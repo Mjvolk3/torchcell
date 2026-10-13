@@ -69,6 +69,8 @@ from torchcell.datamodels.schema import (
     MeasurementType,
     Publication,
     ReferenceGenome,
+    ReleasedGeneKind,
+    ReleasedGeneNamePerturbation,
     ResponseCategory,
     SampleUnit,
     SmallMoleculePerturbation,
@@ -83,43 +85,6 @@ from torchcell.literature.manifest import (
     RetrievalMethod,
     RetrievalRecord,
 )
-from torchcell.sequence.genome.scerevisiae.s288c import (
-    GeneNameResolution,
-    GeneNameStatus,
-    SCerevisiaeGenome,
-)
-
-_AMBIGUOUS = {"PPA1": ["YBR011C", "YHR026W"], "FEN1": ["YCR034W", "YKL113C"]}
-_RENAME = {"VMA2": "YBR127C", "VMA16": "YHR026W", "ELO2": "YCR034W"}
-_RETIRED = {"NOSUCHGENE"}
-
-
-class _StubGenome:
-    """A hand-written resolver covering the three statuses the loader distinguishes."""
-
-    def resolve_gene_name(self, name: str) -> GeneNameResolution:
-        upper = name.upper()
-        if upper in _AMBIGUOUS:
-            return GeneNameResolution(
-                input_name=name,
-                status=GeneNameStatus.AMBIGUOUS,
-                systematic_name=None,
-                candidates=_AMBIGUOUS[upper],
-            )
-        if upper in _RENAME:
-            return GeneNameResolution(
-                input_name=name,
-                status=GeneNameStatus.RENAMED,
-                systematic_name=_RENAME[upper],
-            )
-        if upper in _RETIRED:
-            return GeneNameResolution(
-                input_name=name, status=GeneNameStatus.RETIRED, systematic_name=upper
-            )
-        return GeneNameResolution(
-            input_name=name, status=GeneNameStatus.CURRENT, systematic_name=upper
-        )
-
 
 _TABLES = {
     "ethanol": ["VMA2", "YAL001C"],
@@ -148,9 +113,7 @@ def built(
     monkeypatch.setattr(
         a.EnvChemgenAuesukaree2009Dataset, "_parse_tables", lambda self: _TABLES
     )
-    return a.EnvChemgenAuesukaree2009Dataset(
-        root=str(tmp_path), genome=cast(SCerevisiaeGenome, _StubGenome())
-    )
+    return a.EnvChemgenAuesukaree2009Dataset(root=str(tmp_path))
 
 
 def test_media_is_the_shared_library_object_not_free_text() -> None:
@@ -203,29 +166,24 @@ def test_every_stress_compound_is_identified_at_its_sourced_dose() -> None:
     }
 
 
-def test_ambiguous_tokens_are_adjudicated_by_evidence_never_first_matched() -> None:
-    dataset = a.EnvChemgenAuesukaree2009Dataset.__new__(
-        a.EnvChemgenAuesukaree2009Dataset
-    )
-    dataset.genome = cast(SCerevisiaeGenome, _StubGenome())
-    # YBR011C is the alphabetically first candidate and the old code's silent answer
-    assert a._AMBIGUOUS_ADJUDICATIONS["PPA1"].candidates[0] == "YBR011C"
-    assert dataset._resolve_token("PPA1") == ("YHR026W", "VMA16")
-    assert dataset._resolve_token("FEN1") == ("YCR034W", "ELO2")
-    assert "ESSENTIAL" in a._AMBIGUOUS_ADJUDICATIONS["PPA1"].evidence
-    assert "RAD27 IS" in a._AMBIGUOUS_ADJUDICATIONS["FEN1"].evidence
-
-
-def test_an_unlisted_ambiguous_token_raises_rather_than_guessing(
-    monkeypatch: pytest.MonkeyPatch,
+def test_ambiguous_aliases_are_stored_as_the_symbols_the_paper_wrote(
+    built: a.EnvChemgenAuesukaree2009Dataset,
 ) -> None:
-    dataset = a.EnvChemgenAuesukaree2009Dataset.__new__(
-        a.EnvChemgenAuesukaree2009Dataset
-    )
-    dataset.genome = cast(SCerevisiaeGenome, _StubGenome())
-    monkeypatch.setitem(_AMBIGUOUS, "SOMEGENE", ["YAL001C", "YAL002W"])
-    with pytest.raises(RuntimeError, match="AMBIGUOUS"):
-        dataset._resolve_token("SOMEGENE")
+    """PPA1 and FEN1 are aliases of two current genes each; no adjudication is made and
+    each is a ``ReleasedGeneNamePerturbation`` carrying the symbol verbatim (#1045).
+    """
+    by_name = {
+        p["systematic_gene_name"]: p
+        for i in range(len(built))
+        for p in built[i]["experiment"]["genotype"]["perturbations"]
+    }
+    for symbol in ("PPA1", "FEN1", "VMA2", "NOSUCHGENE"):
+        assert by_name[symbol]["perturbation_type"] == "released_gene_name"
+        assert by_name[symbol]["released_gene_name"] == symbol
+        assert by_name[symbol]["released_kind"] == "deletion"
+        assert by_name[symbol]["marker"] == "KanMX"
+    assert by_name["YAL001C"]["perturbation_type"] == "kanmx_deletion"
+    assert not hasattr(a, "_AMBIGUOUS_ADJUDICATIONS")
 
 
 def test_category_is_typed_and_the_source_word_is_kept(
@@ -252,15 +210,14 @@ def test_reference_environment_is_the_unperturbed_non_stress_plate(
     assert "vs the SAME strain on the matched non-stress" in a.MEASUREMENT_UNITS
 
 
-def test_retired_token_is_dropped_and_logged(
-    built: a.EnvChemgenAuesukaree2009Dataset,
-) -> None:
-    assert len(built) == 6  # 7 listed tokens, one of them retired
+def test_no_listed_token_is_dropped(built: a.EnvChemgenAuesukaree2009Dataset) -> None:
+    """Seven listed tokens, seven records; a token no annotation carries is a record."""
+    assert len(built) == 7
     log = json.loads(open(osp.join(built.root, a._DROPPED_FILENAME)).read())
     assert log["n_listed_tokens"] == 7
-    assert log["n_kept_records"] == 6
-    assert log["dropped_tokens"] == {"NOSUCHGENE": 1}
-    assert {entry["token"] for entry in log["adjudicated"]} == {"PPA1", "FEN1"}
+    assert log["n_kept_records"] == 7
+    assert log["n_dropped_records"] == 0
+    assert (log["n_under_systematic_name"], log["n_under_released_symbol"]) == (3, 4)
 
 
 # ---- Table parse and end-to-end build (2026.09.30) ------------------------------ #
@@ -299,32 +256,6 @@ _PARSED = {
     "NaCl": ["YAL003W"],
     "H2O2": ["YAL004W", "NOSUCHGENE"],
 }
-
-_LAYOUT_RESOLUTIONS: dict[str, tuple[GeneNameStatus, str | None, list[str]]] = {
-    "VMA2": (GeneNameStatus.RENAMED, "YBR127C", []),
-    "YBR127C": (GeneNameStatus.CURRENT, "YBR127C", []),
-    "YAL001C": (GeneNameStatus.CURRENT, "YAL001C", []),
-    "YBL001C": (GeneNameStatus.CURRENT, "YBL001C", []),
-    "FEN1": (GeneNameStatus.AMBIGUOUS, None, ["YCR034W", "YKL113C"]),
-    "PPA1": (GeneNameStatus.AMBIGUOUS, None, ["YBR011C", "YHR026W"]),
-    "NOSUCHGENE": (GeneNameStatus.RETIRED, "NOSUCHGENE", []),
-    "YAL002W": (GeneNameStatus.CURRENT, "YAL002W", []),
-    "YAL003W": (GeneNameStatus.CURRENT, "YAL003W", []),
-    "YAL004W": (GeneNameStatus.CURRENT, "YAL004W", []),
-}
-
-
-class _LayoutGenome:
-    """Explicit resolutions for the layout's tokens; an unknown token raises KeyError."""
-
-    def resolve_gene_name(self, name: str) -> GeneNameResolution:
-        status, systematic, candidates = _LAYOUT_RESOLUTIONS[name]
-        return GeneNameResolution(
-            input_name=name,
-            status=status,
-            systematic_name=systematic,
-            candidates=candidates,
-        )
 
 
 class _Completed:
@@ -442,9 +373,7 @@ def layout_built(
     (root / "raw" / a._PDF_FILENAME).write_bytes(b"%PDF-synthetic")
     monkeypatch.setattr(a, "_EXPECTED_LISTED", _EXPECTED_LAYOUT_COUNTS)
     _fake_subprocess(monkeypatch, _LAYOUT)
-    return a.EnvChemgenAuesukaree2009Dataset(
-        root=str(root), genome=cast(SCerevisiaeGenome, _LayoutGenome())
-    )
+    return a.EnvChemgenAuesukaree2009Dataset(root=str(root))
 
 
 def _phenotype(category: ResponseCategory, label: str) -> EnvironmentResponsePhenotype:
@@ -469,16 +398,24 @@ def _plate(temperature: float, perturbations: list[Any]) -> Environment:
     )
 
 
-def _record(orf: str, stored: str, environment: Environment) -> dict[str, Any]:
+def _deletion(token: str) -> KanMxDeletionPerturbation | ReleasedGeneNamePerturbation:
+    if token.startswith("Y"):
+        return KanMxDeletionPerturbation(
+            systematic_gene_name=token, perturbed_gene_name=token
+        )
+    return ReleasedGeneNamePerturbation(
+        systematic_gene_name=token,
+        perturbed_gene_name=token,
+        released_gene_name=token,
+        released_kind=ReleasedGeneKind.deletion,
+        marker="KanMX",
+    )
+
+
+def _record(token: str, environment: Environment) -> dict[str, Any]:
     return EnvironmentResponseExperiment(
         dataset_name=_DATASET_NAME,
-        genotype=Genotype(
-            perturbations=[
-                KanMxDeletionPerturbation(
-                    systematic_gene_name=orf, perturbed_gene_name=stored
-                )
-            ]
-        ),
+        genotype=Genotype(perturbations=[_deletion(token)]),
         environment=environment,
         phenotype=_phenotype(ResponseCategory.sensitive, "sensitive"),
     ).model_dump()
@@ -494,136 +431,143 @@ _REFERENCE = EnvironmentResponseExperimentReference(
 )
 
 
-def test_build_stores_one_record_per_unique_orf_in_spec_then_orf_order(
+def test_build_stores_one_record_per_listed_token_in_table_order(
     layout_built: a.EnvChemgenAuesukaree2009Dataset,
 ) -> None:
     """Stress order is ``_STRESS_SPECS`` (ethanol, methanol, 1-propanol, heat, NaCl,
-    H2O2); within a stress the ORFs are sorted; the duplicate ORF keeps the first-seen
-    token's name (VMA2, not YBR127C); FEN1 and PPA1 store the adjudicated common names.
+    H2O2); within a stress the tokens keep their listed order; VMA2 and YBR127C (one
+    gene) are two records, as are NOSUCHGENE's two listings in two tables.
     """
-    assert len(layout_built) == 8
+    assert len(layout_built) == 11
     pairs = []
-    for i in range(8):
+    for i in range(11):
         (perturbation,) = layout_built[i]["experiment"]["genotype"]["perturbations"]
         pairs.append(
-            (perturbation["systematic_gene_name"], perturbation["perturbed_gene_name"])
+            (perturbation["perturbation_type"], perturbation["systematic_gene_name"])
         )
     assert pairs == [
-        ("YAL001C", "YAL001C"),
-        ("YBL001C", "YBL001C"),
-        ("YBR127C", "VMA2"),
-        ("YCR034W", "ELO2"),
-        ("YHR026W", "VMA16"),
-        ("YAL002W", "YAL002W"),
-        ("YAL003W", "YAL003W"),
-        ("YAL004W", "YAL004W"),
+        ("released_gene_name", "VMA2"),
+        ("kanmx_deletion", "YAL001C"),
+        ("kanmx_deletion", "YBR127C"),
+        ("kanmx_deletion", "YBL001C"),
+        ("released_gene_name", "FEN1"),
+        ("released_gene_name", "NOSUCHGENE"),
+        ("released_gene_name", "PPA1"),
+        ("kanmx_deletion", "YAL002W"),
+        ("kanmx_deletion", "YAL003W"),
+        ("kanmx_deletion", "YAL004W"),
+        ("released_gene_name", "NOSUCHGENE"),
     ]
 
 
 def test_ethanol_record_equals_the_hand_built_experiment(
     layout_built: a.EnvChemgenAuesukaree2009Dataset,
 ) -> None:
-    """Record 2: 10 percent v/v ethanol on the YPD plate at 30 C for 72 h, KanMX deletion
-    of YBR127C stored under the renamed source token VMA2, categorical ``sensitive`` over
-    three biological replicates; the reference is the unperturbed 30 C plate.
+    """Record 0: 10 percent v/v ethanol on the YPD plate at 30 C for 72 h, the deletion
+    under the released symbol VMA2, categorical ``sensitive`` over three biological
+    replicates; the reference is the unperturbed 30 C plate. Record 2 is the same
+    gene's systematic token YBR127C on the placed KanMX leaf.
     """
     ethanol = SmallMoleculePerturbation(
         compound=resolved_compound("ethanol"),
         concentration=Concentration(value=10.0, unit=ConcentrationUnit.percent_v_v),
     )
-    assert layout_built[2]["experiment"] == _record(
-        "YBR127C", "VMA2", _plate(30.0, [ethanol])
-    )
-    assert layout_built[2]["reference"] == _REFERENCE.model_dump()
+    assert layout_built[0]["experiment"] == _record("VMA2", _plate(30.0, [ethanol]))
+    assert layout_built[2]["experiment"] == _record("YBR127C", _plate(30.0, [ethanol]))
+    assert layout_built[0]["reference"] == _REFERENCE.model_dump()
     assert (
-        layout_built[2]["publication"]
+        layout_built[0]["publication"]
         == Publication(
             doi="10.1007/BF03195688", doi_url="https://doi.org/10.1007/BF03195688"
         ).model_dump()
     )
 
 
-def test_heat_and_adjudicated_records_equal_the_hand_built_experiments(
+def test_heat_and_released_symbol_records_equal_the_hand_built_experiments(
     layout_built: a.EnvChemgenAuesukaree2009Dataset,
 ) -> None:
-    """Record 5 (heat): the plate at 37 C with no perturbation object, yet its reference
-    is the same 30 C plate as every other record. Record 3 (FEN1): 16 percent v/v
-    methanol, stored as YCR034W / ELO2. Record 7 (H2O2): 5 mM hydrogen peroxide.
+    """Record 7 (heat): the plate at 37 C with no perturbation object, yet its reference
+    is the same 30 C plate as every other record. Record 4 (FEN1): 16 percent v/v
+    methanol, stored under the symbol as released. Record 9 (H2O2): 5 mM hydrogen
+    peroxide.
     """
-    assert layout_built[5]["experiment"] == _record(
-        "YAL002W", "YAL002W", _plate(37.0, [])
-    )
-    assert layout_built[5]["reference"] == _REFERENCE.model_dump()
+    assert layout_built[7]["experiment"] == _record("YAL002W", _plate(37.0, []))
+    assert layout_built[7]["reference"] == _REFERENCE.model_dump()
     methanol = SmallMoleculePerturbation(
         compound=resolved_compound("methanol"),
         concentration=Concentration(value=16.0, unit=ConcentrationUnit.percent_v_v),
     )
-    assert layout_built[3]["experiment"] == _record(
-        "YCR034W", "ELO2", _plate(30.0, [methanol])
-    )
+    assert layout_built[4]["experiment"] == _record("FEN1", _plate(30.0, [methanol]))
     peroxide = SmallMoleculePerturbation(
         compound=resolved_compound("hydrogen peroxide"),
         concentration=Concentration(value=5.0, unit=ConcentrationUnit.millimolar),
     )
-    assert layout_built[7]["experiment"] == _record(
-        "YAL004W", "YAL004W", _plate(30.0, [peroxide])
-    )
+    assert layout_built[9]["experiment"] == _record("YAL004W", _plate(30.0, [peroxide]))
 
 
-def test_drop_log_ledgers_the_in_table_collapse(
+def test_drop_log_accounts_for_every_listed_token(
     layout_built: a.EnvChemgenAuesukaree2009Dataset,
 ) -> None:
-    """Contract (issue #520): every listed token is kept, dropped or collapsed, so
-    ``n_listed_tokens`` (11) is ``n_kept_records + n_dropped_records +
-    n_collapsed_tokens`` (8 + 2 + 1). The ethanol table's YBR127C token, whose ORF VMA2
-    already claimed, is ledgered with the name that was kept. The pinned PDF has 0
-    collapses (525 listed tokens, 525 records).
+    """Every listed token is a record: ``n_listed_tokens`` (11) is ``n_kept_records``
+    and nothing is dropped or collapsed. The pinned PDF has 525 listed tokens, 525
+    records.
     """
     log = a.DropLog.model_validate_json(
         Path(layout_built.root, a._DROPPED_FILENAME).read_text()
     )
     assert log == a.DropLog(
         dataset=_DATASET_NAME,
-        rule=a.DROP_RULE,
+        rule=a.RETENTION_RULE,
         n_listed_tokens=11,
-        n_kept_records=8,
-        n_dropped_records=2,
-        n_collapsed_tokens=1,
-        dropped_tokens={"NOSUCHGENE": 2},
-        collapsed_tokens=[
-            a.CollapsedToken(
-                stress="ethanol",
-                token="YBR127C",
-                systematic_name="YBR127C",
-                kept_gene_name="VMA2",
-            )
-        ],
-        adjudicated=[
-            a._AMBIGUOUS_ADJUDICATIONS["PPA1"],
-            a._AMBIGUOUS_ADJUDICATIONS["FEN1"],
-        ],
+        n_kept_records=11,
+        n_dropped_records=0,
+        n_under_systematic_name=6,
+        n_under_released_symbol=5,
     )
+
+
+def test_a_token_listed_twice_in_one_table_refuses_the_build(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """One listed gene is one record, so a table that lists YAL001C twice refuses by
+    name before the store is opened.
+    """
+    text = _LAYOUT.replace(
+        "Unknown function (1)        YBL001C", "Unknown function (1)        YAL001C"
+    )
+    root = tmp_path / "ds"
+    (root / "raw").mkdir(parents=True)
+    (root / "raw" / a._PDF_FILENAME).write_bytes(b"%PDF-synthetic")
+    monkeypatch.setattr(a, "_EXPECTED_LISTED", _EXPECTED_LAYOUT_COUNTS)
+    _fake_subprocess(monkeypatch, text)
+    with pytest.raises(
+        a.RepeatedTokenError, match="ethanol: the table lists 'YAL001C' twice"
+    ):
+        a.EnvChemgenAuesukaree2009Dataset(root=str(root))
+    assert not (root / "processed" / "lmdb").exists()
 
 
 def test_side_files_gene_set_and_one_shared_reference(
     layout_built: a.EnvChemgenAuesukaree2009Dataset,
 ) -> None:
-    """``gene_set.json`` is the eight ORFs sorted; the reference index holds one
-    reference with members 0 to 7; the loader writes no ``data.csv``.
+    """``gene_set.json`` is the ten released names sorted; the reference index holds
+    one reference with members 0 to 10; the loader writes no ``data.csv``.
     """
     preprocess = Path(layout_built.preprocess_dir)
     assert json.loads((preprocess / "gene_set.json").read_text()) == [
+        "FEN1",
+        "NOSUCHGENE",
+        "PPA1",
+        "VMA2",
         "YAL001C",
         "YAL002W",
         "YAL003W",
         "YAL004W",
         "YBL001C",
         "YBR127C",
-        "YCR034W",
-        "YHR026W",
     ]
     index = json.loads((preprocess / "experiment_reference_index.json").read_text())
-    assert [entry["member_indices"] for entry in index] == [list(range(8))]
+    assert [entry["member_indices"] for entry in index] == [list(range(11))]
     assert index[0]["reference"] == _REFERENCE.model_dump(mode="json")
     assert not (preprocess / "data.csv").exists()
     assert layout_built.experiment_class is EnvironmentResponseExperiment
@@ -635,9 +579,7 @@ def _refuse_twice(root: Path) -> list[str]:
     messages = []
     for _ in range(2):
         with pytest.raises(RuntimeError) as info:
-            a.EnvChemgenAuesukaree2009Dataset(
-                root=str(root), genome=cast(SCerevisiaeGenome, _LayoutGenome())
-            )
+            a.EnvChemgenAuesukaree2009Dataset(root=str(root))
         messages.append(str(info.value))
         assert not (root / "processed" / "lmdb").exists()
     return messages
@@ -688,17 +630,6 @@ def test_a_stress_table_absent_from_the_pdf_refuses(
     )
 
 
-def test_resolving_without_a_genome_refuses() -> None:
-    dataset = _dataset()
-    dataset.genome = None
-    with pytest.raises(RuntimeError) as info:
-        dataset._resolve_token("VMA2")
-    assert str(info.value) == (
-        "EnvChemgenAuesukaree2009Dataset requires a genome for gene-name resolution; "
-        "inject SCerevisiaeGenome(...)"
-    )
-
-
 # ---- download and the raw mirror ------------------------------------------------- #
 def test_build_without_raw_or_mirror_names_the_missing_mirror_path(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -708,9 +639,7 @@ def test_build_without_raw_or_mirror_names_the_missing_mirror_path(
     monkeypatch.delenv("TC_DATA_URL", raising=False)
     src = data_root / "torchcell-raw" / a.CITATION_KEY / "paper" / "paper.pdf"
     with pytest.raises(RuntimeError) as info:
-        a.EnvChemgenAuesukaree2009Dataset(
-            root=str(tmp_path / "ds"), genome=cast(SCerevisiaeGenome, _LayoutGenome())
-        )
+        a.EnvChemgenAuesukaree2009Dataset(root=str(tmp_path / "ds"))
     assert str(info.value) == (
         f"raw-mirror PDF not found: {src}. Deposit it with deposit_raw_mirror() from "
         "the library mirror's paper.pdf."

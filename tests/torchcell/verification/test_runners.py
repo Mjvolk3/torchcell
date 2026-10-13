@@ -2226,7 +2226,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "yeastphenome": 524682,
         "env_chemgen_vanacloig2022": 164205,
         "env_chemgen_piotrowski2017": 3435820,
-        "env_chemgen_mota2024": 1270,
+        "env_chemgen_mota2024": 1289,
         "env_chemgen_hoepfner2014": 3083827,
         "env_chemgen_wildenhain2015": 430820,
         "env_chemgen_auesukaree2009": 525,
@@ -2296,11 +2296,11 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "tmi_kuzmin2020": 301798,
     }
     assert _oracles(runners.GENE_ESSENTIALITY_DATASETS) == {
-        "gene_essentiality_sgd": 1287
+        "gene_essentiality_sgd": 1329
     }
     assert _oracles(runners.SYNTHETIC_PAIR_DATASETS) == {
-        "syn_leth_db_yeast": 13996,
-        "syn_rescue_db_yeast": 6942,
+        "syn_leth_db_yeast": 14000,
+        "syn_rescue_db_yeast": 6948,
     }
     assert _oracles(runners.SEGREGANT_GROWTH_DATASETS) == {"bloom2019": 530100}
     assert _oracles(runners.NATURAL_ISOLATE_RESPONSE_DATASETS) == {
@@ -3468,15 +3468,16 @@ def _write_synlethdb(raw: Path) -> Path:
     path.write_text(
         "n1.name,n1.identifier,n2.name,n2.identifier,r.cell_line,r.pubmed_id,"
         "r.source,r.statistic_score\n"
-        "A,1,B,2,null,11,s,0.9\n"
-        "A,1,A,1,null,12,s,0.5\n"
-        "B,2,Z,9,null,13,s,null\n"
-        "C,3,B,2,null,14,s,null\n"
+        "YAL001C,1,YBR085W,2,null,11,s,0.9\n"
+        "YAL001C,1,YAL001C,1,null,12,s,0.5\n"
+        "YBR085W,2,YKL001C,9,null,13,s,null\n"
+        "YJR155W,3,YBR085W,2,null,14,s,null\n"
     )
     return path
 
 
 def _ledger() -> dict[str, Any]:
+    """An older ledger with two drops; since #1045 the loader's ledger lists none."""
     return {
         "dropped_records": 2,
         "rules": [
@@ -3493,21 +3494,27 @@ def _ledger() -> dict[str, Any]:
     }
 
 
-ENTREZ = {1: "YAL001C", 2: "YBR085W", 3: "YJR155W"}
+def _empty_ledger() -> dict[str, Any]:
+    """The #1045 ledger: every released row is a record."""
+    return {"dropped_records": 0, "rules": []}
 
 
-def test_released_synlethdb_pairs_skip_ledgered_rows_and_resolve_by_entrez(
+def test_released_synlethdb_pairs_skip_ledgered_rows_and_key_by_released_name(
     tmp_path: Path,
 ) -> None:
     from torchcell.verification.synthetic_lethality import pair_row_key
 
     path = _write_synlethdb(tmp_path)
-    rows, n_rows = runners.released_synlethdb_pairs(str(path), _ledger(), ENTREZ)
+    rows, n_rows = runners.released_synlethdb_pairs(str(path), _ledger())
     assert n_rows == 4
     assert rows == {
         pair_row_key("YAL001C", "YBR085W", 0.9, "11"): 1,
-        pair_row_key("YBR085W", "YJR155W", None, "14"): 1,
+        pair_row_key("YJR155W", "YBR085W", None, "14"): 1,
     }
+    rows, n_rows = runners.released_synlethdb_pairs(str(path), _empty_ledger())
+    assert n_rows == 4 and sum(rows.values()) == 4
+    assert rows[pair_row_key("YAL001C", "YAL001C", 0.5, "12")] == 1
+    assert rows[pair_row_key("YBR085W", "YKL001C", None, "13")] == 1
 
 
 def test_released_synlethdb_pairs_read_no_score_where_the_source_defines_none(
@@ -3520,39 +3527,37 @@ def test_released_synlethdb_pairs_read_no_score_where_the_source_defines_none(
 
     path = _write_synlethdb(tmp_path)
     rows, n_rows = runners.released_synlethdb_pairs(
-        str(path), _ledger(), ENTREZ, keep_scores=False
+        str(path), _ledger(), keep_scores=False
     )
     assert n_rows == 4
     assert rows == {
         pair_row_key("YAL001C", "YBR085W", None, "11"): 1,
-        pair_row_key("YBR085W", "YJR155W", None, "14"): 1,
+        pair_row_key("YJR155W", "YBR085W", None, "14"): 1,
     }
 
 
 def test_drop_ledger_checks_each_rule_on_the_released_row(tmp_path: Path) -> None:
     path = _write_synlethdb(tmp_path)
-    ok = runners.drop_ledger_result(str(path), _ledger(), ENTREZ)
+    empty = runners.drop_ledger_result(str(path), _empty_ledger())
+    assert empty.passed is True
+    assert empty.message == (
+        "each of the 0 ledgered drops meets its rule on the released row"
+    )
+    ok = runners.drop_ledger_result(str(path), _ledger())
     assert ok.passed is True
-    assert (
-        ok.message == "each of the 2 ledgered drops meets its rule on the released row"
+    assert ok.message == (
+        "each of the 2 ledgered drops meets its rule on the released row (1 checked "
+        "by count only)"
     )
     wrong = _ledger()
-    wrong["rules"][0]["rows"] = [{"source_row": 0, "n1_entrez": 1, "n2_entrez": 2}]
     wrong["rules"][2]["rows"] = [{"source_row": 3, "n1_entrez": 3, "n2_entrez": 2}]
     wrong["rules"][1]["rows"] = [{"source_row": 2, "n1_entrez": 5, "n2_entrez": 9}]
-    bad = runners.drop_ledger_result(str(path), wrong, ENTREZ)
+    bad = runners.drop_ledger_result(str(path), wrong)
     assert bad.passed is False
     assert bad.details["wrong"] == [
-        "row 0: both ids are in the GFF",
         "row 2: ledger ids (2, 9) differ",
         "row 3: two different genes",
     ]
-    by_count = _ledger()
-    by_count["rules"][1]["rows"] = [{"source_row": 3, "n1_entrez": 3, "n2_entrez": 2}]
-    by_count["dropped_records"] = 3
-    counted = runners.drop_ledger_result(str(path), by_count, ENTREZ)
-    assert counted.passed is True
-    assert counted.details["n_checked_by_count_only"] == 1
 
 
 def test_run_synthetic_pairs_wires_release_ledger_and_quotes(
@@ -3610,10 +3615,6 @@ def test_run_synthetic_pairs_wires_release_ledger_and_quotes(
     path = _write_synlethdb(abs_root / "raw")
     (abs_root / "preprocess").mkdir()
     (abs_root / "preprocess" / "dropped_records.json").write_text(json.dumps(_ledger()))
-    monkeypatch.setattr(
-        "torchcell.datasets.scerevisiae.synth_leth_db.load_entrez_to_orf",
-        lambda gff: ENTREZ,
-    )
     _stub_sgd(monkeypatch, set(GENES))
     _stub_genome(monkeypatch)
     audits: list[str] = []

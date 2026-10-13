@@ -211,14 +211,14 @@ def _records(
 def test_screen_stores_one_record_per_released_row(
     screen: m.IsobutanolScreenLopez2024Dataset,
 ) -> None:
-    """Nine Table S2 rows become eight records in row order, each n = 1 with no SE.
+    """Nine Table S2 rows become nine records in row order, each n = 1 with no SE.
 
     YAL001C appears twice (rows 1.5 and 2.5, one typed lowercase): two records of one
     deletion, not an average. YBR002C, YDR002W, YER001W and YFR001W are stored under
     their released names whatever the annotation makes of them. ABC1 is not ORF-shaped
-    and is counted under the leaf deferral rule, the only row without a record.
+    and is stored on the released-gene-name leaf verbatim (#1045).
     """
-    assert len(screen) == 8
+    assert len(screen) == 9
     assert _records(screen) == [
         ("YAL001C", "YAL001C", 1.5, None, 1),
         ("YAL001C", "YAL001C", 2.5, None, 1),
@@ -228,7 +228,15 @@ def test_screen_stores_one_record_per_released_row(
         ("YDR002W", "YDR002W", 0.25, None, 1),
         ("YER001W", "YER001W", 9.0, None, 1),
         ("YFR001W", "YFR001W", 1.1, None, 1),
+        ("ABC1", "ABC1", 1.2, None, 1),
     ]
+    (released,) = screen[8]["experiment"]["genotype"]["perturbations"]
+    assert (
+        released["perturbation_type"],
+        released["released_gene_name"],
+        released["released_kind"],
+        released["marker"],
+    ) == ("released_gene_name", "ABC1", "deletion", "KanMX")
     assert screen[0]["experiment"] == _experiment(
         "IsobutanolScreenLopez2024Dataset", "YAL001C", "YAL001C", 1.5, None, 1
     )
@@ -239,13 +247,13 @@ def test_screen_stores_one_record_per_released_row(
     assert log == {
         "dataset": "IsobutanolScreenLopez2024Dataset",
         "source_records": 9,
-        "kept_records": 8,
-        "dropped_records": 1,
+        "kept_records": 9,
+        "dropped_records": 0,
         "rules": [
             {
-                "rule": m.DEFERRED_RULE,
-                "description": m.DEFERRED_DESCRIPTION,
-                "n_records": 1,
+                "rule": m.RETENTION_RULE,
+                "description": m.RETENTION_DESCRIPTION,
+                "n_records": 0,
                 "items": ["ABC1"],
             }
         ],
@@ -257,7 +265,7 @@ def test_screen_reference_is_one_shared_wt_control_with_n_one(
 ) -> None:
     """Every record is one measurement, so the WT reference (FC 1.0, n = 1, SE None,
     BY4741, SC liquid 30 C aerobic) is one shared entry in
-    ``experiment_reference_index.json`` over all eight records.
+    ``experiment_reference_index.json`` over all nine records.
     """
     assert screen[0]["reference"] == _reference("IsobutanolScreenLopez2024Dataset", 1)
     assert screen[7]["reference"] == _reference("IsobutanolScreenLopez2024Dataset", 1)
@@ -266,7 +274,7 @@ def test_screen_reference_is_one_shared_wt_control_with_n_one(
             Path(screen.root) / "preprocess" / "experiment_reference_index.json"
         ).read_text()
     )
-    assert [entry["member_indices"] for entry in index] == [list(range(8))]
+    assert [entry["member_indices"] for entry in index] == [list(range(9))]
     assert index[0]["reference"]["phenotype_reference"]["n_replicates"] == {
         "isobutanol": 1
     }
@@ -280,7 +288,7 @@ def test_screen_reference_is_one_shared_wt_control_with_n_one(
 def test_screen_writes_gene_set_and_build_manifest(
     screen: m.IsobutanolScreenLopez2024Dataset,
 ) -> None:
-    """``preprocess/gene_set.json`` is the seven released ORFs sorted; the build manifest
+    """``preprocess/gene_set.json`` is the eight released names sorted; the build manifest
     names the root slug, the loader class/module, this host, and the worktree HEAD.
 
     The HEAD comparison shells out to ``git rev-parse HEAD`` in the loader's directory,
@@ -288,6 +296,7 @@ def test_screen_writes_gene_set_and_build_manifest(
     """
     preprocess = Path(screen.root) / "preprocess"
     released = [
+        "ABC1",
         "YAL001C",
         "YBR001C",
         "YBR002C",
@@ -373,24 +382,30 @@ def test_validated_reads_both_blocks_and_stores_every_row(
     )
 
 
-def test_validated_defers_a_name_that_is_not_orf_shaped(tmp_path: Path) -> None:
-    """A Table S3 name with no ORF form is counted under the leaf deferral rule, never
-    resolved and never silently dropped; the ORF-shaped rows beside it are stored.
+def test_validated_stores_a_name_that_is_not_orf_shaped_as_released(
+    tmp_path: Path,
+) -> None:
+    """A Table S3 name with no ORF form is stored on the released-gene-name leaf, never
+    resolved and never dropped; the ledger lists it under the retention rule.
     """
     root = _root(
         tmp_path,
-        "deferred",
+        "released",
         up_rows=[("YAL001C", 3.0, 0.3), ("YLR287-A", 2.5, 0.2)],
         down_rows=[("YCR001W", 0.4, 0.09)],
     )
     dataset = m.IsobutanolValidatedLopez2024Dataset(root=str(root))
-    assert len(dataset) == 2
+    assert len(dataset) == 3
+    (released,) = dataset[1]["experiment"]["genotype"]["perturbations"]
+    assert released["perturbation_type"] == "released_gene_name"
+    assert released["systematic_gene_name"] == "YLR287-A"
     log = json.loads((root / "preprocess" / "dropped_records.json").read_text())
+    assert (log["kept_records"], log["dropped_records"]) == (3, 0)
     assert log["rules"] == [
         {
-            "rule": m.DEFERRED_RULE,
-            "description": m.DEFERRED_DESCRIPTION,
-            "n_records": 1,
+            "rule": m.RETENTION_RULE,
+            "description": m.RETENTION_DESCRIPTION,
+            "n_records": 0,
             "items": ["YLR287-A"],
         }
     ]

@@ -30,8 +30,10 @@ record to the analytes the strain measured (every strain measures all six here).
 a measured WT baseline, not a population mean.
 
 Background: the BY4741/BY4742 haploid deletion collection (KanMX4 deletions). The genotype
-is one ``KanMxDeletionPerturbation`` per strain; the source uses common gene names, so an
-injected ``SCerevisiaeGenome`` resolves them to systematic R64 ORF ids (Cachera pattern).
+is one deletion per strain under the name Table 3 releases, verbatim (#1045): a
+systematic name (``YDR379C-A``) goes on ``KanMxDeletionPerturbation`` with both names the
+ORF, a common name on ``ReleasedGeneNamePerturbation`` (the symbol, kind ``deletion``,
+marker KanMX). No genome is consulted; the join to R64 is a modeling-time act.
 
 Provenance / extraction: the data IS Table 3 in the paper -- there is no external SI file.
 The canonical source is the sha256-pinned library-mirror ``paper.pdf`` (verified by
@@ -49,7 +51,7 @@ import os.path as osp
 import pickle
 import re
 from collections.abc import Callable
-from typing import Any, cast
+from typing import Any
 
 import lmdb
 import pandas as pd
@@ -75,11 +77,12 @@ from torchcell.datamodels.schema import (
     MetabolitePhenotype,
     Publication,
     ReferenceGenome,
+    ReleasedGeneKind,
+    ReleasedGeneNamePerturbation,
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.datasets.scerevisiae.zelezniak2018 import build_metabolite_s_id_map
-from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import SourcedValue
 
@@ -362,13 +365,11 @@ class OrganicAcidYoshida2012Dataset(ExperimentDataset):
         self,
         root: str = "data/torchcell/organic_acid_yoshida2012",
         io_workers: int = 0,
-        genome: SCerevisiaeGenome | None = None,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset; a genome is required to resolve common gene names."""
-        self.genome = genome
+        """Initialize the dataset; every strain is stored under its released name."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -408,45 +409,33 @@ class OrganicAcidYoshida2012Dataset(ExperimentDataset):
         copy_verified(mirror, dest, PDF_SHA256)
         log.info("Staged %s (%d bytes, sha256 verified)", dest, osp.getsize(dest))
 
-    def _resolve_systematic(self, gene: str) -> str:
-        """Resolve a common/systematic gene name to a systematic ORF id (must succeed).
-
-        A systematic-shaped name must be a gene of the injected genome, and a common name
-        must name exactly one gene; anything else is refused by name rather than stored.
-        """
-        gene = gene.strip().upper()
-        genome = cast(SCerevisiaeGenome, self.genome)
+    @staticmethod
+    def _released_deletion(
+        gene: str,
+    ) -> KanMxDeletionPerturbation | ReleasedGeneNamePerturbation:
+        """The deletion under the name Table 3 releases (#1045)."""
         if _SYSTEMATIC_RE.match(gene):
-            if gene not in genome.gene_set:
-                raise RuntimeError(
-                    f"Yoshida2012: systematic name '{gene}' is not a gene of the genome"
-                )
-            return gene
-        candidates = genome.alias_to_systematic.get(gene, [])
-        if not candidates:
-            raise RuntimeError(f"Yoshida2012: could not resolve gene name '{gene}'")
-        if len(candidates) > 1:
-            raise RuntimeError(
-                f"Yoshida2012: gene name '{gene}' is an alias of {len(candidates)} "
-                f"ORFs {candidates}"
+            return KanMxDeletionPerturbation(
+                systematic_gene_name=gene, perturbed_gene_name=gene
             )
-        return candidates[0]
+        return ReleasedGeneNamePerturbation(
+            systematic_gene_name=gene,
+            perturbed_gene_name=gene,
+            released_gene_name=gene,
+            released_kind=ReleasedGeneKind.deletion,
+            marker="KanMX",
+        )
 
     @post_process
     def process(self) -> None:
         """Build per-strain Metabolite experiments from the Table 3 literal, write LMDB.
 
         Every record is built and every refusal raised BEFORE ``data.csv`` or the store is
-        written, so a refused table leaves nothing for a retry to serve. Refusals (each
-        0 of the 17 strains of the released Table 3, 2026.10.01): an unresolvable or
-        ambiguous name, two strains resolving to one ORF, and a NaN mean or SD.
+        written, so a refused table leaves nothing for a retry to serve. The one refusal
+        (0 of the 17 strains of the released Table 3) is a NaN mean or SD; every name is
+        stored as released, so no name can fail (#1045).
         """
         verify_raw_files(self.raw_dir, {PDF_FILENAME: PDF_SHA256})
-        if self.genome is None:
-            raise RuntimeError(
-                "OrganicAcidYoshida2012Dataset requires an injected SCerevisiaeGenome to "
-                "resolve common gene names to systematic ORF ids (Table 3 uses names)."
-            )
         # Organic-acid -> Yeast9 s_NNNN, sourced from YeastGEM (never invented). Phosphate
         # stays unmapped (inorganic; not a modelled organic-acid target).
         self._s_id_map = build_metabolite_s_id_map(ACID_KEGG_IDS)
@@ -461,18 +450,16 @@ class OrganicAcidYoshida2012Dataset(ExperimentDataset):
         self._reference = _row_analytes(TABLE_3[_WT_KEY])
 
         rows: list[dict[str, Any]] = []
-        gene_by_orf: dict[str, str] = {}
         for gene, values in TABLE_3.items():
             if gene == _WT_KEY:
                 continue
-            orf = self._resolve_systematic(gene)
-            if orf in gene_by_orf:
-                raise RuntimeError(
-                    f"Yoshida2012: Table 3 rows '{gene_by_orf[orf]}' and '{gene}' both "
-                    f"resolve to {orf}"
-                )
-            gene_by_orf[orf] = gene
-            rows.append({"orf": orf, "gene": gene, "analytes": _row_analytes(values)})
+            rows.append(
+                {
+                    "gene": gene,
+                    "leaf": self._released_deletion(gene).perturbation_type,
+                    "analytes": _row_analytes(values),
+                }
+            )
         records = [self.create_experiment(record_row) for record_row in rows]
         log.info(
             "Yoshida2012: %d deletion strains, WT reference over %d analytes, "
@@ -482,7 +469,7 @@ class OrganicAcidYoshida2012Dataset(ExperimentDataset):
             len(self._s_id_map),
         )
         os.makedirs(self.preprocess_dir, exist_ok=True)
-        pd.DataFrame([{"orf": r["orf"], "gene": r["gene"]} for r in rows]).to_csv(
+        pd.DataFrame([{"gene": r["gene"], "leaf": r["leaf"]} for r in rows]).to_csv(
             osp.join(self.preprocess_dir, "data.csv"), index=False
         )
 
@@ -537,13 +524,7 @@ class OrganicAcidYoshida2012Dataset(ExperimentDataset):
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="BY4742"
         )
-        genotype = Genotype(
-            perturbations=[
-                KanMxDeletionPerturbation(
-                    systematic_gene_name=row["orf"], perturbed_gene_name=row["gene"]
-                )
-            ]
-        )
+        genotype = Genotype(perturbations=[self._released_deletion(row["gene"])])
         # Static (no shaking) YPD liquid, 25 C, 72 h (Methods; Table 3 caption).
         environment = Environment(media=YOSHIDA_YPD, temperature=Temperature(value=25))
         phenotype = self._phenotype(row["analytes"])
@@ -576,20 +557,15 @@ class OrganicAcidYoshida2012Dataset(ExperimentDataset):
 def main() -> None:
     """Build/load the dataset for interactive debugging.
 
-    A genome is REQUIRED (Table 3 uses common gene names). Loads the existing LMDB if
-    already built; delete ``<root>/processed`` first to re-run ``process()``.
+    Loads the existing LMDB if already built; delete ``<root>/processed`` first to
+    re-run ``process()``.
     """
     from dotenv import load_dotenv
 
     load_dotenv()
     data_root = os.environ["DATA_ROOT"]
-    genome = SCerevisiaeGenome(
-        genome_root=osp.join(data_root, "data/sgd/genome"),
-        go_root=osp.join(data_root, "data/go"),
-        overwrite=False,
-    )
     root = osp.join(data_root, "data/torchcell/organic_acid_yoshida2012")
-    dataset = OrganicAcidYoshida2012Dataset(root=root, genome=genome)
+    dataset = OrganicAcidYoshida2012Dataset(root=root)
     print(f"len = {len(dataset)}")
     print(dataset[0])
 

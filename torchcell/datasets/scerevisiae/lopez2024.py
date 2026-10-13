@@ -51,8 +51,9 @@ source are SYSTEMATIC ORF names and are stored AS RELEASED (upper-cased), as bot
 owner rule 2026-10-12). A released name the current annotation renames (e.g. YAL043C-A)
 or no longer carries (e.g. YAR037W) keeps its own name and its record. One Table S2 row,
 ``YLR287-A``, is not ORF-shaped at all (the release dropped the strand letter); it is
-counted under ``deferred_to_released_gene_name_leaf`` in ``preprocess/dropped_records.json``
-until the released-gene-name leaf lands, and is the only row without a record.
+stored on ``ReleasedGeneNamePerturbation`` under that name verbatim (kind ``deletion``,
+marker KanMX), so every released row is a record and
+``preprocess/dropped_records.json`` lists none.
 
 PROVENANCE / PUBLICATION NOTE: the genome-wide biosensor YKO SCREEN DATA is unpublished
 except in the 2024 dissertation, which has no discoverable DOI/PMID (checked Crossref +
@@ -105,6 +106,8 @@ from torchcell.datamodels.schema import (
     MetabolitePhenotype,
     Publication,
     ReferenceGenome,
+    ReleasedGeneKind,
+    ReleasedGeneNamePerturbation,
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
@@ -130,13 +133,12 @@ TARGET_METABOLITE = "isobutanol"
 _SYSTEMATIC_RE = re.compile(r"^Y[A-P][LR]\d{3}[WC](-[A-Z])?$")
 
 
-DEFERRED_RULE = "deferred_to_released_gene_name_leaf"
-DEFERRED_DESCRIPTION = (
-    "the released strain name is not ORF-shaped (YLR287-A: the release dropped the strand "
-    "letter), so it cannot be stored on KanMxDeletionPerturbation, whose "
-    "systematic_gene_name is validated against the ORF pattern; it is stored once the "
-    "released-gene-name leaf lands (feat/schema-released-gene-name-leaf), never resolved "
-    "against the genome and never dropped for good"
+RETENTION_RULE = "none"
+RETENTION_DESCRIPTION = (
+    "every released row is a record under its released strain name, upper-cased: an "
+    "ORF-shaped name on KanMxDeletionPerturbation with both names the ORF, any other "
+    "name (YLR287-A: the release dropped the strand letter) on "
+    "ReleasedGeneNamePerturbation verbatim; no genome is consulted and no row is dropped"
 )
 
 
@@ -160,9 +162,11 @@ class DropLog(BaseModel):
 
 
 def _write_drop_log(
-    preprocess_dir: str, dataset: str, source: int, kept: int, deferred: list[str]
+    preprocess_dir: str, dataset: str, source: int, kept: int, released: list[str]
 ) -> None:
-    """Write ``preprocess/dropped_records.json``; the only rule is the leaf deferral."""
+    """Write ``preprocess/dropped_records.json``: nothing is dropped; the names stored
+    on the released-gene-name leaf are listed under the retention rule.
+    """
     drop_log = DropLog(
         dataset=dataset,
         source_records=source,
@@ -170,17 +174,16 @@ def _write_drop_log(
         dropped_records=source - kept,
         rules=[
             DropRule(
-                rule=DEFERRED_RULE,
-                description=DEFERRED_DESCRIPTION,
-                n_records=len(deferred),
-                items=sorted(deferred),
+                rule=RETENTION_RULE,
+                description=RETENTION_DESCRIPTION,
+                n_records=0,
+                items=sorted(released),
             )
         ],
     )
-    if len(deferred) != drop_log.dropped_records:
+    if drop_log.dropped_records != 0:
         raise RuntimeError(
-            f"drop accounting mismatch: {len(deferred)} deferred, "
-            f"{drop_log.dropped_records} rows without a record"
+            f"drop accounting mismatch: {drop_log.dropped_records} rows without a record"
         )
     os.makedirs(preprocess_dir, exist_ok=True)
     with open(osp.join(preprocess_dir, "dropped_records.json"), "w") as handle:
@@ -242,15 +245,27 @@ class _IsobutanolLopez2024Base(ExperimentDataset):
             log.info("Verified %s (sha256 %s)", dest, _XLSX_SHA256)
 
     @staticmethod
-    def _released_orf(name: str) -> str | None:
-        """The released strain name, upper-cased, when it is ORF-shaped; else None.
+    def _released_deletion(
+        name: str,
+    ) -> KanMxDeletionPerturbation | ReleasedGeneNamePerturbation:
+        """The deletion under the released strain name, upper-cased (#1045).
 
-        No genome is consulted. The one Table S2 cell that is not ORF-shaped
-        (``YLR287-A``) returns None and is counted, not stored, until the released-gene-name
-        leaf exists.
+        No genome is consulted. An ORF-shaped name goes on the placed KanMX leaf with
+        both names the ORF; the one Table S2 cell that is not (``YLR287-A``) goes on the
+        released-gene-name leaf verbatim.
         """
         upper = name.upper().strip()
-        return upper if _SYSTEMATIC_RE.match(upper) else None
+        if _SYSTEMATIC_RE.match(upper):
+            return KanMxDeletionPerturbation(
+                systematic_gene_name=upper, perturbed_gene_name=upper
+            )
+        return ReleasedGeneNamePerturbation(
+            systematic_gene_name=upper,
+            perturbed_gene_name=upper,
+            released_gene_name=upper,
+            released_kind=ReleasedGeneKind.deletion,
+            marker="KanMX",
+        )
 
     def _environment(self) -> Environment:
         """Aerobic SC-liquid medium; 30 C (standard yeast temp, not explicit in the source)."""
@@ -291,21 +306,14 @@ class _IsobutanolLopez2024Base(ExperimentDataset):
     def _experiment(
         self,
         *,
-        orf: str,
-        standard_name: str,
+        name: str,
         fold_change: float,
         se: float | None,
         n: int,
         environment: Environment,
     ) -> MetaboliteExperiment:
         """Build one biosensor-fold-change experiment for a single deletion strain."""
-        genotype = Genotype(
-            perturbations=[
-                KanMxDeletionPerturbation(
-                    systematic_gene_name=orf, perturbed_gene_name=standard_name
-                )
-            ]
-        )
+        genotype = Genotype(perturbations=[self._released_deletion(name)])
         phenotype = MetabolitePhenotype(
             metabolite_level={TARGET_METABOLITE: fold_change},
             metabolite_level_se=(None if se is None else {TARGET_METABOLITE: se}),
@@ -352,9 +360,8 @@ class IsobutanolScreenLopez2024Dataset(_IsobutanolLopez2024Base):
 
         Every row is a record (``n_replicates = 1``, no SE): a gene the table reports on
         two plates is two records of one deletion, told apart by their values, not an
-        average. The one row whose strain name is not ORF-shaped (``YLR287-A``) is counted
-        in ``preprocess/dropped_records.json`` under ``deferred_to_released_gene_name_leaf``
-        and stored once that leaf exists.
+        average. The one row whose strain name is not ORF-shaped (``YLR287-A``) is
+        stored on the released-gene-name leaf (#1045).
         """
         verify_raw_files(self.raw_dir, {_XLSX_FILENAME: _XLSX_SHA256})
         xlsx = osp.join(self.raw_dir, _XLSX_FILENAME)
@@ -367,24 +374,21 @@ class IsobutanolScreenLopez2024Dataset(_IsobutanolLopez2024Base):
         ref_dump = self._reference_dump(environment, n=1)
 
         rows: list[tuple[str, float]] = []
-        deferred: list[str] = []
+        released_names: list[str] = []
         for _, row in df.iterrows():
-            released = str(row[gene_col]).strip()
-            orf = self._released_orf(released)
-            if orf is None:
-                deferred.append(released)
-                continue
-            rows.append((orf, float(row[fc_col])))
+            released = str(row[gene_col]).strip().upper()
+            if not _SYSTEMATIC_RE.match(released):
+                released_names.append(released)
+            rows.append((released, float(row[fc_col])))
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
         env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e11))
         idx = 0
         with env.begin(write=True) as txn:
-            for orf, fold_change in tqdm(rows, desc="lopez2024-S2"):
+            for name, fold_change in tqdm(rows, desc="lopez2024-S2"):
                 experiment = self._experiment(
-                    orf=orf,
-                    standard_name=orf,
+                    name=name,
                     fold_change=fold_change,
                     se=None,
                     n=1,
@@ -402,13 +406,13 @@ class IsobutanolScreenLopez2024Dataset(_IsobutanolLopez2024Base):
                 )
                 idx += 1
         env.close()
-        _write_drop_log(self.preprocess_dir, self.name, len(df), idx, deferred)
+        _write_drop_log(self.preprocess_dir, self.name, len(df), idx, released_names)
         log.info(
-            "Lopez2024 S2: wrote %d row experiments as released (%d rows deferred to the "
+            "Lopez2024 S2: wrote %d row experiments as released (%d on the "
             "released-gene-name leaf: %s)",
             idx,
-            len(deferred),
-            sorted(deferred),
+            len(released_names),
+            sorted(released_names),
         )
 
 
@@ -455,8 +459,7 @@ class IsobutanolValidatedLopez2024Dataset(_IsobutanolLopez2024Base):
         """Parse Table S3 (both blocks) into one triplicate record per released row; write LMDB.
 
         Every row is a record under its released ORF, including both YBL071W-A rows; a
-        name that is not ORF-shaped is counted under ``deferred_to_released_gene_name_leaf``
-        (0 of 227 rows).
+        name that is not ORF-shaped goes on the released-gene-name leaf (0 of 227 rows).
         """
         verify_raw_files(self.raw_dir, {_XLSX_FILENAME: _XLSX_SHA256})
         records = self._read_blocks()
@@ -468,22 +471,16 @@ class IsobutanolValidatedLopez2024Dataset(_IsobutanolLopez2024Base):
         os.makedirs(self.processed_dir, exist_ok=True)
         env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e11))
         idx = 0
-        deferred: list[str] = []
+        released_names: list[str] = []
         with env.begin(write=True) as txn:
             for released, fc_avg, std in tqdm(records, desc="lopez2024-S3"):
-                orf = self._released_orf(released)
-                if orf is None:
-                    deferred.append(released)
-                    continue
+                name = released.strip().upper()
+                if not _SYSTEMATIC_RE.match(name):
+                    released_names.append(name)
                 # Triplicate re-screen: released STD is the sample SD -> SE = STD / sqrt(3).
                 se = std / math.sqrt(3)
                 experiment = self._experiment(
-                    orf=orf,
-                    standard_name=orf,
-                    fold_change=fc_avg,
-                    se=se,
-                    n=3,
-                    environment=environment,
+                    name=name, fold_change=fc_avg, se=se, n=3, environment=environment
                 )
                 txn.put(
                     f"{idx}".encode(),
@@ -497,13 +494,15 @@ class IsobutanolValidatedLopez2024Dataset(_IsobutanolLopez2024Base):
                 )
                 idx += 1
         env.close()
-        _write_drop_log(self.preprocess_dir, self.name, len(records), idx, deferred)
+        _write_drop_log(
+            self.preprocess_dir, self.name, len(records), idx, released_names
+        )
         log.info(
-            "Lopez2024 S3: wrote %d validated experiments as released (%d rows deferred "
-            "to the released-gene-name leaf: %s)",
+            "Lopez2024 S3: wrote %d validated experiments as released (%d on the "
+            "released-gene-name leaf: %s)",
             idx,
-            len(deferred),
-            sorted(deferred),
+            len(released_names),
+            sorted(released_names),
         )
 
 

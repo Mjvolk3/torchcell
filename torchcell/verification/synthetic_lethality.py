@@ -141,6 +141,7 @@ def verify_synthetic_pair_dataset(
     sgd_genes: set[str] | None = None,
     gene_universe_label: str = "reference",
     min_containment: float = 0.90,
+    expected_self_pairs: int = 0,
 ) -> VerificationReport:
     """Run the L0-L4 gate over one SynLethDB store in a single pass.
 
@@ -148,6 +149,11 @@ def verify_synthetic_pair_dataset(
     2.0 defines its normalized confidence score for SL pairs); with one, every stated
     score must lie in [0, 1]. Without one, a stated score has no sourced meaning, and the
     store passes only if it states none.
+
+    ``expected_self_pairs`` is how many records the loader DECLARES to name one gene on
+    both sides (#1045): the release lists such rows (3 SL, 6 SR) and the loader stores
+    them as released, so ``two_distinct_genes`` passes when exactly that many records
+    are a self pair and every other record is a pair of two distinct genes.
     """
     validate = declared_member_validator(kind.experiment_class)
     validate_reference = declared_member_validator(
@@ -163,6 +169,7 @@ def verify_synthetic_pair_dataset(
     l0_failures: list[dict[str, Any]] = []
     ref_failures: list[dict[str, Any]] = []
     not_pair: list[dict[str, Any]] = []
+    self_pairs: list[dict[str, Any]] = []
     pairs: Counter[tuple[str, str]] = Counter()
     stored: Counter[PairRow] = Counter()
     not_true: list[int] = []
@@ -187,6 +194,14 @@ def verify_synthetic_pair_dataset(
         perturbations = exp["genotype"]["perturbations"]
         names = [str(p.get("systematic_gene_name")) for p in perturbations]
         phenotype = exp["phenotype"]
+        if (
+            len(perturbations) == 2
+            and len(set(names)) == 1
+            and "None" not in names
+            and phenotype.get("graph_level") == "edge"
+        ):
+            self_pairs.append({"index": i, "genes": names})
+            continue
         if (
             len(perturbations) != 2
             or len(set(names)) != 2
@@ -227,19 +242,32 @@ def verify_synthetic_pair_dataset(
         )
     )
     report.add(l1_count(n_records, expected_count))
+    self_ok = len(self_pairs) == expected_self_pairs
+    declared = (
+        f" and {len(self_pairs)} name one gene on both sides, as the loader declares"
+        if self_pairs and self_ok
+        else ""
+    )
     report.add(
         LevelResult(
             level=Level.L1,
             name="two_distinct_genes",
-            passed=n_records > 0 and not not_pair,
+            passed=n_records > 0 and not not_pair and self_ok,
             message=(
-                f"all {n_records} records perturb two distinct named genes at graph "
-                "level 'edge'"
-                if not not_pair
+                f"all {n_records - len(self_pairs)} records perturb two distinct named "
+                f"genes at graph level 'edge'{declared}"
+                if not not_pair and self_ok
                 else f"{len(not_pair)} of {n_records} records are not a pair of two "
-                "distinct genes at graph level 'edge'"
+                f"distinct genes at graph level 'edge'; {len(self_pairs)} name one "
+                f"gene on both sides against {expected_self_pairs} declared"
             ),
-            details={"n_bad": len(not_pair), "examples": not_pair[:20]},
+            details={
+                "n_bad": len(not_pair),
+                "examples": not_pair[:20],
+                "n_self_pairs": len(self_pairs),
+                "expected_self_pairs": expected_self_pairs,
+                "self_pair_examples": self_pairs[:20],
+            },
         )
     )
     repeated = {pair: n for pair, n in pairs.items() if n > 1}
@@ -327,7 +355,7 @@ def _released_rows_result(
         passed=passed,
         message=(
             f"the {sum(stored.values())} stored (gene pair, score, PubMed id) rows are "
-            "the release's kept rows, each side resolved by its Entrez id"
+            "the release's kept rows, each side under its released name"
             if passed
             else f"{sum(only_stored.values())} stored rows are not released and "
             f"{sum(only_released.values())} kept released rows are not stored"

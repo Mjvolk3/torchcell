@@ -1,56 +1,51 @@
 # tests/torchcell/datasets/scerevisiae/test_mota2024.py
 # [[tests.torchcell.datasets.scerevisiae.test_mota2024]]
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/datasets/scerevisiae/test_mota2024.py
-"""Mota 2024 loader: pH as a typed edit, the ordinal grade, and the merge/drop rules.
+"""Mota 2024 loader: pH as a typed edit, the ordinal grade, and released-token storage.
 
-The three spreadsheets are written synthetically with openpyxl, so the parser, the dedup
-rule and the retention rule all run for real without the raw mirror.
+The three spreadsheets are written synthetically with openpyxl, so the parser and the
+placement by token form run for real without the raw mirror and without a genome.
 
-2026.09.30 (Phase 12): a second, richer build (``_EDGE_ROWS``, explicit resolver
-``_EdgeGenome``; an unknown token raises ``KeyError``). Each sheet opens with a title row
-and a blank row before the ``Gene/ORF name`` header, so the header search is exercised.
+A second, richer build (``_EDGE_ROWS``): each sheet opens with a title row and a blank
+row before the ``Gene/ORF name`` header, so the header search is exercised.
 
-    acid      row (token, score)      rule                              counted
-    acetic    TFC3 +                  CURRENT YAL001C, kept as TFC3     yes
-              EFG1 +, YGR272C ++      one gene YGR271C-A, ++ wins,      yes, yes
-                                      canonical name EFG1 stored
-              RLM2 ++                 RETIRED, dropped                  yes
+    acid      row (token, score)      stored as (#1045)                 counted
+    acetic    TFC3 +                  released symbol TFC3              yes
+              EFG1 +, YGR272C ++      two records: the symbol EFG1 and  yes, yes
+                                      the systematic name YGR272C
+              RLM2 ++                 released symbol RLM2              yes
               YDL001W (blank score)   skipped                           no
               (blank token) +         skipped                           no
               YDL001W 0               the reference grade, skipped      no
               nbsp-only token +       empty after strip, skipped        no
-    butyric   ALIASX +, YBR001C +     one gene YBR001C, tie; the        yes, yes
-                                      attribute table's name is None,
-                                      so the ORF is stored
-              RLM2 +, SBR2 +          RETIRED, dropped                  yes, yes
+    butyric   ALIASX +, YBR001C +     two records                       yes, yes
+              RLM2 +, SBR2 +          two records                       yes, yes
     octanoic  YDL001W ++              kept                              yes
-              RLM2 +                  RETIRED, dropped                  yes
+              RLM2 +                  kept                              yes
 
-Records (acid order, then ORF): 0 YAL001C/TFC3 + (acetic), 1 YGR271C-A/EFG1 ++
-(acetic), 2 YBR001C/YBR001C + (butyric), 3 YDL001W/YDL001W ++ (octanoic). Ledger:
-10 counted rows = 4 kept + 4 dropped (RLM2 in three acids, SBR2 once) + 2 merged. Each
-acid has its own reference (the acid rides on the reference plate), so the reference
-index is [[0, 1], [2], [3]]. Also pinned: the download order (mirror, then the ESM URL),
-the sha256 refusals with both digests, ``deposit_raw_mirror`` and its manifest, the
-missing-genome and missing-header refusals.
+Records in sheet order: 0 TFC3 + (acetic), 1 EFG1 +, 2 YGR272C ++, 3 RLM2 ++, 4 ALIASX
++ (butyric), 5 YBR001C +, 6 RLM2 +, 7 SBR2 +, 8 YDL001W ++ (octanoic), 9 RLM2 +. The
+ledger counts 10 rows, 10 records, 0 dropped, 3 under a systematic name and no repeated
+token. Each acid has its own reference (the acid rides on the reference plate), so the
+reference index is [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9]]. Also pinned: the download order
+(mirror, then the ESM URL), the sha256 refusals with both digests, ``deposit_raw_mirror``
+and its manifest, the missing-header refusal.
 
-2026.10.01 (issue #520): a score outside ``0``, ``+``, ``++`` (``+++``, formerly a row of
-the edge acetic table that was skipped uncounted; now tested on the octanoic sheet)
-refuses with a message naming the file, the symbol and the token, and a sheet without the header row refuses with a message
-naming the file instead of a bare ``StopIteration``. All three sheets are parsed before
-``processed/lmdb`` is opened, so either refusal leaves no store and a retry refuses again.
+2026.10.01 (issue #520): a score outside ``0``, ``+``, ``++`` (``+++`` on the octanoic
+sheet) refuses with a message naming the file, the symbol and the token, and a sheet
+without the header row refuses with a message naming the file instead of a bare
+``StopIteration``. All three sheets are parsed before ``processed/lmdb`` is opened, so
+either refusal leaves no store and a retry refuses again.
 """
 
 from __future__ import annotations
 
 import hashlib
 import json
-import os.path as osp
 from pathlib import Path
 from typing import Any, cast
 
 import openpyxl
-import pandas as pd
 import pytest
 
 from torchcell.data import RawSha256MismatchError
@@ -71,6 +66,8 @@ from torchcell.datamodels.schema import (
     PhysicalFactor,
     Publication,
     ReferenceGenome,
+    ReleasedGeneKind,
+    ReleasedGeneNamePerturbation,
     ResponseCategory,
     SmallMoleculePerturbation,
     Temperature,
@@ -84,41 +81,7 @@ from torchcell.literature.manifest import (
     RetrievalRecord,
     SourceCheck,
 )
-from torchcell.sequence.genome.scerevisiae.s288c import (
-    GeneNameResolution,
-    GeneNameStatus,
-    SCerevisiaeGenome,
-)
 from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
-
-# EFG1 and YGR272C are the SI's two names for one gene; RLM2 is retired.
-_RENAME = {"EFG1": "YGR271C-A", "YGR272C": "YGR271C-A", "RNR4": "YGR180C"}
-_RETIRED = {"RLM2"}
-
-
-class _StubGenome:
-    """Resolver + attribute table, the two things the loader asks a genome for."""
-
-    gene_attribute_table = pd.DataFrame(
-        {"ID": ["YGR271C-A", "YGR180C", "YAL001C"], "gene": ["EFG1", "RNR4", "TFC3"]}
-    )
-
-    def resolve_gene_name(self, name: str) -> GeneNameResolution:
-        upper = name.upper()
-        if upper in _RENAME:
-            return GeneNameResolution(
-                input_name=name,
-                status=GeneNameStatus.RENAMED,
-                systematic_name=_RENAME[upper],
-            )
-        if upper in _RETIRED:
-            return GeneNameResolution(
-                input_name=name, status=GeneNameStatus.RETIRED, systematic_name=upper
-            )
-        return GeneNameResolution(
-            input_name=name, status=GeneNameStatus.CURRENT, systematic_name=upper
-        )
-
 
 # (token, score) rows per acid; the header row the parser keys on is written first.
 _ROWS: dict[str, list[tuple[str, str]]] = {
@@ -144,9 +107,7 @@ def built(tmp_path: Path) -> m.EnvChemgenMota2024Dataset:
     raw = tmp_path / "raw"
     raw.mkdir()
     _write_sheets(raw)
-    return m.EnvChemgenMota2024Dataset(
-        root=str(tmp_path), genome=cast(SCerevisiaeGenome, _StubGenome())
-    )
+    return m.EnvChemgenMota2024Dataset(root=str(tmp_path))
 
 
 def test_ph_is_a_typed_perturbation_and_the_medium_is_the_shared_object() -> None:
@@ -155,7 +116,7 @@ def test_ph_is_a_typed_perturbation_and_the_medium_is_the_shared_object() -> Non
     environment = dataset._environment(spec)
     assert environment.media is YPD_AGAR
     assert environment.media.base_medium == "YPD"
-    assert "pH" not in environment.media.name
+    assert environment.media.name is not None and "pH" not in environment.media.name
     acid_entry, ph_entry = environment.perturbations
     acid = cast(SmallMoleculePerturbation, acid_entry)
     ph = cast(EnvironmentPhysicalPerturbation, ph_entry)
@@ -210,45 +171,72 @@ def test_unreported_replicate_design_is_a_typed_gap_not_a_silent_none(
     assert reasons == {"not_reported_by_primary"}
 
 
-def test_two_source_names_for_one_gene_merge_under_its_canonical_name(
+def test_two_source_names_for_one_gene_are_two_records(
     built: m.EnvChemgenMota2024Dataset,
 ) -> None:
-    log = json.loads(open(osp.join(built.root, m._DROPPED_FILENAME)).read())
-    merged = {(e["acid"], e["systematic_name"]): e for e in log["merged"]}
-    acetic = merged[("acetic", "YGR271C-A")]
-    assert acetic["source_tokens"] == ["EFG1", "YGR272C"]
-    assert acetic["kept_score"] == "++"
-    assert acetic["stored_gene_name"] == "EFG1"  # the genome's canonical common name
-    # octanoic: EFG1 is + and YGR272C is ++, so the MORE SEVERE grade wins
-    assert merged[("octanoic", "YGR271C-A")]["kept_score"] == "++"
-    # butyric: the RNR4 source duplicate is one token twice, so the token survives
-    butyric = merged[("butyric", "YGR180C")]
-    assert butyric["source_tokens"] == ["RNR4"] and butyric["kept_score"] == "+"
-    assert "MORE SEVERE" in log["dedup_rule"]
-
-
-def test_retired_token_is_dropped_and_counted(
-    built: m.EnvChemgenMota2024Dataset,
-) -> None:
-    log = json.loads(open(osp.join(built.root, m._DROPPED_FILENAME)).read())
-    assert log["n_raw_rows"] == 9
-    assert log["n_dropped_records"] == 1
-    assert log["n_merged_records"] == 3
-    assert len(built) == 5 == log["n_kept_records"]
-    (dropped,) = log["dropped"]
-    assert dropped["token"] == "RLM2" and dropped["status"] == "retired"
-    assert dropped["acids"] == ["acetic"]
-
-
-def test_renamed_systematic_looking_token_is_rekeyed(
-    built: m.EnvChemgenMota2024Dataset,
-) -> None:
-    stored = {
-        p["systematic_gene_name"]
+    """EFG1 and YGR272C (one gene since SGD merged the ORFs) are two released rows and
+    so two records in every table they share; nothing is merged and no grade wins.
+    """
+    rows = {
+        (
+            p["systematic_gene_name"],
+            built[i]["experiment"]["phenotype"]["category_label"],
+        )
         for i in range(len(built))
         for p in built[i]["experiment"]["genotype"]["perturbations"]
     }
-    assert "YGR271C-A" in stored and "YGR272C" not in stored
+    assert {("EFG1", "++"), ("YGR272C", "++"), ("EFG1", "+")} <= rows
+    log = m.DropLog.model_validate_json(
+        Path(built.root, m._DROPPED_FILENAME).read_text()
+    )
+    assert log.rule == m.RETENTION_RULE and "no genome" in log.rule
+
+
+def test_a_token_listed_twice_is_two_records_and_is_ledgered(
+    built: m.EnvChemgenMota2024Dataset,
+) -> None:
+    """RNR4 (one with a trailing nbsp) is two butyric rows, two records and one
+    ``RepeatedToken`` entry; the retired RLM2 is a record like any other.
+    """
+    log = m.DropLog.model_validate_json(
+        Path(built.root, m._DROPPED_FILENAME).read_text()
+    )
+    assert (log.n_raw_rows, log.n_kept_records, log.n_dropped_records) == (9, 9, 0)
+    assert (log.n_under_systematic_name, log.n_under_released_symbol) == (4, 5)
+    assert log.repeated == [
+        m.RepeatedToken(acid="butyric", token="RNR4", scores=["+", "+"])
+    ]
+    assert len(built) == 9
+    stored = [
+        p["systematic_gene_name"]
+        for i in range(len(built))
+        for p in built[i]["experiment"]["genotype"]["perturbations"]
+    ]
+    assert stored.count("RNR4") == 2 and stored.count("RLM2") == 1
+
+
+def test_a_systematic_token_is_placed_and_a_symbol_is_released(
+    built: m.EnvChemgenMota2024Dataset,
+) -> None:
+    """YAL001C goes on ``KanMxDeletionPerturbation``; EFG1 on
+    ``ReleasedGeneNamePerturbation`` with the symbol verbatim, kind deletion, marker
+    KanMX; the renamed-looking YGR272C stays as written on the placed leaf.
+    """
+    by_name = {
+        p["systematic_gene_name"]: p
+        for i in range(len(built))
+        for p in built[i]["experiment"]["genotype"]["perturbations"]
+    }
+    assert by_name["YAL001C"]["perturbation_type"] == "kanmx_deletion"
+    assert by_name["YGR272C"]["perturbation_type"] == "kanmx_deletion"
+    assert "YGR271C-A" not in by_name
+    efg1 = by_name["EFG1"]
+    assert (
+        efg1["perturbation_type"],
+        efg1["released_gene_name"],
+        efg1["released_kind"],
+        efg1["marker"],
+    ) == ("released_gene_name", "EFG1", "deletion", "KanMX")
 
 
 # ---- A richer build: title rows, skipped rows, merges, multi-acid drops ---------- #
@@ -266,34 +254,6 @@ _EDGE_ROWS: dict[str, list[tuple[str | None, str | None]]] = {
     "butyric": [("ALIASX", "+"), ("YBR001C", "+"), ("RLM2", "+"), ("SBR2", "+")],
     "octanoic": [("YDL001W", "++"), ("RLM2", "+")],
 }
-
-_EDGE_RESOLUTIONS: dict[str, tuple[GeneNameStatus, str]] = {
-    "TFC3": (GeneNameStatus.CURRENT, "YAL001C"),
-    "EFG1": (GeneNameStatus.CURRENT, "YGR271C-A"),
-    "YGR272C": (GeneNameStatus.RENAMED, "YGR271C-A"),
-    "RLM2": (GeneNameStatus.RETIRED, "RLM2"),
-    "SBR2": (GeneNameStatus.RETIRED, "SBR2"),
-    "ALIASX": (GeneNameStatus.CURRENT, "YBR001C"),
-    "YBR001C": (GeneNameStatus.CURRENT, "YBR001C"),
-    "YDL001W": (GeneNameStatus.CURRENT, "YDL001W"),
-}
-
-
-class _EdgeGenome:
-    """Explicit resolutions; YBR001C sits in the attribute table with no common name."""
-
-    gene_attribute_table = pd.DataFrame(
-        {
-            "ID": ["YAL001C", "YGR271C-A", "YBR001C", "YDL001W"],
-            "gene": ["TFC3", "EFG1", None, "RMD9"],
-        }
-    )
-
-    def resolve_gene_name(self, name: str) -> GeneNameResolution:
-        status, systematic = _EDGE_RESOLUTIONS[name]
-        return GeneNameResolution(
-            input_name=name, status=status, systematic_name=systematic
-        )
 
 
 def _write_edge_sheets(raw: Path, header: str = "Gene/ORF name") -> None:
@@ -314,9 +274,7 @@ def edge_built(tmp_path: Path) -> m.EnvChemgenMota2024Dataset:
     root = tmp_path / "env_chemgen_mota2024"
     (root / "raw").mkdir(parents=True)
     _write_edge_sheets(root / "raw")
-    return m.EnvChemgenMota2024Dataset(
-        root=str(root), genome=cast(SCerevisiaeGenome, _EdgeGenome())
-    )
+    return m.EnvChemgenMota2024Dataset(root=str(root))
 
 
 _DATASET_NAME = "EnvChemgenMota2024Dataset"
@@ -368,8 +326,22 @@ def _ordinal(rank: float, category: ResponseCategory, label: str) -> Any:
     )
 
 
+def _deletion(token: str) -> KanMxDeletionPerturbation | ReleasedGeneNamePerturbation:
+    if token.startswith("Y"):
+        return KanMxDeletionPerturbation(
+            systematic_gene_name=token, perturbed_gene_name=token
+        )
+    return ReleasedGeneNamePerturbation(
+        systematic_gene_name=token,
+        perturbed_gene_name=token,
+        released_gene_name=token,
+        released_kind=ReleasedGeneKind.deletion,
+        marker="KanMX",
+    )
+
+
 def _expected_record(
-    acid: str, orf: str, stored: str, score: str
+    acid: str, token: str, score: str
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     grade = {
         "+": (1.0, ResponseCategory.reduced),
@@ -378,13 +350,7 @@ def _expected_record(
     environment = _acid_plate(acid)
     experiment = EnvironmentResponseExperiment(
         dataset_name=_DATASET_NAME,
-        genotype=Genotype(
-            perturbations=[
-                KanMxDeletionPerturbation(
-                    systematic_gene_name=orf, perturbed_gene_name=stored
-                )
-            ]
-        ),
+        genotype=Genotype(perturbations=[_deletion(token)]),
         environment=environment,
         phenotype=_ordinal(grade[0], grade[1], score),
     )
@@ -408,28 +374,33 @@ def test_edge_build_record_order_and_stored_names(
         (perturbation,) = edge_built[i]["experiment"]["genotype"]["perturbations"]
         rows.append(
             (
+                perturbation["perturbation_type"],
                 perturbation["systematic_gene_name"],
-                perturbation["perturbed_gene_name"],
                 phenotype["category_label"],
             )
         )
     assert rows == [
-        ("YAL001C", "TFC3", "+"),
-        ("YGR271C-A", "EFG1", "++"),
-        ("YBR001C", "YBR001C", "+"),
-        ("YDL001W", "YDL001W", "++"),
+        ("released_gene_name", "TFC3", "+"),
+        ("released_gene_name", "EFG1", "+"),
+        ("kanmx_deletion", "YGR272C", "++"),
+        ("released_gene_name", "RLM2", "++"),
+        ("released_gene_name", "ALIASX", "+"),
+        ("kanmx_deletion", "YBR001C", "+"),
+        ("released_gene_name", "RLM2", "+"),
+        ("released_gene_name", "SBR2", "+"),
+        ("kanmx_deletion", "YDL001W", "++"),
+        ("released_gene_name", "RLM2", "+"),
     ]
 
 
-def test_merged_acetic_record_equals_the_hand_built_experiment(
+def test_released_symbol_record_equals_the_hand_built_experiment(
     edge_built: m.EnvChemgenMota2024Dataset,
 ) -> None:
     """Record 1: 75 mM acetic acid plus the pH 4.5 HCl edit on the YPD plate at 30 C for
-    48 h; EFG1 (+) and YGR272C (++) merge on YGR271C-A at the more severe ``++``
-    (rank 2.0, ``severely_reduced``) under the canonical name EFG1; the reference is
-    BY4741 on the same acid plate at rank 0.0.
+    48 h; EFG1 ``+`` (rank 1.0, ``reduced``) under the symbol as released; the
+    reference is BY4741 on the same acid plate at rank 0.0.
     """
-    experiment, reference = _expected_record("acetic", "YGR271C-A", "EFG1", "++")
+    experiment, reference = _expected_record("acetic", "EFG1", "+")
     assert edge_built[1]["experiment"] == experiment
     assert edge_built[1]["reference"] == reference
     assert (
@@ -441,67 +412,41 @@ def test_merged_acetic_record_equals_the_hand_built_experiment(
     )
 
 
-def test_tied_merge_without_a_common_name_stores_the_orf(
+def test_systematic_token_records_equal_the_hand_built_experiments(
     edge_built: m.EnvChemgenMota2024Dataset,
 ) -> None:
-    """Record 2: ALIASX and YBR001C tie at ``+`` on YBR001C, whose attribute-table name
-    is None, so the ORF itself is stored; 14 mM butyric acid; octanoic record 3 carries
-    0.30 mM.
+    """Record 2: YGR272C ``++`` on the placed KanMX leaf, as written (SGD's merge into
+    YGR271C-A is a modeling-time join); record 5: YBR001C ``+`` with 14 mM butyric
+    acid; record 8: YDL001W ``++`` with 0.30 mM octanoic acid.
     """
-    experiment, reference = _expected_record("butyric", "YBR001C", "YBR001C", "+")
-    assert edge_built[2]["experiment"] == experiment
-    assert edge_built[2]["reference"] == reference
-    experiment, reference = _expected_record("octanoic", "YDL001W", "YDL001W", "++")
-    assert edge_built[3]["experiment"] == experiment
-    assert edge_built[3]["reference"] == reference
+    for index, acid, token, score in [
+        (2, "acetic", "YGR272C", "++"),
+        (5, "butyric", "YBR001C", "+"),
+        (8, "octanoic", "YDL001W", "++"),
+    ]:
+        experiment, reference = _expected_record(acid, token, score)
+        assert edge_built[index]["experiment"] == experiment
+        assert edge_built[index]["reference"] == reference
 
 
-def test_edge_drop_log_equals_the_hand_built_ledger(
+def test_edge_ledger_equals_the_hand_built_accounting(
     edge_built: m.EnvChemgenMota2024Dataset,
 ) -> None:
-    """RLM2 is dropped in all three acids (one entry, three records), SBR2 once;
-    merges are listed in acid order with their sorted tokens and scores.
+    """Ten scored rows, ten records, nothing dropped, no token listed twice in one
+    table (RLM2 appears once per table), three systematic names.
     """
     log = m.DropLog.model_validate_json(
         Path(edge_built.root, m._DROPPED_FILENAME).read_text()
     )
     assert log == m.DropLog(
         dataset=_DATASET_NAME,
-        rule=m.DROP_RULE,
-        dedup_rule=m._DEDUP_RULE,
+        rule=m.RETENTION_RULE,
         n_raw_rows=10,
-        n_kept_records=4,
-        n_dropped_records=4,
-        n_merged_records=2,
-        dropped=[
-            m.DroppedToken(
-                token="RLM2",
-                status="retired",
-                acids=["acetic", "butyric", "octanoic"],
-                n_records=3,
-            ),
-            m.DroppedToken(
-                token="SBR2", status="retired", acids=["butyric"], n_records=1
-            ),
-        ],
-        merged=[
-            m.MergedGene(
-                systematic_name="YGR271C-A",
-                acid="acetic",
-                source_tokens=["EFG1", "YGR272C"],
-                source_scores=["+", "++"],
-                kept_score="++",
-                stored_gene_name="EFG1",
-            ),
-            m.MergedGene(
-                systematic_name="YBR001C",
-                acid="butyric",
-                source_tokens=["ALIASX", "YBR001C"],
-                source_scores=["+", "+"],
-                kept_score="+",
-                stored_gene_name="YBR001C",
-            ),
-        ],
+        n_kept_records=10,
+        n_dropped_records=0,
+        n_under_systematic_name=3,
+        n_under_released_symbol=7,
+        repeated=[],
     )
 
 
@@ -537,9 +482,7 @@ def _refuse_twice(root: Path) -> list[str]:
     messages = []
     for _ in range(2):
         with pytest.raises(RuntimeError) as info:
-            m.EnvChemgenMota2024Dataset(
-                root=str(root), genome=cast(SCerevisiaeGenome, _EdgeGenome())
-            )
+            m.EnvChemgenMota2024Dataset(root=str(root))
         messages.append(str(info.value))
         assert not (root / "processed" / "lmdb").exists()
     return messages
@@ -550,13 +493,21 @@ def test_edge_side_files_one_reference_per_acid(
 ) -> None:
     preprocess = Path(edge_built.preprocess_dir)
     assert json.loads((preprocess / "gene_set.json").read_text()) == [
-        "YAL001C",
+        "ALIASX",
+        "EFG1",
+        "RLM2",
+        "SBR2",
+        "TFC3",
         "YBR001C",
         "YDL001W",
-        "YGR271C-A",
+        "YGR272C",
     ]
     index = json.loads((preprocess / "experiment_reference_index.json").read_text())
-    assert [entry["member_indices"] for entry in index] == [[0, 1], [2], [3]]
+    assert [entry["member_indices"] for entry in index] == [
+        [0, 1, 2, 3],
+        [4, 5, 6, 7],
+        [8, 9],
+    ]
     assert not (preprocess / "data.csv").exists()
     assert edge_built.experiment_class is EnvironmentResponseExperiment
     assert edge_built.reference_class is EnvironmentResponseExperimentReference
@@ -576,17 +527,6 @@ def test_a_sheet_without_the_header_row_refuses_naming_the_file(tmp_path: Path) 
             "header in the first sheet"
         ]
         * 2
-    )
-
-
-def test_parsing_without_a_genome_refuses() -> None:
-    dataset = m.EnvChemgenMota2024Dataset.__new__(m.EnvChemgenMota2024Dataset)
-    dataset.genome = None
-    with pytest.raises(RuntimeError) as info:
-        dataset._parse_acid(m._ACID_SPECS[0])
-    assert str(info.value) == (
-        "EnvChemgenMota2024Dataset requires a genome for gene-name resolution; "
-        "inject SCerevisiaeGenome(...)"
     )
 
 

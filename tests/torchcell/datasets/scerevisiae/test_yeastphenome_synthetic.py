@@ -390,19 +390,20 @@ def test_parse_conditions_reports_what_the_schema_cannot_carry() -> None:
 
 
 def test_len_gene_set_and_manifest(dataset: tuple[YeastPhenomeDataset, Path]) -> None:
-    """Eighteen records over two screens; the gene set is the three ORF-shaped row ids.
+    """Twenty-four records over two screens; the gene set is the four released row ids.
 
-    ``not_an_orf`` rows are deferred to the released-gene-name leaf; ``Q0250`` passes the
-    Q-plus-four-digits alternative. No ``preprocess/data.csv`` is written by this loader
+    ``not_an_orf`` rows are stored on the released-gene-name leaf (#1045); ``Q0250``
+    passes the Q-plus-four-digits alternative. No ``preprocess/data.csv`` is written by this loader
     (``df`` is None).
     """
     ds, root = dataset
-    assert len(ds) == 18
+    assert len(ds) == 24
     pre = root / "preprocess"
     assert json.loads((pre / "gene_set.json").read_text()) == [
         "Q0250",
         "YAL001C",
         "YBR002C",
+        "not_an_orf",
     ]
     assert not (pre / "data.csv").exists()
     assert ds.df is None
@@ -420,7 +421,8 @@ def test_len_gene_set_and_manifest(dataset: tuple[YeastPhenomeDataset, Path]) ->
 
 
 def test_hom_colony_size_records(dataset: tuple[YeastPhenomeDataset, Path]) -> None:
-    """Records 0-2 are screen A column 1: YPD solid, furfural 10 mM, BY4743 diploid.
+    """Records 0, 1 and 3 are screen A column 1: YPD solid, furfural 10 mM, BY4743
+    diploid; record 2 is the ``not_an_orf`` row on the released-gene-name leaf.
 
     NPVs 1.5, 0.5, -0.75 for YAL001C, YBR002C, Q0250. Temperature is None with a
     ``not_carried_by_curation`` gap anchored to ``CURATION``; the phenotype carries the
@@ -433,7 +435,7 @@ def test_hom_colony_size_records(dataset: tuple[YeastPhenomeDataset, Path]) -> N
     for idx, orf, npv in [
         (0, "YAL001C", 1.5),
         (1, "YBR002C", 0.5),
-        (2, "Q0250", -0.75),
+        (3, "Q0250", -0.75),
     ]:
         record = ds[idx]
         assert (
@@ -459,7 +461,8 @@ def test_hom_colony_size_records(dataset: tuple[YeastPhenomeDataset, Path]) -> N
 def test_hap_a_turbidity_records_skip_blank_cell(
     dataset: tuple[YeastPhenomeDataset, Path],
 ) -> None:
-    """Records 3-4 are screen A column 2: SD liquid, unresolved quinine 2 mM, BY4741 haploid.
+    """Records 4 and 6 are screen A column 2: SD liquid, unresolved quinine 2 mM, BY4741
+    haploid (record 5 is the ``not_an_orf`` row).
 
     YBR002C's blank cell yields no record, so the column contributes YAL001C (-2.25) and
     Q0250 (0.125) only. ``culture turbidity`` -> liquid state and the readout in units.
@@ -468,7 +471,7 @@ def test_hap_a_turbidity_records_skip_blank_cell(
     env = _environment(
         Media(name="SD", state="liquid", is_synthetic=True), QUININE_UNRESOLVED, 2.0
     )
-    for idx, orf, npv in [(3, "YAL001C", -2.25), (4, "Q0250", 0.125)]:
+    for idx, orf, npv in [(4, "YAL001C", -2.25), (6, "Q0250", 0.125)]:
         record = ds[idx]
         assert record["experiment"] == (
             _experiment(orf, npv, env, "culture turbidity").model_dump()
@@ -482,9 +485,10 @@ def test_hap_a_turbidity_records_skip_blank_cell(
 def test_het_column_is_a_copy_number_drop_in_by4743(
     dataset: tuple[YeastPhenomeDataset, Path],
 ) -> None:
-    """Records 5-7 are screen A column 3 (``het``): one copy dropped 2 -> 1 with a
+    """Records 7-10 are screen A column 3 (``het``): one copy dropped 2 -> 1 with a
     KanMX marker, the same furfural environment as column 1, referenced to diploid
-    BY4743.
+    BY4743; the ``not_an_orf`` row (record 9) is a ``heterozygous_deletion`` on the
+    released-gene-name leaf.
     """
     ds, _ = dataset
     env = _environment(
@@ -497,12 +501,22 @@ def test_het_column_is_a_copy_number_drop_in_by4743(
         reference_copy_number=2,
         marker="KanMX",
     )
-    assert ds[5]["experiment"]["genotype"]["perturbations"] == [
+    assert ds[7]["experiment"]["genotype"]["perturbations"] == [
         perturbation.model_dump()
     ]
-    assert ds[5]["experiment"]["environment"] == env.model_dump()
-    assert ds[5]["experiment"]["phenotype"]["environment_response"] == 1.0
-    assert ds[5]["reference"] == (
+    assert ds[7]["experiment"]["environment"] == env.model_dump()
+    assert ds[7]["experiment"]["phenotype"]["environment_response"] == 1.0
+    (released,) = ds[9]["experiment"]["genotype"]["perturbations"]
+    assert (
+        released["perturbation_type"],
+        released["released_gene_name"],
+        released["released_kind"],
+        released["marker"],
+    ) == ("released_gene_name", "not_an_orf", "heterozygous_deletion", "KanMX")
+    assert ds[2]["experiment"]["genotype"]["perturbations"][0]["released_kind"] == (
+        "deletion"
+    )
+    assert ds[7]["reference"] == (
         _reference(env, "colony size", "BY4743", "diploid").model_dump()
     )
 
@@ -515,7 +529,7 @@ def test_gapped_media_columns_are_stored(
     ``is_synthetic`` a typed gap.
     """
     ds, _ = dataset
-    absent = ds[8]["experiment"]["environment"]["media"]
+    absent = ds[11]["experiment"]["environment"]["media"]
     assert (absent["name"], absent["state"], absent["is_synthetic"]) == (
         None,
         None,
@@ -526,7 +540,7 @@ def test_gapped_media_columns_are_stored(
         "state",
         "is_synthetic",
     ]
-    lb = ds[11]["experiment"]["environment"]["media"]
+    lb = ds[15]["experiment"]["environment"]["media"]
     assert (lb["name"], lb["state"], lb["is_synthetic"]) == ("LB", "solid", None)
     assert [g["field"] for g in lb["provenance_gaps"]] == ["is_synthetic"]
 
@@ -538,7 +552,7 @@ def test_temperature_and_time_components_set_the_environment(
     temperature gap, 48 h and no perturbation.
     """
     ds, _ = dataset
-    environment = ds[14]["experiment"]["environment"]
+    environment = ds[19]["experiment"]["environment"]
     assert environment["temperature"] == {"value": 37.0, "unit": "Celsius"}
     assert environment["duration_hours"] == 48.0
     assert environment["perturbations"] == []
@@ -553,7 +567,7 @@ def test_second_screen_hap_alpha_record_and_publication(
     env = _environment(
         Media(name="SC", state="liquid", is_synthetic=True), FURFURAL, 10.0
     )
-    record = ds[17]
+    record = ds[23]
     assert record["experiment"] == (
         _experiment("YAL001C", 2.0, env, "pooled barseq").model_dump()
     )
@@ -579,7 +593,14 @@ def test_reference_index_groups_by_environment(
     index = json.loads(
         (root / "preprocess" / "experiment_reference_index.json").read_text()
     )
-    members = [[0, 1, 2, 5, 6, 7], [3, 4], [8, 9, 10], [11, 12, 13], [14, 15, 16], [17]]
+    members = [
+        [0, 1, 2, 3, 7, 8, 9, 10],
+        [4, 5, 6],
+        [11, 12, 13, 14],
+        [15, 16, 17, 18],
+        [19, 20, 21, 22],
+        [23],
+    ]
     assert [e["member_indices"] for e in index] == members
     assert [e["reference"]["genome_reference"]["strain"] for e in index] == [
         "BY4743",
@@ -599,7 +620,8 @@ def test_columns_not_stored_are_logged_by_reason(
 ) -> None:
     """The final log line counts every reason once for screen A: the dose-range column
     (not representable), the expression column (not growth), the 2-field header
-    (malformed) and the ``not_an_orf`` rows of the six stored columns (deferred, 6).
+    (malformed); the ``not_an_orf`` rows of the six stored columns are records on the
+    released-gene-name leaf, listed in the ledger.
     ``dropped_records.json`` lists the not-representable column with its components and
     its 4 released values.
     """
@@ -609,13 +631,13 @@ def test_columns_not_stored_are_logged_by_reason(
     _write_screen(root / "raw", SCREEN_A, HEADER_A, ROWS_A)
     with caplog.at_level("INFO", logger="torchcell.datasets.scerevisiae.yeastphenome"):
         ds = YeastPhenomeDataset(root=str(root))
-    assert len(ds) == 17
+    assert len(ds) == 23
     summary = [r for r in caplog.records if r.getMessage().startswith("Wrote ")]
     assert len(summary) == 1
     assert summary[0].getMessage() == (
-        "Wrote 17 YeastPhenome records over 6 environments (1 screens); dropped "
-        "columns/rows: {'deferred_to_released_gene_name_leaf': 6, "
-        "'condition_not_representable': 1, 'not_growth': 1, 'malformed_header': 1}"
+        "Wrote 23 YeastPhenome records over 6 environments (1 screens); dropped "
+        "columns/rows: {'condition_not_representable': 1, 'not_growth': 1, "
+        "'malformed_header': 1}"
     )
     ledger = json.loads((root / "preprocess" / "dropped_records.json").read_text())
     assert ledger["condition_not_representable"] == [
@@ -628,7 +650,7 @@ def test_columns_not_stored_are_logged_by_reason(
             "n_records": 4,
         }
     ]
-    assert ledger["deferred_to_released_gene_name_leaf"] == ["not_an_orf"]
+    assert ledger["stored_on_released_gene_name_leaf"] == ["not_an_orf"]
 
 
 def test_raw_file_names_follow_patched_screens(monkeypatch: pytest.MonkeyPatch) -> None:

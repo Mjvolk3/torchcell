@@ -1884,7 +1884,10 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
     },
     "env_chemgen_mota2024": {
         "root": "data/torchcell/env_chemgen_mota2024",
-        "expected_count": 1270,
+        # every scored row of the three tables (#1045): 377 + 422 + 490
+        "expected_count": 1289,
+        # RNR4 is listed twice in each table and both rows are stored as released
+        "expected_duplicated_pairs": 3,
         "background_genes": frozenset(),
         "provenance": Provenance(
             source_uri=(
@@ -2589,6 +2592,7 @@ def verify_environment_response_entry(
             resolve_gene_name=host.resolve_gene_name,
             reference_centered=spec.get("reference_centered", True),
             expected_unperturbed=spec.get("expected_unperturbed", 0),
+            expected_duplicated_pairs=spec.get("expected_duplicated_pairs", 0),
         )
     else:
         records = load_records(abs_root)
@@ -2611,6 +2615,7 @@ def verify_environment_response_entry(
             min_containment=MIN_RNASEQ_GENE_CONTAINMENT,
             reference_centered=spec.get("reference_centered", True),
             expected_unperturbed=spec.get("expected_unperturbed", 0),
+            expected_duplicated_pairs=spec.get("expected_duplicated_pairs", 0),
         )
     return report
 
@@ -3900,10 +3905,10 @@ def run_gene_interaction(data_root: str) -> bool:
 GENE_ESSENTIALITY_DATASETS: dict[str, dict[str, Any]] = {
     "gene_essentiality_sgd": {
         "root": "data/torchcell/gene_essentiality_sgd",
-        # the 1,329 inviable null S288C annotations of the SGD per-gene JSON release
-        # less the 42 whose allele is not the whole-gene deletion, which the loader
-        # ledgers in preprocess/dropped_records.json (#901)
-        "expected_count": 1287,
+        # every one of the 1,329 inviable null S288C annotations of the SGD per-gene
+        # JSON release: 1,287 whole-gene deletions and, since #1045, the 42 named
+        # alleles on NamedAllelePerturbation
+        "expected_count": 1329,
         "sgd_genes_dir": "data/sgd/genome/genes",
         # sha256 over the sorted "<file> <sha256>" lines of the 6,607 gene JSONs
         "sgd_genes_digest": (
@@ -4009,8 +4014,9 @@ def run_gene_essentiality(data_root: str) -> bool:
 SYNTHETIC_PAIR_DATASETS: dict[str, dict[str, Any]] = {
     "syn_leth_db_yeast": {
         "root": "data/torchcell/syn_leth_db_yeast",
-        # 14,000 released rows minus the 4 the loader ledger drops
-        "expected_count": 13996,
+        # every one of the 14,000 released rows (#1045); 3 name one gene on both sides
+        "expected_count": 14000,
+        "expected_self_pairs": 3,
         "kind": SYNTHETIC_LETHALITY,
         "released_file": ReleasedFile(
             name="Yeast_SL.csv",
@@ -4039,18 +4045,19 @@ SYNTHETIC_PAIR_DATASETS: dict[str, dict[str, Any]] = {
             citation_key="wangSynLethDB20Webbased2022",
             sha256="091e04dbab80044324970feea4a5fc933df0ab7c887042fd87419173129c56ca",
             method=(
-                "one record per kept row of the SynLethDB 2.0 yeast SL file: both "
-                "sides resolved by Entrez id through the pinned NCBI GFF, "
-                "is_synthetic_lethal True, r.statistic_score, r.pubmed_id; drops in "
-                "preprocess/dropped_records.json"
+                "one record per released row of the SynLethDB 2.0 yeast SL file: both "
+                "sides stored under their released name and Entrez id (#1045), "
+                "is_synthetic_lethal True, r.statistic_score, r.pubmed_id; the "
+                "accounting in preprocess/dropped_records.json"
             ),
             page="Nucleic Acids Res 51:D1 (SynLethDB 2.0), Yeast_SL.csv",
         ),
     },
     "syn_rescue_db_yeast": {
         "root": "data/torchcell/syn_rescue_db_yeast",
-        # 6,948 released rows minus the 6 the loader ledger drops
-        "expected_count": 6942,
+        # every one of the 6,948 released rows (#1045); 6 name one gene on both sides
+        "expected_count": 6948,
+        "expected_self_pairs": 6,
         "kind": SYNTHETIC_RESCUE,
         "released_file": ReleasedFile(
             name="Yeast_SR.csv",
@@ -4068,11 +4075,11 @@ SYNTHETIC_PAIR_DATASETS: dict[str, dict[str, Any]] = {
             citation_key="wangSynLethDB20Webbased2022",
             sha256="d84fba780cfa55d59f4844324f5c203f85f09bcfe50bfff6de06169ade2a18f4",
             method=(
-                "one record per kept row of the SynLethDB yeast SR file: both sides "
-                "resolved by Entrez id through the pinned NCBI GFF, "
+                "one record per released row of the SynLethDB yeast SR file: both "
+                "sides stored under their released name and Entrez id (#1045), "
                 "is_synthetic_rescue True, no score (the 74 released r.statistic_score "
-                "values are typed gaps, #903), "
-                "r.pubmed_id; drops in preprocess/dropped_records.json"
+                "values are typed gaps, #903), r.pubmed_id; the accounting in "
+                "preprocess/dropped_records.json"
             ),
             page="SynLethDB 2.0 download, Yeast_SR.csv",
         ),
@@ -4081,19 +4088,16 @@ SYNTHETIC_PAIR_DATASETS: dict[str, dict[str, Any]] = {
 
 
 def released_synlethdb_pairs(
-    csv_path: str,
-    ledger: Mapping[str, Any],
-    entrez_to_orf: Mapping[int, str],
-    *,
-    keep_scores: bool = True,
+    csv_path: str, ledger: Mapping[str, Any], *, keep_scores: bool = True
 ) -> tuple[Counter[Any], int]:
-    """The kept rows of a SynLethDB file as (ORF pair, score, PubMed id), and its row count.
+    """The kept rows of a SynLethDB file as (name pair, score, PubMed id), and its row count.
 
-    Each side resolves by its Entrez id alone; a row the loader's ledger drops is skipped
-    by its source row number, so the comparison covers exactly the rows the loader kept.
-    With ``keep_scores`` False (a file the source defines no score for, the SR file)
-    every released score reads None, which is what ``score_defined_by_source`` asks of
-    the store (#903).
+    Each side is the released ``n1.name`` / ``n2.name``, verbatim, as the loader stores
+    it (#1045); a row the loader's ledger drops is skipped by its source row number, so
+    the comparison covers exactly the rows the loader kept (none, since #1045). With
+    ``keep_scores`` False (a file the source defines no score for, the SR file) every
+    released score reads None, which is what ``score_defined_by_source`` asks of the
+    store (#903).
     """
     import pandas as pd
 
@@ -4107,10 +4111,10 @@ def released_synlethdb_pairs(
     )
     dropped = {row["source_row"] for rule in ledger["rules"] for row in rule["rows"]}
     rows: Counter[Any] = Counter()
-    for index, entrez_1, entrez_2, score, pubmed_id in zip(
+    for index, name_1, name_2, score, pubmed_id in zip(
         frame.index,
-        frame["n1.identifier"],
-        frame["n2.identifier"],
+        frame["n1.name"],
+        frame["n2.name"],
         frame["r.statistic_score"],
         frame["r.pubmed_id"],
         strict=True,
@@ -4119,8 +4123,8 @@ def released_synlethdb_pairs(
             continue
         rows[
             pair_row_key(
-                entrez_to_orf[int(entrez_1)],
-                entrez_to_orf[int(entrez_2)],
+                str(name_1),
+                str(name_2),
                 None if pd.isna(score) or not keep_scores else float(score),
                 str(pubmed_id),
             )
@@ -4128,15 +4132,13 @@ def released_synlethdb_pairs(
     return rows, int(frame.shape[0])
 
 
-def drop_ledger_result(
-    csv_path: str, ledger: Mapping[str, Any], entrez_to_orf: Mapping[int, str]
-) -> LevelResult:
+def drop_ledger_result(csv_path: str, ledger: Mapping[str, Any]) -> LevelResult:
     """L3 ``drop_ledger``: every ledgered drop meets its stated rule on the released row.
 
-    ``entrez_id_not_in_ncbi_gff``: an Entrez id of the row is absent from the pinned GFF;
-    ``same_gene_on_both_sides``: both ids resolve to one ORF;
-    ``gene_name_disagrees_with_entrez_id`` needs the genome's name resolver and is
-    checked only for its count (the ledger records 0 such rows in both files).
+    Since #1045 the loader drops nothing and the ledger's ``rules`` is empty, so the
+    rule passes on an empty ledger. On an older ledger ``same_gene_on_both_sides`` is
+    checked on the released row (the same name and id on both sides); any other rule
+    is checked only for its count.
     """
     import pandas as pd
 
@@ -4151,11 +4153,8 @@ def drop_ledger_result(
             ids = (int(released["n1.identifier"]), int(released["n2.identifier"]))
             if ids != (row["n1_entrez"], row["n2_entrez"]):
                 wrong.append(f"row {row['source_row']}: ledger ids {ids} differ")
-            elif rule["rule"] == "entrez_id_not_in_ncbi_gff":
-                if all(entrez in entrez_to_orf for entrez in ids):
-                    wrong.append(f"row {row['source_row']}: both ids are in the GFF")
             elif rule["rule"] == "same_gene_on_both_sides":
-                if entrez_to_orf.get(ids[0]) != entrez_to_orf.get(ids[1]):
+                if ids[0] != ids[1] or released["n1.name"] != released["n2.name"]:
                     wrong.append(f"row {row['source_row']}: two different genes")
             else:
                 unchecked += 1
@@ -4183,14 +4182,6 @@ def drop_ledger_result(
 
 def run_synthetic_pairs(data_root: str) -> bool:
     """Verify the SynLethDB stores (L0-L4) and write reports. True if all pass."""
-    from torchcell.datasets.scerevisiae.synth_leth_db import (
-        NCBI_GFF_RELPATH,
-        load_entrez_to_orf,
-    )
-
-    entrez_to_orf = load_entrez_to_orf(
-        osp.join(data_root, "data/sgd/genome", NCBI_GFF_RELPATH)
-    )
     hosts: dict[tuple[str, ...], _Host] = {}
     all_passed = True
     for name, spec in SYNTHETIC_PAIR_DATASETS.items():
@@ -4214,10 +4205,7 @@ def run_synthetic_pairs(data_root: str) -> bool:
             (None, None)
             if drift
             else released_synlethdb_pairs(
-                csv_path,
-                ledger,
-                entrez_to_orf,
-                keep_scores=spec["score_definition"] is not None,
+                csv_path, ledger, keep_scores=spec["score_definition"] is not None
             )
         )
         stated: SourcedValue | None = spec["stated_count"]
@@ -4230,7 +4218,7 @@ def run_synthetic_pairs(data_root: str) -> bool:
             stated_count=None if stated is None else int(stated.value),
             stated_count_quote=None if stated is None else stated.quote,
         )
-        extra = [] if drift else [drop_ledger_result(csv_path, ledger, entrez_to_orf)]
+        extra = [] if drift else [drop_ledger_result(csv_path, ledger)]
         quotes = list(spec["quotes"]) + ([] if stated is None else [stated])
         report = verify_synthetic_pair_dataset(
             records,
@@ -4245,6 +4233,7 @@ def run_synthetic_pairs(data_root: str) -> bool:
             sgd_genes=host.universe,
             gene_universe_label=host.label,
             min_containment=MIN_RNASEQ_GENE_CONTAINMENT,
+            expected_self_pairs=spec.get("expected_self_pairs", 0),
         )
         out = _write_report(report, osp.join(abs_root, "preprocess"))
         print(report.summary())

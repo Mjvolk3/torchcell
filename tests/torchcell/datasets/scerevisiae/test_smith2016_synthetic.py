@@ -34,8 +34,8 @@ stored whatever the annotation says of it, with the ORF as its perturbed name si
 Gene cell is blank. Rows 4 and 5 drop on the no-A/var(A) rule
 (``to_numeric(errors="coerce")`` turns the blank and ``n/a`` into NaN); row 7 drops
 because ERG11_g9 has no spacer in Additional file 4; row 8's padded `` erg11 `` ORF
-cell is not ORF-shaped and is deferred to the released-gene-name leaf. So 9 source rows,
-5 kept, 4 dropped = 2 + 1 + 1.
+cell is not ORF-shaped and is stored on the released-gene-name leaf with its construct
+(#1045). So 9 source rows, 6 kept, 3 dropped = 2 + 1.
 
 Every record stores ``n_samples = 1`` and the released ``var(A)`` verbatim as
 ``UncertaintyType.variance``, so the derived SE is ``sqrt(var / 1)``: 0.2, 0.1414...,
@@ -78,6 +78,8 @@ from torchcell.datamodels.schema import (
     MeasurementType,
     Publication,
     ReferenceGenome,
+    ReleasedGeneKind,
+    ReleasedGeneNamePerturbation,
     SampleUnit,
     SmallMoleculePerturbation,
     SourceType,
@@ -168,6 +170,26 @@ def _environment(drug: str, value: float, unit: ConcentrationUnit) -> Environmen
 _FLUCONAZOLE = _environment("Fluconazole", 20.0, ConcentrationUnit.micromolar)
 _DMSO = _environment("DMSO", 1.0, ConcentrationUnit.percent_v_v)
 _VENDOR = _environment("1181-0519", 5.0, ConcentrationUnit.micromolar)
+_RAPAMYCIN = _environment("Rapamycin", 1.0, ConcentrationUnit.nanomolar)
+
+
+def _target(
+    orf: str, gene: str, spacer: str, pool: str
+) -> CrisprInterferencePerturbation | ReleasedGeneNamePerturbation:
+    construct = CrisprConstruct(
+        effector="dCas9-Mxi1", guide_sequence=spacer, n_guides=1, library_pool=pool
+    )
+    if orf.startswith("Y"):
+        return CrisprInterferencePerturbation(
+            systematic_gene_name=orf, perturbed_gene_name=gene, crispr=construct
+        )
+    return ReleasedGeneNamePerturbation(
+        systematic_gene_name=orf,
+        perturbed_gene_name=gene,
+        released_gene_name=orf,
+        released_kind=ReleasedGeneKind.crispr_interference,
+        crispr=construct,
+    )
 
 
 def _experiment(
@@ -175,20 +197,7 @@ def _experiment(
 ) -> EnvironmentResponseExperiment:
     return EnvironmentResponseExperiment(
         dataset_name="CrispriChemgenSmith2016Dataset",
-        genotype=Genotype(
-            perturbations=[
-                CrisprInterferencePerturbation(
-                    systematic_gene_name=orf,
-                    perturbed_gene_name=gene,
-                    crispr=CrisprConstruct(
-                        effector="dCas9-Mxi1",
-                        guide_sequence=spacer,
-                        n_guides=1,
-                        library_pool=pool,
-                    ),
-                )
-            ]
-        ),
+        genotype=Genotype(perturbations=[_target(orf, gene, spacer, pool)]),
         environment=env,
         phenotype=EnvironmentResponsePhenotype(
             measurement_type=MeasurementType.log2_ratio,
@@ -253,6 +262,9 @@ _EXPECTED = [
         0.1,
         0.01,
     ),
+    _experiment(
+        "erg11", "ERG11", _SPACERS["ERG11_g3"], "broad_tiling", _RAPAMYCIN, 0.25, 0.0025
+    ),
 ]
 
 
@@ -268,27 +280,34 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def test_build_keeps_five_records_in_row_order_with_exact_records(
+def test_build_keeps_six_records_in_row_order_with_exact_records(
     dataset: s.CrispriChemgenSmith2016Dataset,
 ) -> None:
-    """Records 0-4 are rows 0, 1, 2, 3 and 6 of the effect table, each equal to a
+    """Records 0-5 are rows 0, 1, 2, 3, 6 and 8 of the effect table, each equal to a
     hand-built ``EnvironmentResponseExperiment``: the released ``Gene`` cell as the
     perturbed name (the ORF again where it is blank, row 6), the released ORF whatever
     the annotation says of it (YOL999W), the joined spacer, the row's pool, the drug
     environment (row 3's vendor code 1181-0519 stored under a typed ``inchikey`` gap),
-    and the SE derived from ``var(A)`` with n = 1: 0.2, sqrt(0.02), 0.1, sqrt(0.1), 0.1.
-    The DMSO record carries the canonical compound name ``dimethyl sulfoxide`` at the
-    sourced 1.0 percent v/v, not the released 0.01. Row 8's `` erg11 `` ORF cell is not
-    ORF-shaped and is deferred to the released-gene-name leaf.
+    and the SE derived from ``var(A)`` with n = 1: 0.2, sqrt(0.02), 0.1, sqrt(0.1), 0.1,
+    0.05. The DMSO record carries the canonical compound name ``dimethyl sulfoxide`` at
+    the sourced 1.0 percent v/v, not the released 0.01. Row 8's `` erg11 `` ORF cell is
+    not ORF-shaped and is stored on the released-gene-name leaf with its construct
+    (#1045).
     """
-    assert len(dataset) == 5
-    assert [dataset[i]["experiment"] for i in range(5)] == [
+    assert len(dataset) == 6
+    assert [dataset[i]["experiment"] for i in range(6)] == [
         e.model_dump() for e in _EXPECTED
     ]
     assert [
         dataset[i]["experiment"]["phenotype"]["environment_response_se"]
-        for i in range(5)
-    ] == [0.2, math.sqrt(0.02), 0.1, math.sqrt(0.1), 0.1]
+        for i in range(6)
+    ] == [0.2, math.sqrt(0.02), 0.1, math.sqrt(0.1), 0.1, 0.05]
+    (released,) = dataset[5]["experiment"]["genotype"]["perturbations"]
+    assert (
+        released["perturbation_type"],
+        released["released_kind"],
+        released["crispr"]["guide_sequence"],
+    ) == ("released_gene_name", "crispr_interference", _SPACERS["ERG11_g3"])
     dmso = dataset[2]["experiment"]["environment"]["perturbations"]
     assert [(p["compound"]["name"], p["concentration"]) for p in dmso] == [
         (
@@ -334,10 +353,17 @@ def test_one_reference_per_drug_environment_and_the_reference_carries_no_n(
             Path(dataset.root) / "preprocess" / "experiment_reference_index.json"
         ).read_text()
     )
-    assert [entry["member_indices"] for entry in index] == [[0, 1, 4], [2], [3]]
-    assert [dataset[i]["reference"] for i in range(5)] == [
+    assert [entry["member_indices"] for entry in index] == [[0, 1, 4], [2], [3], [5]]
+    assert [dataset[i]["reference"] for i in range(6)] == [
         _reference(env).model_dump()
-        for env in (_FLUCONAZOLE, _FLUCONAZOLE, _DMSO, _VENDOR, _FLUCONAZOLE)
+        for env in (
+            _FLUCONAZOLE,
+            _FLUCONAZOLE,
+            _DMSO,
+            _VENDOR,
+            _FLUCONAZOLE,
+            _RAPAMYCIN,
+        )
     ]
     reference_phenotype = dataset[0]["reference"]["phenotype_reference"]
     assert {
@@ -367,9 +393,9 @@ def test_one_reference_per_drug_environment_and_the_reference_carries_no_n(
 def test_drop_log_accounts_for_every_rule_in_application_order(
     dataset: s.CrispriChemgenSmith2016Dataset,
 ) -> None:
-    """``dropped_records.json``: 9 source rows, 5 kept, 4 dropped = 2 no-A/var(A) (rows
-    4 and 5: a blank A and a ``n/a`` variance both coerce to NaN) + 1 target deferred to
-    the released-gene-name leaf (row 8, `` erg11 ``) + 1 guide with no spacer (row 7,
+    """``dropped_records.json``: 9 source rows, 6 kept, 3 dropped = 2 no-A/var(A) (rows
+    4 and 5: a blank A and a ``n/a`` variance both coerce to NaN) + 0 targets on the
+    released-gene-name leaf (row 8, `` erg11 ``, is a record) + 1 guide with no spacer (row 7,
     item ERG11_g9). The vendor-code drug is not a drop: it is listed under
     ``compound_identity_gaps`` with its one record.
     """
@@ -379,8 +405,8 @@ def test_drop_log_accounts_for_every_rule_in_application_order(
     assert drop_log == {
         "dataset": "CrispriChemgenSmith2016Dataset",
         "source_records": 9,
-        "kept_records": 5,
-        "dropped_records": 4,
+        "kept_records": 6,
+        "dropped_records": 3,
         "rules": [
             {
                 "rule": "row_has_no_A_or_var_A",
@@ -393,16 +419,15 @@ def test_drop_log_accounts_for_every_rule_in_application_order(
                 "items": [],
             },
             {
-                "rule": "deferred_to_released_gene_name_leaf",
+                "rule": "stored_on_released_gene_name_leaf",
                 "scope": "row",
                 "description": (
-                    "the ORF cell is not ORF-shaped, so it cannot be stored on "
-                    "CrisprInterferencePerturbation, whose systematic_gene_name is "
-                    "validated against the ORF pattern; stored once the "
-                    "released-gene-name leaf lands (0 today; all 20 released targets "
-                    "are ORF-shaped)"
+                    "the ORF cell is not ORF-shaped, so the target is stored on "
+                    "ReleasedGeneNamePerturbation verbatim with its construct (#1045), "
+                    "never dropped; listed here (0 today; all 20 released targets are "
+                    "ORF-shaped)"
                 ),
-                "n_records": 1,
+                "n_records": 0,
                 "items": ["erg11"],
             },
             {
@@ -433,19 +458,20 @@ def test_drop_log_accounts_for_every_rule_in_application_order(
 def test_gene_set_build_manifest_and_interned_store(
     dataset: s.CrispriChemgenSmith2016Dataset,
 ) -> None:
-    """``gene_set.json`` is the three released ORFs sorted; the build manifest names
-    the root slug, the loader class and module, this host and the worktree HEAD; the
-    ``interned`` store holds 6 entries: the three distinct environments and the three
-    references (each above ``INTERN_MIN_BYTES``), while the four-field DOI-only
-    publication stays inline.
+    """``gene_set.json`` is the four released identifiers sorted (uppercase before
+    lowercase); the build manifest names the root slug, the loader class and module,
+    this host and the worktree HEAD; the ``interned`` store holds 8 entries: the four
+    distinct environments and the four references (each above ``INTERN_MIN_BYTES``),
+    while the four-field DOI-only publication stays inline.
     """
     preprocess = Path(dataset.root) / "preprocess"
     assert json.loads((preprocess / "gene_set.json").read_text()) == [
         "YHR007C",
         "YJR066W",
         "YOL999W",
+        "erg11",
     ]
-    assert dataset.gene_set == {"YHR007C", "YJR066W", "YOL999W"}
+    assert dataset.gene_set == {"YHR007C", "YJR066W", "YOL999W", "erg11"}
     assert dataset.experiment_class is EnvironmentResponseExperiment
     assert dataset.reference_class is EnvironmentResponseExperimentReference
     manifest = json.loads((preprocess / "build_manifest.json").read_text())
@@ -466,7 +492,7 @@ def test_gene_set_build_manifest_and_interned_store(
         "CrisprInterferencePerturbation",
         "SmallMoleculePerturbation",
     } <= set(manifest["closure"])
-    assert _interned_entries(Path(dataset.root)) == 6
+    assert _interned_entries(Path(dataset.root)) == 8
 
 
 def test_store_reopens_without_raw_files_and_serves_the_getters(
@@ -485,7 +511,7 @@ def test_store_reopens_without_raw_files_and_serves_the_getters(
     for name in (s.EFFECT_FILENAME, s.GUIDE_FILENAME):
         (Path(dataset.root) / "raw" / name).unlink()
     reopened = s.CrispriChemgenSmith2016Dataset(root=dataset.root)
-    assert len(reopened) == 5
+    assert len(reopened) == 6
     assert [reopened[i] for i in range(5)] == records
     assert reopened.get([0, 3]) == [records[0], records[3]]
     subset = reopened[[0, 3]]
@@ -499,7 +525,7 @@ def test_store_reopens_without_raw_files_and_serves_the_getters(
         "reference": _reference(_VENDOR),
         "publication": _PUBLICATION,
     }
-    assert repr(reopened) == "CrispriChemgenSmith2016Dataset(5)"
+    assert repr(reopened) == "CrispriChemgenSmith2016Dataset(6)"
     assert reopened.gene_set == {"YHR007C", "YJR066W", "YOL999W"}
     with pytest.raises(NotImplementedError):
         reopened.create_experiment()
@@ -675,7 +701,7 @@ def test_download_links_the_verified_mirror_and_refuses_drift_or_absence(
     assert (root / "raw" / s.GUIDE_FILENAME).resolve() == (
         mirror / s.GUIDE_REL
     ).resolve()
-    assert len(built) == 5
+    assert len(built) == 6
     assert [built[i]["experiment"] for i in range(5)] == [
         e.model_dump() for e in _EXPECTED
     ]
@@ -731,9 +757,9 @@ def test_a_drop_log_that_disagrees_with_its_rules_refuses_after_writing_it(
 ) -> None:
     """``DropLog`` is patched to report one more dropped record than the build lost.
 
-    The rules total 5 (1 vendor code + 2 no A/var(A) + 1 unresolved + 1 no spacer, as
-    in ``test_drop_log_accounts_for_every_rule_in_application_order``) while the log
-    says 6: the exact mismatch message, and the tampered 6 already on disk.
+    The rules total 3 (2 no A/var(A) + 1 no spacer, as in
+    ``test_drop_log_accounts_for_every_rule_in_application_order``) while the log says
+    4: the exact mismatch message, and the tampered 4 already on disk.
     """
     real = s.DropLog
 
@@ -746,7 +772,7 @@ def test_a_drop_log_that_disagrees_with_its_rules_refuses_after_writing_it(
     with pytest.raises(RuntimeError) as err:
         s.CrispriChemgenSmith2016Dataset(root=str(root))
     assert str(err.value) == (
-        "drop accounting mismatch: rules total 4, 5 records missing from the build"
+        "drop accounting mismatch: rules total 3, 4 records missing from the build"
     )
     log = json.loads((root / "preprocess" / "dropped_records.json").read_text())
-    assert log["dropped_records"] == 5
+    assert log["dropped_records"] == 4

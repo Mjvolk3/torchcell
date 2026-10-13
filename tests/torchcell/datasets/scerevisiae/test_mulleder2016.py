@@ -12,8 +12,8 @@ order):
 
     YAL001C     0.5, 1.0, ..., 9.5   (0.5 * (i + 1) for amino acid i)
     YBR001C     2.0 x 19
-    WT          1.0 x 19             no ORF form -> deferred to the released-gene-name leaf
-    YLR287-A    1.0 x 19             no ORF form -> deferred to the released-gene-name leaf
+    WT          1.0 x 19             the background, not a strain -> no record
+    YLR287-A    1.0 x 19             no ORF form -> the released-gene-name leaf (#1045)
     " YCR001W " 1.0 x 19             stripped
 
 ``robust_summary_statistics`` sheet (amino acid, mean (mM), sd (mM)): mean 0.25 * (i + 1)
@@ -31,9 +31,9 @@ ORF, so every default record has n = 1 per amino acid (issue #488 counts these r
   number of strains the MCD robust mean summarizes (issue #489);
 - the medium as a Finding: the record and its reference carry ``SM_AGAR`` (solid), not
   the liquid ``SM`` subculture the amino acids are extracted from (issue #143);
-- the build ledger: a blank ORF and a ``WT`` row log exactly "2 released ORFs stored, 2
-  rows deferred to the released-gene-name leaf (['WT', 'nan'])"; a second row for one
-  ORF is refused by name (2026.10.12, #1045: it used to keep the first row);
+- the build ledger: a blank ORF and a ``WT`` row log exactly "2 released ORFs stored, 0
+  on the released-gene-name leaf, 2 blank or WT rows (['WT', 'nan'])"; a second row for
+  one ORF is refused by name (2026.10.12, #1045: it used to keep the first row);
 - a blank concentration cell and a text cell (``n.d.``) each raise
   ``InvalidConcentrationError`` with an exact message (2026.10.01, issue #528: the blank
   used to be served as NaN and the text to stop in Python's ``float()``). The pinned
@@ -66,7 +66,6 @@ from torchcell.datamodels.media import SM, SM_AGAR
 from torchcell.datamodels.schema import (
     Environment,
     Genotype,
-    KanMxDeletionPerturbation,
     MetaboliteExperiment,
     MetaboliteExperimentReference,
     MetabolitePhenotype,
@@ -90,6 +89,7 @@ _RAW_ROWS: list[list[Any]] = [
     ["S000", "YAL001C", "01", *([10.0] * 19)],
     ["S001", "YBR001C", "01", *([20.0] * 19)],
     ["S002", "YCR001W", "02", *([30.0] * 19)],
+    ["S003", "YLR287-A", "02", *([30.0] * 19)],
     ["QC_001", None, "01", *([5.0] * 19)],
 ]
 
@@ -145,13 +145,7 @@ def _experiment(
 ) -> dict[str, Any]:
     return MetaboliteExperiment(
         dataset_name="AminoAcidMulleder2016Dataset",
-        genotype=Genotype(
-            perturbations=[
-                KanMxDeletionPerturbation(
-                    systematic_gene_name=orf, perturbed_gene_name=orf
-                )
-            ]
-        ),
+        genotype=Genotype(perturbations=[m._released_deletion(orf)]),
         environment=_ENVIRONMENT,
         phenotype=MetabolitePhenotype(
             metabolite_level=dict(zip(_AA, levels, strict=True)),
@@ -163,7 +157,7 @@ def _experiment(
     ).model_dump()
 
 
-def _reference(means: dict[str, float], n_strains: int = 3) -> dict[str, Any]:
+def _reference(means: dict[str, float], n_strains: int = 4) -> dict[str, Any]:
     return MetaboliteExperimentReference(
         dataset_name="AminoAcidMulleder2016Dataset",
         genome_reference=ReferenceGenome(
@@ -182,15 +176,21 @@ def _reference(means: dict[str, float], n_strains: int = 3) -> dict[str, Any]:
 def test_three_records_n_one_with_the_robust_mean_reference(
     dataset: m.AminoAcidMulleder2016Dataset,
 ) -> None:
-    """Five rows give three records (YAL001C, YBR001C, the stripped YCR001W); the WT
-    and malformed names are deferred to the released-gene-name leaf. Each
-    amino acid is n = 1 (one ``data_raw`` row each) with no SE on solid SM at 30 C; the
-    reference is the summary mean with n = 3, the strains it summarizes.
+    """Five rows give four records (YAL001C, YBR001C, YLR287-A on the released-gene-name
+    leaf, the stripped YCR001W); the WT row names no deletion strain. Each amino acid
+    is n = 1 (one ``data_raw`` row each) with no SE on solid SM at 30 C; the reference
+    is the summary mean with n = 4, the strains it summarizes.
     """
-    assert len(dataset) == 3
+    assert len(dataset) == 4
     assert dataset[0]["experiment"] == _experiment("YAL001C", _LEVELS_YAL001C)
     assert dataset[1]["experiment"] == _experiment("YBR001C", [2.0] * 19)
-    assert dataset[2]["experiment"] == _experiment("YCR001W", [1.0] * 19)
+    assert dataset[2]["experiment"] == _experiment("YLR287-A", [1.0] * 19)
+    assert dataset[3]["experiment"] == _experiment("YCR001W", [1.0] * 19)
+    (released,) = dataset[2]["experiment"]["genotype"]["perturbations"]
+    assert (released["perturbation_type"], released["released_gene_name"]) == (
+        "released_gene_name",
+        "YLR287-A",
+    )
     assert dataset[0]["reference"] == _reference(_SUMMARY_MEANS)
     assert dataset[0]["publication"] == _PUBLICATION
     assert dataset[0]["experiment"]["environment"]["media"]["state"] == "solid"
@@ -198,8 +198,8 @@ def test_three_records_n_one_with_the_robust_mean_reference(
 
 def test_side_files(dataset: m.AminoAcidMulleder2016Dataset) -> None:
     """``data.csv`` is one row per kept ORF with the 19 concentrations and its
-    ``data_raw`` row count; one reference covers all three records; the gene set is the
-    three ORFs.
+    ``data_raw`` row count; one reference covers all four records; the gene set is the
+    four released identifiers.
     """
     assert dataset.experiment_class is MetaboliteExperiment
     assert dataset.reference_class is MetaboliteExperimentReference
@@ -207,6 +207,7 @@ def test_side_files(dataset: m.AminoAcidMulleder2016Dataset) -> None:
     expected_rows = [
         ["YAL001C", *_LEVELS_YAL001C, 1],
         ["YBR001C", *([2.0] * 19), 1],
+        ["YLR287-A", *([1.0] * 19), 1],
         ["YCR001W", *([1.0] * 19), 1],
     ]
     assert (preprocess / "data.csv").read_text() == (
@@ -218,9 +219,10 @@ def test_side_files(dataset: m.AminoAcidMulleder2016Dataset) -> None:
         "YAL001C",
         "YBR001C",
         "YCR001W",
+        "YLR287-A",
     ]
     index = json.loads((preprocess / "experiment_reference_index.json").read_text())
-    assert [entry["member_indices"] for entry in index] == [[0, 1, 2]]
+    assert [entry["member_indices"] for entry in index] == [[0, 1, 2, 3]]
     manifest = json.loads((preprocess / "build_manifest.json").read_text())
     assert manifest["dataset_name"] == "amino_acid_mulleder2016"
     assert manifest["loader_class"] == "AminoAcidMulleder2016Dataset"
@@ -313,6 +315,7 @@ def test_n_replicates_counts_the_data_raw_rows_per_amino_acid_issue_488(
     ] + [
         ["S003", "YBR001C", "01", *([20.0] * 19)],
         ["S004", "YCR001W", "01", *([20.0] * 19)],
+        ["S005", "YLR287-A", "01", *([20.0] * 19)],
         ["QC_001", None, "01", *([5.0] * 19)],
     ]
     root = _root(tmp_path, raw_rows=raw_rows)
@@ -322,10 +325,10 @@ def test_n_replicates_counts_the_data_raw_rows_per_amino_acid_issue_488(
         "YAL001C", _LEVELS_YAL001C, n=expected_n
     )
     assert dataset[1]["experiment"] == _experiment("YBR001C", [2.0] * 19)
-    assert dataset[2]["experiment"] == _experiment("YCR001W", [1.0] * 19)
-    assert dataset[0]["reference"] == _reference(_SUMMARY_MEANS, n_strains=3)
+    assert dataset[3]["experiment"] == _experiment("YCR001W", [1.0] * 19)
+    assert dataset[0]["reference"] == _reference(_SUMMARY_MEANS, n_strains=4)
     rows = (root / "preprocess" / "data.csv").read_text().splitlines()
-    assert [row.split(",")[-1] for row in rows] == ["n_raw_rows", "3", "1", "1"]
+    assert [row.split(",")[-1] for row in rows] == ["n_raw_rows", "3", "1", "1", "1"]
 
 
 def test_a_released_orf_without_a_data_raw_row_is_refused(tmp_path: Path) -> None:
@@ -440,9 +443,9 @@ def test_ledger_counts_deferred_rows_and_a_repeated_orf_is_refused(
     tmp_path: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
     """Four rows: YBR001C, a blank ORF cell (read as NaN, stringified to ``"nan"``),
-    ``WT``, and YAL001C. Kept: YBR001C and YAL001C, so two records; the ledger line names
-    the two rows with no ORF form, deferred to the released-gene-name leaf. A second row
-    for YBR001C is refused by name, never kept as the first (0 of 4,678 released rows).
+    ``WT``, and YAL001C. Kept: YBR001C and YAL001C, so two records; the log line names
+    the blank and WT rows, which name no deletion strain. A second row for YBR001C is
+    refused by name, never kept as the first (0 of 4,678 released rows).
     """
     rows: list[list[Any]] = [
         ["YBR001C", *([2.0] * 19)],
@@ -458,8 +461,8 @@ def test_ledger_counts_deferred_rows_and_a_repeated_orf_is_refused(
     assert dataset[1]["experiment"] == _experiment("YAL001C", _LEVELS_YAL001C)
     messages = [r.getMessage() for r in caplog.records if r.name == m.__name__]
     assert messages == [
-        "Mulleder: 2 released ORFs stored, 2 rows deferred to the released-gene-name "
-        "leaf (['WT', 'nan'])",
+        "Mulleder: 2 released ORFs stored, 0 on the released-gene-name leaf, 2 blank "
+        "or WT rows (['WT', 'nan'])",
         "Mulleder: data_raw rows per released ORF {1: 2}; reference n_replicates 2 "
         "(strains the robust mean summarizes)",
         "Wrote 2 Mulleder amino-acid experiments to LMDB",
@@ -572,7 +575,7 @@ def test_main_prints_length_and_first_record(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """``main()`` opens ``$DATA_ROOT/data/torchcell/amino_acid_mulleder2016`` and prints
-    ``len = 3`` then record 0. The store is built first (its progress lines go to stdout
+    ``len = 4`` then record 0. The store is built first (its progress lines go to stdout
     and are discarded) so ``main()`` only loads it; ``load_dotenv`` is stubbed so the
     repo ``.env`` is never read and ``DATA_ROOT`` is ``tmp_path``.
     """
@@ -582,4 +585,4 @@ def test_main_prints_length_and_first_record(
     first = m.AminoAcidMulleder2016Dataset(root=str(root))[0]
     capsys.readouterr()
     m.main()
-    assert capsys.readouterr().out == f"len = 3\n{first}\n"
+    assert capsys.readouterr().out == f"len = 4\n{first}\n"

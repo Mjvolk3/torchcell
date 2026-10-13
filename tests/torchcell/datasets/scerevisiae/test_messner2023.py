@@ -21,7 +21,8 @@ Fixture (``yeast5k_noimpute_wide.csv``, blank cell = not measured):
 Metadata: ``wt_a``/``wt_b`` are ``HIS3`` (WT); the two ``ko`` samples delete YAL059W
 and ``YML009c`` (lowercase in metadata, uppercased by the loader); ``qc_1`` is ``qc``
 (ignored); ``bad_ko`` is a ``ko`` sample whose ORF ``YOR202W-not`` has no ORF form
-(deferred to the released-gene-name leaf, counted); ``absent_ko`` is a ``ko`` row with
+(stored on the released-gene-name leaf as ``YOR202W-NOT``, #1045); ``absent_ko`` is a
+``ko`` row with
 no matrix column (ignored).
 
 WT reference (mean, sample SD / sqrt(n), n over non-blank WT cells), keyed by accession:
@@ -258,23 +259,33 @@ def test_build_orf_to_gene_name_map_missing_gff_raises(tmp_path: Path) -> None:
 def test_len_data_csv_and_side_files(
     dataset: tuple[ProteomeMessner2023Dataset, Path],
 ) -> None:
-    """Two KO records: ``bad_ko`` (no ORF form) is deferred and ``absent_ko`` (no
-    column) is ignored.
+    """Three KO records: ``bad_ko`` (no ORF form) is stored on the released-gene-name
+    leaf and ``absent_ko`` (no column) is ignored.
 
     ``preprocess/data.csv`` lists filename, ORF (uppercased), gene (the ORF again: no
-    name is looked up), and the count of measured proteins (2 for KO_A, 1 for KO_B).
-    The gene set is the two deletion ORFs; the manifest records this loader's module and
-    class.
+    name is looked up), and the count of measured proteins (2 for KO_A, 1 for KO_B, 3
+    for bad_ko). The gene set is the three released identifiers; the manifest records
+    this loader's module and class.
     """
     ds, root = dataset
-    assert len(ds) == 2
+    assert len(ds) == 3
     assert (root / "preprocess" / "data.csv").read_text() == (
         "filename,orf,gene,n_proteins\n"
         f"{KO_A},YAL059W,YAL059W,2\n"
         f"{KO_B},YML009C,YML009C,1\n"
+        "bad_ko,YOR202W-NOT,YOR202W-NOT,3\n"
+    )
+    (released,) = ds[2]["experiment"]["genotype"]["perturbations"]
+    assert (released["perturbation_type"], released["released_gene_name"]) == (
+        "released_gene_name",
+        "YOR202W-NOT",
     )
     pre = root / "preprocess"
-    assert json.loads((pre / "gene_set.json").read_text()) == ["YAL059W", "YML009C"]
+    assert json.loads((pre / "gene_set.json").read_text()) == [
+        "YAL059W",
+        "YML009C",
+        "YOR202W-NOT",
+    ]
     manifest = json.loads((pre / "build_manifest.json").read_text())
     assert manifest["manifest_schema_version"] == 1
     assert manifest["dataset_name"] == "proteome_messner2023"
@@ -366,19 +377,21 @@ def test_record_1_lowercase_orf_uppercased_and_single_wt_measurement_nan_se(
 def test_reference_index_splits_on_restricted_reference(
     dataset: tuple[ProteomeMessner2023Dataset, Path],
 ) -> None:
-    """The two KOs measured different protein sets -> two references, one member each."""
+    """The three KOs measured different protein sets -> three references, one member
+    each.
+    """
     ds, root = dataset
     index = json.loads(
         (root / "preprocess" / "experiment_reference_index.json").read_text()
     )
-    assert [e["member_indices"] for e in index] == [[0], [1]]
+    assert [e["member_indices"] for e in index] == [[0], [1], [2]]
     assert [
         sorted(e["reference"]["phenotype_reference"]["protein_abundance"])
         for e in index
-    ] == [["P00001", "P00410"], ["P00002"]]
+    ] == [["P00001", "P00410"], ["P00002"], ["P00001", "P00002", "P00410"]]
     loaded = ds.experiment_reference_index
     assert loaded is not None
-    assert [eri.member_indices for eri in loaded] == [[0], [1]]
+    assert [eri.member_indices for eri in loaded] == [[0], [1], [2]]
 
 
 def test_missing_wt_columns_raises(
@@ -577,8 +590,8 @@ def test_a_ko_protein_no_wt_sample_measured_is_refused_by_name(
 def test_the_build_summary_is_logged_exactly(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """First fixture: 2 KO strains, 3 WT proteins, 1 deferred ORF (``bad_ko``; the
-    ``absent_ko`` row has no matrix column and is not counted).
+    """First fixture: 3 KO strains, 3 WT proteins, 1 ORF on the released-gene-name leaf
+    (``bad_ko``; the ``absent_ko`` row has no matrix column and is not counted).
     """
     monkeypatch.setenv("DATA_ROOT", str(tmp_path))
     _write_gff(tmp_path)
@@ -587,9 +600,9 @@ def test_the_build_summary_is_logged_exactly(
         ProteomeMessner2023Dataset(root=str(root))
     messages = [r.getMessage() for r in caplog.records if r.name == m.log.name]
     assert messages == [
-        "Messner: 2 KO strains, WT reference with 3 proteins, 1 KO ORFs deferred to "
-        "the released-gene-name leaf",
-        "Wrote 2 Messner proteome experiments to LMDB",
+        "Messner: 3 KO strains, WT reference with 3 proteins, 1 KO ORFs on the "
+        "released-gene-name leaf",
+        "Wrote 3 Messner proteome experiments to LMDB",
     ]
 
 
@@ -721,7 +734,7 @@ def test_main_builds_from_data_root_and_prints_the_length(
     m.main()
     # the build's own progress line comes first; main's two prints are the last two
     lines = capsys.readouterr().out.splitlines()
-    assert lines[-2] == "proteome len = 2"
+    assert lines[-2] == "proteome len = 3"
     assert lines[-1] == str(ProteomeMessner2023Dataset(root=str(root))[0])
 
 

@@ -18,7 +18,7 @@ RELEASED and the deleted gene is the ORF of the genotype label.
     DEG_NaCl_bc_YAL012W.csv       YPL999W 2.0, OLDSYM -1.0 (record 1)
     DEG_Control_bc_YBR020W-1.csv  GAL1 0.5 (replacement strain: ORF YBR020W; record 2)
     DEG_Control_bc_YMR175w-1.csv  YMR175W -3.0 (lower-case label, not in ptbs; record 3)
-    DEG_Control_bc_NOTANORF.csv   genotype label not ORF-shaped: deferred to the
+    DEG_Control_bc_NOTANORF.csv   genotype label not ORF-shaped: stored on the
                                   released-gene-name leaf, counted
     DEG_Control_bc_YGR055W.csv    15S_RRNA 1.0 (record 4; not in ptbs)
 
@@ -55,6 +55,8 @@ from torchcell.datamodels.schema import (
     PseudobulkExpressionPhenotype,
     Publication,
     ReferenceGenome,
+    ReleasedGeneKind,
+    ReleasedGeneNamePerturbation,
     SmallMoleculePerturbation,
     Temperature,
 )
@@ -146,18 +148,26 @@ def _experiment(
     dispersion: float | None,
     n_cells: int | None,
 ) -> dict[str, Any]:
+    perturbation: MarkerDeletionPerturbation | ReleasedGeneNamePerturbation
+    if orf.startswith("Y"):
+        perturbation = MarkerDeletionPerturbation(
+            systematic_gene_name=orf,
+            perturbed_gene_name=name,
+            marker="URA3",
+            strain_id=strain,
+        )
+    else:
+        perturbation = ReleasedGeneNamePerturbation(
+            systematic_gene_name=orf,
+            perturbed_gene_name=name,
+            released_gene_name=orf,
+            released_kind=ReleasedGeneKind.deletion,
+            marker="URA3",
+            strain_id=strain,
+        )
     return PseudobulkExpressionExperiment(
         dataset_name=_DATASET,
-        genotype=Genotype(
-            perturbations=[
-                MarkerDeletionPerturbation(
-                    systematic_gene_name=orf,
-                    perturbed_gene_name=name,
-                    marker="URA3",
-                    strain_id=strain,
-                )
-            ]
-        ),
+        genotype=Genotype(perturbations=[perturbation]),
         environment=environment,
         phenotype=PseudobulkExpressionPhenotype(
             expression_log2_ratio=lfc,
@@ -198,10 +208,11 @@ _REF_NACL = _reference(_NACL, ["YPL999W", "OLDSYM"], 1.1, 400)
 def test_five_records_keep_released_names_and_carry_single_cell_scalars(
     dataset: m.NadalRibellesPerturbSeq2025Dataset,
 ) -> None:
-    """Records follow the ``fcs`` key order; the one label that is not ORF-shaped is
-    deferred and counted. Every gene name is a key as released.
+    """Records follow the ``fcs`` key order; the one label that is not ORF-shaped
+    (``NOTANORF``) is record 4 on the released-gene-name leaf (#1045). Every gene name
+    is a key as released.
     """
-    assert len(dataset) == 5
+    assert len(dataset) == 6
     expected = [
         (
             _experiment(
@@ -253,6 +264,18 @@ def test_five_records_keep_released_names_and_carry_single_cell_scalars(
         ),
         (
             _experiment(
+                "NOTANORF",
+                "NOTANORF",
+                "bc_NOTANORF",
+                _CONTROL,
+                {"MET14": 1.0},
+                None,
+                None,
+            ),
+            _REF_CONTROL,
+        ),
+        (
+            _experiment(
                 "YGR055W",
                 "YGR055W",
                 "bc_YGR055W",
@@ -279,10 +302,11 @@ def test_five_records_keep_released_names_and_carry_single_cell_scalars(
     )
     assert (log["source_records"], log["kept_records"], log["dropped_records"]) == (
         6,
-        5,
-        1,
+        6,
+        0,
     )
-    assert log["rules"][0]["rule"] == "deferred_to_released_gene_name_leaf"
+    assert log["rules"][0]["rule"] == "stored_on_released_gene_name_leaf"
+    assert log["rules"][0]["n_records"] == 0
     assert log["rules"][0]["items"] == ["NOTANORF"]
 
 
@@ -304,13 +328,14 @@ def test_side_files_gene_set_reference_index_and_strain_table(
 ) -> None:
     preprocess = Path(dataset.root) / "preprocess"
     assert json.loads((preprocess / "gene_set.json").read_text()) == [
+        "NOTANORF",
         "YAL012W",
         "YBR020W",
         "YGR055W",
         "YMR175W",
     ]
     index = json.loads((preprocess / "experiment_reference_index.json").read_text())
-    assert [entry["member_indices"] for entry in index] == [[0, 2, 3, 4], [1]]
+    assert [entry["member_indices"] for entry in index] == [[0, 2, 3, 4, 5], [1]]
     assert [entry["reference"] for entry in index] == [_REF_CONTROL, _REF_NACL]
     samples = pd.read_csv(preprocess / "data.csv")
     assert samples.to_dict(orient="list") == {
@@ -319,9 +344,10 @@ def test_side_files_gene_set_reference_index_and_strain_table(
             "bc_YAL012W",
             "bc_YBR020W-1",
             "bc_YMR175w-1",
+            "bc_NOTANORF",
             "bc_YGR055W",
         ],
-        "condition": ["control", "nacl", "control", "control", "control"],
+        "condition": ["control", "nacl", "control", "control", "control", "control"],
     }
     manifest = json.loads((preprocess / "build_manifest.json").read_text())
     assert (manifest["dataset_name"], manifest["loader_class"]) == ("nadal", _DATASET)
@@ -406,7 +432,7 @@ def test_download_verifies_every_mirror_file_then_links_it(
     assert {
         name: os.readlink(tmp_path / "b" / "raw" / name) for name in m.RAW_FILES
     } == {name: str(mirror / name) for name in m.RAW_FILES}
-    assert len(dataset) == 5
+    assert len(dataset) == 6
     (mirror / m.README_NAME).unlink()
     with pytest.raises(
         RuntimeError,

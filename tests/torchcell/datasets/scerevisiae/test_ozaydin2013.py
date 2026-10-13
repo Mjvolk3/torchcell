@@ -239,26 +239,26 @@ def test_download_accepts_a_present_file_matching_the_pin(
 
 
 def test_build_ledger_lines(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
-    """Seven rows: YLR287-A is not ORF-shaped and is deferred to the released-gene-name
-    leaf; YBR001C has only the text score ``_`` and is listed in the ledger. Five rows
-    are records. ``dropped_records.json`` carries both lists verbatim.
+    """Seven rows: YLR287-A is not ORF-shaped and is stored on the released-gene-name
+    leaf (#1045); YBR001C has only the text score ``_`` and is listed in the ledger. Six
+    rows are records. ``dropped_records.json`` carries both lists verbatim.
     """
     caplog.set_level(logging.INFO, logger=m.__name__)
     dataset = m.CarotenoidOzaydin2013Dataset(root=str(_root(tmp_path / "a")))
-    assert len(dataset) == 5
+    assert len(dataset) == 6
     messages = [r.getMessage() for r in caplog.records if r.name == m.__name__]
     assert messages == [
-        "Ozaydin: 7 released rows, 5 records (one per scored row); 1 text-only rows "
-        "and 1 rows deferred to the released-gene-name leaf listed in the ledger",
-        "Wrote 5 Ozaydin visual-score experiments to LMDB",
+        "Ozaydin: 7 released rows, 6 records (one per scored row); 1 text-only rows "
+        "listed in the ledger, 1 names on the released-gene-name leaf",
+        "Wrote 6 Ozaydin visual-score experiments to LMDB",
     ]
     ledger = json.loads(
         (Path(dataset.root) / "preprocess" / "dropped_records.json").read_text()
     )
-    assert (ledger["source_rows"], ledger["kept_records"]) == (7, 5)
+    assert (ledger["source_rows"], ledger["kept_records"]) == (7, 6)
     assert [(r["rule"], r["n_records"]) for r in ledger["rules"]] == [
         ("orf_cell_is_blank", 0),
-        ("deferred_to_released_gene_name_leaf", 1),
+        ("stored_on_released_gene_name_leaf", 0),
         ("color_cell_is_text_not_a_score", 1),
     ]
     assert ledger["rules"][1]["items"] == ["YLR287-A"]
@@ -461,7 +461,7 @@ def test_main_prints_length_and_first_record(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """``main()`` opens ``$DATA_ROOT/data/torchcell/carotenoid_ozaydin2013`` and prints
-    ``len = 5`` then record 0. The store is built first (its progress output is
+    ``len = 6`` then record 0. The store is built first (its progress output is
     discarded), ``load_dotenv`` is stubbed and ``DATA_ROOT`` is ``tmp_path``.
     """
     monkeypatch.setattr("dotenv.load_dotenv", lambda: None)
@@ -470,7 +470,7 @@ def test_main_prints_length_and_first_record(
     first = m.CarotenoidOzaydin2013Dataset(root=str(root))[0]
     capsys.readouterr()
     m.main()
-    assert capsys.readouterr().out == f"len = 5\n{first}\n"
+    assert capsys.readouterr().out == f"len = 6\n{first}\n"
 
 
 def test_a_raw_file_off_the_pin_is_refused_at_build_time(

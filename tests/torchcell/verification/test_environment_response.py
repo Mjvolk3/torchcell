@@ -170,7 +170,9 @@ def _release() -> list[dict[str, Any]]:
 
 
 def _both(
-    records: list[dict[str, Any]], expected_count: int = 3
+    records: list[dict[str, Any]],
+    expected_count: int = 3,
+    expected_duplicated_pairs: int = 0,
 ) -> tuple[VerificationReport, VerificationReport]:
     eager = verify_environment_response_dataset(
         records,
@@ -178,6 +180,7 @@ def _both(
         provenance=PROV,
         expected_count=expected_count,
         sgd_genes=set(GENES),
+        expected_duplicated_pairs=expected_duplicated_pairs,
     )
     streaming = verify_environment_response_dataset_streaming(
         iter(records),
@@ -185,6 +188,7 @@ def _both(
         provenance=PROV,
         expected_count=expected_count,
         sgd_genes=set(GENES),
+        expected_duplicated_pairs=expected_duplicated_pairs,
     )
     return eager, streaming
 
@@ -328,7 +332,31 @@ def test_triplicate_record_counts_two_redundant_records() -> None:
             "2 records duplicate an earlier (study, strain, condition) triple; "
             "3 unique triples",
         )
-        assert _details(report, "pair_uniqueness") == {"n_pairs": 3, "n_duplicated": 2}
+        assert _details(report, "pair_uniqueness") == {
+            "n_pairs": 3,
+            "n_duplicated": 2,
+            "expected_duplicated": 0,
+        }
+
+
+def test_a_declared_duplicate_count_passes_only_when_it_is_exact() -> None:
+    """#1045: a loader that stores a source's repeated rows as released declares how
+    many; the row passes on exactly that count and fails on any other.
+    """
+    records = _release()
+    records += [copy.deepcopy(records[0]), copy.deepcopy(records[0])]
+    eager, streaming = _both(records, expected_count=5, expected_duplicated_pairs=2)
+    for report in (eager, streaming):
+        assert _row(report, "pair_uniqueness") == (
+            "L1",
+            "pair_uniqueness",
+            True,
+            "2 records duplicate an earlier (study, strain, condition) triple (2 "
+            "declared by the loader); 3 unique triples",
+        )
+    eager, streaming = _both(records, expected_count=5, expected_duplicated_pairs=1)
+    for report in (eager, streaming):
+        assert _row(report, "pair_uniqueness")[2] is False
 
 
 def test_same_strain_and_condition_in_another_study_is_not_a_duplicate() -> None:
@@ -843,7 +871,11 @@ def test_replicate_id_keeps_per_replicate_rows_distinct() -> None:
         sgd_genes=set(GENES),
         reference_centered=False,
     )
-    assert _details(eager, "pair_uniqueness") == {"n_pairs": 3, "n_duplicated": 0}
+    assert _details(eager, "pair_uniqueness") == {
+        "n_pairs": 3,
+        "n_duplicated": 0,
+        "expected_duplicated": 0,
+    }
 
     without_ids = _absolute_release([None, None, None])
     eager = verify_environment_response_dataset(
@@ -854,7 +886,11 @@ def test_replicate_id_keeps_per_replicate_rows_distinct() -> None:
         sgd_genes=set(GENES),
         reference_centered=False,
     )
-    assert _details(eager, "pair_uniqueness") == {"n_pairs": 1, "n_duplicated": 2}
+    assert _details(eager, "pair_uniqueness") == {
+        "n_pairs": 1,
+        "n_duplicated": 2,
+        "expected_duplicated": 0,
+    }
 
 
 def test_absolute_reference_branch_states_its_own_value_and_names_itself() -> None:

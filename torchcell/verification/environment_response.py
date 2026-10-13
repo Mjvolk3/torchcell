@@ -246,7 +246,7 @@ def _study_key(record: Record) -> tuple[str, str, str, str]:
 
 
 def _l1_pair_uniqueness(
-    records: Sequence[Record], background: frozenset[str]
+    records: Sequence[Record], background: frozenset[str], expected_duplicated: int = 0
 ) -> LevelResult:
     """L1: exactly one record per (study, screened STRAIN, condition) triple.
 
@@ -261,7 +261,9 @@ def _l1_pair_uniqueness(
     """
     seen = {_pair_key(rec, background) for rec in records}
     return _pair_uniqueness_result(
-        n_pairs=len(seen), n_duplicated=len(records) - len(seen)
+        n_pairs=len(seen),
+        n_duplicated=len(records) - len(seen),
+        expected_duplicated=expected_duplicated,
     )
 
 
@@ -292,7 +294,9 @@ def _pair_key(record: Record, background: frozenset[str]) -> tuple[Any, ...]:
     )
 
 
-def _pair_uniqueness_result(*, n_pairs: int, n_duplicated: int) -> LevelResult:
+def _pair_uniqueness_result(
+    *, n_pairs: int, n_duplicated: int, expected_duplicated: int = 0
+) -> LevelResult:
     """L1 ``pair_uniqueness`` row, shared by the eager and streaming verifiers.
 
     ``n_duplicated`` counts REDUNDANT RECORDS (every record after the first with a given
@@ -301,18 +305,34 @@ def _pair_uniqueness_result(*, n_pairs: int, n_duplicated: int) -> LevelResult:
     the number of records the loader has to aggregate or drop for L1 to pass, the unit the
     count oracle is stated in, and the one a single streaming pass computes without
     holding a per-key counter.
+
+    ``expected_duplicated`` is the count the loader DECLARES (#1045): a source that lists
+    one strain twice under one condition released two rows, and the loader stores both
+    as released rather than merging or dropping one (Mota 2024 lists RNR4 twice in each
+    acid table, with two different grades in the octanoic one). The row passes when the
+    observed count is exactly the declared one, so an undeclared duplicate still fails.
     """
+    passed = n_duplicated == expected_duplicated
+    declared = (
+        f" ({expected_duplicated} declared by the loader)"
+        if expected_duplicated
+        else ""
+    )
     return LevelResult(
         level=Level.L1,
         name="pair_uniqueness",
-        passed=n_duplicated == 0,
+        passed=passed,
         message=(
             f"{n_pairs} unique (study, strain, condition) records, one each"
             if n_duplicated == 0
             else f"{n_duplicated} records duplicate an earlier (study, strain, "
-            f"condition) triple; {n_pairs} unique triples"
+            f"condition) triple{declared}; {n_pairs} unique triples"
         ),
-        details={"n_pairs": n_pairs, "n_duplicated": n_duplicated},
+        details={
+            "n_pairs": n_pairs,
+            "n_duplicated": n_duplicated,
+            "expected_duplicated": expected_duplicated,
+        },
     )
 
 
@@ -954,6 +974,7 @@ def verify_environment_response_dataset(
     expected_unperturbed: int = 0,
     expected_non_bracketing: int = 0,
     expected_gapped_reference: int = 0,
+    expected_duplicated_pairs: int = 0,
 ) -> VerificationReport:
     """Run the L0-L4 record-level gate for an environment-response dataset.
 
@@ -1001,7 +1022,9 @@ def verify_environment_response_dataset(
     report = VerificationReport(dataset_name=dataset_name, provenance=provenance)
     report.add(l0_structural((rec["experiment"] for rec in records), validate))
     report.add(l1_count(len(records), expected_count))
-    report.add(_l1_pair_uniqueness(records, background_genes))
+    report.add(
+        _l1_pair_uniqueness(records, background_genes, expected_duplicated_pairs)
+    )
 
     shared = SharedRecordRules(
         background_genes=background_genes,
@@ -1090,6 +1113,7 @@ def verify_environment_response_dataset_streaming(
     expected_unperturbed: int = 0,
     expected_non_bracketing: int = 0,
     expected_gapped_reference: int = 0,
+    expected_duplicated_pairs: int = 0,
 ) -> VerificationReport:
     """Single-pass, memory-bounded L0-L4 gate for LARGE environment-response datasets.
 
@@ -1231,7 +1255,13 @@ def verify_environment_response_dataset_streaming(
             details={"observed": n_records, "expected": expected_count},
         )
     )
-    report.add(_pair_uniqueness_result(n_pairs=n_pairs, n_duplicated=n_pair_dups))
+    report.add(
+        _pair_uniqueness_result(
+            n_pairs=n_pairs,
+            n_duplicated=n_pair_dups,
+            expected_duplicated=expected_duplicated_pairs,
+        )
+    )
     report.add(_value_result("value_fidelity", n_responses, bad_responses))
     report.add(_value_result("se_nonnegative", n_se, bad_se))
     report.add(intervals.result(expected_non_bracketing))

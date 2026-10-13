@@ -51,38 +51,27 @@ incubation". ``duration_hours`` is the time at which the stored call was made, s
 the sourced value and the 24 h control-plate reading and the 36-48 h photograph range are
 recorded in ``_DURATION``'s note.
 
-GENE RESOLUTION -- every token, INCLUDING one that merely looks systematic, goes through
-the SHARED ``SCerevisiaeGenome.resolve_gene_name``. The previous resolver returned any
-``Y..####[WC]``-shaped token unchecked, which stored four RETIRED systematic names on seven
-records (L4 gene containment read 0.993, below the rule's notice but above its 0.90 floor).
-All four are RENAMED, not retired: YGR272C -> YGR271C-A, YJL021C -> YJL020C,
-YML010W-A -> YML009W-B, YML013C-A -> YML012C-A. CURRENT and RENAMED are kept under the
-CURRENT systematic name; RETIRED is dropped, counted and written to
-``dropped_records.json`` beside ``processed/``.
+GENE IDENTITY -- every scored row is one record under the token its ``Gene/ORF name``
+cell releases, verbatim after stripping whitespace (#1045). A systematic name goes on
+``KanMxDeletionPerturbation`` with both names the ORF; any other token goes on
+``ReleasedGeneNamePerturbation`` (the released symbol, kind ``deletion``, marker KanMX).
+No genome is consulted: nothing is renamed, merged or dropped, and the join to R64 is a
+modeling-time act. Before #1045 the loader resolved every token through
+``SCerevisiaeGenome.resolve_gene_name``, which merged EFG1 with YGR272C (SGD merged the
+two ORFs into YGR271C-A), renamed four systematic tokens and dropped six retired ones
+(13 records).
 
-SOURCE ARTIFACTS / QUIRKS handled deterministically (``_DEDUP_RULE``):
-- RNR4 (YGR180C) is listed TWICE in every table (a source duplicate the paper's headline
-  totals count); acetic/butyric both rows are ``+``, octanoic the two rows conflict
-  (``+`` and ``++``).
-- EFG1 and YGR272C are listed as SEPARATE rows in all three tables but are ONE gene, and
-  the SI says so itself: its annotation of YGR272C reads "it was merged with an adjacent
-  ORF into a single reading frame, designated YGR271C-A". Resolving both to YGR271C-A
-  merges them.
-  Records are deduplicated per (resolved ORF, acid) keeping the MORE SEVERE score; on a tie
-  the lexicographically smallest source token wins. Where two DIFFERENT tokens claim one
-  gene the genome's canonical common name is stored in ``perturbed_gene_name`` instead of
-  either token, so one gene carries one spelling across the three acids.
-- Six gene tokens are genuinely RETIRED in R64-4-1 and are DROPPED (never guessed): REF1,
-  RLM2, SBR2 (all three acids), ILM2 (butyric), VPS236 (butyric, octanoic), SIW15
-  (octanoic) -- 13 records. Resolving them is a flagged follow-up (likely SI typos:
-  VPS236->VPS36?, SIW15->SIW14?, ILM2->ILM1?, RLM2->RLM1?).
-- A score cell outside ``0``, ``+``, ``++`` refuses the build rather than vanishing
-  uncounted, and so does a sheet with no ``Gene/ORF name`` header row. Neither occurs in
-  the pinned sheets (scored rows: acetic 331 ``+`` / 46 ``++``, butyric 371 / 51,
-  octanoic 437 / 53; 0 other symbols).
+SOURCE REPETITIONS stored as released: RNR4 is listed TWICE in every table (the
+paper's headline totals count both rows); acetic and butyric list it ``+`` twice,
+octanoic ``+`` and ``++``. Each row is its own record, and the verifier is told to
+expect exactly those 3 repeated (strain, condition) pairs (``expected_duplicated_pairs``
+in the runner spec). The ledger beside ``processed/`` lists every repeated token with
+its grades. A score cell outside ``0``, ``+``, ``++`` refuses the build rather than
+vanishing uncounted, and so does a sheet with no ``Gene/ORF name`` header row. Neither
+occurs in the pinned sheets (scored rows: acetic 331 ``+`` / 46 ``++``, butyric 371 /
+51, octanoic 437 / 53; 0 other symbols).
 
-Final: acetic 372, butyric 415, octanoic 483 = 1270 records (1289 raw susceptible rows
-- 3 RNR4 duplicates - 3 EFG1/YGR272C merges - 13 retired-token drops).
+Final: acetic 377, butyric 422, octanoic 490 = 1289 records, one per scored row.
 
 DATA SOURCE -- the BMC open-access supplementary spreadsheets (Additional file 1 = acetic
 Table S1, file 2 = butyric Table S2, file 3 = octanoic Table S3) are deposited into
@@ -97,6 +86,7 @@ import logging
 import os
 import os.path as osp
 import pickle
+import re
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
@@ -135,6 +125,8 @@ from torchcell.datamodels.schema import (
     PhysicalFactor,
     Publication,
     ReferenceGenome,
+    ReleasedGeneKind,
+    ReleasedGeneNamePerturbation,
     ResponseCategory,
     SmallMoleculePerturbation,
     Temperature,
@@ -149,8 +141,6 @@ from torchcell.literature.manifest import (
     SourceCheck,
     sha256_file,
 )
-from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
-from torchcell.sequence.genome.scerevisiae.s288c import GeneNameStatus
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import (
     ProvenanceGap,
@@ -310,22 +300,18 @@ MEASUREMENT_UNITS = (
     "rank is an ORDER, not a quantity: the spacing between grades has no meaning"
 )
 
-_DEDUP_RULE = (
-    "one record per (resolved systematic ORF, acid): where two source rows claim the "
-    "same gene, the MORE SEVERE grade wins (++ > +) and a tie is broken by the "
-    "lexicographically smallest source token. Where two DIFFERENT tokens claim one gene "
-    "the genome's canonical common name is stored instead of either token, so one gene "
-    "carries one spelling"
+#: Retention rule (#1045): every scored row is a record under its released token.
+RETENTION_RULE = (
+    "one record per scored row under the 'Gene/ORF name' token verbatim (whitespace "
+    "stripped): a systematic name on KanMxDeletionPerturbation, any other token on "
+    "ReleasedGeneNamePerturbation; no genome is consulted, nothing is renamed, merged "
+    "or dropped, and a token a table lists twice is two records"
 )
 
-DROP_RULE = (
-    "a gene token resolves through SCerevisiaeGenome.resolve_gene_name to a status "
-    "other than CURRENT or RENAMED (RETIRED: absent from R64-4-1); the token's row is "
-    "dropped and counted"
+#: An S288C systematic name, the form that goes on the placed deletion leaf.
+_SYSTEMATIC_RE = re.compile(
+    r"^(Y[A-P][LR]\d{3}[WC](-[A-Z])?|Q\d{4}|YNC[A-Q]\d{4}[WC])$"
 )
-
-#: Retention rule: a token is kept only when it resolves to a LIVE R64 gene.
-_KEPT_STATUSES = frozenset({GeneNameStatus.CURRENT, GeneNameStatus.RENAMED})
 
 # Per-acid source spec: MOESM index, filename, sha256, compound name.
 _ACID_SPECS: list[dict[str, Any]] = [
@@ -457,38 +443,42 @@ def deposit_raw_mirror(
     return str(root)
 
 
-class DroppedToken(BaseModel):
-    """One source gene token the retention rule removed."""
+class RepeatedToken(BaseModel):
+    """One token a table lists more than once, with every grade it carries."""
 
-    token: str = Field(description="the 'Gene/ORF name' cell, verbatim")
-    status: str = Field(description="GeneNameStatus the shared resolver returned")
-    acids: list[str] = Field(description="the acid tables the token appears in")
-    n_records: int = Field(description="records lost with this token")
-
-
-class MergedGene(BaseModel):
-    """One gene claimed by more than one source row, and how the merge was resolved."""
-
-    systematic_name: str
     acid: str
-    source_tokens: list[str]
-    source_scores: list[str]
-    kept_score: str
-    stored_gene_name: str
+    token: str = Field(description="the 'Gene/ORF name' cell, stripped")
+    scores: list[str] = Field(description="the grade symbols in sheet order")
 
 
 class DropLog(BaseModel):
-    """The build's retention + dedup accounting, written beside ``processed/``."""
+    """The build's accounting, written beside ``processed/``: nothing is dropped."""
 
     dataset: str
     rule: str
-    dedup_rule: str
     n_raw_rows: int
     n_kept_records: int
     n_dropped_records: int
-    n_merged_records: int
-    dropped: list[DroppedToken] = Field(default_factory=list)
-    merged: list[MergedGene] = Field(default_factory=list)
+    n_under_systematic_name: int
+    n_under_released_symbol: int
+    repeated: list[RepeatedToken] = Field(default_factory=list)
+
+
+def _released_deletion(
+    token: str,
+) -> KanMxDeletionPerturbation | ReleasedGeneNamePerturbation:
+    """The deletion under the token the table releases (#1045)."""
+    if _SYSTEMATIC_RE.match(token):
+        return KanMxDeletionPerturbation(
+            systematic_gene_name=token, perturbed_gene_name=token
+        )
+    return ReleasedGeneNamePerturbation(
+        systematic_gene_name=token,
+        perturbed_gene_name=token,
+        released_gene_name=token,
+        released_kind=ReleasedGeneKind.deletion,
+        marker="KanMX",
+    )
 
 
 @register_dataset
@@ -501,13 +491,11 @@ class EnvChemgenMota2024Dataset(ExperimentDataset):
         self,
         root: str = "data/torchcell/env_chemgen_mota2024",
         io_workers: int = 0,
-        genome: SCerevisiaeGenome | None = None,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset; a genome is REQUIRED for common-name -> ORF mapping."""
-        self.genome = genome
+        """Initialize the dataset; every scored row is stored under its released token."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -551,24 +539,12 @@ class EnvChemgenMota2024Dataset(ExperimentDataset):
                         data = resp.read()
                     write_verified(data, dest, spec["sha256"], url)
 
-    def _parse_acid(
-        self, spec: dict[str, Any]
-    ) -> tuple[dict[str, tuple[str, str]], dict[str, str], list[MergedGene], int]:
-        """Parse one acid spreadsheet into ``{ORF: (score symbol, stored gene name)}``.
+    def _parse_acid(self, spec: dict[str, Any]) -> list[tuple[str, str]]:
+        """Parse one acid spreadsheet into ``[(released token, score symbol)]``.
 
-        Returns the kept records, the dropped tokens keyed by their resolver status, the
-        merge accounting, and the raw susceptible-row count. Deduplication follows
-        ``_DEDUP_RULE``; retention follows ``DROP_RULE``.
+        One entry per scored row in sheet order (``RETENTION_RULE``); a reference-grade
+        (``0``) row, a blank token and a blank score are not scored rows.
         """
-        if self.genome is None:
-            raise RuntimeError(
-                "EnvChemgenMota2024Dataset requires a genome for gene-name resolution; "
-                "inject SCerevisiaeGenome(...)"
-            )
-        resolve = self.genome.resolve_gene_name
-        attributes = self.genome.gene_attribute_table
-        standard_name = dict(zip(attributes["ID"], attributes["gene"], strict=True))
-
         path = osp.join(self.raw_dir, spec["filename"])
         workbook = openpyxl.load_workbook(path, read_only=True)
         sheet = workbook[workbook.sheetnames[0]]
@@ -581,9 +557,7 @@ class EnvChemgenMota2024Dataset(ExperimentDataset):
                 f"{spec['filename']}: no row starts with the 'Gene/ORF name' header "
                 "in the first sheet"
             )
-        claims: dict[str, list[tuple[str, str]]] = {}
-        dropped: dict[str, str] = {}
-        n_raw = 0
+        scored: list[tuple[str, str]] = []
         for row in rows[header_idx + 1 :]:
             if not row or row[0] is None or row[2] is None:
                 continue
@@ -598,46 +572,14 @@ class EnvChemgenMota2024Dataset(ExperimentDataset):
                 )
             if score == _REFERENCE_SYMBOL:
                 continue
-            n_raw += 1
-            resolution = resolve(token)
-            if resolution.status not in _KEPT_STATUSES:
-                dropped[token] = resolution.status.value
-                continue
-            claims.setdefault(str(resolution.systematic_name), []).append(
-                (score, token)
-            )
-
-        best: dict[str, tuple[str, str]] = {}
-        merged: list[MergedGene] = []
-        for orf, entries in claims.items():
-            score, token = min(entries, key=lambda e: (-_RANK[e[0]], e[1]))
-            tokens = sorted({t for _, t in entries})
-            if len(tokens) > 1:
-                canonical = standard_name.get(orf)
-                token = canonical if isinstance(canonical, str) else orf
-            if len(entries) > 1:
-                merged.append(
-                    MergedGene(
-                        systematic_name=orf,
-                        acid=spec["acid"],
-                        source_tokens=tokens,
-                        source_scores=sorted(s for s, _ in entries),
-                        kept_score=score,
-                        stored_gene_name=token,
-                    )
-                )
-            best[orf] = (score, token)
+            scored.append((token, score))
         log.info(
-            "Mota2024 %s acid: %d raw susceptible rows -> %d records "
-            "(dropped %d retired tokens: %s; merged %d genes)",
+            "Mota2024 %s acid: %d scored rows -> %d records",
             spec["acid"],
-            n_raw,
-            len(best),
-            len(dropped),
-            sorted(dropped),
-            len(merged),
+            len(scored),
+            len(scored),
         )
-        return best, dropped, merged, n_raw
+        return scored
 
     def _perturbations(self, spec: dict[str, Any]) -> list[Any]:
         """The acid at its sourced molarity plus the typed pH edit that sets the plate."""
@@ -693,16 +635,10 @@ class EnvChemgenMota2024Dataset(ExperimentDataset):
         )
 
     def _experiment(
-        self, *, orf: str, gene_name: str, score: str, environment: Environment
+        self, *, token: str, score: str, environment: Environment
     ) -> EnvironmentResponseExperiment:
-        """Build one env x geno -> ordinal-susceptibility experiment for (gene, acid)."""
-        genotype = Genotype(
-            perturbations=[
-                KanMxDeletionPerturbation(
-                    systematic_gene_name=orf, perturbed_gene_name=gene_name
-                )
-            ]
-        )
+        """Build one env x geno -> ordinal-susceptibility experiment for (token, acid)."""
+        genotype = Genotype(perturbations=[_released_deletion(token)])
         phenotype = EnvironmentResponsePhenotype(
             measurement_type=MeasurementType.ordinal,
             assay_type=_ASSAY.value,
@@ -737,35 +673,24 @@ class EnvChemgenMota2024Dataset(ExperimentDataset):
         os.makedirs(self.processed_dir, exist_ok=True)
         env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e11))
         idx = 0
-        n_raw_total = 0
-        dropped_by_token: dict[str, DroppedToken] = {}
-        merged_all: list[MergedGene] = []
+        n_systematic = 0
+        repeated: list[RepeatedToken] = []
         with env.begin(write=True) as txn:
-            for spec, (orf_scores, dropped, merged, n_raw) in parsed:
+            for spec, scored in parsed:
                 environment = self._environment(spec)
                 ref_dump = self._reference(environment).model_dump()
-                n_raw_total += n_raw
-                merged_all.extend(merged)
-                for token, status in dropped.items():
-                    entry = dropped_by_token.get(token)
-                    if entry is None:
-                        dropped_by_token[token] = DroppedToken(
-                            token=token,
-                            status=status,
-                            acids=[spec["acid"]],
-                            n_records=1,
-                        )
-                    else:
-                        entry.acids.append(spec["acid"])
-                        entry.n_records += 1
-                for orf, (score, gene_name) in tqdm(
-                    sorted(orf_scores.items()), desc=f"{spec['acid']} acid"
-                ):
+                by_token: dict[str, list[str]] = {}
+                for token, score in scored:
+                    by_token.setdefault(token, []).append(score)
+                repeated.extend(
+                    RepeatedToken(acid=spec["acid"], token=token, scores=scores)
+                    for token, scores in by_token.items()
+                    if len(scores) > 1
+                )
+                for token, score in tqdm(scored, desc=f"{spec['acid']} acid"):
+                    n_systematic += bool(_SYSTEMATIC_RE.match(token))
                     experiment = self._experiment(
-                        orf=orf,
-                        gene_name=gene_name,
-                        score=score,
-                        environment=environment,
+                        token=token, score=score, environment=environment
                     )
                     txn.put(
                         f"{idx}".encode(),
@@ -782,26 +707,24 @@ class EnvChemgenMota2024Dataset(ExperimentDataset):
 
         drop_log = DropLog(
             dataset=self.name,
-            rule=DROP_RULE,
-            dedup_rule=_DEDUP_RULE,
-            n_raw_rows=n_raw_total,
+            rule=RETENTION_RULE,
+            n_raw_rows=idx,
             n_kept_records=idx,
-            n_dropped_records=sum(e.n_records for e in dropped_by_token.values()),
-            n_merged_records=n_raw_total
-            - sum(e.n_records for e in dropped_by_token.values())
-            - idx,
-            dropped=sorted(dropped_by_token.values(), key=lambda e: e.token),
-            merged=merged_all,
+            n_dropped_records=0,
+            n_under_systematic_name=n_systematic,
+            n_under_released_symbol=idx - n_systematic,
+            repeated=repeated,
         )
         with open(osp.join(self.root, _DROPPED_FILENAME), "w") as handle:
             handle.write(drop_log.model_dump_json(indent=2))
         log.info(
             "Wrote %d Mota2024 environment-response experiments to LMDB "
-            "(%d raw rows, %d dropped, %d merged)",
+            "(%d under a systematic name, %d under a released symbol, %d tokens "
+            "listed twice in a table)",
             idx,
-            n_raw_total,
-            drop_log.n_dropped_records,
-            drop_log.n_merged_records,
+            n_systematic,
+            idx - n_systematic,
+            len(repeated),
         )
 
     def preprocess_raw(self, df: Any, preprocess: dict[str, Any] | None = None) -> Any:
@@ -819,13 +742,8 @@ def main() -> None:
 
     load_dotenv()
     data_root = os.environ["DATA_ROOT"]
-    genome = SCerevisiaeGenome(
-        genome_root=osp.join(data_root, "data/sgd/genome"),
-        go_root=osp.join(data_root, "data/go"),
-        overwrite=False,
-    )
     root = osp.join(data_root, "data/torchcell/env_chemgen_mota2024")
-    dataset = EnvChemgenMota2024Dataset(root=root, genome=genome)
+    dataset = EnvChemgenMota2024Dataset(root=root)
     print(f"len = {len(dataset)}")
     print(dataset[0])
 

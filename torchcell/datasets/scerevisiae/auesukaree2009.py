@@ -79,14 +79,15 @@ SOURCE COUNT NOTES (documented, not guessed):
   (11+7+4+5+2+5+2+2+4+5+1+7). The Table is the per-gene DATA and is authoritative over the
   summary headline, so 55 methanol records are stored and the 1-gene discrepancy is flagged.
 
-GENE RESOLUTION -- every token goes through the SHARED, layered
-``SCerevisiaeGenome.resolve_gene_name``; ``AMBIGUOUS`` is a HARD STOP, never a silent
-first-match. Measured over the 333 listed tokens: 283 RENAMED, 48 CURRENT, 2 AMBIGUOUS,
-0 dropped. The two ambiguous ones are adjudicated by source evidence in
-``_AMBIGUOUS_ADJUDICATIONS``; every other token is stored verbatim in
-``perturbed_gene_name`` (it round-trips to its own systematic name). Final: ethanol 95,
-methanol 55, 1-propanol 125, heat 178, NaCl 42, H2O2 30 = 525 categorical records, none
-dropped.
+GENE IDENTITY (#1045) -- every listed token is one record under the token verbatim. A
+systematic name goes on ``KanMxDeletionPerturbation`` with both names the ORF; any other
+token goes on ``ReleasedGeneNamePerturbation`` (the released symbol, kind ``deletion``,
+marker KanMX). No genome is consulted: nothing is renamed, adjudicated or dropped, and
+the join to R64 is a modeling-time act. The two tokens that are aliases of more than one
+current gene (PPA1, FEN1) are stored as the symbols the paper wrote; the earlier
+evidence-based adjudication lives in the dataset note. A token a table lists twice
+refuses the build (0 in the pinned PDF). Final: ethanol 95, methanol 55, 1-propanol 125,
+heat 178, NaCl 42, H2O2 30 = 525 categorical records, none dropped.
 """
 
 import logging
@@ -101,7 +102,7 @@ from pathlib import Path
 from typing import Any
 
 import lmdb
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from tqdm import tqdm
 
 from torchcell.data import (
@@ -130,6 +131,8 @@ from torchcell.datamodels.schema import (
     MeasurementType,
     Publication,
     ReferenceGenome,
+    ReleasedGeneKind,
+    ReleasedGeneNamePerturbation,
     ResponseCategory,
     SampleUnit,
     SmallMoleculePerturbation,
@@ -145,8 +148,6 @@ from torchcell.literature.manifest import (
     RetrievalRecord,
     sha256_file,
 )
-from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
-from torchcell.sequence.genome.scerevisiae.s288c import GeneNameStatus
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import SourcedValue
 
@@ -334,65 +335,40 @@ _STRESS_SPECS: list[dict[str, Any]] = [
 ]
 
 
-class AmbiguousAdjudication(BaseModel):
-    """One ``AMBIGUOUS`` gene token resolved by source evidence, never by first-match."""
-
-    token: str = Field(description="the paper's gene name, verbatim")
-    candidates: list[str] = Field(description="the systematic names the alias maps to")
-    systematic_name: str = Field(description="the one this dataset stores")
-    stored_gene_name: str = Field(
-        description="the genome's canonical common name for that gene; the ambiguous "
-        "source token cannot be stored because it resolves to no single gene"
-    )
-    evidence: str = Field(description="why the other candidate(s) are excluded")
-
-
-#: Two of the 333 listed tokens are aliases of more than one current gene. The shared
-#: resolver refuses to choose (status AMBIGUOUS, systematic_name None) and this loader
-#: raises on any token not listed here, so no ambiguity is ever silently first-matched.
-_AMBIGUOUS_ADJUDICATIONS: dict[str, AmbiguousAdjudication] = {
-    "PPA1": AmbiguousAdjudication(
-        token="PPA1",
-        candidates=["YBR011C", "YHR026W"],
-        systematic_name="YHR026W",
-        stored_gene_name="VMA16",
-        evidence=(
-            "YBR011C is IPP1, an ESSENTIAL gene: Costanzo 2021's Data File S1 carries it "
-            "only as a temperature-sensitive strain ('YBR011C, IPP1, ipp1-5001, "
-            "tsa1062'), so it cannot be in the 4828-strain NONESSENTIAL haploid deletion "
-            "collection this paper screened. YHR026W is VMA16/PPA1, the V-ATPase V0 "
-            "subunit c'', and the paper lists PPA1 in the 'Vacuolar function' class in "
-            "BOTH tables it appears in (Table 3 1-propanol: 'Vacuolar function (16) "
-            "ARP5, BRO1, FAB1, PEP12, PIB2, PPA1, ...'; Table 4 heat: 'Vacuolar function "
-            "(16) BRO1, CUP5, DID4, PEP7, PEP12, PPA1, ...')"
-        ),
-    ),
-    "FEN1": AmbiguousAdjudication(
-        token="FEN1",
-        candidates=["YCR034W", "YKL113C"],
-        systematic_name="YCR034W",
-        stored_gene_name="ELO2",
-        evidence=(
-            "both candidates are nonessential, so essentiality does not decide. The SAME "
-            "table that lists FEN1 lists the other candidate SEPARATELY under its own "
-            "name: Table 2 (methanol) has 'Vacuolar function (11) CHC1, FEN1, VAM3, "
-            "VMA6, VMA8, VMA21, VPH2, VPS1, VPS4, VPS16, VPS25' and 'Cell rescue, "
-            "defense and virulence (5) AFT2, FLC1, FYV6, RAD27, SOD1'. RAD27 IS "
-            "YKL113C, so FEN1 in that table is the other candidate, YCR034W (ELO2)"
-        ),
-    ),
-}
-
-#: Retention rule: a token is kept only when it resolves to a LIVE R64 gene.
-_KEPT_STATUSES = frozenset({GeneNameStatus.CURRENT, GeneNameStatus.RENAMED})
-
-DROP_RULE = (
-    "a listed gene token resolves through SCerevisiaeGenome.resolve_gene_name to a "
-    "status other than CURRENT or RENAMED, and is not one of the two AMBIGUOUS tokens "
-    "adjudicated by source evidence in _AMBIGUOUS_ADJUDICATIONS (an unlisted AMBIGUOUS "
-    "token raises rather than being first-matched). Measured over this release: 0 tokens "
-    "are dropped"
+#: Retention rule (#1045): every listed token is a record under the token verbatim.
+RETENTION_RULE = (
+    "one record per listed gene token verbatim: a systematic name on "
+    "KanMxDeletionPerturbation, any other token on ReleasedGeneNamePerturbation; no "
+    "genome is consulted, nothing is renamed, adjudicated or dropped. Measured over "
+    "this release: 525 listed tokens, 525 records"
 )
+
+#: An S288C systematic name, the form that goes on the placed deletion leaf.
+_SYSTEMATIC_RE = re.compile(
+    r"^(Y[A-P][LR]\d{3}[WC](-[A-Z])?|Q\d{4}|YNC[A-Q]\d{4}[WC])$"
+)
+
+
+class RepeatedTokenError(ValueError):
+    """One stress table lists a gene token twice."""
+
+
+def _released_deletion(
+    token: str,
+) -> KanMxDeletionPerturbation | ReleasedGeneNamePerturbation:
+    """The deletion under the token the table releases (#1045)."""
+    if _SYSTEMATIC_RE.match(token):
+        return KanMxDeletionPerturbation(
+            systematic_gene_name=token, perturbed_gene_name=token
+        )
+    return ReleasedGeneNamePerturbation(
+        systematic_gene_name=token,
+        perturbed_gene_name=token,
+        released_gene_name=token,
+        released_kind=ReleasedGeneKind.deletion,
+        marker="KanMX",
+    )
+
 
 RAW_MIRROR_REL = f"torchcell-raw/{CITATION_KEY}"
 _PDF_RAW_RELPATH = f"paper/{_PDF_FILENAME}"
@@ -510,20 +486,9 @@ def deposit_raw_mirror(
     return str(root)
 
 
-class CollapsedToken(BaseModel):
-    """A listed token whose ORF an earlier token of the same table already claimed."""
-
-    stress: str
-    token: str
-    systematic_name: str
-    kept_gene_name: str
-
-
 class DropLog(BaseModel):
-    """The build's retention accounting, written beside ``processed/``.
-
-    Every listed token is exactly one of kept, dropped or collapsed, so
-    ``n_listed_tokens == n_kept_records + n_dropped_records + n_collapsed_tokens``.
+    """The build's accounting, written beside ``processed/``: every listed token is a
+    record, so ``n_listed_tokens == n_kept_records`` and nothing is dropped.
     """
 
     dataset: str
@@ -531,10 +496,8 @@ class DropLog(BaseModel):
     n_listed_tokens: int
     n_kept_records: int
     n_dropped_records: int
-    n_collapsed_tokens: int
-    dropped_tokens: dict[str, int] = Field(default_factory=dict)
-    collapsed_tokens: list[CollapsedToken] = Field(default_factory=list)
-    adjudicated: list[AmbiguousAdjudication] = Field(default_factory=list)
+    n_under_systematic_name: int
+    n_under_released_symbol: int
 
 
 @register_dataset
@@ -547,13 +510,11 @@ class EnvChemgenAuesukaree2009Dataset(ExperimentDataset):
         self,
         root: str = "data/torchcell/env_chemgen_auesukaree2009",
         io_workers: int = 0,
-        genome: SCerevisiaeGenome | None = None,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset; a genome is REQUIRED for common-name -> ORF mapping."""
-        self.genome = genome
+        """Initialize the dataset; every listed token is stored as released."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -636,41 +597,11 @@ class EnvChemgenAuesukaree2009Dataset(ExperimentDataset):
             tables[stress] = genes
         return tables
 
-    def _resolve_token(self, token: str) -> tuple[str, str] | None:
-        """``(current systematic name, the common name to store)``, or None to drop.
+    @staticmethod
+    def _stress_tokens(stress: str, tokens: list[str]) -> list[str]:
+        """The listed tokens of one stress, checksummed and checked for a repeat.
 
-        An ``AMBIGUOUS`` token is a hard stop: it is resolved only from the curated,
-        evidence-carrying ``_AMBIGUOUS_ADJUDICATIONS`` table, and an unlisted one raises.
-        For an adjudicated token the genome's canonical common name is stored, because
-        the source token itself resolves to no single gene and so could not round-trip.
-        """
-        if self.genome is None:
-            raise RuntimeError(
-                "EnvChemgenAuesukaree2009Dataset requires a genome for gene-name "
-                "resolution; inject SCerevisiaeGenome(...)"
-            )
-        resolution = self.genome.resolve_gene_name(token)
-        if resolution.status is GeneNameStatus.AMBIGUOUS:
-            adjudication = _AMBIGUOUS_ADJUDICATIONS.get(token.upper())
-            if adjudication is None:
-                raise RuntimeError(
-                    f"gene token {token!r} is AMBIGUOUS "
-                    f"(candidates {resolution.candidates}) and has no evidence-based "
-                    "adjudication in _AMBIGUOUS_ADJUDICATIONS; refusing to first-match"
-                )
-            return adjudication.systematic_name, adjudication.stored_gene_name
-        if resolution.status not in _KEPT_STATUSES:
-            return None
-        return str(resolution.systematic_name), token
-
-    def _resolve_stress(
-        self, stress: str, tokens: list[str]
-    ) -> tuple[dict[str, str], dict[str, int], list[CollapsedToken]]:
-        """Resolve one stress's tokens to ``{ORF: stored name}``; checksum + count drops.
-
-        A token whose ORF an earlier token of the same table already claimed keeps the
-        first name and is ledgered as a ``CollapsedToken``. Measured on the pinned PDF:
-        0 collapses (525 listed tokens, 525 records, 0 dropped).
+        Measured on the pinned PDF: 525 listed tokens, 525 records, no repeat.
         """
         expected = _EXPECTED_LISTED[stress]
         if len(tokens) != expected:
@@ -678,38 +609,21 @@ class EnvChemgenAuesukaree2009Dataset(ExperimentDataset):
                 f"{stress}: parsed {len(tokens)} listed genes, expected {expected} "
                 f"(table extraction self-checksum failed)"
             )
-        resolved: dict[str, str] = {}
-        dropped: dict[str, int] = {}
-        collapsed: list[CollapsedToken] = []
+        seen: set[str] = set()
         for token in tokens:
-            hit = self._resolve_token(token)
-            if hit is None:
-                dropped[token] = dropped.get(token, 0) + 1
-                continue
-            orf, stored = hit
-            if orf in resolved:
-                collapsed.append(
-                    CollapsedToken(
-                        stress=stress,
-                        token=token,
-                        systematic_name=orf,
-                        kept_gene_name=resolved[orf],
-                    )
+            if token in seen:
+                raise RepeatedTokenError(
+                    f"{stress}: the table lists {token!r} twice; one listed gene is "
+                    "one record"
                 )
-                continue
-            resolved[orf] = stored
+            seen.add(token)
         log.info(
-            "Auesukaree2009 %s: %d listed -> %d unique-ORF records "
-            "(dropped %d: %s; collapsed %d: %s)",
+            "Auesukaree2009 %s: %d listed -> %d records",
             stress,
             len(tokens),
-            len(resolved),
-            sum(dropped.values()),
-            sorted(dropped),
-            len(collapsed),
-            [c.token for c in collapsed],
+            len(tokens),
         )
-        return resolved, dropped, collapsed
+        return list(tokens)
 
     def _environment(self, spec: dict[str, Any]) -> Environment:
         """Aerobic solid-YPD plate carrying the edit (an added small molecule, or heat)."""
@@ -766,16 +680,10 @@ class EnvChemgenAuesukaree2009Dataset(ExperimentDataset):
         )
 
     def _experiment(
-        self, *, orf: str, gene_name: str, environment: Environment
+        self, *, token: str, environment: Environment
     ) -> EnvironmentResponseExperiment:
-        """Build one env x geno -> categorical-sensitivity experiment for (gene, stress)."""
-        genotype = Genotype(
-            perturbations=[
-                KanMxDeletionPerturbation(
-                    systematic_gene_name=orf, perturbed_gene_name=gene_name
-                )
-            ]
-        )
+        """Build one env x geno -> categorical-sensitivity experiment for (token, stress)."""
+        genotype = Genotype(perturbations=[_released_deletion(token)])
         phenotype = EnvironmentResponsePhenotype(
             measurement_type=MeasurementType.categorical,
             assay_type=_ASSAY.value,
@@ -801,10 +709,10 @@ class EnvChemgenAuesukaree2009Dataset(ExperimentDataset):
         pub_dump = publication.model_dump()
         ref_dump = self._reference().model_dump()
 
-        # Resolve every table BEFORE the store exists: a refusal (missing table,
-        # checksum miss, unadjudicated AMBIGUOUS token, missing genome) must not leave an
-        # empty ``processed/lmdb`` that a retry would serve as a built dataset.
-        resolved_specs = []
+        # Check every table BEFORE the store exists: a refusal (missing table,
+        # checksum miss, repeated token) must not leave an empty ``processed/lmdb``
+        # that a retry would serve as a built dataset.
+        checked_specs = []
         for spec in _STRESS_SPECS:
             stress = spec["stress"]
             if stress not in tables:
@@ -812,27 +720,19 @@ class EnvChemgenAuesukaree2009Dataset(ExperimentDataset):
                     f"stress table not found in PDF: {stress!r} "
                     f"(parsed: {sorted(tables)})"
                 )
-            resolved_specs.append((spec, self._resolve_stress(stress, tables[stress])))
+            checked_specs.append((spec, self._stress_tokens(stress, tables[stress])))
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
         env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e11))
         idx = 0
-        n_listed = 0
-        dropped_tokens: dict[str, int] = {}
-        collapsed_tokens: list[CollapsedToken] = []
+        n_systematic = 0
         with env.begin(write=True) as txn:
-            for spec, (orf_names, dropped, collapsed) in resolved_specs:
-                stress = spec["stress"]
+            for spec, tokens in checked_specs:
                 environment = self._environment(spec)
-                n_listed += len(tables[stress])
-                for token, count in dropped.items():
-                    dropped_tokens[token] = dropped_tokens.get(token, 0) + count
-                collapsed_tokens.extend(collapsed)
-                for orf, gene_name in tqdm(sorted(orf_names.items()), desc=f"{stress}"):
-                    experiment = self._experiment(
-                        orf=orf, gene_name=gene_name, environment=environment
-                    )
+                for token in tqdm(tokens, desc=f"{spec['stress']}"):
+                    n_systematic += bool(_SYSTEMATIC_RE.match(token))
+                    experiment = self._experiment(token=token, environment=environment)
                     txn.put(
                         f"{idx}".encode(),
                         pickle.dumps(
@@ -848,23 +748,21 @@ class EnvChemgenAuesukaree2009Dataset(ExperimentDataset):
 
         drop_log = DropLog(
             dataset=self.name,
-            rule=DROP_RULE,
-            n_listed_tokens=n_listed,
+            rule=RETENTION_RULE,
+            n_listed_tokens=idx,
             n_kept_records=idx,
-            n_dropped_records=sum(dropped_tokens.values()),
-            n_collapsed_tokens=len(collapsed_tokens),
-            dropped_tokens=dropped_tokens,
-            collapsed_tokens=collapsed_tokens,
-            adjudicated=list(_AMBIGUOUS_ADJUDICATIONS.values()),
+            n_dropped_records=0,
+            n_under_systematic_name=n_systematic,
+            n_under_released_symbol=idx - n_systematic,
         )
         with open(osp.join(self.root, _DROPPED_FILENAME), "w") as handle:
             handle.write(drop_log.model_dump_json(indent=2))
         log.info(
             "Wrote %d Auesukaree2009 environment-response experiments to LMDB "
-            "(%d listed tokens, %d dropped)",
+            "(%d under a systematic name, %d under a released symbol, 0 dropped)",
             idx,
-            n_listed,
-            drop_log.n_dropped_records,
+            n_systematic,
+            idx - n_systematic,
         )
 
     def preprocess_raw(self, df: Any, preprocess: dict[str, Any] | None = None) -> Any:
@@ -882,13 +780,8 @@ def main() -> None:
 
     load_dotenv()
     data_root = os.environ["DATA_ROOT"]
-    genome = SCerevisiaeGenome(
-        genome_root=osp.join(data_root, "data/sgd/genome"),
-        go_root=osp.join(data_root, "data/go"),
-        overwrite=False,
-    )
     root = osp.join(data_root, "data/torchcell/env_chemgen_auesukaree2009")
-    dataset = EnvChemgenAuesukaree2009Dataset(root=root, genome=genome)
+    dataset = EnvChemgenAuesukaree2009Dataset(root=root)
     print(f"len = {len(dataset)}")
     print(dataset[0])
 

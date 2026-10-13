@@ -160,6 +160,15 @@ EXAMPLES: dict[str, dict[str, Any]] = {
         "sample_id": "SD0863b",
         "sample_accession": "ERS838232",
     },
+    # #1045: the released-gene-name leaf refuses the systematic name the generic builder
+    # fills in, and states the released name once more in released_gene_name.
+    "torchcell.datamodels.schema.ReleasedGeneNamePerturbation": {
+        "systematic_gene_name": "ADE2",
+        "perturbed_gene_name": "ADE2",
+        "released_gene_name": "ADE2",
+        "released_kind": "deletion",
+        "marker": "KanMX",
+    },
     # The generic builder fills every str field with one value, which the #987 leaf's
     # keying rule refuses; a frameshift row released without a code is keyed by its
     # Gene, verbatim.

@@ -18,7 +18,7 @@ Sheet ``Color scores of all deletions`` (ORF name, Strain, Color, Comment):
     YDR001C    BY4741  tiny   (blank)
     YER001W    W303    5      incorrect strain; het diploid; does not mate
     YFR001W    BY4741  _      (blank)          text-only, no numeric score -> excluded
-    YLR287-A   BY4741  2      (blank)          malformed ORF name -> excluded
+    YLR287-A   BY4741  2      (blank)          no ORF form -> the released-gene-name leaf
     (blank)    BY4741  4      (blank)          no ORF -> skipped
 
 Sheet ``Names and Functions of TOP200`` lists YAL001C (TFC3, "TFIIIC subunit",
@@ -28,7 +28,7 @@ One record per released scored row, in row order (2026.10.12, #1045): YAL001C 3.
 (slow grower), YAL001C 1.0 (the lowercase spelling, a second plate), YBR001C -1.0 on
 BY4730 (petite), YCR001W -2.0 (strain blank -> BY4741), YDR001C 0.0, YER001W 5.0 on W303
 (the row's own strain, stored as released). The text rows (``pet``, ``tiny``, ``_``) are
-in ``dropped_records.json`` with their text; YLR287-A is deferred to the
+in ``dropped_records.json`` with their text; YLR287-A is stored on the
 released-gene-name leaf; the blank-ORF row is counted. The reference is the same
 WT-with-plasmid score 0.0 for every record, so the reference index splits only on the
 strain: BY4741 -> records [0, 1, 3, 4], BY4730 -> [2], W303 -> [5].
@@ -50,7 +50,6 @@ from torchcell.data.experiment_dataset import verify_raw_files
 from torchcell.datamodels.schema import (
     Environment,
     Genotype,
-    KanMxDeletionPerturbation,
     Publication,
     ReferenceGenome,
     Temperature,
@@ -137,12 +136,7 @@ def _experiment(orf: str, phenotype: VisualScorePhenotype) -> dict[str, Any]:
     return VisualScoreExperiment(
         dataset_name="CarotenoidOzaydin2013Dataset",
         genotype=Genotype(
-            perturbations=[
-                KanMxDeletionPerturbation(
-                    systematic_gene_name=orf, perturbed_gene_name=orf
-                ),
-                *m._carotenogenic_cassette(),
-            ]
+            perturbations=[m._released_deletion(orf), *m._carotenogenic_cassette()]
         ),
         environment=_ENVIRONMENT,
         phenotype=phenotype,
@@ -201,12 +195,12 @@ def test_parse_comment_flags_every_pattern_case_insensitively() -> None:
 def test_six_records_one_per_released_scored_row(
     dataset: m.CarotenoidOzaydin2013Dataset,
 ) -> None:
-    """Eleven SI rows give six records in row order; YFR001W, the ``pet`` and ``tiny``
-    rows (text-only) are in the ledger, YLR287-A is deferred and the blank-ORF row is
-    counted. Each record carries its own row's score, flag and strain, n = 1, no
-    minimum and no text.
+    """Eleven SI rows give seven records in row order; YFR001W, the ``pet`` and ``tiny``
+    rows (text-only) are in the ledger, YLR287-A is a record on the released-gene-name
+    leaf (#1045) and the blank-ORF row is counted. Each record carries its own row's
+    score, flag and strain, n = 1, no minimum and no text.
     """
-    assert len(dataset) == 6
+    assert len(dataset) == 7
     assert dataset[0]["experiment"] == _experiment(
         "YAL001C",
         _phenotype(3.0, None, 1, None, {**_NO_FLAGS, "flag_slow_growth": True}),
@@ -239,15 +233,25 @@ def test_six_records_one_per_released_scored_row(
             },
         ),
     )
+    assert dataset[6]["experiment"] == _experiment(
+        "YLR287-A", _phenotype(2.0, None, 1, None, _NO_FLAGS)
+    )
+    (released,) = [
+        p
+        for p in dataset[6]["experiment"]["genotype"]["perturbations"]
+        if p["perturbation_type"] == "released_gene_name"
+    ]
+    assert (released["released_gene_name"], released["marker"]) == ("YLR287-A", "KanMX")
     assert dataset[0]["publication"] == _PUBLICATION.model_dump()
     ledger = json.loads(
         (Path(dataset.root) / "preprocess" / "dropped_records.json").read_text()
     )
     assert [(r["rule"], r["n_records"]) for r in ledger["rules"]] == [
         ("orf_cell_is_blank", 1),
-        ("deferred_to_released_gene_name_leaf", 1),
+        ("stored_on_released_gene_name_leaf", 0),
         ("color_cell_is_text_not_a_score", 3),
     ]
+    assert ledger["rules"][1]["items"] == ["YLR287-A"]
     assert ledger["rules"][2]["items"] == [
         {"orf": "YBR001C", "strain": "BY4730", "text": "pet"},
         {"orf": "YDR001C", "strain": "BY4741", "text": "tiny"},
@@ -260,7 +264,7 @@ def test_reference_strain_is_the_released_strain_cell(
 ) -> None:
     """The reference strain is the row's own ``Strain`` cell as released (BY4741 where
     the cell is blank), so record 5 is referenced to W303. The reference index has
-    three entries: BY4741 for [0, 1, 3, 4], BY4730 for [2] and W303 for [5]; every
+    three entries: BY4741 for [0, 1, 3, 4, 6], BY4730 for [2] and W303 for [5]; every
     reference phenotype is the WT-with-plasmid score 0.0.
     """
     assert dataset[2]["reference"] == _reference("BY4730")
@@ -270,7 +274,7 @@ def test_reference_strain_is_the_released_strain_cell(
             Path(dataset.root) / "preprocess" / "experiment_reference_index.json"
         ).read_text()
     )
-    assert [entry["member_indices"] for entry in index] == [[0, 1, 3, 4], [2], [5]]
+    assert [entry["member_indices"] for entry in index] == [[0, 1, 3, 4, 6], [2], [5]]
     assert [entry["reference"]["genome_reference"]["strain"] for entry in index] == [
         "BY4741",
         "BY4730",
@@ -302,6 +306,7 @@ def test_data_csv_gene_set_and_build_manifest(
         "YCR001W,BY4741,-2.0,,1,,True,,,unknown\n"
         "YDR001C,BY4741,0.0,,1,,False,,,\n"
         "YER001W,W303,5.0,,1,,False,,,\n"
+        "YLR287-A,BY4741,2.0,,1,,False,,,\n"
     )
     assert json.loads((preprocess / "gene_set.json").read_text()) == [
         "YAL001C",
@@ -309,6 +314,7 @@ def test_data_csv_gene_set_and_build_manifest(
         "YCR001W",
         "YDR001C",
         "YER001W",
+        "YLR287-A",
         "YPL069C",
         "crtI",
         "crtYB",

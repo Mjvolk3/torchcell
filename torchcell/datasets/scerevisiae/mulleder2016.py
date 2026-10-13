@@ -88,6 +88,8 @@ from torchcell.datamodels.schema import (
     MetabolitePhenotype,
     Publication,
     ReferenceGenome,
+    ReleasedGeneKind,
+    ReleasedGeneNamePerturbation,
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
@@ -102,6 +104,31 @@ _CONC_SHEET = "intracellular_concentration_mM"
 _SUMMARY_SHEET = "robust_summary_statistics"
 _RAW_SHEET = "data_raw"
 _SYSTEMATIC_RE = re.compile(r"^Y[A-P][LR]\d{3}[WC](-[A-Z])?$")
+
+#: A concentration-sheet ORF cell that names no deletion strain: a blank cell (pandas
+#: reads it as NaN, stringified ``nan``) or the WT background row.
+_NOT_A_STRAIN = frozenset({"nan", "WT"})
+
+
+def _released_deletion(
+    orf: str,
+) -> KanMxDeletionPerturbation | ReleasedGeneNamePerturbation:
+    """The deletion under the released identifier (#1045): an ORF-shaped one on the
+    placed KanMX leaf with both names the ORF, any other on the released-gene-name leaf
+    verbatim (kind deletion, marker KanMX).
+    """
+    if _SYSTEMATIC_RE.match(orf):
+        return KanMxDeletionPerturbation(
+            systematic_gene_name=orf, perturbed_gene_name=orf
+        )
+    return ReleasedGeneNamePerturbation(
+        systematic_gene_name=orf,
+        perturbed_gene_name=orf,
+        released_gene_name=orf,
+        released_kind=ReleasedGeneKind.deletion,
+        marker="KanMX",
+    )
+
 
 # Mendeley Data 10.17632/bnzdhd6ck8.1 -> Table_S3_Complete_Dataset.xls (direct, pinned).
 DATA_URL = (
@@ -308,17 +335,21 @@ class AminoAcidMulleder2016Dataset(ExperimentDataset):
             raise RuntimeError(f"summary sheet missing amino acids: {ref_missing}")
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
-        deferred: list[str] = []
+        released_names: list[str] = []
+        blank_or_control: list[str] = []
         seen: set[str] = set()
         rows: list[dict[str, Any]] = []
         for _, row in conc.iterrows():
             orf = str(row["ORF"]).strip()
-            if not _SYSTEMATIC_RE.match(orf):
-                # A released identifier with no ORF form cannot sit on
-                # KanMxDeletionPerturbation; it is counted, never dropped for good, until
-                # the released-gene-name leaf lands (0 of 4,678 released rows).
-                deferred.append(orf)
+            if orf in _NOT_A_STRAIN:
+                # a blank ORF cell (read as NaN) names no strain, and WT is the
+                # unperturbed background the robust mean summarizes, not a deletion
+                blank_or_control.append(orf)
                 continue
+            if not _SYSTEMATIC_RE.match(orf):
+                # A released identifier with no ORF form goes on the released-gene-name
+                # leaf verbatim (#1045; 0 of 4,678 released rows).
+                released_names.append(orf)
             if orf in seen:
                 raise RuntimeError(
                     f"Mulleder Table S3: released ORF {orf} is on two rows of the "
@@ -335,11 +366,13 @@ class AminoAcidMulleder2016Dataset(ExperimentDataset):
                 }
             )
         log.info(
-            "Mulleder: %d released ORFs stored, %d rows deferred to the "
-            "released-gene-name leaf%s",
+            "Mulleder: %d released ORFs stored, %d on the released-gene-name leaf%s, "
+            "%d blank or WT rows%s",
             len(rows),
-            len(deferred),
-            f" ({sorted(deferred)})" if deferred else "",
+            len(released_names),
+            f" ({sorted(released_names)})" if released_names else "",
+            len(blank_or_control),
+            f" ({sorted(blank_or_control)})" if blank_or_control else "",
         )
         # Reference n: the strains the population robust mean summarizes (issue #489).
         self._n_reference_strains = len(rows)
@@ -391,13 +424,7 @@ class AminoAcidMulleder2016Dataset(ExperimentDataset):
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="BY4741"
         )
-        genotype = Genotype(
-            perturbations=[
-                KanMxDeletionPerturbation(
-                    systematic_gene_name=row["orf"], perturbed_gene_name=row["orf"]
-                )
-            ]
-        )
+        genotype = Genotype(perturbations=[_released_deletion(row["orf"])])
         # Synthetic minimal (SM) agar, 30 C, exponential growth (Methods "Yeast"):
         # 6.7 g/L YNB without amino acids (Sigma Y0626) + 2% glucose + 2% agar, sourced
         # and quoted on ``SM_AGAR``. The spots on that agar inoculate a liquid SM

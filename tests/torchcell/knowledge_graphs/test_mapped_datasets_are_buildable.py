@@ -63,4 +63,7 @@ def test_every_mapped_bacterial_loader_declares_its_reference_strain_on_the_clas
     )
     assert declared, "no mapped loader names a bacterial genome parameter"
     assert set(declared.values()) <= {"MG1655", "BW25113", "KT2440", "REL606"}, declared
-    assert declared["IsopentenolTiterFoo2014Dataset"] == "MG1655"
+    # Foo 2014, Wang 2015 x2, Baba 2006, Fuhrer 2017, Li 2014 and Gerdes 2003 read no
+    # genome in their builds (#1075) and name no parameter; Brunk 2016 still does
+    assert "IsopentenolTiterFoo2014Dataset" not in declared
+    assert declared["BiofuelTiterBrunk2016Dataset"] == "MG1655"

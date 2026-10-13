@@ -239,11 +239,13 @@ OHYA_PROVENANCE = Provenance(
     page="Ohya et al. 2005 PNAS; PMID 16365294",
 )
 # Ohnuki 2022 high-throughput CalMorph morphology (drug-hypersensitive 3Delta quadruple
-# deletions). 1982 mutant rows minus 1 all-NaN row (YGL141W) minus 2 background-gene
-# collision rows (PDR1=YGL013C, SNQ2=YDR011W already deleted in the 3Delta background).
+# deletions). Every one of the 1982 released mutant rows (#1045): the PDR1 and SNQ2
+# target rows and the HRD1 row, whose two blank cells are key-absent (declared below as
+# the one incomplete record), included.
+OHNUKI2022_EXPECTED_INCOMPLETE = 1
 OHNUKI2022_SOURCE_ROOT = "data/torchcell/scmd_ohnuki2022"
 OHNUKI2022_REPORT_ROOT = "data/torchcell/scmd_ohnuki2022"
-OHNUKI2022_EXPECTED_COUNT = 1979
+OHNUKI2022_EXPECTED_COUNT = 1982
 OHNUKI2022_PROVENANCE = Provenance(
     source_uri=(
         "http://www.yeast.ib.k.u-tokyo.ac.jp/SCMD/ "
@@ -567,6 +569,7 @@ def run_ohnuki_morphology(data_root: str) -> bool:
         dataset_name="scmd_ohnuki2022",
         provenance=OHNUKI2022_PROVENANCE,
         expected_count=OHNUKI2022_EXPECTED_COUNT,
+        expected_incomplete=OHNUKI2022_EXPECTED_INCOMPLETE,
     )
     ohya_abs = osp.join(data_root, OHYA_SOURCE_ROOT)
     if osp.exists(osp.join(ohya_abs, "processed", "lmdb")):
@@ -735,6 +738,7 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
         # on the released-gene-name leaf; 186 ORFs carry two records.
         "expected_count": 4805,
         "allow_duplicate_orfs": True,
+        "allow_duplicate_strains": True,
         "reference_centered": False,  # FC ratio vs WT control (reference metabolite_level=1.0)
         "provenance": Provenance(
             source_uri=(
@@ -763,6 +767,7 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
         # TRIPLICATE (n=3); FC average + STD (SE=STD/sqrt3). All 227 block rows are
         # records (#1045), both YBL071W-A rows included, so that ORF carries two records.
         "allow_duplicate_orfs": True,
+        "allow_duplicate_strains": True,
         # (the line below is the earlier reading of the same count)
         # 227 block rows - 2 YBL071W-A
         # (contradictory 3.469 up / 0.0757 down, dropped) - 1 unresolved YIR043C = 224.
@@ -1765,6 +1770,12 @@ def run_rnaseq(data_root: str) -> bool:
 ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
     "yeastphenome": {
         "root": "data/torchcell/yeastphenome",
+        # #1045: the curated matrices release the same (strain, condition) in more
+        # than one column of one screen (14,508 repeated pairs, measured by job 4606)
+        # and 8,975 base-condition records with no environmental edit; both are
+        # stored as released and declared here
+        "expected_duplicated_pairs": 14508,
+        "expected_unperturbed": 8975,
         # Curated YeastPhenome GROWTH screens (NPV z-score label): 47 deletion screens
         # (haploid BY4741/BY4742, homozygous-diploid BY4743 and heterozygous BY4743) minus
         # already-built primaries, x every growth condition the schema carries (#1045:

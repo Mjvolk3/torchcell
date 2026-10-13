@@ -79,6 +79,11 @@ def _genotype_signature(
             p.get("strain_id"),
             crispr.get("guide_sequence"),
             crispr.get("library_pool"),
+            # #1045: an allele under its released name and a gene under its released
+            # id are their own strains (SGD's 42 named alleles beside the whole-gene
+            # deletion; SynLethDB's Entrez ids); absent on every other leaf
+            p.get("allele_name"),
+            p.get("released_gene_id"),
         )
 
     return tuple(sorted(_identity(p) for p in experiment["genotype"]["perturbations"]))

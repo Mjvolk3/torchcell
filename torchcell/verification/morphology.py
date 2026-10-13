@@ -61,8 +61,16 @@ _BASE_LABELS = set(CALMORPH_LABELS)
 _CV_LABELS = set(CALMORPH_STATISTICS)
 
 
-def _l1_calmorph_completeness(records: Sequence[Record]) -> LevelResult:
-    """L1: every record measures the full 281 base + 220 CV CalMorph vocabulary."""
+def _l1_calmorph_completeness(
+    records: Sequence[Record], expected_incomplete: int = 0
+) -> LevelResult:
+    """L1: every record measures the full 281 base + 220 CV CalMorph vocabulary.
+
+    ``expected_incomplete`` is the count the loader DECLARES (#1045): a released row
+    with a blank cell is stored with that parameter key-absent (Ohnuki 2022's HRD1 row,
+    two blank cells), so the rule passes on exactly the declared number of short
+    records and an undeclared one still fails.
+    """
     short: list[dict[str, Any]] = []
     for i, rec in enumerate(records):
         phenotype = rec["experiment"]["phenotype"]
@@ -78,7 +86,12 @@ def _l1_calmorph_completeness(records: Sequence[Record]) -> LevelResult:
                     "missing_cv": len(missing_cv),
                 }
             )
-    passed = not short
+    passed = len(short) == expected_incomplete
+    declared = (
+        f" ({expected_incomplete} declared by the loader)"
+        if expected_incomplete
+        else ""
+    )
     return LevelResult(
         level=Level.L1,
         name="calmorph_completeness",
@@ -86,8 +99,9 @@ def _l1_calmorph_completeness(records: Sequence[Record]) -> LevelResult:
         message=(
             f"all {len(records)} records carry the full "
             f"{len(_BASE_LABELS)} base + {len(_CV_LABELS)} CV parameters"
-            if passed
+            if not short
             else f"{len(short)}/{len(records)} records missing CalMorph parameters"
+            f"{declared}"
         ),
         details={
             "n_records": len(records),
@@ -154,6 +168,7 @@ def verify_morphology_dataset(
     dataset_name: str,
     provenance: Provenance,
     expected_count: int,
+    expected_incomplete: int = 0,
 ) -> VerificationReport:
     """Run the L0-L3 record-level gate for the Ohya2005 CalMorph dataset.
 
@@ -162,6 +177,8 @@ def verify_morphology_dataset(
         dataset_name: dataset identity for the report.
         provenance: where the records came from.
         expected_count: the mutant record-count oracle (Ohya2005 = 4718).
+        expected_incomplete: how many records the loader declares short of the full
+            CalMorph vocabulary (Ohnuki 2022's HRD1 row, two blank cells key-absent).
 
     Returns:
         A :class:`VerificationReport` carrying the L0-L3 results. L4 (cross-source
@@ -181,7 +198,7 @@ def verify_morphology_dataset(
 
     # L1: exact mutant count + full-vocabulary coverage + populated WT reference.
     report.add(l1_count(len(records), expected_count))
-    report.add(_l1_calmorph_completeness(records))
+    report.add(_l1_calmorph_completeness(records, expected_incomplete))
     report.add(_l1_reference_populated(records))
 
     # L2: finiteness of base measurements (schema blocks NaN, not inf).

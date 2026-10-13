@@ -652,18 +652,19 @@ _needs_mirror = pytest.mark.skipif(
 @pytest.mark.slow
 @_needs_mirror
 def test_cachera_build_stores_every_named_row_as_released(tmp_path: Path) -> None:
-    """The pinned file (4,788 rows) builds to 4,760 records with no genome: 1,169 under
-    a systematic name on the KanMX leaf (two of them released in mixed case, YAL043C-a
-    and YML009c, upper-cased) and 3,591 under a released symbol on the
-    released-gene-name leaf; 27 rows name no gene or carry no level and one is the WT
-    control. ACN9 and AIM1 stay as written (SGD has since renamed them), and the
-    strand-less ``YLR287-A`` is a released symbol, not a malformed id.
+    """The pinned file (4,788 rows) builds to 4,759 records with no genome: 1,167 under
+    a systematic name on the KanMX leaf (the mixed-case YAL043C-a and YML009c among
+    them, upper-cased) and 3,592 under a released symbol on the released-gene-name
+    leaf; 28 rows name no gene or carry no level and one is the WT control. ACN9 and
+    AIM1 stay as written (SGD has since renamed them), and the strand-less ``YLR287-A``
+    is a released symbol, not a malformed id. Measured by slurm array 4604 task 1 and
+    by this test on the final loader.
     """
     root = tmp_path / "betaxanthin_cachera2023"
     (root / "raw").mkdir(parents=True)
     shutil.copy(_MIRROR_CSV, root / "raw" / "GA1_2_4_6.csv")
     dataset = c.BetaxanthinCachera2023Dataset(root=str(root))
-    assert len(dataset) == 4760
+    assert len(dataset) == 4759
 
     record = dataset[0]
     exp = MetaboliteExperiment.model_validate(record["experiment"])
@@ -687,10 +688,10 @@ def test_cachera_build_stores_every_named_row_as_released(tmp_path: Path) -> Non
             if p["perturbation_type"] != "gene_addition"
         ]
         names[deletion["systematic_gene_name"]] = deletion["perturbation_type"]
-    assert len(names) == 4760
+    assert len(names) == 4759
     assert Counter(names.values()) == {
-        "released_gene_name": 3591,
-        "kanmx_deletion": 1169,
+        "released_gene_name": 3592,
+        "kanmx_deletion": 1167,
     }
     assert names["YAL043C-A"] == "kanmx_deletion"
     assert names["ACN9"] == "released_gene_name"
@@ -703,11 +704,11 @@ def test_cachera_build_stores_every_named_row_as_released(tmp_path: Path) -> Non
     )
     assert (ledger.source_records, ledger.kept_records, ledger.dropped_records) == (
         4788,
-        4760,
-        28,
+        4759,
+        29,
     )
     assert [(r.rule, r.n_records) for r in ledger.rules] == [
-        ("gene_cell_is_0_or_blank_or_level_is_blank", 27),
+        ("gene_cell_is_0_or_blank_or_level_is_blank", 28),
         ("control_row", 1),
     ]
 

@@ -200,7 +200,17 @@ def verify_synthetic_pair_dataset(
             and "None" not in names
             and phenotype.get("graph_level") == "edge"
         ):
+            # a released self pair: counted for the declared total and stored as a
+            # released row, never as a repeated gene pair
             self_pairs.append({"index": i, "genes": names})
+            stored[
+                pair_row_key(
+                    names[0],
+                    names[1],
+                    phenotype.get(kind.score_field),
+                    str(rec["publication"]["pubmed_id"]),
+                )
+            ] += 1
             continue
         if (
             len(perturbations) != 2

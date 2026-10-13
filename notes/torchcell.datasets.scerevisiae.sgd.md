@@ -233,3 +233,7 @@ What the removal section listed as losing this class gets it back: the two suppo
 Every one of the 1,329 inviable null S288C annotations is a record. The whole-gene deletion `<gene>-Δ` stays on `SgaKanMxDeletionPerturbation`; the 42 annotations that name a point, truncation or internal-deletion allele (`cdc24p-∆CH`, `rsc3-C14G`, `gcd11-K250A`) go on the new `NamedAllelePerturbation` with the allele name verbatim on the gene's systematic name, the generic `sequence_variant` mechanism of the sequence axis and `strain_id` S288C. The allele name joins the genotype identity signature, so two alleles of one gene are two records and the 24 duplicates that led to the 2026.10.12 ledger (above) do not arise; the duplicate check keys on the allele too. `preprocess/dropped_records.json` keeps its shape with `dropped_records` 0, `rows` empty and two new counts (`n_whole_gene_deletion` 1,287, `n_named_allele` 42).
 
 The served count goes from 1,287 to 1,329. The L0-L4 table from the rebuild follows below once job 4606 finishes.
+
+### Family verification (job 4606): the allele joins the identity
+
+The essentiality verifier keys `one_record_per_gene_and_publication` on the fitness family's genotype signature, which did not carry `allele_name`, so the 42 named-allele records collided with their gene's whole-gene deletion (7 keys, 21 extra records). The signature now carries `allele_name` and `released_gene_id`, so two alleles of one gene are two strains there as well; verified again by job 4658.

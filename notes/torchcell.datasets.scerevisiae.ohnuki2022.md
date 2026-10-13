@@ -56,3 +56,7 @@ Owner rule, 2026-10-12: the data is the data; the genome and the experiment are 
 Before: `reconcile_systematic_names` remapped 7 target ORFs to the current id (e.g. YAL058C-A to YAL056C-A, YML033W to YML034W); the two target rows that are also 3Delta background genes (YGL013C PDR1, YDR011W SNQ2) and the one row with blank cells (YGL141W HRD1, 2 of 501 CV traits) were dropped: 1,979 records.
 
 Now: the released target ORF (stripped, upper-cased) is both names; the HRD1 row is stored with its 499 measured traits and the 2 blank cells key-absent; the PDR1 and SNQ2 targets are stored as released (the genotype carries the target deletion and the background deletion of the same gene, which is what the collection says of those strains). 1,982 records.
+
+### Family verification (job 4606): the count pin and the one incomplete record
+
+The morphology runner still pinned the pre-#1045 count 1979 and the `calmorph_completeness` gate refused the HRD1 record whose two blank cells are key-absent. The pin is 1982 and the runner declares that one record (`OHNUKI2022_EXPECTED_INCOMPLETE`), which the rule reads as the loader's own count; verified again by job 4658.

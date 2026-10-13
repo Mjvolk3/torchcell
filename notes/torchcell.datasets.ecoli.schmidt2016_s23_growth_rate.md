@@ -145,3 +145,30 @@ are imported FROM `schmidt2016`, so there is one copy of each.
 None. No symbol of `torchcell/datamodels/schema.py` is touched, so no served dataset is
 staled by this loader; the new class is additive and reaches the graph through its own
 adapter module, conf and `kg_bacteria.yaml` entry.
+
+## 2026.10.12 - #1057 on main: released rows stored, rebuilt and verified
+
+Owner rule of 2026-10-12: a released row is stored under the identifier its release gives, and the genome never gates storage. Rebuilt from main `db632f2b0` with `--retire-existing --verify` (slurm array 4506; the stores with no per-dataset verifier entry point verified by job 4582).
+
+### `growth_rate_s23_schmidt2016`: 15 -> 24 records
+
+Row 17 Glycerol + AA; MG1665 and NCM3722 on backgrounds named as released; the four chemostat arms with a typed gap on the released Stdev 0.
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 24 records validated |
+| L1 | `count` | pass | observed 24, expected 24 |
+| L1 | `pair_uniqueness` | pass | 24 unique (study, strain, condition) records, one each |
+| L2 | `value_fidelity` | pass | 24 values checked |
+| L2 | `se_nonnegative` | pass | 20 values checked |
+| L2 | `interval_orientation` | pass | 0 of 0 stored intervals do not bracket their value, as declared |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'growth_rate' |
+| L3 | `reference_zero` | pass | absolute rule: reference value finite and on the record's own scale for all 24 records (['growth_rate']) |
+| L3 | `environment_perturbed` | pass | all 24 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=37.0, media='M9 minimal medium, no carbon source (Sc... |
+| L1 | `provenance_gaps` | pass | 28 documented provenance gaps over 24/24 records; 0 deferred field(s): []; 734 undeclared None values over 23 carrier fields (top: Compound.inchi x327, Compound.chebi_id x64, En... |
+| L1 | `canonical_gene_names` | pass | no gene perturbations to check |
+| L2 | `uncertainty_sanity` | pass | 20 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 23 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 277 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 24 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (3 distinct media) |
+| L4 | `assembly_pin_resolves` | pass | all 24 records pin their strain's deposited assembly: BW25113 ecoli_K12_BW25113_ASM75055v1 / GCA_000750555.1; MG1665 ecoli_K12_MG1655_ASM584v2 / GCA_000005845.2; NCM3722 ecoli_K... |

@@ -483,3 +483,47 @@ while `rate / ln(2)` is off by factors of 5 to 10. And Table S23 spells the stra
 Methods say "MG1655". Neither is consumed by any loader; both are recorded because the
 MG1655 arms of Table S9 are already a named follow-up, and a loader keying on the released
 header unit or the released strain string would be wrong.
+
+## 2026.10.12 - #1057 on main: released rows stored, rebuilt and verified
+
+Owner rule of 2026-10-12: a released row is stored under the identifier its release gives, and the genome never gates storage. Rebuilt from main `db632f2b0` with `--retire-existing --verify` (slurm array 4506; the stores with no per-dataset verifier entry point verified by job 4582).
+
+### `proteome_schmidt2016`: 14 -> 19 records
+
+Row 17 M9_AA_SCHMIDT2016, row 21 chemostat dilution rates, the 11 unresolved symbols stored as released.
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 19 records validated |
+| L1 | `count` | pass | observed 19, expected 19 |
+| L1 | `orf_uniqueness` | pass | 0 unique knocked-out ORFs, one record each |
+| L2 | `value_fidelity` | pass | 43272 values checked |
+| L2 | `se_nonnegative` | pass | 38817 values checked |
+| L3 | `reference_finite` | pass | reference abundance finite + key-matched for all 43272 values |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'absolute_protein_copies_per_cell_label_free_sid_anchored' |
+| L1 | `environment_uniqueness` | pass | SUPPLEMENTARY: 19 distinct environments over 19 records |
+| L2 | `se_matches_replicate_count` | pass | SUPPLEMENTARY: 0 of 43272 values disagree with their replicate count |
+| L3 | `assembly_pin` | pass | SUPPLEMENTARY: assembly pins ["('ecoli_K12_BW25113_ASM75055v1', 'GCA_000750555.1')"] |
+| L4 | `gene_containment_bw25113` | pass | 2340 measured protein keys; 11 are released symbols outside the ecoli_K12_BW25113_ASM75055v1 locus universe, stored as released |
+
+## 2026.10.12 - #1045 part 2: the rest of the released rows, under their released identifiers
+
+Every row #1057 still dropped that is not an author withdrawal is stored, and no identifier is translated: the stored key is the one the release prints, and a crosswalk to an annotation is a modeling-time join outside the record. Rebuilt from the part-2 branch with `--retire-existing --verify` (slurm array 4583; the stores with no per-dataset verifier entry point verified by jobs 4645 and 4644).
+
+### `proteome_schmidt2016`: 19 -> 19 records
+
+Every Table S6 row a key under its released Gene symbol (2,340 -> 2,359 keys): the 14 twice-filed rows by symbol and row, the 5 other-organism rows by their symbol.
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 19 records validated |
+| L1 | `count` | pass | observed 19, expected 19 |
+| L1 | `orf_uniqueness` | pass | 0 unique knocked-out ORFs, one record each |
+| L2 | `value_fidelity` | pass | 43617 values checked |
+| L2 | `se_nonnegative` | pass | 39064 values checked |
+| L3 | `reference_finite` | pass | reference abundance finite + key-matched for all 43617 values |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'absolute_protein_copies_per_cell_label_free_sid_anchored' |
+| L1 | `environment_uniqueness` | pass | SUPPLEMENTARY: 19 distinct environments over 19 records |
+| L2 | `se_matches_replicate_count` | pass | SUPPLEMENTARY: 0 of 43617 values disagree with their replicate count (2 keys whose replicate cells the release files twice carry nan by rule) |
+| L3 | `assembly_pin` | pass | SUPPLEMENTARY: assembly pins ["('ecoli_K12_BW25113_ASM75055v1', 'GCA_000750555.1')"] |
+| L4 | `gene_containment_bw25113` | pass | 2359 measured protein keys; 2359 are released symbols outside the ecoli_K12_BW25113_ASM75055v1 locus universe, stored as released |

@@ -227,3 +227,41 @@ Report `verification_report.json` (written 2026-10-11 08:32 UTC):
 | L3 | `measurement_type_consistent` | pass | single measurement_type: 'rnaseq_tpm' |
 | L3 | `reference_finite` | pass | reference expression finite for all 1025937 values |
 | L4 | `gene_containment_assembly` | pass | 0.999 of 4257 measured genes are loci of ecoli_K12_MG1655_ASM584v2 (>= 0.99) |
+
+## 2026.10.12 - #1057 on main: released rows stored, rebuilt and verified
+
+Owner rule of 2026-10-12: a released row is stored under the identifier its release gives, and the genome never gates storage. Rebuilt from main `db632f2b0` with `--retire-existing --verify` (slurm array 4506; the stores with no per-dataset verifier entry point verified by job 4582).
+
+### `rnaseq_lamoureux2023`: 241 -> 717 records
+
+Rows 21, 22, 24: strains and evolved isolates on released backgrounds, rpoB / crp alleles on the released-strain leaf, chemostat arms, library-variant media.
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 717 records validated |
+| L1 | `count` | pass | observed 717, expected 717 |
+| L1 | `replicate_groups` | pass | 717 records with distinct profiles over 155 (genotype, environment) groups, each measuring one gene set |
+| L2 | `tpm_value_fidelity` | pass | 3052269 values checked |
+| L2 | `count_value_fidelity` | pass | 3052269 counts are non-negative integers |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'rnaseq_tpm' |
+| L3 | `reference_finite` | pass | reference expression finite for all 3052269 values |
+| L4 | `gene_containment_assembly` | pass | 0.999 of 4257 measured genes are loci of ecoli_K12_MG1655_ASM584v2 (>= 0.99) |
+
+## 2026.10.12 - #1045 part 2: the rest of the released rows, under their released identifiers
+
+Every row #1057 still dropped that is not an author withdrawal is stored, and no identifier is translated: the stored key is the one the release prints, and a crosswalk to an annotation is a modeling-time join outside the record. Rebuilt from the part-2 branch with `--retire-existing --verify` (slurm array 4583; the stores with no per-dataset verifier entry point verified by jobs 4645 and 4644).
+
+### `rnaseq_lamoureux2023`: 717 -> 859 records
+
+The pColi and +aldA constructs on a background named by the Strain Description (construct a typed gap), the 5 unlisted Base Media labels and the two-compound supplement stored as released, deletions keyed by the released symbol, expression keys verbatim.
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 859 records validated |
+| L1 | `count` | pass | observed 859, expected 859 |
+| L1 | `replicate_groups` | pass | 859 records with distinct profiles over 180 (genotype, environment) groups, each measuring one gene set |
+| L2 | `tpm_value_fidelity` | pass | 3656763 values checked |
+| L2 | `count_value_fidelity` | pass | 3656763 counts are non-negative integers |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'rnaseq_tpm' |
+| L3 | `reference_finite` | pass | reference expression finite for all 3656763 values |
+| L4 | `gene_containment_assembly` | pass | 0.999 of 4257 measured genes are loci of ecoli_K12_MG1655_ASM584v2 (>= 0.99) |

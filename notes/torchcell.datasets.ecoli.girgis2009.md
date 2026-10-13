@@ -409,3 +409,139 @@ Report `verification_report.json` (written 2026-10-11 06:24 UTC):
 | L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
 | L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
 | L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+
+## 2026.10.12 - #1057 on main: released rows stored, rebuilt and verified
+
+Owner rule of 2026-10-12: a released row is stored under the identifier its release gives, and the genome never gates storage. Rebuilt from main `db632f2b0` with `--retire-existing --verify` (slurm array 4506; the stores with no per-dataset verifier entry point verified by job 4582).
+
+### `ecoli_env_chemgen_girgis2009`: 63,766 -> 66,287 records
+
+The 155 b-numbers the annotation does not carry as a locus tag stored as released.
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 66287 records validated |
+| L1 | `count` | pass | observed 66287, expected 66287 |
+| L1 | `pair_uniqueness` | pass | 66287 unique (study, strain, condition) records, one each |
+| L2 | `value_fidelity` | pass | 66287 values checked |
+| L2 | `se_nonnegative` | pass | 0 values checked |
+| L2 | `interval_orientation` | pass | 0 of 0 stored intervals do not bracket their value, as declared |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'z_score' |
+| L3 | `reference_zero` | pass | numeric rule: reference response == 0 for all 66287 records |
+| L3 | `environment_perturbed` | pass | all 66287 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=37.0, media='M9 salts with 0.4% glucose, 0.1% cas... |
+| L1 | `provenance_gaps` | pass | 272797 documented provenance gaps over 66287/66287 records; 1 deferred field(s): ['inchikey']; 1949720 undeclared None values over 18 carrier fields (top: Compound.inchi x662870... |
+| L1 | `canonical_gene_names` | finding (genome reference; reports, does not gate) | 0 genes carry conflicting common-name spellings (0 records; 0 case-only); 155 systematic names are not the genome's current name; 39 common names resolve to another gene |
+| L2 | `uncertainty_sanity` | pass | 0 labeled uncertainties, none a zero dispersion; 66287 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 62316 compound references carry a structure identifier; 3971 declare a typed gap (1 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 530296 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 0 records on a shared MEDIA_LIBRARY medium, 66287 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_sgd` | pass | 0.961 of 3976 measured genes are reference genes (>= 0.9) |
+| L4 | `current_genome_genes` | finding (genome reference; reports, does not gate) | 155 systematic names are absent from the current genome over 2521 records: b0017 x17, b0105 x14, b0165 x16, b0255 x17, b0257 x13, b0302 x16, b0309 x13, b0359 x17, b0362 x17, b03... |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+
+## 2026.10.12 - #1045 part 2: the rest of the released rows, under their released identifiers
+
+Every row #1057 still dropped that is not an author withdrawal is stored, and no identifier is translated: the stored key is the one the release prints, and a crosswalk to an annotation is a modeling-time join outside the record. Rebuilt from the part-2 branch with `--retire-existing --verify` (slurm array 4583; the stores with no per-dataset verifier entry point verified by jobs 4645 and 4644).
+
+### `ecoli_env_chemgen_girgis2009`: 66,287 -> 66,287 records
+
+Every gene named by Dataset S5's released NAME cell.
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 66287 records validated |
+| L1 | `count` | pass | observed 66287, expected 66287 |
+| L1 | `pair_uniqueness` | pass | 66287 unique (study, strain, condition) records, one each |
+| L2 | `value_fidelity` | pass | 66287 values checked |
+| L2 | `se_nonnegative` | pass | 0 values checked |
+| L2 | `interval_orientation` | pass | 0 of 0 stored intervals do not bracket their value, as declared |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'z_score' |
+| L3 | `reference_zero` | pass | numeric rule: reference response == 0 for all 66287 records |
+| L3 | `environment_perturbed` | pass | all 66287 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=37.0, media='M9 salts with 0.4% glucose, 0.1% cas... |
+| L1 | `provenance_gaps` | pass | 272797 documented provenance gaps over 66287/66287 records; 1 deferred field(s): ['inchikey']; 1949720 undeclared None values over 18 carrier fields (top: Compound.inchi x662870... |
+| L1 | `canonical_gene_names` | finding (genome reference; reports, does not gate) | 0 genes carry conflicting common-name spellings (0 records; 0 case-only); 155 systematic names are not the genome's current name; 32 common names resolve to another gene |
+| L2 | `uncertainty_sanity` | pass | 0 labeled uncertainties, none a zero dispersion; 66287 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 62316 compound references carry a structure identifier; 3971 declare a typed gap (1 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 530296 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 0 records on a shared MEDIA_LIBRARY medium, 66287 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_sgd` | pass | 0.961 of 3976 measured genes are reference genes (>= 0.9) |
+| L4 | `current_genome_genes` | finding (genome reference; reports, does not gate) | 155 systematic names are absent from the current genome over 2521 records: b0017 x17, b0105 x14, b0165 x16, b0255 x17, b0257 x13, b0302 x16, b0309 x13, b0359 x17, b0362 x17, b03... |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |

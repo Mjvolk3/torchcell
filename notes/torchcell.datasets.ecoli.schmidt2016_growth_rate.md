@@ -302,3 +302,53 @@ are both acted on there: the `MG1665` spelling is one of the three strain spelli
 reader admits and is dropped by name, and the released condition labels are normalized
 three ways (padding space, trailing footnote digit, lowercase chemostat label) before
 they join `schmidt2016.CONDITIONS`.
+
+## 2026.10.12 - #1057 on main: released rows stored, rebuilt and verified
+
+Owner rule of 2026-10-12: a released row is stored under the identifier its release gives, and the genome never gates storage. Rebuilt from main `db632f2b0` with `--retire-existing --verify` (slurm array 4506; the stores with no per-dataset verifier entry point verified by job 4582).
+
+### `growth_rate_schmidt2016`: 6 -> 6 records
+
+Rebuilt because schmidt2016's condition table moved.
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 6 records validated |
+| L1 | `count` | pass | observed 6, expected 6 |
+| L1 | `pair_uniqueness` | pass | 6 unique (strain, environment) records, one each |
+| L2 | `value_fidelity` | pass | 6 values checked |
+| L2 | `se_nonnegative` | pass | 6 values checked |
+| L3 | `reference_one` | pass | reference fitness == 1.0 for all 6 records |
+| L1 | `provenance_gaps` | pass | 0 documented provenance gaps over 0/6 records; 0 deferred field(s): []; 126 undeclared None values over 7 carrier fields (top: Compound.inchi x84, Compound.chebi_id x12, Environ... |
+| L1 | `canonical_gene_names` | pass | 3 systematic names, one canonical spelling each, each current in the genome |
+| L2 | `uncertainty_sanity` | pass | 6 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 6 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 72 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 6 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_sgd` | pass | 1.000 of 3 measured genes are BW25113 (ecoli_K12_BW25113_ASM75055v1) genes (>= 0.9) |
+| L4 | `current_genome_genes` | pass | every one of the 3 measured systematic names is a gene of the current genome |
+
+## 2026.10.12 - #1045 part 2: the rest of the released rows, under their released identifiers
+
+Every row #1057 still dropped that is not an author withdrawal is stored, and no identifier is translated: the stored key is the one the release prints, and a crosswalk to an annotation is a modeling-time join outside the record. Rebuilt from the part-2 branch with `--retire-existing --verify` (slurm array 4583; the stores with no per-dataset verifier entry point verified by jobs 4645 and 4644).
+
+### `growth_rate_schmidt2016`: 6 -> 6 records
+
+The rim deletions on the released-strain leaf under their symbol.
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 6 records validated |
+| L1 | `count` | pass | observed 6, expected 6 |
+| L1 | `pair_uniqueness` | pass | 6 unique (strain, environment) records, one each |
+| L2 | `value_fidelity` | pass | 6 values checked |
+| L2 | `se_nonnegative` | pass | 6 values checked |
+| L3 | `reference_one` | pass | reference fitness == 1.0 for all 6 records |
+| L1 | `provenance_gaps` | pass | 0 documented provenance gaps over 0/6 records; 0 deferred field(s): []; 126 undeclared None values over 7 carrier fields (top: Compound.inchi x84, Compound.chebi_id x12, Environ... |
+| L1 | `canonical_gene_names` | finding (genome reference; reports, does not gate) | 0 genes carry conflicting common-name spellings (0 records; 0 case-only); 3 systematic names are not the genome's current name; 3 common names resolve to another gene |
+| L2 | `uncertainty_sanity` | pass | 6 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 6 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 72 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 6 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_sgd` | finding (genome reference; reports, does not gate) | 0.000 of 3 measured genes are BW25113 (ecoli_K12_BW25113_ASM75055v1) genes (>= 0.9) |
+| L4 | `current_genome_genes` | finding (genome reference; reports, does not gate) | 3 systematic names are absent from the current genome over 6 records: rimI x2, rimJ x2, rimL x2 |

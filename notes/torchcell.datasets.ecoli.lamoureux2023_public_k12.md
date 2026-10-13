@@ -322,3 +322,32 @@ Report `verification_report.json` (written 2026-10-11 08:32 UTC):
 | L3 | `measurement_type_consistent` | pass | single measurement_type: 'rnaseq_tpm_from_released_counts' |
 | L3 | `reference_finite` | pass | reference expression finite for all 1045200 values |
 | L4 | `gene_containment_assembly` | pass | 0.999 of 4355 measured genes are loci of ecoli_K12_MG1655_ASM584v2 (>= 0.99) |
+
+## 2026.10.12 - #1057 on main: released rows stored, rebuilt and verified
+
+Owner rule of 2026-10-12: a released row is stored under the identifier its release gives, and the genome never gates storage. Rebuilt from main `db632f2b0` with `--retire-existing --verify` (slurm array 4506; the stores with no per-dataset verifier entry point verified by job 4582).
+
+### `rnaseq_public_k12_lamoureux2023`: 240 -> not built records
+
+Rows 21, 22, 24: strains, alleles and cultures as released, gapped blank cells.
+
+Not built on main: the #1057 loader raised on a replicate group whose rows differ (`phage_lysogen:O157_H7_PA8`), fixed in #1045 part 2 below.
+
+## 2026.10.12 - #1045 part 2: the rest of the released rows, under their released identifiers
+
+Every row #1057 still dropped that is not an author withdrawal is stored, and no identifier is translated: the stored key is the one the release prints, and a crosswalk to an annotation is a modeling-time join outside the record. Rebuilt from the part-2 branch with `--retire-existing --verify` (slurm array 4583; the stores with no per-dataset verifier entry point verified by jobs 4645 and 4644).
+
+### `rnaseq_public_k12_lamoureux2023`: not built -> 1,358 records
+
+Plasmid, phage and 'inactive relA' samples on a background named as released, 18 unlisted media labels and the blank one stored as released, a blank temperature a typed gap, replicates whose rows differ reported rather than refused.
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 1358 records validated |
+| L1 | `count` | pass | observed 1358, expected 1358 |
+| L1 | `replicate_groups` | pass | 1358 records with distinct profiles over 252 (genotype, environment) groups, each measuring one gene set |
+| L2 | `tpm_value_fidelity` | pass | 5914090 values checked |
+| L2 | `count_value_fidelity` | pass | 5914090 counts are non-negative integers |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'rnaseq_tpm_from_released_counts' |
+| L3 | `reference_finite` | pass | reference expression finite for all 5914090 values |
+| L4 | `gene_containment_assembly` | pass | 0.999 of 4355 measured genes are loci of ecoli_K12_MG1655_ASM584v2 (>= 0.99) |

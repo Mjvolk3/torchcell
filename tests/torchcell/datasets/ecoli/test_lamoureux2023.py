@@ -56,10 +56,11 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
     write_assembly,
 )
 from torchcell.data import ManifestPinMismatchError
+from torchcell.datamodels.identity import media_identity
 from torchcell.datamodels.media import MEDIA_LIBRARY
 from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
-    BacterialDeletionPerturbation,
+    BacterialReleasedStrainPerturbation,
     BacterialStrainBackground,
     ComponentDefinition,
     ConcentrationUnit,
@@ -67,9 +68,11 @@ from torchcell.datamodels.schema import (
     EnvironmentPhysicalPerturbation,
     MediaComponentRole,
     PhysicalFactor,
+    ReleasedStrainKind,
     SmallMoleculePerturbation,
 )
-from torchcell.sequence.genome.ecoli.k12 import MG1655_ASSEMBLY, EcoliK12MG1655Genome
+from torchcell.sequence.genome.ecoli.k12 import MG1655_ASSEMBLY
+from torchcell.verification.report import FindingClass, finding_class_of
 from torchcell.verification.sourced import (
     ProvenanceGapReason,
     SourcedValue,
@@ -264,11 +267,8 @@ def test_parse_supplements_splits_a_plus_into_two_compounds() -> None:
 @pytest.mark.parametrize(
     "cells,rule",
     [
-        ({L.COL_MEDIA: "CAMHB"}, E.medium_not_in_library),
-        ({L.COL_MEDIA: "TMA"}, E.medium_not_in_library),
         ({L.COL_ACCEPTOR: ""}, E.oxygen_regime_not_stated),
         ({L.COL_ACCEPTOR: "KNO3(20mM)"}, E.oxygen_regime_not_stated),
-        ({L.COL_SUPPLEMENT: "Acetoacetate/LiCl(10mM)"}, E.supplement_label_ambiguous),
     ],
 )
 def test_settle_environment_names_the_rule_that_drops_a_sample(
@@ -276,6 +276,57 @@ def test_settle_environment_names_the_rule_that_drops_a_sample(
 ) -> None:
     verdict = L.settle_environment(_row(**cells))
     assert (verdict.rule, verdict.spec) == (rule, None)
+
+
+@pytest.mark.parametrize("label", ["CAMHB", "TMA"])
+def test_a_medium_no_library_carries_is_stored_as_released(label: str) -> None:
+    """#1045 part 2: the label names the medium; its class and state are typed gaps."""
+    verdict = L.settle_environment(_row(**{L.COL_MEDIA: label}))
+    assert verdict.rule is None
+    media = L.build_environment(_spec(verdict)).media
+    assert (
+        media.name
+        == f"{label} (PRECISE-1K; recipe not stated) + sauer trace element mixture"
+    )
+    assert (media.state, media.is_synthetic, media.base_medium) == (None, None, None)
+    assert [g.field for g in media.provenance_gaps] == ["is_synthetic", "state"]
+    assert media.components[0].compound.name == f"{label} base, PRECISE-1K formulation"
+    assert media.components[0].definition is ComponentDefinition.composition_deferred
+    other = L.build_environment(
+        _spec(L.settle_environment(_row(**{L.COL_MEDIA: "W2"})))
+    )
+    assert media_identity(media) != media_identity(other.media)
+
+
+def test_a_blank_medium_gaps_its_name_and_a_solid_label_states_its_state() -> None:
+    blank = L.build_media(
+        _spec(L.settle_environment(_row(**{L.COL_MEDIA: ""}))).model_copy()
+    )
+    assert blank.name is None
+    assert [g.field for g in blank.provenance_gaps] == ["name", "is_synthetic", "state"]
+    solid = L.build_media(
+        _spec(L.settle_environment(_row(**{L.COL_MEDIA: "M9 (solid)"})))
+    )
+    assert (solid.state, [g.field for g in solid.provenance_gaps]) == (
+        "solid",
+        ["is_synthetic"],
+    )
+
+
+def test_the_two_compound_supplement_label_is_stored_as_released() -> None:
+    """#1045 part 2: one compound under the released label at the stated 10 mM."""
+    verdict = L.settle_environment(
+        _row(**{L.COL_SUPPLEMENT: "Acetoacetate/LiCl(10mM)"})
+    )
+    environment = L.build_environment(_spec(verdict))
+    (added,) = [
+        p for p in environment.perturbations if isinstance(p, SmallMoleculePerturbation)
+    ]
+    assert added.compound.name == "Acetoacetate/LiCl"
+    assert (added.concentration.value, added.concentration.unit) == (
+        10.0,
+        ConcentrationUnit.millimolar,
+    )
 
 
 @pytest.mark.parametrize(
@@ -346,6 +397,21 @@ def test_a_strain_sample_is_stored_on_its_released_strain() -> None:
         )
     )
     assert (added.kept, added.rule) == (False, G.heterologous_expression_construct)
+    # #1045 part 2: the dispatch stores it on a background named as released
+    stored = L.settle_sample_genotype(
+        _row(
+            **{
+                L.COL_STRAIN: "DGF-298",
+                L.COL_DESCRIPTION: "Escherichia coli DGF-298 +aldA",
+            }
+        )
+    )
+    assert stored.kept and stored.untyped_edits
+    assert stored.background is not None
+    assert stored.background.name == "Escherichia coli DGF-298 +aldA"
+    assert L.genotype_class(stored) == "untyped_heterologous_expression_construct"
+    gap = L.strain_background(stored.background, untyped_edits=True).provenance_gaps[0]
+    assert "is not in the release" in (gap.note or "")
     with pytest.raises(ValueError, match="does not name its strain"):
         L.settle_background(_row(**{L.COL_STRAIN: "W3110"}))
 
@@ -859,13 +925,11 @@ def built(
     tier = write_assembly(tmp_path / "tier", MG1655_ASSEMBLY, MG1655_LOCI, MG1655_GAF)
     forbid_network(monkeypatch)
     serve_tier(monkeypatch, tier)
-    (tmp_path / "mg1655").mkdir()
-    genome = EcoliK12MG1655Genome(genome_root=str(tmp_path / "mg1655"), overwrite=False)
     root = tmp_path / "rnaseq_lamoureux2023"
     files = _release_files(root / "raw")
     _pin(monkeypatch, files)
     monkeypatch.setattr(L, "assembly_reference", _pinned)
-    return L.RnaseqLamoureux2023Dataset(root=str(root), ecoli_genome=genome)
+    return L.RnaseqLamoureux2023Dataset(root=str(root))
 
 
 def _json(dataset: L.RnaseqLamoureux2023Dataset, name: str) -> Any:
@@ -877,32 +941,19 @@ def test_the_build_keeps_wild_type_and_deletions_and_counts_every_drop(
 ) -> None:
     # #1057: the evolved isolate, the three other strains, the crp partial edit and the
     # rpoB substitution (on the released-strain leaf) and the chemostat with no stated
-    # rate are stored, not dropped
-    assert len(built) == 13
+    # rate are stored, not dropped; #1045 part 2 stores the pColi construct, the CAMHB
+    # medium and the two-compound supplement too, so only the unstated oxygen regime
+    # is dropped
+    assert len(built) == 16
     assert _json(built, "record_samples.json") == [
-        "p1k_00001",
-        "p1k_00002",
-        "p1k_00003",
-        "p1k_00004",
-        "p1k_00005",
-        "p1k_00006",
-        "p1k_00007",
-        "p1k_00009",
-        "p1k_00010",
-        "p1k_00012",
-        "p1k_00015",
-        "p1k_00016",
-        "p1k_00017",
+        f"p1k_{i:05d}" for i in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17)
     ]
     drop_log = _json(built, "dropped_records.json")
     assert {
         k: drop_log[k] for k in ("source_records", "kept_records", "dropped_records")
-    } == {"source_records": 17, "kept_records": 13, "dropped_records": 4}
+    } == {"source_records": 17, "kept_records": 16, "dropped_records": 1}
     assert [(r["stage"], r["rule"], r["samples"]) for r in drop_log["rules"]] == [
-        ("genotype", "heterologous_expression_construct", ["p1k_00008"]),
-        ("environment", "medium_not_in_library", ["p1k_00011"]),
-        ("environment", "oxygen_regime_not_stated", ["p1k_00013"]),
-        ("environment", "supplement_label_ambiguous", ["p1k_00014"]),
+        ("environment", "oxygen_regime_not_stated", ["p1k_00013"])
     ]
     assert drop_log["kept_by_genotype_class"] == {
         "deletion_1": 2,
@@ -913,10 +964,17 @@ def test_the_build_keeps_wild_type_and_deletions_and_counts_every_drop(
         "strain_BW25113_deletion_0": 1,
         "strain_DGF-298_deletion_0": 1,
         "strain_W3110_deletion_0": 1,
-        "wild_type": 4,
+        "untyped_heterologous_expression_construct": 1,
+        "wild_type": 6,
     }
-    assert drop_log["kept_by_base_media"] == {"LB": 1, "M9": 12}
-    rpob = built[8]["experiment"]["genotype"]["perturbations"]
+    assert drop_log["kept_by_base_media"] == {"CAMHB": 1, "LB": 1, "M9": 14}
+    construct = built[7]["reference"]["genome_reference"]["background"]
+    assert construct["name"] == "Escherichia coli K-12 MG1655 BRCA"
+    assert [g["field"] for g in construct["provenance_gaps"]] == ["genotype_statement"]
+    assert built[7]["experiment"]["genotype"]["perturbations"] == []
+    camhb = built[10]["experiment"]["environment"]["media"]
+    assert (camhb["base_medium"], camhb["is_synthetic"]) == (None, None)
+    rpob = built[9]["experiment"]["genotype"]["perturbations"]
     assert [
         (p["perturbation_type"], p["systematic_gene_name"], p["released_kind"])
         for p in rpob
@@ -928,31 +986,35 @@ def test_the_build_keeps_wild_type_and_deletions_and_counts_every_drop(
     assert strains == {
         "MG1655",
         "Escherichia coli K-12 MG1655",
+        "Escherichia coli K-12 MG1655 BRCA",
         "BW25113",
         "W3110",
         "DGF-298",
     }
-    w3110 = built[11]["reference"]["genome_reference"]
+    w3110 = built[14]["reference"]["genome_reference"]
     assert w3110["assembly_set"] == "ecoli_K12_MG1655_ASM584v2"
     assert w3110["background"]["name"] == "W3110"
 
 
-def test_a_deletion_record_names_the_b_number_and_the_genome_s_symbol(
+def test_a_deletion_record_keys_the_released_symbol(
     built: L.RnaseqLamoureux2023Dataset,
 ) -> None:
+    """#1045 part 2: the symbol the ``del_`` token releases, with no b-number lookup."""
     thra = built[2]["experiment"]["genotype"]["perturbations"]
     double = built[4]["experiment"]["genotype"]["perturbations"]
     assert built[0]["experiment"]["genotype"]["perturbations"] == []
     assert [(p["systematic_gene_name"], p["perturbed_gene_name"]) for p in thra] == [
-        ("b0002", "thrA")
+        ("thrA", "thrA")
     ]
     assert [(p["systematic_gene_name"], p["perturbed_gene_name"]) for p in double] == [
-        ("b0005", "proB"),
-        ("b0006", "proC"),
+        ("proB", "proB"),
+        ("proC", "proC"),
     ]
-    perturbation = BacterialDeletionPerturbation.model_validate(thra[0])
+    perturbation = BacterialReleasedStrainPerturbation.model_validate(thra[0])
     assert perturbation.gene_namespace == "ecoli_k12_mg1655_bnumber"
-    assert perturbation.perturbation_type == "bacterial_deletion"
+    assert perturbation.released_kind is ReleasedStrainKind.deletion
+    assert perturbation.identifier_kind == "gene symbol"
+    assert perturbation.strain_label == "Escherichia coli K-12 MG1655 del_thrA"
 
 
 def test_the_phenotype_is_the_inverted_release_value_and_its_count(
@@ -985,8 +1047,9 @@ def test_one_reference_holds_the_control_pair_s_centering_vector(
     assert reference["genome_reference"] == MG1655_PIN.model_dump()
     index = built.experiment_reference_index
     # one per released strain (#1057): MG1655, the evolved isolate, BW25113, W3110,
-    # DGF-298, each the same centering vector on its own genome reference
-    assert index is not None and len(index) == 5
+    # DGF-298 and (#1045 part 2) the pColi construct, each the same centering vector on
+    # its own genome reference
+    assert index is not None and len(index) == 6
     assert {
         json.dumps(entry.reference.phenotype_reference.model_dump(), sort_keys=True)
         for entry in index
@@ -1011,18 +1074,22 @@ def test_replicates_share_an_environment_and_are_grouped_by_condition(
 ) -> None:
     groups = {g["full_name"]: g for g in _json(built, "replicate_groups.json")}
     assert {k: g["record_indices"] for k, g in groups.items()} == {
+        "abx:camhb": [10],
         "control:wt_glc": [0, 1],
-        "crp:ar1": [7],
+        "crp:ar1": [8],
         "glu:ale": [5],
-        "minicoli:dgf": [12],
-        "minspan:no3_anaero": [10],
+        "minicoli:dgf": [15],
+        "minspan:no3_anaero": [13],
         "omics:bw": [6],
-        "rpoB:e546v": [8],
-        "rpoB:wt_031": [9],
+        "pcoli:BRCA": [7],
+        "rpoB:e546v": [9],
+        "rpoB:wt_031": [11],
         "tcs:delpro_etoh": [4],
-        "w3110:wt": [11],
+        "tcs:wt_LiAcet": [12],
+        "w3110:wt": [14],
         "ytf:delthrA": [2, 3],
     }
+    assert all(g["differing_cells"] == {} for g in groups.values())
     assert groups["ytf:delthrA"]["condition_cells"][L.COL_ANTIBIOTIC] == (
         "Kanamycin (50 ug/mL)"
     )
@@ -1032,7 +1099,7 @@ def test_replicates_share_an_environment_and_are_grouped_by_condition(
     assert (
         built[0]["experiment"]["environment"] != built[2]["experiment"]["environment"]
     )
-    anaerobic = built[10]["experiment"]["environment"]
+    anaerobic = built[13]["experiment"]["environment"]
     assert anaerobic["aerobicity"] == "anaerobic"
     assert anaerobic["perturbations"][3]["compound"]["name"] == "potassium nitrate"
     assert anaerobic["perturbations"][3]["concentration"]["value"] == 20.0
@@ -1045,8 +1112,6 @@ def test_the_build_refuses_a_control_pair_that_names_another_reference(
     tier = write_assembly(tmp_path / "tier", MG1655_ASSEMBLY, MG1655_LOCI, MG1655_GAF)
     forbid_network(monkeypatch)
     serve_tier(monkeypatch, tier)
-    (tmp_path / "mg1655").mkdir()
-    genome = EcoliK12MG1655Genome(genome_root=str(tmp_path / "mg1655"), overwrite=False)
     root = tmp_path / "rnaseq_lamoureux2023"
     files = _release_files(root / "raw")
     metadata = pd.read_csv(root / "raw" / L.METADATA.name, index_col=0, dtype=str)
@@ -1056,7 +1121,7 @@ def test_the_build_refuses_a_control_pair_that_names_another_reference(
     _pin(monkeypatch, files)
     monkeypatch.setattr(L, "assembly_reference", _pinned)
     with pytest.raises(RuntimeError, match="control sample p1k_00002 names reference"):
-        L.RnaseqLamoureux2023Dataset(root=str(root), ecoli_genome=genome)
+        L.RnaseqLamoureux2023Dataset(root=str(root))
 
 
 # --------------------------------------------------------------------------- #
@@ -1110,45 +1175,42 @@ def test_the_dev_tree_build_pins_the_measured_counts() -> None:
     root = _built_root()
     drop_log = json.loads((root / "preprocess/dropped_records.json").read_text())
     # #1057: the evolved isolates, the other strains and the non-batch cultures are
-    # stored, not dropped (241 before)
-    assert (drop_log["source_records"], drop_log["kept_records"]) == (1035, 717)
+    # stored, not dropped (241 before); #1045 part 2 stores the constructs, the media
+    # no library carries and the two-compound supplement (717 before), leaving only
+    # the samples whose oxygen regime the release does not state
+    assert (drop_log["source_records"], drop_log["kept_records"]) == (1035, 859)
     assert {r["rule"]: r["n_records"] for r in drop_log["rules"]} == {
-        "heterologous_expression_construct": 96,
-        "medium_not_in_library": 166,
-        "oxygen_regime_not_stated": 52,
-        "supplement_label_ambiguous": 4,
+        "oxygen_regime_not_stated": 176
     }
     assert drop_log["kept_by_genotype_class"] == {
-        "deletion_1": 108,
+        "deletion_1": 116,
         "deletion_2": 12,
         "deletion_3": 4,
         "evolved_isolate": 421,
         "released_allele_partial_gene_edit": 8,
         "released_allele_point_mutation_allele": 9,
         "strain_BW25113_deletion_0": 10,
-        "strain_BW25113_deletion_1": 17,
-        "wild_type": 128,
+        "strain_BW25113_deletion_1": 23,
+        "untyped_heterologous_expression_construct": 94,
+        "wild_type": 162,
     }
-    assert drop_log["kept_by_base_media"] == {"01xLB": 8, "LB": 36, "M9": 673}
+    assert drop_log["kept_by_base_media"] == {
+        "01xLB": 8,
+        "CAMHB": 10,
+        "LB": 36,
+        "M9": 771,
+        "M9P": 4,
+        "RPMI+10%LB": 10,
+        "TMA": 8,
+        "W2": 12,
+    }
     back_solve = json.loads(
         (root / "preprocess/pseudocount_back_solve.json").read_text()
     )
     assert (back_solve["n_genes"], back_solve["n_samples"]) == (4355, 1035)
     assert back_solve["n_samples_within_tolerance"] == 921
-    reconciliation = json.loads(
-        (root / "preprocess/locus_tag_reconciliation.json").read_text()
-    )
-    expression = reconciliation["expression_genes"]
-    assert expression["status_histogram"] == {
-        "current": 4155,
-        "renamed": 0,
-        "non_gene_feature": 99,
-        "retired": 3,
-        "ambiguous": 0,
-    }
-    assert expression["retired_kept"] == ["b3036", "b4223", "b4590"]
-    assert reconciliation["deleted_genes"]["unique_names"] == 42
-    assert reconciliation["deleted_symbol_to_locus"]["ydhB"] == ["b1659", "punR"]
+    # #1045 part 2: no crosswalk is written; the keys are the release's own
+    assert not (root / "preprocess/locus_tag_reconciliation.json").exists()
 
 
 @pytest.mark.data
@@ -1195,12 +1257,18 @@ def test_the_dev_tree_build_passes_the_record_rules_and_never_merges_two_conditi
         provenance=Provenance(
             source_uri=L.ZENODO_RECORD_URL, citation_key=L.CITATION_KEY
         ),
-        expected_count=717,
+        expected_count=859,
     )
     results = report.results + shared_rule_results(
         records, resolve_gene_name=genome.resolve_gene_name, sgd_genes=genes
     )
-    assert {r.name for r in results if not r.passed} == {"strain_uniqueness"}
+    # the genome-reference rows report what the annotation makes of the released
+    # symbols (#1069); they are findings, not gates
+    assert {
+        r.name
+        for r in results
+        if not r.passed and finding_class_of(r.name) is FindingClass.gate
+    } == {"strain_uniqueness"}
     measured = rnaseq_gene_set(records)
     assert (len(measured), sorted(measured - genes)) == (
         4257,

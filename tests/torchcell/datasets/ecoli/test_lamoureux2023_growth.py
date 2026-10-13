@@ -9,14 +9,14 @@ one row per behaviour the loader has to get right: two base-condition rows in tw
 projects (which the reference aggregates and which repeat ``rep_id``), a base-condition
 row on another carbon concentration (which the environment comparison must exclude), a
 deletion row, a zero-rate row, a blank-rate row, an evolved isolate, a non-MG1655
-strain and an rpoB substitution; since #1057 every rate row is a record but the
-``pColi`` heterologous construct. The genome is the real MG1655 class over the synthetic assembly of
+strain, an rpoB substitution and a ``pColi`` heterologous construct; since #1045 part 2
+every rate row is a record. The genome is the real MG1655 class over the synthetic assembly of
 ``tests/torchcell/sequence/genome/_bacterial_fixtures.py``, so nothing reads
 ``$DATA_ROOT`` and no network call is permitted.
 
 The ``@pytest.mark.data`` tests read the real mirror and pin the numbers the dendron note
-and issue #826 state: 354 released rate cells all of them ``p1k_*`` ids, 260 records
-under the expression loader's own genotype and environment rules (#1057), 16 of those
+and issue #826 state: 354 released rate cells all of them ``p1k_*`` ids, all 354 of them
+records under the expression loader's own genotype and environment rules (#1045 part 2), 16 of those
 exactly zero, spanning 0 to 1.42 1/hr, and the base condition's 8 rows averaging 0.63875.
 """
 
@@ -43,7 +43,6 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
 )
 from torchcell.datamodels.schema import AssemblyReferenceGenome, MeasurementType
 from torchcell.sequence.genome.ecoli.k12 import MG1655_ASSEMBLY, EcoliK12MG1655Genome
-from torchcell.verification.report import Level
 
 #: The shared verifier's genome-reference rules. Under the owner rule (#1057) a gene
 #: symbol stored as released need not be a key of the annotation, so these may read it
@@ -75,7 +74,8 @@ SYNTHETIC: tuple[tuple[str, str, str, str, str, str], ...] = (
     ("p1k_00010", "pcoli", "ec_gene", "0.50", "", "glucose(2)"),
 )
 #: The synthetic rows that become records, in sample order (#1057: the zero rate, the
-#: evolved isolate, the BW25113 sample and the rpoB substitution included).
+#: evolved isolate, the BW25113 sample and the rpoB substitution included; #1045 part 2:
+#: the pColi construct too).
 SYNTHETIC_RECORDS = (
     "p1k_00001",
     "p1k_00002",
@@ -85,6 +85,7 @@ SYNTHETIC_RECORDS = (
     "p1k_00007",
     "p1k_00008",
     "p1k_00009",
+    "p1k_00010",
 )
 SYNTHETIC_RATE_CELLS = 9
 SYNTHETIC_ZEROS = 1
@@ -166,9 +167,9 @@ def mg1655(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> EcoliK12MG1655Gen
 # --------------------------------------------------------------------------- #
 def test_declared_counts_are_the_measured_ones() -> None:
     assert lg.EXPECTED_RATE_CELLS == 354
-    assert lg.EXPECTED_AFTER_LOADER_RULES == 260
+    assert lg.EXPECTED_AFTER_LOADER_RULES == 354
     assert lg.EXPECTED_ZERO_RATES == 16
-    assert lg.EXPECTED_RECORDS == 260
+    assert lg.EXPECTED_RECORDS == 354
     # #1057: a released 0.0 is stored, so the zero rates are records
     assert lg.EXPECTED_RECORDS == lg.EXPECTED_AFTER_LOADER_RULES
     assert lg.EXPECTED_UNPERTURBED == 0
@@ -213,10 +214,8 @@ def test_read_rate_rows_keeps_only_what_the_expression_rules_keep(
 ) -> None:
     rows, rules = lg.read_rate_rows(str(metadata))
     assert [row.sample for row in rows] == list(SYNTHETIC_RECORDS)
-    by_rule = {rule.rule: rule for rule in rules}
-    assert list(by_rule) == ["heterologous_expression_construct"]
-    assert by_rule["heterologous_expression_construct"].items == ["p1k_00010"]
-    assert sum(rule.n_records for rule in rules) + len(rows) == SYNTHETIC_RATE_CELLS
+    assert rules == []
+    assert len(rows) == SYNTHETIC_RATE_CELLS
     by_sample = {row.sample: row for row in rows}
     assert by_sample["p1k_00005"].rate == 0.0
     evolved = by_sample["p1k_00007"].background
@@ -224,6 +223,9 @@ def test_read_rate_rows_keeps_only_what_the_expression_rules_keep(
     strain = by_sample["p1k_00008"].background
     assert strain is not None and strain.name == "BW25113"
     assert [a.gene for a in by_sample["p1k_00009"].released_alleles] == ["rpoB"]
+    construct = by_sample["p1k_00010"]
+    assert construct.untyped_edits and construct.background is not None
+    assert construct.background.name == "Escherichia coli K-12 MG1655"
     # the blank-rate row is not a drop: it never enters the pool
     assert all("p1k_00006" not in rule.items for rule in rules)
     deletions = [row for row in rows if row.deleted_symbols]
@@ -245,7 +247,7 @@ def test_genotype_of_stores_a_released_allele_under_its_strain_description(
 ) -> None:
     rows, _ = lg.read_rate_rows(str(metadata))
     row = next(r for r in rows if r.sample == "p1k_00009")
-    (perturbation,) = lg.genotype_of(row, {}).perturbations
+    (perturbation,) = lg.genotype_of(row).perturbations
     assert perturbation.perturbation_type == "bacterial_released_strain"
     assert perturbation.systematic_gene_name == "rpoB"
     assert getattr(perturbation, "strain_label") == (
@@ -376,7 +378,7 @@ def built(
         )
 
     monkeypatch.setattr(lg, "assembly_reference", pin)
-    return lg.GrowthRateLamoureux2023Dataset(root=str(root), ecoli_genome=mg1655)
+    return lg.GrowthRateLamoureux2023Dataset(root=str(root))
 
 
 def test_process_writes_one_record_per_stored_rate_with_the_aggregate_reference(
@@ -387,6 +389,7 @@ def test_process_writes_one_record_per_stored_rate_with_the_aggregate_reference(
     assert sorted(i["experiment"].phenotype.environment_response for i in items) == [
         0.0,
         0.41,
+        0.50,
         0.58,
         0.68,
         0.70,
@@ -405,17 +408,27 @@ def test_process_writes_one_record_per_stored_rate_with_the_aggregate_reference(
         0,
         0,
         0,
+        0,
         1,
         1,
     ]
-    assert built.gene_set == {"b0002", "rpoB"}
-    # the evolved isolate and the BW25113 sample sit on their released strain
-    strains = {
-        i["reference"].genome_reference.strain
+    # #1045 part 2: the deletion keys the symbol its del_ token releases
+    assert built.gene_set == {"thrA", "rpoB"}
+    # the evolved isolate, the BW25113 sample and the pColi construct sit on their
+    # released strain; the construct and the isolate share a Strain Description and
+    # are still two backgrounds
+    backgrounds = [
+        i["reference"].genome_reference.background
         for i in items
         if i["reference"].genome_reference.background is not None
-    }
-    assert strains == {"BW25113", "Escherichia coli K-12 MG1655"}
+    ]
+    assert sorted(b.name for b in backgrounds) == [
+        "BW25113",
+        "Escherichia coli K-12 MG1655",
+        "Escherichia coli K-12 MG1655",
+    ]
+    shared = [b for b in backgrounds if b.name == "Escherichia coli K-12 MG1655"]
+    assert sorted(str(b.parents) for b in shared) == ["None", "['MG1655']"]
     # screen_id separates the two base rows, which share an environment and a rep_id
     base = [
         i
@@ -437,9 +450,7 @@ def test_process_writes_the_four_declared_ledgers(
     assert drops["source_rows"] == SYNTHETIC_RATE_CELLS
     assert drops["kept_records"] == len(SYNTHETIC_RECORDS)
     assert drops["dropped_records"] == SYNTHETIC_RATE_CELLS - len(SYNTHETIC_RECORDS)
-    assert [rule["rule"] for rule in drops["rules"]] == [
-        "heterologous_expression_construct"
-    ]
+    assert drops["rules"] == []
     assert any("p1k_00005 (oxidative:wt_pq)" in note for note in drops["notes"])
     base = json.loads((preprocess / "base_condition.json").read_text())
     assert base["declared_cells"] == lg.BASE_CONDITION
@@ -449,7 +460,7 @@ def test_process_writes_the_four_declared_ledgers(
     assert sourced["growth_rate_column"]["value"] == lg.COL_GROWTH_RATE
     samples = json.loads((preprocess / "record_samples.json").read_text())
     assert samples == list(SYNTHETIC_RECORDS)
-    assert (preprocess / "locus_tag_reconciliation.json").exists()
+    assert not (preprocess / "locus_tag_reconciliation.json").exists()
     frame = pd.read_csv(preprocess / "growth_rates.csv")
     assert len(frame) == len(SYNTHETIC_RECORDS)
     assert frame["is_base_condition"].sum() == len(SYNTHETIC_BASE)
@@ -467,40 +478,12 @@ def test_verify_build_passes_every_level_on_the_absolute_branch(
     # rules may say so and never gate (#1057), and nothing else may fail
     failed = {r.name for r in report.results if not r.passed}
     assert failed <= GENOME_REFERENCE_RULES, failed
-    assert (Level.L4, "gene_containment_mg1655_b_numbers") in [
-        (r.level, r.name) for r in report.results
-    ]
+    assert report.passed
     assert any(
         "absolute rule" in r.message
         for r in report.results
         if r.name == "reference_zero"
     )
-
-
-def test_l4_refuses_a_deletion_that_is_not_an_mg1655_locus(
-    mg1655: EcoliK12MG1655Genome,
-) -> None:
-    records = [
-        {
-            "experiment": {
-                "genotype": {
-                    "perturbations": [
-                        {
-                            "systematic_gene_name": "b9999",
-                            "perturbation_type": "bacterial_deletion",
-                        },
-                        {
-                            "systematic_gene_name": "rpoB",
-                            "perturbation_type": "bacterial_released_strain",
-                        },
-                    ]
-                }
-            }
-        }
-    ]
-    result = lg.l4_deleted_genes_are_mg1655_loci(records, mg1655)
-    assert result.passed is False
-    assert result.details["missing"] == ["b9999"]
 
 
 # --------------------------------------------------------------------------- #
@@ -529,10 +512,9 @@ def test_real_release_carries_354_rate_cells_all_of_them_precise1k_ids() -> None
 
 
 @pytest.mark.data
-def test_real_rules_keep_260_of_which_16_are_zero() -> None:
+def test_real_rules_keep_all_354_of_which_16_are_zero() -> None:
     rows, rules = lg.read_rate_rows(_real_metadata())
-    by_rule = {rule.rule: rule.n_records for rule in rules}
-    assert by_rule == {"heterologous_expression_construct": 94}
+    assert rules == []
     assert len(rows) == lg.EXPECTED_RECORDS
     assert sum(row.rate == 0.0 for row in rows) == lg.EXPECTED_ZERO_RATES
     assert min(row.rate for row in rows) == lg.MIN_RATE
@@ -549,6 +531,8 @@ def test_real_rules_keep_260_of_which_16_are_zero() -> None:
         == 12
     )
     assert sum(bool(row.released_alleles) for row in rows) == 7
+    # #1045 part 2: the pColi constructs, on a background named as released
+    assert sum(row.untyped_edits for row in rows) == 94
 
 
 @pytest.mark.data

@@ -90,9 +90,14 @@ token raises. An amino-acid substitution or classical point allele (``cpxAF218Y`
 ``del_7prrn`` and a deletion whose symbol the annotation resolves to no b-number (``ihf``,
 the ``rrnC`` / ``rrnD`` / ``rrnE`` rRNA operons, ``dgk``) are stored on
 ``BacterialReleasedStrainPerturbation`` under the gene identifier the release writes,
-the ``Strain Description`` as the strain label (``settle_public_alleles``). Still
-dropped, because the release does not contain the edit: a plasmid-borne construct, a
-phage infection, and "with inactive relA", which names no edit kind.
+the ``Strain Description`` as the strain label (``settle_public_alleles``). Since #1045
+part 2 the rest is stored too: a plasmid-borne construct, a phage infection or
+complementation, and "with inactive relA" (which names no edit kind) put the sample on a
+background named by its ``Strain Description`` verbatim, the edit the release does not
+contain a typed gap on ``genotype_statement`` (``settle_public_untyped``). A whole-gene
+deletion is a ``BacterialReleasedStrainPerturbation`` of ``released_kind=deletion`` keyed
+by the symbol its ``del_`` token releases; the loader resolves no symbol to a b-number.
+Expression keys are the release's own row ids, verbatim.
 
 ENVIRONMENT. Written with the sibling loader's own encoding, so one condition means the
 same thing in both datasets: a loader-local ``Media`` derived from the ``M9`` or ``LB``
@@ -105,11 +110,12 @@ its header, the paper never mentions it, and its 13 distinct values on the kept 
 ``12``, ``12:00:00``, ``0.25`` and ``0:00:30``, so neither a unit nor one format can be
 sourced. A non-batch culture cell (bioreactor, blank, a growth phase written into the
 culture-type column) is stored with a typed gap on ``dilution_rate_per_hour`` naming the
-cell (#1057). Dropped, because the record could not say what the sample saw: a base
-medium with no ``MEDIA_LIBRARY`` key, an unstated oxygen regime, an
-aerobic-anaerobic transition and a dissolved-oxygen setpoint (neither of which
-``Environment.aerobicity`` can express), an unstated temperature or pH, and a minimal
-medium naming no carbon or nitrogen source.
+cell (#1057). Since #1045 part 2 a ``Base Media`` label with no ``MEDIA_LIBRARY`` key is
+stored as released (the sibling loader's ``build_media``: the label names the medium,
+its class and unstated state are typed gaps; a blank cell gaps the name too), and a
+blank temperature is a typed gap on ``Environment.temperature``. Still dropped, because
+``Environment.aerobicity`` cannot be a typed gap and has no value for them: an unstated
+oxygen regime, an aerobic-anaerobic transition and a dissolved-oxygen setpoint.
 
 REFERENCE. One reference for every record, the condition the release centers this dataset
 on: "After centering the Public K-12 dataset to the PRECISE-1K control condition". That is
@@ -139,7 +145,7 @@ from typing import Any, ClassVar, Literal
 
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from torchcell.data import (
     ExperimentDataset,
@@ -150,8 +156,6 @@ from torchcell.data import (
     verify_raw_files,
 )
 from torchcell.datamodels.schema import (
-    BacterialDeletionPerturbation,
-    BacterialReleasedStrainPerturbation,
     BacterialRNASeqExpressionExperiment,
     BacterialRNASeqExpressionExperimentReference,
     ConcentrationUnit,
@@ -164,12 +168,7 @@ from torchcell.datamodels.schema import (
     ReleasedStrainKind,
     RNASeqExpressionPhenotype,
 )
-from torchcell.datasets.bacteria_common import (
-    LocusTagReconciliation,
-    assembly_reference,
-    bacterial_genome,
-    reconcile_locus_tags,
-)
+from torchcell.datasets.bacteria_common import assembly_reference, bacterial_genome
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.datasets.ecoli.lamoureux2023 import (
     ARCHIVE_PREFIX,
@@ -188,7 +187,6 @@ from torchcell.datasets.ecoli.lamoureux2023 import (
     COL_SUPPLEMENT,
     COL_TEMPERATURE,
     CONTROL_PROJECT,
-    GENE_NAMESPACE,
     GITHUB_RELEASE_URL,
     PAPER_DOI,
     PAPER_TITLE,
@@ -205,6 +203,7 @@ from torchcell.datasets.ecoli.lamoureux2023 import (
     StrainBackgroundSpec,
     build_environment,
     culture_rate_gap,
+    deletion_perturbation,
     parse_amount,
     raw_mirror_dir,
     read_metadata,
@@ -212,6 +211,7 @@ from torchcell.datasets.ecoli.lamoureux2023 import (
     retrieval_record,
     settle_environment,
     strain_background,
+    temperature_gap,
 )
 from torchcell.datasets.ecoli.lamoureux2023 import COUNTS as P1K_COUNTS
 from torchcell.datasets.ecoli.lamoureux2023 import LIBRARY_BASES as LIBRARY_BASES
@@ -236,16 +236,13 @@ TPM_TOTAL = 1e6
 #: A record's TPM must sum to one million to this many TPM (float summation slack only).
 TPM_TOTAL_TOLERANCE = 1e-6
 
-#: The expression genes must resolve to MG1655 loci at this fraction or the build stops.
-#: Measured on the release: 4,352 of 4,355 (0.99931); the three that do not (``b3036``,
-#: ``b4223``, ``b4590``) are b-numbers the ASM584v2 annotation no longer carries and are
-#: kept as given, exactly as the sibling dataset keeps them.
-EXPRESSION_MIN_RESOLVED = 0.99
-
-#: Measured: of the 4,352 released genes whose b-number resolves to an ASM584v2 locus, 39
-#: have a ``gene_info.csv`` span that differs from the GenBank span of that locus. The
-#: build writes them out and refuses a different count, so a changed annotation surfaces.
-GENE_LENGTH_DIVERGENCE_N = 39
+#: Measured: of the released gene ids that are ASM584v2 loci, 38 have a
+#: ``gene_info.csv`` span that differs from the GenBank span of that locus (39 while the
+#: keys were resolved: ``b3681``, a /gene_synonym of another locus, is no locus as
+#: released). The build writes them out as a derived finding
+#: (``preprocess/gene_length_divergence.json``) and never refuses on it: the genome does
+#: not gate a released row (#1045 part 2).
+GENE_LENGTH_DIVERGENCE_N = 38
 
 
 # --------------------------------------------------------------------------- #
@@ -462,8 +459,9 @@ PUBLIC_GENOTYPE_RULE_REASONS: dict[PublicGenotypeRule, str] = {
     PublicGenotypeRule.plasmid_borne_construct: (
         "a plasmid-borne construct (pACYC184, pBAD24, pBR322, pBRplac, pCA24N, pEF21, "
         "pJV300, pKK3535, pNT3, pNW129, pORF1, pSEVA, pTP-011, pUUH239.2, pZA12, "
-        "pdCas9 or a p_ Methanothermus histone vector): the construct, its source "
-        "organism and its coding sequence are not in the release"
+        "pdCas9 or a p_ Methanothermus histone vector). Not a drop since #1045 part 2: "
+        "stored on a background named by the Strain Description verbatim, the "
+        "construct, its source organism and its coding sequence a typed gap"
     ),
     PublicGenotypeRule.point_mutation_allele: (
         "an amino-acid substitution or a classical point allele (cpxA F218Y, crp K100Q/R, "
@@ -471,17 +469,20 @@ PUBLIC_GENOTYPE_RULE_REASONS: dict[PublicGenotypeRule, str] = {
         "bacterial schema has no allele leaf for a substitution"
     ),
     PublicGenotypeRule.phage_infected: (
-        "a phage-infected or phage-complemented culture (T7, T4, Svi3-3): an infecting "
-        "phage is not a genomic edit of the host and the release gives no titer or "
-        "timing per sample"
+        "a phage-infected or phage-complemented culture (T7, T4, Svi3-3). Not a drop "
+        "since #1045 part 2: stored on a background named by the Strain Description "
+        "verbatim; the release gives no titer, multiplicity or timing per sample, which "
+        "the background's typed gap says"
     ),
     PublicGenotypeRule.evolved_isolate: (
         "an evolved or mutator-evolved isolate ('CHL evolved', 'AMX evolved', "
         "'del_mutS Mutated'): its acquired mutations are not in the release"
     ),
     PublicGenotypeRule.allele_described_in_prose: (
-        "an allele stated only in prose ('with inactive relA', 'with truncated relA'): "
-        "the release names neither the lesion nor its coordinates"
+        "an allele stated only in prose ('with inactive relA', 'with truncated relA'). "
+        "Not a drop: 'truncated' is a released truncation of relA (#1057), and 'with "
+        "inactive relA', which names no edit kind, is stored on a background named by "
+        "the Strain Description verbatim (#1045 part 2)"
     ),
     PublicGenotypeRule.deletion_not_one_gene: (
         "a deletion that is not one gene ('del_7prrn', the seven rRNA operons): the "
@@ -866,6 +867,46 @@ def settle_public_alleles(row: Mapping[str, str]) -> PublicGenotypeVerdict:
     )
 
 
+def settle_public_untyped(row: Mapping[str, str]) -> PublicGenotypeVerdict:
+    """A sample whose edit no leaf types and the release does not contain (#1045 part 2).
+
+    A plasmid-borne construct, a phage infection or complementation, or "with inactive
+    relA": the sample is stored on a background named by its ``Strain Description``
+    verbatim, its edits untyped, so what the release states is kept and what it omits
+    is the background's typed gap.
+    """
+    verdict = settle_public_genotype(row)
+    description = row[COL_DESCRIPTION]
+    return PublicGenotypeVerdict(
+        rule=verdict.rule,
+        background=StrainBackgroundSpec(
+            name=description,
+            strain_cell=row[COL_STRAIN],
+            description=description,
+            evolved=False,
+        ),
+        untyped_edits=True,
+    )
+
+
+def settle_public_sample_genotype(row: Mapping[str, str]) -> PublicGenotypeVerdict:
+    """One public sample's stored genotype: every rule dispatched to a stored form.
+
+    A strain, an evolved isolate or an undefined label goes to
+    ``settle_public_background``, an allele to ``settle_public_alleles``, and whatever
+    either leaves unstored (a construct, a phage, an untyped prose allele) to
+    ``settle_public_untyped``.
+    """
+    verdict = settle_public_genotype(row)
+    if verdict.rule in BACKGROUND_RULES:
+        verdict = settle_public_background(row)
+    elif verdict.rule in ALLELE_RULES:
+        verdict = settle_public_alleles(row)
+    if not verdict.kept:
+        verdict = settle_public_untyped(row)
+    return verdict
+
+
 # --------------------------------------------------------------------------- #
 # Environment settling
 # --------------------------------------------------------------------------- #
@@ -882,12 +923,11 @@ class PublicEnvironmentRule(StrEnum):
 
 PUBLIC_ENVIRONMENT_RULE_REASONS: dict[PublicEnvironmentRule, str] = {
     PublicEnvironmentRule.medium_not_in_library: (
-        "the 'Base Media' label names no MEDIA_LIBRARY medium or variant of one (NM3, "
-        "Gutnick, tryptone broth, minimal medium A, M4 minimal, Mueller-Hinton, "
-        "'LB,MOPS') or is blank, and no mirrored source states its recipe, so the "
-        "medium would be free text that joins nothing. MOPS, 'MOPS w/o KH2PO4', "
-        "LB-Miller, L-broth and 'M9 RDM' derive from a library key since #1045 row 24; "
-        "a blank label needs the typed medium gap, which the schema does not yet have"
+        "no longer applied (#1045 part 2): a 'Base Media' label that names no "
+        "MEDIA_LIBRARY medium (NM3, Gutnick, tryptone broth, minimal medium A, M4 "
+        "minimal, Mueller-Hinton, 'LB,MOPS', ...) is stored as released, its class and "
+        "unstated state typed gaps, and a blank label is a medium whose name is a "
+        "typed gap too"
     ),
     PublicEnvironmentRule.culture_not_batch: (
         "no longer applied (#1057): a 'Culture Type' cell that is not batch "
@@ -909,8 +949,8 @@ PUBLIC_ENVIRONMENT_RULE_REASONS: dict[PublicEnvironmentRule, str] = {
         "with an unregulated aerobic culture"
     ),
     PublicEnvironmentRule.temperature_not_stated: (
-        "the 'Temperature (C)' cell is blank; temperature is part of every sibling "
-        "record's environment identity, so a gapped one would not be comparable"
+        "no longer applied (#1045 part 2): a blank 'Temperature (C)' cell is a typed "
+        "gap on Environment.temperature"
     ),
 }
 
@@ -928,11 +968,14 @@ AEROBICITY_CELLS: dict[str, Literal["aerobic", "anaerobic"] | PublicEnvironmentR
 }
 
 #: Unit tokens the public cells use that PRECISE-1K's own cells never do, restated in the
-#: enum's units by exact decimal arithmetic: g/L is its own unit, and 100 ng/mL is
-#: 0.1 ug/mL.
+#: enum's units by exact decimal arithmetic: g/L is its own unit, 100 ng/mL is 0.1 ug/mL,
+#: 500 ug/L is 0.5 ug/mL, and ``µM`` is the micro sign's spelling of uM (the last two on
+#: rows stored since #1045 part 2).
 EXTRA_UNIT_TOKENS: dict[str, tuple[ConcentrationUnit, float]] = {
     "g/L": (ConcentrationUnit.g_per_l, 1.0),
     "ng/mL": (ConcentrationUnit.ug_per_ml, 0.001),
+    "ug/L": (ConcentrationUnit.ug_per_ml, 0.001),
+    "µM": (ConcentrationUnit.micromolar, 1.0),
 }
 
 #: The separators the public ``Supplement`` cells use, in the order they are applied. A
@@ -969,10 +1012,6 @@ class PublicEnvironmentVerdict(BaseModel):
 
 def settle_public_environment(row: Mapping[str, str]) -> PublicEnvironmentVerdict:
     """Parse one public metadata row's environment, or name the rule that drops it."""
-    if row[COL_MEDIA] not in LIBRARY_BASES:
-        return PublicEnvironmentVerdict(
-            rule=PublicEnvironmentRule.medium_not_in_library
-        )
     # #1057: a non-batch (or blank) culture cell is a typed gap on the dilution rate,
     # never a refusal
     culture_without_rate = (
@@ -981,10 +1020,6 @@ def settle_public_environment(row: Mapping[str, str]) -> PublicEnvironmentVerdic
     aerobicity = AEROBICITY_CELLS[row[COL_AEROBICITY]]
     if isinstance(aerobicity, PublicEnvironmentRule):
         return PublicEnvironmentVerdict(rule=aerobicity)
-    if not row[COL_TEMPERATURE]:
-        return PublicEnvironmentVerdict(
-            rule=PublicEnvironmentRule.temperature_not_stated
-        )
     carbon = row[COL_CARBON]
     nitrogen = row[COL_NITROGEN]
     # #1045 row 24 retired two rules here: a blank pH cell is the pH factor with its
@@ -1004,7 +1039,7 @@ def settle_public_environment(row: Mapping[str, str]) -> PublicEnvironmentVerdic
     return PublicEnvironmentVerdict(
         spec=ConditionSpec(
             base_media=row[COL_MEDIA],
-            temperature_c=float(row[COL_TEMPERATURE]),
+            temperature_c=float(row[COL_TEMPERATURE]) if row[COL_TEMPERATURE] else None,
             ph=float(row[COL_PH]) if row[COL_PH] else None,
             unstated_sources=unstated,
             culture_without_rate=culture_without_rate,
@@ -1034,14 +1069,19 @@ def settle_public_environment(row: Mapping[str, str]) -> PublicEnvironmentVerdic
 def build_public_environment(spec: ConditionSpec) -> Environment:
     """The sibling loader's environment encoding with this dataset's typed gaps."""
     environment = build_environment(spec)
+    gaps = [DURATION_GAP]
+    if spec.culture_without_rate is not None:
+        gaps.append(culture_rate_gap(spec.culture_without_rate))
+    if spec.temperature_c is None:
+        gaps.append(
+            temperature_gap(public_provenance(PUBLIC_METADATA, COL_TEMPERATURE))
+        )
     return Environment(
         media=environment.media,
         temperature=environment.temperature,
         perturbations=environment.perturbations,
         aerobicity=environment.aerobicity,
-        provenance_gaps=[DURATION_GAP]
-        if spec.culture_without_rate is None
-        else [DURATION_GAP, culture_rate_gap(spec.culture_without_rate)],
+        provenance_gaps=gaps,
     )
 
 
@@ -1320,10 +1360,15 @@ class ReplicateGroup(BaseModel):
     condition_cells: dict[str, str]
     experiment_accessions: list[str]
     record_indices: list[int]
+    #: Per experiment accession, the cells in which a replicate's row differs from the
+    #: group's first row (``phage_lysogen:O157_H7_PA8``'s third replicate names its
+    #: strain ``K-12``, the other two ``MG1655::φPA8``): each record carries its own row,
+    #: and the difference is reported, never refused (#1045 part 2).
+    differing_cells: dict[str, dict[str, str]] = Field(default_factory=dict)
 
 
-#: The columns that define a public sample's strain and condition; every replicate of one
-#: ``full_name`` must carry the same cells (checked at build).
+#: The columns that define a public sample's strain and condition; replicates of one
+#: ``full_name`` that differ in them are listed in ``differing_cells``.
 CONDITION_COLUMNS: tuple[str, ...] = (
     COL_DESCRIPTION,
     COL_STRAIN,
@@ -1440,48 +1485,10 @@ class RnaseqPublicK12Lamoureux2023Dataset(ExperimentDataset):
         with open(osp.join(self.preprocess_dir, name), "w") as handle:
             json.dump(payload, handle, indent=2, default=str)
 
-    def _deletion_tags(
-        self, genome: EcoliK12Genome, symbols: list[str]
-    ) -> tuple[dict[str, tuple[str, str]], LocusTagReconciliation]:
-        """Each deleted gene symbol -> (b-number, the genome's own symbol for it)."""
-        names = pd.Series(sorted(set(symbols)))
-        stored, report = reconcile_locus_tags(
-            genome, names, label=f"{self.name} deleted genes"
-        )
-        # #1057: a symbol the annotation does not resolve is not refused; it has no
-        # entry here and is stored as released on the released-strain leaf
-        unresolved = set(report.outside_namespace)
-        mapping: dict[str, tuple[str, str]] = {}
-        for symbol, tag in zip(names, stored, strict=True):
-            if tag in unresolved:
-                continue
-            canonical = genome.genbank.loci[tag].symbol or symbol
-            if genome.resolve_gene_name(canonical).systematic_name != tag:
-                raise RuntimeError(
-                    f"{canonical!r}, the genome's symbol of {tag}, does not resolve back"
-                )
-            mapping[symbol] = (tag, canonical)
-        return mapping, report
-
-    def _genotype(
-        self,
-        verdict: PublicGenotypeVerdict,
-        tags: Mapping[str, tuple[str, str]],
-        description: str,
-    ) -> Genotype:
-        deletions: list[
-            BacterialDeletionPerturbation | BacterialReleasedStrainPerturbation
-        ] = [
-            BacterialDeletionPerturbation(
-                systematic_gene_name=tags[symbol][0],
-                perturbed_gene_name=tags[symbol][1],
-                gene_namespace=GENE_NAMESPACE,
-            )
-            if symbol in tags
-            else released_allele_perturbation(
-                ReleasedAllele(gene=symbol, kind=ReleasedStrainKind.deletion),
-                description,
-            )
+    def _genotype(self, verdict: PublicGenotypeVerdict, description: str) -> Genotype:
+        """The released deletions and alleles of one sample, under its description."""
+        deletions = [
+            deletion_perturbation(symbol, description)
             for symbol in verdict.deleted_symbols
         ]
         alleles = [
@@ -1518,21 +1525,14 @@ class RnaseqPublicK12Lamoureux2023Dataset(ExperimentDataset):
                 "the count matrix and the annotation name different genes"
             )
 
+        # #1045 part 2: the stored keys are the release's own row ids, verbatim, and
+        # the span comparison with the pinned assembly is a derived finding
         source_genes = [str(g) for g in counts.index]
-        stored_genes, gene_report = reconcile_locus_tags(
-            genome, pd.Series(source_genes), label=f"{self.name} expression genes"
-        )
-        gene_report.require_resolved(EXPRESSION_MIN_RESOLVED)
-        genes = [str(g) for g in stored_genes]
+        genes = source_genes
         if len(set(genes)) != len(genes):
-            raise RuntimeError("reconciled gene keys are not unique")
+            raise RuntimeError("the released count rows repeat a gene id")
         lengths = gene_lengths(annotation, source_genes)
         divergence = gene_length_divergence(source_genes, genes, lengths, genome)
-        if len(divergence) != GENE_LENGTH_DIVERGENCE_N:
-            raise RuntimeError(
-                f"{len(divergence)} released gene spans differ from the pinned "
-                f"assembly, not {GENE_LENGTH_DIVERGENCE_N}"
-            )
         self._write_json(
             "gene_length_divergence.json", [d.model_dump() for d in divergence]
         )
@@ -1548,11 +1548,7 @@ class RnaseqPublicK12Lamoureux2023Dataset(ExperimentDataset):
         kept: list[str] = []
         for sample in samples:
             row = rows[sample]
-            g_verdict = settle_public_genotype(row)
-            if g_verdict.rule in BACKGROUND_RULES:
-                g_verdict = settle_public_background(row)
-            elif g_verdict.rule in ALLELE_RULES:
-                g_verdict = settle_public_alleles(row)
+            g_verdict = settle_public_sample_genotype(row)
             genotype_verdicts[sample] = g_verdict
             if not g_verdict.kept:
                 dropped.setdefault(g_verdict.rule.value, []).append(sample)
@@ -1567,20 +1563,6 @@ class RnaseqPublicK12Lamoureux2023Dataset(ExperimentDataset):
             kept.append(sample)
 
         ledger = self._accession_ledger(metadata, rows, samples, kept, counts)
-        deleted = [
-            symbol for s in kept for symbol in genotype_verdicts[s].deleted_symbols
-        ]
-        tags, deletion_report = self._deletion_tags(genome, deleted)
-        self._write_json(
-            "locus_tag_reconciliation.json",
-            {
-                "expression_genes": gene_report.model_dump(mode="json"),
-                "deleted_genes": deletion_report.model_dump(mode="json"),
-                "deleted_symbol_to_locus": {
-                    s: list(v) for s, v in sorted(tags.items())
-                },
-            },
-        )
 
         count_values = counts.loc[source_genes, kept].to_numpy(dtype=np.int64)
         assigned = multiqc.loc[kept, COL_MULTIQC_ASSIGNED].to_numpy(dtype=np.int64)
@@ -1597,7 +1579,12 @@ class RnaseqPublicK12Lamoureux2023Dataset(ExperimentDataset):
             )
 
         reference = self._reference(genes, source_genes, lengths, genome)
-        backgrounds: dict[str, BacterialRNASeqExpressionExperimentReference] = {}
+        # keyed by the whole spec and its untyped flag, never the name alone (#1045
+        # part 2): two settlings of one Strain Description are two backgrounds
+        backgrounds: dict[
+            tuple[StrainBackgroundSpec, bool],
+            BacterialRNASeqExpressionExperimentReference,
+        ] = {}
 
         def reference_of(sample: str) -> BacterialRNASeqExpressionExperimentReference:
             """The control reference, on the sample's own released strain (#1057)."""
@@ -1605,20 +1592,21 @@ class RnaseqPublicK12Lamoureux2023Dataset(ExperimentDataset):
             spec = verdict.background
             if spec is None:
                 return reference
-            if spec.name not in backgrounds:
+            key = (spec, verdict.untyped_edits)
+            if key not in backgrounds:
                 background = strain_background(
                     spec,
                     lambda column: public_provenance(PUBLIC_METADATA, column),
                     untyped_edits=verdict.untyped_edits,
                 )
-                backgrounds[spec.name] = reference.model_copy(
+                backgrounds[key] = reference.model_copy(
                     update={
                         "genome_reference": assembly_reference(
                             self.REFERENCE_STRAIN, background=background
                         )
                     }
                 )
-            return backgrounds[spec.name]
+            return backgrounds[key]
 
         publication = Publication(doi=PAPER_DOI, doi_url=f"https://doi.org/{PAPER_DOI}")
         environments: dict[ConditionSpec, Environment] = {}
@@ -1638,7 +1626,7 @@ class RnaseqPublicK12Lamoureux2023Dataset(ExperimentDataset):
                 experiment = BacterialRNASeqExpressionExperiment(
                     dataset_name=self.name,
                     genotype=self._genotype(
-                        genotype_verdicts[sample], tags, rows[sample][COL_DESCRIPTION]
+                        genotype_verdicts[sample], rows[sample][COL_DESCRIPTION]
                     ),
                     environment=environment_of(sample),
                     phenotype=rnaseq_phenotype(
@@ -1662,10 +1650,11 @@ class RnaseqPublicK12Lamoureux2023Dataset(ExperimentDataset):
                         record_indices=[],
                     ),
                 )
-                if group.condition_cells != cells:
-                    raise RuntimeError(
-                        f"replicates of {full_name} differ in their condition cells"
-                    )
+                differing = {
+                    c: v for c, v in cells.items() if group.condition_cells[c] != v
+                }
+                if differing:
+                    group.differing_cells[sample] = differing
                 group.experiment_accessions.append(sample)
                 group.record_indices.append(idx)
         env.close()

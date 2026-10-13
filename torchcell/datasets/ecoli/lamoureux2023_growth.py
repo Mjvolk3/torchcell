@@ -6,7 +6,7 @@ r"""Lamoureux 2023 PRECISE-1K: the released per-sample growth rate, as an absolu
 
 Lamoureux et al. 2023 (Nucleic Acids Res 51:10184, doi:10.1093/nar/gkad750) releases its
 sample metadata with a ``Growth Rate (1/hr)`` column. 354 of ``metadata_qc.csv``'s 1,035
-rows carry a value; this module serves 260 of them as
+rows carry a value; this module serves all 354 of them as
 :class:`GrowthRateLamoureux2023Dataset`, one ``BacterialEnvironmentResponseExperiment``
 per released sample carrying the ABSOLUTE rate, against a declared base condition.
 
@@ -20,13 +20,14 @@ doubling time", so an absolute rate in 1/hr is exactly that member.
 THE COUNTS, each measured rather than recalled. Of the 354 rate cells, every one is a
 ``p1k_*`` id of the PRECISE-1K index, so the sibling Public K-12 arm contributes NOTHING.
 The genotype and environment rules are the expression loader's own, imported and never
-restated, with the same #1057 dispatch (``settle_genotype``, then ``settle_background``
-for a strain rule or ``settle_allele`` for an allele rule, then ``settle_environment``):
-they keep 260 and drop 94, the heterologous constructs of the ``pColi`` study. The 260
-are 61 wild type, 42 single deletions, 138 evolved isolates stored under their released
-strain description, 12 BW25113 samples stored on a background named as released, and 7
-``rpoB`` substitution samples stored on the released-strain leaf. Until #1057 the 138,
-the 12 and the 7 were dropped, which left 103.
+restated, through the same dispatch (``settle_sample_genotype``, then
+``settle_environment``): they keep all 354. The 354 are 61 wild type, 42 deletion
+samples (each deletion keyed by the symbol its ``del_`` token releases), 7 ``rpoB``
+substitution samples on the released-strain leaf, and 244 on a background named as
+released: 138 evolved isolates, 12 BW25113 samples (4 of them with a deletion) and 94
+``pColi`` heterologous-construct samples (#1045 part 2), each named by its ``Strain
+Description`` with the construct the release omits a typed gap. Until #1057 only 103
+were stored, and until #1045 part 2 the 94 construct samples were dropped.
 
 THE 16 ZERO-RATE ROWS ARE STORED (#1057; until then the 14 among the 103 were dropped
 under ``zero_rate_not_distinguishable_from_unrecorded``). The release prints ``0.0``,
@@ -116,10 +117,8 @@ from torchcell.data import (
 )
 from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
-    BacterialDeletionPerturbation,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
-    BacterialReleasedStrainPerturbation,
     Environment,
     EnvironmentResponsePhenotype,
     Experiment,
@@ -127,22 +126,12 @@ from torchcell.datamodels.schema import (
     Genotype,
     MeasurementType,
     Publication,
-    ReleasedStrainKind,
 )
-from torchcell.datasets.bacteria_common import (
-    assembly_reference,
-    bacterial_genome,
-    reconcile_locus_tags,
-)
+from torchcell.datasets.bacteria_common import assembly_reference, bacterial_genome
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.datasets.ecoli import lamoureux2023 as lm
 from torchcell.sequence.genome.ecoli.k12 import EcoliK12Genome, EcoliK12StrainName
-from torchcell.verification.report import (
-    Level,
-    LevelResult,
-    Provenance,
-    VerificationReport,
-)
+from torchcell.verification.report import Provenance, VerificationReport
 from torchcell.verification.sourced import (
     ProvenanceGap,
     ProvenanceGapReason,
@@ -159,12 +148,12 @@ UNITS = COL_GROWTH_RATE
 
 #: Build oracles, every one measured on the pinned metadata before being written here.
 EXPECTED_RATE_CELLS = 354
-EXPECTED_AFTER_LOADER_RULES = 260
+EXPECTED_AFTER_LOADER_RULES = 354
 EXPECTED_ZERO_RATES = 16
-EXPECTED_RECORDS = 260
+EXPECTED_RECORDS = 354
 EXPECTED_UNPERTURBED = 0
 EXPECTED_BASE_RECORDS = 8
-#: Measured over the 260 stored rates.
+#: Measured over the 354 stored rates.
 MIN_RATE = 0.0
 MAX_RATE = 1.42
 #: Measured mean of the 8 base-condition rates, recomputed by the build and compared.
@@ -309,6 +298,11 @@ class RateRow(BaseModel):
     released_alleles: tuple[lm.ReleasedAllele, ...] = Field(
         default=(), description="edits stored on the released-strain leaf (#1057)"
     )
+    untyped_edits: bool = Field(
+        default=False,
+        description="the background's name carries a construct no leaf types (#1045 "
+        "part 2)",
+    )
 
     @property
     def is_wild_type_mg1655(self) -> bool:
@@ -345,11 +339,7 @@ def read_rate_rows(path: str) -> tuple[list[RateRow], list[DropRule]]:
     kept: list[RateRow] = []
     for sample in with_rate:
         row = rows[sample]
-        genotype = lm.settle_genotype(row)
-        if genotype.rule in lm.BACKGROUND_RULES:
-            genotype = lm.settle_background(row)
-        elif genotype.rule in lm.ALLELE_RULES:
-            genotype = lm.settle_allele(row)
+        genotype = lm.settle_sample_genotype(row)
         if not genotype.kept:
             dropped.setdefault(("genotype", genotype.rule.value), []).append(sample)
             reasons[genotype.rule.value] = lm.GENOTYPE_RULE_REASONS[genotype.rule]
@@ -376,6 +366,7 @@ def read_rate_rows(path: str) -> tuple[list[RateRow], list[DropRule]]:
                 description=str(row[lm.COL_DESCRIPTION]),
                 background=genotype.background,
                 released_alleles=genotype.released_alleles,
+                untyped_edits=genotype.untyped_edits,
             )
         )
     rules = [
@@ -531,25 +522,15 @@ def reference_phenotype(aggregate: BaseAggregate) -> EnvironmentResponsePhenotyp
     )
 
 
-def genotype_of(row: RateRow, tags: Mapping[str, tuple[str, str]]) -> Genotype:
+def genotype_of(row: RateRow) -> Genotype:
     """The released deletions and alleles of one sample, as ``lamoureux2023`` writes them.
 
-    A deletion symbol with a ``tags`` entry is a deletion on its MG1655 b-number; one
-    without is stored as released on the released-strain leaf, as is every released
-    allele, each under the sample's ``Strain Description`` (#1057).
+    Every whole-gene deletion is keyed by the symbol its ``del_`` token releases, and
+    every released allele sits on the released-strain leaf, each under the sample's
+    ``Strain Description`` (#1057, #1045 part 2); the loader resolves no symbol.
     """
-    deletions: list[BacterialDeletionPerturbation | BacterialReleasedStrainPerturbation]
     deletions = [
-        BacterialDeletionPerturbation(
-            systematic_gene_name=tags[symbol][0],
-            perturbed_gene_name=tags[symbol][1],
-            gene_namespace=lm.GENE_NAMESPACE,
-        )
-        if symbol in tags
-        else lm.released_allele_perturbation(
-            lm.ReleasedAllele(gene=symbol, kind=ReleasedStrainKind.deletion),
-            row.description,
-        )
+        lm.deletion_perturbation(symbol, row.description)
         for symbol in row.deleted_symbols
     ]
     alleles = [
@@ -559,38 +540,12 @@ def genotype_of(row: RateRow, tags: Mapping[str, tuple[str, str]]) -> Genotype:
     return Genotype(perturbations=[*deletions, *alleles])
 
 
-def deletion_tags(
-    genome: EcoliK12Genome, rows: Sequence[RateRow], *, label: str
-) -> tuple[dict[str, tuple[str, str]], Any]:
-    """Each deleted symbol -> (b-number, the genome's own symbol), with the report.
-
-    The rule ``lamoureux2023`` applies to the same symbols: a symbol that resolves to
-    one MG1655 locus whose own symbol resolves back is a deletion on it; a symbol that
-    resolves to none has no entry and is stored as released (#1057).
-    """
-    symbols = sorted({symbol for row in rows for symbol in row.deleted_symbols})
-    names = pd.Series(symbols, dtype=object)
-    stored, report = reconcile_locus_tags(genome, names, label=label)
-    unresolved = set(report.outside_namespace)
-    tags: dict[str, tuple[str, str]] = {}
-    for symbol, tag in zip(symbols, stored.tolist(), strict=True):
-        if tag in unresolved:
-            continue
-        canonical = genome.genbank.loci[str(tag)].symbol or symbol
-        if genome.resolve_gene_name(canonical).systematic_name != str(tag):
-            raise RuntimeError(
-                f"{canonical!r}, the genome's symbol of {tag}, does not resolve back"
-            )
-        tags[symbol] = (str(tag), canonical)
-    return tags, report
-
-
 # --------------------------------------------------------------------------- #
 # The dataset
 # --------------------------------------------------------------------------- #
 @register_dataset
 class GrowthRateLamoureux2023Dataset(ExperimentDataset):
-    """PRECISE-1K's released per-sample growth rate: 260 absolute rates in 1/hr."""
+    """PRECISE-1K's released per-sample growth rate: 354 absolute rates in 1/hr."""
 
     organism = Organism.ecoli
 
@@ -602,11 +557,9 @@ class GrowthRateLamoureux2023Dataset(ExperimentDataset):
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
-        ecoli_genome: EcoliK12Genome | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize; ``ecoli_genome`` is injected by the build entry points."""
-        self.ecoli_genome = ecoli_genome
+        """Initialize; the loader reads no annotation (#1045 part 2)."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -642,15 +595,9 @@ class GrowthRateLamoureux2023Dataset(ExperimentDataset):
             "Lamoureux 2023 metadata linked into %s (sha256 verified)", self.raw_dir
         )
 
-    def _genome(self) -> EcoliK12Genome:
-        """The injected MG1655 genome, or the default cache opened read-only."""
-        if self.ecoli_genome is None:
-            self.ecoli_genome = bacterial_genome("ecoli", self.REFERENCE_STRAIN)
-        return self.ecoli_genome
-
     @post_process
     def process(self) -> None:
-        """Write one record per stored released rate, 260 in all."""
+        """Write one record per stored released rate, 354 in all."""
         verify_raw_files(self.raw_dir, {lm.METADATA.name: lm.METADATA.sha256})
         path = osp.join(self.raw_dir, lm.METADATA.name)
         rows, rules = read_rate_rows(path)
@@ -689,9 +636,6 @@ class GrowthRateLamoureux2023Dataset(ExperimentDataset):
         base = base_condition_environment(path)
         aggregate = base_aggregate(rows, environments, base)
 
-        genome = self._genome()
-        tags, report = deletion_tags(genome, rows, label=f"{self.name} deleted genes")
-
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
         reference = BacterialEnvironmentResponseExperimentReference(
@@ -700,7 +644,12 @@ class GrowthRateLamoureux2023Dataset(ExperimentDataset):
             environment_reference=base,
             phenotype_reference=reference_phenotype(aggregate),
         )
-        backgrounds: dict[str, BacterialEnvironmentResponseExperimentReference] = {}
+        # keyed by the whole spec and its untyped flag, never the name alone: a pColi
+        # construct and an evolved isolate can share a Strain Description (#1045 part 2)
+        backgrounds: dict[
+            tuple[lm.StrainBackgroundSpec, bool],
+            BacterialEnvironmentResponseExperimentReference,
+        ] = {}
 
         def reference_of(
             row: RateRow,
@@ -709,14 +658,18 @@ class GrowthRateLamoureux2023Dataset(ExperimentDataset):
             if row.background is None:
                 return reference
             spec = row.background
-            if spec.name not in backgrounds:
+            key = (spec, row.untyped_edits)
+            if key not in backgrounds:
                 genome_reference: AssemblyReferenceGenome = assembly_reference(
-                    self.REFERENCE_STRAIN, background=lm.strain_background(spec)
+                    self.REFERENCE_STRAIN,
+                    background=lm.strain_background(
+                        spec, untyped_edits=row.untyped_edits
+                    ),
                 )
-                backgrounds[spec.name] = reference.model_copy(
+                backgrounds[key] = reference.model_copy(
                     update={"genome_reference": genome_reference}
                 )
-            return backgrounds[spec.name]
+            return backgrounds[key]
 
         publication = Publication(
             doi=lm.PAPER_DOI, doi_url=f"https://doi.org/{lm.PAPER_DOI}"
@@ -726,7 +679,7 @@ class GrowthRateLamoureux2023Dataset(ExperimentDataset):
             for index, row in enumerate(tqdm(rows, desc="lamoureux2023 growth rate")):
                 experiment = BacterialEnvironmentResponseExperiment(
                     dataset_name=self.name,
-                    genotype=genotype_of(row, tags),
+                    genotype=genotype_of(row),
                     environment=environments[row.sample],
                     phenotype=phenotype(row),
                 )
@@ -739,7 +692,7 @@ class GrowthRateLamoureux2023Dataset(ExperimentDataset):
         env.close()
         interned_env.close()
 
-        self._write_ledgers(rows, rules, aggregate, report, environments)
+        self._write_ledgers(rows, rules, aggregate, environments)
         log.info(
             "Lamoureux 2023 growth rate: %d records over %d conditions and %d projects; "
             "rate %.4f to %.4f 1/hr; reference %s = %.5f 1/hr over %d released rows",
@@ -758,7 +711,6 @@ class GrowthRateLamoureux2023Dataset(ExperimentDataset):
         rows: Sequence[RateRow],
         rules: Sequence[DropRule],
         aggregate: BaseAggregate,
-        report: Any,
         environments: Mapping[str, Environment],
     ) -> None:
         """The drop log, the base aggregate, the sourcing table and the rate table."""
@@ -811,9 +763,6 @@ class GrowthRateLamoureux2023Dataset(ExperimentDataset):
                 },
                 indent=2,
             )
-        )
-        (out / "locus_tag_reconciliation.json").write_text(
-            json.dumps({"deleted_genes": report.model_dump(mode="json")}, indent=2)
         )
         (out / "sourced_values.json").write_text(
             json.dumps(
@@ -879,39 +828,6 @@ VERIFIER_PROVENANCE = Provenance(
 )
 
 
-def l4_deleted_genes_are_mg1655_loci(
-    records: Sequence[Mapping[str, Any]], genome: EcoliK12Genome
-) -> LevelResult:
-    """L4: every stored deletion names a gene row of the pinned MG1655 annotation.
-
-    It reads the placed deletion leaves; a gene stored as released on the
-    released-strain leaf is not placed, so the genome has nothing to say about it
-    (#1057).
-    """
-    deleted = {
-        perturbation["systematic_gene_name"]
-        for record in records
-        for perturbation in record["experiment"]["genotype"]["perturbations"]
-        if perturbation["perturbation_type"] == "bacterial_deletion"
-    }
-    universe = set(genome.genbank.loci)
-    missing = sorted(deleted - universe)
-    return LevelResult(
-        level=Level.L4,
-        name="gene_containment_mg1655_b_numbers",
-        passed=not missing,
-        message=(
-            f"{len(deleted) - len(missing)} of {len(deleted)} deleted loci are MG1655 "
-            "GenBank gene rows"
-        ),
-        details={
-            "n_deleted": len(deleted),
-            "n_universe": len(universe),
-            "missing": missing[:20],
-        },
-    )
-
-
 def verify_build(
     dataset_root: str,
     data_root: str | None = None,
@@ -944,7 +860,6 @@ def verify_build(
         expected_unperturbed=EXPECTED_UNPERTURBED,
         resolve_gene_name=genome.resolve_gene_name,
     )
-    report.add(l4_deleted_genes_are_mg1655_loci(records, genome))
     out = osp.join(dataset_root, "preprocess", "verification_report.json")
     os.makedirs(osp.dirname(out), exist_ok=True)
     with open(out, "w") as handle:

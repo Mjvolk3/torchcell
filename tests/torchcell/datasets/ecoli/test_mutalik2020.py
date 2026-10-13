@@ -1681,7 +1681,12 @@ def test_a_control_whose_medium_has_no_library_base_is_kept_as_released() -> Non
         None,
     )
     assert [gap.field for gap in medium.provenance_gaps] == ["is_synthetic"]
-    assert medium.components == []
+    # the label is the one deferred line, so two released labels never share an identity
+    (line,) = medium.components
+    assert (line.compound.name, line.definition.value) == (
+        medium.name,
+        "composition_deferred",
+    )
 
 
 def test_records_per_experiment_refuses_a_census_the_experiments_do_not_span() -> None:

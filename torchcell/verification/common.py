@@ -450,8 +450,10 @@ class SharedRecordRules:
 
         Model equality against a ``MEDIA_LIBRARY`` member is the strong form (the same
         components, concentrations and provenance); ``base_medium`` naming a library key is
-        the derived form (a dataset-specific variant that still joins at its base). Anything
-        else is free text and joins nothing.
+        the derived form (a dataset-specific variant that still joins at its base). A
+        medium the source labels but no library carries, stored as released with its
+        class a typed gap (``is_synthetic``; #1045 part 2), is ``released``: it declares
+        that it joins nothing. Anything else is free text and joins nothing.
         """
         name = str(media.get("name"))
         # --- begin #901/#902/#903: a typed gap on the medium ------------------ #
@@ -465,6 +467,14 @@ class SharedRecordRules:
                 return name, f"gapped:{reasons[0]}"
             return name, "free_text"
         # --- end #901/#902/#903 ---------------------------------------------- #
+        if media.get("is_synthetic") is None and media.get("base_medium") is None:
+            reasons = [
+                str(gap.get("reason"))
+                for gap in media.get("provenance_gaps") or []
+                if gap.get("field") == "is_synthetic"
+            ]
+            if reasons:
+                return name, f"released:{reasons[0]}"
         for key, dump in self._media_dumps:
             if media == dump:
                 return name, f"library:{key}"
@@ -773,6 +783,7 @@ class SharedRecordRules:
         free_text: Counter[str] = Counter()
         matched: dict[str, str] = {}
         gapped: Counter[str] = Counter()
+        released: Counter[str] = Counter()
         n_library = 0
         n_derived = 0
         for (name, verdict, base), count in self._media_records.items():
@@ -780,6 +791,8 @@ class SharedRecordRules:
                 free_text[f"{name} (base_medium={base})"] += count
             elif verdict.startswith("gapped:"):
                 gapped[verdict.removeprefix("gapped:")] += count
+            elif verdict.startswith("released:"):
+                released[name] += count
             elif verdict.startswith("library:"):
                 n_library += count
                 matched[name] = verdict
@@ -795,6 +808,13 @@ class SharedRecordRules:
             if n_gapped
             else ""
         )
+        n_released = sum(released.values())
+        released_clause = (
+            f", {n_released} on {len(released)} media the source labels with no "
+            "library recipe, stored as released with a typed gap on is_synthetic"
+            if n_released
+            else ""
+        )
         return LevelResult(
             level=Level.L3,
             name="media_membership",
@@ -803,6 +823,7 @@ class SharedRecordRules:
                 f"{n_library} records on a shared MEDIA_LIBRARY medium, {n_derived} on a "
                 f"medium deriving from one ({len(matched)} distinct media)"
                 + gapped_clause
+                + released_clause
                 if passed
                 else f"{len(free_text)} free-text media over {sum(free_text.values())} "
                 "records join nothing: "
@@ -815,6 +836,8 @@ class SharedRecordRules:
                 "n_derived_records": n_derived,
                 "n_gapped_records": n_gapped,
                 "gapped_reasons": dict(sorted(gapped.items())),
+                "n_released_records": n_released,
+                "released_media": dict(released.most_common(50)),
                 "matched_media": dict(sorted(matched.items())),
                 "free_text_records": dict(free_text.most_common(50)),
             },

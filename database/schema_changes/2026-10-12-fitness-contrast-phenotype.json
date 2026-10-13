@@ -4,7 +4,7 @@
   "date": "2026-10-12",
   "pr": 1074,
   "author_kind": "agent",
-  "base_commit": "3259ed278c0c30dfcfd68d8efcd57f31cbe27b72",
+  "base_commit": "11d3a90ef079b2000cd208f3f091eec9511b211f",
   "python_version": "3.13.0",
   "symbols": [
     {
@@ -39,8 +39,8 @@
       "kinds": [
         "enum_member_added"
       ],
-      "fingerprint_before": "7456aee12b83dcbe52c6d111750164bb58215390bf29fa97c5626087fa9a2410",
-      "fingerprint_after": "8af642b9933ea65c7b80c02a41be2da3ff60fb5961a3034c5dbf1c3e9062febf",
+      "fingerprint_before": "41b023f7f533097a1756448f7dc406204baab8bc63f271992dddd7e4086b4fcc",
+      "fingerprint_after": "7e488184bb746a1ba0e2bcc572ef0ff2c7de69cf0a966ad8ec5605623c407d0c",
       "impact": "stale",
       "reasons": [
         "gained members [\"'bacterial_fitness_contrast': BacterialFitnessContrastExperimentReference\"]"
@@ -52,8 +52,8 @@
       "kinds": [
         "enum_member_added"
       ],
-      "fingerprint_before": "2fca3c4c7f955f61567e77d0446db683114af13347aebf33dc269e58c4b0ca85",
-      "fingerprint_after": "236d37735449e6f79ef5359c6fef870ef069aa8e16b6b96b699bb09047ed6071",
+      "fingerprint_before": "f8efd196b981f5408c9544815c0946073d833d6178879a91c142a4b1e9df87fa",
+      "fingerprint_after": "7d1f705840f6aab7e3e2319d9100609c1692a152077026dbe7d4b8cddf4cbc07",
       "impact": "stale",
       "reasons": [
         "gained members [\"'bacterial_fitness_contrast': BacterialFitnessContrastExperiment\"]"
@@ -65,8 +65,8 @@
       "kinds": [
         "enum_member_added"
       ],
-      "fingerprint_before": "d0a2f2c56a4a7bda227bba7b4256222417b90e90c93737dc79224edb7726b09c",
-      "fingerprint_after": "0c9dcc2e3ff15a08113d251d3d6d4b80688060f61d1ac3daa7e19967187fd151",
+      "fingerprint_before": "7239d0d3ad9a05f7fa758513c4b34fe5be53d547f6a5716b5b635593bb8f3e31",
+      "fingerprint_after": "8599ea12a72ab3e6e8b9f2ccb5ddf379e54c33f29013e13d0327559952e01926",
       "impact": "stale",
       "reasons": [
         "gained members ['BacterialFitnessContrastExperimentReference']"
@@ -78,8 +78,8 @@
       "kinds": [
         "enum_member_added"
       ],
-      "fingerprint_before": "fc49ca18edb64b68945aa1c67e8c1dabd0eb6f1c67915b10ef52bda617bc1de0",
-      "fingerprint_after": "36f188a33aed4de8e2760737a839ac7e16f2e54ae4cf6bd5f8a77eecaabd7fa0",
+      "fingerprint_before": "b19d998e91a2a18c568d1bbf39ab59beb0754f87019e65461f57552ecdfa3f80",
+      "fingerprint_after": "17dbfc89da62727be55570f746378dbc5be52aa470214fa92ee7c5ab791770d9",
       "impact": "stale",
       "reasons": [
         "gained members ['BacterialFitnessContrastExperiment']"
@@ -104,8 +104,8 @@
       "kinds": [
         "enum_member_added"
       ],
-      "fingerprint_before": "4066009fb7a0d31ef5b774e4e74a48af77bd2e334c596ec2c5cf10e780950f83",
-      "fingerprint_after": "27bdf8bd84468da6da72b8a0298b8d9152973689b27e2eb9665e1c11c91688c6",
+      "fingerprint_before": "6565c26f97d1c0609b79bea1e0e1c962a8b53c4367ff58bf2f908ef477d3d99d",
+      "fingerprint_after": "d62767bbe8dd9dffe340ed96e1ba83e4744ba0287a06000a939e5e448ff64527",
       "impact": "stale",
       "reasons": [
         "gained members ['FitnessContrastPhenotype']"

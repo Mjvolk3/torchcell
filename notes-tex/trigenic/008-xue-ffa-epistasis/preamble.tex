@@ -14,13 +14,11 @@
 %% Measures the image into a save-box, then wraps image and caption in a minipage of that
 %% exact width. Use inside a figure/figure* environment:
 %%   \tcfig{figures/foo.pdf}{Caption text.}{fig:label}
-\newsavebox{\tcfigbox}
+%% The caption runs the full text width, margin to margin, whatever the figure's
+%% width (author's call, 2026-10-09): a narrow figure should not force a narrow caption.
 \newcommand{\tcfig}[3]{%
-  \sbox{\tcfigbox}{\includegraphics{#1}}%
-  \noindent\begin{minipage}{\wd\tcfigbox}%
-  \usebox{\tcfigbox}\par
+  \centering\includegraphics{#1}\par
   \caption{#2}\label{#3}%
-  \end{minipage}%
 }
 
 %% A multi-panel figure whose panels are separate true-size PDFs, laid out here rather

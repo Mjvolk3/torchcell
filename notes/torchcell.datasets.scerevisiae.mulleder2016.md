@@ -181,3 +181,7 @@ Owner rule, 2026-10-12: the data is the data; the genome and the experiment are 
 Before: a row whose ORF was not ORF-shaped was skipped, and a repeated ORF kept its first row (both 0 on the pinned workbook).
 
 Now: a row with no ORF form is counted in the build log as deferred to the released-gene-name leaf (never dropped for good; 0 of 4,678), and a repeated ORF raises rather than keeping the first (0). 4,678 records, unchanged.
+
+## 2026.10.12 - The deferred name is a record on the released-gene-name leaf (#1045, PR #1085)
+
+A released identifier with no ORF form goes on `ReleasedGeneNamePerturbation` (0 of 4,678 rows). The two concentration-sheet rows that name no deletion strain, the blank ORF cell and the `WT` background row, are listed by name in the log rather than counted as deferred. The count stays 4,678.

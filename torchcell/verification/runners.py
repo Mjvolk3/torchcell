@@ -731,9 +731,9 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
         "root": "data/torchcell/isobutanol_screen_lopez2024",
         # First genome-wide biosensor screen (Table S2): median GFP fluorescence per YKO
         # strain; FC = median fluor(deletion) / median fluor(WT same plate). One record
-        # per released row (#1045): 4805 rows - 1 row with no ORF form (YLR287-A,
-        # deferred to the released-gene-name leaf) = 4804; 186 ORFs carry two records.
-        "expected_count": 4804,
+        # per released row (#1045): all 4805 rows, the one with no ORF form (YLR287-A)
+        # on the released-gene-name leaf; 186 ORFs carry two records.
+        "expected_count": 4805,
         "allow_duplicate_orfs": True,
         "reference_centered": False,  # FC ratio vs WT control (reference metabolite_level=1.0)
         "provenance": Provenance(

@@ -199,3 +199,7 @@ Owner rule, 2026-10-12: the data is the data; the genome and the experiment are 
 Before: rows were aggregated per ORF (`visual_score` = the maximum over an ORF's plates, `visual_score_min` the minimum, `n_replicates` the plate count: 132 rows into 130 ORFs, 96 of them with differing values), a row scored on two strains raised `MixedStrainScoresError`, a strain other than BY4741 or BY4730 was stored as BY4741, the malformed `YLR287-A` was excluded, and 501 ORFs with only a text Color cell were left out.
 
 Now: one record per released scored row, `n_replicates = 1`, `visual_score_min` None, the row's own flags and the row's own `Strain` cell on the reference (`W303` stays `W303`); the visual-score verifier runs the store with `allow_duplicate_orfs`. 4,606 records (was 4,474). `preprocess/dropped_records.json` lists the 546 text-only rows verbatim with ORF, strain and text (`color_cell_is_text_not_a_score`: `visual_score` holds a number) and the one `YLR287-A` row under `deferred_to_released_gene_name_leaf`.
+
+## 2026.10.12 - The deferred name is a record on the released-gene-name leaf (#1045, PR #1085)
+
+The one ORF cell that is not ORF-shaped, `YLR287-A`, is stored on `ReleasedGeneNamePerturbation` (kind `deletion`, marker KanMX); the ledger rule is `stored_on_released_gene_name_leaf` with `n_records` 0 and the name listed. The count goes from 4,606 to 4,607.

@@ -156,3 +156,9 @@ Record-neutral, measured on the pinned PDF (sha256 `01b94544...`): all 67 classe
 Tests: `test_a_class_short_of_its_declared_count_refuses_at_table_end`, `test_a_class_over_its_declared_count_refuses_at_the_next_class_row`, `test_drop_log_ledgers_the_in_table_collapse`.
 
 Review follow-up (same day): the "stress table not found" refusal and every `_resolve_stress` / `_resolve_token` refusal sat inside the write transaction, so a refusal left an empty `processed/lmdb` that a retry served. All six tables now resolve before the store is opened. On the synthetic layout build, the LMDB (8 records) is byte-identical to main's: digest `4505a1f3...`.
+
+## 2026.10.12 - Every released name stored as released on the released-gene-name leaf (#1045, PR #1085)
+
+The loader no longer takes a genome. Every listed token of the six stress tables is one record under the token verbatim: a systematic name on `KanMxDeletionPerturbation`, any other on `ReleasedGeneNamePerturbation` (kind `deletion`, marker KanMX). PPA1 and FEN1, aliases of two current genes each, are stored as the symbols the paper wrote; the evidence-based adjudication of 2026.10.01 (above) is retired, and a token a table lists twice would refuse the build (`RepeatedTokenError`; 0 in the pinned PDF). Records follow the listed order within each stress.
+
+Measured: 525 listed tokens, 525 records, none dropped, as before; the count is unchanged and the identities are now the released symbols. The L0-L4 table from the rebuild follows below once job 4606 finishes.

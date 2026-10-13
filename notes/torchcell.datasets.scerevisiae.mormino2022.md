@@ -214,3 +214,7 @@ Before this change, `download()` verified the mirror bytes against the digest re
 ## 2026.10.01 - OCR processor name resolves
 
 Issue #546. The OCR `ProcessingRecord` written by `deposit_raw_mirror` named `torchcell.literature.ocr.run_mineru`, which does not exist; it now names `torchcell.literature.ocr.ocr_pdf`, the function that OCRs one PDF. Loader records are unchanged (the build reads only the manifest's sha256 values). The raw-mirror `manifest.json` already deposited under `$DATA_ROOT/torchcell-raw/morminoIdentificationAceticAcid2022/` still says `run_mineru` until the next `deposit_raw_mirror`. Evidence: `test_the_processor_named_by_mormino_2022_resolves_to_ocr_pdf` in [[tests.torchcell.literature.test_ocr]].
+
+## 2026.10.12 - Every released name stored as released on the released-gene-name leaf (#1045, PR #1085)
+
+The loader no longer takes a genome. Each of the 12 Table 1 targets is stored under the name the table gives on `ReleasedGeneNamePerturbation` with kind `crispr_interference` and the same construct as before (`dCas9-Mxi1`, one guide, no spacer); a systematic name, had the table used one, would go on `CrisprInterferencePerturbation`. The count stays 12; the L0-L4 table from the rebuild follows below once job 4606 finishes.

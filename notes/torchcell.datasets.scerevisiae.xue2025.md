@@ -106,3 +106,7 @@ L0-L4 on the dev store, read-only (`kg4_pre_build_verification_sweep.py --datase
 | L3 | `reference_finite` | PASS | reference level finite + key-subset for all 880 values |
 | L3 | `measurement_type_consistent` | PASS | single measurement_type: 'titer_mg_per_l' |
 | L4 | `gene_containment_scmd_ohya2005` | **FAIL** | 0.769 of scmd_ohya2005's 13 deletion genes are in Ohya (>= 0.9) |
+
+## 2026.10.12 - Every released name stored as released on the released-gene-name leaf (#1045, PR #1085)
+
+The loader no longer takes a genome. The release names its 13 genes by common name only, so every deletion is stored on `ReleasedGeneNamePerturbation` under that name (kind `deletion`, marker KanMX); TFC7, the standard name of YOR110W and an alias of YNL039W, is stored as the symbol the release wrote and the #886 pin table is gone. `preprocess/data.csv` lists `genotype,n_deletions,genes` with the sorted released names. The count stays 176; the L0-L4 table from the rebuild follows below once job 4606 finishes.

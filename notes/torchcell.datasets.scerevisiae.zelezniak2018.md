@@ -206,3 +206,7 @@ Owner rule, 2026-10-12: the data is the data; the genome and the experiment are 
 Before: a `KO_ORF` outside the ORF pattern was skipped (0 of 97 in the pinned matrix).
 
 Now: such a strain id is counted as deferred to the released-gene-name leaf (0 of 97). Records unchanged: 97 proteome, 129 metabolome.
+
+## 2026.10.12 - The deferred name is a record on the released-gene-name leaf (#1045, PR #1085)
+
+A proteome `KO_ORF` with no ORF form goes on `ReleasedGeneNamePerturbation` with the released `KO_gene_name` as its perturbed name (0 of 97 strains). The counts stay 97 and 129.

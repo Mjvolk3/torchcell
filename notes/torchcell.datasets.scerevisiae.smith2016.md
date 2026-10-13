@@ -145,3 +145,7 @@ Owner rule, 2026-10-12: the data is the data; the genome and the experiment are 
 Before: 7,410 of 14,463 rows were dropped because the Drug label is a ChemDiv / ChemBridge / TimTec catalog id with no released structure (`resolve_compound_identity` PROPRIETARY); the target ORF was resolved through the genome (0 dropped) and the perturbed name was the genome's standard name.
 
 Now: every row is a record. The vendor-code drugs are stored under the released label with the typed `inchikey` gap `resolved_compound` attaches (`not_reported_by_primary`), listed under `compound_identity_gaps` in the ledger with their record counts (the Parsons 2006 route of #1053). The target is the released `ORF` cell and `perturbed_gene_name` the released `Gene` cell (the ORF where blank); no genome is injected. 14,463 records (was 7,053). An `ORF` cell with no ORF form is counted under `deferred_to_released_gene_name_leaf` (0 of 14,463).
+
+## 2026.10.12 - The deferred name is a record on the released-gene-name leaf (#1045, PR #1085)
+
+A target whose ORF cell is not ORF-shaped goes on `ReleasedGeneNamePerturbation` with kind `crispr_interference` and its construct (0 of the 20 released targets); the ledger rule `deferred_to_released_gene_name_leaf` is renamed `stored_on_released_gene_name_leaf` with `n_records` 0. The count stays 14,463.

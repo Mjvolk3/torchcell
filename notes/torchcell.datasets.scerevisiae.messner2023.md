@@ -134,3 +134,7 @@ Owner rule, 2026-10-12: the data is the data; the genome and the experiment are 
 Before: the 1,850 `Protein.Group` UniProt accessions were lifted to systematic ORFs through the SGD GFF `protein_id=UniProtKB:` cross-references and stored as the `protein_abundance` keys; `perturbed_gene_name` was the GFF `gene=` standard name of the metadata ORF (3,780 of 4,699 records), else the ORF.
 
 Now: the protein keys are the released accessions (`P00410`, the mitochondrial COX2, included); `systematic_gene_name` and `perturbed_gene_name` are both the metadata `ORF`, upper-cased. No annotation is consulted; `build_uniprot_to_orf_map` and `build_orf_to_gene_name_map` stay in the module as downstream utilities because the Messner 2021 loader calls the first. A metadata ORF with no ORF form is counted as deferred (0 of 4,699). 4,699 records; joining an accession to a gene is a modeling-time step.
+
+## 2026.10.12 - The deferred name is a record on the released-gene-name leaf (#1045, PR #1085)
+
+A metadata ORF with no ORF form goes on `ReleasedGeneNamePerturbation` (0 of 4,699 strains). The count stays 4,699.

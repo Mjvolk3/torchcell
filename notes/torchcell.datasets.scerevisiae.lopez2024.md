@@ -50,3 +50,7 @@ Owner rule, 2026-10-12: the data is the data; the genome and the experiment are 
 Before (Table S2): rows were resolved through the genome's ID and alias tables (57 rows dropped: 25 with no alias, 31 whose alias target is a directly present ORF, 1 not ORF-shaped), 25 rows renamed to the current ORF, and the rows of one ORF averaged into one record (194 rows into 186 ORFs, SE from the sample SD). Before (Table S3): both `YBL071W-A` rows were dropped as contradictory, `YIR043C` as unresolved, 3 rows renamed.
 
 Now: one record per released row under the released ORF (upper-cased), `n_replicates = 1` and no SE for S2, the released triplicate SD for S3. S2: 4,805 rows, 4,804 records (was 4,554); the one row with no ORF form (`YLR287-A`, the release dropped the strand letter) is counted under `deferred_to_released_gene_name_leaf` in `preprocess/dropped_records.json` and is stored by the released-gene-name leaf PR. S3: all 227 rows, both `YBL071W-A` rows included (FC 3.469 and 0.0757; the contradiction is a finding for the paper note, not a reason to drop either). The metabolite verifier runs both stores with `allow_duplicate_orfs`. The reference is one shared WT control with n 1 (S2) or 3 (S3).
+
+## 2026.10.12 - The deferred name is a record on the released-gene-name leaf (#1045, PR #1085)
+
+The one Table S2 strain name with no ORF form, `YLR287-A`, is stored on `ReleasedGeneNamePerturbation` (kind `deletion`, marker KanMX); `preprocess/dropped_records.json` lists it under the retention rule `none` and drops nothing. The S2 count goes from 4,804 to 4,805.

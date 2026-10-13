@@ -2131,7 +2131,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "metabolite_zelezniak2018": 129,
         "metabolite_dasilveira2014": 127,
         "organic_acid_yoshida2012": 17,
-        "isobutanol_screen_lopez2024": 4804,
+        "isobutanol_screen_lopez2024": 4805,
         "isobutanol_validated_lopez2024": 227,
         "ffa_xue2025": 176,
         "metabolome_fuhrer2017": 3735,

@@ -185,6 +185,7 @@
     <span class="s2">"GeneNameResolution"</span><span class="p">,</span>
     <span class="s2">"GeneNameResolver"</span><span class="p">,</span>
     <span class="s2">"SharedRecordRules"</span><span class="p">,</span>
+    <span class="s2">"declared_first_union_validator"</span><span class="p">,</span>
     <span class="s2">"declared_member_validator"</span><span class="p">,</span>
     <span class="s2">"gap_carrier_fields"</span><span class="p">,</span>
     <span class="s2">"key_digest"</span><span class="p">,</span>
@@ -1148,6 +1149,62 @@
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">tag_field</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">stored</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">tag_field</span><span class="p">)</span><span class="si">!r}</span><span class="s2"> is not </span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">'s </span><span class="si">{</span><span class="n">tag</span><span class="si">!r}</span><span class="s2">"</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">stored</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">validate</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">declared_first_union_validator</span><span class="p">(</span>
+    <span class="n">union</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"ExperimentType"</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="nb">object</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""``TypeAdapter(schema.&lt;union&gt;).validate_python`` with the same verdict, 46x faster.</span>
+
+<span class="sd">    The union is not discriminated, so pydantic tries a stored mapping against every one</span>
+<span class="sd">    of its 46 members: 13.7 ms on a Borchert 2024 record and 12.7 ms on a Choe 2025 one</span>
+<span class="sd">    (73 and 79 records per second). That was 97% of the environment-response verifier's</span>
+<span class="sd">    time, and the verifier was 5 h 24 min of the 5 h 32 min Borchert build (slurm</span>
+<span class="sd">    4011_103). Validating the ONE member whose tag default is the mapping's tag costs</span>
+<span class="sd">    0.3 ms (3,390 and 3,604 records per second).</span>
+
+<span class="sd">    Same verdict as the union, by construction. A mapping that validates as a member</span>
+<span class="sd">    validates as the union, so the declared member's success is returned as the union's.</span>
+<span class="sd">    Any mapping the declared member does not accept (wrong tag, a tag no member or</span>
+<span class="sd">    several members carry, a record that is valid only as another member, an invalid</span>
+<span class="sd">    record) is handed to the union itself, so its pass, its failure and its error text</span>
+<span class="sd">    are the union's own. The one input on which the two can differ is a mapping the</span>
+<span class="sd">    declared member accepts while an EARLIER member's validator raises a non-validation</span>
+<span class="sd">    error (pydantic lets a ``TypeError`` or ``KeyError`` out of the union): the union</span>
+<span class="sd">    fails it, this passes it. Such a record fails L0 (or stops the verifier) today, so</span>
+<span class="sd">    on every store that passes L0 under the union the reports are identical. Unlike</span>
+<span class="sd">    :func:`declared_member_validator`, which is the stronger statement, this keeps the</span>
+<span class="sd">    union's acceptance set; it is the drop-in for a verifier that has always validated</span>
+<span class="sd">    against the union.</span>
+<span class="sd">    """</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">typing</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeAdapter</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels</span><span class="w"> </span><span class="kn">import</span> <span class="n">schema</span>
+
+    <span class="n">union_type</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="n">union</span><span class="p">)</span>
+    <span class="n">tag_field</span> <span class="o">=</span> <span class="n">_UNION_TAG_FIELDS</span><span class="p">[</span><span class="n">union</span><span class="p">]</span>
+    <span class="n">members_by_tag</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">member</span> <span class="ow">in</span> <span class="n">typing</span><span class="o">.</span><span class="n">get_args</span><span class="p">(</span><span class="n">union_type</span><span class="p">):</span>
+        <span class="n">tag</span> <span class="o">=</span> <span class="n">member</span><span class="o">.</span><span class="n">model_fields</span><span class="p">[</span><span class="n">tag_field</span><span class="p">]</span><span class="o">.</span><span class="n">default</span>
+        <span class="n">members_by_tag</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">member</span><span class="p">)</span>
+    <span class="n">declared</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">tag</span><span class="p">:</span> <span class="n">members</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">tag</span><span class="p">,</span> <span class="n">members</span> <span class="ow">in</span> <span class="n">members_by_tag</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">members</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+    <span class="p">}</span>
+    <span class="n">validate_union</span> <span class="o">=</span> <span class="n">TypeAdapter</span><span class="p">(</span><span class="n">union_type</span><span class="p">)</span><span class="o">.</span><span class="n">validate_python</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="n">stored</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">object</span><span class="p">:</span>
+        <span class="n">tag</span> <span class="o">=</span> <span class="n">stored</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">tag_field</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stored</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">declared</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">stored</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># the union decides, with its own error text</span>
+                <span class="k">pass</span>
+        <span class="k">return</span> <span class="n">validate_union</span><span class="p">(</span><span class="n">stored</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">validate</span>
 

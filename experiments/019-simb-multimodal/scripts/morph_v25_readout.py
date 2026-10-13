@@ -44,6 +44,11 @@ TRAIN = "traineval/morphology/pearson_per_feature"
 # report their 1,000 to 1,199 mean (`window_late`) as the check that both rank alike.
 WINDOW = (400, 499)
 WINDOW_LATE = (1000, 1199)
+# The lr 1e-4 cells were still rising at epoch 499 (+0.037 validation Pearson over the
+# last 200 epochs, read 2026-10-12), so the v26b cells at that lr run 1,000 epochs and
+# also report their 900 to 999 mean (`window_1000`, declared before any such run began);
+# their 400 to 499 mean stays the number compared with the rest of the round.
+WINDOW_1000 = (900, 999)
 ESCAPE = 0.3
 # The launcher's SWEEP_OV tags replace the arm script's, so a v25 run carries the arm
 # (M_cls), the split (split0) and the init seed (init0) as separate tags.
@@ -103,6 +108,7 @@ def read_run(run: Any) -> dict[str, Any] | None:
         "finished": finished,
         "window": st.mean(in_window) if finished and in_window else None,
         "window_late": st.mean(late) if last >= WINDOW_LATE[1] and late else None,
+        "window_1000": st.mean(w1k) if last >= WINDOW_1000[1] and (w1k := [v for e, v in val if WINDOW_1000[0] <= e <= WINDOW_1000[1]]) else None,
         "partial_window": None if finished else (st.mean(tail) if tail else None),
         "roll_max": max((v for _, v in val), default=None),
         "train_last": train[-1][1] if train else None,
@@ -163,6 +169,10 @@ def main() -> None:
     runs = list(api.runs(f"{ENTITY}/{PROJECT}", per_page=500))
     with ThreadPoolExecutor(8) as pool:
         rows = [r for r in pool.map(read_run, runs) if r is not None]
+    # A run with no validation epoch is a launch that was cancelled before its first
+    # epoch (the Delta packs resubmitted at the 500-epoch budget left twelve such
+    # records); it is not a partial run and counts in no cell.
+    rows = [r for r in rows if r["last_epoch"] >= 0]
     cells: dict[str, list[dict[str, Any]]] = {}
     for r in rows:
         cells.setdefault(r["cell"], []).append(r)

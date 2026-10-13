@@ -689,6 +689,40 @@ case "$STAGE" in
           JOBS_EXPLICIT=1
           RUNS_PER_GPU=1; STAGE_CONFIG=cgt_morph_v24
           EXTRA_OV="trainer.max_epochs=${MORPH_EPOCHS:-500} data_module.batch_size=128 +data_module.materialize=true data_module.persistent_workers=true wandb.project=torchcell_019_morph_v25" ;;
+  # v26b (2026-10-12 evening, same project; read of 113 v25 cells in morph_v25_readout.json):
+  # the plateau breaks under a gene-token readout with MSE (M_zs + MSE 0.147, 4 of 4 escaped
+  # by epoch 200), under the graph KL on M_cls (4 of 4), and under a LOWER lr on M_cls
+  # (lr 1e-4: 0.141, 3 of 4, still rising at epoch 499); a higher lr never breaks it (0 of
+  # 23 cells). This stage combines and replicates: M_zs + MSE init seeds 1 and 2 (the
+  # headline's replicates); M_xattn + MSE; M_zs + MSE with the alignment term at 0.1;
+  # M_zs + MSE and M_cls + MSE at lr 1e-4, and M_cls pinball at lr 1e-4, the three lr 1e-4
+  # cells at 1,000 epochs (MORPH_EPOCHS_LR1E4, window 900 to 999 beside 400 to 499).
+  # Split seeds 0 to 3: 28 one-card tasks, the 500-epoch cells first.
+  #   sbatch -J 019-morph2w6-combine -p cabbi --gres=gpu:1 --cpus-per-task=5 --mem=60g \
+  #       --time=0-14:00:00 --array=0-27%8 --export=ALL,W5_STAGE=morph_v26b,... igb_expr_wave5.slurm
+  morph_v26b) JOBS=(); SWEEP_OV=()
+          E1="trainer.max_epochs=${MORPH_EPOCHS_LR1E4:-1000}"
+          for s in 0 1 2 3; do for init in 1 2; do
+            JOBS+=("M_zs_s${s}:${init}")
+            SWEEP_OV+=("multitask.dist=point regression_task.optimizer.lr=3e-4 wandb.tags=[v26b,M_zs,mse,lr3e-4,split${s},init${init}]")
+          done; done
+          for s in 0 1 2 3; do
+            JOBS+=("M_xattn_s${s}:0")
+            SWEEP_OV+=("multitask.dist=point regression_task.optimizer.lr=3e-4 wandb.tags=[v26b,M_xattn,mse,lr3e-4,split${s},init0]")
+            JOBS+=("M_zs_s${s}:0")
+            SWEEP_OV+=("multitask.dist=point regression_task.optimizer.lr=3e-4 multitask.latent_align.enabled=true multitask.latent_align.head=global multitask.latent_align.lambda=0.1 multitask.latent_align.source=cls_zs wandb.tags=[v26b,M_zs,mse,align0.1,srccls_zs,lr3e-4,split${s},init0]")
+          done
+          for s in 0 1 2 3; do
+            JOBS+=("M_zs_s${s}:0")
+            SWEEP_OV+=("$E1 multitask.dist=point regression_task.optimizer.lr=1e-4 wandb.tags=[v26b,M_zs,mse,lr1e-4,split${s},init0]")
+            JOBS+=("M_cls_s${s}:0")
+            SWEEP_OV+=("$E1 multitask.dist=point regression_task.optimizer.lr=1e-4 wandb.tags=[v26b,M_cls,mse,lr1e-4,split${s},init0]")
+            JOBS+=("M_cls_s${s}:0")
+            SWEEP_OV+=("$E1 regression_task.optimizer.lr=1e-4 wandb.tags=[v26b,M_cls,lr1e-4,e1000,split${s},init0]")
+          done
+          JOBS_EXPLICIT=1
+          RUNS_PER_GPU=1; STAGE_CONFIG=cgt_morph_v24
+          EXTRA_OV="trainer.max_epochs=${MORPH_EPOCHS:-500} data_module.batch_size=128 +data_module.materialize=true data_module.persistent_workers=true wandb.project=torchcell_019_morph_v25" ;;
   # prot_v26 (2026-10-12, project torchcell_019_prot_v26): the same term on the knockout
   # proteome. The S_prot arm (v21 small trunk: ProtT5, width 90, six layers, per-gene
   # head) on the FULL fig3_proteome store (Messner 2023, every proteome genotype, not the

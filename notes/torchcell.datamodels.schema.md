@@ -677,7 +677,7 @@ Stores (one experiment class per store, so each release's graded calls are a sec
 
 | store | records | what it holds |
 |---|---|---|
-| `graded_gene_essentiality_goodall2018` | 317 | the TraDIS `unclear` calls the boolean store counts under `unclear_call_not_representable`, verbatim, on the same `BacterialReleasedTransposonPerturbation` keyed by the released symbol as #1082's boolean records |
+| `graded_gene_essentiality_goodall2018` | 317 | the TraDIS `unclear` calls the boolean store counts under `unclear_call_not_representable`, verbatim, on the same `BacterialReleasedTransposonPerturbation` as the boolean records (#1082, #1086): the released `Gene` symbol, and the row's own coordinate (`TL row <n>`, `LB row <n>`) as `strain_label` |
 | `graded_gene_essentiality_royet2025` | 11,458 | Table S4: 5,729 KT2440 genes x 2 stages (LB agar, outgrowth in LB), every ES/GD/NE/GA/N/A state as released |
 
 Gerdes 2003's `X` and `?` calls are admitted by the binding but have no graded store yet; they stay in the Gerdes ledger.

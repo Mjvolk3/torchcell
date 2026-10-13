@@ -67,7 +67,8 @@ THE UNCLEAR CALLS (#909). The 317 "unclear" rows are a released call like the ot
 ``graded_gene_essentiality_goodall2018``): a ``GradedGeneEssentialityPhenotype`` whose
 ``essentiality_call`` is ``unclear``, with the same TraDIS evidence (the call, the
 insertion index and the likelihood ratio), on the same
-``BacterialReleasedTransposonPerturbation`` keyed by the released ``Gene`` symbol, with no
+``BacterialReleasedTransposonPerturbation`` as the boolean records: the released ``Gene``
+symbol as the identifier and the row's own coordinate as ``strain_label``, with no
 annotation read. Each released call is stored once: the essential and non-essential
 calls stay booleans in the first store, the unclear calls are graded in the second, and
 both ledgers count the other store's rows. A store holds one experiment class, which is
@@ -1172,14 +1173,14 @@ GRADED_DATASET_ROOT_REL = "data/torchcell/graded_gene_essentiality_goodall2018"
 def build_graded_experiment(
     dataset_name: str, outcome: RowOutcome, env: Environment
 ) -> BacterialGradedGeneEssentialityExperiment:
-    """The graded record of one unclear row, under its released symbol: the call as
-    released.
+    """The graded record of one unclear row, under its released symbol and row
+    coordinate: the call as released.
     """
     if outcome.drop_rule != GRADED_ROW_RULE:
         raise ValueError(f"row {outcome.call.row} is not an unclear call")
     return BacterialGradedGeneEssentialityExperiment(
         dataset_name=dataset_name,
-        genotype=insertion_genotype(outcome.call.gene),
+        genotype=insertion_genotype(outcome.call),
         environment=env,
         phenotype=GradedGeneEssentialityPhenotype(
             essentiality_call=outcome.call.call, evidence=evidence(outcome.call)
@@ -1214,21 +1215,13 @@ class GradedLedger(BaseModel):
 
 
 def graded_ledger(dataset_name: str, outcomes: Sequence[RowOutcome]) -> GradedLedger:
-    """Count the rows, refusing a row in neither store and two unclear rows on one gene
-    in one condition (``DuplicateRecordError``).
+    """Count the rows, refusing a row in neither store. ``classify_calls`` has already
+    refused a released (condition, row) pair that appears twice.
     """
     kept = [o for o in outcomes if o.drop_rule == GRADED_ROW_RULE]
     boolean = sum(1 for o in outcomes if o.drop_rule is None)
     if len(kept) + boolean != len(outcomes):
         raise RuntimeError("a released row is neither graded nor boolean")
-    seen: set[tuple[str, str]] = set()
-    for outcome in kept:
-        key = (outcome.call.condition, outcome.call.gene)
-        if key in seen:
-            raise DuplicateRecordError(
-                f"{outcome.call.condition}: two unclear rows on {outcome.call.gene}"
-            )
-        seen.add(key)
     return GradedLedger(
         dataset=dataset_name,
         source_records=len(outcomes),
@@ -1818,21 +1811,29 @@ def _l2_graded_calls_match_the_tables(
     conditions: Sequence[ConditionKey | None],
     raw_calls: Mapping[ConditionKey, Sequence[GeneCall]],
 ) -> LevelResult:
-    """L2: each record is an unclear row of its table, found by the stored symbol, with
-    that row's insertion index and likelihood ratio, and every unclear row is a record.
+    """L2: each record is an unclear row of its table, found by its ``strain_label``
+    (the release's own (condition, row) coordinate, as the boolean store's L2), whose
+    gene is the stored identifier, with that row's insertion index and likelihood ratio.
     """
-    by_name: dict[tuple[str, str], list[GeneCall]] = {}
+    by_label: dict[str, GeneCall] = {}
     for key, table in raw_calls.items():
         for call in table:
-            by_name.setdefault((key, call.gene), []).append(call)
+            by_label[f"{key} row {call.row}"] = call
     problems: list[str] = []
     for r, condition in zip(records, conditions, strict=True):
-        symbol = r["experiment"]["genotype"]["perturbations"][0]["perturbed_gene_name"]
-        rows = by_name.get((str(condition), symbol), [])
-        if len(rows) != 1:
-            problems.append(f"{condition} {symbol}: {len(rows)} table rows")
+        perturbation = r["experiment"]["genotype"]["perturbations"][0]
+        symbol = perturbation["perturbed_gene_name"]
+        label = str(perturbation["strain_label"])
+        row = by_label.get(label)
+        if row is None or label != f"{condition} row {row.row}":
+            problems.append(f"{condition} {symbol}: no table row at {label!r}")
             continue
-        (row,) = rows
+        if row.gene != perturbation["systematic_gene_name"]:
+            problems.append(
+                f"{label}: table gene {row.gene}, stored "
+                f"{perturbation['systematic_gene_name']}"
+            )
+            continue
         phenotype = r["experiment"]["phenotype"]
         ev = phenotype["evidence"]
         held = (

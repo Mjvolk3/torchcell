@@ -64,6 +64,7 @@ from torchcell.datamodels.schema import (
     EssentialityEvidenceClass,
     EssentialityEvidenceType,
     EssentialityStatementRole,
+    Genotype,
     MediaComponentRole,
     TradisCall,
     TransposonInsertionPerturbation,
@@ -1096,6 +1097,7 @@ def test_build_graded_experiment_stores_the_unclear_call_as_released() -> None:
     )
     experiment = m.build_graded_experiment("x", outcome, m.environment("TL"))
     assert isinstance(experiment, BacterialGradedGeneEssentialityExperiment)
+    assert isinstance(experiment.genotype, Genotype)
     (perturbation,) = experiment.genotype.perturbations
     assert isinstance(perturbation, BacterialReleasedTransposonPerturbation)
     assert (
@@ -1103,7 +1105,7 @@ def test_build_graded_experiment_stores_the_unclear_call_as_released() -> None:
         perturbation.perturbed_gene_name,
         perturbation.strain_label,
         perturbation.identifier_kind,
-    ) == ("hokC", "hokC", "hokC", m.IDENTIFIER_KIND)
+    ) == ("hokC", "hokC", "TL row 3", m.IDENTIFIER_KIND)
     phenotype = experiment.phenotype
     assert phenotype.essentiality_call == "unclear"
     assert (
@@ -1135,8 +1137,6 @@ def test_graded_ledger_places_every_row_once() -> None:
         ledger.in_boolean_store,
         ledger.kept_by_condition,
     ) == (3, 1, 2, {"TL": 1, "LB": 0})
-    with pytest.raises(m.DuplicateRecordError, match="two unclear rows on a"):
-        m.graded_ledger("x", [*outcomes, outcome("a", "unclear", m.GRADED_ROW_RULE)])
 
 
 def test_graded_store_holds_exactly_the_placed_unclear_rows(
@@ -1156,13 +1156,25 @@ def test_graded_store_holds_exactly_the_placed_unclear_rows(
     assert ledger.kept_records == len(records)
     assert ledger.in_boolean_store == len(boolean)
     assert ledger.kept_records + ledger.in_boolean_store == len(TL_ROWS) + len(LB_ROWS)
-    assert sorted(
-        (
-            str(condition),
-            r["experiment"]["genotype"]["perturbations"][0]["strain_label"],
+    raw = Path(graded.raw_dir)
+    unclear = sorted(
+        (spec.key, m.strain_label(c), c.gene)
+        for spec in m.CONDITIONS
+        for c in m.read_calls(raw / spec.table, spec)
+        if c.call == "unclear"
+    )
+    assert [gene for _, _, gene in unclear] == ["yaaP", "proB", "hokC"]
+    assert (
+        sorted(
+            (
+                str(condition),
+                r["experiment"]["genotype"]["perturbations"][0]["strain_label"],
+                r["experiment"]["genotype"]["perturbations"][0]["systematic_gene_name"],
+            )
+            for condition, r in zip(m.record_conditions(records), records, strict=True)
         )
-        for condition, r in zip(m.record_conditions(records), records, strict=True)
-    ) == [("LB", "proB"), ("LB", "yaaP"), ("TL", "hokC")]
+        == unclear
+    )
     assert {r["experiment"]["phenotype"]["essentiality_call"] for r in records} == {
         "unclear"
     }

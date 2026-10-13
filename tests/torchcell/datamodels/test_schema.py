@@ -4032,6 +4032,121 @@ def test_released_strain_leaf_refuses_an_empty_label(field: str) -> None:
 
 
 # --------------------------------------------------------------------------- #
+# #1045: a yeast gene under the name its source released, and a named allele
+# --------------------------------------------------------------------------- #
+_RELEASED_NAME: dict[str, Any] = dict(
+    systematic_gene_name="ADE2",
+    perturbed_gene_name="ADE2",
+    released_gene_name="ADE2",
+    released_kind=s.ReleasedGeneKind.deletion,
+)
+
+
+def test_released_gene_name_leaf_stores_the_symbol_no_annotation_resolved() -> None:
+    leaf = s.ReleasedGeneNamePerturbation(
+        **_RELEASED_NAME, marker="KanMX", strain_id="BY4741"
+    )
+    assert leaf.perturbation_type == "released_gene_name"
+    assert leaf.mechanism_so == ("SO:0000159", "deletion")
+    assert leaf.released_gene_id is None and leaf.crispr is None
+    back = s.Genotype.model_validate(
+        s.Genotype(perturbations=[leaf]).model_dump()
+    ).perturbations[0]
+    assert back == leaf and type(back) is s.ReleasedGeneNamePerturbation
+
+
+def test_released_gene_name_leaf_carries_a_released_id_with_its_namespace() -> None:
+    leaf = s.ReleasedGeneNamePerturbation(
+        **_RELEASED_NAME,
+        released_gene_id="856882",
+        released_gene_id_namespace=s.ReleasedGeneIdNamespace.ncbi_entrez_gene,
+    )
+    assert leaf.released_gene_id == "856882"
+    with pytest.raises(ValueError, match="set together"):
+        s.ReleasedGeneNamePerturbation(**_RELEASED_NAME, released_gene_id="856882")
+    with pytest.raises(ValueError, match="set together"):
+        s.ReleasedGeneNamePerturbation(
+            **_RELEASED_NAME,
+            released_gene_id_namespace=s.ReleasedGeneIdNamespace.ncbi_entrez_gene,
+        )
+    with pytest.raises(ValueError, match="non-empty verbatim"):
+        s.ReleasedGeneNamePerturbation(
+            **_RELEASED_NAME,
+            released_gene_id=" 856882",
+            released_gene_id_namespace=s.ReleasedGeneIdNamespace.ncbi_entrez_gene,
+        )
+
+
+def test_released_gene_name_leaf_crispr_interference_carries_its_construct() -> None:
+    construct = s.CrisprConstruct(
+        effector="dCas9-Mxi1", guide_sequence="ACGTACGTACGTACGTACGT"
+    )
+    leaf = s.ReleasedGeneNamePerturbation(
+        **{**_RELEASED_NAME, "released_kind": s.ReleasedGeneKind.crispr_interference},
+        crispr=construct,
+    )
+    assert leaf.mechanism_so == ("SO:0001998", "sgRNA")
+    with pytest.raises(ValueError, match="crispr is set exactly when"):
+        s.ReleasedGeneNamePerturbation(
+            **{
+                **_RELEASED_NAME,
+                "released_kind": s.ReleasedGeneKind.crispr_interference,
+            }
+        )
+    with pytest.raises(ValueError, match="crispr is set exactly when"):
+        s.ReleasedGeneNamePerturbation(**_RELEASED_NAME, crispr=construct)
+
+
+@pytest.mark.parametrize(
+    "identifier", ["YAL001C", "YAL001C-A", "Q0010", "YNCA0001W", "b0002", " ADE2", ""]
+)
+def test_released_gene_name_leaf_refuses_a_systematic_name_or_a_tag(
+    identifier: str,
+) -> None:
+    with pytest.raises(ValueError):
+        s.ReleasedGeneNamePerturbation(
+            **{
+                **_RELEASED_NAME,
+                "systematic_gene_name": identifier,
+                "released_gene_name": identifier,
+            }
+        )
+
+
+def test_released_gene_name_leaf_states_the_name_once() -> None:
+    with pytest.raises(ValueError, match="must equal"):
+        s.ReleasedGeneNamePerturbation(
+            **{**_RELEASED_NAME, "released_gene_name": "ade2"}
+        )
+
+
+def test_named_allele_leaf_keeps_two_alleles_of_one_gene_apart() -> None:
+    a = s.NamedAllelePerturbation(
+        systematic_gene_name="YLR229C",
+        perturbed_gene_name="CDC42",
+        allele_name="cdc42-111",
+    )
+    b = s.NamedAllelePerturbation(
+        systematic_gene_name="YLR229C",
+        perturbed_gene_name="CDC42",
+        allele_name="cdc42-1",
+    )
+    assert a != b and a.perturbation_type == "named_allele"
+    assert (a.mechanism_so_id, a.mechanism_so_name) == (
+        "SO:0001060",
+        "sequence_variant",
+    )
+    back = s.Genotype.model_validate(
+        s.Genotype(perturbations=[a]).model_dump()
+    ).perturbations[0]
+    assert back == a and type(back) is s.NamedAllelePerturbation
+    with pytest.raises(ValueError, match="non-empty verbatim"):
+        s.NamedAllelePerturbation(
+            systematic_gene_name="YLR229C", perturbed_gene_name="CDC42", allele_name=" "
+        )
+
+
+# --------------------------------------------------------------------------- #
 # #991 / #990: the promoter-carrying genotype leaves and the two readout families
 # --------------------------------------------------------------------------- #
 def test_promoter_driven_integration_requires_its_locus_and_promoter() -> None:

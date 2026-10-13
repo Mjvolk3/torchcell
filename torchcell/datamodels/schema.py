@@ -1397,6 +1397,15 @@ class SOTerm(ModelStrict):
         return _validate_so_id(v)
 
 
+#: An S288C systematic feature name: protein-coding genes, pseudogenes and
+#: transposable-element genes (``YAL001C``, ``YAL001C-A``), mitochondrial genes
+#: (``Q0010``) and the non-coding ``YNC`` names. The identity form of every placed yeast
+#: leaf, and what :class:`ReleasedGeneNamePerturbation` refuses.
+_SYSTEMATIC_GENE_NAME_RE = re.compile(
+    r"^(Y[A-P][LR]\d{3}[WC](-[A-Z])?|Q\d{4}|YNC[A-Q]\d{4}[WC])$"
+)
+
+
 class GenePerturbation(ModelStrict):
     """Base perturbation of a single gene by systematic and common name.
 
@@ -1414,17 +1423,7 @@ class GenePerturbation(ModelStrict):
     @classmethod
     def validate_sys_gene_name(cls, v: str) -> str:
         """Validate the systematic gene name matches an allowed feature pattern."""
-        # Define named patterns for clarity based on genome feature types
-        # protein-coding genes, pseudogenes, transposable_element_genes
-        coding_gene_pattern = r"Y[A-P][LR]\d{3}[WC](-[A-Z])?"
-        # mitochondrial genes
-        mitochondrial_gene_pattern = r"Q\d{4}"
-        # ncRNA_gene, rRNA_gene, snRNA_gene, snoRNA_gene, tRNA_gene, telomerase_RNA_gene
-        noncoding_gene_pattern = r"YNC[A-Q]\d{4}[WC]"
-        # Combine patterns
-        full_pattern = f"^({coding_gene_pattern}|{mitochondrial_gene_pattern}|{noncoding_gene_pattern})$"
-
-        if not re.match(full_pattern, v):
+        if not _SYSTEMATIC_GENE_NAME_RE.match(v):
             raise ValueError("Invalid systematic gene name format")
         return v
 
@@ -4566,6 +4565,206 @@ SgaPerturbationType = (
     | SgaAllelePerturbation
 )
 
+
+# --------------------------------------------------------------------------- #
+# begin ADDITIVE (#1045): a yeast gene stored under the name its source released, and
+# an allele stored under the name its source released.
+#
+# Every yeast gene-perturbation leaf above requires ``systematic_gene_name`` to be an
+# S288C systematic name (the regex of :class:`GenePerturbation`). A source that releases
+# a gene only by its symbol (Cachera 2023, Mota 2024, Auesukaree 2009, Yoshida 2012,
+# Xue 2025, Mormino 2022; SynLethDB by symbol and Entrez id) therefore had to resolve
+# the symbol through a genome annotation before a record could be stored, and the
+# annotation decided which records exist. The owner rule of 2026-10-12 is that the data
+# is the data: the loader stores what the source released, and the genome joins at
+# modeling time. These two leaves are the yeast analogue of the bacterial released
+# leaves (#691) and change nothing above them.
+# --------------------------------------------------------------------------- #
+class ReleasedGeneIdNamespace(StrEnum):
+    """The identifier space a source's released gene id is written in."""
+
+    ncbi_entrez_gene = "ncbi_entrez_gene"
+
+
+class ReleasedGeneKind(StrEnum):
+    """What a source says it did to a gene it names only by symbol.
+
+    - ``deletion``: the gene is deleted (a deletion-collection strain).
+    - ``heterozygous_deletion``: one allele of a diploid is deleted.
+    - ``crispr_interference``: a dead-Cas repressor is guided to the gene.
+    """
+
+    deletion = "deletion"
+    heterozygous_deletion = "heterozygous_deletion"
+    crispr_interference = "crispr_interference"
+
+
+RELEASED_GENE_KIND_SO: dict[ReleasedGeneKind, tuple[str, str]] = {
+    ReleasedGeneKind.deletion: ("SO:0000159", "deletion"),
+    ReleasedGeneKind.heterozygous_deletion: ("SO:0000159", "deletion"),
+    ReleasedGeneKind.crispr_interference: ("SO:0001998", "sgRNA"),
+}
+"""Sequence Ontology mechanism of each released kind, every pair one the schema already
+pins: the deletion leaves' ``deletion`` and the expression-modulation leaves' ``sgRNA``."""
+
+
+class ReleasedGeneNamePerturbation(GenePerturbation, ModelStrict):
+    """One yeast gene identified only by the name its source released.
+
+    ``systematic_gene_name`` is the released gene name verbatim (Cachera 2023: the
+    ``gene`` column, ``ADE2``), as is ``released_gene_name``, which states that the
+    identifier is the source's symbol and not a systematic name; ``perturbed_gene_name``
+    is the same name through the base normalization. Nothing is looked up: no
+    annotation decides whether the record exists, no systematic name is derived, so the
+    record says exactly what the release says and the join to a genome is a separate,
+    later act. A source that also releases a gene id stores it verbatim in
+    ``released_gene_id`` with its namespace (SynLethDB: the NCBI Entrez id). ``released_kind``
+    is what the source says it did to the gene; a CRISPR interference record carries its
+    construct in ``crispr`` and every other kind leaves it None.
+
+    It is NOT placed under the presence/absence or expression axis classes, because the
+    axis is a property of the kind; ``mechanism_so`` gives the Sequence Ontology pair of
+    the kind, from :data:`RELEASED_GENE_KIND_SO`. It refuses a systematic name: a
+    released ORF name is stored on the placed leaves, so one kind of record never sits
+    in two classes.
+    """
+
+    description: str = (
+        "Yeast gene perturbation identified by the gene name its source released, not "
+        "resolved to a systematic name"
+    )
+    perturbation_type: Literal["released_gene_name"] = "released_gene_name"
+    released_gene_name: str = Field(
+        description="the source's gene name, verbatim; equal to systematic_gene_name"
+    )
+    released_gene_id: str | None = Field(
+        default=None,
+        description="the source's gene identifier, verbatim (SynLethDB: '856882'); "
+        "None when the source releases only a name",
+    )
+    released_gene_id_namespace: ReleasedGeneIdNamespace | None = Field(
+        default=None,
+        description="the identifier space of released_gene_id; set exactly when it is",
+    )
+    released_kind: ReleasedGeneKind = Field(
+        description="what the source says it did to the gene"
+    )
+    crispr: CrisprConstruct | None = Field(
+        default=None,
+        description="the construct of a crispr_interference record; None for every "
+        "other kind",
+    )
+    marker: str | None = Field(
+        default=None,
+        description="the selectable marker the source names, verbatim (e.g. 'KanMX'); "
+        "None when unstated",
+    )
+    strain_id: str | None = Field(
+        default=None,
+        description="the background strain the source names, verbatim (e.g. 'BY4741'); "
+        "None when unstated",
+    )
+    collection: str | None = Field(
+        default=None,
+        description="the strain collection the source names, verbatim; None when "
+        "unstated",
+    )
+
+    @field_validator("systematic_gene_name", mode="after")
+    @classmethod
+    def validate_sys_gene_name(cls, v: str) -> str:
+        """The released name verbatim, and never a systematic name or a locus tag."""
+        if not v or v != v.strip():
+            raise ValueError(
+                f"systematic_gene_name must be the released gene name verbatim, got "
+                f"{v!r}"
+            )
+        if _SYSTEMATIC_GENE_NAME_RE.match(v):
+            raise ValueError(
+                f"{v!r} is a systematic gene name; a released systematic name is stored "
+                "on the placed yeast leaves"
+            )
+        if _namespace_of_locus_tag(v) is not None:
+            raise ValueError(
+                f"{v!r} is a bacterial locus tag; a released tag of a pinned assembly "
+                "is stored on the placed bacterial leaves"
+            )
+        return v
+
+    @model_validator(mode="after")
+    def _check_released(self) -> "ReleasedGeneNamePerturbation":
+        """The name is stated once; an id travels with its namespace; CRISPRi has a construct."""
+        if self.released_gene_name != self.systematic_gene_name:
+            raise ValueError(
+                f"released_gene_name {self.released_gene_name!r} must equal "
+                f"systematic_gene_name {self.systematic_gene_name!r}"
+            )
+        if (self.released_gene_id is None) != (self.released_gene_id_namespace is None):
+            raise ValueError(
+                "released_gene_id and released_gene_id_namespace are set together"
+            )
+        if self.released_gene_id is not None and (
+            not self.released_gene_id
+            or self.released_gene_id != self.released_gene_id.strip()
+        ):
+            raise ValueError(
+                f"released_gene_id must be a non-empty verbatim string, got "
+                f"{self.released_gene_id!r}"
+            )
+        if (self.released_kind is ReleasedGeneKind.crispr_interference) != (
+            self.crispr is not None
+        ):
+            raise ValueError(
+                "crispr is set exactly when released_kind is crispr_interference"
+            )
+        return self
+
+    @property
+    def mechanism_so(self) -> tuple[str, str]:
+        """(SO id, SO name) of this perturbation's released kind."""
+        return RELEASED_GENE_KIND_SO[self.released_kind]
+
+
+class NamedAllelePerturbation(SequencePerturbation, ModelStrict):
+    """An allele of a yeast gene that its source names and does not otherwise describe.
+
+    SGD annotates an inviable null phenotype on an allele it names (``cdc42-111``,
+    ``sac1Δ114-503``, ``hht2-L61P``) and the pinned dump carries no sequence change for
+    it, so the record stores the allele name verbatim in ``allele_name`` on the gene's
+    systematic name. The SO mechanism is the generic ``sequence_variant`` of the axis
+    root: the specific edit is not stated. Two alleles of one gene are two
+    perturbations, kept apart by the name. Unlike :class:`ConditionalAllelePerturbation`
+    this leaf asserts nothing about how the allele acts.
+    """
+
+    description: str = "An allele the source names, with no sequence change stated"
+    perturbation_type: Literal["named_allele"] = "named_allele"
+    provenance: str = "engineered"
+    allele_name: str = Field(
+        description="the allele's name, verbatim, e.g. 'cdc42-111'"
+    )
+    strain_id: str | None = Field(
+        default=None,
+        description="the background strain the source names, verbatim; None when "
+        "unstated",
+    )
+
+    @field_validator("allele_name", mode="after")
+    @classmethod
+    def validate_allele_name(cls, v: str) -> str:
+        """The allele name is a non-empty verbatim string."""
+        if not v or v != v.strip():
+            raise ValueError(
+                f"allele_name must be a non-empty verbatim string, got {v!r}"
+            )
+        return v
+
+
+# --------------------------------------------------------------------------- #
+# End ADDITIVE (#1045).
+# --------------------------------------------------------------------------- #
+
+
 GenePerturbationType = (
     SgaPerturbationType
     | MeanDeletionPerturbation
@@ -4606,6 +4805,9 @@ GenePerturbationType = (
     # a CRISPR guide and a transposon insertion against a released identifier (#691)
     | BacterialReleasedCrisprPerturbation
     | BacterialReleasedTransposonPerturbation
+    # a yeast gene under its released name, and an allele under its released name (#1045)
+    | ReleasedGeneNamePerturbation
+    | NamedAllelePerturbation
 )
 
 

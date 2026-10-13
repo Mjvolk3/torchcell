@@ -194,6 +194,12 @@ def _genotype_signature(
         for field in ("strain_label", "released_kind"):
             if p.get(field) is not None:
                 ident = ident + (str(p[field]),)
+        # #1045: a gene under its released name is that name, and its released id
+        # when the source gives one; an allele under its released name is that name
+        # (two SGD alleles of one gene are two strains). Absent on every other leaf.
+        for field in ("released_gene_id", "allele_name"):
+            if p.get(field) is not None:
+                ident = ident + (str(p[field]),)
         constructed = p.get("constructed_orf")
         if isinstance(constructed, dict):
             ident = ident + (constructed.get("source_systematic_name"),)

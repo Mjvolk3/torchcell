@@ -373,6 +373,7 @@ def test_reference_phenotype_is_the_log_mean_level() -> None:
     counts = pd.DataFrame({"a": [1, 10], "b": [2, 13]}, index=["g1", "g2"])
     phenotype = m.reference_phenotype(log_tpm, counts)
     assert dict(phenotype.expression_tpm) == {"g1": 3.0, "g2": 15.0}
+    assert phenotype.expression_count is not None
     assert dict(phenotype.expression_count) == {"g1": 2, "g2": 12}
     assert phenotype.measurement_type == "rnaseq_tpm"
     assert [g.field for g in phenotype.provenance_gaps] == ["n_mapped_reads"]

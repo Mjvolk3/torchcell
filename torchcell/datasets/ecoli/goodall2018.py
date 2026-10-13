@@ -900,8 +900,12 @@ def check_replicon(genome: EcoliK12Genome) -> None:
 def classify_calls(calls: Sequence[GeneCall]) -> list[RowOutcome]:
     """Decide each row's outcome. One rule: an unclear call has no boolean field.
 
-    No annotation is read; every row's ``Gene`` symbol is its record's identifier. Two
-    kept rows under one gene in one condition refuse the build (``DuplicateRecordError``).
+    No annotation is read; every row's ``Gene`` symbol is its record's identifier and
+    the row's own coordinate is its ``strain_label``, because nine insertion-sequence
+    symbols head SEVERAL rows of each table (``insH1`` eleven, ``insD1`` seven, ...;
+    53 rows per table over the nine) and each of those rows is a distinct released
+    measurement with its own insertion index. A released (condition, row) pair that
+    appears twice refuses the build (``DuplicateRecordError``).
     """
     outcomes: list[RowOutcome] = []
     for call in calls:
@@ -915,14 +919,12 @@ def classify_calls(calls: Sequence[GeneCall]) -> list[RowOutcome]:
             )
             continue
         outcomes.append(RowOutcome(call=call, drop_rule=None, reason=None))
-    seen: set[tuple[str, str]] = set()
+    seen: set[tuple[str, int]] = set()
     for outcome in outcomes:
-        if outcome.drop_rule is not None:
-            continue
-        key = (outcome.call.condition, outcome.call.gene)
+        key = (outcome.call.condition, outcome.call.row)
         if key in seen:
             raise DuplicateRecordError(
-                f"{outcome.call.condition}: two kept rows on {outcome.call.gene}"
+                f"{outcome.call.condition}: row {outcome.call.row} appears twice"
             )
         seen.add(key)
     return outcomes
@@ -1038,15 +1040,26 @@ def environment(condition: ConditionKey) -> Environment:
     )
 
 
-def insertion_genotype(gene: str) -> Genotype:
-    """The gene-level transposon disruption of one gene, under its released symbol."""
+def strain_label(call: GeneCall) -> str:
+    """The release's own coordinate of one row: its condition and its row number.
+
+    The ``Gene`` cell is not unique within a table (the nine multi-copy
+    insertion-sequence symbols head 53 rows per table), so the row coordinate is what
+    keeps two released measurements of two copies apart. It is the release's own
+    position, not a derived identifier.
+    """
+    return f"{call.condition} row {call.row}"
+
+
+def insertion_genotype(call: GeneCall) -> Genotype:
+    """The gene-level transposon disruption of one row, under its released symbol."""
     return Genotype(
         perturbations=[
             BacterialReleasedTransposonPerturbation(
-                systematic_gene_name=gene,
-                perturbed_gene_name=gene,
+                systematic_gene_name=call.gene,
+                perturbed_gene_name=call.gene,
                 gene_namespace=STRAIN_GENE_NAMESPACES["BW25113"],
-                strain_label=gene,
+                strain_label=strain_label(call),
                 identifier_kind=IDENTIFIER_KIND,
                 transposon=TRANSPOSON,
             )
@@ -1083,7 +1096,7 @@ def build_experiment(
         raise ValueError(f"row {outcome.call.row} was dropped; it has no record")
     return BacterialGeneEssentialityExperiment(
         dataset_name=dataset_name,
-        genotype=insertion_genotype(outcome.call.gene),
+        genotype=insertion_genotype(outcome.call),
         environment=env,
         phenotype=GeneEssentialityPhenotype(
             is_essential=outcome.call.call == "essential",
@@ -1316,10 +1329,7 @@ def _l1_one_record_per_gene_and_condition(
     records: Sequence[Record], conditions: Sequence[ConditionKey | None]
 ) -> LevelResult:
     keys = Counter(
-        (
-            condition,
-            r["experiment"]["genotype"]["perturbations"][0]["systematic_gene_name"],
-        )
+        (condition, r["experiment"]["genotype"]["perturbations"][0]["strain_label"])
         for r, condition in zip(records, conditions, strict=True)
     )
     unplaced = sum(n for (cond, _), n in keys.items() if cond is None)
@@ -1333,7 +1343,8 @@ def _l1_one_record_per_gene_and_condition(
         name="one_record_per_gene_and_condition",
         passed=passed,
         message=(
-            f"{len(keys)} (condition, locus) pairs, one single-insertion record each"
+            f"{len(keys)} (condition, released row) pairs, one single-insertion record "
+            "each"
             if passed
             else f"{unplaced} records match no condition environment; "
             f"{len(repeated)} pairs repeat; single-perturbation {single}"
@@ -1347,22 +1358,31 @@ def _l2_calls_match_the_tables(
     conditions: Sequence[ConditionKey | None],
     raw_calls: Mapping[ConditionKey, Sequence[GeneCall]],
 ) -> LevelResult:
-    """L2, independent of the build path: each record's call equals its table row's,
-    found by the stored symbol, and the stored identifier IS the row's gene.
+    """L2, independent of the build path: each record's call equals its table row's.
+
+    The row is found by the record's ``strain_label``, the release's own (condition,
+    row) coordinate, because a ``Gene`` cell is not unique within a table; the stored
+    identifier must then BE that row's gene.
     """
-    by_name: dict[tuple[str, str], list[GeneCall]] = {}
+    by_label: dict[str, GeneCall] = {}
     for key, table in raw_calls.items():
         for call in table:
-            by_name.setdefault((key, call.gene), []).append(call)
+            by_label[f"{key} row {call.row}"] = call
     problems: list[str] = []
     for r, condition in zip(records, conditions, strict=True):
         perturbation = r["experiment"]["genotype"]["perturbations"][0]
         symbol = perturbation["perturbed_gene_name"]
-        rows = by_name.get((str(condition), symbol), [])
-        if len(rows) != 1:
-            problems.append(f"{condition} {symbol}: {len(rows)} table rows")
+        label = str(perturbation["strain_label"])
+        row = by_label.get(label)
+        if row is None or label != f"{condition} row {row.row}":
+            problems.append(f"{condition} {symbol}: no table row at {label!r}")
             continue
-        (row,) = rows
+        if row.gene != perturbation["systematic_gene_name"]:
+            problems.append(
+                f"{label}: table gene {row.gene}, stored "
+                f"{perturbation['systematic_gene_name']}"
+            )
+            continue
         stored = r["experiment"]["phenotype"]["is_essential"]
         if row.call == "unclear" or stored != (row.call == "essential"):
             problems.append(f"{condition} {symbol}: stored {stored}, table {row.call}")
@@ -1370,11 +1390,7 @@ def _l2_calls_match_the_tables(
         held = (ev["tradis_call"], ev["insertion_index"], ev["log_likelihood_ratio"])
         if held != (row.call, row.insertion_index, row.log_likelihood_ratio):
             problems.append(f"{condition} {symbol}: evidence {held}")
-        if perturbation["systematic_gene_name"] != row.gene:
-            problems.append(
-                f"{condition} {symbol}: table gene {row.gene}, stored "
-                f"{perturbation['systematic_gene_name']}"
-            )
+
     return LevelResult(
         level=Level.L2,
         name="calls_match_released_tables",

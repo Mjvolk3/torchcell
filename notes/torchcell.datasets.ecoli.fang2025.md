@@ -15,3 +15,7 @@ The owner's rule of 2026-10-12: the loader reads no annotation. `reconcile_locus
 Pins, measured on the pinned bytes: `EXPECTED_RECORDS` 15,708 -> 15,711, `EXPECTED_PERTURBATIONS` 16,187 -> 16,191, `EXPECTED_GENES` 2,628 -> 2,630; round 1 keeps 15,380 records and round 2 331. `build_accounting.json` drops `retired_targets_dropped` and `reconciliation`; `RoundAccounting` drops `dropped_retired_target`.
 
 Released vs stored: 111,342 released (guide, round) rows = 15,711 records + 95,631 rows below the authors' own 20-read floor (the one remaining rule, the release's own exclusion); 0 dropped on a genome ground.
+
+### 2026.10.12 - The per-round pins follow the restored records
+
+Job 4464 failed at `round_1_cf: wrote 15380 records, the pinned bytes give 15378`: `EXPECTED_RECORDS` moved to 15,711 with the reversal but each `Round.kept_records` still carried its retired-target subtraction. A round's kept records are now exactly its `floor_kept_rows`, 15,380 and 331, which is the 15,711 total.

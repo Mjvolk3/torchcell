@@ -165,6 +165,14 @@
 <span class="sd">predates the switch), and the ``status`` table prints it beside the dataset count, so a</span>
 <span class="sd">yeast-only store is never read as "every mapped dataset".</span>
 
+<span class="sd">**Checking a restored release.** ``scripts/kg_release.sh`` restores an archived backup</span>
+<span class="sd">into a new database and, before any alias points at it, runs</span>
+<span class="sd">:data:`RESTORE_CHECK_CYPHER` there; ``verify-restore`` compares the answer with the</span>
+<span class="sd">archive's ``release.json`` (release id, version, dataset set, every dataset's experiment</span>
+<span class="sd">count, the recorded and the counted node totals), and ``pairing-statement`` brings the</span>
+<span class="sd">node's package pairing up to the committed snapshot when a ``retag`` came after the</span>
+<span class="sd">backup.</span>
+
 <span class="sd">    python -m torchcell.knowledge_graphs.releases status --label gilahyper</span>
 <span class="sd">    python -m torchcell.knowledge_graphs.releases datasets --version latest</span>
 <span class="sd">    python -m torchcell.knowledge_graphs.releases diff 2026.09.17-7715ee35 latest</span>
@@ -925,6 +933,189 @@
 
 
 
+<span class="c1"># --------------------------------------------------------------------------- restore check</span>
+
+<span class="c1">#: Columns of :data:`RESTORE_CHECK_CYPHER`, in order.</span>
+<span class="n">RESTORE_CHECK_COLUMNS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"release"</span><span class="p">,</span>
+    <span class="s2">"version"</span><span class="p">,</span>
+    <span class="s2">"n_datasets"</span><span class="p">,</span>
+    <span class="s2">"n_nodes"</span><span class="p">,</span>
+    <span class="s2">"torchcell_version"</span><span class="p">,</span>
+    <span class="s2">"torchcell_tag"</span><span class="p">,</span>
+    <span class="s2">"total_nodes"</span><span class="p">,</span>
+    <span class="s2">"dataset"</span><span class="p">,</span>
+    <span class="s2">"experiments"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1">#: The one query a restored database answers before it is served (``kg_release.sh</span>
+<span class="c1">#: deploy`` and ``serve-swap`` run it through cypher-shell and pass the output to</span>
+<span class="c1">#: ``verify-restore``): the release node's identity and package pairing, the node total</span>
+<span class="c1">#: (``count(n)`` reads the count store), and each ``Dataset`` node's ``ExperimentMemberOf``</span>
+<span class="c1">#: in-degree, a degree read on a dense node rather than a scan. The edge's source is</span>
+<span class="c1">#: always an ``Experiment`` (``torchcell_schema_config.yaml``), so the in-degree is the</span>
+<span class="c1">#: count ``kg_manifest.live_dataset_counts`` recorded at the stamp. One row per dataset;</span>
+<span class="c1">#: no rows when the store carries no release node or no ``Dataset`` node.</span>
+<span class="n">RESTORE_CHECK_CYPHER</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"MATCH (n) WITH count(n) AS total_nodes "</span>
+    <span class="sa">f</span><span class="s2">"MATCH (r:</span><span class="si">{</span><span class="n">RELEASE_LABEL</span><span class="si">}</span><span class="s2">) MATCH (d:Dataset) "</span>
+    <span class="s2">"RETURN r.release AS release, r.version AS version, r.n_datasets AS n_datasets, "</span>
+    <span class="s2">"r.n_nodes AS n_nodes, r.torchcell_version AS torchcell_version, "</span>
+    <span class="s2">"r.torchcell_tag AS torchcell_tag, total_nodes, d.id AS dataset, "</span>
+    <span class="s2">"COUNT { (d)&lt;-[:ExperimentMemberOf]-() } AS experiments ORDER BY dataset;"</span>
+<span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">RestoredStore</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""What a restored database reports about itself through :data:`RESTORE_CHECK_CYPHER`."""</span>
+
+    <span class="n">release</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">n_datasets</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_nodes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">torchcell_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">torchcell_tag</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">total_nodes</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">experiments</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>  <span class="c1"># Dataset.id -&gt; ExperimentMemberOf in-degree</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_plain_null</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""cypher-shell's plain format prints a null as the bare token ``NULL``."""</span>
+    <span class="k">return</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">value</span> <span class="o">==</span> <span class="s2">"NULL"</span> <span class="k">else</span> <span class="n">value</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_restore_check</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RestoredStore</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Parse cypher-shell ``--format plain`` output of :data:`RESTORE_CHECK_CYPHER`.</span>
+
+<span class="sd">    The release columns repeat on every row; they must agree, and no dataset may appear</span>
+<span class="sd">    twice, or the store carries more than one release node.</span>
+<span class="sd">    """</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">text</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span> <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">lines</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"the restore check printed nothing"</span><span class="p">)</span>
+    <span class="n">header</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">column</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">","</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">header</span> <span class="o">!=</span> <span class="n">RESTORE_CHECK_COLUMNS</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"unexpected restore check header </span><span class="si">{</span><span class="n">header</span><span class="si">}</span><span class="s2">; want </span><span class="si">{</span><span class="n">RESTORE_CHECK_COLUMNS</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">csv</span><span class="o">.</span><span class="n">reader</span><span class="p">(</span><span class="n">lines</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">skipinitialspace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">escapechar</span><span class="o">=</span><span class="s2">"</span><span class="se">\\</span><span class="s2">"</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">rows</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"the restored database returned no rows: it carries no </span><span class="si">{</span><span class="n">RELEASE_LABEL</span><span class="si">}</span><span class="s2"> "</span>
+            <span class="s2">"node or no Dataset node"</span>
+        <span class="p">)</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">RESTORE_CHECK_COLUMNS</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"malformed restore check row </span><span class="si">{</span><span class="n">row</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">heads</span> <span class="o">=</span> <span class="p">{</span><span class="nb">tuple</span><span class="p">(</span><span class="n">row</span><span class="p">[:</span><span class="mi">7</span><span class="p">])</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">}</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">heads</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"the restored database carries </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">heads</span><span class="p">)</span><span class="si">}</span><span class="s2"> different </span><span class="si">{</span><span class="n">RELEASE_LABEL</span><span class="si">}</span><span class="s2"> "</span>
+            <span class="s2">"nodes"</span>
+        <span class="p">)</span>
+    <span class="n">release</span><span class="p">,</span> <span class="n">version</span><span class="p">,</span> <span class="n">n_datasets</span><span class="p">,</span> <span class="n">n_nodes</span><span class="p">,</span> <span class="n">tc_version</span><span class="p">,</span> <span class="n">tc_tag</span><span class="p">,</span> <span class="n">total</span> <span class="o">=</span> <span class="n">rows</span><span class="p">[</span><span class="mi">0</span><span class="p">][:</span><span class="mi">7</span><span class="p">]</span>
+    <span class="n">experiments</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span> <span class="ow">in</span> <span class="n">experiments</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Dataset </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span><span class="si">}</span><span class="s2"> appears twice: the store carries more than one "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">RELEASE_LABEL</span><span class="si">}</span><span class="s2"> node or two Dataset nodes with one id"</span>
+            <span class="p">)</span>
+        <span class="n">experiments</span><span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="mi">7</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">8</span><span class="p">])</span>
+    <span class="n">recorded</span> <span class="o">=</span> <span class="n">_plain_null</span><span class="p">(</span><span class="n">n_nodes</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">RestoredStore</span><span class="p">(</span>
+        <span class="n">release</span><span class="o">=</span><span class="n">release</span><span class="p">,</span>
+        <span class="n">version</span><span class="o">=</span><span class="n">version</span><span class="p">,</span>
+        <span class="n">n_datasets</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">n_datasets</span><span class="p">),</span>
+        <span class="n">n_nodes</span><span class="o">=</span><span class="kc">None</span> <span class="k">if</span> <span class="n">recorded</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">int</span><span class="p">(</span><span class="n">recorded</span><span class="p">),</span>
+        <span class="n">torchcell_version</span><span class="o">=</span><span class="n">_plain_null</span><span class="p">(</span><span class="n">tc_version</span><span class="p">),</span>
+        <span class="n">torchcell_tag</span><span class="o">=</span><span class="n">_plain_null</span><span class="p">(</span><span class="n">tc_tag</span><span class="p">),</span>
+        <span class="n">total_nodes</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">total</span><span class="p">),</span>
+        <span class="n">experiments</span><span class="o">=</span><span class="n">experiments</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">expected_total_nodes</span><span class="p">(</span><span class="n">release</span><span class="p">:</span> <span class="n">KgRelease</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The node total a store of ``release`` holds, from the count its stamp recorded.</span>
+
+<span class="sd">    A full build (version ``X.0``) counts the store before it writes the release node;</span>
+<span class="sd">    an incremental admission (``X.1`` and on) counts after the node exists. A full</span>
+<span class="sd">    build's store therefore holds ``n_nodes + 1`` nodes and an admission's ``n_nodes``</span>
+<span class="sd">    (release 3.0: ``n_nodes`` 100,127,515, store 100,127,516). None when the release</span>
+<span class="sd">    recorded no count.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">release</span><span class="o">.</span><span class="n">n_nodes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">minor</span> <span class="o">=</span> <span class="n">release</span><span class="o">.</span><span class="n">version</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">release</span><span class="o">.</span><span class="n">n_nodes</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="k">if</span> <span class="n">minor</span> <span class="o">==</span> <span class="s2">"0"</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">restore_mismatches</span><span class="p">(</span><span class="n">expected</span><span class="p">:</span> <span class="n">KgRelease</span><span class="p">,</span> <span class="n">observed</span><span class="p">:</span> <span class="n">RestoredStore</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Every way a restored store differs from the release record it was archived with.</span>
+
+<span class="sd">    ``expected`` is the archive's ``release.json``; empty means the store is the release</span>
+<span class="sd">    its directory names: same id and version, the same dataset set, every dataset's</span>
+<span class="sd">    experiment count, the recorded node count, and the node total.</span>
+<span class="sd">    """</span>
+    <span class="n">problems</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"release"</span><span class="p">,</span> <span class="s2">"version"</span><span class="p">,</span> <span class="s2">"n_nodes"</span><span class="p">):</span>
+        <span class="n">got</span><span class="p">,</span> <span class="n">want</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">observed</span><span class="p">,</span> <span class="n">field</span><span class="p">),</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">expected</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">got</span> <span class="o">!=</span> <span class="n">want</span><span class="p">:</span>
+            <span class="n">problems</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2">: the node says </span><span class="si">{</span><span class="n">got</span><span class="si">}</span><span class="s2">, release.json </span><span class="si">{</span><span class="n">want</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">observed</span><span class="o">.</span><span class="n">n_datasets</span> <span class="o">!=</span> <span class="n">expected</span><span class="o">.</span><span class="n">n_datasets</span><span class="p">:</span>
+        <span class="n">problems</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"n_datasets: the node says </span><span class="si">{</span><span class="n">observed</span><span class="o">.</span><span class="n">n_datasets</span><span class="si">}</span><span class="s2">, release.json lists "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">expected</span><span class="o">.</span><span class="n">n_datasets</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="n">want_counts</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">d</span><span class="o">.</span><span class="n">n_experiments</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">expected</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+    <span class="n">missing</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">want_counts</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">observed</span><span class="o">.</span><span class="n">experiments</span><span class="p">))</span>
+    <span class="n">extra</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">observed</span><span class="o">.</span><span class="n">experiments</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">want_counts</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
+        <span class="n">problems</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Dataset nodes missing from the store: </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">extra</span><span class="p">:</span>
+        <span class="n">problems</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Dataset nodes release.json does not list: </span><span class="si">{</span><span class="n">extra</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">want_counts</span><span class="p">)</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">observed</span><span class="o">.</span><span class="n">experiments</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">observed</span><span class="o">.</span><span class="n">experiments</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">!=</span> <span class="n">want_counts</span><span class="p">[</span><span class="n">name</span><span class="p">]:</span>
+            <span class="n">problems</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">observed</span><span class="o">.</span><span class="n">experiments</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="si">}</span><span class="s2"> experiments, release.json "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">want_counts</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="n">expected_total_nodes</span><span class="p">(</span><span class="n">expected</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">total</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">observed</span><span class="o">.</span><span class="n">total_nodes</span> <span class="o">!=</span> <span class="n">total</span><span class="p">:</span>
+        <span class="n">problems</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"node total </span><span class="si">{</span><span class="n">observed</span><span class="o">.</span><span class="n">total_nodes</span><span class="si">}</span><span class="s2">, expected </span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2"> from release.json "</span>
+            <span class="sa">f</span><span class="s2">"n_nodes </span><span class="si">{</span><span class="n">expected</span><span class="o">.</span><span class="n">n_nodes</span><span class="si">}</span><span class="s2"> (version </span><span class="si">{</span><span class="n">expected</span><span class="o">.</span><span class="n">version</span><span class="si">}</span><span class="s2">)"</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">problems</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_cypher_literal</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="s2">"null"</span> <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">pairing_statement</span><span class="p">(</span>
+    <span class="n">observed</span><span class="p">:</span> <span class="n">RestoredStore</span><span class="p">,</span> <span class="n">torchcell_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">torchcell_tag</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Cypher giving a restored release node the committed snapshot's package pairing.</span>
+
+<span class="sd">    None when the node already carries it. An archive keeps the node as it was at the</span>
+<span class="sd">    backup, and ``retag`` rewrites the committed snapshot afterwards: release</span>
+<span class="sd">    2026.10.06-4b293d34 was backed up as torchcell 1.6.1 with no tag and paired with</span>
+<span class="sd">    v1.6.2 later, so its restored node needs the snapshot's two fields before it is</span>
+<span class="sd">    served (the 2026-10-12 Radiant deploy set them by hand).</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">observed</span><span class="o">.</span><span class="n">torchcell_version</span><span class="p">,</span> <span class="n">observed</span><span class="o">.</span><span class="n">torchcell_tag</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span>
+        <span class="n">torchcell_version</span><span class="p">,</span>
+        <span class="n">torchcell_tag</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"MATCH (r:</span><span class="si">{</span><span class="n">RELEASE_LABEL</span><span class="si">}</span><span class="s2">) SET r.torchcell_version = "</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_cypher_literal</span><span class="p">(</span><span class="n">torchcell_version</span><span class="p">)</span><span class="si">}</span><span class="s2">, r.torchcell_tag = "</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_cypher_literal</span><span class="p">(</span><span class="n">torchcell_tag</span><span class="p">)</span><span class="si">}</span><span class="s2">;"</span>
+    <span class="p">)</span>
+
+
 <span class="c1"># --------------------------------------------------------------------------- reporting</span>
 
 
@@ -1289,7 +1480,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">argv</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Command-line entry: status, datasets, diff, compat, hashes, write-node, stamp."""</span>
+<span class="w">    </span><span class="sd">"""Command-line entry for the release, serving, and restore-check subcommands."""</span>
     <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
         <span class="n">prog</span><span class="o">=</span><span class="s2">"python -m torchcell.knowledge_graphs.releases"</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="vm">__doc__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\n\n</span><span class="s2">"</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
@@ -1424,8 +1615,72 @@
     <span class="p">)</span>
     <span class="n">p_art</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--json"</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">)</span>
 
+    <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+        <span class="s2">"restore-check-query"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"print the Cypher a restored database answers for verify-restore"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">p_verify</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+        <span class="s2">"verify-restore"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"compare a restored database (the restore-check-query output) with the "</span>
+        <span class="s2">"release.json it was archived with; exit 1 on any difference"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">p_verify</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--release-json"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">p_verify</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--rows"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"cypher-shell --format plain output of the query"</span>
+    <span class="p">)</span>
+    <span class="n">p_pair</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+        <span class="s2">"pairing-statement"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"print the Cypher that gives a restored release node the committed "</span>
+        <span class="s2">"snapshot's torchcell_version and torchcell_tag (nothing when it has them)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">p_pair</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--rows"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"cypher-shell --format plain output of the query"</span>
+    <span class="p">)</span>
+    <span class="n">p_pair</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--snapshot"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"database/releases/&lt;r&gt;.json"</span><span class="p">)</span>
+
     <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span>
     <span class="n">repo_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">repo</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">repo</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">command</span> <span class="o">==</span> <span class="s2">"restore-check-query"</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">RESTORE_CHECK_CYPHER</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">command</span> <span class="o">==</span> <span class="s2">"verify-restore"</span><span class="p">:</span>
+        <span class="n">expected</span> <span class="o">=</span> <span class="n">KgRelease</span><span class="o">.</span><span class="n">model_validate_json</span><span class="p">(</span>
+            <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">release_json</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">observed</span> <span class="o">=</span> <span class="n">parse_restore_check</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">rows</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">))</span>
+        <span class="n">problems</span> <span class="o">=</span> <span class="n">restore_mismatches</span><span class="p">(</span><span class="n">expected</span><span class="p">,</span> <span class="n">observed</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">problems</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"restored store does not match </span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">release_json</span><span class="si">}</span><span class="s2">:"</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">problem</span> <span class="ow">in</span> <span class="n">problems</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">problem</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">return</span> <span class="mi">1</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="n">expected_total_nodes</span><span class="p">(</span><span class="n">expected</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"restore check passed: </span><span class="si">{</span><span class="n">observed</span><span class="o">.</span><span class="n">release</span><span class="si">}</span><span class="s2"> (KG </span><span class="si">{</span><span class="n">observed</span><span class="o">.</span><span class="n">version</span><span class="si">}</span><span class="s2">), "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">observed</span><span class="o">.</span><span class="n">experiments</span><span class="p">)</span><span class="si">}</span><span class="s2"> datasets with release.json's experiment "</span>
+            <span class="sa">f</span><span class="s2">"counts, </span><span class="si">{</span><span class="n">observed</span><span class="o">.</span><span class="n">total_nodes</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> nodes"</span>
+            <span class="o">+</span> <span class="p">(</span><span class="s2">" (release.json recorded no node count)"</span> <span class="k">if</span> <span class="n">total</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">""</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">command</span> <span class="o">==</span> <span class="s2">"pairing-statement"</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.release_snapshot</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_snapshot</span>
+
+        <span class="n">observed</span> <span class="o">=</span> <span class="n">parse_restore_check</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">rows</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">))</span>
+        <span class="n">snapshot</span> <span class="o">=</span> <span class="n">load_snapshot</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">snapshot</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">snapshot</span><span class="o">.</span><span class="n">release</span> <span class="o">!=</span> <span class="n">observed</span><span class="o">.</span><span class="n">release</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">snapshot</span><span class="si">}</span><span class="s2"> describes release </span><span class="si">{</span><span class="n">snapshot</span><span class="o">.</span><span class="n">release</span><span class="si">}</span><span class="s2">, the restored "</span>
+                <span class="sa">f</span><span class="s2">"node </span><span class="si">{</span><span class="n">observed</span><span class="o">.</span><span class="n">release</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="n">statement</span> <span class="o">=</span> <span class="n">pairing_statement</span><span class="p">(</span>
+            <span class="n">observed</span><span class="p">,</span> <span class="n">snapshot</span><span class="o">.</span><span class="n">torchcell_version</span><span class="p">,</span> <span class="n">snapshot</span><span class="o">.</span><span class="n">torchcell_tag</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">statement</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">statement</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span>
 
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">command</span> <span class="o">==</span> <span class="s2">"hashes"</span><span class="p">:</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">csv_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">database</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>

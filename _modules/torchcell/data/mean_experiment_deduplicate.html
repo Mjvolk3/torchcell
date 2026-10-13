@@ -406,11 +406,26 @@
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">first</span><span class="p">,</span> <span class="n">RNASeqExpressionPhenotype</span><span class="p">):</span>
             <span class="n">rna</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">list</span><span class="p">[</span><span class="n">RNASeqExpressionPhenotype</span><span class="p">],</span> <span class="n">phenotypes</span><span class="p">)</span>
             <span class="n">n_mapped</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">n_mapped_reads</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">rna</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">n_mapped_reads</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+            <span class="n">counts</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">expression_count</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">rna</span><span class="p">]</span>
+            <span class="c1"># #964: a record whose release has no counts carries a typed gap; a mean</span>
+            <span class="c1"># over records that include one has no summed count either, so it inherits</span>
+            <span class="c1"># the gap rather than summing a partial set.</span>
+            <span class="n">gaps</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">gap</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">rna</span>
+                <span class="k">for</span> <span class="n">gap</span> <span class="ow">in</span> <span class="n">p</span><span class="o">.</span><span class="n">provenance_gaps</span>
+                <span class="k">if</span> <span class="n">gap</span><span class="o">.</span><span class="n">field</span> <span class="o">==</span> <span class="s2">"expression_count"</span>
+            <span class="p">]</span>
             <span class="k">return</span> <span class="n">RNASeqExpressionPhenotype</span><span class="p">(</span>
                 <span class="n">expression_tpm</span><span class="o">=</span><span class="n">_mean_float_dict</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">expression_tpm</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">rna</span><span class="p">]),</span>
-                <span class="n">expression_count</span><span class="o">=</span><span class="n">_sum_int_dict</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">expression_count</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">rna</span><span class="p">]),</span>
+                <span class="n">expression_count</span><span class="o">=</span><span class="p">(</span>
+                    <span class="kc">None</span>
+                    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">c</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">counts</span><span class="p">)</span>
+                    <span class="k">else</span> <span class="n">_sum_int_dict</span><span class="p">([</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">counts</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">])</span>
+                <span class="p">),</span>
                 <span class="n">measurement_type</span><span class="o">=</span><span class="n">first</span><span class="o">.</span><span class="n">measurement_type</span><span class="p">,</span>
                 <span class="n">n_mapped_reads</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">n_mapped</span><span class="p">))</span> <span class="k">if</span> <span class="n">n_mapped</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">provenance_gaps</span><span class="o">=</span><span class="n">gaps</span><span class="p">[:</span><span class="mi">1</span><span class="p">],</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">first</span><span class="p">,</span> <span class="n">CalMorphPhenotype</span><span class="p">):</span>
             <span class="n">morph</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">list</span><span class="p">[</span><span class="n">CalMorphPhenotype</span><span class="p">],</span> <span class="n">phenotypes</span><span class="p">)</span>

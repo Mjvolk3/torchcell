@@ -237,6 +237,11 @@
 <span class="sd">    carrier's gap-capable fields are exactly its model fields minus ``provenance_gaps``.</span>
 <span class="sd">    A stored mapping is matched back to its class by its key set, which is also how an</span>
 <span class="sd">    unrecognized carrier (a class this build does not know) stays visible in the report.</span>
+
+<span class="sd">    A subclass that declares no field of its own (an abstract parent such as</span>
+<span class="sd">    ``TwoChannelMicroarrayExpressionPhenotype``) has its ancestor's key set; the ancestor</span>
+<span class="sd">    keeps it. A class is visited before its subclasses are pushed, so the first class</span>
+<span class="sd">    seen for a key set is the most general one.</span>
 <span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProvenanceGapMixin</span>
 
@@ -245,7 +250,7 @@
     <span class="k">while</span> <span class="n">stack</span><span class="p">:</span>
         <span class="n">model</span> <span class="o">=</span> <span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
         <span class="n">stack</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">())</span>
-        <span class="n">index</span><span class="p">[</span><span class="nb">frozenset</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">model_fields</span><span class="p">)]</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="n">index</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="nb">frozenset</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">model_fields</span><span class="p">),</span> <span class="n">model</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">index</span>
 
 

@@ -7346,9 +7346,74 @@
 
 
 
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># begin #1022 #989: the two-channel microarray parent</span>
+<span class="c1"># One physical measurement, released four ways. A two-channel array co-hybridizes a</span>
+<span class="c1"># sample and a reference, each labeled with its own dye, to the same spots, and every</span>
+<span class="c1"># value a release carries is derived from that per-spot pair. What the releases CARRY</span>
+<span class="c1"># differs, so the leaves differ (schema-change rule 5: the same technology at one level,</span>
+<span class="c1"># diverging in the specifics, shares the parent and diverges in the leaf):</span>
+<span class="c1">#</span>
+<span class="c1"># - MicroarrayExpressionPhenotype (served: Kemmeren 2014, both Sameith 2015 sets): log2</span>
+<span class="c1">#   ratio, its SE, the linear signal and a per-gene replicate count.</span>
+<span class="c1"># - MicroarrayExpressionScorePhenotype (Hu 2007, GEO GSE4654): an error-model score of</span>
+<span class="c1">#   the ratio and its p-value, no ratio and no signal.</span>
+<span class="c1"># - MicroarrayExpressionRatioPhenotype (Gasch 2000): the log2 ratio alone, against a</span>
+<span class="c1">#   reference the record names.</span>
+<span class="c1"># - InductionTimecourseExpressionPhenotype (Hackett 2020): every processing layer of a</span>
+<span class="c1">#   time course, both channels included.</span>
+<span class="c1">#</span>
+<span class="c1"># The parent carries NO field: the leaves share no released quantity (even the replicate</span>
+<span class="c1"># count differs in kind), so any field here would add a required field to the served</span>
+<span class="c1"># leaf. Placing the served class under it changes only that class's MRO.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TwoChannelMicroarrayExpressionPhenotype</span><span class="p">(</span><span class="n">Phenotype</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Abstract parent of every two-channel microarray expression release.</span>
+
+<span class="sd">    The physical measurement is one array on which a sample and a reference, labeled</span>
+<span class="sd">    with two dyes, hybridize to the same spots: each value a release carries (a log</span>
+<span class="sd">    ratio, its error-model score, a channel intensity) is computed from that per-spot</span>
+<span class="sd">    pair, so it is relative to the reference the release names. Kemmeren 2014 states</span>
+<span class="sd">    "a common reference design with wildtype (WT) reference RNA applied in dye-swap to</span>
+<span class="sd">    each microarray", Sameith 2015 "Dual-channel 70-mer oligonucleotide arrays were</span>
+<span class="sd">    employed with WT RNA as common reference", Hu 2007 "we used a common reference RNA</span>
+<span class="sd">    design for all microarray hybridizations", Gasch 2000 "each Cy5-labeled sample was</span>
+<span class="sd">    compared with a Cy3- labeled reference pool" (the paper's own text, for its heat</span>
+<span class="sd">    shock series) and Hackett 2020 "RNA from references and samples was labeled with</span>
+<span class="sd">    Cy3-CTP and Cy5-CTP, respectively".</span>
+
+<span class="sd">    Never instantiated: a record is always one of the leaves, because what was released</span>
+<span class="sd">    decides which fields exist. The parent declares no field of its own, so</span>
+<span class="sd">    ``Phenotype.validate_label_fields`` (which reads the concrete class's</span>
+<span class="sd">    ``__annotations__``) refuses any ``label_name`` it is given. The empty</span>
+<span class="sd">    ``__annotations__`` below is what keeps that true: once any code has read</span>
+<span class="sd">    ``ABCMeta.__annotations__``, a class with no annotations of its own resolves the</span>
+<span class="sd">    attribute through its MRO to ``Phenotype``'s, and the parent would then accept</span>
+<span class="sd">    ``label_name="graph_level"`` (the CPython quirk ``test_ontology_coherence.py``</span>
+<span class="sd">    records for #640; measured here in CI's full run). Declaring the empty dict in</span>
+<span class="sd">    the class's own namespace pins the lookup to it.</span>
+
+<span class="sd">    The leaves keep their own ``label_name``, because no leaf's quantity converts into</span>
+<span class="sd">    another's without something its release does not carry: a score back to a ratio</span>
+<span class="sd">    needs each spot's error, a ratio up to the served leaf needs the channel signal</span>
+<span class="sd">    and the replicate counts. The one conversion that exists is inside a leaf: a score</span>
+<span class="sd">    leaf's p-value is a function of its score,</span>
+<span class="sd">    ``MicroarrayExpressionScorePhenotype.p_value_of_score``.</span>
+<span class="sd">    """</span>
+
+    <span class="vm">__annotations__</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># its OWN (empty) annotations; see the class docstring</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># end #1022 #989: the two-channel microarray parent</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+
+
 <div class="viewcode-block" id="MicroarrayExpressionPhenotype">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.MicroarrayExpressionPhenotype.html#torchcell.datamodels.schema.MicroarrayExpressionPhenotype">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">MicroarrayExpressionPhenotype</span><span class="p">(</span><span class="n">Phenotype</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MicroarrayExpressionPhenotype</span><span class="p">(</span>
+    <span class="n">TwoChannelMicroarrayExpressionPhenotype</span><span class="p">,</span> <span class="n">ModelStrict</span>
+<span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Microarray expression phenotype with canonical log2 ratio convention.</span>
 
 <span class="sd">    CONVENTION: All expression_log2_ratio values follow the torchcell standard:</span>
@@ -7595,9 +7660,12 @@
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 <span class="c1"># MICROARRAY EXPRESSION SCORE BLOCK START (issue #1022)</span>
 <span class="c1"># A two-color microarray release that carries a per-gene error-model SCORE (and its</span>
-<span class="c1"># p-value) in place of a log ratio: the sibling of MicroarrayExpressionPhenotype.</span>
+<span class="c1"># p-value) in place of a log ratio: a leaf of TwoChannelMicroarrayExpressionPhenotype,</span>
+<span class="c1"># the sibling of MicroarrayExpressionPhenotype.</span>
 <span class="c1"># --------------------------------------------------------------------------- #</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">MicroarrayExpressionScorePhenotype</span><span class="p">(</span><span class="n">Phenotype</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MicroarrayExpressionScorePhenotype</span><span class="p">(</span>
+    <span class="n">TwoChannelMicroarrayExpressionPhenotype</span><span class="p">,</span> <span class="n">ModelStrict</span>
+<span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Per-gene error-model expression SCORE of a strain against a reference, with its</span>
 <span class="sd">    p-value: what a two-color microarray release carries when it releases no ratio.</span>
 
@@ -7608,13 +7676,20 @@
 <span class="sd">    the sample than in the reference) but it is a significance statistic, not a ratio:</span>
 <span class="sd">    on GSE4654 ``p == 2 * (1 - Phi(|X|))`` to within the release's rounding.</span>
 
-<span class="sd">    Why a sibling of ``MicroarrayExpressionPhenotype`` and not a relaxation of it: that</span>
+<span class="sd">    Why a sibling of ``MicroarrayExpressionPhenotype`` (both are leaves of</span>
+<span class="sd">    ``TwoChannelMicroarrayExpressionPhenotype``) and not a relaxation of it: that</span>
 <span class="sd">    class's label ``expression_log2_ratio`` is documented as ``log2(sample/reference)``</span>
 <span class="sd">    and its linear ``expression`` field is required, so storing a score there would</span>
 <span class="sd">    assert a log ratio and a signal the release does not carry, and relaxing either</span>
-<span class="sd">    field would move the schema closure of the three served microarray stores</span>
-<span class="sd">    (Kemmeren 2014, both Sameith 2015 sets) for one release. This class holds exactly</span>
-<span class="sd">    what was released, so it is additive: no served record changes.</span>
+<span class="sd">    field would change a served class's meaning for one release. This class holds</span>
+<span class="sd">    exactly what was released.</span>
+
+<span class="sd">    CONVERSION (score to p-value, ``p_value_of_score``): the error model's ``X`` is a</span>
+<span class="sd">    standard-normal deviate under the null, so its p-value is the two-sided tail,</span>
+<span class="sd">    ``p == 2 * (1 - Phi(|X|))``. Measured on the GSE4654 bytes for #1022: the identity</span>
+<span class="sd">    holds on all 1,707,575 released (X, p) pairs to within 5e-7, the rounding of the</span>
+<span class="sd">    release's six-decimal p column. No conversion runs the other way to a log ratio:</span>
+<span class="sd">    that needs each spot's error, which the release does not carry.</span>
 
 <span class="sd">    Key semantics follow the other dict-valued families: a gene whose spot the release</span>
 <span class="sd">    left null for this sample is not a key, never a 0. ``expression_score_p_value``</span>
@@ -7753,6 +7828,19 @@
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">v</span>
 
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">p_value_of_score</span><span class="p">(</span><span class="n">score</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The two-sided standard-normal p-value of an error-model score.</span>
+
+<span class="sd">        ``2 * (1 - Phi(|score|))``, written as ``erfc(|score| / sqrt(2))`` so the tail</span>
+<span class="sd">        keeps its precision where ``1 - Phi`` would round to 0. This is the conversion</span>
+<span class="sd">        the released p-values obey (class docstring); a release whose p-values do not</span>
+<span class="sd">        is not an error-model score of this kind.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">score</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">score</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"score must be a finite number, got </span><span class="si">{</span><span class="n">score</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">erfc</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">score</span><span class="p">)</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">2.0</span><span class="p">))</span>
+
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_p_value_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"MicroarrayExpressionScorePhenotype"</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""A stored p-value map tests exactly the genes the score map carries."""</span>
@@ -7785,6 +7873,162 @@
 
 
 <span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># begin #989: the ratio-only microarray leaf</span>
+<span class="c1"># A two-channel release that carries the per-gene log2 ratio against a named reference</span>
+<span class="c1"># and nothing else: no channel signal, no SE, no error-model score. The third leaf of</span>
+<span class="c1"># TwoChannelMicroarrayExpressionPhenotype (Gasch 2000 releases 173 such arrays).</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MicroarrayExpressionRatioPhenotype</span><span class="p">(</span>
+    <span class="n">TwoChannelMicroarrayExpressionPhenotype</span><span class="p">,</span> <span class="n">ModelStrict</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Per-gene log2 ratio of a sample against a named reference, as a two-channel</span>
+<span class="sd">    array release carries it when it carries nothing else.</span>
+
+<span class="sd">    Gasch et al. 2000 (Mol Biol Cell 11:4241) release every array as the ScanAlyze</span>
+<span class="sd">    log2 ratio of the sample (Cy5) to the reference (Cy3): "The normalized, relative</span>
+<span class="sd">    transcript levels (R/G ratios) are represented in log2 space (RAT2N)" (the authors'</span>
+<span class="sd">    data page). No channel intensity, standard error or replicate count is released</span>
+<span class="sd">    beside it, so ``MicroarrayExpressionPhenotype`` cannot hold the release: its linear</span>
+<span class="sd">    ``expression`` and per-gene ``n_replicates`` are required, and making them optional</span>
+<span class="sd">    would change a served class's contract for one source.</span>
+
+<span class="sd">    ``expression_log2_ratio`` is ``log2(sample/reference)`` in the same orientation as</span>
+<span class="sd">    the served leaf (positive = higher in the sample); a loader whose source uses the</span>
+<span class="sd">    other orientation negates it. A gene whose spot the release left null is not a key,</span>
+<span class="sd">    never a 0. A reference's own record is the neutral 0 for every key it carries.</span>
+
+<span class="sd">    ``reference_basis`` names the denominator in the source's own terms, because a</span>
+<span class="sd">    ratio means nothing without it and a release mixes kinds (the same culture before a</span>
+<span class="sd">    shift, a culture grown at another temperature, a strain carrying the empty vector).</span>
+<span class="sd">    ``measurement_type`` names the statistic and its pipeline; ``array_platform`` names</span>
+<span class="sd">    the array. ``n_replicates`` is the per-gene count of measurements behind each ratio,</span>
+<span class="sd">    or None with a typed gap when the release does not state it (Gasch: one column per</span>
+<span class="sd">    array, and no statement of how many spots per gene each column averages).</span>
+<span class="sd">    """</span>
+
+    <span class="n">graph_level</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"node"</span>
+    <span class="n">label_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"expression_log2_ratio"</span>
+    <span class="n">label_statistic_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">expression_log2_ratio</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"SortedDict of the per-gene log2(sample/reference) as released; a gene the "</span>
+            <span class="s2">"release left null is not a key"</span>
+        <span class="p">),</span>
+        <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">measurement_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"what the ratio is and how it was computed, e.g. "</span>
+        <span class="s2">"'scanalyze_rat2n_normalized_log2_ratio'"</span>
+    <span class="p">)</span>
+    <span class="n">reference_basis</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"what the reference channel is, in the source's own terms"</span>
+    <span class="p">)</span>
+    <span class="n">array_platform</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the array the ratio was measured on, as the source names it"</span>
+    <span class="p">)</span>
+    <span class="n">n_replicates</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"SortedDict of the measurements behind each gene's ratio, keyed "</span>
+        <span class="s2">"exactly like expression_log2_ratio; None only with a typed gap"</span><span class="p">,</span>
+        <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Summary repr instead of dumping the per-gene dicts."""</span>
+        <span class="n">n_rep</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_replicates</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_replicates</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"MicroarrayExpressionRatioPhenotype(genes=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expression_log2_ratio</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s2">", n_replicates_genes=</span><span class="si">{</span><span class="n">n_rep</span><span class="si">}</span><span class="s2">)"</span>
+        <span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"expression_log2_ratio"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">convert_and_validate_ratio</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>  <span class="c1"># raw pre-validation input</span>
+<span class="w">        </span><span class="sd">"""Coerce to a SortedDict; refuse an empty map or a non-finite ratio."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"expression_log2_ratio must be a per-gene dict, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"expression_log2_ratio cannot be empty"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">SortedDict</span><span class="p">):</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"expression_log2_ratio for </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> is not a number"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"expression_log2_ratio for </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> is not finite: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"n_replicates"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">convert_and_validate_n_replicates</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>  <span class="c1"># raw pre-validation input</span>
+<span class="w">        </span><span class="sd">"""Coerce to a SortedDict of positive integer counts, or keep None."""</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">v</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"n_replicates must be a per-gene dict, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"n_replicates cannot be empty; use None with a gap"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">SortedDict</span><span class="p">):</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">or</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"n_replicates for </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> must be a positive integer, got </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">"</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"measurement_type"</span><span class="p">,</span> <span class="s2">"reference_basis"</span><span class="p">,</span> <span class="s2">"array_platform"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_named</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The statistic, the denominator and the array are named, never blank."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"measurement_type, reference_basis and array_platform cannot be blank"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_counts</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"MicroarrayExpressionRatioPhenotype"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Counts are sourced or gapped, and keyed exactly like the ratios."""</span>
+        <span class="n">_require_value_or_gap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">(</span><span class="s2">"n_replicates"</span><span class="p">,))</span>
+        <span class="n">counts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_replicates</span>
+        <span class="k">if</span> <span class="n">counts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">set</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expression_log2_ratio</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"n_replicates must have the same keys as expression_log2_ratio"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MicroarrayExpressionRatioExperimentReference</span><span class="p">(</span><span class="n">ExperimentReference</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Reference context for a ratio-only microarray experiment."""</span>
+
+    <span class="n">experiment_reference_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"microarray_expression_ratio"</span>
+    <span class="n">phenotype_reference</span><span class="p">:</span> <span class="n">MicroarrayExpressionRatioPhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MicroarrayExpressionRatioExperiment</span><span class="p">(</span><span class="n">Experiment</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Experiment measuring a ratio-only microarray phenotype."""</span>
+
+    <span class="n">experiment_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"microarray_expression_ratio"</span>
+    <span class="n">genotype</span><span class="p">:</span> <span class="n">Genotype</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Genotype</span><span class="p">,]</span>  <span class="c1"># type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass</span>
+    <span class="n">phenotype</span><span class="p">:</span> <span class="n">MicroarrayExpressionRatioPhenotype</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># end #989: the ratio-only microarray leaf</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
 <span class="c1"># begin ADDITIVE (Hackett 2020): one array of an induction time course.</span>
 <span class="c1">#</span>
 <span class="c1"># A two-colour microarray time course after a transcription factor is induced in a</span>
@@ -7796,7 +8040,9 @@
 <span class="c1"># names its primary layer ``log2_cleaned`` and has its own graph class, ``induction</span>
 <span class="c1"># timecourse expression phenotype``. No served dataset's schema closure moves</span>
 <span class="c1"># through these classes; the new ``GenePerturbationType`` member is the only change a</span>
-<span class="c1"># served closure sees.</span>
+<span class="c1"># served closure sees. Since #1022 #989 the phenotype is a leaf of</span>
+<span class="c1"># ``TwoChannelMicroarrayExpressionPhenotype``, beside the served microarray leaf rather</span>
+<span class="c1"># than under it (the same two-channel measurement, a different release).</span>
 <span class="c1">#</span>
 <span class="c1"># - The reference narrows ``genome_reference`` to ``StrainReferenceGenome`` (the typed</span>
 <span class="c1">#   background, which carries the synthetic activator cassette) and</span>
@@ -7807,7 +8053,9 @@
 <span class="c1">#   served Brunk 2016 time course already uses for "hours post-induction"; no time</span>
 <span class="c1">#   field is added.</span>
 <span class="c1"># --------------------------------------------------------------------------- #</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">InductionTimecourseExpressionPhenotype</span><span class="p">(</span><span class="n">Phenotype</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">InductionTimecourseExpressionPhenotype</span><span class="p">(</span>
+    <span class="n">TwoChannelMicroarrayExpressionPhenotype</span><span class="p">,</span> <span class="n">ModelStrict</span>
+<span class="p">):</span>
 <span class="w">    </span><span class="sd">"""One array of an induction time course, with every released processing layer.</span>
 
 <span class="sd">    PRIMARY LAYER (``label_name``): ``log2_cleaned``, the cleaned log2 ratio relative</span>
@@ -8026,9 +8274,15 @@
         <span class="p">),</span>
         <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">expression_count</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+    <span class="c1"># ADDITIVE (#964, Guzman 2018): value-or-gap. A release that publishes TPM and no</span>
+    <span class="c1"># read counts (GEO GSE117303's ``deseq2-tpm.csv``) stores its TPM with</span>
+    <span class="c1"># ``expression_count`` None beside a ProvenanceGap on it; every other record keeps</span>
+    <span class="c1"># its counts, so no stored record changes meaning.</span>
+    <span class="n">expression_count</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-            <span class="s2">"SortedDict of per-gene raw mapped-read counts; same keys as expression_tpm."</span>
+            <span class="s2">"SortedDict of per-gene raw mapped-read counts; same keys as expression_tpm. "</span>
+            <span class="s2">"None ONLY with a ProvenanceGap on 'expression_count' (a release with no "</span>
+            <span class="s2">"counts)"</span>
         <span class="p">),</span>
         <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span>
@@ -8075,7 +8329,8 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">convert_and_validate_count</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>  <span class="c1"># raw pre-validation input</span>
 <span class="w">        </span><span class="sd">"""Coerce counts to a SortedDict; require non-negative integers."""</span>
         <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"expression_count cannot be None"</span><span class="p">)</span>
+            <span class="c1"># #964: a typed gap; validate_matching_keys requires the gap.</span>
+            <span class="k">return</span> <span class="n">v</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"expression_count must be a per-gene dict, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span>
@@ -8097,6 +8352,13 @@
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_matching_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"RNASeqExpressionPhenotype"</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""expression_count must cover exactly the same genes as expression_tpm."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">expression_count</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">"expression_count"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">gapped_fields</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"expression_count is None without a ProvenanceGap on it (a release "</span>
+                    <span class="s2">"with no counts is a typed gap, never a silent None)"</span>
+                <span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span>
         <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expression_count</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">!=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expression_tpm</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">"expression_count must have the same keys as expression_tpm"</span>
@@ -12611,6 +12873,7 @@
     <span class="o">|</span> <span class="n">CalMorphPhenotype</span>
     <span class="o">|</span> <span class="n">MicroarrayExpressionPhenotype</span>
     <span class="o">|</span> <span class="n">MicroarrayExpressionScorePhenotype</span>  <span class="c1"># issue #1022</span>
+    <span class="o">|</span> <span class="n">MicroarrayExpressionRatioPhenotype</span>  <span class="c1"># issue #989</span>
     <span class="o">|</span> <span class="n">InductionTimecourseExpressionPhenotype</span>  <span class="c1"># Hackett 2020 (additive)</span>
     <span class="o">|</span> <span class="n">RNASeqExpressionPhenotype</span>
     <span class="o">|</span> <span class="n">PseudobulkExpressionPhenotype</span>
@@ -12647,6 +12910,7 @@
     <span class="o">|</span> <span class="n">CalMorphExperiment</span>
     <span class="o">|</span> <span class="n">MicroarrayExpressionExperiment</span>
     <span class="o">|</span> <span class="n">MicroarrayExpressionScoreExperiment</span>  <span class="c1"># issue #1022</span>
+    <span class="o">|</span> <span class="n">MicroarrayExpressionRatioExperiment</span>  <span class="c1"># issue #989</span>
     <span class="o">|</span> <span class="n">InductionTimecourseExpressionExperiment</span>  <span class="c1"># Hackett 2020 (additive)</span>
     <span class="o">|</span> <span class="n">RNASeqExpressionExperiment</span>
     <span class="o">|</span> <span class="n">PseudobulkExpressionExperiment</span>
@@ -12699,6 +12963,7 @@
     <span class="o">|</span> <span class="n">CalMorphExperimentReference</span>
     <span class="o">|</span> <span class="n">MicroarrayExpressionExperimentReference</span>
     <span class="o">|</span> <span class="n">MicroarrayExpressionScoreExperimentReference</span>  <span class="c1"># issue #1022</span>
+    <span class="o">|</span> <span class="n">MicroarrayExpressionRatioExperimentReference</span>  <span class="c1"># issue #989</span>
     <span class="o">|</span> <span class="n">InductionTimecourseExpressionExperimentReference</span>  <span class="c1"># Hackett 2020 (additive)</span>
     <span class="o">|</span> <span class="n">RNASeqExpressionExperimentReference</span>
     <span class="o">|</span> <span class="n">PseudobulkExpressionExperimentReference</span>
@@ -12751,6 +13016,7 @@
     <span class="s2">"calmorph"</span><span class="p">:</span> <span class="n">CalMorphExperiment</span><span class="p">,</span>
     <span class="s2">"microarray_expression"</span><span class="p">:</span> <span class="n">MicroarrayExpressionExperiment</span><span class="p">,</span>
     <span class="s2">"microarray_expression_score"</span><span class="p">:</span> <span class="n">MicroarrayExpressionScoreExperiment</span><span class="p">,</span>  <span class="c1"># issue #1022</span>
+    <span class="s2">"microarray_expression_ratio"</span><span class="p">:</span> <span class="n">MicroarrayExpressionRatioExperiment</span><span class="p">,</span>  <span class="c1"># issue #989</span>
     <span class="s2">"induction_timecourse_expression"</span><span class="p">:</span> <span class="n">InductionTimecourseExpressionExperiment</span><span class="p">,</span>  <span class="c1"># Hackett 2020</span>
     <span class="s2">"rnaseq_expression"</span><span class="p">:</span> <span class="n">RNASeqExpressionExperiment</span><span class="p">,</span>
     <span class="s2">"pseudobulk_expression"</span><span class="p">:</span> <span class="n">PseudobulkExpressionExperiment</span><span class="p">,</span>
@@ -12805,6 +13071,9 @@
     <span class="s2">"microarray_expression"</span><span class="p">:</span> <span class="n">MicroarrayExpressionExperimentReference</span><span class="p">,</span>
     <span class="s2">"microarray_expression_score"</span><span class="p">:</span> <span class="p">(</span>  <span class="c1"># issue #1022</span>
         <span class="n">MicroarrayExpressionScoreExperimentReference</span>
+    <span class="p">),</span>
+    <span class="s2">"microarray_expression_ratio"</span><span class="p">:</span> <span class="p">(</span>  <span class="c1"># issue #989</span>
+        <span class="n">MicroarrayExpressionRatioExperimentReference</span>
     <span class="p">),</span>
     <span class="s2">"induction_timecourse_expression"</span><span class="p">:</span> <span class="p">(</span>  <span class="c1"># Hackett 2020</span>
         <span class="n">InductionTimecourseExpressionExperimentReference</span>

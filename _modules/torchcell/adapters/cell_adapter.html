@@ -414,6 +414,10 @@
                 <span class="s2">"microarray expression score phenotype (chunked)"</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_microarray_expression_score_phenotype_node</span><span class="p">,</span>
             <span class="p">),</span>
+            <span class="p">(</span>  <span class="c1"># issue #989</span>
+                <span class="s2">"microarray expression ratio phenotype (chunked)"</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_microarray_expression_ratio_phenotype_node</span><span class="p">,</span>
+            <span class="p">),</span>
             <span class="p">(</span>  <span class="c1"># Hackett 2020 (additive)</span>
                 <span class="s2">"induction timecourse expression phenotype (chunked)"</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_induction_timecourse_expression_phenotype_node</span><span class="p">,</span>
@@ -522,6 +526,10 @@
             <span class="p">(</span>
                 <span class="s2">"microarray expression score phenotype reference"</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_get_microarray_expression_score_phenotype_reference_nodes</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="p">(</span>  <span class="c1"># issue #989</span>
+                <span class="s2">"microarray expression ratio phenotype reference"</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_get_microarray_expression_ratio_phenotype_reference_nodes</span><span class="p">,</span>
             <span class="p">),</span>
             <span class="p">(</span>  <span class="c1"># Hackett 2020 (additive)</span>
                 <span class="s2">"induction timecourse expression phenotype reference"</span><span class="p">,</span>
@@ -2405,6 +2413,69 @@
         <span class="k">return</span> <span class="n">nodes</span>
 
     <span class="c1"># --- end #1022 ---</span>
+
+    <span class="c1"># --- begin #989: the ratio-only microarray leaf ---</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_microarray_expression_ratio_properties</span><span class="p">(</span><span class="n">phenotype</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Node properties of a ``MicroarrayExpressionRatioPhenotype`` (experiment or</span>
+<span class="sd">        reference).</span>
+
+<span class="sd">        The per-gene dicts serialize to JSON strings, the multi-valued phenotype</span>
+<span class="sd">        convention; a gapped ``n_replicates`` stays ``None``. The statistic, the</span>
+<span class="sd">        reference and the platform stay typed, so a query can tell a ratio against a</span>
+<span class="sd">        time-zero sample from one against another strain without parsing.</span>
+<span class="sd">        """</span>
+        <span class="n">counts</span> <span class="o">=</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">n_replicates</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"graph_level"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">graph_level</span><span class="p">,</span>
+            <span class="s2">"label_name"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">label_name</span><span class="p">,</span>
+            <span class="s2">"label_statistic_name"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">label_statistic_name</span><span class="p">,</span>
+            <span class="s2">"expression_log2_ratio"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">expression_log2_ratio</span><span class="p">),</span>
+            <span class="s2">"measurement_type"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">measurement_type</span><span class="p">,</span>
+            <span class="s2">"reference_basis"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">reference_basis</span><span class="p">,</span>
+            <span class="s2">"array_platform"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">array_platform</span><span class="p">,</span>
+            <span class="s2">"n_replicates"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span> <span class="k">if</span> <span class="n">counts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="nd">@data_chunker</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_microarray_expression_ratio_phenotype_node</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">method_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BioCypherNode</span><span class="p">:</span>
+        <span class="n">phenotype</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype</span>
+        <span class="n">phenotype_id</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
+            <span class="n">node_id</span><span class="o">=</span><span class="n">phenotype_id</span><span class="p">,</span>
+            <span class="n">preferred_id</span><span class="o">=</span><span class="sa">f</span><span class="s2">"phenotype_</span><span class="si">{</span><span class="n">phenotype_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">node_label</span><span class="o">=</span><span class="s2">"microarray expression ratio phenotype"</span><span class="p">,</span>
+            <span class="n">properties</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_microarray_expression_ratio_properties</span><span class="p">(</span><span class="n">phenotype</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_microarray_expression_ratio_phenotype_reference_nodes</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BioCypherNode</span><span class="p">]:</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">seen_node_ids</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">experiment_reference_index</span><span class="p">):</span>
+            <span class="n">phenotype</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">phenotype_reference</span>
+            <span class="n">phenotype_id</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">phenotype_id</span> <span class="ow">in</span> <span class="n">seen_node_ids</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">seen_node_ids</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">phenotype_id</span><span class="p">)</span>
+            <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">BioCypherNode</span><span class="p">(</span>
+                    <span class="n">node_id</span><span class="o">=</span><span class="n">phenotype_id</span><span class="p">,</span>
+                    <span class="n">preferred_id</span><span class="o">=</span><span class="s2">"microarray expression ratio phenotype"</span><span class="p">,</span>
+                    <span class="n">node_label</span><span class="o">=</span><span class="s2">"microarray expression ratio phenotype"</span><span class="p">,</span>
+                    <span class="n">properties</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_microarray_expression_ratio_properties</span><span class="p">(</span><span class="n">phenotype</span><span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">nodes</span>
+
+    <span class="c1"># --- end #989 ---</span>
 
     <span class="c1"># --- begin ADDITIVE (Hackett 2020): induction time course arrays -------------- #</span>
     <span class="nd">@data_chunker</span>

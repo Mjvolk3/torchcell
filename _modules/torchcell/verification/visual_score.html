@@ -162,21 +162,34 @@
     <span class="p">]</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_l1_orf_uniqueness</span><span class="p">(</span><span class="n">records</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Record</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">LevelResult</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""L1: exactly one record per deleted ORF (no duplicate strains)."""</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_l1_orf_uniqueness</span><span class="p">(</span>
+    <span class="n">records</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Record</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">allow_duplicate_orfs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LevelResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""L1: exactly one record per deleted ORF (no duplicate strains).</span>
+
+<span class="sd">    With ``allow_duplicate_orfs`` a release that scores one ORF on more than one plate</span>
+<span class="sd">    (Ozaydin 2013: 130 ORFs on two plates) stores one record per released row, so the</span>
+<span class="sd">    rule reports the duplicated ORFs and holds.</span>
+<span class="sd">    """</span>
     <span class="n">seen</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">records</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">_deleted_genes</span><span class="p">(</span><span class="n">rec</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]):</span>
             <span class="n">seen</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="o">=</span> <span class="n">seen</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
     <span class="n">dups</span> <span class="o">=</span> <span class="p">{</span><span class="n">g</span><span class="p">:</span> <span class="n">n</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">seen</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">}</span>
+    <span class="n">passed</span> <span class="o">=</span> <span class="n">allow_duplicate_orfs</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">dups</span>
     <span class="k">return</span> <span class="n">LevelResult</span><span class="p">(</span>
         <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L1</span><span class="p">,</span>
         <span class="n">name</span><span class="o">=</span><span class="s2">"orf_uniqueness"</span><span class="p">,</span>
-        <span class="n">passed</span><span class="o">=</span><span class="ow">not</span> <span class="n">dups</span><span class="p">,</span>
+        <span class="n">passed</span><span class="o">=</span><span class="n">passed</span><span class="p">,</span>
         <span class="n">message</span><span class="o">=</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">seen</span><span class="p">)</span><span class="si">}</span><span class="s2"> unique deleted ORFs, one record each"</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">dups</span>
             <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dups</span><span class="p">)</span><span class="si">}</span><span class="s2"> ORFs appear in multiple records"</span>
+            <span class="o">+</span> <span class="p">(</span>
+                <span class="s2">" (one record per released row, allowed)"</span>
+                <span class="k">if</span> <span class="n">allow_duplicate_orfs</span>
+                <span class="k">else</span> <span class="s2">""</span>
+            <span class="p">)</span>
         <span class="p">),</span>
         <span class="n">details</span><span class="o">=</span><span class="p">{</span><span class="s2">"n_orfs"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">seen</span><span class="p">),</span> <span class="s2">"n_duplicated"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">dups</span><span class="p">)},</span>
     <span class="p">)</span>
@@ -231,6 +244,7 @@
     <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">provenance</span><span class="p">:</span> <span class="n">Provenance</span><span class="p">,</span>
     <span class="n">expected_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">allow_duplicate_orfs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VerificationReport</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Run the L0-L3 record-level gate for a visual-score dataset.</span>
 
@@ -246,7 +260,7 @@
     <span class="n">report</span> <span class="o">=</span> <span class="n">VerificationReport</span><span class="p">(</span><span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">provenance</span><span class="o">=</span><span class="n">provenance</span><span class="p">)</span>
     <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">l0_structural</span><span class="p">((</span><span class="n">rec</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span> <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">records</span><span class="p">),</span> <span class="n">validate</span><span class="p">))</span>
     <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">l1_count</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">records</span><span class="p">),</span> <span class="n">expected_count</span><span class="p">))</span>
-    <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">_l1_orf_uniqueness</span><span class="p">(</span><span class="n">records</span><span class="p">))</span>
+    <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">_l1_orf_uniqueness</span><span class="p">(</span><span class="n">records</span><span class="p">,</span> <span class="n">allow_duplicate_orfs</span><span class="o">=</span><span class="n">allow_duplicate_orfs</span><span class="p">))</span>
 
     <span class="n">scores</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">rec</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"phenotype"</span><span class="p">][</span><span class="s2">"visual_score"</span><span class="p">])</span> <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">records</span><span class="p">]</span>
     <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">l2_value_fidelity</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">allow_nan</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>

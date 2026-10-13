@@ -128,13 +128,16 @@
 <span class="sd">One record per SGD annotation with ``mutant_type`` "null", strain "S288C" and phenotype</span>
 <span class="sd">"inviable" (1,329 in the pinned dump), under two rules (#901):</span>
 
-<span class="sd">- **Allele.** Every annotation names one allele. A record is stored only when that allele</span>
-<span class="sd">  is the whole-gene deletion SGD writes ``&lt;gene&gt;-Δ``: the genotype is a deletion of the</span>
-<span class="sd">  gene. The other 42 annotations name a point, truncation or internal-deletion allele</span>
-<span class="sd">  (``cdc42-111``, ``sac1Δ114-503``, ``hht2-L61P``); the schema has no leaf that carries a</span>
-<span class="sd">  named allele verbatim (#984), and storing them as a whole-gene deletion is what made</span>
-<span class="sd">  24 records exact duplicates of a sibling. They are ledgered in</span>
-<span class="sd">  ``preprocess/dropped_records.json`` (:class:`SgdDropLog`), never stored.</span>
+<span class="sd">- **Allele.** Every annotation names one allele and every annotation is a record</span>
+<span class="sd">  (#1045). When the allele is the whole-gene deletion SGD writes ``&lt;gene&gt;-Δ`` the</span>
+<span class="sd">  genotype is a deletion of the gene (``SgaKanMxDeletionPerturbation``); the other 42</span>
+<span class="sd">  annotations name a point, truncation or internal-deletion allele (``cdc42-111``,</span>
+<span class="sd">  ``sac1Δ114-503``, ``hht2-L61P``) and are stored on ``NamedAllelePerturbation`` with</span>
+<span class="sd">  the allele name verbatim, which is what keeps two alleles of one gene two records.</span>
+<span class="sd">  Before #1045 those 42 were ledgered and never stored, because storing them as a</span>
+<span class="sd">  whole-gene deletion made 24 records exact duplicates of a sibling. The ledger</span>
+<span class="sd">  ``preprocess/dropped_records.json`` (:class:`SgdDropLog`) now records a build that</span>
+<span class="sd">  drops nothing.</span>
 <span class="sd">- **Condition.** An annotation's condition properties are carried, never dropped: the</span>
 <span class="sd">  pinned dump holds four (class, text) pairs, each mapped by :data:`SGD_CONDITIONS` and</span>
 <span class="sd">  any other refused by name. "nitrogen starvation" and "2% glucose" are nutrient edits</span>
@@ -193,6 +196,7 @@
     <span class="n">GeneEssentialityPhenotype</span><span class="p">,</span>
     <span class="n">Genotype</span><span class="p">,</span>
     <span class="n">Media</span><span class="p">,</span>
+    <span class="n">NamedAllelePerturbation</span><span class="p">,</span>
     <span class="n">PhysicalFactor</span><span class="p">,</span>
     <span class="n">Publication</span><span class="p">,</span>
     <span class="n">ReferenceGenome</span><span class="p">,</span>
@@ -441,13 +445,12 @@
     <span class="p">),</span>
 <span class="p">}</span>
 
-<span class="c1">#: The one drop rule of this dataset.</span>
-<span class="n">RULE_NOT_WHOLE_GENE_DELETION</span> <span class="o">=</span> <span class="s2">"allele_not_whole_gene_deletion"</span>
+<span class="c1">#: The retention rule of this dataset (#1045): nothing is dropped.</span>
+<span class="n">RULE_NONE</span> <span class="o">=</span> <span class="s2">"none"</span>
 <span class="n">_RULE_DESCRIPTION</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">"the annotation's allele is not the whole-gene deletion '&lt;gene&gt;-Δ' (a point, "</span>
-    <span class="s2">"truncation or internal-deletion allele); the schema has no leaf that carries a "</span>
-    <span class="s2">"named allele verbatim, and storing it as a deletion of the whole gene duplicated "</span>
-    <span class="s2">"the gene's other records, so it is ledgered, not stored"</span>
+    <span class="s2">"every inviable null S288C annotation is a record: the whole-gene deletion "</span>
+    <span class="s2">"'&lt;gene&gt;-Δ' on SgaKanMxDeletionPerturbation, any other allele (a point, truncation "</span>
+    <span class="s2">"or internal-deletion allele) on NamedAllelePerturbation under its name verbatim"</span>
 <span class="p">)</span>
 
 
@@ -464,7 +467,7 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">DuplicateSgdAnnotationError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Two kept annotations are one (gene, condition, PubMed id) record."""</span>
+<span class="w">    </span><span class="sd">"""Two annotations are one (gene, allele, condition, PubMed id) record."""</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">SgdAnnotation</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
@@ -497,7 +500,11 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">SgdDropLog</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""The ledger of a build: what the dump holds, what was kept, and every drop."""</span>
+<span class="w">    </span><span class="sd">"""The ledger of a build: what the dump holds, what was stored on which leaf.</span>
+
+<span class="sd">    ``rows`` lists what a rule dropped and is empty since #1045; the verifier reads it</span>
+<span class="sd">    to compare the store with the release, less the ledgered annotations.</span>
+<span class="sd">    """</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
 
@@ -505,6 +512,8 @@
     <span class="n">source_annotations</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">kept_records</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">dropped_records</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_whole_gene_deletion</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_named_allele</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">sgd_genes_digest</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">rule</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">description</span><span class="p">:</span> <span class="nb">str</span>
@@ -617,54 +626,70 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">split_by_allele</span><span class="p">(</span>
     <span class="n">annotations</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">SgdAnnotation</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">SgdAnnotation</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">SgdAnnotation</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">"""``(kept, dropped)``: whole-gene deletion alleles first, every other allele second."""</span>
-    <span class="n">kept</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SgdAnnotation</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">dropped</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SgdAnnotation</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="w">    </span><span class="sd">"""``(whole-gene deletions, named alleles)``; both halves are stored (#1045)."""</span>
+    <span class="n">whole</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SgdAnnotation</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">named</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SgdAnnotation</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">annotation</span> <span class="ow">in</span> <span class="n">annotations</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">is_whole_gene_deletion</span><span class="p">(</span><span class="n">annotation</span><span class="o">.</span><span class="n">allele</span><span class="p">,</span> <span class="n">annotation</span><span class="o">.</span><span class="n">locus_display_name</span><span class="p">):</span>
-            <span class="n">kept</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">annotation</span><span class="p">)</span>
+            <span class="n">whole</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">annotation</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">dropped</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">annotation</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">kept</span><span class="p">,</span> <span class="n">dropped</span>
+            <span class="n">named</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">annotation</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">whole</span><span class="p">,</span> <span class="n">named</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">refuse_duplicate_annotations</span><span class="p">(</span><span class="n">kept</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">SgdAnnotation</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Raise when two kept annotations share gene, condition and PubMed id."""</span>
-    <span class="n">keys</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">((</span><span class="n">a</span><span class="o">.</span><span class="n">systematic_name</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">conditions</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">pubmed_id</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">kept</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">refuse_duplicate_annotations</span><span class="p">(</span><span class="n">annotations</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">SgdAnnotation</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Raise when two annotations share gene, allele, condition and PubMed id."""</span>
+    <span class="n">keys</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">systematic_name</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">allele</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">conditions</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">pubmed_id</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">annotations</span>
+    <span class="p">)</span>
     <span class="n">repeated</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">keys</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">repeated</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">DuplicateSgdAnnotationError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">repeated</span><span class="p">)</span><span class="si">}</span><span class="s2"> (gene, conditions, PubMed id) keys repeat: </span><span class="si">{</span><span class="n">repeated</span><span class="si">}</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">repeated</span><span class="p">)</span><span class="si">}</span><span class="s2"> (gene, allele, conditions, PubMed id) keys repeat: "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">repeated</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">drop_log</span><span class="p">(</span>
     <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">n_source</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="n">kept</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SgdAnnotation</span><span class="p">],</span>
-    <span class="n">dropped</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SgdAnnotation</span><span class="p">],</span>
+    <span class="n">whole</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SgdAnnotation</span><span class="p">],</span>
+    <span class="n">named</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SgdAnnotation</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SgdDropLog</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The ledger of one build."""</span>
+<span class="w">    </span><span class="sd">"""The ledger of one build: every annotation a record, none dropped."""</span>
     <span class="k">return</span> <span class="n">SgdDropLog</span><span class="p">(</span>
         <span class="n">dataset</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
         <span class="n">source_annotations</span><span class="o">=</span><span class="n">n_source</span><span class="p">,</span>
-        <span class="n">kept_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">kept</span><span class="p">),</span>
-        <span class="n">dropped_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">dropped</span><span class="p">),</span>
+        <span class="n">kept_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">whole</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">named</span><span class="p">),</span>
+        <span class="n">dropped_records</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">n_whole_gene_deletion</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">whole</span><span class="p">),</span>
+        <span class="n">n_named_allele</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">named</span><span class="p">),</span>
         <span class="n">sgd_genes_digest</span><span class="o">=</span><span class="n">SGD_GENES_DIGEST</span><span class="p">,</span>
-        <span class="n">rule</span><span class="o">=</span><span class="n">RULE_NOT_WHOLE_GENE_DELETION</span><span class="p">,</span>
+        <span class="n">rule</span><span class="o">=</span><span class="n">RULE_NONE</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="n">_RULE_DESCRIPTION</span><span class="p">,</span>
-        <span class="n">rows</span><span class="o">=</span><span class="p">[</span>
-            <span class="n">SgdDroppedAnnotation</span><span class="p">(</span>
-                <span class="n">sgd_annotation_id</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">sgd_annotation_id</span><span class="p">,</span>
-                <span class="n">systematic_name</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">systematic_name</span><span class="p">,</span>
-                <span class="n">locus_display_name</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">locus_display_name</span><span class="p">,</span>
-                <span class="n">allele</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">allele</span><span class="p">,</span>
-                <span class="n">pubmed_id</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">pubmed_id</span><span class="p">,</span>
-                <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">kind</span><span class="p">,</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">a</span><span class="o">.</span><span class="n">conditions</span><span class="p">],</span>
-                <span class="n">note</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">note</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">dropped</span>
-        <span class="p">],</span>
+        <span class="n">rows</span><span class="o">=</span><span class="p">[],</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">sgd_perturbation</span><span class="p">(</span>
+    <span class="n">annotation</span><span class="p">:</span> <span class="n">SgdAnnotation</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SgaKanMxDeletionPerturbation</span> <span class="o">|</span> <span class="n">NamedAllelePerturbation</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The perturbation an annotation states (#1045).</span>
+
+<span class="sd">    The whole-gene deletion ``&lt;gene&gt;-Δ`` is the deletion of the gene; any other allele</span>
+<span class="sd">    is stored under its name, verbatim, on the gene's systematic name.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">is_whole_gene_deletion</span><span class="p">(</span><span class="n">annotation</span><span class="o">.</span><span class="n">allele</span><span class="p">,</span> <span class="n">annotation</span><span class="o">.</span><span class="n">locus_display_name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">SgaKanMxDeletionPerturbation</span><span class="p">(</span>
+            <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">annotation</span><span class="o">.</span><span class="n">systematic_name</span><span class="p">,</span>
+            <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">annotation</span><span class="o">.</span><span class="n">locus_display_name</span><span class="p">,</span>
+            <span class="n">strain_id</span><span class="o">=</span><span class="s2">"S288C"</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">NamedAllelePerturbation</span><span class="p">(</span>
+        <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">annotation</span><span class="o">.</span><span class="n">systematic_name</span><span class="p">,</span>
+        <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">annotation</span><span class="o">.</span><span class="n">locus_display_name</span><span class="p">,</span>
+        <span class="n">allele_name</span><span class="o">=</span><span class="n">annotation</span><span class="o">.</span><span class="n">allele</span><span class="p">,</span>
+        <span class="n">strain_id</span><span class="o">=</span><span class="s2">"S288C"</span><span class="p">,</span>
     <span class="p">)</span>
 
 
@@ -795,20 +820,20 @@
         <span class="n">genes_dir</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">(),</span> <span class="n">SGD_GENES_RELPATH</span><span class="p">)</span>
         <span class="n">verify_sgd_dump</span><span class="p">(</span><span class="n">genes_dir</span><span class="p">)</span>
         <span class="n">annotations</span> <span class="o">=</span> <span class="n">inviable_null_annotations</span><span class="p">(</span><span class="n">genes_dir</span><span class="p">)</span>
-        <span class="n">kept</span><span class="p">,</span> <span class="n">dropped</span> <span class="o">=</span> <span class="n">split_by_allele</span><span class="p">(</span><span class="n">annotations</span><span class="p">)</span>
-        <span class="n">refuse_duplicate_annotations</span><span class="p">(</span><span class="n">kept</span><span class="p">)</span>
-        <span class="n">environments</span> <span class="o">=</span> <span class="p">[</span><span class="n">condition_environment</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">kept</span><span class="p">]</span>
+        <span class="n">whole</span><span class="p">,</span> <span class="n">named</span> <span class="o">=</span> <span class="n">split_by_allele</span><span class="p">(</span><span class="n">annotations</span><span class="p">)</span>
+        <span class="n">refuse_duplicate_annotations</span><span class="p">(</span><span class="n">annotations</span><span class="p">)</span>
+        <span class="n">environments</span> <span class="o">=</span> <span class="p">[</span><span class="n">condition_environment</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">annotations</span><span class="p">]</span>
 
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">ledger</span> <span class="o">=</span> <span class="n">drop_log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">annotations</span><span class="p">),</span> <span class="n">kept</span><span class="p">,</span> <span class="n">dropped</span><span class="p">)</span>
+        <span class="n">ledger</span> <span class="o">=</span> <span class="n">drop_log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">annotations</span><span class="p">),</span> <span class="n">whole</span><span class="p">,</span> <span class="n">named</span><span class="p">)</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"dropped_records.json"</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">ledger</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
 
         <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e12</span><span class="p">))</span>
         <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="n">environment</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
-                <span class="nb">zip</span><span class="p">(</span><span class="n">kept</span><span class="p">,</span> <span class="n">environments</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="nb">zip</span><span class="p">(</span><span class="n">annotations</span><span class="p">,</span> <span class="n">environments</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="p">):</span>
                 <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_experiment</span><span class="p">(</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">annotation</span><span class="p">,</span> <span class="n">environment</span>
@@ -823,12 +848,14 @@
                 <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span> <span class="n">serialized_data</span><span class="p">)</span>
         <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">"</span><span class="si">%s</span><span class="s2">: </span><span class="si">%d</span><span class="s2"> of </span><span class="si">%d</span><span class="s2"> annotations stored, </span><span class="si">%d</span><span class="s2"> ledgered (</span><span class="si">%s</span><span class="s2">)"</span><span class="p">,</span>
+            <span class="s2">"</span><span class="si">%s</span><span class="s2">: </span><span class="si">%d</span><span class="s2"> of </span><span class="si">%d</span><span class="s2"> annotations stored (</span><span class="si">%d</span><span class="s2"> whole-gene deletions, </span><span class="si">%d</span><span class="s2"> named "</span>
+            <span class="s2">"alleles), </span><span class="si">%d</span><span class="s2"> ledgered"</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
             <span class="n">ledger</span><span class="o">.</span><span class="n">kept_records</span><span class="p">,</span>
             <span class="n">ledger</span><span class="o">.</span><span class="n">source_annotations</span><span class="p">,</span>
+            <span class="n">ledger</span><span class="o">.</span><span class="n">n_whole_gene_deletion</span><span class="p">,</span>
+            <span class="n">ledger</span><span class="o">.</span><span class="n">n_named_allele</span><span class="p">,</span>
             <span class="n">ledger</span><span class="o">.</span><span class="n">dropped_records</span><span class="p">,</span>
-            <span class="n">RULE_NOT_WHOLE_GENE_DELETION</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 
@@ -840,20 +867,12 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span>
         <span class="n">GeneEssentialityExperiment</span><span class="p">,</span> <span class="n">GeneEssentialityExperimentReference</span><span class="p">,</span> <span class="n">Publication</span>
     <span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Build the experiment, reference, and publication for one kept annotation."""</span>
+<span class="w">        </span><span class="sd">"""Build the experiment, reference, and publication for one annotation."""</span>
         <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
             <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="s2">"S288C"</span>
         <span class="p">)</span>
 
-        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
-            <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
-                <span class="n">SgaKanMxDeletionPerturbation</span><span class="p">(</span>
-                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">annotation</span><span class="o">.</span><span class="n">systematic_name</span><span class="p">,</span>
-                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">annotation</span><span class="o">.</span><span class="n">locus_display_name</span><span class="p">,</span>
-                    <span class="n">strain_id</span><span class="o">=</span><span class="s2">"S288C"</span><span class="p">,</span>
-                <span class="p">)</span>
-            <span class="p">]</span>
-        <span class="p">)</span>
+        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span><span class="n">perturbations</span><span class="o">=</span><span class="p">[</span><span class="n">sgd_perturbation</span><span class="p">(</span><span class="n">annotation</span><span class="p">)])</span>
 
         <span class="n">phenotype</span> <span class="o">=</span> <span class="n">GeneEssentialityPhenotype</span><span class="p">(</span>
             <span class="n">is_essential</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">evidence</span><span class="o">=</span><span class="n">sgd_evidence</span><span class="p">(</span><span class="n">annotation</span><span class="o">.</span><span class="n">experiment</span><span class="p">)</span>

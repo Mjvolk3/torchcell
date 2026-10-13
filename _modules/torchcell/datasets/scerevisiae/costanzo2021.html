@@ -195,21 +195,22 @@
 <span class="sd">array strain, ``_NEUTRAL_QUERY``); the neutral marker is NOT put in the genotype, which is</span>
 <span class="sd">the same simplification served Costanzo 2016 makes, so the two datasets stay joinable.</span>
 
-<span class="sd">GENE RESOLUTION -- every ``Systematic Name`` goes through the SHARED, layered</span>
-<span class="sd">``SCerevisiaeGenome.resolve_gene_name`` instead of a raw-FASTA header membership test.</span>
-<span class="sd">The FASTA test both dropped 18 strains it should have kept (old systematic names that</span>
-<span class="sd">SGD RENAMED, e.g. YAR044W -&gt; YAR042W) and kept 10 it should have dropped (blocked reading</span>
-<span class="sd">frames and pseudogenes, which are valid R64 features but not genes). Retention: CURRENT and</span>
-<span class="sd">RENAMED are kept (stored under the CURRENT systematic name, with the sheet's own name kept</span>
-<span class="sd">as the strain's ``perturbed_gene_name``); NON_GENE_FEATURE and RETIRED are dropped,</span>
-<span class="sd">counted, and written to ``dropped_records.json`` beside ``processed/``.</span>
+<span class="sd">GENE IDENTITY -- every strain is stored AS RELEASED, under Data File S1's ``Systematic</span>
+<span class="sd">Name`` cell, which is also its ``perturbed_gene_name`` when the sheet gives no ``Gene</span>
+<span class="sd">Name``. No genome is consulted (#1045, owner rule 2026-10-12: "the data is the data";</span>
+<span class="sd">the genome and the experiment are loaded separately and meet through their gene sets at</span>
+<span class="sd">modeling time). An ORF the current annotation renames (18 strains, e.g. YAR044W, which</span>
+<span class="sd">R64-4-1 lists as YAR042W), calls a blocked reading frame or pseudogene (12, e.g.</span>
+<span class="sd">YER108C), or has retired (3: YAR037W, YAR040C, YAR043C) keeps its released name and</span>
+<span class="sd">every one of its condition cells; the previous build dropped the last 15 strains (210</span>
+<span class="sd">records) and keyed the 18 renamed ones to the current name. ``dropped_records.json``</span>
+<span class="sd">beside ``processed/`` records that nothing is dropped and counts the blank cells.</span>
 
 <span class="sd">DATA SOURCE (manual-once -&gt; mirror; Science SI is bot-blocked, verified 403 + Cloudflare</span>
 <span class="sd">challenge, like Costanzo 2016): Data File S1</span>
 <span class="sd">``Costanzo et al_Data File S1_Conditions_Strains_Fitness.xlsx`` is deposited to</span>
 <span class="sd">``$DATA_ROOT/torchcell-raw/costanzoEnvironmentalRobustnessGlobal2021/`` and sha256-pinned.</span>
-<span class="sd">Final: 4414 strains (4396 CURRENT + 18 RENAMED) x 14 conditions minus empty cells =</span>
-<span class="sd">61,430 records.</span>
+<span class="sd">Final: 4429 strains x 14 conditions minus the 366 blank cells = 61,640 records.</span>
 <span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
@@ -266,8 +267,6 @@
     <span class="n">RetrievalRecord</span><span class="p">,</span>
     <span class="n">sha256_file</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae.s288c</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeneNameStatus</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ProvenanceGap</span><span class="p">,</span>
@@ -558,35 +557,14 @@
     <span class="s2">"released)"</span>
 <span class="p">)</span>
 
-<span class="c1">#: Retention rule: a source ORF is kept only when it resolves to a LIVE R64 gene.</span>
-<span class="n">_KEPT_STATUSES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="n">GeneNameStatus</span><span class="o">.</span><span class="n">CURRENT</span><span class="p">,</span> <span class="n">GeneNameStatus</span><span class="o">.</span><span class="n">RENAMED</span><span class="p">})</span>
-
-<span class="n">DROP_RULE</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">"Systematic Name resolves through SCerevisiaeGenome.resolve_gene_name to a status "</span>
-    <span class="s2">"other than CURRENT or RENAMED (a NON_GENE_FEATURE such as a blocked reading frame "</span>
-    <span class="s2">"or pseudogene, or a name RETIRED from R64-4-1); the strain and all of its condition "</span>
-    <span class="s2">"cells are dropped"</span>
+<span class="c1">#: The one retention rule of this dataset: there is none. Every strain of the sheet is</span>
+<span class="c1">#: stored under its released ``Systematic Name``; a blank condition cell is a cell the</span>
+<span class="c1">#: release carries no value for, and it is counted, not a dropped record.</span>
+<span class="n">RETENTION_RULE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"no rule drops a Costanzo 2021 strain or cell: every 'Systematic Name' row is stored "</span>
+    <span class="s2">"as released, and a blank condition cell (a value the release does not carry) is "</span>
+    <span class="s2">"counted under n_blank_cells"</span>
 <span class="p">)</span>
-
-
-<span class="k">class</span><span class="w"> </span><span class="nc">DroppedStrain</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""One source ORF the retention rule removed, with what it resolved to."""</span>
-
-    <span class="n">source_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"the 'Systematic Name' cell, verbatim"</span><span class="p">)</span>
-    <span class="n">status</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"GeneNameStatus the shared resolver returned"</span><span class="p">)</span>
-    <span class="n">resolved_to</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"what the resolver mapped it to, when anything"</span>
-    <span class="p">)</span>
-    <span class="n">feature_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"GFF feature type for a NON_GENE_FEATURE"</span>
-    <span class="p">)</span>
-    <span class="n">n_records</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"non-empty condition cells lost with this strain"</span>
-    <span class="p">)</span>
-    <span class="n">candidates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"the live genes an AMBIGUOUS name could mean (empty otherwise)"</span><span class="p">,</span>
-    <span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">DropLog</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
@@ -599,8 +577,9 @@
     <span class="n">n_kept_records</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">n_dropped_strains</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">n_dropped_records</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">dropped_by_status</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
-    <span class="n">dropped</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DroppedStrain</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">n_blank_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"(strain, condition) cells the release leaves blank; no record"</span>
+    <span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">BlankSystematicNameError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
@@ -731,13 +710,11 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"data/torchcell/env_chemgen_costanzo2021"</span><span class="p">,</span>
         <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-        <span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Initialize the dataset; a genome is REQUIRED for R64 ORF resolution."""</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">genome</span>
+<span class="w">        </span><span class="sd">"""Initialize the dataset (no genome: every strain is stored as released)."""</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="nd">@property</span>
@@ -866,26 +843,18 @@
         <span class="p">)</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_genotype</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">source_orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">gene_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">allele</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">strain_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">gene_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">allele</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">strain_id</span><span class="p">:</span> <span class="nb">str</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Genotype</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""SGA strains: essential -&gt; ts allele; non-essential -&gt; KanMX deletion.</span>
 
 <span class="sd">        Both carry the SGA ``strain_id`` (Costanzo 2021 is condition-SGA, same assay family</span>
 <span class="sd">        as Costanzo 2016), so the Sga* perturbation leaves are the correct types. ``orf`` is</span>
-<span class="sd">        the CURRENT systematic name the shared resolver returned; ``source_orf`` is the</span>
-<span class="sd">        sheet's own name for the strain, and it is what an unnamed strain stores in</span>
-<span class="sd">        ``perturbed_gene_name``.</span>
+<span class="sd">        the sheet's ``Systematic Name`` cell as released, and it is what an unnamed strain</span>
+<span class="sd">        stores in ``perturbed_gene_name``.</span>
 
-<span class="sd">        Storing the SOURCE name matters where SGD MERGED two features: the array screened</span>
-<span class="sd">        YPR089W (dma5081) and YPR090W (dma5080) as two strains with two measurements, and</span>
-<span class="sd">        YPR090W now resolves to YPR089W. They are still two distinct strains, so the</span>
-<span class="sd">        source name is what keeps them apart instead of collapsing two measurements into</span>
-<span class="sd">        one L1 duplicate.</span>
+<span class="sd">        The released name is what keeps two strains apart where SGD has since MERGED two</span>
+<span class="sd">        features: the array screened YPR089W (dma5081) and YPR090W (dma5080) as two strains</span>
+<span class="sd">        with two measurements, and they stay two records under their two released names.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="n">allele</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">Genotype</span><span class="p">(</span>
@@ -901,7 +870,7 @@
             <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
                 <span class="n">SgaKanMxDeletionPerturbation</span><span class="p">(</span>
                     <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
-                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">gene_name</span> <span class="k">if</span> <span class="n">gene_name</span> <span class="k">else</span> <span class="n">source_orf</span><span class="p">,</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">gene_name</span> <span class="k">if</span> <span class="n">gene_name</span> <span class="k">else</span> <span class="n">orf</span><span class="p">,</span>
                     <span class="n">strain_id</span><span class="o">=</span><span class="n">strain_id</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">]</span>
@@ -917,12 +886,6 @@
 <span class="sd">        raises ``RawSha256MismatchError`` before any row is read or any store opened.</span>
 <span class="sd">        """</span>
         <span class="n">verify_raw_files</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="p">{</span><span class="n">_S1_FILENAME</span><span class="p">:</span> <span class="n">_S1_SHA256</span><span class="p">})</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="s2">"EnvChemgenCostanzo2021Dataset requires a genome for R64 ORF "</span>
-                <span class="s2">"resolution; inject SCerevisiaeGenome(...)"</span>
-            <span class="p">)</span>
-        <span class="n">resolve</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="o">.</span><span class="n">resolve_gene_name</span>
         <span class="n">pub_dump</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span><span class="n">doi</span><span class="o">=</span><span class="n">DOI</span><span class="p">,</span> <span class="n">doi_url</span><span class="o">=</span><span class="sa">f</span><span class="s2">"https://doi.org/</span><span class="si">{</span><span class="n">DOI</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
         <span class="n">ref_dump</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference_dump</span><span class="p">()</span>
 
@@ -944,38 +907,20 @@
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e11</span><span class="p">))</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">kept_strains</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">dropped</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DroppedStrain</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">n_blank_cells</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">frame</span><span class="o">.</span><span class="n">iterrows</span><span class="p">(),</span> <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">frame</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"Costanzo2021"</span><span class="p">):</span>
-                <span class="n">source_orf</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"Systematic Name"</span><span class="p">])</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-                <span class="n">resolution</span> <span class="o">=</span> <span class="n">resolve</span><span class="p">(</span><span class="n">source_orf</span><span class="p">)</span>
-                <span class="n">n_cells</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
-                    <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">conditions</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">spec</span><span class="p">[</span><span class="s2">"sheet_col"</span><span class="p">]]))</span>
-                <span class="p">)</span>
-                <span class="k">if</span> <span class="n">resolution</span><span class="o">.</span><span class="n">status</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_KEPT_STATUSES</span><span class="p">:</span>
-                    <span class="n">dropped</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                        <span class="n">DroppedStrain</span><span class="p">(</span>
-                            <span class="n">source_name</span><span class="o">=</span><span class="n">source_orf</span><span class="p">,</span>
-                            <span class="n">status</span><span class="o">=</span><span class="n">resolution</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-                            <span class="n">resolved_to</span><span class="o">=</span><span class="n">resolution</span><span class="o">.</span><span class="n">systematic_name</span><span class="p">,</span>
-                            <span class="n">feature_type</span><span class="o">=</span><span class="n">resolution</span><span class="o">.</span><span class="n">feature_type</span><span class="p">,</span>
-                            <span class="n">n_records</span><span class="o">=</span><span class="n">n_cells</span><span class="p">,</span>
-                            <span class="n">candidates</span><span class="o">=</span><span class="n">resolution</span><span class="o">.</span><span class="n">candidates</span><span class="p">,</span>
-                        <span class="p">)</span>
-                    <span class="p">)</span>
-                    <span class="k">continue</span>
-                <span class="n">orf</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">resolution</span><span class="o">.</span><span class="n">systematic_name</span><span class="p">)</span>
-                <span class="n">kept_strains</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">orf</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"Systematic Name"</span><span class="p">])</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
                 <span class="n">gene_name</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">"Gene Name"</span><span class="p">]</span>
                 <span class="n">gene_name</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">gene_name</span><span class="p">)</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">gene_name</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
                 <span class="n">allele</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">"Allele (Essential genes only)"</span><span class="p">]</span>
                 <span class="n">allele</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">allele</span><span class="p">)</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">allele</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
                 <span class="n">strain_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"Strain ID"</span><span class="p">])</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-                <span class="n">genotype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_genotype</span><span class="p">(</span><span class="n">orf</span><span class="p">,</span> <span class="n">source_orf</span><span class="p">,</span> <span class="n">gene_name</span><span class="p">,</span> <span class="n">allele</span><span class="p">,</span> <span class="n">strain_id</span><span class="p">)</span>
+                <span class="n">genotype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_genotype</span><span class="p">(</span><span class="n">orf</span><span class="p">,</span> <span class="n">gene_name</span><span class="p">,</span> <span class="n">allele</span><span class="p">,</span> <span class="n">strain_id</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">conditions</span><span class="p">:</span>
                     <span class="n">value</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">spec</span><span class="p">[</span><span class="s2">"sheet_col"</span><span class="p">]]</span>
                     <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+                        <span class="n">n_blank_cells</span> <span class="o">+=</span> <span class="mi">1</span>
                         <span class="k">continue</span>
                     <span class="n">experiment</span> <span class="o">=</span> <span class="n">EnvironmentResponseExperiment</span><span class="p">(</span>
                         <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
@@ -1003,31 +948,24 @@
                     <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
-        <span class="n">by_status</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">dropped</span><span class="p">:</span>
-            <span class="n">by_status</span><span class="p">[</span><span class="n">entry</span><span class="o">.</span><span class="n">status</span><span class="p">]</span> <span class="o">=</span> <span class="n">by_status</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
         <span class="n">drop_log</span> <span class="o">=</span> <span class="n">DropLog</span><span class="p">(</span>
             <span class="n">dataset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-            <span class="n">rule</span><span class="o">=</span><span class="n">DROP_RULE</span><span class="p">,</span>
+            <span class="n">rule</span><span class="o">=</span><span class="n">RETENTION_RULE</span><span class="p">,</span>
             <span class="n">n_source_strains</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">frame</span><span class="p">),</span>
-            <span class="n">n_kept_strains</span><span class="o">=</span><span class="n">kept_strains</span><span class="p">,</span>
+            <span class="n">n_kept_strains</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">frame</span><span class="p">),</span>
             <span class="n">n_kept_records</span><span class="o">=</span><span class="n">idx</span><span class="p">,</span>
-            <span class="n">n_dropped_strains</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">dropped</span><span class="p">),</span>
-            <span class="n">n_dropped_records</span><span class="o">=</span><span class="nb">sum</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">n_records</span> <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">dropped</span><span class="p">),</span>
-            <span class="n">dropped_by_status</span><span class="o">=</span><span class="n">by_status</span><span class="p">,</span>
-            <span class="n">dropped</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">dropped</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">entry</span><span class="p">:</span> <span class="n">entry</span><span class="o">.</span><span class="n">source_name</span><span class="p">),</span>
+            <span class="n">n_dropped_strains</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">n_dropped_records</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">n_blank_cells</span><span class="o">=</span><span class="n">n_blank_cells</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="n">_DROPPED_FILENAME</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
             <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">drop_log</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">"Wrote </span><span class="si">%d</span><span class="s2"> Costanzo2021 records from </span><span class="si">%d</span><span class="s2">/</span><span class="si">%d</span><span class="s2"> strains; dropped </span><span class="si">%d</span><span class="s2"> strains "</span>
-            <span class="s2">"(</span><span class="si">%d</span><span class="s2"> records) by rule: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+            <span class="s2">"Wrote </span><span class="si">%d</span><span class="s2"> Costanzo2021 records from all </span><span class="si">%d</span><span class="s2"> strains as released; "</span>
+            <span class="s2">"</span><span class="si">%d</span><span class="s2"> blank cells carry no record"</span><span class="p">,</span>
             <span class="n">idx</span><span class="p">,</span>
-            <span class="n">kept_strains</span><span class="p">,</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">frame</span><span class="p">),</span>
-            <span class="nb">len</span><span class="p">(</span><span class="n">dropped</span><span class="p">),</span>
-            <span class="n">drop_log</span><span class="o">.</span><span class="n">n_dropped_records</span><span class="p">,</span>
-            <span class="n">by_status</span><span class="p">,</span>
+            <span class="n">n_blank_cells</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 
@@ -1053,17 +991,12 @@
 
     <span class="n">load_dotenv</span><span class="p">()</span>
     <span class="n">data_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">]</span>
-    <span class="n">genome</span> <span class="o">=</span> <span class="n">SCerevisiaeGenome</span><span class="p">(</span>
-        <span class="n">genome_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/sgd/genome"</span><span class="p">),</span>
-        <span class="n">go_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/go"</span><span class="p">),</span>
-        <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="p">)</span>
     <span class="n">root</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/torchcell/env_chemgen_costanzo2021"</span><span class="p">)</span>
-    <span class="n">dataset</span> <span class="o">=</span> <span class="n">EnvChemgenCostanzo2021Dataset</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">,</span> <span class="n">genome</span><span class="o">=</span><span class="n">genome</span><span class="p">)</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">EnvChemgenCostanzo2021Dataset</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"len = </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">_DROPPED_FILENAME</span><span class="p">))</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">handle</span><span class="p">)[</span><span class="s2">"n_dropped_records"</span><span class="p">])</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">handle</span><span class="p">)[</span><span class="s2">"n_blank_cells"</span><span class="p">])</span>
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>

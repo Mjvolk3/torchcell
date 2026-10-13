@@ -169,10 +169,11 @@ original native-unit <code class="docutils literal notranslate"><span class="pre
 <dl class="py method">
 <dt class="sig sig-object py" id="torchcell.datasets.scerevisiae.yeastphenome.YeastPhenomeDataset.process">
 <span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/torchcell/datasets/scerevisiae/yeastphenome.html#YeastPhenomeDataset.process"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.datasets.scerevisiae.yeastphenome.YeastPhenomeDataset.process" title="Link to this definition"></a></dt>
-<dd><p>Build env x geno -&gt; NPV records for every ENCODABLE column of every screen.</p>
-<p>Each data COLUMN of a screen is one (phenotype x condition). We keep columns that
-are homozygous + a growth readout + a single dosed-compound condition + a known
-base medium; every other column is dropped-and-logged (the worklist), never guessed.</p>
+<dd><p>Build env x geno -&gt; NPV records for every GROWTH column of every screen.</p>
+<p>Each data COLUMN of a screen is one (phenotype x condition). Every growth column
+whose condition the schema can carry is stored; a column whose condition has an
+unrepresentable component, a non-growth column and a malformed header are
+counted, never guessed. A row id that is not ORF-shaped is stored as released.</p>
 </dd></dl>
 
 <dl class="py method">

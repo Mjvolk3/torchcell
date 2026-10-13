@@ -132,11 +132,18 @@
 <span class="sd">"Color scores of all deletions" is the whole-collection screen; Sheet 2 "Names and</span>
 <span class="sd">Functions of TOP200" is the curated high-hit subset (gene name/function/category).</span>
 
-<span class="sd">Maps to `VisualScorePhenotype` (WS4). One record per ORF that has a numeric color;</span>
-<span class="sd">text-only rows (`pet`, `tiny`, `_`) carry no usable measurement and are excluded</span>
-<span class="sd">(counted + logged, never silently dropped).</span>
+<span class="sd">Maps to `VisualScorePhenotype` (WS4). One record per RELEASED ROW with a numeric color</span>
+<span class="sd">(2026.10.12, #1045): an ORF scored on two plates is two records of one deletion, told</span>
+<span class="sd">apart by their values, with ``n_replicates = 1`` each (the previous build collapsed them</span>
+<span class="sd">to the maximum: 132 rows into 130 ORFs). The ORF is stored as released (upper-cased,</span>
+<span class="sd">no genome consulted); the strain is the row's own ``Strain`` cell. A row whose Color cell</span>
+<span class="sd">is text (``pet``, ``tiny``, ``_``; 546 rows) carries no number the ``visual_score`` field</span>
+<span class="sd">can hold and is listed, with its text, in ``preprocess/dropped_records.json``; a row whose</span>
+<span class="sd">ORF cell is not ORF-shaped (``YLR287-A``, 1 row) is counted there under</span>
+<span class="sd">``deferred_to_released_gene_name_leaf`` until that leaf lands.</span>
 <span class="sd">"""</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
@@ -171,6 +178,8 @@
     <span class="n">MediaComponentRole</span><span class="p">,</span>
     <span class="n">Publication</span><span class="p">,</span>
     <span class="n">ReferenceGenome</span><span class="p">,</span>
+    <span class="n">ReleasedGeneKind</span><span class="p">,</span>
+    <span class="n">ReleasedGeneNamePerturbation</span><span class="p">,</span>
     <span class="n">Temperature</span><span class="p">,</span>
     <span class="n">VisualScoreExperiment</span><span class="p">,</span>
     <span class="n">VisualScoreExperimentReference</span><span class="p">,</span>
@@ -298,17 +307,29 @@
     <span class="p">]</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">MixedStrainScoresError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""An ORF with numeric color scores on more than one background strain.</span>
-
-<span class="sd">    One record carries one reference genome, so scores from two backgrounds cannot be</span>
-<span class="sd">    aggregated into it. The pinned SI has none: its one ORF listed on two strains</span>
-<span class="sd">    (YML086C) has a numeric score only on BY4730 (the BY4741 row reads ``pet``).</span>
-<span class="sd">    """</span>
-
-
 <span class="c1"># Valid S. cerevisiae systematic ORF name (optional trailing -A/-B for sub-features).</span>
 <span class="n">_SYSTEMATIC_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](-[A-Z])?$"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_released_deletion</span><span class="p">(</span>
+    <span class="n">orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KanMxDeletionPerturbation</span> <span class="o">|</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The deletion under the released identifier (#1045): an ORF-shaped one on the</span>
+<span class="sd">    placed KanMX leaf with both names the ORF, any other on the released-gene-name leaf</span>
+<span class="sd">    verbatim (kind deletion, marker KanMX).</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">orf</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">KanMxDeletionPerturbation</span><span class="p">(</span>
+            <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span> <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">orf</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">(</span>
+        <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+        <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+        <span class="n">released_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+        <span class="n">released_kind</span><span class="o">=</span><span class="n">ReleasedGeneKind</span><span class="o">.</span><span class="n">deletion</span><span class="p">,</span>
+        <span class="n">marker</span><span class="o">=</span><span class="s2">"KanMX"</span><span class="p">,</span>
+    <span class="p">)</span>
+
 
 <span class="c1"># QC / phenotype flags parsed from the free-text Comment column (case-insensitive).</span>
 <span class="n">_FLAG_PATTERNS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
@@ -405,8 +426,8 @@
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Wrote </span><span class="si">%s</span><span class="s2"> (</span><span class="si">%d</span><span class="s2"> bytes, sha256 verified)"</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_aggregate_by_orf</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Read Sheet 1, aggregate replicate rows to one row per ORF."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_released_rows</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Read Sheet 1 as released: one row per scored plate, plus the accounting."""</span>
         <span class="n">xlsx</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">si_filename</span><span class="p">)</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">xlsx</span><span class="p">,</span> <span class="n">sheet_name</span><span class="o">=</span><span class="s2">"Color scores of all deletions"</span><span class="p">)</span>
 
@@ -425,94 +446,95 @@
             <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ORF name"</span><span class="p">))</span>
         <span class="p">}</span>
 
-        <span class="n">records</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">malformed</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">released_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">text_rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">n_blank_orf</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
             <span class="n">orf</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ORF name"</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">orf</span><span class="p">):</span>
+                <span class="n">n_blank_orf</span> <span class="o">+=</span> <span class="mi">1</span>
                 <span class="k">continue</span>
             <span class="n">orf</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">orf</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
-            <span class="c1"># Some SI ORF names are malformed (e.g. 'YLR287-A' missing the W/C). Do not</span>
-            <span class="c1"># guess the missing letter -- exclude non-conforming names and log them.</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">orf</span><span class="p">):</span>
-                <span class="n">malformed</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">orf</span><span class="p">)</span>
-                <span class="k">continue</span>
+                <span class="n">released_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">orf</span><span class="p">)</span>
             <span class="n">num</span><span class="p">,</span> <span class="n">text</span> <span class="o">=</span> <span class="n">_parse_color</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Color"</span><span class="p">))</span>
-            <span class="n">flags</span> <span class="o">=</span> <span class="n">_parse_comment</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Comment"</span><span class="p">))</span>
             <span class="n">strain</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"Strain"</span><span class="p">])</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Strain"</span><span class="p">))</span> <span class="k">else</span> <span class="s2">"BY4741"</span>
             <span class="p">)</span>
-            <span class="n">rec</span> <span class="o">=</span> <span class="n">records</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span>
-                <span class="n">orf</span><span class="p">,</span>
-                <span class="p">{</span>
-                    <span class="s2">"orf"</span><span class="p">:</span> <span class="n">orf</span><span class="p">,</span>
-                    <span class="s2">"strain"</span><span class="p">:</span> <span class="n">strain</span><span class="p">,</span>
-                    <span class="s2">"numeric_scores"</span><span class="p">:</span> <span class="p">[],</span>
-                    <span class="s2">"numeric_strains"</span><span class="p">:</span> <span class="nb">set</span><span class="p">(),</span>
-                    <span class="s2">"texts"</span><span class="p">:</span> <span class="nb">set</span><span class="p">(),</span>
-                    <span class="s2">"flags"</span><span class="p">:</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="kc">False</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">_FLAG_PATTERNS</span><span class="p">},</span>
-                <span class="p">},</span>
-            <span class="p">)</span>
-            <span class="k">if</span> <span class="n">num</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">rec</span><span class="p">[</span><span class="s2">"numeric_scores"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">num</span><span class="p">)</span>
-                <span class="n">rec</span><span class="p">[</span><span class="s2">"numeric_strains"</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">strain</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">text</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">rec</span><span class="p">[</span><span class="s2">"texts"</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">flags</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="n">rec</span><span class="p">[</span><span class="s2">"flags"</span><span class="p">][</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">rec</span><span class="p">[</span><span class="s2">"flags"</span><span class="p">][</span><span class="n">k</span><span class="p">]</span> <span class="ow">or</span> <span class="n">v</span>
-
-        <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">orf</span><span class="p">,</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">records</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">scores</span> <span class="o">=</span> <span class="n">rec</span><span class="p">[</span><span class="s2">"numeric_scores"</span><span class="p">]</span>
-            <span class="n">numeric_strains</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">rec</span><span class="p">[</span><span class="s2">"numeric_strains"</span><span class="p">])</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">numeric_strains</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">MixedStrainScoresError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"Ozaydin: </span><span class="si">{</span><span class="n">orf</span><span class="si">}</span><span class="s2"> has numeric color scores on strains "</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">numeric_strains</span><span class="si">}</span><span class="s2">; one record carries one reference genome"</span>
-                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">num</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">text_rows</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"orf"</span><span class="p">:</span> <span class="n">orf</span><span class="p">,</span> <span class="s2">"strain"</span><span class="p">:</span> <span class="n">strain</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">:</span> <span class="n">text</span><span class="p">})</span>
+                <span class="k">continue</span>
             <span class="n">meta</span> <span class="o">=</span> <span class="n">top200_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">orf</span><span class="p">,</span> <span class="p">{})</span>
             <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="p">{</span>
                     <span class="s2">"orf"</span><span class="p">:</span> <span class="n">orf</span><span class="p">,</span>
-                    <span class="c1"># The strain of the scored rows; an ORF with no numeric score keeps</span>
-                    <span class="c1"># its first row's strain and is excluded from the records anyway.</span>
-                    <span class="s2">"strain"</span><span class="p">:</span> <span class="n">numeric_strains</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">numeric_strains</span> <span class="k">else</span> <span class="n">rec</span><span class="p">[</span><span class="s2">"strain"</span><span class="p">],</span>
-                    <span class="s2">"visual_score"</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span> <span class="k">if</span> <span class="n">scores</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-                    <span class="s2">"visual_score_min"</span><span class="p">:</span> <span class="nb">min</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-                    <span class="s2">"n_replicates"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">scores</span><span class="p">),</span>
-                    <span class="s2">"score_text"</span><span class="p">:</span> <span class="s2">";"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">rec</span><span class="p">[</span><span class="s2">"texts"</span><span class="p">]))</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
-                    <span class="s2">"comment_annotations"</span><span class="p">:</span> <span class="n">rec</span><span class="p">[</span><span class="s2">"flags"</span><span class="p">],</span>
+                    <span class="s2">"strain"</span><span class="p">:</span> <span class="n">strain</span><span class="p">,</span>
+                    <span class="s2">"visual_score"</span><span class="p">:</span> <span class="n">num</span><span class="p">,</span>
+                    <span class="s2">"visual_score_min"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="s2">"n_replicates"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+                    <span class="s2">"score_text"</span><span class="p">:</span> <span class="n">text</span><span class="p">,</span>
+                    <span class="s2">"comment_annotations"</span><span class="p">:</span> <span class="n">_parse_comment</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Comment"</span><span class="p">)),</span>
                     <span class="s2">"in_top200"</span><span class="p">:</span> <span class="n">orf</span> <span class="ow">in</span> <span class="n">top200_orfs</span><span class="p">,</span>
                     <span class="o">**</span><span class="n">meta</span><span class="p">,</span>
                 <span class="p">}</span>
             <span class="p">)</span>
-        <span class="k">if</span> <span class="n">malformed</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                <span class="s2">"Ozaydin: excluded </span><span class="si">%d</span><span class="s2"> malformed ORF names (e.g. </span><span class="si">%s</span><span class="s2">)"</span><span class="p">,</span>
-                <span class="nb">len</span><span class="p">(</span><span class="n">malformed</span><span class="p">),</span>
-                <span class="nb">sorted</span><span class="p">(</span><span class="n">malformed</span><span class="p">)[:</span><span class="mi">5</span><span class="p">],</span>
-            <span class="p">)</span>
-        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
+        <span class="n">accounting</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"dataset"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="s2">"source_rows"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)),</span>
+            <span class="s2">"kept_records"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span>
+            <span class="s2">"rules"</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">"rule"</span><span class="p">:</span> <span class="s2">"orf_cell_is_blank"</span><span class="p">,</span>
+                    <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"the released row names no ORF"</span><span class="p">,</span>
+                    <span class="s2">"n_records"</span><span class="p">:</span> <span class="n">n_blank_orf</span><span class="p">,</span>
+                <span class="p">},</span>
+                <span class="p">{</span>
+                    <span class="s2">"rule"</span><span class="p">:</span> <span class="s2">"stored_on_released_gene_name_leaf"</span><span class="p">,</span>
+                    <span class="s2">"description"</span><span class="p">:</span> <span class="p">(</span>
+                        <span class="s2">"the released ORF cell is not ORF-shaped (YLR287-A: the release "</span>
+                        <span class="s2">"dropped the strand letter), so its rows are stored on "</span>
+                        <span class="s2">"ReleasedGeneNamePerturbation under that name verbatim, never "</span>
+                        <span class="s2">"resolved against the genome and never dropped (#1045); listed "</span>
+                        <span class="s2">"here, not removed"</span>
+                    <span class="p">),</span>
+                    <span class="s2">"n_records"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                    <span class="s2">"items"</span><span class="p">:</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">released_names</span><span class="p">),</span>
+                <span class="p">},</span>
+                <span class="p">{</span>
+                    <span class="s2">"rule"</span><span class="p">:</span> <span class="s2">"color_cell_is_text_not_a_score"</span><span class="p">,</span>
+                    <span class="s2">"description"</span><span class="p">:</span> <span class="p">(</span>
+                        <span class="s2">"the released Color cell is a word (pet, tiny, _), not a score on "</span>
+                        <span class="s2">"the -5..+5 scale; VisualScorePhenotype.visual_score holds a "</span>
+                        <span class="s2">"number, so the row's text is kept here, verbatim, with its ORF "</span>
+                        <span class="s2">"and strain"</span>
+                    <span class="p">),</span>
+                    <span class="s2">"n_records"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">text_rows</span><span class="p">),</span>
+                    <span class="s2">"items"</span><span class="p">:</span> <span class="n">text_rows</span><span class="p">,</span>
+                <span class="p">},</span>
+            <span class="p">],</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span> <span class="n">accounting</span>
 
 <div class="viewcode-block" id="CarotenoidOzaydin2013Dataset.process">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.ozaydin2013.CarotenoidOzaydin2013Dataset.html#torchcell.datasets.scerevisiae.ozaydin2013.CarotenoidOzaydin2013Dataset.process">[docs]</a>
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Parse the SI into per-ORF VisualScore experiments and write LMDB."""</span>
+<span class="w">        </span><span class="sd">"""Parse the SI into per-row VisualScore experiments and write LMDB."""</span>
         <span class="n">verify_raw_files</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">si_filename</span><span class="p">:</span> <span class="n">_SI_SHA256</span><span class="p">})</span>
-        <span class="n">agg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregate_by_orf</span><span class="p">()</span>
-        <span class="n">n_total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">agg</span><span class="p">)</span>
-        <span class="c1"># Exclude ORFs with no numeric color (text-only / missing) -- not measurements.</span>
-        <span class="n">usable</span> <span class="o">=</span> <span class="n">agg</span><span class="p">[</span><span class="n">agg</span><span class="p">[</span><span class="s2">"visual_score"</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">n_excluded</span> <span class="o">=</span> <span class="n">n_total</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">usable</span><span class="p">)</span>
+        <span class="n">usable</span><span class="p">,</span> <span class="n">accounting</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_released_rows</span><span class="p">()</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">"Ozaydin: </span><span class="si">%d</span><span class="s2"> ORFs total, </span><span class="si">%d</span><span class="s2"> usable (numeric color), </span><span class="si">%d</span><span class="s2"> excluded (text-only)"</span><span class="p">,</span>
-            <span class="n">n_total</span><span class="p">,</span>
+            <span class="s2">"Ozaydin: </span><span class="si">%d</span><span class="s2"> released rows, </span><span class="si">%d</span><span class="s2"> records (one per scored row); </span><span class="si">%d</span><span class="s2"> text-only "</span>
+            <span class="s2">"rows listed in the ledger, </span><span class="si">%d</span><span class="s2"> names on the released-gene-name leaf"</span><span class="p">,</span>
+            <span class="n">accounting</span><span class="p">[</span><span class="s2">"source_rows"</span><span class="p">],</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">usable</span><span class="p">),</span>
-            <span class="n">n_excluded</span><span class="p">,</span>
+            <span class="n">accounting</span><span class="p">[</span><span class="s2">"rules"</span><span class="p">][</span><span class="mi">2</span><span class="p">][</span><span class="s2">"n_records"</span><span class="p">],</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">accounting</span><span class="p">[</span><span class="s2">"rules"</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="s2">"items"</span><span class="p">]),</span>
         <span class="p">)</span>
 
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"dropped_records.json"</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">accounting</span><span class="p">,</span> <span class="n">fh</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
         <span class="n">usable</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">"comment_annotations"</span><span class="p">])</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span>
             <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"data.csv"</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span>
         <span class="p">)</span>
@@ -552,19 +574,12 @@
         <span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">:</span> <span class="s2">"pd.Series[Any]"</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">VisualScoreExperiment</span><span class="p">,</span> <span class="n">VisualScoreExperimentReference</span><span class="p">,</span> <span class="n">Publication</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Build the VisualScore experiment/reference/publication for one ORF."""</span>
-        <span class="n">strain</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"strain"</span><span class="p">])</span> <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s2">"strain"</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"BY4741"</span><span class="p">,</span> <span class="s2">"BY4730"</span><span class="p">)</span> <span class="k">else</span> <span class="s2">"BY4741"</span>
-        <span class="p">)</span>
+        <span class="c1"># The row's own Strain cell, as released (BY4741 where the cell is blank).</span>
         <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
-            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="n">strain</span>
+            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"strain"</span><span class="p">])</span>
         <span class="p">)</span>
         <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
-            <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
-                <span class="n">KanMxDeletionPerturbation</span><span class="p">(</span>
-                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">],</span> <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">]</span>
-                <span class="p">),</span>
-                <span class="o">*</span><span class="n">_carotenogenic_cassette</span><span class="p">(),</span>
-            <span class="p">]</span>
+            <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span><span class="n">_released_deletion</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">]),</span> <span class="o">*</span><span class="n">_carotenogenic_cassette</span><span class="p">()]</span>
         <span class="p">)</span>
         <span class="c1"># Screen scored on SC-URA agar (URA-selective plasmid), 30 C.</span>
         <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span>

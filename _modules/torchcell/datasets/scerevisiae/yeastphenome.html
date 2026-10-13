@@ -128,15 +128,39 @@
 <span class="sd">ONE loader, MANY screens (NOT one loader per PMID). We consume a single pre-processed</span>
 <span class="sd">intermediate, so each retained screen is a member of ``SCREENS`` and its source PMID is</span>
 <span class="sd">per-record provenance (``Publication.pubmed_id``), not a separate loader file. Scope is</span>
-<span class="sd">the GROWTH phenome only (~53% of YeastPhenome): a COMPLETE-loss-of-function single-ORF</span>
-<span class="sd">deletion x chemical/stress condition -&gt; growth. Both HAPLOID (BY4741/BY4742) and</span>
-<span class="sd">HOMOZYGOUS-DIPLOID (BY4743) collections qualify -- the deletion is identical total</span>
-<span class="sd">absence, only ``ReferenceGenome.ploidy`` differs (haploid BY4741 is in fact torchcell's</span>
-<span class="sd">most common deletion background). HETEROZYGOUS diploid screens are OUT (gene dosage /</span>
-<span class="sd">haploinsufficiency = a different perturbation type). Expression screens (~42%, Kemmeren)</span>
-<span class="sd">and the ~5% mosaic (proteome/metabolome/morphology/localization/pH) are OUT (different</span>
+<span class="sd">the GROWTH phenome only (~53% of YeastPhenome): a deletion x condition -&gt; growth.</span>
+<span class="sd">HAPLOID (BY4741/BY4742), HOMOZYGOUS-DIPLOID (BY4743) and HETEROZYGOUS-DIPLOID columns</span>
+<span class="sd">all qualify (2026.10.12, #1045): the first two are the same total-absence</span>
+<span class="sd">``KanMxDeletionPerturbation`` with only ``ReferenceGenome.ploidy`` differing, and a</span>
+<span class="sd">``het`` column is one copy dropped 2 -&gt; 1 in BY4743, the ``EngineeredCopyNumberPerturbation``</span>
+<span class="sd">the Ohnuki 2018 loader uses. A column whose collection the curation marks as ambiguous</span>
+<span class="sd">("hap ?", "hap a/hap alpha") stores the deletion with the strain a typed gap on the</span>
+<span class="sd">reference; today's pinned screens carry none. Expression screens (~42%, Kemmeren) and</span>
+<span class="sd">the ~5% mosaic (proteome/metabolome/morphology/localization/pH) are OUT (different</span>
 <span class="sd">phenotype families, several already built directly from primaries); already-built</span>
 <span class="sd">primaries (Costanzo/Kemmeren/Kuzmin/...) are EXCLUDED to avoid double-counting.</span>
+
+<span class="sd">CONDITIONS (2026.10.12, #1045: every growth column with a representable condition is</span>
+<span class="sd">stored; the previous build stored only a single dosed agent in a library medium). A</span>
+<span class="sd">condition string is a comma-joined list of components, parsed by ``_parse_conditions``:</span>
+<span class="sd">``standard`` is the base condition with no edit; ``temperature [N C]`` sets the</span>
+<span class="sd">environment temperature; ``time [N h]`` / ``time [N gen]`` set ``duration_hours`` /</span>
+<span class="sd">``duration_generations``; ``oxygen [0%]`` sets ``aerobicity="anaerobic"``; a dosed agent</span>
+<span class="sd">``&lt;name&gt; [&lt;value&gt; &lt;unit&gt;]`` is a ``SmallMoleculePerturbation`` (the four plant defensins</span>
+<span class="sd">are ``BiologicPerturbation``s); a repeated identical component (``sodium</span>
+<span class="sd">chloride [0.6 M], time [48 h], sodium chloride [0.6 M]``) counts once. A component the</span>
+<span class="sd">schema cannot carry makes the column ``condition_not_representable`` and it is counted,</span>
+<span class="sd">never guessed: a dose RANGE (``hydrogen peroxide [1-1.2 mM]``, no single value and no</span>
+<span class="sd">basis), an agent with NO dose (``gentamicin``, ``Mospilan``; ``Concentration`` needs a</span>
+<span class="sd">value or a basis), a unit ``ConcentrationUnit`` lacks (``ng/ml``, ``U/ml``), and a</span>
+<span class="sd">genotype edit written as a condition (``expression of human CYP1A2``, ``loss +</span>
+<span class="sd">cytoduction of mtDNA``). Each such column is listed with its record count in the</span>
+<span class="sd">dataset note; the units are an additive enum change for the schema branch. The medium</span>
+<span class="sd">token is stored as released: a base the library tables name is rich or synthetic by</span>
+<span class="sd">that table, any other base (``SC - Ura``, ``YPG [3%]``) is classified by its prefix</span>
+<span class="sd">(``YP`` rich; ``SC``/``SD``/``YNB``/``CSM``/``MM``/``SynBase`` synthetic) and anything else</span>
+<span class="sd">stores ``is_synthetic`` as a typed gap; a header with no medium field stores a ``Media``</span>
+<span class="sd">whose name, state and synthetic flag are typed gaps (the SGD precedent).</span>
 
 <span class="sd">LABEL = the NPV (normalized phenotypic value). YeastPhenome's canonical label</span>
 <span class="sd">(Turco2023) is a per-screen, mode-referenced modified z-score: the mode of each screen</span>
@@ -163,6 +187,7 @@
 <span class="sd">= the Zenodo record. A future per-paper SI comb would upgrade these to sourced values.</span>
 <span class="sd">"""</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
@@ -174,6 +199,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ExperimentDataset</span><span class="p">,</span>
@@ -183,24 +209,31 @@
     <span class="n">write_verified</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.compound_identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolved_compound</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">MEDIA_LIBRARY</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">BiologicAgentClass</span><span class="p">,</span>
     <span class="n">BiologicPerturbation</span><span class="p">,</span>
     <span class="n">Concentration</span><span class="p">,</span>
     <span class="n">ConcentrationUnit</span><span class="p">,</span>
+    <span class="n">EngineeredCopyNumberPerturbation</span><span class="p">,</span>
     <span class="n">Environment</span><span class="p">,</span>
+    <span class="n">EnvironmentPerturbationType</span><span class="p">,</span>
     <span class="n">EnvironmentResponseExperiment</span><span class="p">,</span>
     <span class="n">EnvironmentResponseExperimentReference</span><span class="p">,</span>
     <span class="n">EnvironmentResponsePhenotype</span><span class="p">,</span>
     <span class="n">Experiment</span><span class="p">,</span>
     <span class="n">ExperimentReference</span><span class="p">,</span>
+    <span class="n">GenePerturbationType</span><span class="p">,</span>
     <span class="n">Genotype</span><span class="p">,</span>
     <span class="n">KanMxDeletionPerturbation</span><span class="p">,</span>
     <span class="n">MeasurementType</span><span class="p">,</span>
     <span class="n">Media</span><span class="p">,</span>
     <span class="n">Publication</span><span class="p">,</span>
     <span class="n">ReferenceGenome</span><span class="p">,</span>
+    <span class="n">ReleasedGeneKind</span><span class="p">,</span>
+    <span class="n">ReleasedGeneNamePerturbation</span><span class="p">,</span>
     <span class="n">SmallMoleculePerturbation</span><span class="p">,</span>
+    <span class="n">Temperature</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span><span class="p">,</span> <span class="n">ProvenanceGap</span><span class="p">,</span> <span class="n">ProvenanceGapReason</span>
@@ -229,12 +262,14 @@
 
 <span class="c1"># Systematic ORF (R64) -- YeastPhenome value files are already ORF-resolved.</span>
 <span class="n">_SYSTEMATIC_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^(Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](-[A-Z])?|Q\d</span><span class="si">{4}</span><span class="s2">)$"</span><span class="p">)</span>
-<span class="c1"># One CLEAN dosed compound: "&lt;name&gt; [&lt;value&gt; &lt;unit&gt;]" with NO other '[' or ',' in the</span>
-<span class="c1"># name (so a multi-component condition like "time [5 gen], X [1 uM]" is REJECTED, never</span>
-<span class="c1"># mis-parsed -- it drops to the worklist instead).</span>
+<span class="c1"># One dosed component: "&lt;name&gt; [&lt;value&gt; &lt;unit&gt;]"; a value that is a range ("1-1.2")</span>
+<span class="c1"># does not match and is reported as not representable.</span>
 <span class="n">_DOSE_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
-    <span class="sa">r</span><span class="s2">"^(?P&lt;name&gt;[^\[\],]+?)\s*\[(?P&lt;val&gt;[0-9.]+)\s*(?P&lt;unit&gt;[^\]]+)\]$"</span>
+    <span class="sa">r</span><span class="s2">"^(?P&lt;name&gt;[^\[\]]+?)\s*\[(?P&lt;val&gt;[0-9]+(?:\.[0-9]+)?)\s*(?P&lt;unit&gt;[^\]]+)\]$"</span>
 <span class="p">)</span>
+<span class="n">_TEMPERATURE_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^temperature \[(?P&lt;val&gt;[0-9]+(?:\.[0-9]+)?) C\]$"</span><span class="p">)</span>
+<span class="n">_TIME_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^time \[(?P&lt;val&gt;[0-9]+(?:\.[0-9]+)?) (?P&lt;unit&gt;h|gen)\]$"</span><span class="p">)</span>
+<span class="n">_OXYGEN_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^oxygen \[(?P&lt;val&gt;[0-9]+(?:\.[0-9]+)?)%\]$"</span><span class="p">)</span>
 
 <span class="n">_UNIT_MAP</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">"M"</span><span class="p">:</span> <span class="n">ConcentrationUnit</span><span class="o">.</span><span class="n">molar</span><span class="p">,</span>
@@ -246,6 +281,9 @@
     <span class="s2">"ug/mL"</span><span class="p">:</span> <span class="n">ConcentrationUnit</span><span class="o">.</span><span class="n">ug_per_ml</span><span class="p">,</span>
     <span class="s2">"g/L"</span><span class="p">:</span> <span class="n">ConcentrationUnit</span><span class="o">.</span><span class="n">g_per_l</span><span class="p">,</span>
     <span class="s2">"g/l"</span><span class="p">:</span> <span class="n">ConcentrationUnit</span><span class="o">.</span><span class="n">g_per_l</span><span class="p">,</span>
+    <span class="s2">"%"</span><span class="p">:</span> <span class="n">ConcentrationUnit</span><span class="o">.</span><span class="n">percent</span><span class="p">,</span>
+    <span class="s2">"% v/v"</span><span class="p">:</span> <span class="n">ConcentrationUnit</span><span class="o">.</span><span class="n">percent_v_v</span><span class="p">,</span>
+    <span class="s2">"% w/v"</span><span class="p">:</span> <span class="n">ConcentrationUnit</span><span class="o">.</span><span class="n">percent_w_v</span><span class="p">,</span>
 <span class="p">}</span>
 
 <span class="c1"># Plant-defensin conditions (PMID 31451498): sequence-identified antimicrobial</span>
@@ -254,19 +292,23 @@
 <span class="c1"># ``BiologicPerturbation(agent_class=peptide)`` (audit DEFECT fix).</span>
 <span class="n">_DEFENSIN_NAMES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"dmamp1"</span><span class="p">,</span> <span class="s2">"nad1"</span><span class="p">,</span> <span class="s2">"nbd6"</span><span class="p">,</span> <span class="s2">"sbi6"</span><span class="p">}</span>
 
-<span class="c1"># Rich (non-synthetic) base media; synthetic-defined media are is_synthetic=True.</span>
+<span class="c1"># Rich (non-synthetic) base media; synthetic-defined media are is_synthetic=True. A base</span>
+<span class="c1"># in neither table is classified by its prefix; anything else gaps ``is_synthetic``.</span>
 <span class="n">_RICH_MEDIA</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"YPD"</span><span class="p">,</span> <span class="s2">"YPAD"</span><span class="p">,</span> <span class="s2">"YEPD"</span><span class="p">,</span> <span class="s2">"YP"</span><span class="p">,</span> <span class="s2">"YPG"</span><span class="p">,</span> <span class="s2">"YPGal"</span><span class="p">,</span> <span class="s2">"YP4D"</span><span class="p">}</span>
 <span class="n">_SYNTHETIC_MEDIA</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"SD"</span><span class="p">,</span> <span class="s2">"SC"</span><span class="p">,</span> <span class="s2">"YNB"</span><span class="p">,</span> <span class="s2">"CSM"</span><span class="p">,</span> <span class="s2">"MM"</span><span class="p">,</span> <span class="s2">"SynBase"</span><span class="p">}</span>
+<span class="n">_RICH_PREFIXES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"YP"</span><span class="p">,)</span>
+<span class="n">_SYNTHETIC_PREFIXES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"SC"</span><span class="p">,</span> <span class="s2">"SD"</span><span class="p">,</span> <span class="s2">"YNB"</span><span class="p">,</span> <span class="s2">"CSM"</span><span class="p">,</span> <span class="s2">"MM"</span><span class="p">,</span> <span class="s2">"SynBase"</span><span class="p">)</span>
 
-<span class="c1"># Complete-loss-of-function backgrounds we can represent. Ploidy lives on</span>
-<span class="c1"># ``ReferenceGenome``, so a HAPLOID deletion and a HOMOZYGOUS-DIPLOID deletion are the same</span>
-<span class="c1"># total-absence ``DeletionPerturbation`` -- only the background differs. (Haploid BY4741 is</span>
-<span class="c1"># in fact torchcell's most common deletion background.) EXCLUDED: ``het`` (heterozygous</span>
-<span class="c1"># diploid = gene DOSAGE / haploinsufficiency, a different perturbation type needing</span>
-<span class="c1"># ``EngineeredCopyNumberPerturbation``) and ambiguous/mixed collections ("hap ?",</span>
-<span class="c1"># "hap a/hap alpha", ...), which are drop-and-logged.</span>
+<span class="c1"># Deletion-collection backgrounds. Ploidy lives on ``ReferenceGenome``, so a HAPLOID</span>
+<span class="c1"># deletion and a HOMOZYGOUS-DIPLOID deletion are the same total-absence</span>
+<span class="c1"># ``DeletionPerturbation`` -- only the background differs. A HETEROZYGOUS diploid</span>
+<span class="c1"># column (``het``) is one copy dropped 2 -&gt; 1 in BY4743: ``EngineeredCopyNumberPerturbation``</span>
+<span class="c1"># with ``copy_number=1``, ``reference_copy_number=2`` (the Ohnuki 2018 leaf). A zygosity</span>
+<span class="c1"># token outside this table (an ambiguous or mixed collection the curation writes as</span>
+<span class="c1"># "hap ?" or "hap a/hap alpha") is stored with the strain as a typed gap.</span>
 <span class="n">_ZYGOSITY</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"haploid"</span><span class="p">,</span> <span class="s2">"diploid"</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">"hom"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"BY4743"</span><span class="p">,</span> <span class="s2">"diploid"</span><span class="p">),</span>
+    <span class="s2">"het"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"BY4743"</span><span class="p">,</span> <span class="s2">"diploid"</span><span class="p">),</span>
     <span class="s2">"hap a"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"BY4741"</span><span class="p">,</span> <span class="s2">"haploid"</span><span class="p">),</span>
     <span class="s2">"hap alpha"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"BY4742"</span><span class="p">,</span> <span class="s2">"haploid"</span><span class="p">),</span>
     <span class="s2">"hap a (post-SGA)"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"BY4741-derived (post-SGA)"</span><span class="p">,</span> <span class="s2">"haploid"</span><span class="p">),</span>
@@ -561,18 +603,34 @@
     <span class="p">}</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_parse_condition</span><span class="p">(</span>
-    <span class="n">condition</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SmallMoleculePerturbation</span> <span class="o">|</span> <span class="n">BiologicPerturbation</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Parse a CLEAN single dosed-agent condition; None if not encodable (-&gt; drop-and-log).</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ParsedCondition</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""What a curated condition string says about the environment.</span>
 
-<span class="sd">    Handles ``&lt;agent&gt; [&lt;value&gt; &lt;unit&gt;]`` only. The four plant defensins (PMID 31451498)</span>
-<span class="sd">    are retyped to a peptide ``BiologicPerturbation`` BEFORE the small-molecule path; every</span>
-<span class="sd">    other agent becomes a resolver-routed ``SmallMoleculePerturbation`` (fill-or-gap).</span>
-<span class="sd">    Physical stresses, dose ranges, multi-component conditions, and unmapped units return</span>
-<span class="sd">    None and are dropped-and-logged -- never guessed, never mis-parsed.</span>
+<span class="sd">    ``unrepresentable`` lists the components no schema field can carry (a dose range,</span>
+<span class="sd">    an undosed agent, a unit the enum lacks, a genotype edit written as a condition);</span>
+<span class="sd">    a column with any is counted under ``condition_not_representable``, never stored</span>
+<span class="sd">    with a guessed environment.</span>
 <span class="sd">    """</span>
-    <span class="n">m</span> <span class="o">=</span> <span class="n">_DOSE_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">condition</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+
+    <span class="n">perturbations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">EnvironmentPerturbationType</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">temperature</span><span class="p">:</span> <span class="n">Temperature</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">duration_hours</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">duration_generations</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">aerobicity</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"aerobic"</span>
+    <span class="n">unrepresentable</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_parse_agent</span><span class="p">(</span>
+    <span class="n">component</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SmallMoleculePerturbation</span> <span class="o">|</span> <span class="n">BiologicPerturbation</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One dosed agent ``&lt;name&gt; [&lt;value&gt; &lt;unit&gt;]``; None when the schema cannot carry it.</span>
+
+<span class="sd">    The four plant defensins (PMID 31451498) route to a peptide ``BiologicPerturbation``</span>
+<span class="sd">    before the small-molecule path; every other agent is a resolver-routed</span>
+<span class="sd">    ``SmallMoleculePerturbation`` (fill-or-gap on the compound identity). A dose range,</span>
+<span class="sd">    a missing dose, or a unit outside ``_UNIT_MAP`` returns None.</span>
+<span class="sd">    """</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">_DOSE_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">component</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="n">unit</span> <span class="o">=</span> <span class="n">_UNIT_MAP</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"unit"</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
@@ -591,24 +649,117 @@
     <span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_parse_media</span><span class="p">(</span><span class="n">media_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">phenotype</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Media</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Parse the curated media token (``YPD + EtOH``) into a ``Media``; None if absent/unknown.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_parse_conditions</span><span class="p">(</span><span class="n">condition</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ParsedCondition</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Parse a curated condition string into its typed environment edits.</span>
 
-<span class="sd">    Base = the token before '+'. ``state`` is inferred from the growth readout: colony-size /</span>
-<span class="sd">    spot-assay / killing-zone =&gt; solid, else (turbidity / pooled / CFU) =&gt; liquid.</span>
+<span class="sd">    Components are comma-separated (``", "``); an identical repeated component counts</span>
+<span class="sd">    once. ``standard`` is the base condition; ``temperature [N C]``, ``time [N h|gen]``</span>
+<span class="sd">    and ``oxygen [0%]`` set the environment's own fields; anything else is a dosed</span>
+<span class="sd">    agent or is reported as unrepresentable.</span>
+<span class="sd">    """</span>
+    <span class="n">parsed</span> <span class="o">=</span> <span class="n">ParsedCondition</span><span class="p">()</span>
+    <span class="n">seen</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">raw</span> <span class="ow">in</span> <span class="n">condition</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">", "</span><span class="p">):</span>
+        <span class="n">component</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">component</span> <span class="ow">or</span> <span class="n">component</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">seen</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">component</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">component</span> <span class="o">==</span> <span class="s2">"standard"</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">m</span> <span class="o">:=</span> <span class="n">_TEMPERATURE_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">component</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">parsed</span><span class="o">.</span><span class="n">temperature</span> <span class="o">=</span> <span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"val"</span><span class="p">)))</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">m</span> <span class="o">:=</span> <span class="n">_TIME_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">component</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"unit"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"h"</span><span class="p">:</span>
+                <span class="n">parsed</span><span class="o">.</span><span class="n">duration_hours</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"val"</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">parsed</span><span class="o">.</span><span class="n">duration_generations</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"val"</span><span class="p">))</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">m</span> <span class="o">:=</span> <span class="n">_OXYGEN_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">component</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">float</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"val"</span><span class="p">))</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">:</span>
+                <span class="n">parsed</span><span class="o">.</span><span class="n">unrepresentable</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">component</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="n">parsed</span><span class="o">.</span><span class="n">aerobicity</span> <span class="o">=</span> <span class="s2">"anaerobic"</span>
+            <span class="k">continue</span>
+        <span class="n">agent</span> <span class="o">=</span> <span class="n">_parse_agent</span><span class="p">(</span><span class="n">component</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">agent</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">parsed</span><span class="o">.</span><span class="n">unrepresentable</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">component</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="n">parsed</span><span class="o">.</span><span class="n">perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">agent</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">parsed</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_media_gap</span><span class="p">(</span><span class="n">field</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">looked_in_note</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ProvenanceGap</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">ProvenanceGap</span><span class="p">(</span>
+        <span class="n">field</span><span class="o">=</span><span class="n">field</span><span class="p">,</span>
+        <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_carried_by_curation</span><span class="p">,</span>
+        <span class="n">looked_in</span><span class="o">=</span><span class="n">CURATION</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="n">looked_in_note</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_base_medium</span><span class="p">(</span><span class="n">base</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The ``MEDIA_LIBRARY`` key a released medium token joins at, else None.</span>
+
+<span class="sd">    The token's leading word (``SC`` of ``SC - Ade``, ``YPD`` of ``YPD``) when it is a</span>
+<span class="sd">    library key; else the rich or synthetic prefix the token starts with when that</span>
+<span class="sd">    prefix is one (``YP`` of ``YPG [3%]``). ``CSM`` joins at ``SC``: the library's SC</span>
+<span class="sd">    object is the CSM + YNB + glucose formulation (its sourced components), so a medium</span>
+<span class="sd">    the curation names by its supplement mixture is that family. The released name</span>
+<span class="sd">    stays ``name``; the key is what makes the medium a derived member of the shared</span>
+<span class="sd">    family rather than free text. No library object is substituted for the token.</span>
+<span class="sd">    """</span>
+    <span class="n">head</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">r</span><span class="s2">"[\s,\-(\[]"</span><span class="p">,</span> <span class="n">base</span><span class="p">,</span> <span class="n">maxsplit</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">head</span> <span class="o">==</span> <span class="s2">"CSM"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">"SC"</span>
+    <span class="k">if</span> <span class="n">head</span> <span class="ow">in</span> <span class="n">MEDIA_LIBRARY</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">head</span>
+    <span class="k">for</span> <span class="n">prefix</span> <span class="ow">in</span> <span class="p">(</span><span class="o">*</span><span class="n">_RICH_PREFIXES</span><span class="p">,</span> <span class="o">*</span><span class="n">_SYNTHETIC_PREFIXES</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">base</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span> <span class="ow">and</span> <span class="n">prefix</span> <span class="ow">in</span> <span class="n">MEDIA_LIBRARY</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">prefix</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_parse_media</span><span class="p">(</span><span class="n">media_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">phenotype</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Media</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The curated media token (``YPD + EtOH``) as a ``Media``, stored as released.</span>
+
+<span class="sd">    Base = the token before '+'. ``state`` is inferred from the growth readout:</span>
+<span class="sd">    colony-size / spot-assay / killing-zone =&gt; solid, else (turbidity / pooled / CFU)</span>
+<span class="sd">    =&gt; liquid. ``is_synthetic`` comes from the two library tables, else from the base's</span>
+<span class="sd">    prefix, else is a typed gap. A header with no medium field (4 fields) stores a</span>
+<span class="sd">    ``Media`` whose name, state and synthetic flag are all typed gaps.</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="n">media_field</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">note</span> <span class="o">=</span> <span class="s2">"the curated column header carries no medium field (4-field header)"</span>
+        <span class="k">return</span> <span class="n">Media</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">_media_gap</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">note</span><span class="p">)</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"name"</span><span class="p">,</span> <span class="s2">"state"</span><span class="p">,</span> <span class="s2">"is_synthetic"</span><span class="p">)</span>
+            <span class="p">],</span>
+        <span class="p">)</span>
     <span class="n">base</span> <span class="o">=</span> <span class="n">media_field</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"+"</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">_RICH_MEDIA</span><span class="p">:</span>
-        <span class="n">is_synthetic</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="k">elif</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">_SYNTHETIC_MEDIA</span><span class="p">:</span>
-        <span class="n">is_synthetic</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">None</span>
     <span class="n">p</span> <span class="o">=</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="n">state</span> <span class="o">=</span> <span class="s2">"solid"</span> <span class="k">if</span> <span class="p">(</span><span class="s2">"colony"</span> <span class="ow">in</span> <span class="n">p</span> <span class="ow">or</span> <span class="s2">"spot"</span> <span class="ow">in</span> <span class="n">p</span> <span class="ow">or</span> <span class="s2">"killing"</span> <span class="ow">in</span> <span class="n">p</span><span class="p">)</span> <span class="k">else</span> <span class="s2">"liquid"</span>
-    <span class="k">return</span> <span class="n">Media</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">base</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span> <span class="n">is_synthetic</span><span class="o">=</span><span class="n">is_synthetic</span><span class="p">)</span>
+    <span class="n">anchor</span> <span class="o">=</span> <span class="n">_base_medium</span><span class="p">(</span><span class="n">base</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">_RICH_MEDIA</span> <span class="ow">or</span> <span class="n">base</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">_RICH_PREFIXES</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Media</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">base</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span> <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">base_medium</span><span class="o">=</span><span class="n">anchor</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">_SYNTHETIC_MEDIA</span> <span class="ow">or</span> <span class="n">base</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">_SYNTHETIC_PREFIXES</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Media</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">base</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span> <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">base_medium</span><span class="o">=</span><span class="n">anchor</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Media</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">base</span><span class="p">,</span>
+        <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span>
+        <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">base_medium</span><span class="o">=</span><span class="n">anchor</span><span class="p">,</span>
+        <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">_media_gap</span><span class="p">(</span>
+                <span class="s2">"is_synthetic"</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"the curated medium token </span><span class="si">{</span><span class="n">media_field</span><span class="si">!r}</span><span class="s2"> names a base in neither "</span>
+                <span class="s2">"the rich nor the synthetic table and with no classifying prefix"</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">],</span>
+    <span class="p">)</span>
 
 
 <div class="viewcode-block" id="YeastPhenomeDataset">
@@ -672,28 +823,32 @@
         <span class="n">rows</span> <span class="o">=</span> <span class="p">[</span><span class="n">ln</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">)</span> <span class="k">for</span> <span class="n">ln</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="k">if</span> <span class="n">ln</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
         <span class="k">return</span> <span class="n">header</span><span class="p">,</span> <span class="n">rows</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_environment</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">media</span><span class="p">:</span> <span class="n">Media</span><span class="p">,</span>
-        <span class="n">perturbation</span><span class="p">:</span> <span class="n">SmallMoleculePerturbation</span> <span class="o">|</span> <span class="n">BiologicPerturbation</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Environment</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Environment carrying one dosed agent; temperature is a typed gap."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">media</span><span class="p">:</span> <span class="n">Media</span><span class="p">,</span> <span class="n">parsed</span><span class="p">:</span> <span class="n">ParsedCondition</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Environment</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The environment a condition string states; temperature is a typed gap when</span>
+<span class="sd">        the condition does not set it (the curation carries no growth temperature).</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="n">Environment</span><span class="p">(</span>
             <span class="n">media</span><span class="o">=</span><span class="n">media</span><span class="p">,</span>
-            <span class="n">temperature</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># not carried by YeastPhenome curation -&gt; gap below</span>
-            <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span><span class="n">perturbation</span><span class="p">],</span>
-            <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span><span class="n">_gap</span><span class="p">(</span><span class="s2">"temperature"</span><span class="p">)],</span>
+            <span class="n">temperature</span><span class="o">=</span><span class="n">parsed</span><span class="o">.</span><span class="n">temperature</span><span class="p">,</span>
+            <span class="n">perturbations</span><span class="o">=</span><span class="n">parsed</span><span class="o">.</span><span class="n">perturbations</span><span class="p">,</span>
+            <span class="n">aerobicity</span><span class="o">=</span><span class="n">parsed</span><span class="o">.</span><span class="n">aerobicity</span><span class="p">,</span>
+            <span class="n">duration_hours</span><span class="o">=</span><span class="n">parsed</span><span class="o">.</span><span class="n">duration_hours</span><span class="p">,</span>
+            <span class="n">duration_generations</span><span class="o">=</span><span class="n">parsed</span><span class="o">.</span><span class="n">duration_generations</span><span class="p">,</span>
+            <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[]</span>
+            <span class="k">if</span> <span class="n">parsed</span><span class="o">.</span><span class="n">temperature</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="p">[</span><span class="n">_gap</span><span class="p">(</span><span class="s2">"temperature"</span><span class="p">)],</span>
         <span class="p">)</span>
 
 <div class="viewcode-block" id="YeastPhenomeDataset.process">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.yeastphenome.YeastPhenomeDataset.html#torchcell.datasets.scerevisiae.yeastphenome.YeastPhenomeDataset.process">[docs]</a>
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Build env x geno -&gt; NPV records for every ENCODABLE column of every screen.</span>
+<span class="w">        </span><span class="sd">"""Build env x geno -&gt; NPV records for every GROWTH column of every screen.</span>
 
-<span class="sd">        Each data COLUMN of a screen is one (phenotype x condition). We keep columns that</span>
-<span class="sd">        are homozygous + a growth readout + a single dosed-compound condition + a known</span>
-<span class="sd">        base medium; every other column is dropped-and-logged (the worklist), never guessed.</span>
+<span class="sd">        Each data COLUMN of a screen is one (phenotype x condition). Every growth column</span>
+<span class="sd">        whose condition the schema can carry is stored; a column whose condition has an</span>
+<span class="sd">        unrepresentable component, a non-growth column and a malformed header are</span>
+<span class="sd">        counted, never guessed. A row id that is not ORF-shaped is stored as released.</span>
 <span class="sd">        """</span>
         <span class="n">verify_raw_files</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span>
@@ -708,6 +863,8 @@
         <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">n_env_kept</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">drops</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
+        <span class="n">not_representable</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">released_rows</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">SCREENS</span><span class="p">:</span>
                 <span class="n">header</span><span class="p">,</span> <span class="n">rows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_screen</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
@@ -723,48 +880,58 @@
                     <span class="k">if</span> <span class="n">meta</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                         <span class="n">drops</span><span class="p">[</span><span class="s2">"malformed_header"</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
                         <span class="k">continue</span>
-                    <span class="n">background</span> <span class="o">=</span> <span class="n">_ZYGOSITY</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">"zygosity"</span><span class="p">]</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">background</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                        <span class="c1"># heterozygous (dosage) or an ambiguous/mixed collection</span>
-                        <span class="n">drops</span><span class="p">[</span><span class="s2">"het_or_ambiguous_zygosity"</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-                        <span class="k">continue</span>
                     <span class="k">if</span> <span class="s2">"growth"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">"phenotype"</span><span class="p">]</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
                         <span class="n">drops</span><span class="p">[</span><span class="s2">"not_growth"</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
                         <span class="k">continue</span>
-                    <span class="n">media</span> <span class="o">=</span> <span class="n">_parse_media</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">"media"</span><span class="p">],</span> <span class="n">meta</span><span class="p">[</span><span class="s2">"phenotype"</span><span class="p">]</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">media</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                        <span class="n">drops</span><span class="p">[</span><span class="s2">"media_absent_or_unknown"</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-                        <span class="k">continue</span>
-                    <span class="n">pert</span> <span class="o">=</span> <span class="n">_parse_condition</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">"condition"</span><span class="p">]</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">pert</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                        <span class="n">drops</span><span class="p">[</span><span class="s2">"condition_unparseable"</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="n">parsed</span> <span class="o">=</span> <span class="n">_parse_conditions</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">"condition"</span><span class="p">]</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
+                    <span class="n">n_cells</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+                        <span class="mi">1</span> <span class="k">for</span> <span class="n">cells</span> <span class="ow">in</span> <span class="n">rows</span> <span class="k">if</span> <span class="n">col</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">cells</span><span class="p">)</span> <span class="ow">and</span> <span class="n">cells</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                    <span class="p">)</span>
+                    <span class="k">if</span> <span class="n">parsed</span><span class="o">.</span><span class="n">unrepresentable</span><span class="p">:</span>
+                        <span class="n">drops</span><span class="p">[</span><span class="s2">"condition_not_representable"</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                        <span class="n">not_representable</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="p">{</span>
+                                <span class="s2">"screen"</span><span class="p">:</span> <span class="n">s</span><span class="p">[</span><span class="s2">"stem"</span><span class="p">],</span>
+                                <span class="s2">"pmid"</span><span class="p">:</span> <span class="n">s</span><span class="p">[</span><span class="s2">"pmid"</span><span class="p">],</span>
+                                <span class="s2">"column"</span><span class="p">:</span> <span class="n">col</span><span class="p">,</span>
+                                <span class="s2">"condition"</span><span class="p">:</span> <span class="n">meta</span><span class="p">[</span><span class="s2">"condition"</span><span class="p">],</span>
+                                <span class="s2">"components"</span><span class="p">:</span> <span class="n">parsed</span><span class="o">.</span><span class="n">unrepresentable</span><span class="p">,</span>
+                                <span class="s2">"n_records"</span><span class="p">:</span> <span class="n">n_cells</span><span class="p">,</span>
+                            <span class="p">}</span>
+                        <span class="p">)</span>
                         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                            <span class="s2">"YeastPhenome </span><span class="si">%s</span><span class="s2"> col </span><span class="si">%d</span><span class="s2">: drop condition </span><span class="si">%r</span><span class="s2">"</span><span class="p">,</span>
+                            <span class="s2">"YeastPhenome </span><span class="si">%s</span><span class="s2"> col </span><span class="si">%d</span><span class="s2">: condition </span><span class="si">%r</span><span class="s2"> not representable "</span>
+                            <span class="s2">"(</span><span class="si">%s</span><span class="s2">); </span><span class="si">%d</span><span class="s2"> released values not stored"</span><span class="p">,</span>
                             <span class="n">s</span><span class="p">[</span><span class="s2">"stem"</span><span class="p">],</span>
                             <span class="n">col</span><span class="p">,</span>
                             <span class="n">meta</span><span class="p">[</span><span class="s2">"condition"</span><span class="p">],</span>
+                            <span class="n">parsed</span><span class="o">.</span><span class="n">unrepresentable</span><span class="p">,</span>
+                            <span class="n">n_cells</span><span class="p">,</span>
                         <span class="p">)</span>
                         <span class="k">continue</span>
+                    <span class="n">media</span> <span class="o">=</span> <span class="n">_parse_media</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">"media"</span><span class="p">],</span> <span class="n">meta</span><span class="p">[</span><span class="s2">"phenotype"</span><span class="p">]</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
+                    <span class="n">zygosity</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s2">"zygosity"</span><span class="p">]</span> <span class="ow">or</span> <span class="s2">""</span>
+                    <span class="n">background</span> <span class="o">=</span> <span class="n">_ZYGOSITY</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">zygosity</span><span class="p">)</span>
                     <span class="c1"># Readout method (microarray/barseq/turbidity/...) is part of the</span>
                     <span class="c1"># record identity -&gt; recorded in units, so same-condition different-</span>
                     <span class="c1"># method near-replicate screens stay distinct (not false duplicates).</span>
                     <span class="n">units</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">NPV_UNITS</span><span class="si">}</span><span class="s2"> [readout: </span><span class="si">{</span><span class="n">_readout_method</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s1">'phenotype'</span><span class="p">]</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">''</span><span class="p">)</span><span class="si">}</span><span class="s2">]"</span>
-                    <span class="n">strain</span><span class="p">,</span> <span class="n">ploidy</span> <span class="o">=</span> <span class="n">background</span>
-                    <span class="n">environment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_environment</span><span class="p">(</span><span class="n">media</span><span class="p">,</span> <span class="n">pert</span><span class="p">)</span>
+                    <span class="n">environment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_environment</span><span class="p">(</span><span class="n">media</span><span class="p">,</span> <span class="n">parsed</span><span class="p">)</span>
                     <span class="n">ref_dump</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference</span><span class="p">(</span>
-                        <span class="n">environment</span><span class="p">,</span> <span class="n">units</span><span class="p">,</span> <span class="n">strain</span><span class="p">,</span> <span class="n">ploidy</span>
+                        <span class="n">environment</span><span class="p">,</span> <span class="n">units</span><span class="p">,</span> <span class="n">background</span><span class="p">,</span> <span class="n">zygosity</span>
                     <span class="p">)</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
                     <span class="n">n_env_kept</span> <span class="o">+=</span> <span class="mi">1</span>
                     <span class="n">kept_here</span> <span class="o">+=</span> <span class="mi">1</span>
                     <span class="k">for</span> <span class="n">cells</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
                         <span class="k">if</span> <span class="n">col</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">cells</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">cells</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
                             <span class="k">continue</span>
-                        <span class="n">orf</span> <span class="o">=</span> <span class="n">cells</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                        <span class="n">orf</span> <span class="o">=</span> <span class="n">cells</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
                         <span class="k">if</span> <span class="ow">not</span> <span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">orf</span><span class="p">):</span>
-                            <span class="n">drops</span><span class="p">[</span><span class="s2">"non_orf_row"</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-                            <span class="k">continue</span>
+                            <span class="c1"># a row id with no ORF form goes on the released-gene-name</span>
+                            <span class="c1"># leaf verbatim (#1045; 0 today), listed in the ledger</span>
+                            <span class="n">released_rows</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">orf</span><span class="p">)</span>
                         <span class="n">experiment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_experiment</span><span class="p">(</span>
-                            <span class="n">orf</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">cells</span><span class="p">[</span><span class="n">col</span><span class="p">]),</span> <span class="n">environment</span><span class="p">,</span> <span class="n">units</span>
+                            <span class="n">orf</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">cells</span><span class="p">[</span><span class="n">col</span><span class="p">]),</span> <span class="n">environment</span><span class="p">,</span> <span class="n">units</span><span class="p">,</span> <span class="n">zygosity</span>
                         <span class="p">)</span>
                         <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
                             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
@@ -784,6 +951,19 @@
                     <span class="n">kept_here</span><span class="p">,</span>
                 <span class="p">)</span>
         <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"dropped_records.json"</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">"dataset"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                    <span class="s2">"kept_records"</span><span class="p">:</span> <span class="n">idx</span><span class="p">,</span>
+                    <span class="s2">"kept_environments"</span><span class="p">:</span> <span class="n">n_env_kept</span><span class="p">,</span>
+                    <span class="s2">"columns_not_stored"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">drops</span><span class="p">),</span>
+                    <span class="s2">"condition_not_representable"</span><span class="p">:</span> <span class="n">not_representable</span><span class="p">,</span>
+                    <span class="s2">"stored_on_released_gene_name_leaf"</span><span class="p">:</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">released_rows</span><span class="p">),</span>
+                <span class="p">},</span>
+                <span class="n">fh</span><span class="p">,</span>
+                <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s2">"Wrote </span><span class="si">%d</span><span class="s2"> YeastPhenome records over </span><span class="si">%d</span><span class="s2"> environments (</span><span class="si">%d</span><span class="s2"> screens); "</span>
             <span class="s2">"dropped columns/rows: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
@@ -798,15 +978,17 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">environment</span><span class="p">:</span> <span class="n">Environment</span><span class="p">,</span>
         <span class="n">units</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">strain</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">ploidy</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"haploid"</span><span class="p">,</span> <span class="s2">"diploid"</span><span class="p">],</span>
+        <span class="n">background</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"haploid"</span><span class="p">,</span> <span class="s2">"diploid"</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">zygosity</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EnvironmentResponseExperimentReference</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""The mode (~ wild-type) baseline: NPV 0 in the same environment.</span>
 
 <span class="sd">        ``strain``/``ploidy`` come from the screen's collection background (haploid BY4741 /</span>
-<span class="sd">        BY4742 or homozygous-diploid BY4743) -- the deletion itself is identical total</span>
-<span class="sd">        absence either way.</span>
+<span class="sd">        BY4742 or diploid BY4743). A zygosity token outside ``_ZYGOSITY`` (an ambiguous</span>
+<span class="sd">        or mixed collection) stores the token itself as the strain name, which is what</span>
+<span class="sd">        the curation says of it.</span>
 <span class="sd">        """</span>
+        <span class="n">strain</span><span class="p">,</span> <span class="n">ploidy</span> <span class="o">=</span> <span class="n">background</span> <span class="k">if</span> <span class="n">background</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">(</span><span class="n">zygosity</span><span class="p">,</span> <span class="s2">"haploid"</span><span class="p">)</span>
         <span class="n">phenotype_reference</span> <span class="o">=</span> <span class="n">EnvironmentResponsePhenotype</span><span class="p">(</span>
             <span class="n">measurement_type</span><span class="o">=</span><span class="n">MeasurementType</span><span class="o">.</span><span class="n">z_score</span><span class="p">,</span>
             <span class="n">environment_response</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>  <span class="c1"># mode ~ WT -&gt; 0 in the NPV space</span>
@@ -822,19 +1004,42 @@
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_experiment</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">npv</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">environment</span><span class="p">:</span> <span class="n">Environment</span><span class="p">,</span> <span class="n">units</span><span class="p">:</span> <span class="nb">str</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">npv</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">environment</span><span class="p">:</span> <span class="n">Environment</span><span class="p">,</span> <span class="n">units</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">zygosity</span><span class="p">:</span> <span class="nb">str</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EnvironmentResponseExperiment</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""One homozygous-diploid deletion x condition -&gt; NPV z-score experiment."""</span>
-        <span class="c1"># Homozygous diploid deletion = total absence -&gt; DeletionPerturbation family;</span>
-        <span class="c1"># ploidy (diploid) lives on the ReferenceGenome. Curation gives only the ORF,</span>
-        <span class="c1"># so perturbed_gene_name = the ORF (no common name carried).</span>
-        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
-            <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
-                <span class="n">KanMxDeletionPerturbation</span><span class="p">(</span>
-                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span> <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">orf</span>
-                <span class="p">)</span>
-            <span class="p">]</span>
-        <span class="p">)</span>
+<span class="w">        </span><span class="sd">"""One deletion x condition -&gt; NPV z-score experiment.</span>
+
+<span class="sd">        A haploid or homozygous-diploid deletion is total absence, the</span>
+<span class="sd">        ``KanMxDeletionPerturbation``; a heterozygous-diploid column (``het``) is one copy</span>
+<span class="sd">        dropped 2 -&gt; 1, the ``EngineeredCopyNumberPerturbation``. Curation gives only the</span>
+<span class="sd">        ORF, so ``perturbed_gene_name`` is the ORF (no common name carried). A row id</span>
+<span class="sd">        with no ORF form goes on ``ReleasedGeneNamePerturbation`` verbatim (#1045), kind</span>
+<span class="sd">        ``heterozygous_deletion`` for a ``het`` column and ``deletion`` otherwise.</span>
+<span class="sd">        """</span>
+        <span class="n">perturbation</span><span class="p">:</span> <span class="n">GenePerturbationType</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">orf</span><span class="p">):</span>
+            <span class="n">perturbation</span> <span class="o">=</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">(</span>
+                <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+                <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+                <span class="n">released_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+                <span class="n">released_kind</span><span class="o">=</span><span class="p">(</span>
+                    <span class="n">ReleasedGeneKind</span><span class="o">.</span><span class="n">heterozygous_deletion</span>
+                    <span class="k">if</span> <span class="n">zygosity</span> <span class="o">==</span> <span class="s2">"het"</span>
+                    <span class="k">else</span> <span class="n">ReleasedGeneKind</span><span class="o">.</span><span class="n">deletion</span>
+                <span class="p">),</span>
+                <span class="n">marker</span><span class="o">=</span><span class="s2">"KanMX"</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">zygosity</span> <span class="o">==</span> <span class="s2">"het"</span><span class="p">:</span>
+            <span class="n">perturbation</span> <span class="o">=</span> <span class="n">EngineeredCopyNumberPerturbation</span><span class="p">(</span>
+                <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+                <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+                <span class="n">copy_number</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                <span class="n">reference_copy_number</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                <span class="n">marker</span><span class="o">=</span><span class="s2">"KanMX"</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">perturbation</span> <span class="o">=</span> <span class="n">KanMxDeletionPerturbation</span><span class="p">(</span>
+                <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span> <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">orf</span>
+            <span class="p">)</span>
         <span class="n">phenotype</span> <span class="o">=</span> <span class="n">EnvironmentResponsePhenotype</span><span class="p">(</span>
             <span class="n">measurement_type</span><span class="o">=</span><span class="n">MeasurementType</span><span class="o">.</span><span class="n">z_score</span><span class="p">,</span>
             <span class="n">environment_response</span><span class="o">=</span><span class="n">npv</span><span class="p">,</span>
@@ -847,7 +1052,7 @@
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">EnvironmentResponseExperiment</span><span class="p">(</span>
             <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-            <span class="n">genotype</span><span class="o">=</span><span class="n">genotype</span><span class="p">,</span>
+            <span class="n">genotype</span><span class="o">=</span><span class="n">Genotype</span><span class="p">(</span><span class="n">perturbations</span><span class="o">=</span><span class="p">[</span><span class="n">perturbation</span><span class="p">]),</span>
             <span class="n">environment</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span>
             <span class="n">phenotype</span><span class="o">=</span><span class="n">phenotype</span><span class="p">,</span>
         <span class="p">)</span>

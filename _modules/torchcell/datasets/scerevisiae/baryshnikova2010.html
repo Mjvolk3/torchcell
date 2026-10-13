@@ -183,8 +183,9 @@
 <span class="sd">  (``_SV_BACKGROUND_STRAIN``; note the quote is the SI's border-control sentence, the only</span>
 <span class="sd">  place the mirror names the array background, and the main text's BY4741 sentence is</span>
 <span class="sd">  scoped to the serial-dilution/actin/RIM101 follow-up strains). The release carries only</span>
-<span class="sd">  systematic allele ids (no common names), so ``perturbed_gene_name`` is the resolved</span>
-<span class="sd">  systematic ORF and ``strain_id`` is the cross-dataset strain key; the allele names of the</span>
+<span class="sd">  systematic allele ids (no common names), so ``perturbed_gene_name`` is the released ORF</span>
+<span class="sd">  token (upper-cased, no genome consulted: #1045, 2026.10.12) and ``strain_id`` is the</span>
+<span class="sd">  cross-dataset strain key (the raw id verbatim); the allele names of the</span>
 <span class="sd">  291 TS strains shared with Costanzo 2016 are NOT imported, because the Costanzo strain</span>
 <span class="sd">  table is not in the raw mirror and a derivation cannot be pinned to it. The reference</span>
 <span class="sd">  fitness 1.0 is the mode-normalization convention, not an averaged control measurement, so</span>
@@ -502,50 +503,16 @@
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 <span class="n">_EXPECTED_ROWS</span> <span class="o">=</span> <span class="mi">6023</span>
 
-<span class="c1">#: Raw allele ids whose ORF the CURRENT R64 annotation cannot resolve (retired, merged or</span>
-<span class="c1">#: dubious ORFs removed since 2010), frozen so the drop is a documented release fact and</span>
-<span class="c1">#: the record-count oracle is ``_EXPECTED_ROWS - len(_UNRESOLVABLE)`` rather than whatever</span>
-<span class="c1">#: the genome on disk happens to yield. A build whose drop set differs from this raises.</span>
-<span class="n">_UNRESOLVABLE</span><span class="p">:</span> <span class="n">MappingProxyType</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">MappingProxyType</span><span class="p">(</span>
-    <span class="p">{</span>
-        <span class="s2">"YAR037W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
-        <span class="s2">"YAR040C"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
-        <span class="s2">"YAR043C"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
-        <span class="s2">"YAR061W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
-        <span class="s2">"YAR062W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
-        <span class="s2">"YCL006C"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
-        <span class="s2">"YCL013W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
-        <span class="s2">"YCL026C"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
-        <span class="s2">"YCL074W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
-        <span class="s2">"YCL075W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
-        <span class="s2">"YDR134C"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
-        <span class="s2">"YER108C"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
-        <span class="s2">"YER109C"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
-        <span class="s2">"YFL056C"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
-        <span class="s2">"YFL057C"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
-        <span class="s2">"YIL080W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
-        <span class="s2">"YIL167W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
-        <span class="s2">"YIL168W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
-        <span class="s2">"YIL170W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
-        <span class="s2">"YIL171W_damp"</span><span class="p">:</span> <span class="s2">"damp"</span><span class="p">,</span>
-        <span class="s2">"YIL174W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
-        <span class="s2">"YIL175W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
-        <span class="s2">"YIR043C"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
-        <span class="s2">"YLL016W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
-        <span class="s2">"YLL017W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
-        <span class="s2">"YOL153C"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
-        <span class="s2">"YOR031W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
-        <span class="s2">"YPL060C-A"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
-        <span class="s2">"YPL275W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
-        <span class="s2">"YPL276W"</span><span class="p">:</span> <span class="s2">"deletion"</span><span class="p">,</span>
-    <span class="p">}</span>
+<span class="c1">#: Every released allele is a record (2026.10.12, #1045): the 30 alleles whose ORF token</span>
+<span class="c1">#: the current R64 annotation does not carry as a gene (29 deletions and one DAmP allele,</span>
+<span class="c1">#: e.g. YAR037W, YCL006C, YIL171W_damp) are stored under their released ORF, and the 42</span>
+<span class="c1">#: whose token R64 lists as a synonym of another locus (e.g. YAL043C-A, YAR044W) keep</span>
+<span class="c1">#: their released token too. The previous build dropped the first 30 and renamed the 42.</span>
+<span class="n">RETENTION_RULE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"no rule drops a Baryshnikova 2010 allele: every released allele id is stored under "</span>
+    <span class="s2">"its own ORF token (upper-cased), with the raw id on strain_id; no genome is consulted"</span>
 <span class="p">)</span>
-<span class="n">DROP_RULE</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">"a released allele whose ORF token does not resolve to a gene of the current R64 "</span>
-    <span class="s2">"annotation (retired, merged or dubious ORF) is dropped; the set is frozen in "</span>
-    <span class="s2">"_UNRESOLVABLE and asserted on every build"</span>
-<span class="p">)</span>
-<span class="n">EXPECTED_RECORDS</span> <span class="o">=</span> <span class="n">_EXPECTED_ROWS</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">_UNRESOLVABLE</span><span class="p">)</span>
+<span class="n">EXPECTED_RECORDS</span> <span class="o">=</span> <span class="n">_EXPECTED_ROWS</span>
 
 <span class="c1">#: 30 C carries the deletions and the DAmP hypomorphs; 26 C carries the TS alleles.</span>
 <span class="n">_TEMPERATURE_C</span><span class="p">:</span> <span class="n">MappingProxyType</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">MappingProxyType</span><span class="p">(</span>
@@ -701,13 +668,11 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"data/torchcell/smf_baryshnikova2010"</span><span class="p">,</span>
         <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-        <span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Initialize the dataset; a genome is REQUIRED to resolve ORFs to current R64."""</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">genome</span>
+<span class="w">        </span><span class="sd">"""Initialize the dataset (no genome: every allele is stored as released)."""</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="nd">@property</span>
@@ -747,29 +712,6 @@
             <span class="n">XLS_SHA256</span><span class="p">,</span>
         <span class="p">)</span></div>
 
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_resolver</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Build an ORF -&gt; current-R64-systematic-name resolver from the genome."""</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="s2">"SmfBaryshnikova2010Dataset requires a genome for ORF resolution; "</span>
-                <span class="s2">"inject SCerevisiaeGenome(...)"</span>
-            <span class="p">)</span>
-        <span class="n">genome</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">genome</span><span class="o">.</span><span class="n">gene_attribute_table</span>
-        <span class="n">ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">"ID"</span><span class="p">])</span>
-        <span class="n">alias_map</span> <span class="o">=</span> <span class="n">genome</span><span class="o">.</span><span class="n">alias_to_systematic</span>
-
-        <span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="n">token</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">gene</span> <span class="o">=</span> <span class="n">token</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">gene</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">gene</span>
-            <span class="n">candidates</span> <span class="o">=</span> <span class="n">alias_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">gene</span><span class="p">,</span> <span class="p">[])</span>
-            <span class="k">if</span> <span class="n">candidates</span> <span class="ow">and</span> <span class="n">candidates</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">candidates</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="k">return</span> <span class="kc">None</span>
-
-        <span class="k">return</span> <span class="n">resolve</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_read_smf</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Read + validate Supplementary Data 1 (3 columns, no header, composition check)."""</span>
@@ -856,7 +798,6 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Convert each SMF row into a fitness record; write LMDB."""</span>
         <span class="n">verify_raw_files</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="p">{</span><span class="n">XLS_NAME</span><span class="p">:</span> <span class="n">XLS_SHA256</span><span class="p">})</span>
-        <span class="n">resolve</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span><span class="p">()</span>
         <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_smf</span><span class="p">()</span>
 
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -874,17 +815,13 @@
         <span class="n">references</span> <span class="o">=</span> <span class="p">{</span><span class="n">kind</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference</span><span class="p">(</span><span class="n">kind</span><span class="p">)</span> <span class="k">for</span> <span class="n">kind</span> <span class="ow">in</span> <span class="n">_TEMPERATURE_C</span><span class="p">}</span>
         <span class="n">publication</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span><span class="n">doi</span><span class="o">=</span><span class="n">DOI</span><span class="p">,</span> <span class="n">doi_url</span><span class="o">=</span><span class="sa">f</span><span class="s2">"https://doi.org/</span><span class="si">{</span><span class="n">DOI</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
-        <span class="n">dropped</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">env</span><span class="p">,</span> <span class="n">interned_env</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_open_write_lmdb</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">))</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">,</span> <span class="n">interned_env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">itxn</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">(),</span> <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"baryshnikova2010"</span><span class="p">):</span>
                 <span class="n">raw_allele</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"allele"</span><span class="p">])</span>
                 <span class="n">orf_token</span><span class="p">,</span> <span class="n">kind</span> <span class="o">=</span> <span class="n">_parse_allele</span><span class="p">(</span><span class="n">raw_allele</span><span class="p">)</span>
-                <span class="n">orf</span> <span class="o">=</span> <span class="n">resolve</span><span class="p">(</span><span class="n">orf_token</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">orf</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="n">dropped</span><span class="p">[</span><span class="n">raw_allele</span><span class="p">]</span> <span class="o">=</span> <span class="n">kind</span>
-                    <span class="k">continue</span>
+                <span class="n">orf</span> <span class="o">=</span> <span class="n">orf_token</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
                 <span class="k">if</span> <span class="n">raw_allele</span> <span class="ow">in</span> <span class="n">dup_ids</span><span class="p">:</span>
                     <span class="n">occ</span><span class="p">[</span><span class="n">raw_allele</span><span class="p">]</span> <span class="o">=</span> <span class="n">occ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">raw_allele</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
                     <span class="n">strain_id</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">raw_allele</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">occ</span><span class="p">[</span><span class="n">raw_allele</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
@@ -910,35 +847,23 @@
         <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
         <span class="n">interned_env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
-        <span class="k">if</span> <span class="n">dropped</span> <span class="o">!=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">_UNRESOLVABLE</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="s2">"unresolvable allele set drifted from the frozen release constant: "</span>
-                <span class="sa">f</span><span class="s2">"unexpected </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">dropped</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">set</span><span class="p">(</span><span class="n">_UNRESOLVABLE</span><span class="p">))</span><span class="si">}</span><span class="s2">, "</span>
-                <span class="sa">f</span><span class="s2">"missing </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">_UNRESOLVABLE</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">set</span><span class="p">(</span><span class="n">dropped</span><span class="p">))</span><span class="si">}</span><span class="s2">"</span>
-            <span class="p">)</span>
         <span class="k">if</span> <span class="n">idx</span> <span class="o">!=</span> <span class="n">EXPECTED_RECORDS</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"wrote </span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2"> records, expected </span><span class="si">{</span><span class="n">EXPECTED_RECORDS</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"dropped_records.json"</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
             <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span>
                 <span class="p">{</span>
-                    <span class="s2">"rule"</span><span class="p">:</span> <span class="n">DROP_RULE</span><span class="p">,</span>
+                    <span class="s2">"rule"</span><span class="p">:</span> <span class="n">RETENTION_RULE</span><span class="p">,</span>
                     <span class="s2">"n_raw_rows"</span><span class="p">:</span> <span class="n">_EXPECTED_ROWS</span><span class="p">,</span>
-                    <span class="s2">"n_dropped"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">dropped</span><span class="p">),</span>
+                    <span class="s2">"n_dropped"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
                     <span class="s2">"n_kept"</span><span class="p">:</span> <span class="n">idx</span><span class="p">,</span>
-                    <span class="s2">"dropped_by_kind"</span><span class="p">:</span> <span class="p">{</span>
-                        <span class="n">kind</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dropped</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span> <span class="o">==</span> <span class="n">kind</span><span class="p">)</span>
-                        <span class="k">for</span> <span class="n">kind</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">dropped</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
-                    <span class="p">},</span>
-                    <span class="s2">"dropped"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">dropped</span><span class="o">.</span><span class="n">items</span><span class="p">())),</span>
                 <span class="p">},</span>
                 <span class="n">fh</span><span class="p">,</span>
                 <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">"Wrote </span><span class="si">%d</span><span class="s2"> Baryshnikova2010 fitness experiments to LMDB (</span><span class="si">%d</span><span class="s2"> dropped: </span><span class="si">%s</span><span class="s2">)"</span><span class="p">,</span>
+            <span class="s2">"Wrote </span><span class="si">%d</span><span class="s2"> Baryshnikova2010 fitness experiments to LMDB (0 dropped: every "</span>
+            <span class="s2">"released allele is stored under its own ORF token)"</span><span class="p">,</span>
             <span class="n">idx</span><span class="p">,</span>
-            <span class="nb">len</span><span class="p">(</span><span class="n">dropped</span><span class="p">),</span>
-            <span class="nb">sorted</span><span class="p">(</span><span class="n">dropped</span><span class="p">),</span>
         <span class="p">)</span></div>
 
 

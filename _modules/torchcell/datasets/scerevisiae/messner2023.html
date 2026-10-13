@@ -153,17 +153,19 @@
 <span class="sd">- **Duplicate strains kept per-instance.** 145 ORFs have &gt;1 deletion strain "of</span>
 <span class="sd">  different origins" (141 duplicated, 4 triplicated); the paper analyses each strain</span>
 <span class="sd">  independently, so we emit one experiment per KO SAMPLE (4,699 records), not per ORF.</span>
-<span class="sd">- **UniProt -&gt; systematic ORF.** Protein ids are UniProt accessions; we map them to</span>
-<span class="sd">  systematic ORFs (authoritatively, via the SGD S288C GFF ``protein_id=UniProtKB:``</span>
-<span class="sd">  cross-refs) so this proteome is joinable with the ORF-keyed Zelezniak2018 proteome.</span>
-<span class="sd">  All 1,850 map (incl. the mito-encoded ``P00410`` -&gt; ``Q0250``/COX2); an unmapped id</span>
-<span class="sd">  raises rather than being silently dropped.</span>
-<span class="sd">- **Gene names from SGD, not the filename (issue #485).** ``systematic_gene_name`` is</span>
-<span class="sd">  the metadata ``ORF`` (uppercased) and stays the join key. ``perturbed_gene_name`` is</span>
-<span class="sd">  that ORF's ``gene=`` standard name in the same SGD GFF, else the uppercase ORF (no</span>
-<span class="sd">  standard name, or the ORF is no GFF feature ID in that release). The token after</span>
-<span class="sd">  the ORF in the sample Filename is never read: on real filenames it is sometimes a</span>
-<span class="sd">  number (``10_9_hpr57_ko_YBL007C_2824_0.49`` is SLA1) or a lowercase ORF.</span>
+<span class="sd">- **Protein keys are the released UniProt accessions.** ``protein_abundance`` is keyed</span>
+<span class="sd">  by the matrix's ``Protein.Group`` accession verbatim (``P00410``, the mito-encoded</span>
+<span class="sd">  COX2, included). No annotation is consulted (#1045, 2026.10.12): the previous build</span>
+<span class="sd">  lifted every accession to its ORF through the SGD GFF ``protein_id=UniProtKB:``</span>
+<span class="sd">  cross-references; joining an accession to a gene is a modeling-time step, kept out of</span>
+<span class="sd">  the stored record.</span>
+<span class="sd">- **Gene names are the released ORF.** ``systematic_gene_name`` and</span>
+<span class="sd">  ``perturbed_gene_name`` are both the metadata ``ORF`` (uppercased); no standard name</span>
+<span class="sd">  is looked up in the GFF (the previous build read one for 3,780 of 4,699 records). The</span>
+<span class="sd">  token after the ORF in the sample Filename is never read: on real filenames it is</span>
+<span class="sd">  sometimes a number (``10_9_hpr57_ko_YBL007C_2824_0.49``) or a lowercase ORF. A</span>
+<span class="sd">  metadata ORF with no ORF form is counted under ``deferred_to_released_gene_name_leaf``</span>
+<span class="sd">  (0 of 4,699).</span>
 
 <span class="sd">The value is a LINEAR (not log2) batch-corrected MaxLFQ quantity</span>
 <span class="sd">(``measurement_type = "swath_ms_maxlfq_batch_corrected_quantity"``); log2 is applied</span>
@@ -206,6 +208,8 @@
     <span class="n">ProteinAbundancePhenotype</span><span class="p">,</span>
     <span class="n">Publication</span><span class="p">,</span>
     <span class="n">ReferenceGenome</span><span class="p">,</span>
+    <span class="n">ReleasedGeneKind</span><span class="p">,</span>
+    <span class="n">ReleasedGeneNamePerturbation</span><span class="p">,</span>
     <span class="n">Temperature</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
@@ -232,6 +236,28 @@
 <span class="c1"># Systematic ORF: nuclear (Y..) for KO deletions; protein ids also include mito</span>
 <span class="c1"># (Q\d{4}, e.g. COX2 = Q0250) after UniProt-&gt;ORF mapping.</span>
 <span class="n">_NUCLEAR_ORF_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](?:-[A-Z])?$"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_released_deletion</span><span class="p">(</span>
+    <span class="n">orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KanMxDeletionPerturbation</span> <span class="o">|</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The deletion under the released identifier (#1045): an ORF-shaped one on the</span>
+<span class="sd">    placed KanMX leaf with both names the ORF, any other on the released-gene-name leaf</span>
+<span class="sd">    verbatim (kind deletion, marker KanMX).</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">_NUCLEAR_ORF_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">orf</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">KanMxDeletionPerturbation</span><span class="p">(</span>
+            <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span> <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">orf</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">(</span>
+        <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+        <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+        <span class="n">released_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+        <span class="n">released_kind</span><span class="o">=</span><span class="n">ReleasedGeneKind</span><span class="o">.</span><span class="n">deletion</span><span class="p">,</span>
+        <span class="n">marker</span><span class="o">=</span><span class="s2">"KanMX"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
 <span class="n">_ORF_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"(?:Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](?:-[A-Z])?|Q\d</span><span class="si">{4}</span><span class="s2">)"</span><span class="p">)</span>
 <span class="n">_UNIPROT_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"UniProtKB:([A-Z0-9]+)"</span><span class="p">)</span>
 
@@ -263,6 +289,9 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">build_uniprot_to_orf_map</span><span class="p">(</span><span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Map UniProt accession -&gt; systematic ORF from the SGD S288C GFF.</span>
+
+<span class="sd">    A downstream utility, not loader logic: this loader stores the released accessions</span>
+<span class="sd">    (#1045). Kept for ``messner2021``, which still calls it.</span>
 
 <span class="sd">    Authoritative source: the ``protein_id=UniProtKB:&lt;acc&gt;`` cross-references in the</span>
 <span class="sd">    SGD reference GFF (see :func:`_sgd_gff_path`). The first ORF token on a line</span>
@@ -395,20 +424,13 @@
         <span class="n">id_col</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># "Protein.Group" (UniProt accession)</span>
         <span class="n">matrix</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">id_col</span><span class="p">)</span>
 
-        <span class="c1"># UniProt -&gt; systematic ORF; every measured protein must map (fail loud).</span>
-        <span class="n">up2orf</span> <span class="o">=</span> <span class="n">build_uniprot_to_orf_map</span><span class="p">()</span>
-        <span class="n">unmapped</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">matrix</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">up2orf</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">unmapped</span><span class="p">:</span>
+        <span class="c1"># Protein keys are the released UniProt accessions, verbatim (#1045).</span>
+        <span class="n">matrix</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+        <span class="n">repeated</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">matrix</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">duplicated</span><span class="p">()]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">repeated</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">unmapped</span><span class="p">)</span><span class="si">}</span><span class="s2"> Messner proteins have no UniProt-&gt;ORF mapping "</span>
-                <span class="sa">f</span><span class="s2">"(e.g. </span><span class="si">{</span><span class="n">unmapped</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span><span class="si">}</span><span class="s2">); refusing to silently drop."</span>
+                <span class="sa">f</span><span class="s2">"Messner matrix lists </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">repeated</span><span class="p">)</span><span class="si">}</span><span class="s2"> accession(s) twice: </span><span class="si">{</span><span class="n">repeated</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
-        <span class="n">matrix</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">up2orf</span><span class="p">)</span>
-        <span class="c1"># Gene names come from SGD by systematic name (issue #485), never from the</span>
-        <span class="c1"># sample Filename: 156 real filenames carry a plate-position number where the</span>
-        <span class="c1"># name would be (``10_9_hpr57_ko_YBL007C_2824_0.49`` is SLA1) and 1,182 a</span>
-        <span class="c1"># lowercase ORF. Rule: the GFF ``gene=`` standard name, else the uppercase ORF.</span>
-        <span class="n">orf2name</span> <span class="o">=</span> <span class="n">build_orf_to_gene_name_map</span><span class="p">()</span>
 
         <span class="n">meta</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">METADATA_FILENAME</span><span class="p">))</span>
         <span class="n">by_filename</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">"Filename"</span><span class="p">)</span>
@@ -440,16 +462,14 @@
 
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">n_bad_orf</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">not_in_gff</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-        <span class="n">n_not_in_gff_rows</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">released_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">ko_cols</span><span class="p">:</span>
             <span class="c1"># Metadata ORF casing is inconsistent (e.g. "YML009c", "YAL043C-a");</span>
             <span class="c1"># systematic names are uppercase -- normalize, never drop on case alone.</span>
             <span class="n">deletion_orf</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">by_filename</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">filename</span><span class="p">,</span> <span class="s2">"ORF"</span><span class="p">])</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">_NUCLEAR_ORF_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">deletion_orf</span><span class="p">):</span>
-                <span class="n">n_bad_orf</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="k">continue</span>
+                <span class="c1"># no ORF form: the released-gene-name leaf, verbatim (0 of 4,699)</span>
+                <span class="n">released_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">deletion_orf</span><span class="p">)</span>
             <span class="n">series</span> <span class="o">=</span> <span class="n">matrix</span><span class="p">[</span><span class="n">filename</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>  <span class="c1"># measured proteins only (noimpute)</span>
             <span class="n">abundance</span> <span class="o">=</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">o</span><span class="p">):</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">series</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
             <span class="n">no_wt</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">abundance</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_reference</span><span class="p">[</span><span class="s2">"abundance"</span><span class="p">]))</span>
@@ -459,31 +479,20 @@
                     <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">no_wt</span><span class="p">)</span><span class="si">}</span><span class="s2"> protein(s) no WT sample measured (e.g. </span><span class="si">{</span><span class="n">no_wt</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span><span class="si">}</span><span class="s2">); "</span>
                     <span class="s2">"the reference has no value for them"</span>
                 <span class="p">)</span>
-            <span class="k">if</span> <span class="n">deletion_orf</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">orf2name</span><span class="p">:</span>
-                <span class="c1"># Rule "ORF not an SGD GFF feature ID": no standard name to read, so</span>
-                <span class="c1"># the name is the uppercase ORF (counted in the build log below).</span>
-                <span class="n">not_in_gff</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">deletion_orf</span><span class="p">)</span>
-                <span class="n">n_not_in_gff_rows</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="p">{</span>
                     <span class="s2">"filename"</span><span class="p">:</span> <span class="n">filename</span><span class="p">,</span>
                     <span class="s2">"orf"</span><span class="p">:</span> <span class="n">deletion_orf</span><span class="p">,</span>
-                    <span class="s2">"gene"</span><span class="p">:</span> <span class="n">orf2name</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">deletion_orf</span><span class="p">,</span> <span class="n">deletion_orf</span><span class="p">),</span>
+                    <span class="s2">"gene"</span><span class="p">:</span> <span class="n">deletion_orf</span><span class="p">,</span>
                     <span class="s2">"abundance"</span><span class="p">:</span> <span class="n">abundance</span><span class="p">,</span>
                 <span class="p">}</span>
             <span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">"Messner: </span><span class="si">%d</span><span class="s2"> KO strains, WT reference with </span><span class="si">%d</span><span class="s2"> proteins, </span><span class="si">%d</span><span class="s2"> non-systematic "</span>
-            <span class="s2">"KO ORF skipped"</span><span class="p">,</span>
+            <span class="s2">"Messner: </span><span class="si">%d</span><span class="s2"> KO strains, WT reference with </span><span class="si">%d</span><span class="s2"> proteins, </span><span class="si">%d</span><span class="s2"> KO ORFs on the "</span>
+            <span class="s2">"released-gene-name leaf"</span><span class="p">,</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span>
             <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_reference</span><span class="p">[</span><span class="s2">"abundance"</span><span class="p">]),</span>
-            <span class="n">n_bad_orf</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">"Messner: </span><span class="si">%d</span><span class="s2"> KO strains (</span><span class="si">%d</span><span class="s2"> ORFs) whose ORF is no SGD GFF feature ID; "</span>
-            <span class="s2">"perturbed_gene_name = the ORF for them"</span><span class="p">,</span>
-            <span class="n">n_not_in_gff_rows</span><span class="p">,</span>
-            <span class="nb">len</span><span class="p">(</span><span class="n">not_in_gff</span><span class="p">),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">released_names</span><span class="p">),</span>
         <span class="p">)</span>
         <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
             <span class="p">[</span>
@@ -540,13 +549,7 @@
         <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
             <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="s2">"BY4741"</span>
         <span class="p">)</span>
-        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
-            <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
-                <span class="n">KanMxDeletionPerturbation</span><span class="p">(</span>
-                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">],</span> <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span>
-                <span class="p">)</span>
-            <span class="p">]</span>
-        <span class="p">)</span>
+        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span><span class="n">perturbations</span><span class="o">=</span><span class="p">[</span><span class="n">_released_deletion</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">])])</span>
         <span class="c1"># Grown in synthetic minimal (SM) liquid medium at 30 C: 6.7 g/L YNB without</span>
         <span class="c1"># amino acids + 2% glucose, restated by this paper and deferred by it to</span>
         <span class="c1"># Mulleder 2016 (its ref 15), both quoted on ``SM``.</span>

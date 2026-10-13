@@ -154,9 +154,10 @@
 <span class="sd">  ``http://www.yeast.ib.k.u-tokyo.ac.jp/SCMD/download.php?path=ess1112data.tsv`` and</span>
 <span class="sd">  ``...=wt114data.tsv``.</span>
 
-<span class="sd">ORFs are already SGD systematic names; they are validated against the S288C R64 gene</span>
-<span class="sd">universe (any not resolving would be logged + dropped -- empirically zero drops, all</span>
-<span class="sd">1,112 present).</span>
+<span class="sd">ORFs are already SGD systematic names and are stored AS RELEASED (stripped and</span>
+<span class="sd">upper-cased); no genome is consulted (#1045). A blank CalMorph cell is key-absent in the</span>
+<span class="sd">record, never written as 0.0 (the previous build wrote 0.0; the pinned matrix has 0 blank</span>
+<span class="sd">cells, so no stored value changes).</span>
 <span class="sd">"""</span>
 
 <span class="c1"># torchcell/datasets/scerevisiae/ohnuki2018</span>
@@ -198,11 +199,6 @@
     <span class="n">Temperature</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.scerevisiae.gene_name_reconcile</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">default_genome</span><span class="p">,</span>
-    <span class="n">reconcile_systematic_names</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="n">SourcedValue</span>
 
@@ -295,15 +291,9 @@
         <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Initialize the dataset; an optional genome reconciles ORF names to R64.</span>
-
-<span class="sd">        If ``genome`` is not supplied one is constructed from ``DATA_ROOT`` during</span>
-<span class="sd">        processing (used only to reconcile source ORF names to the current annotation).</span>
-<span class="sd">        """</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">genome</span>
+<span class="w">        </span><span class="sd">"""Initialize the dataset (no genome: every strain is stored as released)."""</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="nd">@property</span>
@@ -396,12 +386,7 @@
 <div class="viewcode-block" id="ScmdOhnuki2018Dataset.preprocess_calmorph_data">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.ohnuki2018.ScmdOhnuki2018Dataset.html#torchcell.datasets.scerevisiae.ohnuki2018.ScmdOhnuki2018Dataset.preprocess_calmorph_data">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">preprocess_calmorph_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df_mutant</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Clean the mutant matrix and reconcile ORF names to R64 (retain-all).</span>
-
-<span class="sd">        Names are reconciled to the current R64-4-1 annotation with the shared genome</span>
-<span class="sd">        resolver (see :mod:`torchcell.datasets.scerevisiae.gene_name_reconcile`); no record</span>
-<span class="sd">        is dropped for a naming reason.</span>
-<span class="sd">        """</span>
+<span class="w">        </span><span class="sd">"""Clean the mutant matrix and name every strain as released (no genome)."""</span>
         <span class="n">df_mutant</span> <span class="o">=</span> <span class="n">df_mutant</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="c1"># The ORF column carries the systematic gene name; there is no common-name column.</span>
         <span class="n">df_mutant</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_mutant</span><span class="p">[</span><span class="s2">"ORF"</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
@@ -424,11 +409,6 @@
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">df_mutant</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">duplicated</span><span class="p">,</span><span class="w"> </span><span class="s1">'ORF'</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">default_genome</span><span class="p">()</span>
-        <span class="n">df_mutant</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">reconcile_systematic_names</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">,</span> <span class="n">df_mutant</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Ohnuki 2018"</span>
-        <span class="p">)</span>
         <span class="n">df_mutant</span><span class="p">[</span><span class="s2">"perturbed_gene_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_mutant</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">]</span>
 
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
@@ -495,7 +475,9 @@
             <span class="k">if</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">info_columns</span><span class="p">:</span>
                 <span class="k">continue</span>
             <span class="n">value</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">col</span><span class="p">]</span>
-            <span class="n">float_value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">else</span> <span class="mf">0.0</span>
+            <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+                <span class="k">continue</span>  <span class="c1"># a blank cell is key-absent, never 0.0</span>
+            <span class="n">float_value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">_CV_PREFIXES</span><span class="p">):</span>
                 <span class="n">cv_measurements</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">float_value</span>
             <span class="k">else</span><span class="p">:</span>

@@ -132,8 +132,9 @@
 <span class="sd">  effector ``dCas9-Mxi1``, the 18/20 nt ``Specificity_sequence`` spacer (joined from</span>
 <span class="sd">  Additional file 4 by guide name) and the screen ``library_pool``. The spacer keeps</span>
 <span class="sd">  sibling guides of one gene distinct; the pool keeps the SAME spacer's two independent</span>
-<span class="sd">  pool measurements distinct. The common name is the GENOME's own standard name for the</span>
-<span class="sd">  resolved ORF, so one gene carries one spelling across datasets.</span>
+<span class="sd">  pool measurements distinct. The target is stored AS RELEASED: ``systematic_gene_name``</span>
+<span class="sd">  is the row's ``ORF`` cell and ``perturbed_gene_name`` its ``Gene`` cell (the ORF where</span>
+<span class="sd">  that is blank); no genome is consulted (#1045, owner rule 2026-10-12).</span>
 <span class="sd">- ENVIRONMENT: the shared ``media.SC_URA`` object (the paper's "SCM-Ura"; Smith releases</span>
 <span class="sd">  no SCM-Ura recipe, so the shipped library gaps are the honest state) carrying the row's</span>
 <span class="sd">  drug at its released concentration as a ``SmallMoleculePerturbation``, 30 C, aerobic,</span>
@@ -182,15 +183,20 @@
 <span class="sd">member and adding one changes a class in all 36 served dataset closures, so the rule is</span>
 <span class="sd">recorded here and in the dendron note instead of in ``Concentration.basis``.</span>
 
-<span class="sd">RECORDS DROPPED (rule + counts in ``preprocess/dropped_records.json``): 7,410 of 14,463</span>
-<span class="sd">(51.2%) whose drug is a vendor catalog code -- 1181-0519, 4130-1276 and 0KPI-0099</span>
-<span class="sd">(ChemDiv), 9121982, 9125678, 7312221, CBF-666774, 6630449 and 9150499 (ChemBridge),</span>
-<span class="sd">ST016598 (TimTec). The primary released no structure, SMILES or CAS for any of them, so</span>
-<span class="sd">``resolve_compound_identity`` returns ``PROPRIETARY`` with no InChIKey, ChEBI id or CID</span>
-<span class="sd">and the compound entity cannot be encoded or joined. Per the Hoepfner precedent those</span>
-<span class="sd">records are dropped, not served under a bare name. Kept: 7,053. The tenth public compound,</span>
-<span class="sd">``NSC-180973``, resolves through the pinned identity table's synonym for tamoxifen -- the</span>
-<span class="sd">alias the paper's own Additional file 8 releases -- so its 456 records are kept.</span>
+<span class="sd">RECORDS (``preprocess/dropped_records.json`` is the accounting): every released row is a</span>
+<span class="sd">record. The 7,410 rows (51.2%) whose drug is a vendor catalog code -- 1181-0519, 4130-1276</span>
+<span class="sd">and 0KPI-0099 (ChemDiv), 9121982, 9125678, 7312221, CBF-666774, 6630449 and 9150499</span>
+<span class="sd">(ChemBridge), ST016598 (TimTec) -- are stored under the released label with a typed</span>
+<span class="sd">``inchikey`` gap on the ``Compound`` (``resolved_compound`` attaches</span>
+<span class="sd">``not_reported_by_primary`` to a label the pinned identity table marks PROPRIETARY: the</span>
+<span class="sd">primary released no structure, SMILES or CAS). They are listed under</span>
+<span class="sd">``compound_identity_gaps`` with their record counts (2026.10.12, #1045; the previous</span>
+<span class="sd">build dropped them). The tenth public compound, ``NSC-180973``, resolves through the</span>
+<span class="sd">pinned identity table's synonym for tamoxifen, the alias the paper's own Additional file</span>
+<span class="sd">8 releases. The two rules that can still leave a row without a record are a row with no</span>
+<span class="sd">``A`` or ``var(A)`` and a guide with no spacer in Additional file 4; both are 0 on the</span>
+<span class="sd">pinned files. An ``ORF`` cell that is not ORF-shaped is counted under</span>
+<span class="sd">``stored_on_released_gene_name_leaf`` (0 of 14,463 rows) as released (#1045).</span>
 
 <span class="sd">DUPLICATE-BY-POOL: 272 (guide, drug, concentration) triples appear twice, always the pool</span>
 <span class="sd">pair (``broad_tiling``, ``gene_tiling_20bp``) sharing a 20 bp perfect-match spacer. Fitness</span>
@@ -233,10 +239,7 @@
     <span class="n">verify_raw_files</span><span class="p">,</span>
     <span class="n">verify_sha256</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.compound_identity</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">resolve_compound_identity</span><span class="p">,</span>
-    <span class="n">resolved_compound</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.compound_identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolved_compound</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">SC_URA</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">AssayType</span><span class="p">,</span>
@@ -254,13 +257,14 @@
     <span class="n">MeasurementType</span><span class="p">,</span>
     <span class="n">Publication</span><span class="p">,</span>
     <span class="n">ReferenceGenome</span><span class="p">,</span>
+    <span class="n">ReleasedGeneKind</span><span class="p">,</span>
+    <span class="n">ReleasedGeneNamePerturbation</span><span class="p">,</span>
     <span class="n">SampleUnit</span><span class="p">,</span>
     <span class="n">SmallMoleculePerturbation</span><span class="p">,</span>
     <span class="n">Temperature</span><span class="p">,</span>
     <span class="n">UncertaintyType</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.scerevisiae.smith2006</span><span class="w"> </span><span class="kn">import</span> <span class="n">canonical_common_names</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.literature.manifest</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ROLE_SI_DATA</span><span class="p">,</span>
     <span class="n">ArtifactRecord</span><span class="p">,</span>
@@ -268,7 +272,6 @@
     <span class="n">RetrievalMethod</span><span class="p">,</span>
     <span class="n">RetrievalRecord</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ProvenanceGap</span><span class="p">,</span>
@@ -290,6 +293,8 @@
 <span class="p">)</span>
 <span class="n">EFFECT_FILENAME</span> <span class="o">=</span> <span class="s2">"13059_2016_900_MOESM10_ESM.xlsx"</span>
 <span class="n">EFFECT_REL</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"si/si_data/</span><span class="si">{</span><span class="n">EFFECT_FILENAME</span><span class="si">}</span><span class="s2">"</span>
+<span class="n">_SYSTEMATIC_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^(Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](-[A-Z])?|Q\d</span><span class="si">{4}</span><span class="s2">)$"</span><span class="p">)</span>
+
 <span class="n">EFFECT_SHEET</span> <span class="o">=</span> <span class="s2">"Fitness and Effect Data"</span>
 <span class="n">EFFECT_SHA256</span> <span class="o">=</span> <span class="s2">"02962e51e492b0505e8595fc1c80fab5fca8a8c8f05e05969dbff18ddff71cd0"</span>
 <span class="n">GUIDE_FILENAME</span> <span class="o">=</span> <span class="s2">"13059_2016_900_MOESM4_ESM.xlsx"</span>
@@ -543,14 +548,29 @@
     <span class="n">items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">GappedCompound</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A drug stored under its released label with a typed identity gap; not a drop."""</span>
+
+    <span class="n">drug</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">compound_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">gap_field</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">gap_reason</span><span class="p">:</span> <span class="n">ProvenanceGapReason</span>
+    <span class="n">n_records</span><span class="p">:</span> <span class="nb">int</span>
+
+
 <span class="k">class</span><span class="w"> </span><span class="nc">DropLog</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Every retention rule applied to a build, in the order they were applied."""</span>
+<span class="w">    </span><span class="sd">"""Every retention rule applied to a build, in order, plus the gapped compounds.</span>
+
+<span class="sd">    ``compound_identity_gaps`` are not drops: those rows are stored, each compound</span>
+<span class="sd">    carrying its typed gap.</span>
+<span class="sd">    """</span>
 
     <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">source_records</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">kept_records</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">dropped_records</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DropRule</span><span class="p">]</span>
+    <span class="n">compound_identity_gaps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">GappedCompound</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
 
 <div class="viewcode-block" id="CrispriChemgenSmith2016Dataset">
@@ -565,13 +585,11 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"data/torchcell/crispri_chemgen_smith2016"</span><span class="p">,</span>
         <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-        <span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Initialize; a genome is REQUIRED for target-ORF -&gt; current-R64 resolution."""</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">genome</span>
+<span class="w">        </span><span class="sd">"""Initialize the dataset (no genome: every target is stored as released)."""</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="nd">@property</span>
@@ -615,23 +633,18 @@
         <span class="p">)</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_resolver</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Target ORF -&gt; current-R64 ORF via the SHARED genome resolver."""</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="s2">"CrispriChemgenSmith2016Dataset requires a genome; "</span>
-                <span class="s2">"inject SCerevisiaeGenome(...)"</span>
-            <span class="p">)</span>
-        <span class="n">genome</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span>
-        <span class="n">gene_set</span> <span class="o">=</span> <span class="p">{</span><span class="n">gene</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="k">for</span> <span class="n">gene</span> <span class="ow">in</span> <span class="n">genome</span><span class="o">.</span><span class="n">gene_set</span><span class="p">}</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_released_target</span><span class="p">(</span><span class="n">orf_cell</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">gene_cell</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""``(systematic_gene_name, perturbed_gene_name, placed)`` from the row's cells.</span>
 
-        <span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">resolution</span> <span class="o">=</span> <span class="n">genome</span><span class="o">.</span><span class="n">resolve_gene_name</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
-            <span class="k">if</span> <span class="n">resolution</span><span class="o">.</span><span class="n">is_current_gene</span> <span class="ow">and</span> <span class="n">resolution</span><span class="o">.</span><span class="n">systematic_name</span> <span class="ow">in</span> <span class="n">gene_set</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">resolution</span><span class="o">.</span><span class="n">systematic_name</span>
-            <span class="k">return</span> <span class="kc">None</span>
-
-        <span class="k">return</span> <span class="n">resolve</span>
+<span class="sd">        The ``ORF`` cell (stripped) is the systematic name and the ``Gene`` cell the</span>
+<span class="sd">        perturbed name, the ORF again where it is blank. No genome is consulted.</span>
+<span class="sd">        ``placed`` is False for a cell that is not ORF-shaped, which goes on the</span>
+<span class="sd">        released-gene-name leaf (#1045; 0 of the 20 released targets).</span>
+<span class="sd">        """</span>
+        <span class="n">orf</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">orf_cell</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">gene</span> <span class="o">=</span> <span class="s2">""</span> <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">gene_cell</span><span class="p">)</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">gene_cell</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">orf</span><span class="p">,</span> <span class="n">gene</span> <span class="k">if</span> <span class="n">gene</span> <span class="k">else</span> <span class="n">orf</span><span class="p">,</span> <span class="nb">bool</span><span class="p">(</span><span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">orf</span><span class="p">))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_spacer_map</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Guide name -&gt; ``Specificity_sequence`` spacer (unique per name; 0 conflicts)."""</span>
@@ -692,20 +705,11 @@
         <span class="p">)</span>
         <span class="n">df</span><span class="p">[</span><span class="s2">"A"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">"A"</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"coerce"</span><span class="p">)</span>
         <span class="n">df</span><span class="p">[</span><span class="s2">"var(A)"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">"var(A)"</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"coerce"</span><span class="p">)</span>
-        <span class="n">resolve</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span><span class="p">()</span>
-        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-        <span class="n">canonical</span> <span class="o">=</span> <span class="n">canonical_common_names</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">)</span>
         <span class="n">spacer_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_spacer_map</span><span class="p">()</span>
         <span class="n">publication</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span><span class="n">doi</span><span class="o">=</span><span class="n">DOI</span><span class="p">,</span> <span class="n">doi_url</span><span class="o">=</span><span class="sa">f</span><span class="s2">"https://doi.org/</span><span class="si">{</span><span class="n">DOI</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
         <span class="n">source_records</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
-        <span class="n">drugs</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="s2">"Drug"</span><span class="p">]})</span>
-        <span class="n">unidentified</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
-            <span class="n">drug</span>
-            <span class="k">for</span> <span class="n">drug</span> <span class="ow">in</span> <span class="n">drugs</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">resolve_compound_identity</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">drug</span><span class="p">)</span><span class="o">.</span><span class="n">identified</span>
-        <span class="p">)</span>
-        <span class="n">unidentified_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">unidentified</span><span class="p">)</span>
+        <span class="n">gapped_records</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
         <span class="n">env_cache</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
 
@@ -723,8 +727,8 @@
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">env</span><span class="p">,</span> <span class="n">interned_env</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_open_write_lmdb</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">))</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">n_nan</span> <span class="o">=</span> <span class="n">n_unresolved</span> <span class="o">=</span> <span class="n">n_no_spacer</span> <span class="o">=</span> <span class="n">n_unidentified</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">unresolved_genes</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">n_nan</span> <span class="o">=</span> <span class="n">n_no_spacer</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">released_targets</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="n">no_spacer_guides</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">,</span> <span class="n">interned_env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">itxn</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">(),</span> <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"smith2016"</span><span class="p">):</span>
@@ -733,14 +737,9 @@
                     <span class="n">n_nan</span> <span class="o">+=</span> <span class="mi">1</span>
                     <span class="k">continue</span>
                 <span class="n">drug</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"Drug"</span><span class="p">])</span>
-                <span class="k">if</span> <span class="n">drug</span> <span class="ow">in</span> <span class="n">unidentified_set</span><span class="p">:</span>
-                    <span class="n">n_unidentified</span> <span class="o">+=</span> <span class="mi">1</span>
-                    <span class="k">continue</span>
-                <span class="n">orf</span> <span class="o">=</span> <span class="n">resolve</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"ORF"</span><span class="p">])</span>
-                <span class="k">if</span> <span class="n">orf</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="n">n_unresolved</span> <span class="o">+=</span> <span class="mi">1</span>
-                    <span class="n">unresolved_genes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"ORF"</span><span class="p">]))</span>
-                    <span class="k">continue</span>
+                <span class="n">orf</span><span class="p">,</span> <span class="n">gene</span><span class="p">,</span> <span class="n">placed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_released_target</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"ORF"</span><span class="p">],</span> <span class="n">row</span><span class="p">[</span><span class="s2">"Gene"</span><span class="p">])</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">placed</span><span class="p">:</span>
+                    <span class="n">released_targets</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">orf</span><span class="p">)</span>
                 <span class="n">guide_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"Guide"</span><span class="p">])</span>
                 <span class="n">spacer</span> <span class="o">=</span> <span class="n">spacer_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">guide_name</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">spacer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -748,22 +747,33 @@
                     <span class="n">no_spacer_guides</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">guide_name</span><span class="p">)</span>
                     <span class="k">continue</span>
                 <span class="n">item</span> <span class="o">=</span> <span class="n">prepared</span><span class="p">(</span><span class="n">drug</span><span class="p">,</span> <span class="n">row</span><span class="p">[</span><span class="s2">"Concentration"</span><span class="p">])</span>
+                <span class="n">compound</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="s2">"environment"</span><span class="p">]</span><span class="o">.</span><span class="n">perturbations</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">compound</span>
+                <span class="k">if</span> <span class="n">compound</span><span class="o">.</span><span class="n">provenance_gaps</span><span class="p">:</span>
+                    <span class="n">gapped_records</span><span class="p">[</span><span class="n">drug</span><span class="p">]</span> <span class="o">=</span> <span class="n">gapped_records</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">drug</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="n">construct</span> <span class="o">=</span> <span class="n">CrisprConstruct</span><span class="p">(</span>
+                    <span class="n">effector</span><span class="o">=</span><span class="n">EFFECTOR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                    <span class="n">guide_sequence</span><span class="o">=</span><span class="n">spacer</span><span class="p">,</span>
+                    <span class="n">n_guides</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                    <span class="n">library_pool</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"#Pool"</span><span class="p">]),</span>
+                <span class="p">)</span>
+                <span class="n">target</span><span class="p">:</span> <span class="n">CrisprInterferencePerturbation</span> <span class="o">|</span> <span class="n">ReleasedGeneNamePerturbation</span>
+                <span class="k">if</span> <span class="n">placed</span><span class="p">:</span>
+                    <span class="n">target</span> <span class="o">=</span> <span class="n">CrisprInterferencePerturbation</span><span class="p">(</span>
+                        <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+                        <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">gene</span><span class="p">,</span>
+                        <span class="n">crispr</span><span class="o">=</span><span class="n">construct</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">target</span> <span class="o">=</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">(</span>
+                        <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+                        <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">gene</span><span class="p">,</span>
+                        <span class="n">released_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+                        <span class="n">released_kind</span><span class="o">=</span><span class="n">ReleasedGeneKind</span><span class="o">.</span><span class="n">crispr_interference</span><span class="p">,</span>
+                        <span class="n">crispr</span><span class="o">=</span><span class="n">construct</span><span class="p">,</span>
+                    <span class="p">)</span>
                 <span class="n">experiment</span> <span class="o">=</span> <span class="n">EnvironmentResponseExperiment</span><span class="p">(</span>
                     <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-                    <span class="n">genotype</span><span class="o">=</span><span class="n">Genotype</span><span class="p">(</span>
-                        <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
-                            <span class="n">CrisprInterferencePerturbation</span><span class="p">(</span>
-                                <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
-                                <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">canonical</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">orf</span><span class="p">,</span> <span class="n">orf</span><span class="p">),</span>
-                                <span class="n">crispr</span><span class="o">=</span><span class="n">CrisprConstruct</span><span class="p">(</span>
-                                    <span class="n">effector</span><span class="o">=</span><span class="n">EFFECTOR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-                                    <span class="n">guide_sequence</span><span class="o">=</span><span class="n">spacer</span><span class="p">,</span>
-                                    <span class="n">n_guides</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-                                    <span class="n">library_pool</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"#Pool"</span><span class="p">]),</span>
-                                <span class="p">),</span>
-                            <span class="p">)</span>
-                        <span class="p">]</span>
-                    <span class="p">),</span>
+                    <span class="n">genotype</span><span class="o">=</span><span class="n">Genotype</span><span class="p">(</span><span class="n">perturbations</span><span class="o">=</span><span class="p">[</span><span class="n">target</span><span class="p">]),</span>
                     <span class="n">environment</span><span class="o">=</span><span class="n">item</span><span class="p">[</span><span class="s2">"environment"</span><span class="p">],</span>
                     <span class="n">phenotype</span><span class="o">=</span><span class="n">EnvironmentResponsePhenotype</span><span class="p">(</span>
                         <span class="n">measurement_type</span><span class="o">=</span><span class="n">MeasurementType</span><span class="o">.</span><span class="n">log2_ratio</span><span class="p">,</span>
@@ -788,18 +798,6 @@
 
         <span class="n">rules</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">DropRule</span><span class="p">(</span>
-                <span class="n">rule</span><span class="o">=</span><span class="s2">"drug_is_a_vendor_catalog_code_with_no_released_structure"</span><span class="p">,</span>
-                <span class="n">scope</span><span class="o">=</span><span class="s2">"compound"</span><span class="p">,</span>
-                <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-                    <span class="s2">"the Drug label is a ChemDiv / ChemBridge / TimTec catalog id and the "</span>
-                    <span class="s2">"primary released no structure, SMILES or CAS for it, so "</span>
-                    <span class="s2">"resolve_compound_identity returns PROPRIETARY with no InChIKey, ChEBI "</span>
-                    <span class="s2">"id or PubChem CID and the compound entity cannot be encoded or joined"</span>
-                <span class="p">),</span>
-                <span class="n">n_records</span><span class="o">=</span><span class="n">n_unidentified</span><span class="p">,</span>
-                <span class="n">items</span><span class="o">=</span><span class="n">unidentified</span><span class="p">,</span>
-            <span class="p">),</span>
-            <span class="n">DropRule</span><span class="p">(</span>
                 <span class="n">rule</span><span class="o">=</span><span class="s2">"row_has_no_A_or_var_A"</span><span class="p">,</span>
                 <span class="n">scope</span><span class="o">=</span><span class="s2">"row"</span><span class="p">,</span>
                 <span class="n">description</span><span class="o">=</span><span class="p">(</span>
@@ -810,14 +808,16 @@
                 <span class="n">items</span><span class="o">=</span><span class="p">[],</span>
             <span class="p">),</span>
             <span class="n">DropRule</span><span class="p">(</span>
-                <span class="n">rule</span><span class="o">=</span><span class="s2">"target_orf_is_not_a_current_genome_gene"</span><span class="p">,</span>
+                <span class="n">rule</span><span class="o">=</span><span class="s2">"stored_on_released_gene_name_leaf"</span><span class="p">,</span>
                 <span class="n">scope</span><span class="o">=</span><span class="s2">"row"</span><span class="p">,</span>
                 <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-                    <span class="s2">"the target ORF does not resolve to a gene of the current R64 "</span>
-                    <span class="s2">"annotation (0 today; all 20 targets are current)"</span>
+                    <span class="s2">"the ORF cell is not ORF-shaped, so the target is stored on "</span>
+                    <span class="s2">"ReleasedGeneNamePerturbation verbatim with its construct (#1045), "</span>
+                    <span class="s2">"never dropped; listed here (0 today; all 20 released targets are "</span>
+                    <span class="s2">"ORF-shaped)"</span>
                 <span class="p">),</span>
-                <span class="n">n_records</span><span class="o">=</span><span class="n">n_unresolved</span><span class="p">,</span>
-                <span class="n">items</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">unresolved_genes</span><span class="p">),</span>
+                <span class="n">n_records</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                <span class="n">items</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">released_targets</span><span class="p">),</span>
             <span class="p">),</span>
             <span class="n">DropRule</span><span class="p">(</span>
                 <span class="n">rule</span><span class="o">=</span><span class="s2">"guide_has_no_released_spacer"</span><span class="p">,</span>
@@ -830,12 +830,30 @@
                 <span class="n">items</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">no_spacer_guides</span><span class="p">),</span>
             <span class="p">),</span>
         <span class="p">]</span>
+        <span class="n">compound_identity_gaps</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">drug</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">gapped_records</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+            <span class="n">compound</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">env_cache</span><span class="p">[</span><span class="nb">next</span><span class="p">(</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">env_cache</span> <span class="k">if</span> <span class="n">k</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">drug</span><span class="p">)][</span><span class="s2">"environment"</span><span class="p">]</span>
+                <span class="o">.</span><span class="n">perturbations</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="o">.</span><span class="n">compound</span>
+            <span class="p">)</span>
+            <span class="p">(</span><span class="n">gap</span><span class="p">,)</span> <span class="o">=</span> <span class="n">compound</span><span class="o">.</span><span class="n">provenance_gaps</span>
+            <span class="n">compound_identity_gaps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">GappedCompound</span><span class="p">(</span>
+                    <span class="n">drug</span><span class="o">=</span><span class="n">drug</span><span class="p">,</span>
+                    <span class="n">compound_name</span><span class="o">=</span><span class="n">compound</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                    <span class="n">gap_field</span><span class="o">=</span><span class="n">gap</span><span class="o">.</span><span class="n">field</span><span class="p">,</span>
+                    <span class="n">gap_reason</span><span class="o">=</span><span class="n">gap</span><span class="o">.</span><span class="n">reason</span><span class="p">,</span>
+                    <span class="n">n_records</span><span class="o">=</span><span class="n">count</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
         <span class="n">drop_log</span> <span class="o">=</span> <span class="n">DropLog</span><span class="p">(</span>
             <span class="n">dataset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
             <span class="n">source_records</span><span class="o">=</span><span class="n">source_records</span><span class="p">,</span>
             <span class="n">kept_records</span><span class="o">=</span><span class="n">idx</span><span class="p">,</span>
             <span class="n">dropped_records</span><span class="o">=</span><span class="n">source_records</span> <span class="o">-</span> <span class="n">idx</span><span class="p">,</span>
             <span class="n">rules</span><span class="o">=</span><span class="n">rules</span><span class="p">,</span>
+            <span class="n">compound_identity_gaps</span><span class="o">=</span><span class="n">compound_identity_gaps</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"dropped_records.json"</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
             <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">drop_log</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
@@ -846,14 +864,15 @@
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">drop_log</span><span class="o">.</span><span class="n">dropped_records</span><span class="si">}</span><span class="s2"> records missing from the build"</span>
             <span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">"Smith2016: wrote </span><span class="si">%d</span><span class="s2"> of </span><span class="si">%d</span><span class="s2"> rows; dropped </span><span class="si">%d</span><span class="s2"> on </span><span class="si">%d</span><span class="s2"> unidentified vendor-code "</span>
-            <span class="s2">"drugs, </span><span class="si">%d</span><span class="s2"> with no A/var(A), </span><span class="si">%d</span><span class="s2"> unresolved targets, </span><span class="si">%d</span><span class="s2"> guides with no spacer"</span><span class="p">,</span>
+            <span class="s2">"Smith2016: wrote </span><span class="si">%d</span><span class="s2"> of </span><span class="si">%d</span><span class="s2"> rows (</span><span class="si">%d</span><span class="s2"> under a typed compound-identity gap on "</span>
+            <span class="s2">"</span><span class="si">%d</span><span class="s2"> vendor-code drugs); </span><span class="si">%d</span><span class="s2"> with no A/var(A), </span><span class="si">%d</span><span class="s2"> targets on the "</span>
+            <span class="s2">"released-gene-name leaf, </span><span class="si">%d</span><span class="s2"> guides with no spacer"</span><span class="p">,</span>
             <span class="n">idx</span><span class="p">,</span>
             <span class="n">source_records</span><span class="p">,</span>
-            <span class="n">n_unidentified</span><span class="p">,</span>
-            <span class="nb">len</span><span class="p">(</span><span class="n">unidentified</span><span class="p">),</span>
+            <span class="nb">sum</span><span class="p">(</span><span class="n">gapped_records</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">gapped_records</span><span class="p">),</span>
             <span class="n">n_nan</span><span class="p">,</span>
-            <span class="n">n_unresolved</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">released_targets</span><span class="p">),</span>
             <span class="n">n_no_spacer</span><span class="p">,</span>
         <span class="p">)</span></div>
 
@@ -880,13 +899,8 @@
 
     <span class="n">load_dotenv</span><span class="p">()</span>
     <span class="n">data_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">]</span>
-    <span class="n">genome</span> <span class="o">=</span> <span class="n">SCerevisiaeGenome</span><span class="p">(</span>
-        <span class="n">genome_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/sgd/genome"</span><span class="p">),</span>
-        <span class="n">go_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/go"</span><span class="p">),</span>
-        <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="p">)</span>
     <span class="n">root</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/torchcell/crispri_chemgen_smith2016"</span><span class="p">)</span>
-    <span class="n">dataset</span> <span class="o">=</span> <span class="n">CrispriChemgenSmith2016Dataset</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">,</span> <span class="n">genome</span><span class="o">=</span><span class="n">genome</span><span class="p">)</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">CrispriChemgenSmith2016Dataset</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"len = </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
     <span class="nb">print</span><span class="p">(</span>

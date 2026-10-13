@@ -157,19 +157,15 @@
 <span class="sd">25 C here follows the deferral convention (defer method detail to the cited/related mirrored</span>
 <span class="sd">paper); FLAG: pin the verbatim Ohya-2005 temperature once that paper is mirrored.</span>
 
-<span class="sd">ORFs are 2005-annotation SGD systematic names, reconciled to the current R64-4-1 annotation</span>
-<span class="sd">by the shared genome resolver (:meth:`SCerevisiaeGenome.resolve_gene_name`). Every strain is</span>
-<span class="sd">a real measured perturbation, so NO record is dropped for a naming reason: a name that</span>
-<span class="sd">resolves to a current R64 identifier (a live gene, an SGD rename, or a valid non-"gene"</span>
-<span class="sd">feature such as a ``blocked_reading_frame`` pseudogene) is remapped to that id; a name that</span>
-<span class="sd">SGD retired entirely, or whose remap would collide with another strain's record (an SGD</span>
-<span class="sd">merge of two distinct 2005 ORFs), is retained verbatim with its legacy 2005 systematic name.</span>
-<span class="sd">Rows with any missing CalMorph value are dropped whole -- values are NEVER imputed. Net</span>
-<span class="sd">built records: 4718 (0 dropped for naming; ~17 remapped to current ids, the rest kept as</span>
-<span class="sd">current or legacy systematic names). Historical note: an earlier build dropped 23</span>
-<span class="sd">non-R64 names (4695 records) with a hand-authored rename table; the resolver supersedes that,</span>
-<span class="sd">retaining all 4718 and correctly remapping 20 renames + non-gene features the manual table</span>
-<span class="sd">missed.</span>
+<span class="sd">ORFs are 2005-annotation SGD systematic names and are stored AS RELEASED (stripped and</span>
+<span class="sd">upper-cased), as both ``systematic_gene_name`` and ``perturbed_gene_name``; no genome is</span>
+<span class="sd">consulted (#1045, owner rule 2026-10-12: the genome and the experiment are loaded</span>
+<span class="sd">separately and meet through their gene sets at modeling time). A 2005 name the current</span>
+<span class="sd">annotation renames (17 strains, e.g. yal043c-a, which R64-4-1 lists as YAL042C-A),</span>
+<span class="sd">merges, or has retired keeps its released name and its record; the previous build</span>
+<span class="sd">remapped the 17 to the current id. A strain with a blank CalMorph cell keeps every</span>
+<span class="sd">measured trait and the blank one is key-absent, never imputed (0 of 4718 rows). Net built</span>
+<span class="sd">records: 4718, 0 dropped.</span>
 <span class="sd">"""</span>
 
 <span class="c1"># torchcell/datasets/scerevisiae/ohya2005</span>
@@ -209,11 +205,6 @@
     <span class="n">Temperature</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.scerevisiae.gene_name_reconcile</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">default_genome</span><span class="p">,</span>
-    <span class="n">reconcile_systematic_names</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="n">SourcedValue</span>
 
@@ -316,15 +307,9 @@
         <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Initialize the dataset; an optional genome resolves 2005 ORF names to R64.</span>
-
-<span class="sd">        If ``genome`` is not supplied one is constructed from ``DATA_ROOT`` during</span>
-<span class="sd">        processing (used only to reconcile source ORF names to the current annotation).</span>
-<span class="sd">        """</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">genome</span>
+<span class="w">        </span><span class="sd">"""Initialize the dataset (no genome: every strain is stored as released)."""</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="nd">@property</span>
@@ -424,15 +409,11 @@
 <div class="viewcode-block" id="ScmdOhya2005Dataset.preprocess_calmorph_data">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset.html#torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset.preprocess_calmorph_data">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">preprocess_calmorph_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df_mutant</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Clean the mutant matrix, drop incomplete rows, and reconcile ORF names to R64.</span>
+<span class="w">        </span><span class="sd">"""Clean the mutant matrix and name every strain as released.</span>
 
-<span class="sd">        Names are reconciled to the current R64-4-1 annotation with the genome's layered</span>
-<span class="sd">        resolver (:meth:`SCerevisiaeGenome.resolve_gene_name`). NO record is dropped for a</span>
-<span class="sd">        naming reason -- every strain is a real measured perturbation. A resolved current</span>
-<span class="sd">        identifier (live gene, SGD rename, or valid non-"gene" feature) replaces the legacy</span>
-<span class="sd">        2005 name UNLESS doing so would collide with another strain's record (an SGD merge</span>
-<span class="sd">        of two distinct 2005 ORFs), in which case the original 2005 systematic name is kept</span>
-<span class="sd">        so the two strains stay distinct. Retired/ambiguous names are kept verbatim.</span>
+<span class="sd">        No genome is consulted (#1045): the stripped, upper-cased ``ORF`` cell is both</span>
+<span class="sd">        the systematic and the perturbed gene name. A blank ORF row names no strain and is</span>
+<span class="sd">        dropped with a counted warning; two rows naming one strain are refused.</span>
 <span class="sd">        """</span>
         <span class="n">df_mutant</span> <span class="o">=</span> <span class="n">df_mutant</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="c1"># The ORF column carries the systematic gene name; there is no common-name column.</span>
@@ -456,28 +437,22 @@
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">df_mutant</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">duplicated</span><span class="p">,</span><span class="w"> </span><span class="s1">'ORF'</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
 
-        <span class="c1"># Drop any strain with a missing CalMorph value -- CalMorph completeness requires</span>
-        <span class="c1"># the full 501-trait vocabulary per record; values are NEVER imputed (drop whole).</span>
+        <span class="n">df_mutant</span> <span class="o">=</span> <span class="n">df_mutant</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># A blank CalMorph cell is key-absent in the record, never imputed and never a</span>
+        <span class="c1"># reason to drop the strain's other traits (0 blank cells in the pinned matrix).</span>
         <span class="n">feature_cols</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">c</span>
             <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">df_mutant</span><span class="o">.</span><span class="n">columns</span>
             <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"ORF"</span><span class="p">,</span> <span class="s2">"systematic_gene_name"</span><span class="p">,</span> <span class="s2">"perturbed_gene_name"</span><span class="p">)</span>
         <span class="p">]</span>
-        <span class="n">has_all</span> <span class="o">=</span> <span class="n">df_mutant</span><span class="p">[</span><span class="n">feature_cols</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">n_nan</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="o">~</span><span class="n">has_all</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
-        <span class="k">if</span> <span class="n">n_nan</span><span class="p">:</span>
+        <span class="n">n_blank_cells</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">df_mutant</span><span class="p">[</span><span class="n">feature_cols</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">n_blank_cells</span><span class="p">:</span>
             <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                <span class="s2">"Ohya 2005: dropping </span><span class="si">%d</span><span class="s2"> mutant row(s) with missing CalMorph values: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
-                <span class="n">n_nan</span><span class="p">,</span>
-                <span class="n">df_mutant</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="n">has_all</span><span class="p">,</span> <span class="s2">"systematic_gene_name"</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()[:</span><span class="mi">20</span><span class="p">],</span>
+                <span class="s2">"Ohya 2005: </span><span class="si">%d</span><span class="s2"> blank CalMorph cell(s) in </span><span class="si">%d</span><span class="s2"> row(s) are key-absent in "</span>
+                <span class="s2">"their records"</span><span class="p">,</span>
+                <span class="n">n_blank_cells</span><span class="p">,</span>
+                <span class="nb">int</span><span class="p">(</span><span class="n">df_mutant</span><span class="p">[</span><span class="n">feature_cols</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
             <span class="p">)</span>
-        <span class="n">df_mutant</span> <span class="o">=</span> <span class="n">df_mutant</span><span class="p">[</span><span class="n">has_all</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">default_genome</span><span class="p">()</span>
-        <span class="n">df_mutant</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">reconcile_systematic_names</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">,</span> <span class="n">df_mutant</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Ohya 2005"</span>
-        <span class="p">)</span>
         <span class="n">df_mutant</span><span class="p">[</span><span class="s2">"perturbed_gene_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_mutant</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">]</span>
 
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
@@ -533,13 +508,13 @@
         <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span><span class="n">media</span><span class="o">=</span><span class="n">OHYA_YPD</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">25</span><span class="p">))</span>
         <span class="n">environment_reference</span> <span class="o">=</span> <span class="n">environment</span><span class="o">.</span><span class="n">model_copy</span><span class="p">()</span>
 
-        <span class="c1"># Extract morphology measurements and separate base from CV parameters. Rows are</span>
-        <span class="c1"># guaranteed complete + finite (incomplete rows dropped in preprocessing).</span>
+        <span class="c1"># Extract morphology measurements and separate base from CV parameters. A blank</span>
+        <span class="c1"># cell is key-absent (never imputed).</span>
         <span class="n">info_columns</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"ORF"</span><span class="p">,</span> <span class="s2">"systematic_gene_name"</span><span class="p">,</span> <span class="s2">"perturbed_gene_name"</span><span class="p">}</span>
         <span class="n">base_measurements</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">cv_measurements</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">row</span><span class="o">.</span><span class="n">index</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">info_columns</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">info_columns</span> <span class="ow">or</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">col</span><span class="p">]):</span>
                 <span class="k">continue</span>
             <span class="n">float_value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">col</span><span class="p">])</span>
             <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">_CV_PREFIXES</span><span class="p">):</span>

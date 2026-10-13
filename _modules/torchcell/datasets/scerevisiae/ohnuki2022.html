@@ -157,15 +157,17 @@
 <span class="sd">  asymmetry (mutants carry the explicit 3Delta background; the reference genome is a</span>
 <span class="sd">  WT-only placeholder) is the design decision flagged for human review.</span>
 
-<span class="sd">DROPPED STRAINS (3 of 1982 -&gt; 1979 records):</span>
+<span class="sd">RECORDS (1982 of 1982; 2026.10.12, #1045): every released row is a record under its</span>
+<span class="sd">released target ORF (stripped and upper-cased; no genome is consulted, so the 7 names</span>
+<span class="sd">R64-4-1 renames, e.g. YAL058C-A, keep their released spelling). The previous build dropped</span>
+<span class="sd">three rows and remapped seven:</span>
 <span class="sd">  * ``YGL141W`` (HRD1): the single mutant row with missing values (2 CV traits</span>
-<span class="sd">    ``ACV103_A1B``, ``ACV103_C`` are NaN). CalMorph completeness requires the full</span>
-<span class="sd">    501-trait vocabulary per record and values are never imputed, so the strain is</span>
-<span class="sd">    dropped whole (never partially imputed).</span>
-<span class="sd">  * ``YGL013C`` (PDR1) and ``YDR011W`` (SNQ2): these appear as target ORFs but are</span>
-<span class="sd">    ALREADY deleted in the 3Delta background, so they cannot be independent quadruple</span>
-<span class="sd">    deletions (deleting an already-deleted gene is not a new perturbation). Dropped per</span>
-<span class="sd">    the same background-collision convention used by the Vanacloig 2022 loader.</span>
+<span class="sd">    ``ACV103_A1B``, ``ACV103_C`` are NaN). Its 499 measured traits are stored and the two</span>
+<span class="sd">    blank cells are key-absent, never imputed.</span>
+<span class="sd">  * ``YGL013C`` (PDR1) and ``YDR011W`` (SNQ2): target ORFs that are also deleted in the</span>
+<span class="sd">    3Delta background. They are strains of the released collection with released</span>
+<span class="sd">    measurements and are stored as released: the genotype carries the target deletion and</span>
+<span class="sd">    the background deletion of the same gene, which is what the release says of them.</span>
 <span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
@@ -205,11 +207,6 @@
     <span class="n">Temperature</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.scerevisiae.gene_name_reconcile</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">default_genome</span><span class="p">,</span>
-    <span class="n">reconcile_systematic_names</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
 
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -275,15 +272,9 @@
         <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Initialize the dataset; an optional genome reconciles target ORF names to R64.</span>
-
-<span class="sd">        If ``genome`` is not supplied one is constructed from ``DATA_ROOT`` during</span>
-<span class="sd">        processing (used only to reconcile the target ORF name to the current annotation).</span>
-<span class="sd">        """</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">genome</span>
+<span class="w">        </span><span class="sd">"""Initialize the dataset (no genome: every strain is stored as released)."""</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="nd">@property</span>
@@ -337,14 +328,8 @@
         <span class="n">df_mutant</span><span class="p">[</span><span class="s2">"ORF"</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_mutant</span><span class="p">[</span><span class="s2">"ORF"</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
         <span class="n">feature_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">df_mutant</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">c</span> <span class="o">!=</span> <span class="s2">"ORF"</span><span class="p">]</span>
 
-        <span class="c1"># Reconcile the target ORF name to the current R64 annotation (retain-all,</span>
-        <span class="c1"># collision-safe; shared genome resolver). NOT dropped for naming here -- only the</span>
-        <span class="c1"># NaN and 3Delta-background filters below drop rows.</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">default_genome</span><span class="p">()</span>
-        <span class="n">df_mutant</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">reconcile_systematic_names</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">,</span> <span class="n">df_mutant</span><span class="p">[</span><span class="s2">"ORF"</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Ohnuki 2022"</span>
-        <span class="p">)</span>
+        <span class="c1"># The target ORF is stored as released (no genome is consulted, #1045).</span>
+        <span class="n">df_mutant</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_mutant</span><span class="p">[</span><span class="s2">"ORF"</span><span class="p">]</span>
         <span class="c1"># One strain per target ORF (0 repeats among the 1982 released rows): a repeat</span>
         <span class="c1"># would store two records of one genotype, so it is refused, not stored twice.</span>
         <span class="n">repeated</span> <span class="o">=</span> <span class="n">df_mutant</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
@@ -353,31 +338,35 @@
         <span class="k">if</span> <span class="n">repeated</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"Ohnuki 2022 </span><span class="si">{</span><span class="n">MUTANT_FILE</span><span class="si">}</span><span class="s2"> lists </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">repeated</span><span class="p">)</span><span class="si">}</span><span class="s2"> target ORF(s) more "</span>
-                <span class="sa">f</span><span class="s2">"than once after name reconciliation: </span><span class="si">{</span><span class="n">repeated</span><span class="si">}</span><span class="s2">"</span>
+                <span class="sa">f</span><span class="s2">"than once: </span><span class="si">{</span><span class="n">repeated</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
 
-        <span class="c1"># Drop the single strain with missing CalMorph values (never impute).</span>
-        <span class="n">has_all</span> <span class="o">=</span> <span class="n">df_mutant</span><span class="p">[</span><span class="n">feature_cols</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">n_nan</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="o">~</span><span class="n">has_all</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
-        <span class="k">if</span> <span class="n">n_nan</span><span class="p">:</span>
+        <span class="c1"># A blank CalMorph cell is key-absent in its record, never imputed and never a</span>
+        <span class="c1"># reason to drop the strain (YGL141W: 2 of 501 cells blank).</span>
+        <span class="n">blank_rows</span> <span class="o">=</span> <span class="n">df_mutant</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+            <span class="n">df_mutant</span><span class="p">[</span><span class="n">feature_cols</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="s2">"systematic_gene_name"</span>
+        <span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">blank_rows</span><span class="p">:</span>
             <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                <span class="s2">"Ohnuki: dropping </span><span class="si">%d</span><span class="s2"> mutant row(s) with missing CalMorph values: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
-                <span class="n">n_nan</span><span class="p">,</span>
-                <span class="n">df_mutant</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="n">has_all</span><span class="p">,</span> <span class="s2">"systematic_gene_name"</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+                <span class="s2">"Ohnuki: </span><span class="si">%d</span><span class="s2"> mutant row(s) with blank CalMorph cell(s), stored with the "</span>
+                <span class="s2">"blank cells key-absent: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+                <span class="nb">len</span><span class="p">(</span><span class="n">blank_rows</span><span class="p">),</span>
+                <span class="n">blank_rows</span><span class="p">,</span>
             <span class="p">)</span>
-        <span class="c1"># Drop target ORFs that coincide with the 3Delta background (cannot be an</span>
-        <span class="c1"># independent quadruple deletion of an already-deleted gene). Checked on the</span>
-        <span class="c1"># reconciled name so a legacy alias of a background gene is also caught.</span>
-        <span class="n">not_bg</span> <span class="o">=</span> <span class="o">~</span><span class="n">df_mutant</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">BACKGROUND_GENES</span><span class="p">)</span>
-        <span class="n">n_bg</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="o">~</span><span class="n">not_bg</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
-        <span class="k">if</span> <span class="n">n_bg</span><span class="p">:</span>
+        <span class="c1"># A target ORF that is also a 3Delta background gene (PDR1, SNQ2) is a released</span>
+        <span class="c1"># strain with a released measurement; it is stored as released.</span>
+        <span class="n">in_background</span> <span class="o">=</span> <span class="n">df_mutant</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+            <span class="n">df_mutant</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">BACKGROUND_GENES</span><span class="p">),</span>
+            <span class="s2">"systematic_gene_name"</span><span class="p">,</span>
+        <span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">in_background</span><span class="p">:</span>
             <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                <span class="s2">"Ohnuki: dropping </span><span class="si">%d</span><span class="s2"> target row(s) colliding with the 3Delta "</span>
-                <span class="s2">"background: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
-                <span class="n">n_bg</span><span class="p">,</span>
-                <span class="n">df_mutant</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="n">not_bg</span><span class="p">,</span> <span class="s2">"systematic_gene_name"</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+                <span class="s2">"Ohnuki: </span><span class="si">%d</span><span class="s2"> target row(s) also deleted in the 3Delta background, stored "</span>
+                <span class="s2">"as released: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+                <span class="nb">len</span><span class="p">(</span><span class="n">in_background</span><span class="p">),</span>
+                <span class="n">in_background</span><span class="p">,</span>
             <span class="p">)</span>
-        <span class="n">df_mutant</span> <span class="o">=</span> <span class="n">df_mutant</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">has_all</span> <span class="o">&amp;</span> <span class="n">not_bg</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">df_mutant</span> <span class="o">=</span> <span class="n">df_mutant</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">df_mutant</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"data.csv"</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -477,7 +466,9 @@
             <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">25</span><span class="p">),</span>
         <span class="p">)</span>
 
-        <span class="n">measurements</span> <span class="o">=</span> <span class="p">{</span><span class="n">col</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">col</span><span class="p">])</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">feature_cols</span><span class="p">}</span>
+        <span class="n">measurements</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">col</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">col</span><span class="p">])</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">feature_cols</span> <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">col</span><span class="p">])</span>
+        <span class="p">}</span>
         <span class="n">base</span><span class="p">,</span> <span class="n">cv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_traits</span><span class="p">(</span><span class="n">measurements</span><span class="p">)</span>
         <span class="n">phenotype</span> <span class="o">=</span> <span class="n">CalMorphPhenotype</span><span class="p">(</span>
             <span class="n">calmorph</span><span class="o">=</span><span class="n">base</span><span class="p">,</span> <span class="n">calmorph_coefficient_of_variation</span><span class="o">=</span><span class="n">cv</span> <span class="k">if</span> <span class="n">cv</span> <span class="k">else</span> <span class="kc">None</span>

@@ -193,6 +193,11 @@
             <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"strain_id"</span><span class="p">),</span>
             <span class="n">crispr</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"guide_sequence"</span><span class="p">),</span>
             <span class="n">crispr</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"library_pool"</span><span class="p">),</span>
+            <span class="c1"># #1045: an allele under its released name and a gene under its released</span>
+            <span class="c1"># id are their own strains (SGD's 42 named alleles beside the whole-gene</span>
+            <span class="c1"># deletion; SynLethDB's Entrez ids); absent on every other leaf</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"allele_name"</span><span class="p">),</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"released_gene_id"</span><span class="p">),</span>
         <span class="p">)</span>
 
     <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">_identity</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">experiment</span><span class="p">[</span><span class="s2">"genotype"</span><span class="p">][</span><span class="s2">"perturbations"</span><span class="p">]))</span>

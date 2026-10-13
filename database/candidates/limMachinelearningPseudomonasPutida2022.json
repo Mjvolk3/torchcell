@@ -667,6 +667,10 @@
     "unresolved_compounds": [],
     "proposed_class": null
   },
-  "decided_at": "2026-10-11",
-  "torchcell_commit": "aac409119b586fc444d5dc78842969c32c0cf1bf"
+  "derived_from_compendium": {
+    "citation_key": "limMachinelearningPseudomonasPutida2022",
+    "note": "putidaPRECISE321: 225 of the 321 samples were reprocessed from other studies (SRA) to log2(TPM + 1) on AE015451.2; the genotype and condition detail sit in each source study, not in the compendium's metadata."
+  },
+  "decided_at": "2026-10-13",
+  "torchcell_commit": "6982d2437c11d68bd69ddbe2d4f862b937516adb"
 }

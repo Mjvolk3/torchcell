@@ -53,3 +53,9 @@ The first family-verifier pass over the rebuilt store (slurm 4606) failed three 
 | L3 | `media_membership` | gate | ok | 0 records on a shared MEDIA_LIBRARY medium, 524682 on a medium deriving from one (13 distinct media) |
 | L4 | `gene_containment_sgd` | report | ok | 1.000 of 6068 measured genes are S288C reference genes (>= 0.9) |
 | L4 | `current_genome_genes` | report | ok | every one of the 6068 measured systematic names is a gene of the current genome |
+
+## 2026.10.13 - Compendium-derived: hidden assumptions and missed representation
+
+This store is derived from YeastPhenome yp-data (`turcoGlobalAnalysisYeast2023`). Data collected from a compendium, a database aggregate or a follow-up study may embed that source's preprocessing (normalization, filtering, re-keying, merged conditions) and may lack ontological representation the primary release carries (per-sample metadata, replicate structure, the released statistic). Its records are a derived copy, and the primary release is still to be collected from source ([[torchcell.knowledge_graphs.dataset-admission-loop]], 2026.10.13).
+
+What it may hide here, measured against two primary releases: yp-data negates Parsons 2006's released log2 ratio ([[experiments.database.scripts.parsons2006_yeastphenome_crosscheck]]), and averages Yoshikawa 2009's two cultures per condition while pooling strains its ORF translation merges into one locus ([[experiments.database.scripts.yoshikawa2009_yeastphenome_crosscheck]]). Every screen is rescaled to a mode-referenced value, and fields the curation does not carry are typed gaps. Each screen's own release is the source to collect.

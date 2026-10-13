@@ -533,6 +533,10 @@
     "unresolved_compounds": [],
     "proposed_class": null
   },
-  "decided_at": "2026-10-11",
-  "torchcell_commit": "9f708b4e1670c8e3165de6f0dbddeae2e0ac765e"
+  "derived_from_compendium": {
+    "citation_key": "priceMutantPhenotypesThousands2018",
+    "note": "Price 2018 Fitness Browser compendium: 92 of the 162 Keio samples are Wetmore 2015's experiments re-analyzed at statistics version 1.0.3 and kept only when they passed the compendium's quality filter (fit_logratios_good); the other 70 are attributed to Price 2018 by inference from Table S20. Wetmore 2015 is also served from its own release."
+  },
+  "decided_at": "2026-10-13",
+  "torchcell_commit": "6982d2437c11d68bd69ddbe2d4f862b937516adb"
 }

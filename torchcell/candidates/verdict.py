@@ -529,6 +529,27 @@ class G5Record(_Frozen):
     )
 
 
+class CompendiumDerivation(_Frozen):
+    """The candidate's records are a derived copy taken from a compendium.
+
+    Owner, 2026-10-12: "in all cases where we collect compendium data / aggregated data
+    from db or follow up study - the answer is to alwayst try to eventually collect it
+    from source." A compendium, a database aggregate or a follow-up study can embed its
+    own preprocessing (normalization, filtering, re-keying, merged conditions) and can
+    lack ontological representation the primary release carries (per-sample metadata,
+    replicate structure, the released statistic). The flag marks the records as that
+    derived copy, so the primary releases stay on the collection list. It decides no gate.
+    """
+
+    citation_key: str = Field(
+        min_length=1, description="citation key of the compendium the records come from"
+    )
+    note: str = Field(
+        min_length=1,
+        description="what the compendium's copy may hide relative to the primary release",
+    )
+
+
 class CandidateVerdict(_Frozen):
     """The five gates for one candidate row, as recorded in ``database/candidates/``."""
 
@@ -547,6 +568,11 @@ class CandidateVerdict(_Frozen):
     g4_key: G4KeyRecord | None
     g4_value: G4ValueRecord | None
     g5: G5Record | None
+    derived_from_compendium: CompendiumDerivation | None = Field(
+        default=None,
+        description="set when the records are a compendium's, a database aggregate's or "
+        "a follow-up study's copy rather than the primary release; None = not flagged",
+    )
     decided_at: str = Field(description="ISO date the verdict was computed")
     torchcell_commit: str = Field(description="the 40-hex commit the gates read")
 

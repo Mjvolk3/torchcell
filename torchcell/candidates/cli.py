@@ -49,6 +49,7 @@ from torchcell.candidates.verdict import (
     AggregationRecord,
     CandidateTable,
     CandidateVerdict,
+    CompendiumDerivation,
     G4ValueRecord,
     GateName,
     GateResult,
@@ -149,6 +150,9 @@ def render_verdict(verdict: CandidateVerdict) -> str:
         kind = f":{g.blocked_kind}" if g.blocked_kind else ""
         issue = f" (#{g.issue})" if g.issue is not None else ""
         lines.append(f"  {g.gate} {g.outcome}{kind}{issue}: {g.reason}")
+    if verdict.derived_from_compendium is not None:
+        d = verdict.derived_from_compendium
+        lines.append(f"  derived from compendium: {d.citation_key}: {d.note}")
     if verdict.aggregation is not None:
         a = verdict.aggregation
         lines.append(
@@ -233,6 +237,15 @@ def cmd_gate(args: argparse.Namespace) -> int:
         raise UsageError(
             f"{row.name}: finding is filed under {finding.citation_key}, not {key}"
         )
+    if (args.derived_from_compendium is None) != (args.compendium_note is None):
+        raise UsageError("--derived-from-compendium and --compendium-note go together")
+    derivation = (
+        None
+        if args.derived_from_compendium is None
+        else CompendiumDerivation(
+            citation_key=args.derived_from_compendium, note=args.compendium_note
+        )
+    )
     g1 = gates.evaluate_g1(row, finding)
     if args.decomposition is not None:
         records = gates.read_decompositions(Path(args.decomposition))
@@ -281,6 +294,7 @@ def cmd_gate(args: argparse.Namespace) -> int:
         zotero=gates.zotero_item(key, root),
         decided_at=date.today().isoformat(),
         torchcell_commit=git_commit(),
+        derived_from_compendium=derivation,
     )
     print(verdict.model_dump_json(indent=2) if args.json else render_verdict(verdict))
     if args.write:
@@ -477,6 +491,15 @@ def build_parser() -> argparse.ArgumentParser:
         "--decomposition",
         help="aggregation_decomposition_audit.json: fold the measured per-source "
         "decomposition into the aggregation record (plan decision 16)",
+    )
+    p.add_argument(
+        "--derived-from-compendium",
+        metavar="CITATION_KEY",
+        help="the records are this compendium's derived copy (with --compendium-note)",
+    )
+    p.add_argument(
+        "--compendium-note",
+        help="what the compendium's copy may hide relative to the primary release",
     )
     p.add_argument("--json", action="store_true")
     p.add_argument("--write", action="store_true")

@@ -9,6 +9,7 @@ import pytest
 from pydantic import ValidationError
 
 from tests.torchcell.candidates._builders import (
+    admissible_verdict,
     aggregation,
     compendium_paper,
     cross_check,
@@ -20,6 +21,7 @@ from tests.torchcell.candidates._builders import (
 )
 from torchcell.candidates.verdict import (
     AggregationRecord,
+    CompendiumDerivation,
     G2Host,
     G2Record,
     G4KeyHit,
@@ -478,3 +480,26 @@ def test_g4_unmeasured_carries_a_key_record_only_for_a_pending_shared_key() -> N
         _check_g4(pending, shared, value)
     with pytest.raises(ValueError, match="without its record"):
         _check_g4(GateResult(gate="G4", outcome="pass", reason="r"), None, None)
+
+
+def test_derived_from_compendium_is_optional_typed_and_decides_nothing() -> None:
+    """Absent by default (old verdicts read unchanged); when set, both fields are needed."""
+    plain = admissible_verdict()
+    assert plain.derived_from_compendium is None
+    assert "derived_from_compendium" not in verdict_json_schema()["required"]
+    flagged = admissible_verdict(
+        derived_from_compendium=CompendiumDerivation(
+            citation_key="compendiumKey2021", note="re-keyed and filtered"
+        )
+    )
+    assert flagged.outcome == plain.outcome == "admissible"
+    dumped = flagged.model_dump()
+    assert dumped["derived_from_compendium"] == {
+        "citation_key": "compendiumKey2021",
+        "note": "re-keyed and filtered",
+    }
+    assert type(flagged).model_validate(dumped) == flagged
+    with pytest.raises(ValidationError, match="citation_key"):
+        CompendiumDerivation(citation_key="", note="re-keyed")
+    with pytest.raises(ValidationError, match="note"):
+        CompendiumDerivation(citation_key="compendiumKey2021", note="")

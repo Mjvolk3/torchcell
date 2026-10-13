@@ -257,3 +257,9 @@ All 128 derivative samples dropped until now, each on a BacterialStrainBackgroun
 | L3 | `measurement_type_consistent` | pass | single measurement_type: 'rnaseq_tpm' |
 | L3 | `reference_finite` | pass | reference expression finite for all 1786044 values |
 | L4 | `gene_containment_assembly` | pass | 1.000 of 5564 measured genes are loci of pputida_KT2440_ASM756v2 (>= 1.0) |
+
+## 2026.10.13 - Compendium-derived: hidden assumptions and missed representation
+
+This store is derived from putidaPRECISE321 (`limMachinelearningPseudomonasPutida2022`). Data collected from a compendium, a database aggregate or a follow-up study may embed that source's preprocessing (normalization, filtering, re-keying, merged conditions) and may lack ontological representation the primary release carries (per-sample metadata, replicate structure, the released statistic). Its records are a derived copy, and the primary release is still to be collected from source ([[torchcell.knowledge_graphs.dataset-admission-loop]], 2026.10.13).
+
+What it may hide here: 225 of the 321 samples were reprocessed from other studies (SRA) to log2(TPM + 1) on AE015451.2, so the normalization is the compendium's; genotype and condition detail sit in each source study, not in the compendium's metadata. The source studies' own releases are still to be collected.

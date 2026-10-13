@@ -116,3 +116,9 @@ Every gene under its released b-number; the loader reads no genome.
 | L1 | `records_carry_their_browser_publication` | pass | SUPPLEMENTARY: 6 stored samples, 6 expected; 0 carry a publication other than their pubId's |
 | L4 | `compendium_cross_check_price2018` | pass | SUPPLEMENTARY: 158 shared samples against data/torchcell/rbtnseq_price2018_ecoli, 598662 (gene, sample) values; pooled Pearson r 1.000000, smallest per-sample r 1.000000 against... |
 | L4 | `own_release_cross_check_wetmore2015` | pass | SUPPLEMENTARY: 88 shared samples against data/torchcell/rbtnseq_wetmore2015_ecoli, 320848 (gene, sample) values; pooled Pearson r 0.996969, smallest per-sample r 0.988954 agains... |
+
+## 2026.10.13 - Compendium-derived: hidden assumptions and missed representation
+
+This store is derived from the Fitness Browser deposit (`feba.db`), Keio. Data collected from a compendium, a database aggregate or a follow-up study may embed that source's preprocessing (normalization, filtering, re-keying, merged conditions) and may lack ontological representation the primary release carries (per-sample metadata, replicate structure, the released statistic). Its records are a derived copy, and the primary release is still to be collected from source ([[torchcell.knowledge_graphs.dataset-admission-loop]], 2026.10.13).
+
+What it may hide here: the stored `Price21b` samples are the browser's recomputation under its current statistics version, and the medium and condition are the browser's `Experiment` columns rather than the preprint's Methods. The preprint's own tables, if released, are the source to collect.

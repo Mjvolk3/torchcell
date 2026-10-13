@@ -262,3 +262,9 @@ The essentiality verifier keys `one_record_per_gene_and_publication` on the fitn
 | L3 | `media_membership` | gate | ok | 0 records on a shared MEDIA_LIBRARY medium, 1 on a medium deriving from one (1 distinct media), 1328 on a medium the source does not name, as a typed gap (not_carried_by_curation x1328) |
 | L4 | `gene_containment_sgd` | report | ok | 1.000 of 1140 measured genes are S288C reference genes (>= 0.9) |
 | L4 | `current_genome_genes` | report | ok | every one of the 1140 measured systematic names is a gene of the current genome |
+
+## 2026.10.13 - Compendium-derived: hidden assumptions and missed representation
+
+This store is derived from SGD phenotype annotations (a database aggregate). Data collected from a compendium, a database aggregate or a follow-up study may embed that source's preprocessing (normalization, filtering, re-keying, merged conditions) and may lack ontological representation the primary release carries (per-sample metadata, replicate structure, the released statistic). Its records are a derived copy, and the primary release is still to be collected from source ([[torchcell.knowledge_graphs.dataset-admission-loop]], 2026.10.13).
+
+What it may hide here: each record is a curated annotation of a paper, not the paper's release; the curation decides the allele naming, the condition classes and the call "inviable", and an annotation that names no medium or temperature stores them as typed gaps (`not_carried_by_curation`). The annotated papers' own releases are the source to collect.

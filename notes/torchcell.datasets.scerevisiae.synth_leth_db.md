@@ -358,3 +358,9 @@ The pair verifier set the 3 SL and 6 SR self pairs aside for the declared `two_d
 | L3 | `media_membership` | gate | ok | 0 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (0 distinct media), 6948 on a medium the source does not name, as a typed gap (not_carried_by_curation x6948) |
 | L4 | `gene_containment_sgd` | report | finding | 0.037 of 2980 measured genes are S288C reference genes (>= 0.9) |
 | L4 | `current_genome_genes` | report | finding | 2871 systematic names are absent from the current genome over 6948 records: AAC1 x1, AAD3 x1, AAR2 x1, AAT1 x1, AAT2 x1, ABP1 x2, ABP140 x2, ACC1 x5, ACE2 x3, ACF4 x3 |
+
+## 2026.10.13 - Compendium-derived: hidden assumptions and missed representation
+
+This store is derived from SynLethDB (a database aggregate). Data collected from a compendium, a database aggregate or a follow-up study may embed that source's preprocessing (normalization, filtering, re-keying, merged conditions) and may lack ontological representation the primary release carries (per-sample metadata, replicate structure, the released statistic). Its records are a derived copy, and the primary release is still to be collected from source ([[torchcell.knowledge_graphs.dataset-admission-loop]], 2026.10.13).
+
+What it may hide here: pairs are aggregated from papers and from BioGRID, so the perturbation that made a pair is not released (`released_kind` is a typed gap), the confidence score is SynLethDB's and is defined for SL pairs only, and screen-level metadata (strain, medium, replicate structure) is not carried. Each pair's source paper, named by its PMID, is the source to collect.

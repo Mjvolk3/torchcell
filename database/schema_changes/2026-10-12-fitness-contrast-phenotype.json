@@ -4,7 +4,7 @@
   "date": "2026-10-12",
   "pr": 1074,
   "author_kind": "agent",
-  "base_commit": "232e5d17882b668d27ccfe3bdb5e97dbcafd8a04",
+  "base_commit": "3259ed278c0c30dfcfd68d8efcd57f31cbe27b72",
   "python_version": "3.13.0",
   "symbols": [
     {
@@ -39,8 +39,8 @@
       "kinds": [
         "enum_member_added"
       ],
-      "fingerprint_before": "6328849fbe6e527f581f6aad633ebb1da11938d497ea2c7d898719f41387aa79",
-      "fingerprint_after": "a28cfcc21ed29628fbfd4cb707db246c66bb0fc610df23a7aeac9bab54a09d60",
+      "fingerprint_before": "7456aee12b83dcbe52c6d111750164bb58215390bf29fa97c5626087fa9a2410",
+      "fingerprint_after": "8af642b9933ea65c7b80c02a41be2da3ff60fb5961a3034c5dbf1c3e9062febf",
       "impact": "stale",
       "reasons": [
         "gained members [\"'bacterial_fitness_contrast': BacterialFitnessContrastExperimentReference\"]"
@@ -52,8 +52,8 @@
       "kinds": [
         "enum_member_added"
       ],
-      "fingerprint_before": "b55a962ffabea8aa717febe5b1da5e9619018aced64bb5e799441c910d158ed7",
-      "fingerprint_after": "960b979bc782bacff7737bcd2622260f2db3b0f53b8878253a3e9cf4c065e37f",
+      "fingerprint_before": "2fca3c4c7f955f61567e77d0446db683114af13347aebf33dc269e58c4b0ca85",
+      "fingerprint_after": "236d37735449e6f79ef5359c6fef870ef069aa8e16b6b96b699bb09047ed6071",
       "impact": "stale",
       "reasons": [
         "gained members [\"'bacterial_fitness_contrast': BacterialFitnessContrastExperiment\"]"
@@ -65,8 +65,8 @@
       "kinds": [
         "enum_member_added"
       ],
-      "fingerprint_before": "f1a60c21f4bb7caddbecf5a58f4ea0fe0e86a2ee1ccc7a72f76cd1b027c5ba21",
-      "fingerprint_after": "6da3401dc490134a3d0f63d3c3f4351a3aecb8273e32d41528fadc59c2194d07",
+      "fingerprint_before": "d0a2f2c56a4a7bda227bba7b4256222417b90e90c93737dc79224edb7726b09c",
+      "fingerprint_after": "0c9dcc2e3ff15a08113d251d3d6d4b80688060f61d1ac3daa7e19967187fd151",
       "impact": "stale",
       "reasons": [
         "gained members ['BacterialFitnessContrastExperimentReference']"
@@ -78,8 +78,8 @@
       "kinds": [
         "enum_member_added"
       ],
-      "fingerprint_before": "aecfd8a8a37c9d8efcb24084a9d2d854cc3f778e5bd6d2bc4268ace3e4887a59",
-      "fingerprint_after": "008db3fed3faeb5c749fd340351c4330d296838be9378acff2e1caf3cce52d94",
+      "fingerprint_before": "fc49ca18edb64b68945aa1c67e8c1dabd0eb6f1c67915b10ef52bda617bc1de0",
+      "fingerprint_after": "36f188a33aed4de8e2760737a839ac7e16f2e54ae4cf6bd5f8a77eecaabd7fa0",
       "impact": "stale",
       "reasons": [
         "gained members ['BacterialFitnessContrastExperiment']"
@@ -104,8 +104,8 @@
       "kinds": [
         "enum_member_added"
       ],
-      "fingerprint_before": "7298b18961dec8093a260a78342ba008abc7f96975cd06c421347932974d5dfd",
-      "fingerprint_after": "c1c4b9b99c127ed2c7b8d0615b1327ae7078f231b7e2f2cb46cb9dd662a2aff3",
+      "fingerprint_before": "4066009fb7a0d31ef5b774e4e74a48af77bd2e334c596ec2c5cf10e780950f83",
+      "fingerprint_after": "27bdf8bd84468da6da72b8a0298b8d9152973689b27e2eb9665e1c11c91688c6",
       "impact": "stale",
       "reasons": [
         "gained members ['FitnessContrastPhenotype']"
@@ -200,6 +200,17 @@
       "loader": "torchcell/datasets/ecoli/li2014.py",
       "dataset_classes": [
         "ProteinSynthesisRateLi2014Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/li2021.py",
+      "dataset_classes": [
+        "FluxLi2021Dataset"
       ],
       "served_classes": [],
       "impact": "stale",

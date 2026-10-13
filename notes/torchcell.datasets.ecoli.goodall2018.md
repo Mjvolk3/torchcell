@@ -281,3 +281,9 @@ Report `verification_report.json` (written 2026-10-11 08:04 UTC):
 | L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
 | L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
 | L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+
+## 2026.10.12 - Every released symbol keys a record on the released transposon leaf
+
+The owner's rule of 2026-10-12 ([[database.genome-gating-sweep.2026.10.12]], rows 147 and 377): the loader reads no annotation. Each record is a `BacterialReleasedTransposonPerturbation` (#1077) keyed by the table's `Gene` symbol verbatim, with `strain_label` the same row label, `identifier_kind` "gene symbol, as the Table S1 and S4 Gene column writes it" and `transposon` mini-Tn5; `reconcile_locus_tags`, `canonical_symbol`, `MIN_RESOLVED_FRACTION`, the `ecoli_genome` constructor parameter, `preprocess/identifier_reconciliation.json` and the `symbol_not_on_one_bw25113_locus` rule are gone. The nine multi-copy insertion-sequence symbols on no single BW25113 locus (106 rows over the two tables) are records now; the L4 row, renamed `gene_containment_bw25113_annotation`, reports what the annotation's symbols and tags make of the 4,181 stored symbols (#1069), and `check_replicon` runs in the verifier, which opens the genome, not in the build. The one remaining rule is `unclear_call_not_representable` (317 rows; a graded sibling leaf follows #1066).
+
+Released vs stored: 8,626 released rows = 8,309 records + 317 unclear calls; 4,260 released symbols, 4,181 of them on a kept row, all stored.

@@ -184,6 +184,9 @@ GENOME_REFERENCE_RULES: Final[frozenset[str]] = frozenset(
         # Choe 2025: the released spacer against the released window read off OUR
         # pinned MG1655 sequence
         "spacer_matches_the_released_window_on_the_pinned_sequence",
+        # Choe 2019: where the pinned MG1655 assembly places the released deletion
+        # symbols (#1045 part 2)
+        "deleted_symbols_are_one_contiguous_run_of_the_pinned_assembly",
     }
 )
 

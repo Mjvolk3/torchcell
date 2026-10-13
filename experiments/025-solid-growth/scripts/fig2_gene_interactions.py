@@ -10,7 +10,8 @@ idea only). Every number is read from a result file written by a committed scrip
 file and script are named per panel below. Written to $ASSET_IMAGES_DIR/025-solid-growth/
 fig2_gene_interactions.{svg,png} at PANEL_WIDTHS_MM["full"].
 
-  a  the definitions: fitness, digenic and trigenic interaction, the general form
+  a  the hand-drawn explainer, exported from the draw.io figure
+     (notes/assets/drawio/Fig2-gene-interactions.explainer.py -> fig2_explainer.png)
   b  measured trigenic interaction by bin of the prediction, CGT checkpoint M03 on the
      37,673 test triples (010 results: cgt_predictions_M03_c7671wgj_test.npy,
      cgt_record_rows_test.npy; labels from the 010 build's label_df.parquet)
@@ -32,8 +33,8 @@ fig2_gene_interactions.{svg,png} at PANEL_WIDTHS_MM["full"].
   m  the encoder's wild-type gene representations in 2-D, colored by Leiden cluster
      (025 results: wt_gene_embeddings/cluster_assignments.csv, go_enrichment.csv,
      summary.json, from wt_gene_embedding_clusters.py on the S3 closure checkpoint)
-  n  the best Gene Ontology term of every cluster
-  o  the same map colored by whether a gene appears in any training triple
+  n  the same map colored by whether a gene appears in any training triple
+  o  the best Gene Ontology term of every cluster
   p  the raw learnable gene table clustered the same way, as the control
 
 Palette, primaries only: gray no graphs or a no-interaction null; red the cell graph
@@ -63,7 +64,7 @@ from matplotlib.ticker import MultipleLocator
 from scipy import stats
 
 from torchcell.timestamp import timestamp
-from torchcell.utils import PANEL_WIDTHS_MM, PLOT_PALETTE, mm_to_in, savefig_true_size_svg
+from torchcell.utils import PANEL_WIDTHS_MM, PLOT_PALETTE, PLOT_PALETTE_FILL, mm_to_in, savefig_true_size_svg
 
 load_dotenv()
 EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
@@ -130,7 +131,7 @@ def bars(ax: Axes, xs: list[float], groups: list[np.ndarray], colors: list[str],
 
 def not_run(ax: Axes, x: float, y: float, text: str, color: str) -> None:
     ax.scatter([x], [y], s=12, marker="x", color=color, linewidth=0.6, zorder=4)
-    ax.text(x, y, "\n" + text, ha="center", va="top", fontsize=5, color=color)
+    ax.annotate(text, (x, y), xytext=(0, 7), textcoords="offset points", ha="center", va="bottom", fontsize=5, color=color)
 
 
 def stars(p: float | None) -> str:
@@ -193,25 +194,15 @@ def keys(fig: Figure) -> None:
 
 
 def panel_a(ax: Axes) -> None:
-    ax.set_xlim(0, 1)
-    ax.set_ylim(0, 1)
+    """The hand-drawn explainer, exported from the draw.io figure by
+    notes/assets/drawio/Fig2-gene-interactions.explainer.py."""
+    img = plt.imread(osp.join(IMG_DIR, "fig2_explainer.png"))
+    ax.imshow(img, interpolation="lanczos")
     ax.set_xticks([])
     ax.set_yticks([])
-    for s in ax.spines.values():
-        s.set_visible(False)
+    for sp in ax.spines.values():
+        sp.set_visible(False)
     ax.set_title("what the lower orders do not explain")
-    lines = [
-        (r"$f_i = g_i / g_{\mathrm{wt}}$", "fitness, relative to wild type"),
-        (r"$\varepsilon_{ij} = f_{ij} - f_i f_j$", "digenic: double minus product of singles"),
-        (r"$\tau_{ijk} = f_{ijk} - f_i f_j f_k - \varepsilon_{ij} f_k - \varepsilon_{ik} f_j - \varepsilon_{jk} f_i$", "trigenic: triple minus every lower term"),
-        (r"$\eta_S = f_S - \sum_{T \subset S,\, T \neq \emptyset} \eta_T \prod_{i \in S \setminus T} f_i$", "general: peel off every subset"),
-    ]
-    y = 0.93
-    for k, (eq, words) in enumerate(lines):
-        ax.text(0.0, y, eq, fontsize=6, ha="left", va="center")
-        ax.text(0.0, y - (0.14 if k == 3 else 0.095), words, fontsize=5, color=LIGHT, ha="left", va="center")
-        y -= 0.235
-    ax.text(0.0, 0.0, "376,732 triples, 4,352 genes (Kuzmin 2018, 2020)", fontsize=5, color=LIGHT, ha="left", va="bottom")
 
 
 def panel_b(ax: Axes) -> None:
@@ -224,25 +215,24 @@ def panel_b(ax: Axes) -> None:
     edges = [-np.inf, -0.40, -0.32, -0.24, -0.16, -0.08, 0.0, 0.08, 0.16, 0.24, np.inf]
     idx = np.digitize(p, edges[1:-1])
     groups = [y[idx == k] for k in range(len(edges) - 1)]
-    bp = ax.boxplot(
-        groups, positions=range(len(groups)), widths=0.6, showfliers=False, patch_artist=True,
-        medianprops={"color": "black", "lw": 0.7}, whiskerprops={"color": RED, "lw": 0.5},
-        capprops={"color": RED, "lw": 0.5}, boxprops={"facecolor": RED, "edgecolor": "black", "lw": 0.4},
+    # The look of the DCell and DANGO figures: a filled box in the series fill, whiskers
+    # in the warm companion color, the median as a line, no fliers.
+    ax.boxplot(
+        groups, positions=range(len(groups)), widths=0.65, showfliers=False, patch_artist=True,
+        medianprops={"color": RED, "lw": 1.0}, whiskerprops={"color": ORANGE, "lw": 0.6},
+        capprops={"color": ORANGE, "lw": 0.6},
+        boxprops={"facecolor": PLOT_PALETTE_FILL[1], "edgecolor": RED, "lw": 0.6}, zorder=3,
     )
-    del bp
-    ax.axhline(0, color="black", lw=0.4, ls="--", zorder=1)
-    ax.set_xticks(range(len(groups)))
-    ax.set_xticklabels(["<−0.40", "−0.40", "−0.32", "−0.24", "−0.16", "−0.08", "0", "0.08", "0.16", "≥0.24"], fontsize=5, rotation=90)
-    ax.set_xlabel("predicted trigenic interaction, bin lower edge")
-    ax.set_ylabel("measured trigenic interaction")
+    ax.axhline(0, color="black", lw=0.5, zorder=2)
+    ax.axvline(5.5, color="black", lw=0.5, zorder=2)
+    ax.set_xticks(np.arange(len(edges)) - 0.5)
+    ax.set_xticklabels(["\u2212Inf", "\u22120.40", "\u22120.32", "\u22120.24", "\u22120.16", "\u22120.08", "0.00", "0.08", "0.16", "0.24", "Inf"], fontsize=5, rotation=45, ha="right")
+    ax.set_xlim(-0.6, len(groups) - 0.4)
+    ax.set_xlabel("predicted genetic interaction")
+    ax.set_ylabel("measured genetic interaction")
     r = stats.pearsonr(p, y)[0]
     ax.set_title(f"monotone across bins, r = {r:.3f}")
-    ax.set_ylim(-0.75, 1.2)
-    ax.yaxis.set_major_locator(MultipleLocator(0.5))
-    counts = [len(g) for g in groups]
-    for k, c in enumerate(counts):
-        ax.text(k, 1.18, f"{c:,}" if c < 10000 else f"{c/1000:.0f}k", ha="center", va="top", fontsize=4.5, color=LIGHT, rotation=90)
-    strip(ax)
+    strip(ax, grid="both")
 
 
 def panel_c(ax: Axes) -> None:
@@ -261,7 +251,7 @@ def panel_c(ax: Axes) -> None:
     add = pd.read_csv(osp.join(R010, "additive_baseline_gene_interaction.csv"))
     ridge = float(add[(add.model == "B1_additive_gene") & (add.split == "test")].pearson.iloc[0])
     ax.axhline(ridge, color=GRAY, lw=0.7, ls="--", zorder=2)
-    ax.text(-0.45, ridge + 0.006, f"no-interaction ridge, {ridge:.2f}", ha="left", va="bottom", fontsize=5, color=GRAY)
+    ax.text(-0.45, ridge - 0.008, f"ridge, {ridge:.2f}", ha="left", va="top", fontsize=5, color=GRAY)
     for x, (_, vals, _) in enumerate(models):
         ax.text(x, vals.max() + 0.015, f"{vals.mean():.3f}" if vals.mean() > 0.01 else f"{vals.mean():.4f}", ha="center", va="bottom", fontsize=5)
     ax.set_xticks(range(4))
@@ -292,11 +282,11 @@ def panel_d(ax: Axes) -> None:
     ax.set_xticks([0, 1])
     ax.set_xticklabels(["random split\nover triples", "held-out\nquery pairs"])
     ax.set_xlim(-0.55, 1.55)
-    ax.set_ylim(0, 0.5)
+    ax.set_ylim(0, 0.6)
     ax.yaxis.set_major_locator(MultipleLocator(0.1))
     ax.set_ylabel("test Pearson, trigenic interaction")
     ax.set_title("a no-interaction null reaches 0.40")
-    ax.legend(handles=[Patch(facecolor=c, edgecolor="black", linewidth=0.4, label=l) for l, _, c in learners], loc="upper right", bbox_to_anchor=(1.0, 0.8), frameon=False, handlelength=1.0, handletextpad=0.4, borderpad=0.2, labelspacing=0.25)
+    ax.legend(handles=[Patch(facecolor=c, edgecolor="black", linewidth=0.4, label=l) for l, _, c in learners], loc="upper right", bbox_to_anchor=(1.02, 1.0), frameon=False, handlelength=1.0, handletextpad=0.3, borderpad=0.1, labelspacing=0.2)
     strip(ax)
 
 
@@ -340,7 +330,7 @@ def panel_f(ax: Axes) -> None:
     for x, (arm, _, color) in enumerate(pools):
         vals = d[d.arm == arm]["val_gi_pearson_mean_ep10_29"].dropna().to_numpy(dtype=float)
         bars(ax, [x], [vals], [color])
-    not_run(ax, 3, 0.384, "not run", RED)
+    not_run(ax, 3, 0.383, "not run", RED)
     ax.set_xticks(range(4))
     ax.set_xticklabels([p[1] for p in pools] + ["030\nper entry\n13.5 M"], fontsize=5)
     ax.set_ylim(0.38, 0.49)
@@ -424,17 +414,17 @@ def panel_j(ax: Axes, done: pd.DataFrame) -> None:
     ticks = LADDER_TICKS
     for x, arm in enumerate(arms):
         vals = done[done.arm == arm].edge_recall_fixed.dropna().to_numpy(dtype=float)
-        color = PURPLE if arm.startswith("random") else ladder_color(arm)
+        color = GRAY if arm == "kl_0" else RED
         if arm == "mask":
             vals = np.array([1.0])
         ax.scatter(x + np.linspace(-0.12, 0.12, len(vals)), vals, s=7, facecolor=color, edgecolor="black", linewidth=0.4, zorder=4)
-    ax.text(len(arms) - 1.45, 1.0, "by construction", ha="right", va="center", fontsize=5, color=ORANGE)
+    ax.text(len(arms) - 1.45, 1.0, "by construction", ha="right", va="center", fontsize=5, color=RED)
     ax.set_xticks(range(len(arms)))
     ax.set_xticklabels(ticks, fontsize=5)
     ax.set_xlabel("log10 λ, the prior's weight")
     ax.set_ylim(0, 1.05)
     ax.yaxis.set_major_locator(MultipleLocator(0.2))
-    ax.set_ylabel("edge recall at degree, mean of nine heads")
+    ax.set_ylabel("edge recall at degree")
     ax.set_title("every weight contracts attention")
     strip(ax)
 
@@ -550,8 +540,8 @@ def panel_p(ax: Axes, assign: pd.DataFrame, enr: pd.DataFrame, summary: dict[str
 def main() -> None:
     done, hist, summary = sweep()
     assign, enr, wt = wt_data()
-    fig, axes = plt.subplots(4, 4, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(205)))
-    fig.subplots_adjust(left=0.05, right=0.99, bottom=0.08, top=0.965, wspace=0.42, hspace=0.8)
+    fig, axes = plt.subplots(4, 4, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(190)))
+    fig.subplots_adjust(left=0.05, right=0.99, bottom=0.075, top=0.965, wspace=0.34, hspace=0.62)
     ax = axes.ravel()
     panel_a(ax[0])
     panel_b(ax[1])
@@ -566,10 +556,10 @@ def main() -> None:
     panel_k(ax[10], hist)
     panel_l(ax[11], hist)
     panel_m(ax[12], assign, enr, wt)
-    panel_n(ax[13], enr)
-    panel_o(ax[14], assign)
+    panel_o(ax[13], assign)
+    panel_n(ax[14], enr)
     panel_p(ax[15], assign, enr, wt)
-    letters_status(fig, list(ax), ["partial"] + ["ready"] * 15)
+    letters_status(fig, list(ax), ["ready"] * 16)
     keys(fig)
     os.makedirs(IMG_DIR, exist_ok=True)
     stem = osp.join(IMG_DIR, "fig2_gene_interactions")

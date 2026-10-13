@@ -278,3 +278,20 @@ Owner rule, 2026-10-12: the data is the data; the genome and the experiment are 
 Before: `reconcile_systematic_names` remapped a 2005 name the current annotation renames to the current id (17 strains, e.g. yal043c-a stored as YAL042C-A), and a strain with any blank CalMorph cell was dropped whole (0 in the pinned matrix).
 
 Now: the `ORF` cell (stripped, upper-cased) is both names; no genome is injected and `gene_name_reconcile` is no longer imported here. A blank cell is key-absent in the record (never imputed; a row with every trait blank is refused by the phenotype validator). 4,718 records, the 17 renamed strains under their released names.
+
+### L0-L4 from the rebuilt stores (slurm arrays 4457 and 4604, family verifiers job 4658)
+
+**data/torchcell/scmd_ohya2005**: verdict PASS (/scratch/projects/torchcell-scratch/data/torchcell/scmd_ohya2005/preprocess/verification_report.json)
+
+| level | rule | class | outcome | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | ok | 4718 records validated |
+| L1 | `count` | gate | ok | observed 4718, expected 4718 |
+| L1 | `calmorph_completeness` | gate | ok | all 4718 records carry the full 281 base + 220 CV parameters |
+| L1 | `reference_populated` | gate | ok | WT reference carries the full 281+220 vocabulary in all 4718 records |
+| L2 | `value_fidelity` | gate | ok | 1325758 values checked |
+| L2 | `cv_nonnegative` | gate | ok | 1037960 values checked |
+| L3 | `vocabulary_parity` | gate | ok | CALMORPH_LABELS(281) + CALMORPH_STATISTICS(220) == CALMORPH_PARAMETERS(501), disjoint=True |
+| L4 | `gene_containment_microarray_kemmeren2014` | report | ok | 0.969 of microarray_kemmeren2014's 1484 deletion genes are in Ohya (>= 0.9) |
+| L4 | `gene_containment_sm_microarray_sameith2015` | report | ok | 0.988 of sm_microarray_sameith2015's 82 deletion genes are in Ohya (>= 0.9) |
+| L4 | `gene_containment_dm_microarray_sameith2015` | report | ok | 0.988 of dm_microarray_sameith2015's 82 deletion genes are in Ohya (>= 0.9) |

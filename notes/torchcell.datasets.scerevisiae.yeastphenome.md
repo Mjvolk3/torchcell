@@ -29,3 +29,27 @@ A row id with no ORF form is stored on `ReleasedGeneNamePerturbation`, kind `het
 ### Family verification (job 4606) and what it took to pass
 
 The first family-verifier pass over the rebuilt store (slurm 4606) failed three gates, each a property of the released matrices rather than a defect: `pair_uniqueness` found 14,508 records repeating an earlier (study, strain, condition) triple (the curated matrices release the same strain under one parsed condition in more than one column of a screen; the repeated records are identical in units, medium and edit, measured over all 524,682 records), `environment_perturbed` found 8,975 records with no environmental edit (the base-condition columns), and `media_membership` found every medium free text because `_parse_media` set no `base_medium`. The loader now anchors each released medium token at the `MEDIA_LIBRARY` key its leading word or classifying prefix names (`YPD`, `SC`, `SD`, `YNB`, `YP` for `YPG [3%]`, `LB`), keeping the released name as `name` and substituting no library object; the runner spec declares the 14,508 repeated pairs (`expected_duplicated_pairs`) and the 8,975 unperturbed records (`expected_unperturbed`), both read by the verifier as the loader's own count, so an undeclared repeat still fails. Store rebuilt by slurm 4657 and verified by 4658; the L0-L4 table follows.
+
+### L0-L4 from the rebuilt store (slurm 4673, family verifier job 4674)
+
+**yeastphenome**: verdict PASS (/scratch/projects/torchcell-scratch/data/torchcell/yeastphenome/preprocess/verification_report.json)
+
+| level | rule | class | outcome | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | ok | 524682 records validated |
+| L1 | `count` | gate | ok | observed 524682, expected 524682 |
+| L1 | `pair_uniqueness` | gate | ok | 14508 records duplicate an earlier (study, strain, condition) triple (14508 declared by the loader); 510174 unique triples |
+| L2 | `value_fidelity` | gate | ok | 524682 values checked |
+| L2 | `se_nonnegative` | gate | ok | 0 values checked |
+| L2 | `interval_orientation` | gate | ok | 0 of 0 stored intervals do not bracket their value, as declared |
+| L3 | `measurement_type_consistent` | gate | ok | single measurement_type: 'z_score' |
+| L3 | `reference_zero` | gate | ok | numeric rule: reference response == 0 for all 524682 records |
+| L3 | `environment_perturbed` | gate | ok | 8975 of 524682 experiments carry no environmental edit, as declared (a measured condition with no edit: an absolute readout's base condition or a released control arm; baseline temp=None, media='YPD') |
+| L1 | `provenance_gaps` | gate | ok | 2247227 documented provenance gaps over 524682/524682 records; 1 deferred field(s): ['inchikey']; 10319349 undeclared None values over 22 carrier fields (top: Environment.dilution_rate_per_hour x524682, Environment.duration_generations x524682, EnvironmentResponsePhenotype.assay_type x524682, EnvironmentResponsePhenotype.category x524682, EnvironmentResponsePhenotype.category_label x524682) |
+| L1 | `canonical_gene_names` | report | ok | 6068 systematic names, one canonical spelling each, each current in the genome |
+| L2 | `uncertainty_sanity` | gate | ok | 0 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | gate | ok | environment edits: 228574 compound references carry a structure identifier; 195918 declare a typed gap (47 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | gate | ok | medium components: 0 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | gate | ok | 0 records on a shared MEDIA_LIBRARY medium, 524682 on a medium deriving from one (13 distinct media) |
+| L4 | `gene_containment_sgd` | report | ok | 1.000 of 6068 measured genes are S288C reference genes (>= 0.9) |
+| L4 | `current_genome_genes` | report | ok | every one of the 6068 measured systematic names is a gene of the current genome |

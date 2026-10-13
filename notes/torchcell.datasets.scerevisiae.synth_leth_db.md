@@ -306,3 +306,55 @@ Measured on the pinned files: 14,000 SL and 6,948 SR records, every released row
 ### Family verification (job 4606): the self pairs in the released-rows comparison
 
 The pair verifier set the 3 SL and 6 SR self pairs aside for the declared `two_distinct_genes` count and left them out of the stored multiset, so `released_rows` reported them as kept released rows with no record. A self pair now counts as a stored row as well (never as a repeated gene pair); verified again by job 4658.
+
+### L0-L4 from the rebuilt stores (slurm arrays 4457 and 4604, family verifiers job 4658)
+
+**syn_leth_db_yeast**: verdict PASS (/scratch/projects/torchcell-scratch/data/torchcell/syn_leth_db_yeast/preprocess/verification_report.json)
+
+| level | rule | class | outcome | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | ok | 14000 records validated as SyntheticLethalityExperiment |
+| L0 | `reference_structural` | gate | ok | 14000 records validated as SyntheticLethalityExperimentReference |
+| L1 | `count` | gate | ok | observed 14000, expected 14000 |
+| L1 | `two_distinct_genes` | gate | ok | all 13997 records perturb two distinct named genes at graph level 'edge' and 3 name one gene on both sides, as the loader declares |
+| L1 | `unordered_pair_uniqueness` | gate | ok | 13997 unordered gene pairs, one record each |
+| L2 | `positive_label` | gate | ok | all 14000 experiments say is_synthetic_lethal True |
+| L2 | `score_in_unit_interval` | gate | ok | 13997 stated scores lie in [0, 1] (3 records state none) |
+| L2 | `released_rows` | gate | ok | the 14000 stored (gene pair, score, PubMed id) rows are the release's kept rows, each side under its released name |
+| L2 | `release_accounting` | gate | ok | 14000 released rows = 14000 stored + 0 ledgered drops; the release paper states 14000 |
+| L3 | `reference_negative` | gate | ok | every one of the 14000 references says is_synthetic_lethal False with no score, in its experiment's own environment |
+| L3 | `drop_ledger` | gate | ok | each of the 0 ledgered drops meets its rule on the released row |
+| L3 | `provenance_audit` | gate | ok | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | ok | value backed by verbatim quote in paper.md |
+| L1 | `provenance_gaps` | gate | ok | 84000 documented provenance gaps over 14000/14000 records; 0 deferred field(s): []; 168000 undeclared None values over 8 carrier fields (top: ReleasedGeneNamePerturbation.collection x28000, ReleasedGeneNamePerturbation.crispr x28000, ReleasedGeneNamePerturbation.marker x28000, ReleasedGeneNamePerturbation.strain_id x28000, Environment.dilution_rate_per_hour x14000) |
+| L1 | `canonical_gene_names` | report | finding | 0 genes carry conflicting common-name spellings (0 records; 0 case-only); 3435 systematic names are not the genome's current name; 3434 common names resolve to another gene |
+| L2 | `uncertainty_sanity` | gate | ok | 0 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | gate | ok | environment edits: 0 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | gate | ok | medium components: 0 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | gate | ok | 0 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (0 distinct media), 14000 on a medium the source does not name, as a typed gap (not_carried_by_curation x14000) |
+| L4 | `gene_containment_sgd` | report | finding | 0.032 of 3548 measured genes are S288C reference genes (>= 0.9) |
+| L4 | `current_genome_genes` | report | finding | 3435 systematic names are absent from the current genome over 14000 records: AAC1 x1, AAC3 x1, AAD4 x2, AAH1 x3, AAR2 x2, AAT1 x1, AAT2 x10, ABF1 x4, ABM1 x2, ABP1 x5 |
+
+**syn_rescue_db_yeast**: verdict PASS (/scratch/projects/torchcell-scratch/data/torchcell/syn_rescue_db_yeast/preprocess/verification_report.json)
+
+| level | rule | class | outcome | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | ok | 6948 records validated as SyntheticRescueExperiment |
+| L0 | `reference_structural` | gate | ok | 6948 records validated as SyntheticRescueExperimentReference |
+| L1 | `count` | gate | ok | observed 6948, expected 6948 |
+| L1 | `two_distinct_genes` | gate | ok | all 6942 records perturb two distinct named genes at graph level 'edge' and 6 name one gene on both sides, as the loader declares |
+| L1 | `unordered_pair_uniqueness` | gate | ok | 6942 unordered gene pairs, one record each |
+| L2 | `positive_label` | gate | ok | all 6948 experiments say is_synthetic_rescue True |
+| L2 | `score_defined_by_source` | gate | ok | no record states a score (6948 records), and the source defines none |
+| L2 | `released_rows` | gate | ok | the 6948 stored (gene pair, score, PubMed id) rows are the release's kept rows, each side under its released name |
+| L2 | `release_accounting` | gate | ok | 6948 released rows = 6948 stored + 0 ledgered drops; the release paper states no count for this file |
+| L3 | `reference_negative` | gate | ok | every one of the 6948 references says is_synthetic_rescue False with no score, in its experiment's own environment |
+| L3 | `drop_ledger` | gate | ok | each of the 0 ledgered drops meets its rule on the released row |
+| L1 | `provenance_gaps` | gate | ok | 41762 documented provenance gaps over 6948/6948 records; 1 deferred field(s): ['synthetic_rescue_statistic_score']; 90250 undeclared None values over 9 carrier fields (top: ReleasedGeneNamePerturbation.collection x13896, ReleasedGeneNamePerturbation.crispr x13896, ReleasedGeneNamePerturbation.marker x13896, ReleasedGeneNamePerturbation.strain_id x13896, Environment.dilution_rate_per_hour x6948) |
+| L1 | `canonical_gene_names` | report | finding | 0 genes carry conflicting common-name spellings (0 records; 0 case-only); 2871 systematic names are not the genome's current name; 2870 common names resolve to another gene |
+| L2 | `uncertainty_sanity` | gate | ok | 0 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | gate | ok | environment edits: 0 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | gate | ok | medium components: 0 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | gate | ok | 0 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (0 distinct media), 6948 on a medium the source does not name, as a typed gap (not_carried_by_curation x6948) |
+| L4 | `gene_containment_sgd` | report | finding | 0.037 of 2980 measured genes are S288C reference genes (>= 0.9) |
+| L4 | `current_genome_genes` | report | finding | 2871 systematic names are absent from the current genome over 6948 records: AAC1 x1, AAD3 x1, AAR2 x1, AAT1 x1, AAT2 x1, ABP1 x2, ABP140 x2, ACC1 x5, ACE2 x3, ACF4 x3 |

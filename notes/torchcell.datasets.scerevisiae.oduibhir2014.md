@@ -65,3 +65,24 @@ Now: the ORF (upper-cased) and the released `commonName` are stored with no geno
 ## 2026.10.12 - The deferred name is a record on the released-gene-name leaf (#1045, PR #1085)
 
 A Dataset S2 row id with no ORF form is stored on `ReleasedGeneNamePerturbation` with the released `commonName` as its perturbed name instead of refusing the build (0 of 1,312 rows). The count stays 1,312.
+
+### L0-L4 from the rebuilt stores (slurm arrays 4457 and 4604, family verifiers job 4658)
+
+**smf_oduibhir2014**: verdict PASS (/scratch/projects/torchcell-scratch/data/torchcell/smf_oduibhir2014/preprocess/verification_report.json)
+
+| level | rule | class | outcome | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | ok | 1312 records validated |
+| L1 | `count` | gate | ok | observed 1312, expected 1312 |
+| L1 | `pair_uniqueness` | gate | ok | 1312 unique (strain, environment) records, one each |
+| L2 | `value_fidelity` | gate | ok | 1312 values checked |
+| L2 | `se_nonnegative` | gate | ok | 0 values checked |
+| L3 | `reference_one` | gate | ok | reference fitness == 1.0 for all 1312 records |
+| L1 | `provenance_gaps` | gate | ok | 0 documented provenance gaps over 0/1312 records; 0 deferred field(s): []; 86592 undeclared None values over 10 carrier fields (top: Compound.inchi x41984, Compound.chebi_id x34112, Environment.dilution_rate_per_hour x1312, Environment.duration_generations x1312, Environment.duration_hours x1312) |
+| L1 | `canonical_gene_names` | report | ok | 1312 systematic names, one canonical spelling each, each current in the genome; 2 common names the resolver cannot place |
+| L2 | `uncertainty_sanity` | gate | ok | 0 labeled uncertainties, none a zero dispersion; 1312 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | gate | ok | environment edits: 0 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | gate | ok | medium components: 41984 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | gate | ok | 1312 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_sgd` | report | ok | 1.000 of 1312 measured genes are S288C reference genes (>= 0.9) |
+| L4 | `current_genome_genes` | report | ok | every one of the 1312 measured systematic names is a gene of the current genome |

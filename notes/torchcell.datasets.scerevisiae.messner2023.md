@@ -138,3 +138,18 @@ Now: the protein keys are the released accessions (`P00410`, the mitochondrial C
 ## 2026.10.12 - The deferred name is a record on the released-gene-name leaf (#1045, PR #1085)
 
 A metadata ORF with no ORF form goes on `ReleasedGeneNamePerturbation` (0 of 4,699 strains). The count stays 4,699.
+
+### L0-L4 from the rebuilt stores (slurm arrays 4457 and 4604, family verifiers job 4658)
+
+**proteome_messner2023**: verdict PASS (/scratch/projects/torchcell-scratch/data/torchcell/proteome_messner2023/preprocess/verification_report.json)
+
+| level | rule | class | outcome | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | ok | 4699 records validated |
+| L1 | `count` | gate | ok | observed 4699, expected 4699 |
+| L1 | `orf_uniqueness` | gate | ok | 4549 ORFs, 146 with multiple strains (expected) |
+| L2 | `value_fidelity` | gate | ok | 8466210 values checked |
+| L2 | `se_nonnegative` | gate | ok | 0 values checked |
+| L3 | `reference_finite` | gate | ok | reference abundance finite + key-matched for all 8466210 values |
+| L3 | `measurement_type_consistent` | gate | ok | single measurement_type: 'swath_ms_maxlfq_batch_corrected_quantity' |
+| L4 | `gene_containment_scmd_ohya2005` | report | ok | 0.948 of scmd_ohya2005's 4549 deletion genes are in Ohya (>= 0.9) |

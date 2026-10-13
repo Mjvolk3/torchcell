@@ -128,3 +128,10 @@ created: 1791255604174
 - [x] Latent alignment term for the inductive case [[torchcell.losses.latent_align]]: the cosine of two strains' latents pulled toward the Pearson correlation of their label vectors; stage `morph_v26` on cabbi (2428295, 24 tasks) and the knockout proteome `prot_v26` (2428296, 12 tasks, full fig3_proteome store, window epochs 500 to 599 declared before any read)
 - [ ] Delta stage `morph_v26d` prepared in `delta_morph_v25_small.slurm`, not submitted (needs the go)
 - [ ] As v25 and v26 cells land: sync by raw id, `morph_v25_readout.py`, `wandb_v13_report.py --round morph_v25` and `--round prot_v26`; a proteome readout script for `torchcell_019_prot_v26`
+
+## 2026.10.13
+
+- [x] Synced the align (24), proteome (12), pearson_mse rerun (8), M_cls replicate (6) and first v26b cells; readouts [[experiments.019-simb-multimodal.scripts.morph_v25_readout]] and [[experiments.019-simb-multimodal.scripts.prot_v26_readout]]
+- [x] Latent alignment is null to negative, measured: morphology 0 of 20 escapes at every lambda (0.039 to 0.047, the marginal) and 0 of 8 on M_zs where the plain M_zs escaped 4 of 4; proteome paired -0.008 (2 of 4 up) and -0.010 (1 of 4) against the reference 0.062 +/- 0.010; the term's own loss stays near 1 for 200+ epochs. Arm dropped: the three pending MSE + align tasks of v26b cancelled, the Delta stage morph_v26d not submitted
+- [x] M_zs + MSE at lr 3e-4 replicated: 0.140 +/- 0.021, 7 of 7 escaped; M_cls at lr 3e-4 escapes 4 of 12 over init seeds (a coin flip, 0.13 to 0.18 when it does); pearson_mse after the sqrt fix trains but sits on the marginal (0.040 +/- 0.016, 0 of 8, lr 1e-3)
+- [ ] v26b remainder (M_xattn + MSE, lr 1e-4 cells at 1,000 epochs) lands tonight; then the gate document section for v25/v26

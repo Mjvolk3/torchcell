@@ -1,0 +1,24 @@
+# Round 10, GPU: the compound as a token the gene tokens attend to (head: env_encoder
+# in train_factorized.py). Round 9's operator gates each gene independently, so the
+# compound's effect cannot travel from the genes it hits to the deleted gene; here the
+# token sits in front of the 6,607 gene tokens for one further transformer layer, giving
+# the cell-in-that-medium state H^c, and the strain is read at its deleted genes' rows.
+# Same protocol as round 9 so the three heads compare like for like: one-layer encoder,
+# prior weight 0, fixed 50 epochs keeping the last, fit on the non-test pool, three seeds
+# averaged per fold, five folds on each of fold seeds 0, 1, 2 (123 evaluations).
+# PARALLEL=2.
+- {name: enc_L1_lam0_fs0_f0, folds: [0], fold_seed: 0, gene_encoder: cgt, head: env_encoder, env_layers: 1, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool}
+- {name: enc_L1_lam0_fs0_f1, folds: [1], fold_seed: 0, gene_encoder: cgt, head: env_encoder, env_layers: 1, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool}
+- {name: enc_L1_lam0_fs0_f2, folds: [2], fold_seed: 0, gene_encoder: cgt, head: env_encoder, env_layers: 1, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool}
+- {name: enc_L1_lam0_fs0_f3, folds: [3], fold_seed: 0, gene_encoder: cgt, head: env_encoder, env_layers: 1, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool}
+- {name: enc_L1_lam0_fs0_f4, folds: [4], fold_seed: 0, gene_encoder: cgt, head: env_encoder, env_layers: 1, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool}
+- {name: enc_L1_lam0_fs1_f0, folds: [0], fold_seed: 1, gene_encoder: cgt, head: env_encoder, env_layers: 1, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool}
+- {name: enc_L1_lam0_fs1_f1, folds: [1], fold_seed: 1, gene_encoder: cgt, head: env_encoder, env_layers: 1, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool}
+- {name: enc_L1_lam0_fs1_f2, folds: [2], fold_seed: 1, gene_encoder: cgt, head: env_encoder, env_layers: 1, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool}
+- {name: enc_L1_lam0_fs1_f3, folds: [3], fold_seed: 1, gene_encoder: cgt, head: env_encoder, env_layers: 1, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool}
+- {name: enc_L1_lam0_fs1_f4, folds: [4], fold_seed: 1, gene_encoder: cgt, head: env_encoder, env_layers: 1, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool}
+- {name: enc_L1_lam0_fs2_f0, folds: [0], fold_seed: 2, gene_encoder: cgt, head: env_encoder, env_layers: 1, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool}
+- {name: enc_L1_lam0_fs2_f1, folds: [1], fold_seed: 2, gene_encoder: cgt, head: env_encoder, env_layers: 1, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool}
+- {name: enc_L1_lam0_fs2_f2, folds: [2], fold_seed: 2, gene_encoder: cgt, head: env_encoder, env_layers: 1, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool}
+- {name: enc_L1_lam0_fs2_f3, folds: [3], fold_seed: 2, gene_encoder: cgt, head: env_encoder, env_layers: 1, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool}
+- {name: enc_L1_lam0_fs2_f4, folds: [4], fold_seed: 2, gene_encoder: cgt, head: env_encoder, env_layers: 1, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool}

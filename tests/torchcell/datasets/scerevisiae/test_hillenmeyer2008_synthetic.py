@@ -420,6 +420,7 @@ def test_het_side_files_gene_set_reference_index_and_manifest(
         "ConstructedOrf",
         "CultureEnvironment",
         "CultureFormat",
+        "CultureGrowthPhase",
         "DeletionPerturbation",
         "DoseBasis",
         "EndpointRule",

@@ -508,6 +508,7 @@ def test_side_files_gene_set_reference_index_and_strain_list(
         "Compound",
         "Concentration",
         "ConcentrationUnit",
+        "CultureGrowthPhase",
         "DeletionPerturbation",
         "DoseBasis",
         "Environment",

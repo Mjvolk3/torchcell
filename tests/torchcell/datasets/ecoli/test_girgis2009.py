@@ -69,7 +69,6 @@ from torchcell.datamodels.schema import (
     SmallMoleculePerturbation,
     TransposonInsertionPerturbation,
 )
-from torchcell.datasets.bacteria_common import LocusTagResolutionError
 from torchcell.datasets.dataset_registry import dataset_registry
 from torchcell.literature.manifest import RetrievalMethod, RetrievalRecord
 from torchcell.sequence.genome.ecoli.k12 import MG1655_ASSEMBLY, EcoliK12MG1655Genome
@@ -653,25 +652,40 @@ def test_resolve_b_numbers_keeps_every_released_b_number(
 ) -> None:
     monkeypatch.setattr(m, "MIN_RESOLVED_FRACTION", 0.8)
     kept, ledger = m.resolve_b_numbers(
-        mg1655, [row[0] for row in SYNTHETIC_ROWS], label="synthetic"
+        mg1655,
+        [row[0] for row in SYNTHETIC_ROWS],
+        [row[1] for row in SYNTHETIC_ROWS],
+        label="synthetic",
     )
     assert sorted(kept) == sorted([*KEPT_LOCI, *AS_RELEASED])
+    # #1057: every name is the first token of the released NAME cell
     assert kept["b0001"] == "thrL"
     assert kept["b0004"] == "yaaP"
-    # no locus tag of the annotation: stored as released, named by the released id
-    assert (kept["b0010"], kept["b0099"]) == ("b0010", "b0099")
+    assert (kept["b0010"], kept["b0099"]) == ("newG", "ghostG")
     assert ledger.n_locus_tags == 4
     assert ledger.reconciliation.gene_namespace == "ecoli_k12_mg1655_bnumber"
     assert ledger.min_resolved_fraction == 0.8
 
 
-def test_resolve_b_numbers_stops_below_the_default_threshold(
+def test_resolve_b_numbers_reports_a_low_resolved_fraction_without_refusing(
     mg1655: EcoliK12MG1655Genome,
 ) -> None:
-    with pytest.raises(LocusTagResolutionError, match="0.98"):
-        m.resolve_b_numbers(
-            mg1655, [row[0] for row in SYNTHETIC_ROWS], label="synthetic"
-        )
+    """#1057: 4 of 6 resolve, below the default 0.98, and nothing is refused."""
+    kept, ledger = m.resolve_b_numbers(
+        mg1655,
+        [row[0] for row in SYNTHETIC_ROWS],
+        [row[1] for row in SYNTHETIC_ROWS],
+        label="synthetic",
+    )
+    assert len(kept) == len(SYNTHETIC_ROWS)
+    assert ledger.n_locus_tags == 4
+    assert ledger.min_resolved_fraction == 0.98
+
+
+def test_released_name_is_the_first_token_of_the_name_cell() -> None:
+    assert m.released_name("thrA aspartokinase I", "b0002") == "thrA"
+    assert m.released_name("  ", "b0002") == "b0002"
+    assert m.released_name(float("nan"), "b0002") == "b0002"
 
 
 def test_canonical_symbol_falls_back_to_the_tag_when_the_symbol_moves(

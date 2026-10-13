@@ -205,3 +205,96 @@ absent MS56 accession and the bare gene names in both expression tables.
 - confs: `torchcell/adapters/conf/growth_rate_choe2019_adapter.yaml`,
   `torchcell/adapters/conf/tf_knockout_growth_choe2019_adapter.yaml`
 - measurement: [[experiments.036-dataset-fixes-before-kg-build.scripts.choe2019_release_shape]]
+
+## 2026.10.12 - #1057 on main: released rows stored, rebuilt and verified
+
+Owner rule of 2026-10-12: a released row is stored under the identifier its release gives, and the genome never gates storage. Rebuilt from main `db632f2b0` with `--retire-existing --verify` (slurm array 4506; the stores with no per-dataset verifier entry point verified by job 4582).
+
+### `growth_rate_choe2019`: 2 -> 5 records
+
+Row 22: the three Fig. 2f reconstructed alleles against their kan-marked controls.
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 5 records validated |
+| L1 | `count` | pass | observed 5, expected 5 |
+| L1 | `pair_uniqueness` | pass | 5 unique (strain, environment) records, one each |
+| L2 | `value_fidelity` | pass | 5 values checked |
+| L2 | `se_nonnegative` | pass | 5 values checked |
+| L3 | `reference_one` | pass | reference fitness == 1.0 for all 5 records |
+| L1 | `provenance_gaps` | pass | 5 documented provenance gaps over 5/5 records; 0 deferred field(s): []; 65 undeclared None values over 7 carrier fields (top: Compound.inchi x35, Compound.chebi_id x5, Environme... |
+| L1 | `canonical_gene_names` | finding (genome reference; reports, does not gate) | 0 genes carry conflicting common-name spellings (0 records; 0 case-only); 3 systematic names are not the genome's current name; 0 common names resolve to another gene |
+| L2 | `uncertainty_sanity` | pass | 5 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 0 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 35 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 0 records on a shared MEDIA_LIBRARY medium, 5 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_sgd` | finding (genome reference; reports, does not gate) | 0.875 of 24 measured genes are MG1655 (ecoli_K12_MG1655_ASM584v2) genes (>= 0.9) |
+| L4 | `current_genome_genes` | finding (genome reference; reports, does not gate) | 3 systematic names are absent from the current genome over 3 records: cspC x1, ilvN x1, yifB x1 |
+
+### `tf_knockout_growth_choe2019`: 2 -> 2 records
+
+Rebuilt with its module; records unchanged.
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 2 records validated |
+| L1 | `count` | pass | observed 2, expected 2 |
+| L1 | `pair_uniqueness` | pass | 2 unique (strain, environment) records, one each |
+| L2 | `value_fidelity` | pass | 2 values checked |
+| L2 | `se_nonnegative` | pass | 0 values checked |
+| L3 | `reference_one` | pass | reference fitness == 1.0 for all 2 records |
+| L1 | `provenance_gaps` | pass | 0 documented provenance gaps over 0/2 records; 0 deferred field(s): []; 36 undeclared None values over 12 carrier fields (top: Compound.inchi x14, Compound.chebi_id x2, Environm... |
+| L1 | `canonical_gene_names` | pass | 2 systematic names, one canonical spelling each, each current in the genome |
+| L2 | `uncertainty_sanity` | pass | 0 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 0 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 14 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 0 records on a shared MEDIA_LIBRARY medium, 2 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_sgd` | pass | 1.000 of 2 measured genes are BW25113 (ecoli_K12_BW25113_ASM75055v1) genes (>= 0.9) |
+| L4 | `current_genome_genes` | pass | every one of the 2 measured systematic names is a gene of the current genome |
+
+## 2026.10.12 - #1045 part 2: the rest of the released rows, under their released identifiers
+
+Every row #1057 still dropped that is not an author withdrawal is stored, and no identifier is translated: the stored key is the one the release prints, and a crosswalk to an annotation is a modeling-time join outside the record. Rebuilt from the part-2 branch with `--retire-existing --verify` (slurm array 4583; the stores with no per-dataset verifier entry point verified by jobs 4645 and 4644).
+
+### `growth_rate_choe2019`: 5 -> 5 records
+
+The 22 designed deletions under their released symbol; the contiguous-run check is a genome-reference verification row.
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 5 records validated |
+| L1 | `count` | pass | observed 5, expected 5 |
+| L1 | `pair_uniqueness` | pass | 5 unique (strain, environment) records, one each |
+| L2 | `value_fidelity` | pass | 5 values checked |
+| L2 | `se_nonnegative` | pass | 5 values checked |
+| L3 | `reference_one` | pass | reference fitness == 1.0 for all 5 records |
+| L1 | `provenance_gaps` | pass | 5 documented provenance gaps over 5/5 records; 0 deferred field(s): []; 65 undeclared None values over 7 carrier fields (top: Compound.inchi x35, Compound.chebi_id x5, Environme... |
+| L1 | `canonical_gene_names` | finding (genome reference; reports, does not gate) | 0 genes carry conflicting common-name spellings (0 records; 0 case-only); 24 systematic names are not the genome's current name; 21 common names resolve to another gene |
+| L2 | `uncertainty_sanity` | pass | 5 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 0 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 35 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 0 records on a shared MEDIA_LIBRARY medium, 5 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_sgd` | finding (genome reference; reports, does not gate) | 0.000 of 24 measured genes are MG1655 (ecoli_K12_MG1655_ASM584v2) genes (>= 0.9) |
+| L4 | `current_genome_genes` | finding (genome reference; reports, does not gate) | 24 systematic names are absent from the current genome over 5 records: cspC x1, fhlA x1, hycA x1, hycB x1, hycC x1, hycD x1, hycE x1, hypA x1, hypB x1, hypC x1 |
+| L4 | `deleted_symbols_are_one_contiguous_run_of_the_pinned_assembly` | pass | the 21 released deletion symbols are one contiguous run of ecoli_K12_MG1655_ASM584v2 with no unlisted gene inside |
+
+### `tf_knockout_growth_choe2019`: 2 -> 2 records
+
+The two Keio deletions under their released symbol.
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 2 records validated |
+| L1 | `count` | pass | observed 2, expected 2 |
+| L1 | `pair_uniqueness` | pass | 2 unique (strain, environment) records, one each |
+| L2 | `value_fidelity` | pass | 2 values checked |
+| L2 | `se_nonnegative` | pass | 0 values checked |
+| L3 | `reference_one` | pass | reference fitness == 1.0 for all 2 records |
+| L1 | `provenance_gaps` | pass | 0 documented provenance gaps over 0/2 records; 0 deferred field(s): []; 36 undeclared None values over 12 carrier fields (top: Compound.inchi x14, Compound.chebi_id x2, Environm... |
+| L1 | `canonical_gene_names` | finding (genome reference; reports, does not gate) | 0 genes carry conflicting common-name spellings (0 records; 0 case-only); 2 systematic names are not the genome's current name; 2 common names resolve to another gene |
+| L2 | `uncertainty_sanity` | pass | 0 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 0 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 14 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 0 records on a shared MEDIA_LIBRARY medium, 2 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_sgd` | finding (genome reference; reports, does not gate) | 0.000 of 2 measured genes are BW25113 (ecoli_K12_BW25113_ASM75055v1) genes (>= 0.9) |
+| L4 | `current_genome_genes` | finding (genome reference; reports, does not gate) | 2 systematic names are absent from the current genome over 2 records: abgR x1, ydaS x1 |

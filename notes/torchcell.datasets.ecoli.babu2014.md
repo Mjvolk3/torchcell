@@ -265,6 +265,7 @@ this branch's closure has no such symbol, plus `EnvironmentPerturbationType` and
 `GenePerturbationType`) are the parallel branches whose builds are in that tree.
 
 Related: [[torchcell.datasets.ecoli.butland2008]], [[torchcell.datamodels.schema]].
+
 ## 2026.10.09 - The 3,420 hypomorph pairs are stored (issue #792)
 
 `BacterialMarkedAllelePerturbation` landed in `schema.py` in the same branch, so the
@@ -377,3 +378,89 @@ acquire a hypomorph's tag.
 `spa_tag_recipient_has_no_bacterial_perturbation_leaf`, dropping 5,811 cells. The leaf
 now exists and that loader's SPA recipients are the same 149 strains, so it is the next
 extension; it is out of this branch's scope and is recorded here rather than done.
+
+## 2026.10.12 - #1057 on main: released rows stored, rebuilt and verified
+
+Owner rule of 2026-10-12: a released row is stored under the identifier its release gives, and the genome never gates storage. Rebuilt from main `db632f2b0` with `--retire-existing --verify` (slurm array 4506; the stores with no per-dataset verifier entry point verified by job 4582).
+
+### `gene_interaction_babu2014`: 41,988 -> 42,701 records
+
+Every released id stored as released: b-numbers verbatim, the 11 non-b-number recipient ids on BacterialReleasedStrainPerturbation; only the 4 contradictory duplicate rows stay out.
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 42701 records validated |
+| L1 | `count` | pass | observed 42701, expected 42701 |
+| L1 | `digenic_pair_of_one_donor_and_one_recipient` | pass | 42701 of 42701 records are two distinct loci, one cat-marked donor and one kan-marked recipient |
+| L1 | `hypomorph_sides_are_marked_alleles` | pass | 3420 of 42701 records carry a marked hypomorphic allele (expected 3420); every other side is a deletion |
+| L2 | `gene_interaction_equals_table_s2_cell` | pass | 42701 of 42701 stored scores equal their Table S2 cell |
+| L3 | `signed_interaction_score_with_zero_reference` | pass | 25236 aggravating and 17465 alleviating stored scores, 0 zeros, reference scores [0.0] |
+| L3 | `screen_id_is_a_table_s1_screen_set` | pass | screen sets {'This Study': 41572, 'Butland et al.': 1129}; Table S2 subsumes Butland 2008's 39 screens and every record says which set it came from |
+| L1 | `provenance_gaps` | pass | 85402 documented provenance gaps over 42701/42701 records; 0 deferred field(s): []; 854020 undeclared None values over 9 carrier fields (top: Compound.inchi x256206, Compound.ch... |
+| L1 | `canonical_gene_names` | pass | 3880 systematic names, one canonical spelling each (no resolver supplied: spelling checked, annotation not) |
+| L2 | `uncertainty_sanity` | pass | 0 labeled uncertainties, none a zero dispersion; 42701 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 0 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 170804 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 0 records on a shared MEDIA_LIBRARY medium, 42701 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_mg1655_locus_tags` | pass | 3811 of 3880 perturbed ids are MG1655 GenBank loci; 69 are released b-numbers the annotation does not carry as a locus, stored as released |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si7.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si7.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si7.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si7.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si19.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si21.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+
+## 2026.10.12 - #1045 part 2: the rest of the released rows, under their released identifiers
+
+Every row #1057 still dropped that is not an author withdrawal is stored, and no identifier is translated: the stored key is the one the release prints, and a crosswalk to an annotation is a modeling-time join outside the record. Rebuilt from the part-2 branch with `--retire-existing --verify` (slurm array 4583; the stores with no per-dataset verifier entry point verified by jobs 4645 and 4644).
+
+### `gene_interaction_babu2014`: 42,701 -> 42,705 records
+
+Both rows of each of the 4 pairs Table S2 prints twice, told apart by their Table S2 row.
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 42705 records validated |
+| L1 | `count` | pass | observed 42705, expected 42705 |
+| L1 | `digenic_pair_of_one_donor_and_one_recipient` | pass | 42705 of 42705 records are two distinct loci, one cat-marked donor and one kan-marked recipient |
+| L1 | `hypomorph_sides_are_marked_alleles` | pass | 3420 of 42705 records carry a marked hypomorphic allele (expected 3420); every other side is a deletion |
+| L2 | `gene_interaction_equals_table_s2_cell` | pass | 42703 of 42703 stored pairs carry exactly their Table S2 cells |
+| L3 | `signed_interaction_score_with_zero_reference` | pass | 25239 aggravating and 17466 alleviating stored scores, 0 zeros, reference scores [0.0] |
+| L3 | `screen_id_is_a_table_s1_screen_set` | pass | screen sets {'This Study': 41576, 'Butland et al.': 1129}; Table S2 subsumes Butland 2008's 39 screens and every record says which set it came from |
+| L1 | `provenance_gaps` | pass | 85410 documented provenance gaps over 42705/42705 records; 0 deferred field(s): []; 854100 undeclared None values over 9 carrier fields (top: Compound.inchi x256230, Compound.ch... |
+| L1 | `canonical_gene_names` | pass | 3880 systematic names, one canonical spelling each (no resolver supplied: spelling checked, annotation not) |
+| L2 | `uncertainty_sanity` | pass | 0 labeled uncertainties, none a zero dispersion; 42705 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 0 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 170820 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 0 records on a shared MEDIA_LIBRARY medium, 42705 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_mg1655_locus_tags` | pass | 3811 of 3880 perturbed ids are MG1655 GenBank loci; 69 are released b-numbers the annotation does not carry as a locus, stored as released |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si7.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si7.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si7.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si7.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si19.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si21.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |

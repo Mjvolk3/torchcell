@@ -219,3 +219,22 @@ should call `verify_records` (or a sample-keyed L1) for this dataset.
   to Lim 2020 and Linger 2014).
 - `torchcell/datasets/pputida/__init__.py` still says "No loader has landed yet"; left
   untouched to avoid conflicts with the sibling P. putida branches.
+
+## 2026.10.12 - #1045 part 2: the rest of the released rows, under their released identifiers
+
+Every row #1057 still dropped that is not an author withdrawal is stored, and no identifier is translated: the stored key is the one the release prints, and a crosswalk to an annotation is a modeling-time join outside the record. Rebuilt from the part-2 branch with `--retire-existing --verify` (slurm array 4583; the stores with no per-dataset verifier entry point verified by jobs 4645 and 4644).
+
+### `putida_precise321_lim2022`: 180 -> 193 records
+
+ALE:IL_PP5350 on a background named KT2440 PP_5350' whose genotype_statement is the biosample_genotype cell, and every deletion under its released symbol, so the 11 unresolved-symbol samples are stored.
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 193 records validated |
+| L1 | `count` | pass | observed 193, expected 193 |
+| L1 | `replicate_groups` | pass | 193 records with distinct profiles over 71 (genotype, environment) groups, each measuring one gene set |
+| L2 | `tpm_value_fidelity` | pass | 1073852 values checked |
+| L2 | `count_value_fidelity` | pass | 1073852 counts are non-negative integers |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'rnaseq_tpm' |
+| L3 | `reference_finite` | pass | reference expression finite for all 1073852 values |
+| L4 | `gene_containment_assembly` | pass | 1.000 of 5564 measured genes are loci of pputida_KT2440_ASM756v2 (>= 1.0) |

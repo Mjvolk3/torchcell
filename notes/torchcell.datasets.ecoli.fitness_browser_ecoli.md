@@ -85,3 +85,34 @@ Owner rule, 2026-10-12: "the data is the data ... the genome is separate.. it do
 | L4 | gene_containment_sgd, current_genome_genes | pass: 1.000 of 3,789 genes are in the deposit's Keio `Gene.sysName` set |
 | L4 | compendium_cross_check_price2018 | pass: 151 samples, 568,968 values, pooled r 1.000000, smallest per-sample r 1.000000 (bar 0.999999), largest difference 8.88e-16 |
 | L4 | own_release_cross_check_wetmore2015 | pass: 83 samples, 301,124 values, pooled r 0.997034, smallest per-sample r 0.988897 (bar 0.87), largest difference 2.57 |
+
+## 2026.10.12 - #1045 part 2: the rest of the released rows, under their released identifiers
+
+Every row #1057 still dropped that is not an author withdrawal is stored, and no identifier is translated: the stored key is the one the release prints, and a crosswalk to an annotation is a modeling-time join outside the record. Rebuilt from the part-2 branch with `--retire-existing --verify` (slurm array 4583; the stores with no per-dataset verifier entry point verified by jobs 4645 and 4644).
+
+### `rbtnseq_fitness_browser_ecoli`: 22,734 -> 22,734 records
+
+Every gene under its released b-number; the loader reads no genome.
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 22734 records validated |
+| L1 | `count` | pass | observed 22734, expected 22734 |
+| L1 | `pair_uniqueness` | pass | 22734 unique (study, strain, condition) records, one each |
+| L2 | `value_fidelity` | pass | 22734 values checked |
+| L2 | `se_nonnegative` | pass | 22734 values checked |
+| L2 | `interval_orientation` | pass | 0 of 0 stored intervals do not bracket their value, as declared |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'log2_ratio' |
+| L3 | `reference_zero` | pass | numeric rule: reference response == 0 for all 22734 records |
+| L3 | `environment_perturbed` | pass | all 22734 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=30.0, media="RCH2 defined minimal medium, no carb... |
+| L1 | `provenance_gaps` | pass | 136404 documented provenance gaps over 22734/22734 records; 1 deferred field(s): ['inchikey']; 682020 undeclared None values over 16 carrier fields (top: Compound.inchi x159138,... |
+| L1 | `canonical_gene_names` | pass | 3789 systematic names, one canonical spelling each (no resolver supplied: spelling checked, annotation not) |
+| L2 | `uncertainty_sanity` | pass | 0 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 0 compound references carry a structure identifier; 22734 declare a typed gap (1 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 90936 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 22734 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_sgd` | pass | 1.000 of 3789 measured genes are the deposit's Keio Gene.sysName genes (>= 1.0) |
+| L4 | `current_genome_genes` | pass | every one of the 3789 measured systematic names is a gene of the current genome |
+| L1 | `records_carry_their_browser_publication` | pass | SUPPLEMENTARY: 6 stored samples, 6 expected; 0 carry a publication other than their pubId's |
+| L4 | `compendium_cross_check_price2018` | pass | SUPPLEMENTARY: 158 shared samples against data/torchcell/rbtnseq_price2018_ecoli, 598662 (gene, sample) values; pooled Pearson r 1.000000, smallest per-sample r 1.000000 against... |
+| L4 | `own_release_cross_check_wetmore2015` | pass | SUPPLEMENTARY: 88 shared samples against data/torchcell/rbtnseq_wetmore2015_ecoli, 320848 (gene, sample) values; pooled Pearson r 0.996969, smallest per-sample r 0.988954 agains... |

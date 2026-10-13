@@ -284,6 +284,9 @@ def test_parse_media_rich_synthetic_state_prefix_and_gaps() -> None:
     assert _parse_media("YPG [3%]", "growth (colony size)") == Media(
         name="YPG [3%]", state="solid", is_synthetic=False, base_medium="YP"
     )
+    assert _parse_media("CSM", "growth (colony size)") == Media(
+        name="CSM", state="solid", is_synthetic=True, base_medium="SC"
+    )
     lb = _parse_media("LB", "growth (colony size)")
     assert (lb.name, lb.state, lb.is_synthetic, lb.base_medium) == (
         "LB",

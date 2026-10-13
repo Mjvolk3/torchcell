@@ -8,21 +8,34 @@ Niu et al. 2019 (Synth Syst Biotechnol 4(2):113-119, doi:10.1016/j.synbio.2019.0
 PMC6556621, citation key ``niuGenomicTranscriptionalChanges2019``) sequenced an evolved
 pinene-tolerant isolate, read its transcriptome against the designed parent, and then
 tested the up- and down-regulated genes one at a time in that parent with a
-``dCas9*-MCPSoxS`` CRISPR activator and repressor. Each strain's OD600 after 12 h in LB
-plus 0.5% pinene is released as a ratio against the no-guide control.
+``dCas9*-MCPSoxS`` CRISPR activator and repressor. Two numbers per strain are released,
+each a ratio against the no-guide control and each from its own culture: the OD600 after
+12 h in LB plus 0.5% pinene, and the pinene made in a 72 h SBMSN shake-flask production
+run. This module holds a store per column.
 
-RECORD = one (target gene set x arm) ``BacterialEnvironmentResponseExperiment``:
+RECORD (growth) = one (target gene set x arm) ``BacterialEnvironmentResponseExperiment``:
 
-- GENOTYPE: one ``BacterialCrisprActivationPerturbation`` or
-  ``BacterialCrisprInterferencePerturbation`` per targeted gene, keyed by its BW25113
-  locus tag, carrying the shared ``dCas9*-MCPSoxS`` construct and, when Suppl. Table 1
-  releases the matching ``N20-<gene>`` oligo, its guide spacer. The combination strain
-  carries SIX interference leaves in one genotype, which is what it is.
+- GENOTYPE: one ``BacterialReleasedCrisprPerturbation`` per targeted gene, keyed by the
+  label the release writes (a gene symbol or an operon label), carrying the arm's
+  released ``expression_direction``, the shared ``dCas9*-MCPSoxS`` construct and, when
+  Suppl. Table 1 releases the matching ``N20-<gene>`` oligo, its guide spacer. The
+  combination strains carry SIX leaves in one genotype, which is what they are.
 - ENVIRONMENT: the one tolerance culture: LB plus 0.5% pinene at 37 C for 12 h, with the
   200 nM anhydrotetracycline that induces the effector carried as a medium COMPONENT.
 - PHENOTYPE: ``EnvironmentResponsePhenotype`` with ``measurement_type=log2_ratio`` and
   ``assay_type=liquid_od_growth``. The reference carries 0.0, which is what a strain
   growing exactly like the no-guide control is.
+
+RECORD (pinene) = one (target gene set x arm) ``ProductTiterExperiment``:
+
+- GENOTYPE: the same released-construct leaves, keyed the same way.
+- ENVIRONMENT: a ``CultureEnvironment`` for the PRODUCTION run: 50 mL SBMSN at the
+  released amounts plus 1 mM IPTG and 200 nM anhydrotetracycline, a 20% dodecane overlay
+  as the one environment perturbation, 72 h at 30 C and 130 rpm after induction, from an
+  overnight 5 mL LB seed culture.
+- PHENOTYPE: ``ProductTiterPhenotype`` on ``ConcentrationUnit.fold_change``, the released
+  ratio with its released sample SD over three replicates, quantified by GC-FID. The
+  reference carries 1.0, which is what the ratio's denominator is.
 
 WHY THE CRISPR ARMS EXIST ONLY NOW. Issue #799: until
 ``BacterialCrisprActivationPerturbation`` landed, the activation arm had nowhere to go.
@@ -73,32 +86,34 @@ the encoding Lim 2025 landed for the same kind of quantity. The consequence is t
 released dispersion cannot ride along: a sample SD of a RATIO is not the SD of its
 logarithm, and propagating it would be a first-order approximation the source never
 made. ``environment_response_uncertainty`` therefore carries a typed gap, every released
-ratio and SD is written verbatim to ``preprocess/released_growth_ratios.json``, and the
-PR proposes a ``fold_change`` member as the honest fix. ``n_samples=3`` and
+ratio and SD is written verbatim to ``preprocess/released_growth_ratios.json``.
+``ConcentrationUnit.fold_change`` landed in #1077 and the pinene column is now a store
+of its own (``PineneFoldChangeNiu2019Dataset``, below), but ``MeasurementType`` still
+has no fold-change member, so the growth column keeps its log2 and its typed gap.
+``n_samples=3`` and
 ``sample_unit=biological_replicate`` ARE stored: they are facts about the measurement,
 not about the scale ("All experiments were conducted in triplicate, and data were
 averaged and presented as the means +- standard deviation").
 
-RECORDS NOT STORED (rules, counts and items in ``preprocess/dropped_records.json``).
+TWO STORES, ONE PER COLUMN (counts in each store's ``preprocess/dropped_records.json``).
 Released numeric cells: 43 activation growth ratios + 32 activation pinene ratios + 9
 interference growth ratios + 6 interference pinene ratios + the 4 cells of the two
-combination strains = 94. 51 are stored and 43 are not:
+combination strains = 94. The growth store holds 54 of them and the pinene store holds
+the other 40, so every released numeric cell of the paper is stored:
 
-1. ``pinene_ratio_is_a_dimensionless_product_ratio`` -- 40 cells (32 + 6 + the two
-   combination strains' pinene cells). The release is a product RATIO with no absolute
-   titer anywhere in this arm. ``ProductTiterPhenotype`` requires a
-   ``ConcentrationUnit`` and the enum has no dimensionless member, so there is no unit
-   under which the number is honest; ``EnvironmentResponsePhenotype`` is a fitness or
-   growth readout, so putting a production ratio there would mislabel it. Filed as
-   issue #770.
-2. ``target_label_is_a_multi_gene_operon`` -- 2 activation growth cells. ``sufBCDS`` and
-   ``flgFGH`` name operons, and a gene-keyed leaf cannot state a label that is not one
-   gene. #799 records this as the separate, smaller question it is.
-3. ``combination_strain_contains_a_multi_gene_operon`` -- 1 activation growth cell. The
-   six-target activation strain is ``flgFGH``, ``sufBCDS``, ``dusB``, ``rpoA``, ``yehA``
-   and ``hslU``, two of which are rule 2's operons, so the strain cannot be written as
-   six gene-keyed leaves. The six-target INTERFERENCE strain is all single genes and IS
-   stored.
+1. ``CrisprPineneToleranceNiu2019Dataset`` -- 54 records, the growth column: 43 + 9
+   released ratios plus the two combination strains' growth cells. Its ledger's one
+   rule, ``pinene_ratio_is_a_dimensionless_product_ratio``, states why the 40 pinene
+   cells are not in THIS store: they are a product ratio measured in a different
+   culture, so they are a product-titer record rather than a growth one.
+2. ``PineneFoldChangeNiu2019Dataset`` -- 40 records, the pinene column: 32 + 6 released
+   ratios plus the two combination strains' pinene cells, on
+   ``ConcentrationUnit.fold_change`` with the empty-vector control at 1.0 (#770, closed
+   by #1077's unit member).
+
+Both stores key a record by the label the release writes, operon labels included
+(``flgFGH``, ``sufBCDS``), on the released-construct leaf; no annotation is read at load
+time.
 
 Two further parts of the release are not cells of this grid and are refused for reasons
 of their own, recorded in ``preprocess/not_loaded.json``:
@@ -179,10 +194,14 @@ from torchcell.datamodels.schema import (
     BacterialEnvironmentResponseExperimentReference,
     BacterialReleasedCrisprPerturbation,
     BacterialStrainBackground,
+    Censoring,
     ComponentDefinition,
     Concentration,
     ConcentrationUnit,
     CrisprConstruct,
+    CultureEnvironment,
+    CultureFormat,
+    EndpointRule,
     Environment,
     EnvironmentPerturbationType,
     EnvironmentResponsePhenotype,
@@ -193,10 +212,16 @@ from torchcell.datamodels.schema import (
     Media,
     MediaComponent,
     MediaComponentRole,
+    PreCulture,
+    PreCultureSource,
+    ProductTiterExperiment,
+    ProductTiterExperimentReference,
+    ProductTiterPhenotype,
     Publication,
     SampleUnit,
     SmallMoleculePerturbation,
     Temperature,
+    UncertaintyType,
 )
 from torchcell.datasets.bacteria_common import (
     STRAIN_GENE_NAMESPACES,
@@ -216,7 +241,13 @@ from torchcell.sequence.genome.ecoli.k12 import (
     EcoliK12BW25113Genome,
     EcoliK12StrainName,
 )
-from torchcell.verification.report import Provenance, VerificationReport
+from torchcell.verification.levels import l3_convention
+from torchcell.verification.report import (
+    Level,
+    LevelResult,
+    Provenance,
+    VerificationReport,
+)
 from torchcell.verification.sourced import (
     ProvenanceGap,
     ProvenanceGapReason,
@@ -508,15 +539,16 @@ _NO_LB_AMOUNT = (
 )
 
 
-def _lb_ingredients() -> list[MediaComponent]:
-    """LB's three ingredients with NO amounts."""
+def _lb_ingredients(provenance: SourcedValue | None = None) -> list[MediaComponent]:
+    """LB's three ingredients with NO amounts, sourced to the culture that used it."""
+    sourced = GROWTH_CULTURE if provenance is None else provenance
     return [
         MediaComponent(
             compound=resolved_compound("tryptone"),
             role=MediaComponentRole.complex_ingredient,
             concentration=None,
             definition=ComponentDefinition.intrinsically_undefined,
-            provenance=[GROWTH_CULTURE],
+            provenance=[sourced],
             note=_NO_LB_AMOUNT,
         ),
         MediaComponent(
@@ -524,14 +556,14 @@ def _lb_ingredients() -> list[MediaComponent]:
             role=MediaComponentRole.complex_ingredient,
             concentration=None,
             definition=ComponentDefinition.intrinsically_undefined,
-            provenance=[GROWTH_CULTURE],
+            provenance=[sourced],
             note=_NO_LB_AMOUNT,
         ),
         MediaComponent(
             compound=resolved_compound("sodium chloride"),
             role=MediaComponentRole.bulk_salt,
             concentration=None,
-            provenance=[GROWTH_CULTURE],
+            provenance=[sourced],
             note=_NO_LB_AMOUNT,
         ),
     ]
@@ -917,11 +949,12 @@ RULE_PINENE_RATIO = "pinene_ratio_is_a_dimensionless_product_ratio"
 
 DROP_RULE_DESCRIPTIONS: dict[str, str] = {
     RULE_PINENE_RATIO: "the released pinene value is a dimensionless product RATIO "
-    "with no absolute titer anywhere in this arm. ProductTiterPhenotype requires a "
-    "ConcentrationUnit and the enum has no dimensionless member, so there is no unit "
-    "under which the number is honest, and EnvironmentResponsePhenotype is a fitness "
-    "or growth readout, so storing a production ratio there would mislabel it "
-    "(issue #770)"
+    "with no absolute titer anywhere in this arm, measured in the 72 h SBMSN "
+    "shake-flask production culture rather than in this store's 12 h tolerance "
+    "culture. EnvironmentResponsePhenotype is a fitness or growth readout, so storing "
+    "a production ratio there would mislabel it. All 40 cells are stored by "
+    "PineneFoldChangeNiu2019Dataset on ConcentrationUnit.fold_change (issue #770, "
+    "closed by the unit member #1077 landed)"
 }
 
 
@@ -1477,20 +1510,901 @@ def verify_build(
     return report
 
 
+# --------------------------------------------------------------------------- #
+# The pinene fold-change store: the 40 released product ratios
+# --------------------------------------------------------------------------- #
+# The sibling store above holds the growth column of Suppl. Tables 3 and 4. Its ledger
+# accounts for the pinene column as a dimensionless product RATIO that no phenotype
+# could carry: ``ProductTiterPhenotype`` required a ``ConcentrationUnit`` and the enum
+# had no dimensionless member, so there was no unit under which the number was honest.
+# ``ConcentrationUnit.fold_change`` (#1077) is that member, so the 40 released pinene
+# cells are a product-titer store of their own rather than a ledger line.
+#
+# A SEPARATE store, not a second phenotype on the growth records, because the two
+# columns were measured in two different cultures: the growth ratio is a 12 h LB plus
+# 0.5% pinene tolerance assay, and the pinene ratio is a 72 h SBMSN shake-flask
+# production run under a dodecane overlay. One record carrying both would state that
+# one culture produced both numbers.
+# --------------------------------------------------------------------------- #
+_CRISPR_METHODS = "Methods, '2.4. CRISPRa and CRISPRi of the mutant genes'"
+_PRODUCTION = "Methods, '2.5. Pinene production in shake flasks'"
+_GC = "Methods, '2.7. GC analysis'"
+_MAIN_TABLES = "Tables 3 and 4 of the article body"
+
+PINENE_RATIO_MEANING = _paper(
+    "ratio of pinene production with the guide and without",
+    "a The ratio of $\\mathrm { O D } _ { 6 0 0 }$ with CRISPRa and without. b The "
+    "ratio of pinene production with CRISPRa and without.-: means no change or "
+    "negative effect.",
+    page=_ARMS,
+    note="the stored quantity of this store: footnote b's column, a dimensionless "
+    "ratio of the strain's pinene over the no-guide control's, stored on "
+    "ConcentrationUnit.fold_change",
+)
+PRODUCTION_PLASMIDS = _paper(
+    "pBbB2K-dCas9*-MCPSoxS + pTargetA-X + pMEVIGPS",
+    "To investigate the effect of the activation and repression on pinene "
+    "production, pBbB2K-dCas9\\*-MCPSoxS, pTargetA-X and pMEVIGPS were co-"
+    "transferred into E. coli ${ \\tt B W } 2 5 1 1 3 ( { \\mathrm P } _ { "
+    "\\mathrm { T 5 - d x } s } )$ and then analyzed the production of pinene "
+    "in shake flasks.",
+    page=_CRISPR_METHODS,
+    note="the production chassis: the effector plasmid, the guide plasmid and the "
+    "mevalonate-plus-pinene-synthase pathway plasmid in BW25113(PT5-dxs). Only "
+    "pTargetA-X differs between strains, which is why it is the perturbation and the "
+    "other two are background",
+)
+PRODUCTION_CONTROL = _paper(
+    "BW25113(PT5-dxs) (pBbB2K-dCas9*-MCPSoxS, pTargetA, pMEVIGPS)",
+    "The strain harboring the empty vector pTargetA, E. coli $\\mathtt { B W 2"
+    " 5 1 1 3 ( P _ { T 5 - d x s } ) }$ (pBbB2K-dCas9\\*-MCPSoxS, pTargetA, "
+    "pMEVIGPS) was set as the control.",
+    page=_CRISPR_METHODS,
+    note="the denominator of every stored ratio: the same chassis carrying the EMPTY "
+    "guide vector, so the pathway and the effector are in the control too and the "
+    "ratio isolates the guide",
+)
+SEED_CULTURE = _paper(
+    "overnight 5 mL LB falcon-tube culture at 37 C and 200 rpm",
+    "A single colony was inoculated into $5 \\mathrm { m L }$ of LB medium in a "
+    "falcon tube, which was cultured overnight at $3 7 ^ { \\circ } \\mathrm { C "
+    "}$ and $2 0 0 \\mathrm { r p m }$ .",
+    page=_PRODUCTION,
+    note="the pre-culture of the production run, on PreCultureSource.overnight_culture; "
+    "the paper writes 'overnight' and no hour count, so the duration is a typed gap",
+)
+SBMSN_FORMULATION = _paper(
+    "sucrose 20, peptone 12, yeast extract 24, KH2PO4 1.7, K2HPO4 211.42, "
+    "MgCl2.6H2O 1, ammonium oxalate 1.42 (g/L), Tween-80 2 mL",
+    "SBMSN medium $\\mathrm { ( p H } 7 . 0 )$ containing the following $( "
+    "\\mathbf { g } / \\mathbf { L } )$ : sucrose 20, peptone 12, yeast extract"
+    " 24, $\\mathrm { K H _ { 2 } P O _ { 4 } } 1 . 7 ,$ $\\mathrm { K _ { 2 } "
+    "H P O _ { 4 } }$ 211.42, $\\mathrm { M g C l _ { 2 } { \\cdot } 6 H _ { 2 "
+    "} O }$ 1, ammonium oxalate 1.42, and Tween-$8 0 \\ 2 \\mathrm { m L }$ .",
+    page=_PRODUCTION,
+    note="the production medium, stored component by component at the released "
+    "amounts. The K2HPO4 amount is the published one: 211.42 g/L is implausibly high "
+    "for a medium and the publisher's own text layer carries the same digits, so it is "
+    "stored verbatim with this note rather than corrected to a guess",
+)
+MAIN_CULTURE = _paper(
+    "50 mL SBMSN inoculated to OD600 0.1, grown at 37 C and 200 rpm to OD600 0.8",
+    "The main cultures were then incubated at $3 7 ^ { \\circ } \\mathrm { C }$"
+    " and $2 0 0 \\mathrm { r p m }$ until an ${ \\mathrm { O D } } _ { 6 0 0 "
+    "}$ of 0.8 was reached.",
+    page=_PRODUCTION,
+    note="the pre-induction growth phase. Environment.temperature holds the PRODUCTION "
+    "phase's 30 C because that is the phase the titer accumulates in; this phase is "
+    "recorded here and in the culture format's provenance",
+)
+INDUCTION = _paper(
+    "1 mM IPTG and 200 nM anhydrotetracycline, with a 20% dodecane overlay",
+    "Then, the cultures were induced with $^ { 1 \\mathrm { m M } }$ IPTG and $2"
+    " 0 0 \\mathrm { n M }$ anhydrous tetracycline, and overlaid with $2 0 \\%$ "
+    "dodecane to trap pinene.",
+    page=_PRODUCTION,
+    note="the two inducers, which are medium components for the reason the tolerance "
+    "assay's aTc is (constant across the dataset, present in the control, and what "
+    "switches the genome-side perturbation on), and the dodecane overlay, which is an "
+    "environment perturbation on the Brunk 2016 precedent",
+)
+PRODUCTION_INCUBATION = _paper(
+    72.0,
+    "After induction, the cultures were incubated at $3 0 ^ { \\circ } \\mathrm"
+    " { C }$ and $1 3 0 \\mathrm { r p m }$ for $^ { 7 2 \\mathrm { h } }$ .",
+    page=_PRODUCTION,
+    note="the production phase every stored ratio is read at the end of: 72 h at 30 C "
+    "and 130 rpm, which is Environment.duration_hours, temperature and the culture "
+    "format's shaking",
+)
+GC_FID = _paper(
+    "GC-FID",
+    "The samples were analyzed by GC-FID by using a standard curve of $\\alpha$ "
+    "-pinene (Sigma Aldrich).",
+    page=_GC,
+    note="the quantification method stored on every phenotype. The standard is "
+    "alpha-pinene while the released column is named 'pinene', so the product keeps "
+    "the released name and its typed identity gap rather than being resolved to the "
+    "standard's structure",
+)
+COMBINATION_PINENE_ACTIVATION = _paper(
+    1.71,
+    "<td>flgFGH-sufBCDS- dusB-rpoA-yehA-</td><td></td><td>3.55 ± 0.03</td>"
+    "<td>1.71 ± 0.02</td>",
+    page=_MAIN_TABLES,
+    note="the activation combination strain's pinene cell, released in the main table "
+    "only. The row label is truncated by the OCR; the six genes are the prose's, which "
+    "ACTIVATION_COMBINATION quotes",
+)
+COMBINATION_PINENE_INTERFERENCE = _paper(
+    1.13,
+    "<td>ydiJ-yjbQ-prpR-marR-fabR-cedA</td><td></td><td>1.26 ± 0.02</td>"
+    "<td>1.13 ± 0.02</td>",
+    page=_MAIN_TABLES,
+    note="the interference combination strain's pinene cell, released in the main "
+    "table only",
+)
+
+#: Every sourced value of the pinene store, for the same mirror audit.
+PINENE_SOURCED_VALUES: tuple[SourcedValue, ...] = (
+    PINENE_RATIO_MEANING,
+    PRODUCTION_PLASMIDS,
+    PRODUCTION_CONTROL,
+    SEED_CULTURE,
+    SBMSN_FORMULATION,
+    MAIN_CULTURE,
+    INDUCTION,
+    PRODUCTION_INCUBATION,
+    GC_FID,
+    COMBINATION_PINENE_ACTIVATION,
+    COMBINATION_PINENE_INTERFERENCE,
+)
+
+#: The main-table pinene cell of each combination strain, verbatim (ratio, sample SD).
+COMBINATION_PINENE: dict[Arm, tuple[float, float]] = {
+    "crispr_activation": (float(COMBINATION_PINENE_ACTIVATION.value), 0.02),
+    "crispr_interference": (float(COMBINATION_PINENE_INTERFERENCE.value), 0.02),
+}
+
+
+NIU2019_SBMSN_INDUCED = Media(
+    name="SBMSN with 1 mM IPTG and 200 nM anhydrotetracycline (Niu 2019 pinene "
+    "production), liquid",
+    state="liquid",
+    is_synthetic=False,
+    base_medium=None,
+    components=[
+        MediaComponent(
+            compound=resolved_compound("sucrose"),
+            role=MediaComponentRole.carbon_source,
+            concentration=Concentration(value=20.0, unit=ConcentrationUnit.g_per_l),
+            provenance=[SBMSN_FORMULATION],
+        ),
+        MediaComponent(
+            compound=resolved_compound("peptone"),
+            role=MediaComponentRole.complex_ingredient,
+            concentration=Concentration(value=12.0, unit=ConcentrationUnit.g_per_l),
+            definition=ComponentDefinition.intrinsically_undefined,
+            provenance=[SBMSN_FORMULATION],
+        ),
+        MediaComponent(
+            compound=resolved_compound("yeast extract"),
+            role=MediaComponentRole.complex_ingredient,
+            concentration=Concentration(value=24.0, unit=ConcentrationUnit.g_per_l),
+            definition=ComponentDefinition.intrinsically_undefined,
+            provenance=[SBMSN_FORMULATION],
+        ),
+        MediaComponent(
+            compound=resolved_compound("potassium dihydrogen phosphate"),
+            role=MediaComponentRole.buffer,
+            concentration=Concentration(value=1.7, unit=ConcentrationUnit.g_per_l),
+            provenance=[SBMSN_FORMULATION],
+        ),
+        MediaComponent(
+            compound=resolved_compound("dipotassium hydrogen phosphate"),
+            role=MediaComponentRole.buffer,
+            concentration=Concentration(value=211.42, unit=ConcentrationUnit.g_per_l),
+            provenance=[SBMSN_FORMULATION],
+            note="the published amount, stored verbatim. 211.42 g/L is implausibly "
+            "high for a buffer and the publisher's text layer carries the same digits, "
+            "so nothing is corrected: a plausible-looking 11.42 would be our number, "
+            "not theirs",
+        ),
+        MediaComponent(
+            compound=resolved_compound("magnesium chloride hexahydrate"),
+            role=MediaComponentRole.bulk_salt,
+            concentration=Concentration(value=1.0, unit=ConcentrationUnit.g_per_l),
+            provenance=[SBMSN_FORMULATION],
+        ),
+        MediaComponent(
+            compound=resolved_compound("ammonium oxalate"),
+            role=MediaComponentRole.other,
+            concentration=Concentration(value=1.42, unit=ConcentrationUnit.g_per_l),
+            provenance=[SBMSN_FORMULATION],
+            note="the release states the amount and not the role; a complex medium "
+            "already carrying peptone and yeast extract makes 'nitrogen source' an "
+            "inference, so the role stays 'other'",
+        ),
+        MediaComponent(
+            compound=resolved_compound("Tween-80"),
+            role=MediaComponentRole.other,
+            concentration=Concentration(value=0.2, unit=ConcentrationUnit.percent_v_v),
+            provenance=[SBMSN_FORMULATION],
+            note="the release writes '2 mL' inside a list whose stated basis is per "
+            "litre, so 2 mL/L is 0.2% v/v by that basis. ConcentrationUnit has no "
+            "volume-per-volume amount member, and Tween-80 is a liquid, so the v/v "
+            "percent is the unit that carries the released number without a guess",
+        ),
+        MediaComponent(
+            compound=resolved_compound("IPTG"),
+            role=MediaComponentRole.other,
+            concentration=Concentration(value=1.0, unit=ConcentrationUnit.millimolar),
+            provenance=[INDUCTION],
+            note="the inducer of the pMEVIGPS pathway, a medium component for the "
+            "reason the tolerance assay's aTc is: it is constant across the dataset, "
+            "it is in the control, and it switches the genome-side construct on rather "
+            "than being the variable the screen contrasts",
+        ),
+        MediaComponent(
+            compound=resolved_compound("anhydrotetracycline"),
+            role=MediaComponentRole.other,
+            concentration=Concentration(value=200.0, unit=ConcentrationUnit.nanomolar),
+            provenance=[INDUCTION],
+            note="the inducer of the dCas9*-MCPSoxS effector, on the same reasoning",
+        ),
+    ],
+)
+"""The production medium: SBMSN at the released amounts plus the two inducers.
+
+``base_medium`` is None because SBMSN is released as a complete recipe and is not a
+derivative of any medium the shared library holds, so naming a base would assert a
+derivation the paper does not state.
+"""
+
+NIU2019_LB_SEED = Media(
+    name="LB, formulation not stated (Niu 2019 production seed culture), liquid",
+    state="liquid",
+    is_synthetic=False,
+    base_medium="LB",
+    components=_lb_ingredients(SEED_CULTURE),
+)
+"""The seed culture's medium: LB with no inducer and no stated formulation."""
+
+
+def dodecane_overlay() -> SmallMoleculePerturbation:
+    """The 20% dodecane overlay the pinene is trapped in and read out of.
+
+    An environment perturbation rather than a medium component, on the Brunk 2016
+    precedent: it is a second liquid phase added to the culture at induction, not a
+    nutrient of the medium, and it is what the GC sample is drawn from.
+    """
+    return SmallMoleculePerturbation(
+        compound=resolved_compound("dodecane"),
+        concentration=Concentration(value=20.0, unit=ConcentrationUnit.percent_v_v),
+    )
+
+
+def production_culture_format() -> CultureFormat:
+    """The shake-flask format: 50 mL, 130 rpm after induction, a fixed 72 h endpoint."""
+    return CultureFormat(
+        vessel="shake flask",
+        working_volume_ul=50_000.0,
+        shaking_rpm=130.0,
+        inoculum_od600=0.1,
+        endpoint=EndpointRule.fixed_duration,
+        provenance=[MAIN_CULTURE, INDUCTION, PRODUCTION_INCUBATION],
+    )
+
+
+def production_pre_culture() -> PreCulture:
+    """The overnight 5 mL LB seed culture; its duration is a typed gap."""
+    return PreCulture(
+        source=PreCultureSource.overnight_culture,
+        medium=NIU2019_LB_SEED,
+        duration_hours=None,
+        provenance=[SEED_CULTURE],
+        provenance_gaps=[
+            ProvenanceGap(
+                field="duration_hours",
+                reason=ProvenanceGapReason.not_reported_by_primary,
+                looked_in=Provenance(
+                    source_uri=PAPER_MD,
+                    citation_key=CITATION_KEY,
+                    sha256=PAPER_MD_SHA256,
+                    method="section 2.5 read in full for an hour count of the seed "
+                    "culture",
+                    page=_PRODUCTION,
+                ),
+                note="the paper writes 'cultured overnight' and states no hours, so no "
+                "duration is asserted",
+            )
+        ],
+    )
+
+
+def production_environment() -> CultureEnvironment:
+    """The one production culture every stored ratio was measured in.
+
+    ``temperature`` and ``duration_hours`` are the POST-induction phase (30 C, 72 h),
+    because that is the phase the pinene accumulates in and the ratio is read at the
+    end of. The 37 C pre-induction growth to OD600 0.8 is a sourced value on the
+    culture format rather than a second temperature, since an Environment states one.
+    """
+    perturbations: list[EnvironmentPerturbationType] = [dodecane_overlay()]
+    return CultureEnvironment(
+        media=NIU2019_SBMSN_INDUCED,
+        temperature=Temperature(value=30.0),
+        culture_format=production_culture_format(),
+        pre_culture=production_pre_culture(),
+        perturbations=perturbations,
+        aerobicity="aerobic",
+        duration_hours=float(PRODUCTION_INCUBATION.value),
+    )
+
+
+NIU2019_PRODUCTION_BACKGROUND = BacterialStrainBackground(
+    name="BW25113(PT5-dxs) (pBbB2K-dCas9*-MCPSoxS, pMEVIGPS)",
+    reference_strain=REFERENCE_STRAIN_NAME,
+    assembly_set=cast("Any", BACTERIAL_ASSEMBLY_SETS[REFERENCE_STRAIN_NAME]),
+    parents=["BW25113(PT5-dxs)"],
+    construction=None,
+    genotype_statement="BW25113(PT5-dxs) (pBbB2K-dCas9*-MCPSoxS, pMEVIGPS)",
+    alleles=[],
+    provenance=[
+        HOST_STRAIN,
+        DXS_PARENT_DESIGN,
+        PRODUCTION_PLASMIDS,
+        PRODUCTION_CONTROL,
+    ],
+    provenance_gaps=[
+        ProvenanceGap(
+            field="construction",
+            reason=ProvenanceGapReason.not_reported_by_primary,
+            looked_in=Provenance(
+                source_uri=PAPER_MD,
+                citation_key=CITATION_KEY,
+                sha256=PAPER_MD_SHA256,
+                method="full Methods and Results read for a construction sentence for "
+                "the PT5-dxs parent and the two shared plasmids",
+                page="Methods; Results",
+            ),
+            note="the paper names the parent as BW25113(PT5-dxs) and lists the three "
+            "co-transferred plasmids, and never says how the PT5-dxs cassette was "
+            "built or where it sits",
+        )
+    ],
+)
+"""The production chassis as a background: the parent plus the two SHARED plasmids.
+
+The guide plasmid pTargetA-X is deliberately absent: it is the one part that differs
+between strains, so it is the perturbation, and the control carries the empty pTargetA
+in its place. The effector plasmid and the pathway plasmid are in every strain of the
+store AND in the control, which is what makes them background.
+"""
+
+
+PINENE_TITER_UNIT_DETAIL = (
+    "the released column is a dimensionless ratio of the strain's pinene over the "
+    "no-guide control's, so every titer is stored on ConcentrationUnit.fold_change "
+    "with the control at 1.0; no absolute titer is released anywhere in this paper's "
+    "CRISPRa/i arms"
+)
+
+
+def pinene_phenotype(ratio: float, sd: float) -> ProductTiterPhenotype:
+    """One released pinene cell, stored as released: the ratio and its sample SD."""
+    return ProductTiterPhenotype(
+        product=resolved_compound("pinene"),
+        titer=ratio,
+        titer_unit=ConcentrationUnit.fold_change,
+        titer_uncertainty=sd,
+        titer_uncertainty_type=UncertaintyType.sample_sd,
+        n_samples=N_SAMPLES,
+        sample_unit=SampleUnit.biological_replicate,
+        quantification_method=str(GC_FID.value),
+        titer_censoring=Censoring.uncensored,
+    )
+
+
+def pinene_reference_phenotype() -> ProductTiterPhenotype:
+    """The no-guide control: the denominator of every stored ratio, which is 1.0."""
+    return ProductTiterPhenotype(
+        product=resolved_compound("pinene"),
+        titer=1.0,
+        titer_unit=ConcentrationUnit.fold_change,
+        titer_censoring=Censoring.uncensored,
+        quantification_method=str(GC_FID.value),
+        provenance_gaps=[
+            ProvenanceGap(
+                field=field,
+                reason=ProvenanceGapReason.not_reported_by_primary,
+                note="the 1.0 baseline is what the ratio's denominator IS, not a "
+                "measured set of control replicates: the paper releases the control's "
+                "dispersion and replicate design nowhere, and the empty-vector "
+                "strain's absolute titer nowhere either",
+            )
+            for field in (
+                "titer_uncertainty",
+                "titer_uncertainty_type",
+                "n_samples",
+                "sample_unit",
+            )
+        ],
+    )
+
+
+class PineneLedger(BaseModel):
+    """What the pinene store holds, and every released pinene cell it does not."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    dataset: str
+    released_numeric_cells: int
+    stored_records: int
+    dropped_cells: int
+    censored_cells: int
+    growth_cells_in_the_sibling_store: int
+    rules: list[DropRule] = []
+
+
+class PineneRetention(BaseModel):
+    """The strains to store, their released cells, and the ledger."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    #: (arm, released label, the strain's targets in released order)
+    strains: list[tuple[str, str, list[StoredTarget]]]
+    #: ``<arm>/<released label>`` -> (released ratio, released sample SD)
+    titers: dict[str, tuple[float, float]]
+    ledger: PineneLedger
+    released: dict[str, list[dict[str, Any]]]
+    spacer_absences: dict[str, str]
+
+
+def retain_pinene(
+    targets: Mapping[Arm, Sequence[ReleasedTarget]],
+    spacers: GuideSpacers,
+    *,
+    dataset_name: str,
+) -> PineneRetention:
+    """Every released pinene cell that carries a number, and nothing else.
+
+    A dash is not stored: the footnote defines it as 'no change or negative effect',
+    which conflates a null with a decrease, so it is a MEASURED non-positive outcome
+    with neither a number nor a single category. It is counted as censored here for the
+    same reason the sibling store counts it.
+    """
+    for arm, expected in (
+        ("crispr_activation", N_ACTIVATION_TARGETS),
+        ("crispr_interference", N_INTERFERENCE_TARGETS),
+    ):
+        if len(targets[arm]) != expected:  # type: ignore[index]
+            raise ReleaseContentError(
+                f"{arm}: {len(targets[arm])} data rows, the paper states {expected}"  # type: ignore[index]
+            )
+
+    strains: list[tuple[str, str, list[StoredTarget]]] = []
+    titers: dict[str, tuple[float, float]] = {}
+    spacer_absences: dict[str, str] = {}
+    released: dict[str, list[dict[str, Any]]] = {}
+    n_censored = 0
+    n_growth = 0
+
+    for arm in ("crispr_activation", "crispr_interference"):
+        rows = list(targets[arm])  # type: ignore[index]
+        released[arm] = [row.model_dump() for row in rows]
+        for row in rows:
+            n_censored += 1 if row.pinene_is_censored else 0
+            n_growth += 1 if row.growth_ratio is not None else 0
+            if row.pinene_ratio is None:
+                continue
+            if row.pinene_sd is None:
+                raise TableFormatError(
+                    f"{arm} {row.label}: a numeric pinene cell with no SD"
+                )
+            spacer = spacers.spacer_of(row.label)
+            if spacer is None:
+                spacer_absences[_strain_key(arm, row.label)] = (
+                    "the release gives this gene two DIFFERENT N20 spacers and no rule "
+                    "for choosing between them"
+                    if row.label.lower() in spacers.ambiguous
+                    else "Suppl. Table 1 releases no N20 oligo under this gene's name"
+                )
+            strains.append(
+                (
+                    arm,
+                    row.label,
+                    [
+                        StoredTarget(
+                            reported_symbol=row.label,
+                            strain_label=row.label,
+                            guide_sequence=spacer,
+                        )
+                    ],
+                )
+            )
+            titers[_strain_key(arm, row.label)] = (row.pinene_ratio, row.pinene_sd)
+
+    # the two combination strains, whose pinene cell is in the MAIN tables only
+    for arm, label in COMBINATION_LABELS.items():
+        combination: list[StoredTarget] = []
+        for gene in label.split("-"):
+            spacer = spacers.spacer_of(gene)
+            if spacer is None:
+                spacer_absences[f"{_strain_key(arm, label)}:{gene}"] = (
+                    "the release gives this gene two DIFFERENT N20 spacers and no rule "
+                    "for choosing between them"
+                    if gene.lower() in spacers.ambiguous
+                    else "Suppl. Table 1 releases no N20 oligo under this gene's name"
+                )
+            combination.append(
+                StoredTarget(
+                    reported_symbol=gene, strain_label=label, guide_sequence=spacer
+                )
+            )
+        strains.append((arm, label, combination))
+        titers[_strain_key(arm, label)] = COMBINATION_PINENE[arm]
+
+    ledger = PineneLedger(
+        dataset=dataset_name,
+        released_numeric_cells=len(strains),
+        stored_records=len(strains),
+        dropped_cells=0,
+        censored_cells=n_censored,
+        growth_cells_in_the_sibling_store=n_growth + len(COMBINATION_GROWTH),
+        rules=[],
+    )
+    if ledger.dropped_cells != sum(rule.n_cells for rule in ledger.rules):
+        raise RuntimeError("drop accounting mismatch in the pinene ledger")
+    return PineneRetention(
+        strains=strains,
+        titers=titers,
+        ledger=ledger,
+        released=released,
+        spacer_absences=spacer_absences,
+    )
+
+
+#: Records of the pinene store: 32 activation and 6 interference SI cells, plus the two
+#: combination strains whose pinene cell is released in the main tables only.
+PINENE_EXPECTED_RECORDS = 40
+PINENE_DATASET_ROOT_REL = "data/torchcell/pinene_fold_change_niu2019"
+
+
+@register_dataset
+class PineneFoldChangeNiu2019Dataset(ExperimentDataset):
+    """Niu 2019 CRISPRa/CRISPRi pinene production ratios in BW25113(PT5-dxs)."""
+
+    organism = Organism.ecoli
+
+    REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = REFERENCE_STRAIN_NAME
+
+    def __init__(
+        self,
+        root: str = PINENE_DATASET_ROOT_REL,
+        io_workers: int = 0,
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize. No genome parameter: the loader reads no annotation."""
+        super().__init__(root, io_workers, transform, pre_transform, **kwargs)
+
+    @property
+    def experiment_class(self) -> type[Experiment]:
+        """Experiment schema class produced by this dataset."""
+        return ProductTiterExperiment
+
+    @property
+    def reference_class(self) -> type[ExperimentReference]:
+        """Experiment-reference schema class produced by this dataset."""
+        return ProductTiterExperimentReference
+
+    @property
+    def raw_file_names(self) -> list[str]:
+        """The one consumed SI file."""
+        return [SI_FILENAME]
+
+    def download(self) -> None:
+        """Link the mirror's SI file into ``raw/`` after verifying its pinned sha256."""
+        data_root = _data_root()
+        mirror = raw_mirror_dir(data_root)
+        manifest = load_manifest(data_root)
+        check_manifest_pin(si_rel(), manifest_sha256(manifest, si_rel()), SI_SHA256)
+        source = mirror / si_rel()
+        if not source.exists():
+            raise RuntimeError(f"required raw artifact missing from mirror: {source}")
+        os.makedirs(self.raw_dir, exist_ok=True)
+        link_verified(source, osp.join(self.raw_dir, SI_FILENAME), SI_SHA256)
+        log.info(
+            "Niu 2019 %s linked into %s (sha256 verified)", SI_FILENAME, self.raw_dir
+        )
+
+    @post_process
+    def process(self) -> None:
+        """One record per released pinene cell; write the LMDB."""
+        verify_raw_files(self.raw_dir, {SI_FILENAME: SI_SHA256})
+        si = read_si(osp.join(self.raw_dir, SI_FILENAME))
+        spacers = read_guide_spacers(si.tables[0])
+        targets: dict[Arm, Sequence[ReleasedTarget]] = {
+            "crispr_activation": read_target_table(si.tables[2], "crispr_activation"),
+            "crispr_interference": read_target_table(
+                si.tables[3], "crispr_interference"
+            ),
+        }
+        retention = retain_pinene(targets, spacers, dataset_name=self.name)
+        culture = production_environment()
+        reference = ProductTiterExperimentReference(
+            dataset_name=self.name,
+            genome_reference=assembly_reference(
+                self.REFERENCE_STRAIN, background=NIU2019_PRODUCTION_BACKGROUND
+            ),
+            environment_reference=culture,
+            phenotype_reference=pinene_reference_phenotype(),
+        )
+        publication = Publication(doi=DOI, doi_url=f"https://doi.org/{DOI}")
+
+        os.makedirs(self.preprocess_dir, exist_ok=True)
+        os.makedirs(self.processed_dir, exist_ok=True)
+        env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
+        index = 0
+        with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
+            for arm_label, label, strain in tqdm(
+                retention.strains, desc="niu2019-pinene"
+            ):
+                arm = cast("Arm", arm_label)
+                ratio, sd = retention.titers[_strain_key(arm, label)]
+                experiment = ProductTiterExperiment(
+                    dataset_name=self.name,
+                    genotype=genotype(strain, arm),
+                    environment=culture,
+                    phenotype=pinene_phenotype(ratio, sd),
+                )
+                txn.put(
+                    f"{index}".encode(),
+                    self._intern_record(experiment, reference, publication, itxn),
+                )
+                index += 1
+        env.close()
+        interned_env.close()
+        if index != retention.ledger.stored_records:
+            raise RuntimeError(
+                f"wrote {index} records, the ledger counted "
+                f"{retention.ledger.stored_records}"
+            )
+        self._write_pinene_reports(retention)
+        log.info(
+            "Niu2019 pinene: wrote %d records of the release's %d numeric pinene "
+            "cells; %d dashed cells censored; %d growth cells are the sibling store's",
+            index,
+            retention.ledger.released_numeric_cells,
+            retention.ledger.censored_cells,
+            retention.ledger.growth_cells_in_the_sibling_store,
+        )
+
+    def _write_pinene_reports(self, retention: PineneRetention) -> None:
+        """The ledger, the released cells verbatim, and the not-loaded list."""
+        out = Path(self.preprocess_dir)
+        (out / "dropped_records.json").write_text(
+            retention.ledger.model_dump_json(indent=2)
+        )
+        (out / "released_pinene_ratios.json").write_text(
+            json.dumps(
+                {
+                    "note": "every released cell of Suppl. Tables 3 and 4, verbatim. "
+                    "The stored titer is the pinene column's ratio and its sample SD, "
+                    "both as released",
+                    "arms": retention.released,
+                    "combination_strains": {
+                        arm: {
+                            "label": COMBINATION_LABELS[arm],
+                            "pinene_ratio": COMBINATION_PINENE[arm][0],
+                            "pinene_sd": COMBINATION_PINENE[arm][1],
+                            "source": "the article's main Table 3 / Table 4, not the SI",
+                        }
+                        for arm in COMBINATION_LABELS
+                    },
+                    "stored_strains_without_a_spacer": retention.spacer_absences,
+                },
+                indent=2,
+            )
+        )
+        (out / "not_loaded.json").write_text(json.dumps(list(NOT_LOADED), indent=2))
+
+    def preprocess_raw(self, df: Any, preprocess: dict[str, Any] | None = None) -> Any:
+        """Preprocessing is handled inside process() for this dataset."""
+        return df
+
+    def create_experiment(self) -> None:
+        """Experiment construction is handled inline in process() for this dataset."""
+        raise NotImplementedError(
+            "PineneFoldChangeNiu2019Dataset builds records in process()"
+        )
+
+
+# --------------------------------------------------------------------------- #
+# Verification (L0-L4) of a built pinene tree
+# --------------------------------------------------------------------------- #
+def _record_strain_key(record: dict[str, Any]) -> str:
+    """``<arm>/<released label>`` of one stored record, read back off its genotype."""
+    perturbations = record["experiment"]["genotype"]["perturbations"]
+    labels = {str(p["strain_label"]) for p in perturbations}
+    directions = {str(p["expression_direction"]) for p in perturbations}
+    if len(labels) != 1 or len(directions) != 1:
+        raise RuntimeError(
+            f"one record carries {sorted(labels)} and {sorted(directions)}: a stored "
+            "strain is one released label in one arm"
+        )
+    direction = directions.pop()
+    arm = next(key for key, value in DIRECTION_OF_ARM.items() if value == direction)
+    return _strain_key(arm, labels.pop())
+
+
+def _released_pinene_cells(data_root: str) -> dict[str, tuple[float, float]]:
+    """Re-read every released pinene cell from the mirror bytes, keyed by strain."""
+    si = read_si(raw_mirror_dir(data_root) / si_rel())
+    cells: dict[str, tuple[float, float]] = {}
+    for arm, table in (
+        ("crispr_activation", si.tables[2]),
+        ("crispr_interference", si.tables[3]),
+    ):
+        for row in read_target_table(table, cast("Arm", arm)):
+            if row.pinene_ratio is None or row.pinene_sd is None:
+                continue
+            cells[_strain_key(arm, row.label)] = (row.pinene_ratio, row.pinene_sd)
+    for arm, label in COMBINATION_LABELS.items():
+        cells[_strain_key(arm, label)] = COMBINATION_PINENE[arm]
+    return cells
+
+
+def _l2_released_cells(
+    records: Sequence[dict[str, Any]], data_root: str
+) -> LevelResult:
+    """L2: every stored titer and SD is its released cell, re-read from the mirror.
+
+    An independent read: the records come out of the built LMDB and the cells are
+    parsed again from the deposited ``mmc1.docx`` bytes, so a transcription that drifted
+    between the parse and the store shows up here.
+    """
+    expected = _released_pinene_cells(data_root)
+    problems: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for index, record in enumerate(records):
+        key = _record_strain_key(record)
+        seen.add(key)
+        phenotype = record["experiment"]["phenotype"]
+        if key not in expected:
+            problems.append({"index": index, "key": key, "problem": "not released"})
+            continue
+        ratio, sd = expected[key]
+        if float(phenotype["titer"]) != ratio:
+            problems.append(
+                {
+                    "index": index,
+                    "key": key,
+                    "stored": phenotype["titer"],
+                    "released": ratio,
+                }
+            )
+        if float(phenotype["titer_uncertainty"]) != sd:
+            problems.append(
+                {
+                    "index": index,
+                    "key": key,
+                    "stored_sd": phenotype["titer_uncertainty"],
+                    "released_sd": sd,
+                }
+            )
+    missing = sorted(set(expected) - seen)
+    passed = not problems and not missing
+    return LevelResult(
+        level=Level.L2,
+        name="titers_match_the_released_pinene_cells",
+        passed=passed,
+        message=(
+            f"{len(records)} records equal their Suppl. Table 3/4 or main-table pinene "
+            "cell, ratio and sample SD, re-read from the deposited bytes"
+            if passed
+            else f"{len(problems)} mismatched cells and {len(missing)} released cells "
+            "with no record"
+        ),
+        details={
+            "n_released_cells": len(expected),
+            "n_missing": len(missing),
+            "missing": missing[:20],
+            "worst": problems[:20],
+        },
+    )
+
+
+def verify_pinene_build(
+    dataset_root: str, data_root: str | None = None
+) -> VerificationReport:
+    """Run the product-titer family gate plus this release's own cell-level L2.
+
+    L4 is the family runner's: the perturbed-label containment against the pinned
+    BW25113 assembly, which is a reported genome-reference finding and never a gate --
+    two released labels (``flgFGH``, ``sufBCDS``) are operons, which is what the
+    release keys those rows by.
+    """
+    from torchcell.verification.product_titer import verify_product_titer_dataset
+    from torchcell.verification.runners import _write_report, load_records
+
+    root = data_root if data_root is not None else _data_root()
+    records = load_records(dataset_root)
+    report = verify_product_titer_dataset(
+        records,
+        dataset_name=osp.basename(osp.normpath(dataset_root)),
+        provenance=Provenance(
+            source_uri=f"$DATA_ROOT/{RAW_DIR_REL}/{si_rel()}",
+            citation_key=CITATION_KEY,
+            sha256=SI_SHA256,
+            method="the pinene column of Suppl. Tables 3 and 4 (a ratio of the "
+            "strain's 72 h shake-flask pinene over the no-guide control's, by GC-FID), "
+            "plus the two combination strains' pinene cells from the article's main "
+            "Tables 3 and 4. One ProductTiterExperiment per released cell on "
+            "ConcentrationUnit.fold_change, reference = the empty-vector control at 1.0",
+            page="Suppl. Tables 1, 3 and 4 (mmc1.docx); Tables 3 and 4",
+            retrieved=RAW_RETRIEVED_AT,
+        ),
+        expected_count=PINENE_EXPECTED_RECORDS,
+        titer_unit=ConcentrationUnit.fold_change.value,
+        titer_unit_detail=PINENE_TITER_UNIT_DETAIL,
+        se_tol=1e-12,
+        pathway_gene_counts={0},
+        product_names={"pinene"},
+    )
+    report.add(_l2_released_cells(records, root))
+    report.add(
+        l3_convention(
+            "the_reference_is_the_empty_vector_control_at_one",
+            all(
+                record["reference"]["phenotype_reference"]["titer"] == 1.0
+                and record["reference"]["phenotype_reference"]["titer_unit"]
+                == ConcentrationUnit.fold_change.value
+                for record in records
+            ),
+            detail="the denominator of a released ratio is the control, so the "
+            "reference titer is 1.0 fold change by construction and its dispersion is "
+            "a typed gap rather than a number",
+        )
+    )
+    report.add(
+        l3_convention(
+            "the_pathway_plasmid_is_background_not_a_perturbation",
+            all(
+                record["reference"]["genome_reference"]["background"][
+                    "genotype_statement"
+                ]
+                == NIU2019_PRODUCTION_BACKGROUND.genotype_statement
+                for record in records
+            ),
+            detail="pMEVIGPS and pBbB2K-dCas9*-MCPSoxS are in every stored strain AND "
+            "in the control, so they are the background; the guide plasmid pTargetA-X "
+            "is the only part that differs and is the perturbation",
+        )
+    )
+    _write_report(report, osp.join(dataset_root, "preprocess"))
+    return report
+
+
 def main(argv: list[str] | None = None) -> int:
-    """CLI: ``deposit`` the raw mirror, ``build`` the dev LMDB, or ``verify`` it."""
+    """CLI over the raw mirror and the module's two stores, growth and pinene."""
     from dotenv import load_dotenv
 
     parser = argparse.ArgumentParser(prog="python -m torchcell.datasets.ecoli.niu2019")
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("deposit", help="deposit the raw mirror from the library capture")
-    sub.add_parser("build", help="build (or load) the dev-tree LMDB")
-    sub.add_parser("verify", help="run L0-L4 on the built dev-tree LMDB")
+    sub.add_parser("build", help="build (or load) the growth dev-tree LMDB")
+    sub.add_parser("verify", help="run L0-L4 on the built growth dev-tree LMDB")
+    sub.add_parser("build-pinene", help="build (or load) the pinene dev-tree LMDB")
+    sub.add_parser("verify-pinene", help="run L0-L4 on the built pinene dev-tree LMDB")
     args = parser.parse_args(argv)
 
     load_dotenv()
     data_root = _data_root()
     root = osp.join(data_root, DATASET_ROOT_REL)
+    pinene_root = osp.join(data_root, PINENE_DATASET_ROOT_REL)
     if args.command == "deposit":
         print(deposit_raw_mirror(data_root=data_root))
         return 0
@@ -1498,6 +2412,14 @@ def main(argv: list[str] | None = None) -> int:
         dataset = CrisprPineneToleranceNiu2019Dataset(root=root)
         print(f"len = {len(dataset)}")
         return 0
+    if args.command == "build-pinene":
+        pinene = PineneFoldChangeNiu2019Dataset(root=pinene_root)
+        print(f"len = {len(pinene)}")
+        return 0
+    if args.command == "verify-pinene":
+        pinene_report = verify_pinene_build(pinene_root, data_root)
+        print(pinene_report.summary())
+        return 0 if pinene_report.passed else 1
     report = verify_build(root, data_root=data_root)
     print(report.summary())
     return 0 if report.passed else 1

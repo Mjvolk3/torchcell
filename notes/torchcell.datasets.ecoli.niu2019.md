@@ -286,3 +286,80 @@ The 3 cells they removed are records now: the two operon labels `sufBCDS` and `f
 The one remaining rule is `pinene_ratio_is_a_dimensionless_product_ratio` (40 cells). **Not done here:** `ConcentrationUnit.fold_change` landed with #1077 and makes those 40 ratios storable as a `ProductTiterPhenotype`, but they are a different record type (`ProductTiterExperiment`), so they need a SECOND dataset class with its own adapter, `dataset_adapter_map` entry, KG mapping, verification-runner family entry and candidate verdict. That is a new registration rather than a gate reversal, and it is left for the follow-up that owns it.
 
 Released vs stored: 94 released numeric cells = 54 records + 40 pinene ratios; 64 censored dashes are counted separately and stored nowhere, as before.
+
+## 2026.10.12 - The 40 pinene ratios are a store of their own (#770 closed)
+
+The follow-up the section above left: `PineneFoldChangeNiu2019Dataset`, 40
+`ProductTiterExperiment` records on `ConcentrationUnit.fold_change`, store
+`data/torchcell/pinene_fold_change_niu2019`. Every released numeric cell of the paper is
+now stored, 54 in the growth store plus 40 here out of the 94 the release prints.
+
+**The 40 cells.** 32 numeric pinene cells of Suppl. Table 3 (of 57 rows; 25 are the
+footnote's dash) + 6 of Suppl. Table 4 (of 20; 14 dashed) + the two combination strains'
+pinene cells, which the article's MAIN Tables 3 and 4 carry and the SI does not:
+`flgFGH-sufBCDS-dusB-rpoA-yehA-hslU` at 1.71 +- 0.02 and
+`ydiJ-yjbQ-prpR-marR-fabR-cedA` at 1.13 +- 0.02, each quoted verbatim off the OCR'd
+table row. A dashed growth cell does not censor the pinene cell beside it: `hokC` has no
+growth number and a pinene ratio of 1.19, so it is a record here and not in the sibling.
+
+**A SEPARATE store, not a second phenotype on the growth records**, because the two
+columns are two cultures. The growth ratio is OD600 after 12 h in LB plus 0.5% pinene;
+the pinene ratio is a 72 h shake-flask production run in SBMSN under a 20% dodecane
+overlay, inoculated from an overnight LB seed, induced at OD600 0.8 with 1 mM IPTG and
+200 nM anhydrotetracycline, then held at 30 C and 130 rpm, and read by GC-FID against an
+alpha-pinene standard curve. One record carrying both numbers would state that one
+culture produced them.
+
+**What the record stores.** `titer` is the released ratio and `titer_unit` is
+`fold_change`, so the released dispersion rides along as released: `titer_uncertainty`
+is the published sample SD over three replicates, `titer_uncertainty_type=sample_sd`,
+`n_samples=3`, and `titer_se` is the derived SD/sqrt(3). This is what the growth store
+cannot do, since `MeasurementType` has no fold-change member and its stored number is a
+log2 of the ratio. The reference is the empty-vector control at `titer=1.0`, which is
+what the ratio's denominator IS; its dispersion, replicate count and sample unit are
+four typed gaps rather than numbers the paper never printed.
+
+**The production chassis is a background, not a genotype.** `pBbB2K-dCas9*-MCPSoxS` and
+the pathway plasmid `pMEVIGPS` are in every stored strain AND in the control, so they
+are a `BacterialStrainBackground` whose `genotype_statement` is
+`BW25113(PT5-dxs) (pBbB2K-dCas9*-MCPSoxS, pMEVIGPS)`. Only the guide plasmid
+`pTargetA-X` differs between strains, which is why it is the perturbation and the
+control carries the empty `pTargetA` in its place. Consequence: the family's
+`heterologous_pathway_gene_counts` row reads `[0]`, declared.
+
+**The K2HPO4 amount is stored as published.** The SBMSN recipe reads "K2HPO4 211.42"
+(g/L) in both the OCR and the publisher's own PDF text layer. 211.42 g/L is implausibly
+high for a buffer, and nothing is corrected: a plausible-looking 11.42 would be our
+number rather than theirs, so the released value is stored with the component note
+saying so. `Tween-80 2 mL` is stored as 0.2% v/v, the one-step reading of the list's own
+per-litre basis, since `ConcentrationUnit` has no volume-per-volume amount member.
+
+**Verification.** The store passes the product-titer family gate plus two rows of its
+own, `titers_match_the_released_pinene_cells` (every stored titer and SD re-parsed from
+the deposited `mmc1.docx` bytes and the main-table cells) and
+`the_reference_is_the_empty_vector_control_at_one`:
+
+| level | rule | result |
+|---|---|---|
+| L0 | `structural` | pass -- 40 records validated |
+| L1 | `count` | pass -- observed 40, expected 40 |
+| L2 | `value_fidelity` | pass -- 40 titers finite and non-negative |
+| L2 | `uncertainty_nonnegative` | pass -- 40 released SDs |
+| L2 | `se_is_the_uncertainty_over_sqrt_n` | pass -- 40 pairs within 1e-12 |
+| L2 | `titers_match_the_released_pinene_cells` | pass -- 40 cells, ratio and SD |
+| L3 | `titer_unit_is_the_pinned_unit` | pass -- `fold_change` |
+| L3 | `uncertainty_is_typed_or_gapped` | pass |
+| L3 | `replicate_design_is_sourced_or_gapped` | pass |
+| L3 | `heterologous_pathway_gene_counts` | pass -- `[0]`, declared |
+| L3 | `product_is_the_declared_one` | pass -- `pinene` |
+| L3 | `the_reference_is_the_empty_vector_control_at_one` | pass |
+| L3 | `the_pathway_plasmid_is_background_not_a_perturbation` | pass |
+| L4 | `perturbed_gene_containment_assembly` | reported, never gated (#1069): two released labels, `flgFGH` and `sufBCDS`, are operons |
+
+Candidate verdict: `admissible_with_gaps`, the one gap being the compound `pinene`
+itself, whose row stays UNRESOLVED_PUBLIC for the reason the 2026.10.11 section records
+(#726).
+
+**Released vs stored for this store:** 40 released numeric pinene cells, 40 records, 0
+dropped; 39 dashed pinene cells counted as censored and stored nowhere; the 54 growth
+cells belong to the sibling store.

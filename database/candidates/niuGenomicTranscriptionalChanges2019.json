@@ -1,0 +1,129 @@
+{
+  "citation_key": "niuGenomicTranscriptionalChanges2019",
+  "table": "bacteria",
+  "row_name": "Niu 2019 pinene evolved",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: status='candidate', klass='Combinatorial design', no aggregation marker",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "pass",
+      "reason": "assembly_set: MG1655 -> ecoli_K12_MG1655_ASM584v2 resolves and reads; BW25113 -> ecoli_K12_BW25113_ASM75055v1 resolves and reads",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G3",
+      "outcome": "pass",
+      "reason": "2 file(s) in library+raw, 0 worksheet row(s) counted; all intact",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "pass",
+      "reason": "no key held by another module (0 mention(s)); no PMID check; values not compared (no dev store named)",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "gap",
+      "reason": "1 compound(s) unresolved: pinene",
+      "evidence": [],
+      "issue": 726,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "present",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "resolvable_readable",
+    "hosts": [
+      {
+        "name": "MG1655",
+        "assembly_set": "ecoli_K12_MG1655_ASM584v2",
+        "resolvable": true,
+        "readable": true
+      },
+      {
+        "name": "BW25113",
+        "assembly_set": "ecoli_K12_BW25113_ASM75055v1",
+        "resolvable": true,
+        "readable": true
+      }
+    ]
+  },
+  "g3": {
+    "citation_key": "niuGenomicTranscriptionalChanges2019",
+    "trees_read": [
+      "library",
+      "raw"
+    ],
+    "files": [
+      {
+        "tree": "library",
+        "path": "si/si1.docx",
+        "role": "si_data",
+        "bytes": 220006,
+        "sha256_manifest": "72099acb46abce07983265e559ec49596209b031869f081f40ae1e0bc0ce6fb9",
+        "sha256_disk": "72099acb46abce07983265e559ec49596209b031869f081f40ae1e0bc0ce6fb9",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "data/mmc1.docx",
+        "role": "raw_data",
+        "bytes": 220006,
+        "sha256_manifest": "72099acb46abce07983265e559ec49596209b031869f081f40ae1e0bc0ce6fb9",
+        "sha256_disk": "72099acb46abce07983265e559ec49596209b031869f081f40ae1e0bc0ce6fb9",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": []
+      }
+    ],
+    "walls": []
+  },
+  "g4_key": {
+    "doi": "10.1016/j.synbio.2019.05.001",
+    "pmid": null,
+    "accessions": [],
+    "hits": [
+      {
+        "key_kind": "doi",
+        "key": "10.1016/j.synbio.2019.05.001",
+        "where": "torchcell/datasets/ecoli/niu2019.py",
+        "relation": "own"
+      }
+    ],
+    "pmid_checked": false
+  },
+  "g4_value": null,
+  "g5": {
+    "phenotype_class": "ProductTiterPhenotype",
+    "class_exists": true,
+    "unresolved_compounds": [
+      "pinene"
+    ],
+    "proposed_class": null
+  },
+  "decided_at": "2026-10-12",
+  "torchcell_commit": "11d3a90ef079b2000cd208f3f091eec9511b211f"
+}

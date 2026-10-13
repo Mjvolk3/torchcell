@@ -4434,6 +4434,15 @@ def _verify_foo_titer(dataset_root: str, data_root: str) -> VerificationReport:
     return foo2014.verify_build(dataset_root, data_root)
 
 
+def _verify_niu_pinene_fold_change(
+    dataset_root: str, data_root: str
+) -> VerificationReport:
+    """Niu 2019: the 40 released pinene ratios, re-read from the deposited SI bytes."""
+    from torchcell.datasets.ecoli import niu2019
+
+    return niu2019.verify_pinene_build(dataset_root, data_root)
+
+
 def _verify_banerjee_isoprenol_titer(
     dataset_root: str, data_root: str
 ) -> VerificationReport:
@@ -4514,6 +4523,10 @@ PRODUCT_TITER_DATASETS: dict[str, dict[str, Any]] = {
     "isopentenol_titer_foo2014": {
         "root": "data/torchcell/isopentenol_titer_foo2014",
         "verify": _verify_foo_titer,
+    },
+    "pinene_fold_change_niu2019": {
+        "root": "data/torchcell/pinene_fold_change_niu2019",
+        "verify": _verify_niu_pinene_fold_change,
     },
     "isoprenol_titer_carruthers2025": {
         "root": "data/torchcell/isoprenol_titer_carruthers2025",

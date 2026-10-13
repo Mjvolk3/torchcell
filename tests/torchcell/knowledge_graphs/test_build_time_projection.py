@@ -541,6 +541,7 @@ BACTERIAL_DATASETS = {
     "MetabolomeSchastnaya2021Dataset",
     "MorphologyCampos2018Dataset",
     "CrisprPineneToleranceNiu2019Dataset",
+    "PineneFoldChangeNiu2019Dataset",
     "PhageRbTnseqMutalik2020Dataset",
     "PhosphositeIntensityPotel2018Dataset",
     "PromoterReporterMohiuddin2022Dataset",
@@ -627,7 +628,8 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
     # + 1 (row 39, Banerjee 2024 isoprenol titers)
     # + 1 (#910, Teteneva 2024's lake-water RB-TnSeq, the first W3110 dataset)
     # + 2 (#800 Li 2021 13C-MFA maps, #927 Baba 2006 Table 3 OD600)
-    # + 1 (#964, Guzman 2018's own GEO release).
+    # + 1 (#964, Guzman 2018's own GEO release)
+    # + 1 (#770, Niu 2019's pinene fold changes on ConcentrationUnit.fold_change).
     assert (
         len(dataset_adapter_map)
         == 110

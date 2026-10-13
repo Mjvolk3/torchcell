@@ -64,9 +64,7 @@ from torchcell.datamodels.schema import (
     TradisCall,
     TransposonInsertionPerturbation,
 )
-from torchcell.datasets.bacteria_common import LocusTagResolutionError
 from torchcell.literature.manifest import RetrievalMethod, RetrievalRecord
-from torchcell.sequence.genome.base import GeneNameStatus
 from torchcell.sequence.genome.ecoli.k12 import BW25113_ASSEMBLY, EcoliK12BW25113Genome
 from torchcell.verification.report import Provenance, VerificationReport
 from torchcell.verification.sourced import SourcedValue, audit_sourced_value
@@ -185,13 +183,8 @@ def synthetic(
 
 
 @pytest.fixture
-def built(
-    synthetic: Path, monkeypatch: pytest.MonkeyPatch, bw25113: EcoliK12BW25113Genome
-) -> m.GeneEssentialityGoodall2018Dataset:
-    monkeypatch.setattr(m, "MIN_RESOLVED_FRACTION", 0.8)
-    return m.GeneEssentialityGoodall2018Dataset(
-        root=str(synthetic), ecoli_genome=bw25113
-    )
+def built(synthetic: Path) -> m.GeneEssentialityGoodall2018Dataset:
+    return m.GeneEssentialityGoodall2018Dataset(root=str(synthetic))
 
 
 # --------------------------------------------------------------------------- #
@@ -316,79 +309,42 @@ def test_call_counts_lists_every_call() -> None:
 # --------------------------------------------------------------------------- #
 # Identifiers and the ledger
 # --------------------------------------------------------------------------- #
-def test_resolve_calls_keeps_loci_and_names_every_drop(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, bw25113: EcoliK12BW25113Genome
+def test_classify_calls_keeps_every_gene_and_drops_only_unclear_calls(
+    tmp_path: Path,
 ) -> None:
-    monkeypatch.setattr(m, "MIN_RESOLVED_FRACTION", 0.8)
+    """Every row is a record under its released symbol; no annotation is read."""
     _write_raw(tmp_path)
     calls = m.read_calls(tmp_path / m.TABLE_S1, TL_SPEC)
-    outcomes, report = m.resolve_calls(bw25113, calls, label="synthetic")
-    assert [(o.call.gene, o.locus_tag, o.symbol, o.drop_rule) for o in outcomes] == [
-        ("thrL", "BW25113_0001", "thrL", None),
-        ("thrA", "BW25113_0002", "thrA", None),
-        ("hokC", "BW25113_4412", "hokC", "unclear_call_not_representable"),
-        ("yaaP", "BW25113_0004", "yaaP", None),
-        ("ECK0005", None, None, "symbol_not_on_one_bw25113_locus"),
-        ("proB", "BW25113_0005", "proB", None),
+    outcomes = m.classify_calls(calls)
+    assert [(o.call.gene, o.drop_rule) for o in outcomes] == [
+        ("thrL", None),
+        ("thrA", None),
+        ("hokC", "unclear_call_not_representable"),
+        ("yaaP", None),
+        ("ECK0005", None),
+        ("proB", None),
     ]
-    assert outcomes[4].reason == "ambiguous over BW25113_0005, BW25113_0008"
-    assert report.status_histogram[GeneNameStatus.NON_GENE_FEATURE] == 1
     rules = m.drop_rules(outcomes)
     assert [(r.rule, r.items) for r in rules] == [
-        (
-            "symbol_not_on_one_bw25113_locus",
-            ["TL row 5 ECK0005: ambiguous over BW25113_0005, BW25113_0008"],
-        ),
-        ("unclear_call_not_representable", ["TL row 3 hokC (BW25113_4412): ratio 1.0"]),
+        ("unclear_call_not_representable", ["TL row 3 hokC: ratio 1.0"])
     ]
+    assert not hasattr(m, "resolve_calls")
+    assert not hasattr(m, "reconcile_locus_tags")
 
 
-def test_resolve_calls_refuses_two_kept_rows_on_one_locus(
-    monkeypatch: pytest.MonkeyPatch, bw25113: EcoliK12BW25113Genome
-) -> None:
-    monkeypatch.setattr(m, "MIN_RESOLVED_FRACTION", 0.5)
+def test_classify_calls_refuses_two_kept_rows_on_one_gene() -> None:
     calls = [_call("thrL", "essential"), _call("thrL", "essential", row=2)]
-    with pytest.raises(
-        m.DuplicateRecordError, match="TL: two kept rows on BW25113_0001"
-    ):
-        m.resolve_calls(bw25113, calls, label="synthetic")
-
-
-def test_unplaced_reasons_cover_collision_and_retirement(
-    monkeypatch: pytest.MonkeyPatch, bw25113: EcoliK12BW25113Genome
-) -> None:
-    """``thrL`` and ``ECK0001`` both resolve to BW25113_0001 (kept as given); ``yaaQ``
-    is retired; all three are dropped with their reason.
-    """
-    monkeypatch.setattr(m, "MIN_RESOLVED_FRACTION", 0.0)
-    calls = [
-        _call("thrL", "essential"),
-        _call("ECK0001", "essential", row=2),
-        _call("yaaQ", "essential", row=3),
-    ]
-    outcomes, _ = m.resolve_calls(bw25113, calls, label="synthetic")
-    assert [(o.drop_rule, o.reason) for o in outcomes] == [
-        (
-            "symbol_not_on_one_bw25113_locus",
-            "kept as given on collision with another resolving name",
-        ),
-        (
-            "symbol_not_on_one_bw25113_locus",
-            "kept as given on collision with another resolving name",
-        ),
-        ("symbol_not_on_one_bw25113_locus", "retired"),
-    ]
+    with pytest.raises(m.DuplicateRecordError, match="TL: two kept rows on thrL"):
+        m.classify_calls(calls)
 
 
 def test_build_drop_log_refuses_an_unaccounted_drop(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     outcome = m.RowOutcome(
-        call=_call("a", "essential"),
-        locus_tag=None,
-        symbol=None,
-        drop_rule="symbol_not_on_one_bw25113_locus",
-        reason="retired",
+        call=_call("a", "unclear"),
+        drop_rule="unclear_call_not_representable",
+        reason="ratio -10.0",
     )
     log = m.build_drop_log("x", [outcome])
     assert (log.source_records, log.kept_records, log.dropped_records) == (1, 0, 1)
@@ -404,20 +360,6 @@ def test_check_replicon_refuses_another_chromosome(
     monkeypatch.setattr(m, "PAPER_REPLICON", "NC_000913.3")
     with pytest.raises(ValueError, match=r"sit on \['CP009273.1'\]"):
         m.check_replicon(bw25113)
-
-
-def test_canonical_symbol_falls_back_to_the_tag(bw25113: EcoliK12BW25113Genome) -> None:
-    """A locus without a symbol keeps its tag; a symbol that resolves elsewhere too."""
-    assert m.canonical_symbol(bw25113, "BW25113_0002") == "thrA"
-    loci = bw25113.genbank.loci
-    original = loci["BW25113_0002"]
-    loci["BW25113_0002"] = original.model_copy(update={"symbol": None})
-    try:
-        assert m.canonical_symbol(bw25113, "BW25113_0002") == "BW25113_0002"
-        loci["BW25113_0002"] = original.model_copy(update={"symbol": "thrL"})
-        assert m.canonical_symbol(bw25113, "BW25113_0002") == "BW25113_0002"
-    finally:
-        loci["BW25113_0002"] = original
 
 
 # --------------------------------------------------------------------------- #
@@ -460,16 +402,14 @@ def test_perturbation_field_gaps_name_real_leaf_fields() -> None:
     assert fields <= set(TransposonInsertionPerturbation.model_fields)
 
 
-def _kept(gene: str, tag: str, call: m.EssentialityCall) -> m.RowOutcome:
-    return m.RowOutcome(
-        call=_call(gene, call), locus_tag=tag, symbol=gene, drop_rule=None, reason=None
-    )
+def _kept(gene: str, call: m.EssentialityCall) -> m.RowOutcome:
+    return m.RowOutcome(call=_call(gene, call), drop_rule=None, reason=None)
 
 
 def test_build_experiment_is_one_gene_level_insertion() -> None:
     experiment = m.build_experiment(
         "GeneEssentialityGoodall2018Dataset",
-        _kept("thrA", "BW25113_0002", "essential"),
+        _kept("thrA", "essential"),
         m.environment("LB"),
     )
     dumped = experiment.model_dump()
@@ -483,8 +423,8 @@ def test_build_experiment_is_one_gene_level_insertion() -> None:
             "perturbed_gene_name",
             "perturbation_type",
             "gene_namespace",
-            "state",
-            "mechanism_so_id",
+            "strain_label",
+            "identifier_kind",
             "transposon",
             "barcode",
             "insertion_position",
@@ -492,12 +432,12 @@ def test_build_experiment_is_one_gene_level_insertion() -> None:
             "library_pool",
         )
     } == {
-        "systematic_gene_name": "BW25113_0002",
+        "systematic_gene_name": "thrA",
         "perturbed_gene_name": "thrA",
-        "perturbation_type": "transposon_insertion",
+        "perturbation_type": "bacterial_released_transposon",
         "gene_namespace": "ecoli_k12_bw25113_locus_tag",
-        "state": "absent",
-        "mechanism_so_id": "SO:0001218",
+        "strain_label": "thrA",
+        "identifier_kind": m.IDENTIFIER_KIND,
         "transposon": "mini-Tn5",
         "barcode": None,
         "insertion_position": None,
@@ -505,7 +445,7 @@ def test_build_experiment_is_one_gene_level_insertion() -> None:
         "library_pool": None,
     }
     non_essential = m.build_experiment(
-        "x", _kept("thrA", "BW25113_0002", "non_essential"), m.environment("LB")
+        "x", _kept("thrA", "non_essential"), m.environment("LB")
     )
     assert non_essential.phenotype.is_essential is False
 
@@ -514,9 +454,7 @@ def test_evidence_is_the_tradis_call_with_the_rows_values() -> None:
     """#924: the 12-fold rule, the paper's definition, its low-mode caveat and the
     statistic definitions, with the row's call, index and ratio on a record only.
     """
-    record = m.build_experiment(
-        "x", _kept("thrA", "BW25113_0002", "essential"), m.environment("TL")
-    )
+    record = m.build_experiment("x", _kept("thrA", "essential"), m.environment("TL"))
     evidence = record.phenotype.evidence
     assert evidence.evidence_type is EssentialityEvidenceType.tradis_insertion_index
     assert evidence.evidence_class is EssentialityEvidenceClass.insertion_depletion
@@ -545,8 +483,6 @@ def test_evidence_is_the_tradis_call_with_the_rows_values() -> None:
 def test_build_experiment_refuses_a_dropped_row() -> None:
     dropped = m.RowOutcome(
         call=_call("hokC", "unclear", row=3),
-        locus_tag="BW25113_4412",
-        symbol="hokC",
         drop_rule="unclear_call_not_representable",
         reason="ratio 1.0",
     )
@@ -577,8 +513,8 @@ def test_build_seven_records_with_two_references_and_ledgers(
     presence_only_pins: list[Mapping[str, str]],
 ) -> None:
     assert presence_only_pins == [m.DATA_SHA256]
-    assert len(built) == 7
-    records = [built[i] for i in range(7)]
+    assert len(built) == 9
+    records = [built[i] for i in range(9)]
     tl_env = m.environment("TL").model_dump()
     lb_env = m.environment("LB").model_dump()
     observed = [
@@ -593,16 +529,19 @@ def test_build_seven_records_with_two_references_and_ledgers(
         ("TL", "thrL", True),
         ("TL", "thrA", False),
         ("TL", "yaaP", True),
+        ("TL", "ECK0005", False),
         ("TL", "proB", False),
         ("LB", "thrL", True),
         ("LB", "thrA", True),
         ("LB", "hokC", False),
+        ("LB", "ECK0005", False),
     ]
-    assert records[2]["experiment"]["genotype"]["perturbations"][0][
+    # the symbol on no single synthetic locus is a record like any other
+    assert records[3]["experiment"]["genotype"]["perturbations"][0][
         "systematic_gene_name"
-    ] == ("BW25113_0004")
+    ] == ("ECK0005")
     assert records[0]["reference"]["environment_reference"] == tl_env
-    assert records[6]["reference"]["environment_reference"] == lb_env
+    assert records[8]["reference"]["environment_reference"] == lb_env
     assert records[0]["reference"]["genome_reference"] == REFERENCE.model_dump()
     assert records[0]["publication"] == m.PUBLICATION.model_dump()
 
@@ -612,70 +551,26 @@ def test_build_seven_records_with_two_references_and_ledgers(
         drops["source_records"],
         drops["kept_records"],
         drops["dropped_records"],
-    ) == (12, 7, 5)
+    ) == (12, 9, 3)
     assert [(c["condition"], c["kept_records"]) for c in drops["conditions"]] == [
-        ("TL", 4),
-        ("LB", 3),
+        ("TL", 5),
+        ("LB", 4),
     ]
     assert [(r["rule"], r["n_records"]) for r in drops["rules"]] == [
-        ("symbol_not_on_one_bw25113_locus", 2),
-        ("unclear_call_not_representable", 3),
+        ("unclear_call_not_representable", 3)
     ]
     rule = json.loads((preprocess / "call_rule.json").read_text())
     assert rule[1]["moved_at_exact_log2_12"] == ["proB (row 6): ratio 3.59"]
     gaps = json.loads((preprocess / "perturbation_field_gaps.json").read_text())
     assert [g["field"] for g in gaps] == ["insertion_position", "insertion_strand"]
-    ledger = json.loads((preprocess / "identifier_reconciliation.json").read_text())
-    assert ledger["min_resolved_fraction"] == 0.8
-    assert ledger["reconciliation"]["ambiguous_kept"] == {
-        "ECK0005": ["BW25113_0005", "BW25113_0008"]
-    }
+    assert not (preprocess / "identifier_reconciliation.json").exists()
     calls = (preprocess / "calls.csv").read_text().splitlines()
     assert calls[0] == (
-        "condition,row,gene,insertion_index,log_likelihood_ratio,call,locus_tag,"
-        "symbol,drop_rule,record"
+        "condition,row,gene,insertion_index,log_likelihood_ratio,call,drop_rule,record"
     )
-    assert calls[1] == "TL,1,thrL,0.0,-20.0,essential,BW25113_0001,thrL,,0"
-    assert calls[3] == (
-        "TL,3,hokC,0.06,1.0,unclear,BW25113_4412,hokC,unclear_call_not_representable,"
-    )
-    assert calls[12] == (
-        "LB,6,proB,0.03,3.59,unclear,BW25113_0005,proB,unclear_call_not_representable,"
-    )
-
-
-def test_build_stops_below_the_resolution_threshold(
-    synthetic: Path, bw25113: EcoliK12BW25113Genome
-) -> None:
-    with pytest.raises(LocusTagResolutionError, match=r"5 of 6 names \(0\.833\)"):
-        m.GeneEssentialityGoodall2018Dataset(root=str(synthetic), ecoli_genome=bw25113)
-    assert not (synthetic / "processed" / "lmdb").exists()
-
-
-def test_build_refuses_a_genome_of_another_strain(
-    synthetic: Path, monkeypatch: pytest.MonkeyPatch, bw25113: EcoliK12BW25113Genome
-) -> None:
-    monkeypatch.setattr(
-        m, "BACTERIAL_ASSEMBLY_SETS", {"BW25113": "ecoli_K12_MG1655_ASM584v2"}
-    )
-    with pytest.raises(ValueError, match="needs the ecoli_K12_MG1655_ASM584v2 genome"):
-        m.GeneEssentialityGoodall2018Dataset(root=str(synthetic), ecoli_genome=bw25113)
-
-
-def test_build_loads_the_default_genome_on_a_direct_run(
-    synthetic: Path, monkeypatch: pytest.MonkeyPatch, bw25113: EcoliK12BW25113Genome
-) -> None:
-    monkeypatch.setattr(m, "MIN_RESOLVED_FRACTION", 0.8)
-    asked: list[tuple[str, str]] = []
-
-    def default(host: str, strain: str) -> EcoliK12BW25113Genome:
-        asked.append((host, strain))
-        return bw25113
-
-    monkeypatch.setattr(m, "bacterial_genome", default)
-    dataset = m.GeneEssentialityGoodall2018Dataset(root=str(synthetic))
-    assert asked == [("ecoli", "BW25113")]
-    assert len(dataset) == 7
+    assert calls[1] == "TL,1,thrL,0.0,-20.0,essential,,0"
+    assert calls[3] == "TL,3,hokC,0.06,1.0,unclear,unclear_call_not_representable,"
+    assert calls[12] == "LB,6,proB,0.03,3.59,unclear,unclear_call_not_representable,"
 
 
 def test_build_refuses_a_call_off_the_threshold(
@@ -684,26 +579,26 @@ def test_build_refuses_a_call_off_the_threshold(
     rows = [*TL_ROWS[:-1], ("proB", 0.25, 3.0, False, True, False)]
     _write_raw(synthetic / "raw", tl=rows)
     with pytest.raises(m.CallRuleError, match="si2.xlsx: 1 calls disagree"):
-        m.GeneEssentialityGoodall2018Dataset(root=str(synthetic), ecoli_genome=bw25113)
+        m.GeneEssentialityGoodall2018Dataset(root=str(synthetic))
 
 
 def test_build_refuses_table_s1_counts_other_than_the_paper(
-    synthetic: Path, monkeypatch: pytest.MonkeyPatch, bw25113: EcoliK12BW25113Genome
+    synthetic: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr(m, "EXPECTED_TL_COUNTS", m.SOURCED_VALUES["tl_counts"].value)
     with pytest.raises(m.CallCountError, match="the paper states"):
-        m.GeneEssentialityGoodall2018Dataset(root=str(synthetic), ecoli_genome=bw25113)
+        m.GeneEssentialityGoodall2018Dataset(root=str(synthetic))
 
 
 def test_process_verifies_the_real_pins(
-    synthetic: Path, monkeypatch: pytest.MonkeyPatch, bw25113: EcoliK12BW25113Genome
+    synthetic: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """With the real check back, the synthetic Table S1 is refused by its pin."""
     from torchcell.data import verify_raw_files
 
     monkeypatch.setattr(m, "verify_raw_files", verify_raw_files)
     with pytest.raises(RawSha256MismatchError, match=m.DATA_SHA256[m.TABLE_S1]):
-        m.GeneEssentialityGoodall2018Dataset(root=str(synthetic), ecoli_genome=bw25113)
+        m.GeneEssentialityGoodall2018Dataset(root=str(synthetic))
 
 
 def test_unused_hooks_are_inert(built: m.GeneEssentialityGoodall2018Dataset) -> None:
@@ -719,7 +614,11 @@ def test_unused_hooks_are_inert(built: m.GeneEssentialityGoodall2018Dataset) -> 
 # --------------------------------------------------------------------------- #
 # Verification on the hermetic build
 # --------------------------------------------------------------------------- #
-UNIVERSE = {locus.tag for locus in BW25113_LOCI}
+#: The verifier's L4 universe: the synthetic annotation's tags AND symbols, since the
+#: records are keyed by released symbols (ECK0005 is on no single locus: a finding).
+UNIVERSE = {locus.tag for locus in BW25113_LOCI} | {
+    locus.symbol for locus in BW25113_LOCI if locus.symbol
+}
 
 
 def _hermetic_report(
@@ -736,9 +635,8 @@ def _hermetic_report(
     return m.verify_records(
         records if records is not None else load_records(built.root),
         raw_calls=raw_calls,
-        resolve=bw25113.resolve_gene_name,
         universe=UNIVERSE,
-        expected_count=7,
+        expected_count=9,
     )
 
 
@@ -747,6 +645,13 @@ def test_verify_records_passes_the_hermetic_build(
 ) -> None:
     report = _hermetic_report(built, bw25113)
     assert report.passed, report.summary()
+    # ECK0005 is on no single synthetic locus: the L4 row reports it, never gates
+    (containment,) = [
+        r for r in report.results if r.name.startswith("gene_containment_")
+    ]
+    assert not containment.passed
+    assert containment.finding_class.value == "report"
+    assert containment.details["missing_examples"] == ["ECK0005"]
     names = [r.name for r in report.results]
     assert names[:6] == [
         "structural",
@@ -757,7 +662,7 @@ def test_verify_records_passes_the_hermetic_build(
         "table_s1_counts_equal_the_paper",
     ]
     assert "media_membership" in names
-    assert names[-1] == "gene_containment_bw25113_locus_tags"
+    assert names[-1] == "gene_containment_bw25113_annotation"
 
 
 def test_verify_records_fails_on_tampered_records(
@@ -784,7 +689,7 @@ def test_verify_records_fails_on_tampered_records(
     off = {**records[2], "experiment": {**records[2]["experiment"]}}
     perturbation = {
         **records[2]["experiment"]["genotype"]["perturbations"][0],
-        "systematic_gene_name": "BW25113_9999",
+        "systematic_gene_name": "yaaX",
         "perturbed_gene_name": "yaaX",
     }
     off["experiment"]["genotype"] = {"perturbations": [perturbation]}
@@ -795,7 +700,7 @@ def test_verify_records_fails_on_tampered_records(
         "count",
         "one_record_per_gene_and_condition",
         "calls_match_released_tables",
-        "gene_containment_bw25113_locus_tags",
+        "gene_containment_bw25113_annotation",
     } <= failed
     (l2,) = [r for r in report.results if r.name == "calls_match_released_tables"]
     problems = l2.details["problems"]
@@ -804,7 +709,7 @@ def test_verify_records_fails_on_tampered_records(
     assert any("yaaX: 0 table rows" in p for p in problems)
 
 
-def test_verify_records_flags_a_locus_the_row_does_not_resolve_to(
+def test_verify_records_flags_a_stored_identifier_that_is_not_the_rows_gene(
     built: m.GeneEssentialityGoodall2018Dataset, bw25113: EcoliK12BW25113Genome
 ) -> None:
     from torchcell.verification.runners import load_records
@@ -814,14 +719,14 @@ def test_verify_records_flags_a_locus_the_row_does_not_resolve_to(
     moved = {**record, "experiment": {**record["experiment"]}}
     perturbation = {
         **record["experiment"]["genotype"]["perturbations"][0],
-        "systematic_gene_name": "BW25113_0008",
+        "systematic_gene_name": "yaaX",
     }
     moved["experiment"]["genotype"] = {"perturbations": [perturbation]}
     report = _hermetic_report(built, bw25113, [moved, *records[1:]])
     (l2,) = [r for r in report.results if r.name == "calls_match_released_tables"]
     assert not l2.passed
     assert l2.details["problems"] == [
-        f"TL {_gene(record)}: resolves renamed BW25113_0001, stored BW25113_0008"
+        f"TL {_gene(record)}: table gene thrL, stored yaaX"
     ]
 
 
@@ -1039,7 +944,7 @@ def test_cli_build_and_verify(
 
     monkeypatch.setenv("DATA_ROOT", str(tmp_path))
     assert m.main(["build"]) == 0
-    assert capsys.readouterr().out.strip().endswith("len = 7")
+    assert capsys.readouterr().out.strip().endswith("len = 9")
 
     monkeypatch.setattr(m, "SOURCED_VALUES", {})
     monkeypatch.setattr(m, "bacterial_genome", lambda *a, **k: bw25113)
@@ -1052,7 +957,7 @@ def test_cli_build_and_verify(
     assert m.main(["verify"]) == 0
     out = capsys.readouterr().out
     assert "gene_essentiality_goodall2018: PASS (1 genome finding(s) reported" in out
-    assert "  [rp] L4 gene_containment_bw25113_locus_tags:" in out
+    assert "  [rp] L4 gene_containment_bw25113_annotation:" in out
 
 
 # --------------------------------------------------------------------------- #
@@ -1115,7 +1020,8 @@ def test_real_tables_follow_the_printed_threshold_and_the_paper_counts() -> None
 
 @pytest.mark.data
 def test_real_build_counts_and_hand_checked_rows() -> None:
-    """8,203 records = 8,626 rows - 106 multi-copy symbols - 317 unclear calls. degS
+    """8,309 records = 8,626 rows - 317 unclear calls; every released symbol keys a
+    record, the nine multi-copy insertion-sequence symbols included. degS
     (row 3176 of both tables; ratio 9.88 in S1, -5.74 in S4) is the paper's
     conditionally essential example: non-essential as plated, essential after LB.
     """
@@ -1124,10 +1030,12 @@ def test_real_build_counts_and_hand_checked_rows() -> None:
     drops = json.loads(
         Path(_built_root(), "preprocess", "dropped_records.json").read_text()
     )
-    assert (drops["source_records"], drops["kept_records"]) == (8626, 8203)
-    assert [r["n_records"] for r in drops["rules"]] == [106, 317]
+    assert (drops["source_records"], drops["kept_records"]) == (8626, 8309)
+    assert [(r["rule"], r["n_records"]) for r in drops["rules"]] == [
+        ("unclear_call_not_representable", 317)
+    ]
     records = load_records(_built_root())
-    assert len(records) == 8203
+    assert len(records) == 8309
     tl_env = m.environment("TL").model_dump()
     observed = {
         (
@@ -1146,14 +1054,15 @@ def test_real_build_passes_l0_to_l4() -> None:
 
 
 #: Read off ``si2.xlsx`` / ``si7.xlsx`` (openpyxl) and the BW25113 GenBank symbols:
-#: degS BW25113_3235, dnaA BW25113_3702, ttcC BW25113_4638 (a pseudogene), ftsK
-#: BW25113_0890 (non-essential as plated, unclear and dropped after LB).
+#: Keyed by the released symbol now: degS (BW25113_3235), dnaA (BW25113_3702), ttcC
+#: (BW25113_4638, a pseudogene), ftsK (BW25113_0890; non-essential as plated, unclear
+#: and dropped after LB).
 HAND_CHECKED: dict[tuple[str, str], bool] = {
-    ("TL", "BW25113_3235"): False,
-    ("LB", "BW25113_3235"): True,
-    ("TL", "BW25113_3702"): True,
-    ("LB", "BW25113_3702"): True,
-    ("TL", "BW25113_4638"): True,
-    ("LB", "BW25113_4638"): True,
-    ("TL", "BW25113_0890"): False,
+    ("TL", "degS"): False,
+    ("LB", "degS"): True,
+    ("TL", "dnaA"): True,
+    ("LB", "dnaA"): True,
+    ("TL", "ttcC"): True,
+    ("LB", "ttcC"): True,
+    ("TL", "ftsK"): False,
 }

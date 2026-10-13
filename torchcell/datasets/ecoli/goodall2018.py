@@ -25,19 +25,25 @@ time). ``LB``: the same library after 5 or 6 generations in LB broth at 37 C wit
 shaking; these cells passed the TL selection first, which ``Environment`` cannot state.
 
 STRAIN AND IDENTIFIERS. BW25113 (``SOURCED_VALUES["background_strain"]``), mapped to
-CP009273.1, the replicon of the ``ecoli_K12_BW25113_ASM75055v1`` set (checked at build
-time). ``Gene`` holds BW25113 GenBank gene symbols (``SOURCED_VALUES["gene_names"]``), so
-``reconcile_locus_tags`` resolves them at the gene-symbol layer; a name not on exactly one
-BW25113 locus (the multi-copy insertion-sequence symbols) is dropped, with its candidates
-ledgered.
+CP009273.1, the replicon of the ``ecoli_K12_BW25113_ASM75055v1`` set (checked by the
+verifier, which opens the genome; the build does not). ``Gene`` holds BW25113 GenBank
+gene symbols (``SOURCED_VALUES["gene_names"]``) and every record is stored under that
+symbol verbatim: the loader reads no annotation (the owner's rule of 2026-10-12: the
+data is the data, and the genome is a separate layer joined at modeling time). Before
+that rule the symbols went through ``reconcile_locus_tags`` and the nine multi-copy
+insertion-sequence symbols on no single BW25113 locus were dropped (106 rows over the
+two tables); they are records now, and the L4 genome-reference row reports them.
 
-GENOTYPE. One ``TransposonInsertionPerturbation`` per record, at the GENE level: the
-record stands for every insertion mutant of that gene in the pool. ``transposon`` is
-"mini-Tn5"; ``barcode`` is None because TraDIS has no per-strain barcode (the inline index
-marks a sequenced sample); ``insertion_position`` / ``insertion_strand`` are None because a
-gene-level record aggregates many insertions and the tables release no position. The leaf
-has no ``provenance_gaps`` field, so those absences are typed in
-``PERTURBATION_FIELD_GAPS`` and written to ``preprocess/perturbation_field_gaps.json``.
+GENOTYPE. One ``BacterialReleasedTransposonPerturbation`` per record, at the GENE level:
+the record stands for every insertion mutant of that gene in the pool.
+``systematic_gene_name`` and ``perturbed_gene_name`` are the table's ``Gene`` symbol,
+``strain_label`` is that same row label, ``identifier_kind`` says it is a BW25113
+GenBank gene symbol, ``transposon`` is "mini-Tn5"; ``barcode`` is None because TraDIS has
+no per-strain barcode (the inline index marks a sequenced sample);
+``insertion_position`` / ``insertion_strand`` are None because a gene-level record
+aggregates many insertions and the tables release no position. The leaf has no
+``provenance_gaps`` field, so those absences are typed in ``PERTURBATION_FIELD_GAPS``
+and written to ``preprocess/perturbation_field_gaps.json``.
 
 PHENOTYPE. ``GeneEssentialityPhenotype.is_essential`` is the released call (True for
 "essential", False for "non-essential"). Its ``evidence`` (#924) is a
@@ -91,10 +97,10 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import LB
 from torchcell.datamodels.schema import (
-    BACTERIAL_ASSEMBLY_SETS,
     AssemblyReferenceGenome,
     BacterialGeneEssentialityExperiment,
     BacterialGeneEssentialityExperimentReference,
+    BacterialReleasedTransposonPerturbation,
     Environment,
     EssentialityEvidenceClass,
     EssentialityEvidenceType,
@@ -111,15 +117,11 @@ from torchcell.datamodels.schema import (
     Publication,
     Temperature,
     TradisCall,
-    TransposonInsertionPerturbation,
 )
 from torchcell.datasets.bacteria_common import (
-    LOCUS_TAG_PATTERNS,
     STRAIN_GENE_NAMESPACES,
-    LocusTagReconciliation,
     assembly_reference,
     bacterial_genome,
-    reconcile_locus_tags,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.literature.manifest import (
@@ -130,7 +132,6 @@ from torchcell.literature.manifest import (
     RetrievalRecord,
 )
 from torchcell.literature.provenance import run_retriever
-from torchcell.sequence.genome.base import GeneNameResolution, GeneNameStatus
 from torchcell.sequence.genome.ecoli.k12 import EcoliK12Genome, EcoliK12StrainName
 from torchcell.verification.levels import l0_structural, l1_count
 from torchcell.verification.report import (
@@ -468,7 +469,8 @@ EVIDENCE_STATEMENTS: tuple[EssentialityStatement, ...] = (
 #: one BW25113 locus the build stops. The paper states the names ARE BW25113 annotation
 #: symbols, so a lower fraction would mean the wrong annotation, not a few multi-copy
 #: insertion-sequence names (measured 4,260 of 4,269 = 0.9979).
-MIN_RESOLVED_FRACTION = 0.99
+#: What ``systematic_gene_name`` is on every record, as the tables write it.
+IDENTIFIER_KIND = "gene symbol, as the Table S1 and S4 Gene column writes it"
 
 _PAPER_LOOKED_IN = Provenance(
     source_uri=PAPER_MD,
@@ -835,29 +837,21 @@ def call_counts(calls: Sequence[GeneCall]) -> dict[str, int]:
 # --------------------------------------------------------------------------- #
 # Identifiers and the retention ledger
 # --------------------------------------------------------------------------- #
-DropRuleName = Literal[
-    "symbol_not_on_one_bw25113_locus", "unclear_call_not_representable"
-]
+DropRuleName = Literal["unclear_call_not_representable"]
 DROP_RULE_DESCRIPTIONS: dict[DropRuleName, str] = {
-    "symbol_not_on_one_bw25113_locus": "the table's gene name does not resolve to exactly "
-    "one BW25113 GenBank locus (ambiguous over several loci, retired, or shared with "
-    "another resolving name), so no locus tag of the pinned namespace names the "
-    "disrupted gene; each item gives the row and the candidates",
     "unclear_call_not_representable": "the released call is 'Unclear' (ratio within "
     "+/-3.6); GeneEssentialityPhenotype stores a boolean is_essential and refuses a "
     "TraDIS 'unclear' call, which is graded, not boolean; the row's values stay in "
-    "preprocess/calls.csv",
+    "preprocess/calls.csv"
 }
 
 
 class RowOutcome(BaseModel):
-    """What happened to one table row: its locus and record, or the rule that dropped it."""
+    """What happened to one table row: a record under its gene, or the rule that dropped it."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     call: GeneCall
-    locus_tag: str | None
-    symbol: str | None
     drop_rule: DropRuleName | None
     reason: str | None
 
@@ -893,24 +887,6 @@ class DropLog(BaseModel):
     rules: list[DropRule]
 
 
-class IdentifierLedger(BaseModel):
-    """The reconciliation report of every distinct table name, plus the stop threshold."""
-
-    reconciliation: LocusTagReconciliation
-    min_resolved_fraction: float
-
-
-def canonical_symbol(genome: EcoliK12Genome, tag: str) -> str:
-    """The annotation's own gene symbol of ``tag`` when it resolves back to ``tag``,
-    else the tag itself, so the stored pair always round-trips through the resolver.
-    """
-    symbol = genome.genbank.loci[tag].symbol
-    if symbol is None:
-        return tag
-    resolution = genome.resolve_gene_name(symbol)
-    return symbol if resolution.systematic_name == tag else tag
-
-
 def check_replicon(genome: EcoliK12Genome) -> None:
     """Refuse a genome whose loci are not all on the replicon the paper mapped to."""
     replicons = sorted({locus.replicon for locus in genome.genbank.loci.values()})
@@ -921,71 +897,35 @@ def check_replicon(genome: EcoliK12Genome) -> None:
         )
 
 
-def _unplaced_reason(name: str, report: LocusTagReconciliation) -> str:
-    """Why a kept-as-given name is on no single locus."""
-    if name in report.ambiguous_kept:
-        return "ambiguous over " + ", ".join(report.ambiguous_kept[name])
-    if name in report.kept_on_collision:
-        return "kept as given on collision with another resolving name"
-    return "retired"
+def classify_calls(calls: Sequence[GeneCall]) -> list[RowOutcome]:
+    """Decide each row's outcome. One rule: an unclear call has no boolean field.
 
-
-def resolve_calls(
-    genome: EcoliK12Genome, calls: Sequence[GeneCall], *, label: str
-) -> tuple[list[RowOutcome], LocusTagReconciliation]:
-    """Reconcile every row's gene name on ``genome`` and decide each row's outcome.
-
-    Stops (``LocusTagResolutionError``) below ``MIN_RESOLVED_FRACTION`` of distinct
-    names. Rules, first match wins: a name off the BW25113 namespace
-    (``symbol_not_on_one_bw25113_locus``), then an unclear call
-    (``unclear_call_not_representable``). Kept rows carry the locus tag and the
-    annotation's own symbol.
+    No annotation is read; every row's ``Gene`` symbol is its record's identifier. Two
+    kept rows under one gene in one condition refuse the build (``DuplicateRecordError``).
     """
-    names = pd.Series([c.gene for c in calls], dtype=object)
-    stored, report = reconcile_locus_tags(genome, names, label=label)
-    report.require_resolved(MIN_RESOLVED_FRACTION)
-    pattern = LOCUS_TAG_PATTERNS[report.gene_namespace]
     outcomes: list[RowOutcome] = []
-    for call, tag in zip(calls, stored.tolist(), strict=True):
-        if pattern.match(tag) is None:
-            outcomes.append(
-                RowOutcome(
-                    call=call,
-                    locus_tag=None,
-                    symbol=None,
-                    drop_rule="symbol_not_on_one_bw25113_locus",
-                    reason=_unplaced_reason(call.gene, report),
-                )
-            )
-            continue
-        symbol = canonical_symbol(genome, tag)
+    for call in calls:
         if call.call == "unclear":
             outcomes.append(
                 RowOutcome(
                     call=call,
-                    locus_tag=tag,
-                    symbol=symbol,
                     drop_rule="unclear_call_not_representable",
                     reason=f"ratio {call.log_likelihood_ratio}",
                 )
             )
             continue
-        outcomes.append(
-            RowOutcome(
-                call=call, locus_tag=tag, symbol=symbol, drop_rule=None, reason=None
-            )
-        )
+        outcomes.append(RowOutcome(call=call, drop_rule=None, reason=None))
     seen: set[tuple[str, str]] = set()
     for outcome in outcomes:
-        if outcome.drop_rule is not None or outcome.locus_tag is None:
+        if outcome.drop_rule is not None:
             continue
-        key = (outcome.call.condition, outcome.locus_tag)
+        key = (outcome.call.condition, outcome.call.gene)
         if key in seen:
             raise DuplicateRecordError(
-                f"{outcome.call.condition}: two kept rows on {outcome.locus_tag}"
+                f"{outcome.call.condition}: two kept rows on {outcome.call.gene}"
             )
         seen.add(key)
-    return outcomes, report
+    return outcomes
 
 
 def drop_rules(outcomes: Sequence[RowOutcome]) -> list[DropRule]:
@@ -993,9 +933,7 @@ def drop_rules(outcomes: Sequence[RowOutcome]) -> list[DropRule]:
     rules: list[DropRule] = []
     for name, description in DROP_RULE_DESCRIPTIONS.items():
         items = [
-            f"{o.call.condition} row {o.call.row} {o.call.gene}"
-            + (f" ({o.locus_tag})" if o.locus_tag is not None else "")
-            + f": {o.reason}"
+            f"{o.call.condition} row {o.call.row} {o.call.gene}: {o.reason}"
             for o in outcomes
             if o.drop_rule == name
         ]
@@ -1100,14 +1038,16 @@ def environment(condition: ConditionKey) -> Environment:
     )
 
 
-def insertion_genotype(locus_tag: str, symbol: str) -> Genotype:
-    """The gene-level transposon disruption of one BW25113 locus."""
+def insertion_genotype(gene: str) -> Genotype:
+    """The gene-level transposon disruption of one gene, under its released symbol."""
     return Genotype(
         perturbations=[
-            TransposonInsertionPerturbation(
-                systematic_gene_name=locus_tag,
-                perturbed_gene_name=symbol,
+            BacterialReleasedTransposonPerturbation(
+                systematic_gene_name=gene,
+                perturbed_gene_name=gene,
                 gene_namespace=STRAIN_GENE_NAMESPACES["BW25113"],
+                strain_label=gene,
+                identifier_kind=IDENTIFIER_KIND,
                 transposon=TRANSPOSON,
             )
         ]
@@ -1139,15 +1079,11 @@ def build_experiment(
     dataset_name: str, outcome: RowOutcome, env: Environment
 ) -> BacterialGeneEssentialityExperiment:
     """The record of one kept row: essential is True, non-essential is False."""
-    if (
-        outcome.drop_rule is not None
-        or outcome.locus_tag is None
-        or outcome.symbol is None
-    ):
+    if outcome.drop_rule is not None:
         raise ValueError(f"row {outcome.call.row} was dropped; it has no record")
     return BacterialGeneEssentialityExperiment(
         dataset_name=dataset_name,
-        genotype=insertion_genotype(outcome.locus_tag, outcome.symbol),
+        genotype=insertion_genotype(outcome.call.gene),
         environment=env,
         phenotype=GeneEssentialityPhenotype(
             is_essential=outcome.call.call == "essential",
@@ -1187,11 +1123,9 @@ class GeneEssentialityGoodall2018Dataset(ExperimentDataset):
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
-        ecoli_genome: EcoliK12Genome | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize; ``ecoli_genome`` is injected by the build entry points."""
-        self.ecoli_genome = ecoli_genome
+        """Initialize. No genome parameter: the loader reads no annotation."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -1235,20 +1169,6 @@ class GeneEssentialityGoodall2018Dataset(ExperimentDataset):
     def _raw(self, name: str) -> str:
         return osp.join(self.raw_dir, name)
 
-    def _genome(self) -> EcoliK12Genome:
-        """The injected genome, or the reference strain's default cache (a direct run);
-        a genome of another assembly set is refused.
-        """
-        if self.ecoli_genome is None:
-            self.ecoli_genome = bacterial_genome("ecoli", self.REFERENCE_STRAIN)
-        expected = BACTERIAL_ASSEMBLY_SETS[self.REFERENCE_STRAIN]
-        if self.ecoli_genome.ASSEMBLY_SET != expected:
-            raise ValueError(
-                f"{type(self).__name__} needs the {expected} genome, got "
-                f"{self.ecoli_genome.ASSEMBLY_SET}"
-            )
-        return self.ecoli_genome
-
     @post_process
     def process(self) -> None:
         """Parse Tables S1 and S4 into per-gene, per-condition records + LMDB."""
@@ -1271,24 +1191,20 @@ class GeneEssentialityGoodall2018Dataset(ExperimentDataset):
                 f"{TABLE_S1} counts {tl_counts}, the paper states {EXPECTED_TL_COUNTS}"
             )
 
-        genome = self._genome()
-        check_replicon(genome)
-        outcomes, report = resolve_calls(
-            genome, calls, label=f"{self.name} Table S1 and S4 gene names"
-        )
+        outcomes = classify_calls(calls)
         drop_log = build_drop_log(self.name, outcomes)
         kept = [o for o in outcomes if o.drop_rule is None]
         log.info(
-            "Goodall 2018: %d table rows -> %d records; dropped %s; name statuses %s",
+            "Goodall 2018: %d table rows -> %d records under their released symbols; "
+            "dropped %s",
             drop_log.source_records,
             drop_log.kept_records,
             {r.rule: r.n_records for r in drop_log.rules},
-            {s.value: n for s, n in report.status_histogram.items()},
         )
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
-        self._write_ledgers(drop_log, report, checks, outcomes)
+        self._write_ledgers(drop_log, checks, outcomes)
 
         environments = {spec.key: environment(spec.key) for spec in CONDITIONS}
         genome_reference = assembly_reference(self.REFERENCE_STRAIN)
@@ -1314,21 +1230,14 @@ class GeneEssentialityGoodall2018Dataset(ExperimentDataset):
     def _write_ledgers(
         self,
         drop_log: DropLog,
-        report: LocusTagReconciliation,
         checks: Sequence[CallRuleCheck],
         outcomes: Sequence[RowOutcome],
     ) -> None:
-        """The drop log, identifier ledger, call-rule checks, per-row table (with each
-        kept row's LMDB index) and the typed absences of the transposon leaf's
-        coordinate fields.
+        """The drop log, call-rule checks, per-row table (with each kept row's LMDB
+        index) and the typed absences of the transposon leaf's coordinate fields.
         """
         out = Path(self.preprocess_dir)
         (out / "dropped_records.json").write_text(drop_log.model_dump_json(indent=2))
-        (out / "identifier_reconciliation.json").write_text(
-            IdentifierLedger(
-                reconciliation=report, min_resolved_fraction=MIN_RESOLVED_FRACTION
-            ).model_dump_json(indent=2)
-        )
         (out / "call_rule.json").write_text(
             json.dumps([check.model_dump() for check in checks], indent=2)
         )
@@ -1353,8 +1262,6 @@ class GeneEssentialityGoodall2018Dataset(ExperimentDataset):
                     "insertion_index": o.call.insertion_index,
                     "log_likelihood_ratio": o.call.log_likelihood_ratio,
                     "call": o.call.call,
-                    "locus_tag": o.locus_tag,
-                    "symbol": o.symbol,
                     "drop_rule": o.drop_rule,
                     "record": record,
                 }
@@ -1439,10 +1346,9 @@ def _l2_calls_match_the_tables(
     records: Sequence[Record],
     conditions: Sequence[ConditionKey | None],
     raw_calls: Mapping[ConditionKey, Sequence[GeneCall]],
-    resolve: Callable[[str], GeneNameResolution],
 ) -> LevelResult:
     """L2, independent of the build path: each record's call equals its table row's,
-    found by the stored symbol, and the row's name resolves to the stored locus.
+    found by the stored symbol, and the stored identifier IS the row's gene.
     """
     by_name: dict[tuple[str, str], list[GeneCall]] = {}
     for key, table in raw_calls.items():
@@ -1464,14 +1370,9 @@ def _l2_calls_match_the_tables(
         held = (ev["tradis_call"], ev["insertion_index"], ev["log_likelihood_ratio"])
         if held != (row.call, row.insertion_index, row.log_likelihood_ratio):
             problems.append(f"{condition} {symbol}: evidence {held}")
-        resolution = resolve(row.gene)
-        if resolution.systematic_name != perturbation["systematic_gene_name"] or (
-            resolution.status
-            not in (GeneNameStatus.RENAMED, GeneNameStatus.NON_GENE_FEATURE)
-        ):
+        if perturbation["systematic_gene_name"] != row.gene:
             problems.append(
-                f"{condition} {symbol}: resolves {resolution.status.value} "
-                f"{resolution.systematic_name}, stored "
+                f"{condition} {symbol}: table gene {row.gene}, stored "
                 f"{perturbation['systematic_gene_name']}"
             )
     return LevelResult(
@@ -1555,10 +1456,10 @@ def _l4_containment(records: Sequence[Record], universe: set[str]) -> LevelResul
     missing = sorted(disrupted - universe)
     return LevelResult(
         level=Level.L4,
-        name="gene_containment_bw25113_locus_tags",
+        name="gene_containment_bw25113_annotation",
         passed=bool(disrupted) and not missing,
-        message=f"{len(disrupted) - len(missing)} of {len(disrupted)} disrupted loci "
-        "are BW25113 GenBank gene rows",
+        message=f"{len(disrupted) - len(missing)} of {len(disrupted)} released gene "
+        "symbols are a symbol or tag of the BW25113 GenBank annotation",
         details={
             "n_disrupted": len(disrupted),
             "n_universe": len(universe),
@@ -1571,13 +1472,12 @@ def verify_records(
     records: Sequence[Record],
     *,
     raw_calls: Mapping[ConditionKey, Sequence[GeneCall]],
-    resolve: Callable[[str], GeneNameResolution],
     universe: set[str],
     expected_count: int,
     dataset_name: str = "gene_essentiality_goodall2018",
 ) -> VerificationReport:
-    """The L0-L4 gate over built records, given the re-read tables, the BW25113
-    resolver and the BW25113 gene universe.
+    """The L0-L4 gate over built records, given the re-read tables and the BW25113
+    annotation's symbols and tags as the L4 universe (a genome-reference finding).
 
     The shared rules (gap census, spelling, uncertainty, compound identity, media
     membership) run without a resolver: their canonical-name rule requires a CURRENT
@@ -1593,7 +1493,7 @@ def verify_records(
     report.add(l0_structural(records, _validate_record))
     report.add(l1_count(len(records), expected_count))
     report.add(_l1_one_record_per_gene_and_condition(records, conditions))
-    report.add(_l2_calls_match_the_tables(records, conditions, raw_calls, resolve))
+    report.add(_l2_calls_match_the_tables(records, conditions, raw_calls))
     report.add(_l3_call_rule(raw_calls))
     report.add(_l3_tl_counts(raw_calls))
     report.add(_l3_evidence_is_tradis_insertion_index(records))
@@ -1624,16 +1524,21 @@ def run_verification(data_root: str | None = None) -> VerificationReport:
         for spec in CONDITIONS
     }
     genome = bacterial_genome("ecoli", "BW25113", base)
+    check_replicon(genome)
     references = {
         json.dumps(r["reference"]["genome_reference"], sort_keys=True) for r in records
     }
     universe: set[str] = set()
     for ref in references:
         universe |= _gene_set_for_reference(json.loads(ref), base)
+    # the records are keyed by released gene symbols, so the annotation's own symbols
+    # join its tags in the universe; what is missing is a genome-reference finding
+    universe |= {
+        str(locus.symbol) for locus in genome.genbank.loci.values() if locus.symbol
+    }
     report = verify_records(
         records,
         raw_calls=raw_calls,
-        resolve=genome.resolve_gene_name,
         universe=universe,
         expected_count=drops.kept_records,
     )

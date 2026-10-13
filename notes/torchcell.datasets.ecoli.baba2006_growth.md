@@ -43,3 +43,7 @@ Baba et al. 2006 (Mol Syst Biol 2:2006.0008, doi:10.1038/msb4100050, `babaConstr
 | L3 | media_membership | 11,735 on a medium deriving from a library medium (2 distinct media) |
 | L3 | provenance_audit | 9 of 9 quotes verbatim in `paper/PMC1681482.1.txt` |
 | L4 | released_b_numbers_on_mg1655_annotation | 3,832 of 3,909 released b-numbers are MG1655 gene rows, 77 are not; a finding, never a gate (the records keep the released numbers) |
+
+## 2026.10.12 - Rebuilt on main after the rebase (slurm 4425)
+
+The dev store was rebuilt from the rebased tree of PR #1070 (snapshot `accd94cfb`, slurm 4425, `--retire-existing --verify`) and verifies PASS with the same counts and the same L0-L4 rows as job 4387 above; the build manifest now records that tree's schema closure.

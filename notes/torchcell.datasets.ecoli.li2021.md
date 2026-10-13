@@ -35,3 +35,7 @@ Li et al. 2021 (Microb Cell Fact 20:32, doi:10.1186/s12934-021-01526-1, `liFineT
 | L3 | flux_interval_and_gapped_reference | one measurement type; 0 incomplete intervals; 3 of 3 references carry the control-map gap |
 | L3 | provenance_audit | 11 of 11 paper quotes verbatim in `paper.md` (sha256 `7d174c8e...`) |
 | L4 | perturbed_locus_in_bw25113_annotation | 1 of 1 keyed locus (`BW25113_1852`) is a BW25113 gene row; a finding, never a gate |
+
+## 2026.10.12 - Rebuilt on main after the rebase (slurm 4425)
+
+The dev store was rebuilt from the rebased tree of PR #1070 (snapshot `accd94cfb`, slurm 4425, `--retire-existing --verify`) and verifies PASS with the same counts and the same L0-L4 rows as job 4387 above; the build manifest now records that tree's schema closure.

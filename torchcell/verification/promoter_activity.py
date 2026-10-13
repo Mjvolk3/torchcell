@@ -197,11 +197,9 @@ def verify_promoter_activity_dataset_streaming(
     never materialized. L4 (gene-universe overlap with the host's other datasets) is
     asserted by the caller across datasets.
     """
-    from pydantic import TypeAdapter
+    from torchcell.verification.common import declared_first_union_validator
 
-    from torchcell.datamodels.schema import ExperimentType
-
-    validate: Callable[[Any], object] = TypeAdapter(ExperimentType).validate_python
+    validate: Callable[[Any], object] = declared_first_union_validator()
 
     report = VerificationReport(dataset_name=dataset_name, provenance=provenance)
     report.add(l0_structural_streaming(records(), validate))

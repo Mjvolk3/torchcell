@@ -33,6 +33,7 @@ from typing import Any
 from torchcell.verification.common import (
     GeneNameResolver,
     SharedRecordRules,
+    declared_first_union_validator,
     declared_member_validator,
     key_digest,
 )
@@ -234,11 +235,7 @@ def verify_fitness_dataset(
     canonical-name rule; without them the caller owns L4 (:func:`fitness_gene_set` is the
     overlap key).
     """
-    from pydantic import TypeAdapter
-
-    from torchcell.datamodels.schema import ExperimentType
-
-    validate: Callable[[Any], object] = TypeAdapter(ExperimentType).validate_python
+    validate: Callable[[Any], object] = declared_first_union_validator()
 
     report = VerificationReport(dataset_name=dataset_name, provenance=provenance)
     report.add(l0_structural((rec["experiment"] for rec in records), validate))

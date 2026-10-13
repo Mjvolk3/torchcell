@@ -301,3 +301,29 @@ def test_the_records_factory_is_called_once_per_pass_not_materialized() -> None:
     )
     assert report.passed is True
     assert calls == 7
+
+
+def test_promoter_l0_keeps_the_union_report_with_the_declared_member_first(
+    monkeypatch: Any,
+) -> None:
+    """The streaming report, a failing record included, is the union-validated report."""
+    from pydantic import TypeAdapter
+
+    import torchcell.verification.common as common
+    from torchcell.datamodels.schema import ExperimentType
+
+    records = [_record(1.0, 1.0), _record(2.0, 2.0)]
+    broken = _record(3.0, 3.0)
+    broken["experiment"]["genotype"]["perturbations"][0]["copy_number"] = "many"
+    records.append(broken)
+    declared_first = _run(records).model_dump_json()
+    built: list[str] = []
+
+    def union_validator() -> Any:
+        built.append("union")
+        return TypeAdapter(ExperimentType).validate_python
+
+    monkeypatch.setattr(common, "declared_first_union_validator", union_validator)
+    assert _run(records).model_dump_json() == declared_first
+    assert built == ["union"]
+    assert not _row(_run(records), "structural").passed

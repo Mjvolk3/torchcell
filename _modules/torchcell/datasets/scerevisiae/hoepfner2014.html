@@ -123,51 +123,51 @@
 <span class="sd">compounds (&gt;40M data points), each compound profiled in duplicate at (or near) its</span>
 <span class="sd">S. cerevisiae IC30.</span>
 
-<span class="sd">EVERY RELEASED COMPOUND IS STORED (2026.10.12, the data is the data). About 92% of the</span>
-<span class="sd">profiled compounds are PROPRIETARY Novartis ``CMBxxx`` entries with no released structure</span>
-<span class="sd">(paper.md line 110: "In addition to 1641 proprietary compounds (named CMBxxx), we included</span>
-<span class="sd">135 reference compounds ... Table S1"). They are released measurements of an unidentified</span>
-<span class="sd">compound, so every sensitivity column of both deposited matrices is stored except the</span>
-<span class="sd">CMB4019 condition below: 1,851 CMB ids, 2,953 HIP + 2,920 HOP columns. Until 2026.10.12 an</span>
-<span class="sd">``encodable_filter`` built a column only for a CMB id with a released SMILES, which held</span>
-<span class="sd">out 1,702 CMB ids, 2,650 HIP + 2,619 HOP columns and 26,992,230 records; that filter is</span>
-<span class="sd">removed, and whether a compound is featurizable is a modeling-time question.</span>
+<span class="sd">ENCODABLE COMPOUNDS ONLY (build filter): ~92% of the profiled compounds are PROPRIETARY</span>
+<span class="sd">Novartis ``CMBxxx`` entries with no released structure -- black-box perturbations no</span>
+<span class="sd">molecular encoder can represent. This loader keeps ONLY the compounds with a released</span>
+<span class="sd">SMILES in ``Table_S1.xls`` (152 of the 153 CMB rows the table carries; 150 of those CMB</span>
+<span class="sd">ids appear in a kept HIP column and 149 in a kept HOP column), so every stored</span>
+<span class="sd">(ORF, compound) record is featurisable by the cell graph transformer. The full atlas is</span>
+<span class="sd">recoverable by removing the ``smiles is None`` skip in ``_column_meta``. Provenance:</span>
+<span class="sd">paper.md line 110 ("In addition to 1641 proprietary compounds (named CMBxxx), we included</span>
+<span class="sd">135 reference compounds ... Table S1"); analysis in</span>
+<span class="sd">``experiments/017-hoepfner-background-mutations`` (``compound_encodability.json``). The</span>
+<span class="sd">exclusion is a measured ledger entry (``encodable_filter``): 1,702 of the 1,852 deposited</span>
+<span class="sd">CMB ids, 2,650 HIP + 2,619 HOP columns, 15,263,802 HIP + 11,728,428 HOP cells of rows that</span>
+<span class="sd">pass the ORF and detection rules (``experiments/036-dataset-fixes-before-kg-build/scripts/</span>
+<span class="sd">hoepfner2014_inputs.py``).</span>
 
-<span class="sd">COMPOUND IDENTITY -- the compound is keyed by structure where one exists, never by a</span>
-<span class="sd">tagged label. The resolver is called with the CLEAN released label (the Table S1 common</span>
-<span class="sd">name, else ``CMB&lt;id&gt;``) and the released Table S1 SMILES when there is one, so the stored</span>
-<span class="sd">``Compound`` carries the curated table's canonical name and its InChIKey / ChEBI id /</span>
-<span class="sd">PubChem CID. Where no curated row exists the InChIKey is DERIVED from the Table S1 SMILES</span>
-<span class="sd">with ``inchikey_from_smiles`` (RDKit); a curated row always wins, because the two routes</span>
-<span class="sd">measurably disagree (concanamycin A's curated PubChem key and its SMILES-derived key</span>
-<span class="sd">differ in the stereo block). A compound with neither (a proprietary CMB id with no</span>
-<span class="sd">released SMILES, and CMB409 Boromycin, whose released SMILES RDKit 2026.03.6 cannot parse)</span>
-<span class="sd">is STORED under its released label with the typed ``inchikey`` gap ``resolved_compound``</span>
-<span class="sd">attaches, its released SMILES carried verbatim on ``Compound.smiles`` when there is one,</span>
-<span class="sd">and its released dose and vehicle exactly as every other column. The ledger's</span>
-<span class="sd">``compound_identity_gaps`` lists each such CMB id with its columns and records per arm.</span>
-<span class="sd">Measured on the deposited headers: 1,703 gapped CMB ids, 148 with an InChIKey (147</span>
-<span class="sd">distinct keys: CMB 244 and CMB 1818 are two fermentation batches of concanamycin A and</span>
-<span class="sd">correctly merge onto one key), 1,849 distinct stored compound names.</span>
+<span class="sd">COMPOUND IDENTITY -- the compound is keyed by structure, never by a tagged label. The</span>
+<span class="sd">resolver is called with the CLEAN common name (or ``CMB&lt;id&gt;`` for a proprietary compound</span>
+<span class="sd">whose structure WAS released), so the stored ``Compound`` carries the curated table's</span>
+<span class="sd">canonical name and its InChIKey / ChEBI id / PubChem CID. Where no curated row exists the</span>
+<span class="sd">InChIKey is DERIVED from the Table S1 SMILES with ``inchikey_from_smiles`` (RDKit); a</span>
+<span class="sd">curated row always wins, because the two routes measurably disagree (concanamycin A's</span>
+<span class="sd">curated PubChem key and its SMILES-derived key differ in the stereo block). Measured over</span>
+<span class="sd">the 150 kept CMB ids: 149 carry a structure identifier, 148 distinct InChIKeys (CMB 244</span>
+<span class="sd">and CMB 1818 are two fermentation batches of concanamycin A and correctly merge onto one</span>
+<span class="sd">key).</span>
 
-<span class="sd">RECORDS STORED AND HELD OUT. Every scored cell of a stored column is a record; a blank</span>
-<span class="sd">cell is not a value. Measured in-process on the raw matrices with this module's column</span>
-<span class="sd">census and row reader (2026.10.12): 30,308,574 records, HIP 17,104,778 over 2,953 columns</span>
-<span class="sd">and 5,869 rows, HOP 13,203,796 over 2,920 columns and 4,970 rows, against 3,083,827</span>
-<span class="sd">before. Two rules still hold cells out, and both are counted in</span>
-<span class="sd">``&lt;root&gt;/dropped_records.json`` (whose ``accounting`` proves scored cells = stored + held</span>
-<span class="sd">out per arm): ``NOT_ORF_SHAPED_RULE`` (a released token the ``GenePerturbation`` pattern</span>
-<span class="sd">rejects; measured 0 scored cells, the four ``R00x0`` tokens and ``YBR160W_AS`` carry no</span>
-<span class="sd">score) and the CMB4019 exclusion (6 columns, HIP 17,397 + HOP 13,623 scored cells over</span>
-<span class="sd">every row).</span>
+<span class="sd">RECORDS DROPPED -- rule: a column is dropped when its compound carries NO structure</span>
+<span class="sd">identifier after resolution (no curated identifier, and no RDKit-parseable released</span>
+<span class="sd">SMILES). Measured: ONE compound, CMB409 "Boromycin", whose released SMILES RDKit</span>
+<span class="sd">2026.03.6 cannot parse (boron cage), 2 columns. The ORF rule below removes 30 rows per</span>
+<span class="sd">assay; the DETECTION rule removes 72 HIP rows (2,263 records) and 452 HOP rows (7,344</span>
+<span class="sd">records, 328 of the rows SGD-essential); the CMB4019 exclusion removes 6 columns (HIP</span>
+<span class="sd">17,289 + HOP 13,479 records). Measured over the real record path</span>
+<span class="sd">(``experiments/036-dataset-fixes-before-kg-build/scripts/hoepfner2014_inputs.py``):</span>
+<span class="sd">3,083,827 records over 602 sensitivity columns (HIP 1,739,664 over 302 + HOP 1,344,163</span>
+<span class="sd">over 300), against 3,124,319 before #506. The rules and the measured counts are written to</span>
+<span class="sd">``&lt;root&gt;/dropped_records.json`` at build time.</span>
 
 <span class="sd">SCREEN (study) IDENTITY -- ``EnvironmentResponsePhenotype.screen_id`` carries the</span>
 <span class="sd">deposited study number. It is a real batch covariate, *"&lt;Study number&gt;: an internal id</span>
 <span class="sd">for the study in which the compound was profiled. All compound profiles of one study use</span>
 <span class="sd">the same set of control samples and are normalized together."* (paper.md line 50), and it</span>
 <span class="sd">is what keeps one (strain, condition) L1-unique once the compound name is cleaned:</span>
-<span class="sd">measured over all 5,873 stored columns (2026.10.12), 531 collide on (released label, dose)</span>
-<span class="sd">alone (HIP 257, HOP 274) and 0 collide on (resolved compound, dose, study). The reference is per (assay, study) for the same reason: each</span>
+<span class="sd">measured, 47 kept columns collide on (compound, dose) alone (HIP 22, HOP 25) and 0 collide</span>
+<span class="sd">on (compound, dose, study). The reference is per (assay, study) for the same reason: each</span>
 <span class="sd">study normalizes against its OWN control samples.</span>
 
 <span class="sd">STRAIN BACKGROUND AND GENOTYPE (#506, on the #507 schema). The records are</span>
@@ -201,34 +201,24 @@
 <span class="sd">- HOP (YSC1056, homozygous diploid): one ``BarcodedKanMxDeletionPerturbation(</span>
 <span class="sd">  cassette="kanMX4", collection="YSC1056")``. No barcode is released by the paper, so</span>
 <span class="sd">  ``barcode`` is a pending gap on both arms.</span>
-<span class="sd">- The deposited 'Systematic Name' is stored as released on both arms, as the</span>
-<span class="sd">  ``systematic_gene_name`` and the ``perturbed_gene_name`` (the matrices carry no</span>
-<span class="sd">  common-name column). No genome is read: an old deletion-collection ORF that R64 now</span>
-<span class="sd">  lists as an alias, a retired ORF, a pseudogene, a blocked reading frame or a</span>
-<span class="sd">  transposable-element gene is the strain the collection released and is stored under</span>
-<span class="sd">  that spelling. Whether a spelling is a current R64 gene is a modeling-time question.</span>
+<span class="sd">- A RENAMED source ORF (an old deletion-collection ORF that R64 lists as an alias of a</span>
+<span class="sd">  current gene) carries ``constructed_orf=ConstructedOrf(source_systematic_name=&lt;source&gt;)``</span>
+<span class="sd">  with ``relation`` and ``deleted_span`` gapped pending the SGD locus history, so the strain</span>
+<span class="sd">  is never recorded as a deletion of the whole current gene.</span>
 
-<span class="sd">STRAIN DETECTION. Paper: *"For HOP, 4520 strains were detected (96.0%) from 4705 strains</span>
-<span class="sd">obtained from OpenBiosystems."* and an average of 5796 of 5910 HIP strains (line 64);</span>
-<span class="sd">both counts are ``SOURCED_VALUES`` (``hop_detection``, ``hip_detection``). The deposited</span>
-<span class="sd">matrices carry a score for 4,970 HOP rows, 265 more than the 4,705 strains obtained. The</span>
-<span class="sd">paper gives a COUNT, not a per-row rule, so no row is removed for being scored in few</span>
-<span class="sd">columns: a row scored in any stored column is stored (the former 50% detection rule held</span>
-<span class="sd">out HIP 72 rows and HOP 452 rows). A row scored in no stored column carries no record and</span>
-<span class="sd">is counted as ``n_rows_without_any_score``.</span>
+<span class="sd">DETECTION RULE (strains not in the pool). Paper: *"For HOP, 4520 strains were detected</span>
+<span class="sd">(96.0%) from 4705 strains obtained from OpenBiosystems."* and an average of 5796 of 5910</span>
+<span class="sd">HIP strains (line 64). The deposited matrices carry a score for 4,970 HOP rows, 265 more</span>
+<span class="sd">than the 4,705 strains obtained, so some scored rows are not strains of the pool. The</span>
+<span class="sd">paper gives the detection COUNT, not a per-row rule; this loader's rule (a decision the user</span>
+<span class="sd">may reverse) is: a row is dropped when it is scored in fewer than half of its arm's deposited</span>
+<span class="sd">sensitivity columns (all compounds, encodable or not). The rows it removes and the records</span>
+<span class="sd">they lose are in the drop ledger.</span>
 
 <span class="sd">CONDITIONS EXCLUDED. CMB4019 "D-Glucose (starvation)" (Table S1) is a glucose-starvation</span>
 <span class="sd">condition the paper never describes: its header number cannot be a uM addition to YPD and</span>
 <span class="sd">no glucose concentration is stated, so the medium change cannot be expressed with a</span>
 <span class="sd">sourced value. Its columns are EXCLUDED under a named rule and counted in the ledger.</span>
-<span class="sd">This is the one exclusion that needs a schema decision, not a loader change. A</span>
-<span class="sd">``Concentration`` can be built with no value and a basis, but the only basis that fits,</span>
-<span class="sd">``reduced_from_standard``, asserts a medium reduction the paper never states, and the</span>
-<span class="sd">released header number cannot be a typed gap on any field that can be None:</span>
-<span class="sd">``SmallMoleculePerturbation.concentration`` is required (and that class states the</span>
-<span class="sd">compound was ADDED, the opposite of starvation), ``Concentration`` carries no gaps, and an</span>
-<span class="sd">``EnvironmentPhysicalPerturbation`` on carbon source would record a medium change the</span>
-<span class="sd">paper does not describe.</span>
 
 <span class="sd">VEHICLE AND pH. Every compound dosed at or below 200 uM carries the 2% DMSO vehicle</span>
 <span class="sd">(*"DMSO was normalized to 2% to allow testing compounds up to 200 uM"*, line 58); above</span>
@@ -325,14 +315,20 @@
 <span class="sd">  Identity is structural, never smuggled into a name: the compound is the compound, the</span>
 <span class="sd">  dose is the ``Concentration``, the assay is the genotype leaf, the study is</span>
 <span class="sd">  ``screen_id``.</span>
-<span class="sd">- Systematic ORF names are stored exactly as the matrices release them (no</span>
-<span class="sd">  ``resolve_gene_name``, no rename onto a current gene, no SGD gene universe); a token</span>
-<span class="sd">  the ``GenePerturbation`` pattern rejects is held out under ``NOT_ORF_SHAPED_RULE``</span>
-<span class="sd">  until a released-gene-name leaf exists. Empty cells are skipped.</span>
+<span class="sd">- Systematic ORF names go through the SHARED ``SCerevisiaeGenome.resolve_gene_name``, the</span>
+<span class="sd">  same policy as Costanzo 2021, Wildenhain 2015 and Hillenmeyer 2008: a CURRENT gene is</span>
+<span class="sd">  kept as is; a RENAMED alias (an old deletion-collection ORF that SGD merged into a</span>
+<span class="sd">  neighbour, e.g. ``YAL035C-A`` -&gt; ``YAL034C-B``) is kept under the current systematic</span>
+<span class="sd">  name with the source ORF as ``perturbed_gene_name``, so it stays a DISTINCT strain of</span>
+<span class="sd">  that gene; a NON_GENE_FEATURE (pseudogene, blocked reading frame, transposable-element</span>
+<span class="sd">  gene) or a RETIRED name is DROPPED with its status and feature type in the ledger. The</span>
+<span class="sd">  R64 FASTA universe alone is NOT the gene set (it lists pseudogenes and blocked reading</span>
+<span class="sd">  frames as ORFs), which is why a FASTA membership test used to pass 14 non-gene rows</span>
+<span class="sd">  that the shared L1 canonical-gene-name rule then failed. Empty cells are skipped.</span>
 <span class="sd">- Constant sub-objects are INTERNED into ``processed/interned``: one environment per</span>
 <span class="sd">  sensitivity column, one reference per (assay, study), one publication. A record stores</span>
 <span class="sd">  ``{"$ref": ...}`` pointers for them, which is what keeps a 3.1M-record LMDB small and</span>
-<span class="sd">  lets a streaming reader memoize per-condition work across the 30.3M records.</span>
+<span class="sd">  lets a streaming reader memoize per-condition work.</span>
 <span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">csv</span>
@@ -370,12 +366,12 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">YPD_LIQUID</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">SGD_SYSTEMATIC_GENE_PATTERN</span><span class="p">,</span>
     <span class="n">AssayType</span><span class="p">,</span>
     <span class="n">BarcodedKanMxDeletionPerturbation</span><span class="p">,</span>
     <span class="n">Compound</span><span class="p">,</span>
     <span class="n">Concentration</span><span class="p">,</span>
     <span class="n">ConcentrationUnit</span><span class="p">,</span>
+    <span class="n">ConstructedOrf</span><span class="p">,</span>
     <span class="n">CultureEnvironment</span><span class="p">,</span>
     <span class="n">CultureFormat</span><span class="p">,</span>
     <span class="n">DoseBasis</span><span class="p">,</span>
@@ -418,6 +414,8 @@
     <span class="n">RetrievalRecord</span><span class="p">,</span>
     <span class="n">sha256_file</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">SGD_S288C_R64</span><span class="p">,</span> <span class="n">resolve</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae.s288c</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeneNameStatus</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ProvenanceGap</span><span class="p">,</span>
@@ -476,6 +474,12 @@
 
 <span class="n">_ASSAYS</span> <span class="o">=</span> <span class="p">((</span><span class="s2">"HIP_scores.txt"</span><span class="p">,</span> <span class="s2">"HIP"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"HOP_scores.txt"</span><span class="p">,</span> <span class="s2">"HOP"</span><span class="p">))</span>
 
+<span class="c1"># S288C reference gene universe (systematic ORF + RNA-coding names) for R64 resolution.</span>
+<span class="n">_SGD_GENE_FASTAS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"orf_coding_all_R64-4-1_20230830.fasta"</span><span class="p">,</span>
+    <span class="s2">"rna_coding_R64-4-1_20230830.fasta"</span><span class="p">,</span>
+<span class="p">)</span>
+
 <span class="c1"># Experiment column header: '(Ad.|MADL) scores for Exp. &lt;CMB&gt;_&lt;conc&gt;_&lt;HIP|HOP&gt;_&lt;study&gt;'</span>
 <span class="c1"># with an optional trailing ' z-score' (the companion gene-wise z-score column).</span>
 <span class="n">_COL_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
@@ -495,19 +499,22 @@
     <span class="s2">"ratio; a strain growing exactly as its controls scores 0"</span>
 <span class="p">)</span>
 
-<span class="c1">#: The ``GenePerturbation.systematic_gene_name`` validator, applied to the released token.</span>
-<span class="n">_ORF_SHAPED</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">SGD_SYSTEMATIC_GENE_PATTERN</span><span class="p">)</span>
+<span class="n">DROP_RULE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"drop every record whose compound carries no structure identifier after resolution: "</span>
+    <span class="s2">"no curated compound_identity_table row with an InChIKey / ChEBI id / PubChem CID, "</span>
+    <span class="s2">"and no RDKit-parseable released Table S1 SMILES to derive an InChIKey from"</span>
+<span class="p">)</span>
 
-<span class="n">NOT_ORF_SHAPED_RULE</span> <span class="o">=</span> <span class="s2">"systematic_name_is_not_orf_shaped_needs_released_name_leaf"</span>
+<span class="c1">#: Retention rule for a row's ORF: kept only when it resolves to a LIVE R64 gene.</span>
+<span class="n">_KEPT_STATUSES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="n">GeneNameStatus</span><span class="o">.</span><span class="n">CURRENT</span><span class="p">,</span> <span class="n">GeneNameStatus</span><span class="o">.</span><span class="n">RENAMED</span><span class="p">})</span>
 
-<span class="n">NOT_ORF_SHAPED_POLICY</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">"a row whose released 'Systematic Name' token is not ORF-shaped (it fails the "</span>
-    <span class="s2">"GenePerturbation.systematic_gene_name pattern, e.g. R0010W or YBR160W_AS) cannot be "</span>
-    <span class="s2">"stored on the existing deletion leaves, which require that pattern; the row is held "</span>
-    <span class="s2">"out under this rule, with its token and its scored cells counted, until a yeast "</span>
-    <span class="s2">"released-gene-name leaf (a GenePerturbation child carrying the released identifier "</span>
-    <span class="s2">"verbatim with systematic_gene_name as a typed gap) exists. Every ORF-shaped token is "</span>
-    <span class="s2">"stored as released, with no genome lookup"</span>
+<span class="n">ORF_RULE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"a row is kept only when its 'Systematic Name' resolves through the shared "</span>
+    <span class="s2">"SCerevisiaeGenome.resolve_gene_name to CURRENT (stored as is) or RENAMED (stored "</span>
+    <span class="s2">"under the current systematic name, the source ORF kept as perturbed_gene_name so a "</span>
+    <span class="s2">"merged-ORF strain stays distinct); a NON_GENE_FEATURE (pseudogene, blocked reading "</span>
+    <span class="s2">"frame, transposable-element gene) or a RETIRED name drops the row and every one of "</span>
+    <span class="s2">"its cells"</span>
 <span class="p">)</span>
 
 <span class="n">TABLE_S5_POLICY</span> <span class="o">=</span> <span class="p">(</span>
@@ -520,6 +527,19 @@
     <span class="s2">"name; the strain's construction Lab / Batch / Plate / Well rides on the record."</span>
 <span class="p">)</span>
 
+<span class="c1">#: Fraction of an arm's deposited sensitivity columns a row must be scored in to count as</span>
+<span class="c1">#: a strain of the pool (the loader's rule, NOT the paper's: see DETECTION_RULE).</span>
+<span class="n">DETECTION_MIN_FRACTION</span> <span class="o">=</span> <span class="mf">0.5</span>
+
+<span class="n">DETECTION_RULE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"a row is kept only when it carries a score in at least half of its arm's deposited "</span>
+    <span class="s2">"sensitivity columns (every compound, encodable or not; z-score companions excluded). "</span>
+    <span class="s2">"The paper gives the detection COUNT ('For HOP, 4520 strains were detected (96.0%) "</span>
+    <span class="s2">"from 4705 strains obtained', paper.md line 64), not a per-row rule; the 50% "</span>
+    <span class="s2">"threshold is this loader's decision and may be reversed. A row scored in fewer "</span>
+    <span class="s2">"columns is treated as a strain absent from the pool and dropped with its records"</span>
+<span class="p">)</span>
+
 <span class="c1">#: Table S1 CMB ids excluded under a named rule, with the Table S1 name each must carry.</span>
 <span class="n">EXCLUDED_CONDITIONS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"4019"</span><span class="p">:</span> <span class="s2">"D-Glucose (starvation)"</span><span class="p">}</span>
 
@@ -529,6 +549,14 @@
     <span class="s2">"addition of glucose to YPD, and no glucose concentration is stated anywhere, so the "</span>
     <span class="s2">"medium change cannot be expressed with a sourced value. Storing it as YPD plus "</span>
     <span class="s2">"added glucose would state the opposite of starvation"</span>
+<span class="p">)</span>
+
+<span class="n">ENCODABLE_RULE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"a sensitivity column is built only when its CMB id has a released SMILES in Table "</span>
+    <span class="s2">"S1; the other (proprietary Novartis CMBxxx) columns are black-box perturbations no "</span>
+    <span class="s2">"molecular encoder can represent and are excluded. Paper: 'In addition to 1641 "</span>
+    <span class="s2">"proprietary compounds (named CMBxxx), we included 135 reference compounds' "</span>
+    <span class="s2">"(paper.md line 110)"</span>
 <span class="p">)</span>
 
 <span class="c1">#: Highest dose the paper's 2% DMSO normalization covers (SOURCED_VALUES["dmso_ceiling_um"]).</span>
@@ -737,15 +765,15 @@
         <span class="mi">5796</span><span class="p">,</span>
         <span class="s2">"an average of 5796 out of 5910 HIP strains received were detectable "</span>
         <span class="s2">"$( 9 8 . 0 </span><span class="se">\\</span><span class="s2">% )$"</span><span class="p">,</span>
-        <span class="n">note</span><span class="o">=</span><span class="s2">"the paper's detection COUNT, recorded for the note; it is not a per-row "</span>
-        <span class="s2">"rule, and every row scored in any column is stored"</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"the paper's detection COUNT; the loader's per-row rule (DETECTION_RULE) is "</span>
+        <span class="s2">"its own decision"</span><span class="p">,</span>
     <span class="p">),</span>
     <span class="s2">"hop_detection"</span><span class="p">:</span> <span class="n">_sv</span><span class="p">(</span>
         <span class="mi">4520</span><span class="p">,</span>
         <span class="s2">"For HOP, 4520 strains were detected $( 9 6 . 0 </span><span class="se">\\</span><span class="s2">% )$ from 4705 strains "</span>
         <span class="s2">"obtained from OpenBiosystems."</span><span class="p">,</span>
-        <span class="n">note</span><span class="o">=</span><span class="s2">"the paper's detection COUNT, recorded for the note; it is not a per-row "</span>
-        <span class="s2">"rule, and every row scored in any column is stored"</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"the paper's detection COUNT; the loader's per-row rule (DETECTION_RULE) is "</span>
+        <span class="s2">"its own decision"</span><span class="p">,</span>
     <span class="p">),</span>
     <span class="s2">"dmso_ceiling_um"</span><span class="p">:</span> <span class="n">_sv</span><span class="p">(</span>
         <span class="mf">200.0</span><span class="p">,</span>
@@ -817,8 +845,8 @@
         <span class="s2">"In addition to 1641 proprietary compounds (named CMBxxx), we included 135 "</span>
         <span class="s2">"reference compounds with a previously reported molecular mechanism of action "</span>
         <span class="s2">"(Table S1)."</span><span class="p">,</span>
-        <span class="n">note</span><span class="o">=</span><span class="s2">"a CMB id with no released SMILES is stored under its released label with "</span>
-        <span class="s2">"the typed inchikey gap; the ledger's compound_identity_gaps counts them"</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"the encodable-only filter excludes the CMB ids with no released SMILES; the "</span>
+        <span class="s2">"build counts them in the ledger"</span><span class="p">,</span>
     <span class="p">),</span>
     <span class="s2">"cassette"</span><span class="p">:</span> <span class="n">SourcedValue</span><span class="p">(</span>
         <span class="n">value</span><span class="o">=</span><span class="s2">"kanMX4"</span><span class="p">,</span>
@@ -846,6 +874,13 @@
 <span class="p">)</span>
 <span class="sd">"""``resolve_with`` target for the HIP passage question (Fig. S2) and the background</span>
 <span class="sd">mutation coordinates (Figs. S15 to S17)."""</span>
+
+<span class="n">SGD_LOCUS_HISTORY</span> <span class="o">=</span> <span class="n">Provenance</span><span class="p">(</span>
+    <span class="n">source_uri</span><span class="o">=</span><span class="s2">"https://www.yeastgenome.org (locus history of the source ORF)"</span><span class="p">,</span>
+    <span class="n">method</span><span class="o">=</span><span class="s2">"not mirrored; SGD ORF merge / reannotation history, which states how a "</span>
+    <span class="s2">"deletion-collection ORF relates to the current gene and its R64 coordinates"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="sd">"""``resolve_with`` target for a RENAMED ORF's relation and deleted span."""</span>
 
 <span class="n">_PAPER</span> <span class="o">=</span> <span class="n">Provenance</span><span class="p">(</span>
     <span class="n">source_uri</span><span class="o">=</span><span class="n">PAPER_MD</span><span class="p">,</span>
@@ -1119,31 +1154,66 @@
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 <span class="c1"># Typed build-side records (written beside the LMDB, not into it)</span>
 <span class="c1"># --------------------------------------------------------------------------- #</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">CompoundIdentityGap</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""One stored compound with no InChIKey: kept under its released label, gapped."""</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DroppedCompound</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One compound the identity rule removed, and what it cost."""</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
 
     <span class="n">cmb_id</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">source_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"the released label: the Table S1 common name, else CMB&lt;id&gt;"</span>
-    <span class="p">)</span>
-    <span class="n">smiles</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"the released Table S1 SMILES verbatim, None when none is released"</span>
-    <span class="p">)</span>
+    <span class="n">source_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">smiles</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
     <span class="n">resolution_status</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">unresolved_reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
-    <span class="n">n_columns_by_assay</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
-    <span class="n">n_records_by_assay</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
+    <span class="n">n_columns</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_records</span><span class="p">:</span> <span class="nb">int</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">NotOrfShapedRow</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""One row held out under ``NOT_ORF_SHAPED_RULE``: its token fails the ORF pattern."""</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DroppedOrf</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One source ORF the retention rule removed, with what the resolver said."""</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
 
     <span class="n">source_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"the 'Systematic Name' cell, verbatim"</span><span class="p">)</span>
-    <span class="n">n_records</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"scored cells in stored columns of this row"</span><span class="p">)</span>
+    <span class="n">status</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"GeneNameStatus the shared resolver returned"</span><span class="p">)</span>
+    <span class="n">resolved_to</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"what the resolver mapped it to, when anything"</span>
+    <span class="p">)</span>
+    <span class="n">feature_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"GFF feature type for a NON_GENE_FEATURE"</span>
+    <span class="p">)</span>
+    <span class="n">n_records</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"non-empty cells in KEPT sensitivity columns lost with this row"</span>
+    <span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">UndetectedStrain</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One row the detection rule removed: scored in too few of its arm's columns."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">source_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"the 'Systematic Name' cell, verbatim"</span><span class="p">)</span>
+    <span class="n">systematic_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the current systematic name it resolves to"</span>
+    <span class="p">)</span>
+    <span class="n">n_scored_columns</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"deposited sensitivity columns of the arm this row carries a score in"</span>
+    <span class="p">)</span>
+    <span class="n">n_columns</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"deposited sensitivity columns of the arm"</span><span class="p">)</span>
+    <span class="n">n_records</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"non-empty cells in KEPT columns lost with it"</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DetectionLedger</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The detection rule for one arm and what it removed."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">n_columns</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"deposited sensitivity columns of the arm"</span><span class="p">)</span>
+    <span class="n">n_rows_without_any_score</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"rows scored in no column at all (no records; not strains of the pool)"</span>
+    <span class="p">)</span>
+    <span class="n">n_rows_kept</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"scored rows that pass the rule"</span><span class="p">)</span>
+    <span class="n">n_records_dropped</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">dropped</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">UndetectedStrain</span><span class="p">]</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">ExcludedCondition</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
@@ -1157,29 +1227,26 @@
     <span class="n">n_records_by_assay</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">CellAccounting</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Every scored sensitivity cell of one arm: stored, held out, or excluded."""</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EncodableFilterLedger</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The encodable-only build filter (no released SMILES), measured per arm."""</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
 
-    <span class="n">n_sensitivity_columns</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"deposited sensitivity columns of the arm (z-score companions are "</span>
-        <span class="s2">"not sensitivity columns)"</span>
+    <span class="n">rule</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">n_cmb_ids</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"distinct CMB ids excluded over both arms"</span><span class="p">)</span>
+    <span class="n">n_cmb_ids_by_assay</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
+    <span class="n">n_columns_by_assay</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
+    <span class="n">n_records_by_assay</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"non-empty cells in excluded columns of rows that pass the ORF and "</span>
+        <span class="s2">"detection rules (the records a full-atlas build would add)"</span>
     <span class="p">)</span>
-    <span class="n">n_rows</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"data rows of the deposited matrix"</span><span class="p">)</span>
-    <span class="n">n_rows_without_any_score</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"rows scored in no stored column (not records; not-a-value accounting)"</span>
+    <span class="n">n_deposited_cmb_ids</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"distinct CMB ids in the deposited sensitivity columns of both arms"</span>
     <span class="p">)</span>
-    <span class="n">n_source_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"scored cells over every sensitivity column of the arm"</span>
-    <span class="p">)</span>
-    <span class="n">n_stored</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">n_not_orf_shaped</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">n_excluded_condition</span><span class="p">:</span> <span class="nb">int</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">DoseOutsideIc30</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""A stored column whose dose lies outside ``IC30_RATIO_RANGE`` x its Table S1 IC30."""</span>
+<span class="w">    </span><span class="sd">"""A kept column whose dose lies outside ``IC30_RATIO_RANGE`` x its Table S1 IC30."""</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
 
@@ -1193,60 +1260,52 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">DroppedRecordReport</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""The build's ledger: what was stored, what is held out, and under which rule.</span>
-
-<span class="sd">    Every scored sensitivity cell is accounted for per arm:</span>
-<span class="sd">    ``n_source_cells = n_stored + n_not_orf_shaped + n_excluded_condition``.</span>
-<span class="sd">    """</span>
+<span class="w">    </span><span class="sd">"""The build's drop ledger: the rules, and exactly what they removed."""</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
 
     <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">not_orf_shaped_rule</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">not_orf_shaped_policy</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">rule</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">orf_rule</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">detection_rule</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">exclusion_rule</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">n_kept</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">n_dropped</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"cells held out under NOT_ORF_SHAPED_RULE plus EXCLUSION_RULE"</span>
-    <span class="p">)</span>
+    <span class="n">n_dropped</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">kept_by_assay</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
     <span class="n">dropped_by_assay</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
-    <span class="n">accounting</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">CellAccounting</span><span class="p">]</span>
-    <span class="n">not_orf_shaped</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">NotOrfShapedRow</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"per assay, rows whose released token fails the ORF pattern"</span>
+    <span class="n">dropped_compounds</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DroppedCompound</span><span class="p">]</span>
+    <span class="n">dropped_orfs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">DroppedOrf</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"per assay, the rows whose ORF resolves to neither a CURRENT nor a "</span>
+        <span class="s2">"RENAMED R64 gene, never guessed onto a current gene"</span>
+    <span class="p">)</span>
+    <span class="n">renamed_orfs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"per assay, source ORF -&gt; current systematic name for every RENAMED "</span>
+        <span class="s2">"row kept; the source ORF stays on the record as perturbed_gene_name and as "</span>
+        <span class="s2">"constructed_orf.source_systematic_name"</span>
+    <span class="p">)</span>
+    <span class="n">detection</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DetectionLedger</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"per assay, the DETECTION_RULE and the rows it removed"</span>
     <span class="p">)</span>
     <span class="n">excluded_conditions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ExcludedCondition</span><span class="p">]</span>
-    <span class="n">compound_identity_gaps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CompoundIdentityGap</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"stored compounds with no InChIKey (proprietary CMB ids with no "</span>
-        <span class="s2">"released SMILES, and CMB409 Boromycin whose SMILES RDKit cannot parse), each "</span>
-        <span class="s2">"stored under its released label with the typed inchikey gap"</span>
-    <span class="p">)</span>
-    <span class="n">n_cmb_ids_stored</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"distinct CMB ids over both arms' columns"</span>
-    <span class="p">)</span>
-    <span class="n">n_compounds_stored</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"distinct stored Compound names over both arms (two CMB ids of one "</span>
-        <span class="s2">"curated compound merge)"</span>
-    <span class="p">)</span>
-    <span class="n">columns_by_assay</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"stored sensitivity columns"</span><span class="p">)</span>
+    <span class="n">encodable_filter</span><span class="p">:</span> <span class="n">EncodableFilterLedger</span>
     <span class="n">positive_control</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"per assay, deposited sensitivity columns of the plate positive control "</span>
         <span class="s2">"Benomyl (CMB991); its 97 experiments are in the separate Benomyl score files, "</span>
         <span class="s2">"which are not in the raw mirror"</span>
     <span class="p">)</span>
     <span class="n">solvent_gap_columns</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"per assay, stored columns dosed above 200 uM (solvent is a gap)"</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"per assay, kept columns dosed above 200 uM (solvent is a gap)"</span>
     <span class="p">)</span>
     <span class="n">ph_gap_columns</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"per assay, stored columns of an acid / base / acetate (pH is a gap)"</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"per assay, kept columns of an acid / base / acetate (pH is a gap)"</span>
     <span class="p">)</span>
     <span class="n">dose_outside_ic30_range</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DoseOutsideIc30</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"stored columns whose dose is outside 0.5x to 2x the Table S1 IC30; "</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"kept columns whose dose is outside 0.5x to 2x the Table S1 IC30; "</span>
         <span class="s2">"basis stays IC30 (how the dose was SET)"</span>
     <span class="p">)</span>
     <span class="n">n_kept_columns_with_ic30</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
     <span class="n">hip_construction</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"stored HIP rows by Table S5 construction match: 'one_entry', "</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"kept HIP rows by Table S5 construction match: 'one_entry', "</span>
         <span class="s2">"'duplicate_entries' (lab and batch kept, plate and well unset), 'not_listed'"</span>
     <span class="p">)</span>
     <span class="n">created_at</span><span class="p">:</span> <span class="nb">str</span>
@@ -1391,6 +1450,17 @@
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 <span class="c1"># Source readers</span>
 <span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_load_sgd_genes</span><span class="p">(</span><span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""S288C R64 systematic-name universe from the ORF + RNA-coding FASTA headers."""</span>
+    <span class="n">genes</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_SGD_GENE_FASTAS</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">resolve</span><span class="p">(</span><span class="n">SGD_S288C_R64</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">data_root</span><span class="o">=</span><span class="n">data_root</span><span class="p">))</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">handle</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"&gt;"</span><span class="p">):</span>
+                    <span class="n">genes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">genes</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_load_compound_meta</span><span class="p">(</span><span class="n">table_s1_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">"""CMB id -&gt; {common_name, smiles} from Table_S1 (reference + novel MoA + structures).</span>
 
@@ -1505,8 +1575,17 @@
     <span class="p">)</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_has_identifier</span><span class="p">(</span><span class="n">compound</span><span class="p">:</span> <span class="n">Compound</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Whether a compound carries ANY structure identifier (the retention rule)."""</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">compound</span><span class="o">.</span><span class="n">inchikey</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="ow">or</span> <span class="n">compound</span><span class="o">.</span><span class="n">chebi_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="ow">or</span> <span class="n">compound</span><span class="o">.</span><span class="n">pubchem_cid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="p">)</span>
+
+
 <span class="k">class</span><span class="w"> </span><span class="nc">_ColumnMeta</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""One stored sensitivity column: its record templates and its identity fields."""</span>
+<span class="w">    </span><span class="sd">"""One kept sensitivity column: its record templates and its identity fields."""</span>
 
     <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span>
         <span class="s2">"index"</span><span class="p">,</span>
@@ -1514,11 +1593,9 @@
         <span class="s2">"study"</span><span class="p">,</span>
         <span class="s2">"conc"</span><span class="p">,</span>
         <span class="s2">"compound"</span><span class="p">,</span>
-        <span class="s2">"inchikey"</span><span class="p">,</span>
         <span class="s2">"exp_base"</span><span class="p">,</span>
         <span class="s2">"pheno_base"</span><span class="p">,</span>
         <span class="s2">"env_dump"</span><span class="p">,</span>
-        <span class="s2">"n_records"</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -1531,36 +1608,35 @@
         <span class="n">env_dump</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
         <span class="n">conc</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
         <span class="n">compound</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
-        <span class="n">inchikey</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">index</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cmb</span> <span class="o">=</span> <span class="n">cmb</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">study</span> <span class="o">=</span> <span class="n">study</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">conc</span> <span class="o">=</span> <span class="n">conc</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">compound</span> <span class="o">=</span> <span class="n">compound</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">inchikey</span> <span class="o">=</span> <span class="n">inchikey</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">exp_base</span> <span class="o">=</span> <span class="n">exp_base</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pheno_base</span> <span class="o">=</span> <span class="n">pheno_base</span>
         <span class="c1"># The environment INLINE, for the per-column schema validation: what the LMDB</span>
         <span class="c1"># stores is the interned pointer, and the schema only accepts the resolved form.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">env_dump</span> <span class="o">=</span> <span class="n">env_dump</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">n_records</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># records written for this column (the identity-gap ledger)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_ColumnCensus</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Every deposited sensitivity column of one arm, by what the build does with it.</span>
 
-<span class="sd">    ``sensitivity`` is every sensitivity column of the arm (z-score companions are not);</span>
-<span class="sd">    ``excluded`` the columns of an ``EXCLUDED_CONDITIONS`` compound; ``positive_control``</span>
-<span class="sd">    the Benomyl (CMB991) columns; ``cmbs`` every CMB id seen. Stored columns come from</span>
-<span class="sd">    ``_column_meta``.</span>
+<span class="sd">    ``detection`` is every sensitivity column of the arm (the DETECTION_RULE</span>
+<span class="sd">    denominator); ``unencodable`` the columns with no released SMILES (the encodable-only</span>
+<span class="sd">    filter); ``excluded`` the columns of an ``EXCLUDED_CONDITIONS`` compound;</span>
+<span class="sd">    ``positive_control`` the Benomyl (CMB991) columns; ``cmbs`` every CMB id seen. Kept and dropped-compound columns</span>
+<span class="sd">    come from ``_column_meta``.</span>
 <span class="sd">    """</span>
 
-    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"sensitivity"</span><span class="p">,</span> <span class="s2">"cmbs"</span><span class="p">,</span> <span class="s2">"excluded"</span><span class="p">,</span> <span class="s2">"positive_control"</span><span class="p">)</span>
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"detection"</span><span class="p">,</span> <span class="s2">"cmbs"</span><span class="p">,</span> <span class="s2">"unencodable"</span><span class="p">,</span> <span class="s2">"excluded"</span><span class="p">,</span> <span class="s2">"positive_control"</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sensitivity</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detection</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cmbs</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unencodable</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">excluded</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">positive_control</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
@@ -1575,24 +1651,28 @@
 
     <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span>
         <span class="s2">"kept"</span><span class="p">,</span>
+        <span class="s2">"dropped"</span><span class="p">,</span>
         <span class="s2">"flagged"</span><span class="p">,</span>
-        <span class="s2">"not_orf_shaped"</span><span class="p">,</span>
-        <span class="s2">"rows"</span><span class="p">,</span>
+        <span class="s2">"dropped_orfs"</span><span class="p">,</span>
+        <span class="s2">"renamed_orfs"</span><span class="p">,</span>
+        <span class="s2">"undetected"</span><span class="p">,</span>
         <span class="s2">"empty_rows"</span><span class="p">,</span>
-        <span class="s2">"source_cells"</span><span class="p">,</span>
+        <span class="s2">"detected_rows"</span><span class="p">,</span>
+        <span class="s2">"unencodable"</span><span class="p">,</span>
         <span class="s2">"excluded"</span><span class="p">,</span>
         <span class="s2">"construction"</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">kept</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>  <span class="c1"># assay -&gt; stored records</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">flagged</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">Counter</span><span class="p">()</span>
-        <span class="p">)</span>  <span class="c1"># ORF -&gt; stored HIP records, Table S5 only</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">not_orf_shaped</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">NotOrfShapedRow</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># assay -&gt; rows</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">rows</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>  <span class="c1"># assay -&gt; data rows read</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">empty_rows</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>  <span class="c1"># assay -&gt; rows scored nowhere stored</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">source_cells</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>  <span class="c1"># assay -&gt; scored sensitivity cells</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kept</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>  <span class="c1"># assay -&gt; kept records</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dropped</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>  <span class="c1"># (assay, CMB) -&gt; removed</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flagged</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>  <span class="c1"># ORF -&gt; kept HIP records, Table S5 only</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dropped_orfs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">DroppedOrf</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># assay -&gt; dropped rows</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">renamed_orfs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># assay -&gt; source -&gt; current</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">undetected</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">UndetectedStrain</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># assay -&gt; rows</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">empty_rows</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>  <span class="c1"># assay -&gt; rows scored nowhere</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detected_rows</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>  <span class="c1"># assay -&gt; rows passing the rule</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unencodable</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>  <span class="c1"># assay -&gt; cells in filtered columns</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">excluded</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>  <span class="c1"># (assay, CMB) -&gt; cells</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">construction</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>  <span class="c1"># HIP rows by Table S5 match</span>
 
@@ -1611,10 +1691,33 @@
         <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">genome</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Initialize the dataset. No genome is read: every row is stored as released."""</span>
+<span class="w">        </span><span class="sd">"""Initialize the dataset. ``genome`` supplies ``resolve_gene_name``; when it is</span>
+<span class="sd">        None a read-only S288C genome is opened at build time (never at import).</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">genome</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolver</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""``resolve_gene_name`` from the supplied genome, or a read-only S288C genome."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+
+            <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
+
+            <span class="n">load_dotenv</span><span class="p">()</span>
+            <span class="n">data_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">]</span>
+            <span class="c1"># overwrite=False is mandatory: a rebuild here would race any other process</span>
+            <span class="c1"># holding the same gffutils database.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">SCerevisiaeGenome</span><span class="p">(</span>
+                <span class="n">genome_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/sgd/genome"</span><span class="p">),</span>
+                <span class="n">go_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/go"</span><span class="p">),</span>
+                <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">resolver</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="o">.</span><span class="n">resolve_gene_name</span>
+        <span class="k">return</span> <span class="n">resolver</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">experiment_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Experiment</span><span class="p">]:</span>
@@ -1821,17 +1924,46 @@
             <span class="p">),</span>
         <span class="p">)</span>
 
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_constructed_orf</span><span class="p">(</span><span class="n">orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">source_orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ConstructedOrf</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The ORF a RENAMED strain was built against; ``None`` when it is the gene.</span>
+
+<span class="sd">        The shared resolver only says the source ORF is an alias of the current gene, so</span>
+<span class="sd">        whether it was merged into it, reannotated or merely renamed, and which interval</span>
+<span class="sd">        the cassette replaced, are gaps pending the SGD locus history.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">source_orf</span> <span class="o">==</span> <span class="n">orf</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">note</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"R64-4-1 lists </span><span class="si">{</span><span class="n">source_orf</span><span class="si">}</span><span class="s2"> as an alias of </span><span class="si">{</span><span class="n">orf</span><span class="si">}</span><span class="s2">; whether it was merged, "</span>
+            <span class="s2">"reannotated or renamed, and its deleted interval, need the SGD locus history"</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">ConstructedOrf</span><span class="p">(</span>
+            <span class="n">source_systematic_name</span><span class="o">=</span><span class="n">source_orf</span><span class="p">,</span>
+            <span class="n">relation</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">deleted_span</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">pending_source_review</span><span class="p">(</span><span class="s2">"relation"</span><span class="p">,</span> <span class="n">SGD_LOCUS_HISTORY</span><span class="p">,</span> <span class="n">note</span><span class="p">),</span>
+                <span class="n">pending_source_review</span><span class="p">(</span><span class="s2">"deleted_span"</span><span class="p">,</span> <span class="n">SGD_LOCUS_HISTORY</span><span class="p">,</span> <span class="n">note</span><span class="p">),</span>
+            <span class="p">],</span>
+        <span class="p">)</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">_genotype</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">assay</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">strain_entries</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">TableS5Entry</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">assay</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">source_orf</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">strain_entries</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">TableS5Entry</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Genotype</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""HIP -&gt; heterozygous kanMX4 deletion; HOP -&gt; homozygous barcoded deletion.</span>
 
-<span class="sd">        ``orf`` is the deposited 'Systematic Name' exactly as released; it is both the</span>
-<span class="sd">        ``systematic_gene_name`` and the ``perturbed_gene_name`` (the matrices carry no</span>
-<span class="sd">        common-name column), with no genome lookup and no rename. ``strain_entries`` are</span>
-<span class="sd">        the Table S5 entries of the deposited HIP ORF (``None`` or empty when it is not</span>
-<span class="sd">        listed).</span>
+<span class="sd">        ``orf`` is the CURRENT systematic name; ``source_orf`` is the deposited row name,</span>
+<span class="sd">        which differs only for a RENAMED ORF and then stays on the record as</span>
+<span class="sd">        ``perturbed_gene_name`` and ``constructed_orf``. ``strain_entries`` are the Table</span>
+<span class="sd">        S5 entries of the deposited HIP ORF (``None`` or empty when it is not listed).</span>
 <span class="sd">        """</span>
+        <span class="n">perturbed</span> <span class="o">=</span> <span class="n">orf</span> <span class="k">if</span> <span class="n">source_orf</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">source_orf</span>
+        <span class="n">constructed_orf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_constructed_orf</span><span class="p">(</span><span class="n">orf</span><span class="p">,</span> <span class="n">perturbed</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">assay</span> <span class="o">==</span> <span class="s2">"HIP"</span><span class="p">:</span>
             <span class="n">gaps</span> <span class="o">=</span> <span class="p">[</span><span class="n">_BARCODE_GAP</span><span class="p">]</span>
             <span class="n">construction</span> <span class="o">=</span> <span class="kc">None</span>
@@ -1849,10 +1981,11 @@
                 <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
                     <span class="n">HeterozygousDeletionPerturbation</span><span class="p">(</span>
                         <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
-                        <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+                        <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">perturbed</span><span class="p">,</span>
                         <span class="n">cassette</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">SOURCED_VALUES</span><span class="p">[</span><span class="s2">"cassette"</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
                         <span class="n">collection</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">SOURCED_VALUES</span><span class="p">[</span><span class="s2">"hip_collection"</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
                         <span class="n">construction</span><span class="o">=</span><span class="n">construction</span><span class="p">,</span>
+                        <span class="n">constructed_orf</span><span class="o">=</span><span class="n">constructed_orf</span><span class="p">,</span>
                         <span class="n">replaced_allele</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                         <span class="n">provenance_gaps</span><span class="o">=</span><span class="n">gaps</span><span class="p">,</span>
                     <span class="p">)</span>
@@ -1862,9 +1995,10 @@
             <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
                 <span class="n">BarcodedKanMxDeletionPerturbation</span><span class="p">(</span>
                     <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
-                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">perturbed</span><span class="p">,</span>
                     <span class="n">cassette</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">SOURCED_VALUES</span><span class="p">[</span><span class="s2">"cassette"</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
                     <span class="n">collection</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">SOURCED_VALUES</span><span class="p">[</span><span class="s2">"hop_collection"</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
+                    <span class="n">constructed_orf</span><span class="o">=</span><span class="n">constructed_orf</span><span class="p">,</span>
                     <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span><span class="n">_BARCODE_GAP</span><span class="p">],</span>
                 <span class="p">)</span>
             <span class="p">]</span>
@@ -1919,18 +2053,16 @@
         <span class="n">assay</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]],</span>
         <span class="n">itxn</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">_ColumnMeta</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Parse the arm's sensitivity columns into stored record templates.</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">_ColumnMeta</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]:</span>
+<span class="w">        </span><span class="sd">"""Parse the sensitivity columns into kept templates and dropped columns.</span>
 
-<span class="sd">        Every sensitivity column is stored except an ``EXCLUDED_CONDITIONS`` compound's</span>
-<span class="sd">        (``_column_census`` counts those). The compound is ``resolved_compound`` of its</span>
-<span class="sd">        released label with the released Table S1 SMILES when there is one: a curated row</span>
-<span class="sd">        or an RDKit-parseable SMILES gives it an InChIKey, and otherwise (a proprietary</span>
-<span class="sd">        CMB id with no released structure, or CMB409 Boromycin whose SMILES RDKit cannot</span>
-<span class="sd">        parse) it is stored under the released label with the typed ``inchikey`` gap the</span>
-<span class="sd">        resolver attaches, its released SMILES carried verbatim when there is one.</span>
+<span class="sd">        Returns ``(kept, dropped)``, where ``dropped`` is ``(column index, CMB id)`` for a</span>
+<span class="sd">        column whose compound carries NO structure identifier after resolution. A CMB id</span>
+<span class="sd">        with no released SMILES (the encodable-only filter) and an ``EXCLUDED_CONDITIONS``</span>
+<span class="sd">        compound are neither kept nor dropped here; ``_column_census`` counts them.</span>
 <span class="sd">        """</span>
         <span class="n">kept</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">_ColumnMeta</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">dropped</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">raw</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">header</span><span class="p">):</span>
             <span class="n">name</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">'"'</span><span class="p">)</span>
             <span class="n">match</span> <span class="o">=</span> <span class="n">_COL_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
@@ -1939,14 +2071,18 @@
             <span class="k">if</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"assay"</span><span class="p">)</span> <span class="o">!=</span> <span class="n">assay</span><span class="p">:</span>
                 <span class="k">continue</span>
             <span class="n">cmb</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"cmb"</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">cmb</span> <span class="ow">in</span> <span class="n">EXCLUDED_CONDITIONS</span><span class="p">:</span>
-                <span class="k">continue</span>  <span class="c1"># EXCLUSION_RULE, counted by _column_census</span>
+            <span class="n">smiles</span> <span class="o">=</span> <span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cmb</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"smiles"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">smiles</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">cmb</span> <span class="ow">in</span> <span class="n">EXCLUDED_CONDITIONS</span><span class="p">:</span>
+                <span class="k">continue</span>  <span class="c1"># ENCODABLE_RULE / EXCLUSION_RULE, counted by _column_census</span>
             <span class="n">compound</span> <span class="o">=</span> <span class="n">resolved_compound</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_compound_name</span><span class="p">(</span><span class="n">cmb</span><span class="p">,</span> <span class="n">meta</span><span class="p">),</span>
-                <span class="n">smiles</span><span class="o">=</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cmb</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"smiles"</span><span class="p">),</span>
+                <span class="n">smiles</span><span class="o">=</span><span class="n">smiles</span><span class="p">,</span>
                 <span class="n">known_proprietary</span><span class="o">=</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cmb</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"common_name"</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">,</span>
                 <span class="n">derive_from_smiles</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">_has_identifier</span><span class="p">(</span><span class="n">compound</span><span class="p">):</span>
+                <span class="n">dropped</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">index</span><span class="p">,</span> <span class="n">cmb</span><span class="p">))</span>
+                <span class="k">continue</span>
             <span class="n">conc</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"conc"</span><span class="p">))</span>
             <span class="n">study</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"study"</span><span class="p">)</span>
             <span class="n">environment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_environment</span><span class="p">(</span><span class="n">assay</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_treatment</span><span class="p">(</span><span class="n">cmb</span><span class="p">,</span> <span class="n">compound</span><span class="p">,</span> <span class="n">conc</span><span class="p">))</span>
@@ -1983,10 +2119,9 @@
                     <span class="n">env_dump</span><span class="p">,</span>
                     <span class="n">conc</span><span class="o">=</span><span class="n">conc</span><span class="p">,</span>
                     <span class="n">compound</span><span class="o">=</span><span class="n">compound</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-                    <span class="n">inchikey</span><span class="o">=</span><span class="n">compound</span><span class="o">.</span><span class="n">inchikey</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">)</span>
-        <span class="k">return</span> <span class="n">kept</span>
+        <span class="k">return</span> <span class="n">kept</span><span class="p">,</span> <span class="n">dropped</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_column_census</span><span class="p">(</span>
@@ -2005,11 +2140,13 @@
             <span class="k">if</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"assay"</span><span class="p">)</span> <span class="o">!=</span> <span class="n">assay</span><span class="p">:</span>
                 <span class="k">continue</span>
             <span class="n">cmb</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"cmb"</span><span class="p">)</span>
-            <span class="n">census</span><span class="o">.</span><span class="n">sensitivity</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+            <span class="n">census</span><span class="o">.</span><span class="n">detection</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
             <span class="n">census</span><span class="o">.</span><span class="n">cmbs</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">cmb</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">cmb</span> <span class="o">==</span> <span class="n">POSITIVE_CONTROL_CMB</span><span class="p">:</span>
                 <span class="n">census</span><span class="o">.</span><span class="n">positive_control</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">cmb</span> <span class="ow">in</span> <span class="n">EXCLUDED_CONDITIONS</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cmb</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"smiles"</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">census</span><span class="o">.</span><span class="n">unencodable</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">index</span><span class="p">,</span> <span class="n">cmb</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">cmb</span> <span class="ow">in</span> <span class="n">EXCLUDED_CONDITIONS</span><span class="p">:</span>
                 <span class="n">name</span> <span class="o">=</span> <span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cmb</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"common_name"</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">name</span> <span class="o">!=</span> <span class="n">EXCLUDED_CONDITIONS</span><span class="p">[</span><span class="n">cmb</span><span class="p">]:</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -2029,56 +2166,77 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">assay</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">sgd_genes</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
         <span class="n">columns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">_ColumnMeta</span><span class="p">],</span>
+        <span class="n">dropped_columns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
         <span class="n">reference_refs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">Any</span><span class="p">],</span>
         <span class="n">pub_ref</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
         <span class="n">counts</span><span class="p">:</span> <span class="n">_BuildCounts</span><span class="p">,</span>
         <span class="n">strains</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">TableS5Entry</span><span class="p">]],</span>
         <span class="n">validate</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="nb">object</span><span class="p">],</span>
+        <span class="n">resolve</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Any</span><span class="p">],</span>
         <span class="n">census</span><span class="p">:</span> <span class="n">_ColumnCensus</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Yield one pickled record per (row, stored column) scored cell.</span>
+<span class="w">        </span><span class="sd">"""Yield one pickled record per (kept row, kept sensitivity column).</span>
 
-<span class="sd">        The row's 'Systematic Name' is stored exactly as released: no genome lookup, no</span>
-<span class="sd">        rename, no detection threshold. A row scored in no stored column carries no</span>
-<span class="sd">        record and is counted as not-a-value; a row whose token fails the</span>
-<span class="sd">        ``GenePerturbation`` ORF pattern is held out under ``NOT_ORF_SHAPED_RULE`` with</span>
-<span class="sd">        its cells counted. Every scored sensitivity cell and every excluded-condition</span>
-<span class="sd">        cell is counted in the SAME pass, so the ledger's accounting is measured. The</span>
-<span class="sd">        first record of each column is validated against the experiment schema, which is</span>
-<span class="sd">        what makes the per-column template safe. ``strains`` (Table S5, keyed by</span>
-<span class="sd">        upper-cased ORF) gives a HIP strain its construction record and its flag.</span>
+<span class="sd">        A row's ORF goes through ``resolve`` under ``ORF_RULE``, then the row must pass</span>
+<span class="sd">        ``DETECTION_RULE`` over ``census.detection``. The cells a dropped row loses in</span>
+<span class="sd">        KEPT columns are counted, and the dropped / excluded / unencodable columns'</span>
+<span class="sd">        non-empty cells of every surviving row are counted in the SAME pass, so the drop</span>
+<span class="sd">        ledger is measured rather than estimated. The first record of each column is</span>
+<span class="sd">        validated against the experiment schema, which is what makes the per-column</span>
+<span class="sd">        template safe. ``strains`` (Table S5, keyed by upper-cased ORF) gives a HIP</span>
+<span class="sd">        strain its construction record and its flag.</span>
 <span class="sd">        """</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">filled</span><span class="p">(</span><span class="n">parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="ow">and</span> <span class="n">parts</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">'"'</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">""</span>
 
-        <span class="n">not_orf_shaped</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">NotOrfShapedRow</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">dropped_orfs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DroppedOrf</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">undetected</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">UndetectedStrain</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">renamed</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">validated</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="n">genotypes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">n_detection</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">census</span><span class="o">.</span><span class="n">detection</span><span class="p">)</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
             <span class="n">handle</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
             <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Hoepfner2014 </span><span class="si">{</span><span class="n">assay</span><span class="si">}</span><span class="s2">"</span><span class="p">):</span>
                 <span class="n">parts</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">)</span>
-                <span class="n">counts</span><span class="o">.</span><span class="n">rows</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="n">orf</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">'"'</span><span class="p">)</span>
-                <span class="n">counts</span><span class="o">.</span><span class="n">source_cells</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">sum</span><span class="p">(</span>
-                    <span class="mi">1</span> <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">census</span><span class="o">.</span><span class="n">sensitivity</span> <span class="k">if</span> <span class="n">filled</span><span class="p">(</span><span class="n">parts</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span>
-                <span class="p">)</span>
-                <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">cmb</span> <span class="ow">in</span> <span class="n">census</span><span class="o">.</span><span class="n">excluded</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">filled</span><span class="p">(</span><span class="n">parts</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
-                        <span class="n">counts</span><span class="o">.</span><span class="n">excluded</span><span class="p">[(</span><span class="n">assay</span><span class="p">,</span> <span class="n">cmb</span><span class="p">)]</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="n">n_scored</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">columns</span> <span class="k">if</span> <span class="n">filled</span><span class="p">(</span><span class="n">parts</span><span class="p">,</span> <span class="n">col</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
+                <span class="n">source_orf</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">'"'</span><span class="p">)</span>
+                <span class="n">resolution</span> <span class="o">=</span> <span class="n">resolve</span><span class="p">(</span><span class="n">source_orf</span><span class="p">)</span>
+                <span class="n">orf</span> <span class="o">=</span> <span class="n">resolution</span><span class="o">.</span><span class="n">systematic_name</span>
+                <span class="n">lost</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">columns</span> <span class="k">if</span> <span class="n">filled</span><span class="p">(</span><span class="n">parts</span><span class="p">,</span> <span class="n">col</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">resolution</span><span class="o">.</span><span class="n">status</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_KEPT_STATUSES</span> <span class="ow">or</span> <span class="n">orf</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sgd_genes</span><span class="p">:</span>
+                    <span class="n">dropped_orfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">DroppedOrf</span><span class="p">(</span>
+                            <span class="n">source_name</span><span class="o">=</span><span class="n">source_orf</span><span class="p">,</span>
+                            <span class="n">status</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">resolution</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
+                            <span class="n">resolved_to</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+                            <span class="n">feature_type</span><span class="o">=</span><span class="n">resolution</span><span class="o">.</span><span class="n">feature_type</span><span class="p">,</span>
+                            <span class="n">n_records</span><span class="o">=</span><span class="n">lost</span><span class="p">,</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="k">continue</span>
+                <span class="n">n_scored</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">census</span><span class="o">.</span><span class="n">detection</span> <span class="k">if</span> <span class="n">filled</span><span class="p">(</span><span class="n">parts</span><span class="p">,</span> <span class="n">index</span><span class="p">))</span>
                 <span class="k">if</span> <span class="n">n_scored</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="n">counts</span><span class="o">.</span><span class="n">empty_rows</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
                     <span class="k">continue</span>
-                <span class="k">if</span> <span class="n">_ORF_SHAPED</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">orf</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="n">not_orf_shaped</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                        <span class="n">NotOrfShapedRow</span><span class="p">(</span><span class="n">source_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span> <span class="n">n_records</span><span class="o">=</span><span class="n">n_scored</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">n_scored</span> <span class="o">&lt;</span> <span class="n">DETECTION_MIN_FRACTION</span> <span class="o">*</span> <span class="n">n_detection</span><span class="p">:</span>
+                    <span class="n">undetected</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">UndetectedStrain</span><span class="p">(</span>
+                            <span class="n">source_name</span><span class="o">=</span><span class="n">source_orf</span><span class="p">,</span>
+                            <span class="n">systematic_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+                            <span class="n">n_scored_columns</span><span class="o">=</span><span class="n">n_scored</span><span class="p">,</span>
+                            <span class="n">n_columns</span><span class="o">=</span><span class="n">n_detection</span><span class="p">,</span>
+                            <span class="n">n_records</span><span class="o">=</span><span class="n">lost</span><span class="p">,</span>
+                        <span class="p">)</span>
                     <span class="p">)</span>
                     <span class="k">continue</span>
-                <span class="n">entries</span> <span class="o">=</span> <span class="n">strains</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">orf</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span> <span class="p">[])</span>
-                <span class="n">genotype</span> <span class="o">=</span> <span class="n">genotypes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">orf</span><span class="p">)</span>
+                <span class="n">counts</span><span class="o">.</span><span class="n">detected_rows</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">resolution</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">GeneNameStatus</span><span class="o">.</span><span class="n">RENAMED</span><span class="p">:</span>
+                    <span class="n">renamed</span><span class="p">[</span><span class="n">source_orf</span><span class="p">]</span> <span class="o">=</span> <span class="n">orf</span>
+                <span class="n">entries</span> <span class="o">=</span> <span class="n">strains</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">source_orf</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span> <span class="p">[])</span>
+                <span class="n">genotype</span> <span class="o">=</span> <span class="n">genotypes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">source_orf</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">genotype</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">assay</span> <span class="o">==</span> <span class="s2">"HIP"</span><span class="p">:</span>
                         <span class="n">counts</span><span class="o">.</span><span class="n">construction</span><span class="p">[</span>
@@ -2088,10 +2246,23 @@
                             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
                             <span class="k">else</span> <span class="s2">"duplicate_entries"</span>
                         <span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-                    <span class="n">genotype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_genotype</span><span class="p">(</span><span class="n">assay</span><span class="p">,</span> <span class="n">orf</span><span class="p">,</span> <span class="n">entries</span><span class="p">)</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
-                    <span class="n">genotypes</span><span class="p">[</span><span class="n">orf</span><span class="p">]</span> <span class="o">=</span> <span class="n">genotype</span>
-                <span class="c1"># Table S5 names PHYSICAL strains by their 2014 name, the same spelling</span>
-                <span class="c1"># the matrices release, so the flag joins on the released token.</span>
+                    <span class="n">genotype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_genotype</span><span class="p">(</span>
+                        <span class="n">assay</span><span class="p">,</span> <span class="n">orf</span><span class="p">,</span> <span class="n">source_orf</span><span class="p">,</span> <span class="n">entries</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
+                    <span class="n">genotypes</span><span class="p">[</span><span class="n">source_orf</span><span class="p">]</span> <span class="o">=</span> <span class="n">genotype</span>
+                <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">cmb</span> <span class="ow">in</span> <span class="n">dropped_columns</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">filled</span><span class="p">(</span><span class="n">parts</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+                        <span class="n">counts</span><span class="o">.</span><span class="n">dropped</span><span class="p">[(</span><span class="n">assay</span><span class="p">,</span> <span class="n">cmb</span><span class="p">)]</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">cmb</span> <span class="ow">in</span> <span class="n">census</span><span class="o">.</span><span class="n">excluded</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">filled</span><span class="p">(</span><span class="n">parts</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+                        <span class="n">counts</span><span class="o">.</span><span class="n">excluded</span><span class="p">[(</span><span class="n">assay</span><span class="p">,</span> <span class="n">cmb</span><span class="p">)]</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">counts</span><span class="o">.</span><span class="n">unencodable</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">sum</span><span class="p">(</span>
+                    <span class="mi">1</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">census</span><span class="o">.</span><span class="n">unencodable</span> <span class="k">if</span> <span class="n">filled</span><span class="p">(</span><span class="n">parts</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="c1"># Table S5 names PHYSICAL strains by their 2014 name, so the flag matches</span>
+                <span class="c1"># on the deposited (source) name only: a RENAMED merged-ORF strain is not</span>
+                <span class="c1"># the listed strain of the gene it now maps to, and is never flagged</span>
+                <span class="c1"># through the current name.</span>
                 <span class="n">flagged</span> <span class="o">=</span> <span class="n">assay</span> <span class="o">==</span> <span class="s2">"HIP"</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">flagged</span> <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">index</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">):</span>
@@ -2114,9 +2285,8 @@
                         <span class="n">validate</span><span class="p">({</span><span class="o">**</span><span class="n">experiment</span><span class="p">,</span> <span class="s2">"environment"</span><span class="p">:</span> <span class="n">col</span><span class="o">.</span><span class="n">env_dump</span><span class="p">})</span>
                         <span class="n">validated</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
                     <span class="n">counts</span><span class="o">.</span><span class="n">kept</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-                    <span class="n">col</span><span class="o">.</span><span class="n">n_records</span> <span class="o">+=</span> <span class="mi">1</span>
                     <span class="k">if</span> <span class="n">flagged</span><span class="p">:</span>
-                        <span class="n">counts</span><span class="o">.</span><span class="n">flagged</span><span class="p">[</span><span class="n">orf</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                        <span class="n">counts</span><span class="o">.</span><span class="n">flagged</span><span class="p">[</span><span class="n">source_orf</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
                     <span class="k">yield</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
                         <span class="p">{</span>
                             <span class="s2">"experiment"</span><span class="p">:</span> <span class="n">experiment</span><span class="p">,</span>
@@ -2124,19 +2294,21 @@
                             <span class="s2">"publication"</span><span class="p">:</span> <span class="n">pub_ref</span><span class="p">,</span>
                         <span class="p">}</span>
                     <span class="p">)</span>
-        <span class="n">counts</span><span class="o">.</span><span class="n">not_orf_shaped</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
-            <span class="n">not_orf_shaped</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">row</span><span class="p">:</span> <span class="n">row</span><span class="o">.</span><span class="n">source_name</span>
-        <span class="p">)</span>
+        <span class="n">counts</span><span class="o">.</span><span class="n">dropped_orfs</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">dropped_orfs</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="n">d</span><span class="o">.</span><span class="n">source_name</span><span class="p">)</span>
+        <span class="n">counts</span><span class="o">.</span><span class="n">undetected</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">undetected</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="n">d</span><span class="o">.</span><span class="n">source_name</span><span class="p">)</span>
+        <span class="n">counts</span><span class="o">.</span><span class="n">renamed_orfs</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">renamed</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">"Hoepfner2014 </span><span class="si">%s</span><span class="s2">: wrote </span><span class="si">%d</span><span class="s2"> records from </span><span class="si">%d</span><span class="s2"> rows; </span><span class="si">%d</span><span class="s2"> rows scored nowhere; held "</span>
-            <span class="s2">"out </span><span class="si">%d</span><span class="s2"> rows (</span><span class="si">%d</span><span class="s2"> cells) whose token is not ORF-shaped: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+            <span class="s2">"Hoepfner2014 </span><span class="si">%s</span><span class="s2">: wrote </span><span class="si">%d</span><span class="s2"> records; kept </span><span class="si">%d</span><span class="s2"> RENAMED rows under their current "</span>
+            <span class="s2">"name; dropped </span><span class="si">%d</span><span class="s2"> rows (</span><span class="si">%d</span><span class="s2"> cells) whose ORF is no current gene: </span><span class="si">%s</span><span class="s2">; dropped "</span>
+            <span class="s2">"</span><span class="si">%d</span><span class="s2"> rows (</span><span class="si">%d</span><span class="s2"> cells) under the detection rule"</span><span class="p">,</span>
             <span class="n">assay</span><span class="p">,</span>
             <span class="n">counts</span><span class="o">.</span><span class="n">kept</span><span class="p">[</span><span class="n">assay</span><span class="p">],</span>
-            <span class="n">counts</span><span class="o">.</span><span class="n">rows</span><span class="p">[</span><span class="n">assay</span><span class="p">],</span>
-            <span class="n">counts</span><span class="o">.</span><span class="n">empty_rows</span><span class="p">[</span><span class="n">assay</span><span class="p">],</span>
-            <span class="nb">len</span><span class="p">(</span><span class="n">not_orf_shaped</span><span class="p">),</span>
-            <span class="nb">sum</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">n_records</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">not_orf_shaped</span><span class="p">),</span>
-            <span class="p">[</span><span class="n">row</span><span class="o">.</span><span class="n">source_name</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">counts</span><span class="o">.</span><span class="n">not_orf_shaped</span><span class="p">[</span><span class="n">assay</span><span class="p">]],</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">renamed</span><span class="p">),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">dropped_orfs</span><span class="p">),</span>
+            <span class="nb">sum</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">n_records</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dropped_orfs</span><span class="p">),</span>
+            <span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">d</span><span class="o">.</span><span class="n">source_name</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">d</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">counts</span><span class="o">.</span><span class="n">dropped_orfs</span><span class="p">[</span><span class="n">assay</span><span class="p">]],</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">undetected</span><span class="p">),</span>
+            <span class="nb">sum</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">n_records</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">undetected</span><span class="p">),</span>
         <span class="p">)</span>
 
 <div class="viewcode-block" id="EnvChemgenHoepfner2014Dataset.process">
@@ -2159,7 +2331,9 @@
         <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentType</span>
 
         <span class="n">load_dotenv</span><span class="p">()</span>
+        <span class="n">data_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">]</span>
         <span class="n">repo_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+        <span class="n">sgd_genes</span> <span class="o">=</span> <span class="n">_load_sgd_genes</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span>
         <span class="n">table_s1</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="s2">"Table_S1.xls"</span><span class="p">)</span>
         <span class="n">meta</span> <span class="o">=</span> <span class="n">_load_compound_meta</span><span class="p">(</span><span class="n">table_s1</span><span class="p">)</span>
         <span class="n">ic30</span> <span class="o">=</span> <span class="n">_load_ic30</span><span class="p">(</span><span class="n">table_s1</span><span class="p">)</span>
@@ -2172,21 +2346,25 @@
         <span class="n">env</span><span class="p">,</span> <span class="n">interned_env</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_open_write_lmdb</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">))</span>
 
         <span class="n">columns</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">_ColumnMeta</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">dropped_columns</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">censuses</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_ColumnCensus</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">reference_refs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">with</span> <span class="n">interned_env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">itxn</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">filename</span><span class="p">,</span> <span class="n">assay</span> <span class="ow">in</span> <span class="n">_ASSAYS</span><span class="p">:</span>
                 <span class="n">header</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_header</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
-                <span class="n">kept</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_column_meta</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">assay</span><span class="p">,</span> <span class="n">meta</span><span class="p">,</span> <span class="n">itxn</span><span class="p">)</span>
+                <span class="n">kept</span><span class="p">,</span> <span class="n">dropped</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_column_meta</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">assay</span><span class="p">,</span> <span class="n">meta</span><span class="p">,</span> <span class="n">itxn</span><span class="p">)</span>
                 <span class="n">columns</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span> <span class="o">=</span> <span class="n">kept</span>
+                <span class="n">dropped_columns</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span> <span class="o">=</span> <span class="n">dropped</span>
                 <span class="n">censuses</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_column_census</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">assay</span><span class="p">,</span> <span class="n">meta</span><span class="p">)</span>
                 <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                    <span class="s2">"Hoepfner2014 </span><span class="si">%s</span><span class="s2">: </span><span class="si">%d</span><span class="s2"> stored sensitivity experiments (</span><span class="si">%d</span><span class="s2"> with no "</span>
-                    <span class="s2">"InChIKey, stored with the typed gap), </span><span class="si">%d</span><span class="s2"> excluded by rule"</span><span class="p">,</span>
+                    <span class="s2">"Hoepfner2014 </span><span class="si">%s</span><span class="s2">: </span><span class="si">%d</span><span class="s2"> kept sensitivity experiments, </span><span class="si">%d</span><span class="s2"> dropped "</span>
+                    <span class="s2">"(compound without a structure identifier), </span><span class="si">%d</span><span class="s2"> excluded by rule, "</span>
+                    <span class="s2">"</span><span class="si">%d</span><span class="s2"> without a released structure"</span><span class="p">,</span>
                     <span class="n">assay</span><span class="p">,</span>
                     <span class="nb">len</span><span class="p">(</span><span class="n">kept</span><span class="p">),</span>
-                    <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">kept</span> <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">inchikey</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">),</span>
+                    <span class="nb">len</span><span class="p">(</span><span class="n">dropped</span><span class="p">),</span>
                     <span class="nb">len</span><span class="p">(</span><span class="n">censuses</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span><span class="o">.</span><span class="n">excluded</span><span class="p">),</span>
+                    <span class="nb">len</span><span class="p">(</span><span class="n">censuses</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span><span class="o">.</span><span class="n">unencodable</span><span class="p">),</span>
                 <span class="p">)</span>
                 <span class="k">for</span> <span class="n">study</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">col</span><span class="o">.</span><span class="n">study</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">kept</span><span class="p">}):</span>
                     <span class="n">reference_refs</span><span class="p">[(</span><span class="n">assay</span><span class="p">,</span> <span class="n">study</span><span class="p">)]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intern_ref</span><span class="p">(</span>
@@ -2195,6 +2373,7 @@
             <span class="n">pub_ref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intern_ref</span><span class="p">(</span><span class="n">publication</span><span class="p">,</span> <span class="n">DOI</span><span class="p">,</span> <span class="n">itxn</span><span class="p">)</span>
 
         <span class="n">counts</span> <span class="o">=</span> <span class="n">_BuildCounts</span><span class="p">()</span>
+        <span class="n">resolve</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span><span class="p">()</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">batch_size</span> <span class="o">=</span> <span class="mi">500_000</span>
         <span class="n">txn</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -2202,12 +2381,15 @@
             <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter_records</span><span class="p">(</span>
                 <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">),</span>
                 <span class="n">assay</span><span class="p">,</span>
+                <span class="n">sgd_genes</span><span class="p">,</span>
                 <span class="n">columns</span><span class="p">[</span><span class="n">assay</span><span class="p">],</span>
+                <span class="n">dropped_columns</span><span class="p">[</span><span class="n">assay</span><span class="p">],</span>
                 <span class="n">reference_refs</span><span class="p">,</span>
                 <span class="n">pub_ref</span><span class="p">,</span>
                 <span class="n">counts</span><span class="p">,</span>
                 <span class="n">strains</span><span class="p">,</span>
                 <span class="n">validate</span><span class="p">,</span>
+                <span class="n">resolve</span><span class="p">,</span>
                 <span class="n">censuses</span><span class="p">[</span><span class="n">assay</span><span class="p">],</span>
             <span class="p">):</span>
                 <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span> <span class="n">value</span><span class="p">)</span>
@@ -2220,7 +2402,7 @@
         <span class="n">interned_env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Wrote </span><span class="si">%d</span><span class="s2"> Hoepfner2014 environment-response experiments to LMDB"</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_write_drop_ledger</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">ic30</span><span class="p">,</span> <span class="n">columns</span><span class="p">,</span> <span class="n">censuses</span><span class="p">,</span> <span class="n">counts</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_write_drop_ledger</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">ic30</span><span class="p">,</span> <span class="n">columns</span><span class="p">,</span> <span class="n">dropped_columns</span><span class="p">,</span> <span class="n">censuses</span><span class="p">,</span> <span class="n">counts</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_write_table_s5_flags</span><span class="p">(</span><span class="n">strains</span><span class="p">,</span> <span class="n">counts</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_write_sourced_values</span><span class="p">()</span></div>
 
@@ -2230,47 +2412,49 @@
         <span class="n">meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]],</span>
         <span class="n">ic30</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
         <span class="n">columns</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">_ColumnMeta</span><span class="p">]],</span>
+        <span class="n">dropped_columns</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]],</span>
         <span class="n">censuses</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_ColumnCensus</span><span class="p">],</span>
         <span class="n">counts</span><span class="p">:</span> <span class="n">_BuildCounts</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Write ``&lt;root&gt;/dropped_records.json``: what was stored, held out and why.</span>
-
-<span class="sd">        Raises when an arm's scored sensitivity cells do not equal stored plus held-out</span>
-<span class="sd">        plus excluded cells, so no released cell can leave the build uncounted.</span>
-<span class="sd">        """</span>
-        <span class="n">gap_cmbs</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
-            <span class="p">{</span>
-                <span class="n">col</span><span class="o">.</span><span class="n">cmb</span>
-                <span class="k">for</span> <span class="n">cols</span> <span class="ow">in</span> <span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
-                <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cols</span>
-                <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">inchikey</span> <span class="ow">is</span> <span class="kc">None</span>
-            <span class="p">},</span>
-            <span class="n">key</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">identity_gaps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CompoundIdentityGap</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">cmb</span> <span class="ow">in</span> <span class="n">gap_cmbs</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Write ``&lt;root&gt;/dropped_records.json``: every rule and what it measured."""</span>
+        <span class="n">cmb_columns</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">dropped</span> <span class="ow">in</span> <span class="n">dropped_columns</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">cmb</span> <span class="ow">in</span> <span class="n">dropped</span><span class="p">:</span>
+                <span class="n">cmb_columns</span><span class="p">[</span><span class="n">cmb</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">compounds</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DroppedCompound</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">cmb</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">cmb_columns</span><span class="p">):</span>
             <span class="n">source_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compound_name</span><span class="p">(</span><span class="n">cmb</span><span class="p">,</span> <span class="n">meta</span><span class="p">)</span>
             <span class="n">resolution</span> <span class="o">=</span> <span class="n">resolve_compound_identity</span><span class="p">(</span>
                 <span class="n">name</span><span class="o">=</span><span class="n">source_name</span><span class="p">,</span>
                 <span class="n">known_proprietary</span><span class="o">=</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cmb</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"common_name"</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="n">identity_gaps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">CompoundIdentityGap</span><span class="p">(</span>
+            <span class="n">compounds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">DroppedCompound</span><span class="p">(</span>
                     <span class="n">cmb_id</span><span class="o">=</span><span class="n">cmb</span><span class="p">,</span>
                     <span class="n">source_name</span><span class="o">=</span><span class="n">source_name</span><span class="p">,</span>
                     <span class="n">smiles</span><span class="o">=</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cmb</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"smiles"</span><span class="p">),</span>
                     <span class="n">resolution_status</span><span class="o">=</span><span class="n">resolution</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
                     <span class="n">unresolved_reason</span><span class="o">=</span><span class="n">resolution</span><span class="o">.</span><span class="n">unresolved_reason</span><span class="p">,</span>
-                    <span class="n">n_columns_by_assay</span><span class="o">=</span><span class="p">{</span>
-                        <span class="n">assay</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cols</span> <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">cmb</span> <span class="o">==</span> <span class="n">cmb</span><span class="p">)</span>
-                        <span class="k">for</span> <span class="n">assay</span><span class="p">,</span> <span class="n">cols</span> <span class="ow">in</span> <span class="n">columns</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-                    <span class="p">},</span>
-                    <span class="n">n_records_by_assay</span><span class="o">=</span><span class="p">{</span>
-                        <span class="n">assay</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">n_records</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cols</span> <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">cmb</span> <span class="o">==</span> <span class="n">cmb</span><span class="p">)</span>
-                        <span class="k">for</span> <span class="n">assay</span><span class="p">,</span> <span class="n">cols</span> <span class="ow">in</span> <span class="n">columns</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-                    <span class="p">},</span>
+                    <span class="n">n_columns</span><span class="o">=</span><span class="n">cmb_columns</span><span class="p">[</span><span class="n">cmb</span><span class="p">],</span>
+                    <span class="n">n_records</span><span class="o">=</span><span class="nb">sum</span><span class="p">(</span>
+                        <span class="n">n</span>
+                        <span class="k">for</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">dropped_cmb</span><span class="p">),</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">counts</span><span class="o">.</span><span class="n">dropped</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                        <span class="k">if</span> <span class="n">dropped_cmb</span> <span class="o">==</span> <span class="n">cmb</span>
+                    <span class="p">),</span>
                 <span class="p">)</span>
             <span class="p">)</span>
+        <span class="n">detection</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">assay</span><span class="p">:</span> <span class="n">DetectionLedger</span><span class="p">(</span>
+                <span class="n">n_columns</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">census</span><span class="o">.</span><span class="n">detection</span><span class="p">),</span>
+                <span class="n">n_rows_without_any_score</span><span class="o">=</span><span class="n">counts</span><span class="o">.</span><span class="n">empty_rows</span><span class="p">[</span><span class="n">assay</span><span class="p">],</span>
+                <span class="n">n_rows_kept</span><span class="o">=</span><span class="n">counts</span><span class="o">.</span><span class="n">detected_rows</span><span class="p">[</span><span class="n">assay</span><span class="p">],</span>
+                <span class="n">n_records_dropped</span><span class="o">=</span><span class="nb">sum</span><span class="p">(</span>
+                    <span class="n">d</span><span class="o">.</span><span class="n">n_records</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">counts</span><span class="o">.</span><span class="n">undetected</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">assay</span><span class="p">,</span> <span class="p">[])</span>
+                <span class="p">),</span>
+                <span class="n">dropped</span><span class="o">=</span><span class="n">counts</span><span class="o">.</span><span class="n">undetected</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">assay</span><span class="p">,</span> <span class="p">[]),</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">assay</span><span class="p">,</span> <span class="n">census</span> <span class="ow">in</span> <span class="n">censuses</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
         <span class="n">excluded</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">ExcludedCondition</span><span class="p">(</span>
                 <span class="n">cmb_id</span><span class="o">=</span><span class="n">cmb</span><span class="p">,</span>
@@ -2285,32 +2469,20 @@
             <span class="p">)</span>
             <span class="k">for</span> <span class="n">cmb</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">EXCLUDED_CONDITIONS</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
         <span class="p">]</span>
-        <span class="n">accounting</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">CellAccounting</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">held_out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">assay</span><span class="p">,</span> <span class="n">census</span> <span class="ow">in</span> <span class="n">censuses</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">n_not_orf</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
-                <span class="n">row</span><span class="o">.</span><span class="n">n_records</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">counts</span><span class="o">.</span><span class="n">not_orf_shaped</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">assay</span><span class="p">,</span> <span class="p">[])</span>
-            <span class="p">)</span>
-            <span class="n">n_excluded</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">n</span> <span class="k">for</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">_</span><span class="p">),</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">counts</span><span class="o">.</span><span class="n">excluded</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">a</span> <span class="o">==</span> <span class="n">assay</span><span class="p">)</span>
-            <span class="n">accounting</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span> <span class="o">=</span> <span class="n">CellAccounting</span><span class="p">(</span>
-                <span class="n">n_sensitivity_columns</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">census</span><span class="o">.</span><span class="n">sensitivity</span><span class="p">),</span>
-                <span class="n">n_rows</span><span class="o">=</span><span class="n">counts</span><span class="o">.</span><span class="n">rows</span><span class="p">[</span><span class="n">assay</span><span class="p">],</span>
-                <span class="n">n_rows_without_any_score</span><span class="o">=</span><span class="n">counts</span><span class="o">.</span><span class="n">empty_rows</span><span class="p">[</span><span class="n">assay</span><span class="p">],</span>
-                <span class="n">n_source_cells</span><span class="o">=</span><span class="n">counts</span><span class="o">.</span><span class="n">source_cells</span><span class="p">[</span><span class="n">assay</span><span class="p">],</span>
-                <span class="n">n_stored</span><span class="o">=</span><span class="n">counts</span><span class="o">.</span><span class="n">kept</span><span class="p">[</span><span class="n">assay</span><span class="p">],</span>
-                <span class="n">n_not_orf_shaped</span><span class="o">=</span><span class="n">n_not_orf</span><span class="p">,</span>
-                <span class="n">n_excluded_condition</span><span class="o">=</span><span class="n">n_excluded</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="k">if</span> <span class="p">(</span>
-                <span class="n">counts</span><span class="o">.</span><span class="n">source_cells</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span>
-                <span class="o">!=</span> <span class="n">counts</span><span class="o">.</span><span class="n">kept</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span> <span class="o">+</span> <span class="n">n_not_orf</span> <span class="o">+</span> <span class="n">n_excluded</span>
-            <span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"Hoepfner2014 </span><span class="si">{</span><span class="n">assay</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">counts</span><span class="o">.</span><span class="n">source_cells</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span><span class="si">}</span><span class="s2"> scored cells != "</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">counts</span><span class="o">.</span><span class="n">kept</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span><span class="si">}</span><span class="s2"> stored + </span><span class="si">{</span><span class="n">n_not_orf</span><span class="si">}</span><span class="s2"> not ORF-shaped + "</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n_excluded</span><span class="si">}</span><span class="s2"> excluded"</span>
-                <span class="p">)</span>
-            <span class="n">held_out</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span> <span class="o">=</span> <span class="n">n_not_orf</span> <span class="o">+</span> <span class="n">n_excluded</span>
+        <span class="n">unencodable_ids</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">assay</span><span class="p">:</span> <span class="p">{</span><span class="n">cmb</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">cmb</span> <span class="ow">in</span> <span class="n">census</span><span class="o">.</span><span class="n">unencodable</span><span class="p">}</span>
+            <span class="k">for</span> <span class="n">assay</span><span class="p">,</span> <span class="n">census</span> <span class="ow">in</span> <span class="n">censuses</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="n">encodable</span> <span class="o">=</span> <span class="n">EncodableFilterLedger</span><span class="p">(</span>
+            <span class="n">rule</span><span class="o">=</span><span class="n">ENCODABLE_RULE</span><span class="p">,</span>
+            <span class="n">n_cmb_ids</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">()</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="o">*</span><span class="n">unencodable_ids</span><span class="o">.</span><span class="n">values</span><span class="p">())),</span>
+            <span class="n">n_cmb_ids_by_assay</span><span class="o">=</span><span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">ids</span> <span class="ow">in</span> <span class="n">unencodable_ids</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+            <span class="n">n_columns_by_assay</span><span class="o">=</span><span class="p">{</span>
+                <span class="n">a</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">census</span><span class="o">.</span><span class="n">unencodable</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">census</span> <span class="ow">in</span> <span class="n">censuses</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">},</span>
+            <span class="n">n_records_by_assay</span><span class="o">=</span><span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="n">counts</span><span class="o">.</span><span class="n">unencodable</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">censuses</span><span class="p">},</span>
+            <span class="n">n_deposited_cmb_ids</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">()</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">cmbs</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">censuses</span><span class="o">.</span><span class="n">values</span><span class="p">()))),</span>
+        <span class="p">)</span>
         <span class="n">low</span><span class="p">,</span> <span class="n">high</span> <span class="o">=</span> <span class="n">IC30_RATIO_RANGE</span>
         <span class="n">outside</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DoseOutsideIc30</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">with_ic30</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -2336,24 +2508,23 @@
                 <span class="p">)</span>
         <span class="n">report</span> <span class="o">=</span> <span class="n">DroppedRecordReport</span><span class="p">(</span>
             <span class="n">dataset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-            <span class="n">not_orf_shaped_rule</span><span class="o">=</span><span class="n">NOT_ORF_SHAPED_RULE</span><span class="p">,</span>
-            <span class="n">not_orf_shaped_policy</span><span class="o">=</span><span class="n">NOT_ORF_SHAPED_POLICY</span><span class="p">,</span>
+            <span class="n">rule</span><span class="o">=</span><span class="n">DROP_RULE</span><span class="p">,</span>
+            <span class="n">orf_rule</span><span class="o">=</span><span class="n">ORF_RULE</span><span class="p">,</span>
+            <span class="n">detection_rule</span><span class="o">=</span><span class="n">DETECTION_RULE</span><span class="p">,</span>
             <span class="n">exclusion_rule</span><span class="o">=</span><span class="n">EXCLUSION_RULE</span><span class="p">,</span>
             <span class="n">n_kept</span><span class="o">=</span><span class="nb">sum</span><span class="p">(</span><span class="n">counts</span><span class="o">.</span><span class="n">kept</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
-            <span class="n">n_dropped</span><span class="o">=</span><span class="nb">sum</span><span class="p">(</span><span class="n">held_out</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
+            <span class="n">n_dropped</span><span class="o">=</span><span class="nb">sum</span><span class="p">(</span><span class="n">counts</span><span class="o">.</span><span class="n">dropped</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
             <span class="n">kept_by_assay</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">counts</span><span class="o">.</span><span class="n">kept</span><span class="p">),</span>
-            <span class="n">dropped_by_assay</span><span class="o">=</span><span class="n">held_out</span><span class="p">,</span>
-            <span class="n">accounting</span><span class="o">=</span><span class="n">accounting</span><span class="p">,</span>
-            <span class="n">not_orf_shaped</span><span class="o">=</span><span class="n">counts</span><span class="o">.</span><span class="n">not_orf_shaped</span><span class="p">,</span>
+            <span class="n">dropped_by_assay</span><span class="o">=</span><span class="p">{</span>
+                <span class="n">assay</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="n">counts</span><span class="o">.</span><span class="n">dropped</span><span class="p">[(</span><span class="n">assay</span><span class="p">,</span> <span class="n">cmb</span><span class="p">)]</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">cmb</span> <span class="ow">in</span> <span class="n">dropped</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">assay</span><span class="p">,</span> <span class="n">dropped</span> <span class="ow">in</span> <span class="n">dropped_columns</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">},</span>
+            <span class="n">dropped_compounds</span><span class="o">=</span><span class="n">compounds</span><span class="p">,</span>
+            <span class="n">dropped_orfs</span><span class="o">=</span><span class="n">counts</span><span class="o">.</span><span class="n">dropped_orfs</span><span class="p">,</span>
+            <span class="n">renamed_orfs</span><span class="o">=</span><span class="n">counts</span><span class="o">.</span><span class="n">renamed_orfs</span><span class="p">,</span>
+            <span class="n">detection</span><span class="o">=</span><span class="n">detection</span><span class="p">,</span>
             <span class="n">excluded_conditions</span><span class="o">=</span><span class="n">excluded</span><span class="p">,</span>
-            <span class="n">compound_identity_gaps</span><span class="o">=</span><span class="n">identity_gaps</span><span class="p">,</span>
-            <span class="n">n_cmb_ids_stored</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span>
-                <span class="p">{</span><span class="n">col</span><span class="o">.</span><span class="n">cmb</span> <span class="k">for</span> <span class="n">cols</span> <span class="ow">in</span> <span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">}</span>
-            <span class="p">),</span>
-            <span class="n">n_compounds_stored</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span>
-                <span class="p">{</span><span class="n">col</span><span class="o">.</span><span class="n">compound</span> <span class="k">for</span> <span class="n">cols</span> <span class="ow">in</span> <span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">}</span>
-            <span class="p">),</span>
-            <span class="n">columns_by_assay</span><span class="o">=</span><span class="p">{</span><span class="n">assay</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">cols</span><span class="p">)</span> <span class="k">for</span> <span class="n">assay</span><span class="p">,</span> <span class="n">cols</span> <span class="ow">in</span> <span class="n">columns</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+            <span class="n">encodable_filter</span><span class="o">=</span><span class="n">encodable</span><span class="p">,</span>
             <span class="n">positive_control</span><span class="o">=</span><span class="p">{</span>
                 <span class="n">assay</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">census</span><span class="o">.</span><span class="n">positive_control</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">assay</span><span class="p">,</span> <span class="n">census</span> <span class="ow">in</span> <span class="n">censuses</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>

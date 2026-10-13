@@ -216,8 +216,8 @@ def test_the_large_deletion_genotype_string_expands_to_the_declared_symbols() ->
 
 
 def test_every_declared_count_and_quote_is_present() -> None:
-    assert ch.GROWTH_EXPECTED_RECORDS == 5
-    assert ch.GROWTH_EXPECTED_REFERENCES == 4
+    assert ch.GROWTH_EXPECTED_RECORDS == 8
+    assert ch.GROWTH_EXPECTED_REFERENCES == 7
     assert ch.TF_EXPECTED_RECORDS == 2
     assert ch.KEIO_PANEL_STRAINS == 62
     assert [fitness for _, fitness in ch.KEIO_FITNESS] == [0.724, 0.698]
@@ -901,6 +901,9 @@ def test_process_builds_the_deletion_and_reconstructed_allele_records(
 
     items = [dataset.transform_item(dataset[i]) for i in range(len(dataset))]
     assert sorted(len(i["experiment"].genotype.perturbations) for i in items) == [
+        0,
+        0,
+        0,
         1,
         1,
         1,
@@ -913,25 +916,28 @@ def test_process_builds_the_deletion_and_reconstructed_allele_records(
         i["reference"].genome_reference.strain: i["reference"].genome_reference
         for i in items
     }
-    assert sorted(by_reference) == ["MS56", "cspCWT", "ilvNWT", "yifBWT"]
+    assert sorted(by_reference) == ["MS56", "cspCWT", "eMS57", "ilvNWT", "yifBWT"]
     assert {
         strain: genome.background.genotype_statement
         for strain, genome in by_reference.items()
     } == {
         "MS56": ch.MS56_GENOTYPE_STATEMENT,
+        "eMS57": "E. coli MS56 adaptively evolved in M9 glucosemedium",
         "ilvNWT": "MS56, ilvN::ilvN-kan",
         "cspCWT": "MS56, cspC::cspC-kan",
         "yifBWT": "MS56, yifB::yifB-kanR",
     }
     assert {len(g.background.alleles) for g in by_reference.values()} == {0}
-    deletions = [i for i in items if i["reference"].genome_reference.strain == "MS56"]
+    assert by_reference["eMS57"].background.parents == ["MS56"]
+    edited = [i for i in items if i["experiment"].genotype.perturbations]
+    deletions = [i for i in edited if i["reference"].genome_reference.strain == "MS56"]
     # both designed deletions grow FASTER than the reduced parent, so fitness > 1
     assert all(i["experiment"].phenotype.fitness > 1.0 for i in deletions)
     alleles = {
         i["experiment"].genotype.perturbations[0].strain_label: i[
             "experiment"
         ].phenotype
-        for i in items
+        for i in edited
         if i["reference"].genome_reference.strain != "MS56"
     }
     assert {k: round(v.fitness, 6) for k, v in alleles.items()} == {
@@ -940,6 +946,24 @@ def test_process_builds_the_deletion_and_reconstructed_allele_records(
         "yifBmut": round(statistics.fmean(FIG2F["yifB*/yifBWT"]), 6),
     }
     assert {v.n_samples for v in alleles.values()} == {3}
+    # #1045 part 3: MS56 over MG1655, and eMS57 over MS56 once per panel, each on its
+    # named background with an empty genotype
+    unedited = {
+        (
+            i["reference"].genome_reference.strain,
+            i["experiment"].phenotype.screen_id,
+        ): i["experiment"].phenotype.fitness
+        for i in items
+        if not i["experiment"].genotype.perturbations
+    }
+    mean = statistics.fmean
+    assert unedited == pytest.approx(
+        {
+            ("MS56", None): mean(FIG2C["MS56"]) / mean(FIG2C["MG1655"]),
+            ("eMS57", "Fig2c"): mean(FIG2C["eMS57"]) / mean(FIG2C["MS56"]),
+            ("eMS57", "Fig2f"): mean(FIG2F["eMS57/MS56"]),
+        }
+    )
     assert {i["experiment"].environment.temperature for i in items} == {None}
     dataset.close_lmdb()
 
@@ -947,13 +971,12 @@ def test_process_builds_the_deletion_and_reconstructed_allele_records(
     ledger = json.loads((preprocess / "dropped_records.json").read_text())
     assert ledger["source_rows"] == 9
     assert ledger["kept_records"] == ch.GROWTH_EXPECTED_RECORDS
-    # MG1655 and eMS57 of Fig. 2c, and eMS57/MS56 of Fig. 2f
-    assert ledger["dropped_records"] == 3
-    assert ledger["reference_rows"] == ["MS56", "ilvNWT", "cspCWT", "yifBWT"]
-    reasons = {rule["reason"] for rule in ledger["rules"]}
-    assert reasons == {
+    # nothing is dropped since #1045 part 3; MG1655 is MS56's reference
+    assert ledger["dropped_records"] == 0
+    assert ledger["rules"] == []
+    assert ledger["reference_rows"] == ["MG1655", "MS56", "ilvNWT", "cspCWT", "yifBWT"]
+    assert {rule["reason"] for rule in ledger["retired_rules"]} == {
         "evolved_clone_has_no_writable_genotype",
-        "parent_is_the_reference_not_a_record",
         "parent_genotype_not_enumerated_by_this_paper",
     }
     assert any("ilvN*/ilvNWT" in note for note in ledger["notes"])
@@ -965,7 +988,10 @@ def test_process_builds_the_deletion_and_reconstructed_allele_records(
     assert "intergenic_call_has_no_locus_to_key_to" in variants["blocking_reasons"]
 
     gaps = json.loads((preprocess / "genotype_gaps.json").read_text())
-    assert gaps["untyped_absences"][0]["field"] == "alleles"
+    assert [(a["strain"], a["field"]) for a in gaps["untyped_absences"]] == [
+        ("MS56", "alleles"),
+        ("eMS57", "alleles"),
+    ]
     assert gaps["typed_gaps"]["environment"][0]["field"] == "temperature"
 
     checks = json.loads((preprocess / "released_statistics_check.json").read_text())
@@ -978,7 +1004,8 @@ def test_process_builds_the_deletion_and_reconstructed_allele_records(
     assert sourced["cassette"]["value"] == ch.KAN_CASSETTE
     strains = pd.read_csv(preprocess / "strains.csv")
     assert sorted(strains["deleted_genes"].dropna()) == [1, 21]
-    assert list(strains["strain"].iloc[2:]) == ["ilvNmut", "cspCmut", "yifBmut"]
+    assert list(strains["strain"].iloc[2:5]) == ["ilvNmut", "cspCmut", "yifBmut"]
+    assert list(strains["strain"].iloc[5:]) == ["MS56", "eMS57", "eMS57/MS56"]
     assert (preprocess / "build_manifest.json").exists()
 
     report = ch.verify_growth_build(

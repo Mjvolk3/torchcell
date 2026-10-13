@@ -2,7 +2,7 @@
 # [[torchcell.datasets.ecoli.choe2019_growth_rate]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/ecoli/choe2019_growth_rate
 # Test file: tests/torchcell/datasets/ecoli/test_choe2019_growth_rate.py
-"""Choe 2019 genome-reduced ALE: the designed deletions and alleles, nothing evolved.
+"""Choe 2019 genome-reduced ALE: every released growth row, each strain as released.
 
 Choe et al. 2019 (Nat Commun 10:935, doi:10.1038/s41467-019-08888-6) evolved the
 genome-reduced *E. coli* MS56 for 807 generations in M9 glucose, resequenced the
@@ -11,11 +11,13 @@ RNA-seq, Ribo-seq, ChIP-seq, a Biolog phenotype microarray and intracellular met
 Two dataset classes serve what is BOTH released as a number AND keyed to a strain whose
 genotype this schema can write:
 
-- :class:`GrowthRateChoe2019Dataset` -- ``BacterialFitnessExperiment``, five records:
+- :class:`GrowthRateChoe2019Dataset` -- ``BacterialFitnessExperiment``, eight records:
   ``MS56 Delta21kb`` (21 gene deletions) and ``MS56 DeltarpoS`` (one), each against their
-  isogenic parent MS56, from the Fig. 2c sheet of the Source Data workbook; and since
-  #1057 the three reconstructed single-allele strains of the Fig. 2f sheet (``cspCmut``,
-  ``ilvNmut``, ``yifBmut``), each against its own kan-marked wild-type-allele control.
+  isogenic parent MS56, from the Fig. 2c sheet of the Source Data workbook; since #1057
+  the three reconstructed single-allele strains of the Fig. 2f sheet (``cspCmut``,
+  ``ilvNmut``, ``yifBmut``), each against its own kan-marked wild-type-allele control;
+  and since #1045 part 3 MS56 over MG1655 (Fig. 2c) and the evolved clone eMS57 over
+  MS56, once from each panel (Fig. 2c rates, Fig. 2f released ratios).
 - :class:`TranscriptionFactorKnockoutChoe2019Dataset` --
   ``BacterialFitnessExperiment``, two records: the Keio BW25113 ``DeltaydaS`` and
   ``DeltaabgR`` single deletions, whose growth rates the Supplementary Fig. 6 legend
@@ -76,7 +78,15 @@ their sample SD (n = 3 biological replicates, the Fig. 2f legend).
 A SECOND REASON NOT TO MIX THE TWO GROWTH PANELS, measured here: Fig. 2c's rates give
 eMS57/MS56 = 2.8159, while Fig. 2f releases eMS57/MS56 directly as 1.3990 (mean of three
 sets). The two panels disagree by a factor of 2.013 on the same strain pair, so they are
-not the same measurement and nothing may be derived across them. Fig. 2c is internally
+not the same measurement and nothing may be derived across them. Both are stored (#1045
+part 3), each eMS57 record naming its panel in ``FitnessPhenotype.screen_id``.
+
+THE EVOLVED CLONE IS A RECORD ON ITS RELEASED BACKGROUND (#1045 part 3). eMS57 is a
+``BacterialStrainBackground`` named ``eMS57`` whose ``genotype_statement`` is its
+Supplementary Table 3 row verbatim ("E. coli MS56 adaptively evolved in M9
+glucosemedium"), parent MS56, and whose ``alleles`` list is empty for the reason below:
+the release gives the clone no variant list. Its genotype is empty, because nothing is
+edited on top of it; the strain is the background the reference genome names. Fig. 2c is internally
 consistent with the paper's own prose instead: it puts ``Delta21kb`` at 0.7763 and
 ``DeltarpoS`` at 0.7966 of eMS57, against a stated "recovered its growth rate to 80% of
 that of eMS57", and ``check_recovery_fraction`` asserts that agreement on every build.
@@ -91,10 +101,10 @@ reference 4 as "large deletions MD1 to MD56" and enumerates no gene, the reduced
 has no deposited assembly, and typing 55 regions nobody released would be an invention.
 Two consequences are stated rather than typed:
 
-- MS56's own Fig. 2c growth rate is NOT loaded. Written as a record it would need an
-  empty genotype against an MG1655 reference, which asserts that MS56 is genotypically
-  MG1655 while 1.1 Mbp of it is missing. The honest form of that record needs the 55
-  regions, which this paper does not give.
+- MS56's own Fig. 2c growth rate is loaded over MG1655 (#1045 part 3) on MS56's named
+  background, not as an empty genotype against a bare MG1655 reference: the record's
+  strain is the background its reference genome names, so it does not assert that MS56
+  is genotypically MG1655, and the 55 regions stay in the statement.
 - The background's unenumerated content has no TYPED home either. A ``ProvenanceGap`` on
   ``alleles`` is refused by ``ProvenanceGapMixin`` (``field 'alleles' has a
   ProvenanceGap but is not None``), because the field defaults to ``[]`` rather than
@@ -136,8 +146,10 @@ WHAT ELSE IS RELEASED AND WHY IT IS NOT HERE. Every refusal is counted in
   holds a growth curve.
 - Fig. 1g and Fig. 3d release intracellular metabolite levels for MG1655 and eMS57, and
   Supplementary Table 1 a fed-batch biomass and specific growth rate for the same pair.
-  The only non-wild-type strain in any of them is the evolved clone, so the wild-type
-  half would be a record whose fitness is 1.0 against itself.
+  Until #1045 part 3 the evolved clone had no writable strain, which blocked them; it
+  now has its released background, and these MG1655-referenced eMS57 rows are not yet
+  loaded (a metabolite level has its own phenotype class, and the fed-batch rows are a
+  different culture from the Fig. 2c flasks).
 - Fig. 2g's MG1655 valine arm releases no number at all (the cells did not grow), and
   eMS57 is the only other strain in the panel.
 
@@ -181,6 +193,7 @@ from torchcell.data import (
 )
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
+    AssemblyReferenceGenome,
     BacterialAssemblySet,
     BacterialFitnessExperiment,
     BacterialFitnessExperimentReference,
@@ -506,6 +519,8 @@ LARGE_DELETION_GENOTYPE_STATEMENT = (
     "MS56, (hycEDCBA-hypABCDE-fhlA-ygbA-mutS-pphB-ygbIJKLMN-rpoS)::kan"
 )
 RPOS_DELETION_GENOTYPE_STATEMENT = "MS56, rpoS::kan"
+#: The evolved clone, verbatim from Supplementary Table 3 (#1045 part 3).
+EVOLVED_GENOTYPE_STATEMENT = "E. coli MS56 adaptively evolved in M9 glucosemedium"
 
 #: The Keio arm: the two BW25113 single deletions whose growth rate the Supplementary
 #: Fig. 6 legend states, as a FRACTION of wild-type BW25113 in the same medium.
@@ -518,8 +533,8 @@ KEIO_FITNESS: tuple[tuple[str, float], tuple[str, float]] = (
 KEIO_PANEL_STRAINS = 62
 
 #: Expected record counts, asserted at the end of each build.
-GROWTH_EXPECTED_RECORDS = 5
-GROWTH_EXPECTED_REFERENCES = 4
+GROWTH_EXPECTED_RECORDS = 8
+GROWTH_EXPECTED_REFERENCES = 7
 TF_EXPECTED_RECORDS = 2
 TF_EXPECTED_REFERENCES = 1
 #: Every deletion symbol must resolve; a renamed label stops the build.
@@ -599,6 +614,10 @@ _Q_LARGE_DELETION_ROW = (
     "mutS-pphB-ygbIJKLMN-rpoS)::kan</td>"
 )
 _Q_RPOS_ROW = "MS56 ΔrpoS</td><td rowspan=1 colspan=1>MS56, rpoS::kan</td>"
+_Q_EMS57_ROW = (
+    "eMS57</td><td rowspan=1 colspan=1>E. coli MS56 adaptively evolved in M9 "
+    "glucosemedium</td><td rowspan=1 colspan=1>This study</td>"
+)
 _Q_KEIO_PANEL = (
     "Supplementary Fig. 6. Growth curve of E. coli lacking one of the 62 "
     "transcription factors. Growth of 62 knock-out strains in M9 glucose medium was "
@@ -649,6 +668,14 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         LARGE_DELETION_GENOTYPE_STATEMENT, _Q_LARGE_DELETION_ROW
     ),
     "rpos_deletion_genotype": _si1(RPOS_DELETION_GENOTYPE_STATEMENT, _Q_RPOS_ROW),
+    "evolved_strain": _si1(EVOLVED_LABEL, _Q_EMS57_ROW),
+    "evolved_genotype_statement": _si1(
+        EVOLVED_GENOTYPE_STATEMENT,
+        _Q_EMS57_ROW,
+        note="the release gives the clone no variant list (Supplementary Data 2 is a "
+        "population allele frequency per timepoint), so the statement is the whole "
+        "genotype it states",
+    ),
     "large_deletion_gene_count": _paper(
         21,
         _Q_LARGE_DELETION,
@@ -758,6 +785,17 @@ BACKGROUND_ABSENCE = {
     "what_is_missing": "the gene content of MS56's 55 deleted regions, ~1.1 Mbp",
     "where_it_lives_instead": "genotype_statement, verbatim from Supplementary Table 3",
     "source_defers_to": "reference 4 of this paper; MS56 has no deposited assembly",
+}
+#: The same untyped absence for the evolved clone (#1045 part 3).
+EVOLVED_ABSENCE = {
+    "model": "BacterialStrainBackground",
+    "field": "alleles",
+    "strain": EVOLVED_LABEL,
+    "why_no_typed_gap": BACKGROUND_ABSENCE["why_no_typed_gap"],
+    "what_is_missing": "the clone's own mutations beyond MS56",
+    "where_it_lives_instead": "genotype_statement, verbatim from Supplementary Table 3",
+    "source_defers_to": "nothing: the release gives population allele frequencies "
+    "(Supplementary Data 2-4), not a clone genotype",
 }
 
 
@@ -1171,8 +1209,36 @@ def parent_background() -> BacterialStrainBackground:
     )
 
 
-def fitness_phenotype(strain: StrainRates, parent: StrainRates) -> FitnessPhenotype:
-    """One deletion strain's growth rate as a ratio to its isogenic parent MS56.
+def evolved_background() -> BacterialStrainBackground:
+    """eMS57, the clone isolated from the MS56 evolution, named and stated as released.
+
+    ``alleles`` is empty for the reason MS56's is: the release gives no clone variant
+    list, and a population allele frequency is not a clone genotype. Supplementary Table
+    3's statement is kept verbatim and the untyped absence is filed in
+    ``preprocess/genotype_gaps.json`` (#1045 part 3).
+    """
+    return BacterialStrainBackground(
+        name=EVOLVED_LABEL,
+        reference_strain=MG1655,
+        assembly_set=MG1655_ASSEMBLY_SET,
+        parents=[PARENT_LABEL],
+        genotype_statement=EVOLVED_GENOTYPE_STATEMENT,
+        alleles=[],
+        provenance=[
+            SOURCED_VALUES["evolved_strain"],
+            SOURCED_VALUES["evolved_genotype_statement"],
+        ],
+    )
+
+
+def fitness_phenotype(
+    strain: StrainRates, parent: StrainRates, *, screen_id: str | None = None
+) -> FitnessPhenotype:
+    """One strain's growth rate as a ratio to the strain it is compared with.
+
+    The deletion strains and eMS57 are ratios to MS56; MS56 is a ratio to MG1655
+    (#1045 part 3). ``screen_id`` names the panel when one strain pair is released by
+    two panels with different values (eMS57/MS56 in Fig. 2c and Fig. 2f).
 
     ``fitness_uncertainty`` is the strain's sample standard deviation divided by the
     parent mean, which is exactly the sample standard deviation of the n released ratio
@@ -1199,11 +1265,14 @@ def fitness_phenotype(strain: StrainRates, parent: StrainRates) -> FitnessPhenot
         fitness_uncertainty_type=UncertaintyType.sample_sd,
         n_samples=strain.n_samples,
         sample_unit=SampleUnit.biological_replicate,
+        screen_id=screen_id,
     )
 
 
 def parent_phenotype(parent: StrainRates) -> FitnessPhenotype:
-    """MS56: the ratio of its own mean to itself, 1.0, with its own relative spread."""
+    """A reference strain's ratio of its own mean to itself, 1.0, with its own relative
+    spread: MS56 for the strains built on or evolved from it, MG1655 for MS56.
+    """
     return FitnessPhenotype(
         fitness=1.0,
         fitness_uncertainty=parent.sample_sd / parent.mean,
@@ -1264,14 +1333,17 @@ def control_background(allele: ReconstructedAllele) -> BacterialStrainBackground
     )
 
 
-def reconstruction_phenotype(ratios: Sequence[float]) -> FitnessPhenotype:
-    """The mean of the released mutant-over-control ratios, with their sample SD."""
+def reconstruction_phenotype(
+    ratios: Sequence[float], *, screen_id: str | None = None
+) -> FitnessPhenotype:
+    """The mean of the released Fig. 2f ratios, with their sample SD."""
     return FitnessPhenotype(
         fitness=statistics.fmean(ratios),
         fitness_uncertainty=statistics.stdev(ratios),
         fitness_uncertainty_type=UncertaintyType.sample_sd,
         n_samples=len(ratios),
         sample_unit=SampleUnit.biological_replicate,
+        screen_id=screen_id,
     )
 
 
@@ -1576,6 +1648,38 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
                         "fitness_se": phenotype.fitness_se,
                     }
                 )
+            # #1045 part 3: the rows refused until now, each strain on its released
+            # background with an empty genotype (nothing is edited on top of it).
+            for (
+                strain_label,
+                background,
+                versus,
+                record_reference,
+                phenotype,
+            ) in self._background_records(panel, ratios, environment, reference_genome):
+                experiment = BacterialFitnessExperiment(
+                    dataset_name=self.name,
+                    genotype=Genotype(perturbations=[]),
+                    environment=environment,
+                    phenotype=phenotype,
+                )
+                txn.put(
+                    f"{index}".encode(),
+                    self._intern_record(experiment, record_reference, pub, itxn),
+                )
+                index += 1
+                rows.append(
+                    {
+                        "panel": phenotype.screen_id or GROWTH_SHEET,
+                        "strain": strain_label,
+                        "background": background,
+                        "reference_strain": versus,
+                        "n_samples": phenotype.n_samples,
+                        "fitness": phenotype.fitness,
+                        "fitness_uncertainty": phenotype.fitness_uncertainty,
+                        "fitness_se": phenotype.fitness_se,
+                    }
+                )
         env.close()
         interned_env.close()
 
@@ -1591,6 +1695,68 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
             min(row["fitness"] for row in rows),
             max(row["fitness"] for row in rows),
         )
+
+    def _background_records(
+        self,
+        panel: GrowthPanel,
+        ratios: Mapping[str, Sequence[float]],
+        environment: Environment,
+        parent_genome: AssemblyReferenceGenome,
+    ) -> list[
+        tuple[str, str, str, BacterialFitnessExperimentReference, FitnessPhenotype]
+    ]:
+        """MS56 over MG1655, and eMS57 over MS56 from both panels (#1045 part 3).
+
+        Each record's strain is the background its reference genome names, as for a
+        released background elsewhere; the phenotype reference is the denominator the
+        release divides by. Fig. 2c and Fig. 2f release eMS57/MS56 with different values
+        (``check_panels_disagree``), so each eMS57 record names its panel in
+        ``screen_id`` and neither is derived from the other.
+        """
+        parent = panel.rates(PARENT_LABEL)
+        evolved_genome = assembly_reference(
+            self.REFERENCE_STRAIN, background=evolved_background()
+        )
+
+        def reference(
+            genome: AssemblyReferenceGenome, denominator: FitnessPhenotype
+        ) -> BacterialFitnessExperimentReference:
+            return BacterialFitnessExperimentReference(
+                dataset_name=self.name,
+                genome_reference=genome,
+                environment_reference=environment,
+                phenotype_reference=denominator,
+            )
+
+        return [
+            (
+                PARENT_LABEL,
+                PARENT_LABEL,
+                WILD_TYPE_LABEL,
+                reference(
+                    parent_genome, parent_phenotype(panel.rates(WILD_TYPE_LABEL))
+                ),
+                fitness_phenotype(parent, panel.rates(WILD_TYPE_LABEL)),
+            ),
+            (
+                EVOLVED_LABEL,
+                EVOLVED_LABEL,
+                PARENT_LABEL,
+                reference(evolved_genome, parent_phenotype(parent)),
+                fitness_phenotype(
+                    panel.rates(EVOLVED_LABEL), parent, screen_id=GROWTH_SHEET
+                ),
+            ),
+            (
+                RATIO_ROW_ORDER[0],
+                EVOLVED_LABEL,
+                PARENT_LABEL,
+                reference(evolved_genome, control_phenotype()),
+                reconstruction_phenotype(
+                    ratios[RATIO_ROW_ORDER[0]], screen_id=RATIO_SHEET
+                ),
+            ),
+        ]
 
     def _write_ledgers(
         self,
@@ -1611,49 +1777,33 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
                     "source_rows": len(panel.rows) + len(ratios),
                     "kept_records": len(rows),
                     "reference_rows": [
+                        WILD_TYPE_LABEL,
                         PARENT_LABEL,
                         *(a.control_strain for a in RECONSTRUCTED_ALLELES),
                     ],
-                    "dropped_records": len(panel.rows) + len(ratios) - len(rows) - 1,
-                    "rules": [
+                    "dropped_records": 0,
+                    "rules": [],
+                    "retired_rules": [
                         {
-                            "strain": EVOLVED_LABEL,
                             "reason": "evolved_clone_has_no_writable_genotype",
-                            "detail": "eMS57 is a clone isolated from the day-62 "
-                            "population and the release gives it no variant list; a "
-                            "genotype would have to be produced by thresholding "
-                            "population allele frequencies, a call the authors never "
-                            "made, and no perturbation leaf holds a called variant",
+                            "retired": "no longer applied (#1045 part 3): eMS57 is "
+                            "stored on a BacterialStrainBackground named eMS57, its "
+                            "Supplementary Table 3 row the genotype statement, once "
+                            "per panel (screen_id Fig2c and Fig2f)",
                         },
                         {
-                            "strain": f"{EVOLVED_LABEL} ({RATIO_SHEET})",
-                            "reason": "evolved_clone_has_no_writable_genotype",
-                            "detail": "the Fig. 2f eMS57/MS56 row is the same evolved "
-                            "clone as Fig. 2c's, a ratio the two panels give "
-                            "differently (panel_disagreement)",
-                        },
-                        {
-                            "strain": PARENT_LABEL,
-                            "reason": "parent_is_the_reference_not_a_record",
-                            "detail": "MS56 is the isogenic parent both deletion "
-                            "strains were built on, so it is the phenotype_reference "
-                            "the ratio is taken against",
-                        },
-                        {
-                            "strain": WILD_TYPE_LABEL,
                             "reason": "parent_genotype_not_enumerated_by_this_paper",
-                            "detail": "an MG1655-referenced MS56 record would need "
-                            "MS56's 55 deleted regions as perturbations; this paper "
-                            "states only 'large deletions MD1 to MD56' and defers the "
-                            "content to its reference 4, so the record would assert "
-                            "that MS56 is genotypically MG1655",
+                            "retired": "no longer applied (#1045 part 3): MS56 is "
+                            "stored over MG1655 on its own named background, so the "
+                            "record does not assert MS56 is genotypically MG1655",
                         },
                     ],
                     "notes": [
-                        f"{len(panel.rows)} released Fig. 2c rows = 2 records + 1 MS56 "
-                        "reference + 2 refused strains; "
-                        f"{len(ratios)} released Fig. 2f rows = 3 records + 1 refused "
-                        "evolved clone",
+                        f"{len(panel.rows)} released Fig. 2c rows = 4 records (the "
+                        "two deletion strains, MS56 over MG1655, eMS57 over MS56) + "
+                        "MG1655 as MS56's reference; "
+                        f"{len(ratios)} released Fig. 2f rows = 4 records (the three "
+                        "reconstructions and eMS57/MS56)",
                         f"Fig. 2f releases three reconstructed single-allele strains "
                         f"({', '.join(RATIO_ROW_ORDER[1:])}) as mutant-over-control "
                         "growth-rate ratios for three sets. Since #1057 each is a record "
@@ -1703,7 +1853,7 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
             json.dumps(
                 {
                     "dataset": self.name,
-                    "untyped_absences": [BACKGROUND_ABSENCE],
+                    "untyped_absences": [BACKGROUND_ABSENCE, EVOLVED_ABSENCE],
                     "typed_gaps": {
                         "environment": [_GAP_TEMPERATURE.model_dump(mode="json")],
                         "perturbation": [

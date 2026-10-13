@@ -226,6 +226,11 @@ class MixtureConfig(BaseModel):
     pca_dim: int | None = None
     # ---- the ablation ladder
     compound_set: Literal["tokens", "mean"] = "tokens"
+    #: how the compound tokens of ONE medium are reduced to the medium's offset and to
+    #: the token summary the head reads: ``mean`` makes a three-inhibitor medium read as
+    #: the average of its inhibitors (round 7 and earlier), ``sum`` lets each inhibitor
+    #: add; a single-compound medium is identical under both
+    compound_pool: Literal["mean", "sum"] = "mean"
     dose: Literal["film", "off"] = "film"
     host_train: Literal["anchors", "anchors+ex21", "finetune_ex21"] = "anchors"
     lambda_host: float = 1.0
@@ -612,6 +617,12 @@ class MixtureModel(nn.Module):
             e = e.mean(dim=1, keepdim=True)
         return e
 
+    def pool_compounds(self, tokens: torch.Tensor) -> torch.Tensor:
+        """[C, k, d] -> [C, d]: the medium's compound tokens reduced by ``compound_pool``."""
+        if self.cfg.compound_pool == "sum":
+            return tokens.sum(1)
+        return tokens.mean(1)
+
     def medium_state(
         self, h: torch.Tensor, e: torch.Tensor, strain: torch.Tensor | None
     ) -> tuple[torch.Tensor | None, torch.Tensor, torch.Tensor]:
@@ -635,7 +646,7 @@ class MixtureModel(nn.Module):
                 env.append(cell[:, strain].sum(2))
             pooled.append(cell.mean(1))
             token.append(
-                seq[:, :k].mean(1)
+                self.pool_compounds(seq[:, :k])
                 if k
                 else torch.zeros(len(part), d, device=h.device, dtype=h.dtype)
             )
@@ -687,7 +698,7 @@ class MixtureModel(nn.Module):
         # the compound-free medium (the host's uninhibited anchor) has no compound
         # token, and the mean over an empty set is NaN; its offset is zero
         if e.shape[1]:
-            base = gene + self.offset(e.mean(1)).T
+            base = gene + self.offset(self.pool_compounds(e)).T
         else:
             base = gene.expand(b, c)
         head = self.gene_head(self.gene_norm(state.float())).squeeze(-1)

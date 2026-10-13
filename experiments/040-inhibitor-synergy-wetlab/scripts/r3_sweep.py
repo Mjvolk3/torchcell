@@ -528,6 +528,50 @@ def round8_arms() -> list[dict[str, object]]:
     ]
 
 
+def round9_arms() -> list[dict[str, object]]:
+    """Round 9: can the shared head COMPOSE inhibitors. Rounds 7 and 8 read the same
+    host fitness at one, two and three inhibitors on every cell arm (0.63 / 0.60 / 0.59
+    on the single-source arm, 0.69 / 0.67 / 0.67 zero-shot), and the model reduces a
+    medium's compound tokens by their MEAN in both places the host reads them (the
+    medium offset and the token summary), so a three-inhibitor medium is read as the
+    average of its inhibitors by construction. ``compound_pool: sum`` lets each inhibitor
+    add, with no change at one compound. The single-source arm reads it with the
+    titration fitted, the anchors arm zero-shot, the three-source arm with Hillenmeyer's
+    26 heterozygous pairs as the only multi-compound records the sum can learn from.
+    ``lambda_host`` 0.1 is the best public gene-readout arm of wave 2 re-asked under the
+    cell readout, and ``_s345`` on folds 0 to 4 is the round-4 seed ensemble for the
+    cell readout, the noise floor every other reading is held against.
+    """
+    return [
+        arm("van_e150_cell_sum", "van", 150, readout="cell", compound_pool="sum"),
+        arm(
+            "van_e150_cell_anchors_sum",
+            "van",
+            150,
+            readout="cell",
+            host_train="anchors",
+            compound_pool="sum",
+        ),
+        arm("van_e150_cell_lh0p1", "van", 150, readout="cell", lambda_host=0.1),
+        arm(
+            "vanhophet_e150_cell_sum",
+            "vanhophet",
+            150,
+            readout="cell",
+            compound_pool="sum",
+        ),
+        arm(
+            "van_e150_cell",
+            "van",
+            150,
+            readout="cell",
+            folds=[0, 1, 2, 3, 4],
+            name_suffix="_s345",
+            seeds=[3, 4, 5],
+        ),
+    ]
+
+
 def configs(spec: dict[str, object], folds: list[int]) -> list[dict[str, object]]:
     """One config per fold of ``spec``."""
     out = []
@@ -590,12 +634,12 @@ def main() -> None:
         "--wave",
         type=int,
         default=1,
-        choices=(1, 2, 3, 4, 5, 6, 7, 8),
+        choices=(1, 2, 3, 4, 5, 6, 7, 8, 9),
         help=(
             "1 writes the r3_* screen, 2 the r3w2_* second wave, 3 the r4_* seed"
             " ensemble, 4 the r5_* Delta round, 5 the r5b_* convergence follow-up,"
             " 6 the r6_* graph regularization, 7 the r7_* cell readout, 8 the r8_*"
-            " round-5 questions under the cell readout"
+            " round-5 questions under the cell readout, 9 the r9_* composition round"
         ),
     )
     args = parser.parse_args()
@@ -610,6 +654,7 @@ def main() -> None:
         6: "r6",
         7: "r7",
         8: "r8",
+        9: "r9",
     }[args.wave]
     waves = {
         1: arms,
@@ -620,6 +665,7 @@ def main() -> None:
         6: round6_arms,
         7: round7_arms,
         8: round8_arms,
+        9: round9_arms,
     }
     specs = waves[args.wave]()
     label = {
@@ -631,6 +677,7 @@ def main() -> None:
         6: "ROUND 6",
         7: "ROUND 7",
         8: "ROUND 8",
+        9: "ROUND 9",
     }[args.wave]
 
     rows, lines = [], []

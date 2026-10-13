@@ -142,6 +142,12 @@ def test_gap_carrier_fields_maps_stored_dumps_back_to_their_class() -> None:
     assert index[compound_keys] == "Compound"
     assert index[frozenset(fitness.model_dump())] == "FitnessPhenotype"
     assert index[frozenset(environment.model_dump())] == "Environment"
+    # #1045: growth_phase is left out of the dump when None, so both key sets map back
+    held = environment.model_copy(
+        update={"growth_phase": s.CultureGrowthPhase.stationary}
+    )
+    assert "growth_phase" not in environment.model_dump()
+    assert index[frozenset(held.model_dump())] == "Environment"
     assert index.get(compound_keys | {"extra"}) is None
 
 

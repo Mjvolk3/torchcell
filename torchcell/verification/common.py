@@ -53,6 +53,7 @@ from __future__ import annotations
 
 from collections import Counter
 from collections.abc import Callable, Iterable, Mapping, Sequence
+from itertools import combinations
 from typing import Any, Protocol
 
 from pydantic import BaseModel, Field
@@ -128,6 +129,10 @@ def gap_carrier_fields() -> dict[frozenset[str], str]:
     ``TwoChannelMicroarrayExpressionPhenotype``) has its ancestor's key set; the ancestor
     keeps it. A class is visited before its subclasses are pushed, so the first class
     seen for a key set is the most general one.
+
+    A field declared with ``exclude_if`` (``Environment.growth_phase``, #1045) is left
+    out of a dump when its predicate holds, so the class is indexed under every key set
+    its dumps can have: all fields, less any subset of those omissible ones.
     """
     from torchcell.datamodels.schema import ProvenanceGapMixin
 
@@ -136,7 +141,15 @@ def gap_carrier_fields() -> dict[frozenset[str], str]:
     while stack:
         model = stack.pop()
         stack.extend(model.__subclasses__())
-        index.setdefault(frozenset(model.model_fields), model.__name__)
+        fields = frozenset(model.model_fields)
+        omissible = sorted(
+            name
+            for name, info in model.model_fields.items()
+            if info.exclude_if is not None
+        )
+        for size in range(len(omissible) + 1):
+            for left_out in combinations(omissible, size):
+                index.setdefault(fields - frozenset(left_out), model.__name__)
     return index
 
 

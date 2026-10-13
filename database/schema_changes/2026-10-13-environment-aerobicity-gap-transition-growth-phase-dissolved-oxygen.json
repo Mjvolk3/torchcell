@@ -2,7 +2,7 @@
   "record_version": 1,
   "slug": "environment-aerobicity-gap-transition-growth-phase-dissolved-oxygen",
   "date": "2026-10-13",
-  "pr": null,
+  "pr": 1089,
   "author_kind": "agent",
   "base_commit": "c209e248cc7d1635ef53647511bca6dea065e913",
   "python_version": "3.13.0",

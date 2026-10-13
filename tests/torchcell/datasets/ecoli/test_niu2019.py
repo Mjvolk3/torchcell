@@ -47,8 +47,11 @@ from torchcell.datamodels.schema import (
     BacterialReleasedCrisprPerturbation,
     ConcentrationUnit,
     MeasurementType,
+    ProductTiterExperiment,
+    ProductTiterExperimentReference,
     SampleUnit,
     SmallMoleculePerturbation,
+    UncertaintyType,
 )
 from torchcell.datasets.bacteria_common import BacterialGenomeInjector
 from torchcell.datasets.dataset_registry import dataset_registry
@@ -63,6 +66,7 @@ DATA_ROOT = os.environ.get("DATA_ROOT", "")
 _MIRROR = Path(DATA_ROOT, n.RAW_DIR_REL) if DATA_ROOT else None
 _LIBRARY = Path(DATA_ROOT, n.LIBRARY_DIR_REL) if DATA_ROOT else None
 _STORE = Path(DATA_ROOT, n.DATASET_ROOT_REL) if DATA_ROOT else None
+_PINENE_STORE = Path(DATA_ROOT, n.PINENE_DATASET_ROOT_REL) if DATA_ROOT else None
 
 requires_mirror = pytest.mark.skipif(
     _MIRROR is None or not (_MIRROR / n.si_rel()).exists(),
@@ -75,6 +79,10 @@ requires_library = pytest.mark.skipif(
 requires_store = pytest.mark.skipif(
     _STORE is None or not (_STORE / "processed" / "lmdb").exists(),
     reason="the Niu 2019 dev-tree LMDB is not built",
+)
+requires_pinene_store = pytest.mark.skipif(
+    _PINENE_STORE is None or not (_PINENE_STORE / "processed" / "lmdb").exists(),
+    reason="the Niu 2019 pinene dev-tree LMDB is not built",
 )
 
 
@@ -135,6 +143,11 @@ COMBINATION_LABELS = {
 COMBINATION_GROWTH = {
     "crispr_activation": (3.55, 0.03),
     "crispr_interference": (1.26, 0.02),
+}
+#: The fixture's main-table pinene cells for the same two combination strains.
+COMBINATION_PINENE = {
+    "crispr_activation": (1.71, 0.02),
+    "crispr_interference": (1.13, 0.02),
 }
 
 
@@ -344,6 +357,7 @@ def _install_fixture_sizes(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(n, "N_INTERFERENCE_TARGETS", 3)
     monkeypatch.setattr(n, "COMBINATION_LABELS", COMBINATION_LABELS)
     monkeypatch.setattr(n, "COMBINATION_GROWTH", COMBINATION_GROWTH)
+    monkeypatch.setattr(n, "COMBINATION_PINENE", COMBINATION_PINENE)
 
 
 def test_retention_stores_the_resolvable_single_gene_growth_rows(
@@ -727,7 +741,7 @@ def test_create_experiment_is_not_the_entry_point() -> None:
         dataset.create_experiment()
 
 
-def test_the_module_cli_names_its_three_commands() -> None:
+def test_the_module_cli_names_its_five_commands() -> None:
     with pytest.raises(SystemExit):
         n.main([])
 
@@ -741,7 +755,8 @@ def test_every_sourced_value_is_verbatim_in_the_pinned_ocr() -> None:
     assert _LIBRARY is not None
     root = osp.join(DATA_ROOT, "torchcell-library")
     values = [v for v in vars(n).values() if isinstance(v, SourcedValue)]
-    assert len(values) == len(n.SOURCED_VALUES) == 11
+    assert len(values) == len(n.SOURCED_VALUES) + len(n.PINENE_SOURCED_VALUES)
+    assert (len(n.SOURCED_VALUES), len(n.PINENE_SOURCED_VALUES)) == (11, 11)
     for value in values:
         result = audit_sourced_value(value, root)
         assert result.passed, f"{value.value!r}: {result.message}"
@@ -834,3 +849,182 @@ def test_the_built_store_passes_l0_to_l4() -> None:
     report = n.verify_build(str(_STORE), data_root=DATA_ROOT)
     assert report.passed, report.summary()
     assert osp.isfile(osp.join(str(_STORE), "preprocess", "verification_report.json"))
+
+
+# --------------------------------------------------------------------------- #
+# The pinene store (#770): the released product ratios
+# --------------------------------------------------------------------------- #
+@pytest.fixture
+def pinene_retention(si: Path, monkeypatch: pytest.MonkeyPatch) -> n.PineneRetention:
+    """Pinene retention over the synthetic release, with the fixture's arm sizes."""
+    _install_fixture_sizes(monkeypatch)
+    tables = n.read_si(si)
+    return n.retain_pinene(
+        {
+            "crispr_activation": n.read_target_table(
+                tables.tables[2], "crispr_activation"
+            ),
+            "crispr_interference": n.read_target_table(
+                tables.tables[3], "crispr_interference"
+            ),
+        },
+        n.read_guide_spacers(tables.tables[0]),
+        dataset_name="synthetic",
+    )
+
+
+def test_pinene_retention_stores_every_numeric_pinene_cell(
+    pinene_retention: n.PineneRetention,
+) -> None:
+    labels = [(arm, label) for arm, label, _ in pinene_retention.strains]
+    # the three numeric activation cells, including the growth-censored hokC row: a
+    # dashed growth cell does not censor the pinene cell beside it
+    assert ("crispr_activation", "thrA") in labels
+    assert ("crispr_activation", "hokC") in labels
+    assert ("crispr_activation", "sufBCDS") in labels
+    assert ("crispr_interference", "yaaX") in labels
+    # the two combination strains, each read from the main table
+    assert ("crispr_activation", "sufBCDS-thrA") in labels
+    assert ("crispr_interference", "yaaX-proB") in labels
+    assert len(labels) == 6
+    assert pinene_retention.titers["crispr_activation/thrA"] == (1.06, 0.02)
+    assert pinene_retention.titers["crispr_activation/hokC"] == (1.19, 0.01)
+    assert pinene_retention.titers["crispr_activation/sufBCDS-thrA"] == (1.71, 0.02)
+
+
+def test_pinene_retention_does_not_store_a_dashed_pinene_cell(
+    pinene_retention: n.PineneRetention,
+) -> None:
+    labels = {(arm, label) for arm, label, _ in pinene_retention.strains}
+    assert ("crispr_activation", "nosuchgene") not in labels
+    assert ("crispr_interference", "proB") not in labels
+    assert ("crispr_interference", "thrL") not in labels
+    ledger = pinene_retention.ledger
+    assert (ledger.stored_records, ledger.dropped_cells) == (6, 0)
+    assert ledger.censored_cells == 3
+    assert ledger.growth_cells_in_the_sibling_store == 7
+    assert ledger.rules == []
+
+
+def test_pinene_retention_carries_the_combination_strains_leaves(
+    pinene_retention: n.PineneRetention,
+) -> None:
+    targets = {(arm, label): t for arm, label, t in pinene_retention.strains}
+    combination = targets[("crispr_interference", "yaaX-proB")]
+    assert [(t.reported_symbol, t.strain_label) for t in combination] == [
+        ("yaaX", "yaaX-proB"),
+        ("proB", "yaaX-proB"),
+    ]
+    assert [t.guide_sequence for t in combination] == ["C" * 22, None]
+
+
+def test_pinene_phenotype_stores_the_released_ratio_and_its_sd() -> None:
+    phenotype = n.pinene_phenotype(1.71, 0.02)
+    assert phenotype.titer == 1.71
+    assert phenotype.titer_unit == ConcentrationUnit.fold_change
+    assert phenotype.titer_uncertainty == 0.02
+    assert phenotype.titer_uncertainty_type == UncertaintyType.sample_sd
+    assert phenotype.n_samples == 3
+    assert phenotype.sample_unit == SampleUnit.biological_replicate
+    assert phenotype.quantification_method == "GC-FID"
+    assert phenotype.titer_se == pytest.approx(0.02 / math.sqrt(3))
+    assert phenotype.product.name == "pinene"
+
+
+def test_the_pinene_reference_is_the_control_at_one_with_typed_gaps() -> None:
+    reference = n.pinene_reference_phenotype()
+    assert reference.titer == 1.0
+    assert reference.titer_unit == ConcentrationUnit.fold_change
+    assert reference.titer_uncertainty is None
+    assert reference.titer_se is None
+    assert {gap.field for gap in reference.provenance_gaps} == {
+        "titer_uncertainty",
+        "titer_uncertainty_type",
+        "n_samples",
+        "sample_unit",
+    }
+
+
+def test_the_production_environment_is_the_shake_flask_culture() -> None:
+    culture = n.production_environment()
+    assert culture.temperature is not None
+    assert culture.temperature.value == 30.0
+    assert culture.duration_hours == 72.0
+    assert culture.culture_format is not None
+    assert culture.culture_format.working_volume_ul == 50_000.0
+    assert culture.culture_format.shaking_rpm == 130.0
+    assert culture.culture_format.inoculum_od600 == 0.1
+    assert culture.pre_culture is not None
+    assert culture.pre_culture.duration_hours is None
+    # the overlay is the one environment perturbation; the two inducers are medium
+    overlay = culture.perturbations[0]
+    assert isinstance(overlay, SmallMoleculePerturbation)
+    assert [type(p) for p in culture.perturbations] == [SmallMoleculePerturbation]
+    assert overlay.compound.name == "dodecane"
+    amounts = {
+        component.compound.name: (
+            None
+            if component.concentration is None or component.concentration.unit is None
+            else (component.concentration.value, component.concentration.unit.value)
+        )
+        for component in culture.media.components
+    }
+    assert amounts["sucrose"] == (20.0, "g/L")
+    assert amounts["dipotassium hydrogen phosphate"] == (211.42, "g/L")
+    assert amounts["Tween-80"] == (0.2, "percent_v/v")
+    assert amounts["IPTG"] == (1.0, "mM")
+    assert amounts["anhydrotetracycline"] == (200.0, "nM")
+
+
+def test_the_production_background_holds_only_the_shared_plasmids() -> None:
+    background = n.NIU2019_PRODUCTION_BACKGROUND
+    assert background.genotype_statement == (
+        "BW25113(PT5-dxs) (pBbB2K-dCas9*-MCPSoxS, pMEVIGPS)"
+    )
+    assert "pTargetA" not in background.name
+    assert background.reference_strain == "BW25113"
+    assert [gap.field for gap in background.provenance_gaps] == ["construction"]
+
+
+def test_the_pinene_dataset_declares_the_product_titer_pair(tmp_path: Path) -> None:
+    dataset = n.PineneFoldChangeNiu2019Dataset.__new__(n.PineneFoldChangeNiu2019Dataset)
+    assert dataset.experiment_class is ProductTiterExperiment
+    assert dataset.reference_class is ProductTiterExperimentReference
+    assert dataset.raw_file_names == [n.SI_FILENAME]
+    with pytest.raises(NotImplementedError, match="builds records in process"):
+        dataset.create_experiment()
+
+
+@pytest.mark.data
+@requires_pinene_store
+def test_the_built_pinene_store_holds_the_forty_released_cells() -> None:
+    assert _PINENE_STORE is not None
+    records = list(n.stored_records(str(_PINENE_STORE)))
+    assert len(records) == n.PINENE_EXPECTED_RECORDS == 40
+    phenotypes = [r["experiment"]["phenotype"] for r in records]
+    assert {p["titer_unit"] for p in phenotypes} == {"fold_change"}
+    assert {p["product"]["name"] for p in phenotypes} == {"pinene"}
+    assert {p["n_samples"] for p in phenotypes} == {3}
+    leaves = {
+        p["perturbation_type"]
+        for r in records
+        for p in r["experiment"]["genotype"]["perturbations"]
+    }
+    assert leaves == {"bacterial_released_crispr"}
+    ledger = json.loads(
+        (Path(_PINENE_STORE) / "preprocess" / "dropped_records.json").read_text()
+    )
+    assert (ledger["stored_records"], ledger["dropped_cells"]) == (40, 0)
+    assert ledger["censored_cells"] == 39
+    assert ledger["growth_cells_in_the_sibling_store"] == 54
+
+
+@pytest.mark.data
+@requires_pinene_store
+def test_the_built_pinene_store_passes_l0_to_l4() -> None:
+    assert _PINENE_STORE is not None
+    report = n.verify_pinene_build(str(_PINENE_STORE), DATA_ROOT)
+    assert report.passed, report.summary()
+    assert osp.isfile(
+        osp.join(str(_PINENE_STORE), "preprocess", "verification_report.json")
+    )

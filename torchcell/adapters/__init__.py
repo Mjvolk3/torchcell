@@ -274,6 +274,9 @@ from .nichols2011_adapter import (
 from .niu2019_adapter import (
     CrisprPineneToleranceNiu2019Adapter as CrisprPineneToleranceNiu2019Adapter,
 )
+from .niu2019_pinene_adapter import (
+    PineneFoldChangeNiu2019Adapter as PineneFoldChangeNiu2019Adapter,
+)
 from .oduibhir2014_adapter import SmfODuibhir2014Adapter as SmfODuibhir2014Adapter
 from .ohnuki2018_adapter import ScmdOhnuki2018Adapter as ScmdOhnuki2018Adapter
 from .ohnuki2022_adapter import ScmdOhnuki2022Adapter as ScmdOhnuki2022Adapter
@@ -559,6 +562,7 @@ ecoli_adapters = [
     "PhosphositeIntensityPotel2018Adapter",
     "PhageRbTnseqMutalik2020Adapter",
     "CrisprPineneToleranceNiu2019Adapter",
+    "PineneFoldChangeNiu2019Adapter",
     "RbTnseqPrice2018EcoliAdapter",
     "RbTnseqWetmore2015Adapter",
     "RbTnseqFitnessBrowserEcoliAdapter",

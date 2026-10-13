@@ -3099,6 +3099,7 @@ def test_the_bioproduction_registries_name_every_landed_store() -> None:
     } == {
         "biofuel_titer_brunk2016": "data/torchcell/biofuel_titer_brunk2016",
         "isopentenol_titer_foo2014": "data/torchcell/isopentenol_titer_foo2014",
+        "pinene_fold_change_niu2019": "data/torchcell/pinene_fold_change_niu2019",
         "isoprenol_titer_carruthers2025": (
             "data/torchcell/isoprenol_titer_carruthers2025"
         ),

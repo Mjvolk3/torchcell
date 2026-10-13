@@ -54,6 +54,18 @@ distinct targeted gene: the repeated-element guides are genuine multi-locus knoc
 (the seven rRNA operons, the insL/insH IS copies, the rhsABC paralogs, the glnU/glnW
 tRNA pair).
 
+IDENTIFIERS ARE STORED AS RELEASED. The screen table names a guide's targets by GENE
+SYMBOL, and that symbol is what each knockdown leaf stores: a
+``BacterialReleasedCrisprPerturbation`` (#1077) keyed by the released symbol with the
+released symbol as its name, ``strain_label`` the 20-nt spacer (the guide's own released
+identity) and ``expression_direction="decreased"``. The loader reads no annotation (the
+owner's rule of 2026-10-12: the data is the data, and the genome is a separate layer
+joined at modeling time). Before that rule every symbol went through
+``reconcile_locus_tags`` to a b-number and 925 guides (1,850 records) whose targeted
+symbol is retired, shares its locus with another released symbol, or is ambiguous in
+ASM584v2 were dropped; they are records now, and the L4 genome-reference rows report
+what the pinned annotation makes of the stored symbols (#1069).
+
 POSITIONS ARE NOT STORED, AND THE REASON IS A GENOME VERSION. The library was designed
 "around the genome of E. coli strain MG1655 (NC_000913.2)" while the pinned assembly set
 is GenBank ASM584v2 (U00096.3), so the released ``pos`` column is in coordinates one
@@ -111,7 +123,6 @@ from torchcell.data.experiment_dataset import (
     ExperimentDataset,
     check_manifest_pin,
     link_verified,
-    post_process,
     verify_raw_files,
 )
 from torchcell.datamodels.compound_identity import resolved_compound
@@ -119,15 +130,14 @@ from torchcell.datamodels.media import LB
 from torchcell.datamodels.schema import (
     AssayType,
     AssemblyReferenceGenome,
-    BacterialCrisprInterferencePerturbation,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
     BacterialGeneNamespace,
+    BacterialReleasedCrisprPerturbation,
     BacterialStrainBackground,
     Concentration,
     ConcentrationUnit,
     CrisprConstruct,
-    DerivedIdentifierMapping,
     Environment,
     EnvironmentResponsePhenotype,
     Experiment,
@@ -139,12 +149,7 @@ from torchcell.datamodels.schema import (
     SmallMoleculePerturbation,
     Temperature,
 )
-from torchcell.datasets.bacteria_common import (
-    LocusTagReconciliation,
-    assembly_reference,
-    bacterial_genome,
-    reconcile_locus_tags,
-)
+from torchcell.datasets.bacteria_common import assembly_reference, bacterial_genome
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.literature.manifest import (
     ROLE_RAW_DATA,
@@ -232,24 +237,17 @@ SCREENS: tuple[tuple[str, str], ...] = (("LC-E18", "fit18"), ("LC-E75", "fit75")
 #: Frozen oracles, measured on the pinned bytes. The build refuses any other count.
 EXPECTED_SOURCE_ROWS = 85381
 EXPECTED_GUIDES = 78137
-EXPECTED_RECORDS = 141542
+EXPECTED_RECORDS = 143392
 #: Distinct b-numbers the retained records perturb.
-EXPECTED_TARGETS = 4263
+EXPECTED_TARGETS = 4359
 
 #: Drop reasons, each a rule this loader declares; the counts are measured, not stated.
 DROP_NO_GENE = "no_target_in_a_gene"
 DROP_MIXED = "target_outside_a_gene"
-DROP_RETIRED = "gene_retired_in_the_pinned_assembly"
-DROP_COLLISION = "gene_symbol_shared_with_another_source_name"
-DROP_AMBIGUOUS = "gene_symbol_ambiguous_in_the_pinned_assembly"
+#: What ``systematic_gene_name`` is on every record, as the release writes it.
+IDENTIFIER_KIND = "gene symbol, as the screen table's gene column writes it"
 #: Guides dropped per reason, measured on the pinned bytes (x2 screens = measurements).
-EXPECTED_DROPS: dict[str, int] = {
-    DROP_NO_GENE: 6268,
-    DROP_MIXED: 173,
-    DROP_RETIRED: 619,
-    DROP_COLLISION: 283,
-    DROP_AMBIGUOUS: 23,
-}
+EXPECTED_DROPS: dict[str, int] = {DROP_NO_GENE: 6268, DROP_MIXED: 173}
 
 # --------------------------------------------------------------------------- #
 # Sourced values
@@ -852,32 +850,20 @@ class RetentionRule(BaseModel):
     drop_reason: str
 
 
-def classify_guide(
-    guide: GuideMeasurement,
-    stored: Mapping[str, str],
-    *,
-    retired: frozenset[str],
-    collided: frozenset[str],
-    ambiguous: frozenset[str],
-) -> RetentionRule:
-    """The retention verdict for one guide, by the loader's declared drop rules.
+def classify_guide(guide: GuideMeasurement) -> RetentionRule:
+    """The retention verdict for one guide, by the loader's two declared drop rules.
 
-    A guide is retained when EVERY perfect chromosomal match lies in an annotated gene
-    whose source symbol resolves to a b-number of the pinned assembly. The rules, in
-    the order they are applied:
+    A guide is retained when EVERY perfect chromosomal match lies in a gene the release
+    names. The rules, in the order they are applied:
 
     - no match lies in a gene: there is no gene perturbation to write, so the
       measurement has no genotype (``no_target_in_a_gene``);
     - some matches lie in a gene and some do not: the genotype would name a strict
       subset of the loci dCas9 actually binds, which asserts a genotype the release
-      does not support (``target_outside_a_gene``);
-    - a targeted symbol is retired, shares its locus with another source symbol, or is
-      ambiguous in the pinned assembly: the bacterial perturbation leaf refuses a
-      ``systematic_gene_name`` outside its namespace, so the record cannot be written
-      at all (the three ``gene_*`` reasons).
+      does not support (``target_outside_a_gene``).
 
-    The last three are the cost of reading a library designed on NC_000913.2 against
-    ASM584v2, and they are reported as such rather than smoothed over.
+    No annotation is read: a retained guide's stored targets are the released symbols
+    themselves, deduplicated and sorted.
     """
     in_gene = [name for name in guide.source_genes if name != NO_GENE]
     if not in_gene:
@@ -896,25 +882,12 @@ def classify_guide(
             stored_tags=(),
             drop_reason=DROP_MIXED,
         )
-    reason = ""
-    if any(name in retired for name in in_gene):
-        reason = DROP_RETIRED
-    elif any(name in collided for name in in_gene):
-        reason = DROP_COLLISION
-    elif any(name in ambiguous for name in in_gene):
-        reason = DROP_AMBIGUOUS
-    tags = tuple(sorted({stored[name] for name in in_gene})) if not reason else ()
-    if not reason and any(BNUMBER_RE.match(tag) is None for tag in tags):
-        raise RuntimeError(
-            f"guide {guide.guide!r} resolves to {tags}, which is not all b-numbers; "
-            "the reconciliation report named no reason for it"
-        )
     return RetentionRule(
         guide=guide.guide,
         n_targets=guide.n_targets,
         source_genes=guide.source_genes,
-        stored_tags=tags,
-        drop_reason=reason,
+        stored_tags=tuple(sorted(set(in_gene))),
+        drop_reason="",
     )
 
 
@@ -931,7 +904,6 @@ class BuildAccounting(BaseModel):
     dropped_guides_by_reason: dict[str, int]
     distinct_targets: int
     perturbations_written: int
-    reconciliation: LocusTagReconciliation
     notes: list[str] = []
 
     def check(self) -> None:
@@ -1092,50 +1064,31 @@ def screen_phenotype(
 
 
 def crispri_perturbations(
-    rule: RetentionRule, stored: Mapping[str, str], symbols: Mapping[str, str]
-) -> list[BacterialCrisprInterferencePerturbation]:
+    rule: RetentionRule,
+) -> list[BacterialReleasedCrisprPerturbation]:
     """One dCas9 knockdown per distinct gene the guide's perfect matches lie in.
 
     ``n_guides=1`` is a property of the construct, not of the library: one psgRNA
     plasmid carries one spacer, and the library's "average of 19 targets per gene" is
     the number of RECORDS a gene has, not the number of guides in any one cell. Each
-    perturbation carries a ``DerivedIdentifierMapping`` naming the released gene symbol,
-    because the release names no b-number and every stored tag is derived from a symbol.
+    perturbation is keyed by the released gene symbol verbatim, with the guide's own
+    spacer as ``strain_label``; no annotation is read and no mapping is recorded.
     """
     construct = CrisprConstruct(
         effector=str(EFFECTOR.value), guide_sequence=rule.guide, n_guides=1
     )
-    by_tag: dict[str, str] = {}
-    for name in rule.source_genes:
-        if name != NO_GENE:
-            by_tag.setdefault(stored[name], name)
     return [
-        BacterialCrisprInterferencePerturbation(
-            systematic_gene_name=tag,
-            perturbed_gene_name=symbols.get(tag, tag),
+        BacterialReleasedCrisprPerturbation(
+            systematic_gene_name=symbol,
+            perturbed_gene_name=symbol,
             gene_namespace=MG1655_NAMESPACE,
+            strain_label=rule.guide,
+            identifier_kind=IDENTIFIER_KIND,
+            expression_direction="decreased",
             crispr=construct,
-            identifier_mapping=DerivedIdentifierMapping(
-                source_identifier=by_tag[tag], route="gene_symbol"
-            ),
         )
-        for tag in rule.stored_tags
+        for symbol in rule.stored_tags
     ]
-
-
-def annotation_symbols(genome: EcoliK12Genome, tags: Iterable[str]) -> dict[str, str]:
-    """Locus tag -> the annotation's own gene symbol, falling back to the tag.
-
-    The symbol comes from the pinned assembly so one gene carries one spelling across
-    datasets; the release's own symbol is kept on the perturbation's
-    ``identifier_mapping`` and in ``preprocess/guide_retention.csv``.
-    """
-    exact, _ = genome.feature_index["symbol"]
-    by_tag: dict[str, str] = {}
-    for symbol, loci in exact.items():
-        for locus in loci:
-            by_tag.setdefault(str(locus), str(symbol))
-    return {tag: by_tag.get(tag, tag) for tag in tags}
 
 
 # --------------------------------------------------------------------------- #
@@ -1151,19 +1104,16 @@ class CrispriKnockdownCui2018Dataset(ExperimentDataset):
     #: Measured on the pinned bytes: 4,286 of the 4,360 released gene symbols resolve to
     #: a single locus of ASM584v2 (0.983). The floor is stated below that so a small
     #: annotation move reports rather than stops, and far above it so a large one stops.
-    MIN_RESOLVED_FRACTION: ClassVar[float] = 0.95
 
     def __init__(
         self,
         root: str = "data/torchcell/crispri_knockdown_cui2018",
         io_workers: int = 0,
-        ecoli_genome: EcoliK12Genome | None = None,
         transform: Any | None = None,
         pre_transform: Any | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize; the MG1655 genome resolves the released gene symbols to loci."""
-        self.ecoli_genome = ecoli_genome
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -1188,43 +1138,18 @@ class CrispriKnockdownCui2018Dataset(ExperimentDataset):
         )
         log.info("Cui 2018 screen table linked into %s", self.raw_dir)
 
-    def _genome(self) -> EcoliK12Genome:
-        """The injected MG1655 genome, or one opened from the genomes tier."""
-        if self.ecoli_genome is None:
-            self.ecoli_genome = bacterial_genome("ecoli", self.REFERENCE_STRAIN)
-        return self.ecoli_genome
-
-    @post_process
     def process(self) -> None:
         """Build one record per (retained guide, screen); write LMDB."""
         verify_raw_files(self.raw_dir, {SCREEN_FILENAME: SCREEN_SHA256})
         frame = read_screen_table(osp.join(self.raw_dir, SCREEN_FILENAME))
         guides = collapse_to_guides(frame)
-        genome = self._genome()
-
-        names = sorted({name for name in frame["gene"].unique() if name != NO_GENE})
-        resolved, report = reconcile_locus_tags(
-            genome, pd.Series(names), label=self.name
-        )
-        report.require_resolved(self.MIN_RESOLVED_FRACTION)
-        stored = dict(zip(names, resolved, strict=True))
-        rules = [
-            classify_guide(
-                guide,
-                stored,
-                retired=frozenset(report.retired_kept),
-                collided=frozenset(report.kept_on_collision),
-                ambiguous=frozenset(report.ambiguous_kept),
-            )
-            for guide in guides
-        ]
+        rules = [classify_guide(guide) for guide in guides]
         kept = [rule for rule in rules if not rule.drop_reason]
         tags = sorted({tag for rule in kept for tag in rule.stored_tags})
         if len(tags) != EXPECTED_TARGETS:
             raise RuntimeError(
                 f"{len(tags)} distinct targets, not the pinned {EXPECTED_TARGETS}"
             )
-        symbols = annotation_symbols(genome, tags)
 
         environment = screen_environment()
         references = {
@@ -1249,9 +1174,7 @@ class CrispriKnockdownCui2018Dataset(ExperimentDataset):
                 for rule in tqdm(kept, desc=f"cui2018-{screen_id}"):
                     # Annotated list[Any]: Genotype.perturbations is an invariant list
                     # over the whole perturbation union, so a narrower list is refused.
-                    perturbations: list[Any] = crispri_perturbations(
-                        rule, stored, symbols
-                    )
+                    perturbations: list[Any] = crispri_perturbations(rule)
                     experiment = BacterialEnvironmentResponseExperiment(
                         dataset_name=self.name,
                         genotype=Genotype(perturbations=perturbations),
@@ -1306,7 +1229,6 @@ class CrispriKnockdownCui2018Dataset(ExperimentDataset):
                 dropped_guides_by_reason=dropped_by_reason,
                 distinct_targets=len(tags),
                 perturbations_written=n_perturbations,
-                reconciliation=report,
                 notes=[
                     "a released row is a (guide, target position) pair and a record is "
                     "a (guide, screen): the released fold change is constant across a "
@@ -1315,6 +1237,10 @@ class CrispriKnockdownCui2018Dataset(ExperimentDataset):
                     "a multi-target guide becomes ONE record carrying one knockdown "
                     "perturbation per distinct targeted gene; the repeated-element "
                     "guides are genuine multi-locus knockdowns",
+                    "every target is stored under the gene symbol the release names, "
+                    "verbatim, with the guide's 20-nt spacer as the strain label; no "
+                    "annotation is read, and what the pinned ASM584v2 makes of those "
+                    "symbols is a genome-reference finding of the verifier (#1069)",
                     "the stored response is the RAW per-guide log2FC and confounds "
                     "on-target repression, off-target binding at 9-or-more-nt seed "
                     "matches, and the sequence-intrinsic bad-seed effect; the paper's "
@@ -1422,19 +1348,24 @@ def summarize_store(records: Iterable[Mapping[str, Any]]) -> StoreSummary:
 
 
 def stored_tags_are_loci(summary: StoreSummary, genome: EcoliK12Genome) -> LevelResult:
-    """L1 SUPPLEMENTARY: every stored knockdown target resolves to itself.
+    """L1 genome-reference: what the pinned assembly makes of the stored symbols.
 
-    The shared ``canonical_gene_names`` rule requires status ``current``, which a
-    pseudogene locus never has (the bacterial resolver returns ``non_gene_feature``
-    naming the same tag). This row accepts a gene or a pseudogene locus that resolves to
-    itself. It is added beside the shared row, never in its place.
+    The records are keyed by the gene symbols the release names, so this row reports
+    how many of them the pinned annotation resolves to one current or pseudogene locus.
+    It is a ``report``-class rule (#1069): a symbol the annotation retires, shares or
+    cannot place is a finding about the release against our genome, never a reason to
+    refuse a record. It is added beside the shared row, never in its place.
     """
     elsewhere = [
-        tag
-        for tag in summary.targets
-        if (resolution := genome.resolve_gene_name(tag)).systematic_name != tag
+        name
+        for name in summary.targets
+        if (resolution := genome.resolve_gene_name(name)).systematic_name is None
         or resolution.status
-        not in (GeneNameStatus.CURRENT, GeneNameStatus.NON_GENE_FEATURE)
+        not in (
+            GeneNameStatus.CURRENT,
+            GeneNameStatus.RENAMED,
+            GeneNameStatus.NON_GENE_FEATURE,
+        )
     ]
     return LevelResult(
         level=Level.L1,
@@ -1442,7 +1373,7 @@ def stored_tags_are_loci(summary: StoreSummary, genome: EcoliK12Genome) -> Level
         passed=not elsewhere,
         message=(
             f"SUPPLEMENTARY: {len(summary.targets)} stored knockdown targets; "
-            f"{len(elsewhere)} do not resolve to themselves"
+            f"{len(elsewhere)} are on no locus of the pinned assembly"
         ),
         details={"n_targets": len(summary.targets), "not_a_locus": elsewhere[:20]},
     )
@@ -1533,8 +1464,10 @@ def verify_build(dataset_root: str, data_root: str | None = None) -> Verificatio
                 "from three biological replicates and normalized to the non-targeting "
                 "control guide TGAGACCAGTCTAGGTCTCG; the control guide is the "
                 "phenotype_reference at 0.0 and appears in no released row. One record "
-                "per (guide, screen) over the 70,771 guides whose every perfect "
-                "chromosomal match lies in a gene resolving to an ASM584v2 b-number; "
+                "per (guide, screen) over the 71,696 guides whose every perfect "
+                "chromosomal match lies in a gene the release names, each knockdown "
+                "keyed by that released gene symbol with the guide's spacer as its "
+                "strain label (no annotation read); "
                 "a multi-target guide carries one knockdown per distinct targeted "
                 "gene. The response is RAW and confounds on-target repression, "
                 "off-target binding at 9-or-more-nt seed matches and the "
@@ -1543,10 +1476,9 @@ def verify_build(dataset_root: str, data_root: str | None = None) -> Verificatio
                 "standard error is not a released column, so all three uncertainty "
                 "fields are typed ProvenanceGaps. Environment: LB (formulation "
                 "unstated by the source) at 37 C with anhydrotetracycline at 1 nM for "
-                "17 generations. Dropped: 6,268 guides with no match in a gene, 173 "
-                "with a match outside one, and 925 whose targeted symbol is retired, "
-                "shared or ambiguous in ASM584v2 (the library was designed on "
-                "NC_000913.2)"
+                "17 generations. Dropped: 6,268 guides with no match in a gene and 173 "
+                "with a match outside one; what the pinned ASM584v2 makes of the "
+                "released symbols is a genome-reference finding, never a drop"
             ),
             page="Nat Commun 9:1912; Supplementary Data 5 (41467_2018_4209_MOESM8)",
             retrieved=SCREEN_RETRIEVED_AT,
@@ -1573,8 +1505,7 @@ def main() -> None:
     load_dotenv()
     data_root = _data_root()
     root = osp.join(data_root, "data/torchcell/crispri_knockdown_cui2018")
-    genome = bacterial_genome("ecoli", MG1655_STRAIN, data_root)
-    dataset = CrispriKnockdownCui2018Dataset(root=root, ecoli_genome=genome)
+    dataset = CrispriKnockdownCui2018Dataset(root=root)
     print(f"len = {len(dataset)}")
     accounting = json.loads(
         Path(osp.join(root, "preprocess/build_accounting.json")).read_text()

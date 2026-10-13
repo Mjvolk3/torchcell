@@ -172,3 +172,41 @@ The rule, as `torchcell.candidates.gates.g4_result` now applies it ([[torchcell.
 - The comparison decides: if every released column is matched by a served sample within tolerance, the row is a genuine duplicate (the same released values under another key) and G4 fails; otherwise G4 passes and its reason names the shared key and the store compared against.
 
 Tests for both directions: `tests/torchcell/candidates/test_gates.py::test_g4_shared_key_passes_when_content_is_not_held_and_fails_when_it_is`, plus the verdict rule that only a pending shared key may carry a key record while G4 is unmeasured (`test_verdict.py`).
+
+## 2026.10.13 - Compendium-derived data: the warning that follows the G4 content rule
+
+Follows the 2026.10.12 G4 section (#913, PR #1074). G4 refuses duplicate content, not a shared identifier. A copy that was preprocessed differently can hide that it is a duplicate, so the content rule alone does not settle where a compendium's records stand.
+
+The owner, 2026-10-12, verbatim:
+
+> on G4 1 seems fine... we just don't want accidential duplicate data... or even data that was duplicate then waas preprocessed differently st it is hard to tell it is duplicate... in all cases where we collect compendium data / aggregated data from db or follow up study - the answer is to alwayst try to eventually collect it from source.
+
+And on the notes this asks for:
+
+> so we want some notes wrt to this for that - when datasets come from compendium - some warning that there could be hidden assumptions or missed ontological repr.
+
+**Rule.** A dataset whose records come from a compendium, a database aggregate or a follow-up study is admitted as what it is, a derived copy, and the primary release of every study it carries stays on the collection list until it is loaded from source.
+
+**Warning.** Data collected from a compendium, a database aggregate or a follow-up study may embed that source's preprocessing (normalization, filtering, re-keying, merged conditions) and may lack ontological representation the primary release carries (per-sample metadata, replicate structure, the released statistic). Its records are a derived copy, and the primary release is still to be collected from source. Where both are served, the primary release is the record of the measurement and the compendium is its cross-check.
+
+**Where it is recorded.**
+
+- The candidate verdict carries `derived_from_compendium` (`CompendiumDerivation`: the compendium's citation key and a note on what its copy may hide), set with `candidate-gate gate --derived-from-compendium <key> --compendium-note <text> --write`. It is optional and decides no gate. Set 2026-10-13 on the five compendium verdicts: `borchertMachineLearningAnalysis2024`, `priceMutantPhenotypesThousands2018`, `lamoureuxMultiscaleExpressionRegulation2023`, `limMachinelearningPseudomonasPutida2022` (re-gated, outcomes unchanged) and `turcoGlobalAnalysisYeast2023` (its stored verdict plus the field through `candidate-gate validate --write`, because a re-gate from the yeast table reads G1 as `primary` and would drop the aggregation record the stored verdict holds).
+- Each flagged dataset's dendron note carries a dated section naming the compendium and what it may hide.
+
+**Flagged mapped datasets**, and why:
+
+| dataset class | compendium or aggregate | why it is derived |
+|---|---|---|
+| `RbTnseqBorchert2024Dataset` | Borchert 2024 fModules | 254 of 332 samples are Fitness Browser values at three decimals; genes without fitness in every sample eliminated |
+| `RbTnseqPrice2018EcoliDataset` | Price 2018 Fitness Browser compendium | 92 of 162 Keio samples are Wetmore 2015's experiments re-analyzed at statistics 1.0.3 |
+| `FitnessBrowserEcoliDataset`, `FitnessBrowserPutidaDataset` | the Fitness Browser deposit (`feba.db`) | a database that recomputes every study under one statistics version and one metadata schema |
+| `RnaseqLamoureux2023Dataset`, `GrowthRateLamoureux2023Dataset` | PRECISE-1K | earlier studies' libraries re-quantified through one pipeline; growth rate is curated metadata |
+| `RnaseqPublicK12Lamoureux2023Dataset` | Public K-12 (Lamoureux 2023) | other labs' SRA runs reprocessed through the PRECISE-1K pipeline |
+| `PutidaPrecise321Lim2022Dataset` | putidaPRECISE321 | 225 of 321 samples reprocessed from other studies |
+| `GeneInteractionBabu2014Dataset` | Babu 2014 (follow-up study) | re-scores Butland 2008's 39 donor screens and releases only the high-confidence tail |
+| `GeneEssentialitySgdDataset` | SGD phenotype annotations | curated annotations of many papers; medium and temperature often not carried |
+| `SynthLethalityYeastSynthLethDbDataset`, `SynthRescueYeastSynthLethDbDataset` | SynLethDB | pairs aggregated from papers and BioGRID; the perturbation and the statistic are not released |
+| `YeastPhenomeDataset` (loader, not in the adapter map) | YeastPhenome yp-data | curated rescaling of published screens |
+
+**Considered and not flagged.** Wetmore 2015, Mutalik 2020, Guzman 2018 and Borchert 2023 are loaded from their own releases (the compendium is their L4 check). Butland 2008 is its own unfiltered release. Shiver 2016 stores only its own 57 conditions, not the 235 re-analyzed Nichols 2011 rows. Thompson 2019 stores titers and growth rates from its own paper and no compendium sample. O'Duibhir 2014 stores its own Dataset S2, not the Kemmeren compendium. `GeneEssentialityPrice2018EcoliDataset` is Price 2018's own first analysis of the insertion maps. Wildenhain 2015 reads the authors' own PubChem deposit (AID 1159580, the 2016 extension by the same group), which releases per-screen values. Loegler 2025 carries an aggregation verdict but no served loader.

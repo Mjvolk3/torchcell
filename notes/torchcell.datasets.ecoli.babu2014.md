@@ -464,3 +464,9 @@ Both rows of each of the 4 pairs Table S2 prints twice, told apart by their Tabl
 | L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
 | L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
 | L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+
+## 2026.10.13 - Compendium-derived: hidden assumptions and missed representation
+
+This store is derived from Babu 2014, a follow-up study of Butland 2008. Data collected from a compendium, a database aggregate or a follow-up study may embed that source's preprocessing (normalization, filtering, re-keying, merged conditions) and may lack ontological representation the primary release carries (per-sample metadata, replicate structure, the released statistic). Its records are a derived copy, and the primary release is still to be collected from source ([[torchcell.knowledge_graphs.dataset-admission-loop]], 2026.10.13).
+
+What it may hide here: 39 of Babu's 163 donors are Butland 2008's screens re-scored, and Babu releases only the high-confidence tail; 1,125 records carry `screen_id="Butland et al."`. The threshold and the re-scoring are Babu's. Butland 2008's unfiltered matrix is now served from its own release (`GeneInteractionButland2008Dataset`) and is the record for those screens.

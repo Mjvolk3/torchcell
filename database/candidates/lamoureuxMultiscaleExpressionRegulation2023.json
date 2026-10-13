@@ -110,7 +110,7 @@
     "attribution_field": "metadata_qc.csv DOI (PRECISE-1K) and PMID, DOI, GEO, BioProject (Public K-12) per sample; the served records name Lamoureux 2023 only",
     "value_origin": "re_measured",
     "n_sources_mirrored": 1,
-    "net_new_vs_served": 115,
+    "net_new_vs_served": 114,
     "evidence": [
       {
         "value": {
@@ -2640,6 +2640,10 @@
     "unresolved_compounds": [],
     "proposed_class": null
   },
-  "decided_at": "2026-10-11",
-  "torchcell_commit": "aac409119b586fc444d5dc78842969c32c0cf1bf"
+  "derived_from_compendium": {
+    "citation_key": "lamoureuxMultiscaleExpressionRegulation2023",
+    "note": "PRECISE-1K and the Public K-12 set re-quantify earlier studies' libraries through one pipeline (log TPM after QC), with curated sample metadata; the per-sample growth rate column is the compendium's metadata. Measured for Guzman 2018's 14 samples against their own release: Pearson r 0.27 to 0.55. Each source study's own release is still to be collected."
+  },
+  "decided_at": "2026-10-13",
+  "torchcell_commit": "6982d2437c11d68bd69ddbe2d4f862b937516adb"
 }

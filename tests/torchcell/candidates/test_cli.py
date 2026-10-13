@@ -568,3 +568,56 @@ def test_gate_decomposition_refusals(
     )
     assert code == 2
     assert message in capsys.readouterr().err
+
+
+def test_gate_flags_a_compendium_derived_copy(
+    env: dict[str, Path], capsys: pytest.CaptureFixture[str]
+) -> None:
+    """--derived-from-compendium with its note is stored, printed, and decides no gate."""
+    code = run(
+        env,
+        "gate",
+        "--row",
+        "Fixture 2020",
+        "--data-root",
+        str(env["root"]),
+        "--phenotype-class",
+        "FitnessPhenotype",
+        "--derived-from-compendium",
+        "compendiumKey2021",
+        "--compendium-note",
+        "re-normalized across studies",
+        "--write",
+    )
+    assert code == 0
+    out = capsys.readouterr().out
+    assert (
+        "  derived from compendium: compendiumKey2021: re-normalized across studies\n"
+        "  zotero item: absent\n"
+        "  outcome: admissible\n"
+    ) in out
+    stored = store.read_verdict("fixtureKey2020", env["store"])
+    assert stored.derived_from_compendium is not None
+    assert stored.derived_from_compendium.model_dump() == {
+        "citation_key": "compendiumKey2021",
+        "note": "re-normalized across studies",
+    }
+    assert stored.passing
+
+
+@pytest.mark.parametrize(
+    "half",
+    [
+        ("--derived-from-compendium", "compendiumKey2021"),
+        ("--compendium-note", "re-normalized across studies"),
+    ],
+)
+def test_gate_compendium_flags_go_together(
+    env: dict[str, Path], capsys: pytest.CaptureFixture[str], half: tuple[str, str]
+) -> None:
+    """One of the two compendium flags alone exits 2 before any gate runs."""
+    code = run(
+        env, "gate", "--row", "Fixture 2020", "--data-root", str(env["root"]), *half
+    )
+    assert code == 2
+    assert "go together" in capsys.readouterr().err

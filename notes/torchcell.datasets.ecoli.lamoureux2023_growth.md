@@ -261,3 +261,9 @@ Rebuilt because the Lamoureux environment builder it shares changed.
 | L3 | `compound_identity` | pass | environment edits: 740 compound references carry a structure identifier; 128 declare a typed gap (7 distinct compounds, unencodable) |
 | L3 | `media_compound_identity` | pass | medium components: 51 compound references carry a structure identifier; 94 declare a typed gap (1 distinct compounds, unencodable) |
 | L3 | `media_membership` | pass | 0 records on a shared MEDIA_LIBRARY medium, 354 on a medium deriving from one (11 distinct media) |
+
+## 2026.10.13 - Compendium-derived: hidden assumptions and missed representation
+
+This store is derived from PRECISE-1K (`lamoureuxMultiscaleExpressionRegulation2023`). Data collected from a compendium, a database aggregate or a follow-up study may embed that source's preprocessing (normalization, filtering, re-keying, merged conditions) and may lack ontological representation the primary release carries (per-sample metadata, replicate structure, the released statistic). Its records are a derived copy, and the primary release is still to be collected from source ([[torchcell.knowledge_graphs.dataset-admission-loop]], 2026.10.13).
+
+What it may hide here: the `Growth Rate (1/hr)` column is compendium metadata, curated across many studies, not a released measurement table; how each rate was fit, from how many replicates, and what the 16 zero rates mean are the source studies' to state. The source studies' own growth measurements are the source to collect.

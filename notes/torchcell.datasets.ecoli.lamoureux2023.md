@@ -284,3 +284,9 @@ A blank Electron Acceptor cell stores Environment.aerobicity None beside a Prove
 | L3 | `measurement_type_consistent` | pass | single measurement_type: 'rnaseq_tpm' |
 | L3 | `reference_finite` | pass | reference expression finite for all 4405995 values |
 | L4 | `gene_containment_assembly` | pass | 0.999 of 4257 measured genes are loci of ecoli_K12_MG1655_ASM584v2 (>= 0.99) |
+
+## 2026.10.13 - Compendium-derived: hidden assumptions and missed representation
+
+This store is derived from PRECISE-1K (`lamoureuxMultiscaleExpressionRegulation2023`). Data collected from a compendium, a database aggregate or a follow-up study may embed that source's preprocessing (normalization, filtering, re-keying, merged conditions) and may lack ontological representation the primary release carries (per-sample metadata, replicate structure, the released statistic). Its records are a derived copy, and the primary release is still to be collected from source ([[torchcell.knowledge_graphs.dataset-admission-loop]], 2026.10.13).
+
+What it may hide here: libraries of earlier studies are re-quantified through one pipeline (log TPM after the compendium's QC), so the normalization, the QC filter and the condition grouping are the compendium's; the sample metadata is curated, not each study's. Measured for Guzman 2018's 14 samples against their own release (RnaseqGuzman2018Dataset): Pearson r 0.27 to 0.55. Each source study's own release is still to be collected.

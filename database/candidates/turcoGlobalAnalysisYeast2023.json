@@ -216,6 +216,10 @@
     "unresolved_compounds": [],
     "proposed_class": null
   },
+  "derived_from_compendium": {
+    "citation_key": "turcoGlobalAnalysisYeast2023",
+    "note": "YeastPhenome yp-data is a curated re-presentation of primary screens: measured against two primary releases, it negates Parsons 2006's released log2 ratio, averages Yoshikawa 2009's two cultures per condition and pools strains its ORF translation merges into one locus; fields the curation does not carry are typed gaps."
+  },
   "decided_at": "2026-10-11",
   "torchcell_commit": "e83a1e1803a87127d6b983208b050f88dccfec63"
 }

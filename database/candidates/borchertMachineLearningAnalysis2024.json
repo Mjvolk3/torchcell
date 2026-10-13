@@ -827,6 +827,10 @@
     "unresolved_compounds": [],
     "proposed_class": null
   },
-  "decided_at": "2026-10-12",
-  "torchcell_commit": "0462023675b4fb9965fda050f45d97b47bd4c2b1"
+  "derived_from_compendium": {
+    "citation_key": "borchertMachineLearningAnalysis2024",
+    "note": "Borchert 2024 fModules compendium: 254 of its 332 samples are Fitness Browser copies at three-decimal rounding; genes without fitness in all 332 samples were eliminated (832 of 5,564); sample metadata and replicate grouping are the compendium's, not each source study's. The source studies' own releases are still to be collected."
+  },
+  "decided_at": "2026-10-13",
+  "torchcell_commit": "6982d2437c11d68bd69ddbe2d4f862b937516adb"
 }

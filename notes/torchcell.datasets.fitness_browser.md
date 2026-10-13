@@ -22,3 +22,9 @@ created: 1791803958838
 | `compendium_check` | the L4 agreement with a served store: per-sample Pearson r over shared loci, pooled Pearson r over every shared (gene, sample) value, largest difference; a sample absent there needs a stated reason |
 
 Why the deposit is not quoted as a `SourcedValue`: `audit_sourced_value` re-reads its source as text, and the deposit is a 10 GB SQLite file whose rows are not stored as text lines. Every value the loaders store is read from the pinned bytes at build time; nothing about the deposit is hand-transcribed except the study table, which `check_studies` compares with the deposit verbatim.
+
+## 2026.10.13 - Compendium-derived: hidden assumptions and missed representation
+
+This store is derived from the Fitness Browser deposit (`feba.db`, mirrored under `priceMutantPhenotypesThousands2018`). Data collected from a compendium, a database aggregate or a follow-up study may embed that source's preprocessing (normalization, filtering, re-keying, merged conditions) and may lack ontological representation the primary release carries (per-sample metadata, replicate structure, the released statistic). Its records are a derived copy, and the primary release is still to be collected from source ([[torchcell.knowledge_graphs.dataset-admission-loop]], 2026.10.13).
+
+What it may hide here: the browser recomputes every study's gene fitness under its own statistics version and pipeline, so a value can differ from what the study published at the time; its `Experiment` rows are a database schema (medium, condition columns, `pubId`), and condition detail a paper reports outside those columns is not carried; samples with an empty `pubId` have no attributed study. Where the browser is a study's only release (`source_kind = primary`), it is still a database copy, and the paper's own tables are the source to collect when they exist.

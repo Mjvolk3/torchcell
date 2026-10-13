@@ -754,3 +754,9 @@ Every gene under its released sysName and Table S1 name.
 | L3 | `media_membership` | pass | 0 records on a shared MEDIA_LIBRARY medium, 324 on a medium deriving from one (1 distinct media) |
 | L4 | `gene_containment_sgd` | pass | 1.000 of 324 measured genes are MG1655 (the namespace of the released b-numbers) genes (>= 1.0) |
 | L4 | `current_genome_genes` | pass | every one of the 324 measured systematic names is a gene of the current genome |
+
+## 2026.10.13 - Compendium-derived: hidden assumptions and missed representation
+
+This store is derived from Price 2018 Fitness Browser compendium (`priceMutantPhenotypesThousands2018`). Data collected from a compendium, a database aggregate or a follow-up study may embed that source's preprocessing (normalization, filtering, re-keying, merged conditions) and may lack ontological representation the primary release carries (per-sample metadata, replicate structure, the released statistic). Its records are a derived copy, and the primary release is still to be collected from source ([[torchcell.knowledge_graphs.dataset-admission-loop]], 2026.10.13).
+
+What it may hide here: 92 of the 162 Keio samples are Wetmore 2015's experiments re-analyzed at statistics version 1.0.3 and kept only when they passed the compendium's quality filter (`fit_logratios_good`); the other 70 are attributed to Price 2018 by inference from Table S20, not by a per-sample statement. Wetmore 2015 is served from its own release (statistics 1.0.0), so those samples exist twice under two processings; the own release is the record of the measurement.

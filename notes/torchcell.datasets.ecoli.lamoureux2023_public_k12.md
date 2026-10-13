@@ -370,3 +370,9 @@ The 250 blank aerobicity cells store a typed gap, the 15 'transition' cells stor
 | L3 | `measurement_type_consistent` | pass | single measurement_type: 'rnaseq_tpm_from_released_counts' |
 | L3 | `reference_finite` | pass | reference expression finite for all 7294625 values |
 | L4 | `gene_containment_assembly` | pass | 0.999 of 4355 measured genes are loci of ecoli_K12_MG1655_ASM584v2 (>= 0.99) |
+
+## 2026.10.13 - Compendium-derived: hidden assumptions and missed representation
+
+This store is derived from Public K-12 (Lamoureux 2023). Data collected from a compendium, a database aggregate or a follow-up study may embed that source's preprocessing (normalization, filtering, re-keying, merged conditions) and may lack ontological representation the primary release carries (per-sample metadata, replicate structure, the released statistic). Its records are a derived copy, and the primary release is still to be collected from source ([[torchcell.knowledge_graphs.dataset-admission-loop]], 2026.10.13).
+
+What it may hide here: these are other labs' SRA runs reprocessed through the PRECISE-1K pipeline, so the quantification and normalization are the compendium's, and strain, medium and condition come from the compendium's curation of SRA metadata rather than each study's Methods. Each study's own release is still to be collected.

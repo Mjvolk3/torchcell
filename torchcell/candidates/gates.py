@@ -65,6 +65,7 @@ from torchcell.candidates.verdict import (
     AggregationRecord,
     CandidateTable,
     CandidateVerdict,
+    CompendiumDerivation,
     G2Branch,
     G2Host,
     G2Record,
@@ -1263,6 +1264,7 @@ def compose_verdict(
     decided_at: str,
     torchcell_commit: str,
     g4_value: G4ValueRecord | None = None,
+    derived_from_compendium: CompendiumDerivation | None = None,
 ) -> CandidateVerdict:
     """Apply the stop rule and assemble the verdict.
 
@@ -1301,6 +1303,7 @@ def compose_verdict(
         g4_key=records.get("G4"),
         g4_value=g4_value if "G4" in records else None,
         g5=records.get("G5"),
+        derived_from_compendium=derived_from_compendium,
         decided_at=decided_at,
         torchcell_commit=torchcell_commit,
     )

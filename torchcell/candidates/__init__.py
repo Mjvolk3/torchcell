@@ -11,6 +11,7 @@ stage of the dataset-admission program and is unchanged; this package is its fir
 from torchcell.candidates.verdict import (
     AggregationRecord,
     CandidateVerdict,
+    CompendiumDerivation,
     GateResult,
     SourceCrossCheck,
     SourceDecomposition,
@@ -20,6 +21,7 @@ from torchcell.candidates.verdict import (
 __all__ = [
     "AggregationRecord",
     "CandidateVerdict",
+    "CompendiumDerivation",
     "GateResult",
     "SourceCrossCheck",
     "SourceDecomposition",

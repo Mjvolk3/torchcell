@@ -175,16 +175,14 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     BACTERIAL_ASSEMBLY_SETS,
     AssayType,
-    BacterialCrisprActivationPerturbation,
-    BacterialCrisprInterferencePerturbation,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
+    BacterialReleasedCrisprPerturbation,
     BacterialStrainBackground,
     ComponentDefinition,
     Concentration,
     ConcentrationUnit,
     CrisprConstruct,
-    DerivedIdentifierMapping,
     Environment,
     EnvironmentPerturbationType,
     EnvironmentResponsePhenotype,
@@ -214,10 +212,8 @@ from torchcell.literature.manifest import (
     RetrievalRecord,
 )
 from torchcell.literature.retrieve import pmc_cloud_url
-from torchcell.sequence.genome.base import GeneNameStatus
 from torchcell.sequence.genome.ecoli.k12 import (
     EcoliK12BW25113Genome,
-    EcoliK12Genome,
     EcoliK12StrainName,
 )
 from torchcell.verification.report import Provenance, VerificationReport
@@ -305,7 +301,9 @@ COMBINATION_GROWTH: dict[Arm, tuple[float, float]] = {
 }
 
 #: A released target label that is not one gene. Measured on the release: exactly these
-#: two, both in the activation arm.
+#: two, both in the activation arm. They are STORED under the label the release writes
+#: (the released-construct leaf takes an operon label as an identifier), and are kept
+#: here because the note and the ledger name them.
 MULTI_GENE_LABELS: frozenset[str] = frozenset({"sufBCDS", "flgFGH"})
 
 
@@ -662,38 +660,43 @@ def reference_phenotype(arm: Arm) -> EnvironmentResponsePhenotype:
 # --------------------------------------------------------------------------- #
 # Genotype
 # --------------------------------------------------------------------------- #
-PERTURBATION_OF_ARM: dict[Arm, type] = {
-    "crispr_activation": BacterialCrisprActivationPerturbation,
-    "crispr_interference": BacterialCrisprInterferencePerturbation,
+#: The released expression direction of each arm's dead-Cas effector.
+DIRECTION_OF_ARM: dict[Arm, str] = {
+    "crispr_activation": "increased",
+    "crispr_interference": "decreased",
 }
+
+#: What ``systematic_gene_name`` is on every record, as the release writes it.
+IDENTIFIER_KIND = (
+    "target label, as Suppl. Table 3 or 4 writes it (a gene symbol or an operon label)"
+)
 
 
 class StoredTarget(BaseModel):
-    """One targeted gene of a stored strain: its released label, locus tag and spacer."""
+    """One targeted gene of a stored strain: its released label and its spacer."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     reported_symbol: str
-    locus_tag: str
-    gene_name: str
+    strain_label: str
     guide_sequence: str | None
 
 
 def perturbation(target: StoredTarget, arm: Arm) -> Any:
-    """One CRISPRa or CRISPRi leaf for one targeted gene."""
-    leaf = PERTURBATION_OF_ARM[arm]
-    mapping = (
-        None
-        if target.reported_symbol == target.locus_tag
-        else DerivedIdentifierMapping(
-            source_identifier=target.reported_symbol, route="gene_symbol"
-        )
-    )
-    return leaf(
-        systematic_gene_name=target.locus_tag,
-        perturbed_gene_name=target.gene_name,
+    """One CRISPRa or CRISPRi leaf, keyed by the label the release names.
+
+    Both arms take the one released-construct leaf (#1077), whose
+    ``expression_direction`` is a released fact of the effector rather than a class
+    default; the label is stored verbatim, so an operon label such as ``sufBCDS`` is a
+    record identity like a gene symbol and no annotation is read.
+    """
+    return BacterialReleasedCrisprPerturbation(
+        systematic_gene_name=target.reported_symbol,
+        perturbed_gene_name=target.reported_symbol,
         gene_namespace=BW25113_NAMESPACE,
-        identifier_mapping=mapping,
+        strain_label=target.strain_label,
+        identifier_kind=IDENTIFIER_KIND,
+        expression_direction=DIRECTION_OF_ARM[arm],
         crispr=CrisprConstruct(
             effector=str(EFFECTOR.value), guide_sequence=target.guide_sequence
         ),
@@ -911,9 +914,6 @@ def read_target_table(rows: Sequence[Sequence[str]], arm: Arm) -> list[ReleasedT
 # Retention
 # --------------------------------------------------------------------------- #
 RULE_PINENE_RATIO = "pinene_ratio_is_a_dimensionless_product_ratio"
-RULE_MULTI_GENE = "target_label_is_a_multi_gene_operon"
-RULE_COMBINATION_OPERON = "combination_strain_contains_a_multi_gene_operon"
-RULE_LABEL_NOT_IN_ANNOTATION = "target_label_is_not_in_the_bw25113_annotation"
 
 DROP_RULE_DESCRIPTIONS: dict[str, str] = {
     RULE_PINENE_RATIO: "the released pinene value is a dimensionless product RATIO "
@@ -921,14 +921,7 @@ DROP_RULE_DESCRIPTIONS: dict[str, str] = {
     "ConcentrationUnit and the enum has no dimensionless member, so there is no unit "
     "under which the number is honest, and EnvironmentResponsePhenotype is a fitness "
     "or growth readout, so storing a production ratio there would mislabel it "
-    "(issue #770)",
-    RULE_MULTI_GENE: "the released target label names an operon rather than one gene "
-    "(sufBCDS, flgFGH), and a gene-keyed perturbation leaf cannot state it",
-    RULE_COMBINATION_OPERON: "the combination strain targets one of the operon labels "
-    "above, so its genotype cannot be written as one leaf per gene",
-    RULE_LABEL_NOT_IN_ANNOTATION: "the released target label is no locus tag, symbol "
-    "or synonym of the pinned BW25113 annotation, so there is no locus to key a "
-    "perturbation on",
+    "(issue #770)"
 }
 
 
@@ -976,39 +969,10 @@ def _strain_key(arm: str, label: str) -> str:
     return f"{arm}/{label}"
 
 
-def canonical_symbol(genome: EcoliK12BW25113Genome, tag: str) -> str:
-    """The pinned annotation's own gene symbol for ``tag``, when it resolves back to it.
-
-    One spelling per locus is what keeps a gene from splitting into two common names, so
-    the stored ``perturbed_gene_name`` comes from the annotation rather than from the
-    release's spelling (Suppl. Table 3 writes ``muts`` where the main table writes
-    ``mutS``). A locus with no symbol, or whose symbol resolves elsewhere, is named by
-    its tag.
-    """
-    symbol = genome.genbank.loci[tag].symbol
-    if symbol is None:
-        return tag
-    resolved = genome.resolve_gene_name(symbol).systematic_name
-    return symbol if resolved == tag else tag
-
-
-def _resolve(genome: EcoliK12BW25113Genome, symbol: str) -> tuple[str, str] | None:
-    """The BW25113 locus tag and canonical symbol of a released gene name, or ``None``."""
-    resolution = genome.resolve_gene_name(symbol)
-    if resolution.systematic_name is None or resolution.status in (
-        GeneNameStatus.RETIRED,
-        GeneNameStatus.AMBIGUOUS,
-    ):
-        return None
-    tag = str(resolution.systematic_name)
-    return tag, canonical_symbol(genome, tag)
-
-
 def retain(
     targets: Mapping[Arm, Sequence[ReleasedTarget]],
     spacers: GuideSpacers,
     *,
-    genome: EcoliK12BW25113Genome,
     dataset_name: str,
 ) -> Retention:
     """Decide which released cells are stored, and account for every one that is not."""
@@ -1024,8 +988,6 @@ def retain(
     strains: list[tuple[str, str, list[StoredTarget]]] = []
     ratios: dict[str, float] = {}
     spacer_absences: dict[str, str] = {}
-    multi_gene: list[str] = []
-    unresolved: list[str] = []
     n_pinene = 0
     n_censored = 0
     released: dict[str, list[dict[str, Any]]] = {}
@@ -1041,14 +1003,6 @@ def retain(
                 n_pinene += 1
             if row.growth_ratio is None:
                 continue
-            if row.label in MULTI_GENE_LABELS:
-                multi_gene.append(_strain_key(arm, row.label))
-                continue
-            resolved = _resolve(genome, row.label)
-            if resolved is None:
-                unresolved.append(_strain_key(arm, row.label))
-                continue
-            tag, gene_name = resolved
             spacer = spacers.spacer_of(row.label)
             if spacer is None:
                 spacer_absences[_strain_key(arm, row.label)] = (
@@ -1058,32 +1012,18 @@ def retain(
                     else "Suppl. Table 1 releases no N20 oligo under this gene's name"
                 )
             target = StoredTarget(
-                reported_symbol=row.label,
-                locus_tag=tag,
-                gene_name=gene_name,
-                guide_sequence=spacer,
+                reported_symbol=row.label, strain_label=row.label, guide_sequence=spacer
             )
             strains.append((arm, row.label, [target]))
             ratios[_strain_key(arm, row.label)] = row.growth_ratio
 
     # the two combination strains, released in the MAIN tables only
-    combination_dropped: list[str] = []
     for arm, label in COMBINATION_LABELS.items():
         genes = label.split("-")
         ratio, _sd = COMBINATION_GROWTH[arm]
         n_pinene += 1
-        if any(gene in MULTI_GENE_LABELS for gene in genes):
-            combination_dropped.append(_strain_key(arm, label))
-            continue
         combination: list[StoredTarget] = []
         for gene in genes:
-            resolved = _resolve(genome, gene)
-            if resolved is None:
-                raise ReleaseContentError(
-                    f"{label}: the combination strain's gene {gene!r} does not resolve "
-                    "to a BW25113 locus, so the strain cannot be written"
-                )
-            tag, gene_name = resolved
             spacer = spacers.spacer_of(gene)
             if spacer is None:
                 spacer_absences[f"{_strain_key(arm, label)}:{gene}"] = (
@@ -1094,10 +1034,7 @@ def retain(
                 )
             combination.append(
                 StoredTarget(
-                    reported_symbol=gene,
-                    locus_tag=tag,
-                    gene_name=gene_name,
-                    guide_sequence=spacer,
+                    reported_symbol=gene, strain_label=label, guide_sequence=spacer
                 )
             )
         strains.append((arm, label, combination))
@@ -1118,25 +1055,7 @@ def retain(
             description=DROP_RULE_DESCRIPTIONS[RULE_PINENE_RATIO],
             n_cells=n_pinene,
             items=[],
-        ),
-        DropRule(
-            rule=RULE_MULTI_GENE,
-            description=DROP_RULE_DESCRIPTIONS[RULE_MULTI_GENE],
-            n_cells=len(multi_gene),
-            items=sorted(multi_gene),
-        ),
-        DropRule(
-            rule=RULE_COMBINATION_OPERON,
-            description=DROP_RULE_DESCRIPTIONS[RULE_COMBINATION_OPERON],
-            n_cells=len(combination_dropped),
-            items=sorted(combination_dropped),
-        ),
-        DropRule(
-            rule=RULE_LABEL_NOT_IN_ANNOTATION,
-            description=DROP_RULE_DESCRIPTIONS[RULE_LABEL_NOT_IN_ANNOTATION],
-            n_cells=len(unresolved),
-            items=sorted(unresolved),
-        ),
+        )
     ]
     drop_log = DropLog(
         dataset=dataset_name,
@@ -1335,7 +1254,7 @@ def manifest_sha256(manifest: Manifest, relpath: str) -> str:
 #: Records of the full build: 41 activation growth ratios (43 numeric minus the two
 #: operon labels), 9 interference growth ratios, and the six-target interference
 #: combination strain.
-EXPECTED_RECORDS = 51
+EXPECTED_RECORDS = 54
 #: Released numeric cells of the whole paper, which the ledger accounts for whole.
 RELEASED_NUMERIC_CELLS = 94
 
@@ -1352,13 +1271,11 @@ class CrisprPineneToleranceNiu2019Dataset(ExperimentDataset):
         self,
         root: str = DATASET_ROOT_REL,
         io_workers: int = 0,
-        ecoli_genome: EcoliK12Genome | None = None,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset; the BW25113 genome is injected or opened in process."""
-        self.ecoli_genome = ecoli_genome
+        """Initialize. No genome parameter: the loader reads no annotation."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -1391,24 +1308,6 @@ class CrisprPineneToleranceNiu2019Dataset(ExperimentDataset):
             "Niu 2019 %s linked into %s (sha256 verified)", SI_FILENAME, self.raw_dir
         )
 
-    def _genome(self) -> EcoliK12BW25113Genome:
-        """The injected genome, or the reference strain's default cache."""
-        if self.ecoli_genome is None:
-            self.ecoli_genome = bacterial_genome("ecoli", self.REFERENCE_STRAIN)
-        genome = self.ecoli_genome
-        expected = BACTERIAL_ASSEMBLY_SETS[self.REFERENCE_STRAIN]
-        if genome.ASSEMBLY_SET != expected:
-            raise ValueError(
-                f"{type(self).__name__} needs the {expected} genome, got "
-                f"{genome.ASSEMBLY_SET}"
-            )
-        if not isinstance(genome, EcoliK12BW25113Genome):
-            raise TypeError(
-                f"{type(self).__name__} needs the BW25113 genome, got "
-                f"{type(genome).__name__}"
-            )
-        return genome
-
     @post_process
     def process(self) -> None:
         """Parse the SI into one record per stored strain; write the LMDB."""
@@ -1421,9 +1320,7 @@ class CrisprPineneToleranceNiu2019Dataset(ExperimentDataset):
                 si.tables[3], "crispr_interference"
             ),
         }
-        retention = retain(
-            targets, spacers, genome=self._genome(), dataset_name=self.name
-        )
+        retention = retain(targets, spacers, dataset_name=self.name)
         culture = environment()
         arms: tuple[Arm, ...] = ("crispr_activation", "crispr_interference")
         references = {

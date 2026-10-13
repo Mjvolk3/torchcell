@@ -32,10 +32,7 @@ from zipfile import ZipFile
 import pytest
 
 import torchcell.datasets.ecoli.niu2019 as n
-from tests.torchcell.datasets._genome_injection_fakes import (
-    FakeBW25113Genome,
-    install_bacterial_fakes,
-)
+from tests.torchcell.datasets._genome_injection_fakes import install_bacterial_fakes
 from tests.torchcell.sequence.genome._bacterial_fixtures import (
     BW25113_LOCI,
     forbid_network,
@@ -47,8 +44,7 @@ from torchcell.datamodels.schema import (
     BACTERIAL_ASSEMBLY_SETS,
     AssayType,
     AssemblyReferenceGenome,
-    BacterialCrisprActivationPerturbation,
-    BacterialCrisprInterferencePerturbation,
+    BacterialReleasedCrisprPerturbation,
     ConcentrationUnit,
     MeasurementType,
     SampleUnit,
@@ -320,28 +316,11 @@ def bw25113(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> EcoliK12BW25113G
     return EcoliK12BW25113Genome(genome_root=str(tmp_path / "bw25113"), overwrite=True)
 
 
-def test_canonical_symbol_is_the_annotations_own_spelling(
-    bw25113: EcoliK12BW25113Genome,
-) -> None:
-    assert n.canonical_symbol(bw25113, "BW25113_0002") == "thrA"
-    # hokC's numerics disagree with its b-number, and the symbol still resolves back
-    assert n.canonical_symbol(bw25113, "BW25113_4412") == "hokC"
-
-
-def test_a_released_label_with_no_locus_resolves_to_nothing(
-    bw25113: EcoliK12BW25113Genome,
-) -> None:
-    assert n._resolve(bw25113, "nosuchgene") is None
-    assert n._resolve(bw25113, "thrA") == ("BW25113_0002", "thrA")
-
-
 # --------------------------------------------------------------------------- #
 # Retention
 # --------------------------------------------------------------------------- #
 @pytest.fixture
-def retention(
-    si: Path, bw25113: EcoliK12BW25113Genome, monkeypatch: pytest.MonkeyPatch
-) -> n.Retention:
+def retention(si: Path, monkeypatch: pytest.MonkeyPatch) -> n.Retention:
     """Retention over the synthetic release, with the fixture's arm sizes."""
     _install_fixture_sizes(monkeypatch)
     tables = n.read_si(si)
@@ -355,7 +334,6 @@ def retention(
             ),
         },
         n.read_guide_spacers(tables.tables[0]),
-        genome=bw25113,
         dataset_name="synthetic",
     )
 
@@ -371,29 +349,27 @@ def _install_fixture_sizes(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_retention_stores_the_resolvable_single_gene_growth_rows(
     retention: n.Retention,
 ) -> None:
-    assert [(arm, label) for arm, label, _ in retention.strains] == [
-        ("crispr_activation", "thrA"),
-        ("crispr_interference", "yaaX"),
-        ("crispr_interference", "proB"),
-        ("crispr_interference", "yaaX-proB"),
-    ]
-    assert retention.ratios == {
-        "crispr_activation/thrA": 1.24,
-        "crispr_interference/yaaX": 1.07,
-        "crispr_interference/proB": 1.09,
-        "crispr_interference/yaaX-proB": 1.26,
-    }
+    # every released label with a growth ratio is a strain, operon labels included
+    labels = [(arm, label) for arm, label, _ in retention.strains]
+    assert ("crispr_activation", "thrA") in labels
+    assert ("crispr_activation", "sufBCDS") in labels
+    assert ("crispr_activation", "sufBCDS-thrA") in labels
+    assert ("crispr_interference", "yaaX-proB") in labels
+    assert retention.ratios["crispr_activation/thrA"] == 1.24
+    assert retention.ratios["crispr_interference/yaaX-proB"] == 1.26
     targets = dict(((arm, label), t) for arm, label, t in retention.strains)
-    assert [t.locus_tag for t in targets[("crispr_activation", "thrA")]] == [
-        "BW25113_0002"
+    assert [t.reported_symbol for t in targets[("crispr_activation", "thrA")]] == [
+        "thrA"
     ]
     # the combination strain is ONE record with one leaf per gene, in released order
     combination = targets[("crispr_interference", "yaaX-proB")]
-    assert [(t.reported_symbol, t.locus_tag) for t in combination] == [
-        ("yaaX", "BW25113_0008"),
-        ("proB", "BW25113_0005"),
+    assert [(t.reported_symbol, t.strain_label) for t in combination] == [
+        ("yaaX", "yaaX-proB"),
+        ("proB", "yaaX-proB"),
     ]
     assert [t.guide_sequence for t in combination] == ["C" * 22, None]
+    assert not hasattr(n, "canonical_symbol")
+    assert not hasattr(n, "_resolve")
 
 
 def test_retention_accounts_for_every_released_cell_it_does_not_store(
@@ -402,15 +378,13 @@ def test_retention_accounts_for_every_released_cell_it_does_not_store(
     log = retention.drop_log
     assert (log.released_numeric_cells, log.stored_records, log.dropped_cells) == (
         13,
-        4,
-        9,
+        7,
+        6,
     )
     assert log.censored_cells == 5
+    # the pinene ratios are the one remaining rule; every growth cell is a record
     assert {rule.rule: (rule.n_cells, rule.items) for rule in log.rules} == {
-        n.RULE_PINENE_RATIO: (6, []),
-        n.RULE_MULTI_GENE: (1, ["crispr_activation/sufBCDS"]),
-        n.RULE_COMBINATION_OPERON: (1, ["crispr_activation/sufBCDS-thrA"]),
-        n.RULE_LABEL_NOT_IN_ANNOTATION: (1, ["crispr_activation/nosuchgene"]),
+        n.RULE_PINENE_RATIO: (6, [])
     }
     assert sum(rule.n_cells for rule in log.rules) == log.dropped_cells
 
@@ -418,20 +392,27 @@ def test_retention_accounts_for_every_released_cell_it_does_not_store(
 def test_retention_records_why_a_stored_strain_carries_no_spacer(
     retention: n.Retention,
 ) -> None:
-    assert retention.spacer_absences == {
-        "crispr_interference/proB": (
-            "the release gives this gene two DIFFERENT N20 spacers and no rule for "
-            "choosing between them"
-        ),
-        "crispr_interference/yaaX-proB:proB": (
-            "the release gives this gene two DIFFERENT N20 spacers and no rule for "
-            "choosing between them"
-        ),
-    }
+    absences = retention.spacer_absences
+    assert absences["crispr_interference/proB"] == (
+        "the release gives this gene two DIFFERENT N20 spacers and no rule for "
+        "choosing between them"
+    )
+    assert absences["crispr_interference/yaaX-proB:proB"] == (
+        "the release gives this gene two DIFFERENT N20 spacers and no rule for "
+        "choosing between them"
+    )
+    # the labels the annotation could not place are stored, and the release names no
+    # oligo for them, so the absence is recorded rather than the record dropped
+    assert absences["crispr_activation/sufBCDS"] == (
+        "Suppl. Table 1 releases no N20 oligo under this gene's name"
+    )
+    assert absences["crispr_activation/nosuchgene"] == (
+        "Suppl. Table 1 releases no N20 oligo under this gene's name"
+    )
 
 
 def test_retention_refuses_an_arm_whose_row_count_is_not_the_papers(
-    si: Path, bw25113: EcoliK12BW25113Genome, monkeypatch: pytest.MonkeyPatch
+    si: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     _install_fixture_sizes(monkeypatch)
     monkeypatch.setattr(n, "N_ACTIVATION_TARGETS", 57)
@@ -447,7 +428,6 @@ def test_retention_refuses_an_arm_whose_row_count_is_not_the_papers(
                 ),
             },
             n.read_guide_spacers(tables.tables[0]),
-            genome=bw25113,
             dataset_name="synthetic",
         )
 
@@ -455,45 +435,39 @@ def test_retention_refuses_an_arm_whose_row_count_is_not_the_papers(
 # --------------------------------------------------------------------------- #
 # Genotype, phenotype, environment
 # --------------------------------------------------------------------------- #
-def _target(symbol: str = "thrA", tag: str = "BW25113_0002") -> n.StoredTarget:
+def _target(symbol: str = "thrA", label: str | None = None) -> n.StoredTarget:
     return n.StoredTarget(
-        reported_symbol=symbol, locus_tag=tag, gene_name=symbol, guide_sequence="A" * 20
+        reported_symbol=symbol, strain_label=label or symbol, guide_sequence="A" * 20
     )
 
 
-def test_each_arm_takes_its_own_leaf_with_the_shared_effector() -> None:
+def test_each_arm_sets_its_released_direction_on_the_one_leaf() -> None:
     activation = n.perturbation(_target(), "crispr_activation")
-    assert isinstance(activation, BacterialCrisprActivationPerturbation)
+    assert isinstance(activation, BacterialReleasedCrisprPerturbation)
     assert activation.expression_direction == "increased"
-    assert activation.systematic_gene_name == "BW25113_0002"
+    assert activation.systematic_gene_name == "thrA"
     assert activation.perturbed_gene_name == "thrA"
+    assert activation.strain_label == "thrA"
+    assert activation.identifier_kind == n.IDENTIFIER_KIND
     assert activation.gene_namespace == "ecoli_k12_bw25113_locus_tag"
     assert activation.crispr.effector == "dCas9*-MCPSoxS"
     assert activation.crispr.guide_sequence == "A" * 20
-    assert activation.identifier_mapping is not None
-    assert activation.identifier_mapping.source_identifier == "thrA"
-    assert activation.identifier_mapping.route == "gene_symbol"
 
     interference = n.perturbation(_target(), "crispr_interference")
-    assert isinstance(interference, BacterialCrisprInterferencePerturbation)
+    assert isinstance(interference, BacterialReleasedCrisprPerturbation)
     assert interference.expression_direction == "decreased"
 
 
-def test_a_label_that_is_already_the_locus_tag_derives_no_mapping() -> None:
-    leaf = n.perturbation(
-        _target(symbol="BW25113_0002", tag="BW25113_0002"), "crispr_activation"
-    )
-    assert leaf.identifier_mapping is None
+def test_an_operon_label_is_a_record_identity() -> None:
+    """The released-construct leaf takes the label the release writes, operon or gene."""
+    leaf = n.perturbation(_target(symbol="sufBCDS"), "crispr_activation")
+    assert leaf.systematic_gene_name == "sufBCDS"
+    assert leaf.strain_label == "sufBCDS"
 
 
 def test_a_genotype_holds_one_leaf_per_targeted_gene() -> None:
-    genotype = n.genotype(
-        [_target(), _target(symbol="yaaX", tag="BW25113_0008")], "crispr_activation"
-    )
-    assert [p.systematic_gene_name for p in genotype.perturbations] == [
-        "BW25113_0002",
-        "BW25113_0008",
-    ]
+    genotype = n.genotype([_target(), _target(symbol="yaaX")], "crispr_activation")
+    assert [p.systematic_gene_name for p in genotype.perturbations] == ["thrA", "yaaX"]
 
 
 def test_a_genotype_refuses_a_strain_that_targets_nothing() -> None:
@@ -667,8 +641,10 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(
 ) -> None:
     root = tmp_path / "dataset"
     dataset = n.CrisprPineneToleranceNiu2019Dataset(root=str(root))
-    assert len(dataset) == 4
-    assert sorted(dataset.gene_set) == ["BW25113_0002", "BW25113_0005", "BW25113_0008"]
+    # every released label with a growth ratio, operon labels and the combination
+    # strain that names them included
+    assert len(dataset) == 7
+    assert sorted(dataset.gene_set) == ["nosuchgene", "proB", "sufBCDS", "thrA", "yaaX"]
     references = dataset.experiment_reference_index
     assert references is not None
     # one reference per arm, because screen_id names the arm
@@ -679,7 +655,7 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(
     assert first["phenotype"]["environment_response"] == pytest.approx(math.log2(1.24))
     assert first["phenotype"]["screen_id"] == "crispr_activation"
     assert [p["perturbation_type"] for p in first["genotype"]["perturbations"]] == [
-        "bacterial_crispr_activation"
+        "bacterial_released_crispr"
     ]
     assert dataset[0]["reference"]["phenotype_reference"]["environment_response"] == 0.0
     assert dataset[0]["publication"]["doi"] == n.DOI
@@ -689,15 +665,12 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(
         len(dataset[i]["experiment"]["genotype"]["perturbations"])
         for i in range(len(dataset))
     )
-    assert sizes == [1, 1, 1, 2]
+    assert sizes == [1, 1, 1, 1, 1, 2, 2]
 
     drops = json.loads((root / "preprocess" / "dropped_records.json").read_text())
-    assert (drops["released_numeric_cells"], drops["stored_records"]) == (13, 4)
+    assert (drops["released_numeric_cells"], drops["stored_records"]) == (13, 7)
     assert {rule["rule"]: rule["n_cells"] for rule in drops["rules"]} == {
-        n.RULE_PINENE_RATIO: 6,
-        n.RULE_MULTI_GENE: 1,
-        n.RULE_COMBINATION_OPERON: 1,
-        n.RULE_LABEL_NOT_IN_ANNOTATION: 1,
+        n.RULE_PINENE_RATIO: 6
     }
     released = json.loads(
         (root / "preprocess" / "released_growth_ratios.json").read_text()
@@ -721,7 +694,13 @@ def test_the_synthetic_build_passes_l0_to_l4(
 ) -> None:
     root = tmp_path / "dataset"
     n.CrisprPineneToleranceNiu2019Dataset(root=str(root))
-    report = n.verify_build(str(root), genome=bw25113, expected_count=4)
+    report = n.verify_build(str(root), genome=bw25113, expected_count=7)
+    # the labels the synthetic annotation cannot place are reported, never gated
+    assert all(
+        result.finding_class.value == "report"
+        for result in report.results
+        if not result.passed
+    ), report.summary()
     assert report.passed, report.summary()
     assert (root / "preprocess" / "verification_report.json").is_file()
 
@@ -736,18 +715,8 @@ def test_the_loader_is_registered_and_receives_the_bw25113_genome(
     assert n.CrisprPineneToleranceNiu2019Dataset.REFERENCE_STRAIN == "BW25113"
     install_bacterial_fakes(monkeypatch)
     injector = BacterialGenomeInjector(data_root="/nowhere")
-    kwargs = injector.genome_kwargs(n.CrisprPineneToleranceNiu2019Dataset)
-    assert set(kwargs) == {"ecoli_genome"}
-    assert isinstance(kwargs["ecoli_genome"], FakeBW25113Genome)
-
-
-def test_the_loader_refuses_a_genome_of_the_wrong_strain() -> None:
-    dataset = n.CrisprPineneToleranceNiu2019Dataset.__new__(
-        n.CrisprPineneToleranceNiu2019Dataset
-    )
-    dataset.ecoli_genome = cast("Any", object())
-    with pytest.raises(AttributeError):
-        dataset._genome()
+    # the loader declares no genome parameter, so the injector fills nothing
+    assert injector.genome_kwargs(n.CrisprPineneToleranceNiu2019Dataset) == {}
 
 
 def test_create_experiment_is_not_the_entry_point() -> None:
@@ -831,7 +800,7 @@ def test_the_pinned_si_holds_the_release_the_paper_states() -> None:
 def test_the_built_store_holds_the_measured_records() -> None:
     assert _STORE is not None
     records = list(n.stored_records(str(_STORE)))
-    assert len(records) == n.EXPECTED_RECORDS == 51
+    assert len(records) == n.EXPECTED_RECORDS == 54
     arms = {r["experiment"]["phenotype"]["screen_id"] for r in records}
     assert arms == {"crispr_activation", "crispr_interference"}
     leaves = [
@@ -839,8 +808,14 @@ def test_the_built_store_holds_the_measured_records() -> None:
         for r in records
         for p in r["experiment"]["genotype"]["perturbations"]
     ]
-    assert leaves.count("bacterial_crispr_activation") == 41
-    assert leaves.count("bacterial_crispr_interference") == 15
+    assert set(leaves) == {"bacterial_released_crispr"}
+    directions = [
+        p["expression_direction"]
+        for r in records
+        for p in r["experiment"]["genotype"]["perturbations"]
+    ]
+    assert directions.count("increased") == 49
+    assert directions.count("decreased") == 15
     assert {r["experiment"]["phenotype"]["measurement_type"] for r in records} == {
         "log2_ratio"
     }
@@ -848,7 +823,7 @@ def test_the_built_store_holds_the_measured_records() -> None:
         (Path(_STORE) / "preprocess" / "dropped_records.json").read_text()
     )
     assert drops["released_numeric_cells"] == n.RELEASED_NUMERIC_CELLS == 94
-    assert drops["stored_records"] == 51
+    assert drops["stored_records"] == 54
     assert drops["censored_cells"] == 64
 
 

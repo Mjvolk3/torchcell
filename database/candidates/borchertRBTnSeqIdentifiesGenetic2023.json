@@ -29,16 +29,16 @@
     },
     {
       "gate": "G4",
-      "outcome": "fail",
-      "reason": "already held: accession PRJNA856070 in torchcell/datasets/pputida/borchert2024.py",
+      "outcome": "pass",
+      "reason": "key shared with accession PRJNA856070 in torchcell/datasets/pputida/borchert2024.py, content not held: released values checked on 13 column(s) against /scratch/projects/torchcell-scratch/data/torchcell/rbtnseq_borchert2024, not subsumed (the compendium is the derived copy; the primary release is collected from source)",
       "evidence": [],
       "issue": null,
       "blocked_kind": null
     },
     {
       "gate": "G5",
-      "outcome": "unmeasured",
-      "reason": "not evaluated: G4 stopped the run",
+      "outcome": "pass",
+      "reason": "FitnessContrastPhenotype exists; compounds resolve",
       "evidence": [],
       "issue": null,
       "blocked_kind": null
@@ -468,8 +468,124 @@
     ],
     "pmid_checked": false
   },
-  "g4_value": null,
-  "g5": null,
-  "decided_at": "2026-10-12",
-  "torchcell_commit": "232e5d17882b668d27ccfe3bdb5e97dbcafd8a04"
+  "g4_value": {
+    "store": "/scratch/projects/torchcell-scratch/data/torchcell/rbtnseq_borchert2024",
+    "store_commit": "ab59afded6d4baf87947476251997fdbb6d78ba9",
+    "records_read": 1466920,
+    "tolerance": 0.01,
+    "matches": [
+      {
+        "released_column": "Glu_FA_v_Glu_PCA",
+        "best_sample": "set15IT077",
+        "best_max_abs_diff": 30.8705841547443,
+        "runner_up_sample": "set12IT002",
+        "runner_up_max_abs_diff": 30.9335841547443,
+        "keys_compared": 4732
+      },
+      {
+        "released_column": "Glu_v_Glu_4HBA",
+        "best_sample": "set1IT085",
+        "best_max_abs_diff": 27.8428425156977,
+        "runner_up_sample": "set1IT087",
+        "runner_up_max_abs_diff": 27.8478425156977,
+        "keys_compared": 4732
+      },
+      {
+        "released_column": "Glu_v_Glu_4HBald",
+        "best_sample": "set100IT044",
+        "best_max_abs_diff": 34.3439835221418,
+        "runner_up_sample": "set100IT046",
+        "runner_up_max_abs_diff": 34.4549835221418,
+        "keys_compared": 4732
+      },
+      {
+        "released_column": "Glu_v_Glu_AA",
+        "best_sample": "set29IT004",
+        "best_max_abs_diff": 85.8903778992017,
+        "runner_up_sample": "set27IT029",
+        "runner_up_max_abs_diff": 86.6583778992017,
+        "keys_compared": 4732
+      },
+      {
+        "released_column": "Glu_v_Glu_FA",
+        "best_sample": "set27IT059",
+        "best_max_abs_diff": 31.507591408573397,
+        "runner_up_sample": "set27IT058",
+        "runner_up_max_abs_diff": 31.551258758705,
+        "keys_compared": 4732
+      },
+      {
+        "released_column": "Glu_v_Glu_GA",
+        "best_sample": "set1IT083",
+        "best_max_abs_diff": 34.7282779785975,
+        "runner_up_sample": "set1IT082",
+        "runner_up_max_abs_diff": 34.732277978597494,
+        "keys_compared": 4732
+      },
+      {
+        "released_column": "Glu_v_Glu_LA",
+        "best_sample": "set27IT028",
+        "best_max_abs_diff": 66.2528133665692,
+        "runner_up_sample": "set27IT029",
+        "runner_up_max_abs_diff": 66.5458133665692,
+        "keys_compared": 4732
+      },
+      {
+        "released_column": "Glu_v_Glu_Na2SO4",
+        "best_sample": "set101IT013",
+        "best_max_abs_diff": 92.694415613112,
+        "runner_up_sample": "set101IT014",
+        "runner_up_max_abs_diff": 92.70141561311199,
+        "keys_compared": 4732
+      },
+      {
+        "released_column": "Glu_v_Glu_NaCl",
+        "best_sample": "set101IT013",
+        "best_max_abs_diff": 50.426118167457396,
+        "runner_up_sample": "set101IT014",
+        "runner_up_max_abs_diff": 50.4331181674574,
+        "keys_compared": 4732
+      },
+      {
+        "released_column": "Glu_v_Glu_PCA",
+        "best_sample": "set7IT045",
+        "best_max_abs_diff": 40.9115163345301,
+        "runner_up_sample": "set1IT083",
+        "runner_up_max_abs_diff": 40.961516334530096,
+        "keys_compared": 4732
+      },
+      {
+        "released_column": "Glu_v_Glu_VA",
+        "best_sample": "set27IT006",
+        "best_max_abs_diff": 70.7841471518772,
+        "runner_up_sample": "set27IT007",
+        "runner_up_max_abs_diff": 70.8311471518772,
+        "keys_compared": 4732
+      },
+      {
+        "released_column": "Glu_v_Glu_Van",
+        "best_sample": "set29IT004",
+        "best_max_abs_diff": 31.283412200677603,
+        "runner_up_sample": "set29IT005",
+        "runner_up_max_abs_diff": 31.301412200677603,
+        "keys_compared": 4732
+      },
+      {
+        "released_column": "Glu_v_M9_Glu_4CA",
+        "best_sample": "set10IT033",
+        "best_max_abs_diff": 35.2338016345142,
+        "runner_up_sample": "set101IT031",
+        "runner_up_max_abs_diff": 35.6068016345142,
+        "keys_compared": 4732
+      }
+    ]
+  },
+  "g5": {
+    "phenotype_class": "FitnessContrastPhenotype",
+    "class_exists": true,
+    "unresolved_compounds": [],
+    "proposed_class": "FitnessContrastBorchert2023Dataset"
+  },
+  "decided_at": "2026-10-13",
+  "torchcell_commit": "90ef1c0f13ad6b43d5f28ea8740014f89572d1c5"
 }

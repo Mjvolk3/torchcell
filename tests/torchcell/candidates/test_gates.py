@@ -618,10 +618,13 @@ def test_g4_key_own_module_and_mention_pass(
     )
 
 
-def test_g4_key_fails_on_another_modules_doi_or_accession(
+def test_g4_key_shared_doi_or_accession_needs_a_content_comparison(
     index: tuple[gates.ModuleKeys, ...],
 ) -> None:
-    """Another module's primary DOI, or a shared accession, is already held."""
+    """#913, owner 2026-10-12: a key another module holds is a citation, not a duplicate.
+
+    It leaves G4 unmeasured (the content must be compared) instead of refusing the row.
+    """
     by_doi = gates.evaluate_g4_key(
         bacteria_row(url="https://doi.org/10.1000/compendium", accession="none"),
         "fixtureKey2020",
@@ -630,8 +633,11 @@ def test_g4_key_fails_on_another_modules_doi_or_accession(
         aggregator_pmids=None,
     )
     assert (by_doi.result.outcome, by_doi.result.reason) == (
-        "fail",
-        "already held: doi 10.1000/compendium in torchcell/datasets/ecoli/compendium.py",
+        "unmeasured",
+        "key shared with doi 10.1000/compendium in "
+        "torchcell/datasets/ecoli/compendium.py: a citation is not a duplicate; "
+        "compare the released values against that store (candidate-gate overlap) "
+        "before admitting",
     )
     by_accession = gates.evaluate_g4_key(
         bacteria_row(accession="GEO GSE999"),
@@ -641,11 +647,11 @@ def test_g4_key_fails_on_another_modules_doi_or_accession(
         aggregator_pmids=None,
     )
     assert by_accession.record.accessions == ("GSE999",)
-    assert by_accession.result.outcome == "fail"
+    assert by_accession.result.outcome == "unmeasured"
 
 
 def test_g4_key_pmid_against_aggregators(index: tuple[gates.ModuleKeys, ...]) -> None:
-    """A PMID an aggregator re-serves fails; no aggregator data means unchecked."""
+    """A PMID an aggregator re-serves needs the comparison; no aggregator data passes."""
     row = bacteria_row(accession="none")
     hit = gates.evaluate_g4_key(
         row,
@@ -657,7 +663,7 @@ def test_g4_key_pmid_against_aggregators(index: tuple[gates.ModuleKeys, ...]) ->
     assert (hit.record.pmid, hit.record.pmid_checked, hit.result.outcome) == (
         "123",
         True,
-        "fail",
+        "unmeasured",
     )
     unchecked = gates.evaluate_g4_key(
         row,
@@ -667,6 +673,60 @@ def test_g4_key_pmid_against_aggregators(index: tuple[gates.ModuleKeys, ...]) ->
         aggregator_pmids=None,
     )
     assert (unchecked.record.pmid_checked, unchecked.result.outcome) == (False, "pass")
+
+
+def test_g4_shared_key_passes_when_content_is_not_held_and_fails_when_it_is() -> None:
+    """Both directions of the content rule: same released values under another key
+    fail; a shared accession whose values no store holds passes.
+    """
+    from torchcell.candidates.verdict import G4KeyHit
+
+    key = G4KeyRecord(
+        doi=None,
+        pmid=None,
+        accessions=("PRJNA1",),
+        hits=(
+            G4KeyHit(
+                key_kind="accession",
+                key="PRJNA1",
+                where="torchcell/datasets/x/compendium.py",
+                relation="primary_of_other",
+            ),
+        ),
+        pmid_checked=False,
+    )
+    held = G4ValueRecord(
+        store="compendium_store",
+        store_commit=None,
+        records_read=4,
+        tolerance=0.01,
+        matches=gates.match_by_value(
+            {"arm": {"g1": 1.0, "g2": 2.0}}, {"s1": {"g1": 1.0, "g2": 2.0}}
+        ),
+    )
+    duplicate = gates.g4_result(key, held)
+    assert duplicate.outcome == "fail"
+    assert duplicate.reason.startswith("subsumed: every released column matches")
+    not_held = G4ValueRecord(
+        store="compendium_store",
+        store_commit=None,
+        records_read=4,
+        tolerance=0.01,
+        matches=gates.match_by_value(
+            {"arm": {"g1": 30.0, "g2": -5.0}}, {"s1": {"g1": 1.0, "g2": 2.0}}
+        ),
+    )
+    assert (
+        gates.g4_result(key, not_held).outcome,
+        gates.g4_result(key, not_held).reason,
+    ) == (
+        "pass",
+        "key shared with accession PRJNA1 in torchcell/datasets/x/compendium.py, "
+        "content not held: released values checked on 1 column(s) against "
+        "compendium_store, not subsumed (the compendium is the derived copy; the "
+        "primary release is collected from source)",
+    )
+    assert gates.g4_result(key, None).outcome == "unmeasured"
 
 
 def test_g4_result_with_values() -> None:

@@ -557,7 +557,7 @@ class CandidateVerdict(_Frozen):
         _check_g1(by_gate["G1"], self.source_kind, self.aggregation)
         _check_record("G2", by_gate["G2"], self.g2)
         _check_record("G3", by_gate["G3"], self.g3)
-        _check_record("G4", by_gate["G4"], self.g4_key)
+        _check_g4(by_gate["G4"], self.g4_key, self.g4_value)
         _check_record("G5", by_gate["G5"], self.g5)
         if self.g4_value is not None and self.g4_key is None:
             raise ValueError("g4_value without g4_key: G4-value runs after G4-key")
@@ -627,6 +627,25 @@ def _check_record(name: str, result: GateResult, record: Any) -> None:
         raise ValueError(f"{name} is unmeasured but carries a record")
     if result.outcome != "unmeasured" and record is None:
         raise ValueError(f"{name} is {result.outcome!r} without its record")
+
+
+def _check_g4(
+    result: GateResult, key: G4KeyRecord | None, value: G4ValueRecord | None
+) -> None:
+    """G4's record rule, with the one case the content rule adds (#913).
+
+    A key shared with another module leaves G4 ``unmeasured`` WITH its key record until
+    the released values are compared (``gates.g4_result``); that is the only unmeasured
+    G4 that carries a record.
+    """
+    if result.outcome == "unmeasured" and key is not None:
+        if not key.overlapping or value is not None:
+            raise ValueError(
+                "G4 is unmeasured with a key record only while a shared key awaits "
+                "its content comparison"
+            )
+        return
+    _check_record("G4", result, key)
 
 
 def derive_outcome(gates: tuple[GateResult, ...]) -> str:

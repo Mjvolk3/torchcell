@@ -1,0 +1,25 @@
+compound,target,n_genes,spearman,pearson,ceiling,split,arm,fold,seed,epoch,selected_on,n_train_compounds
+2-methylimidazole,raw,3489,0.01103933649096208,0.0054269726660337685,0.15199773365650238,val,cgt_env,1,0,1,val/centered_spearman_mean,29
+2-methylimidazole,centered,3488,0.05274795474646288,0.030626983569065326,0.5597985422409243,val,cgt_env,1,0,1,val/centered_spearman_mean,29
+4-hydroxybenzoic acid,raw,3510,0.02266901090701722,0.027987460817137235,0.5007832696964534,val,cgt_env,1,0,1,val/centered_spearman_mean,29
+4-hydroxybenzoic acid,centered,3507,0.019152481920782862,-0.012427638209075685,0.6069275698019138,val,cgt_env,1,0,1,val/centered_spearman_mean,29
+azelaic acid,raw,3497,0.01113321940364932,-0.0023001012058448136,0.8670875046979807,val,cgt_env,1,0,1,val/centered_spearman_mean,29
+azelaic acid,centered,3496,0.0068181191336382525,-0.021077344323216583,0.8478350127071501,val,cgt_env,1,0,1,val/centered_spearman_mean,29
+gamma-valerolactone,raw,3474,0.024797964262088367,0.006116128171201544,0.8971840735794596,val,cgt_env,1,0,1,val/centered_spearman_mean,29
+gamma-valerolactone,centered,3472,0.011222987235140341,0.004240257585596728,0.8829847106511334,val,cgt_env,1,0,1,val/centered_spearman_mean,29
+1-ethyl-3-methylimidazolium chloride,raw,3492,0.001554014963771943,0.003666947032279934,0.898719369187085,test,cgt_env,1,0,1,val/centered_spearman_mean,29
+1-ethyl-3-methylimidazolium chloride,centered,3491,-0.0022459020203156876,0.0009743978334337447,0.9118751765796688,test,cgt_env,1,0,1,val/centered_spearman_mean,29
+4-methylimidazole,raw,3501,-0.00762622434571567,-0.005251808945408562,0.12769961661112678,test,cgt_env,1,0,1,val/centered_spearman_mean,29
+4-methylimidazole,centered,3501,0.023418128483373324,-0.0016920314373579178,0.615007248676801,test,cgt_env,1,0,1,val/centered_spearman_mean,29
+5-(hydroxymethyl)furfural,raw,3505,0.0304325597300002,0.00677102327415993,0.0,test,cgt_env,1,0,1,val/centered_spearman_mean,29
+5-(hydroxymethyl)furfural,centered,3505,0.04114978956084376,0.01481002625121615,0.4455282268712214,test,cgt_env,1,0,1,val/centered_spearman_mean,29
+caffeic acid,raw,3499,-0.005251318236326406,-0.011268617055714771,0.672719508661378,test,cgt_env,1,0,1,val/centered_spearman_mean,29
+caffeic acid,centered,3496,-0.0007843621944897527,0.012348163874171376,0.5669168753177399,test,cgt_env,1,0,1,val/centered_spearman_mean,29
+crystal violet,raw,3388,-0.0009256395031264577,-0.002510241829121371,0.9246970150673822,test,cgt_env,1,0,1,val/centered_spearman_mean,29
+crystal violet,centered,3387,0.014734750163879337,0.048826388638001095,0.9206845631242002,test,cgt_env,1,0,1,val/centered_spearman_mean,29
+ferulic acid,raw,3500,0.018246727999238807,0.020606672025380975,0.9222047795661907,test,cgt_env,1,0,1,val/centered_spearman_mean,29
+ferulic acid,centered,3500,-0.002395368124284287,0.0014440566933596767,0.9050642845793575,test,cgt_env,1,0,1,val/centered_spearman_mean,29
+methyl methanesulfonate,raw,3489,0.002712162672158786,0.008271217299705888,0.9375622227212969,test,cgt_env,1,0,1,val/centered_spearman_mean,29
+methyl methanesulfonate,centered,3489,0.013897049802212734,0.0025977374659789648,0.9358034669678501,test,cgt_env,1,0,1,val/centered_spearman_mean,29
+syringaldehyde,raw,3514,-0.013261609444077923,-0.022153720271495352,0.8382422102191949,test,cgt_env,1,0,1,val/centered_spearman_mean,29
+syringaldehyde,centered,3514,-0.0214805263019007,-0.0009267719500995844,0.8013726015292344,test,cgt_env,1,0,1,val/centered_spearman_mean,29

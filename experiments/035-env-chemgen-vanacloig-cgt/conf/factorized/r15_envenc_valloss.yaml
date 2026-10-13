@@ -1,0 +1,11 @@
+# Round 15, GPU: validation-loss curves for the environment encoder. Rounds 10 and 11 fit
+# it on the non-test pool, so its 4 validation compounds were in the fit and it has no
+# out-of-sample validation curve. Here it is fit on the training compounds only, epoch
+# picked on the validation compounds, one seed, 50 epochs, five folds of fold seed 0, with
+# train, validation and held-out loss logged every epoch. The counterpart of round 12
+# (the bilinear head). PARALLEL=2.
+- {name: enc_L1_lam0_loss_f0, folds: [0], gene_encoder: cgt, head: env_encoder, env_layers: 1, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50}
+- {name: enc_L1_lam0_loss_f1, folds: [1], gene_encoder: cgt, head: env_encoder, env_layers: 1, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50}
+- {name: enc_L1_lam0_loss_f2, folds: [2], gene_encoder: cgt, head: env_encoder, env_layers: 1, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50}
+- {name: enc_L1_lam0_loss_f3, folds: [3], gene_encoder: cgt, head: env_encoder, env_layers: 1, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50}
+- {name: enc_L1_lam0_loss_f4, folds: [4], gene_encoder: cgt, head: env_encoder, env_layers: 1, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50}

@@ -1,0 +1,25 @@
+compound,target,n_genes,spearman,pearson,ceiling,split,arm,fold,seed,epoch,selected_on,n_train_compounds
+"2,4-dimethylimidazole",raw,3492,0.023256200043758876,0.04108956712515643,0.7305743732158305,val,cgt_env,4,0,1,val/centered_spearman_mean,29
+"2,4-dimethylimidazole",centered,3491,0.07211470538203664,0.16548030256239432,0.8079547907334441,val,cgt_env,4,0,1,val/centered_spearman_mean,29
+cinnamic acid,raw,3505,0.058940355690494786,0.05184676790353996,0.8069010615379222,val,cgt_env,4,0,1,val/centered_spearman_mean,29
+cinnamic acid,centered,3502,0.025579069210175154,-0.030059606685995423,0.7941914323399291,val,cgt_env,4,0,1,val/centered_spearman_mean,29
+ferulic acid,raw,3500,0.04900442392107212,0.05634879921328826,0.9222047795661907,val,cgt_env,4,0,1,val/centered_spearman_mean,29
+ferulic acid,centered,3499,0.005854419158365179,-0.003143885726712169,0.9089198419642592,val,cgt_env,4,0,1,val/centered_spearman_mean,29
+methyl methanesulfonate,raw,3489,0.05760523524224036,0.04714400316804463,0.9375622227212969,val,cgt_env,4,0,1,val/centered_spearman_mean,29
+methyl methanesulfonate,centered,3489,0.04718663671697715,0.05307412002153067,0.9360926678241112,val,cgt_env,4,0,1,val/centered_spearman_mean,29
+2-methylimidazole,raw,3489,0.020120916926380586,0.03728273461097673,0.15199773365650238,test,cgt_env,4,0,1,val/centered_spearman_mean,29
+2-methylimidazole,centered,3488,-0.025619091760876563,0.10445655413089791,0.5624170284630009,test,cgt_env,4,0,1,val/centered_spearman_mean,29
+4'-hydroxyacetophenone,raw,3507,0.045062091905990684,0.04551463186698152,0.8379928898821091,test,cgt_env,4,0,1,val/centered_spearman_mean,29
+4'-hydroxyacetophenone,centered,3505,0.00854704327692755,-0.05919358094347374,0.8088885158878275,test,cgt_env,4,0,1,val/centered_spearman_mean,29
+acetovanillone,raw,3510,0.036897373697723,0.0485818755122908,0.9141428331679445,test,cgt_env,4,0,1,val/centered_spearman_mean,29
+acetovanillone,centered,3509,-0.0019723089210221755,-0.017706335067085716,0.9081816551645971,test,cgt_env,4,0,1,val/centered_spearman_mean,29
+azelaic acid,raw,3497,-0.0034378767361656465,0.002299684643081542,0.8670875046979807,test,cgt_env,4,0,1,val/centered_spearman_mean,29
+azelaic acid,centered,3496,-0.08086625145377202,-0.09172705606678633,0.8553586981230819,test,cgt_env,4,0,1,val/centered_spearman_mean,29
+methylglyoxal,raw,3484,0.0071990979989283,0.01206849880058205,0.9178330549514648,test,cgt_env,4,0,1,val/centered_spearman_mean,29
+methylglyoxal,centered,3481,0.011145863468697224,0.02865750044947253,0.9254443455880632,test,cgt_env,4,0,1,val/centered_spearman_mean,29
+nonylacridine orange,raw,3507,0.02002227366542615,0.021885707603157133,0.8449681878437812,test,cgt_env,4,0,1,val/centered_spearman_mean,29
+nonylacridine orange,centered,3506,0.021484319150052274,0.020304534457357207,0.833886138449666,test,cgt_env,4,0,1,val/centered_spearman_mean,29
+sinapic acid,raw,3495,0.10049468634197356,0.10552368121734863,0.5642822086005129,test,cgt_env,4,0,1,val/centered_spearman_mean,29
+sinapic acid,centered,3493,0.047423123235042774,0.06612134307215575,0.36827411606941146,test,cgt_env,4,0,1,val/centered_spearman_mean,29
+vanillin,raw,3506,0.05443543438331476,0.03848495372918134,0.8097403963300162,test,cgt_env,4,0,1,val/centered_spearman_mean,29
+vanillin,centered,3505,-0.024243795525943933,-0.04256822145495518,0.7359185026149425,test,cgt_env,4,0,1,val/centered_spearman_mean,29

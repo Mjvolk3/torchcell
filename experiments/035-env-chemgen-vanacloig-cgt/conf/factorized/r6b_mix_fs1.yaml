@@ -1,0 +1,9 @@
+# Round 6b: the mixing arms on fold seed 1, so each arm is read over 123 compound-evaluations.
+- {name: mix_readout_L0_fs1, mix: readout, gcn_layers: 0, fold_seed: 1}
+- {name: mix_readout_L2_fs1, mix: readout, gcn_layers: 2, fold_seed: 1}
+- {name: mix_hit_L0_fs1, mix: hit, gcn_layers: 0, fold_seed: 1}
+- {name: mix_hit_L2_fs1, mix: hit, gcn_layers: 2, fold_seed: 1}
+- {name: mix_hitprop_L0_fs1, mix: hit_prop, gcn_layers: 0, fold_seed: 1}
+- {name: mix_hitprop_L2_fs1, mix: hit_prop, gcn_layers: 2, fold_seed: 1}
+- {name: mix_geneattend_L0_fs1, mix: gene_attend, gcn_layers: 0, fold_seed: 1}
+- {name: mix_geneattend_L2_fs1, mix: gene_attend, gcn_layers: 2, fold_seed: 1}

@@ -1,0 +1,247 @@
+compound,target,n_genes,spearman,pearson,ceiling,member,selected_step,fold,fold_seed,name
+"2,2'-bipyridine",raw,3489,-0.01052569798973935,-0.0804170559221496,0.9331732906177713,ensemble,-1,0,0,ridge+r7a_ensembles_e10_geneattend_L2*
+"2,2'-bipyridine",centered,3489,0.43734575914528384,0.7073619729790556,0.9536503665291391,ensemble,-1,0,0,ridge+r7a_ensembles_e10_geneattend_L2*
+"2,4-dimethylimidazole",raw,3491,-0.06198055697961959,-0.16517133062946743,0.7305743732158305,ensemble,-1,0,0,ridge+r7a_ensembles_e10_geneattend_L2*
+"2,4-dimethylimidazole",centered,3491,0.4415631107369538,0.6401042791053154,0.8612685815254334,ensemble,-1,0,0,ridge+r7a_ensembles_e10_geneattend_L2*
+"2,6-dimethylpyrazine",raw,3504,0.1431584569253946,0.2077194788161036,0.8729821697732166,ensemble,-1,0,0,ridge+r7a_ensembles_e10_geneattend_L2*
+"2,6-dimethylpyrazine",centered,3504,0.2510000291812374,0.21075206997408164,0.8732567034681548,ensemble,-1,0,0,ridge+r7a_ensembles_e10_geneattend_L2*
+ethanol,raw,3486,0.19053771080230655,0.24791545229187936,0.9100766609130951,ensemble,-1,0,0,ridge+r7a_ensembles_e10_geneattend_L2*
+ethanol,centered,3486,0.34879711605248276,0.21534477940655006,0.9075088632924206,ensemble,-1,0,0,ridge+r7a_ensembles_e10_geneattend_L2*
+furfural,raw,3493,0.12362413983850047,0.15109323970678656,0.877833605571729,ensemble,-1,0,0,ridge+r7a_ensembles_e10_geneattend_L2*
+furfural,centered,3493,0.3257272083777501,0.3337514379508216,0.8893403223606451,ensemble,-1,0,0,ridge+r7a_ensembles_e10_geneattend_L2*
+isobutanol,raw,3480,0.26607914319380993,0.31258966423292556,0.886756227316329,ensemble,-1,0,0,ridge+r7a_ensembles_e10_geneattend_L2*
+isobutanol,centered,3480,0.2204785259915594,0.22986718064159978,0.8797261537140619,ensemble,-1,0,0,ridge+r7a_ensembles_e10_geneattend_L2*
+levulinic acid,raw,3487,0.21251066349204828,0.24663926378166526,0.38592988486577784,ensemble,-1,0,0,ridge+r7a_ensembles_e10_geneattend_L2*
+levulinic acid,centered,3487,0.13925471524760671,0.24170600181487312,0.62423890352989,ensemble,-1,0,0,ridge+r7a_ensembles_e10_geneattend_L2*
+sodium acetate,raw,3510,0.21013414034457154,0.23245253458998474,0.6082211129787902,ensemble,-1,0,0,ridge+r7a_ensembles_e10_geneattend_L2*
+sodium acetate,centered,3510,0.13483131954769237,0.2532821953688751,0.6217179585073968,ensemble,-1,0,0,ridge+r7a_ensembles_e10_geneattend_L2*
+sodium butyrate,raw,3490,0.06929527356580684,0.051003248875060414,0.0,ensemble,-1,0,0,ridge+r7a_ensembles_e10_geneattend_L2*
+sodium butyrate,centered,3490,0.32951073554621835,0.5855206750175994,0.4561049401794552,ensemble,-1,0,0,ridge+r7a_ensembles_e10_geneattend_L2*
+1-ethyl-3-methylimidazolium chloride,raw,3491,0.513542103188772,0.594368497215197,0.898719369187085,ensemble,-1,1,0,ridge+r7a_ensembles_e10_geneattend_L2*
+1-ethyl-3-methylimidazolium chloride,centered,3491,0.5334646467980682,0.6711000528042155,0.9132019348286584,ensemble,-1,1,0,ridge+r7a_ensembles_e10_geneattend_L2*
+4-methylimidazole,raw,3501,-0.1094106181669513,-0.20465268956706187,0.12769961661112678,ensemble,-1,1,0,ridge+r7a_ensembles_e10_geneattend_L2*
+4-methylimidazole,centered,3501,0.20786498329583658,0.2338464944072538,0.6113571150364794,ensemble,-1,1,0,ridge+r7a_ensembles_e10_geneattend_L2*
+5-(hydroxymethyl)furfural,raw,3505,0.28647502355716076,0.23807401074856768,0.0,ensemble,-1,1,0,ridge+r7a_ensembles_e10_geneattend_L2*
+5-(hydroxymethyl)furfural,centered,3505,0.24546565385525063,0.21297428111058783,0.45493740241417274,ensemble,-1,1,0,ridge+r7a_ensembles_e10_geneattend_L2*
+caffeic acid,raw,3497,0.4768562258226758,0.45476198992610567,0.672719508661378,ensemble,-1,1,0,ridge+r7a_ensembles_e10_geneattend_L2*
+caffeic acid,centered,3497,0.13781389780702172,0.07060049854588364,0.5530421168156869,ensemble,-1,1,0,ridge+r7a_ensembles_e10_geneattend_L2*
+crystal violet,raw,3387,0.4676887249775752,0.6736658713151041,0.9246970150673822,ensemble,-1,1,0,ridge+r7a_ensembles_e10_geneattend_L2*
+crystal violet,centered,3387,0.5926579622765996,0.762013248553007,0.9218257378922377,ensemble,-1,1,0,ridge+r7a_ensembles_e10_geneattend_L2*
+ferulic acid,raw,3500,0.5132371992365486,0.7143315196617491,0.9222047795661907,ensemble,-1,1,0,ridge+r7a_ensembles_e10_geneattend_L2*
+ferulic acid,centered,3500,0.4821561044792156,0.673209897691036,0.9036014305354326,ensemble,-1,1,0,ridge+r7a_ensembles_e10_geneattend_L2*
+methyl methanesulfonate,raw,3489,0.11337213399428263,0.15623143454444569,0.9375622227212969,ensemble,-1,1,0,ridge+r7a_ensembles_e10_geneattend_L2*
+methyl methanesulfonate,centered,3489,-0.2672657279448433,-0.004024138382727485,0.9361871296703799,ensemble,-1,1,0,ridge+r7a_ensembles_e10_geneattend_L2*
+syringaldehyde,raw,3514,0.3791550475241454,0.4971495758358525,0.8382422102191949,ensemble,-1,1,0,ridge+r7a_ensembles_e10_geneattend_L2*
+syringaldehyde,centered,3514,0.12591117679968084,0.28409384992091313,0.8053444540840908,ensemble,-1,1,0,ridge+r7a_ensembles_e10_geneattend_L2*
+1-butyl-3-methylimidazolium chloride,raw,3484,0.5627849621306823,0.608408916693404,0.811477012409954,ensemble,-1,2,0,ridge+r7a_ensembles_e10_geneattend_L2*
+1-butyl-3-methylimidazolium chloride,centered,3484,0.5567837150375893,0.7067133804786427,0.8336253666167436,ensemble,-1,2,0,ridge+r7a_ensembles_e10_geneattend_L2*
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3485,0.35934867229325484,0.5892564357823058,0.9128873232893497,ensemble,-1,2,0,ridge+r7a_ensembles_e10_geneattend_L2*
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3485,0.22802911616982868,0.31359836718464057,0.8825490828239687,ensemble,-1,2,0,ridge+r7a_ensembles_e10_geneattend_L2*
+4-hydroxybenzoic acid,raw,3507,0.4211935984138544,0.46450311510710324,0.5007832696964534,ensemble,-1,2,0,ridge+r7a_ensembles_e10_geneattend_L2*
+4-hydroxybenzoic acid,centered,3507,0.3305372918960479,0.3511750917390735,0.5773539375980108,ensemble,-1,2,0,ridge+r7a_ensembles_e10_geneattend_L2*
+benzoic acid,raw,3490,0.39174440137177957,0.3547226507147895,0.685375384120187,ensemble,-1,2,0,ridge+r7a_ensembles_e10_geneattend_L2*
+benzoic acid,centered,3490,0.34426969077446556,0.2944746065365871,0.7374718689615183,ensemble,-1,2,0,ridge+r7a_ensembles_e10_geneattend_L2*
+ferulamide,raw,3490,0.4061138005754364,0.6571036039916437,0.8930954305048072,ensemble,-1,2,0,ridge+r7a_ensembles_e10_geneattend_L2*
+ferulamide,centered,3490,0.4035549135870681,0.5833462658544387,0.8660552782796856,ensemble,-1,2,0,ridge+r7a_ensembles_e10_geneattend_L2*
+p-coumaric acid,raw,3510,0.349503742148552,0.48407830476764513,0.27549278107492503,ensemble,-1,2,0,ridge+r7a_ensembles_e10_geneattend_L2*
+p-coumaric acid,centered,3510,0.19303079970324608,0.21208976620412726,0.0,ensemble,-1,2,0,ridge+r7a_ensembles_e10_geneattend_L2*
+sodium glyoxylate,raw,3490,0.16886134756860563,0.15349563897642984,0.0,ensemble,-1,2,0,ridge+r7a_ensembles_e10_geneattend_L2*
+sodium glyoxylate,centered,3490,0.29808527781829536,0.32360574736775716,0.0,ensemble,-1,2,0,ridge+r7a_ensembles_e10_geneattend_L2*
+vanillic acid,raw,3486,0.5181776609959868,0.5654631769887178,0.8722616635995127,ensemble,-1,2,0,ridge+r7a_ensembles_e10_geneattend_L2*
+vanillic acid,centered,3486,0.37424301321780357,0.3266931443511411,0.8284074918108438,ensemble,-1,2,0,ridge+r7a_ensembles_e10_geneattend_L2*
+4-hydroxybenzaldehyde,raw,3492,0.6242375603157903,0.6916861475699249,0.8136005615775869,ensemble,-1,3,0,ridge+r7a_ensembles_e10_geneattend_L2*
+4-hydroxybenzaldehyde,centered,3492,0.5087291813471214,0.5791218308971327,0.7486310389734667,ensemble,-1,3,0,ridge+r7a_ensembles_e10_geneattend_L2*
+acetamide,raw,3489,0.1895942885468439,0.18913969815258044,0.5260040030106069,ensemble,-1,3,0,ridge+r7a_ensembles_e10_geneattend_L2*
+acetamide,centered,3489,0.024794830929013256,-0.036442206102161936,0.669534696041139,ensemble,-1,3,0,ridge+r7a_ensembles_e10_geneattend_L2*
+acetosyringone,raw,3493,0.337576585245387,0.6309064175371658,0.8953367924490198,ensemble,-1,3,0,ridge+r7a_ensembles_e10_geneattend_L2*
+acetosyringone,centered,3493,0.18264301833826713,0.47680333753338433,0.8657663958795743,ensemble,-1,3,0,ridge+r7a_ensembles_e10_geneattend_L2*
+benomyl,raw,3492,0.42758898709635146,0.4623117563470843,0.8675396020249485,ensemble,-1,3,0,ridge+r7a_ensembles_e10_geneattend_L2*
+benomyl,centered,3492,0.511692474001882,0.5594127305615753,0.8853017425875782,ensemble,-1,3,0,ridge+r7a_ensembles_e10_geneattend_L2*
+cinnamic acid,raw,3504,0.11963710903436028,0.20818199136258644,0.8069010615379222,ensemble,-1,3,0,ridge+r7a_ensembles_e10_geneattend_L2*
+cinnamic acid,centered,3504,-0.10723582253900428,-0.0886525976905447,0.791306367778296,ensemble,-1,3,0,ridge+r7a_ensembles_e10_geneattend_L2*
+gamma-valerolactone,raw,3473,0.3716374123784301,0.23448136736207267,0.8971840735794596,ensemble,-1,3,0,ridge+r7a_ensembles_e10_geneattend_L2*
+gamma-valerolactone,centered,3473,0.27877465406918883,0.07360168299028613,0.8921636147026369,ensemble,-1,3,0,ridge+r7a_ensembles_e10_geneattend_L2*
+myclobutanil,raw,3496,0.35286688566207924,0.5229727543060537,0.746076298727284,ensemble,-1,3,0,ridge+r7a_ensembles_e10_geneattend_L2*
+myclobutanil,centered,3496,0.43478843286346425,0.6234645711614688,0.7816400701736069,ensemble,-1,3,0,ridge+r7a_ensembles_e10_geneattend_L2*
+syringic acid,raw,3500,0.5266782355072612,0.5151958921704195,0.8765976686189016,ensemble,-1,3,0,ridge+r7a_ensembles_e10_geneattend_L2*
+syringic acid,centered,3500,0.4751577663219168,0.3772624293635779,0.8599322607107426,ensemble,-1,3,0,ridge+r7a_ensembles_e10_geneattend_L2*
+2-methylimidazole,raw,3488,0.21992449830995756,0.3014314938684688,0.15199773365650238,ensemble,-1,4,0,ridge+r7a_ensembles_e10_geneattend_L2*
+2-methylimidazole,centered,3488,0.2366795533542885,0.4652418147378181,0.5746959188181814,ensemble,-1,4,0,ridge+r7a_ensembles_e10_geneattend_L2*
+4'-hydroxyacetophenone,raw,3506,0.45696991643343654,0.5516918231437863,0.8379928898821091,ensemble,-1,4,0,ridge+r7a_ensembles_e10_geneattend_L2*
+4'-hydroxyacetophenone,centered,3506,0.49612571407069606,0.47903037665518433,0.8090940914763887,ensemble,-1,4,0,ridge+r7a_ensembles_e10_geneattend_L2*
+acetovanillone,raw,3509,0.351159740239783,0.5213817386610363,0.9141428331679445,ensemble,-1,4,0,ridge+r7a_ensembles_e10_geneattend_L2*
+acetovanillone,centered,3509,0.47970721477117967,0.46942936426878323,0.9082113767287752,ensemble,-1,4,0,ridge+r7a_ensembles_e10_geneattend_L2*
+azelaic acid,raw,3496,0.13158005333682898,0.2799550113006725,0.8670875046979807,ensemble,-1,4,0,ridge+r7a_ensembles_e10_geneattend_L2*
+azelaic acid,centered,3496,0.09923741877454728,0.044228367155378485,0.8527287439731305,ensemble,-1,4,0,ridge+r7a_ensembles_e10_geneattend_L2*
+methylglyoxal,raw,3481,-0.15109861877689817,-0.010742949638145259,0.9178330549514648,ensemble,-1,4,0,ridge+r7a_ensembles_e10_geneattend_L2*
+methylglyoxal,centered,3481,-0.31355776899509696,0.00994028214408283,0.9244906432852036,ensemble,-1,4,0,ridge+r7a_ensembles_e10_geneattend_L2*
+nonylacridine orange,raw,3506,0.6220866589761812,0.6911023249399143,0.8449681878437812,ensemble,-1,4,0,ridge+r7a_ensembles_e10_geneattend_L2*
+nonylacridine orange,centered,3506,0.6858684613527828,0.7480733626596813,0.8366325723887487,ensemble,-1,4,0,ridge+r7a_ensembles_e10_geneattend_L2*
+sinapic acid,raw,3493,0.4404310682687132,0.6318104161670121,0.5642822086005129,ensemble,-1,4,0,ridge+r7a_ensembles_e10_geneattend_L2*
+sinapic acid,centered,3493,0.3200879569335209,0.4567784411112473,0.3238018158316301,ensemble,-1,4,0,ridge+r7a_ensembles_e10_geneattend_L2*
+vanillin,raw,3505,0.5475792868324774,0.6463371543254495,0.8097403963300162,ensemble,-1,4,0,ridge+r7a_ensembles_e10_geneattend_L2*
+vanillin,centered,3505,0.38731995976780614,0.48643407550868295,0.7304551685344388,ensemble,-1,4,0,ridge+r7a_ensembles_e10_geneattend_L2*
+1-butyl-3-methylimidazolium chloride,raw,3484,0.5768033334249162,0.6594993250647538,0.811477012409954,ensemble,-1,0,1,ridge+r7a_ensembles_e10_geneattend_L2*
+1-butyl-3-methylimidazolium chloride,centered,3484,0.6097360722500348,0.6981187438245751,0.8292558297828654,ensemble,-1,0,1,ridge+r7a_ensembles_e10_geneattend_L2*
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3485,0.6476088035852388,0.7353592308802986,0.9128873232893497,ensemble,-1,0,1,ridge+r7a_ensembles_e10_geneattend_L2*
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3485,0.5046282988013636,0.6214912338182049,0.8808271018966328,ensemble,-1,0,1,ridge+r7a_ensembles_e10_geneattend_L2*
+4'-hydroxyacetophenone,raw,3507,0.7331316447992917,0.8105492487200833,0.8379928898821091,ensemble,-1,0,1,ridge+r7a_ensembles_e10_geneattend_L2*
+4'-hydroxyacetophenone,centered,3507,0.6751832849545248,0.7527290869984233,0.7943510975172879,ensemble,-1,0,1,ridge+r7a_ensembles_e10_geneattend_L2*
+4-hydroxybenzoic acid,raw,3507,0.3837477734516736,0.43455951264688214,0.5007832696964534,ensemble,-1,0,1,ridge+r7a_ensembles_e10_geneattend_L2*
+4-hydroxybenzoic acid,centered,3507,0.22068970706160587,0.2520576599307775,0.49775174760269264,ensemble,-1,0,1,ridge+r7a_ensembles_e10_geneattend_L2*
+crystal violet,raw,3387,0.4237631137193937,0.6225931812491163,0.9246970150673822,ensemble,-1,0,1,ridge+r7a_ensembles_e10_geneattend_L2*
+crystal violet,centered,3387,0.5888575993162753,0.7432931624236641,0.9223391675707808,ensemble,-1,0,1,ridge+r7a_ensembles_e10_geneattend_L2*
+ferulic acid,raw,3499,0.48574055670113064,0.6848786830901301,0.9222047795661907,ensemble,-1,0,1,ridge+r7a_ensembles_e10_geneattend_L2*
+ferulic acid,centered,3499,0.41313236343859655,0.6292201527244143,0.9080060977912938,ensemble,-1,0,1,ridge+r7a_ensembles_e10_geneattend_L2*
+furfural,raw,3493,0.2877868798235665,0.28646232419096374,0.877833605571729,ensemble,-1,0,1,ridge+r7a_ensembles_e10_geneattend_L2*
+furfural,centered,3493,0.2893230627409351,0.26829472236673696,0.8763986094014646,ensemble,-1,0,1,ridge+r7a_ensembles_e10_geneattend_L2*
+myclobutanil,raw,3496,-0.08355559502241983,-0.055605098201043306,0.746076298727284,ensemble,-1,0,1,ridge+r7a_ensembles_e10_geneattend_L2*
+myclobutanil,centered,3496,-0.054821537098540526,-0.10406297412237639,0.7753715138115954,ensemble,-1,0,1,ridge+r7a_ensembles_e10_geneattend_L2*
+vanillic acid,raw,3486,0.5157808798825341,0.5538701930000864,0.8722616635995127,ensemble,-1,0,1,ridge+r7a_ensembles_e10_geneattend_L2*
+vanillic acid,centered,3486,0.3011189567440923,0.3029088179939227,0.8241144912313376,ensemble,-1,0,1,ridge+r7a_ensembles_e10_geneattend_L2*
+"2,4-dimethylimidazole",raw,3491,-0.027065822966331293,-0.044269795493581045,0.7305743732158305,ensemble,-1,1,1,ridge+r7a_ensembles_e10_geneattend_L2*
+"2,4-dimethylimidazole",centered,3491,0.39851545570412333,0.4951486298167174,0.8327319817928159,ensemble,-1,1,1,ridge+r7a_ensembles_e10_geneattend_L2*
+azelaic acid,raw,3496,0.08068316280801131,0.1930539811979684,0.8670875046979807,ensemble,-1,1,1,ridge+r7a_ensembles_e10_geneattend_L2*
+azelaic acid,centered,3496,0.03446570746253194,0.04188405209597986,0.8486867844617119,ensemble,-1,1,1,ridge+r7a_ensembles_e10_geneattend_L2*
+benomyl,raw,3492,0.43991182278438185,0.5114957380831846,0.8675396020249485,ensemble,-1,1,1,ridge+r7a_ensembles_e10_geneattend_L2*
+benomyl,centered,3492,0.6052274614141679,0.6297973056491255,0.8858892884910788,ensemble,-1,1,1,ridge+r7a_ensembles_e10_geneattend_L2*
+benzoic acid,raw,3490,0.3932373540766674,0.35747189868798374,0.685375384120187,ensemble,-1,1,1,ridge+r7a_ensembles_e10_geneattend_L2*
+benzoic acid,centered,3490,0.39581294622376273,0.4617065618716098,0.7302189227161497,ensemble,-1,1,1,ridge+r7a_ensembles_e10_geneattend_L2*
+cinnamic acid,raw,3504,0.1230339534633843,0.19312460754153987,0.8069010615379222,ensemble,-1,1,1,ridge+r7a_ensembles_e10_geneattend_L2*
+cinnamic acid,centered,3504,-0.12605158042285167,-0.08740191525027763,0.783892263289116,ensemble,-1,1,1,ridge+r7a_ensembles_e10_geneattend_L2*
+ferulamide,raw,3490,0.6259684255661092,0.7544558186128628,0.8930954305048072,ensemble,-1,1,1,ridge+r7a_ensembles_e10_geneattend_L2*
+ferulamide,centered,3490,0.5569885969499971,0.6720681973702276,0.8585858925749198,ensemble,-1,1,1,ridge+r7a_ensembles_e10_geneattend_L2*
+methylglyoxal,raw,3481,-0.14267756388076733,0.020195117312526274,0.9178330549514648,ensemble,-1,1,1,ridge+r7a_ensembles_e10_geneattend_L2*
+methylglyoxal,centered,3481,-0.15373246546221223,0.14076170138636598,0.9257318774492264,ensemble,-1,1,1,ridge+r7a_ensembles_e10_geneattend_L2*
+nonylacridine orange,raw,3507,0.6272109903944502,0.6894140558352543,0.8449681878437812,ensemble,-1,1,1,ridge+r7a_ensembles_e10_geneattend_L2*
+nonylacridine orange,centered,3507,0.6440141024965051,0.7084709263782676,0.8336523661619658,ensemble,-1,1,1,ridge+r7a_ensembles_e10_geneattend_L2*
+1-ethyl-3-methylimidazolium chloride,raw,3491,0.4489492354722672,0.5365703392926441,0.898719369187085,ensemble,-1,2,1,ridge+r7a_ensembles_e10_geneattend_L2*
+1-ethyl-3-methylimidazolium chloride,centered,3491,0.4337962753342252,0.6601572669311419,0.9168123496399989,ensemble,-1,2,1,ridge+r7a_ensembles_e10_geneattend_L2*
+5-(hydroxymethyl)furfural,raw,3505,0.20337915904182793,0.1120225579496204,0.0,ensemble,-1,2,1,ridge+r7a_ensembles_e10_geneattend_L2*
+5-(hydroxymethyl)furfural,centered,3505,0.30420418499402757,0.28036834312116826,0.5292874155662355,ensemble,-1,2,1,ridge+r7a_ensembles_e10_geneattend_L2*
+gamma-valerolactone,raw,3473,0.21002808589901598,0.27343728156039676,0.8971840735794596,ensemble,-1,2,1,ridge+r7a_ensembles_e10_geneattend_L2*
+gamma-valerolactone,centered,3473,-0.06779243723468167,0.1337446908179463,0.8890452902831322,ensemble,-1,2,1,ridge+r7a_ensembles_e10_geneattend_L2*
+levulinic acid,raw,3487,0.20744221742888358,0.21052135703289102,0.38592988486577784,ensemble,-1,2,1,ridge+r7a_ensembles_e10_geneattend_L2*
+levulinic acid,centered,3487,0.030794143554739375,0.14131038272252522,0.5910325375246532,ensemble,-1,2,1,ridge+r7a_ensembles_e10_geneattend_L2*
+methyl methanesulfonate,raw,3489,0.198045004611099,0.15333512826571624,0.9375622227212969,ensemble,-1,2,1,ridge+r7a_ensembles_e10_geneattend_L2*
+methyl methanesulfonate,centered,3489,0.22702866265281993,0.20936353655096646,0.9381039702727801,ensemble,-1,2,1,ridge+r7a_ensembles_e10_geneattend_L2*
+sinapic acid,raw,3493,0.5481030297356012,0.687697607581398,0.5642822086005129,ensemble,-1,2,1,ridge+r7a_ensembles_e10_geneattend_L2*
+sinapic acid,centered,3493,0.4160240149588475,0.45210892258927515,0.07933482194825014,ensemble,-1,2,1,ridge+r7a_ensembles_e10_geneattend_L2*
+sodium acetate,raw,3510,0.08589667754187713,0.09838533269876673,0.6082211129787902,ensemble,-1,2,1,ridge+r7a_ensembles_e10_geneattend_L2*
+sodium acetate,centered,3510,0.0860218133320403,0.2250609089758081,0.6416764594276576,ensemble,-1,2,1,ridge+r7a_ensembles_e10_geneattend_L2*
+sodium butyrate,raw,3490,0.048988947728407,0.005680730905325272,0.0,ensemble,-1,2,1,ridge+r7a_ensembles_e10_geneattend_L2*
+sodium butyrate,centered,3490,0.3000490178380606,0.5623219817512782,0.4154944587607023,ensemble,-1,2,1,ridge+r7a_ensembles_e10_geneattend_L2*
+"2,2'-bipyridine",raw,3489,0.15677323593747172,0.02585417364281357,0.9331732906177713,ensemble,-1,3,1,ridge+r7a_ensembles_e10_geneattend_L2*
+"2,2'-bipyridine",centered,3489,0.5319104703250099,0.6877091081296417,0.9491678055239965,ensemble,-1,3,1,ridge+r7a_ensembles_e10_geneattend_L2*
+"2,6-dimethylpyrazine",raw,3504,-0.007155374982834196,0.08234116742793307,0.8729821697732166,ensemble,-1,3,1,ridge+r7a_ensembles_e10_geneattend_L2*
+"2,6-dimethylpyrazine",centered,3504,0.0451947787352334,0.06355861065695974,0.873539479693467,ensemble,-1,3,1,ridge+r7a_ensembles_e10_geneattend_L2*
+acetovanillone,raw,3509,0.7124899341414751,0.7151389403843119,0.9141428331679445,ensemble,-1,3,1,ridge+r7a_ensembles_e10_geneattend_L2*
+acetovanillone,centered,3509,0.673324438191844,0.64192403410408,0.8942413274157337,ensemble,-1,3,1,ridge+r7a_ensembles_e10_geneattend_L2*
+ethanol,raw,3487,0.1802968314836602,0.24276517219949656,0.9100766609130951,ensemble,-1,3,1,ridge+r7a_ensembles_e10_geneattend_L2*
+ethanol,centered,3487,0.1770908880836305,0.0961953032490231,0.9068810672420646,ensemble,-1,3,1,ridge+r7a_ensembles_e10_geneattend_L2*
+isobutanol,raw,3480,0.36100663373463426,0.36189490695150867,0.886756227316329,ensemble,-1,3,1,ridge+r7a_ensembles_e10_geneattend_L2*
+isobutanol,centered,3480,0.08477934371199039,0.07016214890103945,0.8740236766683434,ensemble,-1,3,1,ridge+r7a_ensembles_e10_geneattend_L2*
+sodium glyoxylate,raw,3490,0.11877981722080334,0.10991015394629276,0.0,ensemble,-1,3,1,ridge+r7a_ensembles_e10_geneattend_L2*
+sodium glyoxylate,centered,3490,0.43800316013211904,0.5650506408583055,0.0,ensemble,-1,3,1,ridge+r7a_ensembles_e10_geneattend_L2*
+syringaldehyde,raw,3514,0.12225752935564471,0.32618563446977245,0.8382422102191949,ensemble,-1,3,1,ridge+r7a_ensembles_e10_geneattend_L2*
+syringaldehyde,centered,3514,-0.14652133096537864,-0.003675991817493541,0.815206887225573,ensemble,-1,3,1,ridge+r7a_ensembles_e10_geneattend_L2*
+vanillin,raw,3505,0.49987868019708015,0.6021875412680573,0.8097403963300162,ensemble,-1,3,1,ridge+r7a_ensembles_e10_geneattend_L2*
+vanillin,centered,3505,0.3172703010867613,0.36471208384851145,0.7298831011607608,ensemble,-1,3,1,ridge+r7a_ensembles_e10_geneattend_L2*
+2-methylimidazole,raw,3488,0.21096313597874622,0.357160790278611,0.15199773365650238,ensemble,-1,4,1,ridge+r7a_ensembles_e10_geneattend_L2*
+2-methylimidazole,centered,3488,0.4133354915561741,0.5777910432616226,0.6165798690293909,ensemble,-1,4,1,ridge+r7a_ensembles_e10_geneattend_L2*
+4-hydroxybenzaldehyde,raw,3492,0.5945799893601706,0.6724062282508557,0.8136005615775869,ensemble,-1,4,1,ridge+r7a_ensembles_e10_geneattend_L2*
+4-hydroxybenzaldehyde,centered,3492,0.44975067218595105,0.5163926270000211,0.746178085575299,ensemble,-1,4,1,ridge+r7a_ensembles_e10_geneattend_L2*
+4-methylimidazole,raw,3501,-0.13627677198116125,-0.18528349254977544,0.12769961661112678,ensemble,-1,4,1,ridge+r7a_ensembles_e10_geneattend_L2*
+4-methylimidazole,centered,3501,0.2253404016060214,0.28871191485318093,0.6141195281836963,ensemble,-1,4,1,ridge+r7a_ensembles_e10_geneattend_L2*
+acetamide,raw,3489,0.19802542660956182,0.2047692033316014,0.5260040030106069,ensemble,-1,4,1,ridge+r7a_ensembles_e10_geneattend_L2*
+acetamide,centered,3489,0.07996066401904284,0.03779824346394675,0.6866303993435534,ensemble,-1,4,1,ridge+r7a_ensembles_e10_geneattend_L2*
+acetosyringone,raw,3492,0.6454699283815636,0.7666568727556442,0.8953367924490198,ensemble,-1,4,1,ridge+r7a_ensembles_e10_geneattend_L2*
+acetosyringone,centered,3492,0.613546080873445,0.6927802562242141,0.8698090092048968,ensemble,-1,4,1,ridge+r7a_ensembles_e10_geneattend_L2*
+caffeic acid,raw,3496,0.10973367767560484,0.12616745520147815,0.672719508661378,ensemble,-1,4,1,ridge+r7a_ensembles_e10_geneattend_L2*
+caffeic acid,centered,3496,-0.11144395305552235,-0.18684903342080586,0.6373670032191323,ensemble,-1,4,1,ridge+r7a_ensembles_e10_geneattend_L2*
+p-coumaric acid,raw,3510,0.3474429348087144,0.48572240866598476,0.27549278107492503,ensemble,-1,4,1,ridge+r7a_ensembles_e10_geneattend_L2*
+p-coumaric acid,centered,3510,0.20757932914906654,0.2268875745329861,0.0,ensemble,-1,4,1,ridge+r7a_ensembles_e10_geneattend_L2*
+syringic acid,raw,3500,0.4069248111075648,0.4265821901444445,0.8765976686189016,ensemble,-1,4,1,ridge+r7a_ensembles_e10_geneattend_L2*
+syringic acid,centered,3500,0.31513900293846087,0.27647234712065805,0.8584531456857164,ensemble,-1,4,1,ridge+r7a_ensembles_e10_geneattend_L2*
+"2,4-dimethylimidazole",raw,3491,-0.11738117528594298,-0.16209557833601645,0.7305743732158305,ensemble,-1,0,2,ridge+r7a_ensembles_e10_geneattend_L2*
+"2,4-dimethylimidazole",centered,3491,0.12600937914718477,0.18158074304938696,0.8229137348628133,ensemble,-1,0,2,ridge+r7a_ensembles_e10_geneattend_L2*
+2-methylimidazole,raw,3488,0.22079696721173014,0.23220450962272407,0.15199773365650238,ensemble,-1,0,2,ridge+r7a_ensembles_e10_geneattend_L2*
+2-methylimidazole,centered,3488,0.29736576957195315,0.48917183220037574,0.6024605878402992,ensemble,-1,0,2,ridge+r7a_ensembles_e10_geneattend_L2*
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3485,0.6096064218921328,0.7098898888292494,0.9128873232893497,ensemble,-1,0,2,ridge+r7a_ensembles_e10_geneattend_L2*
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3485,0.525272778958173,0.578812100111224,0.883457280259025,ensemble,-1,0,2,ridge+r7a_ensembles_e10_geneattend_L2*
+4'-hydroxyacetophenone,raw,3507,0.7113108223159937,0.7893576389404366,0.8379928898821091,ensemble,-1,0,2,ridge+r7a_ensembles_e10_geneattend_L2*
+4'-hydroxyacetophenone,centered,3507,0.6393722259785534,0.7234321929017602,0.7935960254022186,ensemble,-1,0,2,ridge+r7a_ensembles_e10_geneattend_L2*
+ferulic acid,raw,3499,0.39200970417354153,0.574197757575461,0.9222047795661907,ensemble,-1,0,2,ridge+r7a_ensembles_e10_geneattend_L2*
+ferulic acid,centered,3499,0.360212275303358,0.4986964877535364,0.9096820756778564,ensemble,-1,0,2,ridge+r7a_ensembles_e10_geneattend_L2*
+furfural,raw,3493,0.29635575153044214,0.2873056864371436,0.877833605571729,ensemble,-1,0,2,ridge+r7a_ensembles_e10_geneattend_L2*
+furfural,centered,3493,0.3302952640648385,0.27096158922177765,0.8788688565797801,ensemble,-1,0,2,ridge+r7a_ensembles_e10_geneattend_L2*
+levulinic acid,raw,3487,0.29366099866682344,0.29460443533918673,0.38592988486577784,ensemble,-1,0,2,ridge+r7a_ensembles_e10_geneattend_L2*
+levulinic acid,centered,3487,0.3188884740629371,0.42301217006715836,0.5248811647424081,ensemble,-1,0,2,ridge+r7a_ensembles_e10_geneattend_L2*
+p-coumaric acid,raw,3510,0.21515756345502818,0.3687351570323883,0.27549278107492503,ensemble,-1,0,2,ridge+r7a_ensembles_e10_geneattend_L2*
+p-coumaric acid,centered,3510,-0.045328558635326706,-0.002216879640360216,0.0,ensemble,-1,0,2,ridge+r7a_ensembles_e10_geneattend_L2*
+sinapic acid,raw,3493,0.33170449013517256,0.5519135737680971,0.5642822086005129,ensemble,-1,0,2,ridge+r7a_ensembles_e10_geneattend_L2*
+sinapic acid,centered,3493,0.20656829196777754,0.3488536873076721,0.3846465212693307,ensemble,-1,0,2,ridge+r7a_ensembles_e10_geneattend_L2*
+4-hydroxybenzoic acid,raw,3507,0.3115910412656668,0.3406196907344925,0.5007832696964534,ensemble,-1,1,2,ridge+r7a_ensembles_e10_geneattend_L2*
+4-hydroxybenzoic acid,centered,3507,0.2921587117002474,0.29233439979611675,0.6603549121483774,ensemble,-1,1,2,ridge+r7a_ensembles_e10_geneattend_L2*
+4-methylimidazole,raw,3501,-0.023984922174125844,-0.12299949725830749,0.12769961661112678,ensemble,-1,1,2,ridge+r7a_ensembles_e10_geneattend_L2*
+4-methylimidazole,centered,3501,0.28614746070639796,0.3397052080804912,0.6602537705690545,ensemble,-1,1,2,ridge+r7a_ensembles_e10_geneattend_L2*
+acetamide,raw,3489,0.23806064068584368,0.225294564294223,0.5260040030106069,ensemble,-1,1,2,ridge+r7a_ensembles_e10_geneattend_L2*
+acetamide,centered,3489,0.18581076018288,0.18206136225803202,0.6945331352340456,ensemble,-1,1,2,ridge+r7a_ensembles_e10_geneattend_L2*
+acetovanillone,raw,3509,0.6429261779883557,0.6961987678550251,0.9141428331679445,ensemble,-1,1,2,ridge+r7a_ensembles_e10_geneattend_L2*
+acetovanillone,centered,3509,0.6528436886143231,0.6636097019378667,0.9007497050254465,ensemble,-1,1,2,ridge+r7a_ensembles_e10_geneattend_L2*
+gamma-valerolactone,raw,3473,0.4125469578459821,0.3684139573696614,0.8971840735794596,ensemble,-1,1,2,ridge+r7a_ensembles_e10_geneattend_L2*
+gamma-valerolactone,centered,3473,0.4768886386578893,0.27464285288668727,0.8904865526111276,ensemble,-1,1,2,ridge+r7a_ensembles_e10_geneattend_L2*
+sodium acetate,raw,3510,0.10041482372847965,0.10455067506306585,0.6082211129787902,ensemble,-1,1,2,ridge+r7a_ensembles_e10_geneattend_L2*
+sodium acetate,centered,3510,0.09453848787371999,0.1832704118833621,0.6540251876535728,ensemble,-1,1,2,ridge+r7a_ensembles_e10_geneattend_L2*
+syringaldehyde,raw,3514,0.23278269797858878,0.40765375624472305,0.8382422102191949,ensemble,-1,1,2,ridge+r7a_ensembles_e10_geneattend_L2*
+syringaldehyde,centered,3514,0.0473747045099999,0.16534771753300362,0.8164755033930678,ensemble,-1,1,2,ridge+r7a_ensembles_e10_geneattend_L2*
+syringic acid,raw,3500,0.3314113630773125,0.4140037011404777,0.8765976686189016,ensemble,-1,1,2,ridge+r7a_ensembles_e10_geneattend_L2*
+syringic acid,centered,3500,0.31032346369987457,0.3039423536189804,0.8669117581200528,ensemble,-1,1,2,ridge+r7a_ensembles_e10_geneattend_L2*
+"2,2'-bipyridine",raw,3489,0.32668469296346114,0.21900652649308086,0.9331732906177713,ensemble,-1,2,2,ridge+r7a_ensembles_e10_geneattend_L2*
+"2,2'-bipyridine",centered,3489,0.4308727139742853,0.35684660072275715,0.942534078087761,ensemble,-1,2,2,ridge+r7a_ensembles_e10_geneattend_L2*
+azelaic acid,raw,3496,0.21654149400666367,0.30296838991919905,0.8670875046979807,ensemble,-1,2,2,ridge+r7a_ensembles_e10_geneattend_L2*
+azelaic acid,centered,3496,0.07469192495927401,0.054638132010337924,0.847310814069945,ensemble,-1,2,2,ridge+r7a_ensembles_e10_geneattend_L2*
+benomyl,raw,3492,0.38139305469832113,0.3856641195729614,0.8675396020249485,ensemble,-1,2,2,ridge+r7a_ensembles_e10_geneattend_L2*
+benomyl,centered,3492,0.5385422569673449,0.46884078343117463,0.8794179243054676,ensemble,-1,2,2,ridge+r7a_ensembles_e10_geneattend_L2*
+crystal violet,raw,3387,0.2518556293909657,0.39828150021924325,0.9246970150673822,ensemble,-1,2,2,ridge+r7a_ensembles_e10_geneattend_L2*
+crystal violet,centered,3387,0.577179487304766,0.6507770710665886,0.9220312622117617,ensemble,-1,2,2,ridge+r7a_ensembles_e10_geneattend_L2*
+ferulamide,raw,3490,0.5339958943704635,0.736165841919192,0.8930954305048072,ensemble,-1,2,2,ridge+r7a_ensembles_e10_geneattend_L2*
+ferulamide,centered,3490,0.4580229384094022,0.6795087177612938,0.8688733613509745,ensemble,-1,2,2,ridge+r7a_ensembles_e10_geneattend_L2*
+methyl methanesulfonate,raw,3489,0.2736345220628296,0.14057458017255156,0.9375622227212969,ensemble,-1,2,2,ridge+r7a_ensembles_e10_geneattend_L2*
+methyl methanesulfonate,centered,3489,0.13239274260881984,-0.014922134130853852,0.9366128421896852,ensemble,-1,2,2,ridge+r7a_ensembles_e10_geneattend_L2*
+vanillic acid,raw,3486,0.4896912719193355,0.5182259651390744,0.8722616635995127,ensemble,-1,2,2,ridge+r7a_ensembles_e10_geneattend_L2*
+vanillic acid,centered,3486,0.29451724536659085,0.23535317794656227,0.8223602732176184,ensemble,-1,2,2,ridge+r7a_ensembles_e10_geneattend_L2*
+vanillin,raw,3505,0.6263323138421304,0.7321162296267039,0.8097403963300162,ensemble,-1,2,2,ridge+r7a_ensembles_e10_geneattend_L2*
+vanillin,centered,3505,0.48746953627064793,0.6154022414476318,0.7267599792119376,ensemble,-1,2,2,ridge+r7a_ensembles_e10_geneattend_L2*
+1-butyl-3-methylimidazolium chloride,raw,3484,0.5964015577630417,0.6782056291714125,0.811477012409954,ensemble,-1,3,2,ridge+r7a_ensembles_e10_geneattend_L2*
+1-butyl-3-methylimidazolium chloride,centered,3484,0.6202055009996219,0.7547567480638603,0.8400804963478274,ensemble,-1,3,2,ridge+r7a_ensembles_e10_geneattend_L2*
+"2,6-dimethylpyrazine",raw,3504,0.12573867984851572,0.13024418294250079,0.8729821697732166,ensemble,-1,3,2,ridge+r7a_ensembles_e10_geneattend_L2*
+"2,6-dimethylpyrazine",centered,3504,0.1369817487397942,0.10273872927311867,0.8681927632775254,ensemble,-1,3,2,ridge+r7a_ensembles_e10_geneattend_L2*
+5-(hydroxymethyl)furfural,raw,3505,0.2911689237683043,0.2342786594348752,0.0,ensemble,-1,3,2,ridge+r7a_ensembles_e10_geneattend_L2*
+5-(hydroxymethyl)furfural,centered,3505,0.3664226454452141,0.3492383672910165,0.4748857338004678,ensemble,-1,3,2,ridge+r7a_ensembles_e10_geneattend_L2*
+acetosyringone,raw,3493,0.5559596367266423,0.7395038385595708,0.8953367924490198,ensemble,-1,3,2,ridge+r7a_ensembles_e10_geneattend_L2*
+acetosyringone,centered,3493,0.5042389088898834,0.6309385345958296,0.8633078995110798,ensemble,-1,3,2,ridge+r7a_ensembles_e10_geneattend_L2*
+benzoic acid,raw,3490,0.4088381097375261,0.3662565974404769,0.685375384120187,ensemble,-1,3,2,ridge+r7a_ensembles_e10_geneattend_L2*
+benzoic acid,centered,3490,0.4147195948130666,0.4648209194052928,0.7465144765242345,ensemble,-1,3,2,ridge+r7a_ensembles_e10_geneattend_L2*
+caffeic acid,raw,3496,0.328348757988094,0.3256623195312875,0.672719508661378,ensemble,-1,3,2,ridge+r7a_ensembles_e10_geneattend_L2*
+caffeic acid,centered,3496,0.061733638563014295,0.0007586819907210315,0.6348437831240964,ensemble,-1,3,2,ridge+r7a_ensembles_e10_geneattend_L2*
+cinnamic acid,raw,3504,0.1890271579716881,0.30711999058600725,0.8069010615379222,ensemble,-1,3,2,ridge+r7a_ensembles_e10_geneattend_L2*
+cinnamic acid,centered,3504,-0.04223382980802767,0.05726192310855729,0.7857923264270728,ensemble,-1,3,2,ridge+r7a_ensembles_e10_geneattend_L2*
+isobutanol,raw,3480,0.24607833516781163,0.4107568328655781,0.886756227316329,ensemble,-1,3,2,ridge+r7a_ensembles_e10_geneattend_L2*
+isobutanol,centered,3480,0.20523455574177937,0.33204048942634323,0.8738205260546376,ensemble,-1,3,2,ridge+r7a_ensembles_e10_geneattend_L2*
+1-ethyl-3-methylimidazolium chloride,raw,3491,0.4929867093016719,0.6042661844517476,0.898719369187085,ensemble,-1,4,2,ridge+r7a_ensembles_e10_geneattend_L2*
+1-ethyl-3-methylimidazolium chloride,centered,3491,0.530440477357876,0.7005690886450124,0.9207372710131602,ensemble,-1,4,2,ridge+r7a_ensembles_e10_geneattend_L2*
+4-hydroxybenzaldehyde,raw,3493,0.5584184059341099,0.6627601707504038,0.8136005615775869,ensemble,-1,4,2,ridge+r7a_ensembles_e10_geneattend_L2*
+4-hydroxybenzaldehyde,centered,3493,0.3189373155127783,0.4599760775453458,0.7330278514305723,ensemble,-1,4,2,ridge+r7a_ensembles_e10_geneattend_L2*
+ethanol,raw,3487,0.31196843342856817,0.439275156236312,0.9100766609130951,ensemble,-1,4,2,ridge+r7a_ensembles_e10_geneattend_L2*
+ethanol,centered,3487,0.15815142829365608,0.3244971938271199,0.8992724015184042,ensemble,-1,4,2,ridge+r7a_ensembles_e10_geneattend_L2*
+methylglyoxal,raw,3481,-0.05438288303778751,0.0805811659728913,0.9178330549514648,ensemble,-1,4,2,ridge+r7a_ensembles_e10_geneattend_L2*
+methylglyoxal,centered,3481,0.25409404669275026,0.3465485735587973,0.9293286685803472,ensemble,-1,4,2,ridge+r7a_ensembles_e10_geneattend_L2*
+myclobutanil,raw,3496,0.2733888004106361,0.3630612007067067,0.746076298727284,ensemble,-1,4,2,ridge+r7a_ensembles_e10_geneattend_L2*
+myclobutanil,centered,3496,0.4890141501243483,0.5715429202341223,0.806521750219523,ensemble,-1,4,2,ridge+r7a_ensembles_e10_geneattend_L2*
+nonylacridine orange,raw,3507,0.6711215511222007,0.731837361900317,0.8449681878437812,ensemble,-1,4,2,ridge+r7a_ensembles_e10_geneattend_L2*
+nonylacridine orange,centered,3507,0.6722464177548293,0.7432868339292082,0.8353957290395438,ensemble,-1,4,2,ridge+r7a_ensembles_e10_geneattend_L2*
+sodium butyrate,raw,3490,0.12171323163204602,0.1153062781014266,0.0,ensemble,-1,4,2,ridge+r7a_ensembles_e10_geneattend_L2*
+sodium butyrate,centered,3490,0.269966193204619,0.28448044432737735,0.42785463831799814,ensemble,-1,4,2,ridge+r7a_ensembles_e10_geneattend_L2*
+sodium glyoxylate,raw,3490,0.147759600867134,0.10032769194838881,0.0,ensemble,-1,4,2,ridge+r7a_ensembles_e10_geneattend_L2*
+sodium glyoxylate,centered,3490,0.2768174012265799,0.28768270009678676,0.10426711163393412,ensemble,-1,4,2,ridge+r7a_ensembles_e10_geneattend_L2*

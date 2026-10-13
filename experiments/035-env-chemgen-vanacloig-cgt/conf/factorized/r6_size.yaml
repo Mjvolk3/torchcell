@@ -1,0 +1,12 @@
+# Round 6 sizing, before the mixing verdict: width, depth of message passing, heads
+# and hops on the hit_prop arm, dim 64 reference in r6_mix (mix_hitprop_L2).
+- {name: size_hp_d32_L2, mix: hit_prop, dim: 32, gcn_layers: 2}
+- {name: size_hp_d128_L2, mix: hit_prop, dim: 128, gcn_layers: 2}
+- {name: size_hp_d64_L1, mix: hit_prop, dim: 64, gcn_layers: 1}
+- {name: size_hp_d64_L3, mix: hit_prop, dim: 64, gcn_layers: 3}
+- {name: size_hp_d64_L2_h1, mix: hit_prop, dim: 64, gcn_layers: 2, heads: 1}
+- {name: size_hp_d64_L2_h8, mix: hit_prop, dim: 64, gcn_layers: 2, heads: 8}
+- {name: size_hp_d64_L2_hop1, mix: hit_prop, dim: 64, gcn_layers: 2, hops: 1}
+- {name: size_hp_d64_L2_hop3, mix: hit_prop, dim: 64, gcn_layers: 2, hops: 3}
+- {name: size_hp_d64_L2_t03, mix: hit_prop, dim: 64, gcn_layers: 2, hit_temperature: 0.3}
+- {name: size_hp_d64_L2_hid512, mix: hit_prop, dim: 64, gcn_layers: 2, hidden: 512}

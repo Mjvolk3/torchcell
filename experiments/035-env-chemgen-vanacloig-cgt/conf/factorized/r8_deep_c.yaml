@@ -1,0 +1,7 @@
+# Round 8 (see r8_small_a.yaml), the 8-layer, prior-weight-1 arm completed to five folds.
+# Fold 0 (r8_deep_a.yaml, slurm 3078) reached median 0.260 against ridge's 0.236 at 200
+# epochs, where round 2 had the same configuration at 0.061 after 20 epochs. Same protocol
+# as fold 0 (validation-selected step, fit on the training compounds) so the folds pool.
+# Folds 1 and 2.
+- {name: L8_lam1_f1, folds: [1], gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, cgt_layers: 8, cgt_lambda: 1.0, epochs: 200}
+- {name: L8_lam1_f2, folds: [2], gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, cgt_layers: 8, cgt_lambda: 1.0, epochs: 200}

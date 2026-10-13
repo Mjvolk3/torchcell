@@ -1,0 +1,7 @@
+# Round 8 (see r8_mid_a.yaml). 4 layers with the prior at weight 1, five folds; 31 GB, one
+# process per card.
+- {name: L4_lam1_f0, folds: [0], cgt_layers: 4, cgt_lambda: 1.0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, epochs: 200}
+- {name: L4_lam1_f1, folds: [1], cgt_layers: 4, cgt_lambda: 1.0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, epochs: 200}
+- {name: L4_lam1_f2, folds: [2], cgt_layers: 4, cgt_lambda: 1.0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, epochs: 200}
+- {name: L4_lam1_f3, folds: [3], cgt_layers: 4, cgt_lambda: 1.0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, epochs: 200}
+- {name: L4_lam1_f4, folds: [4], cgt_layers: 4, cgt_lambda: 1.0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, epochs: 200}

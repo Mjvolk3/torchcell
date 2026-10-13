@@ -1,0 +1,25 @@
+compound,target,n_genes,spearman,pearson,ceiling,split,arm,fold,seed,epoch,selected_on,n_train_compounds
+"2,6-dimethylpyrazine",raw,3505,0.02990036735120611,0.048441044975821565,0.8729821697732166,val,cgt_env,2,0,7,val/centered_spearman_mean,29
+"2,6-dimethylpyrazine",centered,3504,0.011273153373644278,-0.04958518503917426,0.8694361116774606,val,cgt_env,2,0,7,val/centered_spearman_mean,29
+caffeic acid,raw,3499,0.06020297185780122,0.06675098988192046,0.672719508661378,val,cgt_env,2,0,7,val/centered_spearman_mean,29
+caffeic acid,centered,3497,0.08070980145586966,0.13460616513809914,0.6557614375584766,val,cgt_env,2,0,7,val/centered_spearman_mean,29
+ferulic acid,raw,3500,0.038267550048523,0.04171981510459115,0.9222047795661907,val,cgt_env,2,0,7,val/centered_spearman_mean,29
+ferulic acid,centered,3500,0.007815154262802748,-0.016529988506658464,0.9093009961720941,val,cgt_env,2,0,7,val/centered_spearman_mean,29
+methylglyoxal,raw,3484,0.05785140937287011,0.07594836916803445,0.9178330549514648,val,cgt_env,2,0,7,val/centered_spearman_mean,29
+methylglyoxal,centered,3481,0.003994858624202765,0.050085908370541735,0.920466847807044,val,cgt_env,2,0,7,val/centered_spearman_mean,29
+1-butyl-3-methylimidazolium chloride,raw,3485,0.05802138031871337,0.04198752427015387,0.811477012409954,test,cgt_env,2,0,7,val/centered_spearman_mean,29
+1-butyl-3-methylimidazolium chloride,centered,3484,0.06603002119828662,0.12137490436938567,0.8304596375698121,test,cgt_env,2,0,7,val/centered_spearman_mean,29
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3485,0.057078223495945504,0.0712123203053037,0.9128873232893497,test,cgt_env,2,0,7,val/centered_spearman_mean,29
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3485,0.010432853131819995,-0.024644372262193286,0.8870065734674344,test,cgt_env,2,0,7,val/centered_spearman_mean,29
+4-hydroxybenzoic acid,raw,3510,-0.004623979390481605,0.007918010399768268,0.5007832696964534,test,cgt_env,2,0,7,val/centered_spearman_mean,29
+4-hydroxybenzoic acid,centered,3507,0.10265782205968825,0.019797132004760853,0.6091911147972938,test,cgt_env,2,0,7,val/centered_spearman_mean,29
+benzoic acid,raw,3490,0.011618876254213225,0.015687240686091924,0.685375384120187,test,cgt_env,2,0,7,val/centered_spearman_mean,29
+benzoic acid,centered,3490,0.10769129793406851,0.10324400721253937,0.7446436618190221,test,cgt_env,2,0,7,val/centered_spearman_mean,29
+ferulamide,raw,3490,0.040743837026779355,0.07626183683076969,0.8930954305048072,test,cgt_env,2,0,7,val/centered_spearman_mean,29
+ferulamide,centered,3490,0.003696564182616,-0.06298925008526063,0.8672315475473089,test,cgt_env,2,0,7,val/centered_spearman_mean,29
+p-coumaric acid,raw,3510,0.08044614947109661,0.07626987856185392,0.27549278107492503,test,cgt_env,2,0,7,val/centered_spearman_mean,29
+p-coumaric acid,centered,3510,0.019410037927753407,0.008510998415543864,0.0,test,cgt_env,2,0,7,val/centered_spearman_mean,29
+sodium glyoxylate,raw,3491,0.027308047711710373,0.03304855309125951,0.0,test,cgt_env,2,0,7,val/centered_spearman_mean,29
+sodium glyoxylate,centered,3490,0.10006096090050703,0.1274007771548368,0.0,test,cgt_env,2,0,7,val/centered_spearman_mean,29
+vanillic acid,raw,3486,0.07383582793294076,0.08957216913915825,0.8722616635995127,test,cgt_env,2,0,7,val/centered_spearman_mean,29
+vanillic acid,centered,3486,-0.006480347329293701,0.04665239959524746,0.8356351316375633,test,cgt_env,2,0,7,val/centered_spearman_mean,29

@@ -1,0 +1,5 @@
+# Round 2, GPU: the cell graph transformer as the gene encoder of the factorized model,
+# graph prior lambda 1, one seed per fold first to measure speed and whether it learns.
+# gene_batch 64 strains per step: 57 steps is one pass over the 3,598 strains.
+- {name: cgt_bil_prior1, gene_encoder: cgt, gene_batch: 64, steps: 1140, eval_every: 57, seeds: [0]}
+- {name: cgt_bil_prior1_skip, gene_encoder: cgt, gene_batch: 64, steps: 1140, eval_every: 57, seeds: [0], identity_skip: true}

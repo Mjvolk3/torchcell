@@ -1,0 +1,1 @@
+- {name: smoke_gs, aux_sources: [wildenhain], pca_dim: null, graph_smooth: 1.0, steps: 60, eval_every: 30, seeds: [0], folds: [0]}

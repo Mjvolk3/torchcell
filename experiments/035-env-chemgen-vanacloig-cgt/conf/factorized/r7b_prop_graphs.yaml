@@ -1,0 +1,13 @@
+# Round 7b: which networks carry the molecule's hit mass: propagation over one family at a time.
+- {name: prop_phys_L2_fs0, mix: hit_prop, gcn_layers: 2, prop_graphs: [physical_interaction], fold_seed: 0}
+- {name: prop_coexp_L2_fs0, mix: hit_prop, gcn_layers: 2, prop_graphs: [string12_0_coexpression], fold_seed: 0}
+- {name: prop_reg_L2_fs0, mix: hit_prop, gcn_layers: 2, prop_graphs: [regulatory_interaction, tflink], fold_seed: 0}
+- {name: prop_stringexp_L2_fs0, mix: hit_prop, gcn_layers: 2, prop_graphs: [string12_0_experimental, string12_0_database], fold_seed: 0}
+- {name: prop_phys_L2_fs1, mix: hit_prop, gcn_layers: 2, prop_graphs: [physical_interaction], fold_seed: 1}
+- {name: prop_coexp_L2_fs1, mix: hit_prop, gcn_layers: 2, prop_graphs: [string12_0_coexpression], fold_seed: 1}
+- {name: prop_reg_L2_fs1, mix: hit_prop, gcn_layers: 2, prop_graphs: [regulatory_interaction, tflink], fold_seed: 1}
+- {name: prop_stringexp_L2_fs1, mix: hit_prop, gcn_layers: 2, prop_graphs: [string12_0_experimental, string12_0_database], fold_seed: 1}
+- {name: prop_phys_L2_fs2, mix: hit_prop, gcn_layers: 2, prop_graphs: [physical_interaction], fold_seed: 2}
+- {name: prop_coexp_L2_fs2, mix: hit_prop, gcn_layers: 2, prop_graphs: [string12_0_coexpression], fold_seed: 2}
+- {name: prop_reg_L2_fs2, mix: hit_prop, gcn_layers: 2, prop_graphs: [regulatory_interaction, tflink], fold_seed: 2}
+- {name: prop_stringexp_L2_fs2, mix: hit_prop, gcn_layers: 2, prop_graphs: [string12_0_experimental, string12_0_database], fold_seed: 2}

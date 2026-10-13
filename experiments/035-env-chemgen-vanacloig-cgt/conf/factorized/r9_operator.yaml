@@ -1,0 +1,28 @@
+# Round 9, GPU: the compound as a Type I operator on the strain's perturbed cell state
+# (head: operator in train_factorized.py) against the factorized bilinear head on the
+# same encoder.
+#
+# Protocol, set from round 8's fold-seed-0 curves (slurm 3074, 3075): one transformer
+# layer, 9 heads, prior weight 0 (weights 0 and 0.001 and depths 1 and 2 all plateau at
+# mean held-out 0.25 to 0.26, and the prior costs 2.4x per fold); a FIXED 50 epochs with
+# the last epoch kept (held-out is flat from epoch 20 to 200 while the 4-compound
+# validation argmax lands 0.01 to 0.03 below the last epoch); and the fit on the whole
+# non-test pool, as ridge does, so the model sees 32 to 33 compounds instead of 28 to 29.
+# Three seeds averaged per fold, five folds on each of fold seeds 0, 1, 2, so the
+# comparison against nested ridge pairs all 123 compound evaluations.
+# Card A: the operator. PARALLEL=2.
+- {name: op_L1_lam0_fs0_f0, folds: [0], fold_seed: 0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, head: operator}
+- {name: op_L1_lam0_fs0_f1, folds: [1], fold_seed: 0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, head: operator}
+- {name: op_L1_lam0_fs0_f2, folds: [2], fold_seed: 0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, head: operator}
+- {name: op_L1_lam0_fs0_f3, folds: [3], fold_seed: 0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, head: operator}
+- {name: op_L1_lam0_fs0_f4, folds: [4], fold_seed: 0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, head: operator}
+- {name: op_L1_lam0_fs1_f0, folds: [0], fold_seed: 1, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, head: operator}
+- {name: op_L1_lam0_fs1_f1, folds: [1], fold_seed: 1, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, head: operator}
+- {name: op_L1_lam0_fs1_f2, folds: [2], fold_seed: 1, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, head: operator}
+- {name: op_L1_lam0_fs1_f3, folds: [3], fold_seed: 1, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, head: operator}
+- {name: op_L1_lam0_fs1_f4, folds: [4], fold_seed: 1, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, head: operator}
+- {name: op_L1_lam0_fs2_f0, folds: [0], fold_seed: 2, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, head: operator}
+- {name: op_L1_lam0_fs2_f1, folds: [1], fold_seed: 2, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, head: operator}
+- {name: op_L1_lam0_fs2_f2, folds: [2], fold_seed: 2, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, head: operator}
+- {name: op_L1_lam0_fs2_f3, folds: [3], fold_seed: 2, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, head: operator}
+- {name: op_L1_lam0_fs2_f4, folds: [4], fold_seed: 2, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, head: operator}

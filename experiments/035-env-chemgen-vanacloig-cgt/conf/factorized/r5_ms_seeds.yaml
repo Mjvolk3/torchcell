@@ -1,0 +1,4 @@
+# Round 5: Wildenhain-pretrained model with ten seeds per fold, every fold seed.
+- {name: mswild10_fs0, aux_sources: [wildenhain], pca_dim: null, seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], fold_seed: 0}
+- {name: mswild10_fs1, aux_sources: [wildenhain], pca_dim: null, seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], fold_seed: 1}
+- {name: mswild10_fs2, aux_sources: [wildenhain], pca_dim: null, seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], fold_seed: 2}

@@ -1,0 +1,3 @@
+target,size,n_fit_compounds_min,n_fit_compounds_max,compound_evaluations,compounds,ridge_spearman_median,ridge_spearman_mean,encoder_spearman_median,encoder_spearman_mean,encoder_minus_ridge_mean_diff,encoder_minus_ridge_cluster_ci_low,encoder_minus_ridge_cluster_ci_high,compounds_improved
+centered,pool,32,33,123,41,0.3026866476758922,0.29147155484365145,0.2951391476218548,0.2735045923802049,-0.017966962463446413,-0.06654134570575973,0.033001066291883964,15
+raw,pool,32,33,123,41,0.2731908878325682,0.2946300271065124,0.2759377552403645,0.2814186801065614,-0.01321134699995102,-0.05303825066010142,0.023640722886053612,18

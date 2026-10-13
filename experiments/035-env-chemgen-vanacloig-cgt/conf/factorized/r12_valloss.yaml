@@ -1,0 +1,13 @@
+# Round 12, GPU: loss curves. Rounds 8 to 10 logged the train loss of one batch and the
+# rank scores, never the validation or held-out loss, so over- and under-fitting could not
+# be read in the units the model is trained in. train_factorized.py now logs, every epoch,
+# the standardized MSE over every strain for the fitted, validation and held-out compounds.
+# These arms are fit on the training compounds only, so the validation loss is a true one:
+# one layer without the prior (the round-8 arm, 100 epochs: it plateaus by 20 to 40), five
+# folds, one seed, fold seed 0. Round 11's remaining configs log the same curves (their
+# validation compounds are fitted, so only the held-out loss is out of sample there).
+- {name: L1_lam0_loss_f0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 100, seeds: [0], folds: [0], cgt_layers: 1, cgt_heads: 9, cgt_lambda: 0.0}
+- {name: L1_lam0_loss_f1, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 100, seeds: [0], folds: [1], cgt_layers: 1, cgt_heads: 9, cgt_lambda: 0.0}
+- {name: L1_lam0_loss_f2, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 100, seeds: [0], folds: [2], cgt_layers: 1, cgt_heads: 9, cgt_lambda: 0.0}
+- {name: L1_lam0_loss_f3, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 100, seeds: [0], folds: [3], cgt_layers: 1, cgt_heads: 9, cgt_lambda: 0.0}
+- {name: L1_lam0_loss_f4, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 100, seeds: [0], folds: [4], cgt_layers: 1, cgt_heads: 9, cgt_lambda: 0.0}

@@ -1,0 +1,247 @@
+compound,target,n_genes,spearman,pearson,ceiling,member,selected_step,fold,fold_seed,name
+"2,2'-bipyridine",raw,3489,-0.04066850768887292,-0.07575188150825171,0.9331732906177713,ensemble,-1,0,0,ridge+r7a_ensembles_e10_hitprop_L2*
+"2,2'-bipyridine",centered,3489,0.36117588248168586,0.6762667234178434,0.9536503665291391,ensemble,-1,0,0,ridge+r7a_ensembles_e10_hitprop_L2*
+"2,4-dimethylimidazole",raw,3491,-0.019908050564176563,-0.10732177876751658,0.7305743732158305,ensemble,-1,0,0,ridge+r7a_ensembles_e10_hitprop_L2*
+"2,4-dimethylimidazole",centered,3491,0.4779343001641927,0.643577375427808,0.8612685815254334,ensemble,-1,0,0,ridge+r7a_ensembles_e10_hitprop_L2*
+"2,6-dimethylpyrazine",raw,3504,0.09356841621452809,0.16170823943369886,0.8729821697732166,ensemble,-1,0,0,ridge+r7a_ensembles_e10_hitprop_L2*
+"2,6-dimethylpyrazine",centered,3504,0.191098266302573,0.18235385511200544,0.8732567034681548,ensemble,-1,0,0,ridge+r7a_ensembles_e10_hitprop_L2*
+ethanol,raw,3486,0.17214339139891713,0.22720120834281624,0.9100766609130951,ensemble,-1,0,0,ridge+r7a_ensembles_e10_hitprop_L2*
+ethanol,centered,3486,0.3324409557399049,0.20302558175910104,0.9075088632924206,ensemble,-1,0,0,ridge+r7a_ensembles_e10_hitprop_L2*
+furfural,raw,3493,0.1595399058071705,0.1712955402883344,0.877833605571729,ensemble,-1,0,0,ridge+r7a_ensembles_e10_hitprop_L2*
+furfural,centered,3493,0.3484955872107151,0.3516335694240071,0.8893403223606451,ensemble,-1,0,0,ridge+r7a_ensembles_e10_hitprop_L2*
+isobutanol,raw,3480,0.28041488259743574,0.3290472589049002,0.886756227316329,ensemble,-1,0,0,ridge+r7a_ensembles_e10_hitprop_L2*
+isobutanol,centered,3480,0.23717950282175704,0.25639103255558315,0.8797261537140619,ensemble,-1,0,0,ridge+r7a_ensembles_e10_hitprop_L2*
+levulinic acid,raw,3487,0.21877163177416864,0.24956887440117972,0.38592988486577784,ensemble,-1,0,0,ridge+r7a_ensembles_e10_hitprop_L2*
+levulinic acid,centered,3487,0.15420818458970253,0.24946543797497514,0.62423890352989,ensemble,-1,0,0,ridge+r7a_ensembles_e10_hitprop_L2*
+sodium acetate,raw,3510,0.24733057221906435,0.273795205734403,0.6082211129787902,ensemble,-1,0,0,ridge+r7a_ensembles_e10_hitprop_L2*
+sodium acetate,centered,3510,0.1773797613568544,0.28332227271010274,0.6217179585073968,ensemble,-1,0,0,ridge+r7a_ensembles_e10_hitprop_L2*
+sodium butyrate,raw,3490,0.06988785672050626,0.0584887967067497,0.0,ensemble,-1,0,0,ridge+r7a_ensembles_e10_hitprop_L2*
+sodium butyrate,centered,3490,0.32765953685061755,0.5855769924089161,0.4561049401794552,ensemble,-1,0,0,ridge+r7a_ensembles_e10_hitprop_L2*
+1-ethyl-3-methylimidazolium chloride,raw,3491,0.5086440290457841,0.6063288503431599,0.898719369187085,ensemble,-1,1,0,ridge+r7a_ensembles_e10_hitprop_L2*
+1-ethyl-3-methylimidazolium chloride,centered,3491,0.5244439878371806,0.6758673027309857,0.9132019348286584,ensemble,-1,1,0,ridge+r7a_ensembles_e10_hitprop_L2*
+4-methylimidazole,raw,3501,-0.1010463551981803,-0.17600357278308582,0.12769961661112678,ensemble,-1,1,0,ridge+r7a_ensembles_e10_hitprop_L2*
+4-methylimidazole,centered,3501,0.21236377918527083,0.250492390240621,0.6113571150364794,ensemble,-1,1,0,ridge+r7a_ensembles_e10_hitprop_L2*
+5-(hydroxymethyl)furfural,raw,3505,0.293547240550156,0.2523298191247153,0.0,ensemble,-1,1,0,ridge+r7a_ensembles_e10_hitprop_L2*
+5-(hydroxymethyl)furfural,centered,3505,0.2739941516796334,0.2506671325805691,0.45493740241417274,ensemble,-1,1,0,ridge+r7a_ensembles_e10_hitprop_L2*
+caffeic acid,raw,3497,0.4561758074213892,0.44496154950916655,0.672719508661378,ensemble,-1,1,0,ridge+r7a_ensembles_e10_hitprop_L2*
+caffeic acid,centered,3497,0.12472956686530202,0.07232734657612576,0.5530421168156869,ensemble,-1,1,0,ridge+r7a_ensembles_e10_hitprop_L2*
+crystal violet,raw,3387,0.5295166844591405,0.7101133370354398,0.9246970150673822,ensemble,-1,1,0,ridge+r7a_ensembles_e10_hitprop_L2*
+crystal violet,centered,3387,0.6545291339383876,0.7861647138416786,0.9218257378922377,ensemble,-1,1,0,ridge+r7a_ensembles_e10_hitprop_L2*
+ferulic acid,raw,3500,0.5370136260496835,0.7223494919105078,0.9222047795661907,ensemble,-1,1,0,ridge+r7a_ensembles_e10_hitprop_L2*
+ferulic acid,centered,3500,0.49842232285663285,0.671124855254732,0.9036014305354326,ensemble,-1,1,0,ridge+r7a_ensembles_e10_hitprop_L2*
+methyl methanesulfonate,raw,3489,0.08616719018213083,0.17584099162020805,0.9375622227212969,ensemble,-1,1,0,ridge+r7a_ensembles_e10_hitprop_L2*
+methyl methanesulfonate,centered,3489,-0.24065819585796497,0.07130314314974394,0.9361871296703799,ensemble,-1,1,0,ridge+r7a_ensembles_e10_hitprop_L2*
+syringaldehyde,raw,3514,0.35183228503084274,0.4970224964751734,0.8382422102191949,ensemble,-1,1,0,ridge+r7a_ensembles_e10_hitprop_L2*
+syringaldehyde,centered,3514,0.10554136136957443,0.2904226070291818,0.8053444540840908,ensemble,-1,1,0,ridge+r7a_ensembles_e10_hitprop_L2*
+1-butyl-3-methylimidazolium chloride,raw,3484,0.5683236676893519,0.6480778578329011,0.811477012409954,ensemble,-1,2,0,ridge+r7a_ensembles_e10_hitprop_L2*
+1-butyl-3-methylimidazolium chloride,centered,3484,0.5399254056599939,0.6945210258722694,0.8336253666167436,ensemble,-1,2,0,ridge+r7a_ensembles_e10_hitprop_L2*
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3485,0.2972636357312601,0.513402575541718,0.9128873232893497,ensemble,-1,2,0,ridge+r7a_ensembles_e10_hitprop_L2*
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3485,0.1264538735862778,0.22001469847798646,0.8825490828239687,ensemble,-1,2,0,ridge+r7a_ensembles_e10_hitprop_L2*
+4-hydroxybenzoic acid,raw,3507,0.4653521757534194,0.5163566543951574,0.5007832696964534,ensemble,-1,2,0,ridge+r7a_ensembles_e10_hitprop_L2*
+4-hydroxybenzoic acid,centered,3507,0.3305719004848274,0.3535121799698038,0.5773539375980108,ensemble,-1,2,0,ridge+r7a_ensembles_e10_hitprop_L2*
+benzoic acid,raw,3490,0.36220105969934896,0.30117087386110974,0.685375384120187,ensemble,-1,2,0,ridge+r7a_ensembles_e10_hitprop_L2*
+benzoic acid,centered,3490,0.2879350897367366,0.20690547462589218,0.7374718689615183,ensemble,-1,2,0,ridge+r7a_ensembles_e10_hitprop_L2*
+ferulamide,raw,3490,0.4115352755573499,0.6772161921291503,0.8930954305048072,ensemble,-1,2,0,ridge+r7a_ensembles_e10_hitprop_L2*
+ferulamide,centered,3490,0.344571047874463,0.5335025538995773,0.8660552782796856,ensemble,-1,2,0,ridge+r7a_ensembles_e10_hitprop_L2*
+p-coumaric acid,raw,3510,0.24523726515603753,0.36364875376630673,0.27549278107492503,ensemble,-1,2,0,ridge+r7a_ensembles_e10_hitprop_L2*
+p-coumaric acid,centered,3510,0.08072085998049093,0.09165183169033131,0.0,ensemble,-1,2,0,ridge+r7a_ensembles_e10_hitprop_L2*
+sodium glyoxylate,raw,3490,0.16805928709838844,0.14350710086394794,0.0,ensemble,-1,2,0,ridge+r7a_ensembles_e10_hitprop_L2*
+sodium glyoxylate,centered,3490,0.25266865993975995,0.26487187988573896,0.0,ensemble,-1,2,0,ridge+r7a_ensembles_e10_hitprop_L2*
+vanillic acid,raw,3486,0.4624290776523257,0.4768224618527014,0.8722616635995127,ensemble,-1,2,0,ridge+r7a_ensembles_e10_hitprop_L2*
+vanillic acid,centered,3486,0.34806726823387485,0.26330890595010864,0.8284074918108438,ensemble,-1,2,0,ridge+r7a_ensembles_e10_hitprop_L2*
+4-hydroxybenzaldehyde,raw,3492,0.6177173006578998,0.6884862786926906,0.8136005615775869,ensemble,-1,3,0,ridge+r7a_ensembles_e10_hitprop_L2*
+4-hydroxybenzaldehyde,centered,3492,0.5003934438172214,0.5642406842929383,0.7486310389734667,ensemble,-1,3,0,ridge+r7a_ensembles_e10_hitprop_L2*
+acetamide,raw,3489,0.22448861942028742,0.23239630485439772,0.5260040030106069,ensemble,-1,3,0,ridge+r7a_ensembles_e10_hitprop_L2*
+acetamide,centered,3489,0.08859983072976677,0.03986416566627617,0.669534696041139,ensemble,-1,3,0,ridge+r7a_ensembles_e10_hitprop_L2*
+acetosyringone,raw,3493,0.3005051233924299,0.6044376163509633,0.8953367924490198,ensemble,-1,3,0,ridge+r7a_ensembles_e10_hitprop_L2*
+acetosyringone,centered,3493,0.14173405131717223,0.43966155101811366,0.8657663958795743,ensemble,-1,3,0,ridge+r7a_ensembles_e10_hitprop_L2*
+benomyl,raw,3492,0.3673168849226671,0.4481343539904018,0.8675396020249485,ensemble,-1,3,0,ridge+r7a_ensembles_e10_hitprop_L2*
+benomyl,centered,3492,0.4034156534594573,0.5139144571327277,0.8853017425875782,ensemble,-1,3,0,ridge+r7a_ensembles_e10_hitprop_L2*
+cinnamic acid,raw,3504,0.10892452893185563,0.2106102630637008,0.8069010615379222,ensemble,-1,3,0,ridge+r7a_ensembles_e10_hitprop_L2*
+cinnamic acid,centered,3504,-0.12128939994924327,-0.08063832503277082,0.791306367778296,ensemble,-1,3,0,ridge+r7a_ensembles_e10_hitprop_L2*
+gamma-valerolactone,raw,3473,0.33791386127008766,0.2128179990238384,0.8971840735794596,ensemble,-1,3,0,ridge+r7a_ensembles_e10_hitprop_L2*
+gamma-valerolactone,centered,3473,0.22955828463417294,0.06128765894635081,0.8921636147026369,ensemble,-1,3,0,ridge+r7a_ensembles_e10_hitprop_L2*
+myclobutanil,raw,3496,0.39145414307434734,0.5631965151205296,0.746076298727284,ensemble,-1,3,0,ridge+r7a_ensembles_e10_hitprop_L2*
+myclobutanil,centered,3496,0.44380243178075546,0.6325540724033821,0.7816400701736069,ensemble,-1,3,0,ridge+r7a_ensembles_e10_hitprop_L2*
+syringic acid,raw,3500,0.5312954516042935,0.5168652073685299,0.8765976686189016,ensemble,-1,3,0,ridge+r7a_ensembles_e10_hitprop_L2*
+syringic acid,centered,3500,0.47538784083632524,0.37571283816226403,0.8599322607107426,ensemble,-1,3,0,ridge+r7a_ensembles_e10_hitprop_L2*
+2-methylimidazole,raw,3488,0.21162098234646123,0.29585703981582223,0.15199773365650238,ensemble,-1,4,0,ridge+r7a_ensembles_e10_hitprop_L2*
+2-methylimidazole,centered,3488,0.2400374475047061,0.4882273719807395,0.5746959188181814,ensemble,-1,4,0,ridge+r7a_ensembles_e10_hitprop_L2*
+4'-hydroxyacetophenone,raw,3506,0.5228306069539913,0.5966827399395374,0.8379928898821091,ensemble,-1,4,0,ridge+r7a_ensembles_e10_hitprop_L2*
+4'-hydroxyacetophenone,centered,3506,0.5773481292451066,0.5772252083681463,0.8090940914763887,ensemble,-1,4,0,ridge+r7a_ensembles_e10_hitprop_L2*
+acetovanillone,raw,3509,0.4288113003497097,0.5739051207713751,0.9141428331679445,ensemble,-1,4,0,ridge+r7a_ensembles_e10_hitprop_L2*
+acetovanillone,centered,3509,0.6131206736451177,0.574432531731228,0.9082113767287752,ensemble,-1,4,0,ridge+r7a_ensembles_e10_hitprop_L2*
+azelaic acid,raw,3496,0.13128421745982216,0.2780933766683677,0.8670875046979807,ensemble,-1,4,0,ridge+r7a_ensembles_e10_hitprop_L2*
+azelaic acid,centered,3496,0.12221771481274517,0.07047296214449658,0.8527287439731305,ensemble,-1,4,0,ridge+r7a_ensembles_e10_hitprop_L2*
+methylglyoxal,raw,3481,-0.12841572251993938,0.0037179501766487263,0.9178330549514648,ensemble,-1,4,0,ridge+r7a_ensembles_e10_hitprop_L2*
+methylglyoxal,centered,3481,-0.15002386997024886,0.12879569177455902,0.9244906432852036,ensemble,-1,4,0,ridge+r7a_ensembles_e10_hitprop_L2*
+nonylacridine orange,raw,3506,0.669611925878926,0.7383226525309635,0.8449681878437812,ensemble,-1,4,0,ridge+r7a_ensembles_e10_hitprop_L2*
+nonylacridine orange,centered,3506,0.6919688097914466,0.7643091926486043,0.8366325723887487,ensemble,-1,4,0,ridge+r7a_ensembles_e10_hitprop_L2*
+sinapic acid,raw,3493,0.42705367887934315,0.629160332541377,0.5642822086005129,ensemble,-1,4,0,ridge+r7a_ensembles_e10_hitprop_L2*
+sinapic acid,centered,3493,0.294744700142369,0.4515226694660646,0.3238018158316301,ensemble,-1,4,0,ridge+r7a_ensembles_e10_hitprop_L2*
+vanillin,raw,3505,0.5557193115842689,0.6629614531657454,0.8097403963300162,ensemble,-1,4,0,ridge+r7a_ensembles_e10_hitprop_L2*
+vanillin,centered,3505,0.4108914121709822,0.5427958338726062,0.7304551685344388,ensemble,-1,4,0,ridge+r7a_ensembles_e10_hitprop_L2*
+1-butyl-3-methylimidazolium chloride,raw,3484,0.5770782030357854,0.6602016497638964,0.811477012409954,ensemble,-1,0,1,ridge+r7a_ensembles_e10_hitprop_L2*
+1-butyl-3-methylimidazolium chloride,centered,3484,0.6115296627252215,0.7007511126331555,0.8292558297828654,ensemble,-1,0,1,ridge+r7a_ensembles_e10_hitprop_L2*
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3485,0.6341497851986756,0.7325795824774953,0.9128873232893497,ensemble,-1,0,1,ridge+r7a_ensembles_e10_hitprop_L2*
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3485,0.49413561582747123,0.6219766186606239,0.8808271018966328,ensemble,-1,0,1,ridge+r7a_ensembles_e10_hitprop_L2*
+4'-hydroxyacetophenone,raw,3507,0.7381895281185724,0.8133207919281709,0.8379928898821091,ensemble,-1,0,1,ridge+r7a_ensembles_e10_hitprop_L2*
+4'-hydroxyacetophenone,centered,3507,0.6854902767220319,0.7556250522183933,0.7943510975172879,ensemble,-1,0,1,ridge+r7a_ensembles_e10_hitprop_L2*
+4-hydroxybenzoic acid,raw,3507,0.39281089698384636,0.44205335272376906,0.5007832696964534,ensemble,-1,0,1,ridge+r7a_ensembles_e10_hitprop_L2*
+4-hydroxybenzoic acid,centered,3507,0.2112518694785009,0.2406694499526197,0.49775174760269264,ensemble,-1,0,1,ridge+r7a_ensembles_e10_hitprop_L2*
+crystal violet,raw,3387,0.5311570542383399,0.6786053535251623,0.9246970150673822,ensemble,-1,0,1,ridge+r7a_ensembles_e10_hitprop_L2*
+crystal violet,centered,3387,0.6438796699071347,0.7427229595987116,0.9223391675707808,ensemble,-1,0,1,ridge+r7a_ensembles_e10_hitprop_L2*
+ferulic acid,raw,3499,0.5064524678862818,0.6996125528243748,0.9222047795661907,ensemble,-1,0,1,ridge+r7a_ensembles_e10_hitprop_L2*
+ferulic acid,centered,3499,0.4287899940466766,0.6446950132128728,0.9080060977912938,ensemble,-1,0,1,ridge+r7a_ensembles_e10_hitprop_L2*
+furfural,raw,3493,0.2855439536573951,0.29509434704328685,0.877833605571729,ensemble,-1,0,1,ridge+r7a_ensembles_e10_hitprop_L2*
+furfural,centered,3493,0.27757023106277373,0.28707680367247346,0.8763986094014646,ensemble,-1,0,1,ridge+r7a_ensembles_e10_hitprop_L2*
+myclobutanil,raw,3496,-0.1394806768348039,-0.11921500107829296,0.746076298727284,ensemble,-1,0,1,ridge+r7a_ensembles_e10_hitprop_L2*
+myclobutanil,centered,3496,-0.09481173172530506,-0.11417151454792625,0.7753715138115954,ensemble,-1,0,1,ridge+r7a_ensembles_e10_hitprop_L2*
+vanillic acid,raw,3486,0.5041089181299806,0.5411243552306372,0.8722616635995127,ensemble,-1,0,1,ridge+r7a_ensembles_e10_hitprop_L2*
+vanillic acid,centered,3486,0.287218505723174,0.2829046270471783,0.8241144912313376,ensemble,-1,0,1,ridge+r7a_ensembles_e10_hitprop_L2*
+"2,4-dimethylimidazole",raw,3491,0.005652270955443704,0.0007824020290510179,0.7305743732158305,ensemble,-1,1,1,ridge+r7a_ensembles_e10_hitprop_L2*
+"2,4-dimethylimidazole",centered,3491,0.39131997301005994,0.47219774563138245,0.8327319817928159,ensemble,-1,1,1,ridge+r7a_ensembles_e10_hitprop_L2*
+azelaic acid,raw,3496,0.1042036949247427,0.2103908289896644,0.8670875046979807,ensemble,-1,1,1,ridge+r7a_ensembles_e10_hitprop_L2*
+azelaic acid,centered,3496,0.0638640771903938,0.08961087379088901,0.8486867844617119,ensemble,-1,1,1,ridge+r7a_ensembles_e10_hitprop_L2*
+benomyl,raw,3492,0.46123003451223676,0.5600652618037336,0.8675396020249485,ensemble,-1,1,1,ridge+r7a_ensembles_e10_hitprop_L2*
+benomyl,centered,3492,0.5634056521753357,0.6228197391054211,0.8858892884910788,ensemble,-1,1,1,ridge+r7a_ensembles_e10_hitprop_L2*
+benzoic acid,raw,3490,0.4074337209661917,0.3884774932946805,0.685375384120187,ensemble,-1,1,1,ridge+r7a_ensembles_e10_hitprop_L2*
+benzoic acid,centered,3490,0.42490088798147635,0.49505660496947845,0.7302189227161497,ensemble,-1,1,1,ridge+r7a_ensembles_e10_hitprop_L2*
+cinnamic acid,raw,3504,0.07066990615899428,0.12935735245461766,0.8069010615379222,ensemble,-1,1,1,ridge+r7a_ensembles_e10_hitprop_L2*
+cinnamic acid,centered,3504,-0.12505813389506498,-0.09786600472678894,0.783892263289116,ensemble,-1,1,1,ridge+r7a_ensembles_e10_hitprop_L2*
+ferulamide,raw,3490,0.6123635253498939,0.7427349024877106,0.8930954305048072,ensemble,-1,1,1,ridge+r7a_ensembles_e10_hitprop_L2*
+ferulamide,centered,3490,0.5265952727724841,0.6452482396997049,0.8585858925749198,ensemble,-1,1,1,ridge+r7a_ensembles_e10_hitprop_L2*
+methylglyoxal,raw,3481,-0.18506948838585222,-0.004131947567323521,0.9178330549514648,ensemble,-1,1,1,ridge+r7a_ensembles_e10_hitprop_L2*
+methylglyoxal,centered,3481,-0.16676843760182836,0.07242985791082696,0.9257318774492264,ensemble,-1,1,1,ridge+r7a_ensembles_e10_hitprop_L2*
+nonylacridine orange,raw,3507,0.6552599986778644,0.7417997514328003,0.8449681878437812,ensemble,-1,1,1,ridge+r7a_ensembles_e10_hitprop_L2*
+nonylacridine orange,centered,3507,0.6413054791582056,0.7335874936162836,0.8336523661619658,ensemble,-1,1,1,ridge+r7a_ensembles_e10_hitprop_L2*
+1-ethyl-3-methylimidazolium chloride,raw,3491,0.4249797388870782,0.5480834797139194,0.898719369187085,ensemble,-1,2,1,ridge+r7a_ensembles_e10_hitprop_L2*
+1-ethyl-3-methylimidazolium chloride,centered,3491,0.3925576670477804,0.659174257934107,0.9168123496399989,ensemble,-1,2,1,ridge+r7a_ensembles_e10_hitprop_L2*
+5-(hydroxymethyl)furfural,raw,3505,0.18720453082270092,0.0886151187124459,0.0,ensemble,-1,2,1,ridge+r7a_ensembles_e10_hitprop_L2*
+5-(hydroxymethyl)furfural,centered,3505,0.26590121672544426,0.23329927946551152,0.5292874155662355,ensemble,-1,2,1,ridge+r7a_ensembles_e10_hitprop_L2*
+gamma-valerolactone,raw,3473,0.16200009895455394,0.20898159083423615,0.8971840735794596,ensemble,-1,2,1,ridge+r7a_ensembles_e10_hitprop_L2*
+gamma-valerolactone,centered,3473,-0.2565182389665476,-0.23660520776878893,0.8890452902831322,ensemble,-1,2,1,ridge+r7a_ensembles_e10_hitprop_L2*
+levulinic acid,raw,3487,0.2069235243880036,0.21744093634143122,0.38592988486577784,ensemble,-1,2,1,ridge+r7a_ensembles_e10_hitprop_L2*
+levulinic acid,centered,3487,0.14144707824551936,0.28043416074409894,0.5910325375246532,ensemble,-1,2,1,ridge+r7a_ensembles_e10_hitprop_L2*
+methyl methanesulfonate,raw,3489,0.20020901191194074,0.1653658925755872,0.9375622227212969,ensemble,-1,2,1,ridge+r7a_ensembles_e10_hitprop_L2*
+methyl methanesulfonate,centered,3489,0.23893326938986476,0.25043945242237153,0.9381039702727801,ensemble,-1,2,1,ridge+r7a_ensembles_e10_hitprop_L2*
+sinapic acid,raw,3493,0.5618359168802516,0.697169380106559,0.5642822086005129,ensemble,-1,2,1,ridge+r7a_ensembles_e10_hitprop_L2*
+sinapic acid,centered,3493,0.4219622571127273,0.4618771816446705,0.07933482194825014,ensemble,-1,2,1,ridge+r7a_ensembles_e10_hitprop_L2*
+sodium acetate,raw,3510,0.06475903839841411,0.0799630649124076,0.6082211129787902,ensemble,-1,2,1,ridge+r7a_ensembles_e10_hitprop_L2*
+sodium acetate,centered,3510,0.05579350062706893,0.2102490775654624,0.6416764594276576,ensemble,-1,2,1,ridge+r7a_ensembles_e10_hitprop_L2*
+sodium butyrate,raw,3490,0.0365353944569721,-0.006333596793461657,0.0,ensemble,-1,2,1,ridge+r7a_ensembles_e10_hitprop_L2*
+sodium butyrate,centered,3490,0.2887289478091578,0.5659792236093242,0.4154944587607023,ensemble,-1,2,1,ridge+r7a_ensembles_e10_hitprop_L2*
+"2,2'-bipyridine",raw,3489,0.13845918213860375,-0.018975184345752266,0.9331732906177713,ensemble,-1,3,1,ridge+r7a_ensembles_e10_hitprop_L2*
+"2,2'-bipyridine",centered,3489,0.5316599328398063,0.6979435847378516,0.9491678055239965,ensemble,-1,3,1,ridge+r7a_ensembles_e10_hitprop_L2*
+"2,6-dimethylpyrazine",raw,3504,-0.03942202316749262,0.0712422199789506,0.8729821697732166,ensemble,-1,3,1,ridge+r7a_ensembles_e10_hitprop_L2*
+"2,6-dimethylpyrazine",centered,3504,-0.026445387107691353,0.028644632182007936,0.873539479693467,ensemble,-1,3,1,ridge+r7a_ensembles_e10_hitprop_L2*
+acetovanillone,raw,3509,0.6436042916456696,0.6745839790501479,0.9141428331679445,ensemble,-1,3,1,ridge+r7a_ensembles_e10_hitprop_L2*
+acetovanillone,centered,3509,0.5888236927348606,0.564214904050969,0.8942413274157337,ensemble,-1,3,1,ridge+r7a_ensembles_e10_hitprop_L2*
+ethanol,raw,3487,0.155400152372861,0.22740668726192814,0.9100766609130951,ensemble,-1,3,1,ridge+r7a_ensembles_e10_hitprop_L2*
+ethanol,centered,3487,0.13289692029084524,0.0649618947460267,0.9068810672420646,ensemble,-1,3,1,ridge+r7a_ensembles_e10_hitprop_L2*
+isobutanol,raw,3480,0.408918078843104,0.39322572850722,0.886756227316329,ensemble,-1,3,1,ridge+r7a_ensembles_e10_hitprop_L2*
+isobutanol,centered,3480,0.1840588537686239,0.1312975293219044,0.8740236766683434,ensemble,-1,3,1,ridge+r7a_ensembles_e10_hitprop_L2*
+sodium glyoxylate,raw,3490,0.09505848900544986,0.06984106060612133,0.0,ensemble,-1,3,1,ridge+r7a_ensembles_e10_hitprop_L2*
+sodium glyoxylate,centered,3490,0.45101075014410674,0.5841915108859489,0.0,ensemble,-1,3,1,ridge+r7a_ensembles_e10_hitprop_L2*
+syringaldehyde,raw,3514,0.17292545318945404,0.3506404718778224,0.8382422102191949,ensemble,-1,3,1,ridge+r7a_ensembles_e10_hitprop_L2*
+syringaldehyde,centered,3514,-0.05998783653241107,0.043579282942396824,0.815206887225573,ensemble,-1,3,1,ridge+r7a_ensembles_e10_hitprop_L2*
+vanillin,raw,3505,0.5160024935461869,0.6085715277692189,0.8097403963300162,ensemble,-1,3,1,ridge+r7a_ensembles_e10_hitprop_L2*
+vanillin,centered,3505,0.34658324157924797,0.3789340670881598,0.7298831011607608,ensemble,-1,3,1,ridge+r7a_ensembles_e10_hitprop_L2*
+2-methylimidazole,raw,3488,0.20747578618101037,0.3513180753461776,0.15199773365650238,ensemble,-1,4,1,ridge+r7a_ensembles_e10_hitprop_L2*
+2-methylimidazole,centered,3488,0.40581981970091885,0.5808183788858348,0.6165798690293909,ensemble,-1,4,1,ridge+r7a_ensembles_e10_hitprop_L2*
+4-hydroxybenzaldehyde,raw,3492,0.5817284922311383,0.6595850316890641,0.8136005615775869,ensemble,-1,4,1,ridge+r7a_ensembles_e10_hitprop_L2*
+4-hydroxybenzaldehyde,centered,3492,0.4381682034098024,0.49835063066887664,0.746178085575299,ensemble,-1,4,1,ridge+r7a_ensembles_e10_hitprop_L2*
+4-methylimidazole,raw,3501,-0.12753945852182189,-0.1680101454097802,0.12769961661112678,ensemble,-1,4,1,ridge+r7a_ensembles_e10_hitprop_L2*
+4-methylimidazole,centered,3501,0.23126580512655306,0.306797414286044,0.6141195281836963,ensemble,-1,4,1,ridge+r7a_ensembles_e10_hitprop_L2*
+acetamide,raw,3489,0.23325229484375626,0.23994217291071201,0.5260040030106069,ensemble,-1,4,1,ridge+r7a_ensembles_e10_hitprop_L2*
+acetamide,centered,3489,0.16552148174381157,0.14071242413135307,0.6866303993435534,ensemble,-1,4,1,ridge+r7a_ensembles_e10_hitprop_L2*
+acetosyringone,raw,3492,0.6579071827464935,0.7776119732625371,0.8953367924490198,ensemble,-1,4,1,ridge+r7a_ensembles_e10_hitprop_L2*
+acetosyringone,centered,3492,0.6342607152574916,0.7021173420811793,0.8698090092048968,ensemble,-1,4,1,ridge+r7a_ensembles_e10_hitprop_L2*
+caffeic acid,raw,3496,0.10085863520662335,0.11140463367339823,0.672719508661378,ensemble,-1,4,1,ridge+r7a_ensembles_e10_hitprop_L2*
+caffeic acid,centered,3496,-0.10690414652410936,-0.1856577656344157,0.6373670032191323,ensemble,-1,4,1,ridge+r7a_ensembles_e10_hitprop_L2*
+p-coumaric acid,raw,3510,0.3501567468084514,0.4801123975183754,0.27549278107492503,ensemble,-1,4,1,ridge+r7a_ensembles_e10_hitprop_L2*
+p-coumaric acid,centered,3510,0.22633311645542795,0.2376819752153215,0.0,ensemble,-1,4,1,ridge+r7a_ensembles_e10_hitprop_L2*
+syringic acid,raw,3500,0.4087685276429119,0.4136671865347487,0.8765976686189016,ensemble,-1,4,1,ridge+r7a_ensembles_e10_hitprop_L2*
+syringic acid,centered,3500,0.32083396186399693,0.2617741727327897,0.8584531456857164,ensemble,-1,4,1,ridge+r7a_ensembles_e10_hitprop_L2*
+"2,4-dimethylimidazole",raw,3491,-0.05092494264770295,-0.08451733640748724,0.7305743732158305,ensemble,-1,0,2,ridge+r7a_ensembles_e10_hitprop_L2*
+"2,4-dimethylimidazole",centered,3491,0.17320084015097215,0.24587267205943172,0.8229137348628133,ensemble,-1,0,2,ridge+r7a_ensembles_e10_hitprop_L2*
+2-methylimidazole,raw,3488,0.21508442603167757,0.23597368984799522,0.15199773365650238,ensemble,-1,0,2,ridge+r7a_ensembles_e10_hitprop_L2*
+2-methylimidazole,centered,3488,0.29334167001614475,0.5006616143131475,0.6024605878402992,ensemble,-1,0,2,ridge+r7a_ensembles_e10_hitprop_L2*
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3485,0.608421090871361,0.6995413599425638,0.9128873232893497,ensemble,-1,0,2,ridge+r7a_ensembles_e10_hitprop_L2*
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3485,0.5279393553958913,0.5694534036310307,0.883457280259025,ensemble,-1,0,2,ridge+r7a_ensembles_e10_hitprop_L2*
+4'-hydroxyacetophenone,raw,3507,0.7331326243795159,0.8092439695851419,0.8379928898821091,ensemble,-1,0,2,ridge+r7a_ensembles_e10_hitprop_L2*
+4'-hydroxyacetophenone,centered,3507,0.6433593300422217,0.7265490029684358,0.7935960254022186,ensemble,-1,0,2,ridge+r7a_ensembles_e10_hitprop_L2*
+ferulic acid,raw,3499,0.41464639927389424,0.5774835268598025,0.9222047795661907,ensemble,-1,0,2,ridge+r7a_ensembles_e10_hitprop_L2*
+ferulic acid,centered,3499,0.3770898115672634,0.49732532575806865,0.9096820756778564,ensemble,-1,0,2,ridge+r7a_ensembles_e10_hitprop_L2*
+furfural,raw,3493,0.3128779165608606,0.30056058199754343,0.877833605571729,ensemble,-1,0,2,ridge+r7a_ensembles_e10_hitprop_L2*
+furfural,centered,3493,0.33514138703612295,0.2852879780373522,0.8788688565797801,ensemble,-1,0,2,ridge+r7a_ensembles_e10_hitprop_L2*
+levulinic acid,raw,3487,0.27575055589701497,0.28834035143434966,0.38592988486577784,ensemble,-1,0,2,ridge+r7a_ensembles_e10_hitprop_L2*
+levulinic acid,centered,3487,0.277339780126293,0.3614279114187163,0.5248811647424081,ensemble,-1,0,2,ridge+r7a_ensembles_e10_hitprop_L2*
+p-coumaric acid,raw,3510,0.20367012703474005,0.3509951312579707,0.27549278107492503,ensemble,-1,0,2,ridge+r7a_ensembles_e10_hitprop_L2*
+p-coumaric acid,centered,3510,-0.04216540528784448,-0.00031833912856716186,0.0,ensemble,-1,0,2,ridge+r7a_ensembles_e10_hitprop_L2*
+sinapic acid,raw,3493,0.3248110436307223,0.5283475821357291,0.5642822086005129,ensemble,-1,0,2,ridge+r7a_ensembles_e10_hitprop_L2*
+sinapic acid,centered,3493,0.18477016005141023,0.3134953333916645,0.3846465212693307,ensemble,-1,0,2,ridge+r7a_ensembles_e10_hitprop_L2*
+4-hydroxybenzoic acid,raw,3507,0.30166496639736373,0.2944111701595476,0.5007832696964534,ensemble,-1,1,2,ridge+r7a_ensembles_e10_hitprop_L2*
+4-hydroxybenzoic acid,centered,3507,0.26774693458730897,0.22965777791938005,0.6603549121483774,ensemble,-1,1,2,ridge+r7a_ensembles_e10_hitprop_L2*
+4-methylimidazole,raw,3501,0.008878802515590308,-0.10222670693793283,0.12769961661112678,ensemble,-1,1,2,ridge+r7a_ensembles_e10_hitprop_L2*
+4-methylimidazole,centered,3501,0.3416044128885238,0.37354495382004477,0.6602537705690545,ensemble,-1,1,2,ridge+r7a_ensembles_e10_hitprop_L2*
+acetamide,raw,3489,0.22464725940692626,0.2279909049379439,0.5260040030106069,ensemble,-1,1,2,ridge+r7a_ensembles_e10_hitprop_L2*
+acetamide,centered,3489,0.15728042319276142,0.12581013435434918,0.6945331352340456,ensemble,-1,1,2,ridge+r7a_ensembles_e10_hitprop_L2*
+acetovanillone,raw,3509,0.7426330958048878,0.7954473850193766,0.9141428331679445,ensemble,-1,1,2,ridge+r7a_ensembles_e10_hitprop_L2*
+acetovanillone,centered,3509,0.7450868696633863,0.779581536400587,0.9007497050254465,ensemble,-1,1,2,ridge+r7a_ensembles_e10_hitprop_L2*
+gamma-valerolactone,raw,3473,0.30293062728671405,0.22239279094049197,0.8971840735794596,ensemble,-1,1,2,ridge+r7a_ensembles_e10_hitprop_L2*
+gamma-valerolactone,centered,3473,0.21101153048505417,0.04017533678877938,0.8904865526111276,ensemble,-1,1,2,ridge+r7a_ensembles_e10_hitprop_L2*
+sodium acetate,raw,3510,0.1221789191544672,0.13567766673079631,0.6082211129787902,ensemble,-1,1,2,ridge+r7a_ensembles_e10_hitprop_L2*
+sodium acetate,centered,3510,0.19556867641249107,0.27113148755396677,0.6540251876535728,ensemble,-1,1,2,ridge+r7a_ensembles_e10_hitprop_L2*
+syringaldehyde,raw,3514,0.2071958913908732,0.4121376553331666,0.8382422102191949,ensemble,-1,1,2,ridge+r7a_ensembles_e10_hitprop_L2*
+syringaldehyde,centered,3514,0.024413419052580057,0.1850927914586837,0.8164755033930678,ensemble,-1,1,2,ridge+r7a_ensembles_e10_hitprop_L2*
+syringic acid,raw,3500,0.31465304586089005,0.3742805246340069,0.8765976686189016,ensemble,-1,1,2,ridge+r7a_ensembles_e10_hitprop_L2*
+syringic acid,centered,3500,0.24558728470100286,0.21183773463677966,0.8669117581200528,ensemble,-1,1,2,ridge+r7a_ensembles_e10_hitprop_L2*
+"2,2'-bipyridine",raw,3489,0.32019093457636305,0.1993919630790602,0.9331732906177713,ensemble,-1,2,2,ridge+r7a_ensembles_e10_hitprop_L2*
+"2,2'-bipyridine",centered,3489,0.37820580141582766,0.2916045034080818,0.942534078087761,ensemble,-1,2,2,ridge+r7a_ensembles_e10_hitprop_L2*
+azelaic acid,raw,3496,0.20176712575860886,0.28242561976158637,0.8670875046979807,ensemble,-1,2,2,ridge+r7a_ensembles_e10_hitprop_L2*
+azelaic acid,centered,3496,0.07186754507818965,0.07045119501620165,0.847310814069945,ensemble,-1,2,2,ridge+r7a_ensembles_e10_hitprop_L2*
+benomyl,raw,3492,0.3965772831345179,0.3813420022517764,0.8675396020249485,ensemble,-1,2,2,ridge+r7a_ensembles_e10_hitprop_L2*
+benomyl,centered,3492,0.4335572636970028,0.38921535756613435,0.8794179243054676,ensemble,-1,2,2,ridge+r7a_ensembles_e10_hitprop_L2*
+crystal violet,raw,3387,0.26885429463779226,0.38214080144900425,0.9246970150673822,ensemble,-1,2,2,ridge+r7a_ensembles_e10_hitprop_L2*
+crystal violet,centered,3387,0.462211656105632,0.44925554785818955,0.9220312622117617,ensemble,-1,2,2,ridge+r7a_ensembles_e10_hitprop_L2*
+ferulamide,raw,3490,0.5243368228808637,0.72607521482509,0.8930954305048072,ensemble,-1,2,2,ridge+r7a_ensembles_e10_hitprop_L2*
+ferulamide,centered,3490,0.44905278025825357,0.6547514970785655,0.8688733613509745,ensemble,-1,2,2,ridge+r7a_ensembles_e10_hitprop_L2*
+methyl methanesulfonate,raw,3489,0.27177850570125495,0.15487671299315037,0.9375622227212969,ensemble,-1,2,2,ridge+r7a_ensembles_e10_hitprop_L2*
+methyl methanesulfonate,centered,3489,0.13670485337323174,0.037757040058136807,0.9366128421896852,ensemble,-1,2,2,ridge+r7a_ensembles_e10_hitprop_L2*
+vanillic acid,raw,3486,0.47260840099293194,0.4824148618029544,0.8722616635995127,ensemble,-1,2,2,ridge+r7a_ensembles_e10_hitprop_L2*
+vanillic acid,centered,3486,0.28252802992089443,0.2001070312414727,0.8223602732176184,ensemble,-1,2,2,ridge+r7a_ensembles_e10_hitprop_L2*
+vanillin,raw,3505,0.6141401985388377,0.7297180892435592,0.8097403963300162,ensemble,-1,2,2,ridge+r7a_ensembles_e10_hitprop_L2*
+vanillin,centered,3505,0.46907266982645324,0.6011186222900002,0.7267599792119376,ensemble,-1,2,2,ridge+r7a_ensembles_e10_hitprop_L2*
+1-butyl-3-methylimidazolium chloride,raw,3484,0.5792862463948093,0.6690321486958255,0.811477012409954,ensemble,-1,3,2,ridge+r7a_ensembles_e10_hitprop_L2*
+1-butyl-3-methylimidazolium chloride,centered,3484,0.577006730097205,0.7332494169432797,0.8400804963478274,ensemble,-1,3,2,ridge+r7a_ensembles_e10_hitprop_L2*
+"2,6-dimethylpyrazine",raw,3504,0.12641509518692612,0.0846427876551461,0.8729821697732166,ensemble,-1,3,2,ridge+r7a_ensembles_e10_hitprop_L2*
+"2,6-dimethylpyrazine",centered,3504,0.13677119475924387,0.06929391194758583,0.8681927632775254,ensemble,-1,3,2,ridge+r7a_ensembles_e10_hitprop_L2*
+5-(hydroxymethyl)furfural,raw,3505,0.2912790908180564,0.24023555667903537,0.0,ensemble,-1,3,2,ridge+r7a_ensembles_e10_hitprop_L2*
+5-(hydroxymethyl)furfural,centered,3505,0.3180008617903839,0.2657005492821732,0.4748857338004678,ensemble,-1,3,2,ridge+r7a_ensembles_e10_hitprop_L2*
+acetosyringone,raw,3493,0.6448246766803983,0.77917243096392,0.8953367924490198,ensemble,-1,3,2,ridge+r7a_ensembles_e10_hitprop_L2*
+acetosyringone,centered,3493,0.5754804669613675,0.6443385401720629,0.8633078995110798,ensemble,-1,3,2,ridge+r7a_ensembles_e10_hitprop_L2*
+benzoic acid,raw,3490,0.3830293198380478,0.3642703899006409,0.685375384120187,ensemble,-1,3,2,ridge+r7a_ensembles_e10_hitprop_L2*
+benzoic acid,centered,3490,0.39592717370300823,0.4714335176252861,0.7465144765242345,ensemble,-1,3,2,ridge+r7a_ensembles_e10_hitprop_L2*
+caffeic acid,raw,3496,0.3263325245005305,0.33290535155324913,0.672719508661378,ensemble,-1,3,2,ridge+r7a_ensembles_e10_hitprop_L2*
+caffeic acid,centered,3496,0.09475030863272907,0.04369236427317563,0.6348437831240964,ensemble,-1,3,2,ridge+r7a_ensembles_e10_hitprop_L2*
+cinnamic acid,raw,3504,0.09598743732497969,0.21156942401430634,0.8069010615379222,ensemble,-1,3,2,ridge+r7a_ensembles_e10_hitprop_L2*
+cinnamic acid,centered,3504,-0.09091824635055042,-0.029195946900366337,0.7857923264270728,ensemble,-1,3,2,ridge+r7a_ensembles_e10_hitprop_L2*
+isobutanol,raw,3480,0.22620237424849102,0.40059823560828,0.886756227316329,ensemble,-1,3,2,ridge+r7a_ensembles_e10_hitprop_L2*
+isobutanol,centered,3480,0.19733911412372354,0.33458381272495175,0.8738205260546376,ensemble,-1,3,2,ridge+r7a_ensembles_e10_hitprop_L2*
+1-ethyl-3-methylimidazolium chloride,raw,3491,0.49791172774847464,0.6149967945131379,0.898719369187085,ensemble,-1,4,2,ridge+r7a_ensembles_e10_hitprop_L2*
+1-ethyl-3-methylimidazolium chloride,centered,3491,0.5323052627018289,0.7049869627224663,0.9207372710131602,ensemble,-1,4,2,ridge+r7a_ensembles_e10_hitprop_L2*
+4-hydroxybenzaldehyde,raw,3493,0.5494256618367254,0.6548687472477924,0.8136005615775869,ensemble,-1,4,2,ridge+r7a_ensembles_e10_hitprop_L2*
+4-hydroxybenzaldehyde,centered,3493,0.31434181722287663,0.45407936991443215,0.7330278514305723,ensemble,-1,4,2,ridge+r7a_ensembles_e10_hitprop_L2*
+ethanol,raw,3487,0.291089115444715,0.42407782758999846,0.9100766609130951,ensemble,-1,4,2,ridge+r7a_ensembles_e10_hitprop_L2*
+ethanol,centered,3487,0.1542971341009251,0.3127418049225085,0.8992724015184042,ensemble,-1,4,2,ridge+r7a_ensembles_e10_hitprop_L2*
+methylglyoxal,raw,3481,-0.07257743728220918,0.06745466577972818,0.9178330549514648,ensemble,-1,4,2,ridge+r7a_ensembles_e10_hitprop_L2*
+methylglyoxal,centered,3481,0.17214868093066188,0.31063119651015536,0.9293286685803472,ensemble,-1,4,2,ridge+r7a_ensembles_e10_hitprop_L2*
+myclobutanil,raw,3496,0.20369033460871971,0.30174960462482714,0.746076298727284,ensemble,-1,4,2,ridge+r7a_ensembles_e10_hitprop_L2*
+myclobutanil,centered,3496,0.3426044253446989,0.46223153361771985,0.806521750219523,ensemble,-1,4,2,ridge+r7a_ensembles_e10_hitprop_L2*
+nonylacridine orange,raw,3507,0.6555716918684596,0.7256996092474098,0.8449681878437812,ensemble,-1,4,2,ridge+r7a_ensembles_e10_hitprop_L2*
+nonylacridine orange,centered,3507,0.6640404055025002,0.7421275635980211,0.8353957290395438,ensemble,-1,4,2,ridge+r7a_ensembles_e10_hitprop_L2*
+sodium butyrate,raw,3490,0.13419756252676357,0.13012021444673358,0.0,ensemble,-1,4,2,ridge+r7a_ensembles_e10_hitprop_L2*
+sodium butyrate,centered,3490,0.27807224246755935,0.2977596269435575,0.42785463831799814,ensemble,-1,4,2,ridge+r7a_ensembles_e10_hitprop_L2*
+sodium glyoxylate,raw,3490,0.1474184038718948,0.09733145676798084,0.0,ensemble,-1,4,2,ridge+r7a_ensembles_e10_hitprop_L2*
+sodium glyoxylate,centered,3490,0.2672973131797,0.27693585539819054,0.10426711163393412,ensemble,-1,4,2,ridge+r7a_ensembles_e10_hitprop_L2*

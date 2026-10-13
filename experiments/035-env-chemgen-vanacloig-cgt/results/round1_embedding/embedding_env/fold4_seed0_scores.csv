@@ -1,0 +1,25 @@
+compound,target,n_genes,spearman,pearson,ceiling,split,arm,fold,seed,epoch,selected_on,n_train_compounds
+"2,4-dimethylimidazole",raw,3492,-0.05694490321538739,-0.02180549970222448,0.7305743732158305,val,embedding_env,4,0,5,val/centered_spearman_mean,29
+"2,4-dimethylimidazole",centered,3491,0.43290938683236485,0.4726013570562972,0.8079547907334441,val,embedding_env,4,0,5,val/centered_spearman_mean,29
+cinnamic acid,raw,3505,0.17470192100556317,0.258363960532805,0.8069010615379222,val,embedding_env,4,0,5,val/centered_spearman_mean,29
+cinnamic acid,centered,3502,-0.04666202865087016,-0.04467992953797699,0.7941914323399291,val,embedding_env,4,0,5,val/centered_spearman_mean,29
+ferulic acid,raw,3500,0.23562259762192958,0.42483184299513616,0.9222047795661907,val,embedding_env,4,0,5,val/centered_spearman_mean,29
+ferulic acid,centered,3499,0.05071473454207066,0.21624096682084132,0.9089198419642592,val,embedding_env,4,0,5,val/centered_spearman_mean,29
+methyl methanesulfonate,raw,3489,0.3757501530321551,0.20535954257358843,0.9375622227212969,val,embedding_env,4,0,5,val/centered_spearman_mean,29
+methyl methanesulfonate,centered,3489,0.112678952852045,0.0033894678791934296,0.9360926678241112,val,embedding_env,4,0,5,val/centered_spearman_mean,29
+2-methylimidazole,raw,3489,0.15807621525907722,0.2010930796094588,0.15199773365650238,test,embedding_env,4,0,5,val/centered_spearman_mean,29
+2-methylimidazole,centered,3488,0.019732639562012304,0.004179692255488941,0.5624170284630009,test,embedding_env,4,0,5,val/centered_spearman_mean,29
+4'-hydroxyacetophenone,raw,3507,0.22843719128791265,0.3833339741971003,0.8379928898821091,test,embedding_env,4,0,5,val/centered_spearman_mean,29
+4'-hydroxyacetophenone,centered,3505,-0.009856937924817719,0.10356767273981066,0.8088885158878275,test,embedding_env,4,0,5,val/centered_spearman_mean,29
+acetovanillone,raw,3510,0.0025799240348103095,0.23954414960099754,0.9141428331679445,test,embedding_env,4,0,5,val/centered_spearman_mean,29
+acetovanillone,centered,3509,-0.20253278972153232,-0.027332067352499,0.9081816551645971,test,embedding_env,4,0,5,val/centered_spearman_mean,29
+azelaic acid,raw,3497,0.04311591893032774,0.12267284991260083,0.8670875046979807,test,embedding_env,4,0,5,val/centered_spearman_mean,29
+azelaic acid,centered,3496,0.1438986223860357,-0.007206212850754227,0.8553586981230819,test,embedding_env,4,0,5,val/centered_spearman_mean,29
+methylglyoxal,raw,3484,-0.18935228923679795,-0.07038181019902319,0.9178330549514648,test,embedding_env,4,0,5,val/centered_spearman_mean,29
+methylglyoxal,centered,3481,-0.34897456111063735,-0.2920092730109343,0.9254443455880632,test,embedding_env,4,0,5,val/centered_spearman_mean,29
+nonylacridine orange,raw,3507,0.05010567087785582,0.1308737120530953,0.8449681878437812,test,embedding_env,4,0,5,val/centered_spearman_mean,29
+nonylacridine orange,centered,3506,-0.02548154433317917,0.03542879137403037,0.833886138449666,test,embedding_env,4,0,5,val/centered_spearman_mean,29
+sinapic acid,raw,3495,0.29438066794095313,0.4691352108353339,0.5642822086005129,test,embedding_env,4,0,5,val/centered_spearman_mean,29
+sinapic acid,centered,3493,0.03488892964983596,0.14189086119216282,0.36827411606941146,test,embedding_env,4,0,5,val/centered_spearman_mean,29
+vanillin,raw,3506,0.39531981191220883,0.5138231867387528,0.8097403963300162,test,embedding_env,4,0,5,val/centered_spearman_mean,29
+vanillin,centered,3505,0.11343386073720223,0.2210193878504791,0.7359185026149425,test,embedding_env,4,0,5,val/centered_spearman_mean,29

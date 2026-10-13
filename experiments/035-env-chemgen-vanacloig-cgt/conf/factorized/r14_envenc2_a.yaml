@@ -1,0 +1,17 @@
+# Round 14, GPU: two transformer layers over [compound token ; gene tokens] instead of
+# one (env_layers: 2). With one layer a gene can take from the compound and from the other
+# genes in the same step; with two, a gene can take from genes that have already taken from
+# the compound, which is the hit-then-spread reading of a molecule as a Type I perturbation
+# of the cell state. Otherwise the round-10 environment encoder: one-layer wildtype encoder,
+# prior weight 0, fit on the non-test pool, fixed 50 epochs keeping the last, three seeds
+# averaged, five folds on each of fold seeds 0, 1, 2 (123 compound-evaluations), paired
+# against round 10. Split over two cards, PARALLEL=2 each.
+# Card A: fold seed 0, and folds 0 to 2 of fold seed 2.
+- {name: enc2_L1_lam0_fs0_f0, folds: [0], fold_seed: 0, gene_encoder: cgt, head: env_encoder, env_layers: 2, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool}
+- {name: enc2_L1_lam0_fs0_f1, folds: [1], fold_seed: 0, gene_encoder: cgt, head: env_encoder, env_layers: 2, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool}
+- {name: enc2_L1_lam0_fs0_f2, folds: [2], fold_seed: 0, gene_encoder: cgt, head: env_encoder, env_layers: 2, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool}
+- {name: enc2_L1_lam0_fs0_f3, folds: [3], fold_seed: 0, gene_encoder: cgt, head: env_encoder, env_layers: 2, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool}
+- {name: enc2_L1_lam0_fs0_f4, folds: [4], fold_seed: 0, gene_encoder: cgt, head: env_encoder, env_layers: 2, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool}
+- {name: enc2_L1_lam0_fs2_f0, folds: [0], fold_seed: 2, gene_encoder: cgt, head: env_encoder, env_layers: 2, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool}
+- {name: enc2_L1_lam0_fs2_f1, folds: [1], fold_seed: 2, gene_encoder: cgt, head: env_encoder, env_layers: 2, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool}
+- {name: enc2_L1_lam0_fs2_f2, folds: [2], fold_seed: 2, gene_encoder: cgt, head: env_encoder, env_layers: 2, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool}

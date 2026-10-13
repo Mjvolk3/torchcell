@@ -1,0 +1,98 @@
+%% notes-tex/wet-lab/040-inhibitor-synergy-wetlab/040-inhibitor-synergy-wetlab.tex
+%% [[experiments.040-inhibitor-synergy-wetlab]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/wet-lab/040-inhibitor-synergy-wetlab/040-inhibitor-synergy-wetlab.tex
+%%
+%% The hydrolysate-inhibitor case study: what the 2021 Bioscreen runs on bAID measure,
+%% what the model-free mixture references say about them, and what the chemogenomic
+%% models trained on public screens can and cannot add. Four pre-registered claims,
+%% each scored on CPU before any model was trained.
+%%
+%% Build:  make          -> 040-inhibitor-synergy-wetlab.pdf
+%%         make check    -> the formatting / provenance / style gate
+%%         make plots    -> re-convert the eleven panels from ASSET_IMAGES_DIR
+%%         make tables   -> re-generate tables/*.tex from the result CSVs
+%%
+%% Every figure and table is written by a committed script under
+%% experiments/040-inhibitor-synergy-wetlab/scripts/: the panels by the claim scripts
+%% named beside each figure, every table by notes_tex_tables.py.
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\emergencystretch=3.5em
+
+%% Float packing. Eleven true-size panels and seventeen tables are most of this
+%% document, and LaTeX's defaults reserve so much of a page for text that a run of
+%% large floats leaves half-empty pages between them. These let a float take almost a
+%% full page and let three share one, which is what keeps the figure and the prose that
+%% discusses it on the same spread.
+\renewcommand{\topfraction}{0.92}
+\renewcommand{\bottomfraction}{0.85}
+\renewcommand{\textfraction}{0.06}
+\renewcommand{\floatpagefraction}{0.72}
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{5}
+
+\title{\vspace{-1.5em}Inhibitor Synergy in the bAID Host\\
+  {\large What the 2021 Bioscreen runs measure, what Bliss and Loewe explain,
+   and what a chemogenomic model trained on public screens adds}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+Six sorghum-hydrolysate inhibitors, their 63 combinations and three two-way dose grids
+were measured on one strain in 2021: bAID, the CRISPR-AID host of Lian 2019, carrying no
+deletion, in aerobic YPD, 977 wells over five Bioscreen C runs. Four claims were
+registered before anything was scored, and the model-free half of the analysis is now
+complete on all four.
+
+Growth under the combinations departs from independence and stops short of Loewe
+additivity. Loewe from the single-agent Hill fits separates the combinations that grew
+from those that did not at AUROC 0.958 and accuracy 0.825 over all 63, while Bliss
+independence from those fits and highest single agent predict growth for every one of
+the 63 (accuracy 0.333, AUROC 0.777 and 0.663) and Bliss from the observed single-agent
+wells reaches 0.556 and 0.872; 42 of 63 did not grow within 85 h. On the
+21 that grew, Bliss from the observed single-agent wells reaches Spearman 0.573 and
+overestimates fitness by 0.142 on average, Loewe reaches 0.713 and underestimates it by
+0.128. Twelve of the 15 pairs are synergistic against Bliss with bootstrap intervals
+below zero, two are additive and one antagonistic, and no interior cell of any isobole
+grid grew less than Loewe predicts. Every score is reported under both growth calls,
+which disagree on 12 of 197 ex23 wells, all of them 5-HMF combinations.
+
+What the chemogenomic representation adds is, so far, nothing measurable. Profile
+similarity does not anticipate which pairs deviate: with the measured profiles in the
+matrix no similarity measure reaches $p = 0.26$ over 15 pairs, and the only association
+runs the other way in the all-predicted matrix, which is fingerprint similarity among
+the small acids. Compound-cold ridge profiles reach a median centered Spearman of 0.387
+over 32 screened compounds and carry only the generic stress component: 19 of 20
+significant terms for predicted furfural are terms of the 32-compound gene mean, and no
+compound shares a significant term between its measured and predicted centered profiles.
+On public data the composition rule is measurable and is the mean, not the sum: over
+Hillenmeyer's 26 two-compound environments the mean of the matched single profiles has
+the highest $R^2$ of the fixed rules in 24 of 26 pairs (median 0.365 against 0.091),
+with the per-pair linear fit giving $a + b = 1.06$, while the emergent and masked gene
+rates sit inside the hit-calling noise floor. The bars a dose- and mixture-aware model
+has to clear are therefore model-free and already on file; the trainer that would clear
+them is being written and nothing has run.
+\end{abstract}
+
+\vspace{0.5em}
+\tccontents
+\clearpage
+
+\input{sections/1-question}
+\input{sections/2-data}
+\input{sections/3-methods}
+\input{sections/4-results}
+\input{sections/5-model}
+
+\end{document}

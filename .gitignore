@@ -248,6 +248,12 @@ notes-tex/*/*/*-clean.pdf
 notes-tex/*/*/sn-nature.bst
 notes-tex/*/*/sn-jnl.cls
 
+# notes-tex: the staging directory `make plots` reads panels from when the plot
+# scripts still timestamp their output. The document's own Makefile links the newest
+# timestamped SVG of each panel to the exact name Makefile.common resolves, and the
+# links are absolute and machine-local, so they are build state and never committed.
+notes-tex/*/*/panel-svg/
+
 # Merge-queue runtime state (SQLite DB + flock + heartbeat).
 # scripts/merge_queue.py puts this at $DATA_ROOT/dev/merge_queue/. On GilaHyper
 # DATA_ROOT is /scratch/projects/torchcell-scratch, so it lands outside the repo

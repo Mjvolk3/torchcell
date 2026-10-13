@@ -1,0 +1,957 @@
+version,rule,combination,n_members,category,n_genes
+all_predicted,sum,5-(hydroxymethyl)furfural + formic acid,2,composed_top,100
+all_predicted,sum,5-(hydroxymethyl)furfural + formic acid,2,core,105
+all_predicted,sum,5-(hydroxymethyl)furfural + formic acid,2,specific,42
+all_predicted,sum,5-(hydroxymethyl)furfural + formic acid + lactic acid,3,composed_top,100
+all_predicted,sum,5-(hydroxymethyl)furfural + formic acid + lactic acid,3,core,105
+all_predicted,sum,5-(hydroxymethyl)furfural + formic acid + lactic acid,3,specific,44
+all_predicted,sum,5-(hydroxymethyl)furfural + formic acid + levulinic acid,3,composed_top,100
+all_predicted,sum,5-(hydroxymethyl)furfural + formic acid + levulinic acid,3,core,105
+all_predicted,sum,5-(hydroxymethyl)furfural + formic acid + levulinic acid,3,specific,55
+all_predicted,sum,5-(hydroxymethyl)furfural + lactic acid,2,composed_top,100
+all_predicted,sum,5-(hydroxymethyl)furfural + lactic acid,2,core,105
+all_predicted,sum,5-(hydroxymethyl)furfural + lactic acid,2,specific,44
+all_predicted,sum,5-(hydroxymethyl)furfural + levulinic acid,2,composed_top,100
+all_predicted,sum,5-(hydroxymethyl)furfural + levulinic acid,2,core,105
+all_predicted,sum,5-(hydroxymethyl)furfural + levulinic acid,2,specific,55
+all_predicted,sum,5-(hydroxymethyl)furfural + levulinic acid + lactic acid,3,composed_top,100
+all_predicted,sum,5-(hydroxymethyl)furfural + levulinic acid + lactic acid,3,core,105
+all_predicted,sum,5-(hydroxymethyl)furfural + levulinic acid + lactic acid,3,specific,57
+all_predicted,sum,acetic acid + 5-(hydroxymethyl)furfural,2,composed_top,100
+all_predicted,sum,acetic acid + 5-(hydroxymethyl)furfural,2,core,105
+all_predicted,sum,acetic acid + 5-(hydroxymethyl)furfural,2,specific,44
+all_predicted,sum,acetic acid + 5-(hydroxymethyl)furfural + formic acid,3,composed_top,100
+all_predicted,sum,acetic acid + 5-(hydroxymethyl)furfural + formic acid,3,core,105
+all_predicted,sum,acetic acid + 5-(hydroxymethyl)furfural + formic acid,3,specific,44
+all_predicted,sum,acetic acid + 5-(hydroxymethyl)furfural + lactic acid,3,composed_top,100
+all_predicted,sum,acetic acid + 5-(hydroxymethyl)furfural + lactic acid,3,core,105
+all_predicted,sum,acetic acid + 5-(hydroxymethyl)furfural + lactic acid,3,specific,46
+all_predicted,sum,acetic acid + 5-(hydroxymethyl)furfural + levulinic acid,3,composed_top,100
+all_predicted,sum,acetic acid + 5-(hydroxymethyl)furfural + levulinic acid,3,core,105
+all_predicted,sum,acetic acid + 5-(hydroxymethyl)furfural + levulinic acid,3,specific,57
+all_predicted,sum,acetic acid + formic acid,2,composed_top,100
+all_predicted,sum,acetic acid + formic acid,2,core,105
+all_predicted,sum,acetic acid + formic acid,2,specific,2
+all_predicted,sum,acetic acid + formic acid + lactic acid,3,composed_top,100
+all_predicted,sum,acetic acid + formic acid + lactic acid,3,core,105
+all_predicted,sum,acetic acid + formic acid + lactic acid,3,specific,4
+all_predicted,sum,acetic acid + formic acid + levulinic acid,3,composed_top,100
+all_predicted,sum,acetic acid + formic acid + levulinic acid,3,core,105
+all_predicted,sum,acetic acid + formic acid + levulinic acid,3,specific,15
+all_predicted,sum,acetic acid + lactic acid,2,composed_top,100
+all_predicted,sum,acetic acid + lactic acid,2,core,105
+all_predicted,sum,acetic acid + lactic acid,2,specific,4
+all_predicted,sum,acetic acid + levulinic acid,2,composed_top,100
+all_predicted,sum,acetic acid + levulinic acid,2,core,105
+all_predicted,sum,acetic acid + levulinic acid,2,specific,15
+all_predicted,sum,acetic acid + levulinic acid + lactic acid,3,composed_top,100
+all_predicted,sum,acetic acid + levulinic acid + lactic acid,3,core,105
+all_predicted,sum,acetic acid + levulinic acid + lactic acid,3,specific,17
+all_predicted,sum,formic acid + lactic acid,2,composed_top,100
+all_predicted,sum,formic acid + lactic acid,2,core,105
+all_predicted,sum,formic acid + lactic acid,2,specific,2
+all_predicted,sum,formic acid + levulinic acid,2,composed_top,100
+all_predicted,sum,formic acid + levulinic acid,2,core,105
+all_predicted,sum,formic acid + levulinic acid,2,specific,13
+all_predicted,sum,formic acid + levulinic acid + lactic acid,3,composed_top,100
+all_predicted,sum,formic acid + levulinic acid + lactic acid,3,core,105
+all_predicted,sum,formic acid + levulinic acid + lactic acid,3,specific,15
+all_predicted,sum,furfural + 5-(hydroxymethyl)furfural,2,composed_top,100
+all_predicted,sum,furfural + 5-(hydroxymethyl)furfural,2,conflict,1
+all_predicted,sum,furfural + 5-(hydroxymethyl)furfural,2,core,105
+all_predicted,sum,furfural + 5-(hydroxymethyl)furfural,2,specific,51
+all_predicted,sum,furfural + 5-(hydroxymethyl)furfural + formic acid,3,composed_top,100
+all_predicted,sum,furfural + 5-(hydroxymethyl)furfural + formic acid,3,conflict,1
+all_predicted,sum,furfural + 5-(hydroxymethyl)furfural + formic acid,3,core,105
+all_predicted,sum,furfural + 5-(hydroxymethyl)furfural + formic acid,3,specific,51
+all_predicted,sum,furfural + 5-(hydroxymethyl)furfural + lactic acid,3,composed_top,100
+all_predicted,sum,furfural + 5-(hydroxymethyl)furfural + lactic acid,3,conflict,1
+all_predicted,sum,furfural + 5-(hydroxymethyl)furfural + lactic acid,3,core,105
+all_predicted,sum,furfural + 5-(hydroxymethyl)furfural + lactic acid,3,specific,53
+all_predicted,sum,furfural + 5-(hydroxymethyl)furfural + levulinic acid,3,composed_top,100
+all_predicted,sum,furfural + 5-(hydroxymethyl)furfural + levulinic acid,3,conflict,1
+all_predicted,sum,furfural + 5-(hydroxymethyl)furfural + levulinic acid,3,core,105
+all_predicted,sum,furfural + 5-(hydroxymethyl)furfural + levulinic acid,3,specific,64
+all_predicted,sum,furfural + acetic acid,2,composed_top,100
+all_predicted,sum,furfural + acetic acid,2,core,105
+all_predicted,sum,furfural + acetic acid,2,specific,11
+all_predicted,sum,furfural + acetic acid + 5-(hydroxymethyl)furfural,3,composed_top,100
+all_predicted,sum,furfural + acetic acid + 5-(hydroxymethyl)furfural,3,conflict,1
+all_predicted,sum,furfural + acetic acid + 5-(hydroxymethyl)furfural,3,core,105
+all_predicted,sum,furfural + acetic acid + 5-(hydroxymethyl)furfural,3,specific,53
+all_predicted,sum,furfural + acetic acid + formic acid,3,composed_top,100
+all_predicted,sum,furfural + acetic acid + formic acid,3,core,105
+all_predicted,sum,furfural + acetic acid + formic acid,3,specific,11
+all_predicted,sum,furfural + acetic acid + lactic acid,3,composed_top,100
+all_predicted,sum,furfural + acetic acid + lactic acid,3,core,105
+all_predicted,sum,furfural + acetic acid + lactic acid,3,specific,13
+all_predicted,sum,furfural + acetic acid + levulinic acid,3,composed_top,100
+all_predicted,sum,furfural + acetic acid + levulinic acid,3,core,105
+all_predicted,sum,furfural + acetic acid + levulinic acid,3,specific,24
+all_predicted,sum,furfural + formic acid,2,composed_top,100
+all_predicted,sum,furfural + formic acid,2,core,105
+all_predicted,sum,furfural + formic acid,2,specific,9
+all_predicted,sum,furfural + formic acid + lactic acid,3,composed_top,100
+all_predicted,sum,furfural + formic acid + lactic acid,3,core,105
+all_predicted,sum,furfural + formic acid + lactic acid,3,specific,11
+all_predicted,sum,furfural + formic acid + levulinic acid,3,composed_top,100
+all_predicted,sum,furfural + formic acid + levulinic acid,3,core,105
+all_predicted,sum,furfural + formic acid + levulinic acid,3,specific,22
+all_predicted,sum,furfural + lactic acid,2,composed_top,100
+all_predicted,sum,furfural + lactic acid,2,core,105
+all_predicted,sum,furfural + lactic acid,2,specific,11
+all_predicted,sum,furfural + levulinic acid,2,composed_top,100
+all_predicted,sum,furfural + levulinic acid,2,core,105
+all_predicted,sum,furfural + levulinic acid,2,specific,22
+all_predicted,sum,furfural + levulinic acid + lactic acid,3,composed_top,100
+all_predicted,sum,furfural + levulinic acid + lactic acid,3,core,105
+all_predicted,sum,furfural + levulinic acid + lactic acid,3,specific,24
+all_predicted,sum,levulinic acid + lactic acid,2,composed_top,100
+all_predicted,sum,levulinic acid + lactic acid,2,core,105
+all_predicted,sum,levulinic acid + lactic acid,2,specific,15
+best_available,sum,5-(hydroxymethyl)furfural + formic acid,2,composed_top,100
+best_available,sum,5-(hydroxymethyl)furfural + formic acid,2,core,68
+best_available,sum,5-(hydroxymethyl)furfural + formic acid,2,specific,13
+best_available,sum,5-(hydroxymethyl)furfural + formic acid + lactic acid,3,composed_top,100
+best_available,sum,5-(hydroxymethyl)furfural + formic acid + lactic acid,3,core,68
+best_available,sum,5-(hydroxymethyl)furfural + formic acid + lactic acid,3,specific,17
+best_available,sum,5-(hydroxymethyl)furfural + formic acid + levulinic acid,3,composed_top,100
+best_available,sum,5-(hydroxymethyl)furfural + formic acid + levulinic acid,3,core,68
+best_available,sum,5-(hydroxymethyl)furfural + formic acid + levulinic acid,3,specific,30
+best_available,sum,5-(hydroxymethyl)furfural + lactic acid,2,composed_top,100
+best_available,sum,5-(hydroxymethyl)furfural + lactic acid,2,core,68
+best_available,sum,5-(hydroxymethyl)furfural + lactic acid,2,specific,14
+best_available,sum,5-(hydroxymethyl)furfural + levulinic acid,2,composed_top,100
+best_available,sum,5-(hydroxymethyl)furfural + levulinic acid,2,core,68
+best_available,sum,5-(hydroxymethyl)furfural + levulinic acid,2,specific,27
+best_available,sum,5-(hydroxymethyl)furfural + levulinic acid + lactic acid,3,composed_top,100
+best_available,sum,5-(hydroxymethyl)furfural + levulinic acid + lactic acid,3,core,68
+best_available,sum,5-(hydroxymethyl)furfural + levulinic acid + lactic acid,3,specific,31
+best_available,sum,acetic acid + 5-(hydroxymethyl)furfural,2,composed_top,100
+best_available,sum,acetic acid + 5-(hydroxymethyl)furfural,2,conflict,8
+best_available,sum,acetic acid + 5-(hydroxymethyl)furfural,2,core,61
+best_available,sum,acetic acid + 5-(hydroxymethyl)furfural,2,specific,62
+best_available,sum,acetic acid + 5-(hydroxymethyl)furfural + formic acid,3,composed_top,100
+best_available,sum,acetic acid + 5-(hydroxymethyl)furfural + formic acid,3,conflict,11
+best_available,sum,acetic acid + 5-(hydroxymethyl)furfural + formic acid,3,core,61
+best_available,sum,acetic acid + 5-(hydroxymethyl)furfural + formic acid,3,specific,65
+best_available,sum,acetic acid + 5-(hydroxymethyl)furfural + lactic acid,3,composed_top,100
+best_available,sum,acetic acid + 5-(hydroxymethyl)furfural + lactic acid,3,conflict,13
+best_available,sum,acetic acid + 5-(hydroxymethyl)furfural + lactic acid,3,core,61
+best_available,sum,acetic acid + 5-(hydroxymethyl)furfural + lactic acid,3,specific,65
+best_available,sum,acetic acid + 5-(hydroxymethyl)furfural + levulinic acid,3,composed_top,100
+best_available,sum,acetic acid + 5-(hydroxymethyl)furfural + levulinic acid,3,conflict,13
+best_available,sum,acetic acid + 5-(hydroxymethyl)furfural + levulinic acid,3,core,61
+best_available,sum,acetic acid + 5-(hydroxymethyl)furfural + levulinic acid,3,specific,79
+best_available,sum,acetic acid + formic acid,2,composed_top,100
+best_available,sum,acetic acid + formic acid,2,conflict,11
+best_available,sum,acetic acid + formic acid,2,core,61
+best_available,sum,acetic acid + formic acid,2,specific,57
+best_available,sum,acetic acid + formic acid + lactic acid,3,composed_top,100
+best_available,sum,acetic acid + formic acid + lactic acid,3,conflict,13
+best_available,sum,acetic acid + formic acid + lactic acid,3,core,61
+best_available,sum,acetic acid + formic acid + lactic acid,3,specific,60
+best_available,sum,acetic acid + formic acid + levulinic acid,3,composed_top,100
+best_available,sum,acetic acid + formic acid + levulinic acid,3,conflict,13
+best_available,sum,acetic acid + formic acid + levulinic acid,3,core,61
+best_available,sum,acetic acid + formic acid + levulinic acid,3,specific,74
+best_available,sum,acetic acid + lactic acid,2,composed_top,100
+best_available,sum,acetic acid + lactic acid,2,conflict,13
+best_available,sum,acetic acid + lactic acid,2,core,61
+best_available,sum,acetic acid + lactic acid,2,specific,57
+best_available,sum,acetic acid + levulinic acid,2,composed_top,100
+best_available,sum,acetic acid + levulinic acid,2,conflict,13
+best_available,sum,acetic acid + levulinic acid,2,core,61
+best_available,sum,acetic acid + levulinic acid,2,specific,71
+best_available,sum,acetic acid + levulinic acid + lactic acid,3,composed_top,100
+best_available,sum,acetic acid + levulinic acid + lactic acid,3,conflict,14
+best_available,sum,acetic acid + levulinic acid + lactic acid,3,core,61
+best_available,sum,acetic acid + levulinic acid + lactic acid,3,specific,74
+best_available,sum,formic acid + lactic acid,2,composed_top,100
+best_available,sum,formic acid + lactic acid,2,core,68
+best_available,sum,formic acid + lactic acid,2,specific,7
+best_available,sum,formic acid + levulinic acid,2,composed_top,100
+best_available,sum,formic acid + levulinic acid,2,core,68
+best_available,sum,formic acid + levulinic acid,2,specific,20
+best_available,sum,formic acid + levulinic acid + lactic acid,3,composed_top,100
+best_available,sum,formic acid + levulinic acid + lactic acid,3,core,68
+best_available,sum,formic acid + levulinic acid + lactic acid,3,specific,24
+best_available,sum,furfural + 5-(hydroxymethyl)furfural,2,composed_top,100
+best_available,sum,furfural + 5-(hydroxymethyl)furfural,2,core,67
+best_available,sum,furfural + 5-(hydroxymethyl)furfural,2,specific,67
+best_available,sum,furfural + 5-(hydroxymethyl)furfural + formic acid,3,composed_top,100
+best_available,sum,furfural + 5-(hydroxymethyl)furfural + formic acid,3,conflict,5
+best_available,sum,furfural + 5-(hydroxymethyl)furfural + formic acid,3,core,67
+best_available,sum,furfural + 5-(hydroxymethyl)furfural + formic acid,3,specific,70
+best_available,sum,furfural + 5-(hydroxymethyl)furfural + lactic acid,3,composed_top,100
+best_available,sum,furfural + 5-(hydroxymethyl)furfural + lactic acid,3,conflict,10
+best_available,sum,furfural + 5-(hydroxymethyl)furfural + lactic acid,3,core,67
+best_available,sum,furfural + 5-(hydroxymethyl)furfural + lactic acid,3,specific,71
+best_available,sum,furfural + 5-(hydroxymethyl)furfural + levulinic acid,3,composed_top,100
+best_available,sum,furfural + 5-(hydroxymethyl)furfural + levulinic acid,3,conflict,7
+best_available,sum,furfural + 5-(hydroxymethyl)furfural + levulinic acid,3,core,67
+best_available,sum,furfural + 5-(hydroxymethyl)furfural + levulinic acid,3,specific,84
+best_available,sum,furfural + acetic acid,2,composed_top,100
+best_available,sum,furfural + acetic acid,2,conflict,8
+best_available,sum,furfural + acetic acid,2,core,60
+best_available,sum,furfural + acetic acid,2,specific,108
+best_available,sum,furfural + acetic acid + 5-(hydroxymethyl)furfural,3,composed_top,100
+best_available,sum,furfural + acetic acid + 5-(hydroxymethyl)furfural,3,conflict,13
+best_available,sum,furfural + acetic acid + 5-(hydroxymethyl)furfural,3,core,60
+best_available,sum,furfural + acetic acid + 5-(hydroxymethyl)furfural,3,specific,116
+best_available,sum,furfural + acetic acid + formic acid,3,composed_top,100
+best_available,sum,furfural + acetic acid + formic acid,3,conflict,19
+best_available,sum,furfural + acetic acid + formic acid,3,core,60
+best_available,sum,furfural + acetic acid + formic acid,3,specific,111
+best_available,sum,furfural + acetic acid + lactic acid,3,composed_top,100
+best_available,sum,furfural + acetic acid + lactic acid,3,conflict,25
+best_available,sum,furfural + acetic acid + lactic acid,3,core,60
+best_available,sum,furfural + acetic acid + lactic acid,3,specific,111
+best_available,sum,furfural + acetic acid + levulinic acid,3,composed_top,100
+best_available,sum,furfural + acetic acid + levulinic acid,3,conflict,22
+best_available,sum,furfural + acetic acid + levulinic acid,3,core,60
+best_available,sum,furfural + acetic acid + levulinic acid,3,specific,125
+best_available,sum,furfural + formic acid,2,composed_top,100
+best_available,sum,furfural + formic acid,2,conflict,5
+best_available,sum,furfural + formic acid,2,core,67
+best_available,sum,furfural + formic acid,2,specific,60
+best_available,sum,furfural + formic acid + lactic acid,3,composed_top,100
+best_available,sum,furfural + formic acid + lactic acid,3,conflict,10
+best_available,sum,furfural + formic acid + lactic acid,3,core,67
+best_available,sum,furfural + formic acid + lactic acid,3,specific,64
+best_available,sum,furfural + formic acid + levulinic acid,3,composed_top,100
+best_available,sum,furfural + formic acid + levulinic acid,3,conflict,7
+best_available,sum,furfural + formic acid + levulinic acid,3,core,67
+best_available,sum,furfural + formic acid + levulinic acid,3,specific,77
+best_available,sum,furfural + lactic acid,2,composed_top,100
+best_available,sum,furfural + lactic acid,2,conflict,10
+best_available,sum,furfural + lactic acid,2,core,67
+best_available,sum,furfural + lactic acid,2,specific,61
+best_available,sum,furfural + levulinic acid,2,composed_top,100
+best_available,sum,furfural + levulinic acid,2,conflict,7
+best_available,sum,furfural + levulinic acid,2,core,67
+best_available,sum,furfural + levulinic acid,2,specific,74
+best_available,sum,furfural + levulinic acid + lactic acid,3,composed_top,100
+best_available,sum,furfural + levulinic acid + lactic acid,3,conflict,11
+best_available,sum,furfural + levulinic acid + lactic acid,3,core,67
+best_available,sum,furfural + levulinic acid + lactic acid,3,specific,78
+best_available,sum,levulinic acid + lactic acid,2,composed_top,100
+best_available,sum,levulinic acid + lactic acid,2,core,68
+best_available,sum,levulinic acid + lactic acid,2,specific,21
+all_predicted,mean,5-(hydroxymethyl)furfural + formic acid,2,composed_top,100
+all_predicted,mean,5-(hydroxymethyl)furfural + formic acid,2,core,105
+all_predicted,mean,5-(hydroxymethyl)furfural + formic acid,2,specific,42
+all_predicted,mean,5-(hydroxymethyl)furfural + formic acid + lactic acid,3,composed_top,100
+all_predicted,mean,5-(hydroxymethyl)furfural + formic acid + lactic acid,3,core,105
+all_predicted,mean,5-(hydroxymethyl)furfural + formic acid + lactic acid,3,specific,44
+all_predicted,mean,5-(hydroxymethyl)furfural + formic acid + levulinic acid,3,composed_top,100
+all_predicted,mean,5-(hydroxymethyl)furfural + formic acid + levulinic acid,3,core,105
+all_predicted,mean,5-(hydroxymethyl)furfural + formic acid + levulinic acid,3,specific,55
+all_predicted,mean,5-(hydroxymethyl)furfural + lactic acid,2,composed_top,100
+all_predicted,mean,5-(hydroxymethyl)furfural + lactic acid,2,core,105
+all_predicted,mean,5-(hydroxymethyl)furfural + lactic acid,2,specific,44
+all_predicted,mean,5-(hydroxymethyl)furfural + levulinic acid,2,composed_top,100
+all_predicted,mean,5-(hydroxymethyl)furfural + levulinic acid,2,core,105
+all_predicted,mean,5-(hydroxymethyl)furfural + levulinic acid,2,specific,55
+all_predicted,mean,5-(hydroxymethyl)furfural + levulinic acid + lactic acid,3,composed_top,100
+all_predicted,mean,5-(hydroxymethyl)furfural + levulinic acid + lactic acid,3,core,105
+all_predicted,mean,5-(hydroxymethyl)furfural + levulinic acid + lactic acid,3,specific,57
+all_predicted,mean,acetic acid + 5-(hydroxymethyl)furfural,2,composed_top,100
+all_predicted,mean,acetic acid + 5-(hydroxymethyl)furfural,2,core,105
+all_predicted,mean,acetic acid + 5-(hydroxymethyl)furfural,2,specific,44
+all_predicted,mean,acetic acid + 5-(hydroxymethyl)furfural + formic acid,3,composed_top,100
+all_predicted,mean,acetic acid + 5-(hydroxymethyl)furfural + formic acid,3,core,105
+all_predicted,mean,acetic acid + 5-(hydroxymethyl)furfural + formic acid,3,specific,44
+all_predicted,mean,acetic acid + 5-(hydroxymethyl)furfural + lactic acid,3,composed_top,100
+all_predicted,mean,acetic acid + 5-(hydroxymethyl)furfural + lactic acid,3,core,105
+all_predicted,mean,acetic acid + 5-(hydroxymethyl)furfural + lactic acid,3,specific,46
+all_predicted,mean,acetic acid + 5-(hydroxymethyl)furfural + levulinic acid,3,composed_top,100
+all_predicted,mean,acetic acid + 5-(hydroxymethyl)furfural + levulinic acid,3,core,105
+all_predicted,mean,acetic acid + 5-(hydroxymethyl)furfural + levulinic acid,3,specific,57
+all_predicted,mean,acetic acid + formic acid,2,composed_top,100
+all_predicted,mean,acetic acid + formic acid,2,core,105
+all_predicted,mean,acetic acid + formic acid,2,specific,2
+all_predicted,mean,acetic acid + formic acid + lactic acid,3,composed_top,100
+all_predicted,mean,acetic acid + formic acid + lactic acid,3,core,105
+all_predicted,mean,acetic acid + formic acid + lactic acid,3,specific,4
+all_predicted,mean,acetic acid + formic acid + levulinic acid,3,composed_top,100
+all_predicted,mean,acetic acid + formic acid + levulinic acid,3,core,105
+all_predicted,mean,acetic acid + formic acid + levulinic acid,3,specific,15
+all_predicted,mean,acetic acid + lactic acid,2,composed_top,100
+all_predicted,mean,acetic acid + lactic acid,2,core,105
+all_predicted,mean,acetic acid + lactic acid,2,specific,4
+all_predicted,mean,acetic acid + levulinic acid,2,composed_top,100
+all_predicted,mean,acetic acid + levulinic acid,2,core,105
+all_predicted,mean,acetic acid + levulinic acid,2,specific,15
+all_predicted,mean,acetic acid + levulinic acid + lactic acid,3,composed_top,100
+all_predicted,mean,acetic acid + levulinic acid + lactic acid,3,core,105
+all_predicted,mean,acetic acid + levulinic acid + lactic acid,3,specific,17
+all_predicted,mean,formic acid + lactic acid,2,composed_top,100
+all_predicted,mean,formic acid + lactic acid,2,core,105
+all_predicted,mean,formic acid + lactic acid,2,specific,2
+all_predicted,mean,formic acid + levulinic acid,2,composed_top,100
+all_predicted,mean,formic acid + levulinic acid,2,core,105
+all_predicted,mean,formic acid + levulinic acid,2,specific,13
+all_predicted,mean,formic acid + levulinic acid + lactic acid,3,composed_top,100
+all_predicted,mean,formic acid + levulinic acid + lactic acid,3,core,105
+all_predicted,mean,formic acid + levulinic acid + lactic acid,3,specific,15
+all_predicted,mean,furfural + 5-(hydroxymethyl)furfural,2,composed_top,100
+all_predicted,mean,furfural + 5-(hydroxymethyl)furfural,2,conflict,1
+all_predicted,mean,furfural + 5-(hydroxymethyl)furfural,2,core,105
+all_predicted,mean,furfural + 5-(hydroxymethyl)furfural,2,specific,51
+all_predicted,mean,furfural + 5-(hydroxymethyl)furfural + formic acid,3,composed_top,100
+all_predicted,mean,furfural + 5-(hydroxymethyl)furfural + formic acid,3,conflict,1
+all_predicted,mean,furfural + 5-(hydroxymethyl)furfural + formic acid,3,core,105
+all_predicted,mean,furfural + 5-(hydroxymethyl)furfural + formic acid,3,specific,51
+all_predicted,mean,furfural + 5-(hydroxymethyl)furfural + lactic acid,3,composed_top,100
+all_predicted,mean,furfural + 5-(hydroxymethyl)furfural + lactic acid,3,conflict,1
+all_predicted,mean,furfural + 5-(hydroxymethyl)furfural + lactic acid,3,core,105
+all_predicted,mean,furfural + 5-(hydroxymethyl)furfural + lactic acid,3,specific,53
+all_predicted,mean,furfural + 5-(hydroxymethyl)furfural + levulinic acid,3,composed_top,100
+all_predicted,mean,furfural + 5-(hydroxymethyl)furfural + levulinic acid,3,conflict,1
+all_predicted,mean,furfural + 5-(hydroxymethyl)furfural + levulinic acid,3,core,105
+all_predicted,mean,furfural + 5-(hydroxymethyl)furfural + levulinic acid,3,specific,64
+all_predicted,mean,furfural + acetic acid,2,composed_top,100
+all_predicted,mean,furfural + acetic acid,2,core,105
+all_predicted,mean,furfural + acetic acid,2,specific,11
+all_predicted,mean,furfural + acetic acid + 5-(hydroxymethyl)furfural,3,composed_top,100
+all_predicted,mean,furfural + acetic acid + 5-(hydroxymethyl)furfural,3,conflict,1
+all_predicted,mean,furfural + acetic acid + 5-(hydroxymethyl)furfural,3,core,105
+all_predicted,mean,furfural + acetic acid + 5-(hydroxymethyl)furfural,3,specific,53
+all_predicted,mean,furfural + acetic acid + formic acid,3,composed_top,100
+all_predicted,mean,furfural + acetic acid + formic acid,3,core,105
+all_predicted,mean,furfural + acetic acid + formic acid,3,specific,11
+all_predicted,mean,furfural + acetic acid + lactic acid,3,composed_top,100
+all_predicted,mean,furfural + acetic acid + lactic acid,3,core,105
+all_predicted,mean,furfural + acetic acid + lactic acid,3,specific,13
+all_predicted,mean,furfural + acetic acid + levulinic acid,3,composed_top,100
+all_predicted,mean,furfural + acetic acid + levulinic acid,3,core,105
+all_predicted,mean,furfural + acetic acid + levulinic acid,3,specific,24
+all_predicted,mean,furfural + formic acid,2,composed_top,100
+all_predicted,mean,furfural + formic acid,2,core,105
+all_predicted,mean,furfural + formic acid,2,specific,9
+all_predicted,mean,furfural + formic acid + lactic acid,3,composed_top,100
+all_predicted,mean,furfural + formic acid + lactic acid,3,core,105
+all_predicted,mean,furfural + formic acid + lactic acid,3,specific,11
+all_predicted,mean,furfural + formic acid + levulinic acid,3,composed_top,100
+all_predicted,mean,furfural + formic acid + levulinic acid,3,core,105
+all_predicted,mean,furfural + formic acid + levulinic acid,3,specific,22
+all_predicted,mean,furfural + lactic acid,2,composed_top,100
+all_predicted,mean,furfural + lactic acid,2,core,105
+all_predicted,mean,furfural + lactic acid,2,specific,11
+all_predicted,mean,furfural + levulinic acid,2,composed_top,100
+all_predicted,mean,furfural + levulinic acid,2,core,105
+all_predicted,mean,furfural + levulinic acid,2,specific,22
+all_predicted,mean,furfural + levulinic acid + lactic acid,3,composed_top,100
+all_predicted,mean,furfural + levulinic acid + lactic acid,3,core,105
+all_predicted,mean,furfural + levulinic acid + lactic acid,3,specific,24
+all_predicted,mean,levulinic acid + lactic acid,2,composed_top,100
+all_predicted,mean,levulinic acid + lactic acid,2,core,105
+all_predicted,mean,levulinic acid + lactic acid,2,specific,15
+best_available,mean,5-(hydroxymethyl)furfural + formic acid,2,composed_top,100
+best_available,mean,5-(hydroxymethyl)furfural + formic acid,2,core,68
+best_available,mean,5-(hydroxymethyl)furfural + formic acid,2,specific,13
+best_available,mean,5-(hydroxymethyl)furfural + formic acid + lactic acid,3,composed_top,100
+best_available,mean,5-(hydroxymethyl)furfural + formic acid + lactic acid,3,core,68
+best_available,mean,5-(hydroxymethyl)furfural + formic acid + lactic acid,3,specific,17
+best_available,mean,5-(hydroxymethyl)furfural + formic acid + levulinic acid,3,composed_top,100
+best_available,mean,5-(hydroxymethyl)furfural + formic acid + levulinic acid,3,core,68
+best_available,mean,5-(hydroxymethyl)furfural + formic acid + levulinic acid,3,specific,30
+best_available,mean,5-(hydroxymethyl)furfural + lactic acid,2,composed_top,100
+best_available,mean,5-(hydroxymethyl)furfural + lactic acid,2,core,68
+best_available,mean,5-(hydroxymethyl)furfural + lactic acid,2,specific,14
+best_available,mean,5-(hydroxymethyl)furfural + levulinic acid,2,composed_top,100
+best_available,mean,5-(hydroxymethyl)furfural + levulinic acid,2,core,68
+best_available,mean,5-(hydroxymethyl)furfural + levulinic acid,2,specific,27
+best_available,mean,5-(hydroxymethyl)furfural + levulinic acid + lactic acid,3,composed_top,100
+best_available,mean,5-(hydroxymethyl)furfural + levulinic acid + lactic acid,3,core,68
+best_available,mean,5-(hydroxymethyl)furfural + levulinic acid + lactic acid,3,specific,31
+best_available,mean,acetic acid + 5-(hydroxymethyl)furfural,2,composed_top,100
+best_available,mean,acetic acid + 5-(hydroxymethyl)furfural,2,conflict,8
+best_available,mean,acetic acid + 5-(hydroxymethyl)furfural,2,core,61
+best_available,mean,acetic acid + 5-(hydroxymethyl)furfural,2,specific,62
+best_available,mean,acetic acid + 5-(hydroxymethyl)furfural + formic acid,3,composed_top,100
+best_available,mean,acetic acid + 5-(hydroxymethyl)furfural + formic acid,3,conflict,11
+best_available,mean,acetic acid + 5-(hydroxymethyl)furfural + formic acid,3,core,61
+best_available,mean,acetic acid + 5-(hydroxymethyl)furfural + formic acid,3,specific,65
+best_available,mean,acetic acid + 5-(hydroxymethyl)furfural + lactic acid,3,composed_top,100
+best_available,mean,acetic acid + 5-(hydroxymethyl)furfural + lactic acid,3,conflict,13
+best_available,mean,acetic acid + 5-(hydroxymethyl)furfural + lactic acid,3,core,61
+best_available,mean,acetic acid + 5-(hydroxymethyl)furfural + lactic acid,3,specific,65
+best_available,mean,acetic acid + 5-(hydroxymethyl)furfural + levulinic acid,3,composed_top,100
+best_available,mean,acetic acid + 5-(hydroxymethyl)furfural + levulinic acid,3,conflict,13
+best_available,mean,acetic acid + 5-(hydroxymethyl)furfural + levulinic acid,3,core,61
+best_available,mean,acetic acid + 5-(hydroxymethyl)furfural + levulinic acid,3,specific,79
+best_available,mean,acetic acid + formic acid,2,composed_top,100
+best_available,mean,acetic acid + formic acid,2,conflict,11
+best_available,mean,acetic acid + formic acid,2,core,61
+best_available,mean,acetic acid + formic acid,2,specific,57
+best_available,mean,acetic acid + formic acid + lactic acid,3,composed_top,100
+best_available,mean,acetic acid + formic acid + lactic acid,3,conflict,13
+best_available,mean,acetic acid + formic acid + lactic acid,3,core,61
+best_available,mean,acetic acid + formic acid + lactic acid,3,specific,60
+best_available,mean,acetic acid + formic acid + levulinic acid,3,composed_top,100
+best_available,mean,acetic acid + formic acid + levulinic acid,3,conflict,13
+best_available,mean,acetic acid + formic acid + levulinic acid,3,core,61
+best_available,mean,acetic acid + formic acid + levulinic acid,3,specific,74
+best_available,mean,acetic acid + lactic acid,2,composed_top,100
+best_available,mean,acetic acid + lactic acid,2,conflict,13
+best_available,mean,acetic acid + lactic acid,2,core,61
+best_available,mean,acetic acid + lactic acid,2,specific,57
+best_available,mean,acetic acid + levulinic acid,2,composed_top,100
+best_available,mean,acetic acid + levulinic acid,2,conflict,13
+best_available,mean,acetic acid + levulinic acid,2,core,61
+best_available,mean,acetic acid + levulinic acid,2,specific,71
+best_available,mean,acetic acid + levulinic acid + lactic acid,3,composed_top,100
+best_available,mean,acetic acid + levulinic acid + lactic acid,3,conflict,14
+best_available,mean,acetic acid + levulinic acid + lactic acid,3,core,61
+best_available,mean,acetic acid + levulinic acid + lactic acid,3,specific,74
+best_available,mean,formic acid + lactic acid,2,composed_top,100
+best_available,mean,formic acid + lactic acid,2,core,68
+best_available,mean,formic acid + lactic acid,2,specific,7
+best_available,mean,formic acid + levulinic acid,2,composed_top,100
+best_available,mean,formic acid + levulinic acid,2,core,68
+best_available,mean,formic acid + levulinic acid,2,specific,20
+best_available,mean,formic acid + levulinic acid + lactic acid,3,composed_top,100
+best_available,mean,formic acid + levulinic acid + lactic acid,3,core,68
+best_available,mean,formic acid + levulinic acid + lactic acid,3,specific,24
+best_available,mean,furfural + 5-(hydroxymethyl)furfural,2,composed_top,100
+best_available,mean,furfural + 5-(hydroxymethyl)furfural,2,core,67
+best_available,mean,furfural + 5-(hydroxymethyl)furfural,2,specific,67
+best_available,mean,furfural + 5-(hydroxymethyl)furfural + formic acid,3,composed_top,100
+best_available,mean,furfural + 5-(hydroxymethyl)furfural + formic acid,3,conflict,5
+best_available,mean,furfural + 5-(hydroxymethyl)furfural + formic acid,3,core,67
+best_available,mean,furfural + 5-(hydroxymethyl)furfural + formic acid,3,specific,70
+best_available,mean,furfural + 5-(hydroxymethyl)furfural + lactic acid,3,composed_top,100
+best_available,mean,furfural + 5-(hydroxymethyl)furfural + lactic acid,3,conflict,10
+best_available,mean,furfural + 5-(hydroxymethyl)furfural + lactic acid,3,core,67
+best_available,mean,furfural + 5-(hydroxymethyl)furfural + lactic acid,3,specific,71
+best_available,mean,furfural + 5-(hydroxymethyl)furfural + levulinic acid,3,composed_top,100
+best_available,mean,furfural + 5-(hydroxymethyl)furfural + levulinic acid,3,conflict,7
+best_available,mean,furfural + 5-(hydroxymethyl)furfural + levulinic acid,3,core,67
+best_available,mean,furfural + 5-(hydroxymethyl)furfural + levulinic acid,3,specific,84
+best_available,mean,furfural + acetic acid,2,composed_top,100
+best_available,mean,furfural + acetic acid,2,conflict,8
+best_available,mean,furfural + acetic acid,2,core,60
+best_available,mean,furfural + acetic acid,2,specific,108
+best_available,mean,furfural + acetic acid + 5-(hydroxymethyl)furfural,3,composed_top,100
+best_available,mean,furfural + acetic acid + 5-(hydroxymethyl)furfural,3,conflict,13
+best_available,mean,furfural + acetic acid + 5-(hydroxymethyl)furfural,3,core,60
+best_available,mean,furfural + acetic acid + 5-(hydroxymethyl)furfural,3,specific,116
+best_available,mean,furfural + acetic acid + formic acid,3,composed_top,100
+best_available,mean,furfural + acetic acid + formic acid,3,conflict,19
+best_available,mean,furfural + acetic acid + formic acid,3,core,60
+best_available,mean,furfural + acetic acid + formic acid,3,specific,111
+best_available,mean,furfural + acetic acid + lactic acid,3,composed_top,100
+best_available,mean,furfural + acetic acid + lactic acid,3,conflict,25
+best_available,mean,furfural + acetic acid + lactic acid,3,core,60
+best_available,mean,furfural + acetic acid + lactic acid,3,specific,111
+best_available,mean,furfural + acetic acid + levulinic acid,3,composed_top,100
+best_available,mean,furfural + acetic acid + levulinic acid,3,conflict,22
+best_available,mean,furfural + acetic acid + levulinic acid,3,core,60
+best_available,mean,furfural + acetic acid + levulinic acid,3,specific,125
+best_available,mean,furfural + formic acid,2,composed_top,100
+best_available,mean,furfural + formic acid,2,conflict,5
+best_available,mean,furfural + formic acid,2,core,67
+best_available,mean,furfural + formic acid,2,specific,60
+best_available,mean,furfural + formic acid + lactic acid,3,composed_top,100
+best_available,mean,furfural + formic acid + lactic acid,3,conflict,10
+best_available,mean,furfural + formic acid + lactic acid,3,core,67
+best_available,mean,furfural + formic acid + lactic acid,3,specific,64
+best_available,mean,furfural + formic acid + levulinic acid,3,composed_top,100
+best_available,mean,furfural + formic acid + levulinic acid,3,conflict,7
+best_available,mean,furfural + formic acid + levulinic acid,3,core,67
+best_available,mean,furfural + formic acid + levulinic acid,3,specific,77
+best_available,mean,furfural + lactic acid,2,composed_top,100
+best_available,mean,furfural + lactic acid,2,conflict,10
+best_available,mean,furfural + lactic acid,2,core,67
+best_available,mean,furfural + lactic acid,2,specific,61
+best_available,mean,furfural + levulinic acid,2,composed_top,100
+best_available,mean,furfural + levulinic acid,2,conflict,7
+best_available,mean,furfural + levulinic acid,2,core,67
+best_available,mean,furfural + levulinic acid,2,specific,74
+best_available,mean,furfural + levulinic acid + lactic acid,3,composed_top,100
+best_available,mean,furfural + levulinic acid + lactic acid,3,conflict,11
+best_available,mean,furfural + levulinic acid + lactic acid,3,core,67
+best_available,mean,furfural + levulinic acid + lactic acid,3,specific,78
+best_available,mean,levulinic acid + lactic acid,2,composed_top,100
+best_available,mean,levulinic acid + lactic acid,2,core,68
+best_available,mean,levulinic acid + lactic acid,2,specific,21
+all_predicted,max,5-(hydroxymethyl)furfural + formic acid,2,composed_top,100
+all_predicted,max,5-(hydroxymethyl)furfural + formic acid,2,core,105
+all_predicted,max,5-(hydroxymethyl)furfural + formic acid,2,specific,42
+all_predicted,max,5-(hydroxymethyl)furfural + formic acid + lactic acid,3,composed_top,100
+all_predicted,max,5-(hydroxymethyl)furfural + formic acid + lactic acid,3,core,105
+all_predicted,max,5-(hydroxymethyl)furfural + formic acid + lactic acid,3,specific,44
+all_predicted,max,5-(hydroxymethyl)furfural + formic acid + levulinic acid,3,composed_top,100
+all_predicted,max,5-(hydroxymethyl)furfural + formic acid + levulinic acid,3,core,105
+all_predicted,max,5-(hydroxymethyl)furfural + formic acid + levulinic acid,3,specific,55
+all_predicted,max,5-(hydroxymethyl)furfural + lactic acid,2,composed_top,100
+all_predicted,max,5-(hydroxymethyl)furfural + lactic acid,2,core,105
+all_predicted,max,5-(hydroxymethyl)furfural + lactic acid,2,specific,44
+all_predicted,max,5-(hydroxymethyl)furfural + levulinic acid,2,composed_top,100
+all_predicted,max,5-(hydroxymethyl)furfural + levulinic acid,2,core,105
+all_predicted,max,5-(hydroxymethyl)furfural + levulinic acid,2,specific,55
+all_predicted,max,5-(hydroxymethyl)furfural + levulinic acid + lactic acid,3,composed_top,100
+all_predicted,max,5-(hydroxymethyl)furfural + levulinic acid + lactic acid,3,core,105
+all_predicted,max,5-(hydroxymethyl)furfural + levulinic acid + lactic acid,3,specific,57
+all_predicted,max,acetic acid + 5-(hydroxymethyl)furfural,2,composed_top,100
+all_predicted,max,acetic acid + 5-(hydroxymethyl)furfural,2,core,105
+all_predicted,max,acetic acid + 5-(hydroxymethyl)furfural,2,specific,44
+all_predicted,max,acetic acid + 5-(hydroxymethyl)furfural + formic acid,3,composed_top,100
+all_predicted,max,acetic acid + 5-(hydroxymethyl)furfural + formic acid,3,core,105
+all_predicted,max,acetic acid + 5-(hydroxymethyl)furfural + formic acid,3,specific,44
+all_predicted,max,acetic acid + 5-(hydroxymethyl)furfural + lactic acid,3,composed_top,100
+all_predicted,max,acetic acid + 5-(hydroxymethyl)furfural + lactic acid,3,core,105
+all_predicted,max,acetic acid + 5-(hydroxymethyl)furfural + lactic acid,3,specific,46
+all_predicted,max,acetic acid + 5-(hydroxymethyl)furfural + levulinic acid,3,composed_top,100
+all_predicted,max,acetic acid + 5-(hydroxymethyl)furfural + levulinic acid,3,core,105
+all_predicted,max,acetic acid + 5-(hydroxymethyl)furfural + levulinic acid,3,specific,57
+all_predicted,max,acetic acid + formic acid,2,composed_top,100
+all_predicted,max,acetic acid + formic acid,2,core,105
+all_predicted,max,acetic acid + formic acid,2,specific,2
+all_predicted,max,acetic acid + formic acid + lactic acid,3,composed_top,100
+all_predicted,max,acetic acid + formic acid + lactic acid,3,core,105
+all_predicted,max,acetic acid + formic acid + lactic acid,3,specific,4
+all_predicted,max,acetic acid + formic acid + levulinic acid,3,composed_top,100
+all_predicted,max,acetic acid + formic acid + levulinic acid,3,core,105
+all_predicted,max,acetic acid + formic acid + levulinic acid,3,specific,15
+all_predicted,max,acetic acid + lactic acid,2,composed_top,100
+all_predicted,max,acetic acid + lactic acid,2,core,105
+all_predicted,max,acetic acid + lactic acid,2,specific,4
+all_predicted,max,acetic acid + levulinic acid,2,composed_top,100
+all_predicted,max,acetic acid + levulinic acid,2,core,105
+all_predicted,max,acetic acid + levulinic acid,2,specific,15
+all_predicted,max,acetic acid + levulinic acid + lactic acid,3,composed_top,100
+all_predicted,max,acetic acid + levulinic acid + lactic acid,3,core,105
+all_predicted,max,acetic acid + levulinic acid + lactic acid,3,specific,17
+all_predicted,max,formic acid + lactic acid,2,composed_top,100
+all_predicted,max,formic acid + lactic acid,2,core,105
+all_predicted,max,formic acid + lactic acid,2,specific,2
+all_predicted,max,formic acid + levulinic acid,2,composed_top,100
+all_predicted,max,formic acid + levulinic acid,2,core,105
+all_predicted,max,formic acid + levulinic acid,2,specific,13
+all_predicted,max,formic acid + levulinic acid + lactic acid,3,composed_top,100
+all_predicted,max,formic acid + levulinic acid + lactic acid,3,core,105
+all_predicted,max,formic acid + levulinic acid + lactic acid,3,specific,15
+all_predicted,max,furfural + 5-(hydroxymethyl)furfural,2,composed_top,100
+all_predicted,max,furfural + 5-(hydroxymethyl)furfural,2,conflict,1
+all_predicted,max,furfural + 5-(hydroxymethyl)furfural,2,core,105
+all_predicted,max,furfural + 5-(hydroxymethyl)furfural,2,specific,51
+all_predicted,max,furfural + 5-(hydroxymethyl)furfural + formic acid,3,composed_top,100
+all_predicted,max,furfural + 5-(hydroxymethyl)furfural + formic acid,3,conflict,1
+all_predicted,max,furfural + 5-(hydroxymethyl)furfural + formic acid,3,core,105
+all_predicted,max,furfural + 5-(hydroxymethyl)furfural + formic acid,3,specific,51
+all_predicted,max,furfural + 5-(hydroxymethyl)furfural + lactic acid,3,composed_top,100
+all_predicted,max,furfural + 5-(hydroxymethyl)furfural + lactic acid,3,conflict,1
+all_predicted,max,furfural + 5-(hydroxymethyl)furfural + lactic acid,3,core,105
+all_predicted,max,furfural + 5-(hydroxymethyl)furfural + lactic acid,3,specific,53
+all_predicted,max,furfural + 5-(hydroxymethyl)furfural + levulinic acid,3,composed_top,100
+all_predicted,max,furfural + 5-(hydroxymethyl)furfural + levulinic acid,3,conflict,1
+all_predicted,max,furfural + 5-(hydroxymethyl)furfural + levulinic acid,3,core,105
+all_predicted,max,furfural + 5-(hydroxymethyl)furfural + levulinic acid,3,specific,64
+all_predicted,max,furfural + acetic acid,2,composed_top,100
+all_predicted,max,furfural + acetic acid,2,core,105
+all_predicted,max,furfural + acetic acid,2,specific,11
+all_predicted,max,furfural + acetic acid + 5-(hydroxymethyl)furfural,3,composed_top,100
+all_predicted,max,furfural + acetic acid + 5-(hydroxymethyl)furfural,3,conflict,1
+all_predicted,max,furfural + acetic acid + 5-(hydroxymethyl)furfural,3,core,105
+all_predicted,max,furfural + acetic acid + 5-(hydroxymethyl)furfural,3,specific,53
+all_predicted,max,furfural + acetic acid + formic acid,3,composed_top,100
+all_predicted,max,furfural + acetic acid + formic acid,3,core,105
+all_predicted,max,furfural + acetic acid + formic acid,3,specific,11
+all_predicted,max,furfural + acetic acid + lactic acid,3,composed_top,100
+all_predicted,max,furfural + acetic acid + lactic acid,3,core,105
+all_predicted,max,furfural + acetic acid + lactic acid,3,specific,13
+all_predicted,max,furfural + acetic acid + levulinic acid,3,composed_top,100
+all_predicted,max,furfural + acetic acid + levulinic acid,3,core,105
+all_predicted,max,furfural + acetic acid + levulinic acid,3,specific,24
+all_predicted,max,furfural + formic acid,2,composed_top,100
+all_predicted,max,furfural + formic acid,2,core,105
+all_predicted,max,furfural + formic acid,2,specific,9
+all_predicted,max,furfural + formic acid + lactic acid,3,composed_top,100
+all_predicted,max,furfural + formic acid + lactic acid,3,core,105
+all_predicted,max,furfural + formic acid + lactic acid,3,specific,11
+all_predicted,max,furfural + formic acid + levulinic acid,3,composed_top,100
+all_predicted,max,furfural + formic acid + levulinic acid,3,core,105
+all_predicted,max,furfural + formic acid + levulinic acid,3,specific,22
+all_predicted,max,furfural + lactic acid,2,composed_top,100
+all_predicted,max,furfural + lactic acid,2,core,105
+all_predicted,max,furfural + lactic acid,2,specific,11
+all_predicted,max,furfural + levulinic acid,2,composed_top,100
+all_predicted,max,furfural + levulinic acid,2,core,105
+all_predicted,max,furfural + levulinic acid,2,specific,22
+all_predicted,max,furfural + levulinic acid + lactic acid,3,composed_top,100
+all_predicted,max,furfural + levulinic acid + lactic acid,3,core,105
+all_predicted,max,furfural + levulinic acid + lactic acid,3,specific,24
+all_predicted,max,levulinic acid + lactic acid,2,composed_top,100
+all_predicted,max,levulinic acid + lactic acid,2,core,105
+all_predicted,max,levulinic acid + lactic acid,2,specific,15
+best_available,max,5-(hydroxymethyl)furfural + formic acid,2,composed_top,100
+best_available,max,5-(hydroxymethyl)furfural + formic acid,2,core,68
+best_available,max,5-(hydroxymethyl)furfural + formic acid,2,specific,13
+best_available,max,5-(hydroxymethyl)furfural + formic acid + lactic acid,3,composed_top,100
+best_available,max,5-(hydroxymethyl)furfural + formic acid + lactic acid,3,core,68
+best_available,max,5-(hydroxymethyl)furfural + formic acid + lactic acid,3,specific,17
+best_available,max,5-(hydroxymethyl)furfural + formic acid + levulinic acid,3,composed_top,100
+best_available,max,5-(hydroxymethyl)furfural + formic acid + levulinic acid,3,core,68
+best_available,max,5-(hydroxymethyl)furfural + formic acid + levulinic acid,3,specific,30
+best_available,max,5-(hydroxymethyl)furfural + lactic acid,2,composed_top,100
+best_available,max,5-(hydroxymethyl)furfural + lactic acid,2,core,68
+best_available,max,5-(hydroxymethyl)furfural + lactic acid,2,specific,14
+best_available,max,5-(hydroxymethyl)furfural + levulinic acid,2,composed_top,100
+best_available,max,5-(hydroxymethyl)furfural + levulinic acid,2,core,68
+best_available,max,5-(hydroxymethyl)furfural + levulinic acid,2,specific,27
+best_available,max,5-(hydroxymethyl)furfural + levulinic acid + lactic acid,3,composed_top,100
+best_available,max,5-(hydroxymethyl)furfural + levulinic acid + lactic acid,3,core,68
+best_available,max,5-(hydroxymethyl)furfural + levulinic acid + lactic acid,3,specific,31
+best_available,max,acetic acid + 5-(hydroxymethyl)furfural,2,composed_top,100
+best_available,max,acetic acid + 5-(hydroxymethyl)furfural,2,conflict,8
+best_available,max,acetic acid + 5-(hydroxymethyl)furfural,2,core,61
+best_available,max,acetic acid + 5-(hydroxymethyl)furfural,2,specific,62
+best_available,max,acetic acid + 5-(hydroxymethyl)furfural + formic acid,3,composed_top,100
+best_available,max,acetic acid + 5-(hydroxymethyl)furfural + formic acid,3,conflict,11
+best_available,max,acetic acid + 5-(hydroxymethyl)furfural + formic acid,3,core,61
+best_available,max,acetic acid + 5-(hydroxymethyl)furfural + formic acid,3,specific,65
+best_available,max,acetic acid + 5-(hydroxymethyl)furfural + lactic acid,3,composed_top,100
+best_available,max,acetic acid + 5-(hydroxymethyl)furfural + lactic acid,3,conflict,13
+best_available,max,acetic acid + 5-(hydroxymethyl)furfural + lactic acid,3,core,61
+best_available,max,acetic acid + 5-(hydroxymethyl)furfural + lactic acid,3,specific,65
+best_available,max,acetic acid + 5-(hydroxymethyl)furfural + levulinic acid,3,composed_top,100
+best_available,max,acetic acid + 5-(hydroxymethyl)furfural + levulinic acid,3,conflict,13
+best_available,max,acetic acid + 5-(hydroxymethyl)furfural + levulinic acid,3,core,61
+best_available,max,acetic acid + 5-(hydroxymethyl)furfural + levulinic acid,3,specific,79
+best_available,max,acetic acid + formic acid,2,composed_top,100
+best_available,max,acetic acid + formic acid,2,conflict,11
+best_available,max,acetic acid + formic acid,2,core,61
+best_available,max,acetic acid + formic acid,2,specific,57
+best_available,max,acetic acid + formic acid + lactic acid,3,composed_top,100
+best_available,max,acetic acid + formic acid + lactic acid,3,conflict,13
+best_available,max,acetic acid + formic acid + lactic acid,3,core,61
+best_available,max,acetic acid + formic acid + lactic acid,3,specific,60
+best_available,max,acetic acid + formic acid + levulinic acid,3,composed_top,100
+best_available,max,acetic acid + formic acid + levulinic acid,3,conflict,13
+best_available,max,acetic acid + formic acid + levulinic acid,3,core,61
+best_available,max,acetic acid + formic acid + levulinic acid,3,specific,74
+best_available,max,acetic acid + lactic acid,2,composed_top,100
+best_available,max,acetic acid + lactic acid,2,conflict,13
+best_available,max,acetic acid + lactic acid,2,core,61
+best_available,max,acetic acid + lactic acid,2,specific,57
+best_available,max,acetic acid + levulinic acid,2,composed_top,100
+best_available,max,acetic acid + levulinic acid,2,conflict,13
+best_available,max,acetic acid + levulinic acid,2,core,61
+best_available,max,acetic acid + levulinic acid,2,specific,71
+best_available,max,acetic acid + levulinic acid + lactic acid,3,composed_top,100
+best_available,max,acetic acid + levulinic acid + lactic acid,3,conflict,14
+best_available,max,acetic acid + levulinic acid + lactic acid,3,core,61
+best_available,max,acetic acid + levulinic acid + lactic acid,3,specific,74
+best_available,max,formic acid + lactic acid,2,composed_top,100
+best_available,max,formic acid + lactic acid,2,core,68
+best_available,max,formic acid + lactic acid,2,specific,7
+best_available,max,formic acid + levulinic acid,2,composed_top,100
+best_available,max,formic acid + levulinic acid,2,core,68
+best_available,max,formic acid + levulinic acid,2,specific,20
+best_available,max,formic acid + levulinic acid + lactic acid,3,composed_top,100
+best_available,max,formic acid + levulinic acid + lactic acid,3,core,68
+best_available,max,formic acid + levulinic acid + lactic acid,3,specific,24
+best_available,max,furfural + 5-(hydroxymethyl)furfural,2,composed_top,100
+best_available,max,furfural + 5-(hydroxymethyl)furfural,2,core,67
+best_available,max,furfural + 5-(hydroxymethyl)furfural,2,specific,67
+best_available,max,furfural + 5-(hydroxymethyl)furfural + formic acid,3,composed_top,100
+best_available,max,furfural + 5-(hydroxymethyl)furfural + formic acid,3,conflict,5
+best_available,max,furfural + 5-(hydroxymethyl)furfural + formic acid,3,core,67
+best_available,max,furfural + 5-(hydroxymethyl)furfural + formic acid,3,specific,70
+best_available,max,furfural + 5-(hydroxymethyl)furfural + lactic acid,3,composed_top,100
+best_available,max,furfural + 5-(hydroxymethyl)furfural + lactic acid,3,conflict,10
+best_available,max,furfural + 5-(hydroxymethyl)furfural + lactic acid,3,core,67
+best_available,max,furfural + 5-(hydroxymethyl)furfural + lactic acid,3,specific,71
+best_available,max,furfural + 5-(hydroxymethyl)furfural + levulinic acid,3,composed_top,100
+best_available,max,furfural + 5-(hydroxymethyl)furfural + levulinic acid,3,conflict,7
+best_available,max,furfural + 5-(hydroxymethyl)furfural + levulinic acid,3,core,67
+best_available,max,furfural + 5-(hydroxymethyl)furfural + levulinic acid,3,specific,84
+best_available,max,furfural + acetic acid,2,composed_top,100
+best_available,max,furfural + acetic acid,2,conflict,8
+best_available,max,furfural + acetic acid,2,core,60
+best_available,max,furfural + acetic acid,2,specific,108
+best_available,max,furfural + acetic acid + 5-(hydroxymethyl)furfural,3,composed_top,100
+best_available,max,furfural + acetic acid + 5-(hydroxymethyl)furfural,3,conflict,13
+best_available,max,furfural + acetic acid + 5-(hydroxymethyl)furfural,3,core,60
+best_available,max,furfural + acetic acid + 5-(hydroxymethyl)furfural,3,specific,116
+best_available,max,furfural + acetic acid + formic acid,3,composed_top,100
+best_available,max,furfural + acetic acid + formic acid,3,conflict,19
+best_available,max,furfural + acetic acid + formic acid,3,core,60
+best_available,max,furfural + acetic acid + formic acid,3,specific,111
+best_available,max,furfural + acetic acid + lactic acid,3,composed_top,100
+best_available,max,furfural + acetic acid + lactic acid,3,conflict,25
+best_available,max,furfural + acetic acid + lactic acid,3,core,60
+best_available,max,furfural + acetic acid + lactic acid,3,specific,111
+best_available,max,furfural + acetic acid + levulinic acid,3,composed_top,100
+best_available,max,furfural + acetic acid + levulinic acid,3,conflict,22
+best_available,max,furfural + acetic acid + levulinic acid,3,core,60
+best_available,max,furfural + acetic acid + levulinic acid,3,specific,125
+best_available,max,furfural + formic acid,2,composed_top,100
+best_available,max,furfural + formic acid,2,conflict,5
+best_available,max,furfural + formic acid,2,core,67
+best_available,max,furfural + formic acid,2,specific,60
+best_available,max,furfural + formic acid + lactic acid,3,composed_top,100
+best_available,max,furfural + formic acid + lactic acid,3,conflict,10
+best_available,max,furfural + formic acid + lactic acid,3,core,67
+best_available,max,furfural + formic acid + lactic acid,3,specific,64
+best_available,max,furfural + formic acid + levulinic acid,3,composed_top,100
+best_available,max,furfural + formic acid + levulinic acid,3,conflict,7
+best_available,max,furfural + formic acid + levulinic acid,3,core,67
+best_available,max,furfural + formic acid + levulinic acid,3,specific,77
+best_available,max,furfural + lactic acid,2,composed_top,100
+best_available,max,furfural + lactic acid,2,conflict,10
+best_available,max,furfural + lactic acid,2,core,67
+best_available,max,furfural + lactic acid,2,specific,61
+best_available,max,furfural + levulinic acid,2,composed_top,100
+best_available,max,furfural + levulinic acid,2,conflict,7
+best_available,max,furfural + levulinic acid,2,core,67
+best_available,max,furfural + levulinic acid,2,specific,74
+best_available,max,furfural + levulinic acid + lactic acid,3,composed_top,100
+best_available,max,furfural + levulinic acid + lactic acid,3,conflict,11
+best_available,max,furfural + levulinic acid + lactic acid,3,core,67
+best_available,max,furfural + levulinic acid + lactic acid,3,specific,78
+best_available,max,levulinic acid + lactic acid,2,composed_top,100
+best_available,max,levulinic acid + lactic acid,2,core,68
+best_available,max,levulinic acid + lactic acid,2,specific,21
+all_predicted,min,5-(hydroxymethyl)furfural + formic acid,2,composed_top,100
+all_predicted,min,5-(hydroxymethyl)furfural + formic acid,2,core,105
+all_predicted,min,5-(hydroxymethyl)furfural + formic acid,2,specific,42
+all_predicted,min,5-(hydroxymethyl)furfural + formic acid + lactic acid,3,composed_top,100
+all_predicted,min,5-(hydroxymethyl)furfural + formic acid + lactic acid,3,core,105
+all_predicted,min,5-(hydroxymethyl)furfural + formic acid + lactic acid,3,specific,44
+all_predicted,min,5-(hydroxymethyl)furfural + formic acid + levulinic acid,3,composed_top,100
+all_predicted,min,5-(hydroxymethyl)furfural + formic acid + levulinic acid,3,core,105
+all_predicted,min,5-(hydroxymethyl)furfural + formic acid + levulinic acid,3,specific,55
+all_predicted,min,5-(hydroxymethyl)furfural + lactic acid,2,composed_top,100
+all_predicted,min,5-(hydroxymethyl)furfural + lactic acid,2,core,105
+all_predicted,min,5-(hydroxymethyl)furfural + lactic acid,2,specific,44
+all_predicted,min,5-(hydroxymethyl)furfural + levulinic acid,2,composed_top,100
+all_predicted,min,5-(hydroxymethyl)furfural + levulinic acid,2,core,105
+all_predicted,min,5-(hydroxymethyl)furfural + levulinic acid,2,specific,55
+all_predicted,min,5-(hydroxymethyl)furfural + levulinic acid + lactic acid,3,composed_top,100
+all_predicted,min,5-(hydroxymethyl)furfural + levulinic acid + lactic acid,3,core,105
+all_predicted,min,5-(hydroxymethyl)furfural + levulinic acid + lactic acid,3,specific,57
+all_predicted,min,acetic acid + 5-(hydroxymethyl)furfural,2,composed_top,100
+all_predicted,min,acetic acid + 5-(hydroxymethyl)furfural,2,core,105
+all_predicted,min,acetic acid + 5-(hydroxymethyl)furfural,2,specific,44
+all_predicted,min,acetic acid + 5-(hydroxymethyl)furfural + formic acid,3,composed_top,100
+all_predicted,min,acetic acid + 5-(hydroxymethyl)furfural + formic acid,3,core,105
+all_predicted,min,acetic acid + 5-(hydroxymethyl)furfural + formic acid,3,specific,44
+all_predicted,min,acetic acid + 5-(hydroxymethyl)furfural + lactic acid,3,composed_top,100
+all_predicted,min,acetic acid + 5-(hydroxymethyl)furfural + lactic acid,3,core,105
+all_predicted,min,acetic acid + 5-(hydroxymethyl)furfural + lactic acid,3,specific,46
+all_predicted,min,acetic acid + 5-(hydroxymethyl)furfural + levulinic acid,3,composed_top,100
+all_predicted,min,acetic acid + 5-(hydroxymethyl)furfural + levulinic acid,3,core,105
+all_predicted,min,acetic acid + 5-(hydroxymethyl)furfural + levulinic acid,3,specific,57
+all_predicted,min,acetic acid + formic acid,2,composed_top,100
+all_predicted,min,acetic acid + formic acid,2,core,105
+all_predicted,min,acetic acid + formic acid,2,specific,2
+all_predicted,min,acetic acid + formic acid + lactic acid,3,composed_top,100
+all_predicted,min,acetic acid + formic acid + lactic acid,3,core,105
+all_predicted,min,acetic acid + formic acid + lactic acid,3,specific,4
+all_predicted,min,acetic acid + formic acid + levulinic acid,3,composed_top,100
+all_predicted,min,acetic acid + formic acid + levulinic acid,3,core,105
+all_predicted,min,acetic acid + formic acid + levulinic acid,3,specific,15
+all_predicted,min,acetic acid + lactic acid,2,composed_top,100
+all_predicted,min,acetic acid + lactic acid,2,core,105
+all_predicted,min,acetic acid + lactic acid,2,specific,4
+all_predicted,min,acetic acid + levulinic acid,2,composed_top,100
+all_predicted,min,acetic acid + levulinic acid,2,core,105
+all_predicted,min,acetic acid + levulinic acid,2,specific,15
+all_predicted,min,acetic acid + levulinic acid + lactic acid,3,composed_top,100
+all_predicted,min,acetic acid + levulinic acid + lactic acid,3,core,105
+all_predicted,min,acetic acid + levulinic acid + lactic acid,3,specific,17
+all_predicted,min,formic acid + lactic acid,2,composed_top,100
+all_predicted,min,formic acid + lactic acid,2,core,105
+all_predicted,min,formic acid + lactic acid,2,specific,2
+all_predicted,min,formic acid + levulinic acid,2,composed_top,100
+all_predicted,min,formic acid + levulinic acid,2,core,105
+all_predicted,min,formic acid + levulinic acid,2,specific,13
+all_predicted,min,formic acid + levulinic acid + lactic acid,3,composed_top,100
+all_predicted,min,formic acid + levulinic acid + lactic acid,3,core,105
+all_predicted,min,formic acid + levulinic acid + lactic acid,3,specific,15
+all_predicted,min,furfural + 5-(hydroxymethyl)furfural,2,composed_top,100
+all_predicted,min,furfural + 5-(hydroxymethyl)furfural,2,conflict,1
+all_predicted,min,furfural + 5-(hydroxymethyl)furfural,2,core,105
+all_predicted,min,furfural + 5-(hydroxymethyl)furfural,2,specific,51
+all_predicted,min,furfural + 5-(hydroxymethyl)furfural + formic acid,3,composed_top,100
+all_predicted,min,furfural + 5-(hydroxymethyl)furfural + formic acid,3,conflict,1
+all_predicted,min,furfural + 5-(hydroxymethyl)furfural + formic acid,3,core,105
+all_predicted,min,furfural + 5-(hydroxymethyl)furfural + formic acid,3,specific,51
+all_predicted,min,furfural + 5-(hydroxymethyl)furfural + lactic acid,3,composed_top,100
+all_predicted,min,furfural + 5-(hydroxymethyl)furfural + lactic acid,3,conflict,1
+all_predicted,min,furfural + 5-(hydroxymethyl)furfural + lactic acid,3,core,105
+all_predicted,min,furfural + 5-(hydroxymethyl)furfural + lactic acid,3,specific,53
+all_predicted,min,furfural + 5-(hydroxymethyl)furfural + levulinic acid,3,composed_top,100
+all_predicted,min,furfural + 5-(hydroxymethyl)furfural + levulinic acid,3,conflict,1
+all_predicted,min,furfural + 5-(hydroxymethyl)furfural + levulinic acid,3,core,105
+all_predicted,min,furfural + 5-(hydroxymethyl)furfural + levulinic acid,3,specific,64
+all_predicted,min,furfural + acetic acid,2,composed_top,100
+all_predicted,min,furfural + acetic acid,2,core,105
+all_predicted,min,furfural + acetic acid,2,specific,11
+all_predicted,min,furfural + acetic acid + 5-(hydroxymethyl)furfural,3,composed_top,100
+all_predicted,min,furfural + acetic acid + 5-(hydroxymethyl)furfural,3,conflict,1
+all_predicted,min,furfural + acetic acid + 5-(hydroxymethyl)furfural,3,core,105
+all_predicted,min,furfural + acetic acid + 5-(hydroxymethyl)furfural,3,specific,53
+all_predicted,min,furfural + acetic acid + formic acid,3,composed_top,100
+all_predicted,min,furfural + acetic acid + formic acid,3,core,105
+all_predicted,min,furfural + acetic acid + formic acid,3,specific,11
+all_predicted,min,furfural + acetic acid + lactic acid,3,composed_top,100
+all_predicted,min,furfural + acetic acid + lactic acid,3,core,105
+all_predicted,min,furfural + acetic acid + lactic acid,3,specific,13
+all_predicted,min,furfural + acetic acid + levulinic acid,3,composed_top,100
+all_predicted,min,furfural + acetic acid + levulinic acid,3,core,105
+all_predicted,min,furfural + acetic acid + levulinic acid,3,specific,24
+all_predicted,min,furfural + formic acid,2,composed_top,100
+all_predicted,min,furfural + formic acid,2,core,105
+all_predicted,min,furfural + formic acid,2,specific,9
+all_predicted,min,furfural + formic acid + lactic acid,3,composed_top,100
+all_predicted,min,furfural + formic acid + lactic acid,3,core,105
+all_predicted,min,furfural + formic acid + lactic acid,3,specific,11
+all_predicted,min,furfural + formic acid + levulinic acid,3,composed_top,100
+all_predicted,min,furfural + formic acid + levulinic acid,3,core,105
+all_predicted,min,furfural + formic acid + levulinic acid,3,specific,22
+all_predicted,min,furfural + lactic acid,2,composed_top,100
+all_predicted,min,furfural + lactic acid,2,core,105
+all_predicted,min,furfural + lactic acid,2,specific,11
+all_predicted,min,furfural + levulinic acid,2,composed_top,100
+all_predicted,min,furfural + levulinic acid,2,core,105
+all_predicted,min,furfural + levulinic acid,2,specific,22
+all_predicted,min,furfural + levulinic acid + lactic acid,3,composed_top,100
+all_predicted,min,furfural + levulinic acid + lactic acid,3,core,105
+all_predicted,min,furfural + levulinic acid + lactic acid,3,specific,24
+all_predicted,min,levulinic acid + lactic acid,2,composed_top,100
+all_predicted,min,levulinic acid + lactic acid,2,core,105
+all_predicted,min,levulinic acid + lactic acid,2,specific,15
+best_available,min,5-(hydroxymethyl)furfural + formic acid,2,composed_top,100
+best_available,min,5-(hydroxymethyl)furfural + formic acid,2,core,68
+best_available,min,5-(hydroxymethyl)furfural + formic acid,2,specific,13
+best_available,min,5-(hydroxymethyl)furfural + formic acid + lactic acid,3,composed_top,100
+best_available,min,5-(hydroxymethyl)furfural + formic acid + lactic acid,3,core,68
+best_available,min,5-(hydroxymethyl)furfural + formic acid + lactic acid,3,specific,17
+best_available,min,5-(hydroxymethyl)furfural + formic acid + levulinic acid,3,composed_top,100
+best_available,min,5-(hydroxymethyl)furfural + formic acid + levulinic acid,3,core,68
+best_available,min,5-(hydroxymethyl)furfural + formic acid + levulinic acid,3,specific,30
+best_available,min,5-(hydroxymethyl)furfural + lactic acid,2,composed_top,100
+best_available,min,5-(hydroxymethyl)furfural + lactic acid,2,core,68
+best_available,min,5-(hydroxymethyl)furfural + lactic acid,2,specific,14
+best_available,min,5-(hydroxymethyl)furfural + levulinic acid,2,composed_top,100
+best_available,min,5-(hydroxymethyl)furfural + levulinic acid,2,core,68
+best_available,min,5-(hydroxymethyl)furfural + levulinic acid,2,specific,27
+best_available,min,5-(hydroxymethyl)furfural + levulinic acid + lactic acid,3,composed_top,100
+best_available,min,5-(hydroxymethyl)furfural + levulinic acid + lactic acid,3,core,68
+best_available,min,5-(hydroxymethyl)furfural + levulinic acid + lactic acid,3,specific,31
+best_available,min,acetic acid + 5-(hydroxymethyl)furfural,2,composed_top,100
+best_available,min,acetic acid + 5-(hydroxymethyl)furfural,2,conflict,8
+best_available,min,acetic acid + 5-(hydroxymethyl)furfural,2,core,61
+best_available,min,acetic acid + 5-(hydroxymethyl)furfural,2,specific,62
+best_available,min,acetic acid + 5-(hydroxymethyl)furfural + formic acid,3,composed_top,100
+best_available,min,acetic acid + 5-(hydroxymethyl)furfural + formic acid,3,conflict,11
+best_available,min,acetic acid + 5-(hydroxymethyl)furfural + formic acid,3,core,61
+best_available,min,acetic acid + 5-(hydroxymethyl)furfural + formic acid,3,specific,65
+best_available,min,acetic acid + 5-(hydroxymethyl)furfural + lactic acid,3,composed_top,100
+best_available,min,acetic acid + 5-(hydroxymethyl)furfural + lactic acid,3,conflict,13
+best_available,min,acetic acid + 5-(hydroxymethyl)furfural + lactic acid,3,core,61
+best_available,min,acetic acid + 5-(hydroxymethyl)furfural + lactic acid,3,specific,65
+best_available,min,acetic acid + 5-(hydroxymethyl)furfural + levulinic acid,3,composed_top,100
+best_available,min,acetic acid + 5-(hydroxymethyl)furfural + levulinic acid,3,conflict,13
+best_available,min,acetic acid + 5-(hydroxymethyl)furfural + levulinic acid,3,core,61
+best_available,min,acetic acid + 5-(hydroxymethyl)furfural + levulinic acid,3,specific,79
+best_available,min,acetic acid + formic acid,2,composed_top,100
+best_available,min,acetic acid + formic acid,2,conflict,11
+best_available,min,acetic acid + formic acid,2,core,61
+best_available,min,acetic acid + formic acid,2,specific,57
+best_available,min,acetic acid + formic acid + lactic acid,3,composed_top,100
+best_available,min,acetic acid + formic acid + lactic acid,3,conflict,13
+best_available,min,acetic acid + formic acid + lactic acid,3,core,61
+best_available,min,acetic acid + formic acid + lactic acid,3,specific,60
+best_available,min,acetic acid + formic acid + levulinic acid,3,composed_top,100
+best_available,min,acetic acid + formic acid + levulinic acid,3,conflict,13
+best_available,min,acetic acid + formic acid + levulinic acid,3,core,61
+best_available,min,acetic acid + formic acid + levulinic acid,3,specific,74
+best_available,min,acetic acid + lactic acid,2,composed_top,100
+best_available,min,acetic acid + lactic acid,2,conflict,13
+best_available,min,acetic acid + lactic acid,2,core,61
+best_available,min,acetic acid + lactic acid,2,specific,57
+best_available,min,acetic acid + levulinic acid,2,composed_top,100
+best_available,min,acetic acid + levulinic acid,2,conflict,13
+best_available,min,acetic acid + levulinic acid,2,core,61
+best_available,min,acetic acid + levulinic acid,2,specific,71
+best_available,min,acetic acid + levulinic acid + lactic acid,3,composed_top,100
+best_available,min,acetic acid + levulinic acid + lactic acid,3,conflict,14
+best_available,min,acetic acid + levulinic acid + lactic acid,3,core,61
+best_available,min,acetic acid + levulinic acid + lactic acid,3,specific,74
+best_available,min,formic acid + lactic acid,2,composed_top,100
+best_available,min,formic acid + lactic acid,2,core,68
+best_available,min,formic acid + lactic acid,2,specific,7
+best_available,min,formic acid + levulinic acid,2,composed_top,100
+best_available,min,formic acid + levulinic acid,2,core,68
+best_available,min,formic acid + levulinic acid,2,specific,20
+best_available,min,formic acid + levulinic acid + lactic acid,3,composed_top,100
+best_available,min,formic acid + levulinic acid + lactic acid,3,core,68
+best_available,min,formic acid + levulinic acid + lactic acid,3,specific,24
+best_available,min,furfural + 5-(hydroxymethyl)furfural,2,composed_top,100
+best_available,min,furfural + 5-(hydroxymethyl)furfural,2,core,67
+best_available,min,furfural + 5-(hydroxymethyl)furfural,2,specific,67
+best_available,min,furfural + 5-(hydroxymethyl)furfural + formic acid,3,composed_top,100
+best_available,min,furfural + 5-(hydroxymethyl)furfural + formic acid,3,conflict,5
+best_available,min,furfural + 5-(hydroxymethyl)furfural + formic acid,3,core,67
+best_available,min,furfural + 5-(hydroxymethyl)furfural + formic acid,3,specific,70
+best_available,min,furfural + 5-(hydroxymethyl)furfural + lactic acid,3,composed_top,100
+best_available,min,furfural + 5-(hydroxymethyl)furfural + lactic acid,3,conflict,10
+best_available,min,furfural + 5-(hydroxymethyl)furfural + lactic acid,3,core,67
+best_available,min,furfural + 5-(hydroxymethyl)furfural + lactic acid,3,specific,71
+best_available,min,furfural + 5-(hydroxymethyl)furfural + levulinic acid,3,composed_top,100
+best_available,min,furfural + 5-(hydroxymethyl)furfural + levulinic acid,3,conflict,7
+best_available,min,furfural + 5-(hydroxymethyl)furfural + levulinic acid,3,core,67
+best_available,min,furfural + 5-(hydroxymethyl)furfural + levulinic acid,3,specific,84
+best_available,min,furfural + acetic acid,2,composed_top,100
+best_available,min,furfural + acetic acid,2,conflict,8
+best_available,min,furfural + acetic acid,2,core,60
+best_available,min,furfural + acetic acid,2,specific,108
+best_available,min,furfural + acetic acid + 5-(hydroxymethyl)furfural,3,composed_top,100
+best_available,min,furfural + acetic acid + 5-(hydroxymethyl)furfural,3,conflict,13
+best_available,min,furfural + acetic acid + 5-(hydroxymethyl)furfural,3,core,60
+best_available,min,furfural + acetic acid + 5-(hydroxymethyl)furfural,3,specific,116
+best_available,min,furfural + acetic acid + formic acid,3,composed_top,100
+best_available,min,furfural + acetic acid + formic acid,3,conflict,19
+best_available,min,furfural + acetic acid + formic acid,3,core,60
+best_available,min,furfural + acetic acid + formic acid,3,specific,111
+best_available,min,furfural + acetic acid + lactic acid,3,composed_top,100
+best_available,min,furfural + acetic acid + lactic acid,3,conflict,25
+best_available,min,furfural + acetic acid + lactic acid,3,core,60
+best_available,min,furfural + acetic acid + lactic acid,3,specific,111
+best_available,min,furfural + acetic acid + levulinic acid,3,composed_top,100
+best_available,min,furfural + acetic acid + levulinic acid,3,conflict,22
+best_available,min,furfural + acetic acid + levulinic acid,3,core,60
+best_available,min,furfural + acetic acid + levulinic acid,3,specific,125
+best_available,min,furfural + formic acid,2,composed_top,100
+best_available,min,furfural + formic acid,2,conflict,5
+best_available,min,furfural + formic acid,2,core,67
+best_available,min,furfural + formic acid,2,specific,60
+best_available,min,furfural + formic acid + lactic acid,3,composed_top,100
+best_available,min,furfural + formic acid + lactic acid,3,conflict,10
+best_available,min,furfural + formic acid + lactic acid,3,core,67
+best_available,min,furfural + formic acid + lactic acid,3,specific,64
+best_available,min,furfural + formic acid + levulinic acid,3,composed_top,100
+best_available,min,furfural + formic acid + levulinic acid,3,conflict,7
+best_available,min,furfural + formic acid + levulinic acid,3,core,67
+best_available,min,furfural + formic acid + levulinic acid,3,specific,77
+best_available,min,furfural + lactic acid,2,composed_top,100
+best_available,min,furfural + lactic acid,2,conflict,10
+best_available,min,furfural + lactic acid,2,core,67
+best_available,min,furfural + lactic acid,2,specific,61
+best_available,min,furfural + levulinic acid,2,composed_top,100
+best_available,min,furfural + levulinic acid,2,conflict,7
+best_available,min,furfural + levulinic acid,2,core,67
+best_available,min,furfural + levulinic acid,2,specific,74
+best_available,min,furfural + levulinic acid + lactic acid,3,composed_top,100
+best_available,min,furfural + levulinic acid + lactic acid,3,conflict,11
+best_available,min,furfural + levulinic acid + lactic acid,3,core,67
+best_available,min,furfural + levulinic acid + lactic acid,3,specific,78
+best_available,min,levulinic acid + lactic acid,2,composed_top,100
+best_available,min,levulinic acid + lactic acid,2,core,68
+best_available,min,levulinic acid + lactic acid,2,specific,21

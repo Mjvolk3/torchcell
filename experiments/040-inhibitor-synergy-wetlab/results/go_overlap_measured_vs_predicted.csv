@@ -1,0 +1,9 @@
+compound,target,measured,predicted,top_genes_shared,top_n,n_sig_measured,n_sig_predicted,n_sig_shared,jaccard_sig_terms,fraction_measured_terms_recovered,control_top_genes_shared_with_measured,n_sig_control,n_sig_shared_measured_control,jaccard_sig_terms_measured_control,fraction_measured_terms_recovered_by_control,n_sig_shared_measured_predicted_not_control,control_top_genes_shared_with_predicted,n_sig_shared_predicted_control
+furfural,raw,furfural|measured_b002,furfural|predicted_loco,19,100,0,20,0,0.0,,20.0,58.0,0.0,0.0,,0.0,77.0,19.0
+5-(hydroxymethyl)furfural,raw,5-(hydroxymethyl)furfural|measured_b002,5-(hydroxymethyl)furfural|predicted_loco,22,100,0,4,0,0.0,,12.0,58.0,0.0,0.0,,0.0,62.0,4.0
+acetic acid,raw,sodium acetate|measured_hoepfner_hop,acetic acid|predicted_all32,10,100,20,49,11,0.1896551724137931,0.55,8.0,58.0,11.0,0.16417910447761194,0.55,0.0,85.0,48.0
+levulinic acid,raw,levulinic acid|measured_b001,levulinic acid|predicted_all32,24,100,0,43,0,0.0,,20.0,58.0,0.0,0.0,,0.0,78.0,40.0
+furfural,centered,furfural|measured_b002,furfural|predicted_loco,15,100,0,13,0,0.0,,,,,,,,,
+5-(hydroxymethyl)furfural,centered,5-(hydroxymethyl)furfural|measured_b002,5-(hydroxymethyl)furfural|predicted_loco,43,100,15,6,0,0.0,0.0,,,,,,,,
+acetic acid,centered,sodium acetate|measured_hoepfner_hop,acetic acid|predicted_all32,15,100,5,5,0,0.0,0.0,,,,,,,,
+levulinic acid,centered,levulinic acid|measured_b001,levulinic acid|predicted_all32,38,100,11,0,0,0.0,0.0,,,,,,,,

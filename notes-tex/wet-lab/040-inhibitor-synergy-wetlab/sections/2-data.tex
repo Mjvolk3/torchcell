@@ -1,0 +1,102 @@
+%% notes-tex/wet-lab/040-inhibitor-synergy-wetlab/sections/2-data.tex
+
+\section{Data: one private strain screen and four public chemogenomic screens\secstatus{todo}}
+\label{sec:data}
+
+\notesec{The private dataset} \texttt{InhibitorBioscreenVolk2021Dataset} serves 977
+records, one per well, from the dev LMDB at
+\file{\$DATA\_ROOT/data/torchcell/inhibitor\_bioscreen\_volk2021}. Every record carries
+the run, the well duration, each inhibitor's dose, the derived fitness and the growth
+call. The provenance record
+(\file{results/wetlab\_provenance.json}, pydantic \texttt{WetlabProvenance}) pins the
+report OCR by sha256 together with the raw-mirror manifest and the eight archive files
+the loader consumed, so the table below rebuilds from hash-pinned bytes rather than from
+a directory listing. The tidy well table
+(\file{results/wetlab\_wells.csv}) is read from that LMDB and is re-pointed at the
+knowledge graph once the served build carries the private dataset; the records are the
+same.
+
+\notesec{The growth call, and why there are two} The served records call growth from the
+raw curve: a well grew when its baseline-subtracted optical density rose by at least
+0.3, and its generation time is taken from the steepest 3 h window. The 2021 analysis
+instead used the Bioscreen software's generation times, computed by PRECOG from
+calibrated cell counts.
+\external{2021 report, section 1.2.3: \sourcetext{Growth curves are then processed with
+PRECOG software using estimated cell counts from calibration curves to compute doubling
+times}}
+The two calls agree on 185 of 197 ex23 wells, which the loader pins at 0.939086. The 12
+that disagree are all three replicates of four 5-HMF combinations: 5-HMF with lactic
+acid, 5-HMF with levulinic acid, furfural with acetic acid and 5-HMF, and furfural with
+5-HMF and formic acid. The software assigned them generation times of 6.6 to 10.6 h
+while their optical density rose only 0.085 to 0.277, below the 0.3 rise the raw-curve
+call requires (\file{results/wetlab\_growth\_call\_check.csv}). The scales also differ:
+the ex23 control generation time is 1.345 h from the raw curves and 1.815 h from the
+software ($n = 8$ control wells), so the two fitness columns are never mixed.
+
+The served call is primary. The disputed wells are all 5-HMF combinations, which is
+exactly where a synergy call for 5-HMF would land, so the software call is carried as a
+sensitivity and every claim-1 score is reported under both.
+
+%% SOURCE: experiments/040-inhibitor-synergy-wetlab/scripts/notes_tex_tables.py ->
+%% tables/t2-growth-call.tex, from results/mixture_combinations.csv (mixture_rules.py).
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption[]{The 63 ex23 combinations under the two growth calls. A combination grew when at
+least one of its three wells grew; the mean fitness is over the combinations that grew,
+each on its own call's scale. The software call reproduces the counts of experiment 039
+exactly, which places the difference in the call rather than in the table.}
+\label{tab:growthcall}
+\input{tables/t2-growth-call}
+\end{table}
+
+\notesec{Doses} Every dose is stored in g\,L$^{-1}$, the unit the stock sheets use, and
+converted to mM with the standard formula weight, which is what makes a dose comparable
+to a public screen's (Table~\ref{tab:coverage}). The spread is wide: at the ex23 doses
+lactic acid is 222 mM and furfural is 15.6 mM, a factor of 14, so a rule that ignores
+potency and counts inhibitors cannot order these combinations.
+
+\notesec{The public tables, and which inhibitor each screen holds} The pooled
+chemogenomic table of experiment 033 (build 002, TMM-normalized) holds the 32 published
+Vanacloig-Pedros 2022 compounds \texttt{10.1093/femsyr/foac036}, of which only furfural
+and 5-HMF are among the six. Levulinic acid and sodium acetate were dropped from build
+002 as tokens the paper does not report (issue \#501); build 001 still serves them and
+is read for supplementary comparison rows only. Sodium acetate is measured in Hoepfner
+2014 \texttt{10.1016/j.micres.2013.11.004}, at 125 and 150 mM in YPD with homozygous
+diploid deletions, a different screen. Formic and lactic acid are in no screen, so their
+profiles can only be predictions. Hillenmeyer 2008
+\texttt{10.1126/science.1150021} contributes no inhibitor, and enters as the only public
+data with two compounds in one well (Section~\ref{sec:methods}).
+
+%% SOURCE: experiments/040-inhibitor-synergy-wetlab/scripts/notes_tex_tables.py ->
+%% tables/t3-coverage.tex, from results/wetlab_wells.csv and results/profile_matrix.json
+%% (wetlab_table.py, inhibitor_profiles.py).
+\begin{table}[htbp]
+\centering
+\scriptsize
+\caption[]{The six inhibitors: dose at ex23, public coverage, and the profile the
+best-available matrix uses for each. Replicate reliability is the Spearman correlation
+between the screen's own replicate profiles, and the column is blank where the source
+screen gives no replicate pair. Acetic acid is matched to Hoepfner's sodium acetate,
+the same anion at YPD pH, which is a stated assumption and not a measurement; 5-HMF is
+measured but its reliability is below zero, so the matrix uses its prediction instead.}
+\label{tab:coverage}
+\input{tables/t3-coverage}
+\end{table}
+
+\notesec{Confounds, carried into every claim} Three, and none is removable from these
+data.
+
+\begin{itemize}[leftmargin=1.4em,itemsep=1pt]
+\item \textbf{Run length.} 72 h for ex21, 85 h for ex23, 96 h for the isoboles. No
+  growth is a statement about the run, so a combination recorded as not grown in ex23
+  might grow in 96 h. The classification scores of claim 1 inherit this.
+\item \textbf{Strain and medium.} bAID in aerobic YPD against Vanacloig's haploid
+  deletion pool in anaerobic SYNH3 at IC30, and against Hillenmeyer's heterozygous
+  diploid pool in aerobic YPD read as $\log_2$ depletion over 20 generations. A profile
+  measured in one is carried to the other without a correction.
+\item \textbf{The ex21 control.} Its uninhibited wells grew more slowly than its
+  low-dose wells (mean fitness 1.012, 17 of 18 grew), so ex21 is normalized by the
+  fitted top of each Hill curve rather than by its controls, and the fitted tops run
+  1.00 to 1.25.
+\end{itemize}

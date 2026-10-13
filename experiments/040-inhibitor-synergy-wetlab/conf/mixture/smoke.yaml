@@ -1,0 +1,71 @@
+# experiments/040-inhibitor-synergy-wetlab/conf/mixture/smoke.yaml
+#
+# CPU smoke of train_mixture.py: every switch of the ladder exercised at the smallest
+# size that still writes a complete scores table, on the pattern of 038's
+# conf/factorized/smoke_envenc.yaml (gene_batch 8, env_chunk 2, two steps). Two
+# compounds per pass keeps the MATH attention kernel, the only one available on CPU,
+# inside memory on a 6,607-token sequence.
+#
+#   DATA_ROOT=/scratch/projects/torchcell-scratch PYTHONPATH=<worktree> WANDB_MODE=offline \
+#   timeout 1200 python experiments/040-inhibitor-synergy-wetlab/scripts/train_mixture.py \
+#     --sweep experiments/040-inhibitor-synergy-wetlab/conf/mixture/smoke.yaml
+#
+# The numbers a smoke writes are noise by construction (two steps); what it checks is
+# that every evaluation column is populated and that no arm of the ladder crashes.
+- name: smoke_tokens_film_anchors
+  sources: [vanacloig]
+  host_train: anchors
+  dose: film
+  compound_set: tokens
+  env_layers: 1
+  env_chunk: 2
+  gene_batch: 8
+  host_batch: 4
+  cond_batch: 4
+  steps: 2
+  eval_every: 2
+  seeds: [0]
+  folds: [0]
+  cgt_layers: 1
+  cgt_lambda: 0.0
+  select: last
+  fit_on: pool
+- name: smoke_mean_doseoff_joint
+  sources: [vanacloig]
+  host_train: anchors+ex21
+  dose: "off"
+  compound_set: mean
+  require_molar_dose: false
+  env_layers: 1
+  env_chunk: 2
+  gene_batch: 8
+  host_batch: 4
+  cond_batch: 4
+  steps: 2
+  eval_every: 2
+  seeds: [0]
+  folds: [0]
+  cgt_layers: 1
+  cgt_lambda: 0.0
+  select: last
+  fit_on: pool
+- name: smoke_aux_finetune
+  sources: [vanacloig, hoepfner_hop]
+  host_train: finetune_ex21
+  finetune_epochs: 1
+  finetune_scope: host_head+env_encoder
+  dose: film
+  compound_set: tokens
+  env_layers: 1
+  env_chunk: 2
+  gene_batch: 8
+  host_batch: 4
+  cond_batch: 4
+  steps: 2
+  eval_every: 2
+  seeds: [0]
+  folds: [0]
+  cgt_layers: 1
+  cgt_lambda: 0.0
+  select: last
+  fit_on: pool

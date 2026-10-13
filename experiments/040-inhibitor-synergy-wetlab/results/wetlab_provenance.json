@@ -1,0 +1,32 @@
+{
+  "dataset_class": "InhibitorBioscreenVolk2021Dataset",
+  "dataset_root": "/scratch/projects/torchcell-scratch/data/torchcell/inhibitor_bioscreen_volk2021",
+  "n_records": 977,
+  "publication_title": "Machine Learning for Engineering Improved Yeast Fitness",
+  "publication_identifier": "paper.pdf sha256:4c2fcf11e16468b20fbbd589f651821bff5904884a7584ccae27ee2b70ec60b9",
+  "report_pdf_sha256": "4c2fcf11e16468b20fbbd589f651821bff5904884a7584ccae27ee2b70ec60b9",
+  "raw_mirror_manifest_path": "/scratch/projects/torchcell-scratch/torchcell-raw/volkPreliminaryExamReport2021/manifest.json",
+  "raw_mirror_manifest_sha256": "dd919f61bfa7dbe4ef8b8db4cdd042c897f981142c3d4c4cb2d8a6842f1a60b8",
+  "consumed_raw_sha256": {
+    "data/01_bioscreenc_raw/MV_ex21_inhibitor_titration.csv": "b4127ab7279ea2fc4d814f8eeb79f6ebd875d21bdc150b441960c5126f69bdf6",
+    "data/01_bioscreenc_raw/MV_ex23_Magic_inhibitor_combinations.csv": "691e6e90b479789596c262a7aa9187d3c571b827c3f436c5c1dde8ef7d1624a9",
+    "data/01_bioscreenc_raw/MV_ex26_inhibitor_isobole_FF_AA.csv": "f21eab6d29642732d80d0746bf8e98a4866b5c9656d6b2f94a75608c450cba1f",
+    "data/01_bioscreenc_raw/MV_ex27_inhibitor_isobole_FA_AA.csv": "0dd71ff2cc2c827f6fbd3db715ce2ad3496f6012368a35c360306a429a17640f",
+    "data/01_bioscreenc_raw/MV_ex28_inhibitor_isobole_HMF_AA.csv": "4a8f0989e6960cb58c65e9337a482a50fc39e83b2e610df374bc34b4266204f7",
+    "data/03_analysis_code/multi_knockout/experiments/bsc/ex23/MV_ex23_preprocessed.csv": "e96523b4a0c65522b78073ee016a4b0c4966e5022860a80c4dc4afdbed6faf44",
+    "data/02_wet_lab_records/experiments/inhibitors.xlsx": "df3a32b98fb2fdbbefdc212517fe34953a51216f16990745e624126515f6b3c5",
+    "data/02_wet_lab_records/experiments/inhibitors_titration_array.xlsx": "13847d3b252807686c4713bc9b2f70bd6df4cf33e241291a1f37e1812260a530"
+  },
+  "trait_source": "raw_curve",
+  "sensitivity_trait_source": "ex23 only: bioscreen.software_generation_times (the gt column of data/03_analysis_code/multi_knockout/experiments/bsc/ex23/MV_ex23_preprocessed.csv), fitness on its own WT scale",
+  "replicate_ids_from": "torchcell.datasets.private_torchcell.bioscreen.layout",
+  "molar_mass_g_per_mol": {
+    "FF": 96.08,
+    "AA": 60.05,
+    "HMF": 126.11,
+    "FA": 46.03,
+    "LVA": 116.12,
+    "LA": 90.08
+  },
+  "generating_script": "experiments/040-inhibitor-synergy-wetlab/scripts/wetlab_table.py"
+}

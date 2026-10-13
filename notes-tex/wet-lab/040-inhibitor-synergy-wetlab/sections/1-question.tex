@@ -1,0 +1,103 @@
+%% notes-tex/wet-lab/040-inhibitor-synergy-wetlab/sections/1-question.tex
+
+\section{The question, and what the 2021 runs measured\secstatus{todo}}
+\label{sec:question}
+
+A chemogenomic screen measures a compound's effect on a pool of deletion strains, and
+the models of experiments 031 to 038 predict that effect from the compound's structure.
+The host those models never see is the one a fermentation runs in: an engineered strain
+with no deletion, growing in a medium that holds several inhibitors at once. The
+question is whether a model fit on public chemogenomic screens can say anything about
+that host, and the measurement that can answer it already exists.
+
+\term{bAID} is the strain of every run below. Lian 2019 built it by integrating
+PmeI-digested pAID6 into BY4742 and selecting for G418 resistance, and its
+Supplementary Table 9 gives the genotype as
+\file{BY4742-Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]}; the 2021
+report calls the same strain \sourcetext{BY4742-iAID6}.
+\external{Lian 2019 (MinerU OCR of the publisher PDF, library key
+\texttt{lianMultifunctionalGenomewideCRISPR2019}); the sha256-pinned quotes are in
+\file{torchcell/datasets/private\_torchcell/volk2021\_sources.py}}
+It carries the CRISPR-AID machinery and no deletion, so a model asked about it is asked
+about the \term{empty genotype}: the wild-type genome under a perturbed environment.
+
+\notesec{The six inhibitors} Furfural, acetic acid, 5-(hydroxymethyl)furfural (5-HMF),
+formic acid, levulinic acid and lactic acid, the degradation products a bioenergy
+sorghum hydrolysate carries into a fermentation. Short forms FF, AA, HMF, FA, LVA and
+LA appear in the figure panels and nowhere in the prose.
+
+\notesec{The five runs} All on a Bioscreen C, 200 wells per run, optical density over
+time, aerobic YPD, biological replicates randomized across well positions
+(Table~\ref{tab:runs}). The single-agent titrations (ex21) ran 72 h, the 63 combinations
+(ex23) 85 h, and the three two-way dose grids (ex26 to ex28) 96 h. The doses of ex23
+were chosen from ex21 by the report's own rule, \sourcetext{the first concentration that
+showed an increase in doubling time while also showing low doubling time variance}.
+\external{2021 preliminary exam report, section 2.2.1 (MinerU 2.7.6 OCR, 200 dpi, of the
+submitted PDF; sha256 recorded in \file{results/wetlab\_provenance.json})}
+
+%% SOURCE: experiments/040-inhibitor-synergy-wetlab/scripts/notes_tex_tables.py ->
+%% tables/t1-runs.tex, from results/wetlab_wells.csv (wetlab_table.py).
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption[]{The five Bioscreen C runs of 2021, as the served records carry them. Length is
+the longest well duration in the run, so a combination that never grew is a statement
+about that length and no longer. Growth is the served raw-curve call of
+Section~\ref{sec:data}. The isobole runs carry two biological replicates per dose cell
+rather than three.}
+\label{tab:runs}
+\input{tables/t1-runs}
+\end{table}
+
+\notesec{The four claims, as registered} Each was allowed to fail, and the order was
+fixed: the model-free references first, because a reference rule that already explains
+the combinations leaves a trained model nothing to add.
+
+\begin{enumerate}[leftmargin=1.4em,itemsep=2pt]
+\item Growth under combinations departs from independence. Reference rules from the ex21
+  single-agent curves: Bliss independence, Loewe additivity, highest single agent;
+  scored on the 63 ex23 combinations (grew within 85 h over 63; fitness over the 25 that
+  grew) and the three isobole grids (front against the Loewe line). Hypothesis:
+  synergistic relative to Bliss (Bliss gives 0.60 for the four mildest singles together;
+  nothing with four grew).
+\item Chemogenomic profile similarity anticipates which pairs deviate. Measured
+  Vanacloig profiles where they exist, compound-cold ridge-FCFP4 profiles for formic and
+  lactic acid (and, as the fairness check, for the shared compounds from their held-out
+  folds). Tested on 15 pairs (permutation) and the three isoboles; HMF x acetic acid is
+  shown but excluded (single run, growth islands; 039).
+\item Deletion profiles compose under a mixture by a rule measurable on public data:
+  Hillenmeyer HET's 26 two-compound environments against their single-compound partners
+  (sum, mean, max, Bliss-style product); the base rate of emergent and masked genes.
+\item Post-analysis only, not a validated prediction: composed profiles nominate the
+  genes a screen under each combination would recover (core, compound-specific,
+  conflict). The check is GO enrichment of the nominated sets, and whether it overlaps
+  the terms the measured single-compound profiles carry. No in-house screen exists to
+  test them (the thesis archive holds only the library-sequencing correspondence for
+  that screen).
+\end{enumerate}
+
+\begin{keybox}
+\textbf{Measured.} All four claims on CPU, from the committed scripts of
+\file{experiments/040-inhibitor-synergy-wetlab/scripts/}: claim 1 holds, claim 2 fails as
+registered, claim 3 holds on public data, claim 4 is a post-analysis whose nominations
+are hypotheses. Every score is reported under both growth calls.
+
+\textbf{Not measured.} Any trained model on this task. The mixture trainer is being
+written, no run exists, and no number below comes from one. No screen of the bAID
+deletion pool under any inhibitor combination exists, so claim 3's composition rule is
+carried to these compounds as a labeled hypothesis and claim 4's nominations are
+untested.
+\end{keybox}
+
+\notesec{Vocabulary} \term{Fitness} is the ratio of the uninhibited doubling time to the
+well's doubling time, so the uninhibited control is 1 and a well that never grew is 0.
+The \term{served call} derives that doubling time from the raw optical-density curve and
+is primary; the \term{software call} takes the Bioscreen software's generation time and
+is carried as a sensitivity (Section~\ref{sec:data}). A \term{combination} is a set of
+inhibitors each at one dose, and the 63 combinations of ex23 are every non-empty subset
+of the six that the design covers. A \term{profile} is a compound's vector of per-gene
+deletion responses, $\log_2$ of treatment over control, negative when the deletion is
+sick. \term{Compound-cold} means a compound whose profile was held out of the fit
+entirely, which is what a prediction for a never-screened inhibitor has to be. A
+\term{reference rule} predicts a combination's fitness from its single agents and
+contains no fitted parameter beyond the single-agent curves.

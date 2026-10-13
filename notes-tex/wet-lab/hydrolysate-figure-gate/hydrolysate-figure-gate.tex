@@ -1,0 +1,64 @@
+%% notes-tex/wet-lab/hydrolysate-figure-gate/hydrolysate-figure-gate.tex
+%% [[experiments.040-inhibitor-synergy-wetlab]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/wet-lab/hydrolysate-figure-gate/hydrolysate-figure-gate.tex
+%%
+%% Mockups of the hydrolysate inhibitor figure of manuscript section R5, drug exposure,
+%% held for a decision before any of them enters the paper.
+%%
+%% Build:  make numbers  -> sheets and macros from the result files
+%%         make plots    -> convert the newest sheets into figures/
+%%         make          -> hydrolysate-figure-gate.pdf
+%%         make check    -> formatting / provenance gate
+%%
+%% EVERY plotted value and every number a caption prints comes from a result file under
+%% experiments/040, 033, 035 or 038 through experiments/040-inhibitor-synergy-wetlab/
+%% scripts/figure_gate_panels.py (tables/gate_numbers.tex). Nothing is typed into a
+%% figure or a caption.
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+\usepackage{longtable}
+
+\emergencystretch=3em
+
+\input{tables/gate_numbers}
+\input{tables/gate_figure_names}
+
+%% Run names as macros so a caption types no digits. The Bioscreen runs are named
+%% ex21 (the single-agent titrations), ex23 (the combination plate) and ex26 to ex28
+%% (the isobole grids) in the wet-lab records, and those names are identifiers rather
+%% than numbers; a caption still prints them through a macro so the "no digits in a
+%% caption" rule needs no exception.
+\newcommand{\extitration}{\texttt{ex21}}
+\newcommand{\excombination}{\texttt{ex23}}
+\newcommand{\corrected}{the corrected-store campaign}
+
+%% The color and hatch key, stated once and carried by every data figure.
+\newcommand{\colorkey}{Color is the source of a predicted value: amber, a measured
+value, whether a public screen or a Bioscreen well; brick, Bliss independence; lilac,
+Loewe additivity; wheat, the highest single agent; bronze, the mean of the
+single-compound profiles; steel blue, a model learned on chemistry features, whose
+kernel and encoder are written in the label; denim, the cell graph transformer; gray, a
+gene-mean or permutation control and chance. Hatching is the software growth call and
+appears only where a panel draws both calls; a plain bar is the served raw-curve call,
+which is primary. A lighter fill of the same color is a second reading of the same arm,
+and the panel's legend names it. A label with no bar is an arm that has not run.}
+
+\title{\vspace{-1.5em}Figure 5 Gate\\
+  {\large Drug Exposure, the Hydrolysate Inhibitor Figure, as Mockups}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\tccontents
+
+\input{sections/1-decision}
+\input{sections/2-mockups}
+\input{sections/3-remaining}
+\input{sections/4-state}
+
+\end{document}

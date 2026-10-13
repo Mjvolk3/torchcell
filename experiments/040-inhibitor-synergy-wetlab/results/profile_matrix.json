@@ -1,0 +1,301 @@
+{
+  "sign": "log2(inhibitor/control); NEGATIVE = sick (sensitive deletion), positive = resistant",
+  "value_columns": "profile_matrix.csv: '<version>|<target>|<inhibitor>'; profile_all.csv: '<compound>|<source>|<target>'",
+  "targets": {
+    "raw": "the served response (measured) or the ridge prediction (predicted)",
+    "centered": "minus the gene's mean over the 32 build-002 compounds (measured b002), over the same 32 in build 001 (measured b001), or minus the PREDICTED gene mean over the fitted compounds (predicted)"
+  },
+  "reliability_min": 0.5,
+  "top_n": 100,
+  "n_genes": 3587,
+  "inhibitors": [
+    {
+      "abbreviation": "FF",
+      "name": "furfural",
+      "smiles": "C1=COC(=C1)C=O",
+      "smiles_source": "private loader Compound.smiles",
+      "inchikey": "HYBBIBNJHNGZAN-UHFFFAOYSA-N",
+      "vanacloig_name": "furfural",
+      "vanacloig_build": "002"
+    },
+    {
+      "abbreviation": "AA",
+      "name": "acetic acid",
+      "smiles": "CC(=O)O",
+      "smiles_source": "private loader Compound.smiles",
+      "inchikey": "QTBSBXVTEAMEQO-UHFFFAOYSA-N",
+      "vanacloig_name": "sodium acetate",
+      "vanacloig_build": "001"
+    },
+    {
+      "abbreviation": "HMF",
+      "name": "5-(hydroxymethyl)furfural",
+      "smiles": "C1=C(OC(=C1)C=O)CO",
+      "smiles_source": "private loader Compound.smiles",
+      "inchikey": "NOEGNKMFWQHSLB-UHFFFAOYSA-N",
+      "vanacloig_name": "5-(hydroxymethyl)furfural",
+      "vanacloig_build": "002"
+    },
+    {
+      "abbreviation": "FA",
+      "name": "formic acid",
+      "smiles": "OC=O",
+      "smiles_source": "assigned here (loader has an identity gap)",
+      "inchikey": "BDAGIHXWWSANSR-UHFFFAOYSA-N",
+      "vanacloig_name": null,
+      "vanacloig_build": null
+    },
+    {
+      "abbreviation": "LVA",
+      "name": "levulinic acid",
+      "smiles": "CC(=O)CCC(=O)O",
+      "smiles_source": "private loader Compound.smiles",
+      "inchikey": "JOOXCMJARBKPKM-UHFFFAOYSA-N",
+      "vanacloig_name": "levulinic acid",
+      "vanacloig_build": "001"
+    },
+    {
+      "abbreviation": "LA",
+      "name": "lactic acid",
+      "smiles": "CC(O)C(=O)O",
+      "smiles_source": "assigned here (loader has an identity gap)",
+      "inchikey": "JVTAAEKCZFNVCJ-UHFFFAOYSA-N",
+      "vanacloig_name": null,
+      "vanacloig_build": null
+    }
+  ],
+  "choices": [
+    {
+      "version": "best_available",
+      "inhibitor": "furfural",
+      "abbreviation": "FF",
+      "profile": "furfural|measured_b002",
+      "source": "measured_vanacloig_b002",
+      "measured_reliability": 0.769269713707756,
+      "prediction_check_spearman_centered": 0.34085532519213246,
+      "reason": "measured reliability 0.77 >= 0.5"
+    },
+    {
+      "version": "all_predicted",
+      "inhibitor": "furfural",
+      "abbreviation": "FF",
+      "profile": "furfural|predicted_loco",
+      "source": "predicted_ridge_loco",
+      "measured_reliability": 0.769269713707756,
+      "prediction_check_spearman_centered": 0.34085532519213246,
+      "reason": "every column predicted"
+    },
+    {
+      "version": "best_available",
+      "inhibitor": "acetic acid",
+      "abbreviation": "AA",
+      "profile": "sodium acetate|measured_hoepfner_hop",
+      "source": "measured_hoepfner_hop",
+      "measured_reliability": null,
+      "prediction_check_spearman_centered": -0.08379235962094639,
+      "reason": "Hoepfner HOP sodium acetate as acetic acid (cross-screen, salt for acid; 125 vs 150 mM Spearman 0.68)"
+    },
+    {
+      "version": "all_predicted",
+      "inhibitor": "acetic acid",
+      "abbreviation": "AA",
+      "profile": "acetic acid|predicted_all32",
+      "source": "predicted_ridge_all32",
+      "measured_reliability": null,
+      "prediction_check_spearman_centered": -0.08379235962094639,
+      "reason": "every column predicted"
+    },
+    {
+      "version": "best_available",
+      "inhibitor": "5-(hydroxymethyl)furfural",
+      "abbreviation": "HMF",
+      "profile": "5-(hydroxymethyl)furfural|predicted_loco",
+      "source": "predicted_ridge_loco",
+      "measured_reliability": -0.04786037063284132,
+      "prediction_check_spearman_centered": 0.4251900664879089,
+      "reason": "measured reliability -0.05 < 0.5"
+    },
+    {
+      "version": "all_predicted",
+      "inhibitor": "5-(hydroxymethyl)furfural",
+      "abbreviation": "HMF",
+      "profile": "5-(hydroxymethyl)furfural|predicted_loco",
+      "source": "predicted_ridge_loco",
+      "measured_reliability": -0.04786037063284132,
+      "prediction_check_spearman_centered": 0.4251900664879089,
+      "reason": "every column predicted"
+    },
+    {
+      "version": "best_available",
+      "inhibitor": "formic acid",
+      "abbreviation": "FA",
+      "profile": "formic acid|predicted_all32",
+      "source": "predicted_ridge_all32",
+      "measured_reliability": null,
+      "prediction_check_spearman_centered": null,
+      "reason": "no measured profile in build 002 or Hoepfner"
+    },
+    {
+      "version": "all_predicted",
+      "inhibitor": "formic acid",
+      "abbreviation": "FA",
+      "profile": "formic acid|predicted_all32",
+      "source": "predicted_ridge_all32",
+      "measured_reliability": null,
+      "prediction_check_spearman_centered": null,
+      "reason": "every column predicted"
+    },
+    {
+      "version": "best_available",
+      "inhibitor": "levulinic acid",
+      "abbreviation": "LVA",
+      "profile": "levulinic acid|predicted_all32",
+      "source": "predicted_ridge_all32",
+      "measured_reliability": null,
+      "prediction_check_spearman_centered": null,
+      "reason": "no measured profile in build 002 or Hoepfner"
+    },
+    {
+      "version": "all_predicted",
+      "inhibitor": "levulinic acid",
+      "abbreviation": "LVA",
+      "profile": "levulinic acid|predicted_all32",
+      "source": "predicted_ridge_all32",
+      "measured_reliability": null,
+      "prediction_check_spearman_centered": null,
+      "reason": "every column predicted"
+    },
+    {
+      "version": "best_available",
+      "inhibitor": "lactic acid",
+      "abbreviation": "LA",
+      "profile": "lactic acid|predicted_all32",
+      "source": "predicted_ridge_all32",
+      "measured_reliability": null,
+      "prediction_check_spearman_centered": null,
+      "reason": "no measured profile in build 002 or Hoepfner"
+    },
+    {
+      "version": "all_predicted",
+      "inhibitor": "lactic acid",
+      "abbreviation": "LA",
+      "profile": "lactic acid|predicted_all32",
+      "source": "predicted_ridge_all32",
+      "measured_reliability": null,
+      "prediction_check_spearman_centered": null,
+      "reason": "every column predicted"
+    }
+  ],
+  "profiles": {
+    "furfural|measured_b002": {
+      "source": "measured_vanacloig_b002",
+      "reliability": 0.769269713707756,
+      "options": null,
+      "inner_centered_spearman": null,
+      "n_genes_raw": 3492
+    },
+    "5-(hydroxymethyl)furfural|measured_b002": {
+      "source": "measured_vanacloig_b002",
+      "reliability": -0.04786037063284132,
+      "options": null,
+      "inner_centered_spearman": null,
+      "n_genes_raw": 3503
+    },
+    "levulinic acid|measured_b001": {
+      "source": "measured_vanacloig_b001",
+      "reliability": 0.14658591352267913,
+      "options": null,
+      "inner_centered_spearman": null,
+      "n_genes_raw": 3485
+    },
+    "sodium acetate|measured_b001": {
+      "source": "measured_vanacloig_b001",
+      "reliability": 0.3700641454268262,
+      "options": null,
+      "inner_centered_spearman": null,
+      "n_genes_raw": 3508
+    },
+    "furfural|measured_b001": {
+      "source": "measured_vanacloig_b001",
+      "reliability": 0.7711179466565233,
+      "options": null,
+      "inner_centered_spearman": null,
+      "n_genes_raw": 3492
+    },
+    "5-(hydroxymethyl)furfural|measured_b001": {
+      "source": "measured_vanacloig_b001",
+      "reliability": -0.054749292232088465,
+      "options": null,
+      "inner_centered_spearman": null,
+      "n_genes_raw": 3503
+    },
+    "sodium acetate|measured_hoepfner_hop": {
+      "source": "measured_hoepfner_hop",
+      "reliability": null,
+      "options": null,
+      "inner_centered_spearman": null,
+      "n_genes_raw": 3453
+    },
+    "furfural|predicted_loco": {
+      "source": "predicted_ridge_loco",
+      "reliability": null,
+      "options": "lam=0.1,rank=16",
+      "inner_centered_spearman": 0.3471737370107229,
+      "n_genes_raw": 3587
+    },
+    "5-(hydroxymethyl)furfural|predicted_loco": {
+      "source": "predicted_ridge_loco",
+      "reliability": null,
+      "options": "lam=0.1,rank=16",
+      "inner_centered_spearman": 0.3509476691205885,
+      "n_genes_raw": 3587
+    },
+    "levulinic acid|predicted_all32": {
+      "source": "predicted_ridge_all32",
+      "reliability": null,
+      "options": "lam=0.1",
+      "inner_centered_spearman": 0.35325759788247624,
+      "n_genes_raw": 3587
+    },
+    "sodium acetate|predicted_all32": {
+      "source": "predicted_ridge_all32",
+      "reliability": null,
+      "options": "lam=0.1",
+      "inner_centered_spearman": 0.35325759788247624,
+      "n_genes_raw": 3587
+    },
+    "acetic acid|predicted_all32": {
+      "source": "predicted_ridge_all32",
+      "reliability": null,
+      "options": "lam=0.1",
+      "inner_centered_spearman": 0.35325759788247624,
+      "n_genes_raw": 3587
+    },
+    "formic acid|predicted_all32": {
+      "source": "predicted_ridge_all32",
+      "reliability": null,
+      "options": "lam=0.1",
+      "inner_centered_spearman": 0.35325759788247624,
+      "n_genes_raw": 3587
+    },
+    "lactic acid|predicted_all32": {
+      "source": "predicted_ridge_all32",
+      "reliability": null,
+      "options": "lam=0.1",
+      "inner_centered_spearman": 0.35325759788247624,
+      "n_genes_raw": 3587
+    }
+  },
+  "hoepfner_hop_acetate": {
+    "n_hop_genes": 4469,
+    "n_in_build002": 3453,
+    "n_hop_columns": 277,
+    "dose_spearman": 0.6763164922089868,
+    "dose_n_genes": 4469
+  },
+  "loco_median_centered_spearman": 0.3869292728039774,
+  "loco_n_compounds": 32,
+  "cell_table_002": "/scratch/projects/torchcell-scratch/experiments/033-env-chemgen-pooled/cell_table_002/cell_table.parquet",
+  "cell_table_001": "/scratch/projects/torchcell-scratch/experiments/033-env-chemgen-pooled/cell_table/cell_table.parquet",
+  "fcfp4_npz": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/031-env-chemgen-vanacloig-hillenmeyer/experiments/031-env-chemgen-inhibitor-tolerance/results/embeddings/fcfp4_count.npz"
+}

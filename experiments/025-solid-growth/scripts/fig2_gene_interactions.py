@@ -30,10 +30,10 @@ fig2_gene_interactions.{svg,png} at PANEL_WIDTHS_MM["full"].
   j  edge recall at degree against each arm's own target, epoch 29
   k  sixty epochs: no penalty keeps declining, the prior holds
   l  the composite sequence embedding trains only with the prior
-  m  the encoder's wild-type gene representations in 2-D, colored by Leiden cluster
-     (025 results: wt_gene_embeddings/cluster_assignments.csv, go_enrichment.csv,
+  m  the encoder's wild-type gene map colored by whether a gene appears in any training
+     triple (025 results: wt_gene_embeddings/cluster_assignments.csv, go_enrichment.csv,
      summary.json, from wt_gene_embedding_clusters.py on the S3 closure checkpoint)
-  n  the same map colored by whether a gene appears in any training triple
+  n  the same map colored by Leiden cluster
   o  the best Gene Ontology term of every cluster
   p  the raw learnable gene table clustered the same way, as the control
 
@@ -82,6 +82,7 @@ LIGHT = "#8A8A8A"
 STATUS_SYMBOL = {"ready": "●", "partial": "◐", "todo": "○"}
 STATUS_WORD = {"ready": "on file", "partial": "partial", "todo": "idea only"}
 CROSS = ("✗", "#E53935")  # section status: not yet reviewed by the author
+STATUS_MARKS = False  # the review marks and their key at the foot; off on the author's request
 
 plt.rcParams.update(
     {
@@ -163,6 +164,8 @@ def letters_status(fig: Figure, axes: list[Axes], statuses: list[str]) -> None:
         x0 = max(x0, 0.004)
         y = y1 + 0.004
         fig.text(x0, y, ch, fontsize=8, fontweight="bold", ha="left", va="bottom")
+        if not STATUS_MARKS:
+            continue
         fig.text(x0 + 0.013, y + 0.001, CROSS[0], fontsize=5, color=CROSS[1], ha="left", va="bottom", family="DejaVu Sans")
         fig.text(x0 + 0.022, y + 0.001, STATUS_SYMBOL[status], fontsize=5, color=LIGHT, ha="left", va="bottom", family="DejaVu Sans")
 
@@ -178,6 +181,8 @@ def keys(fig: Figure, y_key: float) -> None:
         Patch(facecolor=YELLOW, edgecolor="black", linewidth=0.4, label="other arm"),
     ]
     fig.legend(handles=handles, loc="center", bbox_to_anchor=(0.52, y_key), ncol=6, frameon=False, fontsize=5, handlelength=1.2, handletextpad=0.4, columnspacing=1.2, borderpad=0)
+    if not STATUS_MARKS:
+        return
     x = 0.03
     fig.text(x, 0.004, "section status", fontsize=5, color=LIGHT, ha="left", va="bottom", style="italic")
     fig.text(x + 0.075, 0.004, CROSS[0], fontsize=5, color=CROSS[1], ha="left", va="bottom", family="DejaVu Sans")
@@ -217,13 +222,14 @@ def panel_b(ax: Axes) -> None:
     edges = [-np.inf, -0.40, -0.32, -0.24, -0.16, -0.08, 0.0, 0.08, 0.16, 0.24, np.inf]
     idx = np.digitize(p, edges[1:-1])
     groups = [y[idx == k] for k in range(len(edges) - 1)]
-    # The look of the DCell and DANGO figures: a filled box in the series fill, whiskers
-    # in the warm companion color, the median as a line, no fliers.
+    # The look of the DCell and DANGO figures: boxes abutting, filled in the red fill,
+    # outline and whiskers one dark-red line with no caps, the median in red, no fliers.
+    dark_red = PLOT_PALETTE[7]
     ax.boxplot(
         groups, positions=range(len(groups)), widths=0.96, showfliers=False, patch_artist=True,
-        medianprops={"color": RED, "lw": 1.0}, whiskerprops={"color": ORANGE, "lw": 0.8, "ls": "-"},
-        capprops={"color": ORANGE, "lw": 0.8},
-        boxprops={"facecolor": PLOT_PALETTE_FILL[1], "edgecolor": RED, "lw": 0.6}, zorder=3,
+        showcaps=False,
+        medianprops={"color": RED, "lw": 1.0}, whiskerprops={"color": dark_red, "lw": 0.8, "ls": "-"},
+        boxprops={"facecolor": PLOT_PALETTE_FILL[1], "edgecolor": dark_red, "lw": 0.8}, zorder=3,
     )
     ax.axhline(0, color="black", lw=0.5, zorder=2)
     ax.axvline(5.5, color="black", lw=0.5, zorder=2)
@@ -420,7 +426,8 @@ def panel_j(ax: Axes, done: pd.DataFrame) -> None:
         if arm == "mask":
             vals = np.array([1.0])
         ax.scatter(x + np.linspace(-0.12, 0.12, len(vals)), vals, s=7, facecolor=color, edgecolor="black", linewidth=0.4, zorder=4)
-    ax.annotate("by construction", (len(arms) - 1, 1.0), xytext=(len(arms) - 2.2, 0.72), fontsize=5, ha="right", va="center", color="black",
+    # The line runs straight down from the mask point, through no other point.
+    ax.annotate("by construction", (len(arms) - 1, 1.0), xytext=(len(arms) - 1.15, 0.72), fontsize=5, ha="right", va="top", color="black",
                 arrowprops={"arrowstyle": "-", "color": "black", "lw": 0.5, "shrinkA": 0, "shrinkB": 3})
     ax.set_xticks(range(len(arms)))
     ax.set_xticklabels(ticks, fontsize=5)
@@ -529,7 +536,14 @@ def panel_o(ax: Axes, assign: pd.DataFrame) -> None:
         sp.set_visible(False)
     n_in = int(it.sum())
     ax.set_title("the arc: genes in no training triple")
-    ax.text(0.0, -0.06, f"red: in a training triple, {n_in:,}; gray: never, {len(it) - n_in:,}", transform=ax.transAxes, fontsize=5, color=LIGHT, ha="left", va="bottom")
+    ax.legend(
+        handles=[
+            Patch(facecolor=RED, edgecolor="none", label=f"in a training triple, {n_in:,}"),
+            Patch(facecolor="#C8C8C8", edgecolor="none", label=f"in none, {len(it) - n_in:,}"),
+        ],
+        loc="lower right", frameon=False, handlelength=1.0, handletextpad=0.4, borderpad=0.2, labelspacing=0.25,
+    )
+    ax.text(0.0, -0.06, "UMAP of 6,607 genes", transform=ax.transAxes, fontsize=5, color=LIGHT, ha="left", va="bottom")
 
 
 def panel_p(ax: Axes, assign: pd.DataFrame, enr: pd.DataFrame, summary: dict[str, Any]) -> None:
@@ -566,13 +580,16 @@ def main() -> None:
     panel_j(ax[9], done)
     panel_k(ax[10], hist)
     panel_l(ax[11], hist)
-    panel_m(ax[12], assign, enr, wt)
-    panel_o(ax[13], assign)
+    # m coverage map, n cluster map, o terms, p table: the cluster colors sit beside the
+    # term bars that carry them (review 2026-10-13).
+    panel_o(ax[12], assign)
+    panel_m(ax[13], assign, enr, wt)
     panel_n(ax[14], enr)
     panel_p(ax[15], assign, enr, wt)
     letters_status(fig, list(ax), ["ready"] * 16)
     y_key = (ax[0].get_position().y0 + ax[4].get_position().y1) / 2 - 0.004
     keys(fig, y_key)
+    fig.subplots_adjust(bottom=0.04)
     os.makedirs(IMG_DIR, exist_ok=True)
     stem = osp.join(IMG_DIR, "fig2_gene_interactions")
     savefig_true_size_svg(fig, stem + ".svg")

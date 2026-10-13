@@ -58,6 +58,10 @@ VIEW_NAME = "040 mixture rounds: arms grouped, wet-lab scores first"
 VIEW_TAG = "040-mixture"
 # Pinned after the first `save_as_new_view()`; None creates the view and prints its id.
 VIEW_ID: str | None = "n94xqhmif86"
+# the second saved view: ONLY the cell-readout runs (rounds 7 to 9, ``readout: cell``),
+# grouped by arm, same panels; pinned after its first ``save_as_new_view()``
+CELL_VIEW_NAME = "040 cell readout only (rounds 7 to 9): arms grouped"
+CELL_VIEW_ID: str | None = "xr3rk5exmh5"
 X = "epoch"
 # every panel draws up to this many runs or groups; the W&B default is 10 and the user wants every run visible
 MAX_SHOWN = 1000
@@ -352,8 +356,11 @@ def label_and_relog(api: wandb.Api) -> dict[str, dict[str, object]]:
     return groups
 
 
-def populate_view() -> str:
-    """Overwrite (or create) the saved Charts view grouped by arm."""
+def populate_view(cell_only: bool = False) -> str:
+    """Overwrite (or create) the saved Charts view grouped by arm.
+
+    ``cell_only`` builds the second view, filtered to ``readout: cell`` runs.
+    """
     sections = [
         ws.Section(
             name=name,
@@ -399,25 +406,33 @@ def populate_view() -> str:
         max_runs=MAX_SHOWN,
         sort_panels_alphabetically=False,
     )
+    filters = [ws.Config("view") == VIEW_TAG]
+    if cell_only:
+        filters.append(ws.Config("readout_") == "cell")
     runset_settings = ws.RunsetSettings(
-        filters=[ws.Config("view") == VIEW_TAG],
+        filters=filters,
         groupby=[ws.Config("arm")],
         order=[ws.Ordering(ws.Metric("Name"), ascending=True)],
     )
-    if VIEW_ID is None:
+    view_id = CELL_VIEW_ID if cell_only else VIEW_ID
+    view_name = CELL_VIEW_NAME if cell_only else VIEW_NAME
+    if view_id is None:
         view = ws.Workspace(
             entity=ENTITY,
             project=PROJECT,
-            name=VIEW_NAME,
+            name=view_name,
             sections=sections,
             settings=settings,
             runset_settings=runset_settings,
         )
         view.save_as_new_view()
-        print(f"NEW saved view: {view.url}\n  pin its nw= id into VIEW_ID")
+        print(
+            f"NEW saved view: {view.url}\n  pin its nw= id into "
+            f"{'CELL_VIEW_ID' if cell_only else 'VIEW_ID'}"
+        )
         return str(view.url)
-    view = ws.Workspace.from_url(f"https://wandb.ai/{ENTITY}/{PROJECT}?nw={VIEW_ID}")
-    view.name = VIEW_NAME
+    view = ws.Workspace.from_url(f"https://wandb.ai/{ENTITY}/{PROJECT}?nw={view_id}")
+    view.name = view_name
     view.sections = sections
     view.settings = settings
     view.runset_settings = runset_settings
@@ -442,7 +457,15 @@ def main() -> None:
         action="store_true",
         help="rewrite every run's group and config keys (machine, arm) and stop",
     )
+    parser.add_argument(
+        "--cell-view",
+        action="store_true",
+        help="rewrite (or create) the second saved view, cell-readout runs only",
+    )
     args = parser.parse_args()
+    if args.cell_view:
+        print(populate_view(cell_only=True))
+        return
     if args.view_only:
         print(populate_view())
         return

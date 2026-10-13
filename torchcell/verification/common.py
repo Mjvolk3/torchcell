@@ -71,6 +71,7 @@ __all__ = [
     "GeneNameResolution",
     "GeneNameResolver",
     "SharedRecordRules",
+    "declared_first_union_validator",
     "declared_member_validator",
     "gap_carrier_fields",
     "key_digest",
@@ -1013,6 +1014,62 @@ def declared_member_validator(
                 f"{tag_field} {stored.get(tag_field)!r} is not {class_name}'s {tag!r}"
             )
         return model.model_validate(stored)
+
+    return validate
+
+
+def declared_first_union_validator(
+    union: str = "ExperimentType",
+) -> Callable[[Any], object]:
+    """``TypeAdapter(schema.<union>).validate_python`` with the same verdict, 46x faster.
+
+    The union is not discriminated, so pydantic tries a stored mapping against every one
+    of its 46 members: 13.7 ms on a Borchert 2024 record and 12.7 ms on a Choe 2025 one
+    (73 and 79 records per second). That was 97% of the environment-response verifier's
+    time, and the verifier was 5 h 24 min of the 5 h 32 min Borchert build (slurm
+    4011_103). Validating the ONE member whose tag default is the mapping's tag costs
+    0.3 ms (3,390 and 3,604 records per second).
+
+    Same verdict as the union, by construction. A mapping that validates as a member
+    validates as the union, so the declared member's success is returned as the union's.
+    Any mapping the declared member does not accept (wrong tag, a tag no member or
+    several members carry, a record that is valid only as another member, an invalid
+    record) is handed to the union itself, so its pass, its failure and its error text
+    are the union's own. The one input on which the two can differ is a mapping the
+    declared member accepts while an EARLIER member's validator raises a non-validation
+    error (pydantic lets a ``TypeError`` or ``KeyError`` out of the union): the union
+    fails it, this passes it. Such a record fails L0 (or stops the verifier) today, so
+    on every store that passes L0 under the union the reports are identical. Unlike
+    :func:`declared_member_validator`, which is the stronger statement, this keeps the
+    union's acceptance set; it is the drop-in for a verifier that has always validated
+    against the union.
+    """
+    import typing
+
+    from pydantic import TypeAdapter
+
+    from torchcell.datamodels import schema
+
+    union_type = getattr(schema, union)
+    tag_field = _UNION_TAG_FIELDS[union]
+    members_by_tag: dict[Any, list[Any]] = {}
+    for member in typing.get_args(union_type):
+        tag = member.model_fields[tag_field].default
+        members_by_tag.setdefault(tag, []).append(member)
+    declared = {
+        tag: members[0] for tag, members in members_by_tag.items() if len(members) == 1
+    }
+    validate_union = TypeAdapter(union_type).validate_python
+
+    def validate(stored: Any) -> object:
+        tag = stored.get(tag_field) if isinstance(stored, dict) else None
+        model = declared.get(tag) if isinstance(tag, str) else None
+        if model is not None:
+            try:
+                return model.model_validate(stored)
+            except Exception:  # the union decides, with its own error text
+                pass
+        return validate_union(stored)
 
     return validate
 

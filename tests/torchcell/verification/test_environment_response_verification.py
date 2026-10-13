@@ -632,3 +632,97 @@ def test_screen_id_joins_the_study_and_condition_keys():
     assert _condition_signature(record["experiment"]) != _condition_signature(
         other["experiment"]
     )
+
+
+# --- L0 validator: the declared member first, the union's verdict ------------ #
+def _outcome(validate: Any, stored: Any) -> tuple[Any, ...]:
+    """What a validator does with one mapping: passes, or raises this type and text."""
+    try:
+        validate(stored)
+    except Exception as err:  # the comparison is over whatever the union raises
+        return ("raises", type(err).__name__, str(err))
+    return ("passes",)
+
+
+def _l0_cases() -> list[Any]:
+    good = _record("YAL001C", -1.2)["experiment"]
+    bad_value = {
+        **good,
+        "phenotype": {**good["phenotype"], "environment_response": "not a number"},
+    }
+    no_media = {**good, "environment": {**good["environment"], "media": None}}
+    return [
+        good,
+        bad_value,
+        no_media,
+        {**good, "experiment_type": "no such experiment type"},
+        {**good, "experiment_type": "fitness"},
+        {**good, "experiment_type": "base"},
+        {k: v for k, v in good.items() if k != "experiment_type"},
+        {**good, "experiment_type": ["environment_response"]},
+        None,
+        ["not", "a", "mapping"],
+    ]
+
+
+def test_declared_first_validator_returns_the_union_verdict_and_text() -> None:
+    """Every case passes or fails exactly as ``TypeAdapter(ExperimentType)`` does.
+
+    The good record passes through its declared member; every other case reaches the
+    union, so a failure carries the union's own exception type and message.
+    """
+    from pydantic import TypeAdapter
+
+    from torchcell.datamodels.schema import ExperimentType
+    from torchcell.verification.common import declared_first_union_validator
+
+    union: Any = TypeAdapter(ExperimentType).validate_python
+    fast = declared_first_union_validator()
+    outcomes = [(_outcome(fast, c), _outcome(union, c)) for c in _l0_cases()]
+    for got, expected in outcomes:
+        assert got == expected
+    assert outcomes[0][0] == ("passes",)
+    assert outcomes[1][0][0] == "raises"
+    assert type(fast(_l0_cases()[0])).__name__ == "EnvironmentResponseExperiment"
+
+
+def test_declared_first_validator_leaves_both_reports_byte_identical(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The eager and streaming reports are the union-validated reports, failures included."""
+    from pydantic import TypeAdapter
+
+    import torchcell.verification.environment_response as er
+    from torchcell.datamodels.schema import ExperimentType
+
+    records = _good_records()
+    broken = _record("YJR155W", 0.5)
+    broken["experiment"]["phenotype"]["measurement_type"] = "not a measurement type"
+    records.append(broken)
+
+    def reports() -> tuple[str, str]:
+        eager = verify_environment_response_dataset(
+            records, dataset_name="l0", provenance=PROV, expected_count=len(records)
+        )
+        streaming = verify_environment_response_dataset_streaming(
+            iter(records),
+            dataset_name="l0",
+            provenance=PROV,
+            expected_count=len(records),
+            sgd_genes=SGD,
+        )
+        return eager.model_dump_json(), streaming.model_dump_json()
+
+    fast_reports = reports()
+    monkeypatch.setattr(
+        er,
+        "declared_first_union_validator",
+        lambda: TypeAdapter(ExperimentType).validate_python,
+    )
+    assert reports() == fast_reports
+    assert not _result(
+        verify_environment_response_dataset(
+            records, dataset_name="l0", provenance=PROV, expected_count=len(records)
+        ),
+        "structural",
+    ).passed

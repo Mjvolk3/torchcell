@@ -194,3 +194,7 @@ accumulators for that reason, so the streaming report is not a second implementa
 
 Related: [[torchcell.datasets.ecoli.caglar2017_doubling_time]],
 [[torchcell.datamodels.schema]].
+
+## 2026.10.13 - L0 validates the declared member first
+
+Both `verify_environment_response_dataset` and `verify_environment_response_dataset_streaming` validate with `declared_first_union_validator()` ([[torchcell.verification.common]]) instead of `TypeAdapter(ExperimentType).validate_python`. Same verdict and error text; about 46x faster per record. Measured on full stores in temporary roots: the Borchert 2024 verification went from about 19,465 s (slurm 4011_103) to 979 s and Choe 2025's from about 4,650 s (slurm 4011_50) to 254 s.

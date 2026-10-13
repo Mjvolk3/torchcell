@@ -23,37 +23,34 @@ copy is the published Table S1 is measured: Baba 2006's Supplementary Table 3 re
 on 4,113 of the 4,133 b-numbers both carry (the other 20: 15 Baba marks absent, 5 are
 insertion-sequence b-numbers this table lists twice).
 
-THE CALL, STORED AS RELEASED. E is ``is_essential=True``; N is False. Six rows carry
-``N*`` (ftsK, rpsA, kdsA, accD, usg, nusA); the page defines E, N, X and ? but not the
-asterisk, and says "accD is called nonessential ... regardless of convincing arguments
-to the contrary", with accD's call written ``N*``. So ``N*`` is an N call whose asterisk
-flags contrary expectation, stored False. X ("the gene was not covered") and ?
-("ambiguous") state no boolean: those rows store ``is_essential=None`` beside a typed
-``ProvenanceGap`` on the field. Every row keeps its token verbatim in ``released_call``.
-What ``is_essential=True`` means here is that no disruptive insertion survived 23
-doublings of competitive growth in a pool, which can include slow growers (Baba 2006
-says so of genetic footprinting).
-
-COUNTS. Table S1 calls 619 E, 3,114 N, 6 N*, 331 X and 221 ? (4,291 rows); the abstract
-states 620 essential and 3,126 dispensable, and the procedure overview 3,746 unambiguous
-assertions. The table is 7 short of 3,746 (619 + 3,120); the per-gene table is what is
-stored, and the difference is recorded, not resolved (the walled article body is where
-it would be explained).
+THE CALL. E is ``is_essential=True``; N is False. Six rows carry ``N*`` (ftsK, rpsA,
+kdsA, accD, usg, nusA); the page defines E, N, X and ? but not the asterisk, and says
+"accD is called nonessential ... regardless of convincing arguments to the contrary",
+with accD's call written ``N*``. So ``N*`` is an N call whose asterisk flags contrary
+expectation, stored False with its letter on the evidence. X ("the gene was not
+covered") and ? ("ambiguous") have no boolean, and ``GeneEssentialityPhenotype`` stores
+a boolean ``is_essential`` (#1083 keeps it one; a call with no boolean belongs on the
+graded sibling, #909), so those 552 rows are ledgered under ``not_covered_call`` and
+``ambiguous_call`` in ``preprocess/dropped_records.json``, every released cell kept in
+``preprocess/calls.csv``; a graded store for them is a follow-up under #909. What
+``is_essential=True`` means here is that no disruptive insertion survived 23 doublings
+of competitive growth in a pool, which can include slow growers (Baba 2006 says so of
+genetic footprinting).
 
 STRAIN AND IDENTIFIERS, STORED AS RELEASED (owner rule of 2026-10-12: the data is the
 data, and the genome never gates a record). MG1655 (``SOURCED_VALUES["background_strain"]``).
-Every one of the 4,291 Table S1 rows is a record, and no annotation is read in the
-build. A row whose ``Blattner ID`` is a well-formed b-number that no other row carries
-(4,208 rows) is stored on ``TransposonInsertionPerturbation`` under that b-number
-verbatim, with ``identifier_mapping=None``: the tag is the release's, whether or not
-the pinned annotation carries it, and the verifier's L4 row reports how many of them
-the annotation does, as a finding. The other 83 rows are stored on
-``BacterialReleasedTransposonPerturbation`` under their ERGO id, Table S1's own unique
-row identifier: 64 rows with no Blattner ID, one whose Blattner ID is ``b0018.1``, and
-the 18 rows of 9 b-numbers the table lists twice (insertion-sequence copies at
-different chromosome positions, each with its own call), which one b-number cannot key
-twice. The Blattner ID of those 19 rows stays a released column of
-``preprocess/calls.csv``.
+No annotation is read in the build, and the identifier a row is stored under is decided
+over all 4,291 Table S1 rows. A row whose ``Blattner ID`` is a well-formed b-number that
+no other row carries (4,208 rows) is keyed on ``TransposonInsertionPerturbation`` by
+that b-number verbatim, with ``identifier_mapping=None``: the tag is the release's,
+whether or not the pinned annotation carries it, and the verifier's L4 row reports how
+many of them the annotation does, as a finding. The other 83 rows are keyed on
+``BacterialReleasedTransposonPerturbation`` by their ERGO id, Table S1's own unique row
+identifier: 64 rows with no Blattner ID, one whose Blattner ID is ``b0018.1``, and the
+18 rows of 9 b-numbers the table lists twice (insertion-sequence copies at different
+chromosome positions, each with its own call), which one b-number cannot key twice. The
+Blattner ID of those 19 rows stays a released column of ``preprocess/calls.csv``. Of
+the 3,739 E, N and N* rows stored, 3,681 are b-number records and 58 ERGO-id records.
 
 EVIDENCE (#924). Every phenotype carries a ``GeneEssentialityEvidence`` of type
 ``genetic_footprinting`` (class ``insertion_depletion``): the essential rule of the
@@ -71,14 +68,6 @@ states 620 essential and 3,126 dispensable, and the procedure overview 3,746 una
 assertions. The table is 7 short of 3,746 (619 + 3,120); the per-gene table is what is
 stored, and the difference is recorded, not resolved (the walled article body is where
 it would be explained).
-
-STRAIN AND IDENTIFIERS. MG1655 (``SOURCED_VALUES["background_strain"]``). The
-``Blattner ID`` column goes through ``reconcile_locus_tags`` on the pinned MG1655
-assembly; a b-number the annotation now carries as a synonym of another locus is stored
-under that locus with a ``locus_tag_synonym`` mapping. Dropped: 64 rows with no Blattner
-ID, the 18 rows of 9 b-numbers this table lists twice (insertion-sequence copies with
-different calls), and b-numbers on no single MG1655 locus (retired, ambiguous, or a
-fragment of a locus another row holds directly).
 
 GENOTYPE. One gene-level ``TransposonInsertionPerturbation`` (transposon
 "EZ::TN<KAN-2>"). The table lists each gene's insertion positions in amino-acid
@@ -410,12 +399,13 @@ B_NUMBER_PATTERN = re.compile(r"b\d{4}")
 IdentifierKind = Literal["MG1655 b-number", "ERGO id"]
 B_NUMBER_KIND: IdentifierKind = "MG1655 b-number"
 ERGO_KIND: IdentifierKind = "ERGO id"
-#: Every Table S1 row is a record: 4,208 under a b-number no other row carries, 83
-#: under their ERGO id (64 with no Blattner ID, 1 with ``b0018.1``, 18 on 9 b-numbers
-#: the table lists twice).
-EXPECTED_RECORDS = 4291
-EXPECTED_B_NUMBER_RECORDS = 4208
-EXPECTED_ERGO_RECORDS = 83
+#: Every E, N and N* row of Table S1 is a record (4,291 rows less the 331 X and 221 ?
+#: rows, ledgered): 3,681 under a b-number no other row carries, 58 under their ERGO id.
+#: Over all 4,291 rows the keys split 4,208 b-number and 83 ERGO id (64 with no
+#: Blattner ID, 1 with ``b0018.1``, 18 on 9 b-numbers the table lists twice).
+EXPECTED_RECORDS = 3739
+EXPECTED_B_NUMBER_RECORDS = 3681
+EXPECTED_ERGO_RECORDS = 58
 
 PUBLICATION = Publication(
     pubmed_id=PUBMED_ID,
@@ -529,21 +519,6 @@ TABLE_S1_HEADER: tuple[str, ...] = (
     "scale: 0 - 1",
 )
 Call = Literal["E", "N", "N*", "X", "?"]
-#: The two calls that state no boolean, each a typed absence on ``is_essential``.
-CALL_GAPS: dict[str, ProvenanceGap] = {
-    "X": ProvenanceGap(
-        field="is_essential",
-        reason=ProvenanceGapReason.not_reported_by_primary,
-        note="Table S1 calls the ORF X, which the authors' column comments define as "
-        "'the gene was not covered': no insertion data, so no essentiality call",
-    ),
-    "?": ProvenanceGap(
-        field="is_essential",
-        reason=ProvenanceGapReason.not_reported_by_primary,
-        note="Table S1 calls the ORF ?, which the authors' column comments define as "
-        "'ambiguous': the insertion pattern supports no call either way",
-    ),
-}
 CALLS: tuple[Call, ...] = ("E", "N", "N*", "X", "?")
 
 
@@ -562,10 +537,10 @@ class GerdesRow(BaseModel):
     blattner_id: str
 
     @property
-    def is_essential(self) -> bool | None:
-        """E is essential; N and N* are not; X and ? state no boolean (None)."""
-        if self.call in CALL_GAPS:
-            return None
+    def is_essential(self) -> bool:
+        """E is essential; N and N* are not. X and ? have no boolean."""
+        if self.call in ("X", "?"):
+            raise ValueError(f"{self.ergo_id}: call {self.call!r} has no boolean")
         return self.call == "E"
 
 
@@ -631,29 +606,48 @@ def call_histogram(rows: Sequence[GerdesRow]) -> dict[str, int]:
 # --------------------------------------------------------------------------- #
 # Identifiers as released, and the retention ledger
 # --------------------------------------------------------------------------- #
+DropRuleName = Literal["not_covered_call", "ambiguous_call"]
+DROP_RULE_DESCRIPTIONS: dict[DropRuleName, str] = {
+    "not_covered_call": "the call is X ('the gene was not covered'); it has no boolean "
+    "and GeneEssentialityPhenotype stores a boolean is_essential (#1083); the row's "
+    "released cells stay in preprocess/calls.csv, and a graded store is a follow-up "
+    "under #909",
+    "ambiguous_call": "the call is ? ('ambiguous'); it has no boolean and "
+    "GeneEssentialityPhenotype stores a boolean is_essential (#1083); the row's "
+    "released cells stay in preprocess/calls.csv, and a graded store is a follow-up "
+    "under #909",
+}
+#: The rule each call with no boolean falls under.
+CALL_DROP_RULES: dict[str, DropRuleName] = {
+    "X": "not_covered_call",
+    "?": "ambiguous_call",
+}
+
+
 class RowIdentity(BaseModel):
-    """One Table S1 row and the released identifier its record is stored under."""
+    """One Table S1 row, the released identifier it is keyed by, and the rule that
+    ledgers it when its call has no boolean (``None`` for a record).
+    """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     gerdes: GerdesRow
     kind: IdentifierKind
     identifier: str
+    drop_rule: DropRuleName | None
 
 
 class DropRule(BaseModel):
-    """One retention rule, the rows it removed, and why (none apply; the shape is kept
-    so every bacterial ``dropped_records.json`` reads alike).
-    """
+    """One retention rule, the rows it removed, and why."""
 
-    rule: str
+    rule: DropRuleName
     description: str
     n_records: int
     items: list[str] = []
 
 
 class DropLog(BaseModel):
-    """The retention ledger of one build: every Table S1 row is a record."""
+    """The retention ledger of one build: every E, N and N* row is a record."""
 
     dataset: str
     source_rows: int
@@ -677,16 +671,27 @@ def identify_rows(rows: Sequence[GerdesRow]) -> list[RowIdentity]:
     A well-formed b-number that no other row carries keys the row on the placed
     transposon leaf; every other row (no Blattner ID, a malformed one, or a b-number
     the table lists twice) keys on its ERGO id, the table's own unique row identifier.
-    Nothing is looked up in an annotation.
+    The key is decided over every released row, so a row's identifier does not depend
+    on which rows are stored. An X or ? row carries its drop rule. Nothing is looked up
+    in an annotation.
     """
     counts = Counter(r.blattner_id for r in rows if r.blattner_id)
     out: list[RowIdentity] = []
     for row in rows:
         b = row.blattner_id
+        rule = CALL_DROP_RULES.get(row.call)
         if b and B_NUMBER_PATTERN.fullmatch(b) and counts[b] == 1:
-            out.append(RowIdentity(gerdes=row, kind=B_NUMBER_KIND, identifier=b))
+            out.append(
+                RowIdentity(
+                    gerdes=row, kind=B_NUMBER_KIND, identifier=b, drop_rule=rule
+                )
+            )
         else:
-            out.append(RowIdentity(gerdes=row, kind=ERGO_KIND, identifier=row.ergo_id))
+            out.append(
+                RowIdentity(
+                    gerdes=row, kind=ERGO_KIND, identifier=row.ergo_id, drop_rule=rule
+                )
+            )
     held = Counter(i.identifier for i in out)
     twice = sorted(k for k, n in held.items() if n > 1)
     if twice:
@@ -695,41 +700,57 @@ def identify_rows(rows: Sequence[GerdesRow]) -> list[RowIdentity]:
 
 
 def build_drop_log(dataset_name: str, identities: Sequence[RowIdentity]) -> DropLog:
-    """The ledger of one build: every row a record, split by identifier kind."""
+    """The ledger of one build: every E, N and N* row a record, split by identifier
+    kind; every X and ? row under its rule. Refuses rules that miss a dropped row.
+    """
     rows = [i.gerdes for i in identities]
-    n_b = sum(1 for i in identities if i.kind == B_NUMBER_KIND)
-    n_ergo = len(identities) - n_b
+    kept = [i for i in identities if i.drop_rule is None]
+    n_b = sum(1 for i in kept if i.kind == B_NUMBER_KIND)
+    n_ergo = len(kept) - n_b
     ergo_items = [
         f"row {i.gerdes.row} {i.gerdes.ergo_id} {i.gerdes.gene} ({i.gerdes.call}): "
         f"Blattner ID {i.gerdes.blattner_id!r}"
-        for i in identities
+        for i in kept
         if i.kind == ERGO_KIND
     ]
-    return DropLog(
+    rules = [
+        DropRule(
+            rule=name,
+            description=description,
+            n_records=sum(1 for i in identities if i.drop_rule == name),
+            items=[
+                f"row {i.gerdes.row} {i.identifier} {i.gerdes.gene}"
+                for i in identities
+                if i.drop_rule == name
+            ],
+        )
+        for name, description in DROP_RULE_DESCRIPTIONS.items()
+    ]
+    log_ = DropLog(
         dataset=dataset_name,
         source_rows=len(rows),
         released_calls=call_histogram(rows),
-        kept_records=len(rows),
-        kept_calls=call_histogram(rows),
+        kept_records=len(kept),
+        kept_calls=call_histogram([i.gerdes for i in kept]),
         b_number_records=n_b,
         ergo_records=n_ergo,
-        dropped_records=0,
-        rules=[],
+        dropped_records=len(identities) - len(kept),
+        rules=rules,
         notes=[
-            "every Table S1 row is a record; no annotation is read and no row is "
-            "dropped for a Blattner ID the MG1655 GenBank file does not carry",
-            f"{n_b} rows store their released b-number verbatim on "
+            "every E, N and N* row of Table S1 is a record; no annotation is read and "
+            "no row is dropped for a Blattner ID the MG1655 GenBank file does not carry",
+            f"{n_b} records store their released b-number verbatim on "
             "TransposonInsertionPerturbation (identifier_mapping None)",
-            f"{n_ergo} rows store their ERGO id on "
+            f"{n_ergo} records store their ERGO id on "
             "BacterialReleasedTransposonPerturbation: no Blattner ID, a malformed one, "
             "or a b-number the table lists twice (the Blattner ID stays a column of "
             "calls.csv)",
             *ergo_items,
-            "X and ? rows store is_essential None beside a typed ProvenanceGap, with "
-            "the letter on the evidence; E, N and N* rows store the boolean and the "
-            "letter",
         ],
     )
+    if sum(r.n_records for r in rules) != log_.dropped_records:
+        raise RuntimeError("drop rules do not account for every dropped row")
+    return log_
 
 
 # --------------------------------------------------------------------------- #
@@ -969,14 +990,12 @@ def insertion_genotype(identity: RowIdentity) -> Genotype:
 
 
 def essentiality_phenotype(row: GerdesRow) -> GeneEssentialityPhenotype:
-    """The call as released: E True, N and N* False, X and ? a typed absence; every
-    one with the genetic-footprinting evidence (#924), the letter on it.
+    """The call as released: E True, N and N* False, with the genetic-footprinting
+    evidence (#924), the letter on it. An X or ? row has no boolean
+    (:attr:`GerdesRow.is_essential` refuses it); it is a ledger row.
     """
-    gap = CALL_GAPS.get(row.call)
     return GeneEssentialityPhenotype(
-        is_essential=row.is_essential,
-        evidence=evidence(row),
-        provenance_gaps=[] if gap is None else [gap],
+        is_essential=row.is_essential, evidence=evidence(row)
     )
 
 
@@ -1081,12 +1100,13 @@ class GeneEssentialityGerdes2003Dataset(ExperimentDataset):
             )
         log.info(
             "Gerdes 2003: %d Table S1 rows -> %d records %s (%d under a b-number, %d "
-            "under an ERGO id); nothing dropped",
+            "under an ERGO id); ledgered %s",
             drop_log.source_rows,
             drop_log.kept_records,
             drop_log.kept_calls,
             drop_log.b_number_records,
             drop_log.ergo_records,
+            {r.rule: r.n_records for r in drop_log.rules},
         )
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
@@ -1099,8 +1119,9 @@ class GeneEssentialityGerdes2003Dataset(ExperimentDataset):
         env_out, interned_env = self._open_write_lmdb(
             osp.join(self.processed_dir, "lmdb")
         )
+        kept = [i for i in identities if i.drop_rule is None]
         with env_out.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
-            for idx, identity in enumerate(tqdm(identities, desc="gerdes2003")):
+            for idx, identity in enumerate(tqdm(kept, desc="gerdes2003")):
                 experiment = build_experiment(self.name, identity, env)
                 txn.put(
                     f"{idx}".encode(),
@@ -1108,14 +1129,14 @@ class GeneEssentialityGerdes2003Dataset(ExperimentDataset):
                 )
         env_out.close()
         interned_env.close()
-        log.info("Wrote %d Gerdes 2003 records to LMDB", len(identities))
+        log.info("Wrote %d Gerdes 2003 records to LMDB", len(kept))
 
     def _write_ledgers(
         self, drop_log: DropLog, identities: Sequence[RowIdentity]
     ) -> None:
         """The drop log, the transposon leaf's typed absences, and the per-row table
-        with every released column, each row's LMDB index, its identifier kind and the
-        stored call.
+        with every released column, its identifier kind, and each kept row's LMDB
+        index and stored call or each ledgered row's rule.
         """
         out = Path(self.preprocess_dir)
         (out / "dropped_records.json").write_text(drop_log.model_dump_json(indent=2))
@@ -1125,23 +1146,30 @@ class GeneEssentialityGerdes2003Dataset(ExperimentDataset):
                 indent=2,
             )
         )
-        rows = [
-            {
-                "row": i.gerdes.row,
-                "ergo_id": i.gerdes.ergo_id,
-                "gene": i.gerdes.gene,
-                "call": i.gerdes.call,
-                "length_aa": i.gerdes.length_aa,
-                "insertions_aa": " ".join(map(str, i.gerdes.insertions_aa)),
-                "assertion_error": i.gerdes.assertion_error,
-                "blattner_id": i.gerdes.blattner_id,
-                "identifier_kind": i.kind,
-                "systematic_gene_name": i.identifier,
-                "is_essential": i.gerdes.is_essential,
-                "record": index,
-            }
-            for index, i in enumerate(identities)
-        ]
+        rows: list[dict[str, Any]] = []
+        n_kept = 0
+        for i in identities:
+            record: int | None = None
+            if i.drop_rule is None:
+                record = n_kept
+                n_kept += 1
+            rows.append(
+                {
+                    "row": i.gerdes.row,
+                    "ergo_id": i.gerdes.ergo_id,
+                    "gene": i.gerdes.gene,
+                    "call": i.gerdes.call,
+                    "length_aa": i.gerdes.length_aa,
+                    "insertions_aa": " ".join(map(str, i.gerdes.insertions_aa)),
+                    "assertion_error": i.gerdes.assertion_error,
+                    "blattner_id": i.gerdes.blattner_id,
+                    "identifier_kind": i.kind,
+                    "systematic_gene_name": i.identifier,
+                    "is_essential": None if i.drop_rule else i.gerdes.is_essential,
+                    "drop_rule": i.drop_rule,
+                    "record": record,
+                }
+            )
         pd.DataFrame(rows).astype({"record": "Int64"}).to_csv(
             out / "calls.csv", index=False
         )
@@ -1207,7 +1235,8 @@ def _l2_calls_match_table_s1(
 ) -> LevelResult:
     """L2, independent of the build path: each record's released identifier finds one
     Table S1 row (a b-number row for the placed leaf, an ERGO-id row for the released
-    leaf), and the stored call, token and gap are that row's.
+    leaf) whose call has a boolean (an X or ? row is a ledger row, never a record), and
+    the stored call and evidence are that row's.
     """
     by_b: dict[str, list[GerdesRow]] = {}
     by_ergo: dict[str, GerdesRow] = {}
@@ -1230,13 +1259,13 @@ def _l2_calls_match_table_s1(
                 problems.append(f"{identifier}: no Table S1 row")
                 continue
             row = maybe
+        if row.call in CALL_DROP_RULES:
+            problems.append(f"{identifier}: a {row.call} row stored as a record")
+            continue
         phenotype = record["experiment"]["phenotype"]
         stored = phenotype["is_essential"]
-        gapped = {gap["field"] for gap in phenotype["provenance_gaps"]}
         if stored != row.is_essential:
             problems.append(f"{identifier}: stored {stored}, call {row.call}")
-        if (row.call in CALL_GAPS) != ("is_essential" in gapped):
-            problems.append(f"{identifier}: gap mismatch for call {row.call}")
         ev = phenotype["evidence"]
         cell = read_assertion_error(row.assertion_error, identifier)
         held = (

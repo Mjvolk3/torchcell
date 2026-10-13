@@ -629,6 +629,20 @@ def _pin(strain: EcoliK12StrainName, background: Any = None) -> AssemblyReferenc
     )
 
 
+def _pin_with_background(
+    strain: EcoliK12StrainName, background: Any = None
+) -> AssemblyReferenceGenome:
+    """``_pin``, but carrying the background, which the pinene rules read back."""
+    assembly_set = BACTERIAL_ASSEMBLY_SETS[strain]
+    return AssemblyReferenceGenome(
+        species="Escherichia coli",
+        strain=strain if background is None else background.name,
+        assembly_set=cast("Any", assembly_set),
+        assembly_accession=ASSEMBLY_SET_ACCESSIONS[assembly_set][0],
+        background=background,
+    )
+
+
 @pytest.fixture
 def mirrored(
     si: Path,
@@ -1028,3 +1042,145 @@ def test_the_built_pinene_store_passes_l0_to_l4() -> None:
     assert osp.isfile(
         osp.join(str(_PINENE_STORE), "preprocess", "verification_report.json")
     )
+
+
+@pytest.fixture
+def pinene_mirrored(mirrored: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """``mirrored``, with the pinned reference carrying the production background."""
+    monkeypatch.setattr(n, "assembly_reference", _pin_with_background)
+    return mirrored
+
+
+def test_the_pinene_loader_builds_the_synthetic_release_end_to_end(
+    tmp_path: Path, pinene_mirrored: Path
+) -> None:
+    root = tmp_path / "pinene"
+    dataset = n.PineneFoldChangeNiu2019Dataset(root=str(root))
+    # the four numeric pinene cells plus the two combination strains
+    assert len(dataset) == 6
+    assert sorted(dataset.gene_set) == ["hokC", "proB", "sufBCDS", "thrA", "yaaX"]
+    references = dataset.experiment_reference_index
+    assert references is not None
+    # ONE reference: the no-guide control is the same strain for both arms here
+    assert len(references) == 1
+
+    first = dataset[0]["experiment"]
+    assert first["phenotype"]["titer"] == 1.06
+    assert first["phenotype"]["titer_unit"] == "fold_change"
+    assert first["phenotype"]["titer_uncertainty"] == 0.02
+    assert first["phenotype"]["titer_se"] == pytest.approx(0.02 / math.sqrt(3))
+    assert first["phenotype"]["product"]["name"] == "pinene"
+    assert [p["perturbation_type"] for p in first["genotype"]["perturbations"]] == [
+        "bacterial_released_crispr"
+    ]
+    assert dataset[0]["reference"]["phenotype_reference"]["titer"] == 1.0
+    assert dataset[0]["publication"]["doi"] == n.DOI
+
+    # the two combination strains are the records with more than one leaf
+    sizes = sorted(
+        len(dataset[i]["experiment"]["genotype"]["perturbations"])
+        for i in range(len(dataset))
+    )
+    assert sizes == [1, 1, 1, 1, 2, 2]
+
+    ledger = json.loads((root / "preprocess" / "dropped_records.json").read_text())
+    assert (ledger["stored_records"], ledger["dropped_cells"]) == (6, 0)
+    assert ledger["censored_cells"] == 3
+    assert ledger["growth_cells_in_the_sibling_store"] == 7
+    released = json.loads(
+        (root / "preprocess" / "released_pinene_ratios.json").read_text()
+    )
+    assert released["arms"]["crispr_activation"][0]["pinene_cell"] == "1.06 ± 0.02"
+    assert (
+        released["combination_strains"]["crispr_interference"]["pinene_ratio"] == 1.13
+    )
+    assert released["stored_strains_without_a_spacer"][
+        "crispr_interference/yaaX-proB:proB"
+    ].startswith("the release gives this gene two DIFFERENT")
+    not_loaded = json.loads((root / "preprocess" / "not_loaded.json").read_text())
+    assert any(item.get("n_rows") == 374 for item in not_loaded)
+    assert (root / "raw" / n.SI_FILENAME).is_file()
+
+
+def test_the_synthetic_pinene_build_passes_its_family_gate(
+    tmp_path: Path, pinene_mirrored: Path
+) -> None:
+    root = tmp_path / "pinene"
+    n.PineneFoldChangeNiu2019Dataset(root=str(root))
+    report = n.verify_pinene_build(str(root), str(pinene_mirrored), expected_count=6)
+    assert report.passed, report.summary()
+    names = {result.name for result in report.results}
+    assert "titers_match_the_released_pinene_cells" in names
+    assert "the_reference_is_the_empty_vector_control_at_one" in names
+    assert (root / "preprocess" / "verification_report.json").is_file()
+
+
+def test_the_pinene_l2_catches_a_titer_that_is_not_its_released_cell(
+    tmp_path: Path, pinene_mirrored: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The oracle is independent: it re-reads the mirror, so a drifted store fails."""
+    root = tmp_path / "pinene"
+    n.PineneFoldChangeNiu2019Dataset(root=str(root))
+    monkeypatch.setattr(
+        n, "COMBINATION_PINENE", {arm: (9.99, 0.02) for arm in COMBINATION_PINENE}
+    )
+    report = n.verify_pinene_build(str(root), str(pinene_mirrored), expected_count=6)
+    cell_rule = next(
+        result
+        for result in report.results
+        if result.name == "titers_match_the_released_pinene_cells"
+    )
+    assert not cell_rule.passed
+    assert not report.passed
+
+
+def test_the_pinene_cli_builds_and_verifies_the_synthetic_store(
+    pinene_mirrored: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(n, "PINENE_DATASET_ROOT_REL", "pinene_store")
+    monkeypatch.setattr(n, "PINENE_EXPECTED_RECORDS", 6)
+    assert n.main(["build-pinene"]) == 0
+    assert (pinene_mirrored / "pinene_store" / "processed" / "lmdb").exists()
+    assert n.main(["verify-pinene"]) == 0
+    assert (
+        pinene_mirrored / "pinene_store" / "preprocess" / "verification_report.json"
+    ).is_file()
+
+
+def test_the_pinene_l2_catches_a_drifted_sample_sd(
+    tmp_path: Path, pinene_mirrored: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The SD is checked beside the ratio, so a right value with a wrong SD fails."""
+    root = tmp_path / "pinene"
+    n.PineneFoldChangeNiu2019Dataset(root=str(root))
+    monkeypatch.setattr(
+        n,
+        "COMBINATION_PINENE",
+        {arm: (ratio, 0.99) for arm, (ratio, _sd) in COMBINATION_PINENE.items()},
+    )
+    report = n.verify_pinene_build(str(root), str(pinene_mirrored), expected_count=6)
+    cell_rule = next(
+        result
+        for result in report.results
+        if result.name == "titers_match_the_released_pinene_cells"
+    )
+    assert not cell_rule.passed
+    worst = cell_rule.details["worst"]
+    assert all("stored_sd" in problem for problem in worst)
+    assert {problem["released_sd"] for problem in worst} == {0.99}
+
+
+def test_a_record_mixing_two_released_labels_is_refused() -> None:
+    """One stored strain is one released label in one arm, read back off its leaves."""
+    record = {
+        "experiment": {
+            "genotype": {
+                "perturbations": [
+                    {"strain_label": "thrA", "expression_direction": "increased"},
+                    {"strain_label": "yaaX", "expression_direction": "increased"},
+                ]
+            }
+        }
+    }
+    with pytest.raises(RuntimeError, match="a stored strain is one released label"):
+        n._record_strain_key(record)

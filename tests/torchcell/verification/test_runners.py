@@ -2994,7 +2994,7 @@ def test_each_bioproduction_adapter_calls_its_own_loader_entry_point(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """The registry's indirection is one call per dataset, with its family selected."""
-    from torchcell.datasets.ecoli import caglar2017, foo2014
+    from torchcell.datasets.ecoli import caglar2017, foo2014, niu2019
     from torchcell.datasets.pputida import (
         banerjee2025,
         carruthers2025,
@@ -3016,6 +3016,7 @@ def test_each_bioproduction_adapter_calls_its_own_loader_entry_point(
 
     monkeypatch.setattr(banerjee2025, "verify_build", record("banerjee"))
     monkeypatch.setattr(foo2014, "verify_build", record("foo"))
+    monkeypatch.setattr(niu2019, "verify_pinene_build", record("niu_pinene"))
     monkeypatch.setattr(carruthers2025, "verify_build", record("carruthers"))
     monkeypatch.setattr(desiqueira2025, "verify_build", record("desiqueira"))
     monkeypatch.setattr(kang2026, "verify_build", record("kang"))
@@ -3025,6 +3026,10 @@ def test_each_bioproduction_adapter_calls_its_own_loader_entry_point(
     monkeypatch.setattr(menasalvas2025, "verify_build", record("menasalvas"))
 
     assert runners._verify_foo_titer("/root", "/data").dataset_name == "foo"
+    assert (
+        runners._verify_niu_pinene_fold_change("/root", "/data").dataset_name
+        == "niu_pinene"
+    )
     assert (
         runners._verify_banerjee_proteome("/root", "/data").dataset_name == "banerjee"
     )
@@ -3072,6 +3077,7 @@ def test_each_bioproduction_adapter_calls_its_own_loader_entry_point(
     )
     assert calls == [
         ("foo", ("/root", "/data"), {}),
+        ("niu_pinene", ("/root", "/data"), {}),
         ("banerjee", ("/root", "/data"), {}),
         ("carruthers", ("/root", "/data"), {"family": "titer"}),
         ("carruthers", ("/root", "/data"), {"family": "proteome"}),

@@ -589,11 +589,15 @@ def _base_medium(base: str) -> str | None:
 
     The token's leading word (``SC`` of ``SC - Ade``, ``YPD`` of ``YPD``) when it is a
     library key; else the rich or synthetic prefix the token starts with when that
-    prefix is one (``YP`` of ``YPG [3%]``). The released name stays ``name``; the key
-    is what makes the medium a derived member of the shared family rather than free
-    text. No library object is substituted for the released token.
+    prefix is one (``YP`` of ``YPG [3%]``). ``CSM`` joins at ``SC``: the library's SC
+    object is the CSM + YNB + glucose formulation (its sourced components), so a medium
+    the curation names by its supplement mixture is that family. The released name
+    stays ``name``; the key is what makes the medium a derived member of the shared
+    family rather than free text. No library object is substituted for the token.
     """
     head = re.split(r"[\s,\-(\[]", base, maxsplit=1)[0]
+    if head == "CSM":
+        return "SC"
     if head in MEDIA_LIBRARY:
         return head
     for prefix in (*_RICH_PREFIXES, *_SYNTHETIC_PREFIXES):

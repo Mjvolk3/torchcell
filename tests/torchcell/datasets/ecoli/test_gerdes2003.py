@@ -650,7 +650,14 @@ def test_verify_records_passes_and_fails_on_tampering(
         "b0004"
     )
     records[2]["reference"]["phenotype_reference"]["is_essential"] = True
-    records[3]["experiment"]["phenotype"]["evidence"]["footprinting_call"] = "N"
+    # load_records yields LMDB key order ("0", "1", "10", "11", "2", ...), so pick the
+    # X row by its letter rather than by position
+    x_row = next(
+        r
+        for r in records
+        if r["experiment"]["phenotype"]["evidence"]["footprinting_call"] == "X"
+    )
+    x_row["experiment"]["phenotype"]["evidence"]["footprinting_call"] = "N"
     records[9]["experiment"]["genotype"]["perturbations"][0]["systematic_gene_name"] = (
         "b0010"
     )
@@ -665,8 +672,8 @@ def test_verify_records_passes_and_fails_on_tampering(
         "reference_is_the_viable_parent_without_kanamycin",
     }
     # 1 (flipped call) + 3 (thrA's record under yaaP's b0004: call, gap and evidence)
-    # + 1 (the X letter replaced on the evidence) + 1 (the released-leaf record under a
-    # b-number no ERGO row has)
+    # + 1 (the X letter replaced on the evidence) + 1 (a record moved onto b0010, which
+    # two Table S1 rows carry)
     assert failed["calls_match_table_s1"].details["n_problems"] == 6
 
 

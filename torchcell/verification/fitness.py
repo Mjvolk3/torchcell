@@ -151,12 +151,26 @@ def _environment_signature(experiment: dict[str, Any]) -> tuple[Any, ...]:
     )
 
 
+def _strain_key(record: Record) -> Any:
+    """The STRAIN a record measures: its genotype signature, plus the named strain
+    background of its reference genome when there is one (#1045 part 3).
+
+    A strain stored on a background named as released (Choe 2019's MS56 and eMS57)
+    carries an empty genotype; the background is what tells two such strains apart,
+    as in :func:`environment_response._strain_background_name` (#1057). A record
+    without a background keys exactly as before, so this only splits groups.
+    """
+    signature = _genotype_signature(record["experiment"])
+    background = record["reference"]["genome_reference"].get("background")
+    return signature if background is None else (signature, str(background["name"]))
+
+
 def _l1_pair_uniqueness(records: Sequence[Record]) -> LevelResult:
     """L1: exactly one record per (screened STRAIN, environment) pair."""
     seen: dict[tuple[Any, ...], int] = {}
     for rec in records:
         exp = rec["experiment"]
-        key = (_genotype_signature(exp), _environment_signature(exp))
+        key = (_strain_key(rec), _environment_signature(exp))
         seen[key] = seen.get(key, 0) + 1
     dups = {k: n for k, n in seen.items() if n > 1}
     return LevelResult(
@@ -320,7 +334,7 @@ def verify_fitness_dataset_streaming(
             validate(exp)
         except (ValueError, TypeError) as err:
             l0_failures.append({"index": i, "error": str(err)[:500]})
-        genotype = key_digest(_genotype_signature(exp))
+        genotype = key_digest(_strain_key(rec))
         environment = key_digest(_environment_signature(exp))
         pair_counts[key_digest((genotype, environment))] += 1
         strains.add(genotype)

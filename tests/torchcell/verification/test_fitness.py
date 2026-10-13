@@ -366,6 +366,26 @@ def test_pair_uniqueness_keys_on_strain_id_and_environment() -> None:
     )
 
 
+def test_pair_uniqueness_splits_strains_by_their_named_reference_background() -> None:
+    """#1045 part 3: two strains stored on named backgrounds with empty genotypes (Choe
+    2019's MS56 and eMS57) are two strains; a record without a background keys as
+    before, so the same pair without backgrounds is still one duplicated pair.
+    """
+
+    def on_background(name: str | None, fitness: float) -> dict[str, Any]:
+        record = _record([], fitness)
+        if name is not None:
+            record["reference"]["genome_reference"]["background"] = {"name": name}
+        return record
+
+    named = [on_background("MS56", 0.3), on_background("eMS57", 2.8)]
+    for report in (_verify(named), _stream(named)):
+        assert _result(report, "pair_uniqueness").details["n_pairs"] == 2
+        assert _result(report, "pair_uniqueness").passed
+    bare = _verify([on_background(None, 0.3), on_background(None, 2.8)])
+    assert _result(bare, "pair_uniqueness").passed is False
+
+
 def test_pair_uniqueness_counts_an_environment_perturbation_as_a_condition() -> None:
     """One strain on two carbon sources is two records, not one repeated twice.
 

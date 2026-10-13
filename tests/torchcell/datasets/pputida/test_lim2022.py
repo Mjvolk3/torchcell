@@ -10,9 +10,11 @@ absent; build it with ``python -m torchcell.database.build_dataset_lmdb --datase
 PutidaPrecise321Lim2022Dataset``).
 
 Expected values of the data tests are the build's measured counts: 321 compendium
-samples, 193 stored (180 until #1045 part 2 stored the 11 deletion samples whose symbols
-the annotation does not resolve and the 2 ``ALE:IL_PP5350`` samples), 128 dropped under
-five reasons; 291 count columns paired by name and 30 by an in-house ``SBRG_*`` name.
+samples, all 321 stored (180 until #1045 part 2 stored the 11 deletion samples whose
+symbols the annotation does not resolve and the 2 ``ALE:IL_PP5350`` samples, 193 until
+part 3 stored the 128 engineered, evolved, UWC1 and plasmid-bearing samples on their
+released backgrounds); 291 count columns paired by name and 30 by an in-house ``SBRG_*``
+name.
 """
 
 import json
@@ -175,31 +177,107 @@ def test_every_condition_has_exactly_one_strain_call() -> None:
         kind=m.StrainKind.deletion, deleted_symbols=("relA",)
     )
     assert m.strain_call("Crc:Del_crcZ_crcY").deleted_symbols == ("crcZ", "crcY")
-    assert (
-        m.strain_call("Muconate:GB045_glucose").drop_reason
-        is m.DropReason.engineered_strain_code
-    )
+    assert m.strain_call("Muconate:GB045_glucose").background_name == "GB045"
     with pytest.raises(m.UnclassifiedConditionError, match="no strain call"):
         m.strain_call("New:Del_xyz")
 
 
-def test_dropped_calls_carry_a_reason_and_deletions_carry_symbols() -> None:
-    """A dropped call has a reason and no symbols; a deletion has symbols and no reason;
-    the one released background names its strain and genotype as the sheet writes them.
+def test_no_call_drops_and_each_background_names_its_source() -> None:
+    """#1045 part 3: no condition is dropped; a deletion carries symbols; a background
+    names its strain from a cell or its label and states or gaps its genotype.
     """
-    for call in m.NON_REFERENCE_CONDITIONS.values():
-        if call.kind is m.StrainKind.dropped:
-            assert call.drop_reason is not None and not call.deleted_symbols
-        elif call.kind is m.StrainKind.released_background:
-            assert call.drop_reason is None and not call.deleted_symbols
-            assert (call.background_name, call.genotype_statement) == (
-                "KT2440 PP_5350'",
-                "9bp deletion in its PP_5350",
-            )
+    kinds: dict[str, int] = {}
+    for full_name, call in m.NON_REFERENCE_CONDITIONS.items():
+        kinds[call.kind.value] = kinds.get(call.kind.value, 0) + 1
+        assert call.drop_reason is None
+        if call.kind is m.StrainKind.released_background:
+            assert call.background_name is not None
+            if call.name_from == "condition_label":
+                assert call.background_name in full_name
         else:
-            assert call.kind is m.StrainKind.deletion
-            assert call.drop_reason is None and call.deleted_symbols
+            assert call.kind is m.StrainKind.deletion and call.deleted_symbols
+    assert kinds == {"released_background": 48, "deletion": 8}
     assert set(m.DROP_REASON_TEXT) == set(m.DropReason)
+    assert all(
+        text.startswith("no longer applied") for text in m.DROP_REASON_TEXT.values()
+    )
+
+
+@pytest.mark.parametrize(
+    ("full_name", "name", "genotype", "gapped"),
+    [
+        ("Muconate:CJ522_fructose", "CJ522", None, True),
+        ("ALE:IL_T9", "KT2440 TA9_F60_I1", "evolved", False),
+        (
+            "ALE:GalactoseA5",
+            "GalactoseA5",
+            "engineered P. putida KT2440 strains with heterologous gene expression",
+            False,
+        ),
+        ("Mobile_gene2:Condition1", "UWC1", None, True),
+        ("HNS_protein:WT_pCAR1_ex", "WT_pCAR1", None, True),
+        (
+            "FleQ:OE_wspR",
+            "Pseudomonas putida KT2440",
+            "wild type with multicopy wspR",
+            False,
+        ),
+    ],
+)
+def test_each_derivative_stores_on_its_released_background(
+    full_name: str, name: str, genotype: str | None, gapped: bool
+) -> None:
+    """The name and statement are the release's; an unstated genotype is a typed gap."""
+    background = m.released_background(m.strain_call(full_name), full_name)
+    assert (background.name, background.genotype_statement) == (name, genotype)
+    assert background.reference_strain == "KT2440"
+    assert background.provenance is not None
+    gaps = [(g.field, g.reason) for g in background.provenance_gaps]
+    assert gaps == (
+        [("genotype_statement", ProvenanceGapReason.not_carried_by_curation)]
+        if gapped
+        else []
+    )
+
+
+def test_pcar1_deletions_key_the_released_symbol_on_the_pcar1_background() -> None:
+    """The pCAR1 rows keep their deletions, plasmid-borne pmr included, by symbol."""
+    call = m.strain_call("HNS_protein:WT_pCAR1_Del_pmr_ex")
+    assert call.deleted_symbols == ("pmr",)
+    assert m.strain_call("HNS_protein:WT_pCAR1_Del_turB_st").deleted_symbols == (
+        "turB",
+    )
+    deletion = m.released_deletion("pmr", "HNS_protein:WT_pCAR1_Del_pmr_ex")
+    assert deletion.released_kind is ReleasedStrainKind.deletion
+
+
+def test_a_background_call_refuses_cells_it_does_not_match() -> None:
+    """The call's name and genotype are the cells, or the cells are blank for a gap."""
+    with pytest.raises(ValidationError, match="is not the biosample_strain cell"):
+        m.StrainCall(
+            kind=m.StrainKind.released_background,
+            background_name="UWC1",
+            name_from="biosample_strain",
+            biosample_cells=("KT2440", None),
+            genotype_gap_note="x",
+        )
+    with pytest.raises(ValidationError, match="exactly one"):
+        m.StrainCall(
+            kind=m.StrainKind.released_background,
+            background_name="GB032",
+            name_from="condition_label",
+            biosample_cells=(None, None),
+        )
+    with pytest.raises(ValidationError, match="only where the cell is blank"):
+        m.StrainCall(
+            kind=m.StrainKind.released_background,
+            background_name="X",
+            name_from="biosample_strain",
+            biosample_cells=("X", "evolved"),
+            genotype_gap_note="x",
+        )
+    with pytest.raises(ValueError, match="is not in the label"):
+        m.released_background(m.strain_call("ALE:XyloseA1"), "ALE:XyloseA2")
 
 
 def test_a_deletion_keys_the_released_symbol_and_pp5350_sits_on_its_background() -> (
@@ -212,7 +290,7 @@ def test_a_deletion_keys_the_released_symbol_and_pp5350_sits_on_its_background()
         "Crc:Del_crcZ_crcY",
     )
     assert deletion.released_kind is ReleasedStrainKind.deletion
-    background = m.released_background(m.strain_call("ALE:IL_PP5350"))
+    background = m.released_background(m.strain_call("ALE:IL_PP5350"), "ALE:IL_PP5350")
     assert background.name == "KT2440 PP_5350'"
     assert background.genotype_statement == "9bp deletion in its PP_5350"
     assert background.reference_strain == "KT2440"
@@ -563,7 +641,7 @@ def _ledger(name: str) -> Any:
 
 @pytest.mark.data
 def test_build_report_states_the_measured_aggregation_and_drops() -> None:
-    """321 samples: 96 in-house, 225 reprocessed; 180 stored; drops by reason."""
+    """321 samples: 96 in-house, 225 reprocessed; all 321 stored, nothing dropped."""
     report = _ledger("build_report.json")
     aggregation = report["aggregation"]
     assert (
@@ -571,15 +649,8 @@ def test_build_report_states_the_measured_aggregation_and_drops() -> None:
         aggregation["n_generated_in_this_study"],
         aggregation["n_reprocessed"],
     ) == (321, 96, 225)
-    drops = {r["reason"]: r["n_samples"] for r in report["drops"]["rules"]}
-    assert drops == {
-        "engineered_evolved_sugar_strain": 14,
-        "engineered_strain_code": 71,
-        "evolved_isolate": 4,
-        "non_reference_background": 24,
-        "plasmid_content": 15,
-    }
-    assert report["drops"]["n_stored"] == 193
+    assert report["drops"]["rules"] == []
+    assert report["drops"]["n_stored"] == 321
     pairing = report["count_pairing"]
     assert (pairing["n_same_name"], len(pairing["renamed"])) == (291, 30)
     assert len(pairing["same_name_rejected"]) == 16
@@ -591,6 +662,7 @@ def test_build_report_states_the_measured_aggregation_and_drops() -> None:
         "crcZ",
         "finR",
         "fleQ",
+        "pmr",
         "relA",
         "turA",
         "turB",
@@ -602,18 +674,18 @@ def test_build_report_states_the_measured_aggregation_and_drops() -> None:
 
 @pytest.mark.data
 def test_built_records_pass_the_gate_and_carry_their_sources() -> None:
-    """193 records pass L0-L4; ledger indices, publications and deletions agree."""
+    """321 records pass L0-L4; ledger indices, publications and deletions agree."""
     from torchcell.verification.runners import _gene_set_for_reference, load_records
 
     records = load_records(_build_root())
     universe = _gene_set_for_reference(
         records[0]["reference"]["genome_reference"], os.environ["DATA_ROOT"]
     )
-    report = m.verify_records(records, expected_count=193, gene_universe=universe)
+    report = m.verify_records(records, expected_count=321, gene_universe=universe)
     assert report.passed, report.summary()
 
     ledger = [row for row in _ledger("sample_ledger.json") if row["index"] is not None]
-    assert sorted(row["index"] for row in ledger) == list(range(193))
+    assert sorted(row["index"] for row in ledger) == list(range(321))
     by_index = {row["index"]: row for row in ledger}
     deletions: dict[str, int] = {}
     env = lmdb.open(
@@ -622,7 +694,7 @@ def test_built_records_pass_the_gate_and_carry_their_sources() -> None:
     with env.begin() as txn:
         by_key = {int(key): pickle.loads(value) for key, value in txn.cursor()}
     env.close()
-    assert sorted(by_key) == list(range(193))
+    assert sorted(by_key) == list(range(321))
     for index, record in by_key.items():
         row = by_index[index]
         assert record["publication"] == row["publication"]
@@ -639,8 +711,9 @@ def test_built_records_pass_the_gate_and_carry_their_sources() -> None:
         "relA": 6,
         "finR": 3,
         "fleQ": 3,
-        "turB": 2,
-        "turA": 2,
+        "turB": 6,
+        "turA": 6,
+        "pmr": 2,
         "crc": 2,
         "crcZ": 2,
         "crcY": 2,
@@ -650,4 +723,25 @@ def test_built_records_pass_the_gate_and_carry_their_sources() -> None:
         for r in by_key.values()
         if r["reference"]["genome_reference"].get("background")
     ]
-    assert [b["name"] for b in backgrounds] == ["KT2440 PP_5350'"] * 2
+    names: dict[str, int] = {}
+    for background in backgrounds:
+        names[background["name"]] = names.get(background["name"], 0) + 1
+    assert names == {
+        "KT2440 PP_5350'": 2,
+        "KT2440 TA8_F83_I1": 2,
+        "KT2440 TA9_F60_I1": 2,
+        "CJ522": 18,
+        "GB032": 18,
+        "GB045": 17,
+        "GB062": 18,
+        "GalactoseA5": 2,
+        "GalactoseA6": 2,
+        "GalactoseA8": 2,
+        "XyloseA1": 2,
+        "XyloseA2": 2,
+        "XyloseA3": 2,
+        "XyloseA4": 2,
+        "UWC1": 24,
+        "WT_pCAR1": 12,
+        "Pseudomonas putida KT2440": 3,
+    }

@@ -50,9 +50,28 @@ misstate a 9 bp in-frame deletion, and ``BacterialSequenceVariantPerturbation`` 
 ``BacterialVariantCall`` with replicon coordinates the release does not give. The
 background states the edit as released and types nothing it does not say.
 
-Every other derivative is dropped with a counted reason (``DropReason``): engineered
-strains named only by a strain code, evolved isolates, the engineered xylose and galactose
-strains, the UWC1 background, and plasmid-borne content.
+Every other derivative is stored too (#1045 part 3; 128 samples dropped before), each
+on a ``BacterialStrainBackground`` named as the release names it, its genotype statement
+verbatim where the release gives one and a typed gap (``not_carried_by_curation``, the
+compendium names the strain and its source study holds the genotype) where it does not:
+
+- ``Muconate:<code>_<carbon>`` (71): named by the code (``CJ522``, ``GB032``, ``GB045``,
+  ``GB062``); genotype a gap (Bentley 2020, not mirrored).
+- ``ALE:IL_T8`` / ``ALE:IL_T9`` (4): named by the ``biosample_strain`` cell (``KT2440
+  TA8_F83_I1``), the ``biosample_genotype`` cell ``evolved`` the statement.
+- ``ALE:Galactose*`` / ``ALE:Xylose*`` (14): named by the label token (``XyloseA1``), the
+  paper's "engineered P. putida KT2440 strains with heterologous gene expression" the
+  statement.
+- ``Mobile_gene*`` (24): ``UWC1`` as the cell writes it, a KT2440 derivative because the
+  compendium keeps only KT2440 samples; genotype a gap. Both projects' baselines are UWC1
+  conditions, so their references carry the UWC1 background.
+- ``HNS_protein:WT_pCAR1*`` (12): ``WT_pCAR1`` from the label, genotype a gap, and the
+  ``Del_turA`` / ``Del_turB`` / ``Del_pmr`` deletions as released-strain deletions.
+- ``FleQ:OE_wspR`` (3): the ``biosample_strain`` cell, the ``biosample_genotype`` cell
+  ``wild type with multicopy wspR`` the statement.
+
+Plasmid and integration content is not captured as sequence; it is in the statement or
+the gap. ``DropReason`` keeps every former reason, each "no longer applied".
 
 ENVIRONMENT. The compendium carries no medium or temperature for any sample (the sample
 sheet has no such column). Each condition's environment is therefore a
@@ -89,7 +108,7 @@ from xml.etree import ElementTree
 import lmdb
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
+from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, model_validator
 
 from torchcell.data import (
     ExperimentDataset,
@@ -231,7 +250,13 @@ def _paper(
     )
 
 
-def _si_docx(value: Any, quote: str, *, note: str | None = None) -> SourcedValue:
+def _si_docx(
+    value: Any,
+    quote: str,
+    *,
+    note: str | None = None,
+    page: str = "Supplementary Method 1. Transcriptome sequencing (RNA-seq)",
+) -> SourcedValue:
     """Bind a value to a verbatim quote of the Supplementary Information docx.
 
     The quote is a substring of one paragraph as :func:`docx_paragraphs` renders it
@@ -246,7 +271,7 @@ def _si_docx(value: Any, quote: str, *, note: str | None = None) -> SourcedValue
             citation_key=CITATION_KEY,
             sha256=SI_DOCX_SHA256,
             method="paragraph text of word/document.xml (docx_paragraphs)",
-            page="Supplementary Method 1. Transcriptome sequencing (RNA-seq)",
+            page=page,
         ),
     )
 
@@ -388,6 +413,28 @@ IN_HOUSE_TEMPERATURE = _si_docx(
     "without a temperature, so no record asserts 30 C",
 )
 
+#: The genotype the paper states for the seven engineered, evolved sugar strains (#1045
+#: part 3): stored verbatim as each one's background genotype statement.
+SUGAR_STRAIN_GENOTYPE = _paper(
+    "engineered P. putida KT2440 strains with heterologous gene expression",
+    "engineered P. putida KT2440 strains with heterologous gene expression",
+    page="Results 2.4 (paper.md line 98)",
+    note="the ALE:Galactose* and ALE:Xylose* samples; the heterologous genes are in "
+    "Lim 2021 (doi:10.1021/acssuschemeng.1c03765), which is not mirrored",
+)
+#: How an evolved isolate's name reads (#1045 part 3: ALE:IL_T8, ALE:IL_T9).
+EVOLVED_NAMING = _si_docx(
+    "ALE (A), flask (F), isolate (I)",
+    "Strains were previously named according to ALEdb conventions(Phaneuf et al., "
+    "2019), with each separate evolution experiment receiving a different ALE (A) "
+    "number, which is iteratively assigned new flask (F) numbers as the experiment "
+    "runs; one isolate (I) was taken and sequenced from each flask of interest.",
+    page="Supplementary Note 3. The naming of evolved strains",
+    note="the biosample_strain cells 'KT2440 TA8_F83_I1' and 'KT2440 TA9_F60_I1' name "
+    "an isolate of an evolution experiment; its mutations are in Lim 2020 "
+    "(doi:10.1039/D0GC01663B), which is not mirrored",
+)
+
 #: The sourced statements a reader of the loader can audit in one place.
 SOURCED_VALUES: tuple[SourcedValue, ...] = (
     COMPENDIUM_SIZE,
@@ -406,6 +453,8 @@ SOURCED_VALUES: tuple[SourcedValue, ...] = (
     AROMATIC_MEDIUM,
     MUCONATE_DEFERRAL,
     IN_HOUSE_TEMPERATURE,
+    SUGAR_STRAIN_GENOTYPE,
+    EVOLVED_NAMING,
 )
 
 _PAPER_PROVENANCE = Provenance(
@@ -935,14 +984,19 @@ class StrainKind(StrEnum):
 
     reference = "reference"
     deletion = "deletion"
-    #: a strain the sample sheet names and states, on a background named as released
-    #: (#1045 part 2: ``ALE:IL_PP5350``)
+    #: a strain stored on a background named as released, its genotype statement
+    #: verbatim or a typed gap (#1045 part 2: ``ALE:IL_PP5350``; part 3: every other
+    #: derivative)
     released_background = "released_background"
     dropped = "dropped"
 
 
 class DropReason(StrEnum):
-    """Why a compendium sample is not stored: its genotype is not writable on KT2440."""
+    """Why a compendium sample was not stored.
+
+    Since #1045 part 3 none applies: every sample is stored, a derivative on a
+    background named as released.
+    """
 
     engineered_strain_code = "engineered_strain_code"
     evolved_isolate = "evolved_isolate"
@@ -954,38 +1008,94 @@ class DropReason(StrEnum):
 
 
 DROP_REASON_TEXT: dict[DropReason, str] = {
-    DropReason.engineered_strain_code: "a muconate-producing strain the compendium "
-    "names only by its code (CJ522, GB032, GB045, GB062); its genotype is in Bentley "
-    "2020, which is not mirrored",
-    DropReason.evolved_isolate: "an adaptive-laboratory-evolution isolate (biosample "
-    "genotype 'evolved'); its mutations are not in the compendium",
-    DropReason.engineered_evolved_sugar_strain: "an engineered, evolved xylose or "
-    "galactose strain with heterologous genes (Lim 2021, not mirrored)",
+    DropReason.engineered_strain_code: "no longer applied (#1045 part 3): a "
+    "muconate-producing strain the compendium names only by its code (CJ522, GB032, "
+    "GB045, GB062) is stored on a background of that name, its genotype a typed gap "
+    "(Bentley 2020, not mirrored)",
+    DropReason.evolved_isolate: "no longer applied (#1045 part 3): an evolved isolate "
+    "is stored on a background named by its biosample_strain cell, its "
+    "biosample_genotype cell ('evolved') the genotype statement",
+    DropReason.engineered_evolved_sugar_strain: "no longer applied (#1045 part 3): an "
+    "engineered, evolved xylose or galactose strain is stored on a background named "
+    "by its condition label, the paper's 'engineered P. putida KT2440 strains with "
+    "heterologous gene expression' the genotype statement",
     DropReason.sequence_variant_allele: "no longer applied (#1045 part 2): the 9 bp "
     "in-frame deletion inside PP_5350 is stored on a background named as released, its "
     "biosample_genotype cell the genotype statement",
-    DropReason.non_reference_background: "the UWC1 background (biosample strain), whose "
-    "content beyond KT2440 the compendium does not state",
-    DropReason.plasmid_content: "plasmid-borne content (pCAR1, or a multicopy wspR "
-    "plasmid) that cannot be written against the KT2440 chromosome",
+    DropReason.non_reference_background: "no longer applied (#1045 part 3): a UWC1 "
+    "sample is stored on a background named 'UWC1' as its biosample_strain cell "
+    "writes it, its genotype a typed gap",
+    DropReason.plasmid_content: "no longer applied (#1045 part 3): a pCAR1 sample is "
+    "stored on a background named 'WT_pCAR1' from its condition label (its deletions "
+    "keyed by the released symbol), and the multicopy wspR sample on a background "
+    "whose biosample_genotype cell is the genotype statement; plasmid sequence is not "
+    "captured",
     DropReason.deleted_gene_unresolved: "no longer applied (#1045 part 2): every "
     "deletion is keyed by the symbol the condition label releases, resolved or not",
 }
 
 
 class StrainCall(BaseModel):
-    """One condition's strain, as its metadata states it."""
+    """One condition's strain, as its metadata states it.
+
+    A ``released_background`` call names the background as the release does: from the
+    ``biosample_strain`` cell, or (when that cell is blank or names only KT2440) from
+    the strain token of the condition label. Its genotype statement is the
+    ``biosample_genotype`` cell verbatim, else a paper statement (``genotype_quote``),
+    else a typed gap whose note is ``genotype_gap_note``. ``biosample_cells`` are the
+    two cells verbatim; the build refuses a sample whose cells differ, so the call is
+    the release's, not this module's.
+    """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     kind: StrainKind
     deleted_symbols: tuple[str, ...] = ()
     drop_reason: DropReason | None = None
-    #: The sample sheet's ``biosample_strain`` and ``biosample_genotype`` cells of a
-    #: ``released_background`` call, verbatim; the build refuses a sample whose cells
-    #: differ, so the call is the release's, not this module's.
     background_name: str | None = None
+    name_from: Literal["biosample_strain", "condition_label"] | None = None
+    biosample_cells: tuple[str | None, str | None] | None = None
     genotype_statement: str | None = None
+    genotype_quote: SourcedValue | None = None
+    genotype_gap_note: str | None = None
+    #: further statements the background rests on (the naming convention, the
+    #: compendium's KT2440-only rule)
+    supporting: tuple[SourcedValue, ...] = ()
+
+    @model_validator(mode="after")
+    def _released_background_is_named_and_stated_or_gapped(self) -> StrainCall:
+        """A background call names its source cells; its genotype is stated or gapped."""
+        if self.kind is not StrainKind.released_background:
+            return self
+        if (
+            self.background_name is None
+            or self.name_from is None
+            or self.biosample_cells is None
+        ):
+            raise ValueError("a released background names its strain and its cells")
+        strain_cell, genotype_cell = self.biosample_cells
+        if self.name_from == "biosample_strain" and strain_cell != self.background_name:
+            raise ValueError(
+                f"{self.background_name!r} is not the biosample_strain cell "
+                f"{strain_cell!r}"
+            )
+        if (self.genotype_statement is None) == (self.genotype_gap_note is None):
+            raise ValueError("a genotype statement or a gap note, exactly one")
+        if self.genotype_quote is not None:
+            if genotype_cell is not None:
+                raise ValueError("a paper genotype only where the cell is blank")
+            if self.genotype_statement != self.genotype_quote.quote:
+                raise ValueError("the genotype statement is the quote verbatim")
+        elif self.genotype_statement is not None and (
+            genotype_cell != self.genotype_statement
+        ):
+            raise ValueError(
+                f"{self.genotype_statement!r} is not the biosample_genotype cell "
+                f"{genotype_cell!r}"
+            )
+        if self.genotype_gap_note is not None and genotype_cell is not None:
+            raise ValueError("a genotype gap only where the cell is blank")
+        return self
 
 
 _REF = StrainCall(kind=StrainKind.reference)
@@ -997,6 +1107,68 @@ def _drop(reason: DropReason) -> StrainCall:
 
 def _del(*symbols: str) -> StrainCall:
     return StrainCall(kind=StrainKind.deletion, deleted_symbols=symbols)
+
+
+#: Why a strain the compendium names only by a code has no genotype statement.
+MUCONATE_GENOTYPE_GAP = (
+    "the sample sheet names this muconate strain only by its code (biosample_strain "
+    "and biosample_genotype blank) and the Supplementary Information defers the "
+    "project to Bentley 2020 ('The 81 samples for the “muconate” project were prepared "
+    "as described previously (Bentley et al., 2020).'), which is not mirrored"
+)
+#: Why the pCAR1 background has no genotype statement.
+PCAR1_GENOTYPE_GAP = (
+    "the condition label releases the strain as 'WT_pCAR1' (KT2440 carrying the "
+    "catabolic plasmid pCAR1) and the biosample_genotype cell is blank; the plasmid's "
+    "content is in its source study (Nakamura 2020, doi:10.3389/fmicb.2020.01099), "
+    "which is not mirrored, and plasmid sequence is not captured"
+)
+#: Why the UWC1 background has no genotype statement.
+UWC1_GENOTYPE_GAP = (
+    "the biosample_strain cell is 'UWC1' and the biosample_genotype cell is blank; "
+    "the compendium keeps only KT2440 samples, so UWC1 is stored as a KT2440 "
+    "derivative whose content beyond KT2440 the release does not state"
+)
+
+
+def _cell_background(
+    name: str,
+    genotype: str | None,
+    *,
+    gap_note: str | None = None,
+    supporting: tuple[SourcedValue, ...] = (),
+) -> StrainCall:
+    """A background named by its ``biosample_strain`` cell, stated by its genotype cell."""
+    return StrainCall(
+        kind=StrainKind.released_background,
+        background_name=name,
+        name_from="biosample_strain",
+        biosample_cells=(name, genotype),
+        genotype_statement=genotype,
+        genotype_gap_note=gap_note,
+        supporting=supporting,
+    )
+
+
+def _labelled_background(
+    name: str,
+    cells: tuple[str | None, str | None],
+    *,
+    gap_note: str | None = None,
+    genotype_quote: SourcedValue | None = None,
+    deleted: tuple[str, ...] = (),
+) -> StrainCall:
+    """A background named by the strain token of its condition label."""
+    return StrainCall(
+        kind=StrainKind.released_background,
+        deleted_symbols=deleted,
+        background_name=name,
+        name_from="condition_label",
+        biosample_cells=cells,
+        genotype_statement=None if genotype_quote is None else genotype_quote.quote,
+        genotype_quote=genotype_quote,
+        genotype_gap_note=gap_note,
+    )
 
 
 _MUCONATE_CARBON = (
@@ -1014,14 +1186,22 @@ _MUCONATE_CARBON = (
 #: 'biosample_genotype' columns and the paper's own statements.
 NON_REFERENCE_CONDITIONS: dict[str, StrainCall] = {
     **{
-        f"Muconate:{code}_{carbon}": _drop(DropReason.engineered_strain_code)
+        f"Muconate:{code}_{carbon}": _labelled_background(
+            code, (None, None), gap_note=MUCONATE_GENOTYPE_GAP
+        )
         for code in ("CJ522", "GB032", "GB045", "GB062")
         for carbon in _MUCONATE_CARBON
     },
-    "ALE:IL_T8": _drop(DropReason.evolved_isolate),
-    "ALE:IL_T9": _drop(DropReason.evolved_isolate),
+    "ALE:IL_T8": _cell_background(
+        "KT2440 TA8_F83_I1", "evolved", supporting=(EVOLVED_NAMING,)
+    ),
+    "ALE:IL_T9": _cell_background(
+        "KT2440 TA9_F60_I1", "evolved", supporting=(EVOLVED_NAMING,)
+    ),
     **{
-        f"ALE:{name}": _drop(DropReason.engineered_evolved_sugar_strain)
+        f"ALE:{name}": _labelled_background(
+            name, (None, None), genotype_quote=SUGAR_STRAIN_GENOTYPE
+        )
         for name in (
             "GalactoseA5",
             "GalactoseA6",
@@ -1032,13 +1212,11 @@ NON_REFERENCE_CONDITIONS: dict[str, StrainCall] = {
             "XyloseA4",
         )
     },
-    "ALE:IL_PP5350": StrainCall(
-        kind=StrainKind.released_background,
-        background_name="KT2440 PP_5350'",
-        genotype_statement="9bp deletion in its PP_5350",
-    ),
+    "ALE:IL_PP5350": _cell_background("KT2440 PP_5350'", "9bp deletion in its PP_5350"),
     **{
-        name: _drop(DropReason.non_reference_background)
+        name: _cell_background(
+            "UWC1", None, gap_note=UWC1_GENOTYPE_GAP, supporting=(KT2440_ONLY,)
+        )
         for name in (
             "Mobile_gene:2737_exp",
             "Mobile_gene:2737_reg",
@@ -1050,17 +1228,21 @@ NON_REFERENCE_CONDITIONS: dict[str, StrainCall] = {
         )
     },
     **{
-        f"HNS_protein:{name}": _drop(DropReason.plasmid_content)
-        for name in (
-            "WT_pCAR1_ex",
-            "WT_pCAR1_Del_turA_ex",
-            "WT_pCAR1_Del_turA_st",
-            "WT_pCAR1_Del_turB_ex",
-            "WT_pCAR1_Del_turB_st",
-            "WT_pCAR1_Del_pmr_ex",
+        f"HNS_protein:{name}": _labelled_background(
+            "WT_pCAR1", ("KT2440", None), gap_note=PCAR1_GENOTYPE_GAP, deleted=deleted
+        )
+        for name, deleted in (
+            ("WT_pCAR1_ex", ()),
+            ("WT_pCAR1_Del_turA_ex", ("turA",)),
+            ("WT_pCAR1_Del_turA_st", ("turA",)),
+            ("WT_pCAR1_Del_turB_ex", ("turB",)),
+            ("WT_pCAR1_Del_turB_st", ("turB",)),
+            ("WT_pCAR1_Del_pmr_ex", ("pmr",)),
         )
     },
-    "FleQ:OE_wspR": _drop(DropReason.plasmid_content),
+    "FleQ:OE_wspR": _cell_background(
+        "Pseudomonas putida KT2440", "wild type with multicopy wspR"
+    ),
     "RelA:Del_relA": _del("relA"),
     "RelA:Del_relA_lignin": _del("relA"),
     "FleQ:Del_fleQ": _del("fleQ"),
@@ -1155,10 +1337,40 @@ def released_deletion(
     )
 
 
-def released_background(call: StrainCall) -> BacterialStrainBackground:
-    """The strain of a ``released_background`` call, named and stated as released."""
-    if call.background_name is None or call.genotype_statement is None:
-        raise ValueError(f"{call.kind.value} call names no strain or genotype")
+def released_background(call: StrainCall, full_name: str) -> BacterialStrainBackground:
+    """The strain of a ``released_background`` call, named and stated as released.
+
+    The name is quoted from the cell or the condition label it comes from; the genotype
+    statement is the cell or the paper verbatim, or ``None`` beside a typed gap.
+    """
+    if call.kind is not StrainKind.released_background or call.background_name is None:
+        raise ValueError(f"{full_name}: a {call.kind.value} call names no background")
+    if call.name_from == "condition_label" and call.background_name not in full_name:
+        raise ValueError(f"{call.background_name!r} is not in the label {full_name!r}")
+    provenance = [
+        SourcedValue(
+            value=call.background_name,
+            quote=call.background_name
+            if call.name_from == "biosample_strain"
+            else full_name,
+            provenance=_SAMPLE_SHEET_PROVENANCE,
+            note="the biosample_strain cell"
+            if call.name_from == "biosample_strain"
+            else "the strain token of the full_name cell (the condition label)",
+        )
+    ]
+    if call.genotype_quote is not None:
+        provenance.append(call.genotype_quote)
+    elif call.genotype_statement is not None:
+        provenance.append(
+            SourcedValue(
+                value=call.genotype_statement,
+                quote=call.genotype_statement,
+                provenance=_SAMPLE_SHEET_PROVENANCE,
+                note="the biosample_genotype cell",
+            )
+        )
+    provenance.extend(call.supporting)
     return BacterialStrainBackground(
         name=call.background_name,
         reference_strain="KT2440",
@@ -1166,19 +1378,16 @@ def released_background(call: StrainCall) -> BacterialStrainBackground:
             BACTERIAL_ASSEMBLY_SETS["KT2440"]
         ),
         genotype_statement=call.genotype_statement,
-        provenance=[
-            SourcedValue(
-                value=call.background_name,
-                quote=call.background_name,
-                provenance=_SAMPLE_SHEET_PROVENANCE,
-                note="the biosample_strain cell",
-            ),
-            SourcedValue(
-                value=call.genotype_statement,
-                quote=call.genotype_statement,
-                provenance=_SAMPLE_SHEET_PROVENANCE,
-                note="the biosample_genotype cell",
-            ),
+        provenance=provenance,
+        provenance_gaps=[]
+        if call.genotype_gap_note is None
+        else [
+            ProvenanceGap(
+                field="genotype_statement",
+                reason=ProvenanceGapReason.not_carried_by_curation,
+                looked_in=_SAMPLE_SHEET_PROVENANCE,
+                note=call.genotype_gap_note,
+            )
         ],
     )
 
@@ -1714,16 +1923,16 @@ class PutidaPrecise321Lim2022Dataset(ExperimentDataset):
                         _cell(row["biosample_strain"]),
                         _cell(row["biosample_genotype"]),
                     )
-                    if cells != (call.background_name, call.genotype_statement):
+                    if cells != call.biosample_cells:
                         raise ValueError(
                             f"{sample}: biosample cells {cells} are not the call's "
-                            f"{(call.background_name, call.genotype_statement)}"
+                            f"{call.biosample_cells}"
                         )
                     record_reference = record_reference.model_copy(
                         update={
                             "genome_reference": assembly_reference(
                                 self.REFERENCE_STRAIN,
-                                background=released_background(call),
+                                background=released_background(call, full_name),
                             )
                         }
                     )
@@ -1791,8 +2000,10 @@ class PutidaPrecise321Lim2022Dataset(ExperimentDataset):
     ) -> dict[str, BacterialRNASeqExpressionExperimentReference]:
         """Each project's baseline-condition reference (projects with a stored sample).
 
-        The baseline must be a reference-strain condition; a project whose baseline is
-        a derivative raises rather than borrowing another baseline.
+        The baseline is a reference-strain condition, or a condition on a released
+        background with no further edit (the UWC1 projects, #1045 part 3), whose
+        reference then carries that background; a baseline with a deletion raises
+        rather than borrowing another baseline.
         """
         stored_projects = {
             str(row["project"])
@@ -1806,14 +2017,24 @@ class PutidaPrecise321Lim2022Dataset(ExperimentDataset):
             if len(baselines) != 1:
                 raise ValueError(f"{project}: reference conditions {list(baselines)}")
             baseline = f"{project}:{baselines[0]}"
-            if calls[baseline].kind is not StrainKind.reference:
-                raise ValueError(f"{project}: baseline {baseline} is not the reference")
+            call = calls[baseline]
+            if call.kind is StrainKind.reference:
+                genome_reference = reference
+            elif (
+                call.kind is StrainKind.released_background and not call.deleted_symbols
+            ):
+                genome_reference = assembly_reference(
+                    self.REFERENCE_STRAIN,
+                    background=released_background(call, baseline),
+                )
+            else:
+                raise ValueError(f"{project}: baseline {baseline} carries an edit")
             replicates = members[members["full_name"] == baseline]
             names = replicates["Sample_name"].astype(str).tolist()
             columns = [pairing.pairs[n] for n in names]
             references[project] = BacterialRNASeqExpressionExperimentReference(
                 dataset_name=self.name,
-                genome_reference=reference,
+                genome_reference=genome_reference,
                 environment_reference=environments[baseline],
                 phenotype_reference=reference_phenotype(
                     log_tpm[names], counts[columns]

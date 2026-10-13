@@ -2200,7 +2200,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "rnaseq_lamoureux2023": 1035,
         "rnaseq_public_k12_lamoureux2023": 1675,
         "mrna_fraction_balakrishnan2022": 28,
-        "putida_precise321_lim2022": 193,
+        "putida_precise321_lim2022": 321,
     }
     # The three bacterial compendia release one row per LIBRARY, so their L1 is the
     # replicate-group rule; the yeast rows keep one record per (strain, condition).

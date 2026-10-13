@@ -61,3 +61,7 @@ Owner rule, 2026-10-12: the data is the data; the genome and the experiment are 
 Before: each ORF went through the genome's ID and alias tables (0 of 1,312 changed or dropped on the pinned file).
 
 Now: the ORF (upper-cased) and the released `commonName` are stored with no genome injected. A row id with no ORF form is refused by name (0 of 1,312). 1,312 records, unchanged.
+
+## 2026.10.12 - The deferred name is a record on the released-gene-name leaf (#1045, PR #1085)
+
+A Dataset S2 row id with no ORF form is stored on `ReleasedGeneNamePerturbation` with the released `commonName` as its perturbed name instead of refusing the build (0 of 1,312 rows). The count stays 1,312.

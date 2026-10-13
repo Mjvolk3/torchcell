@@ -97,3 +97,7 @@ Owner rule, 2026-10-12: the data is the data; the genome and the experiment are 
 Before: every gene name of a DEG table was resolved through the genome's ID, alias and standard-name tables; ~1.13M values (3.1%) under names the tables did not place (ncRNAs such as `15S_RRNA`, `SNR*`, retired symbols) were dropped and ~15.7k values under a second name for one ORF were collapsed to the first; the deleted gene's `perturbed_gene_name` was the genome's standard name (the string `"nan"` for 940 records with none).
 
 Now: the keys of `expression_log2_ratio` are the released names, stripped and otherwise verbatim; the deleted gene is the ORF of the genotype label as both names. 6,188 records, every released value under its released name. A name on two rows of one table raises `RepeatedGeneNameError` (0); a genotype label with no ORF form is counted under `deferred_to_released_gene_name_leaf` in `preprocess/dropped_records.json` (0 of 6,188). The ~221 `ptbs` genotype rows with no DEG table carry no log-fold-change vector and have no record, as before.
+
+## 2026.10.12 - The deferred name is a record on the released-gene-name leaf (#1045, PR #1085)
+
+A genotype label with no ORF form is stored on `ReleasedGeneNamePerturbation` under the label, upper-cased, with the URA3 marker and its strain id (0 of 6,188 released tables); the ledger rule is `stored_on_released_gene_name_leaf`. The count stays 6,188.

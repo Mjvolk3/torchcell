@@ -160,3 +160,9 @@ Record-neutral, measured on the three pinned sheets: header found in each (row 5
 Tests: `test_unknown_grade_symbol_refuses_naming_file_symbol_and_token`, `test_a_sheet_without_the_header_row_refuses_naming_the_file`.
 
 Review follow-up (same day): both refusals used to fire inside the write transaction, after `processed/lmdb` existed, so a retry served an empty dataset. `process()` now parses all three sheets before the store is opened and iterates the parsed results inside the transaction. On the synthetic edge build, the LMDB (4 records) is byte-identical to main's: key and value digest `91482078...`, from the b4-zelezniak scratchpad `equiv_build.py`.
+
+## 2026.10.12 - Every released name stored as released on the released-gene-name leaf (#1045, PR #1085)
+
+The loader no longer takes a genome. Every scored row of the three acid tables is one record under the token its `Gene/ORF name` cell releases (whitespace and a trailing non-breaking space stripped, nothing else): a systematic name on `KanMxDeletionPerturbation`, any other token on `ReleasedGeneNamePerturbation` (kind `deletion`, marker KanMX). EFG1 and YGR272C, one gene since SGD merged the ORFs, are two records in every table they share; the six tokens the resolver called retired (REF1, RLM2, SBR2, ILM2, VPS236, SIW15) are records; RNR4, which every table lists twice, is two records per table, with its two different octanoic grades both stored. The ledger beside `processed/` lists each repeated token with its grades, and the runner spec declares the three repeated (strain, condition) pairs through `expected_duplicated_pairs`, which the environment-response verifier's `pair_uniqueness` row now takes (it passes on exactly the declared count).
+
+Measured: acetic 377, butyric 422, octanoic 490 = 1,289 records (115 under a systematic name), against 1,270 before. The L0-L4 table from the rebuild follows below once job 4606 finishes.

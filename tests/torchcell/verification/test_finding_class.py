@@ -50,6 +50,7 @@ def test_the_registry_is_exactly_the_reclassified_rules() -> None:
         "cis_concordance",
         "current_genome_genes",
         "deleted_gene_containment_sgd",
+        "deleted_symbols_are_one_contiguous_run_of_the_pinned_assembly",
         "feature_containment",
         "induced_gene_containment",
         "marker_reference",

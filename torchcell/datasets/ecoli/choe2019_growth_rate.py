@@ -104,10 +104,14 @@ Two consequences are stated rather than typed:
 THE 21 DELETED GENES ARE THE SOURCE'S OWN LIST, AND THE RELEASED COORDINATES ARE NOT
 USABLE. Supplementary Table 3 writes the large deletion as
 ``(hycEDCBA-hypABCDE-fhlA-ygbA-mutS-pphB-ygbIJKLMN-rpoS)::kan``, which expands to exactly
-21 gene symbols; all 21 resolve on the pinned MG1655 assembly to the CONTIGUOUS run
-``b2721`` to ``b2741``, and no unlisted gene lies inside that window
-(``check_deleted_region``). The paper also gives coordinates, "genomic coordinates from
-2,038,496 to 2,059,460 bp", and those are MS56 coordinates: the same genes sit at
+21 gene symbols. Each is stored as released (#1045 part 2): a
+``BacterialReleasedStrainPerturbation`` of ``released_kind=deletion`` keyed by the
+symbol, the panel's strain label as the strain label; the loader reads no annotation.
+What the pinned MG1655 assembly makes of them is the verification's genome-reference
+row :data:`DELETED_REGION_RULE` (a finding, never a gate): measured, all 21 resolve to
+the CONTIGUOUS run ``b2721`` to ``b2741`` and no unlisted gene lies inside that window
+(:func:`check_deleted_region`). The paper also gives coordinates, "genomic coordinates
+from 2,038,496 to 2,059,460 bp", and those are MS56 coordinates: the same genes sit at
 2,844,762 to 2,867,551 on MG1655, an offset of 806,266 bp that is the upstream deletion
 MS56 already carries. The released interval therefore belongs to an undeposited assembly
 and is NOT stored as a span; the gene-keyed deletions are what the records carry.
@@ -178,14 +182,12 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     BacterialAssemblySet,
-    BacterialDeletionPerturbation,
     BacterialFitnessExperiment,
     BacterialFitnessExperimentReference,
     BacterialReleasedStrainPerturbation,
     BacterialStrainBackground,
     Concentration,
     ConcentrationUnit,
-    DerivedIdentifierMapping,
     Environment,
     Experiment,
     ExperimentReference,
@@ -201,12 +203,9 @@ from torchcell.datamodels.schema import (
     UncertaintyType,
 )
 from torchcell.datasets.bacteria_common import (
-    BACTERIAL_ASSEMBLY_SETS,
     STRAIN_GENE_NAMESPACES,
-    LocusTagReconciliation,
     assembly_reference,
     bacterial_genome,
-    reconcile_locus_tags,
     released_identifier_kind,
 )
 from torchcell.datasets.dataset_registry import register_dataset
@@ -219,7 +218,12 @@ from torchcell.literature.manifest import (
     RetrievalRecord,
 )
 from torchcell.sequence.genome.ecoli.k12 import EcoliK12Genome, EcoliK12StrainName
-from torchcell.verification.report import Provenance, VerificationReport
+from torchcell.verification.report import (
+    Level,
+    LevelResult,
+    Provenance,
+    VerificationReport,
+)
 from torchcell.verification.sourced import (
     ProvenanceGap,
     ProvenanceGapReason,
@@ -519,7 +523,9 @@ GROWTH_EXPECTED_REFERENCES = 4
 TF_EXPECTED_RECORDS = 2
 TF_EXPECTED_REFERENCES = 1
 #: Every deletion symbol must resolve; a renamed label stops the build.
-MIN_RESOLVED_FRACTION = 1.0
+#: The verification's genome-reference row over the 21 named genes (#1045 part 2):
+#: registered in ``torchcell.verification.report``, so it reports and never gates.
+DELETED_REGION_RULE = "deleted_symbols_are_one_contiguous_run_of_the_pinned_assembly"
 #: The paper states the two deletion strains recover "to 80%" of eMS57; measured on the
 #: released replicates they are 0.7763 and 0.7966, so 0.05 is the agreement window.
 RECOVERY_TARGET = 0.80
@@ -726,8 +732,8 @@ _GAP_KEIO_CONSTRUCTION = ProvenanceGap(
     reason=ProvenanceGapReason.not_reported_by_primary,
     note="no plate, well or strain accession of either Keio strain is released",
 )
-#: ``BacterialDeletionPerturbation`` is not a ``ProvenanceGapMixin``, so a typed absence
-#: on one of its fields is filed in ``preprocess/provenance_gaps.json`` instead.
+#: ``BacterialReleasedStrainPerturbation`` is not a ``ProvenanceGapMixin``, so a typed
+#: absence on one of its fields is filed in ``preprocess/provenance_gaps.json`` instead.
 GROWTH_PERTURBATION_GAPS: tuple[ProvenanceGap, ...] = (_GAP_CASSETTE_SEQUENCE,)
 TF_PERTURBATION_GAPS: tuple[ProvenanceGap, ...] = (
     ProvenanceGap(
@@ -1062,53 +1068,78 @@ def check_panels_disagree(
     }
 
 
-def check_deleted_region(
-    locus_tag: Mapping[str, str], genome: EcoliK12Genome
-) -> dict[str, Any]:
-    """The 21 named genes are a contiguous MG1655 run containing no unlisted gene.
+def check_deleted_region(genome: EcoliK12Genome) -> dict[str, Any]:
+    """Where the 21 named genes sit on the pinned MG1655 assembly; reports, never raises.
 
-    This is the cross-check that lets the gene list stand in for the released
-    coordinates: Supplementary Table 3 names the genes and the Methods name a span, and
-    on the pinned assembly the named genes span one uninterrupted block.
+    The cross-check that lets the gene list stand in for the released coordinates:
+    Supplementary Table 3 names the genes and the Methods name a span, and on the
+    pinned assembly the named genes should span one uninterrupted block. It compares the
+    release with OUR annotation, so it is a genome-reference finding (#1045 part 2):
+    ``problems`` lists what the annotation disagrees with, and the build never reads it.
     """
     spans: dict[str, tuple[int, int]] = {}
     for feature in genome.db.features_of_type("gene"):
-        tags = feature.attributes.get("locus_tag") or []
-        if len(tags) == 1:
-            spans[tags[0]] = (int(feature.start), int(feature.end))
-    tags = [locus_tag[symbol] for symbol in LARGE_DELETION_SYMBOLS]
-    missing = [tag for tag in tags if tag not in spans]
-    if missing:
-        raise TableFormatError(f"no gene feature for {missing}")
-    low = min(spans[tag][0] for tag in tags)
-    high = max(spans[tag][1] for tag in tags)
-    inside = sorted(
-        tag for tag, (start, end) in spans.items() if start >= low and end <= high
-    )
-    unlisted = [tag for tag in inside if tag not in set(tags)]
-    if unlisted:
-        raise TableFormatError(
-            f"the MG1655 window {low}-{high} also contains {unlisted}, which "
-            "Supplementary Table 3 does not list as deleted"
-        )
-    if len(inside) != len(LARGE_DELETION_SYMBOLS):
-        raise TableFormatError(
-            f"{len(inside)} genes inside the window, the source names "
-            f"{len(LARGE_DELETION_SYMBOLS)}"
-        )
-    return {
+        feature_tags = feature.attributes.get("locus_tag") or []
+        if len(feature_tags) == 1:
+            spans[feature_tags[0]] = (int(feature.start), int(feature.end))
+    resolved = {
+        symbol: genome.resolve_gene_name(symbol).systematic_name
+        for symbol in LARGE_DELETION_SYMBOLS
+    }
+    tags = [tag for tag in resolved.values() if tag is not None and tag in spans]
+    problems: list[str] = []
+    unplaced = [s for s, tag in resolved.items() if tag is None or tag not in spans]
+    if unplaced:
+        problems.append(f"no gene feature of the pinned assembly for {unplaced}")
+    details: dict[str, Any] = {
         "named_symbols": list(LARGE_DELETION_SYMBOLS),
-        "locus_tags": tags,
-        "mg1655_window": [low, high],
-        "mg1655_window_bp": high - low + 1,
+        "locus_tags": [resolved[s] for s in LARGE_DELETION_SYMBOLS],
         "released_ms56_window": [2038496, 2059460],
         "released_ms56_window_bp": 2059460 - 2038496 + 1,
-        "ms56_to_mg1655_offset_bp": low - 2038496,
-        "genes_inside_window": len(inside),
-        "unlisted_genes_inside_window": 0,
         "note": "the released coordinates are MS56 coordinates, so they are not stored "
         "as a span against the pinned MG1655 assembly",
     }
+    if tags:
+        low = min(spans[tag][0] for tag in tags)
+        high = max(spans[tag][1] for tag in tags)
+        inside = sorted(
+            tag for tag, (start, end) in spans.items() if start >= low and end <= high
+        )
+        unlisted = [tag for tag in inside if tag not in set(tags)]
+        if unlisted:
+            problems.append(
+                f"the MG1655 window {low}-{high} also contains {unlisted}, which "
+                "Supplementary Table 3 does not list as deleted"
+            )
+        details.update(
+            {
+                "mg1655_window": [low, high],
+                "mg1655_window_bp": high - low + 1,
+                "ms56_to_mg1655_offset_bp": low - 2038496,
+                "genes_inside_window": len(inside),
+                "unlisted_genes_inside_window": len(unlisted),
+            }
+        )
+    details["problems"] = problems
+    return details
+
+
+def deleted_region_rule(genome: EcoliK12Genome) -> LevelResult:
+    """L4 genome-reference row: :func:`check_deleted_region`, reported, never gating."""
+    details = check_deleted_region(genome)
+    problems = details["problems"]
+    return LevelResult(
+        level=Level.L4,
+        name=DELETED_REGION_RULE,
+        passed=not problems,
+        message=(
+            f"the {len(LARGE_DELETION_SYMBOLS)} released deletion symbols are one "
+            f"contiguous run of {genome.ASSEMBLY_SET} with no unlisted gene inside"
+            if not problems
+            else "; ".join(problems)
+        ),
+        details=details,
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -1182,19 +1213,17 @@ def parent_phenotype(parent: StrainRates) -> FitnessPhenotype:
     )
 
 
-def build_growth_genotype(
-    symbols: Sequence[str], locus_tag: Mapping[str, str]
-) -> Genotype:
-    """One strain's designed deletions, written against the pinned MG1655 assembly."""
+def build_growth_genotype(symbols: Sequence[str], strain_label: str) -> Genotype:
+    """One strain's designed deletions, each keyed by the symbol the release names."""
     return Genotype(
         perturbations=[
-            BacterialDeletionPerturbation(
-                systematic_gene_name=locus_tag[symbol],
+            BacterialReleasedStrainPerturbation(
+                systematic_gene_name=symbol,
                 perturbed_gene_name=symbol,
                 gene_namespace=MG1655_NAMESPACE,
-                identifier_mapping=DerivedIdentifierMapping(
-                    source_identifier=symbol, route="gene_symbol"
-                ),
+                strain_label=strain_label,
+                identifier_kind="gene symbol",
+                released_kind=ReleasedStrainKind.deletion,
                 cassette=KAN_CASSETTE,
             )
             for symbol in symbols
@@ -1251,17 +1280,17 @@ def control_phenotype() -> FitnessPhenotype:
     return FitnessPhenotype(fitness=1.0, n_samples=None, sample_unit=None)
 
 
-def build_keio_genotype(symbol: str, locus_tag: str) -> Genotype:
-    """One Keio single deletion, written against the pinned BW25113 assembly."""
+def build_keio_genotype(symbol: str) -> Genotype:
+    """One Keio single deletion, keyed by the symbol the legend names."""
     return Genotype(
         perturbations=[
-            BacterialDeletionPerturbation(
-                systematic_gene_name=locus_tag,
+            BacterialReleasedStrainPerturbation(
+                systematic_gene_name=symbol,
                 perturbed_gene_name=symbol,
                 gene_namespace=BW25113_NAMESPACE,
-                identifier_mapping=DerivedIdentifierMapping(
-                    source_identifier=symbol, route="gene_symbol"
-                ),
+                strain_label=f"Δ{symbol}",
+                identifier_kind="gene symbol",
+                released_kind=ReleasedStrainKind.deletion,
                 collection=KEIO_COLLECTION,
             )
         ]
@@ -1271,23 +1300,6 @@ def build_keio_genotype(symbol: str, locus_tag: str) -> Genotype:
 def keio_phenotype(fitness: float) -> FitnessPhenotype:
     """One Keio strain's growth rate as the released fraction of wild-type BW25113."""
     return FitnessPhenotype(fitness=fitness, n_samples=None, sample_unit=None)
-
-
-def resolve_symbols(
-    symbols: Sequence[str], genome: EcoliK12Genome, *, label: str
-) -> tuple[dict[str, str], LocusTagReconciliation]:
-    """``{gene symbol: locus tag}`` plus the resolver report; nothing may be unresolved."""
-    unique = sorted(set(symbols))
-    stored, report = reconcile_locus_tags(genome, pd.Series(unique), label=label)
-    report.require_resolved(MIN_RESOLVED_FRACTION)
-    outside = set(report.outside_namespace)
-    unresolved = [tag for tag in stored if tag in outside]
-    if unresolved:
-        raise RuntimeError(f"{label}: {unresolved} resolve to no locus of this strain")
-    locus_tag = {symbol: str(tag) for symbol, tag in zip(unique, stored, strict=True)}
-    if len(set(locus_tag.values())) != len(locus_tag):
-        raise RuntimeError(f"{label}: two symbols share one locus tag")
-    return locus_tag, report
 
 
 # --------------------------------------------------------------------------- #
@@ -1417,11 +1429,9 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
-        ecoli_genome: EcoliK12Genome | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize; ``ecoli_genome`` is injected by the build entry points."""
-        self.ecoli_genome = ecoli_genome
+        """Initialize; the loader reads no annotation (#1045 part 2)."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -1453,18 +1463,6 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
         _link_raw(self.raw_dir, self.raw_file_names)
         log.info("Choe 2019 raw files linked into %s (sha256 verified)", self.raw_dir)
 
-    def _genome(self) -> EcoliK12Genome:
-        """The injected genome, or the reference strain's default cache."""
-        if self.ecoli_genome is None:
-            self.ecoli_genome = bacterial_genome("ecoli", self.REFERENCE_STRAIN)
-        expected = BACTERIAL_ASSEMBLY_SETS[self.REFERENCE_STRAIN]
-        if self.ecoli_genome.ASSEMBLY_SET != expected:
-            raise ValueError(
-                f"{type(self).__name__} needs the {expected} genome, got "
-                f"{self.ecoli_genome.ASSEMBLY_SET}"
-            )
-        return self.ecoli_genome
-
     def _raw(self, name: str) -> str:
         return osp.join(self.raw_dir, name)
 
@@ -1489,11 +1487,6 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
             )
         )
 
-        genome = self._genome()
-        locus_tag, report = resolve_symbols(
-            LARGE_DELETION_SYMBOLS, genome, label=f"{self.name} deleted gene symbols"
-        )
-        region = check_deleted_region(locus_tag, genome)
         environment = growth_environment()
         reference_genome = assembly_reference(
             self.REFERENCE_STRAIN, background=parent_background()
@@ -1522,7 +1515,7 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
                 phenotype = fitness_phenotype(rates, parent)
                 experiment = BacterialFitnessExperiment(
                     dataset_name=self.name,
-                    genotype=build_growth_genotype(symbols, locus_tag),
+                    genotype=build_growth_genotype(symbols, label),
                     environment=environment,
                     phenotype=phenotype,
                 )
@@ -1536,7 +1529,7 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
                         "panel": GROWTH_SHEET,
                         "strain": label,
                         "deleted_genes": len(symbols),
-                        "locus_tags": ";".join(locus_tag[s] for s in symbols),
+                        "deleted_symbols": ";".join(symbols),
                         "growth_rate_replicates": ";".join(
                             f"{value}" for value in rates.replicates
                         ),
@@ -1590,9 +1583,7 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
             raise RuntimeError(
                 f"{index} records, the module states {GROWTH_EXPECTED_RECORDS}"
             )
-        self._write_ledgers(
-            panel, ratios, rows, report, recovery, disagreement, region, variants
-        )
+        self._write_ledgers(panel, ratios, rows, recovery, disagreement, variants)
         log.info(
             "Choe 2019 Fig. 2c + 2f: %d records (%d references); fitness %.6f to %.6f",
             index,
@@ -1606,10 +1597,8 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
         panel: GrowthPanel,
         ratios: Mapping[str, Sequence[float]],
         rows: Sequence[Mapping[str, Any]],
-        report: LocusTagReconciliation,
         recovery: Mapping[str, Any],
         disagreement: Mapping[str, Any],
-        region: Mapping[str, Any],
         variants: Sequence[VariantTable],
     ) -> None:
         """The retention ledger, the refused calls, the gaps and the cross-checks."""
@@ -1683,8 +1672,10 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
                         "and Supplementary Data 5 (839 ChIP-seq peaks) are not "
                         "mirrored: an Omnilog respiration endpoint has no "
                         "MeasurementType member and a binding peak has no class",
+                        "each deletion is keyed by the gene symbol the release names "
+                        "(#1045 part 2); where the pinned MG1655 assembly places them "
+                        f"is the verification row {DELETED_REGION_RULE}",
                     ],
-                    "reconciliation": report.model_dump(mode="json"),
                 },
                 indent=2,
             )
@@ -1720,7 +1711,8 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
                             for gap in GROWTH_PERTURBATION_GAPS
                         ],
                     },
-                    "note": "BacterialDeletionPerturbation is not a ProvenanceGapMixin, "
+                    "note": "BacterialReleasedStrainPerturbation is not a "
+                    "ProvenanceGapMixin, "
                     "so a typed absence on one of its fields is filed here",
                 },
                 indent=2,
@@ -1731,7 +1723,6 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
                 {
                     "recovery_fraction": dict(recovery),
                     "panel_disagreement": dict(disagreement),
-                    "deleted_region": dict(region),
                     "fig2c_strain_means": {row.strain: row.mean for row in panel.rows},
                     "fig2f_released_ratio_means": {
                         label: statistics.fmean(values)
@@ -1780,11 +1771,9 @@ class TranscriptionFactorKnockoutChoe2019Dataset(ExperimentDataset):
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
-        ecoli_genome: EcoliK12Genome | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize; ``ecoli_genome`` is injected by the build entry points."""
-        self.ecoli_genome = ecoli_genome
+        """Initialize; the loader reads no annotation (#1045 part 2)."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -1817,27 +1806,10 @@ class TranscriptionFactorKnockoutChoe2019Dataset(ExperimentDataset):
         _link_raw(self.raw_dir, self.raw_file_names)
         log.info("Choe 2019 SI PDF linked into %s (sha256 verified)", self.raw_dir)
 
-    def _genome(self) -> EcoliK12Genome:
-        """The injected genome, or the reference strain's default cache."""
-        if self.ecoli_genome is None:
-            self.ecoli_genome = bacterial_genome("ecoli", self.REFERENCE_STRAIN)
-        expected = BACTERIAL_ASSEMBLY_SETS[self.REFERENCE_STRAIN]
-        if self.ecoli_genome.ASSEMBLY_SET != expected:
-            raise ValueError(
-                f"{type(self).__name__} needs the {expected} genome, got "
-                f"{self.ecoli_genome.ASSEMBLY_SET}"
-            )
-        return self.ecoli_genome
-
     @post_process
     def process(self) -> None:
         """Build the two Keio fitness records and write the LMDB."""
         verify_raw_files(self.raw_dir, self._consumed_sha256())
-        genome = self._genome()
-        symbols = [symbol for symbol, _ in KEIO_FITNESS]
-        locus_tag, report = resolve_symbols(
-            symbols, genome, label=f"{self.name} deletion symbols"
-        )
         environment = keio_environment()
         reference = BacterialFitnessExperimentReference(
             dataset_name=self.name,
@@ -1859,7 +1831,7 @@ class TranscriptionFactorKnockoutChoe2019Dataset(ExperimentDataset):
                 phenotype = keio_phenotype(fitness)
                 experiment = BacterialFitnessExperiment(
                     dataset_name=self.name,
-                    genotype=build_keio_genotype(symbol, locus_tag[symbol]),
+                    genotype=build_keio_genotype(symbol),
                     environment=environment,
                     phenotype=phenotype,
                 )
@@ -1872,7 +1844,6 @@ class TranscriptionFactorKnockoutChoe2019Dataset(ExperimentDataset):
                     {
                         "strain": f"Δ{symbol}",
                         "gene_symbol": symbol,
-                        "locus_tag": locus_tag[symbol],
                         "fitness": phenotype.fitness,
                     }
                 )
@@ -1883,7 +1854,7 @@ class TranscriptionFactorKnockoutChoe2019Dataset(ExperimentDataset):
             raise RuntimeError(
                 f"{index} records, the module states {TF_EXPECTED_RECORDS}"
             )
-        self._write_ledgers(rows, report)
+        self._write_ledgers(rows)
         log.info(
             "Choe 2019 Supplementary Fig. 6: %d Keio records (+ %d BW25113 reference) "
             "out of a %d-strain panel",
@@ -1892,9 +1863,7 @@ class TranscriptionFactorKnockoutChoe2019Dataset(ExperimentDataset):
             KEIO_PANEL_STRAINS,
         )
 
-    def _write_ledgers(
-        self, rows: Sequence[Mapping[str, Any]], report: LocusTagReconciliation
-    ) -> None:
+    def _write_ledgers(self, rows: Sequence[Mapping[str, Any]]) -> None:
         """The retention ledger, the typed gaps and the sourcing table."""
         out = Path(self.preprocess_dir)
         (out / "dropped_records.json").write_text(
@@ -1933,8 +1902,9 @@ class TranscriptionFactorKnockoutChoe2019Dataset(ExperimentDataset):
                         "no replicate count, dispersion or absolute wild-type rate is "
                         "released for this panel, so n_samples, sample_unit and the "
                         "uncertainty fields are typed gaps",
+                        "each deletion is keyed by the gene symbol the legend names "
+                        "(#1045 part 2); the loader reads no annotation",
                     ],
-                    "reconciliation": report.model_dump(mode="json"),
                 },
                 indent=2,
             )
@@ -1943,7 +1913,7 @@ class TranscriptionFactorKnockoutChoe2019Dataset(ExperimentDataset):
             json.dumps(
                 {
                     "dataset": self.name,
-                    "carrier": "FitnessPhenotype / BacterialDeletionPerturbation",
+                    "carrier": "FitnessPhenotype / BacterialReleasedStrainPerturbation",
                     "note": "neither leaf is a ProvenanceGapMixin, so these typed "
                     "absences are recorded here rather than on the record",
                     "gaps": [
@@ -1992,8 +1962,13 @@ def _verify(
     genome: EcoliK12Genome | None,
     expected_count: int,
     provenance: Provenance,
+    extra: Callable[[EcoliK12Genome], Sequence[LevelResult]] = lambda genome: (),
 ) -> VerificationReport:
-    """Run the fitness L0-L4 gate over one built tree and write its report."""
+    """Run the fitness L0-L4 gate over one built tree and write its report.
+
+    ``extra`` adds a tree's own rows over the same genome (the growth tree's
+    genome-reference region row, #1045 part 2).
+    """
     from torchcell.verification.fitness import verify_fitness_dataset
     from torchcell.verification.runners import load_records
 
@@ -2009,6 +1984,8 @@ def _verify(
         gene_universe_label=f"{strain} ({genome.ASSEMBLY_SET})",
         resolve_gene_name=genome.resolve_gene_name,
     )
+    for result in extra(genome):
+        report.add(result)
     out = osp.join(dataset_root, "preprocess", "verification_report.json")
     os.makedirs(osp.dirname(out), exist_ok=True)
     with open(out, "w") as handle:
@@ -2043,6 +2020,7 @@ def verify_growth_build(
             page=f"si12.xlsx sheets '{GROWTH_SHEET}' and '{RATIO_SHEET}'",
             retrieved=RETRIEVED_AT,
         ),
+        extra=lambda pinned: (deleted_region_rule(pinned),),
     )
 
 

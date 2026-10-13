@@ -6,8 +6,9 @@
 The synthetic tests write a Source Data workbook with the Fig. 2c and Fig. 2f sheets'
 exact layout and three variant tables with each of the three column layouts the release
 uses, then drive the readers, all three cross-checks, the phenotype and genotype
-builders and a full ``process()`` for both dataset classes into ``tmp_path``. The genome
-and the locus-tag reconciliation are in-test objects, so nothing reads ``$DATA_ROOT``.
+builders and a full ``process()`` for both dataset classes into ``tmp_path``. The
+verifier's genome is an in-test object and the loaders read no annotation (#1045 part
+2), so nothing reads ``$DATA_ROOT``.
 
 One assertion here is a MEASUREMENT of the schema rather than of the paper:
 ``BacterialStrainBackground.alleles`` defaults to ``[]``, so a ``ProvenanceGap`` on it is
@@ -44,7 +45,6 @@ from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
     BacterialAssemblySet,
     BacterialBackgroundAllele,
-    BacterialDeletionPerturbation,
     BacterialGeneNamespace,
     BacterialReleasedStrainPerturbation,
     BacterialStrainBackground,
@@ -53,8 +53,8 @@ from torchcell.datamodels.schema import (
     SequenceVariantPerturbation,
     UncertaintyType,
 )
-from torchcell.datasets.bacteria_common import LocusTagReconciliation
 from torchcell.sequence.genome.base import GeneNameResolution, GeneNameStatus
+from torchcell.verification.report import FindingClass, finding_class_of
 from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
 MG1655_ASSEMBLY: BacterialAssemblySet = "ecoli_K12_MG1655_ASM584v2"
@@ -535,96 +535,48 @@ class FakeGenome:
         self.db = _Db(features)
 
     def resolve_gene_name(self, name: str) -> GeneNameResolution:
-        """Every stored locus tag resolves to itself; anything else is retired."""
-        known = name in self.genbank.loci
+        """A locus tag or a carried symbol resolves to its tag; anything else retires."""
+        by_symbol = {locus.symbol: tag for tag, locus in self.genbank.loci.items()}
+        tag = name if name in self.genbank.loci else by_symbol.get(name)
         return GeneNameResolution(
             input_name=name,
-            status=GeneNameStatus.CURRENT if known else GeneNameStatus.RETIRED,
-            systematic_name=name,
+            status=GeneNameStatus.CURRENT
+            if tag is not None
+            else GeneNameStatus.RETIRED,
+            systematic_name=tag,
         )
-
-
-def _fake_reconcile_for(
-    tags: dict[str, str],
-    assembly_set: BacterialAssemblySet,
-    namespace: BacterialGeneNamespace,
-) -> Any:
-    def reconcile(
-        genome: Any, names: pd.Series, *, label: str
-    ) -> tuple[pd.Series, LocusTagReconciliation]:
-        stored = pd.Series([tags.get(name, name) for name in names])
-        resolved = sum(1 for name in set(names) if name in tags)
-        unresolved = len(set(names)) - resolved
-        report = LocusTagReconciliation(
-            label=label,
-            assembly_set=assembly_set,
-            gene_namespace=namespace,
-            unique_names=len(set(names)),
-            status_histogram={
-                GeneNameStatus.RENAMED: resolved,
-                GeneNameStatus.CURRENT: 0,
-                GeneNameStatus.NON_GENE_FEATURE: 0,
-                GeneNameStatus.RETIRED: unresolved,
-                GeneNameStatus.AMBIGUOUS: 0,
-            },
-            layer_histogram={"gene symbol": resolved},
-            remapped=resolved,
-            kept_on_collision=(),
-            retired_kept=(),
-            ambiguous_kept={},
-            case_insensitive=(),
-            outside_namespace=tuple(n for n in names if n not in tags),
-        )
-        return stored, report
-
-    return reconcile
-
-
-def test_resolve_symbols_maps_every_symbol_and_refuses_an_unresolved_one(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(
-        ch,
-        "reconcile_locus_tags",
-        _fake_reconcile_for(MG1655_TAGS, MG1655_ASSEMBLY, MG1655_NAMESPACE),
-    )
-    genome = FakeGenome(MG1655_TAGS, MG1655_ASSEMBLY)
-    locus_tag, report = ch.resolve_symbols(
-        ch.LARGE_DELETION_SYMBOLS,
-        genome,  # type: ignore[arg-type]  # an in-test genome, so no $DATA_ROOT read
-        label="symbols",
-    )
-    assert locus_tag == MG1655_TAGS
-    assert report.remapped == 21
-
-    from torchcell.datasets.bacteria_common import LocusTagResolutionError
-
-    with pytest.raises(LocusTagResolutionError):
-        ch.resolve_symbols(("nosuchgene",), genome, label="symbols")  # type: ignore[arg-type]
 
 
 def test_check_deleted_region_accepts_the_contiguous_run() -> None:
     genome = FakeGenome(MG1655_TAGS, MG1655_ASSEMBLY)
-    region = ch.check_deleted_region(MG1655_TAGS, genome)  # type: ignore[arg-type]
+    region = ch.check_deleted_region(genome)  # type: ignore[arg-type]
     assert region["locus_tags"] == [MG1655_TAGS[s] for s in ch.LARGE_DELETION_SYMBOLS]
     assert region["genes_inside_window"] == 21
     assert region["unlisted_genes_inside_window"] == 0
     assert region["released_ms56_window_bp"] == 20965
+    assert region["problems"] == []
+    rule = ch.deleted_region_rule(genome)  # type: ignore[arg-type]
+    assert (rule.name, rule.passed) == (ch.DELETED_REGION_RULE, True)
 
 
-def test_check_deleted_region_refuses_an_unlisted_gene_inside_the_window() -> None:
-    """A gene inside the window the source does not list is a changed annotation."""
+def test_check_deleted_region_reports_an_unlisted_gene_inside_the_window() -> None:
+    """A gene inside the window the source does not list is a finding, never a gate."""
     genome = FakeGenome(
         MG1655_TAGS, MG1655_ASSEMBLY, extra_gene=("b9999", 1_005_100, 1_005_200)
     )
-    with pytest.raises(ch.TableFormatError, match="does not list as deleted"):
-        ch.check_deleted_region(MG1655_TAGS, genome)  # type: ignore[arg-type]
+    region = ch.check_deleted_region(genome)  # type: ignore[arg-type]
+    assert region["unlisted_genes_inside_window"] == 1
+    assert "does not list as deleted" in region["problems"][0]
+    rule = ch.deleted_region_rule(genome)  # type: ignore[arg-type]
+    assert rule.passed is False
+    assert finding_class_of(rule.name) is FindingClass.report
 
 
-def test_check_deleted_region_refuses_a_missing_gene_feature() -> None:
+def test_check_deleted_region_reports_a_missing_gene_feature() -> None:
     genome = FakeGenome({"rpoS": "b2741"}, MG1655_ASSEMBLY)
-    with pytest.raises(ch.TableFormatError, match="no gene feature for"):
-        ch.check_deleted_region(MG1655_TAGS, genome)  # type: ignore[arg-type]
+    region = ch.check_deleted_region(genome)  # type: ignore[arg-type]
+    assert region["problems"][0].startswith("no gene feature of the pinned assembly")
+    assert "hycE" in region["problems"][0]
 
 
 # --------------------------------------------------------------------------- #
@@ -804,27 +756,30 @@ def test_reconstruction_phenotype_is_the_mean_and_sample_sd_of_the_released_rati
 
 
 def test_build_growth_genotype_writes_one_deletion_per_named_gene() -> None:
-    genotype = ch.build_growth_genotype(ch.LARGE_DELETION_SYMBOLS, MG1655_TAGS)
+    """#1045 part 2: each deletion keys the symbol the release names, as released."""
+    genotype = ch.build_growth_genotype(
+        ch.LARGE_DELETION_SYMBOLS, ch.LARGE_DELETION_LABEL
+    )
     assert len(genotype.perturbations) == 21
-    assert set(genotype.systematic_gene_names) == set(MG1655_TAGS.values())
+    assert set(genotype.systematic_gene_names) == set(ch.LARGE_DELETION_SYMBOLS)
     for perturbation in genotype.perturbations:
-        assert isinstance(perturbation, BacterialDeletionPerturbation)
-        assert perturbation.perturbation_type == "bacterial_deletion"
+        assert isinstance(perturbation, BacterialReleasedStrainPerturbation)
+        assert perturbation.released_kind is ReleasedStrainKind.deletion
+        assert perturbation.strain_label == ch.LARGE_DELETION_LABEL
         assert perturbation.cassette == ch.KAN_CASSETTE
         assert perturbation.gene_namespace == MG1655_NAMESPACE
-        assert perturbation.identifier_mapping is not None
-        assert perturbation.identifier_mapping.route == "gene_symbol"
-    single = ch.build_growth_genotype((ch.RPOS_SYMBOL,), MG1655_TAGS)
+    single = ch.build_growth_genotype((ch.RPOS_SYMBOL,), ch.RPOS_DELETION_LABEL)
     assert len(single.perturbations) == 1
     assert single.perturbations[0].perturbed_gene_name == "rpoS"
 
 
 def test_build_keio_genotype_names_the_collection() -> None:
-    genotype = ch.build_keio_genotype("ydaS", BW25113_TAGS["ydaS"])
+    genotype = ch.build_keio_genotype("ydaS")
     assert len(genotype.perturbations) == 1
     perturbation = genotype.perturbations[0]
-    assert isinstance(perturbation, BacterialDeletionPerturbation)
-    assert perturbation.systematic_gene_name == "BW25113_1357"
+    assert isinstance(perturbation, BacterialReleasedStrainPerturbation)
+    assert perturbation.systematic_gene_name == "ydaS"
+    assert perturbation.strain_label == "ΔydaS"
     assert perturbation.collection == ch.KEIO_COLLECTION
     assert perturbation.cassette is None
     assert perturbation.gene_namespace == BW25113_NAMESPACE
@@ -935,22 +890,14 @@ def test_process_builds_the_deletion_and_reconstructed_allele_records(
     _deposit(tmp_path, monkeypatch)
     monkeypatch.setattr(
         ch,
-        "reconcile_locus_tags",
-        _fake_reconcile_for(MG1655_TAGS, MG1655_ASSEMBLY, MG1655_NAMESPACE),
-    )
-    monkeypatch.setattr(
-        ch,
         "assembly_reference",
         _reference_genome("MS56", MG1655_ASSEMBLY, "GCA_000005845.2"),
     )
     root = tmp_path / "growth_rate_choe2019"
-    dataset = ch.GrowthRateChoe2019Dataset(
-        root=str(root),
-        ecoli_genome=FakeGenome(MG1655_TAGS, MG1655_ASSEMBLY),  # type: ignore[arg-type]
-    )
+    dataset = ch.GrowthRateChoe2019Dataset(root=str(root))
     assert len(dataset) == ch.GROWTH_EXPECTED_RECORDS
-    # the three reconstructed alleles are stored under their released gene symbols
-    assert dataset.gene_set == set(MG1655_TAGS.values()) | {"ilvN", "cspC", "yifB"}
+    # every gene is stored under its released symbol (#1045 part 2)
+    assert dataset.gene_set == set(ch.LARGE_DELETION_SYMBOLS) | {"ilvN", "cspC", "yifB"}
 
     items = [dataset.transform_item(dataset[i]) for i in range(len(dataset))]
     assert sorted(len(i["experiment"].genotype.perturbations) for i in items) == [
@@ -1024,7 +971,8 @@ def test_process_builds_the_deletion_and_reconstructed_allele_records(
     checks = json.loads((preprocess / "released_statistics_check.json").read_text())
     assert checks["recovery_fraction"]["stated_recovery_fraction_of_evolved"] == 0.80
     assert checks["panel_disagreement"]["factor"] == pytest.approx(2.013, abs=1e-3)
-    assert checks["deleted_region"]["genes_inside_window"] == 21
+    # the region cross-check is a verification finding now, not a build check
+    assert "deleted_region" not in checks
 
     sourced = json.loads((preprocess / "sourced_values.json").read_text())
     assert sourced["cassette"]["value"] == ch.KAN_CASSETTE
@@ -1041,6 +989,9 @@ def test_process_builds_the_deletion_and_reconstructed_allele_records(
     # say so report and never gate (#1057)
     failed = {r.name for r in report.results if not r.passed}
     assert failed <= GENOME_REFERENCE_RULES, failed
+    assert report.passed
+    (region,) = [r for r in report.results if r.name == ch.DELETED_REGION_RULE]
+    assert region.passed and region.details["genes_inside_window"] == 21
     assert (preprocess / "verification_report.json").exists()
 
 
@@ -1050,21 +1001,13 @@ def test_process_builds_the_two_keio_records(
     _deposit(tmp_path, monkeypatch)
     monkeypatch.setattr(
         ch,
-        "reconcile_locus_tags",
-        _fake_reconcile_for(BW25113_TAGS, BW25113_ASSEMBLY, BW25113_NAMESPACE),
-    )
-    monkeypatch.setattr(
-        ch,
         "assembly_reference",
         _reference_genome("BW25113", BW25113_ASSEMBLY, "GCA_000750555.1"),
     )
     root = tmp_path / "tf_knockout_growth_choe2019"
-    dataset = ch.TranscriptionFactorKnockoutChoe2019Dataset(
-        root=str(root),
-        ecoli_genome=FakeGenome(BW25113_TAGS, BW25113_ASSEMBLY),  # type: ignore[arg-type]
-    )
+    dataset = ch.TranscriptionFactorKnockoutChoe2019Dataset(root=str(root))
     assert len(dataset) == ch.TF_EXPECTED_RECORDS
-    assert dataset.gene_set == set(BW25113_TAGS.values())
+    assert dataset.gene_set == set(BW25113_TAGS)
 
     items = [dataset.transform_item(dataset[i]) for i in range(len(dataset))]
     assert {len(i["experiment"].genotype.perturbations) for i in items} == {1}
@@ -1095,7 +1038,10 @@ def test_process_builds_the_two_keio_records(
         str(root),
         genome=FakeGenome(BW25113_TAGS, BW25113_ASSEMBLY),  # type: ignore[arg-type]
     )
-    assert [(r.level, r.name) for r in report.results if not r.passed] == []
+    # the released symbols are not the annotation's tags; only the genome-reference
+    # rows may say so, and they never gate (#1045 part 2)
+    assert report.passed
+    assert {r.name for r in report.results if not r.passed} <= GENOME_REFERENCE_RULES
 
 
 def test_process_refuses_a_record_count_the_module_does_not_state(
@@ -1104,20 +1050,12 @@ def test_process_refuses_a_record_count_the_module_does_not_state(
     _deposit(tmp_path, monkeypatch)
     monkeypatch.setattr(
         ch,
-        "reconcile_locus_tags",
-        _fake_reconcile_for(BW25113_TAGS, BW25113_ASSEMBLY, BW25113_NAMESPACE),
-    )
-    monkeypatch.setattr(
-        ch,
         "assembly_reference",
         _reference_genome("BW25113", BW25113_ASSEMBLY, "GCA_000750555.1"),
     )
     monkeypatch.setattr(ch, "KEIO_FITNESS", (("ydaS", 0.724),))
     with pytest.raises(RuntimeError, match="the module states"):
-        ch.TranscriptionFactorKnockoutChoe2019Dataset(
-            root=str(tmp_path / "tf_short"),
-            ecoli_genome=FakeGenome(BW25113_TAGS, BW25113_ASSEMBLY),  # type: ignore[arg-type]
-        )
+        ch.TranscriptionFactorKnockoutChoe2019Dataset(root=str(tmp_path / "tf_short"))
 
 
 def test_read_reconstruction_ratios_refuses_a_changed_title(
@@ -1130,22 +1068,6 @@ def test_read_reconstruction_ratios_refuses_a_changed_title(
     book.close()
     with pytest.raises(ch.TableFormatError, match="title is"):
         ch.read_reconstruction_ratios(str(path))
-
-
-def test_each_class_refuses_a_genome_of_the_wrong_assembly_set() -> None:
-    """A dataset's records pin one assembly, so the injected genome must be that one."""
-    growth = ch.GrowthRateChoe2019Dataset.__new__(ch.GrowthRateChoe2019Dataset)
-    growth.ecoli_genome = FakeGenome(BW25113_TAGS, BW25113_ASSEMBLY)  # type: ignore[assignment]
-    with pytest.raises(ValueError, match="needs the ecoli_K12_MG1655_ASM584v2 genome"):
-        growth._genome()
-    keio = ch.TranscriptionFactorKnockoutChoe2019Dataset.__new__(
-        ch.TranscriptionFactorKnockoutChoe2019Dataset
-    )
-    keio.ecoli_genome = FakeGenome(MG1655_TAGS, MG1655_ASSEMBLY)  # type: ignore[assignment]
-    with pytest.raises(
-        ValueError, match="needs the ecoli_K12_BW25113_ASM75055v1 genome"
-    ):
-        keio._genome()
 
 
 def test_deposit_raw_mirror_refuses_a_mirror_file_that_changed_underneath(
@@ -1165,38 +1087,12 @@ def test_growth_process_refuses_a_record_count_the_module_does_not_state(
     _deposit(tmp_path, monkeypatch)
     monkeypatch.setattr(
         ch,
-        "reconcile_locus_tags",
-        _fake_reconcile_for(MG1655_TAGS, MG1655_ASSEMBLY, MG1655_NAMESPACE),
-    )
-    monkeypatch.setattr(
-        ch,
         "assembly_reference",
         _reference_genome("MS56", MG1655_ASSEMBLY, "GCA_000005845.2"),
     )
     monkeypatch.setattr(ch, "GROWTH_EXPECTED_RECORDS", 3)
     with pytest.raises(RuntimeError, match="the module states 3"):
-        ch.GrowthRateChoe2019Dataset(
-            root=str(tmp_path / "growth_short"),
-            ecoli_genome=FakeGenome(MG1655_TAGS, MG1655_ASSEMBLY),  # type: ignore[arg-type]
-        )
-
-
-def test_resolve_symbols_refuses_two_symbols_sharing_one_locus_tag(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """Two labels on one tag would collapse two strains onto one genotype."""
-    collided = {"rpoS": "b2741", "mutS": "b2741"}
-    monkeypatch.setattr(
-        ch,
-        "reconcile_locus_tags",
-        _fake_reconcile_for(collided, MG1655_ASSEMBLY, MG1655_NAMESPACE),
-    )
-    with pytest.raises(RuntimeError, match="two symbols share one locus tag"):
-        ch.resolve_symbols(
-            ("rpoS", "mutS"),
-            FakeGenome(collided, MG1655_ASSEMBLY),  # type: ignore[arg-type]
-            label="collided",
-        )
+        ch.GrowthRateChoe2019Dataset(root=str(tmp_path / "growth_short"))
 
 
 def test_create_experiment_is_not_the_entry_point() -> None:
@@ -1316,11 +1212,8 @@ def test_real_mg1655_annotation_puts_the_named_genes_in_one_contiguous_run() -> 
     from torchcell.datasets.bacteria_common import bacterial_genome
 
     genome = bacterial_genome("ecoli", "MG1655", data_root)
-    locus_tag, report = ch.resolve_symbols(
-        ch.LARGE_DELETION_SYMBOLS, genome, label="deleted gene symbols"
-    )
-    assert report.resolved_fraction == 1.0
-    region = ch.check_deleted_region(locus_tag, genome)
+    region = ch.check_deleted_region(genome)
+    assert region["problems"] == []
     assert region["locus_tags"] == [f"b{2721 + i}" for i in range(21)]
     assert region["mg1655_window"] == [2844762, 2867551]
     assert region["mg1655_window_bp"] == 22790

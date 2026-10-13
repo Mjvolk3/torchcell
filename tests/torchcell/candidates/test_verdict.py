@@ -440,3 +440,41 @@ def test_decomposition_refuses_repeats_conflicts_and_empty() -> None:
         )
     with pytest.raises(ValidationError, match="an empty decomposition"):
         _decomposed(1, None)
+
+
+def test_g4_unmeasured_carries_a_key_record_only_for_a_pending_shared_key() -> None:
+    """#913: the one record-bearing unmeasured G4 is a shared key awaiting comparison."""
+    from torchcell.candidates.verdict import (
+        G4KeyHit,
+        G4KeyRecord,
+        G4ValueRecord,
+        GateResult,
+        _check_g4,
+    )
+
+    pending = GateResult(gate="G4", outcome="unmeasured", reason="compare first")
+    shared = G4KeyRecord(
+        doi=None,
+        pmid=None,
+        accessions=("PRJNA1",),
+        hits=(
+            G4KeyHit(
+                key_kind="accession",
+                key="PRJNA1",
+                where="m.py",
+                relation="primary_of_other",
+            ),
+        ),
+        pmid_checked=False,
+    )
+    _check_g4(pending, shared, None)
+    clean = shared.model_copy(update={"hits": ()})
+    with pytest.raises(ValueError, match="awaits its content comparison"):
+        _check_g4(pending, clean, None)
+    value = G4ValueRecord(
+        store="s", store_commit=None, records_read=0, tolerance=0.01, matches=()
+    )
+    with pytest.raises(ValueError, match="awaits its content comparison"):
+        _check_g4(pending, shared, value)
+    with pytest.raises(ValueError, match="without its record"):
+        _check_g4(GateResult(gate="G4", outcome="pass", reason="r"), None, None)

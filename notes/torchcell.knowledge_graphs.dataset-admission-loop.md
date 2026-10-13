@@ -160,3 +160,15 @@ The owner revised decision 15 on 2026-10-10: a served compendium is a processing
 Where it lives: `AggregationRecord.sources` in the candidate verdict ([[torchcell.candidates.verdict]]), measured by `experiments/036-dataset-fixes-before-kg-build/scripts/aggregation_decomposition_audit.py` and folded in by `python -m torchcell.candidates gate --decomposition` ([[torchcell.candidates.cli]]); the ledger renders it ([[torchcell.candidates.ledger]]). Full tables, the loading order, the cross-check tolerances and the yeast preparation: [[torchcell.candidates.aggregation-decomposition]].
 
 Measured 2026-10-11 across the four served bacterial compendia: 152 source entries (one per study and served class), 146 of them loadable from a scriptable own release, 1 loaded (Borchert 2023), and 0 walled. The Fitness Browser's bulk SQLite (`cgi_data/feba.db`) is the own release of every browser-sourced RB-TnSeq study, and it matches Borchert 2024's copy to the three-decimal half unit on all 254 such samples.
+
+## 2026.10.12 - G4 refuses duplicate content, not a shared identifier (#913)
+
+The owner, 2026-10-12, on Borchert 2023's fitness contrasts (PR #1074), which G4 had refused because the Borchert 2024 compendium module names the paper's BioProject: "on G4 1 seems fine... we just don't want accidential duplicate data... or even data that was duplicate then waas preprocessed differently st it is hard to tell it is duplicate... in all cases where we collect compendium data / aggregated data from db or follow up study - the answer is to alwayst try to eventually collect it from source."
+
+The rule, as `torchcell.candidates.gates.g4_result` now applies it ([[torchcell.candidates.gates]]):
+
+- A compendium, a database aggregate or a follow-up study that cites a primary paper's DOI, accession or PMID is the DERIVED copy; the primary release is the source that is always collected. A compendium record that was preprocessed differently is still a duplicate of its source.
+- A key found in another module no longer fails G4 by itself. It leaves G4 `unmeasured` with its key record, and the row cannot be admitted until the released values are compared with that store (`python -m torchcell.candidates overlap ... --write`, G4-value).
+- The comparison decides: if every released column is matched by a served sample within tolerance, the row is a genuine duplicate (the same released values under another key) and G4 fails; otherwise G4 passes and its reason names the shared key and the store compared against.
+
+Tests for both directions: `tests/torchcell/candidates/test_gates.py::test_g4_shared_key_passes_when_content_is_not_held_and_fails_when_it_is`, plus the verdict rule that only a pending shared key may carry a key record while G4 is unmeasured (`test_verdict.py`).

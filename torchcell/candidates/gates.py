@@ -33,6 +33,9 @@ What each gate reads:
   ``torchcell-raw/<key>/manifest.json``, kept apart (#495).
 - **G4** DOI, accessions and PMID against every module under ``torchcell/datasets`` (G4-key),
   then a released table against a dev store's records on matched samples (G4-value).
+  G4 refuses duplicate CONTENT, not a shared identifier: a key another module holds makes
+  the value comparison mandatory, and only subsumed values fail (owner, 2026-10-12, #913;
+  :func:`g4_result`).
 - **G5** the phenotype class against ``torchcell.datamodels.schema`` and compound names
   against ``compound_identity_table.json``, offline (#726).
 """
@@ -1007,11 +1010,29 @@ def evaluate_g4_key(
 
 
 def g4_result(key: G4KeyRecord, value: G4ValueRecord | None) -> GateResult:
-    """G4 from both halves: fail on a key held elsewhere or on subsumed values."""
+    """G4 refuses duplicate CONTENT, never a shared identifier on its own.
+
+    Owner, 2026-10-12 (#913): "we just don't want accidential duplicate data... or even
+    data that was duplicate then waas preprocessed differently st it is hard to tell it
+    is duplicate... in all cases where we collect compendium data / aggregated data
+    from db or follow up study - the answer is to alwayst try to eventually collect it
+    from source." So a compendium, a database aggregate or a follow-up study that cites
+    a primary paper's DOI, accession or PMID is the DERIVED copy, and the primary
+    release is the source that is always collected. A key found in another module
+    (``G4KeyRecord.overlapping``) therefore does not fail G4 by itself: it makes the
+    content comparison (G4-value, ``candidate-gate overlap``) mandatory.
+
+    - a value record whose every released column is matched by a served sample within
+      tolerance is a genuine duplicate (the same released values under another key) and
+      FAILS, shared key or not;
+    - an overlapping key with no value record is ``unmeasured``: the content has not
+      been compared yet, so the row cannot be admitted, and nothing is refused on the
+      identifier alone;
+    - an overlapping key with a value record that is not subsumed PASSES, and the reason
+      names the shared key and the store compared against.
+    """
     overlapping = key.overlapping
-    if overlapping:
-        where = "; ".join(f"{h.key_kind} {h.key} in {h.where}" for h in overlapping)
-        return GateResult(gate="G4", outcome="fail", reason=f"already held: {where}")
+    shared = "; ".join(f"{h.key_kind} {h.key} in {h.where}" for h in overlapping)
     if value is not None and value.subsumed:
         worst = max(m.best_max_abs_diff for m in value.matches)
         margins = [m.margin for m in value.matches if m.margin is not None]
@@ -1021,6 +1042,23 @@ def g4_result(key: G4KeyRecord, value: G4ValueRecord | None) -> GateResult:
             outcome="fail",
             reason=f"subsumed: every released column matches a sample of {value.store} "
             f"within {value.tolerance} (max abs diff {worst:.3g}{margin})",
+        )
+    if overlapping and value is None:
+        return GateResult(
+            gate="G4",
+            outcome="unmeasured",
+            reason=f"key shared with {shared}: a citation is not a duplicate; compare "
+            "the released values against that store (candidate-gate overlap) before "
+            "admitting",
+        )
+    if overlapping and value is not None:
+        return GateResult(
+            gate="G4",
+            outcome="pass",
+            reason=f"key shared with {shared}, content not held: released values "
+            f"checked on {len(value.matches)} column(s) against {value.store}, not "
+            "subsumed (the compendium is the derived copy; the primary release is "
+            "collected from source)",
         )
     mentioned = sum(h.relation == "mentioned" for h in key.hits)
     pmid = "PMID checked against aggregators" if key.pmid_checked else "no PMID check"

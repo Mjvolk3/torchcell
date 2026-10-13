@@ -5057,6 +5057,10 @@ class PhysicalFactor(StrEnum):
       dataset that ADDS that nutrient would use.
     - ``radiation``: ionizing/UV irradiation dose (``magnitude`` in the dose unit when
       released; qualitative when only 'irradiated' is reported).
+    - ``dissolved_oxygen``: a dissolved-oxygen setpoint the culture is held at
+      (``magnitude`` the released value in its released unit, e.g. Public K-12's
+      ``aerobic(30% DO)`` as 30 ``percent``), beside ``Environment.aerobicity``, which
+      states the regime the setpoint holds (#1045).
     """
 
     ph = "pH"
@@ -5066,6 +5070,9 @@ class PhysicalFactor(StrEnum):
     ionic_strength = "ionic_strength"
     nutrient_dropout = "nutrient_dropout"
     radiation = "radiation"
+    # --- begin #1045 part 3 ------------------------------------------------------ #
+    dissolved_oxygen = "dissolved_oxygen"
+    # --- end #1045 part 3 -------------------------------------------------------- #
 
 
 class Compound(ProvenanceGapMixin):
@@ -5790,6 +5797,29 @@ class PreCulture(ProvenanceGapMixin):
         return self
 
 
+# --- begin #1045 part 3: the growth phase an environment holds a culture in ---- #
+class CultureGrowthPhase(StrEnum):
+    """The growth phase a batch culture was harvested in, as the source names it.
+
+    Part of the SAMPLE, not of the environment: the medium, temperature and aeration of
+    an exponential and a stationary harvest of one culture are the same, and what
+    differs is when the cells were taken, which is the ``harvest_optical_density``
+    precedent of ``MicroarrayExpressionScorePhenotype``. ``exponential`` is the source's
+    "mid-log phase".
+
+    ``Environment.growth_phase`` (#1045) uses the same vocabulary for the other case: a
+    culture HELD in a phase as the condition itself, which Schmidt 2016's starved arms
+    are ("Starved cells were continuously shaken after reaching stationary phase for
+    either 1 or 3 d"). There the phase is the treatment, not the harvest moment.
+    """
+
+    exponential = "exponential"
+    stationary = "stationary"
+
+
+# --- end #1045 part 3 --------------------------------------------------------- #
+
+
 class Environment(ProvenanceGapMixin):
     """Experimental environment: base medium + temperature + optional perturbations.
 
@@ -5800,7 +5830,16 @@ class Environment(ProvenanceGapMixin):
     oxygen regime (anaerobic fermentation is standard for biofuel screens);
     ``duration_hours`` is the optional treatment time. ``temperature`` is optional: a
     secondary curation layer (YeastPhenome) may not carry it, in which case it is a
-    ``ProvenanceGap`` (``field='temperature'``), NOT a guessed value.
+    ``ProvenanceGap`` (``field='temperature'``), NOT a guessed value. ``aerobicity`` is
+    a value or a typed ``ProvenanceGap`` (#1045): ``None`` only beside a gap naming it,
+    when the source states no oxygen regime (Lamoureux 2023's blank ``Electron
+    Acceptor`` and ``aerobicity`` cells), never a guessed ``aerobic``; ``transition`` is
+    a regime that changes during the culture (Public K-12's anaerobic-aerobic
+    transition series), which no single regime states. A dissolved-oxygen setpoint is
+    an ``EnvironmentPhysicalPerturbation`` of ``PhysicalFactor.dissolved_oxygen``
+    carrying the released value and unit, beside the regime it sets. ``growth_phase``
+    is the phase a culture is held in as the condition (Schmidt 2016's stationary
+    arms), ``None`` when the source states none.
 
     The culture protocol (#507) lives on the subclass ``CultureEnvironment``, not
     here: this class is in the schema closure of every served dataset.
@@ -5813,9 +5852,14 @@ class Environment(ProvenanceGapMixin):
         description="environmental perturbations (added compounds / physical stresses) "
         "on top of the base medium; empty for an unperturbed base environment",
     )
-    aerobicity: str = Field(
-        default="aerobic", description="'aerobic' | 'anaerobic' | 'microaerobic'"
+    # --- begin #1045 part 3: aerobicity is a value or a typed gap ---------------- #
+    aerobicity: str | None = Field(
+        default="aerobic",
+        description="'aerobic' | 'anaerobic' | 'microaerobic' | 'transition'; None only "
+        "with a ProvenanceGap(field='aerobicity') when the source states no oxygen "
+        "regime",
     )
+    # --- end #1045 part 3 -------------------------------------------------------- #
     duration_hours: float | None = Field(
         default=None, description="treatment/growth duration in hours; None if unstated"
     )
@@ -5841,16 +5885,38 @@ class Environment(ProvenanceGapMixin):
         "cultures differ from one another ONLY here).",
     )
     # --- end #753 ---------------------------------------------------------------- #
+    # --- begin #1045 part 3: the growth phase a culture is held in -------------- #
+    growth_phase: CultureGrowthPhase | None = Field(
+        default=None,
+        exclude_if=lambda v: v is None,
+        description="the growth phase the culture is held in as the condition (a "
+        "stationary-phase starvation arm); None when the source states none, and "
+        "then left out of the dump, so an environment without it serializes exactly "
+        "as it did before the field existed (the Genotype.natural_isolate precedent)",
+    )
+    # --- end #1045 part 3 -------------------------------------------------------- #
 
     @field_validator("aerobicity", mode="after")
     @classmethod
-    def validate_aerobicity(cls, v: str) -> str:
-        """Aerobicity is one of the three supported oxygen regimes."""
-        if v not in {"aerobic", "anaerobic", "microaerobic"}:
+    def validate_aerobicity(cls, v: str | None) -> str | None:
+        """Aerobicity is one of the four oxygen regimes, or ``None`` beside a gap."""
+        if v is None:
+            return v
+        if v not in {"aerobic", "anaerobic", "microaerobic", "transition"}:
             raise ValueError(
-                f"aerobicity must be aerobic/anaerobic/microaerobic, got {v!r}"
+                "aerobicity must be aerobic/anaerobic/microaerobic/transition, got "
+                f"{v!r}"
             )
         return v
+
+    # --- begin #1045 part 3: aerobicity is a value or a typed gap ---------------- #
+    @model_validator(mode="after")
+    def _aerobicity_stated_or_gapped(self) -> "Environment":
+        """An unstated oxygen regime is a typed gap, never a silent ``None``."""
+        _require_value_or_gap(self, ("aerobicity",))
+        return self
+
+    # --- end #1045 part 3 -------------------------------------------------------- #
 
     # --- begin #753: the chemostat dilution rate --------------------------------- #
     @field_validator("dilution_rate_per_hour", mode="after")
@@ -8638,18 +8704,7 @@ class PhosphositeQuantification(StrEnum):
     not_quantified = "not_quantified"
 
 
-class CultureGrowthPhase(StrEnum):
-    """The growth phase a batch culture was harvested in, as the source names it.
-
-    Part of the SAMPLE, not of the environment: the medium, temperature and aeration of
-    an exponential and a stationary harvest of one culture are the same, and what
-    differs is when the cells were taken, which is the ``harvest_optical_density``
-    precedent of ``MicroarrayExpressionScorePhenotype``. ``exponential`` is the source's
-    "mid-log phase".
-    """
-
-    exponential = "exponential"
-    stationary = "stationary"
+# ``CultureGrowthPhase`` is defined above ``Environment``, which carries it (#1045).
 
 
 PHOSPHOSITE_KEY_SEPARATOR = "|"

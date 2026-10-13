@@ -460,11 +460,65 @@ def test_a_gapped_medium_has_no_stated_name_and_environment_media_stays_required
 
 
 def test_environment_aerobicity_vocabulary() -> None:
-    """The three oxygen regimes pass; ``hypoxic`` is refused."""
-    for regime in ["aerobic", "anaerobic", "microaerobic"]:
+    """The four oxygen regimes pass (#1045 adds ``transition``); ``hypoxic`` is
+    refused.
+    """
+    for regime in ["aerobic", "anaerobic", "microaerobic", "transition"]:
         assert s.Environment(media=YEPD, aerobicity=regime).aerobicity == regime
-    with _refuses("aerobicity must be aerobic/anaerobic/microaerobic, got 'hypoxic'"):
+    with _refuses(
+        "aerobicity must be aerobic/anaerobic/microaerobic/transition, got 'hypoxic'"
+    ):
         s.Environment(media=YEPD, aerobicity="hypoxic")
+
+
+def test_an_unstated_oxygen_regime_is_a_typed_gap_never_a_silent_none() -> None:
+    """#1045: ``aerobicity`` is a value or a typed gap; the default stays ``aerobic``."""
+    assert s.Environment(media=YEPD).aerobicity == "aerobic"
+    with _refuses("Environment.aerobicity is unset and carries no ProvenanceGap"):
+        s.Environment(media=YEPD, aerobicity=None)
+    gap = ProvenanceGap(
+        field="aerobicity",
+        reason=ProvenanceGapReason.not_reported_by_primary,
+        note="the cell is blank",
+    )
+    gapped = s.Environment(media=YEPD, aerobicity=None, provenance_gaps=[gap])
+    assert gapped.aerobicity is None and gapped.gapped_fields() == {"aerobicity"}
+    assert s.Environment.model_validate(gapped.model_dump()) == gapped
+    with _refuses("field 'aerobicity' has a ProvenanceGap but is not None"):
+        s.Environment(media=YEPD, aerobicity="aerobic", provenance_gaps=[gap])
+
+
+def test_a_growth_phase_and_a_dissolved_oxygen_setpoint_tell_environments_apart() -> (
+    None
+):
+    """#1045: ``growth_phase`` is optional; a DO setpoint is a physical-factor edit."""
+    base = s.Environment(media=YEPD)
+    assert base.growth_phase is None
+    held = s.Environment(
+        media=YEPD, growth_phase=s.CultureGrowthPhase.stationary, duration_hours=72.0
+    )
+    assert held.model_dump_json() != base.model_dump_json()
+    assert s.Environment.model_validate(held.model_dump()).growth_phase is (
+        s.CultureGrowthPhase.stationary
+    )
+    with pytest.raises(
+        ValidationError, match="Input should be 'exponential' or 'stationary'"
+    ):
+        s.Environment(media=YEPD, growth_phase="lag")  # type: ignore[arg-type]
+    setpoint = s.EnvironmentPhysicalPerturbation(
+        factor=s.PhysicalFactor.dissolved_oxygen,
+        magnitude=s.Concentration(value=30.0, unit=s.ConcentrationUnit.percent),
+        provenance_gaps=[
+            ProvenanceGap(
+                field="agent",
+                reason=ProvenanceGapReason.not_reported_by_primary,
+                note="the gas that held the setpoint is not stated",
+            )
+        ],
+    )
+    controlled = s.Environment(media=YEPD, perturbations=[setpoint])
+    assert controlled.model_dump_json() != base.model_dump_json()
+    assert s.PhysicalFactor("dissolved_oxygen") is s.PhysicalFactor.dissolved_oxygen
 
 
 def test_phenotype_label_fields_must_be_own_fields_of_the_concrete_class() -> None:
@@ -1135,6 +1189,7 @@ def test_genotype_of_mixed_leaves_round_trips_and_sorts_by_gene() -> None:
                 "ionic_strength",
                 "nutrient_dropout",
                 "radiation",
+                "dissolved_oxygen",
             ],
         ),
         (s.BiologicAgentClass, ["peptide", "protein", "antibody", "toxin"]),

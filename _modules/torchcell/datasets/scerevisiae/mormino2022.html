@@ -128,10 +128,7 @@
 
 <span class="sd">RECORD = one isolated strain as an ``EnvironmentResponseExperiment``:</span>
 
-<span class="sd">- GENOTYPE: one CRISPRi target under the name Table 1 releases, verbatim (#1045): a</span>
-<span class="sd">  common name (all 12) on ``ReleasedGeneNamePerturbation`` with kind</span>
-<span class="sd">  ``crispr_interference``, a systematic name on ``CrisprInterferencePerturbation``; no</span>
-<span class="sd">  genome is consulted. The construct (effector ``dCas9-Mxi1``,</span>
+<span class="sd">- GENOTYPE: one ``CrisprInterferencePerturbation`` (target gene, effector ``dCas9-Mxi1``,</span>
 <span class="sd">  ``n_guides=1`` -- an isolated strain carries exactly one gRNA; the "1-16 gRNAs each" in</span>
 <span class="sd">  the paper is a per-GENE property of the library, not of a strain). ``guide_sequence``</span>
 <span class="sd">  stays None: Mormino releases no per-strain spacer, the guides live upstream in the</span>
@@ -195,7 +192,6 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">UTC</span><span class="p">,</span> <span class="n">datetime</span>
@@ -235,8 +231,6 @@
     <span class="n">PhysicalFactor</span><span class="p">,</span>
     <span class="n">Publication</span><span class="p">,</span>
     <span class="n">ReferenceGenome</span><span class="p">,</span>
-    <span class="n">ReleasedGeneKind</span><span class="p">,</span>
-    <span class="n">ReleasedGeneNamePerturbation</span><span class="p">,</span>
     <span class="n">ResponseCategory</span><span class="p">,</span>
     <span class="n">SampleUnit</span><span class="p">,</span>
     <span class="n">SmallMoleculePerturbation</span><span class="p">,</span>
@@ -244,6 +238,7 @@
     <span class="n">Temperature</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.scerevisiae.smith2006</span><span class="w"> </span><span class="kn">import</span> <span class="n">canonical_common_names</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.literature.manifest</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ROLE_PAPER_OCR</span><span class="p">,</span>
     <span class="n">ROLE_PAPER_PDF</span><span class="p">,</span>
@@ -253,6 +248,7 @@
     <span class="n">RetrievalMethod</span><span class="p">,</span>
     <span class="n">RetrievalRecord</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="n">SourcedValue</span>
 
@@ -618,12 +614,6 @@
     <span class="n">rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
 
 
-<span class="c1">#: An S288C systematic name, the form that goes on the placed CRISPRi leaf.</span>
-<span class="n">_SYSTEMATIC_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
-    <span class="sa">r</span><span class="s2">"^(Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](-[A-Z])?|Q\d</span><span class="si">{4}</span><span class="s2">|YNC[A-Q]\d</span><span class="si">{4}</span><span class="s2">[WC])$"</span>
-<span class="p">)</span>
-
-
 <div class="viewcode-block" id="CrispriMormino2022Dataset">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.mormino2022.CrispriMormino2022Dataset.html#torchcell.datasets.scerevisiae.mormino2022.CrispriMormino2022Dataset">[docs]</a>
 <span class="nd">@register_dataset</span>
@@ -636,11 +626,13 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"data/torchcell/crispri_mormino2022"</span><span class="p">,</span>
         <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Initialize; every target is stored under the name Table 1 releases."""</span>
+<span class="w">        </span><span class="sd">"""Initialize; a genome is REQUIRED for common-name -&gt; current-R64-ORF resolution."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">genome</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="nd">@property</span>
@@ -684,30 +676,19 @@
         <span class="p">)</span></div>
 
 
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_released_target</span><span class="p">(</span>
-        <span class="n">common</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CrisprInterferencePerturbation</span> <span class="o">|</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The CRISPRi target under the name Table 1 releases (#1045).</span>
-
-<span class="sd">        A systematic name goes on ``CrisprInterferencePerturbation``; a common name (all</span>
-<span class="sd">        12 of Table 1) on ``ReleasedGeneNamePerturbation`` with kind</span>
-<span class="sd">        ``crispr_interference`` and the same construct. No genome is consulted.</span>
-<span class="sd">        """</span>
-        <span class="n">construct</span> <span class="o">=</span> <span class="n">CrisprConstruct</span><span class="p">(</span><span class="n">effector</span><span class="o">=</span><span class="n">EFFECTOR</span><span class="p">,</span> <span class="n">guide_sequence</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_guides</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">common</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">CrisprInterferencePerturbation</span><span class="p">(</span>
-                <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">common</span><span class="p">,</span>
-                <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">common</span><span class="p">,</span>
-                <span class="n">crispr</span><span class="o">=</span><span class="n">construct</span><span class="p">,</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">common</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Common gene name -&gt; current-R64 ORF via the SHARED genome resolver."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">"CrispriMormino2022Dataset requires a genome; inject SCerevisiaeGenome(...)"</span>
             <span class="p">)</span>
-        <span class="k">return</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">(</span>
-            <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">common</span><span class="p">,</span>
-            <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">common</span><span class="p">,</span>
-            <span class="n">released_gene_name</span><span class="o">=</span><span class="n">common</span><span class="p">,</span>
-            <span class="n">released_kind</span><span class="o">=</span><span class="n">ReleasedGeneKind</span><span class="o">.</span><span class="n">crispr_interference</span><span class="p">,</span>
-            <span class="n">crispr</span><span class="o">=</span><span class="n">construct</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="n">resolution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="o">.</span><span class="n">resolve_gene_name</span><span class="p">(</span><span class="n">common</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">resolution</span><span class="o">.</span><span class="n">is_current_gene</span> <span class="ow">or</span> <span class="n">resolution</span><span class="o">.</span><span class="n">systematic_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Mormino2022: gene </span><span class="si">{</span><span class="n">common</span><span class="si">!r}</span><span class="s2"> did not resolve to a current R64 gene "</span>
+                <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">resolution</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2">)"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">resolution</span><span class="o">.</span><span class="n">systematic_name</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Environment</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""SC at pH 3.5 with 50 mM acetic acid and 2 ug/mL ATc, 30 C, aerobic."""</span>
@@ -771,6 +752,8 @@
         <span class="p">)</span>
         <span class="n">paper_md</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">PAPER_MD</span><span class="p">))</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
         <span class="n">audit_table_1</span><span class="p">(</span><span class="n">paper_md</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="n">canonical</span> <span class="o">=</span> <span class="n">canonical_common_names</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">)</span>
         <span class="n">publication</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span>
             <span class="n">pubmed_id</span><span class="o">=</span><span class="n">PMID</span><span class="p">,</span>
             <span class="n">pubmed_url</span><span class="o">=</span><span class="sa">f</span><span class="s2">"https://pubmed.ncbi.nlm.nih.gov/</span><span class="si">{</span><span class="n">PMID</span><span class="si">}</span><span class="s2">/"</span><span class="p">,</span>
@@ -786,12 +769,19 @@
         <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">,</span> <span class="n">interned_env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">itxn</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">_strain</span><span class="p">,</span> <span class="n">rfp</span><span class="p">,</span> <span class="n">_growth</span><span class="p">,</span> <span class="n">common</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">TABLE_1</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"mormino2022"</span><span class="p">):</span>
+                <span class="n">orf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve</span><span class="p">(</span><span class="n">common</span><span class="p">)</span>
                 <span class="n">category</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="n">RFP_CATEGORY</span><span class="p">[</span><span class="n">rfp</span><span class="p">]</span>
                 <span class="n">experiment</span> <span class="o">=</span> <span class="n">EnvironmentResponseExperiment</span><span class="p">(</span>
                     <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
                     <span class="n">genotype</span><span class="o">=</span><span class="n">Genotype</span><span class="p">(</span>
                         <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
-                            <span class="bp">self</span><span class="o">.</span><span class="n">_released_target</span><span class="p">(</span><span class="n">common</span><span class="p">),</span>
+                            <span class="n">CrisprInterferencePerturbation</span><span class="p">(</span>
+                                <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+                                <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">canonical</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">orf</span><span class="p">,</span> <span class="n">orf</span><span class="p">),</span>
+                                <span class="n">crispr</span><span class="o">=</span><span class="n">CrisprConstruct</span><span class="p">(</span>
+                                    <span class="n">effector</span><span class="o">=</span><span class="n">EFFECTOR</span><span class="p">,</span> <span class="n">guide_sequence</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_guides</span><span class="o">=</span><span class="mi">1</span>
+                                <span class="p">),</span>
+                            <span class="p">),</span>
                             <span class="o">*</span><span class="n">biosensor_cassette</span><span class="p">(),</span>
                         <span class="p">]</span>
                     <span class="p">),</span>
@@ -826,9 +816,8 @@
                     <span class="s2">"description"</span><span class="p">:</span> <span class="p">(</span>
                         <span class="s2">"no retention rule removes a Mormino record: acetic acid, "</span>
                         <span class="s2">"anhydrotetracycline and DMSO all resolve to a structure "</span>
-                        <span class="s2">"identifier, all 12 targets are stored under the names Table 1 "</span>
-                        <span class="s2">"releases (#1045), and every Table 1 row is verified verbatim "</span>
-                        <span class="s2">"against the OCR table"</span>
+                        <span class="s2">"identifier, all 12 targets resolve to current R64 genes, and "</span>
+                        <span class="s2">"every Table 1 row is verified verbatim against the OCR table"</span>
                     <span class="p">),</span>
                     <span class="s2">"n_records"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
                     <span class="s2">"items"</span><span class="p">:</span> <span class="p">[],</span>
@@ -862,8 +851,13 @@
 
     <span class="n">load_dotenv</span><span class="p">()</span>
     <span class="n">data_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">]</span>
+    <span class="n">genome</span> <span class="o">=</span> <span class="n">SCerevisiaeGenome</span><span class="p">(</span>
+        <span class="n">genome_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/sgd/genome"</span><span class="p">),</span>
+        <span class="n">go_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/go"</span><span class="p">),</span>
+        <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">root</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/torchcell/crispri_mormino2022"</span><span class="p">)</span>
-    <span class="n">dataset</span> <span class="o">=</span> <span class="n">CrispriMormino2022Dataset</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">)</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">CrispriMormino2022Dataset</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">,</span> <span class="n">genome</span><span class="o">=</span><span class="n">genome</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"len = </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"experiment"</span><span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="nb">str</span><span class="p">)[:</span><span class="mi">3000</span><span class="p">])</span>
 

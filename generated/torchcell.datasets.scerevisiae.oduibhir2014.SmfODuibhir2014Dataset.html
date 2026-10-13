@@ -174,9 +174,9 @@ canonical source is the sha256-pinned file already staged in the library mirror.
 <p>Every record is built and every refusal raised BEFORE the store is opened, so a
 refused file leaves no <code class="docutils literal notranslate"><span class="pre">processed/lmdb</span></code> behind for a retry to serve as empty.
 Every row is a record under its released ORF (upper-cased; no genome is
-consulted, #1045); a cell that is not ORF-shaped goes on the released-gene-name
-leaf verbatim (0 of 1312). Refusals (each 0 of the 1312 rows of the pinned
-file): a blank <code class="docutils literal notranslate"><span class="pre">commonName</span></code> or <code class="docutils literal notranslate"><span class="pre">log2relT</span></code> and two rows naming one ORF.</p>
+consulted, #1045). Refusals (each 0 of the 1312 rows of the pinned file): a blank
+<code class="docutils literal notranslate"><span class="pre">commonName</span></code> or <code class="docutils literal notranslate"><span class="pre">log2relT</span></code>, two rows naming one ORF, and an ORF cell that is
+not ORF-shaped (which would need the released-gene-name leaf, never a drop).</p>
 </dd></dl>
 
 <dl class="py method">

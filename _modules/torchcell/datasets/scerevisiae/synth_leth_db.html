@@ -114,20 +114,20 @@
   <h1>Source code for torchcell.datasets.scerevisiae.synth_leth_db</h1><div class="highlight"><pre>
 <span></span><span class="sd">"""SynLethDB-derived yeast synthetic lethality and synthetic rescue datasets.</span>
 
-<span class="sd">Gene identity (#1045). Every row of ``Yeast_SL.csv`` and ``Yeast_SR.csv`` names both</span>
-<span class="sd">genes twice: a gene name (``n1.name``, ``n2.name``) and an NCBI Entrez Gene id</span>
-<span class="sd">(``n1.identifier``, ``n2.identifier``). Each side is stored exactly as released on</span>
-<span class="sd">``ReleasedGeneNamePerturbation``: the name verbatim in ``systematic_gene_name`` and</span>
-<span class="sd">``released_gene_name``, the Entrez id verbatim in ``released_gene_id`` (namespace</span>
-<span class="sd">``ncbi_entrez_gene``), and ``released_kind`` a typed gap, because SynLethDB states the</span>
-<span class="sd">pair and its source, not the perturbation that made it. No genome or GFF is consulted;</span>
-<span class="sd">a row naming one gene on both sides is stored as released (the pair's two sides are</span>
-<span class="sd">one perturbation), and the verifier is told how many such rows the file holds. The</span>
-<span class="sd">only refusals are a blank PMID and a repeated unordered (name, id) pair, neither of</span>
-<span class="sd">which the pinned files carry. Every released row is a record: 14,000 SL and 6,948 SR.</span>
+<span class="sd">Gene resolution (issue #597). Every row of ``Yeast_SL.csv`` and ``Yeast_SR.csv`` names</span>
+<span class="sd">both genes twice: a gene name (``n1.name``, ``n2.name``) and an NCBI Entrez Gene id</span>
+<span class="sd">(``n1.identifier``, ``n2.identifier``). Each side is resolved by its Entrez id through the</span>
+<span class="sd">RefSeq R64 annotation ``ncbi_genomic.gff`` (``GeneID`` -&gt; ``locus_tag``), pinned by</span>
+<span class="sd">sha256 and read from ``&lt;genome_root&gt;/S288C_reference_genome_R64-4-1_20230830/``. The gene</span>
+<span class="sd">name is a cross-check: ``SCerevisiaeGenome.resolve_gene_name`` (standard name before</span>
+<span class="sd">alias, the prime of ``IMP2'`` kept) must give the same current gene, or the row is</span>
+<span class="sd">dropped under a named rule in ``preprocess/dropped_records.json``. A row naming one gene</span>
+<span class="sd">on both sides is dropped too, since the release does not say what such a pair means.</span>
+<span class="sd">After resolution no unordered ORF pair may repeat (``DuplicateOrfPairError``).</span>
 
-<span class="sd">Before #1045 the loader resolved each side by its Entrez id through the pinned NCBI GFF</span>
-<span class="sd">and dropped 4 SL and 6 SR rows under named rules (an id the GFF lacks, a self pair).</span>
+<span class="sd">The old resolution (a name -&gt; ORF dict in which a later gene's alias overwrote an</span>
+<span class="sd">earlier gene's standard name, and ``rstrip("'")`` turned ``IMP2'`` into ``IMP2``) stored</span>
+<span class="sd">872 of 14,000 SL and 119 of 6,948 SR records under the wrong ORF.</span>
 <span class="sd">"""</span>
 
 <span class="c1"># torchcell/datasets/scerevisiae/synth_leth_db</span>
@@ -140,7 +140,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">Counter</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Mapping</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>
@@ -162,8 +162,7 @@
     <span class="n">Media</span><span class="p">,</span>
     <span class="n">Publication</span><span class="p">,</span>
     <span class="n">ReferenceGenome</span><span class="p">,</span>
-    <span class="n">ReleasedGeneIdNamespace</span><span class="p">,</span>
-    <span class="n">ReleasedGeneNamePerturbation</span><span class="p">,</span>
+    <span class="n">SgaKanMxDeletionPerturbation</span><span class="p">,</span>
     <span class="n">SyntheticLethalityExperiment</span><span class="p">,</span>
     <span class="n">SyntheticLethalityExperimentReference</span><span class="p">,</span>
     <span class="n">SyntheticLethalityPhenotype</span><span class="p">,</span>
@@ -358,34 +357,28 @@
 <span class="c1">#: GFF feature types whose ``Dbxref`` ``GeneID`` names a locus (``locus_tag``).</span>
 <span class="n">_NCBI_LOCUS_TYPES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"gene"</span><span class="p">,</span> <span class="s2">"pseudogene"</span><span class="p">})</span>
 
-<span class="c1">#: Retention rule (#1045): every released row is a record.</span>
-<span class="n">RETENTION_RULE</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">"one record per released row, each side stored on ReleasedGeneNamePerturbation "</span>
-    <span class="s2">"under its released name and Entrez id verbatim; no genome or GFF is consulted and "</span>
-    <span class="s2">"no row is dropped, a row naming one gene on both sides included"</span>
-<span class="p">)</span>
+<span class="c1">#: Drop rules, in the order a row is tested against them.</span>
+<span class="n">RULE_ENTREZ_NOT_IN_GFF</span> <span class="o">=</span> <span class="s2">"entrez_id_not_in_ncbi_gff"</span>
+<span class="n">RULE_NAME_DISAGREES</span> <span class="o">=</span> <span class="s2">"gene_name_disagrees_with_entrez_id"</span>
+<span class="n">RULE_SELF_PAIR</span> <span class="o">=</span> <span class="s2">"same_gene_on_both_sides"</span>
 
-<span class="c1">#: What the release says about the perturbation behind a pair: nothing. The paper</span>
-<span class="c1">#: lists what an SL entry stores (``SYNLETHDB_ENTRY_FIELDS_QUOTE``) and the released</span>
-<span class="c1">#: header carries the two genes, the cell line, the PubMed id, the source and the</span>
-<span class="c1">#: score; how either gene was perturbed in the cited study is not a field.</span>
-<span class="n">SYNLETHDB_KIND_GAP</span> <span class="o">=</span> <span class="n">ProvenanceGap</span><span class="p">(</span>
-    <span class="n">field</span><span class="o">=</span><span class="s2">"released_kind"</span><span class="p">,</span>
-    <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
-    <span class="n">looked_in</span><span class="o">=</span><span class="n">Provenance</span><span class="p">(</span>
-        <span class="n">source_uri</span><span class="o">=</span><span class="s2">"paper.md"</span><span class="p">,</span>
-        <span class="n">citation_key</span><span class="o">=</span><span class="n">SYNLETHDB_CITATION_KEY</span><span class="p">,</span>
-        <span class="n">sha256</span><span class="o">=</span><span class="n">SYNLETHDB_PAPER_SHA256</span><span class="p">,</span>
+<span class="n">_RULE_DESCRIPTIONS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">RULE_ENTREZ_NOT_IN_GFF</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"an Entrez id on the row has no gene or pseudogene feature in the pinned "</span>
+        <span class="s2">"ncbi_genomic.gff, so the side cannot be resolved by its id; the name alone is "</span>
+        <span class="s2">"not used in its place"</span>
     <span class="p">),</span>
-    <span class="n">note</span><span class="o">=</span><span class="p">(</span>
-        <span class="s2">"SynLethDB names the two genes of a pair (n1.name, n1.identifier, n2.name, "</span>
-        <span class="s2">"n2.identifier) and the pair's source, PubMed id and score; it does not say "</span>
-        <span class="s2">"how either gene was perturbed in the cited study ('"</span>
-        <span class="o">+</span> <span class="n">SYNLETHDB_ENTRY_FIELDS_QUOTE</span>
-        <span class="o">+</span> <span class="s2">"'). The perturbation, if stated, is in each record's own "</span>
-        <span class="s2">"Publication.pubmed_id"</span>
+    <span class="n">RULE_NAME_DISAGREES</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"the gene name on the row does not resolve (standard name before alias, through "</span>
+        <span class="s2">"SCerevisiaeGenome.resolve_gene_name) to the current gene its Entrez id maps to, "</span>
+        <span class="s2">"so the two identifiers the release gives for one side contradict each other"</span>
     <span class="p">),</span>
-<span class="p">)</span>
+    <span class="n">RULE_SELF_PAIR</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"both sides resolve to one gene (the release gives the same name and the same "</span>
+        <span class="s2">"Entrez id on both sides); the release does not say what a gene paired with "</span>
+        <span class="s2">"itself means, so no meaning is assigned and the row is not stored"</span>
+    <span class="p">),</span>
+<span class="p">}</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">BlankPubmedIdError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
@@ -401,29 +394,48 @@
 <span class="w">    </span><span class="sd">"""One ``GeneID`` in the NCBI GFF carries two different ``locus_tag`` values."""</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">DuplicatePairError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Two released rows name one unordered (name, Entrez id) pair.</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DuplicateOrfPairError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Two kept rows resolve to the same unordered ORF pair.</span>
 
-<span class="sd">    The pinned files have none; the nine the old name map stored (7 SL, 2 SR) were</span>
-<span class="sd">    all artifacts of its alias overwrite.</span>
+<span class="sd">    With Entrez resolution the pinned files have none; the nine the old name map</span>
+<span class="sd">    stored (7 SL, 2 SR) were all artifacts of its alias overwrite.</span>
 <span class="sd">    """</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MissingGenomeError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A build was started without the genome the gene cross-check needs."""</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DroppedRow</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One source row a drop rule removed, with both sides as the release gives them."""</span>
+
+    <span class="n">source_row</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n1_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">n1_entrez</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n2_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">n2_entrez</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">detail</span><span class="p">:</span> <span class="nb">str</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DropRule</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One drop rule and the source rows it removed."""</span>
+
+    <span class="n">rule</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">n_records</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DroppedRow</span><span class="p">]</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">DropLog</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""The build's accounting: every released row is a record, so nothing is dropped.</span>
-
-<span class="sd">    ``rules`` is empty and kept for the verifier, which reads the ledger's drop rules</span>
-<span class="sd">    to compare the store with the release; ``n_self_pairs`` counts the rows that name</span>
-<span class="sd">    one gene on both sides, which the verifier is told to expect.</span>
-<span class="sd">    """</span>
+<span class="w">    </span><span class="sd">"""Every drop rule applied to a build, and the files the resolution read."""</span>
 
     <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">source_records</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">kept_records</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">dropped_records</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">rule</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">n_self_pairs</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
+    <span class="n">entrez_source_path</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">entrez_source_sha256</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DropRule</span><span class="p">]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_read_synlethdb_csv</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
@@ -453,8 +465,6 @@
     <span class="k">return</span> <span class="n">df</span>
 
 
-<span class="c1"># --- retained utilities: the Entrez -&gt; ORF map of the pinned NCBI GFF, which the</span>
-<span class="c1"># loader no longer consults (#1045) and experiments/036 still reads ------------------ #</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">ncbi_gff_path</span><span class="p">(</span><span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Where the genome's directory keeps the pinned ``ncbi_genomic.gff``."""</span>
     <span class="k">return</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">genome</span><span class="o">.</span><span class="n">genome_root</span><span class="p">,</span> <span class="n">NCBI_GFF_RELPATH</span><span class="p">)</span>
@@ -497,78 +507,143 @@
     <span class="k">return</span> <span class="n">mapping</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">released_side</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">entrez</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""One side of a pair, exactly as the release names it (#1045)."""</span>
-    <span class="k">return</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">(</span>
-        <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
-        <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
-        <span class="n">released_gene_name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
-        <span class="n">released_gene_id</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">entrez</span><span class="p">),</span>
-        <span class="n">released_gene_id_namespace</span><span class="o">=</span><span class="n">ReleasedGeneIdNamespace</span><span class="o">.</span><span class="n">ncbi_entrez_gene</span><span class="p">,</span>
-        <span class="n">released_kind</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span><span class="n">SYNLETHDB_KIND_GAP</span><span class="p">],</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_side</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">entrez</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span><span class="p">,</span> <span class="n">entrez_to_orf</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""``(orf, None, detail)`` when the side resolves, else ``(None, rule, detail)``."""</span>
+    <span class="n">orf</span> <span class="o">=</span> <span class="n">entrez_to_orf</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">entrez</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">orf</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="n">RULE_ENTREZ_NOT_IN_GFF</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> (Entrez </span><span class="si">{</span><span class="n">entrez</span><span class="si">}</span><span class="s2">): not in the GFF"</span>
+    <span class="n">resolution</span> <span class="o">=</span> <span class="n">genome</span><span class="o">.</span><span class="n">resolve_gene_name</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">resolution</span><span class="o">.</span><span class="n">is_current_gene</span> <span class="ow">and</span> <span class="n">resolution</span><span class="o">.</span><span class="n">systematic_name</span> <span class="o">==</span> <span class="n">orf</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">orf</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> (Entrez </span><span class="si">{</span><span class="n">entrez</span><span class="si">}</span><span class="s2">) -&gt; </span><span class="si">{</span><span class="n">orf</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="kc">None</span><span class="p">,</span>
+        <span class="n">RULE_NAME_DISAGREES</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> (Entrez </span><span class="si">{</span><span class="n">entrez</span><span class="si">}</span><span class="s2">) -&gt; </span><span class="si">{</span><span class="n">orf</span><span class="si">}</span><span class="s2"> by id, but the name resolves "</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">resolution</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">resolution</span><span class="o">.</span><span class="n">systematic_name</span><span class="si">}</span><span class="s2"> "</span>
+        <span class="sa">f</span><span class="s2">"(candidates </span><span class="si">{</span><span class="n">resolution</span><span class="o">.</span><span class="n">candidates</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span>
     <span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">pair_keys</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">frozenset</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]:</span>
-<span class="w">    </span><span class="sd">"""The unordered (name, Entrez id) pair of every row, in row order."""</span>
-    <span class="k">return</span> <span class="p">[</span>
-        <span class="nb">frozenset</span><span class="p">(((</span><span class="nb">str</span><span class="p">(</span><span class="n">n1</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">e1</span><span class="p">)),</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">n2</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">e2</span><span class="p">))))</span>
-        <span class="k">for</span> <span class="n">n1</span><span class="p">,</span> <span class="n">e1</span><span class="p">,</span> <span class="n">n2</span><span class="p">,</span> <span class="n">e2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
-            <span class="n">df</span><span class="p">[</span><span class="s2">"n1.name"</span><span class="p">],</span>
-            <span class="n">df</span><span class="p">[</span><span class="s2">"n1.identifier"</span><span class="p">],</span>
-            <span class="n">df</span><span class="p">[</span><span class="s2">"n2.name"</span><span class="p">],</span>
-            <span class="n">df</span><span class="p">[</span><span class="s2">"n2.identifier"</span><span class="p">],</span>
-            <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_pairs</span><span class="p">(</span>
+    <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span><span class="p">,</span> <span class="n">entrez_to_orf</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Add ``n{1,2}.systematic_name``, ``drop_rule`` and ``drop_detail`` to every row.</span>
+
+<span class="sd">    A side resolves to the ORF its Entrez id maps to, and only when its gene name</span>
+<span class="sd">    resolves to that same current gene. A row is dropped by the first rule it meets:</span>
+<span class="sd">    a side's Entrez id absent from the GFF, a side's name disagreeing with its id</span>
+<span class="sd">    (``n1`` is tested before ``n2``), then both sides being one gene. Kept rows have</span>
+<span class="sd">    ``drop_rule`` None.</span>
+<span class="sd">    """</span>
+    <span class="n">n1_orfs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">n2_orfs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">details</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">n1</span><span class="p">,</span> <span class="n">e1</span><span class="p">,</span> <span class="n">n2</span><span class="p">,</span> <span class="n">e2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">"n1.name"</span><span class="p">],</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">"n1.identifier"</span><span class="p">],</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">"n2.name"</span><span class="p">],</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">"n2.identifier"</span><span class="p">],</span>
+        <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">orf1</span><span class="p">,</span> <span class="n">rule1</span><span class="p">,</span> <span class="n">detail1</span> <span class="o">=</span> <span class="n">_resolve_side</span><span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">e1</span><span class="p">),</span> <span class="n">genome</span><span class="p">,</span> <span class="n">entrez_to_orf</span><span class="p">)</span>
+        <span class="n">orf2</span><span class="p">,</span> <span class="n">rule2</span><span class="p">,</span> <span class="n">detail2</span> <span class="o">=</span> <span class="n">_resolve_side</span><span class="p">(</span><span class="n">n2</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">e2</span><span class="p">),</span> <span class="n">genome</span><span class="p">,</span> <span class="n">entrez_to_orf</span><span class="p">)</span>
+        <span class="n">rule</span> <span class="o">=</span> <span class="n">rule1</span> <span class="ow">or</span> <span class="n">rule2</span>
+        <span class="k">if</span> <span class="n">rule</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">orf1</span> <span class="o">==</span> <span class="n">orf2</span><span class="p">:</span>
+            <span class="n">rule</span> <span class="o">=</span> <span class="n">RULE_SELF_PAIR</span>
+        <span class="n">n1_orfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">orf1</span><span class="p">)</span>
+        <span class="n">n2_orfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">orf2</span><span class="p">)</span>
+        <span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rule</span><span class="p">)</span>
+        <span class="n">details</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"n1 </span><span class="si">{</span><span class="n">detail1</span><span class="si">}</span><span class="s2">; n2 </span><span class="si">{</span><span class="n">detail2</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">out</span><span class="p">[</span><span class="s2">"n1.systematic_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">n1_orfs</span>
+    <span class="n">out</span><span class="p">[</span><span class="s2">"n2.systematic_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">n2_orfs</span>
+    <span class="n">out</span><span class="p">[</span><span class="s2">"drop_rule"</span><span class="p">]</span> <span class="o">=</span> <span class="n">rules</span>
+    <span class="n">out</span><span class="p">[</span><span class="s2">"drop_detail"</span><span class="p">]</span> <span class="o">=</span> <span class="n">details</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">drop_log</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">resolved</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">gff_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DropLog</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build the ledger of a resolved frame (from :func:`resolve_pairs`)."""</span>
+    <span class="n">rules</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">rule</span> <span class="ow">in</span> <span class="p">(</span><span class="n">RULE_ENTREZ_NOT_IN_GFF</span><span class="p">,</span> <span class="n">RULE_NAME_DISAGREES</span><span class="p">,</span> <span class="n">RULE_SELF_PAIR</span><span class="p">):</span>
+        <span class="n">hit</span> <span class="o">=</span> <span class="n">resolved</span><span class="p">[</span><span class="n">resolved</span><span class="p">[</span><span class="s2">"drop_rule"</span><span class="p">]</span> <span class="o">==</span> <span class="n">rule</span><span class="p">]</span>
+        <span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">DropRule</span><span class="p">(</span>
+                <span class="n">rule</span><span class="o">=</span><span class="n">rule</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="n">_RULE_DESCRIPTIONS</span><span class="p">[</span><span class="n">rule</span><span class="p">],</span>
+                <span class="n">n_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">hit</span><span class="p">),</span>
+                <span class="n">rows</span><span class="o">=</span><span class="p">[</span>
+                    <span class="n">DroppedRow</span><span class="p">(</span>
+                        <span class="n">source_row</span><span class="o">=</span><span class="n">source_row</span><span class="p">,</span>
+                        <span class="n">n1_name</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"n1.name"</span><span class="p">]),</span>
+                        <span class="n">n1_entrez</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"n1.identifier"</span><span class="p">]),</span>
+                        <span class="n">n2_name</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"n2.name"</span><span class="p">]),</span>
+                        <span class="n">n2_entrez</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"n2.identifier"</span><span class="p">]),</span>
+                        <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"drop_detail"</span><span class="p">]),</span>
+                    <span class="p">)</span>
+                    <span class="k">for</span> <span class="n">source_row</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+                        <span class="n">hit</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">hit</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="s2">"records"</span><span class="p">),</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span>
+                    <span class="p">)</span>
+                <span class="p">],</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="n">kept</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">resolved</span><span class="p">[</span><span class="s2">"drop_rule"</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">DropLog</span><span class="p">(</span>
+        <span class="n">dataset</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+        <span class="n">source_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">resolved</span><span class="p">),</span>
+        <span class="n">kept_records</span><span class="o">=</span><span class="n">kept</span><span class="p">,</span>
+        <span class="n">dropped_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">resolved</span><span class="p">)</span> <span class="o">-</span> <span class="n">kept</span><span class="p">,</span>
+        <span class="n">entrez_source_path</span><span class="o">=</span><span class="n">gff_path</span><span class="p">,</span>
+        <span class="n">entrez_source_sha256</span><span class="o">=</span><span class="n">NCBI_GFF_SHA256</span><span class="p">,</span>
+        <span class="n">rules</span><span class="o">=</span><span class="n">rules</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">refuse_duplicate_pairs</span><span class="p">(</span><span class="n">kept</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Raise ``DuplicateOrfPairError`` when two kept rows name one unordered ORF pair."""</span>
+    <span class="n">pairs</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="nb">frozenset</span><span class="p">((</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+            <span class="n">kept</span><span class="p">[</span><span class="s2">"n1.systematic_name"</span><span class="p">],</span> <span class="n">kept</span><span class="p">[</span><span class="s2">"n2.systematic_name"</span><span class="p">],</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span>
         <span class="p">)</span>
     <span class="p">]</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">refuse_duplicate_pairs</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Raise ``DuplicatePairError`` when two rows name one unordered (name, id) pair."""</span>
-    <span class="n">pairs</span> <span class="o">=</span> <span class="n">pair_keys</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
     <span class="n">repeated</span> <span class="o">=</span> <span class="p">{</span><span class="n">pair</span> <span class="k">for</span> <span class="n">pair</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">Counter</span><span class="p">(</span><span class="n">pairs</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">}</span>
     <span class="k">if</span> <span class="n">repeated</span><span class="p">:</span>
         <span class="n">rows</span> <span class="o">=</span> <span class="p">[</span>
             <span class="nb">int</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">pair</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">pairs</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">pair</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">kept</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">pairs</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">pair</span> <span class="ow">in</span> <span class="n">repeated</span>
         <span class="p">]</span>
-        <span class="k">raise</span> <span class="n">DuplicatePairError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">repeated</span><span class="p">)</span><span class="si">}</span><span class="s2"> released pair(s) repeat across rows </span><span class="si">{</span><span class="n">rows</span><span class="si">}</span><span class="s2">: "</span>
+        <span class="k">raise</span> <span class="n">DuplicateOrfPairError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">repeated</span><span class="p">)</span><span class="si">}</span><span class="s2"> ORF pair(s) repeat across kept rows </span><span class="si">{</span><span class="n">rows</span><span class="si">}</span><span class="s2">: "</span>
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">repeated</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">drop_log</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DropLog</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The ledger of a build: every row a record, the self pairs counted."""</span>
-    <span class="k">return</span> <span class="n">DropLog</span><span class="p">(</span>
-        <span class="n">dataset</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
-        <span class="n">source_records</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)),</span>
-        <span class="n">kept_records</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)),</span>
-        <span class="n">dropped_records</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-        <span class="n">rule</span><span class="o">=</span><span class="n">RETENTION_RULE</span><span class="p">,</span>
-        <span class="n">n_self_pairs</span><span class="o">=</span><span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">pair</span> <span class="ow">in</span> <span class="n">pair_keys</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pair</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">),</span>
-        <span class="n">rules</span><span class="o">=</span><span class="p">[],</span>
-    <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_write_synlethdb_lmdb</span><span class="p">(</span>
     <span class="n">dataset</span><span class="p">:</span> <span class="s2">"SynthLethalityYeastSynthLethDbDataset | SynthRescueYeastSynthLethDbDataset"</span><span class="p">,</span>
     <span class="n">csv_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Read, ledger and write one SynLethDB file (shared by both datasets)."""</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">preprocess_raw</span><span class="p">(</span><span class="n">_read_synlethdb_csv</span><span class="p">(</span><span class="n">csv_path</span><span class="p">))</span>
-    <span class="n">refuse_duplicate_pairs</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">"""Resolve, ledger and write one SynLethDB file (shared by both datasets)."""</span>
+    <span class="n">genome</span> <span class="o">=</span> <span class="n">_require_genome</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">genome</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">_read_synlethdb_csv</span><span class="p">(</span><span class="n">csv_path</span><span class="p">)</span>
+    <span class="n">resolved</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">preprocess_raw</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
     <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">ledger</span> <span class="o">=</span> <span class="n">drop_log</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">df</span><span class="p">)</span>
+    <span class="n">ledger</span> <span class="o">=</span> <span class="n">drop_log</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">resolved</span><span class="p">,</span> <span class="n">ncbi_gff_path</span><span class="p">(</span><span class="n">genome</span><span class="p">))</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"dropped_records.json"</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
         <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">ledger</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">kept</span> <span class="o">=</span> <span class="n">resolved</span><span class="p">[</span><span class="n">resolved</span><span class="p">[</span><span class="s2">"drop_rule"</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()]</span>
+    <span class="n">refuse_duplicate_pairs</span><span class="p">(</span><span class="n">kept</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">rule</span><span class="o">.</span><span class="n">n_records</span> <span class="k">for</span> <span class="n">rule</span> <span class="ow">in</span> <span class="n">ledger</span><span class="o">.</span><span class="n">rules</span><span class="p">)</span> <span class="o">!=</span> <span class="n">ledger</span><span class="o">.</span><span class="n">dropped_records</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"SynLethDB drop accounting does not add up"</span><span class="p">)</span>
 
     <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e12</span><span class="p">))</span>
     <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">row</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tqdm</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">(),</span> <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">))):</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">row</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tqdm</span><span class="p">(</span><span class="n">kept</span><span class="o">.</span><span class="n">iterrows</span><span class="p">(),</span> <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">kept</span><span class="p">))):</span>
             <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">create_experiment</span><span class="p">(</span>
                 <span class="n">dataset</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">row</span>
             <span class="p">)</span>
@@ -582,11 +657,26 @@
             <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span> <span class="n">serialized_data</span><span class="p">)</span>
     <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
     <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-        <span class="s2">"</span><span class="si">%s</span><span class="s2">: wrote </span><span class="si">%d</span><span class="s2"> of </span><span class="si">%d</span><span class="s2"> rows as released (</span><span class="si">%d</span><span class="s2"> name one gene on both sides)"</span><span class="p">,</span>
+        <span class="s2">"</span><span class="si">%s</span><span class="s2">: wrote </span><span class="si">%d</span><span class="s2"> of </span><span class="si">%d</span><span class="s2"> rows (</span><span class="si">%s</span><span class="s2">)"</span><span class="p">,</span>
         <span class="n">dataset</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
         <span class="n">ledger</span><span class="o">.</span><span class="n">kept_records</span><span class="p">,</span>
         <span class="n">ledger</span><span class="o">.</span><span class="n">source_records</span><span class="p">,</span>
-        <span class="n">ledger</span><span class="o">.</span><span class="n">n_self_pairs</span><span class="p">,</span>
+        <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">rule</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">n_records</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">ledger</span><span class="o">.</span><span class="n">rules</span><span class="p">),</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_require_genome</span><span class="p">(</span><span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SCerevisiaeGenome</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">genome</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">MissingGenomeError</span><span class="p">(</span>
+            <span class="s2">"SynLethDB gene resolution needs the SCerevisiaeGenome passed as genome="</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">genome</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_preprocess</span><span class="p">(</span><span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="n">resolved_genome</span> <span class="o">=</span> <span class="n">_require_genome</span><span class="p">(</span><span class="n">genome</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">resolve_pairs</span><span class="p">(</span>
+        <span class="n">df</span><span class="p">,</span> <span class="n">resolved_genome</span><span class="p">,</span> <span class="n">load_entrez_to_orf</span><span class="p">(</span><span class="n">ncbi_gff_path</span><span class="p">(</span><span class="n">resolved_genome</span><span class="p">))</span>
     <span class="p">)</span>
 
 
@@ -601,12 +691,15 @@
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"data/torchcell/syn_leth_db_yeast"</span><span class="p">,</span>
+        <span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Initialize the dataset; every released row is stored as released."""</span>
+<span class="w">        </span><span class="sd">"""Keep the genome for a build, then release it once the dataset is ready."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">genome</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">)</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
@@ -659,15 +752,15 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">preprocess_raw</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">preprocess</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Return the released rows unchanged; nothing is resolved (#1045)."""</span>
-        <span class="k">return</span> <span class="n">df</span></div>
+<span class="w">        </span><span class="sd">"""Resolve both sides of every row by Entrez id (see :func:`resolve_pairs`)."""</span>
+        <span class="k">return</span> <span class="n">_preprocess</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">,</span> <span class="n">df</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="SynthLethalityYeastSynthLethDbDataset.process">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.synth_leth_db.SynthLethalityYeastSynthLethDbDataset.html#torchcell.datasets.scerevisiae.synth_leth_db.SynthLethalityYeastSynthLethDbDataset.process">[docs]</a>
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Verify the raw CSV, ledger its rows, and write the LMDB."""</span>
+<span class="w">        </span><span class="sd">"""Verify the raw CSV, resolve and ledger its rows, and write the LMDB."""</span>
         <span class="n">verify_raw_files</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="p">{</span><span class="n">SL_CSV_NAME</span><span class="p">:</span> <span class="n">SL_CSV_SHA256</span><span class="p">})</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Processing Synthetic Lethality Yeast Data..."</span><span class="p">)</span>
         <span class="n">_write_synlethdb_lmdb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">SL_CSV_NAME</span><span class="p">))</span></div>
@@ -688,8 +781,16 @@
 
         <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
             <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
-                <span class="n">released_side</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"n1.name"</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"n1.identifier"</span><span class="p">])),</span>
-                <span class="n">released_side</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"n2.name"</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"n2.identifier"</span><span class="p">])),</span>
+                <span class="n">SgaKanMxDeletionPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"n1.systematic_name"</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"n1.name"</span><span class="p">],</span>
+                    <span class="n">strain_id</span><span class="o">=</span><span class="s2">"S288C"</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">SgaKanMxDeletionPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"n2.systematic_name"</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"n2.name"</span><span class="p">],</span>
+                    <span class="n">strain_id</span><span class="o">=</span><span class="s2">"S288C"</span><span class="p">,</span>
+                <span class="p">),</span>
             <span class="p">]</span>
         <span class="p">)</span>
 
@@ -740,12 +841,15 @@
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"data/torchcell/syn_rescue_db_yeast"</span><span class="p">,</span>
+        <span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Initialize the dataset; every released row is stored as released."""</span>
+<span class="w">        </span><span class="sd">"""Keep the genome for a build, then release it once the dataset is ready."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">genome</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">)</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
@@ -798,15 +902,15 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">preprocess_raw</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">preprocess</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Return the released rows unchanged; nothing is resolved (#1045)."""</span>
-        <span class="k">return</span> <span class="n">df</span></div>
+<span class="w">        </span><span class="sd">"""Resolve both sides of every row by Entrez id (see :func:`resolve_pairs`)."""</span>
+        <span class="k">return</span> <span class="n">_preprocess</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">,</span> <span class="n">df</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="SynthRescueYeastSynthLethDbDataset.process">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.synth_leth_db.SynthRescueYeastSynthLethDbDataset.html#torchcell.datasets.scerevisiae.synth_leth_db.SynthRescueYeastSynthLethDbDataset.process">[docs]</a>
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Verify the raw CSV, ledger its rows, and write the LMDB."""</span>
+<span class="w">        </span><span class="sd">"""Verify the raw CSV, resolve and ledger its rows, and write the LMDB."""</span>
         <span class="n">verify_raw_files</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="p">{</span><span class="n">SR_CSV_NAME</span><span class="p">:</span> <span class="n">SR_CSV_SHA256</span><span class="p">})</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Processing Synthetic Rescue Yeast Data..."</span><span class="p">)</span>
         <span class="n">_write_synlethdb_lmdb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">SR_CSV_NAME</span><span class="p">))</span></div>
@@ -827,8 +931,16 @@
 
         <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
             <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
-                <span class="n">released_side</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"n1.name"</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"n1.identifier"</span><span class="p">])),</span>
-                <span class="n">released_side</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"n2.name"</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"n2.identifier"</span><span class="p">])),</span>
+                <span class="n">SgaKanMxDeletionPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"n1.systematic_name"</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"n1.name"</span><span class="p">],</span>
+                    <span class="n">strain_id</span><span class="o">=</span><span class="s2">"S288C"</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">SgaKanMxDeletionPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"n2.systematic_name"</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"n2.name"</span><span class="p">],</span>
+                    <span class="n">strain_id</span><span class="o">=</span><span class="s2">"S288C"</span><span class="p">,</span>
+                <span class="p">),</span>
             <span class="p">]</span>
         <span class="p">)</span>
 
@@ -892,13 +1004,21 @@
     <span class="n">load_dotenv</span><span class="p">()</span>
     <span class="n">DATA_ROOT</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">]</span>
 
+    <span class="n">genome</span> <span class="o">=</span> <span class="n">SCerevisiaeGenome</span><span class="p">(</span>
+        <span class="n">genome_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/sgd/genome"</span><span class="p">),</span>
+        <span class="n">go_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/go"</span><span class="p">),</span>
+        <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+
     <span class="n">lethality_dataset</span> <span class="o">=</span> <span class="n">SynthLethalityYeastSynthLethDbDataset</span><span class="p">(</span>
-        <span class="n">root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/torchcell/synth_lethality_yeast_synth_leth_db"</span><span class="p">)</span>
+        <span class="n">root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/torchcell/synth_lethality_yeast_synth_leth_db"</span><span class="p">),</span>
+        <span class="n">genome</span><span class="o">=</span><span class="n">genome</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">lethality_dataset</span><span class="p">)</span>
 
     <span class="n">rescue_dataset</span> <span class="o">=</span> <span class="n">SynthRescueYeastSynthLethDbDataset</span><span class="p">(</span>
-        <span class="n">root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/torchcell/synth_rescue_yeast_synth_leth_db"</span><span class="p">)</span>
+        <span class="n">root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/torchcell/synth_rescue_yeast_synth_leth_db"</span><span class="p">),</span>
+        <span class="n">genome</span><span class="o">=</span><span class="n">genome</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">rescue_dataset</span><span class="p">)</span>
 

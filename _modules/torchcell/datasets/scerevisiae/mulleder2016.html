@@ -202,8 +202,6 @@
     <span class="n">MetabolitePhenotype</span><span class="p">,</span>
     <span class="n">Publication</span><span class="p">,</span>
     <span class="n">ReferenceGenome</span><span class="p">,</span>
-    <span class="n">ReleasedGeneKind</span><span class="p">,</span>
-    <span class="n">ReleasedGeneNamePerturbation</span><span class="p">,</span>
     <span class="n">Temperature</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
@@ -218,31 +216,6 @@
 <span class="n">_SUMMARY_SHEET</span> <span class="o">=</span> <span class="s2">"robust_summary_statistics"</span>
 <span class="n">_RAW_SHEET</span> <span class="o">=</span> <span class="s2">"data_raw"</span>
 <span class="n">_SYSTEMATIC_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](-[A-Z])?$"</span><span class="p">)</span>
-
-<span class="c1">#: A concentration-sheet ORF cell that names no deletion strain: a blank cell (pandas</span>
-<span class="c1">#: reads it as NaN, stringified ``nan``) or the WT background row.</span>
-<span class="n">_NOT_A_STRAIN</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"nan"</span><span class="p">,</span> <span class="s2">"WT"</span><span class="p">})</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_released_deletion</span><span class="p">(</span>
-    <span class="n">orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KanMxDeletionPerturbation</span> <span class="o">|</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The deletion under the released identifier (#1045): an ORF-shaped one on the</span>
-<span class="sd">    placed KanMX leaf with both names the ORF, any other on the released-gene-name leaf</span>
-<span class="sd">    verbatim (kind deletion, marker KanMX).</span>
-<span class="sd">    """</span>
-    <span class="k">if</span> <span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">orf</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">KanMxDeletionPerturbation</span><span class="p">(</span>
-            <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span> <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">orf</span>
-        <span class="p">)</span>
-    <span class="k">return</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">(</span>
-        <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
-        <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
-        <span class="n">released_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
-        <span class="n">released_kind</span><span class="o">=</span><span class="n">ReleasedGeneKind</span><span class="o">.</span><span class="n">deletion</span><span class="p">,</span>
-        <span class="n">marker</span><span class="o">=</span><span class="s2">"KanMX"</span><span class="p">,</span>
-    <span class="p">)</span>
-
 
 <span class="c1"># Mendeley Data 10.17632/bnzdhd6ck8.1 -&gt; Table_S3_Complete_Dataset.xls (direct, pinned).</span>
 <span class="n">DATA_URL</span> <span class="o">=</span> <span class="p">(</span>
@@ -456,21 +429,17 @@
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"summary sheet missing amino acids: </span><span class="si">{</span><span class="n">ref_missing</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">released_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">blank_or_control</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">deferred</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">seen</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">conc</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
             <span class="n">orf</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"ORF"</span><span class="p">])</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">orf</span> <span class="ow">in</span> <span class="n">_NOT_A_STRAIN</span><span class="p">:</span>
-                <span class="c1"># a blank ORF cell (read as NaN) names no strain, and WT is the</span>
-                <span class="c1"># unperturbed background the robust mean summarizes, not a deletion</span>
-                <span class="n">blank_or_control</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">orf</span><span class="p">)</span>
-                <span class="k">continue</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">orf</span><span class="p">):</span>
-                <span class="c1"># A released identifier with no ORF form goes on the released-gene-name</span>
-                <span class="c1"># leaf verbatim (#1045; 0 of 4,678 released rows).</span>
-                <span class="n">released_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">orf</span><span class="p">)</span>
+                <span class="c1"># A released identifier with no ORF form cannot sit on</span>
+                <span class="c1"># KanMxDeletionPerturbation; it is counted, never dropped for good, until</span>
+                <span class="c1"># the released-gene-name leaf lands (0 of 4,678 released rows).</span>
+                <span class="n">deferred</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">orf</span><span class="p">)</span>
+                <span class="k">continue</span>
             <span class="k">if</span> <span class="n">orf</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"Mulleder Table S3: released ORF </span><span class="si">{</span><span class="n">orf</span><span class="si">}</span><span class="s2"> is on two rows of the "</span>
@@ -487,13 +456,11 @@
                 <span class="p">}</span>
             <span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">"Mulleder: </span><span class="si">%d</span><span class="s2"> released ORFs stored, </span><span class="si">%d</span><span class="s2"> on the released-gene-name leaf</span><span class="si">%s</span><span class="s2">, "</span>
-            <span class="s2">"</span><span class="si">%d</span><span class="s2"> blank or WT rows</span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+            <span class="s2">"Mulleder: </span><span class="si">%d</span><span class="s2"> released ORFs stored, </span><span class="si">%d</span><span class="s2"> rows deferred to the "</span>
+            <span class="s2">"released-gene-name leaf</span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span>
-            <span class="nb">len</span><span class="p">(</span><span class="n">released_names</span><span class="p">),</span>
-            <span class="sa">f</span><span class="s2">" (</span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">released_names</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span> <span class="k">if</span> <span class="n">released_names</span> <span class="k">else</span> <span class="s2">""</span><span class="p">,</span>
-            <span class="nb">len</span><span class="p">(</span><span class="n">blank_or_control</span><span class="p">),</span>
-            <span class="sa">f</span><span class="s2">" (</span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">blank_or_control</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span> <span class="k">if</span> <span class="n">blank_or_control</span> <span class="k">else</span> <span class="s2">""</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">deferred</span><span class="p">),</span>
+            <span class="sa">f</span><span class="s2">" (</span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">deferred</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span> <span class="k">if</span> <span class="n">deferred</span> <span class="k">else</span> <span class="s2">""</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="c1"># Reference n: the strains the population robust mean summarizes (issue #489).</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_n_reference_strains</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
@@ -551,7 +518,13 @@
         <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
             <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="s2">"BY4741"</span>
         <span class="p">)</span>
-        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span><span class="n">perturbations</span><span class="o">=</span><span class="p">[</span><span class="n">_released_deletion</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">])])</span>
+        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
+            <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">KanMxDeletionPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">],</span> <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">]</span>
+                <span class="p">)</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
         <span class="c1"># Synthetic minimal (SM) agar, 30 C, exponential growth (Methods "Yeast"):</span>
         <span class="c1"># 6.7 g/L YNB without amino acids (Sigma Y0626) + 2% glucose + 2% agar, sourced</span>
         <span class="c1"># and quoted on ``SM_AGAR``. The spots on that agar inoculate a liquid SM</span>

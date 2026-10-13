@@ -193,11 +193,6 @@
             <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"strain_id"</span><span class="p">),</span>
             <span class="n">crispr</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"guide_sequence"</span><span class="p">),</span>
             <span class="n">crispr</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"library_pool"</span><span class="p">),</span>
-            <span class="c1"># #1045: an allele under its released name and a gene under its released</span>
-            <span class="c1"># id are their own strains (SGD's 42 named alleles beside the whole-gene</span>
-            <span class="c1"># deletion; SynLethDB's Entrez ids); absent on every other leaf</span>
-            <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"allele_name"</span><span class="p">),</span>
-            <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"released_gene_id"</span><span class="p">),</span>
         <span class="p">)</span>
 
     <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">_identity</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">experiment</span><span class="p">[</span><span class="s2">"genotype"</span><span class="p">][</span><span class="s2">"perturbations"</span><span class="p">]))</span>
@@ -265,26 +260,12 @@
     <span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_strain_key</span><span class="p">(</span><span class="n">record</span><span class="p">:</span> <span class="n">Record</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The STRAIN a record measures: its genotype signature, plus the named strain</span>
-<span class="sd">    background of its reference genome when there is one (#1045 part 3).</span>
-
-<span class="sd">    A strain stored on a background named as released (Choe 2019's MS56 and eMS57)</span>
-<span class="sd">    carries an empty genotype; the background is what tells two such strains apart,</span>
-<span class="sd">    as in :func:`environment_response._strain_background_name` (#1057). A record</span>
-<span class="sd">    without a background keys exactly as before, so this only splits groups.</span>
-<span class="sd">    """</span>
-    <span class="n">signature</span> <span class="o">=</span> <span class="n">_genotype_signature</span><span class="p">(</span><span class="n">record</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">])</span>
-    <span class="n">background</span> <span class="o">=</span> <span class="n">record</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">][</span><span class="s2">"genome_reference"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"background"</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">signature</span> <span class="k">if</span> <span class="n">background</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">(</span><span class="n">signature</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">background</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]))</span>
-
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_l1_pair_uniqueness</span><span class="p">(</span><span class="n">records</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Record</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">LevelResult</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""L1: exactly one record per (screened STRAIN, environment) pair."""</span>
     <span class="n">seen</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">records</span><span class="p">:</span>
         <span class="n">exp</span> <span class="o">=</span> <span class="n">rec</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span>
-        <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">_strain_key</span><span class="p">(</span><span class="n">rec</span><span class="p">),</span> <span class="n">_environment_signature</span><span class="p">(</span><span class="n">exp</span><span class="p">))</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">_genotype_signature</span><span class="p">(</span><span class="n">exp</span><span class="p">),</span> <span class="n">_environment_signature</span><span class="p">(</span><span class="n">exp</span><span class="p">))</span>
         <span class="n">seen</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">seen</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
     <span class="n">dups</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">n</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">seen</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">}</span>
     <span class="k">return</span> <span class="n">LevelResult</span><span class="p">(</span>
@@ -451,7 +432,7 @@
             <span class="n">validate</span><span class="p">(</span><span class="n">exp</span><span class="p">)</span>
         <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
             <span class="n">l0_failures</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"index"</span><span class="p">:</span> <span class="n">i</span><span class="p">,</span> <span class="s2">"error"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">)[:</span><span class="mi">500</span><span class="p">]})</span>
-        <span class="n">genotype</span> <span class="o">=</span> <span class="n">key_digest</span><span class="p">(</span><span class="n">_strain_key</span><span class="p">(</span><span class="n">rec</span><span class="p">))</span>
+        <span class="n">genotype</span> <span class="o">=</span> <span class="n">key_digest</span><span class="p">(</span><span class="n">_genotype_signature</span><span class="p">(</span><span class="n">exp</span><span class="p">))</span>
         <span class="n">environment</span> <span class="o">=</span> <span class="n">key_digest</span><span class="p">(</span><span class="n">_environment_signature</span><span class="p">(</span><span class="n">exp</span><span class="p">))</span>
         <span class="n">pair_counts</span><span class="p">[</span><span class="n">key_digest</span><span class="p">((</span><span class="n">genotype</span><span class="p">,</span> <span class="n">environment</span><span class="p">))]</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="n">strains</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">genotype</span><span class="p">)</span>

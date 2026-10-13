@@ -165,9 +165,8 @@
 <span class="sd">owner rule 2026-10-12). A released name the current annotation renames (e.g. YAL043C-A)</span>
 <span class="sd">or no longer carries (e.g. YAR037W) keeps its own name and its record. One Table S2 row,</span>
 <span class="sd">``YLR287-A``, is not ORF-shaped at all (the release dropped the strand letter); it is</span>
-<span class="sd">stored on ``ReleasedGeneNamePerturbation`` under that name verbatim (kind ``deletion``,</span>
-<span class="sd">marker KanMX), so every released row is a record and</span>
-<span class="sd">``preprocess/dropped_records.json`` lists none.</span>
+<span class="sd">counted under ``deferred_to_released_gene_name_leaf`` in ``preprocess/dropped_records.json``</span>
+<span class="sd">until the released-gene-name leaf lands, and is the only row without a record.</span>
 
 <span class="sd">PROVENANCE / PUBLICATION NOTE: the genome-wide biosensor YKO SCREEN DATA is unpublished</span>
 <span class="sd">except in the 2024 dissertation, which has no discoverable DOI/PMID (checked Crossref +</span>
@@ -220,8 +219,6 @@
     <span class="n">MetabolitePhenotype</span><span class="p">,</span>
     <span class="n">Publication</span><span class="p">,</span>
     <span class="n">ReferenceGenome</span><span class="p">,</span>
-    <span class="n">ReleasedGeneKind</span><span class="p">,</span>
-    <span class="n">ReleasedGeneNamePerturbation</span><span class="p">,</span>
     <span class="n">Temperature</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
@@ -247,12 +244,13 @@
 <span class="n">_SYSTEMATIC_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](-[A-Z])?$"</span><span class="p">)</span>
 
 
-<span class="n">RETENTION_RULE</span> <span class="o">=</span> <span class="s2">"none"</span>
-<span class="n">RETENTION_DESCRIPTION</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">"every released row is a record under its released strain name, upper-cased: an "</span>
-    <span class="s2">"ORF-shaped name on KanMxDeletionPerturbation with both names the ORF, any other "</span>
-    <span class="s2">"name (YLR287-A: the release dropped the strand letter) on "</span>
-    <span class="s2">"ReleasedGeneNamePerturbation verbatim; no genome is consulted and no row is dropped"</span>
+<span class="n">DEFERRED_RULE</span> <span class="o">=</span> <span class="s2">"deferred_to_released_gene_name_leaf"</span>
+<span class="n">DEFERRED_DESCRIPTION</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"the released strain name is not ORF-shaped (YLR287-A: the release dropped the strand "</span>
+    <span class="s2">"letter), so it cannot be stored on KanMxDeletionPerturbation, whose "</span>
+    <span class="s2">"systematic_gene_name is validated against the ORF pattern; it is stored once the "</span>
+    <span class="s2">"released-gene-name leaf lands (feat/schema-released-gene-name-leaf), never resolved "</span>
+    <span class="s2">"against the genome and never dropped for good"</span>
 <span class="p">)</span>
 
 
@@ -276,11 +274,9 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_write_drop_log</span><span class="p">(</span>
-    <span class="n">preprocess_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">kept</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">released</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">preprocess_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">kept</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">deferred</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Write ``preprocess/dropped_records.json``: nothing is dropped; the names stored</span>
-<span class="sd">    on the released-gene-name leaf are listed under the retention rule.</span>
-<span class="sd">    """</span>
+<span class="w">    </span><span class="sd">"""Write ``preprocess/dropped_records.json``; the only rule is the leaf deferral."""</span>
     <span class="n">drop_log</span> <span class="o">=</span> <span class="n">DropLog</span><span class="p">(</span>
         <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
         <span class="n">source_records</span><span class="o">=</span><span class="n">source</span><span class="p">,</span>
@@ -288,16 +284,17 @@
         <span class="n">dropped_records</span><span class="o">=</span><span class="n">source</span> <span class="o">-</span> <span class="n">kept</span><span class="p">,</span>
         <span class="n">rules</span><span class="o">=</span><span class="p">[</span>
             <span class="n">DropRule</span><span class="p">(</span>
-                <span class="n">rule</span><span class="o">=</span><span class="n">RETENTION_RULE</span><span class="p">,</span>
-                <span class="n">description</span><span class="o">=</span><span class="n">RETENTION_DESCRIPTION</span><span class="p">,</span>
-                <span class="n">n_records</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-                <span class="n">items</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">released</span><span class="p">),</span>
+                <span class="n">rule</span><span class="o">=</span><span class="n">DEFERRED_RULE</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="n">DEFERRED_DESCRIPTION</span><span class="p">,</span>
+                <span class="n">n_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">deferred</span><span class="p">),</span>
+                <span class="n">items</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">deferred</span><span class="p">),</span>
             <span class="p">)</span>
         <span class="p">],</span>
     <span class="p">)</span>
-    <span class="k">if</span> <span class="n">drop_log</span><span class="o">.</span><span class="n">dropped_records</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">deferred</span><span class="p">)</span> <span class="o">!=</span> <span class="n">drop_log</span><span class="o">.</span><span class="n">dropped_records</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"drop accounting mismatch: </span><span class="si">{</span><span class="n">drop_log</span><span class="o">.</span><span class="n">dropped_records</span><span class="si">}</span><span class="s2"> rows without a record"</span>
+            <span class="sa">f</span><span class="s2">"drop accounting mismatch: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">deferred</span><span class="p">)</span><span class="si">}</span><span class="s2"> deferred, "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">drop_log</span><span class="o">.</span><span class="n">dropped_records</span><span class="si">}</span><span class="s2"> rows without a record"</span>
         <span class="p">)</span>
     <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"dropped_records.json"</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
@@ -359,27 +356,15 @@
             <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Verified </span><span class="si">%s</span><span class="s2"> (sha256 </span><span class="si">%s</span><span class="s2">)"</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="n">_XLSX_SHA256</span><span class="p">)</span>
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_released_deletion</span><span class="p">(</span>
-        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KanMxDeletionPerturbation</span> <span class="o">|</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The deletion under the released strain name, upper-cased (#1045).</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_released_orf</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The released strain name, upper-cased, when it is ORF-shaped; else None.</span>
 
-<span class="sd">        No genome is consulted. An ORF-shaped name goes on the placed KanMX leaf with</span>
-<span class="sd">        both names the ORF; the one Table S2 cell that is not (``YLR287-A``) goes on the</span>
-<span class="sd">        released-gene-name leaf verbatim.</span>
+<span class="sd">        No genome is consulted. The one Table S2 cell that is not ORF-shaped</span>
+<span class="sd">        (``YLR287-A``) returns None and is counted, not stored, until the released-gene-name</span>
+<span class="sd">        leaf exists.</span>
 <span class="sd">        """</span>
         <span class="n">upper</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">upper</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">KanMxDeletionPerturbation</span><span class="p">(</span>
-                <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">upper</span><span class="p">,</span> <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">upper</span>
-            <span class="p">)</span>
-        <span class="k">return</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">(</span>
-            <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">upper</span><span class="p">,</span>
-            <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">upper</span><span class="p">,</span>
-            <span class="n">released_gene_name</span><span class="o">=</span><span class="n">upper</span><span class="p">,</span>
-            <span class="n">released_kind</span><span class="o">=</span><span class="n">ReleasedGeneKind</span><span class="o">.</span><span class="n">deletion</span><span class="p">,</span>
-            <span class="n">marker</span><span class="o">=</span><span class="s2">"KanMX"</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">upper</span> <span class="k">if</span> <span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">upper</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Environment</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Aerobic SC-liquid medium; 30 C (standard yeast temp, not explicit in the source)."""</span>
@@ -420,14 +405,21 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_experiment</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
-        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">standard_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">fold_change</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">se</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">environment</span><span class="p">:</span> <span class="n">Environment</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetaboliteExperiment</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Build one biosensor-fold-change experiment for a single deletion strain."""</span>
-        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span><span class="n">perturbations</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_released_deletion</span><span class="p">(</span><span class="n">name</span><span class="p">)])</span>
+        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
+            <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">KanMxDeletionPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span> <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">standard_name</span>
+                <span class="p">)</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
         <span class="n">phenotype</span> <span class="o">=</span> <span class="n">MetabolitePhenotype</span><span class="p">(</span>
             <span class="n">metabolite_level</span><span class="o">=</span><span class="p">{</span><span class="n">TARGET_METABOLITE</span><span class="p">:</span> <span class="n">fold_change</span><span class="p">},</span>
             <span class="n">metabolite_level_se</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span> <span class="k">if</span> <span class="n">se</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{</span><span class="n">TARGET_METABOLITE</span><span class="p">:</span> <span class="n">se</span><span class="p">}),</span>
@@ -478,8 +470,9 @@
 
 <span class="sd">        Every row is a record (``n_replicates = 1``, no SE): a gene the table reports on</span>
 <span class="sd">        two plates is two records of one deletion, told apart by their values, not an</span>
-<span class="sd">        average. The one row whose strain name is not ORF-shaped (``YLR287-A``) is</span>
-<span class="sd">        stored on the released-gene-name leaf (#1045).</span>
+<span class="sd">        average. The one row whose strain name is not ORF-shaped (``YLR287-A``) is counted</span>
+<span class="sd">        in ``preprocess/dropped_records.json`` under ``deferred_to_released_gene_name_leaf``</span>
+<span class="sd">        and stored once that leaf exists.</span>
 <span class="sd">        """</span>
         <span class="n">verify_raw_files</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="p">{</span><span class="n">_XLSX_FILENAME</span><span class="p">:</span> <span class="n">_XLSX_SHA256</span><span class="p">})</span>
         <span class="n">xlsx</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">_XLSX_FILENAME</span><span class="p">)</span>
@@ -492,21 +485,24 @@
         <span class="n">ref_dump</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference_dump</span><span class="p">(</span><span class="n">environment</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
         <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">released_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">deferred</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
-            <span class="n">released</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">gene_col</span><span class="p">])</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">released</span><span class="p">):</span>
-                <span class="n">released_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">released</span><span class="p">)</span>
-            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">released</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">fc_col</span><span class="p">])))</span>
+            <span class="n">released</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">gene_col</span><span class="p">])</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">orf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_released_orf</span><span class="p">(</span><span class="n">released</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">orf</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">deferred</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">released</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">orf</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">fc_col</span><span class="p">])))</span>
 
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e11</span><span class="p">))</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">fold_change</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"lopez2024-S2"</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">orf</span><span class="p">,</span> <span class="n">fold_change</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"lopez2024-S2"</span><span class="p">):</span>
                 <span class="n">experiment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_experiment</span><span class="p">(</span>
-                    <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                    <span class="n">orf</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+                    <span class="n">standard_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
                     <span class="n">fold_change</span><span class="o">=</span><span class="n">fold_change</span><span class="p">,</span>
                     <span class="n">se</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                     <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
@@ -524,13 +520,13 @@
                 <span class="p">)</span>
                 <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-        <span class="n">_write_drop_log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">),</span> <span class="n">idx</span><span class="p">,</span> <span class="n">released_names</span><span class="p">)</span>
+        <span class="n">_write_drop_log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">),</span> <span class="n">idx</span><span class="p">,</span> <span class="n">deferred</span><span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">"Lopez2024 S2: wrote </span><span class="si">%d</span><span class="s2"> row experiments as released (</span><span class="si">%d</span><span class="s2"> on the "</span>
+            <span class="s2">"Lopez2024 S2: wrote </span><span class="si">%d</span><span class="s2"> row experiments as released (</span><span class="si">%d</span><span class="s2"> rows deferred to the "</span>
             <span class="s2">"released-gene-name leaf: </span><span class="si">%s</span><span class="s2">)"</span><span class="p">,</span>
             <span class="n">idx</span><span class="p">,</span>
-            <span class="nb">len</span><span class="p">(</span><span class="n">released_names</span><span class="p">),</span>
-            <span class="nb">sorted</span><span class="p">(</span><span class="n">released_names</span><span class="p">),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">deferred</span><span class="p">),</span>
+            <span class="nb">sorted</span><span class="p">(</span><span class="n">deferred</span><span class="p">),</span>
         <span class="p">)</span></div>
 </div>
 
@@ -583,7 +579,8 @@
 <span class="w">        </span><span class="sd">"""Parse Table S3 (both blocks) into one triplicate record per released row; write LMDB.</span>
 
 <span class="sd">        Every row is a record under its released ORF, including both YBL071W-A rows; a</span>
-<span class="sd">        name that is not ORF-shaped goes on the released-gene-name leaf (0 of 227 rows).</span>
+<span class="sd">        name that is not ORF-shaped is counted under ``deferred_to_released_gene_name_leaf``</span>
+<span class="sd">        (0 of 227 rows).</span>
 <span class="sd">        """</span>
         <span class="n">verify_raw_files</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="p">{</span><span class="n">_XLSX_FILENAME</span><span class="p">:</span> <span class="n">_XLSX_SHA256</span><span class="p">})</span>
         <span class="n">records</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_blocks</span><span class="p">()</span>
@@ -595,16 +592,22 @@
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e11</span><span class="p">))</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">released_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">deferred</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">released</span><span class="p">,</span> <span class="n">fc_avg</span><span class="p">,</span> <span class="n">std</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">records</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"lopez2024-S3"</span><span class="p">):</span>
-                <span class="n">name</span> <span class="o">=</span> <span class="n">released</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
-                    <span class="n">released_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                <span class="n">orf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_released_orf</span><span class="p">(</span><span class="n">released</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">orf</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">deferred</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">released</span><span class="p">)</span>
+                    <span class="k">continue</span>
                 <span class="c1"># Triplicate re-screen: released STD is the sample SD -&gt; SE = STD / sqrt(3).</span>
                 <span class="n">se</span> <span class="o">=</span> <span class="n">std</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
                 <span class="n">experiment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_experiment</span><span class="p">(</span>
-                    <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">fold_change</span><span class="o">=</span><span class="n">fc_avg</span><span class="p">,</span> <span class="n">se</span><span class="o">=</span><span class="n">se</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">environment</span><span class="o">=</span><span class="n">environment</span>
+                    <span class="n">orf</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+                    <span class="n">standard_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+                    <span class="n">fold_change</span><span class="o">=</span><span class="n">fc_avg</span><span class="p">,</span>
+                    <span class="n">se</span><span class="o">=</span><span class="n">se</span><span class="p">,</span>
+                    <span class="n">n</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                    <span class="n">environment</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
@@ -618,15 +621,13 @@
                 <span class="p">)</span>
                 <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-        <span class="n">_write_drop_log</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">records</span><span class="p">),</span> <span class="n">idx</span><span class="p">,</span> <span class="n">released_names</span>
-        <span class="p">)</span>
+        <span class="n">_write_drop_log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">records</span><span class="p">),</span> <span class="n">idx</span><span class="p">,</span> <span class="n">deferred</span><span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">"Lopez2024 S3: wrote </span><span class="si">%d</span><span class="s2"> validated experiments as released (</span><span class="si">%d</span><span class="s2"> on the "</span>
-            <span class="s2">"released-gene-name leaf: </span><span class="si">%s</span><span class="s2">)"</span><span class="p">,</span>
+            <span class="s2">"Lopez2024 S3: wrote </span><span class="si">%d</span><span class="s2"> validated experiments as released (</span><span class="si">%d</span><span class="s2"> rows deferred "</span>
+            <span class="s2">"to the released-gene-name leaf: </span><span class="si">%s</span><span class="s2">)"</span><span class="p">,</span>
             <span class="n">idx</span><span class="p">,</span>
-            <span class="nb">len</span><span class="p">(</span><span class="n">released_names</span><span class="p">),</span>
-            <span class="nb">sorted</span><span class="p">(</span><span class="n">released_names</span><span class="p">),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">deferred</span><span class="p">),</span>
+            <span class="nb">sorted</span><span class="p">(</span><span class="n">deferred</span><span class="p">),</span>
         <span class="p">)</span></div>
 </div>
 

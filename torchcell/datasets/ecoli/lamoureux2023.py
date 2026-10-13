@@ -87,8 +87,11 @@ and is its composition-deferred base component, and its class (``is_synthetic``)
 unstated physical state are typed gaps (``unlisted_media_gaps``), so the record joins no
 library medium it is not; a blank cell is a medium whose name is a gap too. The one
 supplement label that names two compounds with one dose (``Acetoacetate/LiCl(10mM)``) is
-stored as released, one compound under that label at 10 mM. Still dropped: an unstated
-oxygen regime, because ``Environment.aerobicity`` cannot be a typed gap.
+stored as released, one compound under that label at 10 mM. Since #1045 part 3 an
+unstated oxygen regime (a blank ``Electron Acceptor`` cell on a condition that does not
+say anaerobic) is stored too: ``Environment.aerobicity`` is ``None`` beside a typed gap
+naming the blank cell, never a guessed ``aerobic``. No sample is dropped for its
+environment.
 
 #1045 rows 21 and 24 (2026-10-12). A chemostat whose ``Additional Details`` cell states
 its rate ("chemostat w/ dilution rate 0.31 h^-1") is a record with
@@ -940,9 +943,9 @@ ENVIRONMENT_RULE_REASONS: dict[EnvironmentRule, str] = {
         "its rate carries it (#1045 row 21)"
     ),
     EnvironmentRule.oxygen_regime_not_stated: (
-        "the 'Electron Acceptor' cell is blank and the condition does not say "
-        "anaerobic, so Environment.aerobicity (which cannot be a typed gap) would be a "
-        "guess"
+        "no longer applied (#1045 part 3): the 'Electron Acceptor' cell is blank and "
+        "the condition does not say anaerobic, so Environment.aerobicity is a typed gap "
+        "naming the blank cell rather than a guess"
     ),
     EnvironmentRule.supplement_label_ambiguous: (
         "no longer applied (#1045 part 2): the supplement label "
@@ -1025,6 +1028,7 @@ def parse_amount(
     *,
     default_unit: ConcentrationUnit | None,
     extra_units: Mapping[str, tuple[ConcentrationUnit, float]] | None = None,
+    unitless_tokens: frozenset[str] = frozenset(),
 ) -> Amount:
     """Parse ``name(amount)`` (or a bare ``name``) from one metadata cell part.
 
@@ -1055,6 +1059,8 @@ def parse_amount(
         return Amount(
             label=cell.strip(), name=name, value=float(number), unit=default_unit
         )
+    if token in unitless_tokens:
+        return Amount(label=cell.strip(), name=name, unitless_value=amount.strip())
     if token not in units:
         raise ValueError(f"unknown unit {token!r} in {cell!r}")
     unit, factor = units[token]
@@ -1090,7 +1096,9 @@ class ConditionSpec(BaseModel):
     ph: float | None
     carbon: Amount | None
     nitrogen: Amount | None
-    aerobicity: Literal["aerobic", "anaerobic"]
+    #: ``None`` when the release states no oxygen regime: a typed gap on
+    #: ``Environment.aerobicity`` (#1045 part 3).
+    aerobicity: Literal["aerobic", "anaerobic", "transition"] | None
     electron_acceptor: Amount | None
     trace: str | None
     supplements: tuple[Amount, ...]
@@ -1104,6 +1112,9 @@ class ConditionSpec(BaseModel):
     #: The source factors of a minimal medium whose cell is blank: each is a typed gap
     #: on its perturbation rather than a refusal of the sample.
     unstated_sources: tuple[PhysicalFactor, ...] = ()
+    #: A released dissolved-oxygen setpoint, in percent as the cell writes it (Public
+    #: K-12's ``aerobic(30% DO)``; #1045 part 3).
+    dissolved_oxygen_percent: float | None = None
 
 
 class EnvironmentVerdict(BaseModel):
@@ -1128,8 +1139,9 @@ def settle_environment(row: Mapping[str, str]) -> EnvironmentVerdict:
             # #1057: stored with a typed gap on the rate, never refused
             culture_without_rate = row[COL_CULTURE]
     acceptor = row[COL_ACCEPTOR]
+    aerobicity: Literal["aerobic", "anaerobic"] | None
     if acceptor == AEROBIC_ACCEPTOR:
-        aerobicity: Literal["aerobic", "anaerobic"] = "aerobic"
+        aerobicity = "aerobic"
         electron_acceptor = None
     elif ANAEROBIC_CONDITION_TOKEN in row[COL_CONDITION]:
         aerobicity = "anaerobic"
@@ -1137,16 +1149,24 @@ def settle_environment(row: Mapping[str, str]) -> EnvironmentVerdict:
             parse_amount(acceptor, default_unit=None) if acceptor else None
         )
     else:
-        return EnvironmentVerdict(rule=EnvironmentRule.oxygen_regime_not_stated)
+        # #1045 part 3: the release states no oxygen regime; a typed gap, not a drop
+        aerobicity = None
+        electron_acceptor = None
     supplement = row[COL_SUPPLEMENT]
     supplements = parse_supplements(supplement)
     carbon = row[COL_CARBON]
     nitrogen = row[COL_NITROGEN]
-    if media == "M9" and not (carbon and nitrogen):
-        raise ValueError(
-            f"sample {row[COL_SAMPLE]}: an M9 row with no carbon or nitrogen source "
-            f"({carbon!r}, {nitrogen!r})"
+    # #1045 part 3: an M9 row whose source cell is blank (reached once the unstated
+    # oxygen regime stopped dropping the Minicoli +aldA samples) is that factor with
+    # its compound and amount gapped, as the public arm writes it since #1045 row 24
+    unstated = tuple(
+        factor
+        for factor, cell in (
+            (PhysicalFactor.carbon_source, carbon),
+            (PhysicalFactor.nitrogen_source, nitrogen),
         )
+        if media == "M9" and not cell
+    )
     antibiotic = row[COL_ANTIBIOTIC]
     return EnvironmentVerdict(
         spec=ConditionSpec(
@@ -1168,6 +1188,7 @@ def settle_environment(row: Mapping[str, str]) -> EnvironmentVerdict:
             else None,
             dilution_rate_per_hour=dilution_rate,
             culture_without_rate=culture_without_rate,
+            unstated_sources=unstated,
         )
     )
 
@@ -1407,11 +1428,15 @@ def build_environment(spec: ConditionSpec) -> Environment:
                 concentration=_concentration(amount),
             )
         )
+    if spec.dissolved_oxygen_percent is not None:
+        perturbations.append(dissolved_oxygen_setpoint(spec.dissolved_oxygen_percent))
     gaps = [DURATION_GAP]
     if spec.culture_without_rate is not None:
         gaps.append(culture_rate_gap(spec.culture_without_rate))
     if spec.temperature_c is None:
         gaps.append(temperature_gap(metadata_provenance(COL_TEMPERATURE)))
+    if spec.aerobicity is None:
+        gaps.append(aerobicity_gap(metadata_provenance(COL_ACCEPTOR), COL_ACCEPTOR))
     return Environment(
         media=build_media(spec),
         temperature=None
@@ -1421,6 +1446,37 @@ def build_environment(spec: ConditionSpec) -> Environment:
         aerobicity=spec.aerobicity,
         dilution_rate_per_hour=spec.dilution_rate_per_hour,
         provenance_gaps=gaps,
+    )
+
+
+def aerobicity_gap(looked_in: Provenance, column: str) -> ProvenanceGap:
+    """The typed gap of a sample whose oxygen regime the release leaves blank (#1045)."""
+    return ProvenanceGap(
+        field="aerobicity",
+        reason=ProvenanceGapReason.not_reported_by_primary,
+        looked_in=looked_in,
+        note=f"the {column!r} cell is blank and nothing else in the row states the "
+        "oxygen regime, so it is not guessed",
+    )
+
+
+def dissolved_oxygen_setpoint(percent: float) -> EnvironmentPhysicalPerturbation:
+    """A released dissolved-oxygen setpoint, value and unit as the cell writes them.
+
+    The cell states the setpoint and not the gas or controller that held it, so the
+    realizing agent is a typed gap (#1045 part 3).
+    """
+    return EnvironmentPhysicalPerturbation(
+        factor=PhysicalFactor.dissolved_oxygen,
+        magnitude=Concentration(value=percent, unit=ConcentrationUnit.percent),
+        provenance_gaps=[
+            ProvenanceGap(
+                field="agent",
+                reason=ProvenanceGapReason.not_reported_by_primary,
+                note="the release states the dissolved-oxygen setpoint ('30% DO') and "
+                "not the gas or controller that held it",
+            )
+        ],
     )
 
 

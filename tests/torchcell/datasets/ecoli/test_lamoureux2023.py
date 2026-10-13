@@ -264,18 +264,19 @@ def test_parse_supplements_splits_a_plus_into_two_compounds() -> None:
     assert L.parse_supplements("") == ()
 
 
-@pytest.mark.parametrize(
-    "cells,rule",
-    [
-        ({L.COL_ACCEPTOR: ""}, E.oxygen_regime_not_stated),
-        ({L.COL_ACCEPTOR: "KNO3(20mM)"}, E.oxygen_regime_not_stated),
-    ],
-)
-def test_settle_environment_names_the_rule_that_drops_a_sample(
-    cells: dict[str, str], rule: L.EnvironmentRule
-) -> None:
-    verdict = L.settle_environment(_row(**cells))
-    assert (verdict.rule, verdict.spec) == (rule, None)
+@pytest.mark.parametrize("acceptor", ["", "KNO3(20mM)"])
+def test_an_unstated_oxygen_regime_is_a_typed_gap_not_a_drop(acceptor: str) -> None:
+    """#1045 part 3: a blank or non-O2 acceptor on a condition that does not say
+    anaerobic states no regime, so ``aerobicity`` is ``None`` beside a typed gap.
+    """
+    verdict = L.settle_environment(_row(**{L.COL_ACCEPTOR: acceptor}))
+    assert verdict.rule is None
+    spec = _spec(verdict)
+    assert (spec.aerobicity, spec.electron_acceptor) == (None, None)
+    environment = L.build_environment(spec)
+    assert environment.aerobicity is None
+    (gap,) = [g for g in environment.provenance_gaps if g.field == "aerobicity"]
+    assert gap.note is not None and "'Electron Acceptor'" in gap.note
 
 
 @pytest.mark.parametrize("label", ["CAMHB", "TMA"])
@@ -486,9 +487,17 @@ def test_a_blank_ph_and_a_blank_minimal_source_are_gapped_factors() -> None:
     assert {gap.field for gap in nitrogen.provenance_gaps} == {"agent", "magnitude"}
 
 
-def test_settle_environment_refuses_an_m9_row_without_a_carbon_source() -> None:
-    with pytest.raises(ValueError, match="an M9 row with no carbon or nitrogen source"):
-        L.settle_environment(_row(**{L.COL_CARBON: ""}))
+def test_an_m9_row_without_a_carbon_source_gaps_that_factor() -> None:
+    """#1045 part 3: the blank source is a factor with its compound and amount gapped."""
+    spec = _spec(L.settle_environment(_row(**{L.COL_CARBON: ""})))
+    assert spec.unstated_sources == (PhysicalFactor.carbon_source,)
+    (carbon,) = [
+        p
+        for p in L.build_environment(spec).perturbations
+        if isinstance(p, EnvironmentPhysicalPerturbation)
+        and p.factor is PhysicalFactor.carbon_source
+    ]
+    assert {g.field for g in carbon.provenance_gaps} == {"agent", "magnitude"}
 
 
 def test_an_anaerobic_condition_keeps_its_named_electron_acceptor() -> None:
@@ -943,19 +952,18 @@ def test_the_build_keeps_wild_type_and_deletions_and_counts_every_drop(
     # #1057: the evolved isolate, the three other strains, the crp partial edit and the
     # rpoB substitution (on the released-strain leaf) and the chemostat with no stated
     # rate are stored, not dropped; #1045 part 2 stores the pColi construct, the CAMHB
-    # medium and the two-compound supplement too, so only the unstated oxygen regime
-    # is dropped
-    assert len(built) == 16
-    assert _json(built, "record_samples.json") == [
-        f"p1k_{i:05d}" for i in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17)
-    ]
+    # medium and the two-compound supplement too, and #1045 part 3 the unstated oxygen
+    # regime, so every sample is a record
+    assert len(built) == 17
+    assert _json(built, "record_samples.json") == [f"p1k_{i:05d}" for i in range(1, 18)]
     drop_log = _json(built, "dropped_records.json")
     assert {
         k: drop_log[k] for k in ("source_records", "kept_records", "dropped_records")
-    } == {"source_records": 17, "kept_records": 16, "dropped_records": 1}
-    assert [(r["stage"], r["rule"], r["samples"]) for r in drop_log["rules"]] == [
-        ("environment", "oxygen_regime_not_stated", ["p1k_00013"])
-    ]
+    } == {"source_records": 17, "kept_records": 17, "dropped_records": 0}
+    assert drop_log["rules"] == []
+    unstated = built[12]["experiment"]["environment"]
+    assert unstated["aerobicity"] is None
+    assert "aerobicity" in [g["field"] for g in unstated["provenance_gaps"]]
     assert drop_log["kept_by_genotype_class"] == {
         "deletion_1": 2,
         "deletion_2": 1,
@@ -966,9 +974,9 @@ def test_the_build_keeps_wild_type_and_deletions_and_counts_every_drop(
         "strain_DGF-298_deletion_0": 1,
         "strain_W3110_deletion_0": 1,
         "untyped_heterologous_expression_construct": 1,
-        "wild_type": 6,
+        "wild_type": 7,
     }
-    assert drop_log["kept_by_base_media"] == {"CAMHB": 1, "LB": 1, "M9": 14}
+    assert drop_log["kept_by_base_media"] == {"CAMHB": 1, "LB": 1, "M9": 15}
     construct = built[7]["reference"]["genome_reference"]["background"]
     assert construct["name"] == "Escherichia coli K-12 MG1655 BRCA"
     assert [g["field"] for g in construct["provenance_gaps"]] == ["genotype_statement"]
@@ -992,7 +1000,7 @@ def test_the_build_keeps_wild_type_and_deletions_and_counts_every_drop(
         "W3110",
         "DGF-298",
     }
-    w3110 = built[14]["reference"]["genome_reference"]
+    w3110 = built[15]["reference"]["genome_reference"]
     assert w3110["assembly_set"] == "ecoli_K12_MG1655_ASM584v2"
     assert w3110["background"]["name"] == "W3110"
 
@@ -1079,15 +1087,16 @@ def test_replicates_share_an_environment_and_are_grouped_by_condition(
         "control:wt_glc": [0, 1],
         "crp:ar1": [8],
         "glu:ale": [5],
-        "minicoli:dgf": [15],
-        "minspan:no3_anaero": [13],
+        "minicoli:dgf": [16],
+        "minicoli:glc": [12],
+        "minspan:no3_anaero": [14],
         "omics:bw": [6],
         "pcoli:BRCA": [7],
         "rpoB:e546v": [9],
         "rpoB:wt_031": [11],
         "tcs:delpro_etoh": [4],
-        "tcs:wt_LiAcet": [12],
-        "w3110:wt": [14],
+        "tcs:wt_LiAcet": [13],
+        "w3110:wt": [15],
         "ytf:delthrA": [2, 3],
     }
     assert all(g["differing_cells"] == {} for g in groups.values())
@@ -1100,7 +1109,7 @@ def test_replicates_share_an_environment_and_are_grouped_by_condition(
     assert (
         built[0]["experiment"]["environment"] != built[2]["experiment"]["environment"]
     )
-    anaerobic = built[13]["experiment"]["environment"]
+    anaerobic = built[14]["experiment"]["environment"]
     assert anaerobic["aerobicity"] == "anaerobic"
     assert anaerobic["perturbations"][3]["compound"]["name"] == "potassium nitrate"
     assert anaerobic["perturbations"][3]["concentration"]["value"] == 20.0
@@ -1177,30 +1186,31 @@ def test_the_dev_tree_build_pins_the_measured_counts() -> None:
     drop_log = json.loads((root / "preprocess/dropped_records.json").read_text())
     # #1057: the evolved isolates, the other strains and the non-batch cultures are
     # stored, not dropped (241 before); #1045 part 2 stores the constructs, the media
-    # no library carries and the two-compound supplement (717 before), leaving only
-    # the samples whose oxygen regime the release does not state
-    assert (drop_log["source_records"], drop_log["kept_records"]) == (1035, 859)
-    assert {r["rule"]: r["n_records"] for r in drop_log["rules"]} == {
-        "oxygen_regime_not_stated": 176
-    }
+    # no library carries and the two-compound supplement (717 before), and #1045 part
+    # 3 the 176 samples whose oxygen regime the release does not state (859 before)
+    assert (drop_log["source_records"], drop_log["kept_records"]) == (1035, 1035)
+    assert drop_log["rules"] == []
     assert drop_log["kept_by_genotype_class"] == {
-        "deletion_1": 116,
+        "deletion_1": 123,
         "deletion_2": 12,
         "deletion_3": 4,
         "evolved_isolate": 421,
         "released_allele_partial_gene_edit": 8,
         "released_allele_point_mutation_allele": 9,
-        "strain_BW25113_deletion_0": 10,
-        "strain_BW25113_deletion_1": 23,
-        "untyped_heterologous_expression_construct": 94,
-        "wild_type": 162,
+        "strain_BW25113_deletion_0": 23,
+        "strain_BW25113_deletion_1": 125,
+        "strain_DGF-298_deletion_0": 24,
+        "strain_W3110_deletion_0": 26,
+        "untyped_heterologous_expression_construct": 96,
+        "wild_type": 164,
     }
     assert drop_log["kept_by_base_media"] == {
         "01xLB": 8,
         "CAMHB": 10,
         "LB": 36,
-        "M9": 771,
+        "M9": 825,
         "M9P": 4,
+        "Medium C": 122,
         "RPMI+10%LB": 10,
         "TMA": 8,
         "W2": 12,
@@ -1258,7 +1268,7 @@ def test_the_dev_tree_build_passes_the_record_rules_and_never_merges_two_conditi
         provenance=Provenance(
             source_uri=L.ZENODO_RECORD_URL, citation_key=L.CITATION_KEY
         ),
-        expected_count=859,
+        expected_count=1035,
     )
     results = report.results + shared_rule_results(
         records, resolve_gene_name=genome.resolve_gene_name, sgd_genes=genes

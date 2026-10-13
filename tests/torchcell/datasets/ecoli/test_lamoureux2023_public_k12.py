@@ -232,20 +232,57 @@ def test_a_strain_or_label_sample_is_stored_on_its_released_name() -> None:
     assert evolved.background is not None and evolved.background.evolved
 
 
-@pytest.mark.parametrize(
-    "cells,rule",
-    [
-        ({P.COL_AEROBICITY: ""}, E.oxygen_regime_not_stated),
-        ({P.COL_AEROBICITY: "transition"}, E.oxygen_regime_transition),
-        ({P.COL_AEROBICITY: "aerobic(30% DO)"}, E.oxygen_setpoint_not_expressible),
-    ],
-)
-def test_every_environment_rule_drops_its_own_cells(
-    cells: dict[str, str], rule: P.PublicEnvironmentRule
-) -> None:
-    verdict = P.settle_public_environment(_row(**cells))
-    assert verdict.rule is rule
-    assert verdict.spec is None
+def _spec(verdict: P.PublicEnvironmentVerdict) -> L.ConditionSpec:
+    """The parsed condition of a kept verdict."""
+    assert verdict.spec is not None, verdict.rule
+    return verdict.spec
+
+
+def test_every_oxygen_cell_is_stored_as_released() -> None:
+    """#1045 part 3: a blank cell is a typed gap, 'transition' is its own regime, and
+    'aerobic(30% DO)' is aerobic plus a dissolved-oxygen setpoint of 30 percent.
+    """
+    blank = P.build_public_environment(
+        _spec(P.settle_public_environment(_row(**{P.COL_AEROBICITY: ""})))
+    )
+    assert blank.aerobicity is None
+    (gap,) = [g for g in blank.provenance_gaps if g.field == "aerobicity"]
+    assert gap.looked_in is not None
+    assert gap.looked_in.source_uri.endswith("k12_modulome/metadata_qc.csv")
+    transition = P.build_public_environment(
+        _spec(P.settle_public_environment(_row(**{P.COL_AEROBICITY: "transition"})))
+    )
+    assert transition.aerobicity == "transition"
+    held = P.build_public_environment(
+        _spec(
+            P.settle_public_environment(_row(**{P.COL_AEROBICITY: "aerobic(30% DO)"}))
+        )
+    )
+    assert held.aerobicity == "aerobic"
+    (setpoint,) = [
+        p
+        for p in held.perturbations
+        if isinstance(p, EnvironmentPhysicalPerturbation)
+        and p.factor is PhysicalFactor.dissolved_oxygen
+    ]
+    assert setpoint.magnitude is not None
+    assert (setpoint.magnitude.value, setpoint.magnitude.unit) == (
+        30.0,
+        ConcentrationUnit.percent,
+    )
+    assert [g.field for g in setpoint.provenance_gaps] == ["agent"]
+    with pytest.raises(KeyError):
+        P.settle_public_environment(_row(**{P.COL_AEROBICITY: "hypoxic"}))
+
+
+def test_a_dose_the_release_writes_as_a_multiple_is_kept_verbatim() -> None:
+    """``halicin(0.25x)``: the ``x`` names no unit, so the dose is the verbatim cell."""
+    (halicin,) = P.parse_public_supplements("halicin(0.25x)")
+    assert (halicin.name, halicin.value, halicin.unitless_value) == (
+        "halicin",
+        None,
+        "0.25x",
+    )
 
 
 @pytest.mark.parametrize(
@@ -646,9 +683,20 @@ def _public_rows() -> dict[str, dict[str, str]]:
             16,
             **{L.COL_CULTURE: "bioreactor", L.COL_FULL_NAME: "bioreactor:wt"},
         ),
-        "SRX000017": row("SRX000017", 17, **{P.COL_AEROBICITY: ""}),
-        "SRX000018": row("SRX000018", 18, **{P.COL_AEROBICITY: "transition"}),
-        "SRX000019": row("SRX000019", 19, **{P.COL_AEROBICITY: "aerobic(30% DO)"}),
+        # #1045 part 3: the three oxygen cells the schema could not hold, now stored
+        "SRX000017": row(
+            "SRX000017", 17, **{P.COL_AEROBICITY: "", L.COL_FULL_NAME: "o2:blank"}
+        ),
+        "SRX000018": row(
+            "SRX000018",
+            18,
+            **{P.COL_AEROBICITY: "transition", L.COL_FULL_NAME: "o2:transition"},
+        ),
+        "SRX000019": row(
+            "SRX000019",
+            19,
+            **{P.COL_AEROBICITY: "aerobic(30% DO)", L.COL_FULL_NAME: "o2:do30"},
+        ),
         # #1045 part 2: kept with a gapped temperature, in the group of SRX000001 and
         # SRX000002, from whose rows it differs in that one cell
         "SRX000020": row("SRX000020", 20, **{L.COL_TEMPERATURE: ""}),
@@ -904,8 +952,8 @@ def _json(dataset: P.RnaseqPublicK12Lamoureux2023Dataset, name: str) -> Any:
     return json.loads(Path(dataset.preprocess_dir, name).read_text())
 
 
-#: The synthetic accessions the build stores: every one but the three oxygen regimes.
-KEPT = [f"SRX{k:06d}" for k in (*range(1, 17), 20, 21, 22)]
+#: The synthetic accessions the build stores: every one (#1045 part 3).
+KEPT = [f"SRX{k:06d}" for k in range(1, 23)]
 
 
 def test_the_build_keeps_wild_type_and_deletions_and_counts_every_drop(
@@ -915,20 +963,17 @@ def test_the_build_keeps_wild_type_and_deletions_and_counts_every_drop(
     # #1045 row 24, each with a gapped factor; since #1057 the BW25113 strain, the
     # evolved isolate, the undefined label and the bioreactor culture are stored too;
     # since #1045 part 2 the plasmid, the phage, the prose allele, the NM3 medium and
-    # the blank temperature as well, so only the three oxygen regimes the schema cannot
-    # hold are dropped
+    # the blank temperature as well, and #1045 part 3 the three oxygen cells, so no
+    # sample is dropped
     assert len(built) == len(KEPT)
     assert _json(built, "record_samples.json") == KEPT
     drops = _json(built, "dropped_records.json")
     assert drops["source_records"] == 22
-    assert drops["kept_records"] == 19
-    assert drops["dropped_records"] == 3
-    assert {r["rule"]: r["n_records"] for r in drops["rules"]} == {
-        "oxygen_regime_not_stated": 1,
-        "oxygen_regime_transition": 1,
-        "oxygen_setpoint_not_expressible": 1,
-    }
-    assert {r["stage"] for r in drops["rules"]} == {"environment"}
+    assert drops["kept_records"] == 22
+    assert drops["dropped_records"] == 0
+    assert drops["rules"] == []
+    oxygen = [built[i]["experiment"]["environment"]["aerobicity"] for i in (16, 17, 18)]
+    assert oxygen == [None, "transition", "aerobic"]
     assert drops["kept_by_genotype_class"] == {
         "background_allele_described_in_prose": 1,
         "background_background_label_undefined": 1,
@@ -942,9 +987,9 @@ def test_the_build_keeps_wild_type_and_deletions_and_counts_every_drop(
         "released_allele_deletion_symbol_unresolved": 1,
         "released_allele_partial_gene_edit": 1,
         "released_allele_point_mutation_allele": 1,
-        "wild_type": 7,
+        "wild_type": 10,
     }
-    assert drops["kept_by_base_media"] == {"LB": 16, "M9": 2, "NM3": 1}
+    assert drops["kept_by_base_media"] == {"LB": 19, "M9": 2, "NM3": 1}
     released = {
         built[i]["experiment"]["genotype"]["perturbations"][0][
             "systematic_gene_name"
@@ -957,7 +1002,7 @@ def test_the_build_keeps_wild_type_and_deletions_and_counts_every_drop(
         "crp": "sequence_allele",
         "ihf": "deletion",
     }
-    strains = [built[i]["reference"]["genome_reference"]["strain"] for i in range(19)]
+    strains = [built[i]["reference"]["genome_reference"]["strain"] for i in range(22)]
     assert [strains[i] for i in (4, 5, 7, 8, 9, 12)] == [
         "BW25113",
         "MG1655 pBR322",
@@ -1094,6 +1139,9 @@ def test_the_replicate_groups_pin_the_conditions_and_their_accessions(
         "m9:no_nitrogen",
         "nm3:wt",
         "noph:wt",
+        "o2:blank",
+        "o2:do30",
+        "o2:transition",
         "pbr:wt",
         "pro:double",
         "rela:inactive",
@@ -1109,7 +1157,7 @@ def test_the_replicate_groups_pin_the_conditions_and_their_accessions(
         "SRX000002",
         "SRX000020",
     ]
-    assert by_name["rpoB:wt"]["record_indices"] == [0, 1, 16]
+    assert by_name["rpoB:wt"]["record_indices"] == [0, 1, 19]
     assert set(by_name["rpoB:wt"]["condition_cells"]) == set(P.CONDITION_COLUMNS)
     # #1045 part 2: a replicate whose row differs is reported, never refused
     assert by_name["rpoB:wt"]["differing_cells"] == {
@@ -1250,56 +1298,55 @@ def test_the_dev_store_pins_the_measured_build() -> None:
     # stores the plasmid, phage and prose-allele samples, the media no library carries
     # and the blank temperatures (789 before), leaving the oxygen regimes
     # Environment.aerobicity cannot hold
-    assert drops["kept_records"] == 1358
+    assert drops["kept_records"] == 1675
     assert drops["kept_by_genotype_class"] == {
         "background_allele_described_in_prose": 27,
         "background_background_label_undefined": 7,
         "background_evolved_isolate": 29,
-        "background_phage_infected": 5,
-        "background_plasmid_borne_construct": 151,
+        "background_phage_infected": 20,
+        "background_plasmid_borne_construct": 175,
         "background_point_mutation_allele": 6,
-        "background_strain_not_mg1655": 462,
-        "deletion_1": 149,
+        "background_strain_not_mg1655": 669,
+        "deletion_1": 155,
         "deletion_2": 20,
         "released_allele_allele_described_in_prose": 9,
         "released_allele_deletion_symbol_unresolved": 6,
         "released_allele_partial_gene_edit": 3,
         "released_allele_point_mutation_allele": 35,
-        "wild_type": 449,
+        "wild_type": 514,
     }
     assert drops["kept_by_base_media"] == {
-        "": 23,
+        "": 180,
         "2xYT": 9,
         "Gutnick": 12,
         "Gutnick media": 4,
         "Kornberg": 30,
         "L-broth": 15,
-        "LB": 378,
+        "LB": 426,
         "LB,MOPS": 12,
         "LB-Miller": 2,
         "LBK": 25,
         "LBKmal": 32,
         "Lennox LB": 23,
         "M4 minimal": 8,
-        "M9": 431,
+        "M9": 510,
         "M9 (solid)": 42,
         "M9 RDM": 10,
         "MHBII": 18,
         "MOPS": 68,
         "MOPS EZ Rich": 36,
         "MOPS w/o KH2PO4": 6,
+        "Mueller-Hinton": 3,
         "NM3": 30,
-        "PBS": 6,
+        "PBS": 9,
         "Tryptone broth": 12,
         "isosensitest broth": 56,
-        "other_defined_media": 59,
+        "minimal medium A": 12,
+        "other_defined_media": 74,
         "tryptone broth": 11,
     }
-    assert {r["rule"]: r["n_records"] for r in drops["rules"]} == {
-        "oxygen_regime_not_stated": 250,
-        "oxygen_regime_transition": 15,
-        "oxygen_setpoint_not_expressible": 52,
-    }
+    # #1045 part 3: the 317 oxygen cells are records, so nothing is dropped
+    assert drops["rules"] == []
 
 
 @pytest.mark.data
@@ -1323,7 +1370,7 @@ def test_the_dev_store_pins_the_deduplication_measurement() -> None:
     assert ledger["distinct_bioprojects"] == 89
     assert ledger["distinct_pmids"] == 38
     assert ledger["distinct_geo_series"] == 30
-    assert len(ledger["records"]) == 1358
+    assert len(ledger["records"]) == 1675
 
 
 @pytest.mark.data

@@ -114,8 +114,11 @@ cell (#1057). Since #1045 part 2 a ``Base Media`` label with no ``MEDIA_LIBRARY`
 stored as released (the sibling loader's ``build_media``: the label names the medium,
 its class and unstated state are typed gaps; a blank cell gaps the name too), and a
 blank temperature is a typed gap on ``Environment.temperature``. Still dropped, because
-``Environment.aerobicity`` cannot be a typed gap and has no value for them: an unstated
-oxygen regime, an aerobic-anaerobic transition and a dissolved-oxygen setpoint.
+``Environment.aerobicity`` could not hold them: since #1045 part 3 an unstated oxygen
+regime is a typed gap on ``aerobicity``, the anaerobic-aerobic transition series is the
+``transition`` regime, and ``aerobic(30% DO)`` is the aerobic regime plus an
+``EnvironmentPhysicalPerturbation`` of ``PhysicalFactor.dissolved_oxygen`` at 30
+``percent``, as released. No sample is dropped for its environment.
 
 REFERENCE. One reference for every record, the condition the release centers this dataset
 on: "After centering the Public K-12 dataset to the PRECISE-1K control condition". That is
@@ -201,6 +204,7 @@ from torchcell.datasets.ecoli.lamoureux2023 import (
     RawFile,
     ReleasedAllele,
     StrainBackgroundSpec,
+    aerobicity_gap,
     build_environment,
     culture_rate_gap,
     deletion_perturbation,
@@ -935,18 +939,16 @@ PUBLIC_ENVIRONMENT_RULE_REASONS: dict[PublicEnvironmentRule, str] = {
         "stored with a typed gap on Environment.dilution_rate_per_hour naming the cell"
     ),
     PublicEnvironmentRule.oxygen_regime_not_stated: (
-        "the 'aerobicity' cell is blank, and Environment.aerobicity cannot be a typed "
-        "gap, so the oxygen regime would be a guess"
+        "no longer applied (#1045 part 3): a blank 'aerobicity' cell is a typed gap on "
+        "Environment.aerobicity"
     ),
     PublicEnvironmentRule.oxygen_regime_transition: (
-        "the 'aerobicity' cell is 'transition' (the anaerobic-aerobic transition "
-        "project): one Environment states one regime, so a regime that changes during "
-        "the culture cannot be written"
+        "no longer applied (#1045 part 3): the 'aerobicity' cell 'transition' (the "
+        "anaerobic-aerobic transition project) is the transition regime"
     ),
     PublicEnvironmentRule.oxygen_setpoint_not_expressible: (
-        "the 'aerobicity' cell is 'aerobic(30% DO)': a dissolved-oxygen setpoint has no "
-        "slot anywhere on Environment, and dropping the setpoint would merge the record "
-        "with an unregulated aerobic culture"
+        "no longer applied (#1045 part 3): 'aerobic(30% DO)' is the aerobic regime "
+        "plus a dissolved-oxygen setpoint of 30 percent, as released"
     ),
     PublicEnvironmentRule.temperature_not_stated: (
         "no longer applied (#1045 part 2): a blank 'Temperature (C)' cell is a typed "
@@ -955,16 +957,20 @@ PUBLIC_ENVIRONMENT_RULE_REASONS: dict[PublicEnvironmentRule, str] = {
 }
 
 BATCH = "batch"
-#: ``aerobicity`` cell -> the oxygen regime, or the rule that drops the row. 'O2' is the
-#: electron acceptor token PRECISE-1K's own ``Electron Acceptor`` column uses for an
-#: aerobic culture, reused in this table's ``aerobicity`` column.
-AEROBICITY_CELLS: dict[str, Literal["aerobic", "anaerobic"] | PublicEnvironmentRule] = {
-    "aerobic": "aerobic",
-    "O2": "aerobic",
-    "anaerobic": "anaerobic",
-    "": PublicEnvironmentRule.oxygen_regime_not_stated,
-    "transition": PublicEnvironmentRule.oxygen_regime_transition,
-    "aerobic(30% DO)": PublicEnvironmentRule.oxygen_setpoint_not_expressible,
+#: ``aerobicity`` cell -> (the oxygen regime, a dissolved-oxygen setpoint in percent).
+#: 'O2' is the electron acceptor token PRECISE-1K's own ``Electron Acceptor`` column uses
+#: for an aerobic culture, reused in this table's ``aerobicity`` column. A blank cell is
+#: ``None``, a typed gap on ``Environment.aerobicity`` (#1045 part 3); an unlisted cell
+#: raises.
+AEROBICITY_CELLS: dict[
+    str, tuple[Literal["aerobic", "anaerobic", "transition"] | None, float | None]
+] = {
+    "aerobic": ("aerobic", None),
+    "O2": ("aerobic", None),
+    "anaerobic": ("anaerobic", None),
+    "": (None, None),
+    "transition": ("transition", None),
+    "aerobic(30% DO)": ("aerobic", 30.0),
 }
 
 #: Unit tokens the public cells use that PRECISE-1K's own cells never do, restated in the
@@ -977,6 +983,12 @@ EXTRA_UNIT_TOKENS: dict[str, tuple[ConcentrationUnit, float]] = {
     "ug/L": (ConcentrationUnit.ug_per_ml, 0.001),
     "µM": (ConcentrationUnit.micromolar, 1.0),
 }
+
+#: Dose tokens a public cell writes with no unit this module can type: ``x`` is the
+#: halicin series' ``halicin(0.25x)`` to ``halicin(4x)``, a multiple the release does not
+#: define (#1045 part 3). The dose is kept verbatim as ``unitless_value`` and the
+#: perturbation is a fixed, unquantified dose, never a guessed unit.
+UNITLESS_DOSE_TOKENS: frozenset[str] = frozenset({"x"})
 
 #: The separators the public ``Supplement`` cells use, in the order they are applied. A
 #: bare comma is NOT one: "2,2'-Dipyridyl(200uM)" names one compound.
@@ -996,7 +1008,12 @@ def parse_public_supplements(cell: str) -> tuple[Amount, ...]:
     for separator in _SUPPLEMENT_SEPARATORS:
         parts = [piece for part in parts for piece in part.split(separator)]
     return tuple(
-        parse_amount(part, default_unit=None, extra_units=EXTRA_UNIT_TOKENS)
+        parse_amount(
+            part,
+            default_unit=None,
+            extra_units=EXTRA_UNIT_TOKENS,
+            unitless_tokens=UNITLESS_DOSE_TOKENS,
+        )
         for part in parts
     )
 
@@ -1017,9 +1034,7 @@ def settle_public_environment(row: Mapping[str, str]) -> PublicEnvironmentVerdic
     culture_without_rate = (
         None if row[COL_CULTURE].lower() == BATCH else (row[COL_CULTURE] or "(blank)")
     )
-    aerobicity = AEROBICITY_CELLS[row[COL_AEROBICITY]]
-    if isinstance(aerobicity, PublicEnvironmentRule):
-        return PublicEnvironmentVerdict(rule=aerobicity)
+    aerobicity, dissolved_oxygen = AEROBICITY_CELLS[row[COL_AEROBICITY]]
     carbon = row[COL_CARBON]
     nitrogen = row[COL_NITROGEN]
     # #1045 row 24 retired two rules here: a blank pH cell is the pH factor with its
@@ -1058,6 +1073,7 @@ def settle_public_environment(row: Mapping[str, str]) -> PublicEnvironmentVerdic
             if nitrogen
             else None,
             aerobicity=aerobicity,
+            dissolved_oxygen_percent=dissolved_oxygen,
             electron_acceptor=None,
             trace=None,
             supplements=parse_public_supplements(row[COL_SUPPLEMENT]),
@@ -1075,6 +1091,12 @@ def build_public_environment(spec: ConditionSpec) -> Environment:
     if spec.temperature_c is None:
         gaps.append(
             temperature_gap(public_provenance(PUBLIC_METADATA, COL_TEMPERATURE))
+        )
+    if spec.aerobicity is None:
+        gaps.append(
+            aerobicity_gap(
+                public_provenance(PUBLIC_METADATA, COL_AEROBICITY), COL_AEROBICITY
+            )
         )
     return Environment(
         media=environment.media,

@@ -123,7 +123,10 @@
 <span class="sd">34 conditions (Fig 1B: 33 inhibitors, mostly plant-hydrolysate toxins, and DMSO), in</span>
 <span class="sd">independent biological triplicate, alongside matched inhibitor-free controls on the same</span>
 <span class="sd">plates. The readout is log2(inhibitor/control) barcode abundance, a per-deletion fitness</span>
-<span class="sd">response.</span>
+<span class="sd">response. The GEO count matrix releases 45 condition tokens: the 34 Fig 1B conditions and</span>
+<span class="sd">11 more that Table S1 lists with their IC30 dose but no figure shows (two imidazoles and</span>
+<span class="sd">4(5)-methylimidazole, caffeic acid, levulinic acid, myclobutanil, the two QUADRIS doses,</span>
+<span class="sd">and the three sodium salts). All 45 are stored as released.</span>
 
 <span class="sd">READOUT PROVENANCE / RIGOR. The paper's published values are edgeR glmQLFit PAIRED</span>
 <span class="sd">logFCs on TMM-normalized counts ("using TMM normalization and glmQLFit comparing paired</span>
@@ -151,8 +154,10 @@
 <span class="sd">CONTROL PAIRING. Each replicate is paired with the control columns of its OWN ``CG00n``</span>
 <span class="sd">batch, because the paper's design is paired and its comparison is "to the paired SynBase</span>
 <span class="sd">medium control"; MMS is the one served condition the paper analyzed UNPAIRED, so its</span>
-<span class="sd">control is the mean of all 16 control columns (its ``units`` string records that). DMSO</span>
-<span class="sd">is served as a condition paired the same way, at its Table S1 dose (below).</span>
+<span class="sd">control is the mean of all 16 control columns (its ``units`` string records that).</span>
+<span class="sd">The same Methods sentence names the QUADRIS compounds unpaired too, so QUADRIS1 and</span>
+<span class="sd">QUADRIS2 take the pooled control. DMSO is served as a condition paired the same way as</span>
+<span class="sd">the inhibitors, at its Table S1 dose (below).</span>
 
 <span class="sd">DOSES AND VEHICLES (Table S1). Table S1 is the ``Table_S1.pdf`` member of the OUP</span>
 <span class="sd">supplement zip (PMC Article Datasets copy, ``si/si1.zip`` of the paper's mirror key),</span>
@@ -166,8 +171,10 @@
 <span class="sd">S1's "2.50%" as ``percent_v_v`` under the IC30 basis: the paper's only DMSO fraction</span>
 <span class="sd">statement that names a basis ("the final concentration of DMSO in SynBase medium was 1%</span>
 <span class="sd">(v/v)") fixes v/v as its convention for DMSO. Benomyl keeps Piotrowski 2017's 34.4 uM</span>
-<span class="sd">(fixed). The "Dissolved in DMSO?" column sets ``solvent``: "Yes" is the DMSO vehicle at</span>
-<span class="sd">that sentence's final 1% v/v, "No" is ``None`` (dissolved directly).</span>
+<span class="sd">(fixed). The two QUADRIS doses are Table S1's 0.08% and 0.04% under the fixed basis,</span>
+<span class="sd">because the Methods say they "were arbitrarily selected" rather than set to an IC30</span>
+<span class="sd">(``QUADRIS_ARBITRARY_DOSE``). The "Dissolved in DMSO?" column sets ``solvent``: "Yes" is</span>
+<span class="sd">the DMSO vehicle at that sentence's final 1% v/v, "No" is ``None`` (dissolved directly).</span>
 
 <span class="sd">STRAIN BACKGROUND (#500). The screened strains are the MATa meiotic progeny of the SGA</span>
 <span class="sd">cross of query Y13206 (MATalpha pdr1::natMX pdr3::KlURA3 snq2::KlLEU2 can1::STE2pr-</span>
@@ -175,26 +182,40 @@
 <span class="sd">constant genome content rides on the reference's ``StrainReferenceGenome`` background;</span>
 <span class="sd">each record's ``Genotype`` holds the ONE screened deletion.</span>
 
-<span class="sd">RECORDS DROPPED (rule + count written to ``preprocess/dropped_records.json``): the 11</span>
-<span class="sd">matrix tokens Fig 1B does not list (the paper never reports them); compounds with no</span>
-<span class="sd">resolvable structure identifier; library rows whose gene column is not a systematic ORF</span>
-<span class="sd">or whose EVERY count column is missing, whose ORF is a locus the SGA selections fix in</span>
-<span class="sd">every strain, is not a current R64 gene, or is the legacy spelling of an ORF already in</span>
-<span class="sd">the pool (those carry a typed ``ConstructedOrf`` in the ledger), or that carry no barcode</span>
-<span class="sd">while another row of the release carries the same ORF with one; cells one of whose</span>
-<span class="sd">counts (a replicate or a paired control) is missing; and cells whose three replicate</span>
-<span class="sd">counts are ALL zero.</span>
+<span class="sd">RECORDS STORED AS RELEASED (the genome is a separate layer and gates nothing). Every</span>
+<span class="sd">library row whose gene column names a systematic ORF is stored under that ORF exactly as</span>
+<span class="sd">the release spells it (``systematic_gene_name``), with ``perturbed_gene_name`` the</span>
+<span class="sd">release's own ``std_name`` for that row (the ORF again when the cell is empty). No</span>
+<span class="sd">annotation lookup renames, merges or refuses a row: the 22 ORFs a current R64 annotation</span>
+<span class="sd">no longer lists as genes and the 17 ORFs it folds into another library ORF are stored</span>
+<span class="sd">under their released names, each its own barcoded strain. Every (row, condition) cell is</span>
+<span class="sd">stored with the method's value; a cell whose three replicate counts are all 0 is stored</span>
+<span class="sd">as the log2 of the CPM prior ratio with its sample SD, exactly 0, stored as 0.0. A</span>
+<span class="sd">compound whose curated identity row resolves no structure (the QUADRIS formulation) is</span>
+<span class="sd">stored with the ``inchikey`` gap ``resolved_compound`` attaches and is counted in the</span>
+<span class="sd">ledger's ``compound_identity_gaps``.</span>
+
+<span class="sd">BACKGROUND-LOCUS CONTRADICTION, STORED AS RELEASED. The release carries kanMX deletion</span>
+<span class="sd">rows at four loci the SGA background also replaced (YBL005W PDR3, YDR011W SNQ2, YEL063C</span>
+<span class="sd">CAN1, YNL268W LYP1; ``library_background``). A kanMX deletion of a locus the background</span>
+<span class="sd">already deleted contradicts the strain's own construction. The rows are stored as</span>
+<span class="sd">released, the contradiction is written in the dataset note, and it is not resolved here.</span>
+
+<span class="sd">LEDGER (``preprocess/dropped_records.json``). Source cells = released rows x released</span>
+<span class="sd">condition tokens = stored + not-a-value + dropped. ``not_a_value``: a row whose EVERY</span>
+<span class="sd">count column is missing (2 rows of GSE186866) has no value in any condition and is not a</span>
+<span class="sd">record. Rules: a row whose gene column is not ORF-shaped would need the released</span>
+<span class="sd">gene-name leaf (none in GSE186866); a cell one of whose counts (a replicate or a paired</span>
+<span class="sd">control) is a source NaN has no value the method defines (none in GSE186866).</span>
 
 <span class="sd">MISSING COUNTS AND BARCODES (#524). A missing count removes only the cells that use it,</span>
 <span class="sd">never the strain's row: the paper's per-compound edgeR fit permits no NA count and its</span>
 <span class="sd">design is three replicates against the paired controls, so a cell with a missing member</span>
 <span class="sd">count has no value the method defines, while the strain's other cells are untouched. TMM</span>
 <span class="sd">for a condition runs over the rows complete in that condition's own columns. A row whose</span>
-<span class="sd">gene column carries no ``_&lt;barcode&gt;`` suffix is served only when no other row names its</span>
-<span class="sd">ORF (the matrix is the release's only barcode source, so the barcode is absent from the</span>
-<span class="sd">release): ``barcode=None`` with a typed ``ProvenanceGap`` (``BARCODE_ABSENT_GAP``), never</span>
-<span class="sd">an empty string. GSE186866 itself has no row with a partly missing count and no row</span>
-<span class="sd">without a barcode (2 rows miss every count), so neither rule changes the served build.</span>
+<span class="sd">gene column carries no ``_&lt;barcode&gt;`` suffix is stored with ``barcode=None`` and a typed</span>
+<span class="sd">``ProvenanceGap`` (``BARCODE_ABSENT_GAP``), never an empty string. GSE186866 itself has</span>
+<span class="sd">no row with a partly missing count and no row without a barcode.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -227,17 +248,13 @@
     <span class="n">post_process</span><span class="p">,</span>
     <span class="n">verify_raw_files</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.compound_identity</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">resolve_compound_identity</span><span class="p">,</span>
-    <span class="n">resolved_compound</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.compound_identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolved_compound</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">SYNBASE</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">AssayType</span><span class="p">,</span>
     <span class="n">BarcodedKanMxDeletionPerturbation</span><span class="p">,</span>
     <span class="n">Concentration</span><span class="p">,</span>
     <span class="n">ConcentrationUnit</span><span class="p">,</span>
-    <span class="n">ConstructedOrf</span><span class="p">,</span>
     <span class="n">CultureEnvironment</span><span class="p">,</span>
     <span class="n">CultureFormat</span><span class="p">,</span>
     <span class="n">DoseBasis</span><span class="p">,</span>
@@ -268,7 +285,6 @@
     <span class="n">standard_allele</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.scerevisiae.gene_name_reconcile</span><span class="w"> </span><span class="kn">import</span> <span class="n">default_genome</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.literature.manifest</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ROLE_RAW_DATA</span><span class="p">,</span>
     <span class="n">ArtifactRecord</span><span class="p">,</span>
@@ -276,7 +292,6 @@
     <span class="n">RetrievalMethod</span><span class="p">,</span>
     <span class="n">RetrievalRecord</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ProvenanceGap</span><span class="p">,</span>
@@ -329,7 +344,7 @@
 <span class="c1">#: A float64 count / library-size array.</span>
 <span class="n">FloatArray</span> <span class="o">=</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span>
 
-<span class="n">CPM_PRIOR</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># CPM pseudocount (PSEUDOCOUNT_GAP); all-zero cells are dropped</span>
+<span class="n">CPM_PRIOR</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># CPM pseudocount (PSEUDOCOUNT_GAP); an all-zero cell is stored</span>
 
 <span class="c1"># edgeR 3.26.8 calcNormFactors(method="TMM") defaults, the version the paper names.</span>
 <span class="n">TMM_LOGRATIO_TRIM</span> <span class="o">=</span> <span class="mf">0.3</span>
@@ -526,8 +541,8 @@
     <span class="s2">"All 24-well plates contained control samples with SynBase or SynBase $+ ~ 1 </span><span class="se">\\</span><span class="s2">%$ "</span>
     <span class="s2">"DMSO lacking any inhibitor for paired analysis (see below)."</span><span class="p">,</span>
     <span class="n">note</span><span class="o">=</span><span class="s2">"each replicate is paired with the ControlN columns of its own CG00n batch; "</span>
-    <span class="s2">"MMS keeps the pooled 16-column control because the paper analyzed it unpaired: "</span>
-    <span class="o">+</span> <span class="n">UNPAIRED_COMPOUNDS_QUOTE</span><span class="p">,</span>
+    <span class="s2">"MMS and the two QUADRIS doses keep the pooled 16-column control because the paper "</span>
+    <span class="s2">"analyzed them unpaired: "</span> <span class="o">+</span> <span class="n">UNPAIRED_COMPOUNDS_QUOTE</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">PAIRED_SYNBASE_CONTROL</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
     <span class="s2">"SynBase"</span><span class="p">,</span>
@@ -573,6 +588,16 @@
     <span class="s2">"Acid, Coumaroyl Amide, Feruloyl Amide, Syringic Acid, MBO, Acetovanillone, EMIM-Cl, "</span>
     <span class="s2">"Ferulic Acid, Acetosyringone, NAO, 2,6-Dimethylpyrazine, GVL, CV, EtOH. The matrix "</span>
     <span class="s2">"token of each is FIG_1B_TOKENS"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">QUADRIS_ARBITRARY_DOSE</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
+    <span class="n">DoseBasis</span><span class="o">.</span><span class="n">fixed</span><span class="p">,</span>
+    <span class="s2">"QUADRIS is a suspension and was highly insoluble in SynBase, making $</span><span class="se">\\</span><span class="s2">mathrm "</span>
+    <span class="s2">"{ O D } _ { 6 0 0 }$ reads inaccurate; thus, two concentrations were arbitrarily "</span>
+    <span class="s2">"selected."</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the two QUADRIS doses (Table S1 'QUADRIS-1' 0.08</span><span class="si">% a</span><span class="s2">nd 'QUADRIS-2' 0.04%, "</span>
+    <span class="s2">"matrix tokens QUADRIS1 and QUADRIS2) were not set to an IC30, so their basis is "</span>
+    <span class="s2">"'fixed'; the percent states no v/v or w/v and is stored in the basis-free "</span>
+    <span class="s2">"ConcentrationUnit.percent (#764)"</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">READOUT</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
     <span class="n">MeasurementType</span><span class="o">.</span><span class="n">log2_ratio</span><span class="p">,</span>
@@ -651,7 +676,8 @@
     <span class="n">method</span><span class="o">=</span><span class="s2">"not mirrored; the amino acids and supplements SynH3- carries"</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="c1">#: SGD's locus history (merges and reannotations), not mirrored.</span>
+<span class="c1">#: SGD's locus history (merges and reannotations), not mirrored. This loader no longer</span>
+<span class="c1">#: uses it (no ORF is re-keyed); it stays because piotrowski2017 imports it.</span>
 <span class="n">SGD_ORF_HISTORY</span> <span class="o">=</span> <span class="n">Provenance</span><span class="p">(</span>
     <span class="n">source_uri</span><span class="o">=</span><span class="s2">"https://www.yeastgenome.org (locus history of the source ORF)"</span><span class="p">,</span>
     <span class="n">method</span><span class="o">=</span><span class="s2">"not mirrored; SGD locus-history notes record ORF merges and reannotations"</span><span class="p">,</span>
@@ -683,9 +709,9 @@
         <span class="n">sha256</span><span class="o">=</span><span class="n">DATA_SHA256</span><span class="p">,</span>
         <span class="n">page</span><span class="o">=</span><span class="s2">"gene column ('&lt;ORF&gt;_&lt;barcode&gt;')"</span><span class="p">,</span>
     <span class="p">),</span>
-    <span class="n">note</span><span class="o">=</span><span class="s2">"this row's gene column names the ORF with no '_&lt;barcode&gt;' suffix, no other "</span>
-    <span class="s2">"row names the ORF, and the count matrix is the only file the release carries "</span>
-    <span class="s2">"barcodes in, so the strain's UPTAG is absent from the release"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"this row's gene column names the ORF with no '_&lt;barcode&gt;' suffix, and the "</span>
+    <span class="s2">"count matrix is the only file the release carries barcodes in, so this row's "</span>
+    <span class="s2">"UPTAG is absent from the release"</span><span class="p">,</span>
 <span class="p">)</span>
 
 
@@ -790,15 +816,16 @@
 
 
 <span class="c1">#: Loci whose allele the SGA selections fix in every library strain (the three</span>
-<span class="c1">#: sensitizing deletions and the two reporters). A library row screening one of them</span>
-<span class="c1">#: would put a kanMX deletion on a locus the background already replaced, so it is</span>
-<span class="c1">#: dropped (rule ``orf_is_a_selected_background_locus``).</span>
+<span class="c1">#: sensitizing deletions and the two reporters). This loader stores the release's kanMX</span>
+<span class="c1">#: rows at four of them as released (module docstring, BACKGROUND-LOCUS CONTRADICTION)</span>
+<span class="c1">#: and does not use this set; it stays because piotrowski2017 imports it.</span>
 <span class="n">SELECTED_BACKGROUND_LOCI</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
     <span class="p">{</span><span class="s2">"YGL013C"</span><span class="p">,</span> <span class="s2">"YBL005W"</span><span class="p">,</span> <span class="s2">"YDR011W"</span><span class="p">,</span> <span class="s2">"YEL063C"</span><span class="p">,</span> <span class="s2">"YNL268W"</span><span class="p">}</span>
 <span class="p">)</span>
 
-<span class="c1">#: The 34 Fig 1B conditions as matrix tokens (FIG_1B_CONDITIONS). Every other matrix</span>
-<span class="c1">#: token is a condition the paper never reported.</span>
+<span class="c1">#: The 34 Fig 1B conditions as matrix tokens (FIG_1B_CONDITIONS). The release's other</span>
+<span class="c1">#: 11 tokens are Table S1 conditions no figure shows (TABLE_S1_ONLY_TOKENS); every token</span>
+<span class="c1">#: is stored as released, so this set describes the figure and gates nothing.</span>
 <span class="n">FIG_1B_TOKENS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
     <span class="p">{</span>
         <span class="s2">"Benomyl"</span><span class="p">,</span>
@@ -844,8 +871,12 @@
 <span class="n">_SAMPLE_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^(?P&lt;compound&gt;.+)_CG(?P&lt;batch&gt;\d+)_rep(?P&lt;rep&gt;\d+)$"</span><span class="p">)</span>
 <span class="n">_CONTROL_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^Control\d+_CG(?P&lt;batch&gt;\d+)$"</span><span class="p">)</span>
 
-<span class="c1">#: The one served condition the paper analyzed UNPAIRED, so it keeps the pooled control.</span>
-<span class="n">UNPAIRED_COMPOUND_TOKENS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"MMS"</span><span class="p">})</span>
+<span class="c1">#: The conditions the paper analyzed UNPAIRED (UNPAIRED_COMPOUNDS_QUOTE: "MMS and QUADRIS</span>
+<span class="c1">#: compounds"), so they keep the pooled control.</span>
+<span class="n">UNPAIRED_COMPOUND_TOKENS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"MMS"</span><span class="p">,</span> <span class="s2">"QUADRIS1"</span><span class="p">,</span> <span class="s2">"QUADRIS2"</span><span class="p">})</span>
+
+<span class="c1">#: The two QUADRIS doses, set arbitrarily rather than to an IC30 (QUADRIS_ARBITRARY_DOSE).</span>
+<span class="n">QUADRIS_TOKENS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"QUADRIS1"</span><span class="p">,</span> <span class="s2">"QUADRIS2"</span><span class="p">})</span>
 
 <span class="c1">#: The vehicle, also served as its own condition (Table S1's 2.50% v/v).</span>
 <span class="n">DMSO_TOKEN</span> <span class="o">=</span> <span class="s2">"DMSO"</span>
@@ -907,7 +938,7 @@
     <span class="k">return</span> <span class="n">_table_s1</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">quote</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">)</span>
 
 
-<span class="c1">#: Each served condition's Table S1 row, keyed by matrix token (FIG_1B_TOKENS). The</span>
+<span class="c1">#: Each matrix token's Table S1 row (all 45 release tokens). The</span>
 <span class="c1">#: quotes are the rows exactly as MinerU wrote them into si/si2.md; the dose and the</span>
 <span class="c1">#: "Dissolved in DMSO?" flag are parsed from those quotes, never typed separately.</span>
 <span class="n">TABLE_S1_DOSES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SourcedValue</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
@@ -1035,7 +1066,50 @@
     <span class="s2">"26Dimethylpyrazine"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
         <span class="s2">"&lt;tr&gt;&lt;td&gt;2,6-Dimethylpyrazine&lt;/td&gt;&lt;td&gt;38 mM&lt;/td&gt;&lt;td&gt;No&lt;/td&gt;&lt;td&gt;108-50-9&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;W327301&lt;/td&gt;&lt;/tr&gt;"</span>
     <span class="p">),</span>
+    <span class="c1"># The 11 tokens Table S1 doses and no figure shows (TABLE_S1_ONLY_TOKENS).</span>
+    <span class="s2">"CaffeicAcid"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;Caffeic Acid&lt;/td&gt;&lt;td&gt;7.5 mM&lt;/td&gt;&lt;td&gt;Yes&lt;/td&gt;&lt;td&gt;331-39-5&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;C0625&lt;/td&gt;&lt;/tr&gt;"</span>
+    <span class="p">),</span>
+    <span class="s2">"24Dimethylimidazole"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;2,4-Dimethylimidazole&lt;/td&gt;&lt;td&gt;6 mM&lt;/td&gt;&lt;td&gt;No&lt;/td&gt;&lt;td&gt;930-62-1&lt;/td&gt;&lt;td&gt;Alfa Aesar&lt;/td&gt;&lt;td&gt;A11949&lt;/td&gt;&lt;/tr&gt;"</span>
+    <span class="p">),</span>
+    <span class="s2">"LevulinicAcid"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;Levulinic Acid&lt;/td&gt;&lt;td&gt;10 mM&lt;/td&gt;&lt;td&gt;No&lt;/td&gt;&lt;td&gt;123-76-2&lt;/td&gt;&lt;td&gt;Alfa Aesar&lt;/td&gt;&lt;td&gt;A10813&lt;/td&gt;&lt;/tr&gt;"</span>
+    <span class="p">),</span>
+    <span class="s2">"Mycobutanil"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;Mycobutanil&lt;/td&gt;&lt;td&gt;13 ug/mL&lt;/td&gt;&lt;td&gt;No&lt;/td&gt;&lt;td&gt;88671-89-0&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;34360&lt;/td&gt;&lt;/tr&gt;"</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"Table S1 and the matrix token both spell 'Mycobutanil'; the CAS number "</span>
+        <span class="s2">"88671-89-0 is myclobutanil, the curated identity row's query"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"QUADRIS1"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;QUADRIS-1&lt;/td&gt;&lt;td&gt;0.08%&lt;/td&gt;&lt;td&gt;No&lt;/td&gt;&lt;td&gt;119446-68-3&lt;/td&gt;&lt;td&gt;Syngenta&lt;/td&gt;&lt;td&gt;&lt;/td&gt;&lt;/tr&gt;"</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"IC30 column '0.08%', a dose the Methods say was arbitrarily selected "</span>
+        <span class="s2">"(QUADRIS_ARBITRARY_DOSE), stored under the fixed basis. "</span> <span class="o">+</span> <span class="n">_PERCENT_NOTE</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"QUADRIS2"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;QUADRIS-2&lt;/td&gt;&lt;td&gt;0.04%&lt;/td&gt;&lt;td&gt;No&lt;/td&gt;&lt;td&gt;119446-68-3&lt;/td&gt;&lt;td&gt;Syngenta&lt;/td&gt;&lt;td&gt;&lt;/td&gt;&lt;/tr&gt;"</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"IC30 column '0.04%', a dose the Methods say was arbitrarily selected "</span>
+        <span class="s2">"(QUADRIS_ARBITRARY_DOSE), stored under the fixed basis. "</span> <span class="o">+</span> <span class="n">_PERCENT_NOTE</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"SodiumAcetate"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;Sodium Acetate&lt;/td&gt;&lt;td&gt;150 mM&lt;/td&gt;&lt;td&gt;No&lt;/td&gt;&lt;td&gt;127-09-3&lt;/td&gt;&lt;td&gt;Fisher Scientific&lt;/td&gt;&lt;td&gt;S8750&lt;/td&gt;&lt;/tr&gt;"</span>
+    <span class="p">),</span>
+    <span class="s2">"SodiumButyrate"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;Sodium Butyrate&lt;/td&gt;&lt;td&gt;0.19 mM&lt;/td&gt;&lt;td&gt;No&lt;/td&gt;&lt;td&gt;156-54-7&lt;/td&gt;&lt;td&gt;Fisher Scientific&lt;/td&gt;&lt;td&gt;S1999&lt;/td&gt;&lt;/tr&gt;"</span>
+    <span class="p">),</span>
+    <span class="s2">"SodiumGlyoxylate"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;Sodium Glyoxylate&lt;/td&gt;&lt;td&gt;0.19 mM&lt;/td&gt;&lt;td&gt;No&lt;/td&gt;&lt;td&gt;918149-31-2&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;G4502&lt;/td&gt;&lt;/tr&gt;"</span>
+    <span class="p">),</span>
+    <span class="s2">"2Methylimidazole"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;2-Methylimidazole&lt;/td&gt;&lt;td&gt;3.8 mM&lt;/td&gt;&lt;td&gt;Yes&lt;/td&gt;&lt;td&gt;693-98-1&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;M50850&lt;/td&gt;&lt;/tr&gt;"</span>
+    <span class="p">),</span>
+    <span class="s2">"45Methylimidazole"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;4(5)-Methylimidazole&lt;/td&gt;&lt;td&gt;3.3 mM&lt;/td&gt;&lt;td&gt;Yes&lt;/td&gt;&lt;td&gt;822-36-6&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;199885&lt;/td&gt;&lt;/tr&gt;"</span>
+    <span class="p">),</span>
 <span class="p">}</span>
+
+<span class="c1">#: The release tokens Table S1 doses that no figure of the paper shows.</span>
+<span class="n">TABLE_S1_ONLY_TOKENS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">TABLE_S1_DOSES</span><span class="p">)</span> <span class="o">-</span> <span class="n">FIG_1B_TOKENS</span>
 <span class="n">_SECTION_ROW</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"&lt;tr&gt;&lt;td&gt;(?P&lt;header&gt;[A-Z ]+)&lt;/td&gt;&lt;td&gt;(?P&lt;ic30&gt;[^&lt;]*)&lt;/td&gt;"</span><span class="p">)</span>
 
 
@@ -1342,144 +1416,100 @@
     <span class="n">items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">LegacyOrfStrain</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""A dropped library strain built against an ORF the current genome merged away.</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">NotAValue</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Released cells that hold no value: counted, never records and never drops."""</span>
 
-<span class="sd">    ``constructed_orf`` is the typed record of what the strain physically deleted; its</span>
-<span class="sd">    relation to the current gene and its deleted interval are gaps naming SGD's locus</span>
-<span class="sd">    history. Kept in the ledger so the drop is a typed record, not a silent loss.</span>
-<span class="sd">    """</span>
+    <span class="n">rule</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">n_cells</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
-    <span class="n">source_orf</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">current_orf</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">barcode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
-    <span class="n">constructed_orf</span><span class="p">:</span> <span class="n">ConstructedOrf</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">CompoundIdentityGap</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A stored condition whose compound carries the typed ``inchikey`` gap."""</span>
+
+    <span class="n">token</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">compound_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">n_records</span><span class="p">:</span> <span class="nb">int</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">DropLog</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Every retention rule applied to a build, in the order they were applied."""</span>
+<span class="w">    </span><span class="sd">"""Every released cell of a build: stored, not a value, or dropped by a rule.</span>
+
+<span class="sd">    ``source_records`` = ``kept_records`` + the ``not_a_value`` cells +</span>
+<span class="sd">    ``dropped_records``, and ``dropped_records`` is the sum of the rules.</span>
+<span class="sd">    """</span>
 
     <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">source_records</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">kept_records</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">dropped_records</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DropRule</span><span class="p">]</span>
-    <span class="n">legacy_orf_strains</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">LegacyOrfStrain</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">not_a_value</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">NotAValue</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">compound_identity_gaps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CompoundIdentityGap</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">LibraryRows</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""The library rows a build keeps, after the gene-name policy."""</span>
+<span class="w">    </span><span class="sd">"""The library rows as released: each stored row's ORF, released name and barcode.</span>
+
+<span class="sd">    ``systematic`` is the ORF before the ``_&lt;barcode&gt;`` suffix, verbatim;</span>
+<span class="sd">    ``perturbed`` is the row's own ``std_name`` (the ORF when that cell is empty);</span>
+<span class="sd">    ``barcode`` is the suffix, or None when the row carries none.</span>
+<span class="sd">    """</span>
 
     <span class="n">keep_mask</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span>
     <span class="n">systematic</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
-    <span class="n">common</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">perturbed</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
     <span class="n">barcode</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span>
-    <span class="n">dropped_retired</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
-    <span class="n">dropped_legacy_duplicate</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
-    <span class="n">legacy_target</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">every_count_missing</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">not_an_orf</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_canonical_common_names</span><span class="p">(</span><span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""``systematic name -&gt; the genome's own standard (common) name``.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">released_library_rows</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">sample_cols</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">LibraryRows</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Split the matrix's rows into stored rows and rows that hold no record.</span>
 
-<span class="sd">    One spelling per gene is what keeps a perturbation from splitting into two graph</span>
-<span class="sd">    nodes, and taking it from the genome rather than from the source is what makes the</span>
-<span class="sd">    spelling identical across datasets. Only a standard name that resolves BACK to the</span>
-<span class="sd">    gene is used, so the stored pair always round-trips through the resolver.</span>
+<span class="sd">    A row whose EVERY count column is missing holds no value in any condition. A row</span>
+<span class="sd">    whose gene column is not ORF-shaped would need a released-gene-name leaf the schema</span>
+<span class="sd">    does not have yet, so it is counted under its own rule. Every other row is stored</span>
+<span class="sd">    under its released ORF and ``std_name``. Two stored rows releasing the same ORF and</span>
+<span class="sd">    the same barcode would produce identical records, so the build refuses rather than</span>
+<span class="sd">    collapse them.</span>
 <span class="sd">    """</span>
-    <span class="n">canonical</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">for</span> <span class="n">standard</span> <span class="ow">in</span> <span class="n">genome</span><span class="o">.</span><span class="n">feature_index</span><span class="p">[</span><span class="s2">"standard_to_ids"</span><span class="p">]:</span>
-        <span class="n">resolution</span> <span class="o">=</span> <span class="n">genome</span><span class="o">.</span><span class="n">resolve_gene_name</span><span class="p">(</span><span class="n">standard</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">resolution</span><span class="o">.</span><span class="n">is_current_gene</span> <span class="ow">and</span> <span class="n">resolution</span><span class="o">.</span><span class="n">systematic_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">canonical</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">resolution</span><span class="o">.</span><span class="n">systematic_name</span><span class="p">,</span> <span class="n">standard</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">canonical</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">resolve_library_rows</span><span class="p">(</span>
-    <span class="n">orfs</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">barcodes</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LibraryRows</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Map every library row onto a current R64 gene, or drop it with a typed reason.</span>
-
-<span class="sd">    Two rules, both of which the L1 canonical-name and L4 current-genome gates enforce</span>
-<span class="sd">    downstream. A row whose ORF no longer names a gene of the current genome (a retired</span>
-<span class="sd">    2005-era ORF, or a feature that is not a gene) is dropped: it cannot be keyed to a</span>
-<span class="sd">    gene entity. A row whose ORF is the LEGACY spelling of an ORF the same library also</span>
-<span class="sd">    carries under its current name is dropped too, because remapping it would merge two</span>
-<span class="sd">    physically distinct barcoded strains into one record key; ``legacy_target`` keeps</span>
-<span class="sd">    the current ORF each legacy spelling resolves to.</span>
-<span class="sd">    """</span>
-    <span class="n">gene_set</span> <span class="o">=</span> <span class="p">{</span><span class="n">gene</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="k">for</span> <span class="n">gene</span> <span class="ow">in</span> <span class="n">genome</span><span class="o">.</span><span class="n">gene_set</span><span class="p">}</span>
-    <span class="n">resolutions</span> <span class="o">=</span> <span class="p">{</span><span class="n">orf</span><span class="p">:</span> <span class="n">genome</span><span class="o">.</span><span class="n">resolve_gene_name</span><span class="p">(</span><span class="n">orf</span><span class="p">)</span> <span class="k">for</span> <span class="n">orf</span> <span class="ow">in</span> <span class="n">orfs</span><span class="o">.</span><span class="n">unique</span><span class="p">()}</span>
-    <span class="n">target</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="n">retired</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">orf</span><span class="p">,</span> <span class="n">resolution</span> <span class="ow">in</span> <span class="n">resolutions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="n">mapped</span> <span class="o">=</span> <span class="n">resolution</span><span class="o">.</span><span class="n">systematic_name</span>
-        <span class="k">if</span> <span class="n">resolution</span><span class="o">.</span><span class="n">is_current_gene</span> <span class="ow">and</span> <span class="n">mapped</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">mapped</span> <span class="ow">in</span> <span class="n">gene_set</span><span class="p">:</span>
-            <span class="n">target</span><span class="p">[</span><span class="n">orf</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">retired</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">orf</span><span class="p">)</span>
-    <span class="n">claimed</span> <span class="o">=</span> <span class="p">{</span><span class="n">orf</span> <span class="k">for</span> <span class="n">orf</span> <span class="ow">in</span> <span class="n">target</span> <span class="k">if</span> <span class="n">orf</span> <span class="ow">in</span> <span class="n">gene_set</span><span class="p">}</span>
-    <span class="n">legacy</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
-        <span class="n">orf</span> <span class="k">for</span> <span class="n">orf</span><span class="p">,</span> <span class="n">mapped</span> <span class="ow">in</span> <span class="n">target</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">orf</span> <span class="o">!=</span> <span class="n">mapped</span> <span class="ow">and</span> <span class="n">mapped</span> <span class="ow">in</span> <span class="n">claimed</span>
+    <span class="n">genes</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">split</span> <span class="o">=</span> <span class="n">genes</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"_"</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">orfs</span> <span class="o">=</span> <span class="n">split</span><span class="o">.</span><span class="n">str</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="c1"># No suffix, or an empty one, is a barcode the release does not carry: None.</span>
+    <span class="n">barcodes</span> <span class="o">=</span> <span class="n">split</span><span class="o">.</span><span class="n">str</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+        <span class="k">lambda</span> <span class="n">tag</span><span class="p">:</span> <span class="n">tag</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">tag</span> <span class="o">!=</span> <span class="s2">""</span> <span class="k">else</span> <span class="kc">None</span>
     <span class="p">)</span>
-    <span class="n">canonical</span> <span class="o">=</span> <span class="n">_canonical_common_names</span><span class="p">(</span><span class="n">genome</span><span class="p">)</span>
-    <span class="n">keep_mask</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">systematic</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">common</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">kept_barcodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">legacy_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">legacy</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">orf</span><span class="p">,</span> <span class="n">barcode</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">orfs</span><span class="p">,</span> <span class="n">barcodes</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-        <span class="n">mapped</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">orf</span><span class="p">)</span>
-        <span class="n">keep</span> <span class="o">=</span> <span class="n">mapped</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">orf</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">legacy_set</span>
-        <span class="n">keep_mask</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">keep</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">keep</span><span class="p">:</span>
-            <span class="k">continue</span>
-        <span class="k">assert</span> <span class="n">mapped</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-        <span class="n">systematic</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mapped</span><span class="p">)</span>
-        <span class="n">common</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">canonical</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">mapped</span><span class="p">,</span> <span class="n">mapped</span><span class="p">))</span>
-        <span class="n">kept_barcodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">barcode</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">systematic</span><span class="p">))</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">systematic</span><span class="p">):</span>
+    <span class="n">is_orf</span> <span class="o">=</span> <span class="n">orfs</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">gene</span><span class="p">:</span> <span class="nb">bool</span><span class="p">(</span><span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">gene</span><span class="p">)))</span>
+    <span class="n">has_counts</span> <span class="o">=</span> <span class="o">~</span><span class="n">df</span><span class="p">[</span><span class="n">sample_cols</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">keep</span> <span class="o">=</span> <span class="n">is_orf</span> <span class="o">&amp;</span> <span class="n">has_counts</span>
+    <span class="n">std_names</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"std_name"</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+        <span class="k">lambda</span> <span class="n">name</span><span class="p">:</span> <span class="n">name</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">""</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="p">)</span>
+    <span class="n">systematic</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">orf</span><span class="p">)</span> <span class="k">for</span> <span class="n">orf</span> <span class="ow">in</span> <span class="n">orfs</span><span class="p">[</span><span class="n">keep</span><span class="p">]]</span>
+    <span class="n">perturbed</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="nb">str</span><span class="p">(</span><span class="n">std</span><span class="p">)</span> <span class="k">if</span> <span class="n">std</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">orf</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">orf</span><span class="p">,</span> <span class="n">std</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">orfs</span><span class="p">[</span><span class="n">keep</span><span class="p">],</span> <span class="n">std_names</span><span class="p">[</span><span class="n">keep</span><span class="p">],</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="p">]</span>
+    <span class="n">kept_barcodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">barcodes</span><span class="p">[</span><span class="n">keep</span><span class="p">])</span>
+    <span class="n">keys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">systematic</span><span class="p">,</span> <span class="n">kept_barcodes</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">keys</span><span class="p">))</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">):</span>
+        <span class="n">repeated</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="p">{</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">orf</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">orf</span><span class="p">,</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">keys</span> <span class="k">if</span> <span class="n">keys</span><span class="o">.</span><span class="n">count</span><span class="p">((</span><span class="n">orf</span><span class="p">,</span> <span class="n">tag</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">}</span>
+        <span class="p">)</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-            <span class="s2">"two retained library rows resolve to the same systematic gene; the "</span>
-            <span class="s2">"legacy-duplicate rule did not separate them"</span>
+            <span class="s2">"two library rows release the same ORF and barcode, so their records "</span>
+            <span class="sa">f</span><span class="s2">"would be identical: </span><span class="si">{</span><span class="n">repeated</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">LibraryRows</span><span class="p">(</span>
-        <span class="n">keep_mask</span><span class="o">=</span><span class="n">keep_mask</span><span class="p">,</span>
+        <span class="n">keep_mask</span><span class="o">=</span><span class="p">[</span><span class="nb">bool</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keep</span><span class="p">],</span>
         <span class="n">systematic</span><span class="o">=</span><span class="n">systematic</span><span class="p">,</span>
-        <span class="n">common</span><span class="o">=</span><span class="n">common</span><span class="p">,</span>
+        <span class="n">perturbed</span><span class="o">=</span><span class="n">perturbed</span><span class="p">,</span>
         <span class="n">barcode</span><span class="o">=</span><span class="n">kept_barcodes</span><span class="p">,</span>
-        <span class="n">dropped_retired</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">retired</span><span class="p">),</span>
-        <span class="n">dropped_legacy_duplicate</span><span class="o">=</span><span class="n">legacy</span><span class="p">,</span>
-        <span class="n">legacy_target</span><span class="o">=</span><span class="p">{</span><span class="n">orf</span><span class="p">:</span> <span class="n">target</span><span class="p">[</span><span class="n">orf</span><span class="p">]</span> <span class="k">for</span> <span class="n">orf</span> <span class="ow">in</span> <span class="n">legacy</span><span class="p">},</span>
-    <span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">legacy_orf_strain</span><span class="p">(</span>
-    <span class="n">source_orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">current_orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">barcode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LegacyOrfStrain</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The typed ledger entry for a dropped legacy-spelling strain."""</span>
-    <span class="k">return</span> <span class="n">LegacyOrfStrain</span><span class="p">(</span>
-        <span class="n">source_orf</span><span class="o">=</span><span class="n">source_orf</span><span class="p">,</span>
-        <span class="n">current_orf</span><span class="o">=</span><span class="n">current_orf</span><span class="p">,</span>
-        <span class="n">barcode</span><span class="o">=</span><span class="n">barcode</span><span class="p">,</span>
-        <span class="n">constructed_orf</span><span class="o">=</span><span class="n">ConstructedOrf</span><span class="p">(</span>
-            <span class="n">source_systematic_name</span><span class="o">=</span><span class="n">source_orf</span><span class="p">,</span>
-            <span class="n">relation</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">deleted_span</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span>
-                <span class="n">pending_source_review</span><span class="p">(</span>
-                    <span class="s2">"relation"</span><span class="p">,</span>
-                    <span class="n">SGD_ORF_HISTORY</span><span class="p">,</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">source_orf</span><span class="si">}</span><span class="s2"> resolves to </span><span class="si">{</span><span class="n">current_orf</span><span class="si">}</span><span class="s2"> in R64-4-1; whether it "</span>
-                    <span class="s2">"was merged into it or reannotated is SGD locus history"</span><span class="p">,</span>
-                <span class="p">),</span>
-                <span class="n">pending_source_review</span><span class="p">(</span>
-                    <span class="s2">"deleted_span"</span><span class="p">,</span>
-                    <span class="n">SGD_ORF_HISTORY</span><span class="p">,</span>
-                    <span class="sa">f</span><span class="s2">"the interval the </span><span class="si">{</span><span class="n">source_orf</span><span class="si">}</span><span class="s2"> cassette replaced"</span><span class="p">,</span>
-                <span class="p">),</span>
-            <span class="p">],</span>
-        <span class="p">),</span>
+        <span class="n">every_count_missing</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">genes</span><span class="p">[</span><span class="o">~</span><span class="n">has_counts</span><span class="p">]),</span>
+        <span class="n">not_an_orf</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">genes</span><span class="p">[</span><span class="n">has_counts</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">is_orf</span><span class="p">]),</span>
     <span class="p">)</span>
 
 
@@ -1499,7 +1529,7 @@
         <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Initialize the dataset (the genome is loaded lazily inside ``process``)."""</span>
+<span class="w">        </span><span class="sd">"""Initialize the dataset."""</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="nd">@property</span>
@@ -1551,8 +1581,9 @@
 <span class="w">        </span><span class="sd">"""The dose as the paper SET it: an IC30 target, or a published fixed dose.</span>
 
 <span class="sd">        Every value is the one Table S1 reports (#764), except Benomyl, whose fixed</span>
-<span class="sd">        dose is Piotrowski 2017's molar statement of the same 10 ug/mL. DMSO's percent</span>
-<span class="sd">        is v/v by the paper's own DMSO convention (TABLE_S1_DOSES['DMSO'] note).</span>
+<span class="sd">        dose is Piotrowski 2017's molar statement of the same 10 ug/mL. MMS and the two</span>
+<span class="sd">        QUADRIS doses are fixed (published, or arbitrarily selected), not IC30. DMSO's</span>
+<span class="sd">        percent is v/v by the paper's own DMSO convention (TABLE_S1_DOSES['DMSO'] note).</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="n">compound</span> <span class="o">==</span> <span class="s2">"Benomyl"</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">Concentration</span><span class="p">(</span>
@@ -1560,7 +1591,7 @@
                 <span class="n">unit</span><span class="o">=</span><span class="n">ConcentrationUnit</span><span class="o">.</span><span class="n">micromolar</span><span class="p">,</span>
                 <span class="n">basis</span><span class="o">=</span><span class="n">DoseBasis</span><span class="o">.</span><span class="n">fixed</span><span class="p">,</span>
             <span class="p">)</span>
-        <span class="k">if</span> <span class="n">compound</span> <span class="o">==</span> <span class="s2">"MMS"</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">compound</span> <span class="o">==</span> <span class="s2">"MMS"</span> <span class="ow">or</span> <span class="n">compound</span> <span class="ow">in</span> <span class="n">QUADRIS_TOKENS</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">table_s1_ic30</span><span class="p">(</span><span class="n">compound</span><span class="p">,</span> <span class="n">basis</span><span class="o">=</span><span class="n">DoseBasis</span><span class="o">.</span><span class="n">fixed</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">compound</span> <span class="o">==</span> <span class="n">DMSO_TOKEN</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">Concentration</span><span class="p">(</span>
@@ -1680,17 +1711,20 @@
             <span class="n">units</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_units</span><span class="p">(</span><span class="n">compound</span><span class="p">),</span>
         <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_genotype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">systematic</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">common</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">barcode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Genotype</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_genotype</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">systematic</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">perturbed</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">barcode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Genotype</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""The ONE screened deletion; the constant background is on the reference.</span>
 
-<span class="sd">        ``barcode`` None is a row the release carries no barcode for; it is served with</span>
-<span class="sd">        ``BARCODE_ABSENT_GAP`` so the absence is typed.</span>
+<span class="sd">        ``systematic`` and ``perturbed`` are the release's ORF and ``std_name``,</span>
+<span class="sd">        verbatim. ``barcode`` None is a row the release carries no barcode for; it is</span>
+<span class="sd">        stored with ``BARCODE_ABSENT_GAP`` so the absence is typed.</span>
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="n">Genotype</span><span class="p">(</span>
             <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
                 <span class="n">BarcodedKanMxDeletionPerturbation</span><span class="p">(</span>
                     <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">systematic</span><span class="p">,</span>
-                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">common</span><span class="p">,</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">perturbed</span><span class="p">,</span>
                     <span class="n">barcode</span><span class="o">=</span><span class="n">barcode</span><span class="p">,</span>
                     <span class="n">collection</span><span class="o">=</span><span class="n">LIBRARY_COLLECTION</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
                     <span class="n">cassette</span><span class="o">=</span><span class="n">ARRAY_KANMX</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
@@ -1724,177 +1758,56 @@
         <span class="n">controls</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">cols</span> <span class="ow">in</span> <span class="n">control_by_batch</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">]</span>
 
         <span class="n">source_records</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">compound_cols</span><span class="p">)</span>
-        <span class="n">rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DropRule</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-
-        <span class="c1"># --- compound-level retention ----------------------------------------- #</span>
-        <span class="n">unreported</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">compound_cols</span><span class="p">)</span> <span class="o">-</span> <span class="n">FIG_1B_TOKENS</span><span class="p">)</span>
-        <span class="n">unidentified</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
-            <span class="n">token</span>
-            <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">compound_cols</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">FIG_1B_TOKENS</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">resolve_compound_identity</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">token</span><span class="p">)</span><span class="o">.</span><span class="n">identified</span>
-        <span class="p">)</span>
-        <span class="n">kept_compounds</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
-            <span class="nb">set</span><span class="p">(</span><span class="n">compound_cols</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">unreported</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">unidentified</span><span class="p">)</span>
-        <span class="p">)</span>
-
-        <span class="c1"># --- library-row retention --------------------------------------------- #</span>
-        <span class="n">split</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"_"</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">orfs</span> <span class="o">=</span> <span class="n">split</span><span class="o">.</span><span class="n">str</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="c1"># No suffix, or an empty one, is a barcode the release does not carry: None.</span>
-        <span class="n">barcodes</span> <span class="o">=</span> <span class="n">split</span><span class="o">.</span><span class="n">str</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
-            <span class="k">lambda</span> <span class="n">tag</span><span class="p">:</span> <span class="n">tag</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">tag</span> <span class="o">!=</span> <span class="s2">""</span> <span class="k">else</span> <span class="kc">None</span>
-        <span class="p">)</span>
-        <span class="n">is_orf</span> <span class="o">=</span> <span class="n">orfs</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">gene</span><span class="p">:</span> <span class="nb">bool</span><span class="p">(</span><span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">gene</span><span class="p">)))</span>
-        <span class="c1"># A row is dropped whole only when EVERY count is missing; a partly missing row</span>
-        <span class="c1"># loses just the cells that use a missing count (the cell rule below).</span>
-        <span class="n">has_counts</span> <span class="o">=</span> <span class="o">~</span><span class="n">df</span><span class="p">[</span><span class="n">sample_cols</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">not_background</span> <span class="o">=</span> <span class="o">~</span><span class="n">orfs</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">SELECTED_BACKGROUND_LOCI</span><span class="p">)</span>
-        <span class="n">candidate</span> <span class="o">=</span> <span class="n">is_orf</span> <span class="o">&amp;</span> <span class="n">has_counts</span> <span class="o">&amp;</span> <span class="n">not_background</span>
-        <span class="n">barcoded_orfs</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">orfs</span><span class="p">[</span><span class="n">candidate</span> <span class="o">&amp;</span> <span class="n">barcodes</span><span class="o">.</span><span class="n">notna</span><span class="p">()])</span>
-        <span class="n">shadowed</span> <span class="o">=</span> <span class="n">candidate</span> <span class="o">&amp;</span> <span class="n">barcodes</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span> <span class="o">&amp;</span> <span class="n">orfs</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">barcoded_orfs</span><span class="p">)</span>
-        <span class="n">prefilter</span> <span class="o">=</span> <span class="n">candidate</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">shadowed</span>
-        <span class="n">n_non_orf</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="o">~</span><span class="n">is_orf</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
-        <span class="n">n_all_nan</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">is_orf</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">has_counts</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
-        <span class="n">background_rows</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">orfs</span><span class="p">[</span><span class="n">is_orf</span> <span class="o">&amp;</span> <span class="n">has_counts</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">not_background</span><span class="p">])</span>
-        <span class="n">shadowed_rows</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">orfs</span><span class="p">[</span><span class="n">shadowed</span><span class="p">])</span>
-        <span class="n">n_barcodeless_served</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">prefilter</span> <span class="o">&amp;</span> <span class="n">barcodes</span><span class="o">.</span><span class="n">isna</span><span class="p">())</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
-
-        <span class="n">genome</span> <span class="o">=</span> <span class="n">default_genome</span><span class="p">()</span>
-        <span class="n">library</span> <span class="o">=</span> <span class="n">resolve_library_rows</span><span class="p">(</span>
-            <span class="n">orfs</span><span class="p">[</span><span class="n">prefilter</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
-            <span class="n">barcodes</span><span class="p">[</span><span class="n">prefilter</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
-            <span class="n">genome</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">row_keep</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">library</span><span class="o">.</span><span class="n">keep_mask</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">prefilter</span><span class="p">])</span>
-        <span class="n">keep</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
-        <span class="n">keep</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">row_keep</span><span class="o">.</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">row_keep</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+        <span class="n">compounds</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">compound_cols</span><span class="p">)</span>
+        <span class="n">undosed</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">compounds</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">TABLE_S1_DOSES</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">undosed</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"matrix tokens with no Table S1 row: </span><span class="si">{</span><span class="n">undosed</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">library</span> <span class="o">=</span> <span class="n">released_library_rows</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">sample_cols</span><span class="p">)</span>
+        <span class="n">keep</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">library</span><span class="o">.</span><span class="n">keep_mask</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
         <span class="n">n_rows</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">keep</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
-        <span class="n">n_kept_compounds</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">kept_compounds</span><span class="p">)</span>
-        <span class="n">prefiltered_barcode</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
-            <span class="nb">zip</span><span class="p">(</span><span class="n">orfs</span><span class="p">[</span><span class="n">prefilter</span><span class="p">],</span> <span class="n">barcodes</span><span class="p">[</span><span class="n">prefilter</span><span class="p">],</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="p">)</span>
-
-        <span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="n">rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DropRule</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">DropRule</span><span class="p">(</span>
-                <span class="n">rule</span><span class="o">=</span><span class="s2">"compound_not_reported_by_the_paper"</span><span class="p">,</span>
-                <span class="n">scope</span><span class="o">=</span><span class="s2">"compound"</span><span class="p">,</span>
-                <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-                    <span class="s2">"the matrix token is not one of the 34 conditions Fig 1B lists ("</span>
-                    <span class="o">+</span> <span class="n">FIG_1B_CONDITIONS</span><span class="o">.</span><span class="n">quote</span>
-                    <span class="o">+</span> <span class="s2">" Bar labels read from "</span>
-                    <span class="o">+</span> <span class="n">FIG_1B_IMAGE</span>
-                    <span class="o">+</span> <span class="s2">", sha256 "</span>
-                    <span class="o">+</span> <span class="n">FIG_1B_IMAGE_SHA256</span>
-                    <span class="o">+</span> <span class="s2">"); the paper never reports these conditions or says why"</span>
-                <span class="p">),</span>
-                <span class="n">n_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">unreported</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">),</span>
-                <span class="n">items</span><span class="o">=</span><span class="n">unreported</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
-        <span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="n">DropRule</span><span class="p">(</span>
-                <span class="n">rule</span><span class="o">=</span><span class="s2">"compound_without_a_structure_identifier"</span><span class="p">,</span>
-                <span class="n">scope</span><span class="o">=</span><span class="s2">"compound"</span><span class="p">,</span>
-                <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-                    <span class="s2">"no InChIKey / PubChem CID / ChEBI id resolves for the source label, "</span>
-                    <span class="s2">"so the compound entity cannot be encoded or joined; see the per-"</span>
-                    <span class="s2">"token reason in compound_identity_inputs/vanacloig2022.txt"</span>
-                <span class="p">),</span>
-                <span class="n">n_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">unidentified</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">),</span>
-                <span class="n">items</span><span class="o">=</span><span class="n">unidentified</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
-        <span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="n">DropRule</span><span class="p">(</span>
-                <span class="n">rule</span><span class="o">=</span><span class="s2">"row_is_not_a_barcoded_orf_or_carries_no_counts"</span><span class="p">,</span>
+                <span class="n">rule</span><span class="o">=</span><span class="s2">"gene_column_is_not_a_systematic_orf"</span><span class="p">,</span>
                 <span class="n">scope</span><span class="o">=</span><span class="s2">"library_row"</span><span class="p">,</span>
                 <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-                    <span class="s2">"the gene column does not name a systematic ORF (before any "</span>
-                    <span class="s2">"'_&lt;barcode&gt;' suffix), or every count column is missing (a "</span>
-                    <span class="s2">"QC-dropped barcode); a row missing only some counts is kept and "</span>
-                    <span class="s2">"loses just the cells that use them "</span>
-                    <span class="s2">"(a_count_the_cell_uses_is_missing)"</span>
+                    <span class="s2">"the gene column (before any '_&lt;barcode&gt;' suffix) is not a "</span>
+                    <span class="s2">"systematic ORF; storing it needs the released-gene-name "</span>
+                    <span class="s2">"perturbation leaf (a released identifier verbatim with "</span>
+                    <span class="s2">"systematic_gene_name a typed gap), which the schema does not have "</span>
+                    <span class="s2">"yet. Items are the gene column as released"</span>
                 <span class="p">),</span>
-                <span class="n">n_records</span><span class="o">=</span><span class="p">(</span><span class="n">n_non_orf</span> <span class="o">+</span> <span class="n">n_all_nan</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_kept_compounds</span><span class="p">,</span>
-                <span class="n">items</span><span class="o">=</span><span class="p">[],</span>
+                <span class="n">n_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">library</span><span class="o">.</span><span class="n">not_an_orf</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">compounds</span><span class="p">),</span>
+                <span class="n">items</span><span class="o">=</span><span class="n">library</span><span class="o">.</span><span class="n">not_an_orf</span><span class="p">,</span>
             <span class="p">)</span>
-        <span class="p">)</span>
-        <span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="n">DropRule</span><span class="p">(</span>
-                <span class="n">rule</span><span class="o">=</span><span class="s2">"orf_is_a_selected_background_locus"</span><span class="p">,</span>
-                <span class="n">scope</span><span class="o">=</span><span class="s2">"library_row"</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="n">not_a_value</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">NotAValue</span><span class="p">(</span>
+                <span class="n">rule</span><span class="o">=</span><span class="s2">"every_count_of_the_row_is_missing"</span><span class="p">,</span>
                 <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-                    <span class="s2">"the screened ORF is a locus whose allele the SGA selections fix in "</span>
-                    <span class="s2">"every library strain (pdr1Δ::natMX, pdr3Δ::KlURA3, snq2Δ::KlLEU2, "</span>
-                    <span class="s2">"can1Δ::STE2pr-Sp_his5, lyp1Δ; Piotrowski 2017), so a kanMX "</span>
-                    <span class="s2">"deletion of it contradicts the strain's own background"</span>
+                    <span class="s2">"every count column of this library row is missing (NaN) in the "</span>
+                    <span class="s2">"release, so the row holds no value in any condition; it is counted "</span>
+                    <span class="s2">"here and is not a record. Items are the gene column as released"</span>
                 <span class="p">),</span>
-                <span class="n">n_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">background_rows</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_kept_compounds</span><span class="p">,</span>
-                <span class="n">items</span><span class="o">=</span><span class="n">background_rows</span><span class="p">,</span>
+                <span class="n">n_cells</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">library</span><span class="o">.</span><span class="n">every_count_missing</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">compounds</span><span class="p">),</span>
+                <span class="n">items</span><span class="o">=</span><span class="n">library</span><span class="o">.</span><span class="n">every_count_missing</span><span class="p">,</span>
             <span class="p">)</span>
-        <span class="p">)</span>
-        <span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="n">DropRule</span><span class="p">(</span>
-                <span class="n">rule</span><span class="o">=</span><span class="s2">"barcodeless_row_of_an_orf_another_row_carries_with_a_barcode"</span><span class="p">,</span>
-                <span class="n">scope</span><span class="o">=</span><span class="s2">"library_row"</span><span class="p">,</span>
-                <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-                    <span class="s2">"the gene column names the ORF with no '_&lt;barcode&gt;' suffix while "</span>
-                    <span class="s2">"another row of the release carries the same ORF with a barcode, so "</span>
-                    <span class="s2">"the barcode is not absent from the release and this row cannot be "</span>
-                    <span class="s2">"told apart from that strain; a barcodeless row whose ORF no other "</span>
-                    <span class="s2">"row names is served with barcode None and BARCODE_ABSENT_GAP"</span>
-                <span class="p">),</span>
-                <span class="n">n_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">shadowed_rows</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_kept_compounds</span><span class="p">,</span>
-                <span class="n">items</span><span class="o">=</span><span class="n">shadowed_rows</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
-        <span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="n">DropRule</span><span class="p">(</span>
-                <span class="n">rule</span><span class="o">=</span><span class="s2">"orf_is_not_a_current_genome_gene"</span><span class="p">,</span>
-                <span class="n">scope</span><span class="o">=</span><span class="s2">"library_row"</span><span class="p">,</span>
-                <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-                    <span class="s2">"the barcoded ORF does not resolve to a gene of the current R64 "</span>
-                    <span class="s2">"annotation (retired ORF, or a non-gene feature), so no gene entity "</span>
-                    <span class="s2">"exists to key the record to"</span>
-                <span class="p">),</span>
-                <span class="n">n_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">library</span><span class="o">.</span><span class="n">dropped_retired</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_kept_compounds</span><span class="p">,</span>
-                <span class="n">items</span><span class="o">=</span><span class="n">library</span><span class="o">.</span><span class="n">dropped_retired</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
-        <span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="n">DropRule</span><span class="p">(</span>
-                <span class="n">rule</span><span class="o">=</span><span class="s2">"orf_is_a_legacy_spelling_of_another_library_orf"</span><span class="p">,</span>
-                <span class="n">scope</span><span class="o">=</span><span class="s2">"library_row"</span><span class="p">,</span>
-                <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-                    <span class="s2">"the ORF resolves to an ORF the SAME library also carries under its "</span>
-                    <span class="s2">"current name; remapping would merge two physically distinct "</span>
-                    <span class="s2">"barcoded strains into one record key, so the legacy row is dropped "</span>
-                    <span class="s2">"and recorded as a typed ConstructedOrf in legacy_orf_strains"</span>
-                <span class="p">),</span>
-                <span class="n">n_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">library</span><span class="o">.</span><span class="n">dropped_legacy_duplicate</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_kept_compounds</span><span class="p">,</span>
-                <span class="n">items</span><span class="o">=</span><span class="n">library</span><span class="o">.</span><span class="n">dropped_legacy_duplicate</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
-        <span class="n">legacy_strains</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">legacy_orf_strain</span><span class="p">(</span><span class="n">orf</span><span class="p">,</span> <span class="n">library</span><span class="o">.</span><span class="n">legacy_target</span><span class="p">[</span><span class="n">orf</span><span class="p">],</span> <span class="n">prefiltered_barcode</span><span class="p">[</span><span class="n">orf</span><span class="p">])</span>
-            <span class="k">for</span> <span class="n">orf</span> <span class="ow">in</span> <span class="n">library</span><span class="o">.</span><span class="n">dropped_legacy_duplicate</span>
+        <span class="p">]</span>
+        <span class="n">compound_identity_gaps</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">CompoundIdentityGap</span><span class="p">(</span><span class="n">token</span><span class="o">=</span><span class="n">token</span><span class="p">,</span> <span class="n">compound_name</span><span class="o">=</span><span class="n">compound</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">n_records</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">compounds</span>
+            <span class="k">for</span> <span class="n">compound</span> <span class="ow">in</span> <span class="p">[</span><span class="n">resolved_compound</span><span class="p">(</span><span class="n">token</span><span class="p">)]</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">gap</span><span class="o">.</span><span class="n">field</span> <span class="o">==</span> <span class="s2">"inchikey"</span> <span class="k">for</span> <span class="n">gap</span> <span class="ow">in</span> <span class="n">compound</span><span class="o">.</span><span class="n">provenance_gaps</span><span class="p">)</span>
         <span class="p">]</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">"Vanacloig: </span><span class="si">%d</span><span class="s2"> conditions kept (</span><span class="si">%d</span><span class="s2"> unreported, </span><span class="si">%d</span><span class="s2"> unidentified dropped); "</span>
-            <span class="s2">"</span><span class="si">%d</span><span class="s2"> library rows kept, </span><span class="si">%d</span><span class="s2"> of them without a barcode (</span><span class="si">%d</span><span class="s2"> non-ORF, </span><span class="si">%d</span><span class="s2"> "</span>
-            <span class="s2">"all-NaN, </span><span class="si">%d</span><span class="s2"> background loci, </span><span class="si">%d</span><span class="s2"> barcodeless duplicates, </span><span class="si">%d</span><span class="s2"> retired, </span><span class="si">%d</span><span class="s2"> "</span>
-            <span class="s2">"legacy duplicates dropped)"</span><span class="p">,</span>
-            <span class="n">n_kept_compounds</span><span class="p">,</span>
-            <span class="nb">len</span><span class="p">(</span><span class="n">unreported</span><span class="p">),</span>
-            <span class="nb">len</span><span class="p">(</span><span class="n">unidentified</span><span class="p">),</span>
+            <span class="s2">"Vanacloig: </span><span class="si">%d</span><span class="s2"> conditions (</span><span class="si">%d</span><span class="s2"> of them Table S1 only); </span><span class="si">%d</span><span class="s2"> library rows "</span>
+            <span class="s2">"stored, </span><span class="si">%d</span><span class="s2"> without a barcode; </span><span class="si">%d</span><span class="s2"> rows with every count missing, </span><span class="si">%d</span><span class="s2"> "</span>
+            <span class="s2">"non-ORF rows"</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">compounds</span><span class="p">),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">compounds</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">TABLE_S1_ONLY_TOKENS</span><span class="p">),</span>
             <span class="n">n_rows</span><span class="p">,</span>
-            <span class="n">n_barcodeless_served</span><span class="p">,</span>
-            <span class="n">n_non_orf</span><span class="p">,</span>
-            <span class="n">n_all_nan</span><span class="p">,</span>
-            <span class="nb">len</span><span class="p">(</span><span class="n">background_rows</span><span class="p">),</span>
-            <span class="nb">len</span><span class="p">(</span><span class="n">shadowed_rows</span><span class="p">),</span>
-            <span class="nb">len</span><span class="p">(</span><span class="n">library</span><span class="o">.</span><span class="n">dropped_retired</span><span class="p">),</span>
-            <span class="nb">len</span><span class="p">(</span><span class="n">library</span><span class="o">.</span><span class="n">dropped_legacy_duplicate</span><span class="p">),</span>
+            <span class="nb">sum</span><span class="p">(</span><span class="n">barcode</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">barcode</span> <span class="ow">in</span> <span class="n">library</span><span class="o">.</span><span class="n">barcode</span><span class="p">),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">library</span><span class="o">.</span><span class="n">every_count_missing</span><span class="p">),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">library</span><span class="o">.</span><span class="n">not_an_orf</span><span class="p">),</span>
         <span class="p">)</span>
 
         <span class="c1"># --- normalization ----------------------------------------------------- #</span>
@@ -1912,11 +1825,11 @@
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">env</span><span class="p">,</span> <span class="n">interned_env</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_open_write_lmdb</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">))</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">n_all_zero_cells</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">missing_cells</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">stored_by_token</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">normalization</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">TmmFactors</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">,</span> <span class="n">interned_env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">itxn</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">compound</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">kept_compounds</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"Vanacloig conditions"</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">compound</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">compounds</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"Vanacloig conditions"</span><span class="p">):</span>
                 <span class="n">cols</span> <span class="o">=</span> <span class="n">compound_cols</span><span class="p">[</span><span class="n">compound</span><span class="p">]</span>
                 <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cols</span><span class="p">)</span> <span class="o">!=</span> <span class="n">N_REPLICATES</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
@@ -1958,27 +1871,26 @@
                 <span class="p">)</span>
                 <span class="n">response</span> <span class="o">=</span> <span class="n">log_rep</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
                 <span class="n">sd</span> <span class="o">=</span> <span class="n">log_rep</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-                <span class="c1"># A cell with a missing replicate or paired-control count has no value</span>
-                <span class="c1"># the method defines; it is dropped first, so each cell counts once.</span>
+                <span class="c1"># A cell with a missing (source NaN) replicate or paired-control count</span>
+                <span class="c1"># has no value the method defines. A cell whose three replicate counts</span>
+                <span class="c1"># are all 0 is stored: its value is the log2 of the CPM prior ratio and</span>
+                <span class="c1"># its sample SD is exactly 0.</span>
                 <span class="n">missing</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">kept_counts</span><span class="p">[:,</span> <span class="n">member_idx</span><span class="p">])</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
                 <span class="n">missing_cells</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">library</span><span class="o">.</span><span class="n">systematic</span><span class="p">[</span><span class="n">row</span><span class="p">]</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">compound</span><span class="si">}</span><span class="s2">"</span>
                     <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">missing</span><span class="p">)</span>
                 <span class="p">)</span>
-                <span class="n">all_zero</span> <span class="o">=</span> <span class="p">(</span><span class="n">kept_counts</span><span class="p">[:,</span> <span class="p">[</span><span class="n">col_idx</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">]]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span>
-                    <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
-                <span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">missing</span>
-                <span class="n">n_all_zero_cells</span> <span class="o">+=</span> <span class="nb">int</span><span class="p">(</span><span class="n">all_zero</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+                <span class="n">stored_by_token</span><span class="p">[</span><span class="n">compound</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="o">~</span><span class="n">missing</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
                 <span class="n">environment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_environment</span><span class="p">(</span><span class="n">compound</span><span class="p">)</span>
                 <span class="n">reference</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference</span><span class="p">(</span><span class="n">compound</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_rows</span><span class="p">):</span>
-                    <span class="k">if</span> <span class="n">missing</span><span class="p">[</span><span class="n">row</span><span class="p">]</span> <span class="ow">or</span> <span class="n">all_zero</span><span class="p">[</span><span class="n">row</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="n">missing</span><span class="p">[</span><span class="n">row</span><span class="p">]:</span>
                         <span class="k">continue</span>
                     <span class="n">experiment</span> <span class="o">=</span> <span class="n">StrainEnvironmentResponseExperiment</span><span class="p">(</span>
                         <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
                         <span class="n">genotype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_genotype</span><span class="p">(</span>
                             <span class="n">library</span><span class="o">.</span><span class="n">systematic</span><span class="p">[</span><span class="n">row</span><span class="p">],</span>
-                            <span class="n">library</span><span class="o">.</span><span class="n">common</span><span class="p">[</span><span class="n">row</span><span class="p">],</span>
+                            <span class="n">library</span><span class="o">.</span><span class="n">perturbed</span><span class="p">[</span><span class="n">row</span><span class="p">],</span>
                             <span class="n">library</span><span class="o">.</span><span class="n">barcode</span><span class="p">[</span><span class="n">row</span><span class="p">],</span>
                         <span class="p">),</span>
                         <span class="n">environment</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span>
@@ -2000,37 +1912,28 @@
                 <span class="n">scope</span><span class="o">=</span><span class="s2">"cell"</span><span class="p">,</span>
                 <span class="n">description</span><span class="o">=</span><span class="p">(</span>
                     <span class="s2">"one of the counts this (strain, compound) cell is computed from, a "</span>
-                    <span class="s2">"replicate or one of its paired controls, is missing (NaN) in the "</span>
+                    <span class="s2">"replicate or one of its paired controls, is a source NaN in the "</span>
                     <span class="s2">"release; the paper's per-compound edgeR fit permits no NA count and "</span>
                     <span class="s2">"its design is three replicates against the paired controls, so the "</span>
-                    <span class="s2">"cell has no value the method defines and is dropped, while the "</span>
-                    <span class="s2">"strain's other cells are kept. Items are '&lt;ORF&gt;:&lt;token&gt;'"</span>
+                    <span class="s2">"cell has no value the method defines, while the strain's other "</span>
+                    <span class="s2">"cells are stored. Items are '&lt;ORF&gt;:&lt;token&gt;'"</span>
                 <span class="p">),</span>
                 <span class="n">n_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">missing_cells</span><span class="p">),</span>
                 <span class="n">items</span><span class="o">=</span><span class="n">missing_cells</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
-        <span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="n">DropRule</span><span class="p">(</span>
-                <span class="n">rule</span><span class="o">=</span><span class="s2">"all_three_replicate_counts_are_zero"</span><span class="p">,</span>
-                <span class="n">scope</span><span class="o">=</span><span class="s2">"cell"</span><span class="p">,</span>
-                <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-                    <span class="s2">"every replicate of this (strain, compound) cell has a raw count of "</span>
-                    <span class="s2">"0, so no abundance was measured; the CPM pseudocount would turn a "</span>
-                    <span class="s2">"below-detection observation into a finite log2 value whose sample "</span>
-                    <span class="s2">"SD is exactly 0, i.e. fabricated infinite precision"</span>
-                <span class="p">),</span>
-                <span class="n">n_records</span><span class="o">=</span><span class="n">n_all_zero_cells</span><span class="p">,</span>
-                <span class="n">items</span><span class="o">=</span><span class="p">[],</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
+        <span class="n">n_not_a_value</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">n_cells</span> <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">not_a_value</span><span class="p">)</span>
         <span class="n">drop_log</span> <span class="o">=</span> <span class="n">DropLog</span><span class="p">(</span>
             <span class="n">dataset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
             <span class="n">source_records</span><span class="o">=</span><span class="n">source_records</span><span class="p">,</span>
             <span class="n">kept_records</span><span class="o">=</span><span class="n">idx</span><span class="p">,</span>
-            <span class="n">dropped_records</span><span class="o">=</span><span class="n">source_records</span> <span class="o">-</span> <span class="n">idx</span><span class="p">,</span>
+            <span class="n">dropped_records</span><span class="o">=</span><span class="n">source_records</span> <span class="o">-</span> <span class="n">idx</span> <span class="o">-</span> <span class="n">n_not_a_value</span><span class="p">,</span>
             <span class="n">rules</span><span class="o">=</span><span class="n">rules</span><span class="p">,</span>
-            <span class="n">legacy_orf_strains</span><span class="o">=</span><span class="n">legacy_strains</span><span class="p">,</span>
+            <span class="n">not_a_value</span><span class="o">=</span><span class="n">not_a_value</span><span class="p">,</span>
+            <span class="n">compound_identity_gaps</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">gap</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"n_records"</span><span class="p">:</span> <span class="n">stored_by_token</span><span class="p">[</span><span class="n">gap</span><span class="o">.</span><span class="n">token</span><span class="p">]})</span>
+                <span class="k">for</span> <span class="n">gap</span> <span class="ow">in</span> <span class="n">compound_identity_gaps</span>
+            <span class="p">],</span>
         <span class="p">)</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"dropped_records.json"</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
             <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">drop_log</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>

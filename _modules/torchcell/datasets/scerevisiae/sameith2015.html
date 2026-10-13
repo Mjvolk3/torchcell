@@ -152,17 +152,7 @@
     <span class="n">SgaNatMxDeletionPerturbation</span><span class="p">,</span>
     <span class="n">Temperature</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.strain_background</span><span class="w"> </span><span class="kn">import</span> <span class="n">R64_GFF</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.gene_alias_resolution</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">AliasResolutionRule</span><span class="p">,</span>
-    <span class="n">PinnedAliasResolution</span><span class="p">,</span>
-    <span class="n">candidate_orfs</span><span class="p">,</span>
-    <span class="n">check_ambiguous_aliases</span><span class="p">,</span>
-    <span class="n">pin_table</span><span class="p">,</span>
-    <span class="n">resolve_gene_name_strict</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
 
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -223,53 +213,102 @@
 <span class="n">SAMEITH2015_PUBMED_ID</span> <span class="o">=</span> <span class="s2">"26700642"</span>
 
 <span class="c1"># ============================================================================</span>
-<span class="c1"># Gene names in GEO sample titles (#886)</span>
+<span class="c1"># Gene names in GEO sample titles: the release's own symbol table</span>
 <span class="c1"># ============================================================================</span>
-<span class="c1"># A title token that is not systematic-shaped is resolved by</span>
-<span class="c1"># ``gene_alias_resolution.resolve_gene_name_strict``: a token with no candidate ORF is</span>
-<span class="c1"># not a gene name and is skipped, a token with one candidate resolves to it, and an</span>
-<span class="c1"># ambiguous token resolves only through its pin below, whose rule (the SGD standard name</span>
-<span class="c1"># in the R64 GFF) the build re-checks against the injected genome. Two tokens of</span>
-<span class="c1"># GSE42536 are ambiguous in R64 (measured 2026-10-10 over every title of the series):</span>
-<span class="c1"># SUT2 (YMR080C, YPR009W) in 4 arrays and GAT1 (YFL021W, YKR067W) in 6. The paper's own</span>
-<span class="c1"># list (Additional file 1, sheet "List of 215 GSTFs": "Ypr009W | Sut2", "Yfl021W |</span>
-<span class="c1"># Gat1") names the same ORFs. Before the fix both resolved through the gene table's</span>
-<span class="c1"># standard-name column to these ORFs, so no stored record changes. Each quote is the</span>
-<span class="c1"># verbatim start of the ORF's gene row in the R64-4-1 GFF.</span>
-<span class="n">AMBIGUOUS_ALIAS_PINS</span> <span class="o">=</span> <span class="n">pin_table</span><span class="p">(</span>
-    <span class="p">[</span>
-        <span class="n">PinnedAliasResolution</span><span class="p">(</span>
-            <span class="n">alias</span><span class="o">=</span><span class="s2">"SUT2"</span><span class="p">,</span>
-            <span class="n">systematic_name</span><span class="o">=</span><span class="s2">"YPR009W"</span><span class="p">,</span>
-            <span class="n">rule</span><span class="o">=</span><span class="n">AliasResolutionRule</span><span class="o">.</span><span class="n">SGD_STANDARD_NAME</span><span class="p">,</span>
-            <span class="n">provenance</span><span class="o">=</span><span class="n">R64_GFF</span><span class="p">,</span>
-            <span class="n">quote</span><span class="o">=</span><span class="s2">"ID=YPR009W;Name=YPR009W;gene=SUT2;"</span><span class="p">,</span>
-        <span class="p">),</span>
-        <span class="n">PinnedAliasResolution</span><span class="p">(</span>
-            <span class="n">alias</span><span class="o">=</span><span class="s2">"GAT1"</span><span class="p">,</span>
-            <span class="n">systematic_name</span><span class="o">=</span><span class="s2">"YFL021W"</span><span class="p">,</span>
-            <span class="n">rule</span><span class="o">=</span><span class="n">AliasResolutionRule</span><span class="o">.</span><span class="n">SGD_STANDARD_NAME</span><span class="p">,</span>
-            <span class="n">provenance</span><span class="o">=</span><span class="n">R64_GFF</span><span class="p">,</span>
-            <span class="n">quote</span><span class="o">=</span><span class="s2">"ID=YFL021W;Name=YFL021W;gene=GAT1;"</span><span class="p">,</span>
-        <span class="p">),</span>
-    <span class="p">]</span>
+<span class="c1"># A GEO sample title names a deleted gene by a lower-case token ("dot6-del-1-a",</span>
+<span class="c1"># "rpn4-del+ydr026c-del"). The release itself pairs every gene symbol it uses with a</span>
+<span class="c1"># systematic name: Additional file 1 (``12915_2015_222_MOESM1_ESM.xlsx``, in the raw</span>
+<span class="c1"># dir) lists them in three sheets, "List of 215 GSTFs" (``systematic name``,</span>
+<span class="c1"># ``gene symbol``), "Single mutants - info" (the same two columns) and "Double mutants -</span>
+<span class="c1"># info" (``GSTF1,           systematic name`` / ``GSTF1,           gene symbol`` and the</span>
+<span class="c1"># GSTF2 pair, with that spacing). The workbook writes systematic names as ``Yil130W``</span>
+<span class="c1"># and symbols as ``Asg1``, so both sides are upper-cased. That table is the ONLY route</span>
+<span class="c1"># from a title token to an ORF: no genome, alias table or pin is consulted (the genome</span>
+<span class="c1"># is a separate layer and gates nothing). Measured 2026-10-12 over all 287 titles of</span>
+<span class="c1"># GSE42536 (143 with "+", 144 without, none wildtype): every title resolves through the</span>
+<span class="c1"># workbook (396 symbol tokens) or as an ORF-shaped token (34) to exactly the gene set the</span>
+<span class="c1"># KG 3.0 build stored, including SUT2 -&gt; YPR009W and GAT1 -&gt; YFL021W, the two tokens that</span>
+<span class="c1"># are ambiguous in R64 and that the workbook names directly ("Ypr009W | Sut2",</span>
+<span class="c1"># "Yfl021W | Gat1"). The other title tokens (DEL, MATA, REP) are not genes.</span>
+<span class="n">WORKBOOK_FILE_NAME</span> <span class="o">=</span> <span class="s2">"12915_2015_222_MOESM1_ESM.xlsx"</span>
+<span class="n">_WORKBOOK_NAME_COLUMNS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="p">(</span><span class="s2">"List of 215 GSTFs"</span><span class="p">,</span> <span class="s2">"systematic name"</span><span class="p">,</span> <span class="s2">"gene symbol"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"Single mutants - info"</span><span class="p">,</span> <span class="s2">"systematic name"</span><span class="p">,</span> <span class="s2">"gene symbol"</span><span class="p">),</span>
+    <span class="p">(</span>
+        <span class="s2">"Double mutants - info"</span><span class="p">,</span>
+        <span class="s2">"GSTF1,           systematic name"</span><span class="p">,</span>
+        <span class="s2">"GSTF1,           gene symbol"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="p">(</span>
+        <span class="s2">"Double mutants - info"</span><span class="p">,</span>
+        <span class="s2">"GSTF2,           systematic name"</span><span class="p">,</span>
+        <span class="s2">"GSTF2,           gene symbol"</span><span class="p">,</span>
+    <span class="p">),</span>
 <span class="p">)</span>
-<span class="n">_SYSTEMATIC_PREFIX_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](-[A-Z])?"</span><span class="p">)</span>
+<span class="n">_SYSTEMATIC_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](-[A-Z])?$"</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">convert_title_token</span><span class="p">(</span><span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span><span class="p">,</span> <span class="n">token</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Resolve one title token to a systematic name, or None when it names no gene.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">release_symbol_map</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Upper-cased gene symbol -&gt; upper-cased systematic name, from Additional file 1.</span>
 
-<span class="sd">    A systematic-shaped token is returned upper-cased; a token with no candidate ORF is</span>
-<span class="sd">    not a gene name (None); anything else goes through the refusing resolver, so an</span>
-<span class="sd">    ambiguous token without a pin raises ``GeneNameRefused`` (#886).</span>
+<span class="sd">    Reads every (systematic name, gene symbol) pair of the three sheets of the</span>
+<span class="sd">    release's own workbook; a row with either cell blank names no pair. A symbol the</span>
+<span class="sd">    workbook pairs with two different ORFs raises ``ValueError``, since the release</span>
+<span class="sd">    would then not say which gene a title means. A symbol equal to its ORF (the workbook</span>
+<span class="sd">    writes ``Ypr015C | Ypr015C`` for a gene with no symbol) maps to itself.</span>
 <span class="sd">    """</span>
-    <span class="n">gene_upper</span> <span class="o">=</span> <span class="n">token</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">_SYSTEMATIC_PREFIX_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">gene_upper</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">gene_upper</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">candidate_orfs</span><span class="p">(</span><span class="n">genome</span><span class="p">,</span> <span class="n">gene_upper</span><span class="p">):</span>
-        <span class="k">return</span> <span class="kc">None</span>
-    <span class="k">return</span> <span class="n">resolve_gene_name_strict</span><span class="p">(</span><span class="n">genome</span><span class="p">,</span> <span class="n">gene_upper</span><span class="p">,</span> <span class="n">AMBIGUOUS_ALIAS_PINS</span><span class="p">)</span>
+    <span class="n">symbol_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">sheet</span><span class="p">,</span> <span class="n">orf_column</span><span class="p">,</span> <span class="n">symbol_column</span> <span class="ow">in</span> <span class="n">_WORKBOOK_NAME_COLUMNS</span><span class="p">:</span>
+        <span class="n">table</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">sheet_name</span><span class="o">=</span><span class="n">sheet</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">orf_cell</span><span class="p">,</span> <span class="n">symbol_cell</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+            <span class="n">table</span><span class="p">[</span><span class="n">orf_column</span><span class="p">],</span> <span class="n">table</span><span class="p">[</span><span class="n">symbol_column</span><span class="p">],</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">):</span>
+            <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">orf_cell</span><span class="p">)</span> <span class="ow">or</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">symbol_cell</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">orf</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">orf_cell</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+            <span class="n">symbol</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">symbol_cell</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">symbol</span> <span class="ow">in</span> <span class="n">symbol_map</span> <span class="ow">and</span> <span class="n">symbol_map</span><span class="p">[</span><span class="n">symbol</span><span class="p">]</span> <span class="o">!=</span> <span class="n">orf</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">WORKBOOK_FILE_NAME</span><span class="si">}</span><span class="s2"> pairs the symbol </span><span class="si">{</span><span class="n">symbol</span><span class="si">}</span><span class="s2"> with both "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">symbol_map</span><span class="p">[</span><span class="n">symbol</span><span class="p">]</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">orf</span><span class="si">}</span><span class="s2"> (sheet </span><span class="si">{</span><span class="n">sheet</span><span class="si">!r}</span><span class="s2">)"</span>
+                <span class="p">)</span>
+            <span class="n">symbol_map</span><span class="p">[</span><span class="n">symbol</span><span class="p">]</span> <span class="o">=</span> <span class="n">orf</span>
+    <span class="k">return</span> <span class="n">symbol_map</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">release_gene_symbols</span><span class="p">(</span><span class="n">symbol_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Systematic name -&gt; the release's gene symbol for it, from ``release_symbol_map``.</span>
+
+<span class="sd">    An ORF whose only workbook symbol is the ORF itself has no symbol and is absent.</span>
+<span class="sd">    The workbook names YML081W ``Tda9`` in "List of 215 GSTFs" and "Single mutants -</span>
+<span class="sd">    info" but ``Yml081W`` in "Double mutants - info"; the ORF-as-symbol entry is not a</span>
+<span class="sd">    symbol, so YML081W -&gt; TDA9. Two different non-ORF symbols for one ORF raise</span>
+<span class="sd">    ``ValueError``.</span>
+<span class="sd">    """</span>
+    <span class="n">symbols</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">symbol</span><span class="p">,</span> <span class="n">orf</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">symbol_map</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+        <span class="k">if</span> <span class="n">symbol</span> <span class="o">==</span> <span class="n">orf</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">orf</span> <span class="ow">in</span> <span class="n">symbols</span> <span class="ow">and</span> <span class="n">symbols</span><span class="p">[</span><span class="n">orf</span><span class="p">]</span> <span class="o">!=</span> <span class="n">symbol</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">WORKBOOK_FILE_NAME</span><span class="si">}</span><span class="s2"> names </span><span class="si">{</span><span class="n">orf</span><span class="si">}</span><span class="s2"> both </span><span class="si">{</span><span class="n">symbols</span><span class="p">[</span><span class="n">orf</span><span class="p">]</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">symbol</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="n">symbols</span><span class="p">[</span><span class="n">orf</span><span class="p">]</span> <span class="o">=</span> <span class="n">symbol</span>
+    <span class="k">return</span> <span class="n">symbols</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">title_token_to_systematic</span><span class="p">(</span><span class="n">symbol_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">token</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The ORF a title token names through the release, or None when it names no gene.</span>
+
+<span class="sd">    GEO titles are lower case, so the token is upper-cased first. A systematic-shaped</span>
+<span class="sd">    token is taken verbatim (upper-cased); otherwise the token is looked up in the</span>
+<span class="sd">    workbook's symbol map. A token that is neither (``DEL``, ``MATA``, a replicate</span>
+<span class="sd">    suffix) is not a gene token.</span>
+<span class="sd">    """</span>
+    <span class="n">upper</span> <span class="o">=</span> <span class="n">token</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">upper</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">upper</span>
+    <span class="k">return</span> <span class="n">symbol_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">upper</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="SmMicroarraySameith2015Dataset">
@@ -280,7 +319,9 @@
 
 <span class="sd">    Microarray gene expression data for 82 single mutant yeast strains with</span>
 <span class="sd">    deletions in general stress transcription factors (GSTFs). All single mutants</span>
-<span class="sd">    are from the yeast deletion library (BY4742, MATalpha, KanMX marker).</span>
+<span class="sd">    are from the yeast deletion library (BY4742, MATalpha, KanMX marker). Title tokens</span>
+<span class="sd">    resolve to ORFs only through the release's Additional file 1</span>
+<span class="sd">    (``release_symbol_map``), and ``perturbed_gene_name`` is the workbook's symbol.</span>
 
 <span class="sd">    Data source: GEO accession GSE42536</span>
 <span class="sd">    Paper: Sameith et al. (2015) BMC Biology</span>
@@ -297,18 +338,13 @@
         <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">process_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
-        <span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># Optional dependency injection</span>
         <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Initialize the dataset, optionally injecting a genome for gene mapping."""</span>
+<span class="w">        </span><span class="sd">"""Initialize the dataset; gene names come from the release's own workbook."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">process_workers</span> <span class="o">=</span> <span class="n">process_workers</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
-
-        <span class="c1"># Genome for gene name mapping (optional, injected)</span>
-        <span class="c1"># If None, gene resolution methods will have limited functionality</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">genome</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
@@ -386,14 +422,8 @@
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Parse GEO expression data into single-mutant experiments and write LMDB."""</span>
-        <span class="c1"># Title-token resolution (#886): every (token, systematic) resolution is</span>
-        <span class="c1"># recorded for the build-time check.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">title_resolutions</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-        <span class="c1"># Initialize resolution statistics</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_excel</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_gene_table</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_alias</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">unresolved_genes</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="c1"># Title tokens resolve through the release's own workbook only.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_load_release_names</span><span class="p">()</span>
 
         <span class="c1"># Load the GEO object</span>
         <span class="n">geo_pkl_path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">geo_accession</span><span class="si">}</span><span class="s2">.pkl"</span><span class="p">)</span>
@@ -461,7 +491,6 @@
 
             <span class="n">samples_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sample_info</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_check_title_resolutions</span><span class="p">()</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">single_mutant_samples</span><span class="p">)</span><span class="si">}</span><span class="s2"> unique single mutant genes"</span><span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">wt_samples</span><span class="p">)</span><span class="si">}</span><span class="s2"> wildtype samples"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dropped_double_deletion_titles</span> <span class="o">=</span> <span class="n">multi_gene_titles</span>
@@ -596,6 +625,7 @@
                         <span class="n">log2_var</span><span class="p">,</span>
                         <span class="n">log2_n</span><span class="p">,</span>
                         <span class="n">refpool_n_replicates</span><span class="o">=</span><span class="n">refpool_n</span><span class="p">,</span>
+                        <span class="n">gene_symbols</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">gene_symbols</span><span class="p">,</span>
                     <span class="p">)</span>
                 <span class="p">)</span>
 
@@ -661,7 +691,7 @@
         <span class="k">return</span> <span class="n">mean_dict</span><span class="p">,</span> <span class="n">se_dict</span><span class="p">,</span> <span class="n">variance_dict</span><span class="p">,</span> <span class="n">n_replicates_dict</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_extract_gene_names_from_title</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Every gene a sample title names: systematic names, then resolved common names.</span>
+<span class="w">        </span><span class="sd">"""Every gene a sample title names: systematic names, then workbook symbols.</span>
 
 <span class="sd">        The list is not truncated. GSE42536 holds single- and double-deletion arrays in</span>
 <span class="sd">        one series, and a double-deletion title joins two genes with ``+``</span>
@@ -699,22 +729,11 @@
 
         <span class="k">return</span> <span class="n">gene_names</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_check_title_resolutions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Build-time check (#886): no title token's ORF came from an unpinned ambiguity.</span>
-
-<span class="sd">        Runs over every (token, systematic) resolution of the series' titles, a superset</span>
-<span class="sd">        of the names the store holds, before any record is written.</span>
-<span class="sd">        """</span>
-        <span class="n">audit</span> <span class="o">=</span> <span class="n">check_ambiguous_aliases</span><span class="p">(</span>
-            <span class="n">cast</span><span class="p">(</span><span class="n">SCerevisiaeGenome</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">),</span>
-            <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">title_resolutions</span><span class="p">),</span>
-            <span class="n">AMBIGUOUS_ALIAS_PINS</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">"Sameith2015 ambiguous-name check: </span><span class="si">%d</span><span class="s2"> title resolutions, pinned names </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
-            <span class="n">audit</span><span class="o">.</span><span class="n">n_pairs</span><span class="p">,</span>
-            <span class="n">audit</span><span class="o">.</span><span class="n">ambiguous</span><span class="p">,</span>
-        <span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_release_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Read the workbook's symbol -&gt; ORF map and its ORF -&gt; symbol inverse."""</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">WORKBOOK_FILE_NAME</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">symbol_map</span> <span class="o">=</span> <span class="n">release_symbol_map</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gene_symbols</span> <span class="o">=</span> <span class="n">release_gene_symbols</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">symbol_map</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_is_valid_systematic_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Validate that a systematic name matches the expected format."""</span>
@@ -724,15 +743,10 @@
         <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](-[A-Z])?$"</span><span class="p">,</span> <span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">()))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_convert_to_systematic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gene_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Resolve a title token to a systematic name, recording the resolution (#886)."""</span>
+<span class="w">        </span><span class="sd">"""The ORF a title token names through the release's workbook, else None."""</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">gene_name</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
-        <span class="n">systematic</span> <span class="o">=</span> <span class="n">convert_title_token</span><span class="p">(</span>
-            <span class="n">cast</span><span class="p">(</span><span class="n">SCerevisiaeGenome</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">),</span> <span class="n">gene_name</span>
-        <span class="p">)</span>
-        <span class="k">if</span> <span class="n">systematic</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">title_resolutions</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="n">gene_name</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span> <span class="n">systematic</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">systematic</span>
+        <span class="k">return</span> <span class="n">title_token_to_systematic</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">symbol_map</span><span class="p">,</span> <span class="n">gene_name</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_extract_probe_to_gene_mapping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gse</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Extract probe ID to gene name mapping from GEO platform annotation."""</span>
@@ -953,6 +967,7 @@
         <span class="n">n_replicates</span><span class="p">:</span> <span class="n">SortedDict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">refpool_n_replicates</span><span class="p">:</span> <span class="n">SortedDict</span><span class="p">,</span>
+        <span class="n">gene_symbols</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Create experiment for single deletion mutant.</span>
 
@@ -974,6 +989,9 @@
 <span class="sd">            n_replicates: Number of replicates per gene (optional)</span>
 <span class="sd">            refpool_n_replicates: Arrays in each gene's refpool mean, same keys as</span>
 <span class="sd">                ``refpool_data``</span>
+<span class="sd">            gene_symbols: The workbook's ORF -&gt; gene symbol map</span>
+<span class="sd">                (``release_gene_symbols``); ``perturbed_gene_name`` is that symbol, or</span>
+<span class="sd">                the ORF when the workbook gives the ORF no symbol</span>
 <span class="sd">        """</span>
         <span class="c1"># BY4742 (MATalpha) for every single mutant. Paper: "All single mutants and</span>
         <span class="c1"># most double mutants carry the mating type matα and are in the genetic</span>
@@ -991,7 +1009,7 @@
             <span class="n">perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">SgaKanMxDeletionPerturbation</span><span class="p">(</span>
                     <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">gene_names</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">gene_names</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">gene_symbols</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">gene_names</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">gene_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
                     <span class="n">strain_id</span><span class="o">=</span><span class="sa">f</span><span class="s2">"KanMX_</span><span class="si">{</span><span class="n">gene_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">)</span>
@@ -1069,7 +1087,9 @@
 <span class="sd">    Microarray gene expression data for double-deletion yeast strains pairing</span>
 <span class="sd">    general stress transcription factors (GSTFs), profiled against a common</span>
 <span class="sd">    wildtype reference pool. Authoritative GSTF pairs and per-sample strain are</span>
-<span class="sd">    read from the paper's supplementary table.</span>
+<span class="sd">    read from the paper's supplementary table. Title tokens resolve to ORFs only</span>
+<span class="sd">    through the release's Additional file 1 (``release_symbol_map``), and</span>
+<span class="sd">    ``perturbed_gene_name`` is the workbook's symbol.</span>
 
 <span class="sd">    Data source: GEO accession GSE42536</span>
 <span class="sd">    Paper: Sameith et al. (2015) BMC Biology</span>
@@ -1087,18 +1107,13 @@
         <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">process_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
-        <span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># Optional dependency injection</span>
         <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Initialize the dataset, optionally injecting a genome for gene mapping."""</span>
+<span class="w">        </span><span class="sd">"""Initialize the dataset; gene names come from the release's own workbook."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">process_workers</span> <span class="o">=</span> <span class="n">process_workers</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
-
-        <span class="c1"># Genome for gene name mapping (optional, injected)</span>
-        <span class="c1"># If None, gene resolution methods will have limited functionality</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">genome</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
@@ -1226,14 +1241,8 @@
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Parse GEO expression data into double-mutant experiments and write LMDB."""</span>
-        <span class="c1"># Title-token resolution (#886): every (token, systematic) resolution is</span>
-        <span class="c1"># recorded for the build-time check.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">title_resolutions</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-        <span class="c1"># Initialize resolution statistics</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_excel</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_gene_table</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_alias</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">unresolved_genes</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="c1"># Title tokens resolve through the release's own workbook only.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_load_release_names</span><span class="p">()</span>
 
         <span class="c1"># Load the GEO object</span>
         <span class="n">geo_pkl_path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">geo_accession</span><span class="si">}</span><span class="s2">.pkl"</span><span class="p">)</span>
@@ -1296,7 +1305,6 @@
 
             <span class="n">samples_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sample_info</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_check_title_resolutions</span><span class="p">()</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">single_mutant_samples</span><span class="p">)</span><span class="si">}</span><span class="s2"> unique single mutant genes"</span><span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">double_mutant_samples</span><span class="p">)</span><span class="si">}</span><span class="s2"> double mutant samples"</span><span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">wt_samples</span><span class="p">)</span><span class="si">}</span><span class="s2"> wildtype samples"</span><span class="p">)</span>
@@ -1462,6 +1470,7 @@
                         <span class="n">log2_n</span><span class="p">,</span>
                         <span class="n">strain</span><span class="o">=</span><span class="n">strain</span><span class="p">,</span>  <span class="c1"># NEW: Pass per-sample strain</span>
                         <span class="n">refpool_n_replicates</span><span class="o">=</span><span class="n">refpool_n</span><span class="p">,</span>
+                        <span class="n">gene_symbols</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">gene_symbols</span><span class="p">,</span>
                     <span class="p">)</span>
                 <span class="p">)</span>
 
@@ -1549,6 +1558,7 @@
                     <span class="n">probe_to_gene_map</span><span class="p">,</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">gstf_pairs</span><span class="p">,</span>  <span class="c1"># NEW: Pass gstf_pairs for strain extraction</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">gene_symbols</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="n">futures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">future</span><span class="p">)</span>
 
@@ -1576,6 +1586,7 @@
         <span class="n">probe_to_gene_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
         <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">gstf_pairs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>  <span class="c1"># NEW: strain extraction</span>
+        <span class="n">gene_symbols</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Process a batch of replicate groups. Static method for multiprocessing."""</span>
         <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
@@ -1646,6 +1657,7 @@
                     <span class="n">log2_n</span><span class="p">,</span>
                     <span class="n">strain</span><span class="o">=</span><span class="n">strain</span><span class="p">,</span>  <span class="c1"># NEW: Pass per-sample strain</span>
                     <span class="n">refpool_n_replicates</span><span class="o">=</span><span class="n">refpool_n</span><span class="p">,</span>
+                    <span class="n">gene_symbols</span><span class="o">=</span><span class="n">gene_symbols</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">)</span>
 
@@ -1699,7 +1711,7 @@
         <span class="k">return</span> <span class="n">mean_dict</span><span class="p">,</span> <span class="n">se_dict</span><span class="p">,</span> <span class="n">variance_dict</span><span class="p">,</span> <span class="n">n_replicates_dict</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_extract_gene_names_from_title</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Extract systematic gene names from sample title."""</span>
+<span class="w">        </span><span class="sd">"""Up to two genes a sample title names: systematic names, then workbook symbols."""</span>
         <span class="n">gene_names</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="c1"># Look for systematic names (e.g., YAL001C or YBR089C-A)</span>
@@ -1742,22 +1754,11 @@
 
         <span class="k">return</span> <span class="n">gene_names</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>  <span class="c1"># Return at most 2 genes for double mutants</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_check_title_resolutions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Build-time check (#886): no title token's ORF came from an unpinned ambiguity.</span>
-
-<span class="sd">        Runs over every (token, systematic) resolution of the series' titles, a superset</span>
-<span class="sd">        of the names the store holds, before any record is written.</span>
-<span class="sd">        """</span>
-        <span class="n">audit</span> <span class="o">=</span> <span class="n">check_ambiguous_aliases</span><span class="p">(</span>
-            <span class="n">cast</span><span class="p">(</span><span class="n">SCerevisiaeGenome</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">),</span>
-            <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">title_resolutions</span><span class="p">),</span>
-            <span class="n">AMBIGUOUS_ALIAS_PINS</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">"Sameith2015 ambiguous-name check: </span><span class="si">%d</span><span class="s2"> title resolutions, pinned names </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
-            <span class="n">audit</span><span class="o">.</span><span class="n">n_pairs</span><span class="p">,</span>
-            <span class="n">audit</span><span class="o">.</span><span class="n">ambiguous</span><span class="p">,</span>
-        <span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_release_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Read the workbook's symbol -&gt; ORF map and its ORF -&gt; symbol inverse."""</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">WORKBOOK_FILE_NAME</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">symbol_map</span> <span class="o">=</span> <span class="n">release_symbol_map</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gene_symbols</span> <span class="o">=</span> <span class="n">release_gene_symbols</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">symbol_map</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_is_valid_systematic_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Validate that a systematic name matches the expected format."""</span>
@@ -1767,15 +1768,10 @@
         <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](-[A-Z])?$"</span><span class="p">,</span> <span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">()))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_convert_to_systematic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gene_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Resolve a title token to a systematic name, recording the resolution (#886)."""</span>
+<span class="w">        </span><span class="sd">"""The ORF a title token names through the release's workbook, else None."""</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">gene_name</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
-        <span class="n">systematic</span> <span class="o">=</span> <span class="n">convert_title_token</span><span class="p">(</span>
-            <span class="n">cast</span><span class="p">(</span><span class="n">SCerevisiaeGenome</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">),</span> <span class="n">gene_name</span>
-        <span class="p">)</span>
-        <span class="k">if</span> <span class="n">systematic</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">title_resolutions</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="n">gene_name</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span> <span class="n">systematic</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">systematic</span>
+        <span class="k">return</span> <span class="n">title_token_to_systematic</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">symbol_map</span><span class="p">,</span> <span class="n">gene_name</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_extract_probe_to_gene_mapping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gse</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Extract probe ID to gene name mapping from GEO platform annotation."""</span>
@@ -2068,6 +2064,7 @@
         <span class="n">strain</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"BY4742"</span><span class="p">,</span>  <span class="c1"># NEW: Accept per-sample strain parameter</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">refpool_n_replicates</span><span class="p">:</span> <span class="n">SortedDict</span><span class="p">,</span>
+        <span class="n">gene_symbols</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Create experiment for double deletion mutant with PER-SAMPLE strain.</span>
 
@@ -2090,6 +2087,9 @@
 <span class="sd">            strain: Strain background (BY4742 or BY4741), extracted from Excel comments</span>
 <span class="sd">            refpool_n_replicates: Arrays in each gene's refpool mean, same keys as</span>
 <span class="sd">                ``refpool_data``</span>
+<span class="sd">            gene_symbols: The workbook's ORF -&gt; gene symbol map</span>
+<span class="sd">                (``release_gene_symbols``); ``perturbed_gene_name`` is that symbol, or</span>
+<span class="sd">                the ORF when the workbook gives the ORF no symbol</span>
 <span class="sd">        """</span>
         <span class="c1"># Per-pair strain from the SI comments column: "MATa" -&gt; BY4741, otherwise</span>
         <span class="c1"># BY4742 (see _load_authoritative_gstf_pairs).</span>
@@ -2106,7 +2106,7 @@
             <span class="n">perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">SgaKanMxDeletionPerturbation</span><span class="p">(</span>
                     <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">gene_names</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">gene_names</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">gene_symbols</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">gene_names</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">gene_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
                     <span class="n">strain_id</span><span class="o">=</span><span class="sa">f</span><span class="s2">"KanMX_</span><span class="si">{</span><span class="n">gene_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">)</span>
@@ -2116,7 +2116,7 @@
             <span class="n">perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">SgaNatMxDeletionPerturbation</span><span class="p">(</span>
                     <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">gene_names</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
-                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">gene_names</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">gene_symbols</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">gene_names</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">gene_names</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
                     <span class="n">strain_id</span><span class="o">=</span><span class="sa">f</span><span class="s2">"NatMX_</span><span class="si">{</span><span class="n">gene_names</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">)</span>

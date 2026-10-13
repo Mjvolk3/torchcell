@@ -173,14 +173,24 @@
 <span class="sd">- HOM: ``BarcodedKanMxDeletionPerturbation`` with the same cassette and construction</span>
 <span class="sd">  fields; at the BY marker loci what was physically deleted is a typed gap on</span>
 <span class="sd">  ``constructed_orf``.</span>
-<span class="sd">- Both: ``construction=StrainConstruction(batch=&lt;chrX_Y&gt;)`` from the row id, ``collection``</span>
-<span class="sd">  = the deletion pool named in the control-set id (``het_04_01_2`` ...), barcodes ``None``</span>
-<span class="sd">  with a gap (the tag sequences are in the SGDP tables, not in the release).</span>
-<span class="sd">- A source ORF that the current genome renames is kept under the current gene with a</span>
-<span class="sd">  ``ConstructedOrf`` naming the source ORF (#505 G3). When two source ORFs of one release</span>
-<span class="sd">  resolve onto ONE current gene the relation is ``merged`` (two features annotated</span>
-<span class="sd">  separately at construction time are one gene now); a lone rename is gapped, since the</span>
-<span class="sd">  resolver cannot tell an alias from a reannotation. Two strains therefore never average.</span>
+<span class="sd">- Both: ``construction=StrainConstruction(batch=&lt;batch&gt;)`` from the row id verbatim,</span>
+<span class="sd">  ``collection`` = the deletion pool named in the control-set id (``het_04_01_2`` ...),</span>
+<span class="sd">  barcodes ``None`` with a gap (the tag sequences are in the SGDP tables, not in the</span>
+<span class="sd">  release).</span>
+
+<span class="sd">ORF. ``systematic_gene_name`` and ``perturbed_gene_name`` are the row id's ORF exactly as</span>
+<span class="sd">the release spells it (the release carries no gene symbol). The loader consults no</span>
+<span class="sd">genome: no name resolution, no gene universe, no ``ConstructedOrf``. An ORF that a later</span>
+<span class="sd">SGD release renamed, merged or retired (24 het and 22 hom row ORFs under R64-4-1, among</span>
+<span class="sd">them non-gene features) is stored under its released spelling like every other row;</span>
+<span class="sd">relating a released ORF to the current annotation is a modeling-time join, not a loader</span>
+<span class="sd">decision.</span>
+
+<span class="sd">``YDL227C:ctrl_&lt;n&gt;`` (11 rows per arm). The SOM defines no ``ctrl_`` batch; these rows are</span>
+<span class="sd">stored as the release labels them, a deletion of YDL227C with</span>
+<span class="sd">``StrainConstruction(batch="ctrl_&lt;n&gt;")`` verbatim, so they stay distinct strains from the</span>
+<span class="sd">``YDL227C:chr4_3`` row. Hypothesis (untested): they are HO-locus control strains with</span>
+<span class="sd">distinct tags (Pierce 2006/2007, not mirrored).</span>
 
 <span class="sd">ENVIRONMENT -- parsed from each column header</span>
 <span class="sd">``filename:cond1:conc1:unit1:cond2:conc2:unit2:generations:pool:scanner`` and CROSS-CHECKED</span>
@@ -200,27 +210,39 @@
 <span class="sd">  the conflict table); ``synthetic complete`` -&gt; ``SC``; ``YP glycerol`` -&gt;</span>
 <span class="sd">  ``YP_GLYCEROL_LIQUID``.</span>
 <span class="sd">- everything else -&gt; ``SmallMoleculePerturbation(resolved_compound(label), dose)`` with</span>
-<span class="sd">  ``solvent=None`` and a typed gap (no vehicle is stated per compound).</span>
+<span class="sd">  ``solvent=None`` and a typed gap (no vehicle is stated per compound). A label the</span>
+<span class="sd">  curated compound table does not identify keeps the released label as</span>
+<span class="sd">  ``Compound.name`` and carries the typed ``inchikey`` gap ``resolved_compound`` attaches;</span>
+<span class="sd">  it is stored, and listed with its record count in</span>
+<span class="sd">  ``preprocess/compound_identity_gaps.json``.</span>
+
+<span class="sd">HEADER VS KEY FILE COMPOUND. On five header/key pairs the key file names a different</span>
+<span class="sd">compound from the matrix header and the SOM gives no tie-breaker. The array is served</span>
+<span class="sd">under the HEADER's compound, the column the values are released under</span>
+<span class="sd">(``KeyHeaderRule.header_served_key_disagrees``); both strings stay in</span>
+<span class="sd">``preprocess/key_header_checks.json``.</span>
 
 <span class="sd">The environment is a ``CultureEnvironment``: the SIGN of the generation count becomes</span>
 <span class="sd">``pre_culture`` (negative: ``frozen_stock``; positive: a YPD log-phase pre-culture to</span>
 <span class="sd">OD600 2.0, ~10 generations, both quoted from the SOM), ``duration_generations`` keeps the</span>
 <span class="sd">magnitude, and ``culture_format`` is gapped (vessel and aeration are deferred to Pierce</span>
-<span class="sd">2006). TEMPERATURE IS NOT DEFAULTED: a typed gap naming Pierce 2006.</span>
+<span class="sd">2006). A ``0gen`` array is stored with ``duration_generations=0.0`` and</span>
+<span class="sd">``pre_culture=None`` with a typed ``not_reported_by_primary`` gap: a count of 0 carries no</span>
+<span class="sd">sign, so it states no pre-culture. TEMPERATURE IS NOT DEFAULTED: a typed gap naming</span>
+<span class="sd">Pierce 2006.</span>
 
 <span class="sd">DOSES are canonicalized within the molar family before they become part of the</span>
 <span class="sd">environment identity (``1.5 m`` and ``1.5e+06 um`` are one dose).</span>
 
-<span class="sd">DROPPED (counted per rule in ``preprocess/dropped_records.json`` and</span>
-<span class="sd">``preprocess/dropped_strains.json``):</span>
+<span class="sd">NOT STORED (counted per rule in ``preprocess/dropped_records.json`` and</span>
+<span class="sd">``preprocess/dropped_strains.json``, with a per-cell accounting that must sum):</span>
 
-<span class="sd">- ARRAYS: a compound with no structure identifier; the ``37c, 45c`` heat-shock cycle; a</span>
-<span class="sd">  dose on a media swap with no named agent; a compound-name conflict between the header</span>
-<span class="sd">  and the key file (no tie-breaker in the SOM); a ``0gen`` array (zero generations in the</span>
-<span class="sd">  condition by the SOM's own definition of the field, so no exposure happened).</span>
-<span class="sd">- STRAINS: the homozygous PDR5 strain (the SOM: it "did not have the correct gene</span>
-<span class="sd">  deleted"); the eleven ``YDL227C:ctrl_*`` rows, control strains of unknown construction</span>
-<span class="sd">  that are not a YDL227C deletion; retired or non-gene ORFs (``dropped_genes.json``).</span>
+<span class="sd">- STRAIN, author withdrawal: the homozygous PDR5 row (``YOR153W``), which the SOM says</span>
+<span class="sd">  "did not have the correct gene deleted".</span>
+<span class="sd">- ARRAYS, no typed carrier in the schema (needs schema): the ``37c, 45c`` heat-shock cycle</span>
+<span class="sd">  (``PhysicalFactor`` has no heat-shock member, and a steady 45 C would be false), and a</span>
+<span class="sd">  dose on a media swap whose agent is named nowhere (a ``SmallMoleculePerturbation``</span>
+<span class="sd">  needs a compound name).</span>
 
 <span class="sd">REPLICATE AGGREGATION. Within one (strain row, environment, control set) group each array</span>
 <span class="sd">contributes ONE value and the record's value is the mean over arrays with the sample SD</span>
@@ -268,10 +290,7 @@
     <span class="n">post_process</span><span class="p">,</span>
     <span class="n">verify_raw_files</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.compound_identity</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">resolve_compound_identity</span><span class="p">,</span>
-    <span class="n">resolved_compound</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.compound_identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolved_compound</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">HILLENMEYER_DROPOUT_MEDIA</span><span class="p">,</span>
     <span class="n">HILLENMEYER_PARTIAL_DROPOUT_LEVELS</span><span class="p">,</span>
@@ -327,7 +346,6 @@
     <span class="n">RetrievalRecord</span><span class="p">,</span>
     <span class="n">SourceCheck</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">SGD_S288C_R64</span><span class="p">,</span> <span class="n">resolve</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ProvenanceGap</span><span class="p">,</span>
@@ -567,7 +585,8 @@
     <span class="s2">"generations_definition"</span><span class="p">:</span> <span class="n">_som_sv</span><span class="p">(</span>
         <span class="s2">"generations in the condition"</span><span class="p">,</span>
         <span class="n">QUOTE_GENERATIONS_DEFINITION</span><span class="p">,</span>
-        <span class="n">note</span><span class="o">=</span><span class="s2">"a 0gen array therefore spent no generations in the condition"</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"a 0gen array is stored with duration_generations 0.0; its count carries "</span>
+        <span class="s2">"no sign, so its pre-culture is a typed gap"</span><span class="p">,</span>
     <span class="p">),</span>
     <span class="s2">"pdr5_wrong_strain"</span><span class="p">:</span> <span class="n">_som_sv</span><span class="p">(</span>
         <span class="s2">"YOR153W (hom)"</span><span class="p">,</span> <span class="n">QUOTE_PDR5</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="sa">f</span><span class="s2">"preceded by: </span><span class="si">{</span><span class="n">QUOTE_WRONG_GENE</span><span class="si">!r}</span><span class="s2">"</span>
@@ -648,13 +667,6 @@
 <span class="c1">#: The strain name every record's reference genome states (``SOURCED_VALUES``).</span>
 <span class="n">BACKGROUND_STRAIN</span> <span class="o">=</span> <span class="s2">"BY4743"</span>
 
-<span class="c1"># S288C R64 gene universe (systematic ORF + RNA-coding names). A resolved name must also</span>
-<span class="c1"># be in this universe, which is the same set the L4 containment rule is scored against.</span>
-<span class="n">_SGD_GENE_FASTAS</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">"orf_coding_all_R64-4-1_20230830.fasta"</span><span class="p">,</span>
-    <span class="s2">"rna_coding_R64-4-1_20230830.fasta"</span><span class="p">,</span>
-<span class="p">)</span>
-
 <span class="n">_MOLAR_FAMILY</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ConcentrationUnit</span><span class="p">,</span> <span class="n">Decimal</span><span class="p">],</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
     <span class="p">(</span><span class="s2">"m"</span><span class="p">,</span> <span class="n">ConcentrationUnit</span><span class="o">.</span><span class="n">molar</span><span class="p">,</span> <span class="n">Decimal</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span>
     <span class="p">(</span><span class="s2">"mm"</span><span class="p">,</span> <span class="n">ConcentrationUnit</span><span class="o">.</span><span class="n">millimolar</span><span class="p">,</span> <span class="n">Decimal</span><span class="p">(</span><span class="s2">"1e-3"</span><span class="p">)),</span>
@@ -682,48 +694,33 @@
 <span class="c1"># Missing-value tokens in the score matrices (upper-cased) -- skipped when aggregating.</span>
 <span class="n">_MISSING</span> <span class="o">=</span> <span class="p">{</span><span class="s2">""</span><span class="p">,</span> <span class="s2">"NA"</span><span class="p">,</span> <span class="s2">"NAN"</span><span class="p">,</span> <span class="s2">"NULL"</span><span class="p">}</span>
 
-<span class="n">DROP_UNIDENTIFIABLE</span> <span class="o">=</span> <span class="s2">"unidentifiable_agent"</span>
+<span class="c1">#: Array (column) rules: a released array with no typed carrier in the schema. Both</span>
+<span class="c1">#: need a schema change to be stored (no new member or leaf is added here).</span>
 <span class="n">DROP_HEAT_SHOCK_CYCLE</span> <span class="o">=</span> <span class="s2">"heat_shock_cycle_not_representable"</span>
 <span class="n">DROP_UNNAMED_MEDIA_AGENT</span> <span class="o">=</span> <span class="s2">"unnamed_agent_dosed_into_a_media_swap"</span>
-<span class="n">DROP_KEY_HEADER_COMPOUND_CONFLICT</span> <span class="o">=</span> <span class="s2">"key_header_compound_conflict_no_tie_breaker"</span>
-<span class="n">DROP_ZERO_GENERATIONS</span> <span class="o">=</span> <span class="s2">"zero_generations_no_exposure"</span>
 
-<span class="c1">#: Strain (row) drop rules, written to ``preprocess/dropped_strains.json``.</span>
+<span class="c1">#: Strain (row) rule, written to ``preprocess/dropped_strains.json``: the one author</span>
+<span class="c1">#: withdrawal in the release.</span>
 <span class="n">DROP_WRONG_GENE_DELETED</span> <span class="o">=</span> <span class="s2">"som_wrong_gene_deleted"</span>
-<span class="n">DROP_HO_CONTROL_STRAIN</span> <span class="o">=</span> <span class="s2">"ho_control_strain_unknown_construction"</span>
 
 <span class="n">DROP_RULES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="n">DROP_UNIDENTIFIABLE</span><span class="p">:</span> <span class="s2">"the condition names a compound the pinned compound-identity "</span>
-    <span class="s2">"table resolves to no InChIKey, ChEBI id or PubChem CID; the per-name audit trail is "</span>
-    <span class="s2">"that row's unresolved_reason"</span><span class="p">,</span>
-    <span class="n">DROP_HEAT_SHOCK_CYCLE</span><span class="p">:</span> <span class="s2">"'37c, 45c' is a heat-shock cycle; PhysicalFactor has no "</span>
-    <span class="s2">"heat_shock member (adding one changes a served class) and a steady 45 C would be "</span>
-    <span class="s2">"false"</span><span class="p">,</span>
-    <span class="n">DROP_UNNAMED_MEDIA_AGENT</span><span class="p">:</span> <span class="s2">"a dose is given but the agent is named nowhere in the SOM "</span>
-    <span class="s2">"or the release"</span><span class="p">,</span>
-    <span class="n">DROP_KEY_HEADER_COMPOUND_CONFLICT</span><span class="p">:</span> <span class="s2">"the matrix header and the key file name different "</span>
-    <span class="s2">"compounds for the same array and the SOM gives no tie-breaker (both strings are in "</span>
-    <span class="s2">"preprocess/key_header_checks.json)"</span><span class="p">,</span>
-    <span class="n">DROP_ZERO_GENERATIONS</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"the generations field is 0, and the SOM defines it as "</span>
-    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">QUOTE_GENERATIONS_DEFINITION</span><span class="si">!r}</span><span class="s2">: the cells spent no generations in the condition, "</span>
-    <span class="s2">"so a record would assert an exposure that did not happen"</span><span class="p">,</span>
+    <span class="n">DROP_HEAT_SHOCK_CYCLE</span><span class="p">:</span> <span class="s2">"needs schema: '37c, 45c' is a heat-shock cycle; "</span>
+    <span class="s2">"PhysicalFactor has no heat_shock member (adding one changes a served class) and a "</span>
+    <span class="s2">"steady 45 C would be false"</span><span class="p">,</span>
+    <span class="n">DROP_UNNAMED_MEDIA_AGENT</span><span class="p">:</span> <span class="s2">"needs schema: a dose is given but the agent is named "</span>
+    <span class="s2">"nowhere in the SOM or the release, and a SmallMoleculePerturbation needs a "</span>
+    <span class="s2">"compound name"</span><span class="p">,</span>
 <span class="p">}</span>
 <span class="n">STRAIN_DROP_RULES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="n">DROP_WRONG_GENE_DELETED</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"the SOM (paper.md:332): </span><span class="si">{</span><span class="n">QUOTE_WRONG_GENE</span><span class="si">!r}</span><span class="s2"> "</span>
-    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">QUOTE_PDR5</span><span class="si">!r}</span><span class="s2">; the homozygous PDR5 row would assert a pdr5/pdr5 genotype the "</span>
-    <span class="s2">"authors say the strain does not have"</span><span class="p">,</span>
-    <span class="n">DROP_HO_CONTROL_STRAIN</span><span class="p">:</span> <span class="s2">"row ids 'YDL227C:ctrl_&lt;n&gt;' carry a 'ctrl_' batch token that "</span>
-    <span class="s2">"no SOM sentence defines; they are control strains, not the YDL227C (HO) deletion "</span>
-    <span class="s2">"made in batch chr4_3, and their construction is unknown. Hypothesis (untested): "</span>
-    <span class="s2">"HO-locus reference strains with distinct tags (Pierce 2006/2007, not mirrored)"</span><span class="p">,</span>
+    <span class="n">DROP_WRONG_GENE_DELETED</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"author withdrawal, the SOM (paper.md:332): "</span>
+    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">QUOTE_WRONG_GENE</span><span class="si">!r}</span><span class="s2"> </span><span class="si">{</span><span class="n">QUOTE_PDR5</span><span class="si">!r}</span><span class="s2">; the homozygous PDR5 row would assert a "</span>
+    <span class="s2">"pdr5/pdr5 genotype the authors say the strain does not have"</span>
 <span class="p">}</span>
-<span class="c1">#: arm -&gt; source ORF -&gt; strain drop rule (whole-ORF exclusions named by the SOM).</span>
+<span class="c1">#: arm -&gt; released ORF -&gt; strain drop rule (whole-ORF exclusions named by the SOM).</span>
 <span class="n">EXCLUDED_SOURCE_ORFS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">"het"</span><span class="p">:</span> <span class="p">{},</span>
     <span class="s2">"hom"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"YOR153W"</span><span class="p">:</span> <span class="n">DROP_WRONG_GENE_DELETED</span><span class="p">},</span>
 <span class="p">}</span>
-<span class="n">_HO_CONTROL_ORF</span> <span class="o">=</span> <span class="s2">"YDL227C"</span>
-<span class="n">_HO_CONTROL_BATCH_PREFIX</span> <span class="o">=</span> <span class="s2">"ctrl_"</span>
 
 
 <span class="c1"># --------------------------------------------------------------------------- #</span>
@@ -745,13 +742,15 @@
 <span class="sd">    - ``key_wins_strain_medium``: the header says ``minimal media``, the key file</span>
 <span class="sd">      "synthetic complete for BY4743"; the key names a medium specific to the strain</span>
 <span class="sd">      (the only in-release mention of it), so the array is served on ``SC``.</span>
-<span class="sd">    - ``drop_compound_conflict``: the two name different compounds and the SOM gives no</span>
-<span class="sd">      tie-breaker; the array is dropped (``DROP_KEY_HEADER_COMPOUND_CONFLICT``).</span>
+<span class="sd">    - ``header_served_key_disagrees``: the two name different compounds and the SOM</span>
+<span class="sd">      gives no tie-breaker; the array is served under the HEADER's compound, the column</span>
+<span class="sd">      the values are released under, and the key file's string is kept beside it in</span>
+<span class="sd">      ``preprocess/key_header_checks.json``.</span>
 <span class="sd">    """</span>
 
     <span class="n">header_wins_table_s1</span> <span class="o">=</span> <span class="s2">"header_wins_table_s1"</span>
     <span class="n">key_wins_strain_medium</span> <span class="o">=</span> <span class="s2">"key_wins_strain_medium"</span>
-    <span class="n">drop_compound_conflict</span> <span class="o">=</span> <span class="s2">"drop_compound_conflict"</span>
+    <span class="n">header_served_key_disagrees</span> <span class="o">=</span> <span class="s2">"header_served_key_disagrees"</span>
 
 
 <span class="c1">#: (key-file condition, header cond1), both lower-cased: one compound or condition</span>
@@ -768,8 +767,8 @@
         <span class="p">(</span><span class="s2">"olic acid drop-out"</span><span class="p">,</span> <span class="s2">"folic acid drop-out"</span><span class="p">),</span>
         <span class="p">(</span><span class="s2">"no drug minimal media"</span><span class="p">,</span> <span class="s2">"minimal media"</span><span class="p">),</span>
         <span class="p">(</span><span class="s2">"synthetic complete for by4743"</span><span class="p">,</span> <span class="s2">"synthetic complete"</span><span class="p">),</span>
-        <span class="c1"># the key names the congener, the header the compound family; both are</span>
-        <span class="c1"># unidentifiable in the compound table, so the array drops either way</span>
+        <span class="c1"># the key names the congener, the header the compound family; the header's</span>
+        <span class="c1"># label is served (with the inchikey gap if the compound table lacks it)</span>
         <span class="p">(</span><span class="s2">"dihydromotuporamine c"</span><span class="p">,</span> <span class="s2">"motuporamine"</span><span class="p">),</span>
     <span class="p">}</span>
 <span class="p">)</span>
@@ -781,12 +780,14 @@
         <span class="n">KeyHeaderRule</span><span class="o">.</span><span class="n">key_wins_strain_medium</span>
     <span class="p">),</span>
     <span class="p">(</span><span class="s2">"bisphenol s"</span><span class="p">,</span> <span class="s2">"bathophenanthroline disulfonate"</span><span class="p">):</span> <span class="p">(</span>
-        <span class="n">KeyHeaderRule</span><span class="o">.</span><span class="n">drop_compound_conflict</span>
+        <span class="n">KeyHeaderRule</span><span class="o">.</span><span class="n">header_served_key_disagrees</span>
     <span class="p">),</span>
-    <span class="p">(</span><span class="s2">"sodium sulfate"</span><span class="p">,</span> <span class="s2">"sodium arsenite"</span><span class="p">):</span> <span class="n">KeyHeaderRule</span><span class="o">.</span><span class="n">drop_compound_conflict</span><span class="p">,</span>
-    <span class="p">(</span><span class="s2">"colchiceine"</span><span class="p">,</span> <span class="s2">"colchicine"</span><span class="p">):</span> <span class="n">KeyHeaderRule</span><span class="o">.</span><span class="n">drop_compound_conflict</span><span class="p">,</span>
-    <span class="p">(</span><span class="s2">"tyrphostin"</span><span class="p">,</span> <span class="s2">"chemical diversity labs 14a"</span><span class="p">):</span> <span class="n">KeyHeaderRule</span><span class="o">.</span><span class="n">drop_compound_conflict</span><span class="p">,</span>
-    <span class="p">(</span><span class="s2">"phosphatase inhibitor"</span><span class="p">,</span> <span class="s2">"ptp2"</span><span class="p">):</span> <span class="n">KeyHeaderRule</span><span class="o">.</span><span class="n">drop_compound_conflict</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">"sodium sulfate"</span><span class="p">,</span> <span class="s2">"sodium arsenite"</span><span class="p">):</span> <span class="n">KeyHeaderRule</span><span class="o">.</span><span class="n">header_served_key_disagrees</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">"colchiceine"</span><span class="p">,</span> <span class="s2">"colchicine"</span><span class="p">):</span> <span class="n">KeyHeaderRule</span><span class="o">.</span><span class="n">header_served_key_disagrees</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">"tyrphostin"</span><span class="p">,</span> <span class="s2">"chemical diversity labs 14a"</span><span class="p">):</span> <span class="p">(</span>
+        <span class="n">KeyHeaderRule</span><span class="o">.</span><span class="n">header_served_key_disagrees</span>
+    <span class="p">),</span>
+    <span class="p">(</span><span class="s2">"phosphatase inhibitor"</span><span class="p">,</span> <span class="s2">"ptp2"</span><span class="p">):</span> <span class="n">KeyHeaderRule</span><span class="o">.</span><span class="n">header_served_key_disagrees</span><span class="p">,</span>
 <span class="p">}</span>
 <span class="n">_VOLUME_SUFFIX_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">",\s*\d+ul total up/dn$"</span><span class="p">)</span>
 <span class="n">_CHEMDIV_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^chemdiv (\S+)$"</span><span class="p">)</span>
@@ -1085,7 +1086,8 @@
 <span class="sd">    cond1 selects the branch; cond2, when present, ALWAYS appends a second small molecule</span>
 <span class="sd">    (the double-drug arms). Splitting the two is what keeps ``pH7.5 + FK506`` from being</span>
 <span class="sd">    stored as a plain pH stress and ``&lt;compound&gt; irradiated`` from being stored as bare</span>
-<span class="sd">    radiation.</span>
+<span class="sd">    radiation. A compound the curated table does not identify is kept under its released</span>
+<span class="sd">    label with the typed ``inchikey`` gap ``resolved_compound`` attaches.</span>
 <span class="sd">    """</span>
     <span class="n">label</span> <span class="o">=</span> <span class="n">cond1</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="n">low</span> <span class="o">=</span> <span class="n">label</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
@@ -1135,19 +1137,6 @@
     <span class="k">if</span> <span class="n">cond2</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
         <span class="n">perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_small_molecule</span><span class="p">(</span><span class="n">cond2</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="n">conc2</span><span class="p">,</span> <span class="n">unit2</span><span class="p">))</span>
 
-    <span class="k">if</span> <span class="n">drop_reason</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">unidentified</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">perturbation</span><span class="o">.</span><span class="n">compound</span><span class="o">.</span><span class="n">name</span>
-            <span class="k">for</span> <span class="n">perturbation</span> <span class="ow">in</span> <span class="n">perturbations</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">perturbation</span><span class="p">,</span> <span class="n">SmallMoleculePerturbation</span><span class="p">)</span>
-            <span class="ow">and</span> <span class="ow">not</span> <span class="n">resolve_compound_identity</span><span class="p">(</span>
-                <span class="n">name</span><span class="o">=</span><span class="n">perturbation</span><span class="o">.</span><span class="n">compound</span><span class="o">.</span><span class="n">name</span>
-            <span class="p">)</span><span class="o">.</span><span class="n">identified</span>
-        <span class="p">]</span>
-        <span class="k">if</span> <span class="n">unidentified</span><span class="p">:</span>
-            <span class="n">drop_reason</span> <span class="o">=</span> <span class="n">DROP_UNIDENTIFIABLE</span>
-            <span class="n">drop_detail</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">unidentified</span><span class="p">)</span>
-
     <span class="k">return</span> <span class="n">ConditionParse</span><span class="p">(</span>
         <span class="n">media</span><span class="o">=</span><span class="n">media</span><span class="p">,</span>
         <span class="n">temperature_c</span><span class="o">=</span><span class="n">temperature_c</span><span class="p">,</span>
@@ -1159,11 +1148,7 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">ColumnSpec</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""One matrix data column: its index, its environment and its grouping key.</span>
-
-<span class="sd">    ``environment`` is ``None`` only for a dropped column whose environment could not</span>
-<span class="sd">    be built (a 0gen array has no exposure to describe).</span>
-<span class="sd">    """</span>
+<span class="w">    </span><span class="sd">"""One matrix data column: its index, its environment and its grouping key."""</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"arbitrary_types_allowed"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
 
@@ -1172,7 +1157,7 @@
     <span class="n">header</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">control_set</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">pool</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">environment</span><span class="p">:</span> <span class="n">CultureEnvironment</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">environment</span><span class="p">:</span> <span class="n">CultureEnvironment</span>
     <span class="n">group_key</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">key_check</span><span class="p">:</span> <span class="n">KeyHeaderCheck</span>
     <span class="n">drop_reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
@@ -1228,12 +1213,24 @@
     <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">token</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"gen"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">pre_culture</span><span class="p">(</span><span class="n">signed</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PreCulture</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_zero_generation_pre_culture_gap</span><span class="p">(</span><span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ProvenanceGap</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The typed absence of the pre-culture of a ``0gen`` array or control set."""</span>
+    <span class="k">return</span> <span class="n">ProvenanceGap</span><span class="p">(</span>
+        <span class="n">field</span><span class="o">=</span><span class="s2">"pre_culture"</span><span class="p">,</span>
+        <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
+        <span class="n">looked_in</span><span class="o">=</span><span class="n">_SOM_PROVENANCE</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="sa">f</span><span class="s2">"the generation count is </span><span class="si">{</span><span class="n">label</span><span class="si">!r}</span><span class="s2">; the SOM states the pre-culture only "</span>
+        <span class="s2">"through the count's sign (negative: from the freezer; no sign: a YPD log-phase "</span>
+        <span class="s2">"pre-culture), and a count of 0 carries no sign, so it states no pre-culture"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">pre_culture</span><span class="p">(</span><span class="n">signed</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PreCulture</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""What the SIGN of a generation count says about the culture before treatment.</span>
 
 <span class="sd">    Negative: straight from the freezer. Positive: a YPD log-phase pre-culture to OD600</span>
-<span class="sd">    2.0, about 10 generations. Zero carries no sign and is never built (0gen arrays are</span>
-<span class="sd">    dropped and their control sets are then unused).</span>
+<span class="sd">    2.0, about 10 generations. Zero carries no sign and so states nothing: ``None``, and</span>
+<span class="sd">    the caller attaches ``_zero_generation_pre_culture_gap``.</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="n">signed</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">PreCulture</span><span class="p">(</span>
@@ -1250,7 +1247,7 @@
             <span class="n">source_label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
             <span class="n">provenance</span><span class="o">=</span><span class="p">[</span><span class="n">_PRE_CULTURE_LOG_PHASE</span><span class="p">],</span>
         <span class="p">)</span>
-    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"a 0-generation count (</span><span class="si">{</span><span class="n">label</span><span class="si">!r}</span><span class="s2">) states no pre-culture"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">None</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">build_environment</span><span class="p">(</span><span class="n">parse</span><span class="p">:</span> <span class="n">ConditionParse</span><span class="p">,</span> <span class="n">generations</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CultureEnvironment</span><span class="p">:</span>
@@ -1263,6 +1260,8 @@
         <span class="n">gaps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_temperature_gap</span><span class="p">())</span>
     <span class="k">if</span> <span class="n">parse</span><span class="o">.</span><span class="n">unsupplemented_minimal</span><span class="p">:</span>
         <span class="n">gaps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_supplement_gap</span><span class="p">())</span>
+    <span class="k">if</span> <span class="n">signed</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">gaps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_zero_generation_pre_culture_gap</span><span class="p">(</span><span class="n">generations</span><span class="o">.</span><span class="n">strip</span><span class="p">()))</span>
     <span class="k">return</span> <span class="n">CultureEnvironment</span><span class="p">(</span>
         <span class="n">media</span><span class="o">=</span><span class="n">parse</span><span class="o">.</span><span class="n">media</span><span class="p">,</span>
         <span class="n">temperature</span><span class="o">=</span><span class="p">(</span>
@@ -1335,9 +1334,9 @@
 <span class="w">    </span><span class="sd">"""Parse every data column into its environment, control set and grouping key.</span>
 
 <span class="sd">    Each array's header is cross-checked against its key-file condition first</span>
-<span class="sd">    (``check_key_header``): a compound conflict drops the array, a strain-medium</span>
-<span class="sd">    conflict serves the key's medium, a pH conflict serves the header. A 0gen array is</span>
-<span class="sd">    dropped before its environment is built.</span>
+<span class="sd">    (``check_key_header``): a compound conflict and a pH conflict serve the header, a</span>
+<span class="sd">    strain-medium conflict serves the key's medium. A 0gen array is stored with</span>
+<span class="sd">    duration 0 and a typed pre-culture gap.</span>
 <span class="sd">    """</span>
     <span class="n">specs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ColumnSpec</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">raw</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">header</span><span class="p">):</span>
@@ -1366,29 +1365,12 @@
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">drop_detail</span><span class="si">}</span><span class="s2"> (header </span><span class="si">{</span><span class="n">key_check</span><span class="o">.</span><span class="n">header_condition</span><span class="si">!r}</span><span class="s2">, key file "</span>
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key_check</span><span class="o">.</span><span class="n">key_condition</span><span class="si">!r}</span><span class="s2">)"</span>
             <span class="p">)</span>
-        <span class="k">if</span> <span class="n">key_check</span><span class="o">.</span><span class="n">rule</span> <span class="ow">is</span> <span class="n">KeyHeaderRule</span><span class="o">.</span><span class="n">drop_compound_conflict</span><span class="p">:</span>
-            <span class="n">drop_reason</span> <span class="o">=</span> <span class="n">DROP_KEY_HEADER_COMPOUND_CONFLICT</span>
-            <span class="n">drop_detail</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"header </span><span class="si">{</span><span class="n">key_check</span><span class="o">.</span><span class="n">header_condition</span><span class="si">!r}</span><span class="s2"> vs key file "</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key_check</span><span class="o">.</span><span class="n">key_condition</span><span class="si">!r}</span><span class="s2">"</span>
-            <span class="p">)</span>
-        <span class="k">elif</span> <span class="n">drop_reason</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">signed_generations</span><span class="p">(</span><span class="n">generations</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">drop_reason</span><span class="p">,</span> <span class="n">drop_detail</span> <span class="o">=</span> <span class="n">DROP_ZERO_GENERATIONS</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">c1</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">generations</span><span class="si">}</span><span class="s2">"</span>
-        <span class="n">environment</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="kc">None</span>
-            <span class="k">if</span> <span class="n">signed_generations</span><span class="p">(</span><span class="n">generations</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
-            <span class="k">else</span> <span class="n">build_environment</span><span class="p">(</span><span class="n">parse</span><span class="p">,</span> <span class="n">generations</span><span class="p">)</span>
-        <span class="p">)</span>
+        <span class="n">environment</span> <span class="o">=</span> <span class="n">build_environment</span><span class="p">(</span><span class="n">parse</span><span class="p">,</span> <span class="n">generations</span><span class="p">)</span>
         <span class="c1"># Group replicate arrays by the CANONICAL environment plus the control set the</span>
         <span class="c1"># score was computed against: two arrays of one condition normalized against</span>
         <span class="c1"># different control sets are different measurements.</span>
         <span class="n">group_key</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
-            <span class="p">[</span>
-                <span class="n">environment</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span> <span class="k">if</span> <span class="n">environment</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">raw</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
-                <span class="n">control_set</span><span class="p">,</span>
-            <span class="p">],</span>
-            <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">default</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+            <span class="p">[</span><span class="n">environment</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span> <span class="n">control_set</span><span class="p">],</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="nb">str</span>
         <span class="p">)</span>
         <span class="n">specs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="n">ColumnSpec</span><span class="p">(</span>
@@ -1407,29 +1389,16 @@
     <span class="k">return</span> <span class="n">specs</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_load_sgd_genes</span><span class="p">(</span><span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""S288C R64 systematic-name universe from the ORF + RNA-coding FASTA headers."""</span>
-    <span class="n">genes</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_SGD_GENE_FASTAS</span><span class="p">:</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">resolve</span><span class="p">(</span><span class="n">SGD_S288C_R64</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">data_root</span><span class="o">=</span><span class="n">data_root</span><span class="p">))</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">handle</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"&gt;"</span><span class="p">):</span>
-                    <span class="n">genes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="k">return</span> <span class="n">genes</span>
-
-
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 <span class="c1"># Strain rows (one physical construction each)</span>
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">StrainRow</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""One matrix row: a constructed strain ``ORF:batch`` and its per-array values.</span>
 
-<span class="sd">    ``orf`` is the CURRENT systematic name the record is keyed on; ``source_orf`` is the</span>
-<span class="sd">    name the strain was built against, verbatim from the row id.</span>
+<span class="sd">    ``orf`` and ``batch`` are the two halves of the row id, verbatim.</span>
 <span class="sd">    """</span>
 
     <span class="n">row_id</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">source_orf</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">orf</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">batch</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span>
@@ -1444,25 +1413,14 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">MatrixRows</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Every row of one matrix after name resolution and the strain rules.</span>
-
-<span class="sd">    ``constructed`` maps a renamed source ORF to the ``ConstructedOrf`` its records</span>
-<span class="sd">    carry; ``dropped_genes`` is the per-source-ORF resolver ledger.</span>
-<span class="sd">    """</span>
-
-    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"arbitrary_types_allowed"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+<span class="w">    </span><span class="sd">"""Every row of one matrix: the stored strains and the author-withdrawn ones."""</span>
 
     <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">StrainRow</span><span class="p">]</span>
     <span class="n">dropped_strains</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DroppedStrain</span><span class="p">]</span>
-    <span class="n">dropped_genes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span>
-    <span class="n">constructed</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ConstructedOrf</span><span class="p">]</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_status</span><span class="p">(</span><span class="n">resolution</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""A resolution's status as its plain string value."""</span>
-    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">resolution</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">,</span> <span class="n">resolution</span><span class="o">.</span><span class="n">status</span><span class="p">))</span>
-
-
+<span class="c1"># Kept only for parsons2006.py's import until #1053 lands; Hillenmeyer stores every ORF</span>
+<span class="c1"># as released and calls neither function below.</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_sgd_history_gap</span><span class="p">(</span><span class="n">field</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">note</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ProvenanceGap</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""A gap on a ``ConstructedOrf`` field that only the SGD ORF history would close."""</span>
     <span class="k">return</span> <span class="n">pending_source_review</span><span class="p">(</span>
@@ -1478,11 +1436,9 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">constructed_orf</span><span class="p">(</span><span class="n">source_orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">current</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">n_sources</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ConstructedOrf</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""What a strain built against a since-renamed ORF physically deleted.</span>
 
-<span class="sd">    ``n_sources`` is how many distinct source ORFs of this release resolve onto</span>
-<span class="sd">    ``current``. Two or more means two features annotated separately when the strains</span>
-<span class="sd">    were made are one gene now, which is a merge by definition; one alone could be an</span>
-<span class="sd">    alias or a reannotation, which the resolver cannot tell apart, so the relation is</span>
-<span class="sd">    a gap. The deleted interval is always a gap (coordinates are not released).</span>
+<span class="sd">    Kept only for parsons2006.py's import until #1053 lands; Hillenmeyer stores every</span>
+<span class="sd">    ORF as released. ``n_sources`` &gt;= 2 is ``merged``; a lone rename gaps the relation.</span>
+<span class="sd">    The deleted interval is always a gap.</span>
 <span class="sd">    """</span>
     <span class="n">relation</span> <span class="o">=</span> <span class="n">OrfHistoryRelation</span><span class="o">.</span><span class="n">merged</span> <span class="k">if</span> <span class="n">n_sources</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="k">else</span> <span class="kc">None</span>
     <span class="n">gaps</span> <span class="o">=</span> <span class="p">[</span>
@@ -1509,22 +1465,13 @@
     <span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">read_matrix_rows</span><span class="p">(</span>
-    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
-    <span class="n">n_columns</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="n">sgd_genes</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-    <span class="n">resolve_name</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Any</span><span class="p">],</span>
-    <span class="n">arm</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MatrixRows</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Stream the matrix into one ``StrainRow`` per kept row id ``ORF:batch``.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_matrix_rows</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">n_columns</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">arm</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MatrixRows</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Stream the matrix into one ``StrainRow`` per row id ``ORF:batch``, verbatim.</span>
 
-<span class="sd">    The ORF goes through ``resolve_gene_name``: a renamed strain is kept under the</span>
-<span class="sd">    current systematic name with a ``ConstructedOrf`` naming the source, a retired id or</span>
-<span class="sd">    a non-gene locus is dropped with its reason. The arm's SOM-named exclusions and the</span>
-<span class="sd">    ``YDL227C:ctrl_*`` control rows are kept out under their strain rules.</span>
+<span class="sd">    No genome is consulted: the ORF is stored as the release spells it, whatever a</span>
+<span class="sd">    later annotation calls it. Only the arm's SOM-named withdrawal</span>
+<span class="sd">    (``EXCLUDED_SOURCE_ORFS``) is kept out, under its strain rule.</span>
 <span class="sd">    """</span>
-    <span class="n">resolved</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="n">dropped_genes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">StrainRow</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">dropped_strains</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DroppedStrain</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">excluded</span> <span class="o">=</span> <span class="n">EXCLUDED_SOURCE_ORFS</span><span class="p">[</span><span class="n">arm</span><span class="p">]</span>
@@ -1533,74 +1480,19 @@
         <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">handle</span><span class="p">:</span>
             <span class="n">cells</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">)</span>
             <span class="n">row_id</span> <span class="o">=</span> <span class="n">cells</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">'"'</span><span class="p">)</span>
-            <span class="n">source_orf</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">batch</span> <span class="o">=</span> <span class="n">row_id</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="s2">":"</span><span class="p">)</span>
+            <span class="n">orf</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">batch</span> <span class="o">=</span> <span class="n">row_id</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="s2">":"</span><span class="p">)</span>
             <span class="n">values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">n_columns</span>
             <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">n_columns</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">cells</span><span class="p">))):</span>
                 <span class="n">cell</span> <span class="o">=</span> <span class="n">cells</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
                 <span class="k">if</span> <span class="n">cell</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_MISSING</span><span class="p">:</span>
                     <span class="n">values</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">source_orf</span> <span class="ow">in</span> <span class="n">excluded</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">orf</span> <span class="ow">in</span> <span class="n">excluded</span><span class="p">:</span>
                 <span class="n">dropped_strains</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="n">DroppedStrain</span><span class="p">(</span>
-                        <span class="n">row_id</span><span class="o">=</span><span class="n">row_id</span><span class="p">,</span> <span class="n">rule</span><span class="o">=</span><span class="n">excluded</span><span class="p">[</span><span class="n">source_orf</span><span class="p">],</span> <span class="n">values</span><span class="o">=</span><span class="n">values</span>
-                    <span class="p">)</span>
+                    <span class="n">DroppedStrain</span><span class="p">(</span><span class="n">row_id</span><span class="o">=</span><span class="n">row_id</span><span class="p">,</span> <span class="n">rule</span><span class="o">=</span><span class="n">excluded</span><span class="p">[</span><span class="n">orf</span><span class="p">],</span> <span class="n">values</span><span class="o">=</span><span class="n">values</span><span class="p">)</span>
                 <span class="p">)</span>
                 <span class="k">continue</span>
-            <span class="k">if</span> <span class="n">source_orf</span> <span class="o">==</span> <span class="n">_HO_CONTROL_ORF</span> <span class="ow">and</span> <span class="n">batch</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span>
-                <span class="n">_HO_CONTROL_BATCH_PREFIX</span>
-            <span class="p">):</span>
-                <span class="n">dropped_strains</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="n">DroppedStrain</span><span class="p">(</span>
-                        <span class="n">row_id</span><span class="o">=</span><span class="n">row_id</span><span class="p">,</span> <span class="n">rule</span><span class="o">=</span><span class="n">DROP_HO_CONTROL_STRAIN</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">values</span>
-                    <span class="p">)</span>
-                <span class="p">)</span>
-                <span class="k">continue</span>
-            <span class="k">if</span> <span class="n">source_orf</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">resolved</span><span class="p">:</span>
-                <span class="n">resolution</span> <span class="o">=</span> <span class="n">resolve_name</span><span class="p">(</span><span class="n">source_orf</span><span class="p">)</span>
-                <span class="n">status</span> <span class="o">=</span> <span class="n">_status</span><span class="p">(</span><span class="n">resolution</span><span class="p">)</span>
-                <span class="n">name</span> <span class="o">=</span> <span class="n">resolution</span><span class="o">.</span><span class="n">systematic_name</span>
-                <span class="k">if</span> <span class="p">(</span><span class="n">status</span> <span class="o">==</span> <span class="s2">"current"</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">sgd_genes</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
-                    <span class="n">status</span> <span class="o">==</span> <span class="s2">"renamed"</span>
-                    <span class="ow">and</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                    <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">sgd_genes</span>
-                    <span class="ow">and</span> <span class="n">_status</span><span class="p">(</span><span class="n">resolve_name</span><span class="p">(</span><span class="n">name</span><span class="p">))</span> <span class="o">==</span> <span class="s2">"current"</span>
-                <span class="p">):</span>
-                    <span class="n">resolved</span><span class="p">[</span><span class="n">source_orf</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">resolved</span><span class="p">[</span><span class="n">source_orf</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-                    <span class="n">dropped_genes</span><span class="p">[</span><span class="n">source_orf</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-                        <span class="s2">"status"</span><span class="p">:</span> <span class="n">status</span><span class="p">,</span>
-                        <span class="s2">"resolved_to"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">),</span>
-                        <span class="s2">"in_sgd_fasta"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">name</span> <span class="ow">in</span> <span class="n">sgd_genes</span><span class="p">),</span>
-                    <span class="p">}</span>
-            <span class="n">orf</span> <span class="o">=</span> <span class="n">resolved</span><span class="p">[</span><span class="n">source_orf</span><span class="p">]</span>
-            <span class="k">if</span> <span class="n">orf</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">continue</span>
-            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">StrainRow</span><span class="p">(</span>
-                    <span class="n">row_id</span><span class="o">=</span><span class="n">row_id</span><span class="p">,</span>
-                    <span class="n">source_orf</span><span class="o">=</span><span class="n">source_orf</span><span class="p">,</span>
-                    <span class="n">orf</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
-                    <span class="n">batch</span><span class="o">=</span><span class="n">batch</span><span class="p">,</span>
-                    <span class="n">values</span><span class="o">=</span><span class="n">values</span><span class="p">,</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-    <span class="n">sources_by_gene</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
-        <span class="n">sources_by_gene</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">orf</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">source_orf</span><span class="p">)</span>
-    <span class="n">constructed</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="n">row</span><span class="o">.</span><span class="n">source_orf</span><span class="p">:</span> <span class="n">constructed_orf</span><span class="p">(</span>
-            <span class="n">row</span><span class="o">.</span><span class="n">source_orf</span><span class="p">,</span> <span class="n">row</span><span class="o">.</span><span class="n">orf</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sources_by_gene</span><span class="p">[</span><span class="n">row</span><span class="o">.</span><span class="n">orf</span><span class="p">])</span>
-        <span class="p">)</span>
-        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span>
-        <span class="k">if</span> <span class="n">row</span><span class="o">.</span><span class="n">source_orf</span> <span class="o">!=</span> <span class="n">row</span><span class="o">.</span><span class="n">orf</span>
-    <span class="p">}</span>
-    <span class="k">return</span> <span class="n">MatrixRows</span><span class="p">(</span>
-        <span class="n">rows</span><span class="o">=</span><span class="n">rows</span><span class="p">,</span>
-        <span class="n">dropped_strains</span><span class="o">=</span><span class="n">dropped_strains</span><span class="p">,</span>
-        <span class="n">dropped_genes</span><span class="o">=</span><span class="n">dropped_genes</span><span class="p">,</span>
-        <span class="n">constructed</span><span class="o">=</span><span class="n">constructed</span><span class="p">,</span>
-    <span class="p">)</span>
+            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">StrainRow</span><span class="p">(</span><span class="n">row_id</span><span class="o">=</span><span class="n">row_id</span><span class="p">,</span> <span class="n">orf</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span> <span class="n">batch</span><span class="o">=</span><span class="n">batch</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">values</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">MatrixRows</span><span class="p">(</span><span class="n">rows</span><span class="o">=</span><span class="n">rows</span><span class="p">,</span> <span class="n">dropped_strains</span><span class="o">=</span><span class="n">dropped_strains</span><span class="p">)</span>
 
 
 <span class="c1"># --------------------------------------------------------------------------- #</span>
@@ -1674,18 +1566,15 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">strain_perturbation</span><span class="p">(</span>
-    <span class="n">arm</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">row</span><span class="p">:</span> <span class="n">StrainRow</span><span class="p">,</span>
-    <span class="n">pool</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">constructed</span><span class="p">:</span> <span class="n">ConstructedOrf</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">markers</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">arm</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">row</span><span class="p">:</span> <span class="n">StrainRow</span><span class="p">,</span> <span class="n">pool</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">markers</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HeterozygousDeletionPerturbation</span> <span class="o">|</span> <span class="n">BarcodedKanMxDeletionPerturbation</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The screened edit of one constructed strain in one deletion pool.</span>
 
-<span class="sd">    HET: a heterozygous kanMX4 allele replacement; at a BY marker locus which allele the</span>
+<span class="sd">    The gene is the released ORF verbatim and ``constructed_orf`` is ``None``. HET: a</span>
+<span class="sd">    heterozygous kanMX4 allele replacement; at a BY marker locus which allele the</span>
 <span class="sd">    cassette replaced is a typed gap (it decides the functional dose at LYS2 / MET15).</span>
 <span class="sd">    HOM: a barcoded kanMX4 deletion; at a marker locus what was physically deleted is a</span>
-<span class="sd">    typed gap on ``constructed_orf``.</span>
+<span class="sd">    typed gap on ``constructed_orf`` (keyed on the released ORF).</span>
 <span class="sd">    """</span>
     <span class="n">construction</span> <span class="o">=</span> <span class="n">StrainConstruction</span><span class="p">(</span><span class="n">batch</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">batch</span><span class="p">)</span>
     <span class="n">gaps</span> <span class="o">=</span> <span class="n">_barcode_gaps</span><span class="p">()</span>
@@ -1706,7 +1595,7 @@
             <span class="n">cassette</span><span class="o">=</span><span class="n">KANMX4_CASSETTE</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
             <span class="n">collection</span><span class="o">=</span><span class="n">pool</span><span class="p">,</span>
             <span class="n">construction</span><span class="o">=</span><span class="n">construction</span><span class="p">,</span>
-            <span class="n">constructed_orf</span><span class="o">=</span><span class="n">constructed</span><span class="p">,</span>
+            <span class="n">constructed_orf</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
             <span class="n">replaced_allele</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
             <span class="n">barcode</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
             <span class="n">downtag_barcode</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -1722,14 +1611,13 @@
                 <span class="s2">"stated in a mirrored source"</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
-        <span class="n">constructed</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">return</span> <span class="n">BarcodedKanMxDeletionPerturbation</span><span class="p">(</span>
         <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">orf</span><span class="p">,</span>
         <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">orf</span><span class="p">,</span>
         <span class="n">cassette</span><span class="o">=</span><span class="n">KANMX4_CASSETTE</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">collection</span><span class="o">=</span><span class="n">pool</span><span class="p">,</span>
         <span class="n">construction</span><span class="o">=</span><span class="n">construction</span><span class="p">,</span>
-        <span class="n">constructed_orf</span><span class="o">=</span><span class="n">constructed</span><span class="p">,</span>
+        <span class="n">constructed_orf</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">barcode</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">downtag_barcode</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">provenance_gaps</span><span class="o">=</span><span class="n">gaps</span><span class="p">,</span>
@@ -1752,6 +1640,9 @@
 <span class="sd">    """</span>
     <span class="n">generations</span> <span class="o">=</span> <span class="n">control_set_generations</span><span class="p">(</span><span class="n">control_set</span><span class="p">)</span>
     <span class="n">signed</span> <span class="o">=</span> <span class="n">signed_generations</span><span class="p">(</span><span class="n">generations</span><span class="p">)</span>
+    <span class="n">gaps</span> <span class="o">=</span> <span class="p">[</span><span class="n">_culture_format_gap</span><span class="p">(),</span> <span class="n">_temperature_gap</span><span class="p">()]</span>
+    <span class="k">if</span> <span class="n">signed</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">gaps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_zero_generation_pre_culture_gap</span><span class="p">(</span><span class="n">generations</span><span class="p">))</span>
     <span class="n">environment</span> <span class="o">=</span> <span class="n">CultureEnvironment</span><span class="p">(</span>
         <span class="n">media</span><span class="o">=</span><span class="n">YPD_LIQUID</span><span class="p">,</span>
         <span class="n">temperature</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -1761,7 +1652,7 @@
         <span class="n">pre_culture</span><span class="o">=</span><span class="n">pre_culture</span><span class="p">(</span><span class="n">signed</span><span class="p">,</span> <span class="n">generations</span><span class="p">),</span>
         <span class="n">culture_format</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">auxotroph_supplements</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span><span class="n">_culture_format_gap</span><span class="p">(),</span> <span class="n">_temperature_gap</span><span class="p">()],</span>
+        <span class="n">provenance_gaps</span><span class="o">=</span><span class="n">gaps</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">StrainEnvironmentResponseExperimentReference</span><span class="p">(</span>
         <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
@@ -1872,7 +1763,6 @@
     <span class="n">markers</span> <span class="o">=</span> <span class="n">marker_loci</span><span class="p">(</span><span class="n">background</span><span class="p">)</span>
     <span class="n">group_list</span> <span class="o">=</span> <span class="p">[(</span><span class="n">members</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">members</span><span class="p">)</span> <span class="k">for</span> <span class="n">members</span> <span class="ow">in</span> <span class="n">groups</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
     <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">matrix</span><span class="o">.</span><span class="n">rows</span><span class="p">:</span>
-        <span class="n">constructed</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">constructed</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">source_orf</span><span class="p">)</span>
         <span class="n">genotypes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Genotype</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">head</span><span class="p">,</span> <span class="n">members</span> <span class="ow">in</span> <span class="n">group_list</span><span class="p">:</span>
             <span class="n">values</span> <span class="o">=</span> <span class="n">array_values</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">members</span><span class="p">)</span>
@@ -1881,13 +1771,9 @@
             <span class="k">if</span> <span class="n">head</span><span class="o">.</span><span class="n">pool</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">genotypes</span><span class="p">:</span>
                 <span class="n">genotypes</span><span class="p">[</span><span class="n">head</span><span class="o">.</span><span class="n">pool</span><span class="p">]</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
                     <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
-                        <span class="n">strain_perturbation</span><span class="p">(</span>
-                            <span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">head</span><span class="o">.</span><span class="n">pool</span><span class="p">,</span> <span class="n">constructed</span><span class="p">,</span> <span class="n">markers</span>
-                        <span class="p">)</span>
+                        <span class="n">strain_perturbation</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">head</span><span class="o">.</span><span class="n">pool</span><span class="p">,</span> <span class="n">markers</span><span class="p">)</span>
                     <span class="p">]</span>
                 <span class="p">)</span>
-            <span class="k">if</span> <span class="n">head</span><span class="o">.</span><span class="n">environment</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"kept column </span><span class="si">{</span><span class="n">head</span><span class="o">.</span><span class="n">header</span><span class="si">!r}</span><span class="s2"> has no environment"</span><span class="p">)</span>
             <span class="k">yield</span> <span class="p">(</span>
                 <span class="n">StrainEnvironmentResponseExperiment</span><span class="p">(</span>
                     <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
@@ -1911,6 +1797,89 @@
     <span class="p">)</span>
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">CellAccounting</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Every released value cell of one matrix, by where it went.</span>
+
+<span class="sd">    ``n_value_cells`` is counted independently of the split (every non-missing cell of</span>
+<span class="sd">    every row in the matrix's data columns); the split must sum to it.</span>
+<span class="sd">    """</span>
+
+    <span class="n">n_value_cells</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_in_stored_records</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_in_dropped_arrays</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
+    <span class="n">n_in_withdrawn_strains</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">cell_accounting</span><span class="p">(</span>
+    <span class="n">matrix</span><span class="p">:</span> <span class="n">MatrixRows</span><span class="p">,</span>
+    <span class="n">kept</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">ColumnSpec</span><span class="p">]],</span>
+    <span class="n">dropped</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">ColumnSpec</span><span class="p">]],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CellAccounting</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Split every value cell into stored, dropped-array (per rule) and withdrawn."""</span>
+    <span class="n">cells</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="n">row</span><span class="o">.</span><span class="n">values</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">matrix</span><span class="o">.</span><span class="n">rows</span><span class="p">]</span>
+    <span class="n">cells</span> <span class="o">+=</span> <span class="p">[</span><span class="n">strain</span><span class="o">.</span><span class="n">values</span> <span class="k">for</span> <span class="n">strain</span> <span class="ow">in</span> <span class="n">matrix</span><span class="o">.</span><span class="n">dropped_strains</span><span class="p">]</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">cells</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span> <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">stored</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">array_values</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">members</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">matrix</span><span class="o">.</span><span class="n">rows</span>
+        <span class="k">for</span> <span class="n">members</span> <span class="ow">in</span> <span class="n">kept</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+    <span class="p">)</span>
+    <span class="n">by_rule</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">members</span> <span class="ow">in</span> <span class="n">dropped</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="n">rule</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">members</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">drop_reason</span><span class="p">)</span>
+        <span class="n">by_rule</span><span class="p">[</span><span class="n">rule</span><span class="p">]</span> <span class="o">=</span> <span class="n">by_rule</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">rule</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">array_values</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">members</span><span class="p">))</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">matrix</span><span class="o">.</span><span class="n">rows</span>
+        <span class="p">)</span>
+    <span class="n">withdrawn</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">strain</span> <span class="ow">in</span> <span class="n">matrix</span><span class="o">.</span><span class="n">dropped_strains</span><span class="p">:</span>
+        <span class="n">withdrawn</span><span class="p">[</span><span class="n">strain</span><span class="o">.</span><span class="n">rule</span><span class="p">]</span> <span class="o">=</span> <span class="n">withdrawn</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">strain</span><span class="o">.</span><span class="n">rule</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="mi">1</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">strain</span><span class="o">.</span><span class="n">values</span> <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">)</span>
+    <span class="n">accounting</span> <span class="o">=</span> <span class="n">CellAccounting</span><span class="p">(</span>
+        <span class="n">n_value_cells</span><span class="o">=</span><span class="n">total</span><span class="p">,</span>
+        <span class="n">n_in_stored_records</span><span class="o">=</span><span class="n">stored</span><span class="p">,</span>
+        <span class="n">n_in_dropped_arrays</span><span class="o">=</span><span class="n">by_rule</span><span class="p">,</span>
+        <span class="n">n_in_withdrawn_strains</span><span class="o">=</span><span class="n">withdrawn</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">split</span> <span class="o">=</span> <span class="n">stored</span> <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span><span class="n">by_rule</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span><span class="n">withdrawn</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+    <span class="k">if</span> <span class="n">split</span> <span class="o">!=</span> <span class="n">total</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"cell accounting does not sum: </span><span class="si">{</span><span class="n">split</span><span class="si">}</span><span class="s2"> split vs </span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2"> value cells"</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">accounting</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">compound_identity_gaps</span><span class="p">(</span>
+    <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">StrainRow</span><span class="p">],</span> <span class="n">kept</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">ColumnSpec</span><span class="p">]]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Stored compound labels carrying the typed ``inchikey`` gap, with their counts.</span>
+
+<span class="sd">    Keyed by ``Compound.name`` (the released label, since no curated row matched);</span>
+<span class="sd">    ``n_records`` counts the records whose environment doses that compound.</span>
+<span class="sd">    """</span>
+    <span class="n">gaps</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">members</span> <span class="ow">in</span> <span class="n">kept</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="n">perturbation</span><span class="o">.</span><span class="n">compound</span><span class="o">.</span><span class="n">name</span>
+                <span class="k">for</span> <span class="n">perturbation</span> <span class="ow">in</span> <span class="n">members</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">environment</span><span class="o">.</span><span class="n">perturbations</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">perturbation</span><span class="p">,</span> <span class="n">SmallMoleculePerturbation</span><span class="p">)</span>
+                <span class="ow">and</span> <span class="s2">"inchikey"</span> <span class="ow">in</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">compound</span><span class="o">.</span><span class="n">gapped_fields</span><span class="p">()</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">names</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">n_records</span> <span class="o">=</span> <span class="n">count_records</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">members</span><span class="p">})</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+            <span class="n">bucket</span> <span class="o">=</span> <span class="n">gaps</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span>
+                <span class="n">name</span><span class="p">,</span> <span class="p">{</span><span class="s2">"n_environments"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"n_arrays"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"n_records"</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+            <span class="p">)</span>
+            <span class="n">bucket</span><span class="p">[</span><span class="s2">"n_environments"</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">bucket</span><span class="p">[</span><span class="s2">"n_arrays"</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">members</span><span class="p">)</span>
+            <span class="n">bucket</span><span class="p">[</span><span class="s2">"n_records"</span><span class="p">]</span> <span class="o">+=</span> <span class="n">n_records</span>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">gaps</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
+
+
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 <span class="c1"># Dataset</span>
 <span class="c1"># --------------------------------------------------------------------------- #</span>
@@ -1925,15 +1894,11 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-        <span class="n">genome</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Initialize the dataset. ``genome`` supplies ``resolve_gene_name``; when it is</span>
-<span class="sd">        omitted ``process`` opens the S288C genome read-only from ``DATA_ROOT``.</span>
-<span class="sd">        """</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">genome</span>
+<span class="w">        </span><span class="sd">"""Initialize the dataset (no genome: the loader stores what was released)."""</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="nd">@property</span>
@@ -1977,30 +1942,12 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="c1"># ---- matrix reading -------------------------------------------------------</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_resolver</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""``resolve_gene_name`` from the supplied genome, or a read-only S288C genome."""</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
-
-            <span class="n">data_root</span> <span class="o">=</span> <span class="n">_data_root</span><span class="p">()</span>
-            <span class="c1"># overwrite=False is mandatory: a rebuild here would race any other process</span>
-            <span class="c1"># holding the same gffutils database.</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">SCerevisiaeGenome</span><span class="p">(</span>
-                <span class="n">genome_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/sgd/genome"</span><span class="p">),</span>
-                <span class="n">go_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/go"</span><span class="p">),</span>
-                <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="n">resolver</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="o">.</span><span class="n">resolve_gene_name</span>
-        <span class="k">return</span> <span class="n">resolver</span>
-
     <span class="c1"># ---- build ----------------------------------------------------------------</span>
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Build one record per (strain row, environment, control set)."""</span>
         <span class="n">spec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span>
         <span class="n">data_root</span> <span class="o">=</span> <span class="n">_data_root</span><span class="p">()</span>
-        <span class="n">sgd_genes</span> <span class="o">=</span> <span class="n">_load_sgd_genes</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span>
         <span class="n">manifest</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span>
         <span class="n">rel</span> <span class="o">=</span> <span class="n">raw_relpaths</span><span class="p">()</span>
         <span class="n">verify_raw_files</span><span class="p">(</span>
@@ -2031,9 +1978,7 @@
             <span class="nb">len</span><span class="p">(</span><span class="n">dropped_groups</span><span class="p">),</span>
             <span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">dropped_groups</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
         <span class="p">)</span>
-        <span class="n">matrix</span> <span class="o">=</span> <span class="n">read_matrix_rows</span><span class="p">(</span>
-            <span class="n">matrix_path</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">header</span><span class="p">),</span> <span class="n">sgd_genes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span><span class="p">(),</span> <span class="n">spec</span><span class="o">.</span><span class="n">key</span>
-        <span class="p">)</span>
+        <span class="n">matrix</span> <span class="o">=</span> <span class="n">read_matrix_rows</span><span class="p">(</span><span class="n">matrix_path</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">header</span><span class="p">),</span> <span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
         <span class="n">background</span> <span class="o">=</span> <span class="n">hillenmeyer_background</span><span class="p">()</span>
         <span class="n">references</span> <span class="o">=</span> <span class="p">{</span>
             <span class="n">members</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">control_set</span><span class="p">:</span> <span class="n">build_reference</span><span class="p">(</span>
@@ -2075,7 +2020,8 @@
         <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
         <span class="n">interned_env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_write_drop_report</span><span class="p">(</span><span class="n">dropped_groups</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_write_drop_report</span><span class="p">(</span><span class="n">dropped_groups</span><span class="p">,</span> <span class="n">groups</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_write_compound_gap_report</span><span class="p">(</span><span class="n">groups</span><span class="p">,</span> <span class="n">matrix</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_write_strain_reports</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">groups</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_write_key_header_report</span><span class="p">(</span><span class="n">columns</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_write_batch_report</span><span class="p">(</span><span class="n">matrix</span><span class="p">)</span>
@@ -2088,14 +2034,16 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_write_drop_report</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">dropped_groups</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">ColumnSpec</span><span class="p">]],</span>
+        <span class="n">groups</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">ColumnSpec</span><span class="p">]],</span>
         <span class="n">matrix</span><span class="p">:</span> <span class="n">MatrixRows</span><span class="p">,</span>
         <span class="n">kept_records</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Write ``dropped_records.json`` / ``dropped_genes.json``: the rules and counts.</span>
+<span class="w">        </span><span class="sd">"""Write ``dropped_records.json``: the array rules, counts and cell accounting.</span>
 
-<span class="sd">        A dropped environment's records-not-written count is over the KEPT strain rows,</span>
-<span class="sd">        keyed by the GROUP: one compound is dropped at several doses and control sets,</span>
-<span class="sd">        and a per-rule key would count its records once per environment sharing the rule.</span>
+<span class="sd">        A dropped environment's records-not-written count is over the stored strain</span>
+<span class="sd">        rows, keyed by the GROUP, so one condition dropped at several control sets is</span>
+<span class="sd">        counted once per group. ``cell_accounting`` splits every released value cell into</span>
+<span class="sd">        stored, dropped-array and withdrawn-strain cells and raises if they do not sum.</span>
 <span class="sd">        """</span>
         <span class="n">environments</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">by_rule</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -2124,20 +2072,33 @@
             <span class="s2">"kept_records"</span><span class="p">:</span> <span class="n">kept_records</span><span class="p">,</span>
             <span class="s2">"rules"</span><span class="p">:</span> <span class="n">DROP_RULES</span><span class="p">,</span>
             <span class="s2">"by_rule"</span><span class="p">:</span> <span class="n">by_rule</span><span class="p">,</span>
+            <span class="s2">"cell_accounting"</span><span class="p">:</span> <span class="n">cell_accounting</span><span class="p">(</span>
+                <span class="n">matrix</span><span class="p">,</span> <span class="n">groups</span><span class="p">,</span> <span class="n">dropped_groups</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
             <span class="s2">"environments"</span><span class="p">:</span> <span class="nb">sorted</span><span class="p">(</span>
                 <span class="n">environments</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="s2">"rule"</span><span class="p">]),</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="s2">"detail"</span><span class="p">]))</span>
             <span class="p">),</span>
         <span class="p">}</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"dropped_records.json"</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
             <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"dropped_genes.json"</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_write_compound_gap_report</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">groups</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">ColumnSpec</span><span class="p">]],</span> <span class="n">matrix</span><span class="p">:</span> <span class="n">MatrixRows</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Write ``compound_identity_gaps.json``: stored compounds with no InChIKey."""</span>
+        <span class="n">gaps</span> <span class="o">=</span> <span class="n">compound_identity_gaps</span><span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">rows</span><span class="p">,</span> <span class="n">groups</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span>
+            <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"compound_identity_gaps.json"</span><span class="p">),</span> <span class="s2">"w"</span>
+        <span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
             <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span>
                 <span class="p">{</span>
-                    <span class="s2">"rule"</span><span class="p">:</span> <span class="s2">"a row id is kept only when resolve_gene_name reports it "</span>
-                    <span class="s2">"CURRENT (or RENAMED onto a current name) and the resolved name is "</span>
-                    <span class="s2">"in the SGD R64 ORF/RNA FASTA universe"</span><span class="p">,</span>
-                    <span class="s2">"n_dropped"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">dropped_genes</span><span class="p">),</span>
-                    <span class="s2">"dropped"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">dropped_genes</span><span class="o">.</span><span class="n">items</span><span class="p">())),</span>
+                    <span class="s2">"dataset"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                    <span class="s2">"rule"</span><span class="p">:</span> <span class="s2">"a compound label the curated compound table does not "</span>
+                    <span class="s2">"identify is stored under the released label with the typed "</span>
+                    <span class="s2">"inchikey gap resolved_compound attaches; it is never dropped"</span><span class="p">,</span>
+                    <span class="s2">"n_compounds"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">gaps</span><span class="p">),</span>
+                    <span class="s2">"n_records"</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="n">g</span><span class="p">[</span><span class="s2">"n_records"</span><span class="p">]</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">gaps</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
+                    <span class="s2">"compounds"</span><span class="p">:</span> <span class="n">gaps</span><span class="p">,</span>
                 <span class="p">},</span>
                 <span class="n">handle</span><span class="p">,</span>
                 <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
@@ -2146,7 +2107,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_write_strain_reports</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">matrix</span><span class="p">:</span> <span class="n">MatrixRows</span><span class="p">,</span> <span class="n">groups</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">ColumnSpec</span><span class="p">]]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Write ``dropped_strains.json`` and ``constructed_orfs.json``."""</span>
+<span class="w">        </span><span class="sd">"""Write ``dropped_strains.json``: the author-withdrawn rows and their counts."""</span>
         <span class="n">by_rule</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">strain</span> <span class="ow">in</span> <span class="n">matrix</span><span class="o">.</span><span class="n">dropped_strains</span><span class="p">:</span>
             <span class="n">bucket</span> <span class="o">=</span> <span class="n">by_rule</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span>
@@ -2157,37 +2118,6 @@
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"dropped_strains.json"</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
             <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span>
                 <span class="p">{</span><span class="s2">"dataset"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s2">"rules"</span><span class="p">:</span> <span class="n">STRAIN_DROP_RULES</span><span class="p">,</span> <span class="s2">"by_rule"</span><span class="p">:</span> <span class="n">by_rule</span><span class="p">},</span>
-                <span class="n">handle</span><span class="p">,</span>
-                <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="n">by_gene</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">matrix</span><span class="o">.</span><span class="n">rows</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">row</span><span class="o">.</span><span class="n">source_orf</span> <span class="ow">in</span> <span class="n">matrix</span><span class="o">.</span><span class="n">constructed</span><span class="p">:</span>
-                <span class="n">by_gene</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">orf</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="p">{</span>
-                        <span class="s2">"row_id"</span><span class="p">:</span> <span class="n">row</span><span class="o">.</span><span class="n">row_id</span><span class="p">,</span>
-                        <span class="o">**</span><span class="n">matrix</span><span class="o">.</span><span class="n">constructed</span><span class="p">[</span><span class="n">row</span><span class="o">.</span><span class="n">source_orf</span><span class="p">]</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span>
-                            <span class="n">mode</span><span class="o">=</span><span class="s2">"json"</span><span class="p">,</span> <span class="n">include</span><span class="o">=</span><span class="p">{</span><span class="s2">"source_systematic_name"</span><span class="p">,</span> <span class="s2">"relation"</span><span class="p">}</span>
-                        <span class="p">),</span>
-                    <span class="p">}</span>
-                <span class="p">)</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span>
-            <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"constructed_orfs.json"</span><span class="p">),</span> <span class="s2">"w"</span>
-        <span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
-            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span>
-                <span class="p">{</span>
-                    <span class="s2">"rule"</span><span class="p">:</span> <span class="s2">"a renamed source ORF keeps its own records under the "</span>
-                    <span class="s2">"current gene with a ConstructedOrf; 'merged' when two or more "</span>
-                    <span class="s2">"source ORFs of this release resolve onto that gene, else the "</span>
-                    <span class="s2">"relation is a gap"</span><span class="p">,</span>
-                    <span class="s2">"n_renamed_source_orfs"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">constructed</span><span class="p">),</span>
-                    <span class="s2">"n_merged_source_orfs"</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span>
-                        <span class="mi">1</span>
-                        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">matrix</span><span class="o">.</span><span class="n">constructed</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
-                        <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">relation</span> <span class="ow">is</span> <span class="n">OrfHistoryRelation</span><span class="o">.</span><span class="n">merged</span>
-                    <span class="p">),</span>
-                    <span class="s2">"by_current_gene"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">by_gene</span><span class="o">.</span><span class="n">items</span><span class="p">())),</span>
-                <span class="p">},</span>
                 <span class="n">handle</span><span class="p">,</span>
                 <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
             <span class="p">)</span>
@@ -2211,9 +2141,10 @@
                         <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">QUOTE_TABLE_S1_PH</span><span class="si">!r}</span><span class="s2">; the header is served"</span><span class="p">,</span>
                         <span class="n">KeyHeaderRule</span><span class="o">.</span><span class="n">key_wins_strain_medium</span><span class="o">.</span><span class="n">value</span><span class="p">:</span> <span class="s2">"the key names the "</span>
                         <span class="sa">f</span><span class="s2">"strain's medium </span><span class="si">{</span><span class="n">QUOTE_KEY_BY4743</span><span class="si">!r}</span><span class="s2">; served on SC"</span><span class="p">,</span>
-                        <span class="n">KeyHeaderRule</span><span class="o">.</span><span class="n">drop_compound_conflict</span><span class="o">.</span><span class="n">value</span><span class="p">:</span> <span class="n">DROP_RULES</span><span class="p">[</span>
-                            <span class="n">DROP_KEY_HEADER_COMPOUND_CONFLICT</span>
-                        <span class="p">],</span>
+                        <span class="n">KeyHeaderRule</span><span class="o">.</span><span class="n">header_served_key_disagrees</span><span class="o">.</span><span class="n">value</span><span class="p">:</span> <span class="s2">"the "</span>
+                        <span class="s2">"header and the key file name different compounds and the SOM "</span>
+                        <span class="s2">"gives no tie-breaker; the array is served under the header's "</span>
+                        <span class="s2">"compound, the column the values are released under"</span><span class="p">,</span>
                     <span class="p">},</span>
                     <span class="s2">"disagreements"</span><span class="p">:</span> <span class="p">[</span>
                         <span class="n">c</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"json"</span><span class="p">)</span>
@@ -2312,13 +2243,12 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"data/torchcell/env_chemgen_hillenmeyer2008_het"</span><span class="p">,</span>
         <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-        <span class="n">genome</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Initialize the HET (HIP) dataset."""</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">genome</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
 
@@ -2336,13 +2266,12 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"data/torchcell/env_chemgen_hillenmeyer2008_hom"</span><span class="p">,</span>
         <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-        <span class="n">genome</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Initialize the HOM (HOP) dataset."""</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">genome</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
 

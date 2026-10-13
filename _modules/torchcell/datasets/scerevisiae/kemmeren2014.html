@@ -152,7 +152,6 @@
     <span class="n">Temperature</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeneNameStatus</span><span class="p">,</span> <span class="n">SCerevisiaeGenome</span>
 
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -223,6 +222,71 @@
 <span class="c1"># process() no longer reads them; they stay in raw_file_names as the paper's named</span>
 <span class="c1"># comparison pools.</span>
 
+<span class="c1"># ============================================================================</span>
+<span class="c1"># Gene names in GEO titles: the release's own crosswalk, plus one pinned residue</span>
+<span class="c1"># ============================================================================</span>
+<span class="c1"># A deletion array's GEO title names the deleted gene by a common name ("bck1-del-1-a",</span>
+<span class="c1"># "[HS1991] cup9-del-a"). The release's own crosswalk is Table S1</span>
+<span class="c1"># (kemmeren2014_table_s1.xlsx: 1,484 rows, columns ``gene``, ``orf name``, ``mating</span>
+<span class="c1"># type``), and a title token is resolved ONLY through it: a token that is a Table S1</span>
+<span class="c1"># ``gene`` takes that row's ``orf name``, and a token that IS a Table S1 ``orf name``</span>
+<span class="c1"># is taken verbatim. No genome, alias table or reconciler is consulted (the genome is a</span>
+<span class="c1"># separate layer and gates nothing).</span>
+<span class="c1">#</span>
+<span class="c1"># The residue below is the one remaining crosswalk. Measured 2026-10-12 over the 2,633</span>
+<span class="c1"># deletion arrays of GSE42527 + GSE42526, 73 arrays carry a title token the release</span>
+<span class="c1"># pairs with no ORF: 69 arrays of 36 names that Table S1 spells differently (GEO</span>
+<span class="c1"># ``abc1-del``, Table S1 ``COQ8`` / YGL119W; GEO's sample characteristics carry only the</span>
+<span class="c1"># same ``-del`` token, and only 12 of the 69 can be joined to Table S1 through a slide</span>
+<span class="c1"># number in the supplementary-file name), and 4 arrays of TLC1 and CMS1, whose Table S1</span>
+<span class="c1"># ``orf name`` cell is the common name itself. Each maps to the ORF the KG 3.0 build</span>
+<span class="c1"># served it under, read from that build's preprocess/data.csv (``title``,</span>
+<span class="c1"># ``systematic_gene_name``), never from the genome. Every ORF is a Table S1 ``orf name``</span>
+<span class="c1"># (so the mating-type row joins) except YNCB0010W and YLR003C, which join through the</span>
+<span class="c1"># TLC1 and CMS1 rows. This table is pending group 1's released-gene-name leaf (a</span>
+<span class="c1"># GenePerturbation child carrying the released symbol with ``systematic_gene_name`` as</span>
+<span class="c1"># a typed gap); once it lands, these 38 names are stored verbatim and the table goes.</span>
+<span class="n">RELEASE_TITLE_NAMES_WITHOUT_AN_ORF</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"ABC1"</span><span class="p">:</span> <span class="s2">"YGL119W"</span><span class="p">,</span>
+    <span class="s2">"ATG24"</span><span class="p">:</span> <span class="s2">"YJL036W"</span><span class="p">,</span>
+    <span class="s2">"ATG31"</span><span class="p">:</span> <span class="s2">"YDR022C"</span><span class="p">,</span>
+    <span class="s2">"ATG6"</span><span class="p">:</span> <span class="s2">"YPL120W"</span><span class="p">,</span>
+    <span class="s2">"CAC1"</span><span class="p">:</span> <span class="s2">"YPR018W"</span><span class="p">,</span>
+    <span class="s2">"CAF17"</span><span class="p">:</span> <span class="s2">"YJR122W"</span><span class="p">,</span>
+    <span class="s2">"CAP"</span><span class="p">:</span> <span class="s2">"YNL138W"</span><span class="p">,</span>
+    <span class="s2">"CDK8"</span><span class="p">:</span> <span class="s2">"YPL042C"</span><span class="p">,</span>
+    <span class="s2">"CHF1"</span><span class="p">:</span> <span class="s2">"YHR115C"</span><span class="p">,</span>
+    <span class="s2">"CHF2"</span><span class="p">:</span> <span class="s2">"YNL116W"</span><span class="p">,</span>
+    <span class="s2">"CMS1"</span><span class="p">:</span> <span class="s2">"YLR003C"</span><span class="p">,</span>
+    <span class="s2">"CSN12"</span><span class="p">:</span> <span class="s2">"YJR084W"</span><span class="p">,</span>
+    <span class="s2">"CTH2"</span><span class="p">:</span> <span class="s2">"YLR136C"</span><span class="p">,</span>
+    <span class="s2">"CYCC"</span><span class="p">:</span> <span class="s2">"YNL025C"</span><span class="p">,</span>
+    <span class="s2">"FMP38"</span><span class="p">:</span> <span class="s2">"YOR205C"</span><span class="p">,</span>
+    <span class="s2">"HPA1"</span><span class="p">:</span> <span class="s2">"YPL086C"</span><span class="p">,</span>
+    <span class="s2">"HPR5"</span><span class="p">:</span> <span class="s2">"YJL092W"</span><span class="p">,</span>
+    <span class="s2">"HSN1"</span><span class="p">:</span> <span class="s2">"YHR127W"</span><span class="p">,</span>
+    <span class="s2">"KEM1"</span><span class="p">:</span> <span class="s2">"YGL173C"</span><span class="p">,</span>
+    <span class="s2">"KRH1"</span><span class="p">:</span> <span class="s2">"YAL056W"</span><span class="p">,</span>
+    <span class="s2">"KRH2"</span><span class="p">:</span> <span class="s2">"YOR371C"</span><span class="p">,</span>
+    <span class="s2">"LUG1"</span><span class="p">:</span> <span class="s2">"YCR087C-A"</span><span class="p">,</span>
+    <span class="s2">"MED12"</span><span class="p">:</span> <span class="s2">"YCR081W"</span><span class="p">,</span>
+    <span class="s2">"MED13"</span><span class="p">:</span> <span class="s2">"YDR443C"</span><span class="p">,</span>
+    <span class="s2">"MED15"</span><span class="p">:</span> <span class="s2">"YOL051W"</span><span class="p">,</span>
+    <span class="s2">"MED16"</span><span class="p">:</span> <span class="s2">"YNL236W"</span><span class="p">,</span>
+    <span class="s2">"MED18"</span><span class="p">:</span> <span class="s2">"YGR104C"</span><span class="p">,</span>
+    <span class="s2">"MED20"</span><span class="p">:</span> <span class="s2">"YHR041C"</span><span class="p">,</span>
+    <span class="s2">"MED3"</span><span class="p">:</span> <span class="s2">"YGL025C"</span><span class="p">,</span>
+    <span class="s2">"MED31"</span><span class="p">:</span> <span class="s2">"YGL127C"</span><span class="p">,</span>
+    <span class="s2">"MED5"</span><span class="p">:</span> <span class="s2">"YGL151W"</span><span class="p">,</span>
+    <span class="s2">"MED9"</span><span class="p">:</span> <span class="s2">"YNR010W"</span><span class="p">,</span>
+    <span class="s2">"NOT4"</span><span class="p">:</span> <span class="s2">"YER068W"</span><span class="p">,</span>
+    <span class="s2">"RIS1"</span><span class="p">:</span> <span class="s2">"YOR191W"</span><span class="p">,</span>
+    <span class="s2">"SET7"</span><span class="p">:</span> <span class="s2">"YDR257C"</span><span class="p">,</span>
+    <span class="s2">"SHA3"</span><span class="p">:</span> <span class="s2">"YPL026C"</span><span class="p">,</span>
+    <span class="s2">"SSN6"</span><span class="p">:</span> <span class="s2">"YBR112C"</span><span class="p">,</span>
+    <span class="s2">"TLC1"</span><span class="p">:</span> <span class="s2">"YNCB0010W"</span><span class="p">,</span>
+<span class="p">}</span>
+
 
 <div class="viewcode-block" id="MicroarrayKemmeren2014Dataset">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.kemmeren2014.MicroarrayKemmeren2014Dataset.html#torchcell.datasets.scerevisiae.kemmeren2014.MicroarrayKemmeren2014Dataset">[docs]</a>
@@ -235,6 +299,10 @@
 <span class="sd">    responsive and non-responsive mutant GEO series. The four wildtype series</span>
 <span class="sd">    (BY4741 MATa, BY4742 MATalpha) are downloaded as the paper's named WT pools but</span>
 <span class="sd">    no stored value is computed from them (#484).</span>
+
+<span class="sd">    Each deletion is keyed by the ORF the release pairs with its GEO title token</span>
+<span class="sd">    (Table S1, or the pinned ``RELEASE_TITLE_NAMES_WITHOUT_AN_ORF`` residue), and</span>
+<span class="sd">    ``perturbed_gene_name`` is the release's own name for it; no genome is consulted.</span>
 
 <span class="sd">    Data source: GEO accessions GSE42527, GSE42526, and wildtype references.</span>
 <span class="sd">    Paper: Kemmeren et al. (2014) Cell.</span>
@@ -256,44 +324,19 @@
         <span class="s2">"GSE42215"</span>  <span class="c1"># MATalpha, Erlenmeyer flask, 200 replicates</span>
     <span class="p">)</span>
 
-    <span class="c1"># Special gene name mappings that are not in standard databases</span>
-    <span class="c1"># HSN1: The name was reserved for YHR127W but subsequently withdrawn (SGD note 2003-02-07)</span>
-    <span class="c1"># See: https://www.yeastgenome.org/locus/YHR127W</span>
-    <span class="c1"># TLC1: Telomerase RNA component (systematic name YNCB0010W) - non-coding RNA gene</span>
-    <span class="c1"># Note: TLC1 is not in the standard gene set because it's a telomerase_RNA_gene feature type,</span>
-    <span class="c1"># not a protein-coding gene. The genome.gene_set only includes features of type "gene" (6607 protein-coding).</span>
-    <span class="c1"># Other non-coding RNA genes (tRNA_gene, rRNA_gene, snoRNA_gene, snRNA_gene, ncRNA_gene)</span>
-    <span class="c1"># are stored as separate feature types and require special handling.</span>
-    <span class="c1"># CMS1: Maps to YLR003C (current SGD gene as of 2025.09.11; YNL307C is already in Excel as SKN7)</span>
-    <span class="c1"># LUG1: Historical nomenclature issue - LUG1 was reserved for YCR087C-A but never published (SGD note 2012-05-22)</span>
-    <span class="c1"># LUG1 later became the standard name for YLR352W. The Kemmeren 2014 dataset uses the historical meaning.</span>
-    <span class="c1"># See: https://www.yeastgenome.org/locus/YCR087C-A#history</span>
-    <span class="c1"># This mapping ensures we capture expression data for YCR087C-A from the "lug1-del" GEO samples.</span>
-    <span class="n">SPECIAL_GENE_MAPPINGS</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">"HSN1"</span><span class="p">:</span> <span class="s2">"YHR127W"</span><span class="p">,</span>  <span class="c1"># Historical alias retained by SGD</span>
-        <span class="s2">"TLC1"</span><span class="p">:</span> <span class="s2">"YNCB0010W"</span><span class="p">,</span>  <span class="c1"># Telomerase RNA component</span>
-        <span class="s2">"CMS1"</span><span class="p">:</span> <span class="s2">"YLR003C"</span><span class="p">,</span>  <span class="c1"># Current SGD gene as of 2025.09.11 (YNL307C is already mapped as SKN7)</span>
-        <span class="s2">"LUG1"</span><span class="p">:</span> <span class="s2">"YCR087C-A"</span><span class="p">,</span>  <span class="c1"># Historical reserved name, now maps to YLR352W but dataset uses old meaning</span>
-    <span class="p">}</span>
-
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"data/torchcell/microarray_kemmeren2014"</span><span class="p">,</span>
         <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">process_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>  <span class="c1"># For parallel processing of experiments</span>
         <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>  <span class="c1"># Batch size for parallel processing</span>
-        <span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># Optional dependency injection</span>
         <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Initialize the dataset, optionally injecting a genome for gene mapping."""</span>
+<span class="w">        </span><span class="sd">"""Initialize the dataset; gene names come from the release's Table S1."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">process_workers</span> <span class="o">=</span> <span class="n">process_workers</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
-
-        <span class="c1"># Genome for gene name mapping (optional, injected)</span>
-        <span class="c1"># If None, gene resolution methods will have limited functionality</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">genome</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
@@ -410,12 +453,12 @@
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Parse GEO expression data into experiments and write the LMDB store."""</span>
-        <span class="c1"># Initialize resolution statistics</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_excel</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_gene_table</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_alias</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_shared_reconciler</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">unresolved_genes</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="c1"># Resolution census: every deletion array resolves through exactly one route</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_table_s1_gene</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_table_s1_orf</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_release_title_names</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="c1"># ORF -&gt; the release's own name for the deleted gene (perturbed_gene_name)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">released_gene_names</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
         <span class="c1"># Load mating type information from supplementary table</span>
         <span class="n">systematic_to_strain</span><span class="p">,</span> <span class="n">common_to_systematic</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_mating_type_map</span><span class="p">()</span>
@@ -502,8 +545,6 @@
                     <span class="n">already_assigned</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="n">gene_resolved_from_title</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># Mark that we attempted resolution</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">systematic_gene_name</span><span class="p">:</span>
-                    <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Skipping </span><span class="si">{</span><span class="n">common_name</span><span class="si">}</span><span class="s2"> from title - cannot resolve"</span><span class="p">)</span>
 
             <span class="c1"># Check the channel characteristics for confirmation. The deletion is in</span>
             <span class="c1"># ch2 on the "-a" arrays and in ch1 on the "-b" arrays (the dye swap), so</span>
@@ -531,10 +572,6 @@
                             <span class="n">systematic_to_strain</span><span class="p">,</span>
                             <span class="n">already_assigned</span><span class="p">,</span>
                         <span class="p">)</span>
-                        <span class="k">if</span> <span class="ow">not</span> <span class="n">systematic_gene_name</span><span class="p">:</span>
-                            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-                                <span class="sa">f</span><span class="s2">"Skipping </span><span class="si">{</span><span class="n">common_name</span><span class="si">}</span><span class="s2"> from characteristics - cannot resolve"</span>
-                            <span class="p">)</span>
 
             <span class="c1"># Final check: Only mark as wildtype if no deletion was found</span>
             <span class="c1"># Most samples should be deletion mutants (with or without dye-swap)</span>
@@ -597,21 +634,12 @@
 
         <span class="c1"># Log gene resolution summary</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"=== Gene Resolution Summary ==="</span><span class="p">)</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Resolved by Excel mapping: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_excel</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Resolved by gene_attribute_table: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_gene_table</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Resolved by alias_to_systematic: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_alias</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Resolved by Table S1 gene: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_table_s1_gene</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Resolved by Table S1 orf name: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_table_s1_orf</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"Resolved by shared R64 reconciler: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_shared_reconciler</span><span class="si">}</span><span class="s2">"</span>
+            <span class="s2">"Resolved by RELEASE_TITLE_NAMES_WITHOUT_AN_ORF: "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_release_title_names</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Could not resolve: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">unresolved_genes</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="n">total_attempts</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_excel</span>
-            <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_gene_table</span>
-            <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_alias</span>
-            <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_shared_reconciler</span>
-            <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">unresolved_genes</span>
-        <span class="p">)</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Total resolution attempts: </span><span class="si">{</span><span class="n">total_attempts</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
         <span class="c1"># Check for one-to-one mapping with Excel ORF names</span>
         <span class="n">excel_orf_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">systematic_to_strain</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
@@ -737,6 +765,7 @@
                 <span class="c1"># Create sample info for this gene deletion</span>
                 <span class="n">sample_info</span> <span class="o">=</span> <span class="p">{</span>
                     <span class="s2">"systematic_gene_name"</span><span class="p">:</span> <span class="n">gene_name</span><span class="p">,</span>
+                    <span class="s2">"perturbed_gene_name"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">released_gene_names</span><span class="p">[</span><span class="n">gene_name</span><span class="p">],</span>
                     <span class="s2">"num_replicates"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">gsm_list</span><span class="p">),</span>
                     <span class="s2">"strain"</span><span class="p">:</span> <span class="n">strain</span><span class="p">,</span>
                 <span class="p">}</span>
@@ -801,6 +830,7 @@
                     <span class="n">probe_to_gene_map</span><span class="p">,</span>
                     <span class="n">systematic_to_strain</span><span class="p">,</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">released_gene_names</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="n">futures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">future</span><span class="p">)</span>
 
@@ -842,6 +872,7 @@
         <span class="n">probe_to_gene_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
         <span class="n">systematic_to_strain</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
         <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">released_gene_names</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Process a batch of gene deletions. Static method for multiprocessing."""</span>
         <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
@@ -866,6 +897,7 @@
             <span class="c1"># Create sample info for this gene deletion</span>
             <span class="n">sample_info</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="s2">"systematic_gene_name"</span><span class="p">:</span> <span class="n">gene_name</span><span class="p">,</span>
+                <span class="s2">"perturbed_gene_name"</span><span class="p">:</span> <span class="n">released_gene_names</span><span class="p">[</span><span class="n">gene_name</span><span class="p">],</span>
                 <span class="s2">"num_replicates"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">gsm_list</span><span class="p">),</span>
                 <span class="s2">"strain"</span><span class="p">:</span> <span class="n">strain</span><span class="p">,</span>
             <span class="p">}</span>
@@ -1076,8 +1108,9 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Tuple of:</span>
-<span class="sd">            - Dictionary mapping systematic gene names to strains (BY4741 or BY4742)</span>
-<span class="sd">            - Dictionary mapping common gene names to systematic names</span>
+<span class="sd">            - Dictionary mapping each ``orf name`` cell as released (upper-cased; TLC1</span>
+<span class="sd">              and CMS1 are common names and stay so) to its strain (BY4741 or BY4742)</span>
+<span class="sd">            - Dictionary mapping each Table S1 ``gene`` to that row's ``orf name``</span>
 <span class="sd">        """</span>
         <span class="n">systematic_to_strain</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">common_to_systematic</span> <span class="o">=</span> <span class="p">{}</span>
@@ -1150,23 +1183,9 @@
                     <span class="n">common_name</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">gene_col</span><span class="p">]</span> <span class="k">if</span> <span class="n">gene_col</span> <span class="k">else</span> <span class="kc">None</span>
 
                     <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">systematic_name</span><span class="p">)</span> <span class="ow">and</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">mating_type</span><span class="p">):</span>
-                        <span class="c1"># Convert to uppercase</span>
+                        <span class="c1"># The orf name cell as released (upper-cased; two cells,</span>
+                        <span class="c1"># TLC1 and CMS1, are common names and stay as released)</span>
                         <span class="n">systematic_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">systematic_name</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
-
-                        <span class="c1"># Handle special cases where orf name is actually a common name</span>
-                        <span class="c1"># TLC1 and CMS1 appear in orf name column but are common names, not systematic</span>
-                        <span class="k">if</span> <span class="n">systematic_name</span> <span class="o">==</span> <span class="s2">"TLC1"</span><span class="p">:</span>
-                            <span class="n">systematic_name</span> <span class="o">=</span> <span class="s2">"YNCB0010W"</span>  <span class="c1"># Telomerase RNA component</span>
-                            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                                <span class="s2">"Converted TLC1 -&gt; YNCB0010W in Excel orf name column"</span>
-                            <span class="p">)</span>
-                        <span class="k">elif</span> <span class="n">systematic_name</span> <span class="o">==</span> <span class="s2">"CMS1"</span><span class="p">:</span>
-                            <span class="n">systematic_name</span> <span class="o">=</span> <span class="p">(</span>
-                                <span class="s2">"YLR003C"</span>  <span class="c1"># Current SGD gene as of 2025.09.11</span>
-                            <span class="p">)</span>
-                            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                                <span class="s2">"Converted CMS1 -&gt; YLR003C in Excel orf name column"</span>
-                            <span class="p">)</span>
                         <span class="n">excel_genes_original</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">systematic_name</span><span class="p">)</span>
                         <span class="n">excel_genes_converted</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">systematic_name</span><span class="p">)</span>
 
@@ -1202,12 +1221,6 @@
                         <span class="k">if</span> <span class="n">common_name</span> <span class="ow">and</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">common_name</span><span class="p">):</span>
                             <span class="n">common_name_upper</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">common_name</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
                             <span class="n">common_to_systematic</span><span class="p">[</span><span class="n">common_name_upper</span><span class="p">]</span> <span class="o">=</span> <span class="n">systematic_name</span>
-
-                        <span class="c1"># For TLC1 and CMS1, also add mapping from common name since they appear in GEO</span>
-                        <span class="k">if</span> <span class="n">systematic_name</span> <span class="o">==</span> <span class="s2">"YNCB0010W"</span><span class="p">:</span>  <span class="c1"># TLC1</span>
-                            <span class="n">common_to_systematic</span><span class="p">[</span><span class="s2">"TLC1"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"YNCB0010W"</span>
-                        <span class="k">elif</span> <span class="n">systematic_name</span> <span class="o">==</span> <span class="s2">"YLR003C"</span><span class="p">:</span>  <span class="c1"># CMS1</span>
-                            <span class="n">common_to_systematic</span><span class="p">[</span><span class="s2">"CMS1"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"YLR003C"</span>
 
                 <span class="c1"># Summary output only</span>
                 <span class="c1"># Count strains</span>
@@ -1250,178 +1263,56 @@
         <span class="n">common_to_systematic</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
         <span class="n">systematic_to_strain</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
         <span class="n">already_assigned</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Comprehensive gene name resolution with multiple fallback strategies.</span>
-
-<span class="sd">        Priority:</span>
-<span class="sd">        1. Special hardcoded mappings</span>
-<span class="sd">        2. Excel mapping (experiment-specific)</span>
-<span class="sd">        3. gene_attribute_table (one-to-one)</span>
-<span class="sd">        4. alias_to_systematic (one-to-many with filtering)</span>
-<span class="sd">        5. Case-insensitive alias_to_systematic</span>
-<span class="sd">        6. Direct check in systematic_to_strain</span>
-<span class="sd">        7. Return None if cannot resolve</span>
-<span class="sd">        """</span>
-        <span class="k">if</span> <span class="n">already_assigned</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">already_assigned</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-
-        <span class="n">genome</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">SCerevisiaeGenome</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">)</span>
-        <span class="n">gene_upper</span> <span class="o">=</span> <span class="n">gene_name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
-
-        <span class="c1"># Pass 1: Check special mappings first</span>
-        <span class="c1"># Note: For non-coding RNA genes like TLC1, return the systematic name even if not in Excel</span>
-        <span class="k">if</span> <span class="n">gene_upper</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">SPECIAL_GENE_MAPPINGS</span><span class="p">:</span>
-            <span class="n">systematic</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">SPECIAL_GENE_MAPPINGS</span><span class="p">[</span><span class="n">gene_upper</span><span class="p">]</span>
-            <span class="c1"># First check if the systematic name is in the Excel (most cases)</span>
-            <span class="k">if</span> <span class="n">systematic</span> <span class="ow">in</span> <span class="n">systematic_to_strain</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_alias</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="k">return</span> <span class="n">systematic</span>
-            <span class="c1"># For non-coding RNA genes, we still return the systematic name</span>
-            <span class="c1"># even if not in Excel, to avoid returning the invalid common name</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"Special mapping </span><span class="si">{</span><span class="n">gene_upper</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">systematic</span><span class="si">}</span><span class="s2"> (non-coding RNA gene not in Excel)"</span>
-                <span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_alias</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="k">return</span> <span class="n">systematic</span>
-
-        <span class="c1"># Pass 2: Direct Excel mapping</span>
-        <span class="k">if</span> <span class="n">gene_upper</span> <span class="ow">in</span> <span class="n">common_to_systematic</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_excel</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="k">return</span> <span class="n">common_to_systematic</span><span class="p">[</span><span class="n">gene_upper</span><span class="p">]</span>
-
-        <span class="c1"># Pass 3: Gene attribute table (one-to-one)</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">genome</span><span class="p">,</span> <span class="s2">"gene_attribute_table"</span><span class="p">):</span>
-            <span class="n">df</span> <span class="o">=</span> <span class="n">genome</span><span class="o">.</span><span class="n">gene_attribute_table</span>
-
-            <span class="c1"># Check if it's already systematic in the table</span>
-            <span class="k">if</span> <span class="n">gene_upper</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="s2">"ID"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">gene_upper</span> <span class="ow">in</span> <span class="n">systematic_to_strain</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_gene_table</span> <span class="o">+=</span> <span class="mi">1</span>
-                    <span class="k">return</span> <span class="n">gene_upper</span>
-
-            <span class="c1"># Check gene column</span>
-            <span class="n">matches</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span> <span class="o">==</span> <span class="n">gene_upper</span><span class="p">]</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">matches</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-                <span class="n">systematic</span> <span class="o">=</span> <span class="n">matches</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"ID"</span><span class="p">]</span>
-                <span class="k">if</span> <span class="n">systematic</span> <span class="ow">in</span> <span class="n">systematic_to_strain</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_gene_table</span> <span class="o">+=</span> <span class="mi">1</span>
-                    <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">systematic</span><span class="p">)</span>
-
-            <span class="c1"># Check Alias column</span>
-            <span class="n">matches</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"Alias"</span><span class="p">]</span> <span class="o">==</span> <span class="n">gene_upper</span><span class="p">]</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">matches</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-                <span class="n">systematic</span> <span class="o">=</span> <span class="n">matches</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"ID"</span><span class="p">]</span>
-                <span class="k">if</span> <span class="n">systematic</span> <span class="ow">in</span> <span class="n">systematic_to_strain</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_gene_table</span> <span class="o">+=</span> <span class="mi">1</span>
-                    <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">systematic</span><span class="p">)</span>
-
-        <span class="c1"># Pass 4: Alias to systematic (handle one-to-many)</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">genome</span><span class="p">,</span> <span class="s2">"alias_to_systematic"</span><span class="p">):</span>
-            <span class="n">candidates</span> <span class="o">=</span> <span class="n">genome</span><span class="o">.</span><span class="n">alias_to_systematic</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">gene_upper</span><span class="p">,</span> <span class="p">[])</span>
-
-            <span class="k">if</span> <span class="n">candidates</span><span class="p">:</span>
-                <span class="c1"># Filter for Excel existence only (multiple aliases can map to same systematic)</span>
-                <span class="n">valid</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">candidates</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">systematic_to_strain</span><span class="p">]</span>
-
-                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">valid</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                    <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Resolved </span><span class="si">{</span><span class="n">gene_name</span><span class="si">}</span><span class="s2"> → </span><span class="si">{</span><span class="n">valid</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> via alias matching"</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_alias</span> <span class="o">+=</span> <span class="mi">1</span>
-                    <span class="k">return</span> <span class="n">valid</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-                <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">valid</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-                    <span class="c1"># Pick first alphabetically for consistency</span>
-                    <span class="n">chosen</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">valid</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-                    <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">"Multiple candidates for </span><span class="si">{</span><span class="n">gene_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">valid</span><span class="si">}</span><span class="s2">, chose </span><span class="si">{</span><span class="n">chosen</span><span class="si">}</span><span class="s2">"</span>
-                    <span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_alias</span> <span class="o">+=</span> <span class="mi">1</span>
-                    <span class="k">return</span> <span class="n">chosen</span>
-
-        <span class="c1"># Pass 5: Case-insensitive alias to systematic (for cases like CYCC vs CycC)</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">genome</span><span class="p">,</span> <span class="s2">"alias_to_systematic"</span><span class="p">):</span>
-            <span class="c1"># Try case-insensitive matching</span>
-            <span class="k">for</span> <span class="n">alias</span><span class="p">,</span> <span class="n">systematics</span> <span class="ow">in</span> <span class="n">genome</span><span class="o">.</span><span class="n">alias_to_systematic</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="k">if</span> <span class="n">alias</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">==</span> <span class="n">gene_upper</span><span class="p">:</span>
-                    <span class="c1"># Filter for Excel existence</span>
-                    <span class="n">valid</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">systematics</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">systematic_to_strain</span><span class="p">]</span>
-                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">valid</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-                            <span class="sa">f</span><span class="s2">"Resolved </span><span class="si">{</span><span class="n">gene_name</span><span class="si">}</span><span class="s2"> → </span><span class="si">{</span><span class="n">valid</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> via case-insensitive alias matching"</span>
-                        <span class="p">)</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_alias</span> <span class="o">+=</span> <span class="mi">1</span>
-                        <span class="k">return</span> <span class="n">valid</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-                    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">valid</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-                        <span class="n">chosen</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">valid</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-                        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-                            <span class="sa">f</span><span class="s2">"Multiple candidates for </span><span class="si">{</span><span class="n">gene_name</span><span class="si">}</span><span class="s2"> (case-insensitive): </span><span class="si">{</span><span class="n">valid</span><span class="si">}</span><span class="s2">, chose </span><span class="si">{</span><span class="n">chosen</span><span class="si">}</span><span class="s2">"</span>
-                        <span class="p">)</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_alias</span> <span class="o">+=</span> <span class="mi">1</span>
-                        <span class="k">return</span> <span class="n">chosen</span>
-
-        <span class="c1"># Pass 6: Check if the gene itself exists in Excel (might be non-standard name)</span>
-        <span class="k">if</span> <span class="n">gene_upper</span> <span class="ow">in</span> <span class="n">systematic_to_strain</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Using </span><span class="si">{</span><span class="n">gene_upper</span><span class="si">}</span><span class="s2"> directly (found in Excel)"</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_excel</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="k">return</span> <span class="n">gene_upper</span>
-
-        <span class="c1"># Pass 7: Shared R64 reconciler (SCerevisiaeGenome.resolve_gene_name, PR #98).</span>
-        <span class="c1"># The passes above filter alias hits by Excel membership (systematic_to_strain),</span>
-        <span class="c1"># which drops valid one-to-one aliases whose systematic id is not an Excel strain</span>
-        <span class="c1"># key (e.g. CDK8 -&gt; YPL042C, the Mediator/CDK-module common names). The shared</span>
-        <span class="c1"># reconciler is the ONE source-&gt;R64 resolver designed to RETAIN such records; we</span>
-        <span class="c1"># accept only a definite live gene (CURRENT / RENAMED) so ambiguous / retired names</span>
-        <span class="c1"># still fall through to review rather than being silently invented.</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">genome</span><span class="p">,</span> <span class="s2">"resolve_gene_name"</span><span class="p">):</span>
-            <span class="n">res</span> <span class="o">=</span> <span class="n">genome</span><span class="o">.</span><span class="n">resolve_gene_name</span><span class="p">(</span><span class="n">gene_name</span><span class="p">)</span>
-            <span class="k">if</span> <span class="p">(</span>
-                <span class="n">res</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="p">(</span><span class="n">GeneNameStatus</span><span class="o">.</span><span class="n">CURRENT</span><span class="p">,</span> <span class="n">GeneNameStatus</span><span class="o">.</span><span class="n">RENAMED</span><span class="p">)</span>
-                <span class="ow">and</span> <span class="n">res</span><span class="o">.</span><span class="n">systematic_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="p">):</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"Resolved </span><span class="si">{</span><span class="n">gene_name</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">res</span><span class="o">.</span><span class="n">systematic_name</span><span class="si">}</span><span class="s2"> via shared R64 "</span>
-                    <span class="sa">f</span><span class="s2">"reconciler (</span><span class="si">{</span><span class="n">res</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2">)"</span>
-                <span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_shared_reconciler</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="k">return</span> <span class="n">res</span><span class="o">.</span><span class="n">systematic_name</span>
-
-        <span class="c1"># Final: Cannot resolve</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Cannot resolve </span><span class="si">{</span><span class="n">gene_name</span><span class="si">}</span><span class="s2"> - not in genome annotations or Excel"</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">unresolved_genes</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="k">return</span> <span class="kc">None</span></div>
-
-
-<div class="viewcode-block" id="MicroarrayKemmeren2014Dataset.convert_gene_name">
-<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.kemmeren2014.MicroarrayKemmeren2014Dataset.html#torchcell.datasets.scerevisiae.kemmeren2014.MicroarrayKemmeren2014Dataset.convert_gene_name">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">convert_gene_name</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">gene_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">common_to_systematic</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Simple conversion for expression data - keep as-is if no mapping.</span>
+<span class="w">        </span><span class="sd">"""The ORF a GEO title token names, through the release only.</span>
 
-<span class="sd">        Used for probe-to-gene mappings where we want to keep all genes.</span>
+<span class="sd">        Routes, in order, each counted:</span>
+
+<span class="sd">        1. ``RELEASE_TITLE_NAMES_WITHOUT_AN_ORF``, the pinned residue of 38 tokens the</span>
+<span class="sd">           release pairs with no ORF (see the module comment). When the ORF has no</span>
+<span class="sd">           Table S1 row of its own but the token does (TLC1, CMS1, whose ``orf name``</span>
+<span class="sd">           cell is the common name), the token's mating-type row is joined to the ORF</span>
+<span class="sd">           in ``systematic_to_strain``.</span>
+<span class="sd">        2. A Table S1 ``gene`` -&gt; that row's ``orf name``.</span>
+<span class="sd">        3. A token that IS a Table S1 ``orf name``, taken verbatim.</span>
+
+<span class="sd">        The release's own name for the deleted gene (the title token for routes 1 and</span>
+<span class="sd">        2, the row's Table S1 ``gene`` for route 3, else the ORF) is recorded in</span>
+<span class="sd">        ``released_gene_names`` and becomes ``perturbed_gene_name``. A token on none of</span>
+<span class="sd">        the routes raises ``ValueError``: a deletion array the release ships is never</span>
+<span class="sd">        skipped silently. ``already_assigned`` is accepted and not read.</span>
 <span class="sd">        """</span>
-        <span class="n">genome</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">SCerevisiaeGenome</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">)</span>
         <span class="n">gene_upper</span> <span class="o">=</span> <span class="n">gene_name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
-
-        <span class="c1"># Check Excel mapping</span>
-        <span class="k">if</span> <span class="n">gene_upper</span> <span class="ow">in</span> <span class="n">common_to_systematic</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">common_to_systematic</span><span class="p">[</span><span class="n">gene_upper</span><span class="p">]</span>
-
-        <span class="c1"># Try gene_attribute_table</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">genome</span><span class="p">,</span> <span class="s2">"gene_attribute_table"</span><span class="p">):</span>
-            <span class="n">df</span> <span class="o">=</span> <span class="n">genome</span><span class="o">.</span><span class="n">gene_attribute_table</span>
-
-            <span class="c1"># Check gene column</span>
-            <span class="n">matches</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span> <span class="o">==</span> <span class="n">gene_upper</span><span class="p">]</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">matches</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">matches</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"ID"</span><span class="p">])</span>
-
-            <span class="c1"># Check Alias column</span>
-            <span class="n">matches</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"Alias"</span><span class="p">]</span> <span class="o">==</span> <span class="n">gene_upper</span><span class="p">]</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">matches</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">matches</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"ID"</span><span class="p">])</span>
-
-        <span class="c1"># Return as-is</span>
-        <span class="k">return</span> <span class="n">gene_name</span></div>
+        <span class="n">released_name</span><span class="p">:</span> <span class="nb">str</span>
+        <span class="k">if</span> <span class="n">gene_upper</span> <span class="ow">in</span> <span class="n">RELEASE_TITLE_NAMES_WITHOUT_AN_ORF</span><span class="p">:</span>
+            <span class="n">systematic</span> <span class="o">=</span> <span class="n">RELEASE_TITLE_NAMES_WITHOUT_AN_ORF</span><span class="p">[</span><span class="n">gene_upper</span><span class="p">]</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">systematic</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">systematic_to_strain</span>
+                <span class="ow">and</span> <span class="n">gene_upper</span> <span class="ow">in</span> <span class="n">systematic_to_strain</span>
+            <span class="p">):</span>
+                <span class="n">systematic_to_strain</span><span class="p">[</span><span class="n">systematic</span><span class="p">]</span> <span class="o">=</span> <span class="n">systematic_to_strain</span><span class="p">[</span><span class="n">gene_upper</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_release_title_names</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">released_name</span> <span class="o">=</span> <span class="n">gene_upper</span>
+        <span class="k">elif</span> <span class="n">gene_upper</span> <span class="ow">in</span> <span class="n">common_to_systematic</span><span class="p">:</span>
+            <span class="n">systematic</span> <span class="o">=</span> <span class="n">common_to_systematic</span><span class="p">[</span><span class="n">gene_upper</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_table_s1_gene</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">released_name</span> <span class="o">=</span> <span class="n">gene_upper</span>
+        <span class="k">elif</span> <span class="n">gene_upper</span> <span class="ow">in</span> <span class="n">systematic_to_strain</span><span class="p">:</span>
+            <span class="n">systematic</span> <span class="o">=</span> <span class="n">gene_upper</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_table_s1_orf</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">row_genes</span> <span class="o">=</span> <span class="p">[</span><span class="n">g</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">common_to_systematic</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">o</span> <span class="o">==</span> <span class="n">systematic</span><span class="p">]</span>
+            <span class="n">released_name</span> <span class="o">=</span> <span class="n">row_genes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">row_genes</span> <span class="k">else</span> <span class="n">systematic</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Kemmeren 2014 title token </span><span class="si">{</span><span class="n">gene_name</span><span class="si">!r}</span><span class="s2"> is neither a Table S1 gene, "</span>
+                <span class="s2">"a Table S1 orf name, nor in RELEASE_TITLE_NAMES_WITHOUT_AN_ORF"</span>
+            <span class="p">)</span>
+        <span class="n">recorded</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">released_gene_names</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">systematic</span><span class="p">,</span> <span class="n">released_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">recorded</span> <span class="o">!=</span> <span class="n">released_name</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">systematic</span><span class="si">}</span><span class="s2"> is named both </span><span class="si">{</span><span class="n">recorded</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">released_name</span><span class="si">}</span><span class="s2"> by the release"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">systematic</span></div>
 
 
 <div class="viewcode-block" id="MicroarrayKemmeren2014Dataset.preprocess_raw">
@@ -1561,12 +1452,13 @@
         <span class="p">)</span>
 
         <span class="c1"># Create genotype for deletion mutant</span>
-        <span class="n">systematic_name</span> <span class="o">=</span> <span class="n">sample_info</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">]</span>
+        <span class="c1"># ``perturbed_gene_name`` is the release's own name for the deleted gene</span>
+        <span class="c1"># (``resolve_gene_name_comprehensive``)</span>
         <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
             <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
                 <span class="n">KanMxDeletionPerturbation</span><span class="p">(</span>
-                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">systematic_name</span><span class="p">,</span>
-                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">systematic_name</span><span class="p">,</span>  <span class="c1"># Use same name</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">sample_info</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">sample_info</span><span class="p">[</span><span class="s2">"perturbed_gene_name"</span><span class="p">],</span>
                 <span class="p">)</span>
             <span class="p">]</span>
         <span class="p">)</span>
@@ -1675,16 +1567,8 @@
     <span class="n">load_dotenv</span><span class="p">()</span>
     <span class="n">DATA_ROOT</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"DATA_ROOT"</span><span class="p">)</span>
 
-    <span class="c1"># Initialize genome for gene name mapping</span>
-    <span class="n">genome</span> <span class="o">=</span> <span class="n">SCerevisiaeGenome</span><span class="p">(</span>
-        <span class="n">genome_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">DATA_ROOT</span><span class="p">),</span> <span class="s2">"data/sgd/genome"</span><span class="p">),</span>
-        <span class="n">go_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">DATA_ROOT</span><span class="p">),</span> <span class="s2">"data/go"</span><span class="p">),</span>
-        <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="p">)</span>
-
     <span class="n">dataset</span> <span class="o">=</span> <span class="n">MicroarrayKemmeren2014Dataset</span><span class="p">(</span>
         <span class="n">root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">DATA_ROOT</span><span class="p">),</span> <span class="s2">"data/torchcell/microarray_kemmeren2014"</span><span class="p">),</span>
-        <span class="n">genome</span><span class="o">=</span><span class="n">genome</span><span class="p">,</span>
         <span class="n">io_workers</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
         <span class="n">process_workers</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
     <span class="p">)</span>

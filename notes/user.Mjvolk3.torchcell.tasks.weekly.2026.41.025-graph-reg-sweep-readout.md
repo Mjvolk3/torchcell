@@ -13,3 +13,9 @@ created: 1791682498601
 - [ ] Decide on the width-360 and layers-1-4 arms: smaller per-GPU batch with gradient accumulation, or drop
 - [ ] Draw the mechanism and budget figures (round-2 wireframe rows 2 and 3) from the tables
 - [ ] Pull best checkpoints for the discovery and overruling panels
+
+## 2026.10.13
+
+- [x] Figure 2 (manuscript and prelim) panel d, the additive null on the 010 triples [[experiments.010-kuzmin-tmi.scripts.fig2_additive_null_panel]], and panel e, do the graphs help [[experiments.025-solid-growth.scripts.fig2_graphs_help_panel]]; both third width, ready for the draw.io grid
+- [ ] Refresh panels b (binned prediction) and c (state of the art) with the 025 S3 closure model: needs a TEST evaluation of checkpoints yb4gjh51, srl1xzdf, 8fuwsk48 (only validation is logged, 0.480 to 0.496)
+- [ ] GAT vs CGT equivalence: unit test of a masked CGT layer against PyG TransformerConv with copied weights, then a three-seed training comparison under the 025 protocol

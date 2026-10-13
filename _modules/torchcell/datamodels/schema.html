@@ -10321,17 +10321,6 @@
 <span class="sd">    (and ``CultureEnvironment``) slots already, and putting them on the phenotype would</span>
 <span class="sd">    make "what was measured" carry part of "what it was grown in".</span>
 
-<span class="sd">    A titer the source never RELEASED is a typed gap, not a substitute (#788). Banerjee</span>
-<span class="sd">    2024's M9-minimal family states its denominator only as a ratio ("over 4-fold higher</span>
-<span class="sd">    than WT (IY1245)") and never prints the parent's titer, so the reference carries</span>
-<span class="sd">    ``titer=None`` with a ``ProvenanceGap`` naming 'titer'. Putting a family member's own</span>
-<span class="sd">    value there instead would state a parental measurement nobody made, and</span>
-<span class="sd">    reconstructing one from the ratio would invent a number; the three released child</span>
-<span class="sd">    titers stay records either way. ``titer`` therefore ADMITS ``None`` without becoming</span>
-<span class="sd">    optional: it keeps no default, so every record states it explicitly, and</span>
-<span class="sd">    ``_check_titer`` refuses a ``None`` that no gap declares.</span>
-<span class="sd">    This is distinct from the censoring case below, which is a value the assay bounded.</span>
-
 <span class="sd">    A titer the assay could not detect is a BOUND, not a zero (#867): Thompson 2019</span>
 <span class="sd">    states the wild type's 48 h valerolactam as "no valerolactam could be detected",</span>
 <span class="sd">    which is a value below the assay's floor. ``titer_censoring`` carries it on the</span>
@@ -10348,12 +10337,7 @@
         <span class="n">description</span><span class="o">=</span><span class="s2">"typed chemical identity of the product measured (InChIKey / ChEBI "</span>
         <span class="s2">"when sourced), the join key onto the shared compound layer"</span>
     <span class="p">)</span>
-    <span class="n">titer</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"measured product titer in ``titer_unit``. REQUIRED to be stated: "</span>
-        <span class="s2">"there is no default, so every record passes it explicitly. ``None`` is "</span>
-        <span class="s2">"admitted ONLY with a ``ProvenanceGap`` naming 'titer' -- a reference whose "</span>
-        <span class="s2">"parental titer the source never released (see the class docstring)"</span>
-    <span class="p">)</span>
+    <span class="n">titer</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"measured product titer in ``titer_unit``"</span><span class="p">)</span>
     <span class="n">titer_unit</span><span class="p">:</span> <span class="n">ConcentrationUnit</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"typed UO-aligned unit of the titer, e.g. 'g/L' | 'mM'"</span>
     <span class="p">)</span>
@@ -10408,10 +10392,8 @@
 
     <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"titer"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">validate_titer</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""A titer is a measured amount: finite and non-negative, or a typed absence."""</span>
-        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">v</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_titer</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""A titer is a measured amount: finite and non-negative."""</span>
         <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="ow">or</span> <span class="n">math</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"titer must be a finite number"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">v</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -10445,29 +10427,7 @@
 
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_check_titer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ProductTiterPhenotype"</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""No unlabelled uncertainty, no unitless yield or productivity.</span>
-
-<span class="sd">        An absent titer must be a DECLARED absence (#788): ``ProvenanceGapMixin``</span>
-<span class="sd">        already refuses a gap beside a stored value, and this is the other half --</span>
-<span class="sd">        a ``None`` titer with no gap naming it would be a silent hole rather than a</span>
-<span class="sd">        typed one. An absent titer also carries no uncertainty and no censoring,</span>
-<span class="sd">        because there is no value for either to be about.</span>
-<span class="sd">        """</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">titer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="s2">"titer"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="n">gap</span><span class="o">.</span><span class="n">field</span> <span class="k">for</span> <span class="n">gap</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">provenance_gaps</span><span class="p">}:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="s2">"titer is None without a ProvenanceGap naming 'titer': an absent "</span>
-                    <span class="s2">"titer is a declared absence, never a silent one"</span>
-                <span class="p">)</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">titer_uncertainty</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">titer_se</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="s2">"an absent titer carries no titer_uncertainty and no titer_se"</span>
-                <span class="p">)</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">titer_censoring</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="s2">"an absent titer carries no titer_censoring: a bound is a statement "</span>
-                    <span class="s2">"about a value, and no value was released"</span>
-                <span class="p">)</span>
+<span class="w">        </span><span class="sd">"""No unlabelled uncertainty, no unitless yield or productivity."""</span>
         <span class="n">unc</span><span class="p">,</span> <span class="n">typ</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">titer_uncertainty</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">titer_uncertainty_type</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">unc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="o">!=</span> <span class="p">(</span><span class="n">typ</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>

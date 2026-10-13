@@ -175,4 +175,29 @@ The loader no longer consults a genome. Removed: `resolve_released_genes`, `cons
 - **Ledger.** `ReleaseLedger` drops `refused`, `n_released_orfs_renamed`, `n_released_orfs_refused` and `released_orfs_refused`, and gains `n_genes_without_table4_row`. The accounting validator is now served + wild type = released (8,835 + 8 = 8,843). `data.csv` carries one systematic-name column (the released one) plus `perturbed_gene_name`.
 - **Verifier spec.** `runners.GENOME_ARCHITECTURE_DATASETS["genome_architecture_puddu2019"]["expected_count"]` goes from 8,826 to 8,835. The L1 `canonical_gene_names` and L4 `current_genome_genes` rules still read the genome; on the restored names they report findings (5 retired, 24 renamed), which gate the manifest only until the genome rules become report-only.
 
-L0-L4 after rebuild: (orchestrator fills in after the slurm build)
+### L0-L4 after the rebuild (slurm 4443_4, `--retire-existing --verify`)
+
+Store `genome_architecture_puddu2019`: 8,835 records; build manifest commit `7f67ede3e` (dirty: False), built 2026-10-13T00:20:24Z; verdict PASS over 18 rules (2 genome-reference finding(s) reported under the verdict, 0 failing).
+
+| level | rule | result |
+|---|---|---|
+| L0 | structural | 8835 records validated |
+| L1 | count | observed 8835, expected 8835 |
+| L1 | sample_uniqueness | 8835 sequenced samples, one record each |
+| L1 | assay_coverage | all 8835 records carry the 28 required features of assay puddu2019_wgs_coverage and nothing outside its 28 |
+| L2 | feature_fidelity | 247380 values over 28 features are finite and inside the bound of their declared basis |
+| L2 | release_fidelity | 247380 stored values equal the released cell for their sample |
+| L3 | vocabulary_parity | assay puddu2019_wgs_coverage: 28 features, distinct=True, every basis bounded=True, reference assembly S288c_R64-1-1_Ensembl |
+| L3 | provenance_audit | 35 pinned quotes are present in the sha256-pinned sources |
+| L3 | reference_profile | 1 reference profile(s) state a published mean, its uncertainty kind, its sample count, and a typed gap for every feature not covered |
+| L4 | paper_statistics | 303 rho0 colonies (paper: 303) and 0.5213 of served colonies away from 2n (paper: 0.52) |
+| L1 | provenance_gaps | 11739 documented provenance gaps over 8835/8835 records; 0 deferred field(s): []; 159030 undeclared None values over 10 carrier fields (top: Compound.inchi x35340, Compound.chebi_id x26505, Compound.inchikey x17670, C... |
+| L1 | canonical_gene_names | 0 genes carry conflicting common-name spellings (0 records; 0 case-only); 29 systematic names are not the genome's current name; 22 common names resolve to another gene (finding, reported under the verdict) |
+| L2 | uncertainty_sanity | 0 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | compound_identity | environment edits: 0 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | media_compound_identity | medium components: 17670 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | media_membership | 0 records on a shared MEDIA_LIBRARY medium, 8835 on a medium deriving from one (1 distinct media) |
+| L4 | gene_containment_sgd | 0.993 of 4437 measured genes are SGD S288C R64-4-1 genes (>= 0.9) |
+| L4 | current_genome_genes | 29 systematic names are absent from the current genome over 58 records: YAR037W x2, YAR040C x2, YAR043C x2, YAR044W x2, YBR075W x4, YBR100W x2, YCL012W x2, YCL013W x1, YCL026C x2, YCL060C x2 (finding, reported under the verdict) |
+
+The two genome-reference findings (`canonical_gene_names`: 29 released names the current annotation does not carry as its own name, 22 Table 4 common names that resolve elsewhere; `current_genome_genes`: 29 names absent from R64-4-1 over 58 records, the 5 retired and the 24 renamed ORFs) are reported under a PASS verdict (#1069), as the owner rule requires: the loader stores what the release says and the annotation is joined downstream.

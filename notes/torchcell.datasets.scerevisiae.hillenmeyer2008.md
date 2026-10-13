@@ -466,4 +466,6 @@ Observation, follow-up: four het labels carry the hybridization-volume suffix in
 
 `torchcell/verification/runners.py` still carries the old oracles (2,712,677 / 1,063,034) and `experiments/036-dataset-fixes-before-kg-build/scripts/hillenmeyer2008_inputs.py` still calls `_load_sgd_genes` and the old `read_matrix_rows` signature; neither file is in this change.
 
-L0-L4 after rebuild: (orchestrator fills in after the slurm build)
+### Rebuild (slurm 4443_1 and 4443_2, `--retire-existing --verify`)
+
+`env_chemgen_hillenmeyer2008_hom`: 1,228,676 records in 1,042 s (17.4 min) on commit `7f67ede3e`, exactly the measured expectation; `cell_accounting`: 1,804,800 value cells = 1,796,052 in stored records + 8,740 in the two unnamed-agent arrays (needs schema) + 8 in the withdrawn PDR5 row. `env_chemgen_hillenmeyer2008_het`: 3,074,132 records written (the expectation), post-processing in flight at the landing. Neither arm declares a per-dataset verifier; the environment-response family entries run as slurm 4509 (het) and 4510 (hom), and their L0-L4 tables go in the docs follow-up after the landing. The hom manifest reads `torchcell_dirty: True` from a notes-only edit in the worktree during the array.

@@ -111,4 +111,35 @@ Owner rule of 2026.10.12 ("the data is the data"; the genome is a separate layer
 - Ledger fields `gene_key_status` and `gene_keys_renamed` are replaced by `n_gene_keys_as_released` (6,175) and `n_tf_tokens_pinned` (213). The verifier (`torchcell/verification/induction_timecourse.py`) reads the release's gene names directly and checks the insertion through the pinned table.
 - Record count: unchanged at 1,752 (not served in KG 3.0). Reconciling a release name to the current annotation is a downstream step at adapter or modeling time.
 
-L0-L4 after rebuild: (orchestrator fills in after the slurm build)
+### L0-L4 after the rebuild (slurm 4443_6, `--retire-existing --verify`)
+
+Store `induction_timecourse_hackett2020`: 1,752 records; build manifest commit `7f67ede3e` (dirty: True), built 2026-10-13T00:25:04Z; verdict PASS over 24 rules (0 genome-reference finding(s) reported under the verdict, 0 failing).
+
+| level | rule | result |
+|---|---|---|
+| L0 | structural | 1752 records validated |
+| L1 | count | observed 1752, expected 1752 |
+| L1 | array_completeness | 1752 of 1752 released arrays stored once (21 arrays of 3 refused courses excluded) |
+| L1 | gene_completeness | every layer of every record carries the 6175 keys, a bijection with the release's gene names |
+| L1 | layer_gaps | a layer is absent exactly when its release does not carry it, and then as a typed gap |
+| L1 | provenance_gaps | 10688 documented provenance gaps over 1752/1752 records; 0 deferred field(s): []; 30824 undeclared None values over 11 carrier fields (top: Compound.inchi x5032, Compound.chebi_id x4966, Compound.inchikey x3438, Compo... |
+| L1 | canonical_gene_names | 211 systematic names, one canonical spelling each (no resolver supplied: spelling checked, annotation not) |
+| L2 | uncertainty_sanity | 0 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | compound_identity | environment edits: 1528 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | media_compound_identity | medium components: 66 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | media_membership | 1752 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (3 distinct media) |
+| L2 | release_fidelity | 84572800 stored values equal their released cells bit for bit |
+| L2 | value_fidelity | every value finite; intensities and noise SDs non-negative |
+| L2 | sampling_time | duration_hours x 60 is a released time of the record's course |
+| L3 | t0_zero | every log2 layer is 0 at t = 0 and in every reference |
+| L3 | layer_nesting | shrunken support within selected within thresholded; thresholded equals cleaned where non-zero |
+| L3 | inducer_timing | no estradiol at t = 0 or in a reference, 1 uM estradiol after; medium is the course's limitation |
+| L3 | induction_upregulates | the induced gene is up at the last array of 0.995 of 221 courses (median log2 5.92, 60.7-fold; the paper's median saturation is 53-fold) |
+| L3 | genotype_matches_release | every course's genotype is the release's induced gene (none for a control) |
+| L3 | sourced_values | 46 quotes verbatim in their pinned sources |
+| L4 | shrunken_matches_dataset_ev1 | 10324600 stored shrunken values match Dataset EV1 within 5e-08 (max \|diff\| 5.00e-08), zeros where EV1 has zeros; EV1 holds 1693 arrays |
+| L4 | release_matches_paper | the release reproduces 217 courses, 1,693 arrays, 6,175 genes, 118,134 thresholded and 100,036 selected and shrunken time series |
+| L4 | geo_sample_coverage | all 1752 arrays are GEO GSE142864 samples of the same strain and time (1768 GEO samples) |
+| L4 | induced_gene_containment | all 211 induced genes are S288C genes |
+
+The store built in 154 s on commit `7f67ede3e`; the manifest reads `torchcell_dirty: True` because the Puddu 2019 note was being edited in the same worktree during the array (notes only, no code). Every expression layer is keyed by the release names and the pinned induced-gene table verifies against them; no genome-reference finding.

@@ -396,4 +396,6 @@ A deletion array's GEO title names the deleted gene by a common name (`bck1-del-
 - **Left in place, needs schema:** the Table S1 "unknown mating type -> continue" path and the "gene not in Table S1 -> skip" path. Both hit 0 records today. `ReferenceGenome.strain` is a required `str` and `ReferenceGenome` carries no `provenance_gaps`, so a deletion with no stated mating type cannot be stored with a typed gap without a schema change.
 - **Record counts:** unchanged, 1,484 records. `create_expression_experiment`'s per-feature non-positive signal handling is unchanged (out of scope).
 
-L0-L4 after rebuild: (orchestrator fills in after the slurm build)
+### Rebuild (slurm 4443_9, `--retire-existing --verify`)
+
+Building at the landing (expected 1,484 records); the expression family runner (slurm 4523) writes its report after it, and the count and the L0-L4 table go in the docs follow-up after the landing.

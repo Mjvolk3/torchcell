@@ -165,38 +165,27 @@
 <span class="sd">the sourced value and the 24 h control-plate reading and the 36-48 h photograph range are</span>
 <span class="sd">recorded in ``_DURATION``'s note.</span>
 
-<span class="sd">GENE RESOLUTION -- every token, INCLUDING one that merely looks systematic, goes through</span>
-<span class="sd">the SHARED ``SCerevisiaeGenome.resolve_gene_name``. The previous resolver returned any</span>
-<span class="sd">``Y..####[WC]``-shaped token unchecked, which stored four RETIRED systematic names on seven</span>
-<span class="sd">records (L4 gene containment read 0.993, below the rule's notice but above its 0.90 floor).</span>
-<span class="sd">All four are RENAMED, not retired: YGR272C -&gt; YGR271C-A, YJL021C -&gt; YJL020C,</span>
-<span class="sd">YML010W-A -&gt; YML009W-B, YML013C-A -&gt; YML012C-A. CURRENT and RENAMED are kept under the</span>
-<span class="sd">CURRENT systematic name; RETIRED is dropped, counted and written to</span>
-<span class="sd">``dropped_records.json`` beside ``processed/``.</span>
+<span class="sd">GENE IDENTITY -- every scored row is one record under the token its ``Gene/ORF name``</span>
+<span class="sd">cell releases, verbatim after stripping whitespace (#1045). A systematic name goes on</span>
+<span class="sd">``KanMxDeletionPerturbation`` with both names the ORF; any other token goes on</span>
+<span class="sd">``ReleasedGeneNamePerturbation`` (the released symbol, kind ``deletion``, marker KanMX).</span>
+<span class="sd">No genome is consulted: nothing is renamed, merged or dropped, and the join to R64 is a</span>
+<span class="sd">modeling-time act. Before #1045 the loader resolved every token through</span>
+<span class="sd">``SCerevisiaeGenome.resolve_gene_name``, which merged EFG1 with YGR272C (SGD merged the</span>
+<span class="sd">two ORFs into YGR271C-A), renamed four systematic tokens and dropped six retired ones</span>
+<span class="sd">(13 records).</span>
 
-<span class="sd">SOURCE ARTIFACTS / QUIRKS handled deterministically (``_DEDUP_RULE``):</span>
-<span class="sd">- RNR4 (YGR180C) is listed TWICE in every table (a source duplicate the paper's headline</span>
-<span class="sd">  totals count); acetic/butyric both rows are ``+``, octanoic the two rows conflict</span>
-<span class="sd">  (``+`` and ``++``).</span>
-<span class="sd">- EFG1 and YGR272C are listed as SEPARATE rows in all three tables but are ONE gene, and</span>
-<span class="sd">  the SI says so itself: its annotation of YGR272C reads "it was merged with an adjacent</span>
-<span class="sd">  ORF into a single reading frame, designated YGR271C-A". Resolving both to YGR271C-A</span>
-<span class="sd">  merges them.</span>
-<span class="sd">  Records are deduplicated per (resolved ORF, acid) keeping the MORE SEVERE score; on a tie</span>
-<span class="sd">  the lexicographically smallest source token wins. Where two DIFFERENT tokens claim one</span>
-<span class="sd">  gene the genome's canonical common name is stored in ``perturbed_gene_name`` instead of</span>
-<span class="sd">  either token, so one gene carries one spelling across the three acids.</span>
-<span class="sd">- Six gene tokens are genuinely RETIRED in R64-4-1 and are DROPPED (never guessed): REF1,</span>
-<span class="sd">  RLM2, SBR2 (all three acids), ILM2 (butyric), VPS236 (butyric, octanoic), SIW15</span>
-<span class="sd">  (octanoic) -- 13 records. Resolving them is a flagged follow-up (likely SI typos:</span>
-<span class="sd">  VPS236-&gt;VPS36?, SIW15-&gt;SIW14?, ILM2-&gt;ILM1?, RLM2-&gt;RLM1?).</span>
-<span class="sd">- A score cell outside ``0``, ``+``, ``++`` refuses the build rather than vanishing</span>
-<span class="sd">  uncounted, and so does a sheet with no ``Gene/ORF name`` header row. Neither occurs in</span>
-<span class="sd">  the pinned sheets (scored rows: acetic 331 ``+`` / 46 ``++``, butyric 371 / 51,</span>
-<span class="sd">  octanoic 437 / 53; 0 other symbols).</span>
+<span class="sd">SOURCE REPETITIONS stored as released: RNR4 is listed TWICE in every table (the</span>
+<span class="sd">paper's headline totals count both rows); acetic and butyric list it ``+`` twice,</span>
+<span class="sd">octanoic ``+`` and ``++``. Each row is its own record, and the verifier is told to</span>
+<span class="sd">expect exactly those 3 repeated (strain, condition) pairs (``expected_duplicated_pairs``</span>
+<span class="sd">in the runner spec). The ledger beside ``processed/`` lists every repeated token with</span>
+<span class="sd">its grades. A score cell outside ``0``, ``+``, ``++`` refuses the build rather than</span>
+<span class="sd">vanishing uncounted, and so does a sheet with no ``Gene/ORF name`` header row. Neither</span>
+<span class="sd">occurs in the pinned sheets (scored rows: acetic 331 ``+`` / 46 ``++``, butyric 371 /</span>
+<span class="sd">51, octanoic 437 / 53; 0 other symbols).</span>
 
-<span class="sd">Final: acetic 372, butyric 415, octanoic 483 = 1270 records (1289 raw susceptible rows</span>
-<span class="sd">- 3 RNR4 duplicates - 3 EFG1/YGR272C merges - 13 retired-token drops).</span>
+<span class="sd">Final: acetic 377, butyric 422, octanoic 490 = 1289 records, one per scored row.</span>
 
 <span class="sd">DATA SOURCE -- the BMC open-access supplementary spreadsheets (Additional file 1 = acetic</span>
 <span class="sd">Table S1, file 2 = butyric Table S2, file 3 = octanoic Table S3) are deposited into</span>
@@ -211,6 +200,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">UTC</span><span class="p">,</span> <span class="n">datetime</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
@@ -249,6 +239,8 @@
     <span class="n">PhysicalFactor</span><span class="p">,</span>
     <span class="n">Publication</span><span class="p">,</span>
     <span class="n">ReferenceGenome</span><span class="p">,</span>
+    <span class="n">ReleasedGeneKind</span><span class="p">,</span>
+    <span class="n">ReleasedGeneNamePerturbation</span><span class="p">,</span>
     <span class="n">ResponseCategory</span><span class="p">,</span>
     <span class="n">SmallMoleculePerturbation</span><span class="p">,</span>
     <span class="n">Temperature</span><span class="p">,</span>
@@ -263,8 +255,6 @@
     <span class="n">SourceCheck</span><span class="p">,</span>
     <span class="n">sha256_file</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae.s288c</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeneNameStatus</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ProvenanceGap</span><span class="p">,</span>
@@ -424,22 +414,18 @@
     <span class="s2">"rank is an ORDER, not a quantity: the spacing between grades has no meaning"</span>
 <span class="p">)</span>
 
-<span class="n">_DEDUP_RULE</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">"one record per (resolved systematic ORF, acid): where two source rows claim the "</span>
-    <span class="s2">"same gene, the MORE SEVERE grade wins (++ &gt; +) and a tie is broken by the "</span>
-    <span class="s2">"lexicographically smallest source token. Where two DIFFERENT tokens claim one gene "</span>
-    <span class="s2">"the genome's canonical common name is stored instead of either token, so one gene "</span>
-    <span class="s2">"carries one spelling"</span>
+<span class="c1">#: Retention rule (#1045): every scored row is a record under its released token.</span>
+<span class="n">RETENTION_RULE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"one record per scored row under the 'Gene/ORF name' token verbatim (whitespace "</span>
+    <span class="s2">"stripped): a systematic name on KanMxDeletionPerturbation, any other token on "</span>
+    <span class="s2">"ReleasedGeneNamePerturbation; no genome is consulted, nothing is renamed, merged "</span>
+    <span class="s2">"or dropped, and a token a table lists twice is two records"</span>
 <span class="p">)</span>
 
-<span class="n">DROP_RULE</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">"a gene token resolves through SCerevisiaeGenome.resolve_gene_name to a status "</span>
-    <span class="s2">"other than CURRENT or RENAMED (RETIRED: absent from R64-4-1); the token's row is "</span>
-    <span class="s2">"dropped and counted"</span>
+<span class="c1">#: An S288C systematic name, the form that goes on the placed deletion leaf.</span>
+<span class="n">_SYSTEMATIC_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+    <span class="sa">r</span><span class="s2">"^(Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](-[A-Z])?|Q\d</span><span class="si">{4}</span><span class="s2">|YNC[A-Q]\d</span><span class="si">{4}</span><span class="s2">[WC])$"</span>
 <span class="p">)</span>
-
-<span class="c1">#: Retention rule: a token is kept only when it resolves to a LIVE R64 gene.</span>
-<span class="n">_KEPT_STATUSES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="n">GeneNameStatus</span><span class="o">.</span><span class="n">CURRENT</span><span class="p">,</span> <span class="n">GeneNameStatus</span><span class="o">.</span><span class="n">RENAMED</span><span class="p">})</span>
 
 <span class="c1"># Per-acid source spec: MOESM index, filename, sha256, compound name.</span>
 <span class="n">_ACID_SPECS</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span>
@@ -571,38 +557,42 @@
     <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">DroppedToken</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""One source gene token the retention rule removed."""</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RepeatedToken</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One token a table lists more than once, with every grade it carries."""</span>
 
-    <span class="n">token</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"the 'Gene/ORF name' cell, verbatim"</span><span class="p">)</span>
-    <span class="n">status</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"GeneNameStatus the shared resolver returned"</span><span class="p">)</span>
-    <span class="n">acids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"the acid tables the token appears in"</span><span class="p">)</span>
-    <span class="n">n_records</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"records lost with this token"</span><span class="p">)</span>
-
-
-<span class="k">class</span><span class="w"> </span><span class="nc">MergedGene</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""One gene claimed by more than one source row, and how the merge was resolved."""</span>
-
-    <span class="n">systematic_name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">acid</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">source_tokens</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
-    <span class="n">source_scores</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
-    <span class="n">kept_score</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">stored_gene_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">token</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"the 'Gene/ORF name' cell, stripped"</span><span class="p">)</span>
+    <span class="n">scores</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"the grade symbols in sheet order"</span><span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">DropLog</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""The build's retention + dedup accounting, written beside ``processed/``."""</span>
+<span class="w">    </span><span class="sd">"""The build's accounting, written beside ``processed/``: nothing is dropped."""</span>
 
     <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">rule</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">dedup_rule</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">n_raw_rows</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">n_kept_records</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">n_dropped_records</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">n_merged_records</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">dropped</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DroppedToken</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
-    <span class="n">merged</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">MergedGene</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">n_under_systematic_name</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_under_released_symbol</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">repeated</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">RepeatedToken</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_released_deletion</span><span class="p">(</span>
+    <span class="n">token</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KanMxDeletionPerturbation</span> <span class="o">|</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The deletion under the token the table releases (#1045)."""</span>
+    <span class="k">if</span> <span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">token</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">KanMxDeletionPerturbation</span><span class="p">(</span>
+            <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">token</span><span class="p">,</span> <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">token</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">(</span>
+        <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">token</span><span class="p">,</span>
+        <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">token</span><span class="p">,</span>
+        <span class="n">released_gene_name</span><span class="o">=</span><span class="n">token</span><span class="p">,</span>
+        <span class="n">released_kind</span><span class="o">=</span><span class="n">ReleasedGeneKind</span><span class="o">.</span><span class="n">deletion</span><span class="p">,</span>
+        <span class="n">marker</span><span class="o">=</span><span class="s2">"KanMX"</span><span class="p">,</span>
+    <span class="p">)</span>
 
 
 <div class="viewcode-block" id="EnvChemgenMota2024Dataset">
@@ -617,13 +607,11 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"data/torchcell/env_chemgen_mota2024"</span><span class="p">,</span>
         <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-        <span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Initialize the dataset; a genome is REQUIRED for common-name -&gt; ORF mapping."""</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">genome</span>
+<span class="w">        </span><span class="sd">"""Initialize the dataset; every scored row is stored under its released token."""</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="nd">@property</span>
@@ -670,24 +658,12 @@
                     <span class="n">write_verified</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"sha256"</span><span class="p">],</span> <span class="n">url</span><span class="p">)</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_parse_acid</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">MergedGene</span><span class="p">],</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Parse one acid spreadsheet into ``{ORF: (score symbol, stored gene name)}``.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_parse_acid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Parse one acid spreadsheet into ``[(released token, score symbol)]``.</span>
 
-<span class="sd">        Returns the kept records, the dropped tokens keyed by their resolver status, the</span>
-<span class="sd">        merge accounting, and the raw susceptible-row count. Deduplication follows</span>
-<span class="sd">        ``_DEDUP_RULE``; retention follows ``DROP_RULE``.</span>
+<span class="sd">        One entry per scored row in sheet order (``RETENTION_RULE``); a reference-grade</span>
+<span class="sd">        (``0``) row, a blank token and a blank score are not scored rows.</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="s2">"EnvChemgenMota2024Dataset requires a genome for gene-name resolution; "</span>
-                <span class="s2">"inject SCerevisiaeGenome(...)"</span>
-            <span class="p">)</span>
-        <span class="n">resolve</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="o">.</span><span class="n">resolve_gene_name</span>
-        <span class="n">attributes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="o">.</span><span class="n">gene_attribute_table</span>
-        <span class="n">standard_name</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">attributes</span><span class="p">[</span><span class="s2">"ID"</span><span class="p">],</span> <span class="n">attributes</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">],</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
-
         <span class="n">path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"filename"</span><span class="p">])</span>
         <span class="n">workbook</span> <span class="o">=</span> <span class="n">openpyxl</span><span class="o">.</span><span class="n">load_workbook</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">read_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">sheet</span> <span class="o">=</span> <span class="n">workbook</span><span class="p">[</span><span class="n">workbook</span><span class="o">.</span><span class="n">sheetnames</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
@@ -700,9 +676,7 @@
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">spec</span><span class="p">[</span><span class="s1">'filename'</span><span class="p">]</span><span class="si">}</span><span class="s2">: no row starts with the 'Gene/ORF name' header "</span>
                 <span class="s2">"in the first sheet"</span>
             <span class="p">)</span>
-        <span class="n">claims</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">dropped</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">n_raw</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">scored</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">[</span><span class="n">header_idx</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:]:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">row</span> <span class="ow">or</span> <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">row</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">continue</span>
@@ -717,46 +691,14 @@
                 <span class="p">)</span>
             <span class="k">if</span> <span class="n">score</span> <span class="o">==</span> <span class="n">_REFERENCE_SYMBOL</span><span class="p">:</span>
                 <span class="k">continue</span>
-            <span class="n">n_raw</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="n">resolution</span> <span class="o">=</span> <span class="n">resolve</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">resolution</span><span class="o">.</span><span class="n">status</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_KEPT_STATUSES</span><span class="p">:</span>
-                <span class="n">dropped</span><span class="p">[</span><span class="n">token</span><span class="p">]</span> <span class="o">=</span> <span class="n">resolution</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">value</span>
-                <span class="k">continue</span>
-            <span class="n">claims</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">resolution</span><span class="o">.</span><span class="n">systematic_name</span><span class="p">),</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="p">(</span><span class="n">score</span><span class="p">,</span> <span class="n">token</span><span class="p">)</span>
-            <span class="p">)</span>
-
-        <span class="n">best</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">merged</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">MergedGene</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">orf</span><span class="p">,</span> <span class="n">entries</span> <span class="ow">in</span> <span class="n">claims</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">score</span><span class="p">,</span> <span class="n">token</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="n">_RANK</span><span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
-            <span class="n">tokens</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">t</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">})</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">canonical</span> <span class="o">=</span> <span class="n">standard_name</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">orf</span><span class="p">)</span>
-                <span class="n">token</span> <span class="o">=</span> <span class="n">canonical</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">canonical</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">orf</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">merged</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="n">MergedGene</span><span class="p">(</span>
-                        <span class="n">systematic_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
-                        <span class="n">acid</span><span class="o">=</span><span class="n">spec</span><span class="p">[</span><span class="s2">"acid"</span><span class="p">],</span>
-                        <span class="n">source_tokens</span><span class="o">=</span><span class="n">tokens</span><span class="p">,</span>
-                        <span class="n">source_scores</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">),</span>
-                        <span class="n">kept_score</span><span class="o">=</span><span class="n">score</span><span class="p">,</span>
-                        <span class="n">stored_gene_name</span><span class="o">=</span><span class="n">token</span><span class="p">,</span>
-                    <span class="p">)</span>
-                <span class="p">)</span>
-            <span class="n">best</span><span class="p">[</span><span class="n">orf</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">score</span><span class="p">,</span> <span class="n">token</span><span class="p">)</span>
+            <span class="n">scored</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">token</span><span class="p">,</span> <span class="n">score</span><span class="p">))</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">"Mota2024 </span><span class="si">%s</span><span class="s2"> acid: </span><span class="si">%d</span><span class="s2"> raw susceptible rows -&gt; </span><span class="si">%d</span><span class="s2"> records "</span>
-            <span class="s2">"(dropped </span><span class="si">%d</span><span class="s2"> retired tokens: </span><span class="si">%s</span><span class="s2">; merged </span><span class="si">%d</span><span class="s2"> genes)"</span><span class="p">,</span>
+            <span class="s2">"Mota2024 </span><span class="si">%s</span><span class="s2"> acid: </span><span class="si">%d</span><span class="s2"> scored rows -&gt; </span><span class="si">%d</span><span class="s2"> records"</span><span class="p">,</span>
             <span class="n">spec</span><span class="p">[</span><span class="s2">"acid"</span><span class="p">],</span>
-            <span class="n">n_raw</span><span class="p">,</span>
-            <span class="nb">len</span><span class="p">(</span><span class="n">best</span><span class="p">),</span>
-            <span class="nb">len</span><span class="p">(</span><span class="n">dropped</span><span class="p">),</span>
-            <span class="nb">sorted</span><span class="p">(</span><span class="n">dropped</span><span class="p">),</span>
-            <span class="nb">len</span><span class="p">(</span><span class="n">merged</span><span class="p">),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">scored</span><span class="p">),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">scored</span><span class="p">),</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">best</span><span class="p">,</span> <span class="n">dropped</span><span class="p">,</span> <span class="n">merged</span><span class="p">,</span> <span class="n">n_raw</span>
+        <span class="k">return</span> <span class="n">scored</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_perturbations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""The acid at its sourced molarity plus the typed pH edit that sets the plate."""</span>
@@ -812,16 +754,10 @@
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_experiment</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">gene_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">score</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">environment</span><span class="p">:</span> <span class="n">Environment</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">token</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">score</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">environment</span><span class="p">:</span> <span class="n">Environment</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EnvironmentResponseExperiment</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Build one env x geno -&gt; ordinal-susceptibility experiment for (gene, acid)."""</span>
-        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
-            <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
-                <span class="n">KanMxDeletionPerturbation</span><span class="p">(</span>
-                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span> <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">gene_name</span>
-                <span class="p">)</span>
-            <span class="p">]</span>
-        <span class="p">)</span>
+<span class="w">        </span><span class="sd">"""Build one env x geno -&gt; ordinal-susceptibility experiment for (token, acid)."""</span>
+        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span><span class="n">perturbations</span><span class="o">=</span><span class="p">[</span><span class="n">_released_deletion</span><span class="p">(</span><span class="n">token</span><span class="p">)])</span>
         <span class="n">phenotype</span> <span class="o">=</span> <span class="n">EnvironmentResponsePhenotype</span><span class="p">(</span>
             <span class="n">measurement_type</span><span class="o">=</span><span class="n">MeasurementType</span><span class="o">.</span><span class="n">ordinal</span><span class="p">,</span>
             <span class="n">assay_type</span><span class="o">=</span><span class="n">_ASSAY</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
@@ -858,35 +794,24 @@
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e11</span><span class="p">))</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">n_raw_total</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">dropped_by_token</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DroppedToken</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">merged_all</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">MergedGene</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">n_systematic</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">repeated</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">RepeatedToken</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">spec</span><span class="p">,</span> <span class="p">(</span><span class="n">orf_scores</span><span class="p">,</span> <span class="n">dropped</span><span class="p">,</span> <span class="n">merged</span><span class="p">,</span> <span class="n">n_raw</span><span class="p">)</span> <span class="ow">in</span> <span class="n">parsed</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">spec</span><span class="p">,</span> <span class="n">scored</span> <span class="ow">in</span> <span class="n">parsed</span><span class="p">:</span>
                 <span class="n">environment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_environment</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
                 <span class="n">ref_dump</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference</span><span class="p">(</span><span class="n">environment</span><span class="p">)</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
-                <span class="n">n_raw_total</span> <span class="o">+=</span> <span class="n">n_raw</span>
-                <span class="n">merged_all</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">merged</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">token</span><span class="p">,</span> <span class="n">status</span> <span class="ow">in</span> <span class="n">dropped</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                    <span class="n">entry</span> <span class="o">=</span> <span class="n">dropped_by_token</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">entry</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                        <span class="n">dropped_by_token</span><span class="p">[</span><span class="n">token</span><span class="p">]</span> <span class="o">=</span> <span class="n">DroppedToken</span><span class="p">(</span>
-                            <span class="n">token</span><span class="o">=</span><span class="n">token</span><span class="p">,</span>
-                            <span class="n">status</span><span class="o">=</span><span class="n">status</span><span class="p">,</span>
-                            <span class="n">acids</span><span class="o">=</span><span class="p">[</span><span class="n">spec</span><span class="p">[</span><span class="s2">"acid"</span><span class="p">]],</span>
-                            <span class="n">n_records</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-                        <span class="p">)</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="n">entry</span><span class="o">.</span><span class="n">acids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">spec</span><span class="p">[</span><span class="s2">"acid"</span><span class="p">])</span>
-                        <span class="n">entry</span><span class="o">.</span><span class="n">n_records</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="k">for</span> <span class="n">orf</span><span class="p">,</span> <span class="p">(</span><span class="n">score</span><span class="p">,</span> <span class="n">gene_name</span><span class="p">)</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span>
-                    <span class="nb">sorted</span><span class="p">(</span><span class="n">orf_scores</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span> <span class="n">desc</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">spec</span><span class="p">[</span><span class="s1">'acid'</span><span class="p">]</span><span class="si">}</span><span class="s2"> acid"</span>
-                <span class="p">):</span>
+                <span class="n">by_token</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">for</span> <span class="n">token</span><span class="p">,</span> <span class="n">score</span> <span class="ow">in</span> <span class="n">scored</span><span class="p">:</span>
+                    <span class="n">by_token</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">score</span><span class="p">)</span>
+                <span class="n">repeated</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                    <span class="n">RepeatedToken</span><span class="p">(</span><span class="n">acid</span><span class="o">=</span><span class="n">spec</span><span class="p">[</span><span class="s2">"acid"</span><span class="p">],</span> <span class="n">token</span><span class="o">=</span><span class="n">token</span><span class="p">,</span> <span class="n">scores</span><span class="o">=</span><span class="n">scores</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">token</span><span class="p">,</span> <span class="n">scores</span> <span class="ow">in</span> <span class="n">by_token</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">token</span><span class="p">,</span> <span class="n">score</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">scored</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">spec</span><span class="p">[</span><span class="s1">'acid'</span><span class="p">]</span><span class="si">}</span><span class="s2"> acid"</span><span class="p">):</span>
+                    <span class="n">n_systematic</span> <span class="o">+=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">token</span><span class="p">))</span>
                     <span class="n">experiment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_experiment</span><span class="p">(</span>
-                        <span class="n">orf</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
-                        <span class="n">gene_name</span><span class="o">=</span><span class="n">gene_name</span><span class="p">,</span>
-                        <span class="n">score</span><span class="o">=</span><span class="n">score</span><span class="p">,</span>
-                        <span class="n">environment</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span>
+                        <span class="n">token</span><span class="o">=</span><span class="n">token</span><span class="p">,</span> <span class="n">score</span><span class="o">=</span><span class="n">score</span><span class="p">,</span> <span class="n">environment</span><span class="o">=</span><span class="n">environment</span>
                     <span class="p">)</span>
                     <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
                         <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
@@ -903,26 +828,24 @@
 
         <span class="n">drop_log</span> <span class="o">=</span> <span class="n">DropLog</span><span class="p">(</span>
             <span class="n">dataset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-            <span class="n">rule</span><span class="o">=</span><span class="n">DROP_RULE</span><span class="p">,</span>
-            <span class="n">dedup_rule</span><span class="o">=</span><span class="n">_DEDUP_RULE</span><span class="p">,</span>
-            <span class="n">n_raw_rows</span><span class="o">=</span><span class="n">n_raw_total</span><span class="p">,</span>
+            <span class="n">rule</span><span class="o">=</span><span class="n">RETENTION_RULE</span><span class="p">,</span>
+            <span class="n">n_raw_rows</span><span class="o">=</span><span class="n">idx</span><span class="p">,</span>
             <span class="n">n_kept_records</span><span class="o">=</span><span class="n">idx</span><span class="p">,</span>
-            <span class="n">n_dropped_records</span><span class="o">=</span><span class="nb">sum</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">n_records</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">dropped_by_token</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
-            <span class="n">n_merged_records</span><span class="o">=</span><span class="n">n_raw_total</span>
-            <span class="o">-</span> <span class="nb">sum</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">n_records</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">dropped_by_token</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-            <span class="o">-</span> <span class="n">idx</span><span class="p">,</span>
-            <span class="n">dropped</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">dropped_by_token</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">token</span><span class="p">),</span>
-            <span class="n">merged</span><span class="o">=</span><span class="n">merged_all</span><span class="p">,</span>
+            <span class="n">n_dropped_records</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">n_under_systematic_name</span><span class="o">=</span><span class="n">n_systematic</span><span class="p">,</span>
+            <span class="n">n_under_released_symbol</span><span class="o">=</span><span class="n">idx</span> <span class="o">-</span> <span class="n">n_systematic</span><span class="p">,</span>
+            <span class="n">repeated</span><span class="o">=</span><span class="n">repeated</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="n">_DROPPED_FILENAME</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
             <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">drop_log</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s2">"Wrote </span><span class="si">%d</span><span class="s2"> Mota2024 environment-response experiments to LMDB "</span>
-            <span class="s2">"(</span><span class="si">%d</span><span class="s2"> raw rows, </span><span class="si">%d</span><span class="s2"> dropped, </span><span class="si">%d</span><span class="s2"> merged)"</span><span class="p">,</span>
+            <span class="s2">"(</span><span class="si">%d</span><span class="s2"> under a systematic name, </span><span class="si">%d</span><span class="s2"> under a released symbol, </span><span class="si">%d</span><span class="s2"> tokens "</span>
+            <span class="s2">"listed twice in a table)"</span><span class="p">,</span>
             <span class="n">idx</span><span class="p">,</span>
-            <span class="n">n_raw_total</span><span class="p">,</span>
-            <span class="n">drop_log</span><span class="o">.</span><span class="n">n_dropped_records</span><span class="p">,</span>
-            <span class="n">drop_log</span><span class="o">.</span><span class="n">n_merged_records</span><span class="p">,</span>
+            <span class="n">n_systematic</span><span class="p">,</span>
+            <span class="n">idx</span> <span class="o">-</span> <span class="n">n_systematic</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">repeated</span><span class="p">),</span>
         <span class="p">)</span></div>
 
 
@@ -948,13 +871,8 @@
 
     <span class="n">load_dotenv</span><span class="p">()</span>
     <span class="n">data_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">]</span>
-    <span class="n">genome</span> <span class="o">=</span> <span class="n">SCerevisiaeGenome</span><span class="p">(</span>
-        <span class="n">genome_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/sgd/genome"</span><span class="p">),</span>
-        <span class="n">go_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/go"</span><span class="p">),</span>
-        <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="p">)</span>
     <span class="n">root</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/torchcell/env_chemgen_mota2024"</span><span class="p">)</span>
-    <span class="n">dataset</span> <span class="o">=</span> <span class="n">EnvChemgenMota2024Dataset</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">,</span> <span class="n">genome</span><span class="o">=</span><span class="n">genome</span><span class="p">)</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">EnvChemgenMota2024Dataset</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"len = </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 

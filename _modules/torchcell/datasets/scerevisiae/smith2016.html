@@ -196,7 +196,7 @@
 <span class="sd">8 releases. The two rules that can still leave a row without a record are a row with no</span>
 <span class="sd">``A`` or ``var(A)`` and a guide with no spacer in Additional file 4; both are 0 on the</span>
 <span class="sd">pinned files. An ``ORF`` cell that is not ORF-shaped is counted under</span>
-<span class="sd">``deferred_to_released_gene_name_leaf`` (0 of 14,463 rows) until that leaf lands.</span>
+<span class="sd">``stored_on_released_gene_name_leaf`` (0 of 14,463 rows) as released (#1045).</span>
 
 <span class="sd">DUPLICATE-BY-POOL: 272 (guide, drug, concentration) triples appear twice, always the pool</span>
 <span class="sd">pair (``broad_tiling``, ``gene_tiling_20bp``) sharing a 20 bp perfect-match spacer. Fitness</span>
@@ -257,6 +257,8 @@
     <span class="n">MeasurementType</span><span class="p">,</span>
     <span class="n">Publication</span><span class="p">,</span>
     <span class="n">ReferenceGenome</span><span class="p">,</span>
+    <span class="n">ReleasedGeneKind</span><span class="p">,</span>
+    <span class="n">ReleasedGeneNamePerturbation</span><span class="p">,</span>
     <span class="n">SampleUnit</span><span class="p">,</span>
     <span class="n">SmallMoleculePerturbation</span><span class="p">,</span>
     <span class="n">Temperature</span><span class="p">,</span>
@@ -632,18 +634,17 @@
 
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_released_target</span><span class="p">(</span><span class="n">orf_cell</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">gene_cell</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""``(systematic_gene_name, perturbed_gene_name)`` from the row's released cells.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_released_target</span><span class="p">(</span><span class="n">orf_cell</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">gene_cell</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""``(systematic_gene_name, perturbed_gene_name, placed)`` from the row's cells.</span>
 
 <span class="sd">        The ``ORF`` cell (stripped) is the systematic name and the ``Gene`` cell the</span>
-<span class="sd">        perturbed name, the ORF again where it is blank. No genome is consulted. A cell</span>
-<span class="sd">        that is not ORF-shaped returns None and is counted under the leaf deferral rule.</span>
+<span class="sd">        perturbed name, the ORF again where it is blank. No genome is consulted.</span>
+<span class="sd">        ``placed`` is False for a cell that is not ORF-shaped, which goes on the</span>
+<span class="sd">        released-gene-name leaf (#1045; 0 of the 20 released targets).</span>
 <span class="sd">        """</span>
         <span class="n">orf</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">orf_cell</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">orf</span><span class="p">):</span>
-            <span class="k">return</span> <span class="kc">None</span>
         <span class="n">gene</span> <span class="o">=</span> <span class="s2">""</span> <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">gene_cell</span><span class="p">)</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">gene_cell</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">orf</span><span class="p">,</span> <span class="n">gene</span> <span class="k">if</span> <span class="n">gene</span> <span class="k">else</span> <span class="n">orf</span>
+        <span class="k">return</span> <span class="n">orf</span><span class="p">,</span> <span class="n">gene</span> <span class="k">if</span> <span class="n">gene</span> <span class="k">else</span> <span class="n">orf</span><span class="p">,</span> <span class="nb">bool</span><span class="p">(</span><span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">orf</span><span class="p">))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_spacer_map</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Guide name -&gt; ``Specificity_sequence`` spacer (unique per name; 0 conflicts)."""</span>
@@ -726,8 +727,8 @@
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">env</span><span class="p">,</span> <span class="n">interned_env</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_open_write_lmdb</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">))</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">n_nan</span> <span class="o">=</span> <span class="n">n_deferred</span> <span class="o">=</span> <span class="n">n_no_spacer</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">deferred_targets</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">n_nan</span> <span class="o">=</span> <span class="n">n_no_spacer</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">released_targets</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="n">no_spacer_guides</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">,</span> <span class="n">interned_env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">itxn</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">(),</span> <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"smith2016"</span><span class="p">):</span>
@@ -736,12 +737,9 @@
                     <span class="n">n_nan</span> <span class="o">+=</span> <span class="mi">1</span>
                     <span class="k">continue</span>
                 <span class="n">drug</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"Drug"</span><span class="p">])</span>
-                <span class="n">target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_released_target</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"ORF"</span><span class="p">],</span> <span class="n">row</span><span class="p">[</span><span class="s2">"Gene"</span><span class="p">])</span>
-                <span class="k">if</span> <span class="n">target</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="n">n_deferred</span> <span class="o">+=</span> <span class="mi">1</span>
-                    <span class="n">deferred_targets</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"ORF"</span><span class="p">])</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
-                    <span class="k">continue</span>
-                <span class="n">orf</span><span class="p">,</span> <span class="n">gene</span> <span class="o">=</span> <span class="n">target</span>
+                <span class="n">orf</span><span class="p">,</span> <span class="n">gene</span><span class="p">,</span> <span class="n">placed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_released_target</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"ORF"</span><span class="p">],</span> <span class="n">row</span><span class="p">[</span><span class="s2">"Gene"</span><span class="p">])</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">placed</span><span class="p">:</span>
+                    <span class="n">released_targets</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">orf</span><span class="p">)</span>
                 <span class="n">guide_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"Guide"</span><span class="p">])</span>
                 <span class="n">spacer</span> <span class="o">=</span> <span class="n">spacer_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">guide_name</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">spacer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -752,22 +750,30 @@
                 <span class="n">compound</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="s2">"environment"</span><span class="p">]</span><span class="o">.</span><span class="n">perturbations</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">compound</span>
                 <span class="k">if</span> <span class="n">compound</span><span class="o">.</span><span class="n">provenance_gaps</span><span class="p">:</span>
                     <span class="n">gapped_records</span><span class="p">[</span><span class="n">drug</span><span class="p">]</span> <span class="o">=</span> <span class="n">gapped_records</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">drug</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="n">construct</span> <span class="o">=</span> <span class="n">CrisprConstruct</span><span class="p">(</span>
+                    <span class="n">effector</span><span class="o">=</span><span class="n">EFFECTOR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                    <span class="n">guide_sequence</span><span class="o">=</span><span class="n">spacer</span><span class="p">,</span>
+                    <span class="n">n_guides</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                    <span class="n">library_pool</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"#Pool"</span><span class="p">]),</span>
+                <span class="p">)</span>
+                <span class="n">target</span><span class="p">:</span> <span class="n">CrisprInterferencePerturbation</span> <span class="o">|</span> <span class="n">ReleasedGeneNamePerturbation</span>
+                <span class="k">if</span> <span class="n">placed</span><span class="p">:</span>
+                    <span class="n">target</span> <span class="o">=</span> <span class="n">CrisprInterferencePerturbation</span><span class="p">(</span>
+                        <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+                        <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">gene</span><span class="p">,</span>
+                        <span class="n">crispr</span><span class="o">=</span><span class="n">construct</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">target</span> <span class="o">=</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">(</span>
+                        <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+                        <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">gene</span><span class="p">,</span>
+                        <span class="n">released_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+                        <span class="n">released_kind</span><span class="o">=</span><span class="n">ReleasedGeneKind</span><span class="o">.</span><span class="n">crispr_interference</span><span class="p">,</span>
+                        <span class="n">crispr</span><span class="o">=</span><span class="n">construct</span><span class="p">,</span>
+                    <span class="p">)</span>
                 <span class="n">experiment</span> <span class="o">=</span> <span class="n">EnvironmentResponseExperiment</span><span class="p">(</span>
                     <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-                    <span class="n">genotype</span><span class="o">=</span><span class="n">Genotype</span><span class="p">(</span>
-                        <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
-                            <span class="n">CrisprInterferencePerturbation</span><span class="p">(</span>
-                                <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
-                                <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">gene</span><span class="p">,</span>
-                                <span class="n">crispr</span><span class="o">=</span><span class="n">CrisprConstruct</span><span class="p">(</span>
-                                    <span class="n">effector</span><span class="o">=</span><span class="n">EFFECTOR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-                                    <span class="n">guide_sequence</span><span class="o">=</span><span class="n">spacer</span><span class="p">,</span>
-                                    <span class="n">n_guides</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-                                    <span class="n">library_pool</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"#Pool"</span><span class="p">]),</span>
-                                <span class="p">),</span>
-                            <span class="p">)</span>
-                        <span class="p">]</span>
-                    <span class="p">),</span>
+                    <span class="n">genotype</span><span class="o">=</span><span class="n">Genotype</span><span class="p">(</span><span class="n">perturbations</span><span class="o">=</span><span class="p">[</span><span class="n">target</span><span class="p">]),</span>
                     <span class="n">environment</span><span class="o">=</span><span class="n">item</span><span class="p">[</span><span class="s2">"environment"</span><span class="p">],</span>
                     <span class="n">phenotype</span><span class="o">=</span><span class="n">EnvironmentResponsePhenotype</span><span class="p">(</span>
                         <span class="n">measurement_type</span><span class="o">=</span><span class="n">MeasurementType</span><span class="o">.</span><span class="n">log2_ratio</span><span class="p">,</span>
@@ -802,16 +808,16 @@
                 <span class="n">items</span><span class="o">=</span><span class="p">[],</span>
             <span class="p">),</span>
             <span class="n">DropRule</span><span class="p">(</span>
-                <span class="n">rule</span><span class="o">=</span><span class="s2">"deferred_to_released_gene_name_leaf"</span><span class="p">,</span>
+                <span class="n">rule</span><span class="o">=</span><span class="s2">"stored_on_released_gene_name_leaf"</span><span class="p">,</span>
                 <span class="n">scope</span><span class="o">=</span><span class="s2">"row"</span><span class="p">,</span>
                 <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-                    <span class="s2">"the ORF cell is not ORF-shaped, so it cannot be stored on "</span>
-                    <span class="s2">"CrisprInterferencePerturbation, whose systematic_gene_name is "</span>
-                    <span class="s2">"validated against the ORF pattern; stored once the released-gene-name "</span>
-                    <span class="s2">"leaf lands (0 today; all 20 released targets are ORF-shaped)"</span>
+                    <span class="s2">"the ORF cell is not ORF-shaped, so the target is stored on "</span>
+                    <span class="s2">"ReleasedGeneNamePerturbation verbatim with its construct (#1045), "</span>
+                    <span class="s2">"never dropped; listed here (0 today; all 20 released targets are "</span>
+                    <span class="s2">"ORF-shaped)"</span>
                 <span class="p">),</span>
-                <span class="n">n_records</span><span class="o">=</span><span class="n">n_deferred</span><span class="p">,</span>
-                <span class="n">items</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">deferred_targets</span><span class="p">),</span>
+                <span class="n">n_records</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                <span class="n">items</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">released_targets</span><span class="p">),</span>
             <span class="p">),</span>
             <span class="n">DropRule</span><span class="p">(</span>
                 <span class="n">rule</span><span class="o">=</span><span class="s2">"guide_has_no_released_spacer"</span><span class="p">,</span>
@@ -859,14 +865,14 @@
             <span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s2">"Smith2016: wrote </span><span class="si">%d</span><span class="s2"> of </span><span class="si">%d</span><span class="s2"> rows (</span><span class="si">%d</span><span class="s2"> under a typed compound-identity gap on "</span>
-            <span class="s2">"</span><span class="si">%d</span><span class="s2"> vendor-code drugs); </span><span class="si">%d</span><span class="s2"> with no A/var(A), </span><span class="si">%d</span><span class="s2"> targets deferred to the "</span>
+            <span class="s2">"</span><span class="si">%d</span><span class="s2"> vendor-code drugs); </span><span class="si">%d</span><span class="s2"> with no A/var(A), </span><span class="si">%d</span><span class="s2"> targets on the "</span>
             <span class="s2">"released-gene-name leaf, </span><span class="si">%d</span><span class="s2"> guides with no spacer"</span><span class="p">,</span>
             <span class="n">idx</span><span class="p">,</span>
             <span class="n">source_records</span><span class="p">,</span>
             <span class="nb">sum</span><span class="p">(</span><span class="n">gapped_records</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">gapped_records</span><span class="p">),</span>
             <span class="n">n_nan</span><span class="p">,</span>
-            <span class="n">n_deferred</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">released_targets</span><span class="p">),</span>
             <span class="n">n_no_spacer</span><span class="p">,</span>
         <span class="p">)</span></div>
 

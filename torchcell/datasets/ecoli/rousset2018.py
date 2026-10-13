@@ -21,11 +21,15 @@ is below under THE GROWTH SCREEN IS CUI 2018'S SCREEN.
 
 RECORD = one (sgRNA x screen) ``BacterialEnvironmentResponseExperiment``:
 
-- GENOTYPE: one ``BacterialCrisprInterferencePerturbation`` keyed by the target gene's
-  MG1655 b-number, carrying the 20-nt spacer on the shared ``crispr`` construct
-  (``effector="dCas9"``). The release names genes by SYMBOL, so every symbol is resolved
-  to a current locus through ``reconcile_locus_tags``; the symbol it came from is kept on
-  ``identifier_mapping`` (``route="gene_symbol"``), never dropped.
+- GENOTYPE: one ``BacterialReleasedCrisprPerturbation`` (#1077) keyed by the target
+  gene's SYMBOL, exactly as the release names it, with the 20-nt spacer on the shared
+  ``crispr`` construct (``effector="dCas9"``) and as ``strain_label``, and
+  ``expression_direction="decreased"``. The loader reads no annotation (the owner's
+  rule of 2026-10-12: the data is the data, and the genome is a separate layer joined
+  at modeling time). Before that rule every symbol went through
+  ``reconcile_locus_tags`` to a b-number and 444 records over 111 symbols the pinned
+  GCA_000005845.2 retires, merges or cannot place were dropped; they are records now,
+  and the L4 genome-reference rows report them (#1069).
 - ENVIRONMENT: the screen's own culture, which is one medium for all four screens: LB
   plus 1 microM aTc, 0.2% maltose and 5 mM CaCl2 at 37 C for 2 h, each record carrying
   exactly one ``PhagePerturbation`` at ``multiplicity_of_infection=1``. The aTc that
@@ -139,21 +143,17 @@ RECORDS DROPPED (rule + counts in ``preprocess/dropped_records.json``):
    (``served_by``), so the drop is attributable rather than a disappearance.
 4. ``growth_screen_guide_is_below_cui2018_read_floor`` (1,687 guides): the remaining S1
    rows whose spacer Cui's table does not carry, the low-abundance tail measured above.
-5. ``gene_symbol_is_not_in_the_mg1655_annotation`` (S4/S6; RETIRED against
-   GCA_000005845.2, the insertion-sequence and cryptic-prophage names ``insA-7``,
-   ``lomR_1``, ``C0299``, ``G0-10699``, ...).
-6. ``gene_symbol_collides_with_another_symbol_on_one_mg1655_locus``: two released symbols
-   resolve to ONE current locus (the annotation merges the pseudogene fragments
-   ``yaiT``/``yaiU``, ``ydeK``/``ydeU``, ...). ``reconcile_locus_tags`` keeps both as
-   given so the records stay distinct, and a bare symbol is not a b-number, so neither
-   member can be stored. The group is dropped whole: unlike Tong 2020's b-number case, no
-   member IS the locus tag.
-7. ``gene_symbol_is_ambiguous_in_mg1655``.
+The three symbol rules that used to follow (``gene_symbol_is_not_in_the_mg1655_annotation``
+for a name GCA_000005845.2 retires, such as ``insA-7`` or ``lomR_1``;
+``gene_symbol_collides_with_another_symbol_on_one_mg1655_locus`` for two names the
+annotation merges, such as ``yaiT``/``yaiU``; and ``gene_symbol_is_ambiguous_in_mg1655``)
+are GONE: they removed 444 records over 111 symbols, which are stored as released now,
+and what the pinned assembly makes of a symbol is a verifier finding (#1069).
 
 Retention arithmetic: 59,246 + 3 x 17,220 + 17,220 = 128,126 released (guide, screen)
 cells. The S1 Table's 59,246 are accounted for whole by rules 1 to 4
-(5,063 + 30,811 + 21,685 + 1,687), and rules 5 to 7 remove 444 of the 68,880 phage-derived
-cells, leaving 68,436 records over 3,671 genes. The candidate table's 236,000 is 59,000
+(5,063 + 30,811 + 21,685 + 1,687), and every one of the 68,880 phage-derived cells is a
+record, over 3,708 released symbols. The candidate table's 236,000 is 59,000
 guides x 4 conditions, which counts every guide in every condition; the phage and
 transduction screens were released on the filtered 17,220-guide library.
 
@@ -219,15 +219,14 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     AssayType,
-    BacterialCrisprInterferencePerturbation,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
+    BacterialReleasedCrisprPerturbation,
     BacterialStrainBackground,
     ComponentDefinition,
     Concentration,
     ConcentrationUnit,
     CrisprConstruct,
-    DerivedIdentifierMapping,
     Environment,
     EnvironmentResponsePhenotype,
     Experiment,
@@ -244,10 +243,8 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.datasets.bacteria_common import (
     STRAIN_GENE_NAMESPACES,
-    LocusTagReconciliation,
     assembly_reference,
     bacterial_genome,
-    reconcile_locus_tags,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.literature.manifest import (
@@ -258,12 +255,7 @@ from torchcell.literature.manifest import (
     RetrievalRecord,
 )
 from torchcell.literature.retrieve import pmc_cloud_url
-from torchcell.sequence.genome.bacterial import BacterialGenome
-from torchcell.sequence.genome.ecoli.k12 import (
-    EcoliK12Genome,
-    EcoliK12MG1655Genome,
-    EcoliK12StrainName,
-)
+from torchcell.sequence.genome.ecoli.k12 import EcoliK12MG1655Genome, EcoliK12StrainName
 from torchcell.verification.report import (
     Level,
     LevelResult,
@@ -377,7 +369,6 @@ def table_url(filename: str) -> str:
 
 #: Fraction of the released gene symbols that must resolve to one MG1655 locus
 #: (plan checklist item 4). Measured on the release: 3,912 of 3,944 (0.9919).
-MIN_RESOLVED_FRACTION = 0.95
 
 #: The b-number namespace every record is written in (both host strains are MG1655
 #: derivatives written against the MG1655 assembly).
@@ -1239,108 +1230,36 @@ def coding_strand(frame: pd.DataFrame, filename: str) -> pd.Series:
 # --------------------------------------------------------------------------- #
 # Identifiers
 # --------------------------------------------------------------------------- #
+#: What ``systematic_gene_name`` is on every record, as the release writes it.
+IDENTIFIER_KIND = "gene symbol, as the released S4 and S6 gene column writes it"
+
+
 class StoredGuide(BaseModel):
-    """One kept (guide, gene) pair with the identity its records are stored under."""
+    """One kept (guide, gene) pair, identified as the release identifies it."""
 
     model_config = ConfigDict(frozen=True)
 
     spacer: str
     reported_symbol: str
-    systematic_gene_name: str
-    perturbed_gene_name: str
-
-
-class SymbolResolution(BaseModel):
-    """The one symbol-to-b-number map the whole dataset is stored under.
-
-    ONE reconciliation over the union of every symbol the three tables name, so a gene
-    has a single identity across the five screens. Reconciling per table would let a
-    symbol that collides in one table and not in another be stored two different ways.
-    """
-
-    stored: dict[str, str]
-    retired: tuple[str, ...]
-    collided: tuple[str, ...]
-    ambiguous: tuple[str, ...]
-    report: LocusTagReconciliation
-
-    @property
-    def unstorable(self) -> frozenset[str]:
-        """Symbols that cannot be written as a b-number, so their records are dropped."""
-        return (
-            frozenset(self.retired)
-            | frozenset(self.collided)
-            | frozenset(self.ambiguous)
-        )
 
 
 def genotype(stored: StoredGuide) -> Genotype:
-    """One guide-bearing strain: CRISPRi of its target gene by its 20-nt spacer."""
+    """One guide-bearing strain: CRISPRi of its released target gene by its spacer."""
     return Genotype(
         perturbations=[
-            BacterialCrisprInterferencePerturbation(
-                systematic_gene_name=stored.systematic_gene_name,
-                perturbed_gene_name=stored.perturbed_gene_name,
+            BacterialReleasedCrisprPerturbation(
+                systematic_gene_name=stored.reported_symbol,
+                perturbed_gene_name=stored.reported_symbol,
                 gene_namespace=MG1655_NAMESPACE,
+                strain_label=stored.spacer,
+                identifier_kind=IDENTIFIER_KIND,
+                expression_direction="decreased",
                 crispr=CrisprConstruct(
                     effector=EFFECTOR.value, guide_sequence=stored.spacer, n_guides=1
-                ),
-                identifier_mapping=DerivedIdentifierMapping(
-                    source_identifier=stored.reported_symbol, route="gene_symbol"
                 ),
             )
         ]
     )
-
-
-def canonical_symbol(genome: BacterialGenome[Any], tag: str) -> str:
-    """The genome's own gene symbol for ``tag`` when it resolves back to ``tag``.
-
-    One spelling per locus is what keeps a perturbation from splitting into two graph
-    nodes, so the symbol comes from the pinned annotation rather than from the release's
-    ``gene`` column. A locus with no symbol, or whose symbol resolves elsewhere, is named
-    by its tag.
-    """
-    symbol = genome.genbank.loci[tag].symbol
-    if symbol is None:
-        return tag
-    resolved = genome.resolve_gene_name(symbol).systematic_name
-    return symbol if resolved == tag else tag
-
-
-def resolve_symbols(
-    symbols: Sequence[str], genome: EcoliK12MG1655Genome, *, label: str
-) -> SymbolResolution:
-    """Map every released gene symbol to one MG1655 b-number.
-
-    ``reconcile_locus_tags`` keeps a retired, colliding or ambiguous name as given; a
-    bare gene symbol is not a b-number, so those names have no storable identity and are
-    reported here for the drop accounting. Every other symbol is remapped to its locus,
-    and the remapped tags must be distinct.
-    """
-    names = pd.Series(sorted(set(symbols)), dtype=str)
-    stored, report = reconcile_locus_tags(genome, names, label=label)
-    report.require_resolved(MIN_RESOLVED_FRACTION)
-    mapping = dict(zip(names, stored, strict=True))
-    unstorable = frozenset(report.outside_namespace)
-    resolution = SymbolResolution(
-        stored={k: v for k, v in mapping.items() if v not in unstorable},
-        retired=report.retired_kept,
-        collided=report.kept_on_collision,
-        ambiguous=tuple(sorted(report.ambiguous_kept)),
-        report=report,
-    )
-    accounted = resolution.unstorable
-    unmapped = {k for k, v in mapping.items() if v in unstorable}
-    if accounted != unmapped:
-        raise RuntimeError(
-            f"{label}: symbols with no storable b-number {sorted(unmapped)} are not the "
-            f"retired/colliding/ambiguous set {sorted(accounted)}"
-        )
-    tags = sorted(resolution.stored.values())
-    if len(tags) != len(set(tags)):
-        raise RuntimeError(f"{label}: two symbols stored under one b-number")
-    return resolution
 
 
 # --------------------------------------------------------------------------- #
@@ -1374,16 +1293,15 @@ class DropLog(BaseModel):
 
 
 class IdentifierReport(BaseModel):
-    """What the identifier step did, written to ``preprocess/``."""
+    """What the records are keyed by, written to ``preprocess/``.
+
+    No annotation is read: every released symbol of a stored row is a stored
+    identifier, and what the pinned assembly makes of it is a verifier finding.
+    """
 
     dataset: str
     released_symbols: int
     stored_symbols: int
-    stored_b_numbers: int
-    retired: list[str]
-    collided: list[str]
-    ambiguous: dict[str, list[str]]
-    reconciliation: LocusTagReconciliation
 
 
 # --------------------------------------------------------------------------- #
@@ -1403,13 +1321,11 @@ class CrispriScreenRousset2018Dataset(ExperimentDataset):
         self,
         root: str = "data/torchcell/ecoli_crispri_rousset2018",
         io_workers: int = 0,
-        ecoli_genome: EcoliK12Genome | None = None,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize the dataset; the MG1655 genome is injected or opened in process."""
-        self.ecoli_genome = ecoli_genome
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -1471,18 +1387,6 @@ class CrispriScreenRousset2018Dataset(ExperimentDataset):
             self.raw_dir,
         )
 
-    def _genome(self) -> EcoliK12MG1655Genome:
-        """The MG1655 genome: injected by the build entry points, or opened here."""
-        if self.ecoli_genome is None:  # a direct run; the build entry points inject it
-            self.ecoli_genome = bacterial_genome("ecoli", self.REFERENCE_STRAIN)
-        genome = self.ecoli_genome
-        if not isinstance(genome, EcoliK12MG1655Genome):
-            raise TypeError(
-                f"{type(self).__name__} needs the MG1655 genome, got "
-                f"{type(genome).__name__}"
-            )
-        return genome
-
     @post_process
     def process(self) -> None:
         """Parse the three tables into per-(guide, screen) records; write the LMDB."""
@@ -1495,7 +1399,6 @@ class CrispriScreenRousset2018Dataset(ExperimentDataset):
             filename: coding_strand(frame, filename)
             for filename, frame in tables.items()
         }
-        genome = self._genome()
         record_tables = {c.table for c in CONDITIONS}
         symbols = sorted(
             {
@@ -1505,10 +1408,6 @@ class CrispriScreenRousset2018Dataset(ExperimentDataset):
                 for name in frame.loc[coding[filename], "gene"].dropna()
             }
         )
-        resolution = resolve_symbols(symbols, genome, label=f"{self.name} gene symbols")
-        canonical = {
-            tag: canonical_symbol(genome, tag) for tag in resolution.stored.values()
-        }
 
         environments = {c.screen_id: environment(c) for c in CONDITIONS}
         references = {
@@ -1533,7 +1432,6 @@ class CrispriScreenRousset2018Dataset(ExperimentDataset):
         os.makedirs(self.processed_dir, exist_ok=True)
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
         idx = 0
-        dropped_by_symbol: Counter[str] = Counter()
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for condition in tqdm(CONDITIONS, desc="rousset2018"):
                 frame = tables[condition.table]
@@ -1542,19 +1440,10 @@ class CrispriScreenRousset2018Dataset(ExperimentDataset):
                 reference = references[condition.screen_id]
                 for row in kept.itertuples(index=False):
                     symbol = str(row.gene)
-                    tag = resolution.stored.get(symbol)
-                    if tag is None:
-                        dropped_by_symbol[symbol] += 1
-                        continue
                     experiment = BacterialEnvironmentResponseExperiment(
                         dataset_name=self.name,
                         genotype=genotype(
-                            StoredGuide(
-                                spacer=str(row.target),
-                                reported_symbol=symbol,
-                                systematic_gene_name=tag,
-                                perturbed_gene_name=canonical[tag],
-                            )
+                            StoredGuide(spacer=str(row.target), reported_symbol=symbol)
                         ),
                         environment=condition_environment,
                         phenotype=phenotype(
@@ -1572,15 +1461,14 @@ class CrispriScreenRousset2018Dataset(ExperimentDataset):
         self._write_reports(
             tables,
             coding,
-            resolution,
-            dropped_by_symbol,
+            symbols,
             idx,
             cui2018_spacers(osp.join(self.raw_dir, CUI2018_SCREEN_FILENAME)),
         )
         log.info(
-            "Rousset2018: wrote %d records over %d genes and %d screens",
+            "Rousset2018: wrote %d records over %d released symbols and %d screens",
             idx,
-            len(resolution.stored),
+            len(symbols),
             len(CONDITIONS),
         )
 
@@ -1588,8 +1476,7 @@ class CrispriScreenRousset2018Dataset(ExperimentDataset):
         self,
         tables: Mapping[str, pd.DataFrame],
         coding: Mapping[str, pd.Series],
-        resolution: SymbolResolution,
-        dropped_by_symbol: Mapping[str, int],
+        symbols: Sequence[str],
         kept_records: int,
         cui_spacers: frozenset[str],
     ) -> None:
@@ -1602,9 +1489,6 @@ class CrispriScreenRousset2018Dataset(ExperimentDataset):
         n_served_by_cui = int(in_cui.sum())
         n_below_read_floor = int((~in_cui).sum())
         source_records = len(growth) + sum(len(tables[c.table]) for c in CONDITIONS)
-
-        def by_rule(items: Sequence[str]) -> int:
-            return sum(dropped_by_symbol.get(symbol, 0) for symbol in items)
 
         rules = [
             DropRule(
@@ -1676,39 +1560,6 @@ class CrispriScreenRousset2018Dataset(ExperimentDataset):
                 ),
                 n_records=n_below_read_floor,
             ),
-            DropRule(
-                rule="gene_symbol_is_not_in_the_mg1655_annotation",
-                scope="gene",
-                description=(
-                    "the released gene symbol is no locus tag, symbol or synonym of "
-                    "GCA_000005845.2 (RETIRED), so no b-number can be written for it"
-                ),
-                n_records=by_rule(resolution.retired),
-                items=list(resolution.retired),
-            ),
-            DropRule(
-                rule="gene_symbol_collides_with_another_symbol_on_one_mg1655_locus",
-                scope="gene",
-                description=(
-                    "two released symbols resolve to ONE current MG1655 locus (the "
-                    "annotation merges pseudogene fragments such as yaiT/yaiU). "
-                    "reconcile_locus_tags keeps both as given so the records stay "
-                    "distinct, and a bare symbol is not a b-number, so neither member "
-                    "has a storable identity; unlike a b-number collision, no member IS "
-                    "the locus tag, so the group is dropped whole"
-                ),
-                n_records=by_rule(resolution.collided),
-                items=list(resolution.collided),
-            ),
-            DropRule(
-                rule="gene_symbol_is_ambiguous_in_mg1655",
-                scope="gene",
-                description=(
-                    "the released gene symbol matches more than one MG1655 locus"
-                ),
-                n_records=by_rule(resolution.ambiguous),
-                items=list(resolution.ambiguous),
-            ),
         ]
         drop_log = DropLog(
             dataset=self.name,
@@ -1727,16 +1578,8 @@ class CrispriScreenRousset2018Dataset(ExperimentDataset):
             handle.write(drop_log.model_dump_json(indent=2))
         identifiers = IdentifierReport(
             dataset=self.name,
-            released_symbols=resolution.report.unique_names,
-            stored_symbols=len(resolution.stored),
-            stored_b_numbers=len(set(resolution.stored.values())),
-            retired=list(resolution.retired),
-            collided=list(resolution.collided),
-            ambiguous={
-                name: list(candidates)
-                for name, candidates in resolution.report.ambiguous_kept.items()
-            },
-            reconciliation=resolution.report,
+            released_symbols=len(symbols),
+            stored_symbols=len(symbols),
         )
         with open(
             osp.join(self.preprocess_dir, "identifier_reconciliation.json"), "w"
@@ -1759,17 +1602,17 @@ class CrispriScreenRousset2018Dataset(ExperimentDataset):
 #: The growth screen is absent: it is Cui 2018's screen and is accounted for in the
 #: retention ledger rather than stored.
 EXPECTED_SCREEN_CENSUS: dict[str, int] = {
-    "phage_lambda": 17109,
-    "phage_T4": 17109,
-    "phage_186cIts": 17109,
-    "lambda_transduction": 17109,
+    "phage_lambda": 17220,
+    "phage_T4": 17220,
+    "phage_186cIts": 17220,
+    "lambda_transduction": 17220,
 }
 
 #: The frozen record-count oracle: the four phage-derived screens together.
 EXPECTED_RECORDS = sum(EXPECTED_SCREEN_CENSUS.values())
 
-#: The frozen gene-set oracle: distinct MG1655 b-numbers across the kept records.
-EXPECTED_GENES = 3671
+#: The frozen gene-set oracle: distinct RELEASED gene symbols across the kept records.
+EXPECTED_GENES = 3708
 
 
 def screen_census(records: Iterable[Mapping[str, Any]]) -> LevelResult:
@@ -1887,7 +1730,8 @@ def verify_build(
                 f"{PMCID}.1): one BacterialEnvironmentResponseExperiment per (sgRNA, "
                 "screen), DESeq2 log2FoldChange of guide abundance normalized on a "
                 "non-targeting control guide and paired against each sample's initial "
-                "condition; coding-strand in-gene guides only. The S1 Table growth "
+                "condition; coding-strand in-gene guides only, each keyed by the gene "
+                "SYMBOL the release names (no annotation read). The S1 Table growth "
                 "screen is Cui 2018's and is not stored"
             ),
             page=(

@@ -1468,3 +1468,34 @@ W&B, the 040a project, fold 0 of each arm:
 The gate draws `r9_van_e150_cell_bliss` as the model and `r9_van_e150_cell_anchors_bliss`
 as its zero-shot twin from here (`figure_gate_panels.py`, `MODEL_ARM` and
 `ZERO_SHOT_ARM`).
+
+## 2026.10.13 - The gate's figures: true size, panel b, the status key, and the encoders compared
+
+Three placement fixes and one new sheet in the gate document, all in
+`figure_gate_panels.py` and `sections/2-mockups.tex`. The main sheet was authored 214
+mm tall and placed at 0.56 of the text width so it and its panel captions fit one page,
+which read as narrow; it is now authored at the figure standard's cap, 179 by 170 mm,
+placed at true size (`\tcfig`, the WYSIWYG contract) under a headline caption with the
+panel text as the paragraph after, and every other sheet moves to `\tcfig` as well.
+Panel b's two-line bar annotations at 3.9 pt collapsed into each other at the new
+height; each bar now carries one line at 5 pt, the cell count and the culture. The
+status key strip along the bottom of every sheet is off: the document's first-page
+legend (`\tcstatuslegend`) is the one key, and a sheet carries the per-panel marks only.
+
+The encoders, and how they were compared, are now a subsection and supplement seven of
+the gate. One basis for every encoder: a compound-cold split of the Vanacloig profiles
+(32 compounds on each of three fold seeds, 96 compound-evaluations), the centered
+Spearman across strains between the predicted and the measured profile, the median over
+evaluations as the score. The ladder's 15 chemistry encoders (four fingerprint
+families, RDKit descriptors, seven pretrained molecular models, three concatenations)
+under kernel ridge and nearest neighbors with linear, RBF and Tanimoto kernels, 62
+learner-by-encoder arms: nested ridge on FCFP4 counts leads at 0.359, the best
+pretrained model is Uni-Mol at 0.323, the lowest single encoder ChemBERTa-2 MLM at
+0.219, and no concatenation beats the single best fingerprint except the all-embedding
+concatenation under nearest neighbors at 0.334. The learned environment encoder (038
+round 10) against its bilinear control (round 9), paired on compound and fold: median
+difference -0.036, up on 37 of 96, neither above ridge. The mixture trainer scores on its
+own basis (28 compounds with a molar dose, folds 0 to 2) and is read in its own round
+tables. Supplement seven draws the ladder by encoder with the best learner as the bar
+and every learner as a point, colored by family, and the paired encoder-versus-control
+read sorted by the control's score.

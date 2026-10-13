@@ -608,76 +608,11 @@ def letters_status(fig: Any, axes: list[Any], statuses: list[str]) -> None:
 
 
 def status_key(fig: Any) -> None:
-    """The two status keys along the bottom of a sheet."""
-    if not STATUS_MARKS:
-        return
-    x = 0.03
-    fig.text(
-        x,
-        0.004,
-        "section status",
-        fontsize=5,
-        color=GRAY,
-        ha="left",
-        va="bottom",
-        style="italic",
-    )
-    x += 0.075
-    for key in ("todo", "tent", "final"):
-        glyph, color = SECTION_SYMBOL[key]
-        fig.text(
-            x,
-            0.004,
-            glyph,
-            fontsize=5,
-            color=color,
-            ha="left",
-            va="bottom",
-            family="DejaVu Sans",
-        )
-        fig.text(
-            x + 0.012,
-            0.004,
-            SECTION_WORD[key],
-            fontsize=5,
-            color=GRAY,
-            ha="left",
-            va="bottom",
-        )
-        x += 0.03 + 0.0052 * len(SECTION_WORD[key])
-    x += 0.03
-    fig.text(
-        x,
-        0.004,
-        "figure status",
-        fontsize=5,
-        color=GRAY,
-        ha="left",
-        va="bottom",
-        style="italic",
-    )
-    x += 0.07
-    for key in ("ready", "partial", "todo"):
-        fig.text(
-            x,
-            0.004,
-            STATUS_SYMBOL[key],
-            fontsize=5,
-            color=GRAY,
-            ha="left",
-            va="bottom",
-            family="DejaVu Sans",
-        )
-        fig.text(
-            x + 0.012,
-            0.004,
-            STATUS_WORD[key],
-            fontsize=5,
-            color=GRAY,
-            ha="left",
-            va="bottom",
-        )
-        x += 0.065
+    """No key on the sheet: the document's status legend on its first page (the
+    tcstatuslegend macro in tcdoc.sty) is the one key for the per-panel marks
+    (owner, 2026-10-13); a sheet carries the marks only.
+    """
+    return None
 
 
 def hgrid(ax: Any, step: float) -> None:
@@ -1199,11 +1134,11 @@ def draw_molecules(ax: Any, R: Reads) -> None:
 #: private_torchcell/bioscreen.py (aerobic liquid YPD at 30 C; the archive states no
 #: shaking, ``SHAKING_GAP``; the Bioscreen C is run shaken, per the operator).
 CULTURE = {
-    "vanacloig": "anaerobic, static, SynBase",
-    "hoepfner_hop": "aerobic, 550 rpm, YPD",
-    "hillenmeyer_het": "YPD; aeration not stated",
-    "wildenhain": "aerobic, static, SC",
-    "host": "aerobic, shaken (operator), YPD",
+    "vanacloig": "anaerobic, static",
+    "hoepfner_hop": "aerobic, 550 rpm",
+    "hillenmeyer_het": "aeration not stated",
+    "wildenhain": "aerobic, static",
+    "host": "aerobic, shaken, YPD",
 }
 SOURCE_TITLE = {
     "vanacloig": "Vanacloig 2022, the task",
@@ -1225,16 +1160,12 @@ def draw_sources(ax: Any, R: Reads) -> None:
     rows_: list[tuple[str, str, int, str, bool]] = []
     for src in ["vanacloig", "hoepfner_hop", "hillenmeyer_het", "wildenhain"]:
         r = c.loc[src]
-        detail = (
-            f"{int(r.n_cells):,} cells, {int(r.n_genes):,} genes"
-            if r.n_conditions == r.n_compounds
-            else f"{int(r.n_cells):,} cells, {int(r.n_genes):,} genes, "
-            f"{int(r.n_conditions)} conditions"
-        )
+        # one short line per bar: the cell count and the culture; genes and
+        # conditions per source are in the note's table, not on the sheet
         rows_.append(
             (
                 SOURCE_TITLE[src],
-                f"{detail}\n{CULTURE[src]}",
+                f"{int(r.n_cells):,} cells; {CULTURE[src]}",
                 int(r.n_compounds),
                 src,
                 True,
@@ -1244,9 +1175,7 @@ def draw_sources(ax: Any, R: Reads) -> None:
         r = c.loc[split]
         unit = "conditions" if split == "host_anchor" else "wells"
         n = int(r.n_conditions) if split == "host_anchor" else int(r.n_cells)
-        detail = f"{n:,} {unit}" + (
-            f", {int(r.n_conditions)} conditions" if split != "host_anchor" else ""
-        )
+        detail = f"{n:,} {unit}"
         trained = split in ("host_anchor", "host_ex21")
         rows_.append((HOST_TITLE[split], detail, int(r.n_compounds), split, trained))
     # the four gene-level sources on top, a gap, then the host records by split
@@ -1265,15 +1194,14 @@ def draw_sources(ax: Any, R: Reads) -> None:
             n_cmp * 1.3,
             yi,
             detail,
-            fontsize=3.9,
+            fontsize=5.0,
             ha="left",
             va="center",
             color="black",
-            linespacing=1.1,
             zorder=3,
         )
     ax.set_yticks(y)
-    ax.set_yticklabels([r[0] for r in rows_], fontsize=4.2)
+    ax.set_yticklabels([r[0] for r in rows_], fontsize=5.0)
     ax.set_ylim(-0.6, 9.6)
     ax.set_xscale("log")
     ax.set_xlim(0.7, 3e6)
@@ -1284,7 +1212,7 @@ def draw_sources(ax: Any, R: Reads) -> None:
         0.85,
         4.4,
         "the host readout, " + CULTURE["host"],
-        fontsize=4.2,
+        fontsize=5.0,
         style="italic",
         ha="left",
         va="center",
@@ -3242,6 +3170,211 @@ def fig_si4(R: Reads) -> dict[str, str]:
     return save(fig, "gate_si4_rounds")
 
 
+#: the chemistry encoders of the 038 ladder, by family: what each embeds a compound as
+ENCODER_FAMILY = {
+    "fcfp4_count": ("FCFP4 counts", "fingerprint"),
+    "ecfp4_count": ("ECFP4 counts", "fingerprint"),
+    "ecfp4_bit": ("ECFP4 bits", "fingerprint"),
+    "maccs": ("MACCS keys", "fingerprint"),
+    "rdkit_2d": ("RDKit 2D descriptors", "descriptor"),
+    "mol2vec": ("mol2vec", "pretrained"),
+    "mole_static": ("MolE", "pretrained"),
+    "unimol_v1": ("Uni-Mol v1 (3D)", "pretrained"),
+    "chemberta2_mtr": ("ChemBERTa-2 MTR", "pretrained"),
+    "chemberta2_mlm": ("ChemBERTa-2 MLM", "pretrained"),
+    "molformer_xl": ("MoLFormer-XL", "pretrained"),
+    "roberta_zinc_480m": ("RoBERTa ZINC 480M", "pretrained"),
+    "fingerprints": ("all fingerprints, concatenated", "combo"),
+    "pretrained": ("all pretrained, concatenated", "combo"),
+    "all": ("every embedding, concatenated", "combo"),
+}
+FAMILY_SRC = {
+    "fingerprint": "ridge",
+    "descriptor": "mean",
+    "pretrained": "control",
+    "combo": "hsa",
+}
+
+
+def draw_encoders(ax: Any, R: Reads) -> None:
+    """Supplement seven, a: every chemistry encoder of the ladder, its best learner as
+    the bar and every learner it was run with as a point, on the one basis the ladder
+    scores on (centered Spearman across strains, median over the 96 compound-cold
+    evaluations at the full compound count).
+    """
+    d = R.ladder[(R.ladder.target == "centered") & (R.ladder.model != "selected")]
+    d = d[d.compounds == d.compounds.max()].copy()
+    d["embedding"] = d.kernel.str.split(":").str[-1]
+    d["learner"] = d.model + ", " + d.kernel.str.split(":").str[0]
+    best = (
+        d.sort_values("spearman_median", ascending=False)
+        .groupby("embedding", as_index=False)
+        .first()
+        .sort_values("spearman_median", ascending=False)
+    )
+    data = []
+    for _, r in best.iterrows():
+        label, family = ENCODER_FAMILY.get(r.embedding, (r.embedding, "pretrained"))
+        data.append(
+            (
+                f"{label} ({r.learner})",
+                float(r.spearman_median),
+                None,
+                FAMILY_SRC[family],
+                False,
+            )
+        )
+    bars(ax, data, "median centered Spearman, compound-cold (96 evaluations)", 0.40)
+    y = np.arange(len(data))[::-1]
+    for yi, (_, r) in zip(y, best.iterrows()):
+        others = d[d.embedding == r.embedding]
+        ax.scatter(
+            others.spearman_median,
+            np.full(len(others), yi),
+            s=4,
+            color="black",
+            zorder=4,
+            linewidths=0,
+        )
+    ax.tick_params(axis="y", labelsize=4.6)
+    n_rows = panel_legend(
+        ax,
+        [
+            Patch(
+                facecolor=SRC_COLOR[FAMILY_SRC[f]],
+                edgecolor="black",
+                linewidth=0.4,
+                label=lab,
+            )
+            for f, lab in (
+                ("fingerprint", "fingerprint"),
+                ("descriptor", "RDKit descriptors"),
+                ("pretrained", "pretrained molecular model"),
+                ("combo", "concatenation"),
+            )
+        ],
+        ncol=4,
+    )
+    num("encoderN", int(best.embedding.nunique()))
+    num("encoderLearnerRuns", int(len(d)))
+    num("encoderBest", float(best.spearman_median.iloc[0]))
+    num("encoderBestName", ENCODER_FAMILY[best.embedding.iloc[0]][0])
+    worst = best[~best.embedding.isin(["all", "fingerprints", "pretrained"])]
+    num("encoderWorst", float(worst.spearman_median.iloc[-1]))
+    num("encoderWorstName", ENCODER_FAMILY[worst.embedding.iloc[-1]][0])
+    pre = best[
+        best.embedding.map(lambda e: ENCODER_FAMILY.get(e, ("", "pretrained"))[1])
+        == "pretrained"
+    ]
+    num("encoderBestPretrained", float(pre.spearman_median.iloc[0]))
+    num("encoderBestPretrainedName", ENCODER_FAMILY[pre.embedding.iloc[0]][0])
+    title(
+        ax,
+        "the chemistry encoders on one basis: best learner (bar), every learner (points)",
+        n_rows,
+    )
+
+
+def draw_paired_encoder(ax: Any, R: Reads) -> None:
+    """Supplement seven, b: the learned environment encoder against its bilinear
+    control, paired on compound and fold: the per-evaluation difference, and where the
+    ridge bar and the mixture trainer sit on the same axis.
+    """
+    if not (len(R.bil) and len(R.envenc)):
+        blank(ax, 100, 46)
+        return
+    key_cols = ["compound", "fold", "fold_seed"]
+    a = R.bil[(R.bil.target == "centered") & (R.bil.member == "ensemble")]
+    b = R.envenc[(R.envenc.target == "centered") & (R.envenc.member == "ensemble")]
+    paired = a.merge(b, on=key_cols, suffixes=("_bil", "_enc")).sort_values(
+        "spearman_bil"
+    )
+    x = np.arange(len(paired))
+    ax.vlines(
+        x,
+        paired.spearman_bil,
+        paired.spearman_enc,
+        color=SRC_COLOR["cgt"],
+        linewidth=0.5,
+        alpha=0.6,
+        zorder=2,
+    )
+    ax.scatter(
+        x, paired.spearman_bil, s=4, color=SRC_COLOR["control"], zorder=3, linewidths=0
+    )
+    ax.scatter(
+        x, paired.spearman_enc, s=4, color=SRC_COLOR["cgt"], zorder=4, linewidths=0
+    )
+    ridge = R.ladder_row("krr", "linear:fcfp4_count")
+    ax.axhline(
+        float(ridge.spearman_median), color=SRC_COLOR["ridge"], linewidth=0.8, zorder=1
+    )
+    ax.axhline(0.0, color="black", linewidth=0.4, zorder=1)
+    ax.set_xlim(-1, len(paired))
+    ax.set_xticks([])
+    ax.set_xlabel("the 96 compound-evaluations, sorted by the control's score")
+    ax.set_ylabel("centered Spearman across strains")
+    ax.set_ylim(-0.6, 1.0)
+    ax.yaxis.set_major_locator(MultipleLocator(0.2))
+    ax.yaxis.set_minor_locator(MultipleLocator(0.1))
+    ax.grid(axis="y", which="both", color="#DDDDDD", linewidth=0.3, zorder=0)
+    ax.tick_params(axis="y", which="minor", length=0)
+    ax.set_axisbelow(True)
+    delta = paired.spearman_enc - paired.spearman_bil
+    n = panel_legend(
+        ax,
+        [
+            Line2D(
+                [],
+                [],
+                marker="o",
+                color=SRC_COLOR["control"],
+                linestyle="",
+                markersize=2.5,
+                label="bilinear control, 3-seed ensemble",
+            ),
+            Line2D(
+                [],
+                [],
+                marker="o",
+                color=SRC_COLOR["cgt"],
+                linestyle="",
+                markersize=2.5,
+                label="environment encoder, 3-seed ensemble",
+            ),
+            Line2D(
+                [],
+                [],
+                color=SRC_COLOR["ridge"],
+                linewidth=0.8,
+                label=f"nested ridge, fingerprint counts ({float(ridge.spearman_median):.3f})",
+            ),
+        ],
+        ncol=1,
+    )
+    ax.text(
+        0.02,
+        0.04,
+        f"encoder minus control: median {delta.median():+.3f}, up on {int((delta > 0).sum())} of {len(delta)}",
+        transform=ax.transAxes,
+        fontsize=5,
+        ha="left",
+        va="bottom",
+    )
+    title(ax, "the learned encoder against its control, paired", n)
+
+
+def fig_si7(R: Reads) -> dict[str, str]:
+    """Supplement seven: the encoders compared, and how."""
+    fig = new_sheet(80)
+    fig.get_layout_engine().set(rect=(0, 0.012, 1, 0.94))
+    axes = rows(fig, 1, 2)
+    draw_encoders(axes[0], R)
+    draw_paired_encoder(axes[1], R)
+    letters_status(fig, axes, ["ready", "ready"])
+    return save(fig, "gate_si7_encoders")
+
+
 def newest_svg(stem: str) -> dict[str, str]:
     """The newest ``<stem>_<timestamp>.svg`` of the experiment's image directory.
 
@@ -3368,6 +3501,7 @@ def main() -> None:
     figures["si4"] = fig_si4(R)
     figures["si5"] = newest_svg("r3_convergence")
     figures["si6"] = newest_svg("r3_arms_overview")
+    figures["si7"] = fig_si7(R)
     conv = R.convergence.set_index(["arm", "source"])
     for arm, source, tag in (
         ("mix_van_e150", "vanacloig", "Van"),

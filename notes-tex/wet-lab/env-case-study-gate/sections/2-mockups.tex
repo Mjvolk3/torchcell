@@ -432,3 +432,62 @@ a, b & every \file{*_scores.csv} under \file{results/mixture/} and
 from \file{results/figure_gate_numbers.json}. Status: on file. \\
 \bottomrule
 \end{tabular}}
+
+\clearpage
+\subsection{The encoders, and how they were compared}
+\label{sec:encoders}
+
+Every encoder in this document was scored on ONE basis, so the sheet's bars are
+comparable: a compound-cold split of the Vanacloig profiles (the compound is held out
+with every one of its doses; 32 compounds on each of three fold seeds, 96
+compound-evaluations), the centered Spearman across strains between the predicted and
+the measured profile of the held-out compound, and the median over the evaluations as
+the score. Three kinds of encoder sit on that basis.
+
+\begin{itemize}
+\item \textbf{Fixed chemistry encoders with a shallow learner} (the ladder, 038):
+  \hydencoderN{} ways of embedding a compound, four fingerprint families (FCFP4 and
+  ECFP4 as counts or bits, MACCS keys), RDKit's 2D descriptors, seven pretrained
+  molecular models (mol2vec, MolE, Uni-Mol, ChemBERTa-2 in both pretraining modes,
+  MoLFormer-XL, a ZINC RoBERTa) and three concatenations, each run with kernel ridge
+  and nearest neighbors under linear, RBF and Tanimoto kernels, \hydencoderLearnerRuns{}
+  learner-by-encoder arms, every regularization chosen by a nested fold. The best is
+  nested ridge on FCFP4 counts at \hydencoderBest{}; the best pretrained model is
+  \hydencoderBestPretrainedName{} at \hydencoderBestPretrained{}; the lowest single
+  encoder is \hydencoderWorstName{} at \hydencoderWorst{}.
+\item \textbf{Learned environment encoders} (038 rounds 9 and 10): the bilinear control
+  (a compound embedding read against a learned gene embedding, no attention) and the
+  environment encoder (the compound token with its dose in front of the gene tokens of
+  the cell graph transformer), trained on the same folds, three seeds each; the
+  encoder is read against its control paired on compound and fold, median difference
+  \hydpairedMedian{}, up on \hydpairedUp{} of \hydpairedEvaluations{}.
+\item \textbf{The mixture trainer} (040), the same transformer with the public screens
+  and the host records in one objective, which scores on its own basis (the 28
+  compounds with a molar dose, folds 0 to 2): \hydmixVanEnsemble{} for the gene readout
+  and, under the cell readout, inside its fold noise (\cref{sec:state}).
+\end{itemize}
+
+\tcfig{\figSiSeven}{\textbf{Supplement seven: the encoders compared.} \textbf{a}, Every
+chemistry encoder of the ladder on the one basis, its best learner as the bar (the
+learner named in the label) and every learner it was run with as a point; color is the
+encoder family: fingerprints, descriptors, pretrained models, concatenations. Nested
+ridge on fingerprint counts leads; no pretrained model reaches it. \textbf{b}, The
+learned environment encoder against its bilinear control, paired on compound and fold
+over the \hydpairedEvaluations{} evaluations, sorted by the control's score; the line
+is nested ridge. The encoder is not above its control (median difference
+\hydpairedMedian{}) and neither is above ridge. \status{todo}\,\fstat{file}}{fig:siseven}
+
+\clearpage
+
+{\footnotesize\noindent
+\begin{tabular}{@{}p{8mm}p{168mm}@{}}
+\toprule
+\multicolumn{2}{@{}l}{\textbf{Sources for \cref{fig:siseven}}} \\
+\midrule
+a & \file{038/ladder/ladder_r2_summary.csv}, the centered target at the full compound
+count, every learner-by-encoder row. Status: on file. \\
+b & \file{038/factorized/r9_control/*_scores.csv} and
+\file{038/factorized/r10_envenc/*_scores.csv}, the three-seed ensemble per fold, merged
+on compound, fold and fold seed. Status: on file. \\
+\bottomrule
+\end{tabular}}

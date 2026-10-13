@@ -622,6 +622,7 @@ def test_the_phenotype_inverts_log2_tpm_plus_one_exactly() -> None:
         np.array([0, 12], dtype=np.int64),
     )
     assert dict(phenotype.expression_tpm) == {"b0001": 0.0, "b0002": 6.0}
+    assert phenotype.expression_count is not None
     assert dict(phenotype.expression_count) == {"b0001": 0, "b0002": 12}
     assert phenotype.measurement_type == "rnaseq_tpm"
     assert phenotype.n_mapped_reads is None

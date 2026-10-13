@@ -120,7 +120,8 @@ def table(cells: dict[str, dict[str, Any]]) -> str:
         "training Pearson at the last logged epoch. Bold, the best window mean. "
         "\\src{experiments/019-simb-multimodal/scripts/prot_v26_readout.py}}",
         "  \\label{tab:prot-v26}",
-        "  \\begin{tabular}{@{}lrrrrr@{}}",
+        "  \\setlength{\\tabcolsep}{3pt}",
+        "  \\begin{tabular}{@{}>{\\raggedright\\arraybackslash}p{40mm}*{5}{>{\\raggedleft\\arraybackslash}p{26mm}}@{}}",
         "    \\toprule",
         "    cell & runs (n) & finished (n) & window mean val Pearson per feature (s.d.) & paired difference vs reference, mean (splits up) & train Pearson per feature, last epoch (mean) \\\\",
         "    \\midrule",
@@ -156,6 +157,10 @@ def main() -> None:
         json.dump(out, f, indent=1)
     with open(osp.join(TABLES, "prot_v26.tex"), "w") as f:
         f.write(table(summary))
+    from morph_v25_readout import run_index
+
+    with open(osp.join(TABLES, "wandb_runs_prot_v26.tex"), "w") as f:
+        f.write(run_index(cells, "prot-v26", "Every run of round prot\\_v26 (project torchcell\\_019\\_prot\\_v26) by cell, linked to its W\\&B page. \\src{experiments/019-simb-multimodal/scripts/prot_v26_readout.py}", "prot_v26_readout.py"))
 
 
 if __name__ == "__main__":

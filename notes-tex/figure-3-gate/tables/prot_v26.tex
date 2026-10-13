@@ -5,7 +5,8 @@
   \footnotesize
   \caption[Round v26, proteome alignment]{Round v26 on the knockout proteome (Messner 2023, every proteome genotype), genotype only, v21 small trunk at batch 128, 600 epochs. The window is the mean validation Pearson per feature over epochs 500 to 599 of finished runs; the paired difference is against the reference on the same split seed; the training fit is the eval-mode training Pearson at the last logged epoch. Bold, the best window mean. \src{experiments/019-simb-multimodal/scripts/prot_v26_readout.py}}
   \label{tab:prot-v26}
-  \begin{tabular}{@{}lrrrrr@{}}
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{40mm}*{5}{>{\raggedleft\arraybackslash}p{26mm}}@{}}
     \toprule
     cell & runs (n) & finished (n) & window mean val Pearson per feature (s.d.) & paired difference vs reference, mean (splits up) & train Pearson per feature, last epoch (mean) \\
     \midrule

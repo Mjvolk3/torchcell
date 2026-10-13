@@ -3,15 +3,17 @@
 \begin{table}[htbp]
   \centering
   \footnotesize
-  \caption[Round v25, inductive morphology]{Round v25 by cell (arm plus recipe), genotype only on fig3_core, 116 moving features. The window is the mean validation Pearson per feature over epochs 400 to 499 of finished runs (the 1{,}200-epoch runs of the first wave also carry their 1{,}000 to 1{,}199 mean in the json); the escape fraction is the share of runs whose training Pearson exceeded 0.3 at any epoch; the training fit is at the last logged epoch. A cell with unfinished runs is partial. Bold, the best finished window mean. \src{experiments/019-simb-multimodal/scripts/morph_v25_readout.py}}
+  \caption[Rounds v25 and v26, inductive morphology]{Rounds v25 and v26 by cell (arm plus recipe tags), genotype only on fig3\_core, 116 moving features. The window is the mean validation Pearson per feature over epochs 400 to 499 of finished runs (the 1{,}200-epoch runs of the first wave also carry their 1{,}000 to 1{,}199 mean in the json); the escape fraction is the share of runs whose training Pearson exceeded 0.3 at any epoch; the training fit is at the last logged epoch. A cell with unfinished runs is partial. Bold, the best finished window mean. \src{experiments/019-simb-multimodal/scripts/morph_v25_readout.py}}
   \label{tab:morph-v25}
-  \begin{tabular}{@{}lrrrrr@{}}
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{58mm}*{5}{>{\raggedleft\arraybackslash}p{22mm}}@{}}
     \toprule
-    cell & runs (n) & finished (n) & window mean val Pearson per feature (s.d.) & escape fraction & train Pearson per feature, last epoch (mean) \\
+    cell (arm and recipe tags) & runs (n) & finished (n) & window mean val Pearson per feature (s.d.) & runs escaped (n of n) & train Pearson per feature, last epoch (mean) \\
     \midrule
-    \texttt{M\_zs\_b128\_lr3e-4} & 6 & 6 & \textbf{0.142 (0.058)} & 4 of 6 & 0.24 \\
-    \texttt{M\_cls\_lr1e-4} & 4 & 4 & 0.141 (0.031) & 3 of 4 & 0.33 \\
-    \texttt{M\_zs\_lr3e-4\_mse} & 7 & 7 & 0.140 (0.021) & 7 of 7 & 0.46 \\
+    \texttt{M\_zs\_lr3e-4\_mse} & 12 & 12 & \textbf{0.149 (0.022)} & 12 of 12 & 0.45 \\
+    \texttt{M\_zs\_b128\_lr3e-4} & 6 & 6 & 0.142 (0.058) & 4 of 6 & 0.24 \\
+    \texttt{M\_zs\_lr1e-4\_mse} & 4 & 4 & 0.133 (0.031) & 4 of 4 & 0.63 \\
+    \texttt{M\_cls\_lr1e-4} & 8 & 8 & 0.131 (0.047) & 7 of 8 & 0.44 \\
     \texttt{M\_zs\_b64\_lr3e-4} & 3 & 3 & 0.127 (0.051) & 2 of 3 & 0.28 \\
     \texttt{M\_xattn\_lr3e-4} & 4 & 4 & 0.121 (0.029) & 4 of 4 & 0.54 \\
     \texttt{M\_zs\_lr3e-4} & 4 & 4 & 0.097 (0.072) & 4 of 4 & 0.35 \\
@@ -24,6 +26,7 @@
     \texttt{M\_zs\_b32\_lr3e-4} & 3 & 3 & 0.067 (0.020) & 0 of 3 & 0.11 \\
     \texttt{M\_pool\_b64\_lr3e-4} & 3 & 3 & 0.065 (0.019) & 0 of 3 & 0.12 \\
     \texttt{M\_pool\_b128\_lr3e-4} & 6 & 6 & 0.064 (0.018) & 0 of 6 & 0.10 \\
+    \texttt{M\_xattn\_lr3e-4\_mse} & 4 & 4 & 0.061 (0.057) & 1 of 4 & 0.17 \\
     \texttt{M\_cls\_align1\_lr3e-4\_nocenter\_srccls} & 4 & 4 & 0.047 (0.018) & 0 of 4 & 0.09 \\
     \texttt{M\_cls\_lr1e-3} & 4 & 4 & 0.044 (0.018) & 0 of 4 & 0.10 \\
     \texttt{M\_pool\_lr1e-3} & 4 & 4 & 0.043 (0.017) & 0 of 4 & 0.09 \\
@@ -38,11 +41,13 @@
     \texttt{M\_zs\_lr1e-3\_mse} & 4 & 4 & 0.040 (0.016) & 0 of 4 & 0.10 \\
     \texttt{M\_zs\_align1\_lr3e-4\_srccls\_zs} & 4 & 4 & 0.039 (0.016) & 0 of 4 & 0.07 \\
     \texttt{M\_cls\_lr3e-4\_mse} & 4 & 4 & 0.038 (0.017) & 0 of 4 & 0.07 \\
+    \texttt{M\_cls\_lr1e-4\_mse} & 4 & 4 & 0.038 (0.016) & 0 of 4 & 0.07 \\
     \texttt{M\_cls\_lr3e-3} & 3 & 3 & 0.037 (0.004) & 0 of 3 & 0.11 \\
     \texttt{M\_zs\_lr3e-3} & 3 & 3 & 0.036 (0.005) & 0 of 3 & 0.11 \\
     \texttt{M\_pool\_lr3e-3} & 3 & 3 & 0.036 (0.004) & 0 of 3 & 0.11 \\
     \texttt{M\_xattn\_lr3e-3} & 3 & 3 & 0.035 (0.004) & 0 of 3 & 0.11 \\
     \texttt{M\_zs\_lr1e-3} & 3 & 3 & 0.035 (0.004) & 0 of 3 & 0.08 \\
+    \texttt{M\_zs\_align0.1\_lr3e-4\_mse\_srccls\_zs} & 1 & 1 & 0.033 & 0 of 1 & 0.06 \\
     \texttt{M\_xattn\_lr1e-3} & 3 & 3 & 0.029 (0.004) & 0 of 3 & 0.07 \\
     \texttt{M\_cls\_lr1e-3\_pearson\_mse} & 8 & 8 & 0.020 (0.024) & 0 of 8 & 0.06 \\
     \texttt{M\_zs\_lr1e-3\_pearson\_mse} & 8 & 8 & 0.019 (0.023) & 0 of 8 & 0.05 \\

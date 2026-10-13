@@ -7,8 +7,8 @@
 ``conf/scmd_ohya2005_adapter.yaml`` (which of the ``CellAdapter`` methods run) and the
 constructor wiring. So the fixture is the real ``ScmdOhya2005Dataset`` built hermetically
 in ``tmp_path`` from two synthetic SCMD matrices (the ``test_ohya2005`` recipe: both TSVs
-in ``raw/`` so ``download()`` never runs, a genome stub whose ``resolve_gene_name`` says
-every ORF is current), and the adapter's full ``get_nodes`` / ``get_edges`` output is
+in ``raw/`` so ``download()`` never runs and no genome: every ORF is stored as released,
+#1045), and the adapter's full ``get_nodes`` / ``get_edges`` output is
 compared, node by node and edge by edge, with ``BioCypherNode`` / ``BioCypherEdge``
 objects built by hand from hand-built schema objects.
 
@@ -85,11 +85,6 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.scerevisiae.ohya2005 import OHYA_YPD, ScmdOhya2005Dataset
-from torchcell.sequence.genome.scerevisiae.s288c import (
-    GeneNameResolution,
-    GeneNameStatus,
-    SCerevisiaeGenome,
-)
 
 DATASET = "ScmdOhya2005Dataset"
 FEATURES = ["A101_A", "C103_A1B", "ACV103_A1B", "CCV103_A1B"]
@@ -194,16 +189,6 @@ def _experiment_blob(experiment: CalMorphExperiment) -> str:
 # ------------------------------------------------------------------- fixtures
 
 
-class _StubGenome:
-    """Only ``resolve_gene_name``: every ORF is current under its uppercased name."""
-
-    def resolve_gene_name(self, name: str) -> GeneNameResolution:
-        upper = name.strip().upper()
-        return GeneNameResolution(
-            input_name=name, status=GeneNameStatus.CURRENT, systematic_name=upper
-        )
-
-
 class _Table:
     def __init__(self, columns: list[str], data: list[list[Any]]) -> None:
         self.columns = columns
@@ -262,9 +247,7 @@ def _build(tmp_path: Path) -> Path:
 
 
 def _dataset(root: Path) -> ScmdOhya2005Dataset:
-    return ScmdOhya2005Dataset(
-        root=str(root), genome=cast(SCerevisiaeGenome, _StubGenome())
-    )
+    return ScmdOhya2005Dataset(root=str(root))
 
 
 def _adapter(dataset: ScmdOhya2005Dataset) -> ScmdOhya2005Adapter:

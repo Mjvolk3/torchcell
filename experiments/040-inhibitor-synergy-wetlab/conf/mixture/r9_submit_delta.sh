@@ -25,16 +25,19 @@ mkdir -p experiments/040-inhibitor-synergy-wetlab/slurm/output
 sbatch --job-name=040-r9_van_e150_cell_sum --account="$ACCOUNT" --qos="$ACCOUNT" --time=12:00:00 --export=ALL,SWEEP=conf/mixture/r9_van_e150_cell_sum.yaml,PARALLEL=1 \
   experiments/040-inhibitor-synergy-wetlab/scripts/delta_train_mixture.slurm
 
-sbatch --job-name=040-r9_van_e150_cell_anchors_sum --account="$ACCOUNT" --qos="$ACCOUNT" --time=12:00:00 --export=ALL,SWEEP=conf/mixture/r9_van_e150_cell_anchors_sum.yaml,PARALLEL=1 \
+sbatch --job-name=040-r9_van_e150_cell_bliss --account="$ACCOUNT" --qos="$ACCOUNT" --time=12:00:00 --export=ALL,SWEEP=conf/mixture/r9_van_e150_cell_bliss.yaml,PARALLEL=1 \
+  experiments/040-inhibitor-synergy-wetlab/scripts/delta_train_mixture.slurm
+
+sbatch --job-name=040-r9_van_e150_cell_anchors_bliss --account="$ACCOUNT" --qos="$ACCOUNT" --time=12:00:00 --export=ALL,SWEEP=conf/mixture/r9_van_e150_cell_anchors_bliss.yaml,PARALLEL=1 \
+  experiments/040-inhibitor-synergy-wetlab/scripts/delta_train_mixture.slurm
+
+sbatch --job-name=040-r9_van_e150_cell_bliss_film --account="$ACCOUNT" --qos="$ACCOUNT" --time=12:00:00 --export=ALL,SWEEP=conf/mixture/r9_van_e150_cell_bliss_film.yaml,PARALLEL=1 \
+  experiments/040-inhibitor-synergy-wetlab/scripts/delta_train_mixture.slurm
+
+sbatch --job-name=040-r9_vanhophet_e150_cell_bliss --account="$ACCOUNT" --qos="$ACCOUNT" --time=12:00:00 --export=ALL,SWEEP=conf/mixture/r9_vanhophet_e150_cell_bliss.yaml,PARALLEL=1 \
   experiments/040-inhibitor-synergy-wetlab/scripts/delta_train_mixture.slurm
 
 sbatch --job-name=040-r9_van_e150_cell_lh0p1 --account="$ACCOUNT" --qos="$ACCOUNT" --time=12:00:00 --export=ALL,SWEEP=conf/mixture/r9_van_e150_cell_lh0p1.yaml,PARALLEL=1 \
-  experiments/040-inhibitor-synergy-wetlab/scripts/delta_train_mixture.slurm
-
-sbatch --job-name=040-r9_van_e150_cell_sum_film --account="$ACCOUNT" --qos="$ACCOUNT" --time=12:00:00 --export=ALL,SWEEP=conf/mixture/r9_van_e150_cell_sum_film.yaml,PARALLEL=1 \
-  experiments/040-inhibitor-synergy-wetlab/scripts/delta_train_mixture.slurm
-
-sbatch --job-name=040-r9_vanhophet_e150_cell_sum --account="$ACCOUNT" --qos="$ACCOUNT" --time=12:00:00 --export=ALL,SWEEP=conf/mixture/r9_vanhophet_e150_cell_sum.yaml,PARALLEL=1 \
   experiments/040-inhibitor-synergy-wetlab/scripts/delta_train_mixture.slurm
 
 sbatch --job-name=040-r9_van_e150_cell_s345_p0 --account="$ACCOUNT" --qos="$ACCOUNT" --time=12:00:00 --export=ALL,SWEEP=conf/mixture/r9_van_e150_cell_s345_p0.yaml,PARALLEL=1 \

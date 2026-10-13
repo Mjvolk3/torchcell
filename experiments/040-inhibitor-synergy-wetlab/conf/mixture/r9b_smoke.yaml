@@ -1,0 +1,46 @@
+# experiments/040-inhibitor-synergy-wetlab/conf/mixture/r9b_smoke.yaml
+#
+# Smoke of ``compound_pool: bliss``: a k-compound medium read as k single-compound media
+# through the shared head and composed after it (host: product; source: sum). The
+# second config carries Hillenmeyer HET, whose 26 heterozygous pairs are the only
+# two-compound gene-level records, so the gene-path sum on k = 2 runs in training and
+# in the held-out evaluation; the host path's product runs on the 63 ex23 combinations
+# in every config. Four steps on one GPU per config; the numbers are noise.
+#
+#   sbatch --job-name=040-r9b-smoke --cpus-per-task=2 --mem=12G --time=01:00:00 \
+#     --export=ALL,SWEEP=conf/mixture/r9b_smoke.yaml,PARALLEL=1 \
+#     experiments/040-inhibitor-synergy-wetlab/scripts/gh_train_mixture.slurm
+- name: r9bsmoke_van_cell_bliss_film
+  sources: [vanacloig]
+  readout: cell
+  compound_pool: bliss
+  host_train: anchors+ex21
+  dose: film
+  fit_on: train
+  select: val
+  env_chunk: 8
+  gene_batch: 32
+  host_batch: 8
+  steps: 4
+  eval_every: 2
+  seeds: [0]
+  folds: [0]
+  checkpoint: true
+- name: r9bsmoke_vanhet_cell_bliss
+  sources: [vanacloig, hillenmeyer_het]
+  readout: cell
+  compound_pool: bliss
+  aux_holdout: compound
+  host_train: anchors
+  dose: "off"
+  fit_on: train
+  select: val
+  env_chunk: 8
+  gene_batch: 32
+  host_batch: 8
+  cond_batch: 8
+  steps: 4
+  eval_every: 2
+  seeds: [0]
+  folds: [0]
+  checkpoint: false

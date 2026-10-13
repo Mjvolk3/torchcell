@@ -231,8 +231,12 @@ class MixtureConfig(BaseModel):
     #: how the compound tokens of ONE medium are reduced to the medium's offset and to
     #: the token summary the head reads: ``mean`` makes a three-inhibitor medium read as
     #: the average of its inhibitors (round 7 and earlier), ``sum`` lets each inhibitor
-    #: add; a single-compound medium is identical under both
-    compound_pool: Literal["mean", "sum"] = "mean"
+    #: add; a single-compound medium is identical under both. ``bliss`` reads a
+    #: k-compound medium as k single-compound media through the head and composes
+    #: them after it, the host's fitness as the product of its single-agent fitness
+    #: (Bliss independence), a source's standardized response as the sum; the head
+    #: never sees a multi-compound token (needs ``readout: cell``)
+    compound_pool: Literal["mean", "sum", "bliss"] = "mean"
     #: the W&B project. Rounds 1 to 8 logged to ``torchcell_040-inhibitor-synergy-wetlab``
     #: as one run per config file with fold- and seed-prefixed keys; from round 9 every
     #: (fold, seed) trajectory is its own run, grouped by arm, with the keys every run
@@ -564,6 +568,11 @@ class MixtureModel(nn.Module):
             )
             for emb in self.attribute_tokens:
                 nn.init.normal_(emb.weight, std=0.02)
+        if cfg.compound_pool == "bliss":
+            assert cfg.readout == "cell" and cfg.compound_set == "tokens", (
+                "compound_pool: bliss composes single-compound readings of the shared "
+                "head; it needs readout: cell and compound_set: tokens"
+            )
         # one decoder, one linear head per source: scale 1 and shift 0 at the start, so
         # the arm starts as the shared head
         self.source_scale = nn.Embedding(n_tokens, 1)
@@ -631,6 +640,15 @@ class MixtureModel(nn.Module):
             return tokens.sum(1)
         return tokens.mean(1)
 
+    def split_media(self, e: torch.Tensor) -> torch.Tensor:
+        """Under ``compound_pool: bliss`` a k-compound medium is read as k single-compound
+        media, [C, k, d] -> [C x k, 1, d], and composed after the head; otherwise ``e``.
+        """
+        c, k, d = e.shape
+        if self.cfg.compound_pool == "bliss" and k > 1:
+            return e.reshape(c * k, 1, d)
+        return e
+
     def medium_state(
         self, h: torch.Tensor, e: torch.Tensor, strain: torch.Tensor | None
     ) -> tuple[torch.Tensor | None, torch.Tensor, torch.Tensor]:
@@ -638,8 +656,10 @@ class MixtureModel(nn.Module):
 
         Returns (rows of ``H^c`` at each strain's deleted genes [B, C, d] or None when no
         strain is read, the mean of ``H^c`` over genes [C, d], the mean of the compound
-        tokens after they read the genome [C, d]).
+        tokens after they read the genome [C, d]). Under ``compound_pool: bliss`` C is
+        the number of single-compound media the k-compound media split into.
         """
+        e = self.split_media(e)
         n, d = h.shape
         c, k = e.shape[0], e.shape[1]
         env, pooled, token = [], [], []
@@ -682,6 +702,8 @@ class MixtureModel(nn.Module):
         and there is no gene bias, so the cell is read at its gene mean and its medium
         alone, through the same head and with its own source scale and shift.
         """
+        k_set = e.shape[1]
+        e = self.split_media(e)
         c, d = pooled.shape
         if env is None or h_del is None:
             assert strain is None, "an empty genotype reads no perturbed rows"
@@ -706,14 +728,29 @@ class MixtureModel(nn.Module):
         # the compound-free medium (the host's uninhibited anchor) has no compound
         # token, and the mean over an empty set is NaN; its offset is zero
         if e.shape[1]:
-            base = gene + self.offset(self.pool_compounds(e)).T
+            offset = self.offset(self.pool_compounds(e)).T.expand(b, c)
         else:
-            base = gene.expand(b, c)
+            offset = torch.zeros(b, c, device=env.device, dtype=torch.float32)
         head = self.gene_head(self.gene_norm(state.float())).squeeze(-1)
         if self.cfg.source_head or source_index == self.host_source:
             index = torch.full((1,), source_index, dtype=torch.long, device=env.device)
             head = head * self.source_scale(index) + self.source_shift(index)
-        return base + head
+        out = offset + head
+        if self.cfg.compound_pool == "bliss" and k_set > 1:
+            # the k single-compound readings of one medium, composed as Bliss
+            # independence: on the host's fitness scale the medium's fitness is the
+            # PRODUCT of its compounds' single-agent fitness (the uninhibited anchor
+            # reads 1); on a source's standardized log-ratio response the compounds ADD.
+            # Round 9's sum pooling read a three-inhibitor medium as fitter than its
+            # singles (0.74, 0.78, 0.86 at one, two, three) because a summed token is
+            # outside anything the head was trained on; here every reading is a
+            # single-compound medium of the kind the head is trained on.
+            out = out.view(b, c // k_set, k_set)
+            if source_index == self.host_source:
+                out = out.clamp(min=1e-3).prod(dim=-1)
+            else:
+                out = out.sum(dim=-1)
+        return gene + out
 
     def host_logits(
         self, pooled: torch.Tensor, token: torch.Tensor, e: torch.Tensor

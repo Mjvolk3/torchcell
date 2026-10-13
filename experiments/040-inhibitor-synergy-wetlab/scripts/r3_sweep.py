@@ -534,43 +534,51 @@ def round9_arms() -> list[dict[str, object]]:
     on the single-source arm, 0.69 / 0.67 / 0.67 zero-shot), and the model reduces a
     medium's compound tokens by their MEAN in both places the host reads them (the
     medium offset and the token summary), so a three-inhibitor medium is read as the
-    average of its inhibitors by construction. ``compound_pool: sum`` lets each inhibitor
-    add, with no change at one compound. The single-source arm reads it with the
-    titration fitted, the anchors arm zero-shot, the three-source arm with Hillenmeyer's
-    26 heterozygous pairs as the only multi-compound records the sum can learn from.
-    ``lambda_host`` 0.1 is the best public gene-readout arm of wave 2 re-asked under the
-    cell readout, and ``_s345`` on folds 0 to 4 is the round-4 seed ensemble for the
-    cell readout, the noise floor every other reading is held against.
+    average of its inhibitors by construction.
+
+    ``compound_pool: sum`` was the first lever (one fold ran before the Vanacloig store
+    was rebuilt under it, 2026-10-12 19:18): it moved the composition the WRONG way,
+    0.74 / 0.78 / 0.86 at one, two and three inhibitors, growth AUROC 0.30, because a
+    summed token is outside anything the head is trained on. The single-source sum arm
+    stays for the three-fold record; the other sum arms are replaced by ``bliss``: a
+    k-compound medium is read as k single-compound media through the head, the host's
+    fitness is the product of its single-agent fitness, a source's standardized
+    response the sum, so every reading is of the kind the head is trained on and the
+    composition carries no free parameter. The anchors arm reads it zero-shot, the
+    FiLM arm with the dose channel, the three-source arm with Hillenmeyer's 26
+    heterozygous pairs as the multi-compound training records the additive gene-level
+    composition is fitted on. ``lambda_host`` 0.1 is the best public gene-readout arm
+    of wave 2 re-asked under the cell readout, and ``_s345`` on folds 0 to 4 is the
+    round-4 seed ensemble for the cell readout, the noise floor every other reading is
+    held against.
     """
     return [
         arm("van_e150_cell_sum", "van", 150, readout="cell", compound_pool="sum"),
+        arm("van_e150_cell_bliss", "van", 150, readout="cell", compound_pool="bliss"),
         arm(
-            "van_e150_cell_anchors_sum",
+            "van_e150_cell_anchors_bliss",
             "van",
             150,
             readout="cell",
             host_train="anchors",
-            compound_pool="sum",
+            compound_pool="bliss",
         ),
-        arm("van_e150_cell_lh0p1", "van", 150, readout="cell", lambda_host=0.1),
-        # the dose FiLM arm fits the titration in sample (Spearman 0.918 against 0.434
-        # without a dose channel) and still reads one fitness at one, two and three
-        # inhibitors (0.83 / 0.83 / 0.82); with the sum it can read dose AND add
         arm(
-            "van_e150_cell_sum_film",
+            "van_e150_cell_bliss_film",
             "van",
             150,
             readout="cell",
-            compound_pool="sum",
+            compound_pool="bliss",
             dose="film",
         ),
         arm(
-            "vanhophet_e150_cell_sum",
+            "vanhophet_e150_cell_bliss",
             "vanhophet",
             150,
             readout="cell",
-            compound_pool="sum",
+            compound_pool="bliss",
         ),
+        arm("van_e150_cell_lh0p1", "van", 150, readout="cell", lambda_host=0.1),
         arm(
             "van_e150_cell",
             "van",

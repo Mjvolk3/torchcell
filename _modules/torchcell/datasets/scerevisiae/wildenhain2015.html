@@ -138,19 +138,24 @@
 <span class="sd">background rides on the reference's ``StrainReferenceGenome``. Each record's genotype is:</span>
 
 <span class="sd">- a ``BarcodedKanMxDeletionPerturbation`` (cassette kanMX4, sourced to Giaever 2014; the</span>
-<span class="sd">  release publishes no barcode, a typed gap) for 209 of the 242 released ORFs;</span>
-<span class="sd">- a ``ConditionalAllelePerturbation`` with ``allele_class=None`` and typed gaps naming Sci</span>
-<span class="sd">  Data Table 1 / Cell Systems Table S3 (not mirrored) for the 33 released ORFs that are</span>
-<span class="sd">  SGD-essential (``ESSENTIAL_GENE_ORFS``): a haploid kanMX null of an essential gene is</span>
-<span class="sd">  not viable, so these strains carry a conditional allele whose identity the release does</span>
-<span class="sd">  not carry. They are real measurements, so they are emitted with the gap, not dropped;</span>
+<span class="sd">  release publishes no barcode, a typed gap) for every one of the 242 released ORFs,</span>
+<span class="sd">  keyed by the released ``orf`` with the released ``sym`` of the row as</span>
+<span class="sd">  ``perturbed_gene_name``, both verbatim. 33 of the 242 ORFs are SGD-essential</span>
+<span class="sd">  (``ESSENTIAL_GENE_ORFS``, kept as the documented contradiction): a haploid kanMX null</span>
+<span class="sd">  of an essential gene is not viable, so those strains must carry some other allele, but</span>
+<span class="sd">  both papers call every sentinel a Euroscarf deletion strain and the release names no</span>
+<span class="sd">  allele. The owner rule of 2026-10-12 stores what the authors reported and files the</span>
+<span class="sd">  contradiction in the dataset note, so they are stored as the deletions the release</span>
+<span class="sd">  calls them, never re-typed by an annotation at load time;</span>
 <span class="sd">- the EMPTY genotype (the BY4741 background alone) for the released ``wild type`` screen.</span>
 
 <span class="sd">The released rows whose ``orf`` is not a systematic name are strain screens, not</span>
-<span class="sd">controls: ``NA/NNK1`` is the NNK1 (YKL171W) strain and is mapped to it;</span>
-<span class="sd">``NULL/wild type`` is the BY4741 screen; ``NA/TSCII``, ``NULL/YGL11`` and ``NULL/wtn01``</span>
-<span class="sd">name no resolvable strain and are held in the ledger under</span>
-<span class="sd">``strain_label_unresolved`` until Table 1 is mirrored.</span>
+<span class="sd">controls: ``NULL/wild type`` is the BY4741 screen; ``NA/NNK1`` is mapped to YKL171W</span>
+<span class="sd">(a synonym route that the released-gene-name leaf of #1067's yeast analogue replaces</span>
+<span class="sd">once it exists; until then the mapping keeps the 678 rows served); ``NA/TSCII``,</span>
+<span class="sd">``NULL/YGL11`` and ``NULL/wtn01`` name no strain a mirrored source identifies and are</span>
+<span class="sd">held in the ledger under ``strain_label_unresolved`` for the same leaf. No genome is</span>
+<span class="sd">read at build time.</span>
 
 <span class="sd">DATA SOURCE. PubChem BioAssay AID 1159580 (the chemgrid.org/cgm portal is an interactive</span>
 <span class="sd">PHP site with no bulk export). Two artifacts are mirrored and sha256-pinned: the per-AID</span>
@@ -159,9 +164,10 @@
 <span class="sd">description JSON (column definitions, the protocol as submitted). Both are read from the raw</span>
 <span class="sd">mirror at build time; the URLs are retrieval metadata, not live dependencies.</span>
 
-<span class="sd">WHAT THE NUMBER IS. The stored response is the released per-screen ``z_score``, averaged</span>
-<span class="sd">over the screens of a (strain, compound) cell exactly as the paper constructs the matrix</span>
-<span class="sd">("Z scores were calculated and averaged for the replicate screens"). The z is computed by</span>
+<span class="sd">WHAT THE NUMBER IS. The stored response is the released per-screen ``z_score``, one</span>
+<span class="sd">record per released screen (the paper averaged them for its matrix, "Z scores were</span>
+<span class="sd">calculated and averaged for the replicate screens"; the release carries the per-screen</span>
+<span class="sd">values, so those are what is stored and the mean is a modeling-time choice). The z is computed by</span>
 <span class="sd">"fitting a normal distribution with N(1,IQR)" to the median-normalized OD of ONE strain's</span>
 <span class="sd">screen, so it is IQR-scaled and its 0 is that SAME strain's plate-median growth, not</span>
 <span class="sd">BY4741 under the compound. The reference therefore states the vehicle (no-compound)</span>
@@ -169,26 +175,29 @@
 <span class="sd">deletion strain" lives in the reference's ``units`` text (the schema gap is recorded in the</span>
 <span class="sd">dendron note).</span>
 
-<span class="sd">SCREEN COUNTING (measured, and it corrects the previous build). A (strain, compound) cell</span>
-<span class="sd">recurs across the four libraries, and the export ALSO re-emits the same datapoint under two</span>
-<span class="sd">gene-symbol spellings (``MDH1`` / ``mdh1``): of the 46,195 cells with more than one released</span>
-<span class="sd">row, 33,483 contain byte-identical duplicates. Within a cell, two rows sharing a z_score</span>
-<span class="sd">share every other data column too, and no two genuinely distinct datapoints of a cell share</span>
-<span class="sd">a z_score, so the z value IS the datapoint key. The key is the PARSED value, not the string,</span>
-<span class="sd">so ``-4.0`` and ``-4.00`` are one datapoint (measured: 0 of the 428,573 cells hold two z</span>
-<span class="sd">strings of equal value, so the parsed key and the string key give the same cells). After</span>
-<span class="sd">deduplication the screens-per-cell histogram is {1: 412,368, 2: 14,579, 3: 1,617, 4: 7, 5: 2}. ``n_samples`` is therefore the</span>
-<span class="sd">number of contributing SCREENS with ``sample_unit=screen`` (the independent unit; the two</span>
-<span class="sd">OD reads inside a screen are the technical duplicate the z already averages), and the</span>
-<span class="sd">uncertainty is the sample SD across those screens, or a typed ``ProvenanceGap`` for the</span>
-<span class="sd">single-screen cells. The previous build's ``n_samples = 2 x rows`` counted OD reads of</span>
-<span class="sd">re-exported duplicates.</span>
+<span class="sd">SCREEN COUNTING. A (strain, compound) cell recurs across the libraries, and the export</span>
+<span class="sd">ALSO re-emits the same datapoint under two gene-symbol spellings (``MDH1`` / ``mdh1``).</span>
+<span class="sd">Within a cell, two rows sharing a z_score share every other data column too, and no two</span>
+<span class="sd">genuinely distinct datapoints of a cell share a z_score, so the PARSED z value is the</span>
+<span class="sd">datapoint key (``-4.0`` and ``-4.00`` are one datapoint). A re-exported row is a true</span>
+<span class="sd">duplicate of the release and collapses onto the first row carrying it (its</span>
+<span class="sd">``PUBCHEM_RESULT_TAG`` is listed on the datapoint); every DISTINCT datapoint of a cell is</span>
+<span class="sd">its own record, with ``replicate_id`` = the ``PUBCHEM_RESULT_TAG`` of the row it came</span>
+<span class="sd">from, ``n_samples = 1`` with ``sample_unit=screen`` (the two OD reads inside a screen are</span>
+<span class="sd">the technical duplicate the z already averages), the row's own released call as the</span>
+<span class="sd">category, and typed gaps on the per-screen uncertainty (the release carries none) and on</span>
+<span class="sd">``screen_id`` (no library or screen column). Earlier builds averaged the 2 to 5 screens</span>
+<span class="sd">of a cell into one record with a sample SD; under the owner rule of 2026-10-12 every</span>
+<span class="sd">released screen is stored as released.</span>
 
 <span class="sd">RECORDS DROPPED (rule + count in ``preprocess/dropped_records.json``, applied in this</span>
-<span class="sd">order): ``strain_label_unresolved`` (the TSCII, YGL11 and wtn01 screens), then</span>
-<span class="sd">``compound_without_a_structure_identifier`` (the 5 SID-only compounds, which have no CID and</span>
-<span class="sd">no SMILES). Everything else is served: all 5,173 CIDs resolve to an InChIKey and a</span>
-<span class="sd">canonical PubChem name through the pinned compound-identity table.</span>
+<span class="sd">order): ``strain_label_unresolved`` (the TSCII, YGL11 and wtn01 rows, held for the</span>
+<span class="sd">released-gene-name leaf), then ``re_exported_duplicate_row`` (the release's own</span>
+<span class="sd">byte-identical re-emissions). The 5 SID-only compounds (no CID and no SMILES) are</span>
+<span class="sd">STORED: ``resolved_compound`` names them by their SID and attaches the typed</span>
+<span class="sd">``inchikey`` gap, and the ledger lists them under</span>
+<span class="sd">``compounds_without_a_structure_identifier``; every other CID resolves to an InChIKey</span>
+<span class="sd">and a canonical PubChem name through the pinned compound-identity table.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -205,7 +214,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">UTC</span><span class="p">,</span> <span class="n">datetime</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">statistics</span><span class="w"> </span><span class="kn">import</span> <span class="n">fmean</span><span class="p">,</span> <span class="n">stdev</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span>
@@ -229,7 +237,6 @@
     <span class="n">Compound</span><span class="p">,</span>
     <span class="n">Concentration</span><span class="p">,</span>
     <span class="n">ConcentrationUnit</span><span class="p">,</span>
-    <span class="n">ConditionalAllelePerturbation</span><span class="p">,</span>
     <span class="n">CultureEnvironment</span><span class="p">,</span>
     <span class="n">CultureFormat</span><span class="p">,</span>
     <span class="n">EndpointRule</span><span class="p">,</span>
@@ -253,7 +260,6 @@
     <span class="n">StrainEnvironmentResponseExperimentReference</span><span class="p">,</span>
     <span class="n">StrainReferenceGenome</span><span class="p">,</span>
     <span class="n">Temperature</span><span class="p">,</span>
-    <span class="n">UncertaintyType</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.strain_background</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">BRACHMANN_1998</span><span class="p">,</span>
@@ -263,7 +269,6 @@
     <span class="n">standard_background</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.scerevisiae.gene_name_reconcile</span><span class="w"> </span><span class="kn">import</span> <span class="n">default_genome</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.literature.manifest</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ROLE_RAW_DATA</span><span class="p">,</span>
     <span class="n">ArtifactRecord</span><span class="p">,</span>
@@ -271,7 +276,6 @@
     <span class="n">RetrievalMethod</span><span class="p">,</span>
     <span class="n">RetrievalRecord</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ProvenanceGap</span><span class="p">,</span>
@@ -561,8 +565,9 @@
     <span class="n">line</span><span class="o">=</span><span class="s2">"50"</span><span class="p">,</span>
     <span class="n">note</span><span class="o">=</span><span class="s2">"the 2015 paper says the same: 'S. cerevisiae deletion strains were obtained "</span>
     <span class="s2">"from the Euroscarf deletion set and are isogenic to BY4741 (Table S3).' The 33 "</span>
-    <span class="s2">"SGD-essential released ORFs contradict 'deletion strain' for those strains, whose "</span>
-    <span class="s2">"collection is therefore a typed gap (ESSENTIAL_GENE_ORFS)"</span><span class="p">,</span>
+    <span class="s2">"SGD-essential released ORFs (ESSENTIAL_GENE_ORFS) contradict 'deletion strain' for "</span>
+    <span class="s2">"those strains; they are stored as the release reports them and the contradiction is "</span>
+    <span class="s2">"filed in the dataset note"</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">WILD_TYPE_SCREEN</span> <span class="o">=</span> <span class="n">_scidata</span><span class="p">(</span>
     <span class="s2">"BY4741 wild type"</span><span class="p">,</span>
@@ -651,21 +656,10 @@
 
 <span class="n">WILDENHAIN_SC</span> <span class="o">=</span> <span class="n">_wildenhain_sc</span><span class="p">()</span>
 
+
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 <span class="c1"># Strain background (BY4741), the 33 essential-gene strains, non-ORF strain labels</span>
 <span class="c1"># --------------------------------------------------------------------------- #</span>
-<span class="c1">#: The per-strain roster (allele, collection, accession) that would resolve every</span>
-<span class="c1">#: strain-level gap below. NOT mirrored; retrieving it needs the user's go-ahead.</span>
-<span class="n">STRAIN_TABLES</span> <span class="o">=</span> <span class="n">Provenance</span><span class="p">(</span>
-    <span class="n">source_uri</span><span class="o">=</span><span class="s2">"Sci Data 2016 Table 1 (available online only); Cell Systems 2015 "</span>
-    <span class="s2">"Table S3"</span><span class="p">,</span>
-    <span class="n">citation_key</span><span class="o">=</span><span class="n">SCIDATA_CITATION_KEY</span><span class="p">,</span>
-    <span class="n">method</span><span class="o">=</span><span class="s2">"not mirrored: the per-strain sentinel roster ('The 242 different S. "</span>
-    <span class="s2">"cerevisiae deletion strains used as sentinels to generate the CGM (Table 1 "</span>
-    <span class="s2">"(available online only))', Sci Data paper.md line 50)"</span><span class="p">,</span>
-<span class="p">)</span>
-
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_background_allele</span><span class="p">(</span><span class="n">allele</span><span class="p">:</span> <span class="n">BackgroundAllele</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BackgroundAllele</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The allele with a pending-review gap on its (unpublished) construction."""</span>
     <span class="k">return</span> <span class="n">BackgroundAllele</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span>
@@ -703,10 +697,12 @@
 <span class="p">)</span>
 
 <span class="c1">#: The 33 released ORFs that are essential in torchcell's SGD essentiality set (#504</span>
-<span class="c1">#: finding 1). A haploid kanMX null of an essential gene is not viable, so each is served</span>
-<span class="c1">#: as a ConditionalAllelePerturbation of unknown class. Pinned here (not read at build</span>
-<span class="c1">#: time, so the build does not depend on another dataset's store); the test recomputes it</span>
-<span class="c1">#: from ESSENTIAL_GENE_SET_SOURCE when that file is present. ILV3 (YJR016C) and SLN1</span>
+<span class="c1">#: finding 1): a haploid kanMX null of an essential gene is not viable, so these strains</span>
+<span class="c1">#: must carry some other allele the release does not name. They are STORED as the</span>
+<span class="c1">#: deletions the release calls them (owner rule 2026-10-12: a reported value that</span>
+<span class="c1">#: contradicts an annotation is stored as reported, the contradiction filed in the note).</span>
+<span class="c1">#: Pinned here as documentation only; nothing at build time reads it. The test recomputes</span>
+<span class="c1">#: it from ESSENTIAL_GENE_SET_SOURCE when that file is present. ILV3 (YJR016C) and SLN1</span>
 <span class="c1">#: (YIL147C) are the two whose essentiality is condition/background dependent.</span>
 <span class="n">ESSENTIAL_GENE_ORFS</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
     <span class="p">{</span>
@@ -729,9 +725,10 @@
 <span class="w">    </span><span class="sd">"""How one released (orf, sym) pair whose ``orf`` is not a systematic name is read.</span>
 
 <span class="sd">    ``mapped_to_orf``: a real gene's strain released without its ORF (served on that</span>
-<span class="sd">    ORF, checked against the genome at build time). ``wild_type``: the BY4741 parental</span>
-<span class="sd">    screen (served as the empty genotype). ``unresolved``: no strain the mirrored</span>
-<span class="sd">    sources name; held in the ledger under ``strain_label_unresolved``.</span>
+<span class="sd">    ORF by a pinned map, no genome read; the released-gene-name leaf replaces the map).</span>
+<span class="sd">    ``wild_type``: the BY4741 parental screen (served as the empty genotype).</span>
+<span class="sd">    ``unresolved``: no strain the mirrored sources name; held in the ledger under</span>
+<span class="sd">    ``strain_label_unresolved`` for the same leaf.</span>
 <span class="sd">    """</span>
 
     <span class="n">orf</span><span class="p">:</span> <span class="nb">str</span>
@@ -956,17 +953,49 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">DropLog</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Every retention rule applied to a build, in the order they were applied."""</span>
+<span class="w">    </span><span class="sd">"""Every retention rule applied to a build, in the order they were applied.</span>
+
+<span class="sd">    ``source_records`` counts released datapoint rows (a row with a z_score);</span>
+<span class="sd">    ``kept_records`` the records written, one per distinct released screen.</span>
+<span class="sd">    ``compounds_without_a_structure_identifier`` lists the compound identities stored</span>
+<span class="sd">    with a typed ``inchikey`` gap (nothing is dropped for them).</span>
+<span class="sd">    """</span>
 
     <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">source_records</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">kept_records</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">dropped_records</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DropRule</span><span class="p">]</span>
+    <span class="n">compounds_without_a_structure_identifier</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ScreenDatapoint</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One distinct released screen of a (strain, compound) cell: the row as released."""</span>
+
+    <span class="c1">#: ``PUBCHEM_RESULT_TAG`` of the first released row carrying this datapoint; the</span>
+    <span class="c1">#: record's ``replicate_id``.</span>
+    <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">z</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="c1">#: the row's ``sym`` cell, verbatim (the record's ``perturbed_gene_name``)</span>
+    <span class="n">sym</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">non_replicate</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">outcome</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">bioactivity</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="c1">#: tags of the release's own byte-identical re-emissions of this datapoint</span>
+    <span class="n">re_exported_tags</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">category</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ResponseCategory</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The row's released call on the shared axis + its verbatim source words."""</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">outcome</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">bioactivity</span>
+            <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">outcome</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">bioactivity</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">OUTCOME_CATEGORY</span><span class="p">[(</span><span class="bp">self</span><span class="o">.</span><span class="n">outcome</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bioactivity</span><span class="p">)],</span> <span class="n">label</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">MatrixCell</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""One (strain, compound) cell of the CGM, collapsed over its released screens."""</span>
+<span class="w">    </span><span class="sd">"""One (strain, compound) cell of the CGM: its distinct released screens."""</span>
 
     <span class="c1">#: the strain key: a systematic ORF (``NA/NNK1`` rows land on YKL171W),</span>
     <span class="c1">#: ``WILD_TYPE_KEY`` for the BY4741 screen, or ``"&lt;orf&gt;/&lt;sym&gt;"`` for an unresolved</span>
@@ -975,41 +1004,24 @@
     <span class="n">identity</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">pubchem_cid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
     <span class="n">smiles</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
-    <span class="c1">#: parsed z_score -&gt; (non-replicate flag, activity outcome, bioactivity), one entry</span>
-    <span class="c1">#: per DISTINCT released datapoint (the z value is the datapoint key, so ``-4.0`` and</span>
-    <span class="c1">#: ``-4.00`` are one; see the module docstring for the measurement behind that).</span>
-    <span class="n">screens</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">z_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""The distinct per-screen z-scores contributing to this cell."""</span>
-        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">screens</span><span class="p">)</span>
+    <span class="c1">#: parsed z_score -&gt; the released screen, one entry per DISTINCT datapoint (the z</span>
+    <span class="c1">#: value is the datapoint key, so ``-4.0`` and ``-4.00`` are one)</span>
+    <span class="n">screens</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">ScreenDatapoint</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">n_screens</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Number of contributing screens (the independent unit of replication)."""</span>
+<span class="w">        </span><span class="sd">"""Number of distinct released screens (one record each)."""</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">screens</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">n_re_exported_rows</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Released rows that re-emit a datapoint this cell already carries."""</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">screen</span><span class="o">.</span><span class="n">re_exported_tags</span><span class="p">)</span> <span class="k">for</span> <span class="n">screen</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">screens</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">all_screens_non_replicating</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Whether EVERY contributing screen's two OD reads failed to replicate."""</span>
-        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">flag</span> <span class="o">==</span> <span class="s2">"1"</span> <span class="k">for</span> <span class="n">flag</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">screens</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">category</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ResponseCategory</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""The released curation verdict on the shared axis + its verbatim source words.</span>
-
-<span class="sd">        A cell whose screens DISAGREE has no single released call, so it resolves to</span>
-<span class="sd">        ``not_determined`` and the label keeps every word the release used.</span>
-<span class="sd">        """</span>
-        <span class="n">outcomes</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">outcome</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">outcome</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">screens</span><span class="o">.</span><span class="n">values</span><span class="p">()})</span>
-        <span class="n">activities</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">bio</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">bio</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">screens</span><span class="o">.</span><span class="n">values</span><span class="p">()})</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">outcomes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">activities</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">label</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">outcomes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">activities</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">outcomes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="n">activities</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
-            <span class="p">)</span>
-            <span class="k">return</span> <span class="n">OUTCOME_CATEGORY</span><span class="p">[(</span><span class="n">outcomes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">activities</span><span class="p">[</span><span class="mi">0</span><span class="p">])],</span> <span class="n">label</span>
-        <span class="n">words</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">outcomes</span><span class="p">,</span> <span class="o">*</span><span class="p">[</span><span class="n">bio</span> <span class="k">for</span> <span class="n">bio</span> <span class="ow">in</span> <span class="n">activities</span> <span class="k">if</span> <span class="n">bio</span><span class="p">]]</span>
-        <span class="k">return</span> <span class="n">ResponseCategory</span><span class="o">.</span><span class="n">not_determined</span><span class="p">,</span> <span class="s2">" / "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">words</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">screen</span><span class="o">.</span><span class="n">non_replicate</span> <span class="o">==</span> <span class="s2">"1"</span> <span class="k">for</span> <span class="n">screen</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">screens</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_z</span><span class="p">(</span><span class="n">z_raw</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">identity</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -1028,22 +1040,6 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">z</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">orf</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">identity</span><span class="si">}</span><span class="s2">: z_score </span><span class="si">{</span><span class="n">z_raw</span><span class="si">!r}</span><span class="s2"> is not finite"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">z</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_canonical_common_names</span><span class="p">(</span><span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""``systematic name -&gt; the genome's own standard (common) name``.</span>
-
-<span class="sd">    The release spells 16 ORFs two ways (``TOR1`` and ``Tor1``), which splits one</span>
-<span class="sd">    perturbation into two graph nodes. Taking the spelling from the genome instead of</span>
-<span class="sd">    from the source is what makes it one node, and identical across datasets. Only a</span>
-<span class="sd">    standard name that resolves BACK to the gene is used.</span>
-<span class="sd">    """</span>
-    <span class="n">canonical</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">for</span> <span class="n">standard</span> <span class="ow">in</span> <span class="n">genome</span><span class="o">.</span><span class="n">feature_index</span><span class="p">[</span><span class="s2">"standard_to_ids"</span><span class="p">]:</span>
-        <span class="n">resolution</span> <span class="o">=</span> <span class="n">genome</span><span class="o">.</span><span class="n">resolve_gene_name</span><span class="p">(</span><span class="n">standard</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">resolution</span><span class="o">.</span><span class="n">is_current_gene</span> <span class="ow">and</span> <span class="n">resolution</span><span class="o">.</span><span class="n">systematic_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">canonical</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">resolution</span><span class="o">.</span><span class="n">systematic_name</span><span class="p">,</span> <span class="n">standard</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">canonical</span>
 
 
 <div class="viewcode-block" id="EnvChemgenWildenhain2015Dataset">
@@ -1133,11 +1129,12 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_collapse_matrix</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">MatrixCell</span><span class="p">],</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">int</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">"""Read the datapoint CSV; collapse to one cell per (strain key, compound).</span>
+<span class="w">        </span><span class="sd">"""Read the datapoint CSV; group the released screens per (strain key, compound).</span>
 
-<span class="sd">        Identity is the PubChem CID when present, else the SID. Repeated releases of the</span>
-<span class="sd">        SAME datapoint (equal parsed z) collapse; distinct screens accumulate. Returns the</span>
-<span class="sd">        cells, the datapoint-row count, and the row count of every non-ORF label.</span>
+<span class="sd">        Identity is the PubChem CID when present, else the SID. A re-emission of the</span>
+<span class="sd">        SAME datapoint (equal parsed z) is listed on the first row's screen; distinct</span>
+<span class="sd">        screens accumulate as their own datapoints. Returns the cells, the</span>
+<span class="sd">        datapoint-row count, and the row count of every non-ORF label.</span>
 <span class="sd">        """</span>
         <span class="n">path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">DATA_FILENAME</span><span class="p">)</span>
         <span class="n">cells</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">MatrixCell</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -1174,11 +1171,25 @@
                         <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
                     <span class="p">)</span>
                     <span class="n">cells</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">cell</span>
-                <span class="n">cell</span><span class="o">.</span><span class="n">screens</span><span class="p">[</span><span class="n">_parse_z</span><span class="p">(</span><span class="n">z_raw</span><span class="p">,</span> <span class="n">strain</span><span class="p">,</span> <span class="n">identity</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="n">row</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="s2">"non replicate"</span><span class="p">]]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
-                    <span class="n">row</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="s2">"PUBCHEM_ACTIVITY_OUTCOME"</span><span class="p">]]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
-                    <span class="n">row</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="s2">"bioactivity"</span><span class="p">]]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
-                <span class="p">)</span>
+                <span class="n">z</span> <span class="o">=</span> <span class="n">_parse_z</span><span class="p">(</span><span class="n">z_raw</span><span class="p">,</span> <span class="n">strain</span><span class="p">,</span> <span class="n">identity</span><span class="p">)</span>
+                <span class="n">tag</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="s2">"PUBCHEM_RESULT_TAG"</span><span class="p">]]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">tag</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">strain</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">identity</span><span class="si">}</span><span class="s2">: released row has no PUBCHEM_RESULT_TAG; "</span>
+                        <span class="s2">"the tag is the record's replicate_id"</span>
+                    <span class="p">)</span>
+                <span class="n">screen</span> <span class="o">=</span> <span class="n">cell</span><span class="o">.</span><span class="n">screens</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">screen</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">cell</span><span class="o">.</span><span class="n">screens</span><span class="p">[</span><span class="n">z</span><span class="p">]</span> <span class="o">=</span> <span class="n">ScreenDatapoint</span><span class="p">(</span>
+                        <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
+                        <span class="n">z</span><span class="o">=</span><span class="n">z</span><span class="p">,</span>
+                        <span class="n">sym</span><span class="o">=</span><span class="n">sym</span><span class="p">,</span>
+                        <span class="n">non_replicate</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="s2">"non replicate"</span><span class="p">]]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+                        <span class="n">outcome</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="s2">"PUBCHEM_ACTIVITY_OUTCOME"</span><span class="p">]]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+                        <span class="n">bioactivity</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="s2">"bioactivity"</span><span class="p">]]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">screen</span><span class="o">.</span><span class="n">re_exported_tags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s2">"Wildenhain2015: </span><span class="si">%d</span><span class="s2"> datapoints (</span><span class="si">%d</span><span class="s2"> on a non-ORF strain label) -&gt; </span><span class="si">%d</span><span class="s2"> "</span>
             <span class="s2">"(strain, compound) cells"</span><span class="p">,</span>
@@ -1291,101 +1302,62 @@
             <span class="p">),</span>
         <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_phenotype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cell</span><span class="p">:</span> <span class="n">MatrixCell</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EnvironmentResponsePhenotype</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The screen-averaged z-score with its across-screen dispersion, or a typed gap.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_phenotype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">screen</span><span class="p">:</span> <span class="n">ScreenDatapoint</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EnvironmentResponsePhenotype</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""One released screen's z-score, as released, with its typed absences.</span>
 
-<span class="sd">        Every record also carries a typed gap on ``screen_id``: the release has no</span>
-<span class="sd">        library / screen column, and the normalization differs by library</span>
-<span class="sd">        (``NORMALIZATION_BY_LIBRARY``).</span>
+<span class="sd">        ``replicate_id`` is the row's ``PUBCHEM_RESULT_TAG``. The release carries no</span>
+<span class="sd">        per-screen error (typed gaps on both uncertainty fields) and no library / screen</span>
+<span class="sd">        column (typed gap on ``screen_id``; the normalization differs by library,</span>
+<span class="sd">        ``NORMALIZATION_BY_LIBRARY``).</span>
 <span class="sd">        """</span>
-        <span class="n">z_values</span> <span class="o">=</span> <span class="n">cell</span><span class="o">.</span><span class="n">z_values</span>
-        <span class="n">category</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="n">cell</span><span class="o">.</span><span class="n">category</span><span class="p">()</span>
-        <span class="n">common</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">"measurement_type"</span><span class="p">:</span> <span class="n">Z_SCORE_DEFINITION</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-            <span class="s2">"assay_type"</span><span class="p">:</span> <span class="n">ASSAY</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-            <span class="s2">"environment_response"</span><span class="p">:</span> <span class="n">fmean</span><span class="p">(</span><span class="n">z_values</span><span class="p">),</span>
-            <span class="s2">"category"</span><span class="p">:</span> <span class="n">category</span><span class="p">,</span>
-            <span class="s2">"category_label"</span><span class="p">:</span> <span class="n">label</span><span class="p">,</span>
-            <span class="s2">"n_samples"</span><span class="p">:</span> <span class="n">cell</span><span class="o">.</span><span class="n">n_screens</span><span class="p">,</span>
-            <span class="s2">"sample_unit"</span><span class="p">:</span> <span class="n">SampleUnit</span><span class="o">.</span><span class="n">screen</span><span class="p">,</span>
-            <span class="s2">"units"</span><span class="p">:</span> <span class="n">MEASUREMENT_UNITS</span><span class="p">,</span>
-        <span class="p">}</span>
-        <span class="n">screen_gap</span> <span class="o">=</span> <span class="n">ProvenanceGap</span><span class="p">(</span>
-            <span class="n">field</span><span class="o">=</span><span class="s2">"screen_id"</span><span class="p">,</span>
-            <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
-            <span class="n">note</span><span class="o">=</span><span class="s2">"the release has no library, screen or plate column; screens were "</span>
-            <span class="s2">"LOWESS- or DMSO-control-normalized by library (Sci Data lines 63-64), so a "</span>
-            <span class="s2">"cell's normalization is not recoverable"</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="k">if</span> <span class="n">cell</span><span class="o">.</span><span class="n">n_screens</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">EnvironmentResponsePhenotype</span><span class="p">(</span>
-                <span class="o">**</span><span class="n">common</span><span class="p">,</span>
-                <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span>
-                    <span class="o">*</span><span class="p">(</span>
-                        <span class="n">ProvenanceGap</span><span class="p">(</span>
-                            <span class="n">field</span><span class="o">=</span><span class="n">field</span><span class="p">,</span>
-                            <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
-                            <span class="n">note</span><span class="o">=</span><span class="s2">"one released screen for this (strain, compound) cell; "</span>
-                            <span class="s2">"a dispersion across screens is undefined at n=1 and the "</span>
-                            <span class="s2">"release carries no per-screen error"</span><span class="p">,</span>
-                        <span class="p">)</span>
-                        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="p">(</span>
-                            <span class="s2">"environment_response_uncertainty"</span><span class="p">,</span>
-                            <span class="s2">"environment_response_se"</span><span class="p">,</span>
-                        <span class="p">)</span>
-                    <span class="p">),</span>
-                    <span class="n">screen_gap</span><span class="p">,</span>
-                <span class="p">],</span>
-            <span class="p">)</span>
+        <span class="n">category</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="n">screen</span><span class="o">.</span><span class="n">category</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">EnvironmentResponsePhenotype</span><span class="p">(</span>
-            <span class="o">**</span><span class="n">common</span><span class="p">,</span>
-            <span class="n">environment_response_uncertainty</span><span class="o">=</span><span class="n">stdev</span><span class="p">(</span><span class="n">z_values</span><span class="p">),</span>
-            <span class="n">environment_response_uncertainty_type</span><span class="o">=</span><span class="n">UncertaintyType</span><span class="o">.</span><span class="n">sample_sd</span><span class="p">,</span>
-            <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span><span class="n">screen_gap</span><span class="p">],</span>
+            <span class="n">measurement_type</span><span class="o">=</span><span class="n">Z_SCORE_DEFINITION</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">assay_type</span><span class="o">=</span><span class="n">ASSAY</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">environment_response</span><span class="o">=</span><span class="n">screen</span><span class="o">.</span><span class="n">z</span><span class="p">,</span>
+            <span class="n">category</span><span class="o">=</span><span class="n">category</span><span class="p">,</span>
+            <span class="n">category_label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
+            <span class="n">n_samples</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">sample_unit</span><span class="o">=</span><span class="n">SampleUnit</span><span class="o">.</span><span class="n">screen</span><span class="p">,</span>
+            <span class="n">units</span><span class="o">=</span><span class="n">MEASUREMENT_UNITS</span><span class="p">,</span>
+            <span class="n">replicate_id</span><span class="o">=</span><span class="n">screen</span><span class="o">.</span><span class="n">tag</span><span class="p">,</span>
+            <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span>
+                <span class="o">*</span><span class="p">(</span>
+                    <span class="n">ProvenanceGap</span><span class="p">(</span>
+                        <span class="n">field</span><span class="o">=</span><span class="n">field</span><span class="p">,</span>
+                        <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
+                        <span class="n">note</span><span class="o">=</span><span class="s2">"one released screen per record; the release carries no "</span>
+                        <span class="s2">"per-screen error"</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="p">(</span>
+                        <span class="s2">"environment_response_uncertainty"</span><span class="p">,</span>
+                        <span class="s2">"environment_response_se"</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">),</span>
+                <span class="n">ProvenanceGap</span><span class="p">(</span>
+                    <span class="n">field</span><span class="o">=</span><span class="s2">"screen_id"</span><span class="p">,</span>
+                    <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
+                    <span class="n">note</span><span class="o">=</span><span class="s2">"the release has no library, screen or plate column; screens "</span>
+                    <span class="s2">"were LOWESS- or DMSO-control-normalized by library (Sci Data lines "</span>
+                    <span class="s2">"63-64), so a cell's normalization is not recoverable"</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">],</span>
         <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_genotype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">strain</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">common</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Genotype</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_genotype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">strain</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">released_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Genotype</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""The screened strain's genotype on the BY4741 background.</span>
 
-<span class="sd">        The wild-type screen is the empty genotype; one of the 33 essential-gene ORFs</span>
-<span class="sd">        is a conditional allele of unknown class (typed gaps naming the strain tables);</span>
-<span class="sd">        every other ORF is a kanMX4 Euroscarf haploid deletion with no released barcode.</span>
+<span class="sd">        The wild-type screen is the empty genotype; every other strain is the kanMX4</span>
+<span class="sd">        Euroscarf haploid deletion the release calls it, keyed by the released ORF with</span>
+<span class="sd">        the row's released ``sym`` as its gene name and no released barcode.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="n">strain</span> <span class="o">==</span> <span class="n">WILD_TYPE_KEY</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">Genotype</span><span class="p">(</span><span class="n">perturbations</span><span class="o">=</span><span class="p">[])</span>
-        <span class="k">assert</span> <span class="n">common</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-        <span class="k">if</span> <span class="n">strain</span> <span class="ow">in</span> <span class="n">ESSENTIAL_GENE_ORFS</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">Genotype</span><span class="p">(</span>
-                <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
-                    <span class="n">ConditionalAllelePerturbation</span><span class="p">(</span>
-                        <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">strain</span><span class="p">,</span>
-                        <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">common</span><span class="p">,</span>
-                        <span class="n">allele_class</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                        <span class="n">collection</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                        <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span>
-                            <span class="n">pending_source_review</span><span class="p">(</span>
-                                <span class="s2">"allele_class"</span><span class="p">,</span>
-                                <span class="n">STRAIN_TABLES</span><span class="p">,</span>
-                                <span class="s2">"SGD-essential gene, so a haploid kanMX null is not "</span>
-                                <span class="s2">"viable; the allele (ts / DAmP / promoter replacement) "</span>
-                                <span class="s2">"is in the strain table, not the release"</span><span class="p">,</span>
-                            <span class="p">),</span>
-                            <span class="n">pending_source_review</span><span class="p">(</span>
-                                <span class="s2">"collection"</span><span class="p">,</span>
-                                <span class="n">STRAIN_TABLES</span><span class="p">,</span>
-                                <span class="s2">"both papers say Euroscarf deletion collection for "</span>
-                                <span class="s2">"every sentinel, which an essential-gene strain "</span>
-                                <span class="s2">"contradicts"</span><span class="p">,</span>
-                            <span class="p">),</span>
-                        <span class="p">],</span>
-                    <span class="p">)</span>
-                <span class="p">]</span>
-            <span class="p">)</span>
         <span class="k">return</span> <span class="n">Genotype</span><span class="p">(</span>
             <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
                 <span class="n">BarcodedKanMxDeletionPerturbation</span><span class="p">(</span>
                     <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">strain</span><span class="p">,</span>
-                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">common</span><span class="p">,</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">released_name</span><span class="p">,</span>
                     <span class="n">collection</span><span class="o">=</span><span class="n">COLLECTION</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
                     <span class="n">cassette</span><span class="o">=</span><span class="n">KANMX4_CASSETTE</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
                     <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span>
@@ -1410,59 +1382,34 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="p">{</span><span class="n">DATA_FILENAME</span><span class="p">:</span> <span class="n">DATA_SHA256</span><span class="p">,</span> <span class="n">AID_FILENAME</span><span class="p">:</span> <span class="n">AID_SHA256</span><span class="p">}</span>
         <span class="p">)</span>
         <span class="n">cells</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">,</span> <span class="n">label_rows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collapse_matrix</span><span class="p">()</span>
-        <span class="n">source_records</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">cells</span><span class="p">)</span>
 
-        <span class="n">genome</span> <span class="o">=</span> <span class="n">default_genome</span><span class="p">()</span>
-        <span class="n">gene_set</span> <span class="o">=</span> <span class="p">{</span><span class="n">gene</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="k">for</span> <span class="n">gene</span> <span class="ow">in</span> <span class="n">genome</span><span class="o">.</span><span class="n">gene_set</span><span class="p">}</span>
-        <span class="n">canonical</span> <span class="o">=</span> <span class="n">_canonical_common_names</span><span class="p">(</span><span class="n">genome</span><span class="p">)</span>
-        <span class="k">for</span> <span class="p">(</span><span class="n">orf</span><span class="p">,</span> <span class="n">sym</span><span class="p">),</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">NON_ORF_STRAIN_LABELS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">label</span><span class="o">.</span><span class="n">disposition</span> <span class="o">!=</span> <span class="s2">"mapped_to_orf"</span> <span class="ow">or</span> <span class="p">(</span><span class="n">orf</span><span class="p">,</span> <span class="n">sym</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">label_rows</span><span class="p">:</span>
-                <span class="k">continue</span>
-            <span class="n">resolved</span> <span class="o">=</span> <span class="n">genome</span><span class="o">.</span><span class="n">resolve_gene_name</span><span class="p">(</span><span class="n">sym</span><span class="p">)</span>
-            <span class="k">if</span> <span class="p">(</span>
-                <span class="ow">not</span> <span class="n">resolved</span><span class="o">.</span><span class="n">is_current_gene</span>
-                <span class="ow">or</span> <span class="n">resolved</span><span class="o">.</span><span class="n">systematic_name</span> <span class="o">!=</span> <span class="n">label</span><span class="o">.</span><span class="n">systematic_gene_name</span>
-            <span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"strain label </span><span class="si">{</span><span class="n">orf</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">sym</span><span class="si">}</span><span class="s2"> is mapped to "</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">label</span><span class="o">.</span><span class="n">systematic_gene_name</span><span class="si">}</span><span class="s2">, but the genome resolves </span><span class="si">{</span><span class="n">sym</span><span class="si">!r}</span><span class="s2"> to "</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">resolved</span><span class="o">.</span><span class="n">systematic_name</span><span class="si">!r}</span><span class="s2">"</span>
-                <span class="p">)</span>
         <span class="n">unresolved_pairs</span> <span class="o">=</span> <span class="p">{</span>
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">orf</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">sym</span><span class="si">}</span><span class="s2">"</span><span class="p">:</span> <span class="p">(</span><span class="n">orf</span><span class="p">,</span> <span class="n">sym</span><span class="p">)</span>
             <span class="k">for</span> <span class="p">(</span><span class="n">orf</span><span class="p">,</span> <span class="n">sym</span><span class="p">),</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">NON_ORF_STRAIN_LABELS</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">label</span><span class="o">.</span><span class="n">disposition</span> <span class="o">==</span> <span class="s2">"unresolved"</span>
         <span class="p">}</span>
         <span class="n">unresolved</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">unresolved_pairs</span><span class="p">)</span>
-        <span class="n">orfs</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
-            <span class="p">{</span><span class="n">cell</span><span class="o">.</span><span class="n">orf</span> <span class="k">for</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">cells</span><span class="o">.</span><span class="n">values</span><span class="p">()}</span> <span class="o">-</span> <span class="n">unresolved</span> <span class="o">-</span> <span class="p">{</span><span class="n">WILD_TYPE_KEY</span><span class="p">}</span>
-        <span class="p">)</span>
-        <span class="n">off_genome</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
-            <span class="n">orf</span>
-            <span class="k">for</span> <span class="n">orf</span> <span class="ow">in</span> <span class="n">orfs</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
-                <span class="p">(</span><span class="n">resolution</span> <span class="o">:=</span> <span class="n">genome</span><span class="o">.</span><span class="n">resolve_gene_name</span><span class="p">(</span><span class="n">orf</span><span class="p">))</span><span class="o">.</span><span class="n">is_current_gene</span>
-                <span class="ow">and</span> <span class="n">resolution</span><span class="o">.</span><span class="n">systematic_name</span> <span class="ow">in</span> <span class="n">gene_set</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
-        <span class="k">if</span> <span class="n">off_genome</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">off_genome</span><span class="p">)</span><span class="si">}</span><span class="s2"> released ORFs are not current R64 genes: "</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">off_genome</span><span class="p">[:</span><span class="mi">10</span><span class="p">]</span><span class="si">}</span><span class="s2">; the release measured 242 current genes when this "</span>
-                <span class="s2">"loader was written, so a new drop rule is needed, not a silent skip"</span>
-            <span class="p">)</span>
-        <span class="n">common_names</span> <span class="o">=</span> <span class="p">{</span><span class="n">orf</span><span class="p">:</span> <span class="n">canonical</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">orf</span><span class="p">,</span> <span class="n">orf</span><span class="p">)</span> <span class="k">for</span> <span class="n">orf</span> <span class="ow">in</span> <span class="n">orfs</span><span class="p">}</span>
-
-        <span class="c1"># Rule 1: unresolved strain labels are held, whatever their compound.</span>
+        <span class="c1"># Rule 1: unresolved strain labels are held, whatever their compound, until the</span>
+        <span class="c1"># released-gene-name leaf exists. Counted in released rows.</span>
         <span class="n">held</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">cells</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">cell</span><span class="o">.</span><span class="n">orf</span> <span class="ow">in</span> <span class="n">unresolved</span><span class="p">}</span>
         <span class="n">held_by_label</span> <span class="o">=</span> <span class="p">{</span>
             <span class="n">label</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">held</span> <span class="k">if</span> <span class="n">cells</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">orf</span> <span class="o">==</span> <span class="n">label</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">unresolved</span><span class="p">)</span>
         <span class="p">}</span>
+        <span class="n">n_held_rows</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="n">label_rows</span><span class="p">[</span><span class="n">unresolved_pairs</span><span class="p">[</span><span class="n">label</span><span class="p">]]</span>
+            <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">held_by_label</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">n</span>
+        <span class="p">)</span>
 
-        <span class="c1"># Rule 2: resolve each DISTINCT compound identity of the remaining cells once; a</span>
-        <span class="c1"># compound carrying no InChIKey, CID or ChEBI id cannot be encoded, so its cells</span>
-        <span class="c1"># are dropped.</span>
+        <span class="c1"># Rule 2: the release's own re-emissions of a datapoint collapse onto its first</span>
+        <span class="c1"># row (true duplicates; the other tags stay on the datapoint).</span>
+        <span class="n">n_re_exported</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="n">cell</span><span class="o">.</span><span class="n">n_re_exported_rows</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">cells</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">held</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Every DISTINCT compound identity is resolved once; one with no InChIKey, CID</span>
+        <span class="c1"># or ChEBI id is STORED with the typed inchikey gap resolved_compound attaches.</span>
         <span class="n">compounds</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Compound</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">cells</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">held</span> <span class="ow">and</span> <span class="n">cell</span><span class="o">.</span><span class="n">identity</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">compounds</span><span class="p">:</span>
@@ -1474,17 +1421,7 @@
             <span class="ow">and</span> <span class="n">compound</span><span class="o">.</span><span class="n">pubchem_cid</span> <span class="ow">is</span> <span class="kc">None</span>
             <span class="ow">and</span> <span class="n">compound</span><span class="o">.</span><span class="n">chebi_id</span> <span class="ow">is</span> <span class="kc">None</span>
         <span class="p">)</span>
-        <span class="n">unidentified_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">unidentified</span><span class="p">)</span>
-        <span class="n">n_dropped_compound</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
-            <span class="mi">1</span>
-            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">cells</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">held</span> <span class="ow">and</span> <span class="n">cell</span><span class="o">.</span><span class="n">identity</span> <span class="ow">in</span> <span class="n">unidentified_set</span>
-        <span class="p">)</span>
-        <span class="n">names</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">compound</span><span class="o">.</span><span class="n">name</span>
-            <span class="k">for</span> <span class="n">identity</span><span class="p">,</span> <span class="n">compound</span> <span class="ow">in</span> <span class="n">compounds</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">identity</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">unidentified_set</span>
-        <span class="p">]</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">compound</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">compound</span> <span class="ow">in</span> <span class="n">compounds</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">names</span><span class="p">))</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
                 <span class="s2">"two distinct compound identities resolve to the same canonical name, "</span>
@@ -1504,43 +1441,43 @@
         <span class="n">env</span><span class="p">,</span> <span class="n">interned_env</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_open_write_lmdb</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">))</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">n_all_non_replicating</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">by_kind</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"deletion"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"conditional_allele"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"wild_type"</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+        <span class="n">n_cells</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">by_kind</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"deletion"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"wild_type"</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
         <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">,</span> <span class="n">interned_env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">itxn</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">cells</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"Wildenhain2015 CGM"</span><span class="p">):</span>
                 <span class="n">cell</span> <span class="o">=</span> <span class="n">cells</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-                <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">held</span> <span class="ow">or</span> <span class="n">cell</span><span class="o">.</span><span class="n">identity</span> <span class="ow">in</span> <span class="n">unidentified_set</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">held</span><span class="p">:</span>
                     <span class="k">continue</span>
+                <span class="n">n_cells</span> <span class="o">+=</span> <span class="mi">1</span>
                 <span class="k">if</span> <span class="n">cell</span><span class="o">.</span><span class="n">identity</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">environments</span><span class="p">:</span>
                     <span class="n">environments</span><span class="p">[</span><span class="n">cell</span><span class="o">.</span><span class="n">identity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_environment</span><span class="p">(</span>
                         <span class="n">compounds</span><span class="p">[</span><span class="n">cell</span><span class="o">.</span><span class="n">identity</span><span class="p">]</span>
                     <span class="p">)</span>
                 <span class="k">if</span> <span class="n">cell</span><span class="o">.</span><span class="n">all_screens_non_replicating</span><span class="p">:</span>
                     <span class="n">n_all_non_replicating</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="k">if</span> <span class="n">cell</span><span class="o">.</span><span class="n">orf</span> <span class="o">==</span> <span class="n">WILD_TYPE_KEY</span><span class="p">:</span>
-                    <span class="n">by_kind</span><span class="p">[</span><span class="s2">"wild_type"</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="k">elif</span> <span class="n">cell</span><span class="o">.</span><span class="n">orf</span> <span class="ow">in</span> <span class="n">ESSENTIAL_GENE_ORFS</span><span class="p">:</span>
-                    <span class="n">by_kind</span><span class="p">[</span><span class="s2">"conditional_allele"</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">by_kind</span><span class="p">[</span><span class="s2">"deletion"</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="n">experiment</span> <span class="o">=</span> <span class="n">StrainEnvironmentResponseExperiment</span><span class="p">(</span>
-                    <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-                    <span class="n">genotype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_genotype</span><span class="p">(</span><span class="n">cell</span><span class="o">.</span><span class="n">orf</span><span class="p">,</span> <span class="n">common_names</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cell</span><span class="o">.</span><span class="n">orf</span><span class="p">)),</span>
-                    <span class="n">environment</span><span class="o">=</span><span class="n">environments</span><span class="p">[</span><span class="n">cell</span><span class="o">.</span><span class="n">identity</span><span class="p">],</span>
-                    <span class="n">phenotype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_phenotype</span><span class="p">(</span><span class="n">cell</span><span class="p">),</span>
-                <span class="p">)</span>
-                <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_intern_record</span><span class="p">(</span><span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span><span class="p">,</span> <span class="n">itxn</span><span class="p">),</span>
-                <span class="p">)</span>
-                <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">kind</span> <span class="o">=</span> <span class="s2">"wild_type"</span> <span class="k">if</span> <span class="n">cell</span><span class="o">.</span><span class="n">orf</span> <span class="o">==</span> <span class="n">WILD_TYPE_KEY</span> <span class="k">else</span> <span class="s2">"deletion"</span>
+                <span class="k">for</span> <span class="n">z</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">cell</span><span class="o">.</span><span class="n">screens</span><span class="p">):</span>
+                    <span class="n">screen</span> <span class="o">=</span> <span class="n">cell</span><span class="o">.</span><span class="n">screens</span><span class="p">[</span><span class="n">z</span><span class="p">]</span>
+                    <span class="n">by_kind</span><span class="p">[</span><span class="n">kind</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="n">experiment</span> <span class="o">=</span> <span class="n">StrainEnvironmentResponseExperiment</span><span class="p">(</span>
+                        <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                        <span class="n">genotype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_genotype</span><span class="p">(</span><span class="n">cell</span><span class="o">.</span><span class="n">orf</span><span class="p">,</span> <span class="n">screen</span><span class="o">.</span><span class="n">sym</span><span class="p">),</span>
+                        <span class="n">environment</span><span class="o">=</span><span class="n">environments</span><span class="p">[</span><span class="n">cell</span><span class="o">.</span><span class="n">identity</span><span class="p">],</span>
+                        <span class="n">phenotype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_phenotype</span><span class="p">(</span><span class="n">screen</span><span class="p">),</span>
+                    <span class="p">)</span>
+                    <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_intern_record</span><span class="p">(</span><span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span><span class="p">,</span> <span class="n">itxn</span><span class="p">),</span>
+                    <span class="p">)</span>
+                    <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
         <span class="n">interned_env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
         <span class="n">drop_log</span> <span class="o">=</span> <span class="n">DropLog</span><span class="p">(</span>
             <span class="n">dataset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-            <span class="n">source_records</span><span class="o">=</span><span class="n">source_records</span><span class="p">,</span>
+            <span class="n">source_records</span><span class="o">=</span><span class="n">n_rows</span><span class="p">,</span>
             <span class="n">kept_records</span><span class="o">=</span><span class="n">idx</span><span class="p">,</span>
-            <span class="n">dropped_records</span><span class="o">=</span><span class="n">source_records</span> <span class="o">-</span> <span class="n">idx</span><span class="p">,</span>
+            <span class="n">dropped_records</span><span class="o">=</span><span class="n">n_rows</span> <span class="o">-</span> <span class="n">idx</span><span class="p">,</span>
             <span class="n">rules</span><span class="o">=</span><span class="p">[</span>
                 <span class="n">DropRule</span><span class="p">(</span>
                     <span class="n">rule</span><span class="o">=</span><span class="s2">"strain_label_unresolved"</span><span class="p">,</span>
@@ -1548,10 +1485,10 @@
                     <span class="n">description</span><span class="o">=</span><span class="p">(</span>
                         <span class="s2">"the released orf is not a systematic name and the sym names "</span>
                         <span class="s2">"no strain a mirrored source identifies (NON_ORF_STRAIN_LABELS); "</span>
-                        <span class="s2">"held until Sci Data Table 1 / Cell Systems Table S3 is "</span>
-                        <span class="s2">"mirrored. Items: label (cells, released rows)"</span>
+                        <span class="s2">"held for the released-gene-name leaf. Counted in released "</span>
+                        <span class="s2">"rows. Items: label (cells, released rows)"</span>
                     <span class="p">),</span>
-                    <span class="n">n_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">held</span><span class="p">),</span>
+                    <span class="n">n_records</span><span class="o">=</span><span class="n">n_held_rows</span><span class="p">,</span>
                     <span class="n">items</span><span class="o">=</span><span class="p">[</span>
                         <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> cells, "</span>
                         <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">label_rows</span><span class="p">[</span><span class="n">unresolved_pairs</span><span class="p">[</span><span class="n">label</span><span class="p">]]</span><span class="si">}</span><span class="s2"> rows)"</span>
@@ -1560,36 +1497,40 @@
                     <span class="p">],</span>
                 <span class="p">),</span>
                 <span class="n">DropRule</span><span class="p">(</span>
-                    <span class="n">rule</span><span class="o">=</span><span class="s2">"compound_without_a_structure_identifier"</span><span class="p">,</span>
-                    <span class="n">scope</span><span class="o">=</span><span class="s2">"compound"</span><span class="p">,</span>
+                    <span class="n">rule</span><span class="o">=</span><span class="s2">"re_exported_duplicate_row"</span><span class="p">,</span>
+                    <span class="n">scope</span><span class="o">=</span><span class="s2">"library_row"</span><span class="p">,</span>
                     <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-                        <span class="s2">"the released row carries no PUBCHEM_CID and no SMILES, so the "</span>
-                        <span class="s2">"compound has no InChIKey, CID or ChEBI id to be keyed or "</span>
-                        <span class="s2">"joined by; only its submitter SID is known"</span>
+                        <span class="s2">"the release re-emits a datapoint it already carries for the "</span>
+                        <span class="s2">"cell (same parsed z_score, every other data column equal, "</span>
+                        <span class="s2">"typically under a second gene-symbol spelling); the row is a "</span>
+                        <span class="s2">"true duplicate and its PUBCHEM_RESULT_TAG is listed on the "</span>
+                        <span class="s2">"datapoint it repeats"</span>
                     <span class="p">),</span>
-                    <span class="n">n_records</span><span class="o">=</span><span class="n">n_dropped_compound</span><span class="p">,</span>
-                    <span class="n">items</span><span class="o">=</span><span class="n">unidentified</span><span class="p">,</span>
+                    <span class="n">n_records</span><span class="o">=</span><span class="n">n_re_exported</span><span class="p">,</span>
+                    <span class="n">items</span><span class="o">=</span><span class="p">[],</span>
                 <span class="p">),</span>
             <span class="p">],</span>
+            <span class="n">compounds_without_a_structure_identifier</span><span class="o">=</span><span class="n">unidentified</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"dropped_records.json"</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
             <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">drop_log</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
-        <span class="k">if</span> <span class="n">drop_log</span><span class="o">.</span><span class="n">dropped_records</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">held</span><span class="p">)</span> <span class="o">+</span> <span class="n">n_dropped_compound</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">drop_log</span><span class="o">.</span><span class="n">dropped_records</span> <span class="o">!=</span> <span class="n">n_held_rows</span> <span class="o">+</span> <span class="n">n_re_exported</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"drop accounting mismatch: rule total </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">held</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">n_dropped_compound</span><span class="si">}</span><span class="s2">, "</span>
+                <span class="sa">f</span><span class="s2">"drop accounting mismatch: rule total </span><span class="si">{</span><span class="n">n_held_rows</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">n_re_exported</span><span class="si">}</span><span class="s2">, "</span>
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">drop_log</span><span class="o">.</span><span class="n">dropped_records</span><span class="si">}</span><span class="s2"> records missing from the build"</span>
             <span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">"Wrote </span><span class="si">%d</span><span class="s2"> Wildenhain2015 records (</span><span class="si">%d</span><span class="s2"> kanMX deletion, </span><span class="si">%d</span><span class="s2"> conditional allele, "</span>
-            <span class="s2">"</span><span class="si">%d</span><span class="s2"> wild type; </span><span class="si">%d</span><span class="s2"> held for an unresolved strain label; </span><span class="si">%d</span><span class="s2"> dropped for an "</span>
-            <span class="s2">"unidentifiable compound; </span><span class="si">%d</span><span class="s2"> cells whose every screen is non-replicate "</span>
-            <span class="s2">"flagged)"</span><span class="p">,</span>
+            <span class="s2">"Wrote </span><span class="si">%d</span><span class="s2"> Wildenhain2015 records over </span><span class="si">%d</span><span class="s2"> cells (</span><span class="si">%d</span><span class="s2"> kanMX deletion, </span><span class="si">%d</span><span class="s2"> wild "</span>
+            <span class="s2">"type; </span><span class="si">%d</span><span class="s2"> rows held for an unresolved strain label; </span><span class="si">%d</span><span class="s2"> re-exported duplicate "</span>
+            <span class="s2">"rows collapsed; </span><span class="si">%d</span><span class="s2"> compounds stored with an inchikey gap; </span><span class="si">%d</span><span class="s2"> cells whose "</span>
+            <span class="s2">"every screen is non-replicate flagged)"</span><span class="p">,</span>
             <span class="n">idx</span><span class="p">,</span>
+            <span class="n">n_cells</span><span class="p">,</span>
             <span class="n">by_kind</span><span class="p">[</span><span class="s2">"deletion"</span><span class="p">],</span>
-            <span class="n">by_kind</span><span class="p">[</span><span class="s2">"conditional_allele"</span><span class="p">],</span>
             <span class="n">by_kind</span><span class="p">[</span><span class="s2">"wild_type"</span><span class="p">],</span>
-            <span class="nb">len</span><span class="p">(</span><span class="n">held</span><span class="p">),</span>
-            <span class="n">n_dropped_compound</span><span class="p">,</span>
+            <span class="n">n_held_rows</span><span class="p">,</span>
+            <span class="n">n_re_exported</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">unidentified</span><span class="p">),</span>
             <span class="n">n_all_non_replicating</span><span class="p">,</span>
         <span class="p">)</span></div>
 

@@ -145,9 +145,11 @@
 <span class="sd">dropped by ``BLANK_ROW_RULES`` (issue #598): ``present`` rows are served (under the S288C</span>
 <span class="sd">name when the row is an accessory feature merged with its S288C homolog, else under the</span>
 <span class="sd">pangenome id ``X&lt;n&gt;-&lt;name&gt;``), ``absent`` rows are dropped as the paper does, and</span>
-<span class="sd">``bad annotation`` / ``unannotated`` rows are dropped under a typed ``ProvenanceGap``</span>
-<span class="sd">because no mirrored source defines those classes. Every row is counted in</span>
-<span class="sd">``preprocess/blank_systematic_name_ledger.json``. The shared</span>
+<span class="sd">``bad annotation`` / ``unannotated`` rows are served under their pangenome id with a</span>
+<span class="sd">typed ``ProvenanceGap`` on the class definition, because no mirrored source defines</span>
+<span class="sd">those classes and a released value is stored as released (owner rule 2026-10-12; the</span>
+<span class="sd">16,031 ``bad annotation`` rows of the built isolates carry 17 pangenome ids). Every row</span>
+<span class="sd">is counted in ``preprocess/blank_systematic_name_ledger.json``. The shared</span>
 <span class="sd">``phenotype_reference`` is the POPULATION MEAN over the 943 built isolates (mean TPM /</span>
 <span class="sd">rounded mean count per gene) -- an absolute WT-equivalent baseline, NOT a centered 0</span>
 <span class="sd">(reference is not the record itself; ``reference_centered = False`` for verification).</span>
@@ -421,8 +423,9 @@
     <span class="s2">"sheet of Supplementary Tables 1-9 (</span><span class="si">{si_xlsx}</span><span class="s2">, sha256 </span><span class="si">{si_xlsx_sha}</span><span class="s2">) for "</span>
     <span class="s2">"'bad annotation', 'unannotated' and 'pan_absence' with zero hits; the authors' "</span>
     <span class="s2">"code (github.com/HaploTeam/1011yeastsRNAseq: tpm_calc.R and GWAS scripts) does not "</span>
-    <span class="s2">"assign the column either (read 2026-10-02, not mirrored). Rows stay dropped and "</span>
-    <span class="s2">"counted until a source defines the class."</span>
+    <span class="s2">"assign the column either (read 2026-10-02, not mirrored). The rows are served "</span>
+    <span class="s2">"under their pangenome id as released, with this gap on the class definition, "</span>
+    <span class="s2">"until a source defines the class."</span>
 <span class="p">)</span>
 
 
@@ -443,6 +446,13 @@
         <span class="p">),</span>
     <span class="p">)</span>
 
+
+<span class="n">_PANGENOME_ID_RULE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"serve under 'X' + demangle_orf(ORF) (ORF 'X37.augustus_masked.2.CGIPLA_MA' -&gt; "</span>
+    <span class="s2">"'X37-augustus_masked.2.CGIPLA_MA'), the form Datafile 1 gives every named accessory "</span>
+    <span class="s2">"ORF as its systematic_name; refused unless ORF is a pangenome id 'X&lt;number&gt;.&lt;name&gt;' "</span>
+    <span class="s2">"and the id is no served systematic_name"</span>
+<span class="p">)</span>
 
 <span class="n">BLANK_ROW_RULES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">BlankRowClass</span><span class="p">,</span> <span class="n">BlankRowRule</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
     <span class="n">BlankRowClass</span><span class="o">.</span><span class="n">present_s288c_homolog</span><span class="p">:</span> <span class="n">BlankRowRule</span><span class="p">(</span>
@@ -475,13 +485,7 @@
         <span class="n">row_class</span><span class="o">=</span><span class="n">BlankRowClass</span><span class="o">.</span><span class="n">present_pangenome_orf</span><span class="p">,</span>
         <span class="n">pan_absence</span><span class="o">=</span><span class="s2">"present"</span><span class="p">,</span>
         <span class="n">action</span><span class="o">=</span><span class="s2">"served"</span><span class="p">,</span>
-        <span class="n">id_rule</span><span class="o">=</span><span class="p">(</span>
-            <span class="s2">"serve under 'X' + demangle_orf(ORF) (ORF 'X37.augustus_masked.2."</span>
-            <span class="s2">"CGIPLA_MA' -&gt; 'X37-augustus_masked.2.CGIPLA_MA'), the form Datafile 1 "</span>
-            <span class="s2">"gives every named accessory ORF as its systematic_name; refused unless "</span>
-            <span class="s2">"ORF is a pangenome id 'X&lt;number&gt;.&lt;name&gt;' and the id is no served "</span>
-            <span class="s2">"systematic_name"</span>
-        <span class="p">),</span>
+        <span class="n">id_rule</span><span class="o">=</span><span class="n">_PANGENOME_ID_RULE</span><span class="p">,</span>
         <span class="n">definition</span><span class="o">=</span><span class="n">_methods_sv</span><span class="p">(</span>
             <span class="s2">"present_pangenome_orf"</span><span class="p">,</span>
             <span class="n">_PRESENT_QUOTE</span><span class="p">,</span>
@@ -519,16 +523,16 @@
     <span class="n">BlankRowClass</span><span class="o">.</span><span class="n">bad_annotation</span><span class="p">:</span> <span class="n">BlankRowRule</span><span class="p">(</span>
         <span class="n">row_class</span><span class="o">=</span><span class="n">BlankRowClass</span><span class="o">.</span><span class="n">bad_annotation</span><span class="p">,</span>
         <span class="n">pan_absence</span><span class="o">=</span><span class="s2">"bad annotation"</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s2">"dropped"</span><span class="p">,</span>
-        <span class="n">id_rule</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"served"</span><span class="p">,</span>
+        <span class="n">id_rule</span><span class="o">=</span><span class="n">_PANGENOME_ID_RULE</span><span class="p">,</span>
         <span class="n">definition</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">gap</span><span class="o">=</span><span class="n">_undefined_class_gap</span><span class="p">(</span><span class="s2">"bad annotation"</span><span class="p">),</span>
     <span class="p">),</span>
     <span class="n">BlankRowClass</span><span class="o">.</span><span class="n">unannotated</span><span class="p">:</span> <span class="n">BlankRowRule</span><span class="p">(</span>
         <span class="n">row_class</span><span class="o">=</span><span class="n">BlankRowClass</span><span class="o">.</span><span class="n">unannotated</span><span class="p">,</span>
         <span class="n">pan_absence</span><span class="o">=</span><span class="s2">"unannotated"</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s2">"dropped"</span><span class="p">,</span>
-        <span class="n">id_rule</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"served"</span><span class="p">,</span>
+        <span class="n">id_rule</span><span class="o">=</span><span class="n">_PANGENOME_ID_RULE</span><span class="p">,</span>
         <span class="n">definition</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">gap</span><span class="o">=</span><span class="n">_undefined_class_gap</span><span class="p">(</span><span class="s2">"unannotated"</span><span class="p">),</span>
     <span class="p">),</span>
@@ -607,8 +611,9 @@
 
 <span class="sd">    ``df`` holds ``CAUDAL_COLUMNS`` for the built isolates only. A named row keeps its</span>
 <span class="sd">    ``systematic_name``. A blank-name row is classified by ``pan_absence`` into a</span>
-<span class="sd">    ``BlankRowClass``; the two ``present`` classes are served under the id their</span>
-<span class="sd">    ``BLANK_ROW_RULES`` entry names and the others are dropped. A blank row with any</span>
+<span class="sd">    ``BlankRowClass``; every class whose rule says ``served`` is served under the id</span>
+<span class="sd">    the rule names (the S288C homolog name, else the pangenome id) and ``absent`` is</span>
+<span class="sd">    dropped as the paper does. A blank row with any</span>
 <span class="sd">    other ``pan_absence`` raises ``UnclassifiedBlankRowError``; a served id that would</span>
 <span class="sd">    collide with a named gene of the same isolate raises ``GeneIdCollisionError``.</span>
 <span class="sd">    Returns the kept rows (with ``gene_id``) and the ledger.</span>
@@ -634,12 +639,19 @@
         <span class="o">&amp;</span> <span class="p">(</span><span class="n">orf</span> <span class="o">==</span> <span class="n">blank</span><span class="p">[</span><span class="s2">"Ortholog_in_SGD_2010"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">))</span>
         <span class="o">&amp;</span> <span class="n">orf</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">served_names</span><span class="p">)</span>
     <span class="p">)</span>
-    <span class="n">pangenome</span> <span class="o">=</span> <span class="p">(</span><span class="n">blank</span><span class="p">[</span><span class="s2">"pan_absence"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"present"</span><span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">homolog</span>
+    <span class="n">served_by_pangenome_id</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">r</span><span class="o">.</span><span class="n">pan_absence</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">BLANK_ROW_RULES</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">action</span> <span class="o">==</span> <span class="s2">"served"</span> <span class="ow">and</span> <span class="n">r</span><span class="o">.</span><span class="n">id_rule</span> <span class="o">==</span> <span class="n">_PANGENOME_ID_RULE</span>
+    <span class="p">}</span>
+    <span class="n">pangenome</span> <span class="o">=</span> <span class="n">blank</span><span class="p">[</span><span class="s2">"pan_absence"</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">served_by_pangenome_id</span><span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">homolog</span>
     <span class="n">row_class</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span>
         <span class="n">blank</span><span class="p">[</span><span class="s2">"pan_absence"</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">by_value</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">blank</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span>
     <span class="p">)</span>
     <span class="n">row_class</span><span class="p">[</span><span class="n">homolog</span><span class="p">]</span> <span class="o">=</span> <span class="n">BlankRowClass</span><span class="o">.</span><span class="n">present_s288c_homolog</span>
-    <span class="n">row_class</span><span class="p">[</span><span class="n">pangenome</span><span class="p">]</span> <span class="o">=</span> <span class="n">BlankRowClass</span><span class="o">.</span><span class="n">present_pangenome_orf</span>
+    <span class="n">row_class</span><span class="p">[</span><span class="n">pangenome</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">blank</span><span class="p">[</span><span class="s2">"pan_absence"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"present"</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">BlankRowClass</span><span class="o">.</span><span class="n">present_pangenome_orf</span>
+    <span class="p">)</span>
 
     <span class="n">homolog_rows</span> <span class="o">=</span> <span class="n">blank</span><span class="p">[</span><span class="n">homolog</span><span class="p">]</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">gene_id</span><span class="o">=</span><span class="n">orf</span><span class="p">[</span><span class="n">homolog</span><span class="p">])</span>
     <span class="n">not_pangenome</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">orf</span><span class="p">[</span><span class="n">pangenome</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">orf</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">_PANGENOME_ORF_RE</span><span class="p">)]))</span>

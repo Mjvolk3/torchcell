@@ -173,37 +173,34 @@
 <span class="sd">correlation cut), so they are not consumed. ``metabolite_level_se`` is a typed</span>
 <span class="sd">``ProvenanceGap`` on every phenotype.</span>
 
-<span class="sd">RETENTION RULES (every count written to ``preprocess/dropped_records.json``):</span>
+<span class="sd">RETENTION RULES (every count written to ``preprocess/dropped_records.json``). The data is</span>
+<span class="sd">the data (owner rule, 2026-10-12): every Table 4 row is a record under the identifier the</span>
+<span class="sd">authors released, and no genome, annotation or other store is consulted at load time.</span>
 
 <span class="sd">- Identifier normalization: five cells are malformed by whitespace, case or a misplaced</span>
 <span class="sd">  suffix (``YJL038C `` , ``YLR228 C``, ``YML009c``, ``YMR062 C``, ``YML048WA-``); they</span>
-<span class="sd">  are normalized (whitespace removed, upper-cased, trailing ``WA-`` -&gt; ``W-A``) BEFORE</span>
-<span class="sd">  the resolver, and every normalization is recorded with the verbatim cell.</span>
-<span class="sd">- Resolver retention (the shared ``SCerevisiaeGenome.resolve_gene_name``): CURRENT kept</span>
-<span class="sd">  as is; RENAMED kept under the current systematic name with the normalized source name</span>
-<span class="sd">  as ``perturbed_gene_name`` (a merged-ORF strain stays a distinct strain of that gene);</span>
-<span class="sd">  NON_GENE_FEATURE, RETIRED and AMBIGUOUS go to the ``dropped_orfs`` ledger.</span>
-<span class="sd">- Duplicate identifiers: 46 identifiers occur twice (92 rows), replicate strains of the</span>
-<span class="sd">  collection with different values. They are NOT averaged. The metabolite verifier's L1</span>
-<span class="sd">  ``genotype_uniqueness`` keys a record on ``(systematic_gene_name, perturbation_type,</span>
-<span class="sd">  perturbed_gene_name)`` and ``KanMxDeletionPerturbation`` carries no strain</span>
-<span class="sd">  discriminator, so a second row cannot be a distinct served record without a schema or</span>
-<span class="sd">  verifier change; the FIRST row in file order is kept and the second is written, with</span>
-<span class="sd">  all of its values, to the ``duplicate_strain_rows`` ledger. Re-admitting those rows is a</span>
-<span class="sd">  follow-up that needs a strain_id-aware L1 (as ``verification/fitness.py`` has).</span>
+<span class="sd">  are normalized (whitespace removed, upper-cased, trailing ``WA-`` -&gt; ``W-A``) and every</span>
+<span class="sd">  normalization is recorded with the verbatim cell. The normalized identifier is both</span>
+<span class="sd">  ``systematic_gene_name`` and ``perturbed_gene_name`` of the record.</span>
+<span class="sd">- Released identifiers R64-4-1 does not carry as a gene (22 rows: 13 non-gene features</span>
+<span class="sd">  such as the pseudogene YCL074W, 9 retired names such as YCL006C) are stored under the</span>
+<span class="sd">  released name like every other row. Whether a released name is a current gene is a</span>
+<span class="sd">  question for the genome layer at modeling time, never for the loader.</span>
+<span class="sd">- Duplicate identifiers: 46 identifiers occur twice and one three times (94 rows), the</span>
+<span class="sd">  replicate strains of the collection with different values. Every row is a record; the</span>
+<span class="sd">  rows that share an identifier are listed in the ``duplicate_identifiers`` ledger. The</span>
+<span class="sd">  release carries no plate, well or clone key, so the records of one identifier differ</span>
+<span class="sd">  only in their values; the metabolite verifier reports the collisions as a finding</span>
+<span class="sd">  (``allow_duplicate_strains``) rather than refusing the store.</span>
 <span class="sd">- Non-deletion rows: a parent-strain (BY4742) row would go to ``excluded_non_deletion``</span>
 <span class="sd">  (a wild type has no perturbation and cannot be a deletion record); Table 4 carries</span>
 <span class="sd">  none. Tet-promoter (YSC1182) strains are essential-gene knockdowns under doxycycline,</span>
 <span class="sd">  not deletions, and would be excluded the same way; Table 4 carries no canonical</span>
 <span class="sd">  essential gene (CDC28, ACT1, TUB2, RPB1, FAS1, FAS2, GLC7, CMD1 and CDC42 are all</span>
 <span class="sd">  absent), so no tet-promoter row is present and the exclusion count is 0.</span>
-<span class="sd">- SGD essentiality flag: the local ``gene_essentiality_sgd`` store is consulted and every</span>
-<span class="sd">  kept ORF it lists is written to the ``essentiality_flagged`` ledger and KEPT. The store</span>
-<span class="sd">  holds SGD "inviable" null-phenotype annotations, which include conditionally inviable</span>
-<span class="sd">  genes (the 21 hits are ATG1, ATG2, ATG3, ATG5, ATG7, ATG8, ATG9, ATG10, ATG12, ATG15,</span>
-<span class="sd">  ATG16, ATG17, ATG18, ERG24, HHT2, PLC1, RPS28A, SAC1, SPC72, VPS30, YMR185W, all viable</span>
-<span class="sd">  deletion-collection strains; the deletion-only Mulleder 2016 set carries 28 of the same</span>
-<span class="sd">  kind), so the flag is diagnostic, not an exclusion.</span>
+<span class="sd">- No essentiality flag: the earlier join against the local ``gene_essentiality_sgd``</span>
+<span class="sd">  store was a load-time cross-reference and is gone; the 21 ORFs it used to flag (ATG1,</span>
+<span class="sd">  ATG2, ..., YMR185W) are viable deletion-collection strains and are stored as released.</span>
 
 <span class="sd">ENVIRONMENT: ``COOPER_SC``, a loader-local ``dropout(SC, ...)`` medium (never a</span>
 <span class="sd">``media.py`` edit, which would move the value surface and block incremental admission):</span>
@@ -230,7 +227,6 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sequence</span>
@@ -238,7 +234,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -249,7 +244,6 @@
     <span class="n">verify_raw_files</span><span class="p">,</span>
     <span class="n">verify_sha256</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.experiment_dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolve_interned</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">SC</span><span class="p">,</span> <span class="n">dropout</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Environment</span><span class="p">,</span>
@@ -274,7 +268,6 @@
     <span class="n">RetrievalRecord</span><span class="p">,</span>
     <span class="n">sha256_file</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae.s288c</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeneNameStatus</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ProvenanceGap</span><span class="p">,</span>
@@ -388,39 +381,29 @@
     <span class="s2">"Asp"</span><span class="p">:</span> <span class="s2">"Fig. 4B 'Asp' = Fig. 1 peak 18"</span><span class="p">,</span>
 <span class="p">}</span>
 
-<span class="c1">#: Retention rule for a row's ORF: kept only when it resolves to a LIVE R64 gene.</span>
-<span class="n">_KEPT_STATUSES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="n">GeneNameStatus</span><span class="o">.</span><span class="n">CURRENT</span><span class="p">,</span> <span class="n">GeneNameStatus</span><span class="o">.</span><span class="n">RENAMED</span><span class="p">})</span>
-
-<span class="n">ORF_RULE</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">"a row is kept only when its normalized 'Sysname' resolves through the shared "</span>
-    <span class="s2">"SCerevisiaeGenome.resolve_gene_name to CURRENT (stored as is) or RENAMED (stored "</span>
-    <span class="s2">"under the current systematic name, the normalized source name kept as "</span>
-    <span class="s2">"perturbed_gene_name so a merged-ORF strain stays distinct); a NON_GENE_FEATURE, a "</span>
-    <span class="s2">"RETIRED name or an AMBIGUOUS name drops the row with its status in the ledger"</span>
+<span class="n">IDENTIFIER_RULE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"every row is a record under its normalized 'Sysname', stored verbatim as both "</span>
+    <span class="s2">"systematic_gene_name and perturbed_gene_name; no genome or annotation is consulted, "</span>
+    <span class="s2">"so a released name R64 carries as a non-gene feature or no longer carries at all is "</span>
+    <span class="s2">"stored like every other row (the genome layer decides at modeling time)"</span>
 <span class="p">)</span>
 <span class="n">NORMALIZATION_RULE</span> <span class="o">=</span> <span class="p">(</span>
     <span class="s2">"the 'Sysname' cell has all whitespace removed and is upper-cased, and a trailing "</span>
-    <span class="s2">"'WA-' is rewritten 'W-A' (YML048WA- -&gt; YML048W-A), before the resolver; every "</span>
-    <span class="s2">"changed cell is recorded verbatim"</span>
+    <span class="s2">"'WA-' is rewritten 'W-A' (YML048WA- -&gt; YML048W-A); every changed cell is recorded "</span>
+    <span class="s2">"verbatim"</span>
 <span class="p">)</span>
 <span class="n">DUPLICATE_RULE</span> <span class="o">=</span> <span class="p">(</span>
     <span class="s2">"an identifier occurring on more than one row (replicate strains of the collection, "</span>
-    <span class="s2">"different values) keeps its FIRST row in file order as the served record; later "</span>
-    <span class="s2">"rows are written to the duplicate_strain_rows ledger with all their values, never "</span>
-    <span class="s2">"averaged, because the metabolite verifier keys L1 uniqueness on the deletion set "</span>
-    <span class="s2">"and KanMxDeletionPerturbation carries no strain discriminator"</span>
+    <span class="s2">"different values) is a record on every row, never averaged and never reduced to its "</span>
+    <span class="s2">"first row; the rows sharing an identifier are listed in duplicate_identifiers, and "</span>
+    <span class="s2">"the metabolite verifier reports their genotype collisions as a finding because the "</span>
+    <span class="s2">"release carries no plate, well or clone key that tells the strains apart"</span>
 <span class="p">)</span>
 <span class="n">EXCLUSION_RULE</span> <span class="o">=</span> <span class="p">(</span>
     <span class="s2">"a row is excluded when its identifier or NAME names the parent strain (BY4742, WT, "</span>
     <span class="s2">"wild type) rather than a deletion, or when it is a tet-promoter (YSC1182) "</span>
     <span class="s2">"essential-gene knockdown, which is not a deletion; Table 4 carries neither (no "</span>
     <span class="s2">"canonical essential gene is present), measured 0"</span>
-<span class="p">)</span>
-<span class="n">ESSENTIALITY_RULE</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">"every kept ORF listed in the local gene_essentiality_sgd store (SGD inviable null "</span>
-    <span class="s2">"phenotypes, which include conditionally inviable genes such as ATG1) is flagged and "</span>
-    <span class="s2">"KEPT; the flag is diagnostic because the store lists viable deletion-collection "</span>
-    <span class="s2">"strains and Table 4 holds no essential-gene knockdown"</span>
 <span class="p">)</span>
 <span class="n">REPLICATE_RULE</span> <span class="o">=</span> <span class="p">(</span>
     <span class="s2">"n_replicates = 1 for every key (conservative lower end): strains were screened in "</span>
@@ -841,11 +824,12 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">KeptRow</span><span class="p">(</span><span class="n">TableRow</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""A retained row with what the resolver made of its identifier."""</span>
+<span class="w">    </span><span class="sd">"""A retained row and the released identifier its record is keyed on."""</span>
 
-    <span class="n">systematic_gene_name</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">perturbed_gene_name</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">status</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">systematic_gene_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the normalized 'Sysname', as released"</span>
+    <span class="p">)</span>
+    <span class="n">perturbed_gene_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"equal to systematic_gene_name"</span><span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">IdentifierNormalization</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
@@ -858,36 +842,14 @@
     <span class="n">normalized_name</span><span class="p">:</span> <span class="nb">str</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">DroppedOrf</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""One source identifier the retention rule removed, with what the resolver said."""</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DuplicateIdentifier</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One normalized identifier that heads more than one Table 4 row; every row is a record."""</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
 
-    <span class="n">row_index</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">source_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"the 'Sysname' cell, verbatim"</span><span class="p">)</span>
     <span class="n">normalized_name</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">status</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"GeneNameStatus the shared resolver returned"</span><span class="p">)</span>
-    <span class="n">resolved_to</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"what the resolver mapped it to, when anything"</span>
-    <span class="p">)</span>
-    <span class="n">feature_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"GFF feature type for a NON_GENE_FEATURE"</span>
-    <span class="p">)</span>
-    <span class="n">n_values</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"present peak values lost with this row"</span><span class="p">)</span>
-
-
-<span class="k">class</span><span class="w"> </span><span class="nc">DuplicateStrainRow</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""A row whose identifier already has a served record, with all of its values."""</span>
-
-    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
-
-    <span class="n">row_index</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">source_name</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">normalized_name</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">systematic_gene_name</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">name_cell</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">kept_row_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"the served row of the same identifier"</span><span class="p">)</span>
-    <span class="n">levels</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+    <span class="n">row_indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"0-based data rows, in file order"</span><span class="p">)</span>
+    <span class="n">name_cells</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"the 'NAME' cell of each row, verbatim"</span><span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">ExcludedRow</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
@@ -902,47 +864,32 @@
     <span class="n">levels</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">EssentialityFlag</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""A kept ORF the SGD essentiality store lists (diagnostic, not an exclusion)."""</span>
-
-    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
-
-    <span class="n">row_index</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">systematic_gene_name</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">name_cell</span><span class="p">:</span> <span class="nb">str</span>
-
-
 <span class="k">class</span><span class="w"> </span><span class="nc">BuildLedger</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""The build's retention accounting: the rules, and exactly what they did."""</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
 
     <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">orf_rule</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">identifier_rule</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">normalization_rule</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">duplicate_rule</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">exclusion_rule</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">essentiality_rule</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">replicate_rule</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">legend_contradiction</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">n_source_rows</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">n_kept</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">n_dropped_orfs</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">n_renamed</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">n_normalized</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">n_duplicate_rows</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_duplicate_identifiers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"identifiers heading more than one row; all of their rows are records"</span>
+    <span class="p">)</span>
+    <span class="n">n_duplicate_rows</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"rows beyond the first of each duplicate identifier (all kept)"</span>
+    <span class="p">)</span>
     <span class="n">n_excluded_non_deletion</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">n_essentiality_flagged</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">n_values_kept</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">normalizations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">IdentifierNormalization</span><span class="p">]</span>
-    <span class="n">dropped_orfs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DroppedOrf</span><span class="p">]</span>
-    <span class="n">renamed_orfs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"normalized source name -&gt; current systematic name for every RENAMED "</span>
-        <span class="s2">"row kept; the source name stays on the record as perturbed_gene_name"</span>
-    <span class="p">)</span>
-    <span class="n">duplicate_strain_rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DuplicateStrainRow</span><span class="p">]</span>
+    <span class="n">duplicate_identifiers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DuplicateIdentifier</span><span class="p">]</span>
     <span class="n">excluded_non_deletion</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ExcludedRow</span><span class="p">]</span>
-    <span class="n">essentiality_flagged</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">EssentialityFlag</span><span class="p">]</span>
     <span class="n">created_at</span><span class="p">:</span> <span class="nb">str</span>
 
 
@@ -998,60 +945,19 @@
     <span class="k">return</span> <span class="n">rows</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">load_sgd_essential_genes</span><span class="p">(</span><span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Systematic names whose stored SGD essentiality phenotype is ``is_essential=True``.</span>
-
-<span class="sd">    Read from the dev-tree ``gene_essentiality_sgd`` LMDB (SGD inviable null phenotypes).</span>
-<span class="sd">    The store must exist: the flag is measured against it, never assumed.</span>
-<span class="sd">    """</span>
-    <span class="n">root</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/torchcell/gene_essentiality_sgd"</span><span class="p">)</span>
-    <span class="n">lmdb_dir</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">"processed"</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">lmdb_dir</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">lmdb_dir</span><span class="si">}</span><span class="s2"> is absent; build GeneEssentialitySgdDataset first, the "</span>
-            <span class="s2">"essentiality flag is measured against it"</span>
-        <span class="p">)</span>
-    <span class="n">interned</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="n">interned_dir</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">"processed"</span><span class="p">,</span> <span class="s2">"interned"</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">osp</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">interned_dir</span><span class="p">):</span>
-        <span class="n">ienv</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">interned_dir</span><span class="p">,</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">lock</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-        <span class="k">with</span> <span class="n">ienv</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">itxn</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">itxn</span><span class="o">.</span><span class="n">cursor</span><span class="p">():</span>
-                <span class="n">interned</span><span class="p">[</span><span class="n">key</span><span class="o">.</span><span class="n">decode</span><span class="p">()]</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-        <span class="n">ienv</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-    <span class="n">essential</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-    <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">lmdb_dir</span><span class="p">,</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">lock</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">txn</span><span class="o">.</span><span class="n">cursor</span><span class="p">():</span>
-            <span class="n">record</span> <span class="o">=</span> <span class="n">resolve_interned</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="n">interned</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">record</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"phenotype"</span><span class="p">][</span><span class="s2">"is_essential"</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">True</span><span class="p">:</span>
-                <span class="k">continue</span>
-            <span class="k">for</span> <span class="n">perturbation</span> <span class="ow">in</span> <span class="n">record</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"genotype"</span><span class="p">][</span><span class="s2">"perturbations"</span><span class="p">]:</span>
-                <span class="n">essential</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">perturbation</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">])</span>
-    <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-    <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">essential</span><span class="p">)</span>
-
-
 <span class="k">def</span><span class="w"> </span><span class="nf">retain_rows</span><span class="p">(</span>
-    <span class="n">rows</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">TableRow</span><span class="p">],</span>
-    <span class="n">resolve</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Any</span><span class="p">],</span>
-    <span class="n">essential_genes</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-    <span class="o">*</span><span class="p">,</span>
-    <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">rows</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">TableRow</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">KeptRow</span><span class="p">],</span> <span class="n">BuildLedger</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Apply every retention rule in order and return the kept rows plus the ledger.</span>
+<span class="w">    </span><span class="sd">"""Apply the retention rules in order and return the kept rows plus the ledger.</span>
 
-<span class="sd">    Order per row: parent-strain exclusion, resolver retention (``ORF_RULE``), duplicate</span>
-<span class="sd">    identifier (``DUPLICATE_RULE``), essentiality flag (``ESSENTIALITY_RULE``, kept).</span>
+<span class="sd">    Order per row: parent-strain exclusion, then the row is a record under its normalized</span>
+<span class="sd">    released identifier (``IDENTIFIER_RULE``); rows sharing an identifier are all kept</span>
+<span class="sd">    and listed (``DUPLICATE_RULE``). Nothing here reads a genome or another store.</span>
 <span class="sd">    """</span>
     <span class="n">kept</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">KeptRow</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">normalizations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">IdentifierNormalization</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">dropped</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DroppedOrf</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">renamed</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="n">duplicates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DuplicateStrainRow</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">excluded</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ExcludedRow</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">flagged</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">EssentialityFlag</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">served</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">rows_of</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">TableRow</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">row</span><span class="o">.</span><span class="n">source_name</span> <span class="o">!=</span> <span class="n">row</span><span class="o">.</span><span class="n">normalized_name</span><span class="p">:</span>
             <span class="n">normalizations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
@@ -1072,78 +978,41 @@
                 <span class="p">)</span>
             <span class="p">)</span>
             <span class="k">continue</span>
-        <span class="n">resolution</span> <span class="o">=</span> <span class="n">resolve</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">normalized_name</span><span class="p">)</span>
-        <span class="n">orf</span> <span class="o">=</span> <span class="n">resolution</span><span class="o">.</span><span class="n">systematic_name</span>
-        <span class="k">if</span> <span class="n">resolution</span><span class="o">.</span><span class="n">status</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_KEPT_STATUSES</span> <span class="ow">or</span> <span class="n">orf</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">dropped</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">DroppedOrf</span><span class="p">(</span>
-                    <span class="n">row_index</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">row_index</span><span class="p">,</span>
-                    <span class="n">source_name</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">source_name</span><span class="p">,</span>
-                    <span class="n">normalized_name</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">normalized_name</span><span class="p">,</span>
-                    <span class="n">status</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">resolution</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
-                    <span class="n">resolved_to</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
-                    <span class="n">feature_type</span><span class="o">=</span><span class="n">resolution</span><span class="o">.</span><span class="n">feature_type</span><span class="p">,</span>
-                    <span class="n">n_values</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">levels</span><span class="p">),</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-            <span class="k">continue</span>
-        <span class="k">if</span> <span class="n">resolution</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">GeneNameStatus</span><span class="o">.</span><span class="n">RENAMED</span><span class="p">:</span>
-            <span class="n">renamed</span><span class="p">[</span><span class="n">row</span><span class="o">.</span><span class="n">normalized_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">orf</span>
-        <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">orf</span><span class="p">,</span> <span class="n">row</span><span class="o">.</span><span class="n">normalized_name</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">served</span><span class="p">:</span>
-            <span class="n">duplicates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">DuplicateStrainRow</span><span class="p">(</span>
-                    <span class="n">row_index</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">row_index</span><span class="p">,</span>
-                    <span class="n">source_name</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">source_name</span><span class="p">,</span>
-                    <span class="n">normalized_name</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">normalized_name</span><span class="p">,</span>
-                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
-                    <span class="n">name_cell</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">name_cell</span><span class="p">,</span>
-                    <span class="n">kept_row_index</span><span class="o">=</span><span class="n">served</span><span class="p">[</span><span class="n">key</span><span class="p">],</span>
-                    <span class="n">levels</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">levels</span><span class="p">,</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-            <span class="k">continue</span>
-        <span class="n">served</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">row_index</span>
-        <span class="k">if</span> <span class="n">orf</span> <span class="ow">in</span> <span class="n">essential_genes</span><span class="p">:</span>
-            <span class="n">flagged</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">EssentialityFlag</span><span class="p">(</span>
-                    <span class="n">row_index</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">row_index</span><span class="p">,</span>
-                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
-                    <span class="n">name_cell</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">name_cell</span><span class="p">,</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
+        <span class="n">rows_of</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">normalized_name</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
         <span class="n">kept</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="n">KeptRow</span><span class="p">(</span>
                 <span class="o">**</span><span class="n">row</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
-                <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+                <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">normalized_name</span><span class="p">,</span>
                 <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="o">.</span><span class="n">normalized_name</span><span class="p">,</span>
-                <span class="n">status</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">resolution</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
             <span class="p">)</span>
         <span class="p">)</span>
+    <span class="n">duplicates</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">DuplicateIdentifier</span><span class="p">(</span>
+            <span class="n">normalized_name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">row_indices</span><span class="o">=</span><span class="p">[</span><span class="n">row</span><span class="o">.</span><span class="n">row_index</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">group</span><span class="p">],</span>
+            <span class="n">name_cells</span><span class="o">=</span><span class="p">[</span><span class="n">row</span><span class="o">.</span><span class="n">name_cell</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">group</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">rows_of</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">group</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
+    <span class="p">]</span>
     <span class="n">ledger</span> <span class="o">=</span> <span class="n">BuildLedger</span><span class="p">(</span>
         <span class="n">dataset</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
-        <span class="n">orf_rule</span><span class="o">=</span><span class="n">ORF_RULE</span><span class="p">,</span>
+        <span class="n">identifier_rule</span><span class="o">=</span><span class="n">IDENTIFIER_RULE</span><span class="p">,</span>
         <span class="n">normalization_rule</span><span class="o">=</span><span class="n">NORMALIZATION_RULE</span><span class="p">,</span>
         <span class="n">duplicate_rule</span><span class="o">=</span><span class="n">DUPLICATE_RULE</span><span class="p">,</span>
         <span class="n">exclusion_rule</span><span class="o">=</span><span class="n">EXCLUSION_RULE</span><span class="p">,</span>
-        <span class="n">essentiality_rule</span><span class="o">=</span><span class="n">ESSENTIALITY_RULE</span><span class="p">,</span>
         <span class="n">replicate_rule</span><span class="o">=</span><span class="n">REPLICATE_RULE</span><span class="p">,</span>
         <span class="n">legend_contradiction</span><span class="o">=</span><span class="n">LEGEND_CONTRADICTION</span><span class="p">,</span>
         <span class="n">n_source_rows</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span>
         <span class="n">n_kept</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">kept</span><span class="p">),</span>
-        <span class="n">n_dropped_orfs</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">dropped</span><span class="p">),</span>
-        <span class="n">n_renamed</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">renamed</span><span class="p">),</span>
         <span class="n">n_normalized</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">normalizations</span><span class="p">),</span>
-        <span class="n">n_duplicate_rows</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">duplicates</span><span class="p">),</span>
+        <span class="n">n_duplicate_identifiers</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">duplicates</span><span class="p">),</span>
+        <span class="n">n_duplicate_rows</span><span class="o">=</span><span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">row_indices</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">duplicates</span><span class="p">),</span>
         <span class="n">n_excluded_non_deletion</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">excluded</span><span class="p">),</span>
-        <span class="n">n_essentiality_flagged</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">flagged</span><span class="p">),</span>
         <span class="n">n_values_kept</span><span class="o">=</span><span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">levels</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">kept</span><span class="p">),</span>
         <span class="n">normalizations</span><span class="o">=</span><span class="n">normalizations</span><span class="p">,</span>
-        <span class="n">dropped_orfs</span><span class="o">=</span><span class="n">dropped</span><span class="p">,</span>
-        <span class="n">renamed_orfs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">renamed</span><span class="o">.</span><span class="n">items</span><span class="p">())),</span>
-        <span class="n">duplicate_strain_rows</span><span class="o">=</span><span class="n">duplicates</span><span class="p">,</span>
+        <span class="n">duplicate_identifiers</span><span class="o">=</span><span class="n">duplicates</span><span class="p">,</span>
         <span class="n">excluded_non_deletion</span><span class="o">=</span><span class="n">excluded</span><span class="p">,</span>
-        <span class="n">essentiality_flagged</span><span class="o">=</span><span class="n">flagged</span><span class="p">,</span>
         <span class="n">created_at</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">kept</span><span class="p">,</span> <span class="n">ledger</span>
@@ -1166,30 +1035,11 @@
         <span class="n">genome</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Initialize the dataset. ``genome`` supplies ``resolve_gene_name``; when it is</span>
-<span class="sd">        None a read-only S288C genome is opened at build time (never at import).</span>
+<span class="w">        </span><span class="sd">"""Initialize the dataset. ``genome`` is accepted for the registry's uniform</span>
+<span class="sd">        constructor and never read: no identifier is resolved at load time.</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">genome</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_resolver</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""``resolve_gene_name`` from the supplied genome, or a read-only S288C genome."""</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
-
-            <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
-
-            <span class="n">load_dotenv</span><span class="p">()</span>
-            <span class="n">data_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">]</span>
-            <span class="c1"># overwrite=False is mandatory: a rebuild here would race any other process</span>
-            <span class="c1"># holding the same gffutils database.</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">SCerevisiaeGenome</span><span class="p">(</span>
-                <span class="n">genome_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/sgd/genome"</span><span class="p">),</span>
-                <span class="n">go_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="s2">"data/go"</span><span class="p">),</span>
-                <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="n">resolver</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="o">.</span><span class="n">resolve_gene_name</span>
-        <span class="k">return</span> <span class="n">resolver</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">experiment_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Experiment</span><span class="p">]:</span>
@@ -1306,32 +1156,19 @@
 <span class="sd">        a mismatch raises ``RawSha256MismatchError`` and no store is written.</span>
 <span class="sd">        """</span>
         <span class="n">verify_raw_files</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="p">{</span><span class="n">TABLE4_NAME</span><span class="p">:</span> <span class="n">TABLE4_SHA256</span><span class="p">})</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
-
-        <span class="n">load_dotenv</span><span class="p">()</span>
-        <span class="n">data_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">]</span>
         <span class="n">rows</span> <span class="o">=</span> <span class="n">read_table4</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">TABLE4_NAME</span><span class="p">))</span>
-        <span class="n">kept</span><span class="p">,</span> <span class="n">ledger</span> <span class="o">=</span> <span class="n">retain_rows</span><span class="p">(</span>
-            <span class="n">rows</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span><span class="p">(),</span>
-            <span class="n">load_sgd_essential_genes</span><span class="p">(</span><span class="n">data_root</span><span class="p">),</span>
-            <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="n">kept</span><span class="p">,</span> <span class="n">ledger</span> <span class="o">=</span> <span class="n">retain_rows</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">"Cooper2010: </span><span class="si">%d</span><span class="s2"> source rows -&gt; </span><span class="si">%d</span><span class="s2"> kept (</span><span class="si">%d</span><span class="s2"> values); dropped </span><span class="si">%d</span><span class="s2"> ORFs "</span>
-            <span class="s2">"(</span><span class="si">%s</span><span class="s2">); </span><span class="si">%d</span><span class="s2"> RENAMED kept under the current name; </span><span class="si">%d</span><span class="s2"> normalized identifiers; "</span>
-            <span class="s2">"</span><span class="si">%d</span><span class="s2"> duplicate rows to the ledger; </span><span class="si">%d</span><span class="s2"> excluded non-deletion rows; "</span>
-            <span class="s2">"</span><span class="si">%d</span><span class="s2"> essentiality-flagged rows kept"</span><span class="p">,</span>
+            <span class="s2">"Cooper2010: </span><span class="si">%d</span><span class="s2"> source rows -&gt; </span><span class="si">%d</span><span class="s2"> kept (</span><span class="si">%d</span><span class="s2"> values); </span><span class="si">%d</span><span class="s2"> normalized "</span>
+            <span class="s2">"identifiers; </span><span class="si">%d</span><span class="s2"> identifiers on more than one row (</span><span class="si">%d</span><span class="s2"> extra rows, all "</span>
+            <span class="s2">"kept); </span><span class="si">%d</span><span class="s2"> excluded non-deletion rows"</span><span class="p">,</span>
             <span class="n">ledger</span><span class="o">.</span><span class="n">n_source_rows</span><span class="p">,</span>
             <span class="n">ledger</span><span class="o">.</span><span class="n">n_kept</span><span class="p">,</span>
             <span class="n">ledger</span><span class="o">.</span><span class="n">n_values_kept</span><span class="p">,</span>
-            <span class="n">ledger</span><span class="o">.</span><span class="n">n_dropped_orfs</span><span class="p">,</span>
-            <span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">d</span><span class="o">.</span><span class="n">source_name</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">d</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">ledger</span><span class="o">.</span><span class="n">dropped_orfs</span><span class="p">],</span>
-            <span class="n">ledger</span><span class="o">.</span><span class="n">n_renamed</span><span class="p">,</span>
             <span class="n">ledger</span><span class="o">.</span><span class="n">n_normalized</span><span class="p">,</span>
+            <span class="n">ledger</span><span class="o">.</span><span class="n">n_duplicate_identifiers</span><span class="p">,</span>
             <span class="n">ledger</span><span class="o">.</span><span class="n">n_duplicate_rows</span><span class="p">,</span>
             <span class="n">ledger</span><span class="o">.</span><span class="n">n_excluded_non_deletion</span><span class="p">,</span>
-            <span class="n">ledger</span><span class="o">.</span><span class="n">n_essentiality_flagged</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>

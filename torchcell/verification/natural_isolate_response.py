@@ -49,7 +49,10 @@ import pandas as pd
 
 from torchcell.datasets.scerevisiae import peter2018 as p
 from torchcell.sequence import natural_isolate as ni
-from torchcell.verification.common import SharedRecordRules
+from torchcell.verification.common import (
+    SharedRecordRules,
+    declared_first_union_validator,
+)
 from torchcell.verification.environment_response import (
     _condition_signature,
     _environment_perturbed_result,
@@ -282,11 +285,9 @@ def verify_natural_isolate_response_streaming(
     ``genotypes`` re-derives each isolate's genotype from the pinned releases (built over
     the release's isolates, reading the store's own allele-diff cache).
     """
-    from pydantic import TypeAdapter
+    from torchcell.datamodels.schema import Genotype
 
-    from torchcell.datamodels.schema import ExperimentType, Genotype
-
-    validate: Callable[[Any], object] = TypeAdapter(ExperimentType).validate_python
+    validate: Callable[[Any], object] = declared_first_union_validator()
     raw_dir = Path(raw_dir)
     conditions = p.build_conditions()
     signatures = expected_condition_signatures(conditions)

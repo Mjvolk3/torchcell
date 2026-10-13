@@ -611,3 +611,29 @@ def test_streaming_value_problem_names_a_non_numeric_and_an_infinite_value() -> 
         {"index": 0, "value": "'high'", "reason": "non-numeric"},
         {"index": 1, "value": "inf", "reason": "inf"},
     ]
+
+
+def test_fitness_l0_keeps_the_union_report_with_the_declared_member_first(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The eager report, a failing record included, is the union-validated report."""
+    from pydantic import TypeAdapter
+
+    import torchcell.verification.fitness as fitness
+    from torchcell.datamodels.schema import ExperimentType
+
+    records = _good_records()
+    broken = _record(["YJR155W"], 0.9)
+    broken["experiment"]["phenotype"]["sample_unit"] = "not a sample unit"
+    records.append(broken)
+    declared_first = _verify(records).model_dump_json()
+    built: list[str] = []
+
+    def union_validator() -> Any:
+        built.append("union")
+        return TypeAdapter(ExperimentType).validate_python
+
+    monkeypatch.setattr(fitness, "declared_first_union_validator", union_validator)
+    assert _verify(records).model_dump_json() == declared_first
+    assert built == ["union"]
+    assert not _result(_verify(records), "structural").passed

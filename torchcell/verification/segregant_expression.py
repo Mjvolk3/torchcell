@@ -50,7 +50,10 @@ import numpy as np
 from torchcell.datamodels.schema import HaplotypeBlock
 from torchcell.datasets.scerevisiae import boocock2025 as bc
 from torchcell.datasets.scerevisiae.bloom2019 import expand_blocks
-from torchcell.verification.common import SharedRecordRules
+from torchcell.verification.common import (
+    SharedRecordRules,
+    declared_first_union_validator,
+)
 from torchcell.verification.report import (
     Level,
     LevelResult,
@@ -155,13 +158,9 @@ def verify_segregant_expression_streaming(
     reproduce. ``genome`` supplies ``fasta_dna`` and ``chr_to_nc`` for the marker
     reference check.
     """
-    from pydantic import TypeAdapter
-
-    from torchcell.datamodels.schema import ExperimentType
-
     specs = panels if panels is not None else bc.PANELS
     library_panel = {lib: p.panel for p in specs.values() for lib in p.libraries}
-    validate: Callable[[Any], object] = TypeAdapter(ExperimentType).validate_python
+    validate: Callable[[Any], object] = declared_first_union_validator()
     report = VerificationReport(dataset_name=dataset_name, provenance=provenance)
     shared = SharedRecordRules()
 

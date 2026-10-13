@@ -1224,6 +1224,10 @@ def test_a_verify_build_shared_by_several_mapped_stores_refuses_a_root_of_none(
             "ecoli_growth_rate_campos2018",
             "ecoli_morphology_campos2018",
         ],
+        "torchcell.datasets.ecoli.wang2018.verify_build": [
+            "crispri_gene_fitness_wang2018",
+            "crispri_guide_fitness_wang2018",
+        ],
         "torchcell.datasets.scerevisiae.dechiara2022.verify_build": [
             "cell_yield_dechiara2022",
             "doubling_time_dechiara2022",

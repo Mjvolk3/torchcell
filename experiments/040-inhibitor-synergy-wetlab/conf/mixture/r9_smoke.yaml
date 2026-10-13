@@ -1,0 +1,47 @@
+# experiments/040-inhibitor-synergy-wetlab/conf/mixture/r9_smoke.yaml
+#
+# Smoke of the two code paths round 9 adds to train_mixture.py: ``compound_pool: sum``
+# and the logging rewrite (one W&B run per fold and seed in the 040a project, the full
+# train and validation loss with every term, by epoch; the history CSV under the same
+# keys). Four steps on one GPU per config; the numbers are noise by construction. The
+# second config carries an auxiliary source with a held-out compound so test_loss/<aux>
+# is exercised, and two seeds so the fold ensemble's summary write is exercised. NOT A
+# CPU SMOKE (see r3w2_smoke.yaml).
+#
+#   sbatch --job-name=040-r9-smoke --cpus-per-task=2 --mem=12G --time=01:00:00 \
+#     --export=ALL,SWEEP=conf/mixture/r9_smoke.yaml,PARALLEL=1 \
+#     experiments/040-inhibitor-synergy-wetlab/scripts/gh_train_mixture.slurm
+- name: r9smoke_van_cell_sum
+  sources: [vanacloig]
+  readout: cell
+  compound_pool: sum
+  host_train: anchors+ex21
+  dose: "off"
+  fit_on: train
+  select: val
+  env_chunk: 8
+  gene_batch: 32
+  host_batch: 8
+  steps: 4
+  eval_every: 2
+  seeds: [0]
+  folds: [0]
+  checkpoint: true
+- name: r9smoke_vanhop_cell_sum_film
+  sources: [vanacloig, hoepfner_hop]
+  readout: cell
+  compound_pool: sum
+  aux_holdout: compound
+  host_train: anchors
+  dose: film
+  fit_on: train
+  select: val
+  env_chunk: 8
+  gene_batch: 32
+  host_batch: 8
+  cond_batch: 8
+  steps: 4
+  eval_every: 2
+  seeds: [0, 1]
+  folds: [0]
+  checkpoint: false

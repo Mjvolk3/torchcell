@@ -32,9 +32,13 @@ from __future__ import annotations
 import glob
 import os.path as osp
 import re
+import sys
 
 import numpy as np
 import pandas as pd
+
+sys.path.insert(0, osp.dirname(osp.abspath(__file__)))
+from mixture_data import read_history  # noqa: E402
 
 EXPERIMENT = osp.dirname(osp.dirname(osp.abspath(__file__)))
 RESULTS = osp.join(EXPERIMENT, "results")
@@ -158,7 +162,7 @@ def selection_table() -> pd.DataFrame:
         sweep = osp.basename(osp.dirname(path))
         if "smoke" in sweep:
             continue
-        history = pd.read_csv(path)
+        history = read_history(path)
         name = osp.basename(path).replace("_history.csv", "")
         for seed, run in history.groupby("seed"):
             epochs = run["epoch"].to_numpy(dtype=float)
@@ -173,16 +177,24 @@ def selection_table() -> pd.DataFrame:
                 "seed": int(str(seed)),
                 "epochs": int(round(float(run["epoch"].max()))),
                 "selected_epoch": int(round(chosen / steps_per_epoch)),
-                "val_at_selected": float(at["val_centered_mean"].iloc[0]),
-                "test_at_selected": float(at["test_centered_mean"].iloc[0]),
-                "test_best": float(run["test_centered_mean"].max()),
+                "val_at_selected": float(at["score/val_centered_spearman"].iloc[0]),
+                "test_at_selected": float(at["score/test_centered_spearman"].iloc[0]),
+                "test_best": float(run["score/test_centered_spearman"].max()),
                 "test_best_epoch": int(
-                    round(epochs[int(np.argmax(run["test_centered_mean"].to_numpy()))])
+                    round(
+                        epochs[
+                            int(
+                                np.argmax(
+                                    run["score/test_centered_spearman"].to_numpy()
+                                )
+                            )
+                        ]
+                    )
                 ),
-                "test_last": float(run["test_centered_mean"].iloc[-1]),
+                "test_last": float(run["score/test_centered_spearman"].iloc[-1]),
             }
-            for column in [c for c in run.columns if c.startswith("heldout_loss_")]:
-                source = column.replace("heldout_loss_", "")
+            for column in [c for c in run.columns if c.startswith("test_loss/")]:
+                source = column.replace("test_loss/", "")
                 row[f"heldout_loss_min_epoch_{source}"] = int(
                     round(epochs[int(np.argmin(run[column].to_numpy()))])
                 )

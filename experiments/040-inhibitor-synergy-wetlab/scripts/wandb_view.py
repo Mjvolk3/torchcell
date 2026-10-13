@@ -62,6 +62,102 @@ VIEW_ID: str | None = "n94xqhmif86"
 # grouped by arm, same panels; pinned after its first ``save_as_new_view()``
 CELL_VIEW_NAME = "040 cell readout only (rounds 7 to 9): arms grouped"
 CELL_VIEW_ID: str | None = "xr3rk5exmh5"
+# THE 040a PROJECT (round 9 on): the trainer logs one run per fold and seed, grouped by
+# arm at init, under the keys below, so nothing is re-logged; ``--project-040a`` only
+# writes the saved view. Pinned after its first ``save_as_new_view()``.
+PROJECT_040A = "torchcell_040a-inhibitor-synergy-cell"
+VIEW_040A_NAME = "040a cell readout: train and validation loss in full, arms grouped"
+VIEW_040A_ID: str | None = "dpr4810ts7s"
+AUX = ["hoepfner_hop", "hillenmeyer_het", "wildenhain"]
+SECTIONS_040A: list[tuple[str, list[tuple[str, list[str]]]]] = [
+    (
+        "1 THE LOSS: train and validation, total and every term (x = epoch)",
+        [
+            ("TOTAL loss, train vs validation", ["train_loss/total", "val_loss/total"]),
+            (
+                "Vanacloig target: train (fitted compounds) vs validation (4 held-out "
+                "compounds) vs test (6 test compounds)",
+                ["train_loss/vanacloig", "val_loss/vanacloig", "test_loss/vanacloig"],
+            ),
+            (
+                "host: train (anchors, ex21 fitted) vs validation (ex21 not fitted) vs "
+                "test (63 ex23 combinations)",
+                ["train_loss/host", "val_loss/host", "test_loss/host_ex23"],
+            ),
+            (
+                "train loss, every term on one axis",
+                ["train_loss/total", "train_loss/vanacloig"]
+                + [f"train_loss/{a}" for a in AUX]
+                + ["train_loss/host", "train_loss/graph_penalty"],
+            ),
+            (
+                "validation loss, every term on one axis",
+                ["val_loss/total", "val_loss/vanacloig", "val_loss/host"],
+            ),
+            (
+                "test loss, every term on one axis",
+                ["test_loss/vanacloig"]
+                + [f"test_loss/{a}" for a in AUX]
+                + ["test_loss/host_ex23"],
+            ),
+        ],
+    ),
+    (
+        "2 auxiliary sources: train vs held-out loss, per source",
+        [
+            (f"{a}: train vs held-out", [f"train_loss/{a}", f"test_loss/{a}"])
+            for a in AUX
+        ],
+    ),
+    (
+        "3 the public score (centered Spearman across strains, mean over compounds)",
+        [
+            (
+                "validation vs test score on one axis",
+                ["score/val_centered_spearman", "score/test_centered_spearman"],
+            ),
+            ("test score", ["score/test_centered_spearman"]),
+            (
+                "validation score (the selection signal)",
+                ["score/val_centered_spearman"],
+            ),
+        ],
+    ),
+    (
+        "4 optimization and bookkeeping",
+        [
+            ("gradient norm before clipping", ["opt/grad_norm"]),
+            ("learning rate", ["opt/lr"]),
+            ("peak GPU memory (GB)", ["sys/gpu_peak_gb"]),
+        ],
+    ),
+]
+FINAL_040A = {
+    "growth AUROC over the 63 combinations, fold ensemble (Loewe 0.958)": (
+        "ensemble/ex23/combinations/growth_auroc/served"
+    ),
+    "worst-scenario Spearman over all 63, fold ensemble (Loewe 0.772)": (
+        "ensemble/ex23/combinations/worst_scenario_spearman/served"
+    ),
+    "fitness Spearman over the combinations that grew, fold ensemble (Bliss 0.573)": (
+        "ensemble/ex23/combinations_that_grew/fitness_spearman/served"
+    ),
+    "Vanacloig compound-cold centered Spearman, fold ensemble (ridge 0.359)": (
+        "ensemble/vanacloig/test_compounds/centered_spearman_median/both"
+    ),
+    "furfural x acetic acid grid, observed minus predicted (Bliss -0.08)": (
+        "ensemble/isobole_ex26/interior_cells/mean_observed_minus_predicted/served"
+    ),
+    "formic x acetic acid grid, observed minus predicted (Bliss -0.45)": (
+        "ensemble/isobole_ex27/interior_cells/mean_observed_minus_predicted/served"
+    ),
+    "5-HMF x acetic acid grid, observed minus predicted (Bliss -0.02)": (
+        "ensemble/isobole_ex28/interior_cells/mean_observed_minus_predicted/served"
+    ),
+    "Hoepfner HOP held-out compound, fold ensemble (ridge 0.189)": (
+        "ensemble/hoepfner_hop/heldout_compound/centered_spearman_median/both"
+    ),
+}
 X = "epoch"
 # every panel draws up to this many runs or groups; the W&B default is 10 and the user wants every run visible
 MAX_SHOWN = 1000
@@ -440,8 +536,86 @@ def populate_view(cell_only: bool = False) -> str:
     return str(view.url)
 
 
+def populate_040a_view() -> str:
+    """Overwrite (or create) the 040a project's saved view: loss first, grouped by arm."""
+    sections = [
+        ws.Section(
+            name=name,
+            is_open=True,
+            layout_settings=ws.SectionLayoutSettings(columns=3, rows=1),
+            panel_settings=ws.SectionPanelSettings(x_axis=X, smoothing_type="none"),
+            panels=[
+                wr.LinePlot(
+                    x=X,
+                    y=keys,
+                    title=title,
+                    title_x="epoch",
+                    max_runs_to_show=MAX_SHOWN,
+                    layout=wr.Layout(w=8, h=7),
+                )
+                for title, keys in panels
+            ],
+        )
+        for name, panels in SECTIONS_040A
+    ]
+    sections.append(
+        ws.Section(
+            name="5 wet-lab and public scores per arm, the fold ensemble (the model-free "
+            "bar is in each title)",
+            is_open=True,
+            layout_settings=ws.SectionLayoutSettings(columns=2, rows=1),
+            panels=[
+                wr.BarPlot(
+                    title=title,
+                    metrics=[metric],
+                    max_runs_to_show=MAX_SHOWN,
+                    max_bars_to_show=MAX_SHOWN,
+                    layout=wr.Layout(w=12, h=8),
+                )
+                for title, metric in FINAL_040A.items()
+            ],
+        )
+    )
+    settings = ws.WorkspaceSettings(
+        x_axis=X,
+        smoothing_type="none",
+        max_runs=MAX_SHOWN,
+        sort_panels_alphabetically=False,
+    )
+    runset_settings = ws.RunsetSettings(
+        groupby=[ws.Config("arm")],
+        order=[ws.Ordering(ws.Metric("CreatedTimestamp"), ascending=False)],
+    )
+    if VIEW_040A_ID is None:
+        view = ws.Workspace(
+            entity=ENTITY,
+            project=PROJECT_040A,
+            name=VIEW_040A_NAME,
+            sections=sections,
+            settings=settings,
+            runset_settings=runset_settings,
+        )
+        view.save_as_new_view()
+        print(f"NEW saved view: {view.url}\n  pin its nw= id into VIEW_040A_ID")
+        return str(view.url)
+    view = ws.Workspace.from_url(
+        f"https://wandb.ai/{ENTITY}/{PROJECT_040A}?nw={VIEW_040A_ID}"
+    )
+    view.name = VIEW_040A_NAME
+    view.sections = sections
+    view.settings = settings
+    view.runset_settings = runset_settings
+    view.save()
+    return str(view.url)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--project-040a",
+        action="store_true",
+        help="rewrite (or create) the 040a project's saved view and stop",
+    )
     parser.add_argument(
         "--view-only",
         action="store_true",
@@ -463,6 +637,9 @@ def main() -> None:
         help="rewrite (or create) the second saved view, cell-readout runs only",
     )
     args = parser.parse_args()
+    if args.project_040a:
+        print(populate_040a_view())
+        return
     if args.cell_view:
         print(populate_view(cell_only=True))
         return

@@ -110,7 +110,8 @@ round-3 and round-4 run on both machines in which the compound was held out: fur
 \hydprofHmfCgtRuns{}, with the run spread as the whisker. \status{todo}\,\fstat{file}
 \textbf{j}, The six titrations with their Hill fits, dose in units of each compound's own
 half-maximal dose; slopes run \hydhillMin{} to \hydhillMax{}. Dotted, the model whose
-host head trained on the public anchors alone: a flat line at the anchors' assumed
+host, the empty genotype read through the shared cell head, trained on the public
+anchors alone: a flat line at the anchors' assumed
 fitness for every inhibitor at every dose, Spearman \hydexTwoOneZeroShotSpearman{}
 against the \hydexTwoOneZeroShotConditions{} observed single-agent conditions. Dashed,
 the model trained on these wells: a fit, Spearman \hydexTwoOneFittedSpearman{}, and
@@ -118,10 +119,10 @@ still nearly flat in dose. \status{todo}\,\fstat{file}
 \textbf{k}, The combinations that grew, observed against the two rules, by number of
 inhibitors. Growth AUROC: Loewe \hydloeweAuroc{}, Bliss \hydblissAuroc{}. Fitness
 Spearman: Bliss \hydblissSpearman{}, Loewe \hydloeweSpearman{}. The fourth bar is the
-model (single source, trained on the anchors and the titration, mean over
-\hydmodelFolds{} folds): the same predicted fitness at one, two and three inhibitors,
+model (single source, cell readout, trained on the anchors and the titration, mean
+over \hydmodelFolds{} folds): the same predicted fitness at one, two and three inhibitors,
 growth AUROC \hydmodelAuroc{}, fitness Spearman \hydmodelGrownSpearman{}. The host
-head does not compose. \status{todo}\,\fstat{file}
+does not compose. \status{todo}\,\fstat{file}
 \textbf{l}, The \hydnIsoboles{} isobole grids as observed fitness, white at none, with
 the cells that grew marked and each rule's front drawn where its predicted fitness
 crosses the growth threshold: Bliss in red, Loewe in purple. Mean observed minus Bliss

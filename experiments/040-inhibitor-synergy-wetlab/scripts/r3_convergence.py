@@ -29,6 +29,7 @@ import glob
 import os
 import os.path as osp
 import re
+import sys
 
 import matplotlib
 
@@ -40,6 +41,10 @@ from dotenv import load_dotenv  # noqa: E402
 from matplotlib.lines import Line2D  # noqa: E402
 
 from torchcell.timestamp import timestamp  # noqa: E402
+
+sys.path.insert(0, osp.dirname(osp.abspath(__file__)))
+from mixture_data import read_history  # noqa: E402
+
 from torchcell.utils import (  # noqa: E402
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
@@ -102,7 +107,7 @@ def histories() -> list[tuple[str, str, str, pd.DataFrame]]:
             if "smoke" in sweep:
                 continue
             name = osp.basename(path).replace("_history.csv", "")
-            out.append((machine, sweep, name, pd.read_csv(path)))
+            out.append((machine, sweep, name, read_history(path)))
     return out
 
 
@@ -112,7 +117,7 @@ def run_rows() -> pd.DataFrame:
         for seed, run in history.groupby("seed"):
             run = run.sort_values("epoch")
             epoch = run["epoch"].to_numpy(dtype=float)
-            test = run["test_centered_mean"].to_numpy(dtype=float)
+            test = run["score/test_centered_spearman"].to_numpy(dtype=float)
             chosen = int(run["selected_step"].iloc[0])
             at = run[run["step"] == chosen]
             base = {
@@ -123,17 +128,17 @@ def run_rows() -> pd.DataFrame:
                 "seed": int(str(seed)),
                 "fold": int(run["fold"].iloc[0]),
                 "epochs": int(round(epoch.max())),
-                "lr_end": float(run["lr"].iloc[-1]),
+                "lr_end": float(run["opt/lr"].iloc[-1]),
                 "test_peak": float(np.nanmax(test)),
                 "test_peak_epoch": int(round(epoch[int(np.nanargmax(test))])),
                 "test_end": float(test[-1]),
-                "test_selected": float(at["test_centered_mean"].iloc[0]),
+                "test_selected": float(at["score/test_centered_spearman"].iloc[0]),
                 "selected_epoch": int(
                     round(chosen / (run["step"].max() / epoch.max()))
                 ),
             }
             for source in SOURCES:
-                tl, hl = f"loss_{source}", f"heldout_loss_{source}"
+                tl, hl = f"train_loss/{source}", f"test_loss/{source}"
                 if hl not in run or run[hl].isna().all():
                     continue
                 held = run[hl].to_numpy(dtype=float)
@@ -147,13 +152,6 @@ def run_rows() -> pd.DataFrame:
                 row["heldout_removed_from_first"] = float(1.0 - held[i_min] / held[0])
                 if tl in run and not run[tl].isna().all():
                     train = smooth(run[tl].to_numpy(dtype=float))
-                    row["train_early"] = float(np.nanmedian(train[1:4]))
-                    row["train_end"] = float(np.nanmedian(train[-3:]))
-                    row["train_rel_slope_last_fifth"] = rel_slope(epoch, train)
-                else:
-                    # the primary source's training loss is the gene_loss column only
-                    # when it is the sole source; otherwise it is logged by name
-                    train = smooth(run["gene_loss"].to_numpy(dtype=float))
                     row["train_early"] = float(np.nanmedian(train[1:4]))
                     row["train_end"] = float(np.nanmedian(train[-3:]))
                     row["train_rel_slope_last_fifth"] = rel_slope(epoch, train)
@@ -198,7 +196,7 @@ def mean_curve(arm: str, column: str) -> pd.Series | None:
                 continue
             frames.append(
                 smooth(s.to_numpy(dtype=float))
-                if column.startswith("loss_") or column == "gene_loss"
+                if column.startswith("train_loss/")
                 else s.to_numpy(dtype=float)
             )
     if not frames:
@@ -218,12 +216,7 @@ def draw(runs: pd.DataFrame) -> str:
     )
     for arm, _ in DRAWN:
         for source in SOURCES:
-            col = (
-                f"loss_{source}"
-                if arm != "mix_van_e150" or source != "vanacloig"
-                else "gene_loss"
-            )
-            c = mean_curve(arm, col)
+            c = mean_curve(arm, f"train_loss/{source}")
             if c is not None:
                 axes[0].plot(
                     c.index,
@@ -232,7 +225,7 @@ def draw(runs: pd.DataFrame) -> str:
                     color=SOURCE_COLOR[source],
                     linewidth=0.8,
                 )
-            h = mean_curve(arm, f"heldout_loss_{source}")
+            h = mean_curve(arm, f"test_loss/{source}")
             if h is not None:
                 axes[1].plot(
                     h.index,
@@ -241,7 +234,7 @@ def draw(runs: pd.DataFrame) -> str:
                     color=SOURCE_COLOR[source],
                     linewidth=0.8,
                 )
-        t = mean_curve(arm, "test_centered_mean")
+        t = mean_curve(arm, "score/test_centered_spearman")
         if t is not None:
             axes[2].plot(
                 t.index,
@@ -250,7 +243,7 @@ def draw(runs: pd.DataFrame) -> str:
                 color=PLOT_PALETTE[10],
                 linewidth=0.8,
             )
-        v = mean_curve(arm, "val_centered_mean")
+        v = mean_curve(arm, "score/val_centered_spearman")
         if v is not None:
             axes[2].plot(
                 v.index,

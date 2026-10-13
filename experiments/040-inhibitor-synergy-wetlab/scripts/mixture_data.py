@@ -292,7 +292,10 @@ class VanacloigDose(BaseModel):
     """One Vanacloig condition's Table S1 dose, as the rebuilt dev store holds it."""
 
     compound: str
-    inchikey: str
+    #: None for a compound the store serves with the typed ``inchikey`` gap (QUADRIS,
+    #: a fungicide formulation with no structure, since the 2026-10-12 rebuild); its
+    #: dose is a percent, so it has no molar dose and ``require_molar_dose`` drops it
+    inchikey: str | None
     value: float
     unit: str
     basis: str
@@ -348,6 +351,7 @@ def vanacloig_doses(store: str = VANACLOIG_STORE) -> list[VanacloigDose]:
             molar: float | None = value * MOLAR_FACTOR[unit]
             molar_source = f"{unit} -> molar"
         elif unit == "ug/mL":
+            assert compound["inchikey"], f"{compound['name']}: ug/mL with no structure"
             weight = weights[compound["inchikey"]]
             molar = value * 1e-3 / weight
             molar_source = f"ug/mL / MolWt {weight:.2f} g/mol (curated SMILES)"
@@ -1289,3 +1293,46 @@ def assemble(
         inchikey_of_inhibitor=inchikey_of,
         counts=counts,
     )
+
+
+# ---- the history table, under the keys the trainer logs since round 9 ---------- #
+#: round 1 to 8 history columns -> the shared keys logged since round 9 (the W&B key
+#: and the CSV column are the same string). ``gene_loss`` (the target plus aux_weight
+#: times the auxiliary sources) has no single successor; a single-source run's
+#: ``train_loss/vanacloig`` is filled from it when no ``loss_vanacloig`` column exists.
+HISTORY_RENAMES: dict[str, str] = {
+    "loss_vanacloig": "train_loss/vanacloig",
+    "loss_hoepfner_hop": "train_loss/hoepfner_hop",
+    "loss_hillenmeyer_het": "train_loss/hillenmeyer_het",
+    "loss_wildenhain": "train_loss/wildenhain",
+    "host_loss": "train_loss/host",
+    "total_loss": "train_loss/total",
+    "graph_penalty": "train_loss/graph_penalty",
+    "val_loss_vanacloig": "val_loss/vanacloig",
+    "heldout_loss_vanacloig": "test_loss/vanacloig",
+    "heldout_loss_hoepfner_hop": "test_loss/hoepfner_hop",
+    "heldout_loss_hillenmeyer_het": "test_loss/hillenmeyer_het",
+    "heldout_loss_wildenhain": "test_loss/wildenhain",
+    "val_centered_mean": "score/val_centered_spearman",
+    "test_centered_mean": "score/test_centered_spearman",
+    "grad_norm": "opt/grad_norm",
+    "lr": "opt/lr",
+    "seconds": "sys/seconds",
+    "gpu_peak_gb": "sys/gpu_peak_gb",
+}
+
+
+def read_history(path: str) -> pd.DataFrame:
+    """One run's ``*_history.csv`` with every column under its round-9 name.
+
+    A table written before round 9 is renamed on read; one written since is returned
+    as is. ``train_loss/total`` is derived for a round-1 to round-5 table that
+    predates the column (gene loss plus ``lambda_host`` times host loss is not
+    recoverable without the config, so it is left absent there).
+    """
+    history = pd.read_csv(path)
+    present = {old: new for old, new in HISTORY_RENAMES.items() if old in history}
+    history = history.rename(columns=present)
+    if "train_loss/vanacloig" not in history and "gene_loss" in history:
+        history["train_loss/vanacloig"] = history["gene_loss"]
+    return history

@@ -150,10 +150,11 @@ SRC_LABEL = {
 }
 SRC_ORDER = ["measured", "bliss", "loewe", "hsa", "mean", "ridge", "cgt", "control"]
 #: the arm drawn as THE model on the wet-lab panels (single source, held-out protocol,
-#: host head trained on the anchors and the ex21 titration) and its zero-shot twin
-#: (anchors only, so its ex21 curve is a prediction of singles it never saw)
-MODEL_ARM = "r3_van_e150"
-ZERO_SHOT_ARM = "r3w2_van_e150_anchors"
+#: the CELL readout: the host is the empty genotype read through the shared head,
+#: trained on the anchors and the ex21 titration) and its zero-shot twin (anchors
+#: only, so its ex21 curve is a prediction of singles it never saw)
+MODEL_ARM = "r7_van_e150_cell"
+ZERO_SHOT_ARM = "r8_van_e150_cell_anchors"
 #: HATCH: the software growth call, where a panel draws both calls. Plain is served.
 SOFTWARE_HATCH = "////"
 

@@ -96,6 +96,8 @@ from __future__ import annotations
 import argparse
 import os
 import os.path as osp
+import re
+import socket
 import sys
 import time
 import warnings
@@ -231,6 +233,12 @@ class MixtureConfig(BaseModel):
     #: the average of its inhibitors (round 7 and earlier), ``sum`` lets each inhibitor
     #: add; a single-compound medium is identical under both
     compound_pool: Literal["mean", "sum"] = "mean"
+    #: the W&B project. Rounds 1 to 8 logged to ``torchcell_040-inhibitor-synergy-wetlab``
+    #: as one run per config file with fold- and seed-prefixed keys; from round 9 every
+    #: (fold, seed) trajectory is its own run, grouped by arm, with the keys every run
+    #: shares (``train_loss/total``, ``val_loss/total`` and their terms, by epoch), in a
+    #: project of its own so the cell-readout program is not mixed with the gene-head runs
+    wandb_project: str = "torchcell_040a-inhibitor-synergy-cell"
     dose: Literal["film", "off"] = "film"
     host_train: Literal["anchors", "anchors+ex21", "finetune_ex21"] = "anchors"
     lambda_host: float = 1.0
@@ -1137,6 +1145,25 @@ def train_seed(
     vanacloig = sources[0]
     host = host_training_records(cfg, ctx, fold, "main")
     assert host, "the host task has no training record"
+    # the host records the loss curves read but the optimizer never steps on: the ex21
+    # single-agent cells outside the training list (the fold's held-out compounds under
+    # anchors+ex21, all of ex21 under anchors; empty when every ex21 cell is fitted), as
+    # the host's VALIDATION loss, and the 63 ex23 combinations, the private test, as its
+    # TEST loss. Neither enters the selection, which reads the public validation score.
+    trained_keys = {r.key for r in host}
+    host_val_rows = np.array(
+        [
+            i
+            for i, r in enumerate(ctx.data.host)
+            if r.split == "ex21" and r.key not in trained_keys
+        ],
+        dtype=int,
+    )
+    host_test_rows = np.array(
+        [i for i, r in enumerate(ctx.data.host) if r.run == "ex23" and r.compounds],
+        dtype=int,
+    )
+    host_observed = np.array([r.fitness for r in ctx.data.host], dtype=float)
     genes_fit = fitted_genes(cfg, fold, len(vanacloig.genes))
     std = standardize(cfg, ctx, fold, host, device, genes_fit)
     conditions = {
@@ -1198,7 +1225,6 @@ def train_seed(
         [r.fitness for r in host], dtype=torch.float32, device=device
     )
     pool = centering_compounds(cfg, fold)
-    tag = f"fold{fold.fold}_seed{seed}"
     if device.type == "cuda":
         torch.cuda.reset_peak_memory_stats(device)
 
@@ -1310,14 +1336,53 @@ def train_seed(
                 # the validation compounds' loss in the training loss's own units;
                 # in-sample under fit_on: pool, as the validation score is
                 van_val_loss = heldout_loss(vanacloig, matrix, std, fold.val)
-            record = {
+            # THE LOSS, IN FULL, FOR TRAIN AND FOR VALIDATION, each with every term it
+            # is made of, so a run can be read as training from its curves alone:
+            #   train_loss/total = train_loss/vanacloig
+            #                    + aux_weight x sum of train_loss/<auxiliary source>
+            #                    + lambda_host x train_loss/host
+            #                    + cgt_lambda x train_loss/graph_penalty
+            #   val_loss/total   = val_loss/vanacloig (the fold's validation compounds)
+            #                    + lambda_host x val_loss/host (ex21 cells not fitted;
+            #                      absent, and the term zero, when every one is fitted)
+            #   test_loss/*      = the fold's test compounds, the auxiliary held-out
+            #                      conditions, and the 63 ex23 combinations
+            # The train terms are the step's batch (W&B smooths them); the validation
+            # and test terms are full evaluations at the end of the epoch.
+            host_val_loss = (
+                float(
+                    np.mean(
+                        (host_pred[host_val_rows] - host_observed[host_val_rows]) ** 2
+                    )
+                )
+                if len(host_val_rows)
+                else float("nan")
+            )
+            val_total = van_val_loss + (
+                cfg.lambda_host * host_val_loss if len(host_val_rows) else 0.0
+            )
+            record: dict[str, float] = {
                 "step": step + 1,
                 "epoch": (step + 1) / steps_per_epoch,
-                "gene_loss": float(gene_loss.detach()),
-                "heldout_loss_vanacloig": van_heldout,
-                "val_loss_vanacloig": van_val_loss,
+                "train_loss/total": float(total.detach()),
+                "train_loss/vanacloig": float(losses[vanacloig.spec.name].detach()),
                 **{
-                    f"heldout_loss_{name}": heldout_loss(
+                    f"train_loss/{name}": float(loss.detach())
+                    for name, loss in losses.items()
+                    if name != vanacloig.spec.name
+                },
+                "train_loss/host": float(host_loss.detach()),
+                # the graph penalty (KL of the regularized heads' attention to the nine
+                # graph priors) is computed on every step and scaled by cgt_lambda
+                "train_loss/graph_penalty": (
+                    float(sum(penalties).detach()) if penalties else 0.0
+                ),
+                "val_loss/total": val_total,
+                "val_loss/vanacloig": van_val_loss,
+                "val_loss/host": host_val_loss,
+                "test_loss/vanacloig": van_heldout,
+                **{
+                    f"test_loss/{name}": heldout_loss(
                         ctx.data.source(name),
                         aux_pred[name],
                         std,
@@ -1325,33 +1390,25 @@ def train_seed(
                     )
                     for name in aux_pred
                 },
-                "host_loss": float(host_loss.detach()),
-                "total_loss": float(total.detach()),
-                # every term of the objective is logged, weighted or not: the graph
-                # penalty (KL of the regularized heads' attention to the nine graph
-                # priors) is computed on every step and scaled by cgt_lambda, zero in
-                # every round so far
-                "graph_penalty": float(sum(penalties).detach()) if penalties else 0.0,
-                "grad_norm": float(grad_norm),
-                "lr": float(scheduler.get_last_lr()[0]),
-                "val_centered_mean": val,
-                "test_centered_mean": test,
-                "seconds": time.time() - started,
-                "gpu_peak_gb": (
+                "test_loss/host_ex23": float(
+                    np.mean(
+                        (host_pred[host_test_rows] - host_observed[host_test_rows]) ** 2
+                    )
+                ),
+                "score/val_centered_spearman": val,
+                "score/test_centered_spearman": test,
+                "opt/grad_norm": float(grad_norm),
+                "opt/lr": float(scheduler.get_last_lr()[0]),
+                "sys/seconds": time.time() - started,
+                "sys/gpu_peak_gb": (
                     torch.cuda.max_memory_allocated(device) / 2**30
                     if device.type == "cuda"
                     else 0.0
                 ),
             }
-            record |= {
-                f"loss_{name}": float(loss.detach()) for name, loss in losses.items()
-            }
             history.append(record)
             if wandb.run is not None:
-                wandb.log(
-                    {f"{tag}/{k}": v for k, v in record.items() if k != "step"}
-                    | {"step": step + 1}
-                )
+                wandb.log({k: v for k, v in record.items() if np.isfinite(v)})
             if cfg.select == "last" or (np.isfinite(val) and val > best[0]):
                 best = (val, step + 1)
                 selected = SeedResult(
@@ -1448,7 +1505,10 @@ def finetune_host(
             optimizer.step()
         if wandb.run is not None:
             wandb.log(
-                {f"finetune/fold{fold.fold}_loss": float(loss.detach()), "step": epoch}
+                {
+                    "finetune/train_loss_host": float(loss.detach()),
+                    "finetune/epoch": epoch,
+                }
             )
     selected.host = predict_host(model, ctx, ctx.data.host, std, device)
     return selected
@@ -1766,22 +1826,42 @@ def run(cfg: MixtureConfig, sweep: str, device: torch.device) -> pd.DataFrame:
     ctx.data.counts.assign(name=cfg.name).to_csv(
         osp.join(out_dir, f"{cfg.name}_counts.csv"), index=False
     )
-    run_wandb = wandb.init(
-        mode=WANDB_MODE,
-        project="torchcell_040-inhibitor-synergy-wetlab",
-        group=f"{sweep}/{cfg.name}",
-        name=cfg.name,
-        tags=["mixture", sweep],
-        config=cfg.model_dump()
-        | {
-            "n_aux_dropped": ctx.n_aux_dropped,
-            "dropped_compounds": ctx.data.dropped_compounds,
-        },
-        dir=osp.join(DATA_ROOT, "wandb-experiments", "040-inhibitor-synergy-wetlab"),
-        reinit=True,
-    )
-    run_wandb.define_metric("step")
-    run_wandb.define_metric("*", step_metric="step")
+    # ONE W&B RUN PER TRAJECTORY (fold, seed), grouped by arm, keys shared by every
+    # run and read against the epoch; the fold ensemble's scores are written to each
+    # of its seed runs under ``ensemble/`` once the fold is done
+    arm = re.sub(r"_s\d+$", "", re.sub(r"_f\d+$", "", cfg.name))
+    wandb_config = cfg.model_dump() | {
+        "arm": arm,
+        "sweep": sweep,
+        "round": sweep.split("_")[0],
+        "readout_": cfg.readout,
+        "compound_pool_": cfg.compound_pool,
+        "host_train_": cfg.host_train,
+        "dose_": cfg.dose,
+        "fold_seed_": cfg.fold_seed,
+        "machine": socket.gethostname().split(".")[0],
+        "n_aux_dropped": ctx.n_aux_dropped,
+        "dropped_compounds": ctx.data.dropped_compounds,
+    }
+    wandb_dir = osp.join(DATA_ROOT, "wandb-experiments", "040-inhibitor-synergy-wetlab")
+
+    def open_run(fold: int, seed: int) -> wandb.sdk.wandb_run.Run:
+        run = wandb.init(
+            mode=WANDB_MODE,
+            project=cfg.wandb_project,
+            group=arm,
+            name=f"{cfg.name}_seed{seed}",
+            job_type="train",
+            tags=["mixture", sweep, f"readout_{cfg.readout}"],
+            config=wandb_config | {"fold": fold, "seed": seed},
+            dir=wandb_dir,
+            reinit=True,
+        )
+        run.define_metric("epoch")
+        run.define_metric("*", step_metric="epoch")
+        run.define_metric("finetune/epoch")
+        run.define_metric("finetune/*", step_metric="finetune/epoch")
+        return run
 
     vanacloig = ctx.data.sources[0]
     if cfg.split == "gene":
@@ -1791,11 +1871,13 @@ def run(cfg: MixtureConfig, sweep: str, device: torch.device) -> pd.DataFrame:
             len(vanacloig.compounds), cfg.n_folds, cfg.n_val, cfg.fold_seed
         )
     frames, compounds, histories, aux_tables = [], [], [], []
+    all_runs: list[str] = []
     for fold in folds:
         if cfg.folds is not None and fold.fold not in cfg.folds:
             continue
-        results = []
+        results, seed_runs = [], []
         for seed in cfg.seeds:
+            run_wandb = open_run(fold.fold, seed)
             result = train_seed(cfg, ctx, fold, seed, device, sweep)
             results.append(result)
             histories.append(result.history.assign(fold=fold.fold))
@@ -1805,14 +1887,24 @@ def run(cfg: MixtureConfig, sweep: str, device: torch.device) -> pd.DataFrame:
             )
             aux_table, aux_summary = aux_scores(cfg, ctx, result.aux)
             aux_tables.append(aux_table.assign(fold=fold.fold, member=f"seed{seed}"))
-            frames.append(
-                pd.concat(
-                    [summary, aux_summary, host_scores(cfg, ctx, result.host, bars)]
-                ).assign(fold=fold.fold, member=f"seed{seed}")
+            seed_scores = pd.concat(
+                [summary, aux_summary, host_scores(cfg, ctx, result.host, bars)]
+            ).assign(fold=fold.fold, member=f"seed{seed}")
+            frames.append(seed_scores)
+            run_wandb.summary.update(
+                {
+                    f"{row['task']}/{row['subset']}/{row['metric']}/{row['call']}": row[
+                        "value"
+                    ]
+                    for _, row in seed_scores.iterrows()
+                }
+                | {"selected_step": int(result.history["selected_step"].iloc[0])}
             )
+            seed_runs.append(run_wandb.path)
+            run_wandb.finish()
             print(
                 f"{cfg.name} fold {fold.fold} seed {seed}: "
-                f"{result.history['seconds'].iloc[-1]:.0f} s",
+                f"{result.history['sys/seconds'].iloc[-1]:.0f} s",
                 flush=True,
             )
         matrix = np.mean([r.vanacloig for r in results], axis=0)
@@ -1835,11 +1927,12 @@ def run(cfg: MixtureConfig, sweep: str, device: torch.device) -> pd.DataFrame:
         }
         aux_table, aux_summary = aux_scores(cfg, ctx, aux_mean)
         aux_tables.append(aux_table.assign(fold=fold.fold, member="ensemble"))
-        frames.append(
-            pd.concat([summary, aux_summary, host_scores(cfg, ctx, host, bars)]).assign(
-                fold=fold.fold, member="ensemble"
-            )
-        )
+        ensemble_scores = pd.concat(
+            [summary, aux_summary, host_scores(cfg, ctx, host, bars)]
+        ).assign(fold=fold.fold, member="ensemble")
+        frames.append(ensemble_scores)
+        write_summary(seed_runs, "ensemble", ensemble_scores)
+        all_runs.extend(seed_runs)
 
     scores = pd.concat(frames, ignore_index=True).assign(
         name=cfg.name, fold_seed=cfg.fold_seed, training_call=cfg.call
@@ -1884,14 +1977,31 @@ def run(cfg: MixtureConfig, sweep: str, device: torch.device) -> pd.DataFrame:
         .sort_values(["task", "subset", "metric", "call"], ignore_index=True)
     )
     print_table(f"{cfg.name} (ensemble, mean over folds)", summary)
-    run_wandb.summary.update(
-        {
-            f"{row['task']}/{row['subset']}/{row['metric']}/{row['call']}": row["value"]
-            for _, row in summary.iterrows()
-        }
-    )
-    run_wandb.finish()
+    write_summary(all_runs, "mean_over_folds", summary)
     return scores
+
+
+def write_summary(run_paths: list[str], prefix: str, scores: pd.DataFrame) -> None:
+    """Write ``scores`` (long form) to each finished run's W&B summary under ``prefix``.
+
+    The seed runs are finished by the time their fold's ensemble and the config's mean
+    over folds exist, so the values go through the API. Nothing is written when W&B
+    is disabled or offline.
+    """
+    if not run_paths or WANDB_MODE in ("disabled", "offline"):
+        return
+    values = {
+        f"{prefix}/{row['task']}/{row['subset']}/{row['metric']}/{row['call']}": float(
+            row["value"]
+        )
+        for _, row in scores.iterrows()
+    }
+    # the public API's summary.update persists the keys it is given; run.update()
+    # would push the whole summary the client fetched, which can predate the run's
+    # own final upload and drop keys (seen on a seed finished seconds earlier)
+    api = wandb.Api()
+    for path in run_paths:
+        api.run(path).summary.update(values)
 
 
 def main() -> None:

@@ -107,3 +107,39 @@ Rebuilt from this branch under slurm (job 4445, `build_dataset_lmdb --retire-exi
 | L1-L3 | shared rules (gap census 8,846 gaps over 4,378 records, canonical spellings, uncertainty, compound identity, media membership) | pass |
 | L4 (finding) | `gene_containment_bw25113_jw_synonyms` | 4,171 of 4,378 released JW ids are a `gene_synonym` of a BW25113 locus; 207 are not and 47 share a locus with another JW id; reported, not gated |
 | L3 | provenance audit of every sourced value | pass, 16 of 16 quotes verbatim in `paper/PMC1681482.1.txt` |
+
+## 2026.10.13 - Rebased onto main: the N.A. rows are ledger rows on the boolean leaf
+
+Rebased onto main `6982d2437`, which landed PR #1083 (the graded essentiality sibling) and PR #1072 (typed gaps on released Z scores and pathway organisms). Main's `torchcell/datamodels/schema.py` is kept whole, so this branch carries no schema change and no schema-change record: `GeneEssentialityPhenotype.is_essential` stays a `bool`, there is no `released_call`, `BacterialReleasedStrainPerturbation` has no `construction` slot, and the record `2026-10-12-essentiality-released-call-gap-and-released-strain-construction.json` named in the 2026.10.12 section is gone. `python -m torchcell.provenance.schema_change check` passes, and the ontology figures and browser seed regenerate byte-identical to main's.
+
+### What changed from the 2026.10.12 section
+
+The 90 Table 3 `N.A.` rows (ORFs the paper did not target, so no construction outcome) can no longer be a gapped `None` on the boolean leaf. They are ledgered under the named rule `not_targeted` in `preprocess/dropped_records.json` (items `gene JW id`), the pattern main's Gerdes 2003 and Goodall 2018 loaders use, and every one keeps its released cells in `preprocess/calls.csv` with `drop_rule = not_targeted` and an empty `record`. L2 refuses a record under an N.A. row's JW id. The JW-id reversal stands: the 172 rows main's loader dropped for a JW id the annotation lacks or shares are records.
+
+| store | dev store 2026-10-11 (main's loader) | 2026.10.12 section (gapped None) | after this rebase |
+|---|---:|---:|---:|
+| `gene_essentiality_baba2006` | 4,116 | 4,378 | 4,288 |
+
+Count arithmetic: 4,378 Table 3 rows = 4,288 records (3,985 obtained, `is_essential=False`; 303 not obtained, `True`, Table 6 exactly) + 90 `not_targeted`. 4,288 >= 4,116, the store's count before this PR.
+
+### L0-L4 after the rebuild
+
+Rebuilt from this branch at `487bc2982` under slurm array 4675 (`gilahyper_build_dataset_lmdbs_array.slurm`, `build_dataset_lmdb --dataset <Class> --retire-existing --verify`, 8 CPUs / 32 G per task, `%4`), task 1; `run_verification`: PASS. A `report` row is a genome-reference finding, listed under the verdict and never gated.
+
+| level | rule | kind | verdict | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | pass | 4,288 records validated |
+| L1 | `count` | gate | pass | observed 4,288, expected 4,288 |
+| L1 | `one_record_per_jw_id` | gate | pass | 4,288 Keio JW ids, one record each |
+| L1 | `provenance_gaps` | gate | pass | 8,576 documented gaps over 4,288 records |
+| L2 | `calls_match_table_s3` | gate | pass | 4,288 records equal their Table 3 row's scoring outcome and carry its PCR counts |
+| L2 | `uncertainty_sanity` | gate | pass | 0 labeled uncertainties |
+| L3 | `scoring_rule_reproduces_the_paper_and_table_6` | gate | pass | targeted 4,288, obtained 3,985, not obtained 303; Table 6 equal |
+| L3 | `reference_is_the_viable_parent_without_kanamycin` | gate | pass | 4,288 of 4,288 |
+| L3 | `evidence_is_construction_outcome` | gate | pass | 4,288 of 4,288 records and references |
+| L3 | `compound_identity`, `media_compound_identity`, `media_membership` | gate | pass | 12,864 medium compound references identified; 1 distinct medium |
+| L3 | `provenance_audit` | gate | pass | 16 of 16 quotes verbatim in `PMC1681482.1.txt` |
+| L1 | `canonical_gene_names` | report | pass | 4,288 systematic names, one spelling each |
+| L4 | `gene_containment_bw25113_jw_synonyms` | report | pass | 4,163 of 4,288 released JW ids are a `gene_synonym` of a BW25113 locus; 125 are not and 47 share a locus with another JW id |
+
+The real-data tests (`-m data --data`) pass against this store.

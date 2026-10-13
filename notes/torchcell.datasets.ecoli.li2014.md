@@ -109,3 +109,28 @@ Rebuilt from this branch under slurm (job 4447, `build_dataset_lmdb --retire-exi
 | L2 | 8,644 rates finite and non-negative; generation times are the SI's | pass |
 | L3 | assembly pin MG1655 GenBank; 16 quotes verbatim in the mirror | pass |
 | L4 (finding) | `stored_protein_keys_are_loci_of_the_pinned_assembly` | 3,394 of 3,410 released gene names resolve to an MG1655 locus; 16 do not and 2 share a locus with another released name; reported, not gated |
+
+## 2026.10.13 - Rebased onto main: no schema change, the store rebuilt
+
+Rebased onto main `6982d2437`, which landed PR #1083 (the graded essentiality sibling) and PR #1072 (typed gaps on released Z scores and pathway organisms). Main's `torchcell/datamodels/schema.py` is kept whole, so this branch carries no schema change and no schema-change record: `GeneEssentialityPhenotype.is_essential` stays a `bool`, there is no `released_call`, `BacterialReleasedStrainPerturbation` has no `construction` slot, and the record `2026-10-12-essentiality-released-call-gap-and-released-strain-construction.json` named in the 2026.10.12 section is gone. `python -m torchcell.provenance.schema_change check` passes, and the ontology figures and browser seed regenerate byte-identical to main's.
+
+### What changed from the 2026.10.12 section
+
+Nothing in the loader or its records: 3 records keyed by 3,041 / 3,362 / 2,241 released gene names (8,644 keys; 8,597 before this PR).
+
+### L0-L4 after the rebuild
+
+Rebuilt from this branch at `487bc2982` under slurm array 4675 (`gilahyper_build_dataset_lmdbs_array.slurm`, `build_dataset_lmdb --dataset <Class> --retire-existing --verify`, 8 CPUs / 32 G per task, `%4`), task 4; `verify_build`: PASS.
+
+| level | rule | kind | verdict | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | pass | 3 records validated |
+| L1 | `count` | gate | pass | observed 3, expected 3 |
+| L1 | `per_medium_key_counts_are_the_pinned_ones` | gate | pass | complete 3,041, minimal 3,362, complete without methionine 2,241 |
+| L2 | `value_fidelity` | gate | pass | 8,644 values checked |
+| L2 | `generation_time_is_the_si_doubling_time` | gate | pass | 21.5 / 56.3 / 26.5 min |
+| L3 | `sourced_quotes_are_verbatim_in_the_pinned_mirror` | gate | pass | 16 quotes re-read, 0 failed |
+| L3 | `assembly_pin_is_mg1655_genbank` | report | pass | 1 pin, `ecoli_K12_MG1655_ASM584v2` |
+| L4 | `stored_protein_keys_are_loci_of_the_pinned_assembly` | report | pass | 3,394 of 3,410 released gene names resolve to an MG1655 locus; 16 do not and 2 share a locus with another released name |
+
+The real-data tests (`-m data --data`) pass against this store.

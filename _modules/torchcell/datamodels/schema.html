@@ -5410,6 +5410,10 @@
 <span class="sd">      dataset that ADDS that nutrient would use.</span>
 <span class="sd">    - ``radiation``: ionizing/UV irradiation dose (``magnitude`` in the dose unit when</span>
 <span class="sd">      released; qualitative when only 'irradiated' is reported).</span>
+<span class="sd">    - ``dissolved_oxygen``: a dissolved-oxygen setpoint the culture is held at</span>
+<span class="sd">      (``magnitude`` the released value in its released unit, e.g. Public K-12's</span>
+<span class="sd">      ``aerobic(30% DO)`` as 30 ``percent``), beside ``Environment.aerobicity``, which</span>
+<span class="sd">      states the regime the setpoint holds (#1045).</span>
 <span class="sd">    """</span>
 
     <span class="n">ph</span> <span class="o">=</span> <span class="s2">"pH"</span>
@@ -5418,8 +5422,11 @@
     <span class="n">nitrogen_source</span> <span class="o">=</span> <span class="s2">"nitrogen_source"</span>
     <span class="n">ionic_strength</span> <span class="o">=</span> <span class="s2">"ionic_strength"</span>
     <span class="n">nutrient_dropout</span> <span class="o">=</span> <span class="s2">"nutrient_dropout"</span>
-    <span class="n">radiation</span> <span class="o">=</span> <span class="s2">"radiation"</span></div>
+    <span class="n">radiation</span> <span class="o">=</span> <span class="s2">"radiation"</span>
+    <span class="c1"># --- begin #1045 part 3 ------------------------------------------------------ #</span>
+    <span class="n">dissolved_oxygen</span> <span class="o">=</span> <span class="s2">"dissolved_oxygen"</span></div>
 
+    <span class="c1"># --- end #1045 part 3 -------------------------------------------------------- #</span>
 
 
 <div class="viewcode-block" id="Compound">
@@ -6195,6 +6202,29 @@
 
 
 
+<span class="c1"># --- begin #1045 part 3: the growth phase an environment holds a culture in ---- #</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CultureGrowthPhase</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The growth phase a batch culture was harvested in, as the source names it.</span>
+
+<span class="sd">    Part of the SAMPLE, not of the environment: the medium, temperature and aeration of</span>
+<span class="sd">    an exponential and a stationary harvest of one culture are the same, and what</span>
+<span class="sd">    differs is when the cells were taken, which is the ``harvest_optical_density``</span>
+<span class="sd">    precedent of ``MicroarrayExpressionScorePhenotype``. ``exponential`` is the source's</span>
+<span class="sd">    "mid-log phase".</span>
+
+<span class="sd">    ``Environment.growth_phase`` (#1045) uses the same vocabulary for the other case: a</span>
+<span class="sd">    culture HELD in a phase as the condition itself, which Schmidt 2016's starved arms</span>
+<span class="sd">    are ("Starved cells were continuously shaken after reaching stationary phase for</span>
+<span class="sd">    either 1 or 3 d"). There the phase is the treatment, not the harvest moment.</span>
+<span class="sd">    """</span>
+
+    <span class="n">exponential</span> <span class="o">=</span> <span class="s2">"exponential"</span>
+    <span class="n">stationary</span> <span class="o">=</span> <span class="s2">"stationary"</span>
+
+
+<span class="c1"># --- end #1045 part 3 --------------------------------------------------------- #</span>
+
+
 <div class="viewcode-block" id="Environment">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.Environment.html#torchcell.datamodels.schema.Environment">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Environment</span><span class="p">(</span><span class="n">ProvenanceGapMixin</span><span class="p">):</span>
@@ -6207,7 +6237,16 @@
 <span class="sd">    oxygen regime (anaerobic fermentation is standard for biofuel screens);</span>
 <span class="sd">    ``duration_hours`` is the optional treatment time. ``temperature`` is optional: a</span>
 <span class="sd">    secondary curation layer (YeastPhenome) may not carry it, in which case it is a</span>
-<span class="sd">    ``ProvenanceGap`` (``field='temperature'``), NOT a guessed value.</span>
+<span class="sd">    ``ProvenanceGap`` (``field='temperature'``), NOT a guessed value. ``aerobicity`` is</span>
+<span class="sd">    a value or a typed ``ProvenanceGap`` (#1045): ``None`` only beside a gap naming it,</span>
+<span class="sd">    when the source states no oxygen regime (Lamoureux 2023's blank ``Electron</span>
+<span class="sd">    Acceptor`` and ``aerobicity`` cells), never a guessed ``aerobic``; ``transition`` is</span>
+<span class="sd">    a regime that changes during the culture (Public K-12's anaerobic-aerobic</span>
+<span class="sd">    transition series), which no single regime states. A dissolved-oxygen setpoint is</span>
+<span class="sd">    an ``EnvironmentPhysicalPerturbation`` of ``PhysicalFactor.dissolved_oxygen``</span>
+<span class="sd">    carrying the released value and unit, beside the regime it sets. ``growth_phase``</span>
+<span class="sd">    is the phase a culture is held in as the condition (Schmidt 2016's stationary</span>
+<span class="sd">    arms), ``None`` when the source states none.</span>
 
 <span class="sd">    The culture protocol (#507) lives on the subclass ``CultureEnvironment``, not</span>
 <span class="sd">    here: this class is in the schema closure of every served dataset.</span>
@@ -6220,9 +6259,14 @@
         <span class="n">description</span><span class="o">=</span><span class="s2">"environmental perturbations (added compounds / physical stresses) "</span>
         <span class="s2">"on top of the base medium; empty for an unperturbed base environment"</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">aerobicity</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="s2">"aerobic"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"'aerobic' | 'anaerobic' | 'microaerobic'"</span>
+    <span class="c1"># --- begin #1045 part 3: aerobicity is a value or a typed gap ---------------- #</span>
+    <span class="n">aerobicity</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">"aerobic"</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"'aerobic' | 'anaerobic' | 'microaerobic' | 'transition'; None only "</span>
+        <span class="s2">"with a ProvenanceGap(field='aerobicity') when the source states no oxygen "</span>
+        <span class="s2">"regime"</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="c1"># --- end #1045 part 3 -------------------------------------------------------- #</span>
     <span class="n">duration_hours</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"treatment/growth duration in hours; None if unstated"</span>
     <span class="p">)</span>
@@ -6248,19 +6292,41 @@
         <span class="s2">"cultures differ from one another ONLY here)."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="c1"># --- end #753 ---------------------------------------------------------------- #</span>
+    <span class="c1"># --- begin #1045 part 3: the growth phase a culture is held in -------------- #</span>
+    <span class="n">growth_phase</span><span class="p">:</span> <span class="n">CultureGrowthPhase</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">exclude_if</span><span class="o">=</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the growth phase the culture is held in as the condition (a "</span>
+        <span class="s2">"stationary-phase starvation arm); None when the source states none, and "</span>
+        <span class="s2">"then left out of the dump, so an environment without it serializes exactly "</span>
+        <span class="s2">"as it did before the field existed (the Genotype.natural_isolate precedent)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># --- end #1045 part 3 -------------------------------------------------------- #</span>
 
 <div class="viewcode-block" id="Environment.validate_aerobicity">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.Environment.html#torchcell.datamodels.schema.Environment.validate_aerobicity">[docs]</a>
     <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"aerobicity"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">validate_aerobicity</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Aerobicity is one of the three supported oxygen regimes."""</span>
-        <span class="k">if</span> <span class="n">v</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"aerobic"</span><span class="p">,</span> <span class="s2">"anaerobic"</span><span class="p">,</span> <span class="s2">"microaerobic"</span><span class="p">}:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_aerobicity</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Aerobicity is one of the four oxygen regimes, or ``None`` beside a gap."""</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">v</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"aerobic"</span><span class="p">,</span> <span class="s2">"anaerobic"</span><span class="p">,</span> <span class="s2">"microaerobic"</span><span class="p">,</span> <span class="s2">"transition"</span><span class="p">}:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"aerobicity must be aerobic/anaerobic/microaerobic, got </span><span class="si">{</span><span class="n">v</span><span class="si">!r}</span><span class="s2">"</span>
+                <span class="s2">"aerobicity must be aerobic/anaerobic/microaerobic/transition, got "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">v</span><span class="si">!r}</span><span class="s2">"</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">v</span></div>
 
+
+    <span class="c1"># --- begin #1045 part 3: aerobicity is a value or a typed gap ---------------- #</span>
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_aerobicity_stated_or_gapped</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Environment"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""An unstated oxygen regime is a typed gap, never a silent ``None``."""</span>
+        <span class="n">_require_value_or_gap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">(</span><span class="s2">"aerobicity"</span><span class="p">,))</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="c1"># --- end #1045 part 3 -------------------------------------------------------- #</span>
 
     <span class="c1"># --- begin #753: the chemostat dilution rate --------------------------------- #</span>
 <div class="viewcode-block" id="Environment.validate_dilution_rate">
@@ -9256,18 +9322,7 @@
     <span class="n">not_quantified</span> <span class="o">=</span> <span class="s2">"not_quantified"</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">CultureGrowthPhase</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""The growth phase a batch culture was harvested in, as the source names it.</span>
-
-<span class="sd">    Part of the SAMPLE, not of the environment: the medium, temperature and aeration of</span>
-<span class="sd">    an exponential and a stationary harvest of one culture are the same, and what</span>
-<span class="sd">    differs is when the cells were taken, which is the ``harvest_optical_density``</span>
-<span class="sd">    precedent of ``MicroarrayExpressionScorePhenotype``. ``exponential`` is the source's</span>
-<span class="sd">    "mid-log phase".</span>
-<span class="sd">    """</span>
-
-    <span class="n">exponential</span> <span class="o">=</span> <span class="s2">"exponential"</span>
-    <span class="n">stationary</span> <span class="o">=</span> <span class="s2">"stationary"</span>
+<span class="c1"># ``CultureGrowthPhase`` is defined above ``Environment``, which carries it (#1045).</span>
 
 
 <span class="n">PHOSPHOSITE_KEY_SEPARATOR</span> <span class="o">=</span> <span class="s2">"|"</span>

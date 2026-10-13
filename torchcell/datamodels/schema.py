@@ -1661,7 +1661,11 @@ class DeletionPerturbation(PresenceAbsencePerturbation, ModelStrict):
     """
 
     description: str = "Deletion via KanMX or NatMX gene replacement"
-    perturbation_type: Literal["deletion"] = "deletion"
+    # Annotated ``str``, not ``Literal["deletion"]``: this base is abstract (never a
+    # union member) and every leaf below narrows the tag to its own Literal. A Literal
+    # here would make each leaf's tag an incompatible override (not a subtype), which is
+    # what a ``type: ignore[assignment]`` on every leaf used to hide.
+    perturbation_type: str = "deletion"
     state: str = "absent"
     mechanism_so_id: str = "SO:0000159"
     mechanism_so_name: str = "deletion"
@@ -1671,7 +1675,7 @@ class DeletionPerturbation(PresenceAbsencePerturbation, ModelStrict):
 class KanMxDeletionPerturbation(DeletionPerturbation, ModelStrict):
     """Gene deletion via KanMX gene replacement."""
 
-    perturbation_type: Literal["kanmx_deletion"] = "kanmx_deletion"  # type: ignore[assignment]
+    perturbation_type: Literal["kanmx_deletion"] = "kanmx_deletion"
     deletion_description: str = "Deletion via KanMX gene replacement."
     deletion_type: str = "KanMX"
 
@@ -1704,7 +1708,7 @@ class BarcodedKanMxDeletionPerturbation(
     to it would force a full rebuild of every one of them.
     """
 
-    perturbation_type: Literal["barcoded_kanmx_deletion"] = "barcoded_kanmx_deletion"  # type: ignore[assignment]
+    perturbation_type: Literal["barcoded_kanmx_deletion"] = "barcoded_kanmx_deletion"  # type: ignore[assignment]  # KNOWN_VIOLATIONS in tests/torchcell/datamodels/test_liskov_fields.py
     barcode: str | None = Field(
         default=None,
         description="the molecular barcode (UPTAG, or the only tag the source names) the "
@@ -1794,7 +1798,7 @@ class HeterozygousDeletionPerturbation(
 class NatMxDeletionPerturbation(DeletionPerturbation, ModelStrict):
     """Gene deletion via NatMX gene replacement."""
 
-    perturbation_type: Literal["natmx_deletion"] = "natmx_deletion"  # type: ignore[assignment]
+    perturbation_type: Literal["natmx_deletion"] = "natmx_deletion"
     deletion_description: str = "Deletion via NatMX gene replacement."
     deletion_type: str = "NatMX"
 
@@ -1802,7 +1806,7 @@ class NatMxDeletionPerturbation(DeletionPerturbation, ModelStrict):
 class SgaKanMxDeletionPerturbation(KanMxDeletionPerturbation, ModelStrict):
     """KanMX deletion perturbation specific to SGA experiments."""
 
-    perturbation_type: Literal["sga_kanmx_deletion"] = "sga_kanmx_deletion"  # type: ignore[assignment]
+    perturbation_type: Literal["sga_kanmx_deletion"] = "sga_kanmx_deletion"  # type: ignore[assignment]  # KNOWN_VIOLATIONS in tests/torchcell/datamodels/test_liskov_fields.py
     kan_mx_description: str = (
         "KanMX Deletion Perturbation information specific to SGA experiments."
     )
@@ -1813,7 +1817,7 @@ class SgaKanMxDeletionPerturbation(KanMxDeletionPerturbation, ModelStrict):
 class SgaNatMxDeletionPerturbation(NatMxDeletionPerturbation, ModelStrict):
     """NatMX deletion perturbation specific to SGA experiments."""
 
-    perturbation_type: Literal["sga_natmx_deletion"] = "sga_natmx_deletion"  # type: ignore[assignment]
+    perturbation_type: Literal["sga_natmx_deletion"] = "sga_natmx_deletion"  # type: ignore[assignment]  # KNOWN_VIOLATIONS in tests/torchcell/datamodels/test_liskov_fields.py
     nat_mx_description: str = (
         "NatMX Deletion Perturbation information specific to SGA experiments."
     )
@@ -1979,7 +1983,7 @@ class MeanDeletionPerturbation(DeletionPerturbation, ModelStrict):
     """Deletion perturbation aggregating duplicate experiments by their mean."""
 
     description: str = "Mean deletion perturbation representing duplicate experiments"
-    perturbation_type: Literal["mean_deletion"] = "mean_deletion"  # type: ignore[assignment]
+    perturbation_type: Literal["mean_deletion"] = "mean_deletion"
     deletion_type: str = "mean"
     num_duplicates: int = Field(
         description="Number of duplicate experiments used to compute the mean and std."
@@ -1996,7 +2000,7 @@ class MarkerDeletionPerturbation(DeletionPerturbation, ModelStrict):
     ``marker`` names the exact cassette so the deletion is not mislabelled KanMX/NatMX.
     """
 
-    perturbation_type: Literal["marker_deletion"] = "marker_deletion"  # type: ignore[assignment]
+    perturbation_type: Literal["marker_deletion"] = "marker_deletion"
     marker: str = Field(
         description="selectable marker, e.g. 'KlURA3' | 'KlLEU2' | 'HIS3'"
     )
@@ -2033,7 +2037,7 @@ class CrisprDeletionPerturbation(DeletionPerturbation, ModelStrict):
     description: str = (
         "Gene deletion via an active Cas nuclease cut + homology-donor repair"
     )
-    perturbation_type: Literal["crispr_deletion"] = "crispr_deletion"  # type: ignore[assignment]
+    perturbation_type: Literal["crispr_deletion"] = "crispr_deletion"
     deletion_type: str = "crispr"
     crispr: CrisprConstruct = Field(
         description="the guide + active-Cas effector introduced to cut the gene"
@@ -2821,7 +2825,7 @@ class BacterialDeletionPerturbation(DeletionPerturbation, ModelStrict):
     """
 
     description: str = "Bacterial gene deletion, identified by a namespaced locus tag"
-    perturbation_type: Literal["bacterial_deletion"] = "bacterial_deletion"  # type: ignore[assignment]
+    perturbation_type: Literal["bacterial_deletion"] = "bacterial_deletion"
     deletion_type: str = "bacterial"
     gene_namespace: BacterialGeneNamespace = Field(
         description="which host's locus-tag namespace systematic_gene_name is written in"
@@ -2960,7 +2964,7 @@ class BacterialCrisprInterferencePerturbation(
         "CRISPR interference (decreased expression) of a bacterial gene by locus tag"
     )
     perturbation_type: Literal["bacterial_crispr_interference"] = (
-        "bacterial_crispr_interference"  # type: ignore[assignment]
+        "bacterial_crispr_interference"  # type: ignore[assignment]  # KNOWN_VIOLATIONS in tests/torchcell/datamodels/test_liskov_fields.py
     )
     gene_namespace: BacterialGeneNamespace = Field(
         description="which host's locus-tag namespace systematic_gene_name is written in"
@@ -3033,7 +3037,7 @@ class PromoterReplacementPerturbation(ExpressionModulationPerturbation, ModelStr
         "``Compound``, so the molecule joins the shared compound layer and the genome "
         "edit does not restate it (one canonical encoding).",
     )
-    crispr: CrisprConstruct | None = Field(  # type: ignore[assignment]
+    crispr: CrisprConstruct | None = Field(  # type: ignore[assignment]  # KNOWN_VIOLATIONS in tests/torchcell/datamodels/test_liskov_fields.py
         default=None,
         description="no guide-directed machinery is involved in a promoter swap; the "
         "field is inherited from the expression axis and stays None",
@@ -3072,7 +3076,7 @@ class HeterologousPathwayPerturbation(GeneAdditionPerturbation, ModelStrict):
     description: str = (
         "Heterologous pathway gene added on a cassette, with its copy context"
     )
-    perturbation_type: Literal["heterologous_pathway"] = "heterologous_pathway"  # type: ignore[assignment]
+    perturbation_type: Literal["heterologous_pathway"] = "heterologous_pathway"  # type: ignore[assignment]  # KNOWN_VIOLATIONS in tests/torchcell/datamodels/test_liskov_fields.py
     gene_namespace: BacterialGeneNamespace = Field(
         description="the HOST genome the construct was built in (not the namespace of "
         "systematic_gene_name, which is usually a heterologous symbol)"
@@ -6747,7 +6751,6 @@ class FitnessExperiment(Experiment, ModelStrict):
     """Experiment measuring a fitness phenotype."""
 
     experiment_type: str = "fitness"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: FitnessPhenotype
 
 
@@ -6762,7 +6765,6 @@ class GeneInteractionExperiment(Experiment, ModelStrict):
     """Experiment measuring a gene interaction phenotype."""
 
     experiment_type: str = "gene interaction"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: GeneInteractionPhenotype
 
 
@@ -6778,7 +6780,6 @@ class GeneEssentialityExperiment(Experiment, ModelStrict):
     """Experiment measuring a gene essentiality phenotype."""
 
     experiment_type: str = "gene essentiality"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: GeneEssentialityPhenotype
 
 
@@ -6793,7 +6794,6 @@ class SyntheticLethalityExperiment(Experiment, ModelStrict):
     """Experiment measuring a synthetic lethality phenotype."""
 
     experiment_type: str = "synthetic lethality"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: SyntheticLethalityPhenotype
 
 
@@ -6808,7 +6808,6 @@ class SyntheticRescueExperiment(Experiment, ModelStrict):
     """Experiment measuring a synthetic rescue phenotype."""
 
     experiment_type: str = "synthetic rescue"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: SyntheticRescuePhenotype
 
 
@@ -6823,7 +6822,6 @@ class CalMorphExperiment(Experiment, ModelStrict):
     """Experiment measuring a CalMorph phenotype."""
 
     experiment_type: str = "calmorph"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: CalMorphPhenotype
 
 
@@ -7107,7 +7105,6 @@ class MicroarrayExpressionExperiment(Experiment, ModelStrict):
     """Experiment measuring a microarray expression phenotype."""
 
     experiment_type: str = "microarray_expression"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: MicroarrayExpressionPhenotype
 
 
@@ -7807,7 +7804,6 @@ class RNASeqExpressionExperiment(Experiment, ModelStrict):
     """Experiment measuring an RNA-seq (absolute TPM) expression phenotype."""
 
     experiment_type: str = "rnaseq_expression"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: RNASeqExpressionPhenotype
 
 
@@ -7930,7 +7926,6 @@ class PseudobulkExpressionExperiment(Experiment, ModelStrict):
     """Experiment measuring a pseudobulk single-cell (Perturb-seq) expression phenotype."""
 
     experiment_type: str = "pseudobulk_expression"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: PseudobulkExpressionPhenotype
 
 
@@ -8025,7 +8020,6 @@ class VisualScoreExperiment(Experiment, ModelStrict):
     """Experiment measuring a visual-score phenotype."""
 
     experiment_type: str = "visual_score"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: VisualScorePhenotype
 
 
@@ -8099,7 +8093,6 @@ class MetaboliteExperiment(Experiment, ModelStrict):
     """Experiment measuring a metabolite phenotype."""
 
     experiment_type: str = "metabolite"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: MetabolitePhenotype
 
 
@@ -8161,7 +8154,6 @@ class ProteinAbundanceExperiment(Experiment, ModelStrict):
     """Experiment measuring a protein-abundance phenotype."""
 
     experiment_type: str = "protein_abundance"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: ProteinAbundancePhenotype
 
 
@@ -9236,7 +9228,6 @@ class EnvironmentResponseExperiment(Experiment, ModelStrict):
     """Experiment measuring a strain's response to an environmental perturbation."""
 
     experiment_type: str = "environment_response"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: EnvironmentResponsePhenotype
 
 
@@ -10776,7 +10767,6 @@ class ProductTiterExperiment(Experiment, ModelStrict):
     """Experiment measuring how much product a strain made."""
 
     experiment_type: str = "product_titer"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     environment: CultureEnvironment  # narrowed: a titer is read with its vessel
     phenotype: ProductTiterPhenotype
 
@@ -10793,7 +10783,6 @@ class ProteinTurnoverExperiment(Experiment, ModelStrict):
     """Experiment measuring per-protein turnover rates."""
 
     experiment_type: str = "protein_turnover"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: ProteinTurnoverPhenotype
 
 
@@ -10859,7 +10848,6 @@ class FluxExperiment(Experiment, ModelStrict):
     """Experiment measuring a fitted net-flux distribution."""
 
     experiment_type: str = "flux"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: FluxPhenotype
 
 
@@ -11287,7 +11275,6 @@ class BacterialFitnessExperiment(Experiment, ModelStrict):
     """Bacterial fitness experiment (transposon, RB-TnSeq, CRISPRi, Keio growth)."""
 
     experiment_type: str = "bacterial_fitness"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: FitnessPhenotype
 
 
@@ -11303,7 +11290,6 @@ class BacterialEnvironmentResponseExperiment(Experiment, ModelStrict):
     """A bacterial strain's response to an environmental perturbation."""
 
     experiment_type: str = "bacterial_environment_response"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: EnvironmentResponsePhenotype
 
 
@@ -11319,7 +11305,6 @@ class BacterialGeneInteractionExperiment(Experiment, ModelStrict):
     """Bacterial gene-interaction experiment (double-mutant screens)."""
 
     experiment_type: str = "bacterial_gene_interaction"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: GeneInteractionPhenotype
 
 
@@ -11335,7 +11320,6 @@ class BacterialGeneEssentialityExperiment(Experiment, ModelStrict):
     """Bacterial gene-essentiality calls (e.g. a TraDIS essentiality classification)."""
 
     experiment_type: str = "bacterial_gene_essentiality"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: GeneEssentialityPhenotype
 
 
@@ -11351,7 +11335,6 @@ class BacterialProteinAbundanceExperiment(Experiment, ModelStrict):
     """Bacterial proteome abundance experiment."""
 
     experiment_type: str = "bacterial_protein_abundance"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: ProteinAbundancePhenotype
 
 
@@ -11409,7 +11392,6 @@ class BacterialMetaboliteExperiment(Experiment, ModelStrict):
     """Bacterial metabolome experiment."""
 
     experiment_type: str = "bacterial_metabolite"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: MetabolitePhenotype
 
 
@@ -11425,7 +11407,6 @@ class BacterialRNASeqExpressionExperiment(Experiment, ModelStrict):
     """Bacterial transcriptome experiment (absolute TPM on the pinned assembly)."""
 
     experiment_type: str = "bacterial_rnaseq_expression"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: RNASeqExpressionPhenotype
 
 
@@ -11441,7 +11422,6 @@ class BacterialVisualScoreExperiment(Experiment, ModelStrict):
     """Bacterial visual-score experiment (a scored plate as a product proxy)."""
 
     experiment_type: str = "bacterial_visual_score"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: VisualScorePhenotype
 
 

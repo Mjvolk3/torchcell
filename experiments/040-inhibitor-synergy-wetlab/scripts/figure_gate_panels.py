@@ -153,8 +153,8 @@ SRC_ORDER = ["measured", "bliss", "loewe", "hsa", "mean", "ridge", "cgt", "contr
 #: the CELL readout: the host is the empty genotype read through the shared head,
 #: trained on the anchors and the ex21 titration) and its zero-shot twin (anchors
 #: only, so its ex21 curve is a prediction of singles it never saw)
-MODEL_ARM = "r7_van_e150_cell"
-ZERO_SHOT_ARM = "r8_van_e150_cell_anchors"
+MODEL_ARM = "r9_van_e150_cell_bliss"
+ZERO_SHOT_ARM = "r9_van_e150_cell_anchors_bliss"
 #: HATCH: the software growth call, where a panel draws both calls. Plain is served.
 SOFTWARE_HATCH = "////"
 

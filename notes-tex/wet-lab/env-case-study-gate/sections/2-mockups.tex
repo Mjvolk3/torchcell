@@ -128,18 +128,24 @@ still nearly flat in dose. \status{todo}\,\fstat{file}
 inhibitors. Growth AUROC: Loewe \hydloeweAuroc{}, Bliss \hydblissAuroc{}. Fitness
 Spearman: Bliss \hydblissSpearman{}, Loewe \hydloeweSpearman{}. The fourth bar is the
 model (single source, cell readout, trained on the anchors and the titration, mean
-over \hydmodelFolds{} folds): the same predicted fitness at one, two and three inhibitors,
-growth AUROC \hydmodelAuroc{}, fitness Spearman \hydmodelGrownSpearman{}. The host
-does not compose. \status{todo}\,\fstat{file}
+over \hydmodelFolds{} folds), which reads a medium one inhibitor at a time through the
+shared head and composes the readings as Bliss independence: its predicted fitness
+falls with the inhibitor count, growth AUROC \hydmodelAuroc{}, fitness Spearman
+\hydmodelGrownSpearman{}. Under mean pooling of the inhibitor tokens the same model read
+one fitness at every count (AUROC 0.535). \status{todo}\,\fstat{file}
 \textbf{l}, The \hydnIsoboles{} isobole grids as observed fitness, white at none, with
 the cells that grew marked and each rule's front drawn where its predicted fitness
 crosses the growth threshold: Bliss in red, Loewe in purple. Mean observed minus Bliss
 over the \hydisoboleExTwoSixCells{} interior cells: \hydisoboleExTwoSixExcess{},
 \hydisoboleExTwoSevenExcess{} and \hydisoboleExTwoEightExcess{}, the last a single run
-with growth islands and flagged. Dotted, the model's front after the monotone closure:
-it sits at the grid's edge on every run, because a head that predicts the same fitness
-at every dose calls every cell alive; the closure drops
-\hydisoboleExTwoSixModelIslands{} cells on the furfural grid and none on the other two.
+with growth islands and flagged. Dotted, the Bliss-composed model's front after the
+monotone closure, inside the grid for the first time: the model's mean observed minus
+predicted over the interior cells is -0.084, +0.016 and -0.102, against the rule's
+-0.082, -0.446 and -0.017, so on the formic acid grid, where the rule on measured
+singles overpredicts by 0.45, the model is within 0.02. A caveat the sheet carries:
+the model's single-agent curves are nearly flat in dose (j), so a product of two low
+readings matching a low interior is not yet evidence that it reads the interaction;
+the closure drops \hydisoboleExTwoSixModelIslands{} cells on the furfural grid.
 \status{todo}\,\fstat{file}
 
 %% The float is flushed before its source table is set: a deferred float

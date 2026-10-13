@@ -1391,3 +1391,80 @@ run. Hypothesis (untested until 4609 reads): under Bliss composition the model's
 falls between the measured-singles Bliss front and the observed cells, and the sheet's
 bottom row carries a model front for the first time; whether it beats Bliss on measured
 singles is then the question of the single-agent predictions, not of composition.
+
+## 2026.10.13 - Round 9 read: Bliss composition takes the private readout from chance to the rule's level, zero-shot
+
+Every round-9 arm but the seed ensemble finished on GilaHyper card A overnight (4589 sum,
+4609 bliss, 4610 anchors bliss, 4611 bliss with FiLM, 4612 three-source bliss, 4592
+host weight 0.1), and card B finished the round-7 seed twins of the single-source arms
+(4597, 4598) with the two-source twins in progress. Nothing has run on Delta: its 27
+jobs for 040 are pending behind the account's other work. Three folds at seed 0 per
+arm, scored at the selected step; host readouts from `r3_host_predictions.py` with the
+folds' per-well predictions averaged, 63 combinations (22 grew), the public score the
+compound-cold centered Spearman over the six test compounds.
+
+| arm | public test, mean (min to max) | ex23 growth AUROC | ex23 Spearman | fitness at 1 / 2 / 3 inhibitors | isobole grids, observed minus predicted (ex26 / ex27 / ex28) |
+|---|---|---|---|---|---|
+| observed | | | | 0.81 / 0.35 / 0.05 | |
+| Bliss rule on measured singles | | 0.872 | 0.573 (grown) | | -0.08 / -0.45 / -0.02 |
+| Loewe rule on measured singles | | 0.958 | 0.713 (grown) | | |
+| cell, mean pooling (r7 van) | 0.335 (0.32 to 0.35) | 0.556 | 0.150 | 0.63 / 0.60 / 0.59 | -0.40 / -0.36 / -0.42 |
+| cell, mean pooling, zero-shot (r8 anchors) | 0.339 (0.28 to 0.39) | 0.597 | 0.245 | 0.68 / 0.67 / 0.67 | |
+| cell, sum pooling (r9) | 0.268 (0.18 to 0.33) | 0.269 | -0.377 | 0.69 / 0.79 / 0.91 | |
+| **cell, Bliss composition** | 0.241 (0.12 to 0.37) | **0.896** | **0.690** | 0.54 / 0.30 / 0.17 | **-0.08 / +0.02 / -0.10** |
+| **cell, Bliss, zero-shot (anchors only)** | 0.255 (0.18 to 0.34) | **0.912** | **0.716** | 0.68 / 0.46 / 0.31 | -0.34 / -0.16 / -0.35 |
+| cell, Bliss with dose FiLM | 0.140 (0.06 to 0.22) | 0.739 | 0.431 | 0.77 / 0.61 / 0.49 | |
+| cell, Bliss, van + Hoepfner + Hillenmeyer | 0.224 (0.09 to 0.37) | 0.881 | 0.663 | 0.66 / 0.43 / 0.28 | -0.18 / -0.15 / -0.20 |
+| cell, host weight 0.1 | 0.176 (-0.03 to 0.33) | 0.518 | 0.064 | 0.74 / 0.71 / 0.70 | |
+| cell, mean pooling, seeds 1 and 2 (r7 s12) | 0.291 (0.28 to 0.30) | 0.542 | 0.130 | 0.69 / 0.65 / 0.65 | |
+| cell, two-source, auxiliary weight 3 (r8) | 0.246 (0.19 to 0.29) | 0.492 | 0.038 | 0.67 / 0.64 / 0.63 | |
+
+The per-fold ensembles the trainer scores itself (`*_scores.csv`, member ensemble, mean
+over the three folds) read the same: growth AUROC 0.865 fitted, 0.925 zero-shot, 0.877
+three-source, against Loewe 0.958; worst-scenario Spearman over all 63 with no growth
+as zero 0.63 / 0.72 / 0.65 against Loewe 0.772; fitness Spearman over the grown 0.564 /
+0.568 / 0.571 against Bliss 0.573.
+
+Four readings.
+
+1. **The composition was the whole problem.** The same model, the same training
+   records, the same head: read a medium one compound at a time and multiply, and the
+   growth AUROC over the private combinations goes from 0.56 (mean pooling) and 0.27
+   (sum pooling, the wrong sign, now three folds) to 0.90, and the predicted fitness
+   falls with the inhibitor count (0.54 / 0.30 / 0.17 against the observed 0.81 /
+   0.35 / 0.05) where every earlier arm read one number.
+2. **Zero-shot is the best arm.** The anchors-only model never saw a titration well
+   (its ex21 Spearman is 0.09, a flat line), and composed by Bliss it orders the
+   combinations at AUROC 0.912, above the Bliss rule computed from the MEASURED singles
+   (0.872) and 0.05 under Loewe (0.958). What it composes is its own single-agent
+   reading of each inhibitor at its dose, learned from the public screens and two
+   anchors; the measured singles are not in it. Fitting the titration (0.896) and
+   adding the two public screens (0.881) do not improve on it, one seed each.
+3. **The isobole grids are where the fitted arm separates from the rule.** On the
+   formic acid x acetic acid grid the Bliss rule on measured singles overpredicts
+   fitness by 0.45 (the grid where the observed cells sit far inside the Bliss front)
+   and the fitted Bliss-composed model reads +0.02; on the other two grids it is within
+   0.1 of the rule. Caveat stated plainly: the model's single-agent curves are nearly
+   flat in dose (titration Spearman 0.44), so a product of two flat, low readings
+   matching a low interior is not yet evidence that the model reads the interaction;
+   the zero-shot arm, whose singles are flatter, reads -0.34 / -0.16 / -0.35 there.
+   The test of a real front is panel l of the gate, now drawn from these arms.
+4. **The public side pays a little, inside the noise.** The Bliss arms score 0.22 to
+   0.26 against 0.34 for mean pooling at seed 0, with fold spreads of 0.25; the
+   composition changes only the gene-level records that carry two compounds
+   (Hillenmeyer's 26 pairs, present only in the three-source arm), so on the
+   single-source arms the public difference is seed noise by construction, and the
+   seed ensemble (4594, 4595, running) is what reads it. The dose channel still costs
+   the public score (0.140) and under Bliss it also costs the host (0.739), one seed.
+
+W&B, the 040a project, fold 0 of each arm:
+
+- Bliss, fitted: https://wandb.ai/zhao-group/torchcell_040a-inhibitor-synergy-cell/runs/8yrhkyzg
+- Bliss, zero-shot: https://wandb.ai/zhao-group/torchcell_040a-inhibitor-synergy-cell/runs/dg6cifuk
+- Bliss, three sources: https://wandb.ai/zhao-group/torchcell_040a-inhibitor-synergy-cell/runs/nmx1orki
+- Bliss with FiLM: https://wandb.ai/zhao-group/torchcell_040a-inhibitor-synergy-cell/runs/41n4tcd2
+- sum pooling, fold 1: https://wandb.ai/zhao-group/torchcell_040a-inhibitor-synergy-cell/runs/llj4gs3f
+
+The gate draws `r9_van_e150_cell_bliss` as the model and `r9_van_e150_cell_anchors_bliss`
+as its zero-shot twin from here (`figure_gate_panels.py`, `MODEL_ARM` and
+`ZERO_SHOT_ARM`).

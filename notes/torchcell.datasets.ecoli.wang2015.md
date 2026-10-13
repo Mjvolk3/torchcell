@@ -348,4 +348,13 @@ The five Table S2 numbers that disagree with the strain's own name on the annota
 
 ### L0-L4 after the rebuild
 
-(L0-L4 table filled in after the rebuild)
+Rebuilt from this branch under slurm (job 4448, `build_dataset_lmdb --retire-existing --verify`), 46 records; `run_verification`: PASS.
+
+| level | check | result |
+|---|---|---|
+| L0 | records validate | pass, 46 |
+| L1 | count; (study, strain, condition) uniqueness; gap census; canonical spellings (no resolver supplied) | pass |
+| L2 | value fidelity; interval orientation; uncertainty sanity | pass |
+| L3 | one measurement type; reference 0; every experiment carries an environmental edit; compound identity; media membership | pass |
+| L4 (finding) | `gene_containment_bw25113_released_symbols` | 46 of 46 released gene symbols resolve to a BW25113 locus; reported, not gated |
+| L3 | provenance audit of every sourced value | pass |

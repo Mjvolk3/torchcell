@@ -100,4 +100,12 @@ The three records and their typed gaps (`n_replicates`, `synthesis_rate_se`) are
 
 ### L0-L4 after the rebuild
 
-(L0-L4 table filled in after the rebuild)
+Rebuilt from this branch under slurm (job 4447, `build_dataset_lmdb --retire-existing --verify`), 3 records with 3,041 / 3,362 / 2,241 keys; `verify_build`: PASS.
+
+| level | check | result |
+|---|---|---|
+| L0 | records validate | pass, 3 |
+| L1 | count; per-medium key counts are the pinned plain-cell counts | pass, 3,041 / 3,362 / 2,241 |
+| L2 | 8,644 rates finite and non-negative; generation times are the SI's | pass |
+| L3 | assembly pin MG1655 GenBank; 16 quotes verbatim in the mirror | pass |
+| L4 (finding) | `stored_protein_keys_are_loci_of_the_pinned_assembly` | 3,394 of 3,410 released gene names resolve to an MG1655 locus; 16 do not and 2 share a locus with another released name; reported, not gated |

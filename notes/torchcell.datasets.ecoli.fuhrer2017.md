@@ -217,4 +217,13 @@ Count arithmetic: 3,807 deposit columns = `wt` (the reference) + 3,806 records. 
 
 ### L0-L4 after the rebuild
 
-(L0-L4 table filled in after the rebuild)
+Rebuilt from this branch under slurm (job 4446, `build_dataset_lmdb --retire-existing --verify`), 3,806 records; `run_verification`: PASS.
+
+| level | check | result |
+|---|---|---|
+| L0 | records validate | pass, 3,806 |
+| L1 | count; one record per strain (deletion set) | pass, 3,806 unique deletion sets |
+| L2 | value fidelity | pass, 28,674,404 finite values |
+| L3 | reference finite and key-matched; one measurement type | pass |
+| L4 (finding) | `gene_containment_bw25113_jw_synonyms` | 3,783 of 3,830 released identifiers (JW ids over the 3,806 columns, pooled ones counted once each) resolve to a BW25113 locus; 47 do not; reported, not gated |
+| L3 | provenance audit of every sourced value | pass |

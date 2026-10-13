@@ -702,7 +702,7 @@ def test_download_links_the_verified_mirror_and_refuses_drift_or_absence(
         mirror / s.GUIDE_REL
     ).resolve()
     assert len(built) == 6
-    assert [built[i]["experiment"] for i in range(5)] == [
+    assert [built[i]["experiment"] for i in range(6)] == [
         e.model_dump() for e in _EXPECTED
     ]
     built.close_lmdb()

@@ -80,3 +80,100 @@ The user asked for the 51-dataset graph on Radiant now, on the Taiga-backed volu
 5. `server.memory.pagecache.size` 512M to 24G and heap 8G/8G in `~/projects/torchcell/database/conf/neo4j.conf` (backup `neo4j.conf.bak-2026-10-12`), `docker restart tc-neo4j`, online again in 15 s, `debug.log` confirms the three values.
 
 Result: `make ops` reads `radiant kg-2026-10-06-4b293d34 [default] 3.0 2026.10.06-4b293d34 v1.6.2 ... 51 ... 100,127,516 latest,pinned,torchcell online` and `sync: in sync (2026.10.06-4b293d34)`. A cold `MATCH (e:Experiment) RETURN e.id LIMIT 1` through the alias answered in 2.6 s, no I/O fault on this store so far (one read, not a soak). Volume: 70 G free of 500 G, so the next release needs the July directories gone or the block volume first.
+
+## 2026.10.13 - Deploy from the archive mount: Radiant serves from Taiga zhao5
+
+KG 4.0 (three organisms, about 165 datasets, Hoepfner alone ten times its 3.0 size) does not fit beside 3.0 on the 500 G export Radiant serves from today (70 G free). The owner, 2026-10-12: "We shouldn't need a TB block volume, the data is stored on Taiga" and "the db size is going to increase too, so we need a way to do direct transfer to the mount." `kg_release.sh` now restores an archived release in place on the Taiga mount the archive already sits on and serves the store from a directory on that mount.
+
+### Radiant as measured (2026-10-13, 05:01 to 05:11 UTC, read-only inspection over ssh)
+
+| mount | export | size | used | free |
+|---|---|---|---|---|
+| `/` | `/dev/vda5` (xfs) | 39 G | 36 G | 3.8 G |
+| `/mnt/delta_bbub` | `taiga-nfs.ncsa.illinois.edu:/taiga/nsf/delta/bbub` (nfs4) | 500 G | 431 G | 70 G |
+| `/mnt/zhao5` | `taiga-nfs.ncsa.illinois.edu:/taiga/illinois/eng/chbe/zhao5` (nfs4) | 50 T | 43 T | 8.0 T |
+
+- **`/mnt/delta_bbub` is not a block volume.** It is a 500 G Taiga NFS export, so KG 3.0 has been served from NFS since 2026-10-12. Both mounts come from the same server (141.142.224.36) with identical options: `vers=4.2, rsize=wsize=1048576, hard, proto=tcp, timeo=600, local_lock=none`. Moving the store to `/mnt/zhao5` changes the quota it draws on, not its storage class. The 8.0 T free on zhao5 is the shared allocation of the zhao5 group.
+- **The container.** `tc-neo4j`, image `michaelvolk/tc-neo4j:5.26.28`, user `67392:202`, `--restart unless-stopped`, ports 7473, 7474 and 7687, environment beyond the image's own: `NEO4J_ACCEPT_LICENSE_AGREEMENT=yes` only. It was created by a plain `docker run` on 2026-07-22 (no compose labels) and last started 2026-10-12 14:43 UTC. Bind mounts: `/data` <- `/mnt/delta_bbub/mjvolk3/torchcell_openstack/neo4j-data`, `/logs` <- `.../neo4j-logs`, `/var/lib/neo4j/conf` <- `/home/rocky/projects/torchcell/database/conf` (rw), `/var/lib/neo4j/certificates`, `/plugins`, `/.env` (ro) from the same `database/` directory. There is no `/kg-releases` mount. The conf: `dbms.security.auth_enabled=false`, `server.databases.default_to_read_only=false`, bolt TLS `REQUIRED`, page cache 24G, heap 8G, query log `VERBOSE` at threshold 0. VM: 16 CPUs, 62 G RAM (47 G available).
+- **What delta_bbub holds** (`du -sh`): `databases/kg-2026-10-06-4b293d34` 151 G, the dropped July `databases/torchcell` 49 G (plus 258 M of transactions), `staging/2026.10.06-4b293d34` 11 G (the 2026-10-12 staging copy of the 3.0 backup), `neo4j-data/dumps` 2.6 G, `torchcell_openstack/dumps` 2.4 G, logs 30 M.
+- **The archive on zhao5.** `kg-releases/2026.09.17-7715ee35/` (14,545,906,536-byte artifact) and `kg-releases/2026.10.06-4b293d34/` (11,175,064,969 bytes), owned `1000:555647` under setgid group directories (2770). `kg_release.sh ship` already writes here: rsync over ssh to the VM, whose NFS client writes the files straight onto Taiga, with nothing staged on the VM's disks. Ship is unchanged.
+- **Permissions.** The container's uid 67392 (mjvolk3's NCSA uid, owner of `/mnt/zhao5/mjvolk3`) lists `kg-releases/` and passes `test -w` on `/mnt/zhao5/mjvolk3/projects/torchcell` with no supplementary group (`sudo setpriv --reuid=67392 --regid=202 --clear-groups`). Taiga resolves its groups server side, so the containers need no `--group-add`.
+- **NFS read throughput**, `dd` with O_DIRECT, 16 MiB blocks, 4 GiB of the 3.0 artifact: zhao5 488 MB/s, delta_bbub 468 MB/s. Write throughput was not measured here (read-only inspection only). The recorded figure is the 2026-10-12 restore: 151 G written onto delta_bbub in 8 min 36 s, about 0.3 GB/s for extract plus move on one mount.
+- **The NFS caveat.** Counting `Input/output error` lines in `debug.log` per day gives 205 on 2026-10-07 and 173 on 2026-10-08, the last day with any. Those faults hit the July store at a 512M page cache. Since the 3.0 deploy (restart 2026-10-12 14:43 UTC) there are none: `debug.log` has had no line since 14:43:37 that day, and none of the 2,360 `query.log` lines dated 2026-10-12 or 2026-10-13 contains "exception" or "error". That is 14.5 h of light serving, not a soak. The store runs exactly as the memory records: NFS, read only, auth off.
+
+### What the script does now
+
+- `deploy <release> --from-archive-mount [--pin] [--dry-run]` (run on GilaHyper; it drives the VM over ssh). It verifies `SHA256SUMS` where `ship` put the release, reads `release.json` from there, and requires the committed snapshot `database/releases/<release>.json`. It then restores in a detached helper container (`kg-restore-kg-<release>`, the serving image and uid, archive mounted read-only at `/kg-releases`, the serving conf read-only). `neo4j-admin database restore --temp-path=/data/restore-tmp-<db>` unpacks onto the same mount as `/data/databases`, so the finished store is moved into place, not written twice. Nothing crosses the ssh connection but commands and logs. If the serving container already runs on `$SERVE_DATA`, the database is then registered online: created, checked, paired, set READ ONLY, and `latest`, `torchcell` and the default database move to it (`pinned` too with `--pin`). Otherwise the run stops after the restore.
+- `serve-swap --latest <r> [--pinned <r>] [--dry-run]` makes the one-time move. A staging DBMS (`tc-neo4j-staging`: no published port, 2G heap and 2G page cache beside the serving DBMS) starts on `$SERVE_DATA` with the serving conf mounted at `/conf`. The image entrypoint copies `/conf` before applying settings, so the host conf is never edited (md5 unchanged in the rehearsal). Staging registers each release, points the aliases and the default database, checks them, and is removed. Then `tc-neo4j` is stopped (`--time 300`), renamed `tc-neo4j-pre-<timestamp>` with `restart=no`, and relaunched from its own `docker inspect`: same image, user, ports, environment, conf, certificates, plugins and `.env`, with `/data` and `/logs` on zhao5 and the archive read-only at `/kg-releases`. Downtime is one stop and one start. Any unknown mount, a non-default network or a resource limit makes the relaunch refuse rather than drop something silently.
+- `serve-point --latest <r> [--pinned <r>]` moves `latest`, `torchcell` and the default database (and `pinned`) between releases the archive-mount DBMS already serves. This is the alias-level rollback.
+- `serve-rollback <tc-neo4j-pre-timestamp>` stops the archive-mount container, keeps it as `tc-neo4j-archive-mount-<timestamp>`, renames the kept container back and starts it on its untouched delta_bbub store.
+- **The check** (`releases verify-restore`, now used by the GilaHyper deploy and `restore-test` too) runs one query. Its node total comes from the count store and each dataset's experiment count from the `ExperimentMemberOf` in-degree. It must equal `release.json` in release id, version, dataset set, every dataset's experiment count and the node total. A full build (`X.0`) stamps `n_nodes` before its release node exists and an admission after, so the expected total is `n_nodes + 1` or `n_nodes`. **Pairing:** the 3.0 artifact predates its retag (node 1.6.1, no tag), so `pairing-statement` sets the committed snapshot's `torchcell_version` and `torchcell_tag` before READ ONLY, the step the 2026-10-12 deploy did by hand. For 4.0 it is a no-op.
+- `dbms.setDefaultDatabase` refuses while the old default runs ("The old default database neo4j is still running.", measured in the rehearsal), so the alias step stops the old default for that one call and starts it again. A release `pinned` names is unavailable for those seconds.
+- `docker stop` uses `--time 300`: with Docker's 10 s default the toy DBMS was killed (exit 137) before it finished shutting down.
+
+### Tests
+
+- **Restore check against the real store.** Slurm job 4642, read-only, ran the restore check against GilaHyper's served `torchcell` (release 3.0) and compared it with `/bulk/kg-releases/2026.10.06-4b293d34/release.json`: passed, 51 datasets with release.json's experiment counts, 100,127,516 nodes, the query took 1.9 s. In the same job, `deploy 2026.10.06-4b293d34 --dry-run` (GilaHyper mode) verified the checksums and found the name free with 3,195 G free on `/data`.
+- **Radiant dry runs, read-only.** `deploy 2026.10.06-4b293d34 --from-archive-mount --dry-run` took 45 s, most of it `sha256sum -c` of the 11 G artifact; all three files OK. It reported that `tc-neo4j` runs on delta_bbub (restore-only mode), that the two zhao5 directories would be created as `67392:555647` with mode 2770 (passwordless sudo present), and 8,121 G free. `serve-swap ... --dry-run` printed the staging command and the relaunch command shown above and refused on "NOT restored". A quoting round trip of a Cypher statement with backticks, quotes, `$`, `*` and `!` and of a Go template with tabs came back byte-identical through `rocky`'s zsh.
+- **Rehearsal on GilaHyper** (toy containers, `SERVE_HOST=local`, scratch directories; no served store touched). The toy setup was an old DBMS serving a "3.0" (full build, node untagged) and three archived toy releases: a "3.0", a "4.0" and a "4.1" admission. Results:
+  - Restores of the 3.0 and the 4.0 into `$SERVE_DATA` worked, with the temp directory removed afterwards.
+  - `serve-swap --latest 4.0 --pinned 3.0` passed both checks, set the 3.0 node to the snapshot's 1.6.2/v1.6.2 and made both databases read-only. Downtime from stop to an online default was 34 s on the toy store.
+  - An online `deploy` of the 4.1 into the swapped DBMS passed the admission node-count rule and kept the old default online.
+  - `serve-point` back to the 4.0 and `serve-rollback` to the pre-swap container (clean exit 0) both worked.
+  - Unit tests: seven new in `tests/torchcell/knowledge_graphs/test_releases.py`. Strict mypy is clean.
+
+### Estimates (hypotheses, not measured)
+
+- **4.0 restore time.** The 4.0 store size is the 2026-10-12 scratch estimate of 250 to 300 G (3.0 was 151 G for 52.7M experiments). Unverified: at the 3.0 rate of 0.3 GB/s the restore takes 15 to 20 min. The 3.0 restore onto zhao5 should take about 9 min, as on 2026-10-12.
+- **Swap downtime.** Unverified: one Neo4j stop and one start with two large stores on NFS takes 1 to 3 min. The toy took 34 s.
+- **Restore load on serving.** Unverified: the restore reads the archive at up to about 0.5 GB/s and writes the store on the same Taiga server the served store reads from, so cold queries may slow while it runs.
+
+### Owner decisions
+
+1. **Serving directory.** `SERVE_DATA=/mnt/zhao5/mjvolk3/projects/torchcell/neo4j-data` and `SERVE_LOGS=.../neo4j-logs` (the A0b names). The pair of stores (3.0 at 151 G plus 4.0 estimated at 250 to 300 G) draws on the shared zhao5 allocation (8.0 T free).
+2. **3.0 as `pinned`.** By default 3.0 is restored from its archive into the new DBMS and stays online as `pinned` (the owner's plan of 2026-10-12). Without `--pinned`, 3.0 is reachable only through `serve-rollback`.
+3. **When to swap.** Restoring 3.0 onto zhao5 has no downtime and can run before the build finishes; the swap is the only downtime.
+4. **Cleanup on delta_bbub.** The 3.0 store there (151 G) is the container-level rollback copy until 4.0 is accepted. The July store (49 G), the staging copy (11 G) and the two dumps can go whenever the owner chooses.
+5. **NCSA block volume (A0).** Capacity no longer needs it. It remains the fix if I/O faults return under load on NFS.
+6. **Keep tags.** `kg_release.sh keep` both served releases so `purge` never removes their archives.
+
+### Command sequence for KG 4.0
+
+Run on GilaHyper from the primary checkout once this branch is on main, or from this worktree with `SNAPSHOT_ROOT=~/Documents/projects/torchcell` so the 4.0 snapshot the build writes is found. `R4` is the new release id (`make ops` shows it after the build), `R3=2026.10.06-4b293d34`. Use tmux: the restores run detached on Radiant either way.
+
+```bash
+cd ~/Documents/projects/torchcell
+R3=2026.10.06-4b293d34
+R4=<the 4.0 release id>
+
+# 0. Any time before the build finishes: restore 3.0 onto zhao5 (no downtime, about 9 min)
+bash scripts/kg_release.sh deploy $R3 --from-archive-mount --dry-run
+bash scripts/kg_release.sh deploy $R3 --from-archive-mount
+
+# 1. After the build swapped and stamped on GilaHyper: archive and ship 4.0 straight onto zhao5
+bash scripts/kg_release.sh backup        # detached; wait for "exit 0" in /bulk/kg-releases/$R4/backup.log
+bash scripts/kg_release.sh archive
+bash scripts/kg_release.sh ship $R4
+bash scripts/kg_release.sh keep $R4 "KG 4.0, served on Radiant"
+bash scripts/kg_release.sh keep $R3 "KG 3.0, pinned on Radiant"
+
+# 2. Restore 4.0 in place on zhao5 (no downtime)
+bash scripts/kg_release.sh deploy $R4 --from-archive-mount --dry-run
+bash scripts/kg_release.sh deploy $R4 --from-archive-mount
+
+# 3. Swap Radiant onto zhao5 (staging registers both; downtime is one stop and one start)
+bash scripts/kg_release.sh serve-swap --latest $R4 --pinned $R3 --dry-run
+bash scripts/kg_release.sh serve-swap --latest $R4 --pinned $R3
+#    prints the kept container: tc-neo4j-pre-<timestamp>
+
+# 4. Verify
+bash scripts/ops.sh sync                 # "in sync ($R4)": radiant [default] kg-<R4> with latest,torchcell; kg-<R3> with pinned
+make ops                                 # full panel, artifacts line included
+ssh rocky@141.142.216.218 docker inspect tc-neo4j --format '{{range .Mounts}}{{.Destination}} <- {{.Source}}{{println}}{{end}}'
+
+# 5. Rollback, if needed
+bash scripts/kg_release.sh serve-point --latest $R3 --pinned $R3     # stay on zhao5, serve 3.0 as latest
+bash scripts/kg_release.sh serve-rollback tc-neo4j-pre-<timestamp>   # back to the delta_bbub container and store
+```
+
+Every step that changes something refuses on a failed precondition and prints what to do next. A failure partway through `serve-swap` before the swap leaves `tc-neo4j` serving untouched; a rerun resumes, because registration is idempotent.

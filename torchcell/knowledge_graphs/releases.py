@@ -51,6 +51,14 @@ and the snapshot carry that set as ``organisms`` (None for a release whose manif
 predates the switch), and the ``status`` table prints it beside the dataset count, so a
 yeast-only store is never read as "every mapped dataset".
 
+**Checking a restored release.** ``scripts/kg_release.sh`` restores an archived backup
+into a new database and, before any alias points at it, runs
+:data:`RESTORE_CHECK_CYPHER` there; ``verify-restore`` compares the answer with the
+archive's ``release.json`` (release id, version, dataset set, every dataset's experiment
+count, the recorded and the counted node totals), and ``pairing-statement`` brings the
+node's package pairing up to the committed snapshot when a ``retag`` came after the
+backup.
+
     python -m torchcell.knowledge_graphs.releases status --label gilahyper
     python -m torchcell.knowledge_graphs.releases datasets --version latest
     python -m torchcell.knowledge_graphs.releases diff 2026.09.17-7715ee35 latest
@@ -730,6 +738,189 @@ def require_paired(
     raise IncompatibleReleaseError("\n".join(lines))
 
 
+# --------------------------------------------------------------------------- restore check
+
+#: Columns of :data:`RESTORE_CHECK_CYPHER`, in order.
+RESTORE_CHECK_COLUMNS = (
+    "release",
+    "version",
+    "n_datasets",
+    "n_nodes",
+    "torchcell_version",
+    "torchcell_tag",
+    "total_nodes",
+    "dataset",
+    "experiments",
+)
+
+#: The one query a restored database answers before it is served (``kg_release.sh
+#: deploy`` and ``serve-swap`` run it through cypher-shell and pass the output to
+#: ``verify-restore``): the release node's identity and package pairing, the node total
+#: (``count(n)`` reads the count store), and each ``Dataset`` node's ``ExperimentMemberOf``
+#: in-degree, a degree read on a dense node rather than a scan. The edge's source is
+#: always an ``Experiment`` (``torchcell_schema_config.yaml``), so the in-degree is the
+#: count ``kg_manifest.live_dataset_counts`` recorded at the stamp. One row per dataset;
+#: no rows when the store carries no release node or no ``Dataset`` node.
+RESTORE_CHECK_CYPHER = (
+    "MATCH (n) WITH count(n) AS total_nodes "
+    f"MATCH (r:{RELEASE_LABEL}) MATCH (d:Dataset) "
+    "RETURN r.release AS release, r.version AS version, r.n_datasets AS n_datasets, "
+    "r.n_nodes AS n_nodes, r.torchcell_version AS torchcell_version, "
+    "r.torchcell_tag AS torchcell_tag, total_nodes, d.id AS dataset, "
+    "COUNT { (d)<-[:ExperimentMemberOf]-() } AS experiments ORDER BY dataset;"
+)
+
+
+class RestoredStore(BaseModel):
+    """What a restored database reports about itself through :data:`RESTORE_CHECK_CYPHER`."""
+
+    release: str
+    version: str
+    n_datasets: int
+    n_nodes: int | None
+    torchcell_version: str | None
+    torchcell_tag: str | None
+    total_nodes: int
+    experiments: dict[str, int]  # Dataset.id -> ExperimentMemberOf in-degree
+
+
+def _plain_null(value: str) -> str | None:
+    """cypher-shell's plain format prints a null as the bare token ``NULL``."""
+    return None if value == "NULL" else value
+
+
+def parse_restore_check(text: str) -> RestoredStore:
+    """Parse cypher-shell ``--format plain`` output of :data:`RESTORE_CHECK_CYPHER`.
+
+    The release columns repeat on every row; they must agree, and no dataset may appear
+    twice, or the store carries more than one release node.
+    """
+    lines = [line for line in text.splitlines() if line.strip()]
+    if not lines:
+        raise ValueError("the restore check printed nothing")
+    header = tuple(column.strip() for column in lines[0].split(","))
+    if header != RESTORE_CHECK_COLUMNS:
+        raise ValueError(
+            f"unexpected restore check header {header}; want {RESTORE_CHECK_COLUMNS}"
+        )
+    rows = list(csv.reader(lines[1:], skipinitialspace=True, escapechar="\\"))
+    if not rows:
+        raise ValueError(
+            f"the restored database returned no rows: it carries no {RELEASE_LABEL} "
+            "node or no Dataset node"
+        )
+    for row in rows:
+        if len(row) != len(RESTORE_CHECK_COLUMNS):
+            raise ValueError(f"malformed restore check row {row}")
+    heads = {tuple(row[:7]) for row in rows}
+    if len(heads) != 1:
+        raise ValueError(
+            f"the restored database carries {len(heads)} different {RELEASE_LABEL} "
+            "nodes"
+        )
+    release, version, n_datasets, n_nodes, tc_version, tc_tag, total = rows[0][:7]
+    experiments: dict[str, int] = {}
+    for row in rows:
+        if row[7] in experiments:
+            raise ValueError(
+                f"Dataset {row[7]} appears twice: the store carries more than one "
+                f"{RELEASE_LABEL} node or two Dataset nodes with one id"
+            )
+        experiments[row[7]] = int(row[8])
+    recorded = _plain_null(n_nodes)
+    return RestoredStore(
+        release=release,
+        version=version,
+        n_datasets=int(n_datasets),
+        n_nodes=None if recorded is None else int(recorded),
+        torchcell_version=_plain_null(tc_version),
+        torchcell_tag=_plain_null(tc_tag),
+        total_nodes=int(total),
+        experiments=experiments,
+    )
+
+
+def expected_total_nodes(release: KgRelease) -> int | None:
+    """The node total a store of ``release`` holds, from the count its stamp recorded.
+
+    A full build (version ``X.0``) counts the store before it writes the release node;
+    an incremental admission (``X.1`` and on) counts after the node exists. A full
+    build's store therefore holds ``n_nodes + 1`` nodes and an admission's ``n_nodes``
+    (release 3.0: ``n_nodes`` 100,127,515, store 100,127,516). None when the release
+    recorded no count.
+    """
+    if release.n_nodes is None:
+        return None
+    minor = release.version.split(".")[1]
+    return release.n_nodes + (1 if minor == "0" else 0)
+
+
+def restore_mismatches(expected: KgRelease, observed: RestoredStore) -> list[str]:
+    """Every way a restored store differs from the release record it was archived with.
+
+    ``expected`` is the archive's ``release.json``; empty means the store is the release
+    its directory names: same id and version, the same dataset set, every dataset's
+    experiment count, the recorded node count, and the node total.
+    """
+    problems: list[str] = []
+    for field in ("release", "version", "n_nodes"):
+        got, want = getattr(observed, field), getattr(expected, field)
+        if got != want:
+            problems.append(f"{field}: the node says {got}, release.json {want}")
+    if observed.n_datasets != expected.n_datasets:
+        problems.append(
+            f"n_datasets: the node says {observed.n_datasets}, release.json lists "
+            f"{expected.n_datasets}"
+        )
+    want_counts = {name: d.n_experiments for name, d in expected.datasets.items()}
+    missing = sorted(set(want_counts) - set(observed.experiments))
+    extra = sorted(set(observed.experiments) - set(want_counts))
+    if missing:
+        problems.append(f"Dataset nodes missing from the store: {missing}")
+    if extra:
+        problems.append(f"Dataset nodes release.json does not list: {extra}")
+    for name in sorted(set(want_counts) & set(observed.experiments)):
+        if observed.experiments[name] != want_counts[name]:
+            problems.append(
+                f"{name}: {observed.experiments[name]} experiments, release.json "
+                f"{want_counts[name]}"
+            )
+    total = expected_total_nodes(expected)
+    if total is not None and observed.total_nodes != total:
+        problems.append(
+            f"node total {observed.total_nodes}, expected {total} from release.json "
+            f"n_nodes {expected.n_nodes} (version {expected.version})"
+        )
+    return problems
+
+
+def _cypher_literal(value: str | None) -> str:
+    return "null" if value is None else json.dumps(value)
+
+
+def pairing_statement(
+    observed: RestoredStore, torchcell_version: str | None, torchcell_tag: str | None
+) -> str | None:
+    """Cypher giving a restored release node the committed snapshot's package pairing.
+
+    None when the node already carries it. An archive keeps the node as it was at the
+    backup, and ``retag`` rewrites the committed snapshot afterwards: release
+    2026.10.06-4b293d34 was backed up as torchcell 1.6.1 with no tag and paired with
+    v1.6.2 later, so its restored node needs the snapshot's two fields before it is
+    served (the 2026-10-12 Radiant deploy set them by hand).
+    """
+    if (observed.torchcell_version, observed.torchcell_tag) == (
+        torchcell_version,
+        torchcell_tag,
+    ):
+        return None
+    return (
+        f"MATCH (r:{RELEASE_LABEL}) SET r.torchcell_version = "
+        f"{_cypher_literal(torchcell_version)}, r.torchcell_tag = "
+        f"{_cypher_literal(torchcell_tag)};"
+    )
+
+
 # --------------------------------------------------------------------------- reporting
 
 
@@ -1073,7 +1264,7 @@ def _release_for(version: str, uri: str, user: str, password: str) -> KgRelease:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Command-line entry: status, datasets, diff, compat, hashes, write-node, stamp."""
+    """Command-line entry for the release, serving, and restore-check subcommands."""
     parser = argparse.ArgumentParser(
         prog="python -m torchcell.knowledge_graphs.releases",
         description=__doc__.split("\n\n")[0],
@@ -1208,8 +1399,72 @@ def main(argv: list[str] | None = None) -> int:
     )
     p_art.add_argument("--json", action="store_true")
 
+    sub.add_parser(
+        "restore-check-query",
+        help="print the Cypher a restored database answers for verify-restore",
+    )
+    p_verify = sub.add_parser(
+        "verify-restore",
+        help="compare a restored database (the restore-check-query output) with the "
+        "release.json it was archived with; exit 1 on any difference",
+    )
+    p_verify.add_argument("--release-json", required=True)
+    p_verify.add_argument(
+        "--rows", required=True, help="cypher-shell --format plain output of the query"
+    )
+    p_pair = sub.add_parser(
+        "pairing-statement",
+        help="print the Cypher that gives a restored release node the committed "
+        "snapshot's torchcell_version and torchcell_tag (nothing when it has them)",
+    )
+    p_pair.add_argument(
+        "--rows", required=True, help="cypher-shell --format plain output of the query"
+    )
+    p_pair.add_argument("--snapshot", required=True, help="database/releases/<r>.json")
+
     args = parser.parse_args(argv)
     repo_root = Path(args.repo).resolve() if args.repo else None
+
+    if args.command == "restore-check-query":
+        print(RESTORE_CHECK_CYPHER)
+        return 0
+
+    if args.command == "verify-restore":
+        expected = KgRelease.model_validate_json(
+            Path(args.release_json).read_text(encoding="utf-8")
+        )
+        observed = parse_restore_check(Path(args.rows).read_text(encoding="utf-8"))
+        problems = restore_mismatches(expected, observed)
+        if problems:
+            print(f"restored store does not match {args.release_json}:")
+            for problem in problems:
+                print(f"  {problem}")
+            return 1
+        total = expected_total_nodes(expected)
+        print(
+            f"restore check passed: {observed.release} (KG {observed.version}), "
+            f"{len(observed.experiments)} datasets with release.json's experiment "
+            f"counts, {observed.total_nodes:,} nodes"
+            + (" (release.json recorded no node count)" if total is None else "")
+        )
+        return 0
+
+    if args.command == "pairing-statement":
+        from torchcell.knowledge_graphs.release_snapshot import load_snapshot
+
+        observed = parse_restore_check(Path(args.rows).read_text(encoding="utf-8"))
+        snapshot = load_snapshot(Path(args.snapshot))
+        if snapshot.release != observed.release:
+            raise SystemExit(
+                f"{args.snapshot} describes release {snapshot.release}, the restored "
+                f"node {observed.release}"
+            )
+        statement = pairing_statement(
+            observed, snapshot.torchcell_version, snapshot.torchcell_tag
+        )
+        if statement is not None:
+            print(statement)
+        return 0
 
     if args.command == "hashes":
         if (args.csv_dir is None) == (args.database is None):

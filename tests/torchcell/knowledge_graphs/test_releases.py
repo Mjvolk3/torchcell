@@ -1894,3 +1894,229 @@ def test_the_release_node_carries_the_organism_set_of_its_manifest() -> None:
     assert organisms_label(None) == "-"
     widened = release.model_copy(update={"organisms": ["scerevisiae", "ecoli"]})
     assert organisms_label(widened) == "scerevisiae,ecoli"
+
+
+# --------------------------------------------------------------------------- restore check
+
+#: A restored release as cypher-shell --format plain prints RESTORE_CHECK_CYPHER: two
+#: datasets, the tag null, a full build (3.0) whose store holds n_nodes + 1 nodes.
+RESTORE_ROWS = (
+    "release, version, n_datasets, n_nodes, torchcell_version, torchcell_tag, "
+    "total_nodes, dataset, experiments\n"
+    '"2026.10.06-4b293d34", "3.0", 2, 7, "1.6.1", NULL, 8, "DsA", 3\n'
+    '"2026.10.06-4b293d34", "3.0", 2, 7, "1.6.1", NULL, 8, "DsB", 2\n'
+)
+
+
+def _archived(version: str = "3.0", n_nodes: int | None = 7) -> KgRelease:
+    """The release.json the RESTORE_ROWS store was archived with."""
+    return KgRelease(
+        release="2026.10.06-4b293d34",
+        version=version,
+        torchcell_commit="4b293d34aaaa",
+        torchcell_version="1.6.1",
+        built_at="2026-10-06T04:42:48-05:00",
+        biocypher_out="2026-10-05_00-00-00",
+        n_nodes=n_nodes,
+        datasets={
+            name: ReleaseDataset(
+                dataset_class=name, n_experiments=n, content_sha256="x"
+            )
+            for name, n in (("DsA", 3), ("DsB", 2))
+        },
+    )
+
+
+def test_restore_check_query_reads_the_node_the_count_store_and_dataset_degrees() -> (
+    None
+):
+    """The query returns exactly the parser's columns, counts nodes with ``count(n)``
+    and each dataset's experiments as the ``ExperimentMemberOf`` in-degree.
+    """
+    assert releases.RESTORE_CHECK_CYPHER.startswith(
+        "MATCH (n) WITH count(n) AS total_nodes MATCH (r:KgRelease) MATCH (d:Dataset) "
+    )
+    assert "COUNT { (d)<-[:ExperimentMemberOf]-() } AS experiments" in (
+        releases.RESTORE_CHECK_CYPHER
+    )
+    returned = releases.RESTORE_CHECK_CYPHER.split("RETURN ")[1].split(" ORDER BY")[0]
+    aliases = tuple(part.split(" AS ")[-1].strip() for part in returned.split(", "))
+    assert aliases[:7] == releases.RESTORE_CHECK_COLUMNS[:7]
+    assert aliases[-1] == "experiments"
+
+
+def test_parse_restore_check_reads_null_tags_and_per_dataset_counts() -> None:
+    """Plain output parses into the node fields, the total and the dataset map."""
+    store = releases.parse_restore_check(RESTORE_ROWS)
+    assert store == releases.RestoredStore(
+        release="2026.10.06-4b293d34",
+        version="3.0",
+        n_datasets=2,
+        n_nodes=7,
+        torchcell_version="1.6.1",
+        torchcell_tag=None,
+        total_nodes=8,
+        experiments={"DsA": 3, "DsB": 2},
+    )
+    unrecorded = RESTORE_ROWS.replace("2, 7, ", "2, NULL, ")
+    assert releases.parse_restore_check(unrecorded).n_nodes is None
+
+
+def test_parse_restore_check_refuses_empty_foreign_and_ambiguous_output() -> None:
+    """No output, another header, no rows, two release nodes, a repeated dataset and a
+    short row each raise with the reason.
+    """
+    header = RESTORE_ROWS.splitlines()[0]
+    rows = RESTORE_ROWS.splitlines()[1:]
+    with pytest.raises(ValueError, match="printed nothing"):
+        releases.parse_restore_check("\n")
+    with pytest.raises(ValueError, match="unexpected restore check header"):
+        releases.parse_restore_check("r.release, r.version\n" + rows[0])
+    with pytest.raises(ValueError, match="no KgRelease node or no Dataset node"):
+        releases.parse_restore_check(header + "\n")
+    second = rows[1].replace('"1.6.1", NULL', '"1.6.2", "v1.6.2"')
+    with pytest.raises(ValueError, match="carries 2 different KgRelease nodes"):
+        releases.parse_restore_check("\n".join([header, rows[0], second]))
+    with pytest.raises(ValueError, match="Dataset DsA appears twice"):
+        releases.parse_restore_check("\n".join([header, rows[0], rows[0]]))
+    with pytest.raises(ValueError, match="malformed restore check row"):
+        releases.parse_restore_check("\n".join([header, rows[0].rsplit(",", 1)[0]]))
+
+
+def test_expected_total_counts_the_node_after_a_full_build_but_not_an_admission() -> (
+    None
+):
+    """A full build (X.0) stamps n_nodes before its node exists, an admission after."""
+    assert releases.expected_total_nodes(_archived("3.0", 7)) == 8
+    assert releases.expected_total_nodes(_archived("3.1", 7)) == 7
+    assert releases.expected_total_nodes(_archived("3.0", None)) is None
+
+
+def test_restore_mismatches_is_empty_for_the_archived_release_and_names_each_drift() -> (
+    None
+):
+    """The matching store passes; a changed id, version, count, dataset or total is
+    named, and an unrecorded n_nodes skips only the total.
+    """
+    store = releases.parse_restore_check(RESTORE_ROWS)
+    assert releases.restore_mismatches(_archived(), store) == []
+    drifted = store.model_copy(
+        update={
+            "release": "2026.10.13-00000000",
+            "version": "4.0",
+            "n_datasets": 3,
+            "total_nodes": 9,
+            "experiments": {"DsA": 4, "DsC": 1},
+        }
+    )
+    assert releases.restore_mismatches(_archived(), drifted) == [
+        "release: the node says 2026.10.13-00000000, release.json 2026.10.06-4b293d34",
+        "version: the node says 4.0, release.json 3.0",
+        "n_datasets: the node says 3, release.json lists 2",
+        "Dataset nodes missing from the store: ['DsB']",
+        "Dataset nodes release.json does not list: ['DsC']",
+        "DsA: 4 experiments, release.json 3",
+        "node total 9, expected 8 from release.json n_nodes 7 (version 3.0)",
+    ]
+    assert releases.restore_mismatches(_archived("3.1"), store) == [
+        "version: the node says 3.0, release.json 3.1",
+        "node total 8, expected 7 from release.json n_nodes 7 (version 3.1)",
+    ]
+    assert releases.restore_mismatches(_archived(n_nodes=None), store) == [
+        "n_nodes: the node says 7, release.json None"
+    ]
+
+
+def test_pairing_statement_sets_the_snapshot_pair_or_returns_none() -> None:
+    """A node backed up before a retag gets the snapshot's two fields; a paired node
+    needs nothing; a snapshot without a tag writes null.
+    """
+    store = releases.parse_restore_check(RESTORE_ROWS)
+    assert releases.pairing_statement(store, "1.6.1", None) is None
+    assert releases.pairing_statement(store, "1.6.2", "v1.6.2") == (
+        'MATCH (r:KgRelease) SET r.torchcell_version = "1.6.2", '
+        'r.torchcell_tag = "v1.6.2";'
+    )
+    paired = store.model_copy(update={"torchcell_tag": "v1.6.2"})
+    assert releases.pairing_statement(paired, "1.6.1", None) == (
+        'MATCH (r:KgRelease) SET r.torchcell_version = "1.6.1", r.torchcell_tag = null;'
+    )
+
+
+def test_cli_restore_checks_print_the_query_verify_and_emit_the_pairing(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """``restore-check-query`` prints the query; ``verify-restore`` exits 0 on a match
+    and 1 listing every mismatch; ``pairing-statement`` prints the statement, nothing
+    when paired, and refuses a snapshot of another release.
+    """
+    from torchcell.knowledge_graphs.release_snapshot import KgReleaseSnapshot
+
+    rows = tmp_path / "rows.txt"
+    rows.write_text(RESTORE_ROWS, encoding="utf-8")
+    archived = tmp_path / "release.json"
+    archived.write_text(_archived().model_dump_json(), encoding="utf-8")
+
+    assert main(["restore-check-query"]) == 0
+    assert capsys.readouterr().out == releases.RESTORE_CHECK_CYPHER + "\n"
+
+    assert (
+        main(["verify-restore", "--release-json", str(archived), "--rows", str(rows)])
+        == 0
+    )
+    assert capsys.readouterr().out == (
+        "restore check passed: 2026.10.06-4b293d34 (KG 3.0), 2 datasets with "
+        "release.json's experiment counts, 8 nodes\n"
+    )
+    archived.write_text(_archived("3.1").model_dump_json(), encoding="utf-8")
+    assert (
+        main(["verify-restore", "--release-json", str(archived), "--rows", str(rows)])
+        == 1
+    )
+    assert capsys.readouterr().out.splitlines() == [
+        f"restored store does not match {archived}:",
+        "  version: the node says 3.0, release.json 3.1",
+        "  node total 8, expected 7 from release.json n_nodes 7 (version 3.1)",
+    ]
+
+    def snapshot(release: str, tag: str | None) -> Path:
+        path = tmp_path / f"{release}.json"
+        path.write_text(
+            KgReleaseSnapshot(
+                release=release,
+                version="3.0",
+                torchcell_commit="4b293d34aaaa",
+                torchcell_version="1.6.2" if tag else "1.6.1",
+                torchcell_tag=tag,
+                built_at="2026-10-06T04:42:48-05:00",
+                neo4j_version="5.26.28",
+                biocypher_version="0.15.2",
+                store_host="gilahyper",
+                n_nodes=7,
+                datasets={},
+                graph_schema={},
+                events=[],
+                composite_sha256="x",
+            ).model_dump_json(),
+            encoding="utf-8",
+        )
+        return path
+
+    retagged = snapshot("2026.10.06-4b293d34", "v1.6.2")
+    assert (
+        main(["pairing-statement", "--rows", str(rows), "--snapshot", str(retagged)])
+        == 0
+    )
+    assert capsys.readouterr().out == (
+        'MATCH (r:KgRelease) SET r.torchcell_version = "1.6.2", '
+        'r.torchcell_tag = "v1.6.2";\n'
+    )
+    untouched = snapshot("2026.10.06-4b293d34", None)
+    assert (
+        main(["pairing-statement", "--rows", str(rows), "--snapshot", str(untouched)])
+        == 0
+    )
+    assert capsys.readouterr().out == ""
+    other = snapshot("2026.10.13-00000000", "v1.7.0")
+    with pytest.raises(SystemExit, match="describes release 2026.10.13-00000000"):
+        main(["pairing-statement", "--rows", str(rows), "--snapshot", str(other)])

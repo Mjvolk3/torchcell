@@ -143,3 +143,19 @@ Tests (`tests/torchcell/knowledge_graphs/test_releases.py`): `test_properties_ro
 `KgRelease.organisms` comes from `KgBuildManifest.organisms` (`release_from_manifest`) and is written to the node as the list property `organisms`, so `release.json` (`scripts/kg_release.sh archive` dumps the node's properties) carries it too. `None` on a node whose manifest predates the switch: a recorded set is never invented for an old release.
 
 `status` gains an `ORGANISMS` column after `DATASETS`: the set comma-joined, `unrecorded` for a pre-switch release node, `-` where there is no node. A yeast-only store therefore shows `scerevisiae` beside its dataset count in `make ops`, never a smaller count alone. `scripts/ops.sh` finds the release id by pattern, not by column position, so the extra column does not move anything it reads.
+
+## 2026.10.13 - The restore check: `verify-restore` and `pairing-statement`
+
+`RESTORE_CHECK_CYPHER` is the one query a restored database answers before any alias points at it. It returns one row per `Dataset` node with these columns:
+
+- the release node's id, version, `n_datasets`, `n_nodes`, `torchcell_version` and `torchcell_tag`;
+- the node total, `MATCH (n) RETURN count(n)`, read from the count store;
+- the dataset's `ExperimentMemberOf` in-degree. This is a degree read on a dense node, not a scan, and the edge's source is always an `Experiment`, so it equals the count `kg_manifest.live_dataset_counts` recorded at the stamp.
+
+`parse_restore_check` reads cypher-shell's plain output into a `RestoredStore`, where a bare `NULL` is `None`. It refuses an empty answer (no release node or no `Dataset` node), two release nodes and a repeated dataset.
+
+`restore_mismatches` compares that with the archive's `release.json` (a `KgRelease`): id, version, `n_nodes`, `n_datasets`, the dataset set, every dataset's experiment count, and the node total. A full build (`X.0`) stamps `n_nodes` before its release node exists and an admission after, so the expected total is `n_nodes + 1` or `n_nodes` (`expected_total_nodes`; 3.0: 100,127,515 recorded, 100,127,516 in the store).
+
+`pairing_statement` returns the Cypher that gives a restored node the committed snapshot's `torchcell_version` and `torchcell_tag`, or None when it already carries them. An archive keeps the node as it was at the backup, and 3.0 was backed up before its retag to v1.6.2.
+
+On GilaHyper's served 3.0 (slurm job 4642, read-only) the check passed for all 51 datasets against `/bulk/kg-releases/2026.10.06-4b293d34/release.json` in 1.9 s. CLI: `restore-check-query`, `verify-restore --release-json --rows` (exit 1 listing every mismatch), `pairing-statement --rows --snapshot`. `scripts/kg_release.sh` uses all three ([[scripts.kg_release]]).

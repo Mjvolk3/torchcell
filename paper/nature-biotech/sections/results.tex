@@ -116,12 +116,31 @@ triple-mutant fitness is compared against the fitness expected from the single- 
 double-mutant terms,
 $\tau_{ijk}=f_{ijk}-f_if_jf_k-\varepsilon_{ij}f_k-\varepsilon_{ik}f_j-\varepsilon_{jk}f_i$,
 with digenic interactions $\varepsilon_{ij}=f_{ij}-f_if_j$.
-\textbf{b}, The nested cell representation -- genome, gene networks, metabolism, and
+\textbf{b}, Predicted versus measured trigenic gene--gene interaction.
+\textbf{c}, State of the art on trigenic interactions: Pearson $r$ for Yeast9 FBA ($0.0006$),
+DCell ($0.157$), DANGO ($0.367$), and TorchCell ($0.454$).
+\textbf{d}, The additive null. Test Pearson on the 376{,}732 Kuzmin triples for a ridge
+over gene indicators with no capacity for interaction ($0.400$), the same plus the 420
+recurring query pairs ($0.406$), a gene-embedding MLP (three seeds, $0.426$) and the
+cell graph transformer (three checkpoints, $0.446$) on the random split over triples,
+and on five folds that hold out whole query pairs, where every baseline falls to
+$0.06$ to $0.13$ and the transformer has not been refit. Bar is the mean, whisker the
+sample sd, every replicate an open circle.
+\textbf{e}, Whether the nine gene--gene graphs help: validation Pearson at epoch 29 under
+one protocol (three seeds; five for the random arm) with the graphs absent ($0.425$),
+imposed as a hard attention mask on layer 1 ($0.421$), imposed as a soft divergence
+prior at weight 1 ($0.447$), and the same prior toward degree-matched random rewirings
+($0.427$). Stars are the paired $t$ against no penalty; the bracket is the prior against
+its random control on the three shared seeds.
+\textbf{f}, Whether lower-order data helps: the same model on the same validation triples,
+scored as the mean validation Pearson over epochs 10 to 29, trained on the 010 triples
+alone (S0, $0.439$), on S0 with a joint fitness head ($0.439$), and on the S3 closure of
+the 025 solid-growth build, S0 plus every single and double whose genes lie inside a
+triple ($1.12$ M records, $0.479$); the 030 per-entry build ($13.5$ M entries) is the next
+pool and has not been trained.
+\textbf{g}, The nested cell representation -- genome, gene networks, metabolism, and
 environment -- feeds TorchCell and a Learn--Design--Build--Test loop with the NSF
-iBioFoundry.
-\textbf{c}, Predicted versus measured trigenic gene--gene interaction.
-\textbf{d}, State of the art on trigenic interactions: Pearson $r$ for Yeast9 FBA ($0.0006$),
-DCell ($0.157$), DANGO ($0.367$), and TorchCell ($0.454$).}{fig:ggi}
+iBioFoundry.}{fig:ggi}
 \end{figure*}
 \FloatBarrier
 

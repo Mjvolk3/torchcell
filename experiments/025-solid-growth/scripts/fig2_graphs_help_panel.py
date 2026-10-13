@@ -67,13 +67,14 @@ plt.rcParams.update(
     }
 )
 
-# (arm in the runs table, label, palette index). The prior is brick red, the color
-# Figure 2 gives TorchCell; the control arms are neutrals.
+# (arm in the runs table, label, palette index). The six primaries only (review
+# 2026-10-13): the prior is brick red, the color Figure 2 gives TorchCell; no penalty is
+# gray, the mask orange, the random-graph control purple.
 ARMS = [
     ("kl_0", "no\npenalty", 5),
-    ("mask", "hard\nmask", 11),
+    ("mask", "hard\nmask", 0),
     ("kl_1", "soft prior\nλ = 1", 1),
-    ("random_1", "prior,\nrandom graphs", 17),
+    ("random_1", "prior,\nrandom graphs", 2),
 ]
 GRID_COLOR, GRID_LW = "#E3E3E3", 0.3
 
@@ -162,7 +163,8 @@ def main() -> None:
         "stars: paired t vs no penalty\n* p < 0.05, ** 0.01, *** 0.001",
         transform=ax.transAxes, ha="left", va="top", fontsize=5,
     )
-    panel_label(ax, "e")
+    # No panel letter here: the draw.io figure places its own letters in the slot
+    # frames (Fig2-gene-interactions.compose.py).
     os.makedirs(IMG_DIR, exist_ok=True)
     stem = osp.join(IMG_DIR, "fig2_graphs_help_panel")
     savefig_true_size_svg(fig, stem + ".svg")

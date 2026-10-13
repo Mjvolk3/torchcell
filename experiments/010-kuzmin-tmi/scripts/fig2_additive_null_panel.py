@@ -63,12 +63,13 @@ plt.rcParams.update(
     }
 )
 
-# (label, prefix in the results tables, palette index). CGT is brick red, the color the
-# state-of-the-art panel of Figure 2 gives TorchCell; the nulls are the cool neutrals.
+# (label, prefix in the results tables, palette index). The six primaries only (review
+# 2026-10-13): CGT is brick red, the color the state-of-the-art panel of Figure 2 gives
+# TorchCell; the no-interaction null is gray, its pair extension yellow, the MLP blue.
 LEARNERS = [
-    ("additive ridge", "B1_additive_gene", 16),
-    ("additive + pair", "B2_additive_plus_pair", 17),
-    ("gene-embedding MLP", "B5_gene_embedding_mlp", 10),
+    ("additive ridge", "B1_additive_gene", 5),
+    ("additive + pair", "B2_additive_plus_pair", 3),
+    ("gene-embedding MLP", "B5_gene_embedding_mlp", 4),
     ("CGT", "CGT_", 1),
 ]
 GROUPS = [("random split\nover triples", "random"), ("held-out\nquery pairs", "disjoint")]
@@ -154,7 +155,8 @@ def main() -> None:
         borderpad=0.2,
         labelspacing=0.25,
     )
-    panel_label(ax, "d")
+    # No panel letter here: the draw.io figure places its own letters in the slot
+    # frames (Fig2-gene-interactions.compose.py).
     os.makedirs(IMG_DIR, exist_ok=True)
     stem = osp.join(IMG_DIR, "fig2_additive_null_panel")
     savefig_true_size_svg(fig, stem + ".svg")

@@ -276,7 +276,7 @@ L 89.992454 443.812742
 L 89.992454 82.599317 
 L 70.885296 82.599317 
 z
-" clip-path="url(#pdf315c7783)" style="fill: #4a4a4a; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
+" clip-path="url(#pdf315c7783)" style="fill: #d79b00; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
    <g id="patch_9">
     <path d="M 101.703294 443.812742 
@@ -295,7 +295,7 @@ L 151.62845 443.812742
 L 151.62845 77.663619 
 L 132.521291 77.663619 
 z
-" clip-path="url(#pdf315c7783)" style="fill: #a29682; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
+" clip-path="url(#pdf315c7783)" style="fill: #9673a6; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
    <g id="text_13">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: middle" x="126.665872" y="34.538436" transform="rotate(-0 126.665872 34.538436)">+0.017, every seed *</text>
@@ -305,17 +305,6 @@ z
     <text style="font-size: 5px; font-family: 'Arial'" transform="translate(33.718791 35.413425)">* p &lt; 0.05, ** 0.01, *** 0.001</text>
    </g>
    <g id="text_15">
-    <g id="patch_11">
-     <path d="M 4.211329 12.544252 
-L 10.580079 12.544252 
-L 10.580079 3.319252 
-L 4.211329 3.319252 
-z
-" style="fill: #ffffff"/>
-    </g>
-    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="5.171329" y="10.005502" transform="rotate(-0 5.171329 10.005502)">e</text>
-   </g>
-   <g id="text_16">
     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="95.847874" y="17.584252" transform="rotate(-0 95.847874 17.584252)">Graphs help as a soft prior toward the real graphs</text>
    </g>
    <g id="LineCollection_1">

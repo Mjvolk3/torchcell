@@ -96,12 +96,14 @@ IDENTIFIERS. ``UNIQID`` holds 2009-vintage MG1655 b-numbers, every one a lowerca
 followed by four digits (:data:`B_NUMBER_PATTERN`).
 Every b-number is stored as released (the owner rule of 2026-10-12, #1057: "the data is
 the data", and the genome does not gate a released row), so no record carries a
-``DerivedIdentifierMapping``. Against the pinned GCA_000005845.2 annotation 3,821 of the
-3,976 are locus tags (3,758 current genes, 63 pseudogene loci) and carry the annotation's
-own symbol; the other 155 (110 the annotation carries as a ``/gene_synonym`` of another
-locus, 45 it does not carry at all) were dropped until #1057 and now carry their
-released b-number as their name. ``preprocess/identifier_reconciliation.json`` records
-what the annotation says about every one.
+``DerivedIdentifierMapping``, and every record's name is the release's own: the first
+token of Dataset S5's ``NAME`` cell (``thrA`` of ``thrA aspartate kinase / homoserine
+dehydrogenase``), else the b-number. No annotation decides a stored value. Against the
+pinned GCA_000005845.2 annotation 3,821 of the 3,976 are locus tags (3,758 current
+genes, 63 pseudogene loci); the other 155 (110 the annotation carries as a
+``/gene_synonym`` of another locus, 45 it does not carry at all) were dropped until
+#1057. ``preprocess/identifier_reconciliation.json`` records what the annotation says
+about every one, as a derived finding.
 
 RETENTION (rules, counts and items in ``preprocess/dropped_records.json``).
 
@@ -1603,35 +1605,46 @@ def canonical_symbol(genome: EcoliK12Genome, tag: str) -> str:
     return symbol if resolution.systematic_name == tag else tag
 
 
+def released_name(name_cell: object, b_number: str) -> str:
+    """The gene name a Dataset S5 ``NAME`` cell releases: its first token, else the
+    b-number (the cell is ``<symbol> <description>``).
+    """
+    text = name_cell.strip() if isinstance(name_cell, str) else ""
+    return text.split()[0] if text else b_number
+
+
 def resolve_b_numbers(
-    genome: EcoliK12Genome, b_numbers: Sequence[str], *, label: str
+    genome: EcoliK12Genome,
+    b_numbers: Sequence[str],
+    names: Sequence[object],
+    *,
+    label: str,
 ) -> tuple[dict[str, str], IdentifierLedger]:
-    """Every released b-number mapped to its stored symbol, plus the ledger.
+    """Every released b-number mapped to its released name, plus the ledger.
 
     Every b-number is kept as released (#1057, the owner rule of 2026-10-12: the genome
-    does not gate a released row). One that IS a locus tag of the pinned annotation (a
-    current gene or a pseudogene locus) carries the annotation's own symbol; any other
-    carries its released b-number as its name, since the annotation names no gene for it.
-    Stops (``LocusTagResolutionError``) below :data:`MIN_RESOLVED_FRACTION`.
+    does not gate a released row) and named by Dataset S5's own ``NAME`` cell
+    (:func:`released_name`). The annotation's verdict on each b-number is the ledger's
+    derived finding and decides nothing: a fraction below
+    :data:`MIN_RESOLVED_FRACTION` is reported, never refused.
     """
     _, report = reconcile_locus_tags(
         genome, pd.Series(list(b_numbers), dtype=object), label=label
     )
-    report.require_resolved(MIN_RESOLVED_FRACTION)
     pattern = LOCUS_TAG_PATTERNS[report.gene_namespace]
     kept: dict[str, str] = {}
     n_locus_tags = 0
-    for b_number in dict.fromkeys(b_numbers):
+    for b_number, name_cell in zip(b_numbers, names, strict=True):
+        if b_number in kept:
+            continue
         if pattern.match(b_number) is None:
             raise SheetFormatError(
                 f"{b_number} is not a {report.gene_namespace} tag in form"
             )
         resolution = genome.resolve_gene_name(b_number)
         if resolution_layer(genome, resolution) == LAYER_LOCUS_TAG:
-            kept[b_number] = canonical_symbol(genome, b_number)
             n_locus_tags += 1
-        else:
-            kept[b_number] = b_number
+        kept[b_number] = released_name(name_cell, b_number)
     ledger = IdentifierLedger(
         reconciliation=report,
         min_resolved_fraction=MIN_RESOLVED_FRACTION,
@@ -2050,7 +2063,10 @@ class EnvChemgenGirgis2009Dataset(ExperimentDataset):
 
         genome = self._genome()
         kept, identifiers = resolve_b_numbers(
-            genome, b_numbers, label=f"{self.name} Dataset S5 UNIQID"
+            genome,
+            b_numbers,
+            frames[DATASET_S5]["NAME"].tolist(),
+            label=f"{self.name} Dataset S5 UNIQID",
         )
         drop_log = build_drop_log(self.name, frames[DATASET_S5], b_numbers, kept)
         log.info(

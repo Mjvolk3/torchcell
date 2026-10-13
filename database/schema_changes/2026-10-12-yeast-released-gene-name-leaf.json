@@ -4,7 +4,7 @@
   "date": "2026-10-12",
   "pr": 1085,
   "author_kind": "agent",
-  "base_commit": "11d3a90ef079b2000cd208f3f091eec9511b211f",
+  "base_commit": "cec4c2aebe5f4696b583e76ed427f448eabf355e",
   "python_version": "3.13.0",
   "symbols": [
     {
@@ -442,6 +442,19 @@
       "loader": "torchcell/datasets/ecoli/gupta2024.py",
       "dataset_classes": [
         "ProteinTurnoverGupta2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/guzman2018.py",
+      "dataset_classes": [
+        "RnaseqGuzman2018Dataset"
       ],
       "served_classes": [],
       "impact": "stale",

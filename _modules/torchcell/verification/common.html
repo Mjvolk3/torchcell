@@ -575,8 +575,10 @@
 
 <span class="sd">        Model equality against a ``MEDIA_LIBRARY`` member is the strong form (the same</span>
 <span class="sd">        components, concentrations and provenance); ``base_medium`` naming a library key is</span>
-<span class="sd">        the derived form (a dataset-specific variant that still joins at its base). Anything</span>
-<span class="sd">        else is free text and joins nothing.</span>
+<span class="sd">        the derived form (a dataset-specific variant that still joins at its base). A</span>
+<span class="sd">        medium the source labels but no library carries, stored as released with its</span>
+<span class="sd">        class a typed gap (``is_synthetic``; #1045 part 2), is ``released``: it declares</span>
+<span class="sd">        that it joins nothing. Anything else is free text and joins nothing.</span>
 <span class="sd">        """</span>
         <span class="n">name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">media</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">))</span>
         <span class="c1"># --- begin #901/#902/#903: a typed gap on the medium ------------------ #</span>
@@ -590,6 +592,14 @@
                 <span class="k">return</span> <span class="n">name</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"gapped:</span><span class="si">{</span><span class="n">reasons</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
             <span class="k">return</span> <span class="n">name</span><span class="p">,</span> <span class="s2">"free_text"</span>
         <span class="c1"># --- end #901/#902/#903 ---------------------------------------------- #</span>
+        <span class="k">if</span> <span class="n">media</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"is_synthetic"</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">media</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"base_medium"</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">reasons</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">gap</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"reason"</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">gap</span> <span class="ow">in</span> <span class="n">media</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"provenance_gaps"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]</span>
+                <span class="k">if</span> <span class="n">gap</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"field"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"is_synthetic"</span>
+            <span class="p">]</span>
+            <span class="k">if</span> <span class="n">reasons</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">name</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"released:</span><span class="si">{</span><span class="n">reasons</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">dump</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_media_dumps</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">media</span> <span class="o">==</span> <span class="n">dump</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">name</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"library:</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span>
@@ -904,6 +914,7 @@
         <span class="n">free_text</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
         <span class="n">matched</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">gapped</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
+        <span class="n">released</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
         <span class="n">n_library</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">n_derived</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">for</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">verdict</span><span class="p">,</span> <span class="n">base</span><span class="p">),</span> <span class="n">count</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_media_records</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -911,6 +922,8 @@
                 <span class="n">free_text</span><span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> (base_medium=</span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s2">)"</span><span class="p">]</span> <span class="o">+=</span> <span class="n">count</span>
             <span class="k">elif</span> <span class="n">verdict</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"gapped:"</span><span class="p">):</span>
                 <span class="n">gapped</span><span class="p">[</span><span class="n">verdict</span><span class="o">.</span><span class="n">removeprefix</span><span class="p">(</span><span class="s2">"gapped:"</span><span class="p">)]</span> <span class="o">+=</span> <span class="n">count</span>
+            <span class="k">elif</span> <span class="n">verdict</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"released:"</span><span class="p">):</span>
+                <span class="n">released</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">+=</span> <span class="n">count</span>
             <span class="k">elif</span> <span class="n">verdict</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"library:"</span><span class="p">):</span>
                 <span class="n">n_library</span> <span class="o">+=</span> <span class="n">count</span>
                 <span class="n">matched</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">verdict</span>
@@ -926,6 +939,13 @@
             <span class="k">if</span> <span class="n">n_gapped</span>
             <span class="k">else</span> <span class="s2">""</span>
         <span class="p">)</span>
+        <span class="n">n_released</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">released</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="n">released_clause</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">", </span><span class="si">{</span><span class="n">n_released</span><span class="si">}</span><span class="s2"> on </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">released</span><span class="p">)</span><span class="si">}</span><span class="s2"> media the source labels with no "</span>
+            <span class="s2">"library recipe, stored as released with a typed gap on is_synthetic"</span>
+            <span class="k">if</span> <span class="n">n_released</span>
+            <span class="k">else</span> <span class="s2">""</span>
+        <span class="p">)</span>
         <span class="k">return</span> <span class="n">LevelResult</span><span class="p">(</span>
             <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L3</span><span class="p">,</span>
             <span class="n">name</span><span class="o">=</span><span class="s2">"media_membership"</span><span class="p">,</span>
@@ -934,6 +954,7 @@
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n_library</span><span class="si">}</span><span class="s2"> records on a shared MEDIA_LIBRARY medium, </span><span class="si">{</span><span class="n">n_derived</span><span class="si">}</span><span class="s2"> on a "</span>
                 <span class="sa">f</span><span class="s2">"medium deriving from one (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">matched</span><span class="p">)</span><span class="si">}</span><span class="s2"> distinct media)"</span>
                 <span class="o">+</span> <span class="n">gapped_clause</span>
+                <span class="o">+</span> <span class="n">released_clause</span>
                 <span class="k">if</span> <span class="n">passed</span>
                 <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">free_text</span><span class="p">)</span><span class="si">}</span><span class="s2"> free-text media over </span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="n">free_text</span><span class="o">.</span><span class="n">values</span><span class="p">())</span><span class="si">}</span><span class="s2"> "</span>
                 <span class="s2">"records join nothing: "</span>
@@ -946,6 +967,8 @@
                 <span class="s2">"n_derived_records"</span><span class="p">:</span> <span class="n">n_derived</span><span class="p">,</span>
                 <span class="s2">"n_gapped_records"</span><span class="p">:</span> <span class="n">n_gapped</span><span class="p">,</span>
                 <span class="s2">"gapped_reasons"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">gapped</span><span class="o">.</span><span class="n">items</span><span class="p">())),</span>
+                <span class="s2">"n_released_records"</span><span class="p">:</span> <span class="n">n_released</span><span class="p">,</span>
+                <span class="s2">"released_media"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">released</span><span class="o">.</span><span class="n">most_common</span><span class="p">(</span><span class="mi">50</span><span class="p">)),</span>
                 <span class="s2">"matched_media"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">matched</span><span class="o">.</span><span class="n">items</span><span class="p">())),</span>
                 <span class="s2">"free_text_records"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">free_text</span><span class="o">.</span><span class="n">most_common</span><span class="p">(</span><span class="mi">50</span><span class="p">)),</span>
             <span class="p">},</span>

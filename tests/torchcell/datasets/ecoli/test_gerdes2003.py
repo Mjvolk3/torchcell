@@ -4,26 +4,24 @@
 """The Gerdes 2003 genetic-footprinting loader (``torchcell.datasets.ecoli.gerdes2003``).
 
 Synthetic tests (run everywhere) serve Table S1 through a fake ``xlrd.open_workbook`` (no
-``.xls`` writer is installed) and use the real ``EcoliK12MG1655Genome`` over a synthetic
-MG1655 assembly (network refused). The synthetic Table S1:
+``.xls`` writer is installed); the build reads no genome, and the verifier's L4 finding
+reads a synthetic MG1655 gene universe. The synthetic Table S1:
 
     row  gene   call  Blattner ID  outcome
-    1    thrL   E     b0001        -> b0001, True
-    2    thrA   N     b0002        -> b0002, False (insertions "101, 130")
-    3    thrW   N*    b0003        -> b0003, False (one insertion, read as 69.0)
-    4    yaaP   X     b0004        -> dropped: not covered
-    5    proB   N     b0099        -> b0005, False, a locus_tag_synonym of b0005
-    6    proC   E     b0006        -> b0006, True (it IS the locus of its collision group)
-    7    frag   N     b0098        -> dropped: a synonym of b0006, which row 6 holds
-    8    insZ   ?     b0007        -> dropped: ambiguous
-    9    hokC   N     (empty)      -> dropped: no Blattner ID
-    10   insA   E     b0010        -> dropped: b0010 on two rows
-    11   insA2  N     b0010        -> dropped: b0010 on two rows
-    12   dead   N     b0500        -> dropped: retired
+    1    thrL   E     b0001        -> record 0, b0001, True
+    2    thrA   N     b0002        -> record 1, b0002, False (insertions "101, 130")
+    3    thrW   N*    b0003        -> record 2, b0003, False (one insertion, read as 69.0)
+    4    yaaP   X     b0004        -> ledgered: not_covered_call
+    5    proB   N     b0099        -> record 3, b0099 verbatim, False
+    6    proC   E     b0006        -> record 4, b0006, True
+    7    frag   N     b0098        -> record 5, b0098 verbatim, False
+    8    insZ   ?     b0007        -> ledgered: ambiguous_call
+    9    hokC   N     (empty)      -> record 6, ERGO id REC00009, False
+    10   insA   E     b0010        -> record 7, ERGO id REC00010 (b0010 on two rows), True
+    11   insA2  N     b0010        -> record 8, ERGO id REC00011, False
+    12   dead   N     b0500        -> record 9, b0500 verbatim, False
 
-Eight of nine distinct single Blattner ids resolve (0.889 < 0.98), so the success path
-stores every row under its released identifier (no genome is read in the build); the
-build. Five records.
+Ten records: seven under a b-number, three under an ERGO id.
 
 Data-gated tests (``@pytest.mark.data``) read the real raw mirror and the built dev-tree
 LMDB under ``$DATA_ROOT`` (never building it).
@@ -240,8 +238,8 @@ def synthetic(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 def built(
     synthetic: Path, monkeypatch: pytest.MonkeyPatch
 ) -> m.GeneEssentialityGerdes2003Dataset:
-    monkeypatch.setattr(m, "EXPECTED_RECORDS", 12)
-    monkeypatch.setattr(m, "EXPECTED_B_NUMBER_RECORDS", 9)
+    monkeypatch.setattr(m, "EXPECTED_RECORDS", 10)
+    monkeypatch.setattr(m, "EXPECTED_B_NUMBER_RECORDS", 7)
     monkeypatch.setattr(m, "EXPECTED_ERGO_RECORDS", 3)
     return m.GeneEssentialityGerdes2003Dataset(root=str(synthetic))
 
@@ -259,8 +257,10 @@ def test_read_table_s1_reads_every_row(tmp_path: Path) -> None:
     ]
     assert rows[8].gene == "hokC" and rows[0].assertion_error == "< 0.1"
     assert m.call_histogram(rows) == SYNTHETIC_CALLS
-    assert [r.is_essential for r in rows[:4]] == [True, False, False, None]
-    assert rows[7].is_essential is None
+    assert [r.is_essential for r in rows[:3]] == [True, False, False]
+    for no_boolean in (rows[3], rows[7]):
+        with pytest.raises(ValueError, match="has no boolean"):
+            _ = no_boolean.is_essential
 
 
 def _mutated(row: int, col: int, value: Any) -> list[list[Any]]:
@@ -299,19 +299,19 @@ def test_identify_rows_keys_unique_b_numbers_and_the_rest_by_ergo_id(
     register(tmp_path / "t.xls", table_rows())
     rows = m.read_table_s1(tmp_path / "t.xls")
     identities = m.identify_rows(rows)
-    assert [(i.gerdes.gene, i.kind, i.identifier) for i in identities] == [
-        ("thrL", "MG1655 b-number", "b0001"),
-        ("thrA", "MG1655 b-number", "b0002"),
-        ("thrW", "MG1655 b-number", "b0003"),
-        ("yaaP", "MG1655 b-number", "b0004"),
-        ("proB", "MG1655 b-number", "b0099"),
-        ("proC", "MG1655 b-number", "b0006"),
-        ("frag", "MG1655 b-number", "b0098"),
-        ("insZ", "MG1655 b-number", "b0007"),
-        ("hokC", "ERGO id", "REC00009"),
-        ("insA", "ERGO id", "REC00010"),
-        ("insA2", "ERGO id", "REC00011"),
-        ("dead", "MG1655 b-number", "b0500"),
+    assert [(i.gerdes.gene, i.kind, i.identifier, i.drop_rule) for i in identities] == [
+        ("thrL", "MG1655 b-number", "b0001", None),
+        ("thrA", "MG1655 b-number", "b0002", None),
+        ("thrW", "MG1655 b-number", "b0003", None),
+        ("yaaP", "MG1655 b-number", "b0004", "not_covered_call"),
+        ("proB", "MG1655 b-number", "b0099", None),
+        ("proC", "MG1655 b-number", "b0006", None),
+        ("frag", "MG1655 b-number", "b0098", None),
+        ("insZ", "MG1655 b-number", "b0007", "ambiguous_call"),
+        ("hokC", "ERGO id", "REC00009", None),
+        ("insA", "ERGO id", "REC00010", None),
+        ("insA2", "ERGO id", "REC00011", None),
+        ("dead", "MG1655 b-number", "b0500", None),
     ]
     log_ = m.build_drop_log("gerdes", identities)
     assert (
@@ -320,9 +320,13 @@ def test_identify_rows_keys_unique_b_numbers_and_the_rest_by_ergo_id(
         log_.b_number_records,
         log_.ergo_records,
         log_.dropped_records,
-        log_.rules,
-    ) == (12, 12, 9, 3, 0, [])
-    assert log_.kept_calls == SYNTHETIC_CALLS
+    ) == (12, 10, 7, 3, 2)
+    assert [(r.rule, r.n_records, r.items) for r in log_.rules] == [
+        ("not_covered_call", 1, ["row 4 b0004 yaaP"]),
+        ("ambiguous_call", 1, ["row 8 b0007 insZ"]),
+    ]
+    assert log_.released_calls == SYNTHETIC_CALLS
+    assert log_.kept_calls == {**SYNTHETIC_CALLS, "?": 0, "X": 0}
     assert any("REC00010 insA (E): Blattner ID 'b0010'" in n for n in log_.notes)
 
 
@@ -426,11 +430,10 @@ def test_build_experiment_and_reference(tmp_path: Path) -> None:
         m.SOURCED_VALUES["insertion_coordinates"],
     ]
 
-    x = m.build_experiment("gerdes", yaaP, env)
-    assert x.phenotype.is_essential is None
-    assert x.phenotype.evidence.footprinting_call is FootprintingCall.not_covered
-    assert [g.field for g in x.phenotype.provenance_gaps] == ["is_essential"]
-    assert "not covered" in str(x.phenotype.provenance_gaps[0].note)
+    # an X row has no boolean: it is a ledger row, never a record
+    assert yaaP.drop_rule == "not_covered_call"
+    with pytest.raises(ValueError, match="has no boolean"):
+        m.build_experiment("gerdes", yaaP, env)
 
     h = m.build_experiment("gerdes", hokC, env)
     assert isinstance(h.genotype, Genotype)
@@ -524,22 +527,20 @@ def _locus_of(record: Mapping[str, Any]) -> str:
     )
 
 
-def test_build_twelve_records_and_the_ledgers(
+def test_build_ten_records_and_the_ledgers(
     built: m.GeneEssentialityGerdes2003Dataset,
 ) -> None:
-    assert len(built) == 12
-    records = [built[i] for i in range(12)]
+    assert len(built) == 10
+    records = [built[i] for i in range(10)]
     assert [
         (_locus_of(r), r["experiment"]["phenotype"]["is_essential"]) for r in records
     ] == [
         ("b0001", True),
         ("b0002", False),
         ("b0003", False),
-        ("b0004", None),
         ("b0099", False),
         ("b0006", True),
         ("b0098", False),
-        ("b0007", None),
         ("REC00009", False),
         ("REC00010", True),
         ("REC00011", False),
@@ -547,16 +548,18 @@ def test_build_twelve_records_and_the_ledgers(
     ]
     assert [
         r["experiment"]["genotype"]["perturbations"][0]["perturbation_type"]
-        for r in records[7:11]
+        for r in records[5:10]
     ] == [
         "transposon_insertion",
         "bacterial_released_transposon",
         "bacterial_released_transposon",
         "bacterial_released_transposon",
+        "transposon_insertion",
     ]
-    ambiguous = records[7]["experiment"]["phenotype"]
-    assert ambiguous["evidence"]["footprinting_call"] == "?"
-    assert [g["field"] for g in ambiguous["provenance_gaps"]] == ["is_essential"]
+    assert all(r["experiment"]["phenotype"]["provenance_gaps"] == [] for r in records)
+    assert {
+        r["experiment"]["phenotype"]["evidence"]["footprinting_call"] for r in records
+    } == {"E", "N", "N*"}
     preprocess = Path(built.preprocess_dir)
     drops = json.loads((preprocess / "dropped_records.json").read_text())
     assert (
@@ -564,9 +567,12 @@ def test_build_twelve_records_and_the_ledgers(
         drops["b_number_records"],
         drops["ergo_records"],
         drops["dropped_records"],
-        drops["rules"],
-    ) == (12, 9, 3, 0, [])
-    assert drops["kept_calls"] == SYNTHETIC_CALLS
+    ) == (10, 7, 3, 2)
+    assert [(r["rule"], r["n_records"]) for r in drops["rules"]] == [
+        ("not_covered_call", 1),
+        ("ambiguous_call", 1),
+    ]
+    assert drops["released_calls"] == SYNTHETIC_CALLS
     gaps = json.loads((preprocess / "perturbation_field_gaps.json").read_text())
     assert [g["field"] for g in gaps] == ["insertion_position", "insertion_strand"]
     assert not (preprocess / "identifier_reconciliation.json").exists()
@@ -574,10 +580,16 @@ def test_build_twelve_records_and_the_ledgers(
 
     calls = pd.read_csv(preprocess / "calls.csv", keep_default_na=False)
     assert calls.loc[1, "insertions_aa"] == "101 130"
-    assert calls["record"].tolist() == list(range(12))
+    assert [str(v) for v in calls["record"]] == [
+        "0", "1", "2", "", "3", "4", "5", "", "6", "7", "8", "9"
+    ]  # fmt: skip
     assert calls.loc[9, "identifier_kind"] == "ERGO id"
     assert calls.loc[9, "blattner_id"] == "b0010"
     assert calls.loc[3, "call"] == "X" and calls.loc[3, "is_essential"] == ""
+    assert (calls.loc[3, "drop_rule"], calls.loc[7, "drop_rule"]) == (
+        "not_covered_call",
+        "ambiguous_call",
+    )
 
 
 def test_build_refuses_other_counts(
@@ -587,8 +599,8 @@ def test_build_refuses_other_counts(
     with pytest.raises(m.CallCountError, match="pinned"):
         m.GeneEssentialityGerdes2003Dataset(root=str(synthetic))
     monkeypatch.setattr(m, "TABLE_CALLS", SYNTHETIC_CALLS)
-    monkeypatch.setattr(m, "EXPECTED_RECORDS", 12)
-    monkeypatch.setattr(m, "EXPECTED_B_NUMBER_RECORDS", 10)
+    monkeypatch.setattr(m, "EXPECTED_RECORDS", 10)
+    monkeypatch.setattr(m, "EXPECTED_B_NUMBER_RECORDS", 8)
     monkeypatch.setattr(m, "EXPECTED_ERGO_RECORDS", 2)
     with pytest.raises(m.CallCountError, match="the module declares"):
         m.GeneEssentialityGerdes2003Dataset(root=str(synthetic))
@@ -620,7 +632,7 @@ def _report(
         records if records is not None else load_records(built.root),
         rows=rows,
         universe=UNIVERSE,
-        expected_count=12,
+        expected_count=10,
     )
 
 
@@ -645,19 +657,17 @@ def test_verify_records_passes_and_fails_on_tampering(
     assert finding.details["missing_examples"] == ["b0098", "b0099", "b0500"]
     assert finding.details["n_ergo_records"] == 3
     records = load_records(built.root)
+    # ten records, so load_records' LMDB key order ("0" to "9") is the record order
+    assert [_locus_of(r) for r in records][:2] == ["b0001", "b0002"]
     records[0]["experiment"]["phenotype"]["is_essential"] = False
     records[1]["experiment"]["genotype"]["perturbations"][0]["systematic_gene_name"] = (
         "b0004"
     )
     records[2]["reference"]["phenotype_reference"]["is_essential"] = True
-    # load_records yields LMDB key order ("0", "1", "10", "11", "2", ...), so pick the
-    # X row by its letter rather than by position
-    x_row = next(
-        r
-        for r in records
-        if r["experiment"]["phenotype"]["evidence"]["footprinting_call"] == "X"
+    records[3]["experiment"]["phenotype"]["evidence"]["footprinting_call"] = "E"
+    records[5]["experiment"]["genotype"]["perturbations"][0]["systematic_gene_name"] = (
+        "b0007"
     )
-    x_row["experiment"]["phenotype"]["evidence"]["footprinting_call"] = "N"
     records[9]["experiment"]["genotype"]["perturbations"][0]["systematic_gene_name"] = (
         "b0010"
     )
@@ -671,10 +681,13 @@ def test_verify_records_passes_and_fails_on_tampering(
         "calls_match_table_s1",
         "reference_is_the_viable_parent_without_kanamycin",
     }
-    # 1 (flipped call) + 3 (thrA's record under yaaP's b0004: call, gap and evidence)
-    # + 1 (the X letter replaced on the evidence) + 1 (a record moved onto b0010, which
-    # two Table S1 rows carry)
-    assert failed["calls_match_table_s1"].details["n_problems"] == 6
+    # 1 (flipped call) + 1 (a record under the X row's b0004) + 1 (proB's N letter
+    # replaced on the evidence) + 1 (a record under the ? row's b0007) + 1 (a record
+    # moved onto b0010, which two Table S1 rows carry)
+    assert failed["calls_match_table_s1"].details["n_problems"] == 5
+    problems = failed["calls_match_table_s1"].details["problems"]
+    assert "b0004: a X row stored as a record" in problems
+    assert "b0007: a ? row stored as a record" in problems
 
 
 def test_verify_records_fails_on_tampered_evidence(
@@ -731,7 +744,7 @@ def test_run_verification_and_cli(
 
     monkeypatch.setenv("DATA_ROOT", str(tmp_path))
     assert m.main(["build"]) == 0
-    assert capsys.readouterr().out.strip().endswith("len = 12")
+    assert capsys.readouterr().out.strip().endswith("len = 10")
     assert m.main(["verify"]) == 0
     # an empty gene universe changes the L4 finding's counts and nothing else: it is
     # reported under the verdict, never gating it (owner, 2026-10-12)
@@ -740,7 +753,7 @@ def test_run_verification_and_cli(
     assert m.main(["verify"]) == 0
     out = capsys.readouterr().out
     assert "gene_essentiality_gerdes2003: PASS" in out
-    assert "L4 gene_containment_mg1655_locus_tags: 0 of 9 released b-numbers" in out
+    assert "L4 gene_containment_mg1655_locus_tags: 0 of 7 released b-numbers" in out
 
 
 def test_download_links_the_mirror_and_checks_the_manifest(
@@ -821,8 +834,8 @@ def test_real_sourced_values_are_verbatim(key: str) -> None:
 
 @pytest.mark.data
 def test_real_build_counts_and_hand_checked_rows() -> None:
-    """4,291 records = every Table S1 row: 4,208 under a released b-number, 83 under
-    an ERGO id (64 with no Blattner ID, b0018.1, 18 rows of 9 repeated b-numbers).
+    """3,739 records = every E, N and N* row of Table S1: 3,681 under a released
+    b-number, 58 under an ERGO id; the 331 X and 221 ? rows are ledgered.
     """
     from torchcell.verification.runners import load_records
 
@@ -834,15 +847,23 @@ def test_real_build_counts_and_hand_checked_rows() -> None:
         drops["b_number_records"],
         drops["ergo_records"],
         drops["dropped_records"],
-        drops["rules"],
-    ) == (4291, 4291, 4208, 83, 0, [])
-    assert drops["kept_calls"] == {"?": 221, "E": 619, "N": 3114, "N*": 6, "X": 331}
+        [(rule["rule"], rule["n_records"]) for rule in drops["rules"]],
+    ) == (
+        4291,
+        3739,
+        3681,
+        58,
+        552,
+        [("not_covered_call", 331), ("ambiguous_call", 221)],
+    )
+    assert drops["released_calls"] == {"?": 221, "E": 619, "N": 3114, "N*": 6, "X": 331}
+    assert drops["kept_calls"] == {"?": 0, "E": 619, "N": 3114, "N*": 6, "X": 0}
     records = load_records(root)
     calls = {
         _locus_of(r): r["experiment"]["phenotype"]["is_essential"] for r in records
     }
     assert {k: calls[k] for k in HAND_CHECKED} == HAND_CHECKED
-    assert sum(1 for v in calls.values() if v is None) == 331 + 221
+    assert sum(1 for v in calls.values() if v is None) == 0
     # ylbE is released as b0519, which the annotation carries as a synonym of b4572:
     # the record stores b0519 verbatim and no mapping
     (ylbe,) = [r for r in records if _locus_of(r) == "b0519"]
@@ -856,5 +877,5 @@ def test_real_build_counts_and_hand_checked_rows() -> None:
             if r["experiment"]["genotype"]["perturbations"][0]["perturbation_type"]
             == "bacterial_released_transposon"
         )
-        == 83
+        == 58
     )

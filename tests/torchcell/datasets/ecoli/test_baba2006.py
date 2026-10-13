@@ -4,23 +4,22 @@
 """The Baba 2006 Keio construction-outcome loader (``torchcell.datasets.ecoli.baba2006``).
 
 Synthetic tests (run everywhere) serve the three released ``.xls`` tables through a fake
-``xlrd.open_workbook`` (no ``.xls`` writer is installed) and use the real
-``EcoliK12BW25113Genome`` over a synthetic BW25113 assembly whose loci carry JW ids as
-``gene_synonym`` (network refused). The synthetic Table 3:
+``xlrd.open_workbook`` (no ``.xls`` writer is installed); the build reads no genome, and
+the verifier's L4 finding reads the real ``EcoliK12BW25113Genome`` over a synthetic
+BW25113 assembly whose loci carry JW ids as ``gene_synonym`` (network refused). The
+synthetic Table 3:
 
     row  gene   JW      verified/tested  outcome
-    1    thrL   JW4367  8/8   obtained       -> BW25113_0001, False
-    2    thrA   JW0001  0/8   not obtained   -> BW25113_0002, True
-    3    hokC   JW5002  1/8   not obtained   -> BW25113_4412, True (one colony, as secM)
-    4    yaaP   JW0004  4/4   obtained       -> BW25113_0004 (pseudogene), False
-    5    proB   JW0006  2/8   obtained       -> dropped: JW0006 and JW0007 share a locus
-    6    proB   JW0007  3/8   obtained       -> dropped (the same collision)
-    7    insX   JW9999  5/8   obtained       -> dropped: no locus carries JW9999
-    8    insL   JW0015  N.A.  not targeted   -> dropped: no construction
+    1    thrL   JW4367  8/8   obtained       -> record 0, False
+    2    thrA   JW0001  0/8   not obtained   -> record 1, True
+    3    hokC   JW5002  1/8   not obtained   -> record 2, True (one colony, as secM)
+    4    yaaP   JW0004  4/4   obtained       -> record 3, False
+    5    proB   JW0006  2/8   obtained       -> record 4, False (shares a locus with JW0007)
+    6    proB   JW0007  3/8   obtained       -> record 5, False
+    7    insX   JW9999  5/8   obtained       -> record 6, False (no locus carries JW9999)
+    8    insL   JW0015  N.A.  not targeted   -> ledgered under ``not_targeted``
 
-Six of seven targeted JW ids resolve (0.857 < 0.95), so the success path lowers
-``MIN_RESOLVED_FRACTION`` to 0.8 and a separate test shows the default stops the build.
-Four records.
+Seven records; the L4 finding counts JW9999 unplaced and JW0006/JW0007 on one locus.
 
 Data-gated tests (``@pytest.mark.data``) read the real raw mirror and the built dev-tree
 LMDB under ``$DATA_ROOT`` (never building it).
@@ -241,7 +240,7 @@ def synthetic(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 def built(
     synthetic: Path, monkeypatch: pytest.MonkeyPatch
 ) -> m.GeneEssentialityBaba2006Dataset:
-    monkeypatch.setattr(m, "EXPECTED_RECORDS", len(KEIO))
+    monkeypatch.setattr(m, "EXPECTED_RECORDS", len(TARGETED_JW))
     return m.GeneEssentialityBaba2006Dataset(root=str(synthetic))
 
 
@@ -412,18 +411,12 @@ def test_build_experiment_stores_the_released_jw_id_and_the_call() -> None:
             "Keio JW id",
             "deletion",
         )
-    untargeted = m.build_experiment("baba", _row("JW0015", None, None, "none"), env)
-    assert isinstance(untargeted.genotype, Genotype)
-    (q,) = untargeted.genotype.perturbations
-    assert isinstance(q, BacterialReleasedStrainPerturbation)
-    assert (q.perturbed_gene_name, q.collection) == ("JW0015", None)
-    phenotype = untargeted.phenotype
-    assert phenotype.is_essential is None
-    assert [gap.field for gap in phenotype.provenance_gaps] == ["is_essential"]
-    assert phenotype.provenance_gaps[0].reason == "not_reported_by_primary"
-    assert "N.A." in str(phenotype.provenance_gaps[0].note)
-    assert phenotype.evidence.colonies_tested is None
-    assert phenotype.evidence.statements == obtained.phenotype.evidence.statements
+    # an N.A. row has no construction outcome: it is a ledger row, never a record
+    untargeted = _row("JW0015", None, None, "none")
+    assert m.drop_rule_of(untargeted) == "not_targeted"
+    assert m.drop_rule_of(_row("JW0001", 0, 8, gene="thrA")) is None
+    with pytest.raises(ValueError, match="was not targeted"):
+        m.build_experiment("baba", untargeted, env)
 
 
 def test_evidence_is_the_construction_outcome_with_the_rows_pcr_counts() -> None:
@@ -453,7 +446,6 @@ def test_evidence_is_the_construction_outcome_with_the_rows_pcr_counts() -> None
     reference = m.build_reference("baba", REFERENCE).phenotype_reference.evidence
     assert reference.colonies_tested is None
     assert reference.statements == evidence.statements
-    assert m.evidence(_row("JW9", None, None)).colonies_tested is None
 
 
 def test_build_reference_is_the_viable_parent_without_kanamycin() -> None:
@@ -472,11 +464,11 @@ def _locus_of(record: Mapping[str, Any]) -> str:
     )
 
 
-def test_build_eight_records_and_the_ledgers(
+def test_build_seven_records_and_the_ledgers(
     built: m.GeneEssentialityBaba2006Dataset,
 ) -> None:
-    assert len(built) == 8
-    records = [built[i] for i in range(8)]
+    assert len(built) == 7
+    records = [built[i] for i in range(7)]
     assert [
         (_locus_of(r), r["experiment"]["phenotype"]["is_essential"]) for r in records
     ] == [
@@ -487,27 +479,22 @@ def test_build_eight_records_and_the_ledgers(
         ("JW0006", False),
         ("JW0007", False),
         ("JW9999", False),
-        ("JW0015", None),
     ]
     insx = records[6]["experiment"]["genotype"]["perturbations"][0]
     assert (insx["perturbed_gene_name"], insx["strain_label"]) == ("insX", "JW9999")
-    untargeted = records[7]["experiment"]["phenotype"]
-    assert [gap["field"] for gap in untargeted["provenance_gaps"]] == ["is_essential"]
-    assert untargeted["evidence"]["colonies_tested"] is None
+    assert all(r["experiment"]["phenotype"]["provenance_gaps"] == [] for r in records)
     assert records[0]["experiment"]["phenotype"]["evidence"]["colonies_tested"] == 8
     preprocess = Path(built.preprocess_dir)
     drops = json.loads((preprocess / "dropped_records.json").read_text())
     assert (drops["source_rows"], drops["kept_records"], drops["dropped_records"]) == (
         8,
-        8,
-        0,
+        7,
+        1,
     )
-    assert (
-        drops["kept_essential"],
-        drops["kept_non_essential"],
-        drops["kept_not_targeted"],
-        drops["rules"],
-    ) == (2, 5, 1, [])
+    assert (drops["kept_essential"], drops["kept_non_essential"]) == (2, 5)
+    assert [
+        (rule["rule"], rule["n_records"], rule["items"]) for rule in drops["rules"]
+    ] == [("not_targeted", 1, ["insL JW0015"])]
     check = json.loads((preprocess / "scoring_check.json").read_text())
     assert (check["obtained"], check["not_obtained"], check["not_targeted"]) == (
         5,
@@ -518,8 +505,12 @@ def test_build_eight_records_and_the_ledgers(
     import pandas as pd
 
     calls = pd.read_csv(preprocess / "calls.csv")
-    assert calls["record"].tolist() == list(range(8))
+    assert calls["record"].tolist()[:7] == list(range(7))
+    assert pd.isna(calls.loc[7, "record"]) and calls.loc[7, "drop_rule"] == (
+        "not_targeted"
+    )
     assert pd.isna(calls.loc[7, "obtained"]) and pd.isna(calls.loc[7, "is_essential"])
+    assert calls["drop_rule"].isna().sum() == 7
     assert calls["b_number"].tolist()[6] == "none"
 
 
@@ -574,7 +565,7 @@ def _report(
         rows=rows,
         check=check,
         genome=bw25113,
-        expected_count=8,
+        expected_count=7,
     )
 
 
@@ -593,8 +584,9 @@ def test_verify_records_passes_the_hermetic_build(
     ]
     finding = report.results[-1]
     assert finding.name == "gene_containment_bw25113_jw_synonyms" and finding.passed
-    # JW0015 and JW9999 are in no annotation; JW0006 and JW0007 share BW25113_0005
-    assert finding.details["unplaced"] == ["JW0015", "JW9999"]
+    # JW9999 is in no annotation (JW0015 is a ledger row, so not counted); JW0006 and
+    # JW0007 share BW25113_0005
+    assert finding.details["unplaced"] == ["JW9999"]
     assert finding.details["on_shared_locus"] == ["JW0006", "JW0007"]
 
 
@@ -613,7 +605,9 @@ def test_verify_records_fails_on_tampered_records(
     )
     records[3] = copy.deepcopy(records[3])
     records[3]["reference"]["phenotype_reference"]["is_essential"] = True
-    records[7]["experiment"]["phenotype"]["evidence"]["colonies_tested"] = 8
+    records[6]["experiment"]["genotype"]["perturbations"][0]["systematic_gene_name"] = (
+        "JW0015"
+    )
     records.append(records[0])
     failed = {
         r.name: r for r in _report(built, bw25113, records).results if not r.passed
@@ -625,8 +619,8 @@ def test_verify_records_fails_on_tampered_records(
         "reference_is_the_viable_parent_without_kanamycin",
     }
     # 1 (flipped call) + 1 (collection on an unobtained deletion) + 3 (the JW id of
-    # another row: its call, its PCR counts and its collection) + 1 (the N.A. row given
-    # counts) + 1 (the appended copy of the flipped record)
+    # another row: its call, its PCR counts and its collection) + 1 (a record under the
+    # N.A. row's JW id) + 1 (the appended copy of the flipped record)
     assert failed["calls_match_table_s3"].details["n_problems"] == 7
 
 
@@ -685,7 +679,7 @@ def test_run_verification_and_cli(
 
     monkeypatch.setenv("DATA_ROOT", str(tmp_path))
     assert m.main(["build"]) == 0
-    assert capsys.readouterr().out.strip().endswith("len = 8")
+    assert capsys.readouterr().out.strip().endswith("len = 7")
     assert m.main(["verify"]) == 0
     # the L4 row is a genome-reference finding: it reads the annotation in the verifier
     # only, passes whatever it counts, and is listed under the verdict as [rp]
@@ -782,7 +776,9 @@ def test_real_sourced_values_are_verbatim(key: str) -> None:
 
 @pytest.mark.data
 def test_real_build_counts_and_hand_checked_rows() -> None:
-    """4,378 records = every Table 3 row: 3,985 obtained, 303 not, 90 not targeted."""
+    """4,288 records = every targeted Table 3 row: 3,985 obtained, 303 not; the 90
+    not-targeted rows are ledgered under ``not_targeted``.
+    """
     from torchcell.verification.runners import load_records
 
     root = osp.join(os.environ["DATA_ROOT"], m.DATASET_ROOT_REL)
@@ -792,14 +788,13 @@ def test_real_build_counts_and_hand_checked_rows() -> None:
         drops["kept_records"],
         drops["kept_essential"],
         drops["kept_non_essential"],
-        drops["kept_not_targeted"],
         drops["dropped_records"],
-        drops["rules"],
-    ) == (4378, 4378, 303, 3985, 90, 0, [])
+        [(rule["rule"], rule["n_records"]) for rule in drops["rules"]],
+    ) == (4378, 4288, 303, 3985, 90, [("not_targeted", 90)])
     records = load_records(root)
     calls = {
         _locus_of(r): r["experiment"]["phenotype"]["is_essential"] for r in records
     }
     assert {k: calls[k] for k in HAND_CHECKED} == HAND_CHECKED
-    assert sum(1 for v in calls.values() if v is None) == 90
+    assert sum(1 for v in calls.values() if v is None) == 0
     assert "JW4296.5" in calls

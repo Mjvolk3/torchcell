@@ -30,11 +30,13 @@ by a suppressor). process() refuses a release where any of that stops holding. W
 ``is_essential=True`` means here is a CONSTRUCTION outcome on selection plates, a
 "candidate" in the paper's own word, not a growth measurement.
 
-ROWS WITH NO CALL ARE STILL ROWS. Table 3's 90 ``N.A.`` rows are ORFs the paper did
-not target (insertion-sequence genes, the ``ldr`` toxins, the araBAD/lacZ/rhaBAD genes
-BW25113 already lacks, re-annotated ORFs); no construction was attempted, so the
-release states no outcome. They are stored as released: ``is_essential=None`` beside a
-typed ``ProvenanceGap`` on the field whose note carries the cell verbatim.
+ROWS WITH NO CALL. Table 3's 90 ``N.A.`` rows are ORFs the paper did not target
+(insertion-sequence genes, the ``ldr`` toxins, the araBAD/lacZ/rhaBAD genes BW25113
+already lacks, re-annotated ORFs); no construction was attempted, so the release states
+no outcome. ``GeneEssentialityPhenotype.is_essential`` is a boolean (#1083 keeps it one
+and stores a call with no boolean on the graded sibling), so those rows are ledgered,
+not stored: ``preprocess/dropped_records.json`` names them under ``not_targeted`` and
+``preprocess/calls.csv`` keeps every one with its released cells.
 
 STRAIN AND IDENTIFIERS, STORED AS RELEASED (owner rule of 2026-10-12: the data is the
 data, and the genome never gates a record). BW25113
@@ -48,7 +50,8 @@ annotation lacks its id or because two ids share a locus, and the ECK accession 
 b-number of each row stay released columns of ``preprocess/calls.csv``. The join of a JW
 id to a BW25113 ``gene_synonym`` is a downstream act over the gene set; the verifier's
 L4 row reports how many JW ids the pinned annotation places and gates on none of it.
-All 4,378 Table 3 rows are records: 3,985 obtained, 303 not obtained, 90 not targeted.
+Every targeted Table 3 row is a record: 4,288 of 4,378 (3,985 obtained, 303 not
+obtained); the 90 not targeted are the ``not_targeted`` ledger rows.
 
 GENOTYPE. One ``BacterialReleasedStrainPerturbation`` per record, cassette "kanamycin
 cassette". ``collection`` is "Keio collection" only for an obtained deletion: a deletion
@@ -74,9 +77,8 @@ EVIDENCE (#924). Every phenotype carries a ``GeneEssentialityEvidence`` of type
 ``construction_outcome`` (class ``mutant_recovery``): the scoring rule, the paper's
 "candidates for essential genes" as the call's definition, its own caveat on population
 methods, the definitions of the colony counts, and the record's Table 3 PCR counts
-(verified, tested, percent). The reference and the 90 untargeted rows carry the same
-evidence without counts: no construction was attempted. ``preprocess/calls.csv`` keeps
-the per-row table.
+(verified, tested, percent). The reference carries the same evidence without counts.
+``preprocess/calls.csv`` keeps the per-row table.
 """
 
 from __future__ import annotations
@@ -352,7 +354,8 @@ EVIDENCE_STATEMENTS: tuple[EssentialityStatement, ...] = (
 IDENTIFIER_KIND = "Keio JW id"
 #: Every Table 3 row is a record (the owner rule of 2026-10-12): 4,288 targeted ORFs
 #: (3,985 obtained + 303 not obtained) plus the 90 the paper did not target.
-EXPECTED_RECORDS = 4378
+#: The targeted rows of Table 3 (4,378 rows less the 90 ``N.A.`` rows, ledgered).
+EXPECTED_RECORDS = 4288
 
 _PAPER_LOOKED_IN = Provenance(
     source_uri=PAPER_TEXT_REL,
@@ -366,15 +369,6 @@ SELECTION_DURATION_GAP = ProvenanceGap(
     looked_in=_PAPER_LOOKED_IN,
     note="the transformants were spread 'to select KmR transformants at 37°C'; no "
     "incubation time is stated for the selection plates",
-)
-#: The 90 rows Table 3 prints ``N.A.`` for: the paper did not target the ORF, so the
-#: release states no construction outcome and the boolean is a typed absence.
-NOT_TARGETED_CALL_GAP = ProvenanceGap(
-    field="is_essential",
-    reason=ProvenanceGapReason.not_reported_by_primary,
-    looked_in=_PAPER_LOOKED_IN,
-    note="Table 3 prints 'N.A.' in the verified, colonies-tested and percent columns: "
-    "the paper did not target the ORF, so no construction outcome is released",
 )
 
 PUBLICATION = Publication(
@@ -606,60 +600,78 @@ def require_scoring(check: ScoringCheck) -> None:
 
 
 # --------------------------------------------------------------------------- #
-# The retention ledger: every released row is a record
+# The retention ledger: every targeted row is a record
 # --------------------------------------------------------------------------- #
-class DropRule(BaseModel):
-    """One retention rule, the rows it removed, and why (none apply; the shape is kept
-    so every bacterial ``dropped_records.json`` reads alike).
-    """
+DropRuleName = Literal["not_targeted"]
+DROP_RULE_DESCRIPTIONS: dict[DropRuleName, str] = {
+    "not_targeted": "Table 3 gives 'N.A.' for the verification columns: the paper did "
+    "not target the ORF, so no construction outcome is released, and "
+    "GeneEssentialityPhenotype stores a boolean is_essential (#1083); the row's "
+    "released cells stay in preprocess/calls.csv"
+}
 
-    rule: str
+
+class DropRule(BaseModel):
+    """One retention rule, the rows it removed, and why."""
+
+    rule: DropRuleName
     description: str
     n_records: int
     items: list[str] = []
 
 
 class DropLog(BaseModel):
-    """The retention ledger of one build: every Table 3 row is a record."""
+    """The retention ledger of one build: every targeted Table 3 row is a record."""
 
     dataset: str
     source_rows: int
     kept_records: int
     kept_essential: int
     kept_non_essential: int
-    kept_not_targeted: int
     dropped_records: int
     rules: list[DropRule]
     notes: list[str]
 
 
+def drop_rule_of(row: KeioRow) -> DropRuleName | None:
+    """The one rule a Table 3 row can fall under: an ``N.A.`` row has no outcome."""
+    return None if row.targeted else "not_targeted"
+
+
 def build_drop_log(dataset_name: str, rows: Sequence[KeioRow]) -> DropLog:
-    """The ledger of one build, with the three call classes counted."""
-    targeted = [r for r in rows if r.targeted]
-    obtained = sum(1 for r in targeted if r.obtained)
-    not_obtained = len(targeted) - obtained
-    not_targeted = len(rows) - len(targeted)
-    return DropLog(
+    """The ledger of one build, refusing rules that miss a dropped row."""
+    kept = [r for r in rows if drop_rule_of(r) is None]
+    obtained = sum(1 for r in kept if r.obtained)
+    rules = [
+        DropRule(
+            rule=name,
+            description=description,
+            n_records=sum(1 for r in rows if drop_rule_of(r) == name),
+            items=[f"{r.gene} {r.jw_id}" for r in rows if drop_rule_of(r) == name],
+        )
+        for name, description in DROP_RULE_DESCRIPTIONS.items()
+    ]
+    log_ = DropLog(
         dataset=dataset_name,
         source_rows=len(rows),
-        kept_records=len(rows),
-        kept_essential=not_obtained,
+        kept_records=len(kept),
+        kept_essential=len(kept) - obtained,
         kept_non_essential=obtained,
-        kept_not_targeted=not_targeted,
-        dropped_records=0,
-        rules=[],
+        dropped_records=len(rows) - len(kept),
+        rules=rules,
         notes=[
-            "every Table 3 row is a record under its Keio JW id, verbatim "
+            "every targeted Table 3 row is a record under its Keio JW id, verbatim "
             "(BacterialReleasedStrainPerturbation); no annotation is read and no row "
             "is dropped for an identifier the BW25113 GenBank file does not carry",
-            f"{not_obtained} not-obtained ORFs store is_essential True, {obtained} "
-            "obtained ORFs store False (the paper's own scoring rule), and "
-            f"{not_targeted} N.A. rows store is_essential None beside a typed "
-            "ProvenanceGap whose note carries the 'N.A.' cell",
+            f"{len(kept) - obtained} not-obtained ORFs store is_essential True and "
+            f"{obtained} obtained ORFs store False (the paper's own scoring rule)",
             "the ECK accession and the b-number of each row are released columns of "
             "calls.csv, not record fields",
         ],
     )
+    if sum(r.n_records for r in rules) != log_.dropped_records:
+        raise RuntimeError("drop rules do not account for every dropped row")
+    return log_
 
 
 # --------------------------------------------------------------------------- #
@@ -755,11 +767,10 @@ def deletion_genotype(row: KeioRow) -> Genotype:
 def evidence(row: KeioRow | None = None) -> GeneEssentialityEvidence:
     """The construction-outcome evidence (#924), with ``row``'s PCR counts when given.
 
-    The reference (``row`` None) and an untargeted row (Table 3 prints ``N.A.``) carry
-    the type, rule, definition and caveat only: no construction was attempted.
+    The reference (``row`` None) carries the type, rule, definition and caveat only.
     """
     counts: dict[str, Any] = {}
-    if row is not None and row.targeted:
+    if row is not None:
         counts = {
             "colonies_verified": row.verified,
             "colonies_tested": row.tested,
@@ -774,16 +785,10 @@ def evidence(row: KeioRow | None = None) -> GeneEssentialityEvidence:
 
 
 def essentiality_phenotype(row: KeioRow) -> GeneEssentialityPhenotype:
-    """The call: True when no mutant was obtained, False when one was, and a typed
-    absence (the verbatim ``N.A.`` in the gap's note) for an ORF the paper did not
-    target; every one with the construction-outcome evidence.
+    """The call: True when no mutant was obtained, False when one was, with the
+    construction-outcome evidence. An untargeted row has no outcome
+    (:attr:`KeioRow.obtained` refuses it); it is a ``not_targeted`` ledger row.
     """
-    if not row.targeted:
-        return GeneEssentialityPhenotype(
-            is_essential=None,
-            evidence=evidence(row),
-            provenance_gaps=[NOT_TARGETED_CALL_GAP],
-        )
     return GeneEssentialityPhenotype(
         is_essential=not row.obtained, evidence=evidence(row)
     )
@@ -792,7 +797,7 @@ def essentiality_phenotype(row: KeioRow) -> GeneEssentialityPhenotype:
 def build_experiment(
     dataset_name: str, row: KeioRow, env: Environment
 ) -> BacterialGeneEssentialityExperiment:
-    """One Table 3 row, targeted or not."""
+    """One targeted Table 3 row."""
     return BacterialGeneEssentialityExperiment(
         dataset_name=dataset_name,
         genotype=deletion_genotype(row),
@@ -888,13 +893,13 @@ class GeneEssentialityBaba2006Dataset(ExperimentDataset):
                 f"{EXPECTED_RECORDS}"
             )
         log.info(
-            "Baba 2006: %d Table 3 rows -> %d records (%d essential, %d not, %d not "
-            "targeted); nothing dropped",
+            "Baba 2006: %d Table 3 rows -> %d records (%d essential, %d not); "
+            "ledgered %s",
             drop_log.source_rows,
             drop_log.kept_records,
             drop_log.kept_essential,
             drop_log.kept_non_essential,
-            drop_log.kept_not_targeted,
+            {r.rule: r.n_records for r in drop_log.rules},
         )
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
@@ -907,8 +912,9 @@ class GeneEssentialityBaba2006Dataset(ExperimentDataset):
         env_out, interned_env = self._open_write_lmdb(
             osp.join(self.processed_dir, "lmdb")
         )
+        kept = [row for row in rows if drop_rule_of(row) is None]
         with env_out.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
-            for idx, row in enumerate(tqdm(rows, desc="baba2006")):
+            for idx, row in enumerate(tqdm(kept, desc="baba2006")):
                 experiment = build_experiment(self.name, row, env)
                 txn.put(
                     f"{idx}".encode(),
@@ -916,34 +922,42 @@ class GeneEssentialityBaba2006Dataset(ExperimentDataset):
                 )
         env_out.close()
         interned_env.close()
-        log.info("Wrote %d Baba 2006 records to LMDB", len(rows))
+        log.info("Wrote %d Baba 2006 records to LMDB", len(kept))
 
     def _write_ledgers(
         self, drop_log: DropLog, check: ScoringCheck, rows: Sequence[KeioRow]
     ) -> None:
         """The drop log, the scoring check, and the per-row table (every released
-        column, each row's LMDB index, the stored call, and the PCR counts that have
-        no field).
+        column, each kept row's LMDB index, the stored call, and each ledgered row's
+        rule).
         """
         out = Path(self.preprocess_dir)
         (out / "dropped_records.json").write_text(drop_log.model_dump_json(indent=2))
         (out / "scoring_check.json").write_text(check.model_dump_json(indent=2))
-        table = [
-            {
-                "row": row.row,
-                "eck": row.eck,
-                "gene": row.gene,
-                "jw_id": row.jw_id,
-                "b_number": row.b_number,
-                "verified": row.verified,
-                "tested": row.tested,
-                "percent": row.percent,
-                "obtained": row.obtained if row.targeted else None,
-                "is_essential": (not row.obtained) if row.targeted else None,
-                "record": index,
-            }
-            for index, row in enumerate(rows)
-        ]
+        table: list[dict[str, Any]] = []
+        n_kept = 0
+        for row in rows:
+            rule = drop_rule_of(row)
+            record: int | None = None
+            if rule is None:
+                record = n_kept
+                n_kept += 1
+            table.append(
+                {
+                    "row": row.row,
+                    "eck": row.eck,
+                    "gene": row.gene,
+                    "jw_id": row.jw_id,
+                    "b_number": row.b_number,
+                    "verified": row.verified,
+                    "tested": row.tested,
+                    "percent": row.percent,
+                    "obtained": row.obtained if row.targeted else None,
+                    "is_essential": (not row.obtained) if row.targeted else None,
+                    "drop_rule": rule,
+                    "record": record,
+                }
+            )
         pd.DataFrame(table).astype(
             {"record": "Int64", "verified": "Int64", "tested": "Int64"}
         ).to_csv(out / "calls.csv", index=False)
@@ -1010,10 +1024,9 @@ def _l1_one_record_per_jw_id(records: Sequence[Record]) -> LevelResult:
 def _l2_calls_match_table_s3(
     records: Sequence[Record], rows: Sequence[KeioRow]
 ) -> LevelResult:
-    """L2, independent of the build path: each record's JW id finds its Table 3 row,
-    the stored call is that row's scoring outcome (or the typed absence of an N.A.
-    row, with the verbatim token), and ``collection`` is set exactly on an obtained
-    deletion.
+    """L2, independent of the build path: each record's JW id finds a targeted Table 3
+    row (an ``N.A.`` row is a ledger row, never a record), the stored call is that
+    row's scoring outcome, and ``collection`` is set exactly on an obtained deletion.
     """
     by_jw = {r.jw_id: r for r in rows}
     problems: list[str] = []
@@ -1024,27 +1037,22 @@ def _l2_calls_match_table_s3(
         if row is None:
             problems.append(f"{jw_id}: no Table 3 row")
             continue
+        if not row.targeted:
+            problems.append(f"{jw_id}: an N.A. row stored as a record")
+            continue
         phenotype = record["experiment"]["phenotype"]
         stored = phenotype["is_essential"]
-        gapped = {gap["field"] for gap in phenotype["provenance_gaps"]}
         ev = phenotype["evidence"]
         counts = (
             ev["colonies_verified"],
             ev["colonies_tested"],
             ev["percent_verified"],
         )
-        if not row.targeted:
-            if stored is not None or "is_essential" not in gapped:
-                problems.append(f"{jw_id}: N.A. row stored {stored!r}")
-            if counts != (None, None, None):
-                problems.append(f"{jw_id}: N.A. row carries evidence counts {counts}")
-        else:
-            if stored != (not row.obtained):
-                problems.append(f"{jw_id}: stored {stored}, verified {row.verified}")
-            if counts != (row.verified, row.tested, row.percent):
-                problems.append(f"{jw_id}: evidence counts {counts}")
-        obtained = row.targeted and row.obtained
-        if (p["collection"] == KEIO_COLLECTION) != obtained:
+        if stored != (not row.obtained):
+            problems.append(f"{jw_id}: stored {stored}, verified {row.verified}")
+        if counts != (row.verified, row.tested, row.percent):
+            problems.append(f"{jw_id}: evidence counts {counts}")
+        if (p["collection"] == KEIO_COLLECTION) != row.obtained:
             problems.append(f"{jw_id}: collection {p['collection']!r}")
     return LevelResult(
         level=Level.L2,

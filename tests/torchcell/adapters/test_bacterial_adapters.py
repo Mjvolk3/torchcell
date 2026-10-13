@@ -45,6 +45,7 @@ def test_every_registered_bacterial_dataset_is_mapped_to_its_adapter() -> None:
     # + 1 (#910, Teteneva 2024's lake-water RB-TnSeq, the first W3110 dataset),
     # + 1 (#964, Guzman 2018's own GEO release, owner policy 2026-10-10),
     # re-derived from the merged conf and map.
+    # + 1 (#879, Wang 2018 Supplementary Data 5 gene-level calls).
     # organism keyed by publication) + 2 (#800 Li 2021's released 13C-MFA maps,
     # #927 Baba 2006 Table 3's OD600) + 1 (#770, Niu 2019's pinene fold changes),
     # re-derived from the merged conf and map.

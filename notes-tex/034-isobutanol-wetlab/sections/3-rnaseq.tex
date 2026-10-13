@@ -1,0 +1,102 @@
+%% notes-tex/034-isobutanol-wetlab/sections/3-rnaseq.tex
+%% SOURCE: hand-authored, resting on tables/t1-strain-panel.tex,
+%% tables/t3-genotypes.tex and the two mirrored documents cited in
+%% sections/1-panel.tex and sections/2-yko.tex.
+%% The design fact that drives the selection, that Ll_ilvD in YZy452 sits behind
+%% P_GAL10 and is therefore off in glucose, is quoted below.
+
+\section{The First Sequencing Round\secstatus{todo}}
+\label{sec:rnaseq}
+
+The ask is a low-flux anchor, the best producer, and steps in between. The panel
+supplies two independent versions of that, both for isobutanol, and one sentence
+in the Methods is what turns the first of them into three points rather than
+two.
+
+\notesec{The promoter that makes a ladder} The dehydratase in YZy452 is not
+constitutive.
+
+\begin{quote}\small
+Because the wild-type copy of \gene{Ll\_ilvD} in YZy452 is expressed from a
+P$_{\text{GAL10}}$ promoter, growing the library in glucose ensures this
+wild-type copy is repressed, and only the \gene{Ll\_ilvD} variants from the CEN
+plasmid library (inserted downstream of a P$_{\text{TDH3}}$ promoter) are
+expressed.
+\end{quote}
+
+\noindent
+YZy452 also carries \gene{ilv3}$\Delta$, so the native dihydroxyacid dehydratase
+is gone. In glucose, C0049 therefore has no dehydratase at all, C0050 supplies
+the wild-type bacterial enzyme from a CEN plasmid, and C0051 supplies the
+improved allele from the same backbone. Three levels of one step, one host, one
+carbon source.
+
+\notesec{Round one, five strains} Two matched contrasts, on two different steps
+of the pathway: \gene{Ll\_ilvD} wild type against I433V at 3.1-fold, and
+\gene{ILV6} wild type against V110E at 1.6-fold, with C0049 as the floor beneath
+the first. \Cref{tab:roundone} gives the five, and what every tube needs if it is
+picked up at all.
+
+\input{tables/t4-round-one}
+
+\notesec{No sorting anywhere in this} The protocol that produced every titer in
+the paper is a single colony into 1 mL of SC or SC-ura with 2 percent glucose
+overnight, 10 $\mu$L of that into 1 mL of the same in a 24-well plate, 20 h, then
+a spin and a resuspension into 1 mL of the same medium with 15 percent sugar,
+sealed, 48 h at 30 $^{\circ}$C and 200 rpm, then OD$_{600}$ on a plate reader and
+HPLC on the supernatant. A shaker, a plate reader and an HPLC. Fluorescence-activated
+cell sorting appears only in the path that isolates strains out of pooled
+libraries, and those isolations are already done.
+
+\notesec{Two conditions that are not free choices} C0049 ferments on galactose,
+not glucose, for the P$_{\text{GAL10}}$ reason above, and on glucose it will read
+as a dead strain rather than as a floor. C0053 is the one tube that is not pick
+and use at all: its overnight needs constant blue light before production can run
+in the dark, which is an illuminated-plate setup rather than a shaker.
+
+Leucine has to be in the medium for all of them. The SI is direct about why:
+"LEU2 deletion also causes leucine auxotrophy, requiring supplementation of this
+amino acid in the growth medium". Standard SC supplies it, and a leucine dropout
+would kill the panel.
+
+\notesec{Measure titer alongside, do not carry it across} C0049's published
+310 $\pm$ 15 mg/L is a galactose number. Whichever carbon source the round
+settles on, the titer for each strain belongs in the same experiment as the
+sequencing rather than taken from the paper, because the media here will not
+match the media there well enough for the numbers to transfer.
+
+\noindent
+C0053 stays out of round one on the light grounds above, but it is worth
+sequencing eventually for one reason: it is the direct parent of YZy505, the
+paper's best isobutanol strain at 681 $\pm$ 29 mg/L, so a baseline taken now is
+what makes that comparison possible later.
+
+\notesec{What is not in the round} The isopentanol arm, C0046 through C0048, is
+the cleanest three-point series in the box and C0048 holds the highest titer of
+anything here at 842 $\pm$ 23 mg/L. It is the leucine branch. This program is
+the valine branch, so those three are round two, and they move up only if a
+dose-response in $\alpha$-isopropylmalate flux is wanted for its own sake.
+
+C0043 YZy311 sits out because its nearest neighbor in the panel, C0044, differs
+from it by both host and pathway, so a contrast between them would not isolate
+anything. C0052 YZy91 sits out because it is the plasmid-free host of C0043
+rather than a producer.
+
+\notesec{Three requests worth making with the next shipment}
+
+\begin{itemize}\setlength\itemsep{0.15em}
+  \item \textbf{YZy121}, which Supplementary Table 1 gives as CEN.PK2-1C
+    carrying the isobutanol-configured biosensor and nothing else. It is the
+    reference every strain in this panel is missing: same lineage, same
+    reporter, no deletions and no pathway.
+  \item \textbf{YZy312}, Strain B, which completes the Fig.~3c 2$\times$2 that
+    C0043, C0044 and C0045 are three quarters of. It is one transformation of
+    C0052 with pYZ228.
+  \item \textbf{YZy453}, YZy452 carrying an empty CEN URA3 plasmid. C0049
+    carries no plasmid while C0050 and C0051 do, so the plasmid itself and its
+    selection marker are currently confounded with the dehydratase.
+\end{itemize}
+
+\noindent
+None of the three connects this panel to the knockout screen; for that reason
+\cref{sec:yko} names yJM1 instead.

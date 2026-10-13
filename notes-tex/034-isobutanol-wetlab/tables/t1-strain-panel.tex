@@ -1,0 +1,26 @@
+%% SOURCE: experiments/034-isobutanol-wetlab/scripts/strain_panel.py
+%% Mirror: $DATA_ROOT/torchcell-library/zhangBiosensorBranchedchainAmino2022/paper.pdf
+%% sha256 551ba08ec3bf584ef49b72186050d4bb3230df59edfa664a8a6af3460a2a8bec
+\begin{table}[htbp]
+\centering
+\caption{\textbf{The eleven strains on hand, and what each one is in the paper that built them.} Color groups are as the tubes are labeled. Titers are not comparable down the column: the carbon source differs by row and two rows are a different product. A dagger marks a value we back-computed from a reported fold change rather than one the paper prints.}
+\label{tab:panel}
+\footnotesize
+\begin{tabular}{@{}llll >{\raggedright\arraybackslash}p{52mm} l@{}}
+\toprule
+ID & Tube & Group & Config. & What it is & Titer (mg/L) \\
+\midrule
+C0043 & Yzy311 & green & isobutanol & Strain A of Fig. 3c: the \gene{ILV6} screening host carrying wild-type \gene{ILV6} on a CEN plasmid, with no isobutanol pathway overexpressed. & -- \\
+C0044 & YZy313 & green & isobutanol & Strain C of Fig. 3c: wild-type \gene{ILV6} on a CEN plasmid in YZy363, which carries the mitochondrial isobutanol pathway $\delta$-integrated. The denominator of the 1.6-fold improvement. & -- \\
+C0045 & YZy314 & green & isobutanol & Strain D of Fig. 3c: the ILV6V110E hit in the same pathway-overexpressing host, 1.6-fold over C0044. One point mutation separates the two. & -- \\
+C0046 & YZy148 & blue & isopentanol & Screening host for the \gene{LEU4} mutagenesis libraries. Carries the isopentanol configuration with the \gene{LEU4}$\Delta$S547 allele removed, so a plasmid-borne \gene{LEU4} is the only source of the enzyme. & -- \\
+C0047 & YZy148+LEU4WT & blue & isopentanol & Wild-type \gene{LEU4} control for the isopentanol screen: YZy148 retransformed with a plasmid carrying unmutagenized \gene{LEU4}. & 201$^{\dagger}$ \\
+C0048 & YZy148+LEU4deltaS547 & blue & isopentanol & The published leucine-insensitive allele, a single Ser547 deletion, carried back into the screening host. This is the benchmark the evolved \gene{LEU4} variants were scored against. & 842 $\pm$ 23 \\
+C0049 & YZy452 & orange & isobutanol & Best cytosolic-pathway isolate from three rounds of FACS on $\delta$-site integrants, and the host the \gene{Ll\_ilvD} plasmid library was then screened in. & 310 $\pm$ 15 \\
+C0050 & YZy454 & orange & isobutanol & Wild-type \gene{Ll\_ilvD} control: YZy452 carrying a CEN plasmid with the unmutated dehydratase. The denominator of the 3.1-fold improvement. & 73$^{\dagger}$ \\
+C0051 & YZy469 & orange & isobutanol & The \gene{Ll\_ilvD} hit, I433V, on a CEN plasmid. Same host and same carbon source as YZy454, so the pair is a clean one-allele contrast. & 227 $\pm$ 13 \\
+C0052 & YZy91 & gray & isobutanol & Screening host for the \gene{ILV6} mutagenesis libraries. \gene{BAT1} and \gene{BAT2} are deleted so valine and $\alpha$-KIV cannot interconvert, and \gene{ILV6} is deleted so the only Ilv6p present is the plasmid-borne one under test. The tube itself carries no ILV6; the screen's best hit, this host plus ILV6V110E, reached 378 $\pm$ 10 mg/L. & -- \\
+C0053 & YZy502 & gray & isobutanol & Optogenetic host: triple \gene{pdc}$\Delta$ with light-inducible \gene{PDC1} under OptoEXP and the dark-inducible cytosolic pathway under OptoINVRT7, $\delta$-integrated. One plasmid and two FACS rounds short of the paper's best isobutanol strain. & -- \\
+\bottomrule
+\end{tabular}
+\end{table}

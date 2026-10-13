@@ -1,0 +1,69 @@
+%% notes-tex/034-isobutanol-wetlab/034-isobutanol-wetlab.tex
+%% [[experiments.034-isobutanol-wetlab.strain-panel]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/034-isobutanol-wetlab/034-isobutanol-wetlab.tex
+%%
+%% The bench side of isobutanol. Eleven strains from the Avalos lab are in the
+%% freezer, and the first question is which of them a first round of RNA
+%% sequencing should carry. That question turns on what each strain is, which
+%% the tube labels do not say, so the document starts by mapping every tube onto
+%% the paper that built it.
+%%
+%% Build:  make            -> 034-isobutanol-wetlab.pdf       (draft view)
+%%         make clean-view -> 034-isobutanol-wetlab-clean.pdf (share view)
+%%         make check      -> formatting / provenance / citation gate
+%%         make tables     -> regenerate tables/ from the experiment script
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+
+\title{\vspace{-1.5em}Isobutanol, Bench Side\\
+  {\large Eleven Avalos-lab strains, and which of them a first RNA-seq round carries}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+Eleven strains built for a branched-chain amino acid biosensor are on hand,
+labeled by tube number and strain number and by nothing else. Eight of them are
+named in the paper that built them, and those eight turn out to be screening
+hosts and single-allele controls rather than the strains that produced the
+paper's headline titers: three of those headline strains are a single
+transformation past a tube already in the freezer. Three more tubes are named
+nowhere in the paper's running text at all. For sequencing, the panel spans
+roughly an order of magnitude in isobutanol titer, that span is not a clean
+ladder because the carbon source changes between arms, and none of these strains
+shares a genetic background with the knockout-collection isobutanol work they
+get grouped with. A five-strain first round follows from that, anchored on the
+screening hosts rather than on a wild type the panel does not contain.
+\end{abstract}
+
+\vspace{0.5em}
+{\small\color{tcgray}
+\textbf{How to read this.} \Cref{sec:panel} is the mapping from tube to strain,
+and it is the part that has to be right before anything else is decided.
+\Cref{sec:yko} is the relationship to the dissertation work on the yeast
+knockout collection, which shares a biosensor cassette with these strains but
+not a genetic background. \Cref{sec:rnaseq} is the first sequencing round that
+falls out of the two.\par\smallskip
+
+Source paper: Zhang \textit{et al.}, \textit{Nature Communications} \textbf{13},
+270 (2022), \url{https://doi.org/10.1038/s41467-021-27852-x}, mirrored as
+\file{zhangBiosensorBranchedchainAmino2022}.\par
+Generating script: \file{experiments/034-isobutanol-wetlab/scripts/strain\_panel.py}\par}
+
+\vspace{1em}
+\tccontents
+
+\input{sections/1-panel}
+\input{sections/2-yko}
+\input{sections/3-rnaseq}
+
+\clearpage
+\small
+\bibliography{references}
+
+\end{document}

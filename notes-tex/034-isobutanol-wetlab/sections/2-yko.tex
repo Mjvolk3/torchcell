@@ -1,0 +1,62 @@
+%% notes-tex/034-isobutanol-wetlab/sections/2-yko.tex
+%% SOURCE: hand-authored. Every quote is verbatim from two mirrored documents,
+%%   $DATA_ROOT/torchcell-library/zhangBiosensorBranchedchainAmino2022/  (the paper)
+%%   $DATA_ROOT/torchcell-library/lopezSystemsMetabolicEngineering2024/  (the dissertation)
+%% No number in this section is derived.
+
+\section{The Knockout-Collection Work Shares a Cassette, Not a Background\secstatus{todo}}
+\label{sec:yko}
+
+These strains get grouped with the isobutanol screen of the yeast gene-knockout
+collection (\term{YKOC}) that ran in the same lab, and the grouping is half
+right. The screen is chapter 3 of Jos\'e de Jes\'us Monta\~no L\'opez's
+dissertation, \textit{Systems Metabolic Engineering of Isobutanol Production in
+Saccharomyces cerevisiae} (Princeton, November 2024, adviser Jose L.\ Avalos),
+mirrored as \file{lopezSystemsMetabolicEngineering2024}. It names the paper
+above as its reference 158:
+
+\begin{quote}\small
+We used a previously designed branched-chain amino acid biosensor to rapidly
+quantify flux changes in the isobutanol biosynthetic pathway$^{158}$
+\end{quote}
+
+\notesec{The cassette is the same construct, to the promoter} The dissertation's
+Supplementary Table 5 gives the sensor strain as
+
+\begin{quote}\small
+YKOC, \gene{his3}::HIS3-P$_{\text{LEU1}}$-yEGFP-PEST-T$_{\text{ADH1}}$-P$_{\text{TPI1}}$-LEU4$_{1-410}$-T$_{\text{PGK1}}$
+\end{quote}
+
+\noindent
+which is the paper's isobutanol configuration term for term: destabilized yEGFP
+read out of P$_{\text{LEU1}}$, amplified by the truncated LEU4$_{1-410}$ under
+P$_{\text{TPI1}}$. The \gene{leu2}$\Delta$ the configuration calls for comes free,
+because every strain in the knockout collection is \gene{leu2}$\Delta$0. So a
+strain carrying the isobutanol configuration in our box and a strain from that
+screen are reporting the same quantity through the same reporter.
+
+\notesec{The background is where they part} The screen runs in BY4741, which the
+same table gives as \term{S288C} MATa \gene{his3}$\Delta$1 \gene{leu2}$\Delta$0
+\gene{met15}$\Delta$0 \gene{ura3}$\Delta$0. The paper runs in CEN.PK2-1C. These
+are different laboratory lineages, and the paper's own choice of CEN.PK2-1C for
+higher alcohol work is itself the argument that the choice of lineage is not
+neutral for this phenotype.
+
+The consequence for sequencing is specific. A differential expression contrast
+between one of our tubes and a strain from the knockout screen would confound
+the perturbation with the lineage, and no normalization recovers that. The two
+sets support a comparison of \emph{direction}, not of expression level.
+
+\notesec{None of the eleven is a strain from that screen} The dissertation names
+no strain with a \texttt{YZy} prefix anywhere in its text, and the paper names
+none of the dissertation's \texttt{yJM} strains. The nearest relative to the
+screen in our box is any tube carrying the isobutanol configuration, and what it
+shares is the reporter.
+
+\notesec{What to ask for, if the screen background is the point} The strain the
+screen was anchored on is \term{yJM1}, BY4741 carrying that same cassette at
+\gene{HIS3}, and the collection itself is the biosensor-containing YKOC. Both
+are Avalos-lab strains and neither is in the shipment. If the transcriptomics
+plan is meant to connect to the knockout screen rather than to the biosensor
+paper, yJM1 is the request to make, and it is a different request from the one
+that produced these eleven tubes.

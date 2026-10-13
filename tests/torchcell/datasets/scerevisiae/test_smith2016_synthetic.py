@@ -526,7 +526,7 @@ def test_store_reopens_without_raw_files_and_serves_the_getters(
         "publication": _PUBLICATION,
     }
     assert repr(reopened) == "CrispriChemgenSmith2016Dataset(6)"
-    assert reopened.gene_set == {"YHR007C", "YJR066W", "YOL999W"}
+    assert reopened.gene_set == {"YHR007C", "YJR066W", "YOL999W", "erg11"}
     with pytest.raises(NotImplementedError):
         reopened.create_experiment()
     sentinel = object()

@@ -126,20 +126,20 @@ def test_environment_response_properties_project_the_z_score_axes() -> None:
 
 # ---- #504: the strain-resolved records through the real adapter ------------------ #
 def _panel_store(tmp_path: Any, monkeypatch: pytest.MonkeyPatch) -> Any:
-    """A real scratch build: CDC28 (conditional allele), NNK1 on YKL171W, the wild type,
-    plus the held TSCII / YGL11 / wtn01 labels (4 served records).
+    """A real scratch build with no genome: CDC28 (stored as the deletion the release
+    calls it), NNK1 on YKL171W (two cells), the wild type, plus the held TSCII / YGL11 /
+    wtn01 labels (4 served records, one released screen each).
     """
     from tests.torchcell.datasets.scerevisiae.test_wildenhain2015 import (
         _build,
         _panel_row,
         _panel_rows,
-        _PanelGenome,
         _write_raw,
     )
 
     rows = [*_panel_rows(), _panel_row("NULL", "wild type", "8", "1183", "-2.0")]
     _write_raw(tmp_path, rows)
-    return _build(tmp_path, monkeypatch, _PanelGenome())
+    return _build(tmp_path, monkeypatch)
 
 
 class _Table:
@@ -165,9 +165,10 @@ def test_adapter_emits_the_strain_resolved_nodes(
 ) -> None:
     """Contract (#504 / #507): the experiment, reference, genome and phenotype nodes come
     out for the new family with no adapter change. One reference and one genome node
-    (the BY4741 background, MATa, four alleles) serve all four records; the
-    perturbation nodes carry the conditional-allele and kanMX-deletion leaves; the
-    wild-type record has a genotype node with no perturbation edge.
+    (the BY4741 background, MATa, four alleles) serve all four records; every
+    perturbation node is the kanMX-deletion leaf the release reports (no annotation
+    re-types CDC28 at load time); the wild-type record has a genotype node with no
+    perturbation edge.
     """
     monkeypatch.delenv("TC_DATA_URL", raising=False)
     monkeypatch.setattr(cell_adapter_module, "wandb", _Recorder())
@@ -215,7 +216,7 @@ def test_adapter_emits_the_strain_resolved_nodes(
     }
     assert {
         n.get_properties()["perturbation_type"] for n in by_label["perturbation"]
-    } == {"conditional_allele", "barcoded_kanmx_deletion"}
+    } == {"barcoded_kanmx_deletion"}
     assert len(by_label["environment response phenotype"]) == 5  # 4 records + reference
     assert len(by_label["genotype"]) == 4
     perturbation_edges = [e for e in edges if e.get_label() == "perturbation member of"]

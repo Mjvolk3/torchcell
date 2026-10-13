@@ -1303,3 +1303,91 @@ W&B runs of the arms read above, fold 0 unless noted:
 - cell, van + Hoepfner: https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/runs/3d8pmdiw
 - cell, van + Hoepfner + Hillenmeyer: https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/runs/0n92blb9
 - round 9, cell, van, sum: https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/runs/qcy7pyln
+
+## 2026.10.12 - The loss in full, the 040a project, the sum's wrong sign, and Bliss composition
+
+The W&B logging was rewritten (commit 13ff6732a) because a running run could not be
+read as training: the trainer logged every curve under fold- and seed-prefixed keys
+(`fold0_seed0/total_loss`), and the shared `curve/` keys the view's panels draw existed
+only after `wandb_view.py` re-logged a FINISHED run. From round 9 on:
+
+- every (fold, seed) trajectory is its own W&B run, named `<config>_seed<s>`, grouped by
+  arm at init, in a project of its own, `torchcell_040a-inhibitor-synergy-cell`, so the
+  cell-readout program is not mixed with the 147 gene-head runs of rounds 1 to 8;
+- the keys are the same on every run and read against the epoch: `train_loss/total`
+  with its terms `train_loss/vanacloig`, `train_loss/<auxiliary source>`,
+  `train_loss/host`, `train_loss/graph_penalty`; `val_loss/total` with
+  `val_loss/vanacloig` (the fold's four validation compounds) and `val_loss/host` (the
+  ex21 cells the fold does not fit; absent when all are fitted); `test_loss/vanacloig`
+  (six test compounds), `test_loss/<auxiliary source>` (its held-out conditions),
+  `test_loss/host_ex23` (the 63 combinations, the private test);
+  `score/val_centered_spearman`, `score/test_centered_spearman`, `opt/*`, `sys/*`;
+- each seed run's summary carries its own scores, and the fold ensemble and the mean
+  over folds are written back to the seed runs under `ensemble/` and
+  `mean_over_folds/` (the public API's `summary.update`, not `run.update()`, which
+  pushed a stale copy and dropped a key on the smoke);
+- the history CSV carries the same keys; `mixture_data.read_history` maps the round 1
+  to 8 columns onto them, so `r3_convergence.py` and `r3_readout.py` read both.
+
+The saved view for the project, loss first:
+https://wandb.ai/zhao-group/torchcell_040a-inhibitor-synergy-cell?nw=dpr4810ts7s
+
+Two things broke on the way. The Vanacloig dev store was rebuilt by another session at
+19:18 (the seven-loader landing 54aef3e7f, which serves QUADRIS with the typed
+`inchikey` gap), and job 4494, the first sum arm, failed on its second fold's
+`build_context` with that gap; `VanacloigDose.inchikey` is now `str | None` and the
+record, a percent dose, is dropped as before (37 of 45 conditions carry a molar dose,
+unchanged). And the card B head sat behind the node's memory (7 GB free against a 12 GB
+request) until its request was lowered to 7 GB, under the 5.2 GB the two-source arm
+peaks at.
+
+The sum's one finished fold (4494, van cell sum, fold 0) answers the pooling question
+with the wrong sign: fitness at one, two and three inhibitors 0.744 / 0.782 / 0.863
+(mean pooling 0.644 / 0.623 / 0.621 on the same fold), growth AUROC 0.302, Spearman
+-0.312 against the observed fitness. A summed token is outside anything the head is
+trained on, since no single-source record carries two compounds, and the head reads
+"more medium" as fitter. The mean's flatness and the sum's inversion are the same fact
+from two sides: the composition has to be made of readings the head is trained on.
+
+`compound_pool: bliss` (commit 4e3cc2d23) does that. A k-compound medium is split into
+k single-compound media before the medium transformer, each is read through the shared
+head as the single-agent medium it is, and the readings are composed AFTER the head:
+the host's fitness as the product of its single-agent fitness (Bliss independence, with
+the uninhibited anchor at 1), a source's standardized log-ratio response as the sum.
+No multi-compound token reaches the head and the composition has no free parameter;
+the CPU check holds a single-compound medium identical under mean and Bliss, the host's
+three-compound reading equal to the product of its three singles, and a source's
+two-compound reading equal to the sum of its singles plus the gene bias once. What the
+model can then contribute beyond the Bliss rule on measured singles is its own
+single-agent predictions (for a compound or dose the titration did not measure), and
+the three-source arm, where Hillenmeyer's 26 heterozygous pairs are two-compound
+records, fits the additive composition on real pairs.
+
+Round 9 as it runs (the sum arms other than the single-source record replaced by
+Bliss):
+
+| arm | GilaHyper | Delta |
+|---|---|---|
+| van cell sum (the three-fold record of the sum) | 4589, running since 23:22 | 22862421 |
+| Bliss smoke (`r9b_smoke.yaml`: FiLM; van + Hillenmeyer HET for the pairs) | 4608 after 4589 | |
+| van cell bliss | 4609 | 22862611 |
+| van cell anchors bliss (zero-shot) | 4610 | 22862612 |
+| van cell bliss with dose FiLM | 4611 | 22862613 |
+| van + Hoepfner + Hillenmeyer cell bliss | 4612 | 22862614 |
+| van cell host weight 0.1 | 4592 | 22862424 |
+| van cell seeds 3 to 5, folds 0 to 4 | 4594, 4595 | 22862426, 22862427 |
+| card B: two-source auxiliary weight 3, then the round-7 seed twins | 4596, 4597 to 4603 | r7 and r8 requeued, 22862402 to 22862420 |
+
+Delta holds 27 jobs for 040, every one requeued on the new trainer (the old 26 were
+cancelled; nothing had started). Both GilaHyper cards carry the cell readout.
+
+Is there synergy in the model. Not yet, and the sheet now says so with the cell readout
+as the model: `figure_gate_panels.py` draws `r7_van_e150_cell` as the fitted model and
+`r8_van_e150_cell_anchors` as its zero-shot twin, and the rebuilt gate reads growth
+AUROC 0.535 over the 63 combinations against Bliss 0.872 and Loewe 0.958, fitness
+Spearman 0.316 over the combinations that grew against Bliss 0.573, the same fitness at
+one, two and three inhibitors, and a model front at the isobole grids' edge on every
+run. Hypothesis (untested until 4609 reads): under Bliss composition the model's front
+falls between the measured-singles Bliss front and the observed cells, and the sheet's
+bottom row carries a model front for the first time; whether it beats Bliss on measured
+singles is then the question of the single-agent predictions, not of composition.

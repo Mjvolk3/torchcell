@@ -131,7 +131,7 @@ def bars(ax: Axes, xs: list[float], groups: list[np.ndarray], colors: list[str],
 
 def not_run(ax: Axes, x: float, y: float, text: str, color: str) -> None:
     ax.scatter([x], [y], s=12, marker="x", color=color, linewidth=0.6, zorder=4)
-    ax.annotate(text, (x, y), xytext=(0, 7), textcoords="offset points", ha="center", va="bottom", fontsize=5, color=color)
+    ax.annotate(text, (x, y), xytext=(0, 7), textcoords="offset points", ha="center", va="bottom", fontsize=5, color="black")
 
 
 def stars(p: float | None) -> str:
@@ -160,14 +160,15 @@ def letters_status(fig: Figure, axes: list[Axes], statuses: list[str]) -> None:
         box = ax.get_tightbbox(renderer)
         same = [tops[id(o)] for o in axes if abs(tops[id(o)] - tops[id(ax)]) < near]
         x0, y1 = inv.transform((box.x0, max(same)))
+        x0 = max(x0, 0.004)
         y = y1 + 0.004
         fig.text(x0, y, ch, fontsize=8, fontweight="bold", ha="left", va="bottom")
         fig.text(x0 + 0.013, y + 0.001, CROSS[0], fontsize=5, color=CROSS[1], ha="left", va="bottom", family="DejaVu Sans")
         fig.text(x0 + 0.022, y + 0.001, STATUS_SYMBOL[status], fontsize=5, color=LIGHT, ha="left", va="bottom", family="DejaVu Sans")
 
 
-def keys(fig: Figure) -> None:
-    """Color key and status key across the foot of the sheet."""
+def keys(fig: Figure, y_key: float) -> None:
+    """Color key between rows 1 and 2, beside the panels that use it; status key at the foot."""
     handles = [
         Patch(facecolor=GRAY, edgecolor="black", linewidth=0.4, label="no graphs, or a no-interaction null"),
         Patch(facecolor=RED, edgecolor="black", linewidth=0.4, label="cell graph transformer, soft prior"),
@@ -176,17 +177,17 @@ def keys(fig: Figure) -> None:
         Patch(facecolor=BLUE, edgecolor="black", linewidth=0.4, label="learned null (MLP)"),
         Patch(facecolor=YELLOW, edgecolor="black", linewidth=0.4, label="other arm"),
     ]
-    fig.legend(handles=handles, loc="lower center", bbox_to_anchor=(0.5, 0.012), ncol=6, frameon=False, fontsize=5, handlelength=1.2, handletextpad=0.4, columnspacing=1.2)
+    fig.legend(handles=handles, loc="center", bbox_to_anchor=(0.52, y_key), ncol=6, frameon=False, fontsize=5, handlelength=1.2, handletextpad=0.4, columnspacing=1.2, borderpad=0)
     x = 0.03
-    fig.text(x, 0.002, "section status", fontsize=5, color=LIGHT, ha="left", va="bottom", style="italic")
-    fig.text(x + 0.075, 0.002, CROSS[0], fontsize=5, color=CROSS[1], ha="left", va="bottom", family="DejaVu Sans")
-    fig.text(x + 0.087, 0.002, "not reviewed, none approved", fontsize=5, color=LIGHT, ha="left", va="bottom")
+    fig.text(x, 0.004, "section status", fontsize=5, color=LIGHT, ha="left", va="bottom", style="italic")
+    fig.text(x + 0.075, 0.004, CROSS[0], fontsize=5, color=CROSS[1], ha="left", va="bottom", family="DejaVu Sans")
+    fig.text(x + 0.087, 0.004, "not reviewed, none approved", fontsize=5, color=LIGHT, ha="left", va="bottom")
     x = 0.33
-    fig.text(x, 0.002, "figure status", fontsize=5, color=LIGHT, ha="left", va="bottom", style="italic")
+    fig.text(x, 0.004, "figure status", fontsize=5, color=LIGHT, ha="left", va="bottom", style="italic")
     x += 0.07
     for key in ("ready", "partial", "todo"):
-        fig.text(x, 0.002, STATUS_SYMBOL[key], fontsize=5, color=LIGHT, ha="left", va="bottom", family="DejaVu Sans")
-        fig.text(x + 0.012, 0.002, STATUS_WORD[key], fontsize=5, color=LIGHT, ha="left", va="bottom")
+        fig.text(x, 0.004, STATUS_SYMBOL[key], fontsize=5, color=LIGHT, ha="left", va="bottom", family="DejaVu Sans")
+        fig.text(x + 0.012, 0.004, STATUS_WORD[key], fontsize=5, color=LIGHT, ha="left", va="bottom")
         x += 0.065
 
 
@@ -198,6 +199,7 @@ def panel_a(ax: Axes) -> None:
     notes/assets/drawio/Fig2-gene-interactions.explainer.py."""
     img = plt.imread(osp.join(IMG_DIR, "fig2_explainer.png"))
     ax.imshow(img, interpolation="lanczos")
+    ax.set_anchor("NW")
     ax.set_xticks([])
     ax.set_yticks([])
     for sp in ax.spines.values():
@@ -218,9 +220,9 @@ def panel_b(ax: Axes) -> None:
     # The look of the DCell and DANGO figures: a filled box in the series fill, whiskers
     # in the warm companion color, the median as a line, no fliers.
     ax.boxplot(
-        groups, positions=range(len(groups)), widths=0.65, showfliers=False, patch_artist=True,
-        medianprops={"color": RED, "lw": 1.0}, whiskerprops={"color": ORANGE, "lw": 0.6},
-        capprops={"color": ORANGE, "lw": 0.6},
+        groups, positions=range(len(groups)), widths=0.96, showfliers=False, patch_artist=True,
+        medianprops={"color": RED, "lw": 1.0}, whiskerprops={"color": ORANGE, "lw": 0.8, "ls": "-"},
+        capprops={"color": ORANGE, "lw": 0.8},
         boxprops={"facecolor": PLOT_PALETTE_FILL[1], "edgecolor": RED, "lw": 0.6}, zorder=3,
     )
     ax.axhline(0, color="black", lw=0.5, zorder=2)
@@ -266,7 +268,7 @@ def panel_c(ax: Axes) -> None:
 def panel_d(ax: Axes) -> None:
     rnd = pd.read_csv(osp.join(R010, "additive_baseline_gene_interaction.csv"))
     cv = pd.read_csv(osp.join(R010, "query_pair_disjoint_cv.csv"))
-    learners = [("additive ridge", "B1_additive_gene", GRAY), ("additive + pair", "B2_additive_plus_pair", YELLOW), ("gene-embedding MLP", "B5_gene_embedding_mlp", BLUE), ("CGT", "CGT_", RED)]
+    learners = [("ridge", "B1_additive_gene", GRAY), ("ridge + pair", "B2_additive_plus_pair", YELLOW), ("MLP", "B5_gene_embedding_mlp", BLUE), ("CGT", "CGT_", RED)]
     w = 0.19
     for g, group in enumerate(("random", "disjoint")):
         for k, (label, prefix, color) in enumerate(learners):
@@ -418,7 +420,8 @@ def panel_j(ax: Axes, done: pd.DataFrame) -> None:
         if arm == "mask":
             vals = np.array([1.0])
         ax.scatter(x + np.linspace(-0.12, 0.12, len(vals)), vals, s=7, facecolor=color, edgecolor="black", linewidth=0.4, zorder=4)
-    ax.text(len(arms) - 1.45, 1.0, "by construction", ha="right", va="center", fontsize=5, color=RED)
+    ax.annotate("by construction", (len(arms) - 1, 1.0), xytext=(len(arms) - 2.2, 0.72), fontsize=5, ha="right", va="center", color="black",
+                arrowprops={"arrowstyle": "-", "color": "black", "lw": 0.5, "shrinkA": 0, "shrinkB": 3})
     ax.set_xticks(range(len(arms)))
     ax.set_xticklabels(ticks, fontsize=5)
     ax.set_xlabel("log10 λ, the prior's weight")
@@ -491,7 +494,7 @@ def umap_by_cluster(ax: Axes, assign: pd.DataFrame, enr: pd.DataFrame, rep: str,
     for sp in ax.spines.values():
         sp.set_visible(False)
     ax.set_title(title)
-    ax.text(0.0, 0.0, "UMAP of 6,607 genes", transform=ax.transAxes, fontsize=5, color=LIGHT, ha="left", va="bottom")
+    ax.text(0.0, -0.06, "UMAP of 6,607 genes", transform=ax.transAxes, fontsize=5, color=LIGHT, ha="left", va="bottom")
 
 
 def panel_m(ax: Axes, assign: pd.DataFrame, enr: pd.DataFrame, summary: dict[str, Any]) -> None:
@@ -526,7 +529,7 @@ def panel_o(ax: Axes, assign: pd.DataFrame) -> None:
         sp.set_visible(False)
     n_in = int(it.sum())
     ax.set_title("the arc: genes in no training triple")
-    ax.text(0.0, 0.0, f"red: in a training triple, {n_in:,} genes; gray: never, {len(it) - n_in:,}", transform=ax.transAxes, fontsize=5, color=LIGHT, ha="left", va="bottom")
+    ax.text(0.0, -0.06, f"red: in a training triple, {n_in:,}; gray: never, {len(it) - n_in:,}", transform=ax.transAxes, fontsize=5, color=LIGHT, ha="left", va="bottom")
 
 
 def panel_p(ax: Axes, assign: pd.DataFrame, enr: pd.DataFrame, summary: dict[str, Any]) -> None:
@@ -540,9 +543,17 @@ def panel_p(ax: Axes, assign: pd.DataFrame, enr: pd.DataFrame, summary: dict[str
 def main() -> None:
     done, hist, summary = sweep()
     assign, enr, wt = wt_data()
-    fig, axes = plt.subplots(4, 4, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(190)))
-    fig.subplots_adjust(left=0.05, right=0.99, bottom=0.075, top=0.965, wspace=0.34, hspace=0.62)
+    fig, axes = plt.subplots(4, 4, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(200)))
+    fig.subplots_adjust(left=0.055, right=0.99, bottom=0.085, top=0.965, wspace=0.34, hspace=0.62)
     ax = axes.ravel()
+    # Rows 2 to 4 drop by a strip that holds the color key under row 1, beside d, e, f.
+    key_strip = 0.022
+    for a_ in ax[4:]:
+        pos = a_.get_position()
+        a_.set_position([pos.x0, pos.y0 - key_strip, pos.width, pos.height])
+    # Panel o (the term bars) moves right into the room beside p so its labels clear n.
+    pos = ax[14].get_position()
+    ax[14].set_position([pos.x0 + 0.05, pos.y0, pos.width - 0.03, pos.height])
     panel_a(ax[0])
     panel_b(ax[1])
     panel_c(ax[2])
@@ -560,7 +571,8 @@ def main() -> None:
     panel_n(ax[14], enr)
     panel_p(ax[15], assign, enr, wt)
     letters_status(fig, list(ax), ["ready"] * 16)
-    keys(fig)
+    y_key = (ax[0].get_position().y0 + ax[4].get_position().y1) / 2 - 0.004
+    keys(fig, y_key)
     os.makedirs(IMG_DIR, exist_ok=True)
     stem = osp.join(IMG_DIR, "fig2_gene_interactions")
     savefig_true_size_svg(fig, stem + ".svg")

@@ -196,7 +196,9 @@ def test_environment_kanamycin_only_for_deletion_strains() -> None:
 class _Genome:
     def resolve_gene_name(self, name: str) -> Any:
         if name not in LOCI:
-            return SimpleNamespace(status=SimpleNamespace(value="retired"))
+            return SimpleNamespace(
+                status=SimpleNamespace(value="retired"), systematic_name=name
+            )
         return SimpleNamespace(
             status=SimpleNamespace(value="renamed"), systematic_name=LOCI[name]
         )

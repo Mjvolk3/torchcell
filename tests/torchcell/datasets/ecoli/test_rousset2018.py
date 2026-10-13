@@ -238,10 +238,14 @@ def test_a_growth_record_names_s1_as_its_identifier_source() -> None:
         identifier_kind=r.GROWTH_IDENTIFIER_KIND,
     )
     (perturbation,) = r.genotype(stored).perturbations
+    assert isinstance(perturbation, BacterialReleasedCrisprPerturbation)
     assert perturbation.identifier_kind == r.GROWTH_IDENTIFIER_KIND
     assert "S1" in r.GROWTH_IDENTIFIER_KIND
-    default = r.StoredGuide(spacer="A" * 20, reported_symbol="thrL")
-    assert r.genotype(default).perturbations[0].identifier_kind == r.IDENTIFIER_KIND
+    (default,) = r.genotype(
+        r.StoredGuide(spacer="A" * 20, reported_symbol="thrL")
+    ).perturbations
+    assert isinstance(default, BacterialReleasedCrisprPerturbation)
+    assert default.identifier_kind == r.IDENTIFIER_KIND
 
 
 def test_the_synthetic_build_stores_no_cui_screen_id(

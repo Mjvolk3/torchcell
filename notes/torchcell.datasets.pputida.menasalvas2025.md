@@ -844,3 +844,97 @@ older closure. Measured 2026-10-09 by running
 The owner's ruling on #915: `source_organism` on the five integrated pIY670 parts (`mvaS`, `mvaE`, `MKmm`, `PMDHKQ`, `aphA`) is a typed `ProvenanceGap`, never a sentinel string, and a part token is mapped to an organism only where Supplementary Data 2 Sheet 4 states it. The schema change that allows it (`HeterologousPathwayPerturbation.source_organism` becomes value-or-gap, still required) is recorded in `database/schema_changes/2026-10-12-released-z-score-and-pathway-organism-gap.json`.
 
 Sheet 4 states no token. Its `Protein` column (the README's "Tertiary Protein.ID from UniPROT") reads `Mvas`, `Mvae`, `Mvk`, `Mvd1` and `Apha` for the five mevalonate-pathway UniProt entries; none of them equals a pIY670 token verbatim, so no part is mapped (measured 2026-10-12 on the deposited Dryad workbook). `Mvas`, `Mvae` and `Apha` equal `mvaS`, `mvaE` and `aphA` after case folding; whether that counts as the sheet stating them is an owner question, and it is not acted on. Each part stores `source_organism=None` with a `not_reported_by_primary` gap whose `looked_in` is the SI OCR (Supplementary Tables 4 and 5) and whose note names Sheet 4. The integrated mCherry biosensor copies carry the same kind of gap. Nothing is refused: the 58 `IsoprenolSelectionMenasalvas2025Dataset` records keep every perturbation.
+
+## 2026.10.12 - Rebuilt stores and their L0-L4 tables (slurm 4475, PR #1072)
+
+Built with `build_dataset_lmdb --retire-existing --verify` in slurm array 4475 at commit `00e419661`; counts and tables from `experiments/036-dataset-fixes-before-kg-build/scripts/bacteria_released_columns_store_report.py` (`results/bacteria_released_columns_store_report.json`). A `report` row is a genome-reference finding, reported and never gated.
+
+| store | records before | records after |
+|---|---|---|
+| `IsoprenolSelectionMenasalvas2025Dataset` | 58 | 58 |
+| `ProteomeMenasalvas2025Dataset` | 6 | 6 |
+| `MetaboliteGrowthPhaseMenasalvas2025Dataset` | 3 | 3 |
+| `MetaboliteProductionPhaseMenasalvas2025Dataset` | 3 | 3 |
+
+### IsoprenolSelectionMenasalvas2025Dataset
+
+| level | rule | kind | verdict | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | pass | 58 records validated |
+| L1 | `canonical_gene_names` | report | pass | 60 systematic names, one canonical spelling each, each current in the genome |
+| L1 | `count` | gate | pass | observed 58, expected 58 |
+| L1 | `pair_uniqueness` | gate | pass | 58 unique (study, strain, condition) records, one each |
+| L1 | `provenance_gaps` | gate | pass | 522 documented provenance gaps over 58/58 records; 0 deferred field(s): []; 3712 undeclared None values over 25 carrier fields (top: Compound.inchi x696, HeterologousPathwayPerturbation.identifier_mapping x348, Heterolog |
+| L1 | `stored_targets_are_loci_of_the_pinned_assembly` | report | pass | SUPPLEMENTARY: 60 stored knockdown targets; 0 do not resolve to themselves |
+| L2 | `interval_orientation` | gate | pass | 0 of 0 stored intervals do not bracket their value, as declared |
+| L2 | `se_nonnegative` | gate | pass | 0 values checked |
+| L2 | `uncertainty_sanity` | gate | pass | 0 labeled uncertainties, none a zero dispersion; 58 records report n_samples >= 2 with no uncertainty |
+| L2 | `value_fidelity` | gate | pass | 0 values checked |
+| L3 | `assembly_pin_is_kt2440_genbank_with_no_asserted_background` | report | pass | SUPPLEMENTARY: 1 distinct assembly pin(s): [('pputida_KT2440_ASM756v2', 'GCA_000007565.2', 'None')] |
+| L3 | `compound_identity` | gate | pass | environment edits: 116 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `environment_perturbed` | gate | pass | all 58 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=None, media='NREL M9 + 30 mM MOPS + 2% glucose (70 mM ammonium sulfate + 1X Teknova T1001; Mena |
+| L3 | `every_genotype_carries_the_stated_host_background` | gate | pass | SUPPLEMENTARY: 58 genotypes checked against ['MKmm', 'PMDHKQ', 'PP_1815', 'TERTU_1389', 'aphA', 'mvaE', 'mvaS']; 0 incomplete |
+| L3 | `measurement_type_consistent` | gate | pass | single measurement_type: 'categorical' |
+| L3 | `media_compound_identity` | gate | pass | medium components: 464 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | gate | pass | 58 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (1 distinct media) |
+| L3 | `reference_zero` | gate | pass | categorical rule: all 58 references carry the baseline category 'no_change', which no experiment record reports |
+| L4 | `current_genome_genes` | report | pass | every one of the 60 measured systematic names is a gene of the current genome |
+| L4 | `gene_containment_sgd` | report | pass | 1.000 of 60 measured genes are reference genes (>= 0.9) |
+
+### ProteomeMenasalvas2025Dataset
+
+| level | rule | kind | verdict | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | pass | 6 records validated |
+| L1 | `count` | gate | pass | observed 6, expected 6 |
+| L1 | `one_record_per_strain_and_growth_phase` | gate | pass | 6 (strain, phase) keys over 6 records; 0 repeated, 0 missing |
+| L1 | `orf_uniqueness` | gate | pass | 89 ORFs, 89 with multiple strains (expected) |
+| L2 | `se_nonnegative` | gate | pass | 12540 values checked |
+| L2 | `value_fidelity` | gate | pass | 12540 values checked |
+| L3 | `called_variants_attach_only_to_the_identically_named_clone` | gate | pass | TEAM-2595 records carry [75] called variants (expected 75); 0 other strain(s) carry any |
+| L3 | `every_record_measures_the_same_kt2440_locus_set` | gate | pass | 1 distinct key set(s) over 6 records, 2090 loci, 0 of them not a PP_ tag |
+| L3 | `measurement_type_consistent` | gate | pass | single measurement_type: 'dia_protein_counts_sum_mean' |
+| L3 | `one_coordinate_per_call` | gate | pass | 150 stored calls carry the release's single coordinate; 0 do not. data S1-5 releases ONE coordinate per call ('position') and no end coordinate, so position_end repeats position_start for every call and the released span |
+| L3 | `reference_finite` | gate | pass | reference abundance finite + key-matched for all 12540 values |
+| L4 | `pp_2088_production_fold_is_supplementary_note_2s` | gate | pass | PP_2088 production-phase fold over TEAM-2595: stored {'TEAM-3174': 18.555, 'TEAM-3185': 31.895}, Note 2 states {'TEAM-3185': 34.0, 'TEAM-3174': 20.0} (relative tolerance 0.1) |
+| L4 | `protein_and_perturbed_locus_containment_assembly` | report | pass | 1.000 of 2137 measured genes are loci of pputida_KT2440_ASM756v2 (>= 1.0) |
+| L4 | `stored_deletion_sets_are_supplementary_table_4s` | gate | pass | 6 records checked against Supplementary Table 4's strain rows; 0 disagree |
+| L4 | `supplementary_note_2_loci_are_measured_in_every_record` | gate | pass | 10 loci Supplementary Note 2 names as measured; 0 of 6 records miss any |
+
+### MetaboliteGrowthPhaseMenasalvas2025Dataset
+
+| level | rule | kind | verdict | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | pass | 3 records validated |
+| L1 | `count` | gate | pass | observed 3, expected 3 |
+| L1 | `genotype_uniqueness` | gate | pass | 3 unique strains (deletion sets), one record each |
+| L1 | `one_record_per_released_strain` | gate | pass | 3 strains over 3 records; 0 repeated, 0 missing |
+| L2 | `se_nonnegative` | gate | pass | 0 values checked |
+| L2 | `value_fidelity` | gate | pass | 138 values checked |
+| L3 | `called_variants_attach_only_to_the_identically_named_clone` | gate | pass | TEAM-2595 records carry [75] called variants (expected 75); 0 other strain(s) carry any |
+| L3 | `every_stored_metabolite_is_an_absolute_row` | gate | pass | 46 stored metabolites over 48 Absolute rows; 0 not released, 0 from the 10 Relative rows |
+| L3 | `measurement_type_consistent` | gate | pass | single measurement_type: 'lc_ms_intracellular_concentration_uM' |
+| L3 | `one_coordinate_per_call` | gate | pass | 75 stored calls carry the release's single coordinate; 0 do not. data S1-5 releases ONE coordinate per call ('position') and no end coordinate, so position_end repeats position_start for every call and the released span  |
+| L3 | `reference_finite` | gate | pass | reference level finite + key-subset for all 138 values |
+| L4 | `perturbed_gene_containment_assembly` | report | pass | 1.000 of 73 measured genes are loci of pputida_KT2440_ASM756v2 (>= 1.0) |
+| L4 | `results_prose_amino_acids_are_not_in_data_s1_1` | gate | pass | the Results cite data S1-1 for ['leucine', 'phenylalanine', 'tryptophan']; 0 of the three are stored, measured 0 on 2026-10-09 |
+| L4 | `specific_block_recovers_one_harvest_od600_per_strain` | gate | pass | 3 records against the released Specific block; recovered OD600 {'TEAM-2595': 2.4, 'TEAM-3174': 1.2, 'TEAM-3185': 2.7}, 0 finding(s) |
+
+### MetaboliteProductionPhaseMenasalvas2025Dataset
+
+| level | rule | kind | verdict | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | pass | 3 records validated |
+| L1 | `count` | gate | pass | observed 3, expected 3 |
+| L1 | `genotype_uniqueness` | gate | pass | 3 unique strains (deletion sets), one record each |
+| L1 | `one_record_per_released_strain` | gate | pass | 3 strains over 3 records; 0 repeated, 0 missing |
+| L2 | `se_nonnegative` | gate | pass | 0 values checked |
+| L2 | `value_fidelity` | gate | pass | 139 values checked |
+| L3 | `called_variants_attach_only_to_the_identically_named_clone` | gate | pass | TEAM-2595 records carry [75] called variants (expected 75); 0 other strain(s) carry any |
+| L3 | `every_stored_metabolite_is_an_absolute_row` | gate | pass | 48 stored metabolites over 48 Absolute rows; 0 not released, 0 from the 10 Relative rows |
+| L3 | `measurement_type_consistent` | gate | pass | single measurement_type: 'lc_ms_intracellular_concentration_uM' |
+| L3 | `one_coordinate_per_call` | gate | pass | 75 stored calls carry the release's single coordinate; 0 do not. data S1-5 releases ONE coordinate per call ('position') and no end coordinate, so position_end repeats position_start for every call and the released span  |
+| L3 | `reference_finite` | gate | pass | reference level finite + key-subset for all 137 values |
+| L4 | `perturbed_gene_containment_assembly` | report | pass | 1.000 of 73 measured genes are loci of pputida_KT2440_ASM756v2 (>= 1.0) |
+| L4 | `results_prose_amino_acids_are_not_in_data_s1_1` | gate | pass | the Results cite data S1-1 for ['leucine', 'phenylalanine', 'tryptophan']; 0 of the three are stored, measured 0 on 2026-10-09 |
+| L4 | `specific_block_recovers_one_harvest_od600_per_strain` | gate | pass | 3 records against the released Specific block; recovered OD600 {'TEAM-2595': 15.511, 'TEAM-3174': 12.9202, 'TEAM-3185': 13.9954}, 0 finding(s) |

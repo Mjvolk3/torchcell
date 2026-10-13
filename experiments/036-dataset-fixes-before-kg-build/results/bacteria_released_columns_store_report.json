@@ -1,0 +1,110 @@
+{
+  "CrispriGuideFitnessWang2018Dataset": {
+    "before": 240481,
+    "after": 240481,
+    "store": "/scratch/projects/torchcell-scratch/data/torchcell/crispri_guide_fitness_wang2018/processed",
+    "gate_rules": 16,
+    "gate_failures": [],
+    "reported_findings": []
+  },
+  "CrispriGeneFitnessWang2018Dataset": {
+    "before": null,
+    "after": 20158,
+    "store": "/scratch/projects/torchcell-scratch/data/torchcell/crispri_gene_fitness_wang2018/processed",
+    "gate_rules": 14,
+    "gate_failures": [],
+    "reported_findings": [
+      "current_genome_genes"
+    ]
+  },
+  "CrispriScreenRousset2018Dataset": {
+    "before": 68436,
+    "after": 91645,
+    "store": "/scratch/projects/torchcell-scratch/data/torchcell/ecoli_crispri_rousset2018/processed.superseded.20261012-211227",
+    "gate_rules": 16,
+    "gate_failures": [],
+    "reported_findings": []
+  },
+  "ProteomeBrunk2016Dataset": {
+    "before": 81,
+    "after": 81,
+    "store": "/scratch/projects/torchcell-scratch/data/torchcell/proteome_brunk2016/processed",
+    "gate_rules": 12,
+    "gate_failures": [],
+    "reported_findings": [
+      "protein_and_perturbed_locus_containment_assembly"
+    ]
+  },
+  "MetabolomeBrunk2016Dataset": {
+    "before": 117,
+    "after": 117,
+    "store": "/scratch/projects/torchcell-scratch/data/torchcell/metabolome_brunk2016/processed",
+    "gate_rules": 11,
+    "gate_failures": [],
+    "reported_findings": []
+  },
+  "ExometaboliteBrunk2016Dataset": {
+    "before": 126,
+    "after": 126,
+    "store": "/scratch/projects/torchcell-scratch/data/torchcell/exometabolite_brunk2016/processed",
+    "gate_rules": 11,
+    "gate_failures": [],
+    "reported_findings": []
+  },
+  "BiofuelTiterBrunk2016Dataset": {
+    "before": 72,
+    "after": 72,
+    "store": "/scratch/projects/torchcell-scratch/data/torchcell/biofuel_titer_brunk2016/processed",
+    "gate_rules": 9,
+    "gate_failures": [],
+    "reported_findings": []
+  },
+  "IsoprenolSelectionMenasalvas2025Dataset": {
+    "before": 58,
+    "after": 58,
+    "store": "/scratch/projects/torchcell-scratch/data/torchcell/isoprenol_selection_menasalvas2025/processed",
+    "gate_rules": 15,
+    "gate_failures": [],
+    "reported_findings": []
+  },
+  "ProteomeMenasalvas2025Dataset": {
+    "before": 6,
+    "after": 6,
+    "store": "/scratch/projects/torchcell-scratch/data/torchcell/proteome_menasalvas2025/processed",
+    "gate_rules": 14,
+    "gate_failures": [],
+    "reported_findings": []
+  },
+  "MetaboliteGrowthPhaseMenasalvas2025Dataset": {
+    "before": 3,
+    "after": 3,
+    "store": "/scratch/projects/torchcell-scratch/data/torchcell/metabolite_growth_menasalvas2025/processed",
+    "gate_rules": 13,
+    "gate_failures": [],
+    "reported_findings": []
+  },
+  "MetaboliteProductionPhaseMenasalvas2025Dataset": {
+    "before": 3,
+    "after": 3,
+    "store": "/scratch/projects/torchcell-scratch/data/torchcell/metabolite_production_menasalvas2025/processed",
+    "gate_rules": 13,
+    "gate_failures": [],
+    "reported_findings": []
+  },
+  "IsopentenolTiterFoo2014Dataset": {
+    "before": 9,
+    "after": 9,
+    "store": "/scratch/projects/torchcell-scratch/data/torchcell/isopentenol_titer_foo2014/processed",
+    "gate_rules": 10,
+    "gate_failures": [],
+    "reported_findings": []
+  },
+  "ProteinFoldChangeCaglar2017Dataset": {
+    "before": 8,
+    "after": 8,
+    "store": "/scratch/projects/torchcell-scratch/data/torchcell/protein_fold_change_caglar2017/processed",
+    "gate_rules": 71,
+    "gate_failures": [],
+    "reported_findings": []
+  }
+}

@@ -609,3 +609,37 @@ The correction is sourced through the paper's deferral. Rousset: "computed the l
 The growth screen's culture and host come from the stated deferral to Cui 2018 (LB, 1 nM aTc, 37 C; Cui's Supplementary Table 7 record of LC-E75), and the 17 generations and triplicate are Rousset's own sentence. The two drop rules that compared S1 with Cui's released table are gone and Cui's table is no longer read. What they measured stays as a finding (#878): 54,326 shared spacers, maximum absolute difference 0.0066 against Cui's `fit75`, 426 bit-identical, so S1 is Rousset's own DESeq2 run of the same reads. Both releases are now stored, each under its own publication and screen id, and which to use is a modeling-time decision.
 
 S1 symbols are reconciled on their own. Reconciling them together with the phage library's would create new collisions and remove 9 records per phage screen that are stored today; the 3,667 symbols both name resolve identically. The genome-ground symbol rules (163 S1 rows, 444 phage cells; #1045 row 27) are untouched here, and the adapter conf now enables `environment perturbation` for the growth screen's aTc beside `phage perturbation`.
+
+## 2026.10.12 - Rebuilt stores and their L0-L4 tables (slurm 4475, PR #1072)
+
+Built with `build_dataset_lmdb --retire-existing --verify` in slurm array 4475 at commit `00e419661`; counts and tables from `experiments/036-dataset-fixes-before-kg-build/scripts/bacteria_released_columns_store_report.py` (`results/bacteria_released_columns_store_report.json`). A `report` row is a genome-reference finding, reported and never gated.
+
+| store | records before | records after |
+|---|---|---|
+| `CrispriScreenRousset2018Dataset` | 68,436 | 91,645 |
+
+### CrispriScreenRousset2018Dataset
+
+| level | rule | kind | verdict | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | pass | 91645 records validated |
+| L1 | `canonical_gene_names` | report | pass | 3900 systematic names, one canonical spelling each, each current in the genome; 47 common names the resolver cannot place; 47 are pseudogene loci the genome resolves to themselves |
+| L1 | `count` | gate | pass | observed 91645, expected 91645 |
+| L1 | `pair_uniqueness` | gate | pass | 91645 unique (study, strain, condition) records, one each |
+| L1 | `provenance_gaps` | gate | pass | 228517 documented provenance gaps over 91645/91645 records; 0 deferred field(s): []; 2953467 undeclared None values over 27 carrier fields (top: Compound.inchi x503452, Compound.chebi_id x343371, Compound.pubchem_cid x18 |
+| L1 | `screen_census` | gate | pass | SUPPLEMENTARY: 5 screens, census {'growth_LC-E75': 23209, 'phage_lambda': 17109, 'phage_T4': 17109, 'phage_186cIts': 17109, 'lambda_transduction': 17109} |
+| L2 | `interval_orientation` | gate | pass | 0 of 0 stored intervals do not bracket their value, as declared |
+| L2 | `released_test_where_released` | gate | pass | SUPPLEMENTARY: 23209 of 91645 records carry S1 Table's padj (benjamini_hochberg); the rest carry no test, as released |
+| L2 | `se_nonnegative` | gate | pass | 0 values checked |
+| L2 | `uncertainty_sanity` | gate | pass | 0 labeled uncertainties, none a zero dispersion; 91645 records report n_samples >= 2 with no uncertainty |
+| L2 | `value_fidelity` | gate | pass | 91645 values checked |
+| L3 | `compound_identity` | gate | pass | environment edits: 23209 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `environment_perturbed` | gate | pass | all 91645 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=37.0, media='LB with 1 uM aTc, 0.2% maltose and 5 mM CaCl2, formulation not stated (Rousset  |
+| L3 | `measurement_type_consistent` | gate | pass | single measurement_type: 'log2_ratio' |
+| L3 | `media_compound_identity` | gate | pass | medium components: 296953 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | gate | pass | 23209 records on a shared MEDIA_LIBRARY medium, 68436 on a medium deriving from one (2 distinct media) |
+| L3 | `reference_zero` | gate | pass | numeric rule: reference response == 0 for all 91645 records |
+| L4 | `current_genome_genes` | report | pass | every one of the 3900 measured systematic names is a gene of the current genome |
+| L4 | `gene_containment_sgd` | report | pass | 1.000 of 3900 measured genes are reference genes (>= 0.9) |
+
+The store above is slurm 4475 task 3's build (91,645 records, gene set 3,900, `processed.superseded.20261012-211227`). The shared dev store was rebuilt at 02:13 UTC on 2026-10-13 by `fix/genome-gate-reversals-ecoli-2` (#1082, commit `953b2d60f`), which does not yet carry this change, so the live dev store reads 68,880 until the two land together.

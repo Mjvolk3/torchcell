@@ -985,3 +985,90 @@ proteome 105 records (1 L0, 3 L1, 3 L2, 60 L3, 1 L4).
 The owner's ruling on #914: all 8 `ProteinFoldChangeCaglar2017Dataset` records (33,268 protein fold changes) stay, each citing this paper. Context for a reader, not a record field and not a reason to refuse: every kept record's base group mixes Caglar's samples with Houser 2015's glucose time course (15 of 20 samples in the exponential phase, 6 of 11 in the stationary phase), because the base group is the phase's reference condition that Houser's time course shares; every test group is Caglar's alone. The per-group attribution is measured in `preprocess/fold_change_records.json` (`houser2015_test_samples`, `houser2015_base_samples`). No loader logic changed; the class docstring records the decision.
 
 The other Table S8 groups stay refused under their own rules (16 groups: the doubling-time control model and the pooled-dose `highMg` and `highNa` levels), and the 100,704-row gene-level arm has no carrier; these are #1045 row 29 and are not part of #914.
+
+## 2026.10.12 - Rebuilt stores and their L0-L4 tables (slurm 4475, PR #1072)
+
+Built with `build_dataset_lmdb --retire-existing --verify` in slurm array 4475 at commit `00e419661`; counts and tables from `experiments/036-dataset-fixes-before-kg-build/scripts/bacteria_released_columns_store_report.py` (`results/bacteria_released_columns_store_report.json`). A `report` row is a genome-reference finding, reported and never gated.
+
+| store | records before | records after |
+|---|---|---|
+| `ProteinFoldChangeCaglar2017Dataset` | 8 | 8 |
+
+### ProteinFoldChangeCaglar2017Dataset
+
+| level | rule | kind | verdict | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | pass | 8 records validated |
+| L1 | `contrast_environment_uniqueness` | gate | pass | 8 distinct (environment, reference environment) pairs over 8 records |
+| L1 | `contrast_uniqueness` | gate | pass | 8 distinct contrasts, one record each |
+| L1 | `count` | gate | pass | observed 8, expected 8 |
+| L1 | `sample_uniqueness` | gate | pass | 8 distinct protein_fold_change profiles over 8 records |
+| L2 | `adjusted_p_values_are_probabilities` | gate | pass | 21892 of 21892 adjusted p-values lie in (0, 1] |
+| L2 | `fold_change_se_nonnegative` | gate | pass | 33268 values checked |
+| L2 | `p_values_are_probabilities` | gate | pass | all 33264 p-values lie in (0, 1] |
+| L2 | `statistic_keys_are_nested` | gate | pass | 0 statistic maps key a protein the record carries no fold change for |
+| L2 | `value_fidelity` | gate | pass | 33268 values checked |
+| L3 | `assembly_pin` | report | pass | assembly pins [('ecoli_B_REL606_ASM1798v1', 'GCA_000017985.1')] |
+| L3 | `fold_change_scale_consistent` | gate | pass | single fold_change_scale: 'log2' |
+| L3 | `measurement_type_consistent` | gate | pass | single measurement_type: 'deseq2_wald_log2_fold_change_design_batch_plus_condition' |
+| L3 | `p_value_adjustment_back_solve` | gate | pass | benjamini_hochberg reproduces padj over 24 groups and 69472 rows to 1.04e-13 |
+| L3 | `p_value_adjustment_method_consistent` | gate | pass | adjustment methods ['benjamini_hochberg'] |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | gate | pass | value backed by verbatim quote in paper.md |
+| L3 | `reference_is_the_scales_neutral_value` | gate | pass | all 33268 reference values are their scale's neutral value and key-matched to the experiment |
+| L4 | `gene_containment_rel606` | report | pass | 4187 of 4187 measured loci are REL606 GenBank gene rows |
+| L4 | `protein_and_perturbed_locus_containment_assembly` | report | pass | 1.000 of 4187 measured genes are loci of ecoli_B_REL606_ASM1798v1 (>= 1.0) |

@@ -209,3 +209,81 @@ Explanatory context, kept here and not on any record:
 Verification: the three released keys are not loci of the pinned assembly, so the protein-abundance family's L4 `protein_and_perturbed_locus_containment_assembly` reports a containment below 1.0. That row is a genome-reference rule, reported and never gated (`GENOME_REFERENCE_RULE_PREFIXES` in `torchcell/verification/report.py`), so the store passes. The synthase genes (GPPS, LS, BIS), measured with an empty Organism cell, now carry a typed `ProvenanceGap` on `source_organism` instead of the string `unreported` (#915).
 
 Still not stored, as before and raised for the owner: the 13 non-host proteins (pathway enzymes and the AmpR, Cam and BSA standards, where `HMGS` and `HMGR` each name two organisms), and the eight `72C` samples.
+
+## 2026.10.12 - Rebuilt stores and their L0-L4 tables (slurm 4475, PR #1072)
+
+Built with `build_dataset_lmdb --retire-existing --verify` in slurm array 4475 at commit `00e419661`; counts and tables from `experiments/036-dataset-fixes-before-kg-build/scripts/bacteria_released_columns_store_report.py` (`results/bacteria_released_columns_store_report.json`). A `report` row is a genome-reference finding, reported and never gated.
+
+| store | records before | records after |
+|---|---|---|
+| `ProteomeBrunk2016Dataset` | 81 | 81 |
+| `MetabolomeBrunk2016Dataset` | 117 | 117 |
+| `ExometaboliteBrunk2016Dataset` | 126 | 126 |
+| `BiofuelTiterBrunk2016Dataset` | 72 | 72 |
+
+### ProteomeBrunk2016Dataset
+
+| level | rule | kind | verdict | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | pass | 81 records validated |
+| L1 | `count` | gate | pass | observed 81, expected 81 |
+| L1 | `one_record_per_strain_hour_sample` | gate | pass | 81 records over 81 strain-hour samples; 0 repeated, 81 expected |
+| L1 | `orf_uniqueness` | gate | pass | 14 ORFs, 14 with multiple strains (expected) |
+| L2 | `se_nonnegative` | gate | pass | 0 values checked |
+| L2 | `value_fidelity` | gate | pass | 5508 values checked |
+| L3 | `duration_hours_is_the_released_sampling_time` | gate | pass | 81 records carry a sampling hour in the released window ('0 to 72 hours post-induction'); 0 do not |
+| L3 | `measurement_type_consistent` | gate | pass | single measurement_type: 'srm_protein_peak_area' |
+| L3 | `reference_finite` | gate | pass | reference abundance finite + key-matched for all 5508 values |
+| L3 | `reference_is_the_same_hour_wild_type_profile` | gate | pass | 81 references share their record's hour and measure a subset of its keys; 0 do not |
+| L4 | `protein_and_perturbed_locus_containment_assembly` | report | FAIL | 0.956 of 68 measured genes are loci of ecoli_K12_MG1655_ASM584v2 (>= 1.0) |
+| L4 | `stored_peak_area_totals_against_the_released_workbook` | gate | pass | 81 overlapping entities agree within 1e-06 |
+| L4 | `the_moved_plasmid_pairs_proteins_are_higher_in_the_repaired_strain` | gate | pass | 9 of the 9 proteins B2 inherited from the OCR's DH1 row are measured; all are higher in B2 than in DH1 (smallest ratio 7.4x), 0 are not |
+
+### MetabolomeBrunk2016Dataset
+
+| level | rule | kind | verdict | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | pass | 117 records validated |
+| L1 | `count` | gate | pass | observed 117, expected 117 |
+| L1 | `genotype_uniqueness` | gate | pass | 117 unique (strain, environment) pairs, one record each |
+| L1 | `one_record_per_strain_hour_sample` | gate | pass | 117 records over 117 strain-hour samples; 0 repeated, 117 expected |
+| L2 | `se_nonnegative` | gate | pass | 0 values checked |
+| L2 | `value_fidelity` | gate | pass | 3820 values checked |
+| L3 | `duration_hours_is_the_released_sampling_time` | gate | pass | 117 records carry a sampling hour in the released window ('0 to 72 hours post-induction'); 0 do not |
+| L3 | `measurement_type_consistent` | gate | pass | single measurement_type: 'lc_ms_concentration_um' |
+| L3 | `reference_finite` | gate | pass | reference level finite + key-subset for all 3815 values |
+| L3 | `reference_is_the_same_hour_wild_type_profile` | gate | pass | 117 references share their record's hour and measure a subset of its keys; 0 do not |
+| L4 | `perturbed_gene_containment_assembly` | report | pass | 1.000 of 4 measured genes are loci of ecoli_K12_MG1655_ASM584v2 (>= 1.0) |
+| L4 | `stored_values_against_the_released_workbook` | gate | pass | 3820 overlapping entities agree within 0.0 |
+
+### ExometaboliteBrunk2016Dataset
+
+| level | rule | kind | verdict | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | pass | 126 records validated |
+| L1 | `count` | gate | pass | observed 126, expected 126 |
+| L1 | `genotype_uniqueness` | gate | pass | 126 unique (strain, environment) pairs, one record each |
+| L1 | `one_record_per_strain_hour_sample` | gate | pass | 126 records over 126 strain-hour samples; 0 repeated, 126 expected |
+| L2 | `se_nonnegative` | gate | pass | 0 values checked |
+| L2 | `value_fidelity` | gate | pass | 756 values checked |
+| L3 | `duration_hours_is_the_released_sampling_time` | gate | pass | 126 records carry a sampling hour in the released window ('0 to 72 hours post-induction'); 0 do not |
+| L3 | `measurement_type_consistent` | gate | pass | single measurement_type: 'hplc_extracellular_concentration_g_per_l' |
+| L3 | `reference_finite` | gate | pass | reference level finite + key-subset for all 756 values |
+| L3 | `reference_is_the_same_hour_wild_type_profile` | gate | pass | 126 references share their record's hour and measure a subset of its keys; 0 do not |
+| L4 | `perturbed_gene_containment_assembly` | report | pass | 1.000 of 4 measured genes are loci of ecoli_K12_MG1655_ASM584v2 (>= 1.0) |
+| L4 | `stored_values_against_the_released_workbook` | gate | pass | 756 overlapping entities agree within 0.0 |
+
+### BiofuelTiterBrunk2016Dataset
+
+| level | rule | kind | verdict | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | pass | 72 records validated |
+| L1 | `count` | gate | pass | observed 72, expected 72 |
+| L1 | `one_record_per_strain_hour_sample` | gate | pass | 72 records over 72 strain-hour samples; 0 repeated, 72 expected |
+| L2 | `value_fidelity` | gate | pass | 72 values checked |
+| L3 | `duration_hours_is_the_released_sampling_time` | gate | pass | 72 records carry a sampling hour in the released window ('0 to 72 hours post-induction'); 0 do not |
+| L3 | `every_uncertainty_is_a_typed_gap_not_a_guess` | gate | pass | the sheet releases one titer per strain-hour and no dispersion and no replicate count, so none is invented |
+| L3 | `isopentenol_is_the_canonical_isoprenol_entity` | gate | pass | resolved through the compound table's '3-methyl-3-buten-1-ol' synonym, so these titers join every other isoprenol record |
+| L3 | `titer_unit_is_the_sheets_own_g_per_l` | gate | pass | the workbook's fuel columns are labelled g/L and the number is stored verbatim, with no unit arithmetic |
+| L4 | `perturbed_gene_containment_assembly` | report | pass | 1.000 of 4 measured genes are loci of ecoli_K12_MG1655_ASM584v2 (>= 1.0) |
+| L4 | `stored_titers_against_the_released_workbook` | gate | pass | 72 overlapping entities agree within 0.0 |

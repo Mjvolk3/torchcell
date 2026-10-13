@@ -490,4 +490,6 @@ Expected stored records after rebuild: 3,649 rows x 45 conditions = 164,205 (ser
 118,662). Check: 118,662 + 40,139 + 748 + 578 + 136 + 3,942 = 164,205, and 164,295 -
 164,205 = 90 not-a-value cells.
 
-L0-L4 after rebuild: (orchestrator fills in after the slurm build)
+### Rebuild (slurm 4443_3, `--retire-existing --verify`)
+
+164,205 records in 124 s on commit `7f67ede3e` (`torchcell_dirty: False`), exactly the measured expectation: 164,295 cells minus the 90 cells of the two all-missing rows; `dropped_records.json` holds 0 dropped records, the two QUADRIS tokens under `compound_identity_gaps` (3,649 records each) and the 90 cells under `not_a_value`. The loader declares no per-dataset verifier; the environment-response family entry runs as slurm 4508 and its L0-L4 table goes in the docs follow-up after the landing.

@@ -133,4 +133,6 @@ The loader no longer consults a genome. `resolve_strains(labels, pool)` matches 
 - **NA cells** (48,923) are not values and stay counted as `not_scored_cells`.
 - **Expected count:** 3,438,421 released z-scores minus 289 minus 2,312 = 3,435,820, the served count; the strain rules removed here held 0 records.
 
-L0-L4 after rebuild: (orchestrator fills in after the slurm build)
+### Rebuild (slurm 4443_5, `--retire-existing --verify`)
+
+Building at the landing (3,438,421 released z-scores, expected 3,435,820 records); the environment-response family entry runs as slurm 4511 after it, and the count and the L0-L4 table go in the docs follow-up after the landing.

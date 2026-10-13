@@ -582,4 +582,6 @@ GEO sample titles of GSE42536 name the deleted genes by lower-case tokens (`dot6
 - **Needs schema:** nothing.
 - `torchcell/scratch/sameith2015_demo.py` no longer builds a genome, since the constructors no longer take one.
 
-L0-L4 after rebuild: (orchestrator fills in after the slurm build)
+### Rebuild (slurm 4443_7 and 4443_8, `--retire-existing --verify`)
+
+`sm_microarray_sameith2015`: 82 records in 83 s; `dm_microarray_sameith2015`: 72 records in 81 s; both on commit `7f67ede3e` (manifests read `torchcell_dirty: True` from a notes-only edit in the worktree during the array). Neither loader declares a per-dataset verifier; the expression family runner (`runners.run_expression`, slurm 4523, queued after the Kemmeren build) writes their `verification_report.json`, and its L0-L4 table goes in the docs follow-up after the landing.

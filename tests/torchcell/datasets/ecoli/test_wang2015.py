@@ -415,10 +415,13 @@ def _identity(token: str = "JW0001") -> m.StrainIdentity:
     )
 
 
-def test_deletion_genotype_stores_the_released_symbol_and_keio_number() -> None:
+def test_deletion_genotype_stores_the_released_symbol_and_label() -> None:
+    """The record holds the symbol and the Table S3 label; the released-strain leaf has
+    no accession slot, so the Keio number is a column of ``table_s3.csv``.
+    """
     (p,) = m.deletion_genotype(_identity("JW0001")).perturbations
     dumped = p.model_dump()
-    assert dumped["construction"]["strain_accession"] == "JW0001"
+    assert "construction" not in dumped
     assert (
         dumped["perturbation_type"],
         dumped["systematic_gene_name"],
@@ -441,7 +444,7 @@ def test_deletion_genotype_stores_the_released_symbol_and_keio_number() -> None:
         "kanamycin cassette flanked by FLP recognition target sites",
     )
     (malformed,) = m.deletion_genotype(_identity("JJW4367")).perturbations
-    assert malformed.model_dump()["construction"]["strain_accession"] == "JJW4367"
+    assert malformed == p
 
 
 def test_build_experiment_and_reference_round_trip() -> None:
@@ -472,6 +475,12 @@ def test_build_four_records_with_the_parent_reference_and_ledgers(
     assert dataset.experiment_class is BacterialEnvironmentResponseExperiment
     assert dataset.reference_class is BacterialEnvironmentResponseExperimentReference
 
+    import pandas as pd
+
+    strains = pd.read_csv(synthetic / "preprocess" / "table_s3.csv").dropna(
+        subset=["record"]
+    )
+    keio_of = dict(zip(strains["record"].astype(int), strains["keio_token"]))
     values = []
     for idx in range(4):
         experiment = dataset[idx]["experiment"]
@@ -479,7 +488,7 @@ def test_build_four_records_with_the_parent_reference_and_ledgers(
         values.append(
             (
                 perturbation["systematic_gene_name"],
-                perturbation["construction"]["strain_accession"],
+                keio_of[idx],
                 experiment["phenotype"]["environment_response"],
             )
         )
@@ -862,13 +871,17 @@ def test_real_build_counts_and_the_acra_record() -> None:
     assert acra["phenotype"]["environment_response"] == pytest.approx(
         math.log2((6.26 / 8.13) / (4.12 / 8.30)), abs=1e-15
     )
+    import pandas as pd
+
+    strains = pd.read_csv(Path(_built_root(), "preprocess", "table_s3.csv")).dropna(
+        subset=["record"]
+    )
     accessions = {
-        gene: r["experiment"]["genotype"]["perturbations"][0]["construction"][
-            "strain_accession"
-        ]
-        for gene, r in by_gene.items()
+        str(label).removeprefix(f"BW{D}"): token
+        for label, token in zip(strains["strain"], strains["keio_token"])
     }
-    # the five Table S2 numbers the release itself contradicts, stored verbatim
+    assert set(accessions) == set(by_gene)
+    # the five Table S2 numbers the release itself contradicts, kept verbatim
     assert {g: accessions[g] for g in ("acrA", "acrB", "emrK", "emrY", "mdtD")} == {
         "acrA": "JW0451",
         "acrB": "JJW0452",

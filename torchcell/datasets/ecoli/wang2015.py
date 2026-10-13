@@ -51,12 +51,15 @@ construction paper. Records pin ``assembly_reference("BW25113")`` and the
 
 IDENTIFIERS, STORED AS RELEASED (owner rule of 2026-10-12: the data is the data, and
 the genome never gates a record). Table S3 labels a strain only by gene name
-(``BWΔacrA``); Table S2 adds a Keio number. The record stores exactly that: the gene
-symbol as ``systematic_gene_name`` and ``perturbed_gene_name``, the whole label as
-``strain_label``, and the Keio number verbatim as ``construction.strain_accession``,
-the malformed ``JJW0452`` included. No annotation is read in the build: the join of a
-symbol to a BW25113 locus is a downstream act over the gene set, and the verifier's
-L4 row reports how many symbols the pinned annotation places without gating on it.
+(``BWΔacrA``); Table S2 adds a Keio number. The record stores the gene symbol as
+``systematic_gene_name`` and ``perturbed_gene_name`` and the whole label as
+``strain_label`` on ``BacterialReleasedStrainPerturbation``. That leaf has no strain
+accession slot (main's schema; adding one is a schema change of its own), so the Keio
+number is kept verbatim beside each record's index in ``preprocess/table_s3.csv``
+(``keio_token``), the malformed ``JJW0452`` included. No annotation is read in the
+build: the join of a symbol to a BW25113 locus is a downstream act over the gene set,
+and the verifier's L4 row reports how many symbols the pinned annotation places without
+gating on it.
 What the release itself contradicts is recorded, not acted on: the paper's own Table
 S4 measured an ``acrB`` transcript in the strain it calls BWΔacrA and an ``acrA``
 transcript in BWΔacrB (``SOURCED_VALUES["identity_evidence_*"]``), so for those two
@@ -138,7 +141,6 @@ from torchcell.datamodels.schema import (
     ReleasedStrainKind,
     SampleUnit,
     SmallMoleculePerturbation,
-    StrainConstruction,
     Temperature,
 )
 from torchcell.datasets.bacteria_common import (
@@ -974,10 +976,10 @@ def strain_identities(
     """Every Table S3 deletion strain, with its Table S2 number and family, verbatim.
 
     Nothing is resolved: the gene symbol of the strain label is the record's identifier,
-    the Table S2 number is stored as the strain's accession exactly as printed (the
-    malformed ``JJW0452`` and the five numbers the paper's own Table S4 contradicts
-    included; ``SOURCED_VALUES["identity_evidence_*"]`` record that evidence), and the
-    join to a BW25113 locus is a downstream act over the gene set.
+    the Table S2 number is kept in the strain table exactly as printed (the malformed
+    ``JJW0452`` and the five numbers the paper's own Table S4 contradicts included;
+    ``SOURCED_VALUES["identity_evidence_*"]`` record that evidence), and the join to a
+    BW25113 locus is a downstream act over the gene set.
     """
     return [
         StrainIdentity(
@@ -1068,7 +1070,9 @@ def environment() -> Environment:
 
 
 def deletion_genotype(identity: StrainIdentity) -> Genotype:
-    """The one Keio deletion, under the gene symbol and Keio number the paper releases."""
+    """The one Keio deletion, under the gene symbol and strain label the paper releases
+    (the Table S2 Keio number is a column of ``preprocess/table_s3.csv``).
+    """
     return Genotype(
         perturbations=[
             BacterialReleasedStrainPerturbation(
@@ -1080,7 +1084,6 @@ def deletion_genotype(identity: StrainIdentity) -> Genotype:
                 released_kind=ReleasedStrainKind.deletion,
                 collection=COLLECTION,
                 cassette=CASSETTE,
-                construction=StrainConstruction(strain_accession=identity.keio_token),
             )
         ]
     )

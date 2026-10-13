@@ -414,7 +414,6 @@ def test_build_experiment_is_one_keio_deletion_under_its_released_jw_id() -> Non
             "released_kind",
             "collection",
             "cassette",
-            "construction",
         )
     } == {
         "systematic_gene_name": "JW0001",
@@ -426,7 +425,6 @@ def test_build_experiment_is_one_keio_deletion_under_its_released_jw_id() -> Non
         "released_kind": "deletion",
         "collection": "KEIO knockout collection",
         "cassette": "kanamycin cassette flanked by FLP recognition target sites",
-        "construction": None,
     }
     assert dumped["phenotype"]["metabolite_level"] == {"neg_0001": 1.5}
     assert dumped["phenotype"]["n_replicates"] == {"neg_0001": 2}

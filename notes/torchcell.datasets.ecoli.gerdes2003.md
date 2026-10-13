@@ -85,8 +85,18 @@ Owner rule of 2026-10-12: the data is the data, and the genome never gates a rec
 | `not_covered_call` (X) 306 and `ambiguous_call` (?) 189 dropped | stored with `is_essential=None`, a typed `ProvenanceGap(field="is_essential", not_reported_by_primary)` carrying the page's own definition, and `released_call` `X` or `?`; E, N and N* rows carry their token in `released_call` too |
 | `identifier_reconciliation.json` written | not written; the Blattner ID of every row stays a column of `calls.csv` beside `identifier_kind` and `systematic_gene_name` |
 
-Count arithmetic: 4,291 rows = 4,208 b-number records + 83 ERGO records (64 + 1 + 18); calls as released, 619 E, 3,114 N, 6 N*, 331 X, 221 ?. Nothing dropped. The released-transposon leaf is group 2's (`feat/schema-bacterial-released-constructs`, PR #1077), cherry-picked onto this branch until it lands.
+Count arithmetic: 4,291 rows = 4,208 b-number records + 83 ERGO records (64 + 1 + 18); calls as released, 619 E, 3,114 N, 6 N*, 331 X, 221 ?. Nothing dropped. The released-transposon leaf is #1077's `BacterialReleasedTransposonPerturbation`, on main.
 
 ### L0-L4 after the rebuild
 
-(L0-L4 table filled in after the rebuild)
+Rebuilt from this branch under slurm (job 4455, `build_dataset_lmdb --retire-existing --verify`), 4,291 records; `run_verification`: PASS.
+
+| level | check | result |
+|---|---|---|
+| L0 | experiment and reference validate | pass, 4,291 records |
+| L1 | record count; one record per released identifier (4,208 b-numbers + 83 ERGO ids) | pass |
+| L2 | each record's identifier finds its Table S1 row: call, gap, and the letter, insertions and assertion error on the evidence | pass |
+| L3 | Table S1 call histogram pinned (619 E, 3,114 N, 6 N*, 331 X, 221 ?); reference is the viable parent without kanamycin; genetic-footprinting evidence on every record (#924), 9 E calls gapping their assertion error | pass |
+| L1-L3 | shared rules (gap census 17,725 gaps over 4,291 records, canonical spellings, uncertainty, compound identity, media membership) | pass |
+| L4 (finding) | `gene_containment_mg1655_locus_tags` | 4,084 of 4,208 released b-numbers are MG1655 GenBank gene rows; 124 are not; 83 records are keyed by ERGO id; reported, not gated |
+| L3 | provenance audit of every sourced value | pass, 27 of 27 quotes verbatim |

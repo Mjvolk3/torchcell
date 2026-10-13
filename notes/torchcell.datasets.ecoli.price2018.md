@@ -654,3 +654,103 @@ dataset's labels ([[torchcell.datamodels.compound_identity]], 2026.10.11):
 
 The RB-TnSeq store carries both labels and takes both changes at its next build; every dev
 store is stale on main anyway.
+
+## 2026.10.12 - #1057 on main: released rows stored, rebuilt and verified
+
+Owner rule of 2026-10-12: a released row is stored under the identifier its release gives, and the genome never gates storage. Rebuilt from main `db632f2b0` with `--retire-existing --verify` (slurm array 4506; the stores with no per-dataset verifier entry point verified by job 4582).
+
+### `rbtnseq_price2018_ecoli`: 553,896 -> 572,139 records
+
+Row 16 MOPS rich medium (+4 samples), row 23 t statistic on every record, the 21 genes with no one-to-one ECK pair stored as released MG1655 b-numbers.
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 572139 records validated |
+| L1 | `count` | pass | observed 572139, expected 572139 |
+| L1 | `pair_uniqueness` | pass | 572139 unique (study, strain, condition) records, one each |
+| L2 | `value_fidelity` | pass | 572139 values checked |
+| L2 | `se_nonnegative` | pass | 572139 values checked |
+| L2 | `interval_orientation` | pass | 0 of 0 stored intervals do not bracket their value, as declared |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'log2_ratio' |
+| L3 | `reference_zero` | pass | numeric rule: reference response == 0 for all 572139 records |
+| L3 | `environment_perturbed` | pass | all 572139 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=37.0, media='LB, Lennox (10 g/L tryptone, 5 g/L ... |
+| L1 | `provenance_gaps` | pass | 1170801 documented provenance gaps over 572139/572139 records; 2 deferred field(s): ['n_samples', 'sample_unit']; 14648274 undeclared None values over 17 carrier fields (top: Co... |
+| L1 | `canonical_gene_names` | finding (genome reference; reports, does not gate) | 0 genes carry conflicting common-name spellings (0 records; 0 case-only); 21 systematic names are not the genome's current name; 2 common names resolve to another gene |
+| L2 | `uncertainty_sanity` | pass | 572139 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 757800 compound references carry a structure identifier; 15156 declare a typed gap (1 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 3012255 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 572139 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (5 distinct media) |
+| L4 | `gene_containment_sgd` | finding (genome reference; reports, does not gate) | 0.994 of 3789 measured genes are reference genes (>= 1.0) |
+| L4 | `current_genome_genes` | finding (genome reference; reports, does not gate) | 21 systematic names are absent from the current genome over 3171 records: b0500 x151, b1172 x151, b1370 x151, b2650 x151, b2863 x151, b3683 x151, b4104 x151, b4294 x151, b4339 x... |
+| L1 | `stored_tags_are_loci_of_the_pinned_assembly` | pass | SUPPLEMENTARY: 3768 stored tags, statuses {'current': 3625, 'non_gene_feature': 143}; 0 do not resolve to themselves |
+
+### `gene_essentiality_price2018_ecoli`: 320 -> 324 records
+
+The ECK-unplaced essential genes stored as released.
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 324 records validated |
+| L1 | `count` | pass | observed 324, expected 324 |
+| L2 | `calls_match_table_s1` | pass | 324 records, one likely-essential locus each, from 324 released Keio rows |
+| L2 | `evidence_matches_table_s1` | pass | 324 records carry rb_tnseq_coverage_and_fitness evidence with their Table S1 coverage, every density under 0.2 |
+| L3 | `disjoint_from_the_fitness_genes` | pass | 324 likely-essential genes and 3789 genes with fitness values share none |
+| L3 | `label_caveat_on_every_record` | pass | all 324 records carry the 'nearly essential' label and the 6% to 16% FDR on their perturbation description |
+| L1 | `provenance_gaps` | pass | 972 documented provenance gaps over 324/324 records; 0 deferred field(s): []; 9072 undeclared None values over 18 carrier fields (top: Compound.inchi x1620, Compound.chebi_id x9... |
+| L1 | `canonical_gene_names` | finding (genome reference; reports, does not gate) | 0 genes carry conflicting common-name spellings (0 records; 0 case-only); 4 systematic names are not the genome's current name; 0 common names resolve to another gene |
+| L2 | `uncertainty_sanity` | pass | 0 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 0 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 972 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 0 records on a shared MEDIA_LIBRARY medium, 324 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_sgd` | finding (genome reference; reports, does not gate) | 0.988 of 324 measured genes are BW25113 genes (>= 1.0) |
+| L4 | `current_genome_genes` | finding (genome reference; reports, does not gate) | 4 systematic names are absent from the current genome over 4 records: b0062 x1, b0063 x1, b3903 x1, b3904 x1 |
+| L1 | `stored_tags_are_loci_of_the_pinned_assembly` | pass | SUPPLEMENTARY: 320 stored tags, statuses {'current': 320}; 0 do not resolve to themselves |
+
+## 2026.10.12 - #1045 part 2: the rest of the released rows, under their released identifiers
+
+Every row #1057 still dropped that is not an author withdrawal is stored, and no identifier is translated: the stored key is the one the release prints, and a crosswalk to an annotation is a modeling-time join outside the record. Rebuilt from the part-2 branch with `--retire-existing --verify` (slurm array 4583; the stores with no per-dataset verifier entry point verified by jobs 4645 and 4644).
+
+### `rbtnseq_price2018_ecoli`: 572,139 -> 598,662 records
+
+Every gene under its released MG1655 b-number (no ECK liftover to BW25113; the crosswalk is a derived report) and the 7 soft-agar motility samples kept (151 -> 158 samples).
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 598662 records validated |
+| L1 | `count` | pass | observed 598662, expected 598662 |
+| L1 | `pair_uniqueness` | pass | 598662 unique (study, strain, condition) records, one each |
+| L2 | `value_fidelity` | pass | 598662 values checked |
+| L2 | `se_nonnegative` | pass | 598662 values checked |
+| L2 | `interval_orientation` | pass | 0 of 0 stored intervals do not bracket their value, as declared |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'log2_ratio' |
+| L3 | `reference_zero` | pass | numeric rule: reference response == 0 for all 598662 records |
+| L3 | `environment_perturbed` | pass | all 598662 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=37.0, media='LB, Lennox (10 g/L tryptone, 5 g/L ... |
+| L1 | `provenance_gaps` | pass | 1250370 documented provenance gaps over 598662/598662 records; 2 deferred field(s): ['n_samples', 'sample_unit']; 15337872 undeclared None values over 18 carrier fields (top: Co... |
+| L1 | `canonical_gene_names` | finding (genome reference; reports, does not gate) | 0 genes carry conflicting common-name spellings (0 records; 0 case-only); 8 systematic names are not the genome's current name; 1 common names resolve to another gene |
+| L2 | `uncertainty_sanity` | pass | 598662 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 784323 compound references carry a structure identifier; 15156 declare a typed gap (1 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 3038778 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 598662 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (5 distinct media) |
+| L4 | `gene_containment_sgd` | finding (genome reference; reports, does not gate) | 0.998 of 3789 measured genes are reference genes (>= 1.0) |
+| L4 | `current_genome_genes` | finding (genome reference; reports, does not gate) | 8 systematic names are absent from the current genome over 1264 records: b0500 x158, b4104 x158, b4339 x158, b4590 x158, b4600 x158, b4659 x158, b4694 x158, b4695 x158 |
+
+### `gene_essentiality_price2018_ecoli`: 324 -> 324 records
+
+Every gene under its released sysName and Table S1 name.
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 324 records validated |
+| L1 | `count` | pass | observed 324, expected 324 |
+| L2 | `calls_match_table_s1` | pass | 324 records, one likely-essential locus each, from 324 released Keio rows |
+| L2 | `evidence_matches_table_s1` | pass | 324 records carry rb_tnseq_coverage_and_fitness evidence with their Table S1 coverage, every density under 0.2 |
+| L3 | `disjoint_from_the_fitness_genes` | pass | 324 likely-essential genes and 3789 genes with fitness values share none |
+| L3 | `label_caveat_on_every_record` | pass | all 324 records carry the 'nearly essential' label and the 6% to 16% FDR on their perturbation description |
+| L1 | `provenance_gaps` | pass | 972 documented provenance gaps over 324/324 records; 0 deferred field(s): []; 9072 undeclared None values over 18 carrier fields (top: Compound.inchi x1620, Compound.chebi_id x9... |
+| L1 | `canonical_gene_names` | pass | 324 systematic names, one canonical spelling each, each current in the genome; 1 common names the resolver cannot place |
+| L2 | `uncertainty_sanity` | pass | 0 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 0 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 972 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 0 records on a shared MEDIA_LIBRARY medium, 324 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_sgd` | pass | 1.000 of 324 measured genes are MG1655 (the namespace of the released b-numbers) genes (>= 1.0) |
+| L4 | `current_genome_genes` | pass | every one of the 324 measured systematic names is a gene of the current genome |

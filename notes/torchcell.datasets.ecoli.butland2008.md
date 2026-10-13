@@ -561,3 +561,91 @@ schema contract changes**. The leaf, its graph class and `BACTERIAL_PERTURBATION
 all landed with #837; this branch only starts using them.
 
 Related: [[torchcell.datasets.ecoli.babu2014]], [[torchcell.datamodels.bacterial-perturbation-ontology]].
+
+## 2026.10.12 - #1057 on main: released rows stored, rebuilt and verified
+
+Owner rule of 2026-10-12: a released row is stored under the identifier its release gives, and the genome never gates storage. Rebuilt from main `db632f2b0` with `--retire-existing --verify` (slurm array 4506; the stores with no per-dataset verifier entry point verified by job 4582).
+
+### `gene_interaction_butland2008`: 301,803 -> 312,427 records
+
+Every released recipient id stored as released (JW ids, bNNNN.1, CSCR, b4404,b4405 on the released-strain leaf); the retired / synonym b-number rule is gone.
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 312427 records validated |
+| L1 | `count` | pass | observed 312427, expected 312427 |
+| L1 | `digenic_pair_of_one_query_and_one_recipient` | pass | 312427 of 312427 records are two distinct loci, one cat-marked query and one kan-marked recipient |
+| L1 | `recipient_leaf_states_its_array_row` | pass | 312427 recipient leaves state their array row {'Isolate 1': 153791, 'Isolate 2': 153223, 'SPA-tag essential': 5413}; 0 leaves are wrong |
+| L2 | `gene_interaction_equals_its_matrix_cell` | pass | 312427 of 312427 stored scores equal their Supplementary Table 4 cell |
+| L3 | `signed_unclamped_interaction_score_with_zero_reference` | pass | 151282 aggravating and 152931 alleviating stored scores, 8214 at exactly zero, reference scores [0.0] |
+| L3 | `partitioned_from_the_served_babu2014_store` | pass | 312427 stored records against 42701 served oriented pairs; 0 share one |
+| L1 | `provenance_gaps` | pass | 624854 documented provenance gaps over 312427/312427 records; 0 deferred field(s): []; 6560967 undeclared None values over 10 carrier fields (top: Compound.inchi x1874562, Compo... |
+| L1 | `canonical_gene_names` | finding (genome reference; reports, does not gate) | 1 genes carry conflicting common-name spellings (78 records; 0 case-only); 0 systematic names are not the genome's current name; 0 common names resolve to another gene |
+| L2 | `uncertainty_sanity` | pass | 0 labeled uncertainties, none a zero dispersion; 312427 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 0 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 1249708 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 0 records on a shared MEDIA_LIBRARY medium, 312427 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_mg1655_locus_tags` | pass | 3978 of 4117 perturbed ids are MG1655 GenBank loci; 139 are released b-numbers the annotation does not carry as a locus, stored as released |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim cells of si5.xls (title cells A1 and A2) |
+| L3 | `provenance_audit` | pass | value backed by verbatim cells of si5.xls (banner cell A3) |
+| L3 | `provenance_audit` | pass | value backed by verbatim cells of si5.xls (footnote a of the block below the matrix) |
+| L3 | `provenance_audit` | pass | value backed by verbatim cells of si5.xls (footnote f, over two consecutive cells) |
+| L3 | `provenance_audit` | pass | value backed by verbatim cells of si5.xls (footnote g, over two consecutive cells) |
+| L3 | `provenance_audit` | pass | value backed by verbatim cells of si4.xls (footnote g, over two consecutive cells) |
+| L3 | `provenance_audit` | pass | value backed by verbatim cells of si2.xls (footnote d of the block below the roster) |
+
+## 2026.10.12 - #1045 part 2: the rest of the released rows, under their released identifiers
+
+Every row #1057 still dropped that is not an author withdrawal is stored, and no identifier is translated: the stored key is the one the release prints, and a crosswalk to an annotation is a modeling-time join outside the record. Rebuilt from the part-2 branch with `--retire-existing --verify` (slurm array 4583; the stores with no per-dataset verifier entry point verified by jobs 4645 and 4644).
+
+### `gene_interaction_butland2008`: 312,427 -> 314,769 records
+
+The 1,854 cells Babu 2014 re-released and the 488 printed 0.0 cells over all-zero colonies stored; the de-duplication against Babu 2014 is a note, not a drop.
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 314769 records validated |
+| L1 | `count` | pass | observed 314769, expected 314769 |
+| L1 | `digenic_pair_of_one_query_and_one_recipient` | pass | 314769 of 314769 records are two distinct loci, one cat-marked query and one kan-marked recipient |
+| L1 | `recipient_leaf_states_its_array_row` | pass | 314769 recipient leaves state their array row {'Isolate 1': 154713, 'Isolate 2': 154245, 'SPA-tag essential': 5811}; 0 leaves are wrong |
+| L2 | `gene_interaction_equals_its_matrix_cell` | pass | 314769 of 314769 stored scores equal their Supplementary Table 4 cell |
+| L3 | `signed_unclamped_interaction_score_with_zero_reference` | pass | 152917 aggravating and 153144 alleviating stored scores, 8708 at exactly zero, reference scores [0.0] |
+| L3 | `overlap_with_the_babu2014_store` | pass | 314769 stored records; 1854 of them are oriented pairs Babu 2014 also releases under screen_id 'Butland et al.', each release stored as released (#1057) |
+| L1 | `provenance_gaps` | pass | 629538 documented provenance gaps over 314769/314769 records; 0 deferred field(s): []; 6610149 undeclared None values over 10 carrier fields (top: Compound.inchi x1888614, Compo... |
+| L1 | `canonical_gene_names` | finding (genome reference; reports, does not gate) | 1 genes carry conflicting common-name spellings (78 records; 0 case-only); 0 systematic names are not the genome's current name; 0 common names resolve to another gene |
+| L2 | `uncertainty_sanity` | pass | 0 labeled uncertainties, none a zero dispersion; 314769 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 0 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 1259076 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 0 records on a shared MEDIA_LIBRARY medium, 314769 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_mg1655_locus_tags` | pass | 3978 of 4117 perturbed ids are MG1655 GenBank loci; 139 are released b-numbers the annotation does not carry as a locus, stored as released |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim cells of si5.xls (title cells A1 and A2) |
+| L3 | `provenance_audit` | pass | value backed by verbatim cells of si5.xls (banner cell A3) |
+| L3 | `provenance_audit` | pass | value backed by verbatim cells of si5.xls (footnote a of the block below the matrix) |
+| L3 | `provenance_audit` | pass | value backed by verbatim cells of si5.xls (footnote f, over two consecutive cells) |
+| L3 | `provenance_audit` | pass | value backed by verbatim cells of si5.xls (footnote g, over two consecutive cells) |
+| L3 | `provenance_audit` | pass | value backed by verbatim cells of si4.xls (footnote g, over two consecutive cells) |
+| L3 | `provenance_audit` | pass | value backed by verbatim cells of si2.xls (footnote d of the block below the roster) |

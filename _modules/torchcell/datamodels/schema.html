@@ -12941,6 +12941,137 @@
 
 
 <span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># FITNESS CONTRAST BLOCK (issue #913). ADDITIVE: a new leaf under ``Phenotype``,</span>
+<span class="c1"># the sibling of ``EnvironmentResponsePhenotype``, with its own experiment pair.</span>
+<span class="c1"># Nothing above this block changes.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FitnessContrastPhenotype</span><span class="p">(</span><span class="n">Phenotype</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A released significance test of one gene's fitness between two culture arms.</span>
+
+<span class="sd">    Borchert 2023 releases, for every (gene, comparison sheet), a two-sample t test of</span>
+<span class="sd">    the gene's RB-TnSeq fitness in a condition arm against a reference arm: the</span>
+<span class="sd">    t-statistic, its p-value, the pFDR q-value and the monotonicity-adjusted q-value.</span>
+<span class="sd">    That quadruple tests a DIFFERENCE between two arms, so it is not a property of</span>
+<span class="sd">    either arm's per-culture fitness (``EnvironmentResponsePhenotype``), whose t and p</span>
+<span class="sd">    fields test one culture's response; filing it there would misfile the statistic on</span>
+<span class="sd">    one of its two arms. The released per-replicate fitness of each arm stays on the</span>
+<span class="sd">    sibling leaf; this leaf holds only what the release states about the contrast.</span>
+
+<span class="sd">    The record's ``environment`` is the condition arm and its reference's</span>
+<span class="sd">    ``environment_reference`` the reference arm. ``contrast_label`` is the source's own</span>
+<span class="sd">    name for the comparison (the sheet name), verbatim. Every statistic is stored as</span>
+<span class="sd">    released (a pFDR q-value can exceed 1 before the monotonicity adjustment, and 582</span>
+<span class="sd">    of Borchert's do), and each is value-or-gap: the reference of a contrast tests</span>
+<span class="sd">    nothing, so its fields are typed gaps rather than invented null-test values.</span>
+<span class="sd">    """</span>
+
+    <span class="n">graph_level</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"global"</span>
+    <span class="n">label_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"t_statistic"</span>
+    <span class="n">label_statistic_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">measurement_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"what was compared and how, e.g. 'rbtnseq_gene_fitness_two_sample_t_test'"</span>
+    <span class="p">)</span>
+    <span class="n">test_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the test the source names, verbatim (e.g. 'two-sample t test')"</span>
+    <span class="p">)</span>
+    <span class="n">contrast_label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the source's own label for the comparison, verbatim (a sheet name)"</span>
+    <span class="p">)</span>
+    <span class="n">t_statistic</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the released test statistic, verbatim, signed as released. None "</span>
+        <span class="s2">"ONLY with a ProvenanceGap"</span>
+    <span class="p">)</span>
+    <span class="n">p_value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the released unadjusted p-value, a probability in [0, 1]. None "</span>
+        <span class="s2">"ONLY with a ProvenanceGap"</span>
+    <span class="p">)</span>
+    <span class="n">q_value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the released multiple-testing q-value, verbatim and not bounded "</span>
+        <span class="s2">"above (a pFDR q-value can exceed 1 before a monotonicity adjustment). None "</span>
+        <span class="s2">"ONLY with a ProvenanceGap"</span>
+    <span class="p">)</span>
+    <span class="n">q_value_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the correction behind q_value, e.g. 'positive_false_discovery_rate'; "</span>
+        <span class="s2">"required whenever q_value is stored"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">q_value_adjusted</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"a second, adjusted q-value the source also releases, verbatim; None "</span>
+        <span class="s2">"when the source releases no second q-value"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">q_value_adjustment_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the adjustment behind q_value_adjusted, e.g. 'monotonicity'; "</span>
+        <span class="s2">"required whenever q_value_adjusted is stored and forbidden otherwise"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">n_replicates_condition</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"biological replicates of the condition arm the test is over"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">n_replicates_reference</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"biological replicates of the reference arm the test is over"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_contrast</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"FitnessContrastPhenotype"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Value-or-gap statistics, finite values, a probability p, named corrections."""</span>
+        <span class="n">_require_value_or_gap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">(</span><span class="s2">"t_statistic"</span><span class="p">,</span> <span class="s2">"p_value"</span><span class="p">,</span> <span class="s2">"q_value"</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"t_statistic"</span><span class="p">,</span> <span class="s2">"p_value"</span><span class="p">,</span> <span class="s2">"q_value"</span><span class="p">,</span> <span class="s2">"q_value_adjusted"</span><span class="p">):</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> must be finite, got </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">p_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="mf">0.0</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p_value</span> <span class="o">&lt;=</span> <span class="mf">1.0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"p_value is </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">p_value</span><span class="si">}</span><span class="s2">, not a probability in [0, 1]"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"q_value"</span><span class="p">,</span> <span class="s2">"q_value_adjusted"</span><span class="p">):</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="mf">0.0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> must be non-negative, got </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="o">!=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q_value_method</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"q_value and q_value_method are set together or not at all"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q_value_adjusted</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="o">!=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">q_value_adjustment_method</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"q_value_adjusted and q_value_adjustment_method are set together or not "</span>
+                <span class="s2">"at all"</span>
+            <span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"n_replicates_condition"</span><span class="p">,</span> <span class="s2">"n_replicates_reference"</span><span class="p">):</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> must be a positive integer, got </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"measurement_type"</span><span class="p">,</span> <span class="s2">"test_name"</span><span class="p">,</span> <span class="s2">"contrast_label"</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> cannot be blank"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialFitnessContrastExperimentReference</span><span class="p">(</span><span class="n">ExperimentReference</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The reference arm of a fitness contrast, assembly-pinned."""</span>
+
+    <span class="n">experiment_reference_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"bacterial_fitness_contrast"</span>
+    <span class="n">genome_reference</span><span class="p">:</span> <span class="n">AssemblyReferenceGenome</span>
+    <span class="n">phenotype_reference</span><span class="p">:</span> <span class="n">FitnessContrastPhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialFitnessContrastExperiment</span><span class="p">(</span><span class="n">Experiment</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One gene's fitness tested between a condition arm and a reference arm."""</span>
+
+    <span class="n">experiment_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"bacterial_fitness_contrast"</span>
+    <span class="n">genotype</span><span class="p">:</span> <span class="n">Genotype</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Genotype</span><span class="p">,]</span>  <span class="c1"># type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass</span>
+    <span class="n">phenotype</span><span class="p">:</span> <span class="n">FitnessContrastPhenotype</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># FITNESS CONTRAST BLOCK END (issue #913)</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
 <span class="c1"># LIFE CYCLE BLOCK START (De Chiara 2022)</span>
 <span class="c1"># Progression through the sexual cycle and survival in stationary phase, read as the</span>
 <span class="c1"># percentage of a culture's cells in a state at a time after the culture was induced</span>
@@ -13439,6 +13570,7 @@
     <span class="o">|</span> <span class="n">BiosensorFluorescencePhenotype</span>  <span class="c1"># Zhang 2020 (#990)</span>
     <span class="o">|</span> <span class="n">BacterialMorphologyPhenotype</span>  <span class="c1"># issue #774</span>
     <span class="o">|</span> <span class="n">MrnaNumberFractionPhenotype</span>  <span class="c1"># issue #854</span>
+    <span class="o">|</span> <span class="n">FitnessContrastPhenotype</span>  <span class="c1"># issue #913</span>
     <span class="o">|</span> <span class="n">SingleCellExpressionPhenotype</span>  <span class="c1"># boocock2025</span>
     <span class="o">|</span> <span class="n">LifeCyclePhenotype</span>  <span class="c1"># De Chiara 2022</span>
     <span class="c1"># ADDITIVE (Puddu 2019 genome architecture)</span>
@@ -13492,6 +13624,7 @@
     <span class="o">|</span> <span class="n">BacterialVisualScoreExperiment</span>
     <span class="o">|</span> <span class="n">BacterialMorphologyExperiment</span>  <span class="c1"># issue #774</span>
     <span class="o">|</span> <span class="n">MrnaNumberFractionExperiment</span>  <span class="c1"># issue #854</span>
+    <span class="o">|</span> <span class="n">BacterialFitnessContrastExperiment</span>  <span class="c1"># issue #913</span>
     <span class="o">|</span> <span class="n">SegregantExpressionExperiment</span>  <span class="c1"># boocock2025</span>
     <span class="o">|</span> <span class="n">LifeCycleExperiment</span>  <span class="c1"># De Chiara 2022</span>
     <span class="o">|</span> <span class="n">PseudobulkUmiCountExperiment</span>  <span class="c1"># jackson2020</span>
@@ -13546,6 +13679,7 @@
     <span class="o">|</span> <span class="n">BacterialVisualScoreExperimentReference</span>
     <span class="o">|</span> <span class="n">BacterialMorphologyExperimentReference</span>  <span class="c1"># issue #774</span>
     <span class="o">|</span> <span class="n">MrnaNumberFractionExperimentReference</span>  <span class="c1"># issue #854</span>
+    <span class="o">|</span> <span class="n">BacterialFitnessContrastExperimentReference</span>  <span class="c1"># issue #913</span>
     <span class="o">|</span> <span class="n">SegregantExpressionExperimentReference</span>  <span class="c1"># boocock2025</span>
     <span class="o">|</span> <span class="n">LifeCycleExperimentReference</span>  <span class="c1"># De Chiara 2022</span>
     <span class="o">|</span> <span class="n">PseudobulkUmiCountExperimentReference</span>  <span class="c1"># jackson2020</span>
@@ -13602,6 +13736,7 @@
     <span class="s2">"bacterial_visual_score"</span><span class="p">:</span> <span class="n">BacterialVisualScoreExperiment</span><span class="p">,</span>
     <span class="s2">"bacterial_morphology"</span><span class="p">:</span> <span class="n">BacterialMorphologyExperiment</span><span class="p">,</span>  <span class="c1"># issue #774</span>
     <span class="s2">"mrna_number_fraction"</span><span class="p">:</span> <span class="n">MrnaNumberFractionExperiment</span><span class="p">,</span>  <span class="c1"># issue #854</span>
+    <span class="s2">"bacterial_fitness_contrast"</span><span class="p">:</span> <span class="n">BacterialFitnessContrastExperiment</span><span class="p">,</span>  <span class="c1"># issue #913</span>
     <span class="s2">"segregant_expression"</span><span class="p">:</span> <span class="n">SegregantExpressionExperiment</span><span class="p">,</span>  <span class="c1"># boocock2025</span>
     <span class="s2">"life_cycle"</span><span class="p">:</span> <span class="n">LifeCycleExperiment</span><span class="p">,</span>  <span class="c1"># De Chiara 2022</span>
     <span class="s2">"pseudobulk_umi_count"</span><span class="p">:</span> <span class="n">PseudobulkUmiCountExperiment</span><span class="p">,</span>  <span class="c1"># jackson2020</span>
@@ -13667,6 +13802,9 @@
     <span class="s2">"bacterial_visual_score"</span><span class="p">:</span> <span class="n">BacterialVisualScoreExperimentReference</span><span class="p">,</span>
     <span class="s2">"bacterial_morphology"</span><span class="p">:</span> <span class="n">BacterialMorphologyExperimentReference</span><span class="p">,</span>  <span class="c1"># issue #774</span>
     <span class="s2">"mrna_number_fraction"</span><span class="p">:</span> <span class="n">MrnaNumberFractionExperimentReference</span><span class="p">,</span>  <span class="c1"># issue #854</span>
+    <span class="s2">"bacterial_fitness_contrast"</span><span class="p">:</span> <span class="p">(</span>  <span class="c1"># issue #913</span>
+        <span class="n">BacterialFitnessContrastExperimentReference</span>
+    <span class="p">),</span>
     <span class="s2">"segregant_expression"</span><span class="p">:</span> <span class="n">SegregantExpressionExperimentReference</span><span class="p">,</span>  <span class="c1"># boocock2025</span>
     <span class="s2">"life_cycle"</span><span class="p">:</span> <span class="n">LifeCycleExperimentReference</span><span class="p">,</span>  <span class="c1"># De Chiara 2022</span>
     <span class="s2">"pseudobulk_umi_count"</span><span class="p">:</span> <span class="n">PseudobulkUmiCountExperimentReference</span><span class="p">,</span>  <span class="c1"># jackson2020</span>

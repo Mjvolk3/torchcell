@@ -73,6 +73,7 @@ def test_every_registered_bacterial_dataset_is_mapped_to_its_adapter() -> None:
         + 1
         + 2
         + 1
+        + 1
     )
     assert registered_bacterial_classes() == set(expected)
     mapped = {
@@ -109,6 +110,7 @@ def test_each_adapter_has_its_own_module() -> None:
         + 1
         + 1
         + 2
+        + 1
         + 1
     )
     assert modules == [f"torchcell.adapters.{b.module}" for b in BACTERIAL]
@@ -149,6 +151,7 @@ def test_kg_bacteria_names_exactly_the_registered_bacterial_datasets() -> None:
         + 1
         + 1
         + 2
+        + 1
         + 1
     )
     classes = [dataset_registry[name] for name in names]

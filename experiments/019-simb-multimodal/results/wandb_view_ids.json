@@ -64,6 +64,26 @@
     "name": "v25 inductive round by cell",
     "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=xbewyhsxbtr"
   },
+  "morph_v25/M_cls_align0.01_lr3e-4_srccls": {
+    "id": "w9f8g0smlzg",
+    "name": "M_cls_align0.01_lr3e-4_srccls: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=w9f8g0smlzg"
+  },
+  "morph_v25/M_cls_align0.1_lr3e-4_srccls": {
+    "id": "1vy5i8r69g4",
+    "name": "M_cls_align0.1_lr3e-4_srccls: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=1vy5i8r69g4"
+  },
+  "morph_v25/M_cls_align1_lr3e-4_nocenter_srccls": {
+    "id": "4b9pxka5bh4",
+    "name": "M_cls_align1_lr3e-4_nocenter_srccls: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=4b9pxka5bh4"
+  },
+  "morph_v25/M_cls_align1_lr3e-4_srccls": {
+    "id": "cr2y7shcpz2",
+    "name": "M_cls_align1_lr3e-4_srccls: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=cr2y7shcpz2"
+  },
   "morph_v25/M_cls_crps_lr1e-3": {
     "id": "2z49lon5v83",
     "name": "M_cls_crps_lr1e-3: one line per split",
@@ -164,6 +184,16 @@
     "name": "M_xattn_lr3e-4: one line per split",
     "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=h823jprysjp"
   },
+  "morph_v25/M_zs_align0.1_lr3e-4_srccls_zs": {
+    "id": "fxa1k3xctmv",
+    "name": "M_zs_align0.1_lr3e-4_srccls_zs: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=fxa1k3xctmv"
+  },
+  "morph_v25/M_zs_align1_lr3e-4_srccls_zs": {
+    "id": "6ecogkztv4p",
+    "name": "M_zs_align1_lr3e-4_srccls_zs: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=6ecogkztv4p"
+  },
   "morph_v25/M_zs_b128_lr3e-4": {
     "id": "1f6ctu9bnby",
     "name": "M_zs_b128_lr3e-4: one line per split",
@@ -218,6 +248,26 @@
     "id": "s8pk039xhfo",
     "name": "M_zs_lr3e-4_mse: one line per split",
     "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=s8pk039xhfo"
+  },
+  "prot_v26": {
+    "id": "9nsa6vtv42n",
+    "name": "v26 proteome alignment by cell",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_prot_v26?nw=9nsa6vtv42n"
+  },
+  "prot_v26/S_prot_align0.1_srczs": {
+    "id": "82mipa61g5h",
+    "name": "S_prot_align0.1_srczs: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_prot_v26?nw=82mipa61g5h"
+  },
+  "prot_v26/S_prot_align1_srczs": {
+    "id": "08lesp5u0og",
+    "name": "S_prot_align1_srczs: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_prot_v26?nw=08lesp5u0og"
+  },
+  "prot_v26/S_prot_ref": {
+    "id": "cy9avcjhxkd",
+    "name": "S_prot_ref: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_prot_v26?nw=cy9avcjhxkd"
   },
   "v16": {
     "id": "jvc4d5ajdy1",

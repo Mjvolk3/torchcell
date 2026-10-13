@@ -43,7 +43,11 @@ from collections import Counter
 from collections.abc import Callable, Iterable, Sequence
 from typing import Any
 
-from torchcell.verification.common import GeneNameResolver, SharedRecordRules
+from torchcell.verification.common import (
+    GeneNameResolver,
+    SharedRecordRules,
+    declared_first_union_validator,
+)
 from torchcell.verification.levels import l0_structural, l1_count
 from torchcell.verification.report import (
     Level,
@@ -1013,11 +1017,7 @@ def verify_environment_response_dataset(
       records' references carry a typed gap on ``environment_response`` because the
       source releases no reading for the reference; observed must EQUAL declared.
     """
-    from pydantic import TypeAdapter
-
-    from torchcell.datamodels.schema import ExperimentType
-
-    validate: Callable[[Any], object] = TypeAdapter(ExperimentType).validate_python
+    validate: Callable[[Any], object] = declared_first_union_validator()
 
     report = VerificationReport(dataset_name=dataset_name, provenance=provenance)
     report.add(l0_structural((rec["experiment"] for rec in records), validate))
@@ -1124,11 +1124,7 @@ def verify_environment_response_dataset_streaming(
     The shared rules are accumulators for the same reason, and memoize their per-condition
     verdicts on the identity of the interned environment mapping.
     """
-    from pydantic import TypeAdapter
-
-    from torchcell.datamodels.schema import ExperimentType
-
-    validate: Callable[[Any], object] = TypeAdapter(ExperimentType).validate_python
+    validate: Callable[[Any], object] = declared_first_union_validator()
 
     n_records = 0
     l0_failures: list[dict[str, Any]] = []

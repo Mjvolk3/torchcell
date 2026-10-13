@@ -2,7 +2,7 @@
   "record_version": 1,
   "slug": "graded-gene-essentiality-sibling",
   "date": "2026-10-12",
-  "pr": null,
+  "pr": 1083,
   "author_kind": "agent",
   "base_commit": "3259ed278c0c30dfcfd68d8efcd57f31cbe27b72",
   "python_version": "3.13.0",

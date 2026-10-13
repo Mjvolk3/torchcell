@@ -207,3 +207,60 @@ LMDB entries 21,583; `--list-stale --include-private` does not name the dataset.
 | L4 | current_genome_genes | ok, 5,491 of 5,491 |
 
 Report: `$DATA_ROOT/data/torchcell/pputida_env_metal_tnseq_royet2025/preprocess/verification_report.json`.
+
+## 2026.10.12 - Table S4: the HMM essentiality state of every gene (#909, PR #1083)
+
+`GradedGeneEssentialityRoyet2025Dataset` (`data/torchcell/graded_gene_essentiality_royet2025`, organism `pputida`) stores Table S4 (`EMI-27-e70095-s002.xlsx`, sha256 `b786a2a1b995a736b96a894e7b623a1ca1ec419827373114f03b9bd597991f42`, 713,725 bytes, `pmc_cloud`, retrieved 2026-10-07), now deposited in the raw mirror beside S5 and S6 (`NOT_MIRRORED` no longer lists it; the literature mirror's copy is `si/si8.xlsx`). Each of the two sheets, "HMM analysis - LB agar" and "HMM analysis - outgrowth in LB", gives every one of the 5,729 KT2440 genes a TRANSIT HMM state with its TA sites, the sites labeled each state, the mean insertion rate and the mean read count. Records: 5,729 x 2 = 11,458 `BacterialGradedGeneEssentialityExperiment`, one per (gene, stage), the gene under the released Gene ID and Gene name with no annotation lookup.
+
+| stage | ES | NE | GA | GD | N/A |
+|---|---|---|---|---|---|
+| LB agar | 600 | 4,458 | 435 | 223 | 13 |
+| outgrowth in LB | 722 | 4,238 | 533 | 223 | 13 |
+
+Measured on the workbook by `read_table_s4`; the LB agar ES and NE counts are asserted against the Results' own statement (`hmm_counts`). The 13 `N/A` rows per sheet are the genes with no TA site, stored as the released state `N/A`.
+
+- **Evidence.** `tnseq_hmm_state` under `insertion_depletion`: the scoring rule is the Results' TRANSIT HMM sentence (`_Q_HMM`), the state definitions are Table 1's footnote c, quoted from paper.pdf page 8 in the `hmm_counts` note because the OCR dropped the footnote (`TABLE1_FOOTNOTE_C`, soft hyphens as the PDF text has them). The eight per-gene statistics go on the descriptor, with the label-site counts summing to the TA sites.
+- **Environment.** LB agar with gentamicin, 24 h at 28 C, for the plated pool (`plating`, `plated_pool`); for the second sheet, ~10^7 mutants inoculated in 25 mL LB and grown at 28 C, shaken, for 12 generations, the LB arm of the screen (`outgrowth`). The medium carries no amounts because the paper gives none. Gentamicin is unresolved in the compound table, so the candidate verdict is `admissible_with_gaps` on #1063.
+- Reference: the unperturbed KT2440 with `essentiality_call = "NE"`.
+- `all_raw_files()` replaces the module constant so the deposit, retrieval and CLI iterate S4, S5 and S6 and tests can substitute the list.
+- Verification: `verify_graded_build` (registered in `runners.BACTERIAL_GRADED_ESSENTIALITY_DATASETS`).
+
+### L0-L4 of the graded store
+
+Built and verified by slurm array 4584 (task 2, `--retire-existing --verify`, source `1c55407e4`); rendered by `experiments/036-dataset-fixes-before-kg-build/scripts/no_verifier_store_report_tables.py graded_gene_essentiality_royet2025`.
+
+`graded_gene_essentiality_royet2025`: **PASS**, 31 rules, 0 failing (report written 2026-10-12T23:40:35)
+
+| Level | Rule | Verdict | Message |
+|---|---|---|---|
+| L0 | `structural` | PASS | 11458 records validated |
+| L1 | `count` | PASS | observed 11458, expected 11458 |
+| L2 | `calls_match_table_s4` | PASS | 11458 records are the 11458 Table S4 rows, call and statistics |
+| L3 | `evidence_is_tnseq_hmm_state` | PASS | 11458 of 11458 records carry the tnseq_hmm_state statements; every reference is the parent called NE |
+| L1 | `provenance_gaps` | PASS | 11458 documented provenance gaps over 5729/11458 records; 1 deferred field(s): ['inchikey']; 401030 undeclared None values over 27 carrier fields (top: Compound.inchi x45832, Compound.smiles x34374, Compound.chebi_id ... |
+| L1 | `canonical_gene_names` | PASS | 5729 systematic names, one canonical spelling each (no resolver supplied: spelling checked, annotation not) |
+| L2 | `uncertainty_sanity` | PASS | 0 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | PASS | environment edits: 0 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | PASS | medium components: 17187 compound references carry a structure identifier; 5729 declare a typed gap (1 distinct compounds, unencodable) |
+| L3 | `media_membership` | PASS | 5729 records on a shared MEDIA_LIBRARY medium, 5729 on a medium deriving from one (2 distinct media) |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L4 | `perturbed_gene_containment_assembly` | PASS | 1.000 of 5729 measured genes are loci of pputida_KT2440_ASM756v2 (>= 1.0) |

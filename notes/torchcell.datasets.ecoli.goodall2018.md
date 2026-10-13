@@ -291,3 +291,61 @@ Released vs stored: 8,626 released rows = 8,309 records + 317 unclear calls; 4,2
 ### 2026.10.12 - The released row is the record identity
 
 The 8,309-record build of job 4483 failed: nine insertion-sequence symbols head SEVERAL rows of each table (`insH1` 11, `insD1` 7, `insB1`/`insC1`/`insA` 6, `insE1`/`insF1` 5, `insI1` 4, `insL1` 3; 53 rows per table), so `(condition, Gene)` is not a record identity. Each of those rows is a distinct released measurement with its own insertion index and likelihood ratio, which is exactly what the dropped `symbol_not_on_one_bw25113_locus` rule used to hide. `strain_label` is now the release's own coordinate of the row, `"<condition> row <n>"`; `classify_calls` refuses a repeated `(condition, row)` rather than a repeated symbol, the L1 row keys `(condition, strain_label)`, and the L2 row looks the table row up by that label before checking that the stored identifier IS that row's gene. Counts are unchanged: 4,151 TL + 4,158 LB = 8,309 records.
+
+## 2026.10.12 - The unclear calls get a graded store (#909, PR #1083)
+
+The 317 TraDIS calls Tables S1 and S4 release as `unclear` (the log likelihood ratio inside +/-3.6) have no boolean, so the boolean store keeps counting them under `unclear_call_not_representable`. They are now stored in a second store of the same release, `GradedGeneEssentialityGoodall2018Dataset` (`data/torchcell/graded_gene_essentiality_goodall2018`), as `GradedGeneEssentialityPhenotype` records with `essentiality_call = "unclear"` and the same `GeneEssentialityEvidence` (`tradis_insertion_index`, `tradis_call = unclear`, the insertion index and the ratio as released). A store holds one experiment class, which is why the graded calls are a second store rather than a second class in the first.
+
+- **Keyed as the boolean records (#1082, #1086).** The genotype is the shared `insertion_genotype`: a `BacterialReleasedTransposonPerturbation` with the released `Gene` symbol as the identifier and the row's own coordinate (`TL row <n>`, `LB row <n>`) as `strain_label`; no annotation is read. The graded L2 finds each record's table row by that coordinate and checks the stored gene is the row's.
+- **Every released row is in exactly one store.** `GradedLedger` (`preprocess/dropped_records.json`) counts the rows of both tables as graded (317) or boolean (8,309), 8,626 in all, and the build refuses a row in neither. `read_released_calls` is the one reader both stores call, so they split the same parsed rows; `classify_calls` refuses a repeated (condition, row) for every row.
+- Reference: the unperturbed BW25113 parent with `essentiality_call = "non_essential"` (`build_graded_reference`).
+- Verification: `verify_graded_build`, registered in `runners.BACTERIAL_GRADED_ESSENTIALITY_DATASETS`. Its L4 (`gene_containment_bw25113_annotation`, annotation symbols and tags) and the family's `perturbed_gene_containment_assembly` are genome-reference findings, never gates.
+
+### L0-L4 of the graded store
+
+Built and verified by slurm array 4584 (task 1, `--retire-existing --verify`, source `1c55407e4`); rendered by `experiments/036-dataset-fixes-before-kg-build/scripts/no_verifier_store_report_tables.py graded_gene_essentiality_goodall2018`. The one failing row is the family's `perturbed_gene_containment_assembly`, a report-class genome-reference finding: it compares the released symbols with locus tags, as on the boolean store; the module's own L4 against the annotation's symbols and tags holds 229 of 229.
+
+`graded_gene_essentiality_goodall2018`: **PASS**, 40 rules, 1 failing (report written 2026-10-12T23:39:50)
+
+| Level | Rule | Verdict | Message |
+|---|---|---|---|
+| L0 | `structural` | PASS | 317 records validated |
+| L1 | `count` | PASS | observed 317, expected 317 |
+| L1 | `one_record_per_gene_and_condition` | PASS | 317 (condition, released row) pairs, one single-insertion record each |
+| L2 | `unclear_calls_match_released_tables` | PASS | 317 records are unclear rows of Tables S1/S4 with their insertion index and likelihood ratio (317 unclear rows released) |
+| L3 | `call_threshold_convention` | PASS | TL: 4313/4313 calls follow +/-3.6, LB: 4313/4313 calls follow +/-3.6 |
+| L3 | `evidence_is_tradis_insertion_index` | PASS | 317 of 317 records and references carry tradis_insertion_index evidence (insertion_depletion) with the sourced rule, definition and caveat |
+| L3 | `reference_is_the_parent_called_non_essential` | PASS | 317 of 317 references state the parent's non_essential call with the TraDIS evidence |
+| L1 | `provenance_gaps` | PASS | 641 documented provenance gaps over 317/317 records; 0 deferred field(s): []; 12215 undeclared None values over 32 carrier fields (top: Compound.inchi x1275, Compound.smiles x796, Compound.chebi_id x634, Compound.inch... |
+| L1 | `canonical_gene_names` | PASS | 229 systematic names, one canonical spelling each (no resolver supplied: spelling checked, annotation not) |
+| L2 | `uncertainty_sanity` | PASS | 0 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | PASS | environment edits: 0 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | PASS | medium components: 641 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | PASS | 155 records on a shared MEDIA_LIBRARY medium, 162 on a medium deriving from one (2 distinct media) |
+| L4 | `gene_containment_bw25113_annotation` | PASS | 229 of 229 released gene symbols are a symbol or tag of the BW25113 GenBank annotation |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | PASS | value backed by verbatim quote in paper.md |
+| L4 | `perturbed_gene_containment_assembly` | **FAIL** | 0.000 of 229 measured genes are loci of ecoli_K12_BW25113_ASM75055v1 (>= 1.0) |

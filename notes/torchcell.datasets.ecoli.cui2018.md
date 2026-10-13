@@ -427,3 +427,13 @@ served `crispr construct` graph class changed, plumbing drift on
 dataset-specific check passes: dev LMDB `fresh`, in `dataset_adapter_map`, no undeclared
 phenotype method, not served. So this dataset enters the full rebuild, not the
 incremental path.
+
+## 2026.10.12 - Every guide's released gene symbols key its knockdowns
+
+The owner's rule of 2026-10-12 ([[database.genome-gating-sweep.2026.10.12]], rows 48, 92, 106, 174 and 380): the loader reads no annotation. Each knockdown is a `BacterialReleasedCrisprPerturbation` (#1077) keyed by the released gene symbol with the same symbol as its name, `strain_label` the guide's 20-nt spacer, `identifier_kind` "gene symbol, as the screen table's gene column writes it" and `expression_direction="decreased"`; `reconcile_locus_tags`, `annotation_symbols`, `MIN_RESOLVED_FRACTION`, the `ecoli_genome` constructor parameter and the `reconciliation` field of `build_accounting.json` are gone, as are the three genome drop rules (`gene_retired_in_the_pinned_assembly` 619 guides, `gene_symbol_shared_with_another_source_name` 283, `gene_symbol_ambiguous_in_the_pinned_assembly` 23). Those 925 guides (1,850 records) are stored; the L1 supplementary row, which keeps its name `stored_targets_are_loci_of_the_pinned_assembly`, now reports how many stored symbols the pinned ASM584v2 cannot place, as a `report`-class finding (#1069).
+
+Two rules remain, both about a missing genotype rather than a name: `no_target_in_a_gene` (6,268 guides) and `target_outside_a_gene` (173).
+
+Pins, measured on the pinned bytes: `EXPECTED_RECORDS` 141,542 -> 143,392; `EXPECTED_TARGETS` 4,263 -> 4,359 (the distinct released symbols on a kept guide; the release names 4,360 in all, the one difference being a symbol only on a mixed-target guide).
+
+Released vs stored: 85,381 released rows over 78,137 guides = 156,274 candidate (guide, screen) records = 143,392 records + 12,536 on guides with no in-gene match + 346 on partly intergenic guides.

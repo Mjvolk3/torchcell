@@ -109,17 +109,16 @@ RESPONSES: dict[str, tuple[float, float]] = {
 }
 SYNTHETIC_ROWS = sum(len(cells) for _, cells in TARGETS)
 SYNTHETIC_GUIDES = len(TARGETS)
-SYNTHETIC_KEPT_GUIDES = sum(1 for rule, _ in TARGETS if rule.startswith("kept_"))
+#: Only the two no-genotype rules drop a guide now; a symbol the annotation retires,
+#: shares or cannot place is stored as released (owner, 2026-10-12).
+SYNTHETIC_KEPT_GUIDES = sum(
+    1 for rule, _ in TARGETS if not rule.startswith(("drop_no_gene", "drop_mixed"))
+)
 SYNTHETIC_RECORDS = SYNTHETIC_KEPT_GUIDES * len(C.SCREENS)
-SYNTHETIC_TARGETS = 4
-SYNTHETIC_PERTURBATIONS = 5 * len(C.SCREENS)
-SYNTHETIC_DROPS: dict[str, int] = {
-    C.DROP_NO_GENE: 1,
-    C.DROP_MIXED: 1,
-    C.DROP_RETIRED: 1,
-    C.DROP_COLLISION: 2,
-    C.DROP_AMBIGUOUS: 1,
-}
+#: thrL, thrA, thrW, zzzA, pro2, proB, dup1, yaaP
+SYNTHETIC_TARGETS = 8
+SYNTHETIC_PERTURBATIONS = 9 * len(C.SCREENS)
+SYNTHETIC_DROPS: dict[str, int] = {C.DROP_NO_GENE: 1, C.DROP_MIXED: 1}
 
 
 def synthetic_screen_csv(
@@ -223,7 +222,6 @@ def _pin_synthetic_counts(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(C, "EXPECTED_RECORDS", SYNTHETIC_RECORDS)
     monkeypatch.setattr(C, "EXPECTED_TARGETS", SYNTHETIC_TARGETS)
     monkeypatch.setattr(C, "EXPECTED_DROPS", SYNTHETIC_DROPS)
-    monkeypatch.setattr(C.CrispriKnockdownCui2018Dataset, "MIN_RESOLVED_FRACTION", 0.5)
 
 
 @pytest.fixture
@@ -243,9 +241,7 @@ def built(
 ) -> Any:
     """The loader built over the synthetic mirror and the synthetic annotation."""
     _pin_synthetic_counts(monkeypatch)
-    return C.CrispriKnockdownCui2018Dataset(
-        root=str(tmp_path / "build"), ecoli_genome=synthetic_mg1655
-    )
+    return C.CrispriKnockdownCui2018Dataset(root=str(tmp_path / "build"))
 
 
 def _json(dataset: Any, name: str) -> Any:
@@ -392,15 +388,8 @@ def _measurement(rule: str, cells: tuple[str, ...]) -> C.GuideMeasurement:
     )
 
 
-def _classify(rule: str, cells: tuple[str, ...], **kwargs: Any) -> C.RetentionRule:
-    stored = kwargs.pop("stored", {"thrA": "b0002", "thrW": "b0003"})
-    return C.classify_guide(
-        _measurement(rule, cells),
-        stored,
-        retired=frozenset(kwargs.pop("retired", ())),
-        collided=frozenset(kwargs.pop("collided", ())),
-        ambiguous=frozenset(kwargs.pop("ambiguous", ())),
-    )
+def _classify(rule: str, cells: tuple[str, ...]) -> C.RetentionRule:
+    return C.classify_guide(_measurement(rule, cells))
 
 
 def test_a_guide_with_no_match_in_a_gene_has_no_genotype_to_write() -> None:
@@ -415,48 +404,20 @@ def test_a_partly_intergenic_guide_is_dropped_rather_than_partly_asserted() -> N
     assert _classify("drop_mixed", ("thrA", "NA")).drop_reason == C.DROP_MIXED
 
 
-def test_a_retired_symbol_is_dropped_because_the_leaf_refuses_it() -> None:
-    """``systematic_gene_name`` must be a b-number of the pinned assembly."""
-    verdict = _classify("drop_retired", ("zzzA",), retired=("zzzA",))
-    assert verdict.drop_reason == C.DROP_RETIRED
-
-
-def test_a_shared_symbol_is_dropped_and_named_as_a_collision() -> None:
-    """Two source names on one locus are kept as given, so neither is a b-number."""
-    verdict = _classify("drop_collision_a", ("pro2",), collided=("pro2",))
-    assert verdict.drop_reason == C.DROP_COLLISION
-
-
-def test_an_ambiguous_symbol_is_dropped_and_named_as_ambiguous() -> None:
-    """A symbol on two loci names no single gene to perturb."""
-    verdict = _classify("drop_ambiguous", ("dup1",), ambiguous=("dup1",))
-    assert verdict.drop_reason == C.DROP_AMBIGUOUS
-
-
-def test_the_drop_reasons_are_applied_in_their_declared_order() -> None:
-    """A guide hitting several unresolvable kinds reports the first rule, once."""
-    verdict = _classify(
-        "drop_retired",
-        ("zzzA", "pro2"),
-        retired=("zzzA",),
-        collided=("pro2",),
-        stored={"zzzA": "zzzA", "pro2": "pro2"},
-    )
-    assert verdict.drop_reason == C.DROP_RETIRED
-
-
-def test_a_retained_guides_targets_deduplicate_to_sorted_b_numbers() -> None:
-    """Two positions in one gene are one knockdown, and the tags come out sorted."""
-    assert _classify("kept_multi", ("thrW", "thrA")).stored_tags == ("b0002", "b0003")
+def test_a_retained_guides_targets_deduplicate_to_sorted_released_symbols() -> None:
+    """Two positions in one gene are one knockdown, and the symbols come out sorted."""
+    assert _classify("kept_multi", ("thrW", "thrA")).stored_tags == ("thrA", "thrW")
     assert _classify("kept_two_positions_one_gene", ("thrA", "thrA")).stored_tags == (
-        "b0002",
+        "thrA",
     )
 
 
-def test_a_resolved_name_that_is_not_a_b_number_is_a_refusal_not_a_drop() -> None:
-    """A name outside the namespace that no reconciliation status explains is a bug."""
-    with pytest.raises(RuntimeError, match="which is not all b-numbers"):
-        _classify("kept_single", ("thrL",), stored={"thrL": "ECK0001"})
+def test_a_symbol_the_annotation_cannot_place_is_still_a_record() -> None:
+    """The loader reads no annotation, so a retired or ambiguous symbol is a target."""
+    assert _classify("drop_retired", ("zzzA",)).drop_reason == ""
+    assert _classify("drop_retired", ("zzzA",)).stored_tags == ("zzzA",)
+    assert not hasattr(C, "reconcile_locus_tags")
+    assert not hasattr(C, "annotation_symbols")
 
 
 # --------------------------------------------------------------------------- #
@@ -474,7 +435,6 @@ def _accounting(**overrides: Any) -> C.BuildAccounting:
         "dropped_guides_by_reason": dict(SYNTHETIC_DROPS),
         "distinct_targets": SYNTHETIC_TARGETS,
         "perturbations_written": SYNTHETIC_PERTURBATIONS,
-        "reconciliation": None,
     }
     fields.update(overrides)
     return C.BuildAccounting.model_construct(**fields)
@@ -610,36 +570,21 @@ def test_the_reference_phenotype_is_the_control_guide_at_zero() -> None:
     assert str(C.NORMALIZATION.value) in reference.units
 
 
-def test_a_knockdown_carries_the_spacer_and_names_its_source_symbol() -> None:
-    """The spacer is the identity; the released symbol rides on identifier_mapping."""
+def test_a_knockdown_is_keyed_by_the_released_symbol_with_its_spacer() -> None:
+    """The released symbol IS the identifier; the spacer is the strain label."""
     rule = _classify("kept_multi", ("thrA", "thrW"))
-    perturbations = C.crispri_perturbations(
-        rule, {"thrA": "b0002", "thrW": "b0003"}, {"b0002": "thrA", "b0003": "thrW"}
-    )
-    assert [p.systematic_gene_name for p in perturbations] == ["b0002", "b0003"]
+    perturbations = C.crispri_perturbations(rule)
+    assert [p.systematic_gene_name for p in perturbations] == ["thrA", "thrW"]
     assert [p.perturbed_gene_name for p in perturbations] == ["thrA", "thrW"]
     for perturbation in perturbations:
-        assert perturbation.perturbation_type == "bacterial_crispr_interference"
+        assert perturbation.perturbation_type == "bacterial_released_crispr"
         assert perturbation.gene_namespace == "ecoli_k12_mg1655_bnumber"
         assert perturbation.expression_direction == "decreased"
+        assert perturbation.strain_label == SPACERS["kept_multi"]
+        assert perturbation.identifier_kind == C.IDENTIFIER_KIND
         assert perturbation.crispr.effector == "dCas9"
         assert perturbation.crispr.guide_sequence == SPACERS["kept_multi"]
         assert perturbation.crispr.n_guides == 1
-        assert perturbation.identifier_mapping is not None
-        assert perturbation.identifier_mapping.route == "gene_symbol"
-    assert [
-        p.identifier_mapping.source_identifier
-        for p in perturbations
-        if p.identifier_mapping is not None
-    ] == ["thrA", "thrW"]
-
-
-def test_annotation_symbols_prefer_the_assemblys_spelling_and_fall_back_to_the_tag(
-    synthetic_mg1655: Any,
-) -> None:
-    """One gene carries one spelling across datasets; a symbol-less locus keeps its tag."""
-    symbols = C.annotation_symbols(synthetic_mg1655, ("b0001", "b0002", "b9999"))
-    assert symbols == {"b0001": "thrL", "b0002": "thrA", "b9999": "b9999"}
 
 
 # --------------------------------------------------------------------------- #
@@ -790,10 +735,10 @@ def test_the_retention_ledger_names_every_guide_and_its_verdict(built: Any) -> N
     verdicts = dict(zip(ledger["guide"], ledger["drop_reason"], strict=True))
     assert verdicts[SPACERS["kept_single"]] == ""
     assert verdicts[SPACERS["drop_no_gene"]] == C.DROP_NO_GENE
-    assert verdicts[SPACERS["drop_ambiguous"]] == C.DROP_AMBIGUOUS
+    assert verdicts[SPACERS["drop_ambiguous"]] == ""
     multi = ledger[ledger["guide"] == SPACERS["kept_multi"]].iloc[0]
     assert multi["source_genes"] == "thrA;thrW"
-    assert multi["stored_tags"] == "b0002;b0003"
+    assert multi["stored_tags"] == "thrA;thrW"
     assert float(multi["fit18"]) == RESPONSES["kept_multi"][0]
 
 
@@ -855,9 +800,18 @@ def test_a_multi_target_guide_is_one_record_with_several_knockdowns(built: Any) 
     assert sizes[SPACERS["kept_pseudogene"]] == 1
 
 
-def test_the_gene_set_is_the_resolved_b_numbers_only(built: Any) -> None:
-    """A dropped guide's gene never reaches the store, pseudogene loci do."""
-    assert set(built.gene_set) == {"b0001", "b0002", "b0003", "b0004"}
+def test_the_gene_set_is_the_released_symbols(built: Any) -> None:
+    """Every released symbol of a stored guide is a gene key, as released."""
+    assert set(built.gene_set) == {
+        "thrL",
+        "thrA",
+        "thrW",
+        "zzzA",
+        "pro2",
+        "proB",
+        "dup1",
+        "yaaP",
+    }
 
 
 def test_a_record_count_other_than_the_oracle_is_refused(
@@ -870,9 +824,7 @@ def test_a_record_count_other_than_the_oracle_is_refused(
     _pin_synthetic_counts(monkeypatch)
     monkeypatch.setattr(C, "EXPECTED_RECORDS", SYNTHETIC_RECORDS + 2)
     with pytest.raises(RuntimeError, match="records written, not the pinned"):
-        C.CrispriKnockdownCui2018Dataset(
-            root=str(tmp_path / "build_bad"), ecoli_genome=synthetic_mg1655
-        )
+        C.CrispriKnockdownCui2018Dataset(root=str(tmp_path / "build_bad"))
 
 
 def test_a_target_count_other_than_the_oracle_is_refused(
@@ -885,26 +837,7 @@ def test_a_target_count_other_than_the_oracle_is_refused(
     _pin_synthetic_counts(monkeypatch)
     monkeypatch.setattr(C, "EXPECTED_TARGETS", SYNTHETIC_TARGETS + 1)
     with pytest.raises(RuntimeError, match="distinct targets, not the pinned"):
-        C.CrispriKnockdownCui2018Dataset(
-            root=str(tmp_path / "build_bad2"), ecoli_genome=synthetic_mg1655
-        )
-
-
-def test_a_resolution_rate_below_the_stated_floor_stops_the_build(
-    synthetic_mirror: Path,
-    synthetic_mg1655: Any,
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """Records are never dropped to pass a threshold; the build reports instead."""
-    from torchcell.datasets.bacteria_common import LocusTagResolutionError
-
-    monkeypatch.setattr(C, "EXPECTED_SOURCE_ROWS", SYNTHETIC_ROWS)
-    monkeypatch.setattr(C, "EXPECTED_GUIDES", SYNTHETIC_GUIDES)
-    with pytest.raises(LocusTagResolutionError, match="below 0.95"):
-        C.CrispriKnockdownCui2018Dataset(
-            root=str(tmp_path / "build_floor"), ecoli_genome=synthetic_mg1655
-        )
+        C.CrispriKnockdownCui2018Dataset(root=str(tmp_path / "build_bad2"))
 
 
 def test_create_experiment_is_not_the_entry_point_for_this_loader(built: Any) -> None:
@@ -925,7 +858,16 @@ def test_one_pass_summarizes_the_store_the_supplementary_rows_read(built: Any) -
     """The summary is what keeps the rows memory-bounded on a 141,542-record store."""
     summary = C.summarize_store(_records(built))
     assert summary.n_records == SYNTHETIC_RECORDS
-    assert summary.targets == ("b0001", "b0002", "b0003", "b0004")
+    assert summary.targets == (
+        "dup1",
+        "pro2",
+        "proB",
+        "thrA",
+        "thrL",
+        "thrW",
+        "yaaP",
+        "zzzA",
+    )
     assert summary.n_spacers == SYNTHETIC_KEPT_GUIDES
     assert summary.malformed_spacers == ()
     assert summary.per_screen == {
@@ -935,15 +877,17 @@ def test_one_pass_summarizes_the_store_the_supplementary_rows_read(built: Any) -
     assert len(summary.pins) == len(C.SCREENS)
 
 
-def test_the_stored_targets_row_accepts_genes_and_pseudogene_loci(
+def test_the_stored_targets_row_reports_the_symbols_the_assembly_cannot_place(
     built: Any, synthetic_mg1655: Any
 ) -> None:
-    """A pseudogene resolves to itself as ``non_gene_feature``, which is a locus."""
+    """A genome-reference finding: ``dup1`` and ``zzzA`` are stored and reported."""
     result = C.stored_tags_are_loci(
         C.summarize_store(_records(built)), synthetic_mg1655
     )
-    assert result.passed
+    assert not result.passed
+    assert result.finding_class.value == "report"
     assert result.details["n_targets"] == SYNTHETIC_TARGETS
+    assert result.details["not_a_locus"] == ["dup1", "zzzA"]
 
 
 def test_the_stored_targets_row_fails_on_a_tag_the_assembly_does_not_carry(
@@ -1023,11 +967,17 @@ def test_verify_build_runs_the_whole_gate_over_the_synthetic_store(
             "structural_validation",
             "count",
             "pair_uniqueness",
-            "stored_targets_are_loci_of_the_pinned_assembly",
             "guide_spacers_are_twenty_nt_acgt",
             "both_screens_are_balanced_and_strain_pinned",
         }
     ), [(r.name, r.message) for r in report.results if not r.passed]
+    # the two symbols the synthetic annotation cannot place are reported, not gated
+    assert all(
+        result.finding_class.value == "report"
+        for result in report.results
+        if not result.passed
+    )
+    assert report.passed
     written = json.loads(
         Path(built.root, "preprocess", "verification_report.json").read_text()
     )
@@ -1093,7 +1043,7 @@ def test_the_built_store_holds_the_pinned_records_over_the_pinned_targets() -> N
     accounting = json.loads(
         Path(root, "preprocess", "build_accounting.json").read_text()
     )
-    assert accounting["kept_records"] == C.EXPECTED_RECORDS == 141542
-    assert accounting["distinct_targets"] == C.EXPECTED_TARGETS == 4263
+    assert accounting["kept_records"] == C.EXPECTED_RECORDS == 143392
+    assert accounting["distinct_targets"] == C.EXPECTED_TARGETS == 4359
     assert accounting["dropped_records"] == 14732
     assert accounting["dropped_guides_by_reason"] == C.EXPECTED_DROPS

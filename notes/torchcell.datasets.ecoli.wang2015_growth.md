@@ -161,4 +161,13 @@ The same reversal as [[torchcell.datasets.ecoli.wang2015]]: the 46 fitness recor
 
 ### L0-L4 after the rebuild
 
-(L0-L4 table filled in after the rebuild)
+Rebuilt from this branch under slurm (job 4449, `build_dataset_lmdb --retire-existing --verify`), 46 records; `verify_build`: PASS.
+
+| level | check | result |
+|---|---|---|
+| L0 | records validate | pass, 46 |
+| L1 | count; (strain, environment) uniqueness; gap census; canonical spellings (no resolver supplied) | pass |
+| L2 | value fidelity; SE non-negative; stored SE at least the parent-conditioned derivation | pass |
+| L3 | reference fitness 1.0; compound identity; media membership | pass |
+| L4 (finding) | `gene_containment_bw25113_released_symbols` | 46 of 46 released gene symbols resolve to a BW25113 locus; reported, not gated |
+| L3 | provenance audit of every sourced value | pass |

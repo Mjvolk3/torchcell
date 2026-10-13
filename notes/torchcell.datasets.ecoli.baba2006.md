@@ -96,4 +96,14 @@ The schema change behind the None call (additive): [[torchcell.datamodels.schema
 
 ### L0-L4 after the rebuild
 
-(L0-L4 table filled in after the rebuild)
+Rebuilt from this branch under slurm (job 4445, `build_dataset_lmdb --retire-existing --verify`), 4,378 records; `run_verification`: PASS.
+
+| level | check | result |
+|---|---|---|
+| L0 | experiment and reference validate | pass, 4,378 records |
+| L1 | record count; one record per Keio JW id | pass, 4,378 of 4,378; 4,378 JW ids |
+| L2 | each record's JW id finds its Table 3 row: scoring outcome, N.A. gap, collection and PCR counts on the evidence | pass |
+| L3 | scoring rule reproduces 4,288 / 3,985 / 303 and Table 6; reference is the viable parent without kanamycin; construction-outcome evidence on every record (#924) | pass |
+| L1-L3 | shared rules (gap census 8,846 gaps over 4,378 records, canonical spellings, uncertainty, compound identity, media membership) | pass |
+| L4 (finding) | `gene_containment_bw25113_jw_synonyms` | 4,171 of 4,378 released JW ids are a `gene_synonym` of a BW25113 locus; 207 are not and 47 share a locus with another JW id; reported, not gated |
+| L3 | provenance audit of every sourced value | pass, 16 of 16 quotes verbatim in `paper/PMC1681482.1.txt` |

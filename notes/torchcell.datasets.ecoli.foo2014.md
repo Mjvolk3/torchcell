@@ -185,4 +185,13 @@ The eight tolerance genes are stored under the gene symbol the paper releases (`
 
 ### L0-L4 after the rebuild
 
-(L0-L4 table filled in after the rebuild)
+Rebuilt from this branch under slurm (job 4450, `build_dataset_lmdb --retire-existing --verify`), 9 records; the product-titer family runner: PASS with one genome finding.
+
+| level | check | result |
+|---|---|---|
+| L0 | records validate | pass, 9 |
+| L1 | count | pass, 9 of 9 |
+| L2 | titers finite; one perturbation per record | pass |
+| L3 | unit stored verbatim (mg/L as ug/mL); uncertainties typed gaps; canonical isoprenol entity; reference is the released PS+RFP titer | pass |
+| L4 | titer against the released improvement percent; construct against the deposited Table S3 | pass, 9 of 9 each |
+| L4 (finding) | `perturbed_gene_containment_assembly` | 0 of 8 released symbols are locus tags of the MG1655 assembly (they are gene symbols, not b-numbers); reported, not gated |

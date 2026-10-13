@@ -123,6 +123,7 @@ from torchcell.data.experiment_dataset import (
     ExperimentDataset,
     check_manifest_pin,
     link_verified,
+    post_process,
     verify_raw_files,
 )
 from torchcell.datamodels.compound_identity import resolved_compound
@@ -1138,6 +1139,7 @@ class CrispriKnockdownCui2018Dataset(ExperimentDataset):
         )
         log.info("Cui 2018 screen table linked into %s", self.raw_dir)
 
+    @post_process
     def process(self) -> None:
         """Build one record per (retained guide, screen); write LMDB."""
         verify_raw_files(self.raw_dir, {SCREEN_FILENAME: SCREEN_SHA256})

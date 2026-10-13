@@ -332,9 +332,17 @@ def test_classify_calls_keeps_every_gene_and_drops_only_unclear_calls(
     assert not hasattr(m, "reconcile_locus_tags")
 
 
-def test_classify_calls_refuses_two_kept_rows_on_one_gene() -> None:
-    calls = [_call("thrL", "essential"), _call("thrL", "essential", row=2)]
-    with pytest.raises(m.DuplicateRecordError, match="TL: two kept rows on thrL"):
+def test_classify_calls_keeps_two_rows_of_one_symbol_apart_by_their_row() -> None:
+    """The nine insertion-sequence symbols head several rows; each row is a record."""
+    calls = [_call("insH1", "essential"), _call("insH1", "essential", row=2)]
+    outcomes = m.classify_calls(calls)
+    assert [o.drop_rule for o in outcomes] == [None, None]
+    assert [m.strain_label(o.call) for o in outcomes] == ["TL row 1", "TL row 2"]
+
+
+def test_classify_calls_refuses_a_released_row_that_appears_twice() -> None:
+    calls = [_call("thrL", "essential"), _call("thrA", "essential")]
+    with pytest.raises(m.DuplicateRecordError, match="TL: row 1 appears twice"):
         m.classify_calls(calls)
 
 
@@ -436,7 +444,7 @@ def test_build_experiment_is_one_gene_level_insertion() -> None:
         "perturbed_gene_name": "thrA",
         "perturbation_type": "bacterial_released_transposon",
         "gene_namespace": "ecoli_k12_bw25113_locus_tag",
-        "strain_label": "thrA",
+        "strain_label": "TL row 1",
         "identifier_kind": m.IDENTIFIER_KIND,
         "transposon": "mini-Tn5",
         "barcode": None,
@@ -705,8 +713,8 @@ def test_verify_records_fails_on_tampered_records(
     (l2,) = [r for r in report.results if r.name == "calls_match_released_tables"]
     problems = l2.details["problems"]
     assert any("stored False, table essential" in p for p in problems)
-    assert any("None thrA: 0 table rows" in p for p in problems)
-    assert any("yaaX: 0 table rows" in p for p in problems)
+    assert any("no table row at" in p for p in problems)
+    assert any("stored yaaX" in p for p in problems)
 
 
 def test_verify_records_flags_a_stored_identifier_that_is_not_the_rows_gene(
@@ -725,9 +733,7 @@ def test_verify_records_flags_a_stored_identifier_that_is_not_the_rows_gene(
     report = _hermetic_report(built, bw25113, [moved, *records[1:]])
     (l2,) = [r for r in report.results if r.name == "calls_match_released_tables"]
     assert not l2.passed
-    assert l2.details["problems"] == [
-        f"TL {_gene(record)}: table gene thrL, stored yaaX"
-    ]
+    assert l2.details["problems"] == ["TL row 1: table gene thrL, stored yaaX"]
 
 
 def test_run_verification_writes_the_report(

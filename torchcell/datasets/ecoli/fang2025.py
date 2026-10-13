@@ -571,7 +571,7 @@ ROUNDS: tuple[Round, ...] = (
         fitness_all_column=21,
         carries_background_knockdown=False,
         floor_kept_rows=15380,
-        kept_records=15378,
+        kept_records=15380,
     ),
     Round(
         round_id="round_2_pcnbi",
@@ -586,7 +586,7 @@ ROUNDS: tuple[Round, ...] = (
         fitness_all_column=19,
         carries_background_knockdown=True,
         floor_kept_rows=331,
-        kept_records=330,
+        kept_records=331,
     ),
 )
 

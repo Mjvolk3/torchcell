@@ -437,3 +437,7 @@ Two rules remain, both about a missing genotype rather than a name: `no_target_i
 Pins, measured on the pinned bytes: `EXPECTED_RECORDS` 141,542 -> 143,392; `EXPECTED_TARGETS` 4,263 -> 4,359 (the distinct released symbols on a kept guide; the release names 4,360 in all, the one difference being a symbol only on a mixed-target guide).
 
 Released vs stored: 85,381 released rows over 78,137 guides = 156,274 candidate (guide, screen) records = 143,392 records + 12,536 on guides with no in-gene match + 346 on partly intergenic guides.
+
+### 2026.10.12 - The build manifest, restored
+
+Job 4515 wrote all 143,392 records, the 4,359-gene set and both references, then failed its manifest check: removing the `_genome` accessor took the `@post_process` decorator (and its import) off `process()` with it, so `write_build_manifest` never ran. Restored; the records and counts are unchanged.

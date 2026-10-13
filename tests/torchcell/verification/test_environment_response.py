@@ -91,7 +91,11 @@ EDIT_OK = (
 
 
 def _environment(
-    *, perturbed: bool = True, temperature: float = 30, media: Media = YP_GALACTOSE
+    *,
+    perturbed: bool = True,
+    temperature: float = 30,
+    media: Media = YP_GALACTOSE,
+    aerobicity: str = "aerobic",
 ) -> Environment:
     perturbations: list[EnvironmentPerturbationType] = (
         [
@@ -107,6 +111,7 @@ def _environment(
         media=media,
         temperature=Temperature(value=temperature),
         perturbations=perturbations,
+        aerobicity=aerobicity,
     )
 
 
@@ -574,6 +579,28 @@ def test_unperturbed_record_at_baseline_is_flagged_and_shifts_are_edits() -> Non
             "baseline_temperature": 30.0,
             "baseline_media": "YP + 2% galactose",
         }
+
+
+def test_an_oxygen_regime_shift_on_the_baseline_medium_is_an_edit() -> None:
+    """Nichols 2011's ANAEROBIC screen sits on the baseline LB agar at the baseline
+    37 C with no perturbation object: its edit is the oxygen regime. Three perturbed
+    records plus one anaerobic record at the baseline medium and temperature, and one
+    genuinely unperturbed aerobic record: exactly one record has no edit.
+    """
+    records = _release()
+    records += [
+        _record(
+            "YCR001W",
+            _numeric(0.1),
+            _numeric(0.0),
+            _environment(perturbed=False, aerobicity="anaerobic"),
+        ),
+        _record("YDR001C", _numeric(0.2), _numeric(0.0), _environment(perturbed=False)),
+    ]
+    eager, streaming = _both(records, expected_count=5)
+    for report in (eager, streaming):
+        assert _details(report, "environment_perturbed")["n_missing"] == 1
+        assert _row(report, "environment_perturbed")[2] is False
 
 
 def _deletion(gene: str, name: str | None = None, **extra: Any) -> dict[str, Any]:

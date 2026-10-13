@@ -919,6 +919,13 @@ def _modal_scalar(
     return values.most_common(1)[0][0] if values else None
 
 
+def _scalar_edit(value: Any, baseline: Any) -> bool:
+    """A stated base-environment scalar that differs from the dataset's modal value is a
+    genuine environmental edit; ``None`` (unstated, or a typed gap) never is.
+    """
+    return value is not None and value != baseline
+
+
 def _l3_environment_perturbed(
     records: Sequence[Record], expected_unperturbed: int = 0
 ) -> LevelResult:
@@ -941,6 +948,8 @@ def _l3_environment_perturbed(
     baseline_media = _modal_scalar(
         records, lambda e: (e.get("media") or {}).get("name")
     )
+    baseline_oxygen = _modal_scalar(records, lambda e: e.get("aerobicity"))
+    baseline_phase = _modal_scalar(records, lambda e: e.get("growth_phase"))
     n_missing = 0
     for rec in records:
         env = rec["experiment"]["environment"]
@@ -952,6 +961,10 @@ def _l3_environment_perturbed(
         media = (env.get("media") or {}).get("name")
         if media is not None and media != baseline_media:
             continue  # base-medium swap (minimal / synthetic complete) -- genuine edit
+        if _scalar_edit(env.get("aerobicity"), baseline_oxygen):
+            continue  # oxygen-regime edit (an anaerobic screen on the baseline medium)
+        if _scalar_edit(env.get("growth_phase"), baseline_phase):
+            continue  # growth-phase edit (a stationary arm of the baseline culture)
         n_missing += 1
     return _environment_perturbed_result(
         n_records=len(records),
@@ -1147,7 +1160,9 @@ def verify_environment_response_dataset_streaming(
     # and resolve after the pass (the no-perturbation set is small).
     temp_counts: Counter[Any] = Counter()
     media_counts: Counter[Any] = Counter()
-    no_pert_env: list[tuple[Any, Any]] = []
+    oxygen_counts: Counter[Any] = Counter()
+    phase_counts: Counter[Any] = Counter()
+    no_pert_env: list[tuple[Any, Any, Any, Any]] = []
     # #776: the two declared-count rules and the absolute-reference branch, as
     # accumulators, so the streaming report carries exactly the eager one's rows.
     from torchcell.datamodels.schema import ABSOLUTE_MEASUREMENT_TYPES
@@ -1219,10 +1234,14 @@ def verify_environment_response_dataset_streaming(
         media = (exp["environment"].get("media") or {}).get("name")
         # None counts as a baseline value, as in _modal_scalar: a gapped baseline
         # temperature is an unstated one, and a stated temperature differs from it.
+        oxygen = exp["environment"].get("aerobicity")
+        phase = exp["environment"].get("growth_phase")
         temp_counts[temp] += 1
         media_counts[media] += 1
+        oxygen_counts[oxygen] += 1
+        phase_counts[phase] += 1
         if not (exp["environment"].get("perturbations") or []):
-            no_pert_env.append((temp, media))
+            no_pert_env.append((temp, media, oxygen, phase))
 
     report = VerificationReport(dataset_name=dataset_name, provenance=provenance)
     report.add(
@@ -1279,11 +1298,15 @@ def verify_environment_response_dataset_streaming(
     )
     baseline_temp = temp_counts.most_common(1)[0][0] if temp_counts else None
     baseline_media = media_counts.most_common(1)[0][0] if media_counts else None
+    baseline_oxygen = oxygen_counts.most_common(1)[0][0] if oxygen_counts else None
+    baseline_phase = phase_counts.most_common(1)[0][0] if phase_counts else None
     n_env_missing = sum(
         1
-        for temp, media in no_pert_env
-        if not (temp is not None and temp != baseline_temp)
-        and not (media is not None and media != baseline_media)
+        for temp, media, oxygen, phase in no_pert_env
+        if not _scalar_edit(temp, baseline_temp)
+        and not _scalar_edit(media, baseline_media)
+        and not _scalar_edit(oxygen, baseline_oxygen)
+        and not _scalar_edit(phase, baseline_phase)
     )
     report.add(
         _environment_perturbed_result(

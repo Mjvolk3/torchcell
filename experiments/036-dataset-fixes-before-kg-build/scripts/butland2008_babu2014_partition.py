@@ -19,7 +19,9 @@ pins take.
 #1057 (the owner rule of 2026-10-12: the data is the data) re-measured it again: both
 loaders now store every released id as released (an id that is no b-number on the
 released-strain leaf), so the served side grew to 1,129 and no cell is dropped on its
-identifier.
+identifier. Part 2 of #1057 stopped dropping the cells Babu re-released and the 0.0
+cells over all-zero colonies, so the partition now RECORDS the overlap: each release is
+stored as released, and the only Butland drop left is the self pair.
 
 This script is the measurement behind the new pins. Nothing here is read from the
 loader's docstring or from a build log: the served side comes from the rebuilt Babu dev
@@ -37,15 +39,17 @@ What it measures:
 2. **Where each served Butland-screen pair sits in the release.** Each of the 1,125 is
    located in the 39 x 8,073 matrix and classified by the FIRST Butland retention rule
    that applies to it, which is what decides whether it reaches the served rule at all.
-3. **The new Butland ledger.** The three retention rules re-applied in order, giving the
-   kept-record and kept-pair counts split by recipient row label, and the cells the
-   served rule now removes.
-4. **No measurement stored twice.** The experiment content ids of both built stores (the
-   id a knowledge-graph build writes,
-   ``sha256(json.dumps(experiment.model_dump()))``, from
-   ``torchcell/adapters/cell_adapter.py::_experiment_node``) must be disjoint, and so must
-   the two stores' oriented gene pairs. This step needs the Butland store built, so it is
-   skipped with a stated reason when it is absent.
+3. **The new Butland ledger.** Each released cell's category (self pair, a 0.0 over
+   all-zero colonies, a pair the Babu store also holds, or plain), in the loader's
+   order, giving the kept-record count (every cell but the self pairs), the kept pairs
+   split by recipient row label, and the cells the Babu store also holds.
+4. **The overlap of the two built stores.** The experiment content ids (the id a
+   knowledge-graph build writes, ``sha256(json.dumps(experiment.model_dump()))``, from
+   ``torchcell/adapters/cell_adapter.py::_experiment_node``) and the oriented gene pairs
+   both stores hold. Since #1057 part 2 the shared pairs are the recorded overlap; the
+   content ids stay distinct because each record carries its own release's score. This
+   step needs the Butland store built, so it is skipped with a stated reason when it is
+   absent.
 
 Writes
 ``experiments/036-dataset-fixes-before-kg-build/results/butland2008_babu2014_partition.json``.
@@ -102,10 +106,11 @@ def served_side(served_root: str) -> dict[str, Any]:
             str(by_cassette[QUERY_CASSETTE]["systematic_gene_name"]),
             str(by_cassette[RECIPIENT_CASSETTE]["systematic_gene_name"]),
         )
-        if pair in pairs:
-            raise RuntimeError(f"the served store holds {pair} twice")
         screen = str(experiment["phenotype"]["screen_id"])
-        pairs[pair] = screen
+        if pair in pairs and BABU_SCREEN_TAG in (screen, pairs[pair]):
+            raise RuntimeError(f"the served store holds {pair} twice")
+        # Babu's two twice-released pairs (#1057) keep their first row-named screen
+        pairs.setdefault(pair, screen)
         screens[screen] += 1
         signature = "+".join(
             f"{cassette}:{leaf['perturbation_type']}"
@@ -152,13 +157,12 @@ def release_side(raw_dir: str) -> dict[str, Any]:
 def ledger(
     release: dict[str, Any], served: dict[tuple[str, str], str]
 ) -> dict[str, Any]:
-    """Re-apply the three retention rules in the loader's order over every released cell.
+    """Assign every released cell its category in the loader's order, and count them.
 
-    The per-cell rule the matrix assigns is also returned per oriented pair, which is
-    what locates each served pair in the release. There is no longer a SPA-tag rule:
-    this loader stores a ``SPA-tag essential`` recipient on
-    ``BacterialMarkedAllelePerturbation`` (issue #792), so those cells reach every later
-    rule and the kept records are counted by row label too.
+    The per-cell category is also returned per oriented pair, which is what locates each
+    served pair in the release. Only the self pair drops (#1057 part 2); the 0.0 cells
+    over all-zero colonies and the pairs the Babu store also holds are stored and
+    counted under their category.
     """
     scores = release["scores"]
     block, colonies, zero_colonies = (
@@ -167,6 +171,7 @@ def ledger(
         release["zero_colonies"],
     )
     rules: Counter[str] = Counter()
+    recorded: Counter[str] = Counter()
     pair_rule: dict[tuple[str, str], set[str]] = {}
     pair_label: dict[tuple[str, str], str] = {}
     stored_pairs: set[tuple[str, str]] = set()
@@ -184,20 +189,22 @@ def ledger(
                 and float(block[row, column]) == 0.0
             ):
                 rule = b.RULE_CONTRADICTION
-            elif pair in served:
+            elif served.get(pair) == BABU_SCREEN_TAG:
                 rule = b.RULE_SERVED
             else:
                 rule = "stored"
             pair_rule.setdefault(pair, set()).add(rule)
             pair_label[pair] = label
-            if rule == "stored":
-                kept += 1
-                kept_by_label[label] += 1
-                stored_pairs.add(pair)
-            else:
+            if rule in b.DROP_RULES:
                 rules[rule] += 1
-                if rule == b.RULE_SERVED:
-                    served_by_label[label] += 1
+                continue
+            if rule != "stored":
+                recorded[rule] += 1
+            kept += 1
+            kept_by_label[label] += 1
+            stored_pairs.add(pair)
+            if rule == b.RULE_SERVED:
+                served_by_label[label] += 1
     released_cells = len(scores.recipient_tags) * len(scores.query_tags)
     dropped = sum(rules.values())
     if dropped + kept != released_cells:
@@ -208,6 +215,7 @@ def ledger(
         "kept_oriented_pairs": len(stored_pairs),
         "dropped_records": dropped,
         "dropped_by_rule": {rule: rules[rule] for rule in b.DROP_RULES},
+        "stored_by_category": {name: recorded[name] for name in b.RECORDED_CELLS},
         "kept_by_row_label": dict(sorted(kept_by_label.items())),
         "served_rule_cells_by_row_label": dict(sorted(served_by_label.items())),
         "pair_rule": pair_rule,
@@ -312,6 +320,9 @@ def main() -> int:
             "babu_content_ids": len(served["content_ids"]),
             "shared_content_ids": len(shared_ids),
             "shared_oriented_pairs": len(shared_pairs),
+            "shared_butland_screen_pairs": len(
+                stored["oriented_pairs"] & butland_pairs
+            ),
             "shared_examples": sorted(shared_ids)[:5],
         }
     record = {
@@ -326,17 +337,18 @@ def main() -> int:
             "kept_oriented_pairs": counts["kept_oriented_pairs"],
             "dropped_records": counts["dropped_records"],
             "dropped_by_rule": counts["dropped_by_rule"],
+            "stored_by_category": counts["stored_by_category"],
             "kept_by_row_label": counts["kept_by_row_label"],
             "served_rule_cells_by_row_label": counts["served_rule_cells_by_row_label"],
             "n_queries": len(set(release["scores"].query_tags)),
             "n_recipient_rows": len(release["scores"].recipient_tags),
         },
         "served_butland_screen_pairs_located": located,
-        "nothing_stored_twice": overlap,
+        "overlap_of_the_two_stores": overlap,
         "pins": {
             "SERVED_BUTLAND_RECORDS": len(butland_pairs),
             "SERVED_BUTLAND_PAIRS": len(butland_pairs),
-            "SERVED_OVERLAP_CELLS": counts["dropped_by_rule"][b.RULE_SERVED],
+            "SERVED_OVERLAP_CELLS": counts["stored_by_category"][b.RULE_SERVED],
             "SERVED_OVERLAP_PAIRS": located["by_first_rule_that_applies"].get(
                 b.RULE_SERVED, 0
             ),

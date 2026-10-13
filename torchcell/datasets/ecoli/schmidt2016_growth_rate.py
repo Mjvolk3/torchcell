@@ -26,9 +26,12 @@ collection19. Correctness of the deletions were checked by PCR." So ``collection
 ``"KEIO collection"`` verbatim and the background is the same BW25113 the proteome map
 uses. The replacement cassette is NOT stated by this paper -- it is a property of the
 Keio collection that Baba 2006 states and that is not in this mirror -- so ``cassette``
-is a typed gap rather than a guess. Measured against the pinned BW25113 annotation, all
-three symbols resolve through the gene-symbol layer with no collision and no ambiguity:
-``rimI -> BW25113_4373``, ``rimJ -> BW25113_1066``, ``rimL -> BW25113_1427``.
+is a typed gap rather than a guess. Each deletion is a ``BacterialReleasedStrainPerturbation``
+of ``released_kind=deletion`` keyed by the gene symbol its row label releases (``ΔrimI``
+-> ``rimI``), the row label as the strain label (#1045 part 2): the loader reads no
+annotation. Until #1045 part 2 each symbol was resolved to a BW25113 locus tag
+(``rimI -> BW25113_4373``, ``rimJ -> BW25113_1066``, ``rimL -> BW25113_1427``); that
+crosswalk is a modeling-time join now.
 
 WHY ``FitnessPhenotype`` AND NOT A LOG RATIO. ``FitnessPhenotype`` is documented as
 ``ko_growth_rate/wt_growth_rate`` and its validator CLAMPS a non-positive value to 0.0,
@@ -117,25 +120,22 @@ from torchcell.data import (
     verify_raw_files,
 )
 from torchcell.datamodels.schema import (
-    BacterialDeletionPerturbation,
     BacterialFitnessExperiment,
     BacterialFitnessExperimentReference,
-    DerivedIdentifierMapping,
+    BacterialReleasedStrainPerturbation,
     Environment,
     Experiment,
     ExperimentReference,
     FitnessPhenotype,
     Genotype,
+    ReleasedStrainKind,
     SampleUnit,
     UncertaintyType,
 )
 from torchcell.datasets.bacteria_common import (
-    BACTERIAL_ASSEMBLY_SETS,
     STRAIN_GENE_NAMESPACES,
-    LocusTagReconciliation,
     assembly_reference,
     bacterial_genome,
-    reconcile_locus_tags,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.datasets.ecoli import schmidt2016 as sm
@@ -180,9 +180,6 @@ EXPECTED_RECORDS = 6
 EXPECTED_REFERENCES = 2
 #: Relative tolerance of the released-statistics identities against the bytes.
 IDENTITY_RTOL = 1e-9
-#: Measured: all three symbols resolve, so the floor is 1.0 and a renamed strain label
-#: stops the build instead of silently dropping a record.
-MIN_RESOLVED_FRACTION = 1.0
 #: Table S23's own BW25113 rate is within this relative distance of Table S24's
 #: wild-type average for the SAME medium (measured: 0.019 glucose, 0.034 acetate) and
 #: far outside it for the other one (0.97 and 0.46).
@@ -638,17 +635,17 @@ def reference_phenotype(wild_type: StrainRates) -> FitnessPhenotype:
     )
 
 
-def build_genotype(strain: StrainRates, locus_tag: str) -> Genotype:
-    """One KEIO single deletion, written against the pinned BW25113 assembly."""
+def build_genotype(strain: StrainRates) -> Genotype:
+    """One KEIO single deletion, keyed by the symbol its row label releases."""
     return Genotype(
         perturbations=[
-            BacterialDeletionPerturbation(
-                systematic_gene_name=locus_tag,
+            BacterialReleasedStrainPerturbation(
+                systematic_gene_name=strain.gene_symbol,
                 perturbed_gene_name=strain.gene_symbol,
                 gene_namespace=BW25113_NAMESPACE,
-                identifier_mapping=DerivedIdentifierMapping(
-                    source_identifier=strain.strain, route="gene_symbol"
-                ),
+                strain_label=strain.strain,
+                identifier_kind="gene symbol",
+                released_kind=ReleasedStrainKind.deletion,
                 collection=KEIO_COLLECTION,
             )
         ]
@@ -671,23 +668,6 @@ def build_environments() -> dict[str, Environment]:
     return environments
 
 
-def resolve_deletions(
-    blocks: Sequence[MediumBlock], genome: EcoliK12Genome, *, label: str
-) -> tuple[dict[str, str], LocusTagReconciliation]:
-    """``{gene symbol: locus tag}`` for the deletion labels, plus the resolver report."""
-    symbols = sorted({row.gene_symbol for block in blocks for row in block.deletions})
-    stored, report = reconcile_locus_tags(genome, pd.Series(symbols), label=label)
-    report.require_resolved(MIN_RESOLVED_FRACTION)
-    outside = set(report.outside_namespace)
-    unresolved = [tag for tag in stored if tag in outside]
-    if unresolved:
-        raise RuntimeError(f"{label}: {unresolved} resolve to no BW25113 locus")
-    locus_tag = {symbol: str(tag) for symbol, tag in zip(symbols, stored, strict=True)}
-    if len(set(locus_tag.values())) != len(locus_tag):
-        raise RuntimeError(f"{label}: two deletion labels share one locus tag")
-    return locus_tag, report
-
-
 # --------------------------------------------------------------------------- #
 # The dataset
 # --------------------------------------------------------------------------- #
@@ -705,11 +685,9 @@ class GrowthRateSchmidt2016Dataset(ExperimentDataset):
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
-        ecoli_genome: EcoliK12Genome | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize; ``ecoli_genome`` is injected by the build entry points."""
-        self.ecoli_genome = ecoli_genome
+        """Initialize; the loader reads no annotation (#1045 part 2)."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -746,18 +724,6 @@ class GrowthRateSchmidt2016Dataset(ExperimentDataset):
             self.raw_dir,
         )
 
-    def _genome(self) -> EcoliK12Genome:
-        """The injected genome, or the reference strain's default cache."""
-        if self.ecoli_genome is None:
-            self.ecoli_genome = bacterial_genome("ecoli", self.REFERENCE_STRAIN)
-        expected = BACTERIAL_ASSEMBLY_SETS[self.REFERENCE_STRAIN]
-        if self.ecoli_genome.ASSEMBLY_SET != expected:
-            raise ValueError(
-                f"{type(self).__name__} needs the {expected} genome, got "
-                f"{self.ecoli_genome.ASSEMBLY_SET}"
-            )
-        return self.ecoli_genome
-
     @post_process
     def process(self) -> None:
         """Build one fitness record per (deletion strain, medium) and write the LMDB."""
@@ -767,10 +733,6 @@ class GrowthRateSchmidt2016Dataset(ExperimentDataset):
         statistics_check = check_released_statistics(blocks)
         header_check = check_medium_headers(
             blocks, read_table_s23_wild_type_rates(path)
-        )
-        genome = self._genome()
-        locus_tag, report = resolve_deletions(
-            blocks, genome, label=f"{self.name} deletion labels"
         )
         environments = build_environments()
         reference_genome = assembly_reference(self.REFERENCE_STRAIN)
@@ -794,7 +756,7 @@ class GrowthRateSchmidt2016Dataset(ExperimentDataset):
                     phenotype = fitness_phenotype(strain, block.wild_type)
                     experiment = BacterialFitnessExperiment(
                         dataset_name=self.name,
-                        genotype=build_genotype(strain, locus_tag[strain.gene_symbol]),
+                        genotype=build_genotype(strain),
                         environment=environment,
                         phenotype=phenotype,
                     )
@@ -808,7 +770,6 @@ class GrowthRateSchmidt2016Dataset(ExperimentDataset):
                             "medium": block.medium,
                             "strain": strain.strain,
                             "gene_symbol": strain.gene_symbol,
-                            "locus_tag": locus_tag[strain.gene_symbol],
                             "n_samples": strain.n_samples,
                             "growth_rate_h1": strain.mean,
                             "wild_type_growth_rate_h1": block.wild_type.mean,
@@ -823,7 +784,7 @@ class GrowthRateSchmidt2016Dataset(ExperimentDataset):
 
         if index != EXPECTED_RECORDS:
             raise RuntimeError(f"{index} records, the module states {EXPECTED_RECORDS}")
-        self._write_ledgers(blocks, rows, report, statistics_check, header_check)
+        self._write_ledgers(blocks, rows, statistics_check, header_check)
         log.info(
             "Schmidt 2016 Table S24: %d records (+ %d wild-type references) over %d "
             "media; fitness range %.6f to %.6f",
@@ -838,7 +799,6 @@ class GrowthRateSchmidt2016Dataset(ExperimentDataset):
         self,
         blocks: Sequence[MediumBlock],
         rows: Sequence[Mapping[str, Any]],
-        report: LocusTagReconciliation,
         statistics_check: Mapping[str, Any],
         header_check: Mapping[str, Any],
     ) -> None:
@@ -861,14 +821,14 @@ class GrowthRateSchmidt2016Dataset(ExperimentDataset):
                         f"{len(blocks)} wild-type rows, which are the per-medium "
                         "phenotype_reference rather than records: an unperturbed parent "
                         "is the reference a fitness ratio is taken against",
-                        "no row is dropped; both media have a MEDIA_LIBRARY entry and "
-                        "all three deletion labels resolve to a BW25113 locus",
+                        "no row is dropped; both media have a MEDIA_LIBRARY entry, and "
+                        "each deletion is keyed by the symbol its row label releases "
+                        "(#1045 part 2)",
                         "Table S23's 26 per-condition growth rates are NOT loaded: an "
                         "absolute rate has no MeasurementType member (gap 1 of the E. "
                         "coli SI audit), two of its rows are negative, and its Stdev's "
                         "replicate design is neither stated nor back-solvable",
                     ],
-                    "reconciliation": report.model_dump(mode="json"),
                 },
                 indent=2,
             )
@@ -896,7 +856,7 @@ class GrowthRateSchmidt2016Dataset(ExperimentDataset):
             json.dumps(
                 {
                     "dataset": self.name,
-                    "carrier": "BacterialDeletionPerturbation",
+                    "carrier": "BacterialReleasedStrainPerturbation",
                     "note": "the leaf is not a ProvenanceGapMixin, so these typed "
                     "absences are recorded here rather than on the record",
                     "gaps": [gap.model_dump(mode="json") for gap in PERTURBATION_GAPS],

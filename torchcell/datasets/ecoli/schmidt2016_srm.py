@@ -83,8 +83,8 @@ build time so a corrected re-export is visible instead of silent, and the findin
 recorded in the dendron note.
 
 THE RECORD GRAIN, AND THE DROPS. One ``BacterialProteinAbundanceExperiment`` per loaded
-growth condition, keyed by BW25113 locus tag, which is the grain the stored Table S6
-block uses. Each arm's glucose condition is the ``phenotype_reference`` rather than a
+growth condition, keyed by the released ``Gene`` symbol (#1045 part 2), which is the
+key the stored Table S6 block uses. Each arm's glucose condition is the ``phenotype_reference`` rather than a
 record, as it is there. The same structural condition rule applies, for the same
 measured reason (``schmidt2016.py``'s ``DropReason`` is reused verbatim, so there is one
 statement of it): the two stationary-phase arms collapse onto the exponential glucose
@@ -94,17 +94,17 @@ glycerol + amino acid arm (set 2) and the four chemostat arms (both sets) were d
 too (11 and 14 records); they now carry ``M9_AA_SCHMIDT2016`` and
 ``Environment.dilution_rate_per_hour``.
 
-IDENTIFIERS. Each released ``Gene`` symbol is resolved against the pinned BW25113
-GenBank annotation through ``reconcile_locus_tags``, the same derived route the stored
-block takes, because the records are BW25113 and these tables release no b-number at
-all. Measured: 41 of 41 and 31 of 31 symbols resolve (39 and 29 through the gene-symbol
-layer, 2 and 2 through a gene synonym) with no collision and no ambiguity. The one
-identifier inconsistency inside the release is pinned rather than smoothed over:
-``P0ACP1`` is ``cra`` in Table S1 and in its own UniProt description's ``GN=`` token but
-``fruR`` in Tables S2 and S3. They are synonyms of one gene and both resolve to the same
-locus; ``check_identifier_columns`` asserts that this is the ONLY accession whose gene
-name disagrees between the panel table and the measurement tables, and that every
-released peptide sequence matches Table S1's selected proteotypic peptide exactly.
+IDENTIFIERS. The stored key is each accession's released ``Gene`` symbol in the
+measurement table, verbatim (#1045 part 2): the loader reads no annotation, and a
+crosswalk to a BW25113 locus tag is a modeling-time join (until #1045 part 2 every symbol
+was resolved to one, 41 of 41 and 31 of 31, 2 and 2 of them through a gene synonym).
+These tables release no b-number. The one identifier inconsistency inside the release
+is pinned rather than smoothed over: ``P0ACP1`` is ``cra`` in Table S1 and in its own
+UniProt description's ``GN=`` token but ``fruR`` in Tables S2 and S3, so its key is
+``fruR``, the measurement table's own; ``check_identifier_columns`` asserts that this
+is the ONLY accession whose gene name disagrees between the panel table and the
+measurement tables, and that every released peptide sequence matches Table S1's
+selected proteotypic peptide exactly.
 
 DATA. The one consumed file is ``si2.xlsx``, the same pinned Supplementary-tables
 workbook ``schmidt2016.py`` consumes, read from the same raw mirror under the same
@@ -150,13 +150,7 @@ from torchcell.datamodels.schema import (
     ProteinAbundancePhenotype,
     Publication,
 )
-from torchcell.datasets.bacteria_common import (
-    BACTERIAL_ASSEMBLY_SETS,
-    LocusTagReconciliation,
-    assembly_reference,
-    bacterial_genome,
-    reconcile_locus_tags,
-)
+from torchcell.datasets.bacteria_common import assembly_reference, bacterial_genome
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.datasets.ecoli import schmidt2016 as sm
 from torchcell.sequence import GeneSet
@@ -191,10 +185,6 @@ SRM_SD_BIOLOGICAL = "Standard Deviation (copies/cell) from Biological Triplicate
 GENE_NAME_DISAGREEMENT = {"P0ACP1": ("cra", "fruR")}
 #: Relative tolerance below which two released numbers count as the same number.
 IDENTITY_RTOL = 1e-6
-#: Measured: every released symbol resolves in both panels, so a renamed one stops the
-#: build instead of silently shrinking the abundance map.
-MIN_RESOLVED_FRACTION = 1.0
-
 SCHMIDT_REFERENCE_STRAIN: EcoliK12StrainName = sm.SCHMIDT_REFERENCE_STRAIN
 #: Table S6's own condition-coverage pattern: the four columns every dataset-1 row
 #: marks ``NA``, measured over its 301 dataset-1 rows.
@@ -758,8 +748,9 @@ class ArmSelection(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    locus_tag: dict[str, str] = Field(description="uniprot accession -> locus tag")
-    reconciliation: LocusTagReconciliation
+    key: dict[str, str] = Field(
+        description="uniprot accession -> its released Gene symbol, the stored key"
+    )
     loaded_columns: list[str] = Field(
         description="Table S6 condition columns this arm loads, the reference included"
     )
@@ -768,21 +759,21 @@ class ArmSelection(BaseModel):
     )
 
 
-def select_arm(
-    cells: Sequence[SrmCell], genome: EcoliK12Genome, *, label: str
-) -> ArmSelection:
-    """Resolve the arm's gene symbols, and partition its conditions by the drop rules."""
-    accessions = sorted({cell.uniprot for cell in cells})
-    genes = {cell.uniprot: cell.gene for cell in cells}
-    stored, report = reconcile_locus_tags(
-        genome, pd.Series([genes[key] for key in accessions]), label=label
-    )
-    report.require_resolved(MIN_RESOLVED_FRACTION)
-    # #1057: a symbol the annotation resolves to no locus is stored as released (the
-    # reconciler keeps it as given); none does on this release
-    locus_tag = {key: str(tag) for key, tag in zip(accessions, stored, strict=True)}
-    if len(set(locus_tag.values())) != len(locus_tag):
-        raise RuntimeError(f"{label}: two released symbols share one locus tag")
+def select_arm(cells: Sequence[SrmCell], *, label: str) -> ArmSelection:
+    """Key the arm's accessions by their released symbols; partition its conditions.
+
+    The loader reads no annotation (#1045 part 2): an accession's stored key is the
+    ``Gene`` symbol its own measurement rows release, which must be one symbol per
+    accession and one accession per symbol.
+    """
+    genes: dict[str, set[str]] = {}
+    for cell in cells:
+        genes.setdefault(cell.uniprot, set()).add(cell.gene)
+    if any(len(names) != 1 for names in genes.values()):
+        raise RuntimeError(f"{label}: an accession carries two released symbols")
+    key = {accession: next(iter(names)) for accession, names in sorted(genes.items())}
+    if len(set(key.values())) != len(key):
+        raise RuntimeError(f"{label}: two accessions share one released symbol")
 
     labels = sorted({cell.condition for cell in cells})
     dropped: dict[str, list[str]] = {}
@@ -799,8 +790,7 @@ def select_arm(
             dropped.setdefault(reason.rule, []).append(released)
     order = [spec.s6_column for spec in sm.CONDITIONS]
     return ArmSelection(
-        locus_tag=locus_tag,
-        reconciliation=report,
+        key=key,
         loaded_columns=sorted(loaded, key=order.index),
         dropped={rule: sorted(items) for rule, items in dropped.items()},
     )
@@ -808,13 +798,13 @@ def select_arm(
 
 def build_phenotype(
     cells: Sequence[SrmCell],
-    locus_tag: Mapping[str, str],
+    key: Mapping[str, str],
     column: str,
     *,
     measurement_type: str,
     n_replicates: int,
 ) -> ProteinAbundancePhenotype:
-    """The SRM abundance profile of one condition, keyed by BW25113 locus tag.
+    """The SRM abundance profile of one condition, keyed by released symbol.
 
     The released standard deviation is a dispersion of ``n_replicates`` observations, so
     the stored standard error divides it by ``sqrt(n)``. A released dispersion of exactly
@@ -832,7 +822,7 @@ def build_phenotype(
             continue
         if CONDITION_LABELS[cell.condition] != column:
             continue
-        tag = locus_tag[cell.uniprot]
+        tag = key[cell.uniprot]
         abundance[tag] = cell.copies_per_cell
         standard_error[tag] = cell.standard_deviation / math.sqrt(n_replicates)
         replicates[tag] = n_replicates
@@ -875,11 +865,9 @@ class _SrmSchmidt2016Dataset(ExperimentDataset):
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
-        ecoli_genome: EcoliK12Genome | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize; ``ecoli_genome`` is injected by the build entry points."""
-        self.ecoli_genome = ecoli_genome
+        """Initialize; the loader reads no annotation (#1045 part 2)."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -918,7 +906,7 @@ class _SrmSchmidt2016Dataset(ExperimentDataset):
         )
 
     def compute_gene_set(self) -> GeneSet:
-        """The BW25113 loci this arm's abundance profiles are keyed by.
+        """The released gene symbols this arm's abundance profiles are keyed by.
 
         Every record is wild type, so no genotype names a gene and the base class's
         genotype scan would return the empty set it refuses. This is the same override
@@ -933,18 +921,6 @@ class _SrmSchmidt2016Dataset(ExperimentDataset):
                 genes.update(record["experiment"]["phenotype"]["protein_abundance"])
         self.close_lmdb()
         return genes
-
-    def _genome(self) -> EcoliK12Genome:
-        """The injected genome, or the reference strain's default cache."""
-        if self.ecoli_genome is None:
-            self.ecoli_genome = bacterial_genome("ecoli", self.REFERENCE_STRAIN)
-        expected = BACTERIAL_ASSEMBLY_SETS[self.REFERENCE_STRAIN]
-        if self.ecoli_genome.ASSEMBLY_SET != expected:
-            raise ValueError(
-                f"{type(self).__name__} needs the {expected} genome, got "
-                f"{self.ecoli_genome.ASSEMBLY_SET}"
-            )
-        return self.ecoli_genome
 
     @post_process
     def process(self) -> None:
@@ -976,8 +952,7 @@ class _SrmSchmidt2016Dataset(ExperimentDataset):
             sheet=self.SHEET,
         )
 
-        genome = self._genome()
-        selection = select_arm(cells, genome, label=f"{self.name} gene symbols")
+        selection = select_arm(cells, label=f"{self.name} gene symbols")
         environments = {
             column: sm.build_environment(sm.CONDITIONS_BY_COLUMN[column])
             for column in selection.loaded_columns
@@ -986,7 +961,7 @@ class _SrmSchmidt2016Dataset(ExperimentDataset):
         phenotypes = {
             column: build_phenotype(
                 cells,
-                selection.locus_tag,
+                selection.key,
                 column,
                 measurement_type=self.MEASUREMENT_TYPE,
                 n_replicates=self.N_REPLICATES,
@@ -1118,7 +1093,6 @@ class _SrmSchmidt2016Dataset(ExperimentDataset):
                         }
                         for rule, items in sorted(selection.dropped.items())
                     ],
-                    "reconciliation": selection.reconciliation.model_dump(mode="json"),
                     "notes": [
                         f"{len(cells)} released rows = "
                         f"{len({cell.uniprot for cell in cells})} panel proteins x "
@@ -1166,10 +1140,10 @@ class _SrmSchmidt2016Dataset(ExperimentDataset):
                     "table_s1_gene": panel[accession].gene,
                     "peptide": panel[accession].peptide,
                     "spike_fmol_per_ug": panel[accession].spike_fmol_per_ug,
-                    "stored_locus_tag": tag,
+                    "stored_key": tag,
                     "n_replicates": self.N_REPLICATES,
                 }
-                for accession, tag in sorted(selection.locus_tag.items())
+                for accession, tag in sorted(selection.key.items())
             ]
         ).to_csv(out / "protein_identifiers.csv", index=False)
 
@@ -1205,18 +1179,10 @@ class ProteomeSrmSet1Schmidt2016Dataset(_SrmSchmidt2016Dataset):
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
-        ecoli_genome: EcoliK12Genome | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize with this arm's own build root."""
-        super().__init__(
-            root,
-            io_workers,
-            transform,
-            pre_transform,
-            ecoli_genome=ecoli_genome,
-            **kwargs,
-        )
+        super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
 
 @register_dataset
@@ -1242,18 +1208,10 @@ class ProteomeSrmSet2Schmidt2016Dataset(_SrmSchmidt2016Dataset):
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
-        ecoli_genome: EcoliK12Genome | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize with this arm's own build root."""
-        super().__init__(
-            root,
-            io_workers,
-            transform,
-            pre_transform,
-            ecoli_genome=ecoli_genome,
-            **kwargs,
-        )
+        super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
 
 ARMS: tuple[type[_SrmSchmidt2016Dataset], ...] = (

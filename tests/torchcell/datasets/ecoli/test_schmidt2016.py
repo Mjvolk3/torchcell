@@ -7,13 +7,14 @@ The synthetic tests write a small workbook with the release's exact three-sheet,
 block layout (six protein rows, one per rule the loader applies; the 22 released
 conditions) and drive the readers, the protein-row rules, the two released-statistics
 identities, the environment and phenotype builders, the raw-mirror deposit and a full
-``process()`` build into ``tmp_path``. The genome, the locus-tag reconciliation and the
-assembly pin are in-test objects, so nothing reads ``$DATA_ROOT``.
+``process()`` build into ``tmp_path``. The verifier's genome and the assembly pin are
+in-test objects, so nothing reads ``$DATA_ROOT``; the loader itself reads no annotation
+(#1045 part 2).
 
 The ``@pytest.mark.data`` tests read the real mirrors and the dev-tree LMDB and pin the
-numbers the dendron note states: 2,359 released rows, 2,340 protein keys, 19 records,
-the 5 non-host rows, the 7 twice-filed symbols, the 11 symbols stored as released, and that
-Table S6's first two CV headers are swapped.
+numbers the dendron note states: 2,359 released rows and 2,359 protein keys (every row
+stored since #1045 part 2), 19 records, the 5 rows of another organism, the 7
+twice-filed symbols, and that Table S6's first two CV headers are swapped.
 """
 
 from __future__ import annotations
@@ -40,8 +41,6 @@ from torchcell.datamodels.schema import (
     EnvironmentPhysicalPerturbation,
     SmallMoleculePerturbation,
 )
-from torchcell.datasets.bacteria_common import LocusTagReconciliation
-from torchcell.sequence.genome.base import GeneNameStatus
 
 ASSEMBLY_SET: BacterialAssemblySet = "ecoli_K12_BW25113_ASM75055v1"
 NAMESPACE: BacterialGeneNamespace = "ecoli_k12_bw25113_locus_tag"
@@ -56,8 +55,17 @@ ROWS: tuple[tuple[str, str, int, str], ...] = (
 )
 KEPT_GENES = ("aceA", "aceB")
 UNRESOLVED = ("ghost",)
-#: Every stored key: the unresolved symbol is stored as released since #1057.
-STORED_GENES = (*KEPT_GENES, *UNRESOLVED)
+#: Every stored key, one per released row (#1045 part 2): the symbol verbatim, the two
+#: rows of a twice-filed symbol told apart by their Table S6 row, and the row of another
+#: organism under its released symbol.
+STORED_KEYS = (
+    "aceA",
+    "aceB",
+    "dupA | Table S6 row 6",
+    "dupA | Table S6 row 7",
+    "foreign",
+    "ghost",
+)
 #: The four conditions dataset 1 did not cover, as the release's NA cells say.
 DATASET1_MISSING = ("Glycerol + AA", "Xylose", "Mannose", "Fructose")
 IDENTIFIER_HEADERS = (
@@ -411,37 +419,6 @@ class FakeGenome:
         self.genbank = _Annotation({gene: _Locus(gene) for gene in KEPT_GENES})
 
 
-def _reconciliation(names: pd.Series, label: str) -> LocusTagReconciliation:
-    unresolved = [n for n in names if n in UNRESOLVED]
-    return LocusTagReconciliation(
-        label=label,
-        assembly_set=ASSEMBLY_SET,
-        gene_namespace=NAMESPACE,
-        unique_names=len(set(names)),
-        status_histogram={
-            GeneNameStatus.RENAMED: len(set(names)) - len(unresolved),
-            GeneNameStatus.CURRENT: 0,
-            GeneNameStatus.NON_GENE_FEATURE: 0,
-            GeneNameStatus.RETIRED: len(unresolved),
-            GeneNameStatus.AMBIGUOUS: 0,
-        },
-        layer_histogram={"gene symbol": len(set(names)) - len(unresolved)},
-        remapped=len(set(names)) - len(unresolved),
-        kept_on_collision=(),
-        retired_kept=tuple(unresolved),
-        ambiguous_kept={},
-        case_insensitive=(),
-        outside_namespace=tuple(unresolved),
-    )
-
-
-def _identity_reconciliation(
-    genome: Any, names: pd.Series, *, label: str
-) -> tuple[pd.Series, LocusTagReconciliation]:
-    """Store each gene name as itself, and mark ``UNRESOLVED`` outside the namespace."""
-    return names, _reconciliation(names, label)
-
-
 def _reference_genome() -> AssemblyReferenceGenome:
     return AssemblyReferenceGenome(
         species="Escherichia coli",
@@ -452,43 +429,40 @@ def _reference_genome() -> AssemblyReferenceGenome:
     )
 
 
-def test_select_proteins_applies_the_two_rules_in_order(
-    workbook: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.setattr(sm, "reconcile_locus_tags", _identity_reconciliation)
-    monkeypatch.setattr(sm, "MIN_RESOLVED_FRACTION", 0.5)
+def test_select_proteins_keys_every_released_row(workbook: Path) -> None:
+    """#1045 part 2: no row dropped, no annotation read, each key the release's own."""
     rows, _ = sm.read_table_s6(str(workbook))
-    selection = sm.select_proteins(rows, FakeGenome(), label="test")  # type: ignore[arg-type]
-    # #1057: the unresolved symbol is stored as released, not dropped
-    assert [row.gene for row in selection.kept] == list(STORED_GENES)
-    assert selection.locus_tag == {
-        "P00001": "aceA",
-        "P00002": "aceB",
-        "P00006": "ghost",
-    }
-    assert selection.dropped_rows == len(ROWS) - len(STORED_GENES)
-    by_rule = {rule.rule: rule for rule in selection.rules}
-    assert by_rule["source_organism_is_not_escherichia_coli"].n_items == 1
-    assert by_rule["source_organism_is_not_escherichia_coli"].items == [
-        "foreign (P00005, Bacillus subtilis)"
+    selection = sm.select_proteins(rows, label="test")
+    assert [row.gene for row in selection.kept] == [row[0] for row in ROWS]
+    assert list(selection.key.values()) == list(STORED_KEYS)
+    assert selection.dropped_rows == 0
+    assert selection.twice_filed == [
+        "dupA (P00003, dataset 2, row 6)",
+        "dupA (P00004, dataset 2, row 7)",
     ]
-    assert by_rule["gene_symbol_filed_on_two_released_rows"].n_items == 2
-    assert set(by_rule) == {
-        "source_organism_is_not_escherichia_coli",
-        "gene_symbol_filed_on_two_released_rows",
-    }
+    assert selection.other_organism == ["foreign (P00005, Bacillus subtilis)"]
 
 
-def test_select_proteins_refuses_a_release_below_the_resolution_floor(
-    workbook: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.setattr(sm, "reconcile_locus_tags", _identity_reconciliation)
-    monkeypatch.setattr(sm, "MIN_RESOLVED_FRACTION", 0.99)
+def test_select_proteins_refuses_two_rows_sharing_a_key(workbook: Path) -> None:
     rows, _ = sm.read_table_s6(str(workbook))
-    from torchcell.datasets.bacteria_common import LocusTagResolutionError
+    clash = rows[0].model_copy(update={"gene": "dupA | Table S6 row 6"})
+    with pytest.raises(RuntimeError, match="share one stored key"):
+        sm.select_proteins([clash, *rows[1:]], label="test")
 
-    with pytest.raises(LocusTagResolutionError):
-        sm.select_proteins(rows, FakeGenome(), label="test")  # type: ignore[arg-type]
+
+def test_the_replicate_rule_exempts_a_key_whose_cells_the_release_files_twice() -> None:
+    """Three replicates and a ``nan`` SE hold only for an unattributable key."""
+    record = {
+        "experiment": {
+            "phenotype": {
+                "protein_abundance_se": {"clpB | Table S6 row 1003": float("nan")},
+                "n_replicates": {"clpB | Table S6 row 1003": 3},
+            }
+        }
+    }
+    assert sm.replicate_rule([record]).passed is False
+    exempt = sm.replicate_rule([record], frozenset({"clpB | Table S6 row 1003"}))
+    assert exempt.passed is True
 
 
 # --------------------------------------------------------------------------- #
@@ -584,16 +558,14 @@ def test_chemostat_arms_differ_by_dilution_rate_and_stationary_arms_collapse() -
 def test_phenotype_skips_na_and_matches_se_to_the_replicate_count(
     workbook: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(sm, "reconcile_locus_tags", _identity_reconciliation)
-    monkeypatch.setattr(sm, "MIN_RESOLVED_FRACTION", 0.5)
     rows, _ = sm.read_table_s6(str(workbook))
-    selection = sm.select_proteins(rows, FakeGenome(), label="test")  # type: ignore[arg-type]
+    selection = sm.select_proteins(rows, label="test")
     loaded = [c.s6_column for c in sm.CONDITIONS if c.drop is None]
     cells, _ = sm.read_table_s8(str(workbook), loaded)
 
-    glucose = sm.build_phenotype(selection.kept, selection.locus_tag, cells, "Glucose")
-    # #1057: the unresolved symbol is a key too, as released
-    assert set(glucose.protein_abundance) == set(STORED_GENES)
+    glucose = sm.build_phenotype(selection.kept, selection.key, cells, "Glucose")
+    # #1045 part 2: every released row is a key, as released
+    assert set(glucose.protein_abundance) == set(STORED_KEYS)
     assert glucose.protein_abundance["aceA"] == pytest.approx(
         _copies("aceA", "Glucose")
     )
@@ -603,20 +575,18 @@ def test_phenotype_skips_na_and_matches_se_to_the_replicate_count(
     assert math.isnan(glucose.protein_abundance_se["aceB"])
     assert glucose.measurement_type == sm.MEASUREMENT_TYPE
 
-    xylose = sm.build_phenotype(selection.kept, selection.locus_tag, cells, "Xylose")
-    assert set(xylose.protein_abundance) == {"aceA", "ghost"}
+    xylose = sm.build_phenotype(selection.kept, selection.key, cells, "Xylose")
+    assert set(xylose.protein_abundance) == set(STORED_KEYS) - {"aceB"}
 
 
 def test_restrict_keeps_only_the_requested_keys_and_refuses_a_missing_one(
     workbook: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(sm, "reconcile_locus_tags", _identity_reconciliation)
-    monkeypatch.setattr(sm, "MIN_RESOLVED_FRACTION", 0.5)
     rows, _ = sm.read_table_s6(str(workbook))
-    selection = sm.select_proteins(rows, FakeGenome(), label="test")  # type: ignore[arg-type]
+    selection = sm.select_proteins(rows, label="test")
     loaded = [c.s6_column for c in sm.CONDITIONS if c.drop is None]
     cells, _ = sm.read_table_s8(str(workbook), loaded)
-    glucose = sm.build_phenotype(selection.kept, selection.locus_tag, cells, "Glucose")
+    glucose = sm.build_phenotype(selection.kept, selection.key, cells, "Glucose")
     narrowed = sm.restrict(glucose, ["aceA"])
     assert set(narrowed.protein_abundance) == {"aceA"}
     assert set(narrowed.n_replicates) == {"aceA"}
@@ -714,16 +684,11 @@ def test_process_builds_one_record_per_loaded_condition(
     raw.mkdir(parents=True)
     path = write_workbook(raw / sm.SI2)
     monkeypatch.setattr(sm, "DATA_SHA256", {sm.SI2: file_sha256(path)})
-    monkeypatch.setattr(sm, "reconcile_locus_tags", _identity_reconciliation)
-    monkeypatch.setattr(sm, "MIN_RESOLVED_FRACTION", 0.5)
     monkeypatch.setattr(sm, "assembly_reference", lambda strain: _reference_genome())
 
-    dataset = sm.ProteomeSchmidt2016Dataset(
-        root=str(root),
-        ecoli_genome=FakeGenome(),  # type: ignore[arg-type]
-    )
+    dataset = sm.ProteomeSchmidt2016Dataset(root=str(root))
     assert len(dataset) == sm.EXPECTED_RECORDS
-    assert dataset.gene_set == set(STORED_GENES)
+    assert dataset.gene_set == set(STORED_KEYS)
 
     items = [dataset.transform_item(dataset[i]) for i in range(len(dataset))]
     assert {len(i["experiment"].genotype.perturbations) for i in items} == {0}
@@ -741,13 +706,14 @@ def test_process_builds_one_record_per_loaded_condition(
             experiment.phenotype.protein_abundance
         )
         for key, value in reference.phenotype_reference.protein_abundance.items():
-            assert value == pytest.approx(_copies(key, "Glucose"))
+            gene = key.split(sm.TWICE_FILED_SEPARATOR)[0]
+            assert value == pytest.approx(_copies(gene, "Glucose"))
     # The four conditions dataset 1 did not cover carry one key fewer (Glycerol + AA is
     # the fourth since #1045 row 17 loaded it).
     by_keys = {len(i["experiment"].phenotype.protein_abundance) for i in items}
-    assert by_keys == {2, 3}
+    assert by_keys == {5, 6}
     assert (
-        len([i for i in items if len(i["experiment"].phenotype.protein_abundance) == 2])
+        len([i for i in items if len(i["experiment"].phenotype.protein_abundance) == 5])
         == 4
     )
     # Every environment is distinct, which is the record identity here.
@@ -762,15 +728,28 @@ def test_process_builds_one_record_per_loaded_condition(
     assert ledger["kept_records"] == sm.EXPECTED_RECORDS
     assert ledger["dropped_records"] == 2
     assert ledger["source_protein_rows"] == len(ROWS)
-    assert ledger["kept_protein_keys"] == len(STORED_GENES)
-    assert ledger["dropped_protein_rows"] == len(ROWS) - len(STORED_GENES)
+    assert ledger["kept_protein_keys"] == len(STORED_KEYS)
+    assert ledger["dropped_protein_rows"] == 0
+    assert ledger["other_organism_rows"] == ["foreign (P00005, Bacillus subtilis)"]
+    assert len(ledger["twice_filed_rows"]) == 2
     checks = json.loads((preprocess / "released_statistics_check.json").read_text())
     assert checks["table_s6_cv_header_swap"]["swapped"] is True
     assert checks["median_and_cv_from_replicates"]["worst_median_rtol"] == 0.0
     sourced = json.loads((preprocess / "sourced_values.json").read_text())
     assert sourced["reference_strain"]["value"] == "BW25113"
     identifiers = pd.read_csv(preprocess / "protein_identifiers.csv")
-    assert list(identifiers["released_gene"]) == list(STORED_GENES)
+    assert list(identifiers["released_gene"]) == [row[0] for row in ROWS]
+    assert list(identifiers["stored_key"]) == list(STORED_KEYS)
+    # the synthetic Table S8 files the non-host accession twice, as the release does
+    # P63284's: that key keeps its three replicates and an SE of nan, by rule
+    assert list(identifiers["replicate_cells_attributable"]) == [
+        True,
+        True,
+        True,
+        True,
+        False,
+        True,
+    ]
     conditions = pd.read_csv(preprocess / "conditions.csv")
     assert len(conditions) == sm.EXPECTED_RECORDS
     assert sm.REFERENCE_CONDITION not in set(conditions["s6_column"])
@@ -781,8 +760,8 @@ def test_process_builds_one_record_per_loaded_condition(
         genome=FakeGenome(),  # type: ignore[arg-type]
         expected_count=sm.EXPECTED_RECORDS,
     )
-    # #1057: ghost is stored as released and is no BW25113 locus; only the
-    # genome-reference rows may read that as a failure
+    # #1057, #1045 part 2: the keys are released symbols, no BW25113 locus tags; only
+    # the genome-reference rows may read that as a failure
     assert {r.name for r in report.results if not r.passed} <= {
         "gene_containment_bw25113",
         "gene_containment_sgd",
@@ -793,7 +772,6 @@ def test_process_builds_one_record_per_loaded_condition(
 
 
 def test_drop_log_check_refuses_an_unaccounted_drop() -> None:
-    reconciliation = _reconciliation(pd.Series(["aceA"]), "test")
     log_model = sm.DropLog(
         dataset="test",
         source_conditions=22,
@@ -809,7 +787,8 @@ def test_drop_log_check_refuses_an_unaccounted_drop() -> None:
                 rule="r", scope="protein_row", description="d", n_items=1, items=["x"]
             )
         ],
-        reconciliation=reconciliation,
+        twice_filed_rows=[],
+        other_organism_rows=[],
         notes=[],
     )
     with pytest.raises(RuntimeError, match="dropped conditions"):
@@ -931,7 +910,11 @@ def test_built_lmdb_numbers() -> None:
     assert keys == {sm.EXPECTED_PROTEIN_KEYS, sm.EXPECTED_PROTEIN_KEYS_DATASET2_ONLY}
     ledger = json.loads(Path(root, "preprocess", "dropped_records.json").read_text())
     assert ledger["source_protein_rows"] == 2359
-    assert ledger["kept_protein_keys"] == sm.EXPECTED_PROTEIN_KEYS
-    assert ledger["dropped_protein_rows"] == 30
-    assert ledger["reconciliation"]["unique_names"] == 2340
-    assert ledger["reconciliation"]["remapped"] == sm.EXPECTED_PROTEIN_KEYS
+    assert ledger["kept_protein_keys"] == sm.EXPECTED_PROTEIN_KEYS == 2359
+    assert ledger["dropped_protein_rows"] == 0
+    assert len(ledger["twice_filed_rows"]) == 14
+    assert len(ledger["other_organism_rows"]) == 5
+    identifiers = pd.read_csv(Path(root, "preprocess", "protein_identifiers.csv"))
+    assert sorted(
+        identifiers.loc[~identifiers["replicate_cells_attributable"], "stored_key"]
+    ) == ["clpB | Table S6 row 1003", "clpB | Table S6 row 2127"]

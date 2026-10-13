@@ -8,8 +8,9 @@ The synthetic tests extend the Table S6 / S8 / S25 workbook
 read -- Table S1's panel and Tables S2 and S3's long-form measurements -- so the
 separability check runs against a real Table S6 block rather than a stub. They drive the
 readers, all four header-versus-values checks, the phenotype builder and a full
-``process()`` for BOTH arms into ``tmp_path``; the genome and the locus-tag
-reconciliation are in-test objects, so nothing reads ``$DATA_ROOT``.
+``process()`` for BOTH arms into ``tmp_path``; the verifier's genome is an in-test
+object and the loader reads no annotation (#1045 part 2), so nothing reads
+``$DATA_ROOT``.
 
 The ``@pytest.mark.data`` tests read the real mirror and pin the numbers the dendron note
 states: 779 and 682 released rows over 41 and 31 panel proteins, 19 and 22 conditions,
@@ -44,8 +45,6 @@ from torchcell.datamodels.schema import (
     BacterialAssemblySet,
     BacterialGeneNamespace,
 )
-from torchcell.datasets.bacteria_common import LocusTagReconciliation
-from torchcell.sequence.genome.base import GeneNameStatus
 
 ASSEMBLY_SET: BacterialAssemblySet = "ecoli_K12_BW25113_ASM75055v1"
 NAMESPACE: BacterialGeneNamespace = "ecoli_k12_bw25113_locus_tag"
@@ -531,35 +530,6 @@ class FakeGenome:
         )
 
 
-def _fake_reconcile(
-    genome: Any, names: pd.Series, *, label: str
-) -> tuple[pd.Series, LocusTagReconciliation]:
-    """Map each panel symbol to its locus tag; anything else is outside the namespace."""
-    stored = pd.Series([LOCUS_TAGS.get(name, name) for name in names])
-    resolved = sum(1 for name in set(names) if name in LOCUS_TAGS)
-    report = LocusTagReconciliation(
-        label=label,
-        assembly_set=ASSEMBLY_SET,
-        gene_namespace=NAMESPACE,
-        unique_names=len(set(names)),
-        status_histogram={
-            GeneNameStatus.RENAMED: resolved,
-            GeneNameStatus.CURRENT: 0,
-            GeneNameStatus.NON_GENE_FEATURE: 0,
-            GeneNameStatus.RETIRED: len(set(names)) - resolved,
-            GeneNameStatus.AMBIGUOUS: 0,
-        },
-        layer_histogram={"gene symbol": resolved},
-        remapped=resolved,
-        kept_on_collision=(),
-        retired_kept=(),
-        ambiguous_kept={},
-        case_insensitive=(),
-        outside_namespace=tuple(n for n in names if n not in LOCUS_TAGS),
-    )
-    return stored, report
-
-
 def _reference_genome() -> AssemblyReferenceGenome:
     return AssemblyReferenceGenome(
         species="Escherichia coli",
@@ -573,13 +543,12 @@ def _reference_genome() -> AssemblyReferenceGenome:
 def test_select_arm_partitions_the_conditions_by_the_shared_drop_rules(
     workbook: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(srm, "reconcile_locus_tags", _fake_reconcile)
     cells = srm.read_srm_table(str(workbook), srm.SHEET_S2, srm.SRM_SD_TECHNICAL)
-    selection = srm.select_arm(cells, FakeGenome(), label="test")  # type: ignore[arg-type]
-    assert selection.locus_tag == {
-        "P00001": "BW25113_4015",
-        "P00002": "BW25113_4014",
-        "P00003": "BW25113_4013",
+    selection = srm.select_arm(cells, label="test")
+    # #1045 part 2: each accession keys the symbol its measurement rows release
+    assert selection.key == {
+        accession: next(c.gene for c in cells if c.uniprot == accession)
+        for accession in ("P00001", "P00002", "P00003")
     }
     # the chemostat arms are loaded since #1045 row 21 (they carry a dilution rate)
     assert selection.dropped == {
@@ -597,36 +566,34 @@ def test_select_arm_partitions_the_conditions_by_the_shared_drop_rules(
     )
 
 
-def test_select_arm_refuses_a_symbol_outside_the_namespace(
-    workbook: Path, monkeypatch: pytest.MonkeyPatch
+def test_select_arm_keys_a_symbol_no_annotation_carries_and_refuses_a_shared_one(
+    workbook: Path,
 ) -> None:
-    monkeypatch.setattr(srm, "reconcile_locus_tags", _fake_reconcile)
     cells = srm.read_srm_table(str(workbook), srm.SHEET_S2, srm.SRM_SD_TECHNICAL)
+    first = cells[0].uniprot
+    ghost = [
+        cell.model_copy(update={"gene": "ghost"}) if cell.uniprot == first else cell
+        for cell in cells
+    ]
+    assert srm.select_arm(ghost, label="test").key[first] == "ghost"
     renamed = [cell.model_copy(update={"gene": "ghost"}) for cell in cells]
-    from torchcell.datasets.bacteria_common import LocusTagResolutionError
-
-    with pytest.raises(LocusTagResolutionError):
-        srm.select_arm(renamed, FakeGenome(), label="test")  # type: ignore[arg-type]
+    with pytest.raises(RuntimeError, match="share one released symbol"):
+        srm.select_arm(renamed, label="test")
 
 
 def test_phenotype_divides_the_released_sd_by_the_root_of_the_replicate_count(
     workbook: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(srm, "reconcile_locus_tags", _fake_reconcile)
     cells = srm.read_srm_table(str(workbook), srm.SHEET_S2, srm.SRM_SD_TECHNICAL)
-    selection = srm.select_arm(cells, FakeGenome(), label="test")  # type: ignore[arg-type]
+    selection = srm.select_arm(cells, label="test")
     phenotype = srm.build_phenotype(
-        cells,
-        selection.locus_tag,
-        "Glucose",
-        measurement_type="test_type",
-        n_replicates=2,
+        cells, selection.key, "Glucose", measurement_type="test_type", n_replicates=2
     )
-    assert set(phenotype.protein_abundance) == set(LOCUS_TAGS.values())
+    assert set(phenotype.protein_abundance) == set(selection.key.values())
     assert phenotype.measurement_type == "test_type"
     assert set(phenotype.n_replicates.values()) == {2}
     assert phenotype.protein_abundance_se is not None
-    for accession, tag in selection.locus_tag.items():
+    for accession, tag in selection.key.items():
         value = _srm_value(accession, "Glucose")
         assert phenotype.protein_abundance[tag] == pytest.approx(value)
         assert phenotype.protein_abundance_se[tag] == pytest.approx(
@@ -659,14 +626,17 @@ def test_process_builds_one_record_per_loaded_condition(
     path = write_workbook(raw / sm.SI2)
     conditions = len(SET1_LABELS) + 1 if arm.IS_SET1 else len(sm.CONDITIONS)
     monkeypatch.setattr(sm, "DATA_SHA256", {sm.SI2: file_sha256(path)})
-    monkeypatch.setattr(srm, "reconcile_locus_tags", _fake_reconcile)
     monkeypatch.setattr(srm, "assembly_reference", lambda strain: _reference_genome())
     monkeypatch.setattr(arm, "EXPECTED_ROWS", len(accessions) * conditions)
     monkeypatch.setattr(arm, "EXPECTED_PROTEIN_KEYS", len(accessions))
 
-    dataset = arm(root=str(root), ecoli_genome=FakeGenome())
+    dataset = arm(root=str(root))
     assert len(dataset) == records == arm.EXPECTED_RECORDS
-    assert dataset.gene_set == {LOCUS_TAGS[PANEL[a][1]] for a in accessions}
+    released = {
+        cell.uniprot: cell.gene
+        for cell in srm.read_srm_table(str(path), arm.SHEET, arm.SD_HEADER)
+    }
+    assert dataset.gene_set == {released[a] for a in accessions}
 
     items = [dataset.transform_item(dataset[i]) for i in range(len(dataset))]
     assert {len(i["experiment"].genotype.perturbations) for i in items} == {0}
@@ -706,6 +676,7 @@ def test_process_builds_one_record_per_loaded_condition(
     assert sourced["reference_strain"]["value"] == "BW25113"
     identifiers = pd.read_csv(preprocess / "protein_identifiers.csv")
     assert len(identifiers) == len(accessions)
+    assert list(identifiers["stored_key"]) == list(identifiers["released_gene"])
     assert set(identifiers["n_replicates"]) == {arm.N_REPLICATES}
     built = pd.read_csv(preprocess / "conditions.csv")
     assert len(built) == records
@@ -725,12 +696,8 @@ def test_process_refuses_a_row_count_that_is_not_the_declared_one(
     raw.mkdir(parents=True)
     path = write_workbook(raw / sm.SI2)
     monkeypatch.setattr(sm, "DATA_SHA256", {sm.SI2: file_sha256(path)})
-    monkeypatch.setattr(srm, "reconcile_locus_tags", _fake_reconcile)
     with pytest.raises(RuntimeError, match="data rows, the module states"):
-        srm.ProteomeSrmSet1Schmidt2016Dataset(
-            root=str(root),
-            ecoli_genome=FakeGenome(),  # type: ignore[arg-type]
-        )
+        srm.ProteomeSrmSet1Schmidt2016Dataset(root=str(root))
 
 
 def test_download_links_the_mirror(

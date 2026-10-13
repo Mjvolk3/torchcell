@@ -7,8 +7,9 @@ The synthetic tests write a workbook with Table S24's exact two-block layout (a
 ``<medium>:`` label row carrying the five statistic headers, then one row per strain) and
 a Table S23 sheet carrying the per-condition growth rates the medium-header check reads.
 They drive the readers, both released-statistics checks, the phenotype and genotype
-builders and a full ``process()`` into ``tmp_path``; the genome and the locus-tag
-reconciliation are in-test objects, so nothing reads ``$DATA_ROOT``.
+builders and a full ``process()`` into ``tmp_path``; the verifier's genome is an in-test
+object and the loader reads no annotation (#1045 part 2), so nothing reads
+``$DATA_ROOT``.
 
 The ``@pytest.mark.data`` tests read the real mirror and pin the numbers the dendron note
 states: eight released cells, the two cells that release two replicates rather than
@@ -39,11 +40,12 @@ from torchcell.datamodels.schema import (
     BacterialAssemblySet,
     BacterialGeneNamespace,
     EnvironmentPhysicalPerturbation,
+    ReleasedStrainKind,
     SampleUnit,
     UncertaintyType,
 )
-from torchcell.datasets.bacteria_common import LocusTagReconciliation
 from torchcell.sequence.genome.base import GeneNameResolution, GeneNameStatus
+from torchcell.verification.report import FindingClass, finding_class_of
 
 ASSEMBLY_SET: BacterialAssemblySet = "ecoli_K12_BW25113_ASM75055v1"
 NAMESPACE: BacterialGeneNamespace = "ecoli_k12_bw25113_locus_tag"
@@ -332,23 +334,21 @@ def test_fitness_refuses_a_propagated_se_below_the_conditioned_one(
         gr.fitness_phenotype(inflated, blocks[0].wild_type)
 
 
-def test_genotype_is_one_keio_deletion_against_the_pinned_namespace(
+def test_genotype_is_one_keio_deletion_keyed_by_its_released_symbol(
     workbook: Path,
 ) -> None:
+    """#1045 part 2: the symbol the row label releases, with no locus-tag lookup."""
     blocks = gr.read_table_s24(str(workbook))
     strain = blocks[0].deletions[0]
-    genotype = gr.build_genotype(strain, "BW25113_4373")
-    (perturbation,) = genotype.perturbations
-    assert perturbation.perturbation_type == "bacterial_deletion"
-    assert perturbation.systematic_gene_name == "BW25113_4373"
+    (perturbation,) = gr.build_genotype(strain).perturbations
+    assert perturbation.perturbation_type == "bacterial_released_strain"
+    assert perturbation.systematic_gene_name == "rimI"
     assert perturbation.perturbed_gene_name == "rimI"
     assert perturbation.gene_namespace == NAMESPACE
+    assert perturbation.strain_label == "ΔrimI"
+    assert perturbation.released_kind is ReleasedStrainKind.deletion
     assert perturbation.collection == gr.KEIO_COLLECTION
     assert perturbation.cassette is None
-    assert perturbation.construction is None
-    assert perturbation.identifier_mapping is not None
-    assert perturbation.identifier_mapping.route == "gene_symbol"
-    assert perturbation.identifier_mapping.source_identifier == "ΔrimI"
 
 
 def test_both_media_build_distinct_environments_from_the_proteome_condition_table() -> (
@@ -410,41 +410,6 @@ class FakeGenome:
         )
 
 
-def _reconciliation(
-    names: pd.Series, label: str, resolved: int
-) -> LocusTagReconciliation:
-    unresolved = len(set(names)) - resolved
-    return LocusTagReconciliation(
-        label=label,
-        assembly_set=ASSEMBLY_SET,
-        gene_namespace=NAMESPACE,
-        unique_names=len(set(names)),
-        status_histogram={
-            GeneNameStatus.RENAMED: resolved,
-            GeneNameStatus.CURRENT: 0,
-            GeneNameStatus.NON_GENE_FEATURE: 0,
-            GeneNameStatus.RETIRED: unresolved,
-            GeneNameStatus.AMBIGUOUS: 0,
-        },
-        layer_histogram={"gene symbol": resolved},
-        remapped=resolved,
-        kept_on_collision=(),
-        retired_kept=(),
-        ambiguous_kept={},
-        case_insensitive=(),
-        outside_namespace=tuple(n for n in names if n not in LOCUS_TAGS),
-    )
-
-
-def _fake_reconcile(
-    genome: Any, names: pd.Series, *, label: str
-) -> tuple[pd.Series, LocusTagReconciliation]:
-    """Map each rim symbol to its locus tag; anything else stays outside the namespace."""
-    stored = pd.Series([LOCUS_TAGS.get(name, name) for name in names])
-    resolved = sum(1 for name in set(names) if name in LOCUS_TAGS)
-    return stored, _reconciliation(names, label, resolved)
-
-
 def _reference_genome() -> AssemblyReferenceGenome:
     return AssemblyReferenceGenome(
         species="Escherichia coli",
@@ -453,29 +418,6 @@ def _reference_genome() -> AssemblyReferenceGenome:
         assembly_set=ASSEMBLY_SET,
         assembly_accession="GCA_000750555.1",
     )
-
-
-def test_resolve_deletions_maps_every_label_and_refuses_an_unresolved_one(
-    workbook: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.setattr(gr, "reconcile_locus_tags", _fake_reconcile)
-    blocks = gr.read_table_s24(str(workbook))
-    locus_tag, report = gr.resolve_deletions(blocks, FakeGenome(), label="test")  # type: ignore[arg-type]
-    assert locus_tag == LOCUS_TAGS
-    assert report.outside_namespace == ()
-
-    renamed = blocks[0].model_copy(
-        update={
-            "deletions": (
-                blocks[0].deletions[0].model_copy(update={"strain": "ΔrimX"}),
-                *blocks[0].deletions[1:],
-            )
-        }
-    )
-    from torchcell.datasets.bacteria_common import LocusTagResolutionError
-
-    with pytest.raises(LocusTagResolutionError):
-        gr.resolve_deletions((renamed, blocks[1]), FakeGenome(), label="test")  # type: ignore[arg-type]
 
 
 # --------------------------------------------------------------------------- #
@@ -513,15 +455,11 @@ def test_process_builds_six_records_and_two_references(
     raw.mkdir(parents=True)
     path = write_workbook(raw / sm.SI2)
     monkeypatch.setattr(sm, "DATA_SHA256", {sm.SI2: file_sha256(path)})
-    monkeypatch.setattr(gr, "reconcile_locus_tags", _fake_reconcile)
     monkeypatch.setattr(gr, "assembly_reference", lambda strain: _reference_genome())
 
-    dataset = gr.GrowthRateSchmidt2016Dataset(
-        root=str(root),
-        ecoli_genome=FakeGenome(),  # type: ignore[arg-type]
-    )
+    dataset = gr.GrowthRateSchmidt2016Dataset(root=str(root))
     assert len(dataset) == gr.EXPECTED_RECORDS
-    assert dataset.gene_set == set(LOCUS_TAGS.values())
+    assert dataset.gene_set == set(LOCUS_TAGS)
 
     items = [dataset.transform_item(dataset[i]) for i in range(len(dataset))]
     assert {len(i["experiment"].genotype.perturbations) for i in items} == {1}
@@ -561,7 +499,14 @@ def test_process_builds_six_records_and_two_references(
     assert (preprocess / "build_manifest.json").exists()
 
     report = gr.verify_build(str(root), genome=FakeGenome())  # type: ignore[arg-type]
-    assert [(r.level, r.name) for r in report.results if not r.passed] == []
+    # the keys are released symbols, no BW25113 locus tags (#1045 part 2): only the
+    # genome-reference rows may read that as a failure, and they never gate
+    assert report.passed
+    assert all(
+        finding_class_of(r.name) is FindingClass.report
+        for r in report.results
+        if not r.passed
+    )
     assert (preprocess / "verification_report.json").exists()
 
 

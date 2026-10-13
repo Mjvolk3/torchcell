@@ -20,3 +20,5 @@ created: 1791682498601
 - [ ] Refresh panels b (binned prediction) and c (state of the art) with the 025 S3 closure model: needs a TEST evaluation of checkpoints yb4gjh51, srl1xzdf, 8fuwsk48 (only validation is logged, 0.480 to 0.496)
 - [ ] GAT vs CGT equivalence: unit test of a masked CGT layer against PyG TransformerConv with copied weights, then a three-seed training comparison under the 025 protocol
 - [x] Figure 2 composed headless: panels d, e and the new f (training pool, S0 0.439 vs S3 closure 0.479) placed into `Fig2-gene-interactions.drawio.svg` by [[notes.assets.drawio.Fig2-gene-interactions.compose]], exported with the draw.io .deb under xvfb, caption rewritten a to g; prelim copy is the thesis session's to re-export
+- [x] Figure 2 remade as a twelve-panel gate-style sheet, no frames, status marks, primaries only, panel c from the SI's current numbers [[experiments.025-solid-growth.scripts.fig2_gene_interactions]]
+- [ ] Wild-type gene embedding clusters and GO enrichment from the S3 closure checkpoint on mmli (background agent running)

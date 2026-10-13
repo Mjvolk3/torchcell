@@ -1216,3 +1216,90 @@ cache rather than the data model, and no 040 source carries a multi-gene genotyp
 the set path is exercised only by the empty set (host) and by the unit check of the bias
 sum; aerobicity, shaking, medium and temperature are environment attributes the record
 carries in the schema and the model does not yet see.
+
+## 2026.10.12 - Rounds 7 and 8 read, and round 9: the host averages its inhibitors by construction
+
+Every round-7 arm and five of the six round-8 arms finished on GilaHyper (4326 to 4330,
+4364 to 4367; the 96-condition batch 4368 is on fold 2, auxiliary weight 3 behind it).
+Three folds at seed 0 each, scored at the selected step; the public score is the
+compound-cold centered Spearman over the six test compounds, the host readouts come from
+`r3_host_predictions.py` with the three folds' per-well predictions averaged (64 ex23
+combinations, 22 grown; 55 ex21 single-agent wells).
+
+| arm | public test, mean (min to max) | ex23 growth AUROC | ex23 Spearman | fitness at 1 / 2 / 3 inhibitors | titration fit (in sample) |
+|---|---|---|---|---|---|
+| gene readout, van (r3 / r3w2 s12 / r4 s345, three runs of one config) | 0.254 / 0.316 / 0.278 | 0.602 / 0.606 / 0.597 | 0.21 / 0.22 / 0.21 | 0.66 / 0.65 / 0.63 | 0.446 / 0.434 / 0.434 |
+| cell, van | 0.335 (0.322 to 0.348) | 0.556 | 0.150 | 0.63 / 0.60 / 0.59 | 0.434 |
+| cell, van, host weight 3 | 0.311 (0.252 to 0.374) | 0.508 | 0.042 | 0.65 / 0.65 / 0.64 | 0.434 |
+| cell, van, dose FiLM | 0.139 (0.065 to 0.222) | 0.548 | 0.145 | 0.83 / 0.83 / 0.82 | 0.918 |
+| cell, van, anchors only (zero-shot host) | 0.339 (0.278 to 0.387) | 0.597 | 0.245 | 0.69 / 0.67 / 0.67 | -0.06 (not trained) |
+| cell, van, fine-tune on the titration | 0.306 (0.192 to 0.425) | 0.560 | 0.174 | 0.67 / 0.64 / 0.64 | 0.413 |
+| cell, van, fold seed 1 / 2 | 0.365 / 0.221 | 0.521 / 0.535 | 0.09 / 0.10 | 0.71 / 0.71 / 0.71 and 0.64 / 0.62 / 0.61 | 0.434 / 0.434 |
+| cell, van + Hoepfner | 0.316 (0.251 to 0.352) | 0.501 | 0.049 | 0.61 / 0.58 / 0.57 | 0.434 |
+| cell, van + Hoepfner, cond batch 96 (folds 0, 1) | 0.306 (0.202 to 0.411) | 0.508 | 0.043 | 0.66 / 0.63 / 0.63 | 0.434 |
+| cell, van + Hoepfner + Hillenmeyer | 0.224 (0.171 to 0.325) | 0.531 | 0.088 | 0.71 / 0.70 / 0.69 | 0.413 |
+| gene readout, anchors only (r3w2) | 0.293 | 0.388 | -0.19 | 0.70 / 0.70 / 0.70 | 0.04 (not trained) |
+
+Three readings. First, the public side is unchanged by the readout: every single-source
+cell arm sits inside the gene readout's own three-run spread (0.25 to 0.32 for one
+config), and the fold seed moves the cell arm from 0.22 to 0.37 as it moved the gene arm
+from 0.18 to 0.43. Dose FiLM through the shared head is the one arm that falls out of
+that band (0.139); the gene readout's FiLM arm also scored lowest of its wave (0.231), so
+the dose channel costs the public score under either readout, one seed each. Second, the
+one host-side change is zero-shot: with the gene readout, a host head that never saw a
+titration well ordered the combinations below chance (AUROC 0.388); the shared head at
+the empty genotype orders them at 0.597 with Spearman 0.245 against the observed
+fitness, the highest ex23 rank correlation of any arm, and it does this without a single
+host record beyond the two anchors. Fine-tuning the shared head on the titration then
+does not improve on it (0.560), nor does fitting the titration during training (0.556),
+nor host weight 3 (0.508). Third, nothing composes: on every arm the predicted fitness at
+one, two and three inhibitors is one number (the widest gap is 0.04), against the
+observed 0.81 / 0.35 / 0.05. The titration fit column says why the dose arms differ from
+the rest: without a dose channel the host's prediction is constant across a compound's
+doses, so the in-sample Spearman against the titration is fixed at 0.434 by the compound
+ordering alone, identical on nine arms; with FiLM it reaches 0.918, so the dose channel
+is read when it is trained on, and the combinations still come out flat.
+
+Why they come out flat is in the model, not the data. Both places the host reads its
+medium reduce the compound tokens by their MEAN: the medium offset is
+`offset(e.mean(1))` and the token summary the head reads is `seq[:, :k].mean(1)`. A
+three-inhibitor medium is therefore read as the average of its three inhibitors by
+construction, and a sum of single-agent effects is not representable. Round 9
+(`r3_sweep.py --wave 9`, `r9_*`, commit 4dc23c7d0) adds `compound_pool: sum` to the
+trainer (identical at one compound; the CPU check holds the single-compound host logits
+equal under both and the three-compound logits apart) and runs it four ways: the
+single-source cell arm with the titration fitted, the anchors arm zero-shot, the sum with
+dose FiLM (reads dose and adds), and the three-source arm, where Hillenmeyer's 26
+heterozygous pairs are the only multi-compound training records the sum can learn from.
+With them, host weight 0.1 (the best public gene arm of wave 2) under the cell readout,
+and seeds 3 to 5 on folds 0 to 4 as the cell readout's noise floor. GilaHyper card A
+runs the chain 4494 sum, 4495 anchors sum, 4496 host weight 0.1, 4497 three-source sum,
+4500 sum with FiLM, 4501 and 4502 the seed ensemble; card B finishes round 8 (4368,
+4369). Delta holds the seven round-9 jobs (22856729 to 22856734, 22856749) behind its
+19 round-7 and round-8 jobs, all still pending.
+
+Train against validation loss on the target, fold 0 of each arm, is one sheet
+(`scratchpad/r78_train_vs_val_loss.png`, to be regenerated by `r3_convergence.py`
+once round 9 is in): on every cell arm the train loss on the fitted compounds falls from
+1.1 to 0.1 to 0.2 while the validation loss on the four held-out compounds is flat from
+epoch 20 at 0.75 to 0.9 and the test loss flat at 0.6 to 0.7, the same shape as the gene
+readout. The anchors arm's validation loss jumps to 1.7 at epoch 30 and settles at 1.2,
+the one curve that differs; its public score is unaffected (0.339).
+
+Hypothesis (untested until round 9 reads): the sum restores the ordering at two and
+three inhibitors and the zero-shot AUROC rises above 0.6; if the sum arm with FiLM also
+keeps the titration fit, the host reads dose and composes, and the main sheet's bottom
+row can carry a model front. If the sum does not move the combinations, the flatness is
+not the pooling and the next lever is the attention (the compound tokens attend to the
+genome but not to each other through the offset).
+
+W&B runs of the arms read above, fold 0 unless noted:
+
+- cell, van: https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/runs/952clxf1
+- cell, van, host weight 3: https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/runs/26awpzgb
+- cell, van, dose FiLM: https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/runs/ogui2nzh
+- cell, van, anchors only: https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/runs/cfvdkslp
+- cell, van, fine-tune: https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/runs/lw6t1yls
+- cell, van + Hoepfner: https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/runs/3d8pmdiw
+- cell, van + Hoepfner + Hillenmeyer: https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/runs/0n92blb9
+- round 9, cell, van, sum: https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/runs/qcy7pyln

@@ -553,6 +553,17 @@ def round9_arms() -> list[dict[str, object]]:
             compound_pool="sum",
         ),
         arm("van_e150_cell_lh0p1", "van", 150, readout="cell", lambda_host=0.1),
+        # the dose FiLM arm fits the titration in sample (Spearman 0.918 against 0.434
+        # without a dose channel) and still reads one fitness at one, two and three
+        # inhibitors (0.83 / 0.83 / 0.82); with the sum it can read dose AND add
+        arm(
+            "van_e150_cell_sum_film",
+            "van",
+            150,
+            readout="cell",
+            compound_pool="sum",
+            dose="film",
+        ),
         arm(
             "vanhophet_e150_cell_sum",
             "vanhophet",

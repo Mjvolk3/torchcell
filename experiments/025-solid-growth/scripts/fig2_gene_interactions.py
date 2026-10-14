@@ -216,7 +216,7 @@ def panel_a(ax: Axes) -> None:
     """The hand-drawn explainer, exported from the draw.io figure by
     notes/assets/drawio/Fig2-gene-interactions.explainer.py."""
     img = plt.imread(osp.join(IMG_DIR, "fig2_explainer.png"))
-    ax.imshow(img, interpolation="lanczos")
+    ax.imshow(img, interpolation="none")
     ax.set_anchor("NW")
     ax.set_xticks([])
     ax.set_yticks([])
@@ -324,8 +324,6 @@ def panel_d(ax: Axes) -> None:
         v = float(sub.val_pearson.tail(10).mean())
         x030 = g + 2.6 * w
         ax.bar(x030, v, width=w * 0.9, color=LIGHT_RED, edgecolor="black", linewidth=0.4, zorder=3)
-        if split == "disjoint":
-            ax.text(x030, v + 0.012, "running", ha="center", va="bottom", fontsize=5)
         print(f"d {split:8s} 030 closure + fitness, mean of epochs {int(sub.epoch.iloc[-10])}-{int(sub.epoch.iloc[-1])} val {v:.3f}")
     ax.set_xticks([0, 1])
     ax.set_xticklabels(["random split\nover triples", "held-out\nquery pairs"])
@@ -336,7 +334,7 @@ def panel_d(ax: Axes) -> None:
     ax.set_title("a no-interaction null reaches 0.40")
     handles = [Patch(facecolor=c, edgecolor="black", linewidth=0.4, label=l) for l, _, c in learners]
     handles.append(Patch(facecolor=LIGHT_RED, edgecolor="black", linewidth=0.4, label="CGT + closure + fitness (030), 1 seed"))
-    ax.legend(handles=handles, loc="upper right", bbox_to_anchor=(1.02, 1.0), frameon=False, handlelength=1.0, handletextpad=0.3, borderpad=0.1, labelspacing=0.2)
+    ax.legend(handles=handles, loc="upper right", bbox_to_anchor=(1.02, 1.04), frameon=False, handlelength=1.0, handletextpad=0.3, borderpad=0.0, borderaxespad=0.0, labelspacing=0.2)
     # The transformer's reading on that split differs from the baselines' (validation on one
     # split, epoch 29, three seeds, against five-fold test), so the note hangs under that group.
     ax.text(1.0, -0.22, "CGT: validation, one split", transform=ax.get_xaxis_transform(), ha="center", va="top", fontsize=5, color="black")
@@ -663,7 +661,7 @@ def main() -> None:
     stem = osp.join(IMG_DIR, "fig2_gene_interactions")
     savefig_true_size_svg(fig, stem + ".svg")
     fig.savefig(stem + ".png", dpi=300)
-    fig.savefig(stem + ".pdf")
+    fig.savefig(stem + ".pdf", dpi=600)
     savefig_true_size_svg(fig, f"{stem}_{timestamp()}.svg")
     print("wrote", stem + ".svg")
 

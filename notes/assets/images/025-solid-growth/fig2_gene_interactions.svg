@@ -4415,7 +4415,7 @@ L 502.327559 399.278708
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: end" x="500.437438" y="375.853947" transform="rotate(-0 500.437438 375.853947)">gene table, no penalty: 0.42 (e)</text>
    </g>
    <g id="text_184">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="455.074524" y="303.789041" transform="rotate(-0 455.074524 303.789041)">composite embedding trains only with the prior</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="455.074524" y="303.789041" transform="rotate(-0 455.074524 303.789041)">composite embedding needs the prior</text>
    </g>
    <g id="legend_4">
     <g id="line2d_297">

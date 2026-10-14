@@ -511,7 +511,7 @@ def panel_l(ax: Axes, hist: pd.DataFrame) -> None:
     ax.yaxis.set_major_locator(MultipleLocator(0.1))
     ax.set_xlabel("epoch")
     ax.set_ylabel("validation Pearson")
-    ax.set_title("composite embedding trains only with the prior")
+    ax.set_title("composite embedding needs the prior")
     ax.legend(loc="center right", bbox_to_anchor=(1.0, 0.4), frameon=False, handlelength=1.6, handletextpad=0.4, borderpad=0.2, labelspacing=0.25)
     strip(ax)
 

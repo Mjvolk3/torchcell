@@ -804,7 +804,7 @@ def main() -> None:
     y_key = ax[4].get_position().y1 + 10.6 / SHEET_H_MM
     keys(fig, y_key)
     # The maps' supplementary line, italic like the S0 line, in the gap above m to p.
-    fig.text(0.055, ax[12].get_position().y1 + 8.6 / SHEET_H_MM, "m to p: the S3 + fitness model of f, seed 2, epoch 43", ha="left", va="center", fontsize=5, style="italic")
+    fig.text(0.055, ax[12].get_position().y1 + 8.6 / SHEET_H_MM, "m to p: S3 + fitness of ($\\bf{f}$)", ha="left", va="center", fontsize=5, style="italic")
     os.makedirs(IMG_DIR, exist_ok=True)
     stem = osp.join(IMG_DIR, "fig2_gene_interactions")
     # The SVG is the note's copy, with the explainer as a raster. The sheet's PDF and PNG are

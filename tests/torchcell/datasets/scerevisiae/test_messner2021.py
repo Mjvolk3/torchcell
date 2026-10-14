@@ -765,7 +765,13 @@ def test_messner2023_reference_profile_unions_the_store_references(
                 ),
             )
     env.close()
-    assert m.messner2023_reference_profile(str(tmp_path)) == {"A": 1.0, "B": 3.0}
+    assert m.messner2023_reference_profile(str(tmp_path), {}) == {"A": 1.0, "B": 3.0}
+    # #1045: Messner 2023 keys by released UniProt accession; the join lifts each one to
+    # its ORF through the GFF map, and an unmapped accession keeps its released key.
+    assert m.messner2023_reference_profile(str(tmp_path), {"A": "YAL001C"}) == {
+        "YAL001C": 1.0,
+        "B": 3.0,
+    }
 
 
 def test_run_protein_dispatches_a_verify_build_module_entry(

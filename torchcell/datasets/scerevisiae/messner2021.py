@@ -1343,13 +1343,31 @@ def check_messner2023_reference(
     )
 
 
-def messner2023_reference_profile(data_root: str) -> dict[str, float]:
-    """The union of Messner 2023's per-record WT reference abundances (one profile)."""
+def messner2023_reference_profile(
+    data_root: str, uniprot_to_orf: dict[str, str] | None = None
+) -> dict[str, float]:
+    """The union of Messner 2023's per-record WT reference abundances (one profile),
+    keyed by systematic ORF.
+
+    Messner 2023 stores its protein keys as the released UniProt accessions (#1045) while
+    this store keys by the ORF the DIA-NN report names, so the join lifts each accession
+    through the SGD GFF cross-references (:func:`build_uniprot_to_orf_map`, a
+    verification-time utility, never a record field); an accession the GFF does not
+    carry keeps its released key and simply never matches.
+    """
     from torchcell.verification.runners import stream_records
 
+    mapping = (
+        build_uniprot_to_orf_map(data_root)
+        if uniprot_to_orf is None
+        else uniprot_to_orf
+    )
     profile: dict[str, float] = {}
     for record in stream_records(osp.join(data_root, MESSNER2023_ROOT)):
-        profile.update(record["reference"]["phenotype_reference"]["protein_abundance"])
+        abundances = record["reference"]["phenotype_reference"]["protein_abundance"]
+        profile.update(
+            {mapping.get(key, key): value for key, value in abundances.items()}
+        )
     return profile
 
 

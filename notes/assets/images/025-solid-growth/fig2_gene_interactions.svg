@@ -1113,7 +1113,7 @@ L 445.644462 109.332187
 L 445.644462 62.428067 
 L 438.618141 62.428067 
 z
-" clip-path="url(#p281ef7283f)" style="fill: #f8cecc; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
+" clip-path="url(#p281ef7283f)" style="fill: #d79b00; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
    <g id="patch_34">
     <path d="M 456.286667 109.332187 
@@ -1145,7 +1145,7 @@ L 486.734057 109.332187
 L 486.734057 95.677116 
 L 479.707737 95.677116 
 z
-" clip-path="url(#p281ef7283f)" style="fill: #f8cecc; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
+" clip-path="url(#p281ef7283f)" style="fill: #d79b00; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
    <g id="patch_38">
     <path d="M 447.205866 109.332187 
@@ -1367,7 +1367,7 @@ L 419.437993 36.735589
 L 419.437993 33.235589 
 L 414.437993 33.235589 
 z
-" style="fill: #f8cecc; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
+" style="fill: #d79b00; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
     </g>
     <g id="text_54">
      <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="420.937993" y="36.735589" transform="rotate(-0 420.937993 36.735589)">CGT</text>

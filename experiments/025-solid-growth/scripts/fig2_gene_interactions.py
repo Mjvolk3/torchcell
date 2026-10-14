@@ -84,7 +84,7 @@ LIGHT = "#8A8A8A"
 STATUS_SYMBOL = {"ready": "●", "partial": "◐", "todo": "○"}
 STATUS_WORD = {"ready": "on file", "partial": "partial", "todo": "idea only"}
 CROSS = ("✗", "#E53935")  # section status: not yet reviewed by the author
-LIGHT_RED = PLOT_PALETTE_FILL[1]  # in d, the transformer on triples alone; red is the closure arm (review 2026-10-13)
+# In d the transformer on triples alone is orange and the closure arm red (review 2026-10-13).
 MAP = "tsne"  # which 2-D map the gene panels draw: "tsne" or "umap"
 MAP_NAME = {"tsne": "t-SNE", "umap": "UMAP"}[MAP]
 STATUS_MARKS = True  # the review marks beside each panel letter
@@ -299,7 +299,7 @@ def panel_d(ax: Axes) -> None:
         ("ridge, genes", "B1_additive_gene", GRAY),
         ("ridge, genes + pairs", "B2_additive_plus_pair", YELLOW),
         ("MLP, genes only", "B5_gene_embedding_mlp", BLUE),
-        ("CGT", "CGT_", LIGHT_RED),
+        ("CGT", "CGT_", ORANGE),
     ]
     w = 0.19
     for g, group in enumerate(("random", "disjoint")):
@@ -621,6 +621,49 @@ def panel_p(ax: Axes, assign: pd.DataFrame, enr: pd.DataFrame, summary: dict[str
     umap_by_cluster(ax, assign, enr, "table", f"input embeddings: {rep['n_enriched_clusters']} of {rep['n_clusters']} enriched", key=True)
 
 
+# ----------------------------------------------------------------------------- loss curves
+
+
+def loss_sheet(hist: pd.DataFrame) -> None:
+    """Companion to i, k and l: the point loss (z-scored MSE on the interaction target) of the
+    same arms, train dashed and validation solid, mean and sd band over seeds. The point loss
+    is the term every arm shares; the total loss carries λ times the penalty and is not
+    comparable across arms, so the fourth panel shows the penalty term itself."""
+    panels = [
+        ("30 epochs: the arms of i", [(a, l, c) for a, l, c, _ in CURVES]),
+        ("60 epochs: the arms of k", [("kl_1_60ep", "soft prior, λ = 1", RED), ("mask_60ep", "hard mask", ORANGE), ("kl_0_60ep", "no penalty", GRAY)]),
+        ("inputs: the arms of l", [("kl_1", "gene table, soft prior", RED), ("kl_1_emb", "composite embedding, soft prior", YELLOW), ("kl_0_emb", "composite embedding, no penalty", GRAY)]),
+    ]
+    fig, axes = plt.subplots(1, 4, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(52)))
+    fig.subplots_adjust(left=0.055, right=0.99, bottom=0.17, top=0.86, wspace=0.34)
+    for ax, (title, arms) in zip(axes[:3], panels):
+        for z, (arm, label, color) in enumerate(arms):
+            curve(ax, hist, arm, "val/point_loss", color, "-", label, 20 + z)
+            curve(ax, hist, arm, "train/point_loss", color, "--", "_", 10 + z)
+        ax.set_title(title)
+        ax.set_xlabel("epoch")
+        ax.set_ylabel("point loss, z-scored MSE")
+        # Arms in the key; the line style is one rule for the sheet, written under it.
+        ax.legend(frameon=False, fontsize=5, handlelength=1.6, labelspacing=0.2, loc="lower left")
+        strip(ax)
+    ax = axes[3]
+    for z, (arm, label, color) in enumerate([("kl_1", "soft prior, λ = 1", RED), ("mask", "hard mask", ORANGE), ("random_1", "prior, random graphs", PURPLE)]):
+        curve(ax, hist, arm, "train/graph_reg_loss", color, "-", label, 20 + z)
+    ax.set_title("the penalty term itself")
+    ax.set_xlabel("epoch")
+    ax.set_ylabel("graph penalty, train")
+    ax.legend(frameon=False, fontsize=5, handlelength=1.6, labelspacing=0.2, loc="upper right")
+    strip(ax)
+    letters_status(fig, list(axes), ["ready"] * 4)
+    fig.text(0.055, 0.01, "solid: validation, dashed: train; mean and sd band over seeds", fontsize=5, ha="left", va="bottom")
+    stem = osp.join(IMG_DIR, "fig2_loss_curves")
+    savefig_true_size_svg(fig, stem + ".svg")
+    fig.savefig(stem + ".png", dpi=300)
+    fig.savefig(stem + ".pdf", dpi=600)
+    plt.close(fig)
+    print("wrote", stem + ".png")
+
+
 # ----------------------------------------------------------------------------- sheet
 
 
@@ -665,6 +708,7 @@ def main() -> None:
     fig.savefig(stem + ".pdf", dpi=600)
     savefig_true_size_svg(fig, f"{stem}_{timestamp()}.svg")
     print("wrote", stem + ".svg")
+    loss_sheet(hist)
 
 
 if __name__ == "__main__":

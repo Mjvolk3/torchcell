@@ -23,3 +23,11 @@ Panel a is the hand-drawn explainer again, exported from the draw.io figure by `
 ## 2026.10.13 - Gene maps switched to t-SNE
 
 The gene panels m, n and p now draw the t-SNE at perplexity 30, early exaggeration 4 (`MAP = "tsne"` in the script; coordinates in `results/wt_gene_embeddings/tsne_coords.csv`, written by [[experiments.025-solid-growth.scripts.wt_gene_embedding_tsne]]), chosen from the six-setting grid in that note. The genes in no training triple become detached slivers instead of the UMAP's arc, so the trained cloud fills the panel; `MAP = "umap"` restores the UMAP, whose coordinates stay in `cluster_assignments.csv`. Same round: panel d carries the CGT on held-out query pairs (cgt_s0_q_kl_ctrl_016, validation on one split) and the 030 closure arm on that split as an in-flight hatched bar (`s3q_030_readout.py`), the GO names in o sit on their bars, the review marks are back beside the letters with the foot key off, and the sheet is also written as PDF.
+
+## 2026.10.13 - Companion loss sheet
+
+`loss_sheet()` in the same script writes `fig2_loss_curves.{svg,png,pdf}`: the point loss (z-scored MSE on the interaction target) of the arms of i, k and l, validation solid and train dashed, and the training graph penalty of the soft prior, the hard mask and the random-graph prior. The point loss is the one term every arm shares; the total loss carries λ times the penalty and is not comparable across arms.
+
+![](./assets/images/025-solid-growth/fig2_loss_curves.svg)
+
+Same round: in d the transformer on triples alone is orange and the 030 closure arm red, with no epoch text; the color key sits just above e to h; the explainer in a is embedded at its own pixels (a resampling interpolation had let the PDF and SVG backends rebuild it at 100 dpi).

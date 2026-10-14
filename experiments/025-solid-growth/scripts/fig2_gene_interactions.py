@@ -84,7 +84,7 @@ LIGHT = "#8A8A8A"
 STATUS_SYMBOL = {"ready": "●", "partial": "◐", "todo": "○"}
 STATUS_WORD = {"ready": "on file", "partial": "partial", "todo": "idea only"}
 CROSS = ("✗", "#E53935")  # section status: not yet reviewed by the author
-DARK_RED = PLOT_PALETTE[7]  # the transformer family under another training pool
+LIGHT_RED = PLOT_PALETTE_FILL[1]  # the transformer family under another training pool
 MAP = "tsne"  # which 2-D map the gene panels draw: "tsne" or "umap"
 MAP_NAME = {"tsne": "t-SNE", "umap": "UMAP"}[MAP]
 STATUS_MARKS = True  # the review marks beside each panel letter
@@ -322,20 +322,20 @@ def panel_d(ax: Axes) -> None:
     for g, split in enumerate(("random", "disjoint")):
         sub = r030[r030.split == split].sort_values("epoch")
         v = float(sub.val_pearson.tail(10).mean())
-        state = "" if split == "random" else "\nrunning"
         x030 = g + 2.6 * w
-        ax.bar(x030, v, width=w * 0.9, color=DARK_RED, edgecolor="black", linewidth=0.4, zorder=3)
-        ax.text(x030, v + 0.012, f"epoch {int(sub.epoch.iloc[-1])}{state}", ha="center", va="bottom", fontsize=5)
+        ax.bar(x030, v, width=w * 0.9, color=LIGHT_RED, edgecolor="black", linewidth=0.4, zorder=3)
+        if split == "disjoint":
+            ax.text(x030, v + 0.012, "running", ha="center", va="bottom", fontsize=5)
         print(f"d {split:8s} 030 closure + fitness, mean of epochs {int(sub.epoch.iloc[-10])}-{int(sub.epoch.iloc[-1])} val {v:.3f}")
     ax.set_xticks([0, 1])
     ax.set_xticklabels(["random split\nover triples", "held-out\nquery pairs"])
     ax.set_xlim(-0.55, 1.75)
-    ax.set_ylim(0, 1.0)
+    ax.set_ylim(0, 0.85)
     ax.yaxis.set_major_locator(MultipleLocator(0.1))
     ax.set_ylabel("held-out Pearson, trigenic interaction")
     ax.set_title("a no-interaction null reaches 0.40")
     handles = [Patch(facecolor=c, edgecolor="black", linewidth=0.4, label=l) for l, _, c in learners]
-    handles.append(Patch(facecolor=DARK_RED, edgecolor="black", linewidth=0.4, label="CGT + closure + fitness (030), 1 seed"))
+    handles.append(Patch(facecolor=LIGHT_RED, edgecolor="black", linewidth=0.4, label="CGT + closure + fitness (030), 1 seed"))
     ax.legend(handles=handles, loc="upper right", bbox_to_anchor=(1.02, 1.0), frameon=False, handlelength=1.0, handletextpad=0.3, borderpad=0.1, labelspacing=0.2)
     # The transformer's reading on that split differs from the baselines' (validation on one
     # split, epoch 29, three seeds, against five-fold test), so the note hangs under that group.
@@ -373,7 +373,7 @@ def panel_e(ax: Axes, done: pd.DataFrame, summary: dict[str, Any]) -> None:
     ax.set_ylim(0.38, 0.49)
     ax.yaxis.set_major_locator(MultipleLocator(0.02))
     ax.set_ylabel("validation Pearson, epoch 29")
-    ax.set_title("a soft prior helps, a hard mask does not")
+    ax.set_title("a soft prior helps, a mask does not")
     strip(ax)
 
 
@@ -389,7 +389,8 @@ def panel_f(ax: Axes) -> None:
     ax.set_ylim(0.38, 0.49)
     ax.yaxis.set_major_locator(MultipleLocator(0.02))
     ax.set_ylabel("validation Pearson, epochs 10 to 29")
-    ax.set_xlabel("training pool, records\nS3: S0 + closure singles and doubles")
+    ax.set_xlabel("training pool, records")
+    ax.text(0.02, 0.97, "S3 = S0 + the closure's\nsingles and doubles", transform=ax.transAxes, ha="left", va="top", fontsize=5)
     ax.set_title("lower-order data adds 0.04")
     strip(ax)
 
@@ -480,7 +481,7 @@ def panel_j(ax: Axes, done: pd.DataFrame) -> None:
     ax.set_ylim(0, 1.05)
     ax.yaxis.set_major_locator(MultipleLocator(0.2))
     ax.set_ylabel("edge recall at degree")
-    ax.set_title("every weight contracts attention")
+    ax.set_title("any λ > 0 puts attention on graph edges")
     strip(ax)
 
 
@@ -543,12 +544,12 @@ def umap_by_cluster(ax: Axes, assign: pd.DataFrame, enr: pd.DataFrame, rep: str,
         # The table's clusters are its own partition, not the encoder's, so their best terms
         # go in the panel (o lists only the encoder's); headroom above the cloud holds the key.
         lo, hi = float(y.min()), float(y.max())
-        ax.set_ylim(lo - 0.02 * (hi - lo), hi + 0.42 * (hi - lo))
+        ax.set_ylim(lo - 0.02 * (hi - lo), hi + 0.5 * (hi - lo))
         name_of = {int(r.cluster): r.go_name for _, r in best.iterrows()}
         short = {"mitochondrial protein-containing complex": "mitochondrial complex", "organic acid metabolic process": "organic acid metabolism"}
         ax.legend(
             handles=[Patch(facecolor=color_of[c], edgecolor="none", label=f"{c} {short.get(name_of[c], name_of[c])}") for c in top],
-            loc="upper left", frameon=False, handlelength=1.0, handletextpad=0.4, borderpad=0.2, labelspacing=0.25, fontsize=5,
+            loc="upper left", bbox_to_anchor=(0.0, 1.04), frameon=False, handlelength=1.0, handletextpad=0.4, borderpad=0.2, labelspacing=0.25, fontsize=5,
         )
     other = ~lab.isin(top)
     ax.scatter(x[other], y[other], s=1.2, color="#C8C8C8", linewidths=0, rasterized=False, zorder=2)
@@ -606,7 +607,7 @@ def panel_o(ax: Axes, assign: pd.DataFrame) -> None:
     for sp in ax.spines.values():
         sp.set_visible(False)
     n_in = int(it.sum())
-    ax.set_title("the slivers: genes in no training triple")
+    ax.set_title("genes in no training triple stray from the mass")
     ax.legend(
         handles=[
             Patch(facecolor=RED, edgecolor="none", label=f"in a training triple, {n_in:,}"),
@@ -619,7 +620,7 @@ def panel_o(ax: Axes, assign: pd.DataFrame) -> None:
 
 def panel_p(ax: Axes, assign: pd.DataFrame, enr: pd.DataFrame, summary: dict[str, Any]) -> None:
     rep = next(r for r in summary["representations"] if r["name"] == "table")
-    umap_by_cluster(ax, assign, enr, "table", f"input table: {rep['n_clusters']} clusters, {rep['n_enriched_clusters']} enriched", key=True)
+    umap_by_cluster(ax, assign, enr, "table", f"input embeddings: {rep['n_enriched_clusters']} of {rep['n_clusters']} clusters enriched", key=True)
 
 
 # ----------------------------------------------------------------------------- sheet

@@ -125,28 +125,39 @@ TAGS = {"161": "left", "162": "left", "163": "right", "200": "right"}  # growth,
 TAG_SIZE = 7.0  # the ladder's floor, 5.04 pt
 
 
-def enlarge_tags(keep: list[ET.Element]) -> None:
-    """Retype the four gray tags to the ladder's floor and grow their pills to match, keeping
-    the edge that faces the equation (review 2026-10-14: the tags were the smallest type)."""
+EQUATIONS = {"83": "left", "76": "left", "80": "left", "154": "center"}  # growth, digenic, trigenic, general
+EQUATION_SIZE = 6.5  # 4.7 pt; 7 would run the trigenic line into its tag
+
+
+def retype_cells(keep: list[ET.Element], which: dict[str, str], size: float) -> None:
+    """Retype the named labels to one draw.io size and grow their boxes by the same factor,
+    anchored on the left edge, the right edge or the center (review 2026-10-14: the tags
+    to the ladder's floor, the equations as large as the slot's rows allow)."""
     for c in keep:
-        anchor = TAGS.get(c.get("id") or "")
+        anchor = which.get(c.get("id") or "")
         if anchor is None:
             continue
         m = re.search(r"font-size:\s*([\d.]+)px", c.get("value") or "")
-        assert m is not None, f"tag {c.get('id')} has no inline size"
-        f = TAG_SIZE / float(m.group(1))
-        c.set("value", re.sub(r"font-size:\s*([\d.]+)px", f"font-size: {TAG_SIZE:g}px", c.get("value")))
+        assert m is not None, f"cell {c.get('id')} has no inline size"
+        f = size / float(m.group(1))
+        c.set("value", re.sub(r"font-size:\s*([\d.]+)px", f"font-size: {size:g}px", c.get("value")))
         g = c.find("mxGeometry")
         assert g is not None
         x, y, w, h = (float(g.get(k) or 0) for k in ("x", "y", "width", "height"))
         nw, nh = w * f, h * f
-        g.set("x", f"{x if anchor == 'left' else x + w - nw:.2f}")
+        nx = {"left": x, "right": x + w - nw, "center": x - (nw - w) / 2}[anchor]
+        g.set("x", f"{nx:.2f}")
         g.set("y", f"{y - (nh - h) / 2:.2f}")
         g.set("width", f"{nw:.2f}")
         g.set("height", f"{nh:.2f}")
 
 
-NUDGES = {"154": (-12.0, 0.0)}  # the beige general-interaction box, left by 3 mm (review 2026-10-14)
+def enlarge_tags(keep: list[ET.Element]) -> None:
+    retype_cells(keep, TAGS, TAG_SIZE)
+    retype_cells(keep, EQUATIONS, EQUATION_SIZE)
+
+
+NUDGES = {"154": (-12.0, 0.0), "163": (10.0, 0.0), "200": (10.0, 0.0)}  # the beige box left 3 mm; the trigenic and general tags right 2.5 mm, clear of the larger equations
 
 
 def nudge(keep: list[ET.Element]) -> None:

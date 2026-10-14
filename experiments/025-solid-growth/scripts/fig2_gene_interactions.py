@@ -197,7 +197,8 @@ def keys(fig: Figure, y_key: float) -> None:
     ]
     # One line: the pool statement at the left (every arm of e to l is S0, cgt_s0_r_kl_000
     # and its descendants; f alone varies the pool), the color key to its right.
-    fig.text(0.055, y_key, "e to l: S0, 376 k Kuzmin triples  |", ha="left", va="center", fontsize=5)
+    fig.text(0.055, y_key, "e to l: S0, 376 k Kuzmin triples", ha="left", va="center", fontsize=5)
+    fig.add_artist(Line2D([0.203, 0.203], [y_key - 1.4 / SHEET_H_MM, y_key + 1.4 / SHEET_H_MM], transform=fig.transFigure, color="black", lw=0.5))
     fig.legend(handles=handles, loc="center left", bbox_to_anchor=(0.215, y_key), ncol=6, frameon=False, fontsize=5, handlelength=1.1, handletextpad=0.35, columnspacing=0.9, borderpad=0, borderaxespad=0)
     if not STATUS_KEY:
         return
@@ -335,6 +336,12 @@ def panel_d(ax: Axes) -> None:
     # paper/nature-biotech/sections/backmatter.tex, "How far below the achievable").
     ax.axhspan(0.74, 0.81, color="#E6E6E6", lw=0, zorder=0)
     ax.text(-0.5, 0.775, "replicate ceiling, 0.74 to 0.81", ha="left", va="center", fontsize=5, zorder=1)
+    # DANGO's reading of the same screen: Pearson 0.59 between the two individual replicates
+    # (Zhang et al. 2020, Results, "The Pearson correlation between the trigenic interaction
+    # scores of two individual replicates is around 0.59"), which it calls an approximate
+    # upper bound; the adjusted-score range above is Kuzmin 2018's own figure.
+    ax.axhline(0.59, color="black", lw=0.5, ls="--", zorder=1)
+    ax.text(-0.5, 0.60, "two raw replicates, 0.59", ha="left", va="bottom", fontsize=5, zorder=1)
     ax.set_xticks([0, 1])
     ax.set_xticklabels(["random split\nover triples", "held-out\nquery pairs"])
     ax.set_xlim(-0.55, 1.75)
@@ -615,10 +622,10 @@ def panel_o(ax: Axes, assign: pd.DataFrame) -> None:
     for sp in ax.spines.values():
         sp.set_visible(False)
     n_in = int(it.sum())
-    ax.set_title("genes in no training triple stray from the mass")
+    ax.set_title("genes in no training triple stray")
     ax.legend(
         handles=[
-            Patch(facecolor=RED, edgecolor="none", label=f"in a training triple, {n_in:,}"),
+            Patch(facecolor=RED, edgecolor="none", label=f"in training, {n_in:,}"),
             Patch(facecolor="#C8C8C8", edgecolor="none", label=f"in none, {len(it) - n_in:,}"),
         ],
         loc="upper right", frameon=False, handlelength=1.0, handletextpad=0.4, borderpad=0.2, labelspacing=0.25,

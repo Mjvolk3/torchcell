@@ -78,7 +78,7 @@ from torchcell.paper.tables import (
 SCRIPT = Path(__file__).resolve()
 REPO = SCRIPT.parents[3]
 RESULTS = SCRIPT.parent.parent / "results"
-CACHE_PATH = SCRIPT.parent / "bacteria_signals_cache.json"
+CACHE_PATH = SCRIPT.parent / "dataset_probe_cache.json"
 # Bump when any extractor definition changes: a cached row is only reused when both the
 # LMDB fingerprint and this tag match.
 PROBE_VARIANT = "probes-v1"
@@ -110,6 +110,31 @@ SECTION_BY_EXPERIMENT_TYPE = {
     "protein_turnover": "Protein synthesis / turnover",
     "product_titer": "Product titer",
     "flux": "Flux",
+    # yeast experiment types (the 2026-07-17 paper table curates these by hand)
+    "fitness": "Fitness",
+    "segregant_growth": "Fitness",
+    "segregant_perturbation": "Fitness",
+    "gene interaction": "Gene interaction",
+    "synthetic lethality": "Viability",
+    "synthetic rescue": "Viability",
+    "gene essentiality": "Viability",
+    "environment_response": "Environmental / chemogenomic response",
+    "strain_environment_response": "Environmental / chemogenomic response",
+    "calmorph": "Morphology",
+    "visual_score": "Morphology",
+    "microarray_expression": "Expression (microarray)",
+    "microarray_expression_score": "Expression (microarray)",
+    "induction_timecourse_expression": "Expression (microarray)",
+    "rnaseq_expression": "Expression (RNA-seq)",
+    "segregant_expression": "Expression (RNA-seq)",
+    "pooled_sort_seq_expression": "Expression (RNA-seq)",
+    "pseudobulk_expression": "Expression (RNA-seq)",
+    "pseudobulk_umi_count": "Expression (RNA-seq)",
+    "metabolite": "Metabolite",
+    "protein_abundance": "Protein abundance",
+    "yeast_protein_turnover": "Protein synthesis / turnover",
+    "genome_architecture": "Genome architecture",
+    "life_cycle": "Life cycle",
 }
 
 

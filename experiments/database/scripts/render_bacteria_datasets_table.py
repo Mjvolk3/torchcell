@@ -252,7 +252,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--data", type=Path, default=None)
     args = ap.parse_args()
-    data_path = args.data or newest_json()
+    data_path = (args.data or newest_json()).resolve()
     payload = json.loads(data_path.read_text())
     records = [DatasetProbeRecord(**d) for d in payload["datasets"]]
     sections = payload["sections"]

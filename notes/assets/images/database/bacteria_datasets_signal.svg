@@ -1837,11 +1837,11 @@ z
 " style="stroke: #000000; stroke-width: 0.3"/>
      </defs>
      <g>
-      <use xlink:href="#m40c0c8e44d" x="1.741021" y="260.362301" style="fill: #d79b00; stroke: #000000; stroke-width: 0.3"/>
+      <use xlink:href="#m40c0c8e44d" x="22.610832" y="260.362301" style="fill: #d79b00; stroke: #000000; stroke-width: 0.3"/>
      </g>
     </g>
     <g id="text_17">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="9.541021" y="262.462301" transform="rotate(-0 9.541021 262.462301)">Environmental / chemogenomic response</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="30.410832" y="262.462301" transform="rotate(-0 30.410832 262.462301)">Environmental / chemogenomic response</text>
     </g>
     <g id="line2d_131">
      <defs>
@@ -1858,11 +1858,11 @@ z
 " style="stroke: #000000; stroke-width: 0.3"/>
      </defs>
      <g>
-      <use xlink:href="#meeee14fdb6" x="1.741021" y="267.492926" style="fill: #b85450; stroke: #000000; stroke-width: 0.3"/>
+      <use xlink:href="#meeee14fdb6" x="22.610832" y="267.492926" style="fill: #b85450; stroke: #000000; stroke-width: 0.3"/>
      </g>
     </g>
     <g id="text_18">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="9.541021" y="269.592926" transform="rotate(-0 9.541021 269.592926)">Expression (RNA-seq)</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="30.410832" y="269.592926" transform="rotate(-0 30.410832 269.592926)">Expression (RNA-seq)</text>
     </g>
     <g id="line2d_132">
      <defs>
@@ -1879,11 +1879,11 @@ z
 " style="stroke: #000000; stroke-width: 0.3"/>
      </defs>
      <g>
-      <use xlink:href="#me2a56f7338" x="1.741021" y="274.550426" style="fill: #9673a6; stroke: #000000; stroke-width: 0.3"/>
+      <use xlink:href="#me2a56f7338" x="22.610832" y="274.550426" style="fill: #9673a6; stroke: #000000; stroke-width: 0.3"/>
      </g>
     </g>
     <g id="text_19">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="9.541021" y="276.650426" transform="rotate(-0 9.541021 276.650426)">Fitness</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="30.410832" y="276.650426" transform="rotate(-0 30.410832 276.650426)">Fitness</text>
     </g>
     <g id="line2d_133">
      <defs>
@@ -1900,11 +1900,11 @@ z
 " style="stroke: #000000; stroke-width: 0.3"/>
      </defs>
      <g>
-      <use xlink:href="#m1e2f488b87" x="1.741021" y="281.537613" style="fill: #d6b656; stroke: #000000; stroke-width: 0.3"/>
+      <use xlink:href="#m1e2f488b87" x="22.610832" y="281.537613" style="fill: #d6b656; stroke: #000000; stroke-width: 0.3"/>
      </g>
     </g>
     <g id="text_20">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="9.541021" y="283.637613" transform="rotate(-0 9.541021 283.637613)">Flux</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="30.410832" y="283.637613" transform="rotate(-0 30.410832 283.637613)">Flux</text>
     </g>
     <g id="line2d_134">
      <defs>
@@ -1921,11 +1921,11 @@ z
 " style="stroke: #000000; stroke-width: 0.3"/>
      </defs>
      <g>
-      <use xlink:href="#m676c2e40aa" x="1.741021" y="288.524801" style="fill: #6c8ebf; stroke: #000000; stroke-width: 0.3"/>
+      <use xlink:href="#m676c2e40aa" x="22.610832" y="288.524801" style="fill: #6c8ebf; stroke: #000000; stroke-width: 0.3"/>
      </g>
     </g>
     <g id="text_21">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="9.541021" y="290.624801" transform="rotate(-0 9.541021 290.624801)">Gene interaction</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="30.410832" y="290.624801" transform="rotate(-0 30.410832 290.624801)">Gene interaction</text>
     </g>
     <g id="line2d_135">
      <defs>
@@ -1942,11 +1942,11 @@ z
 " style="stroke: #000000; stroke-width: 0.3"/>
      </defs>
      <g>
-      <use xlink:href="#m93f4b7e1d4" x="130.724146" y="260.362301" style="fill: #666666; stroke: #000000; stroke-width: 0.3"/>
+      <use xlink:href="#m93f4b7e1d4" x="151.593957" y="260.362301" style="fill: #666666; stroke: #000000; stroke-width: 0.3"/>
      </g>
     </g>
     <g id="text_22">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="138.524146" y="262.462301" transform="rotate(-0 138.524146 262.462301)">Metabolite</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="159.393957" y="262.462301" transform="rotate(-0 159.393957 262.462301)">Metabolite</text>
     </g>
     <g id="line2d_136">
      <defs>
@@ -1963,11 +1963,11 @@ z
 " style="stroke: #000000; stroke-width: 0.3"/>
      </defs>
      <g>
-      <use xlink:href="#m40ad6d7257" x="130.724146" y="267.349488" style="fill: #9d7100; stroke: #000000; stroke-width: 0.3"/>
+      <use xlink:href="#m40ad6d7257" x="151.593957" y="267.349488" style="fill: #9d7100; stroke: #000000; stroke-width: 0.3"/>
      </g>
     </g>
     <g id="text_23">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="138.524146" y="269.449488" transform="rotate(-0 138.524146 269.449488)">Morphology</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="159.393957" y="269.449488" transform="rotate(-0 159.393957 269.449488)">Morphology</text>
     </g>
     <g id="line2d_137">
      <defs>
@@ -1984,11 +1984,11 @@ z
 " style="stroke: #000000; stroke-width: 0.3"/>
      </defs>
      <g>
-      <use xlink:href="#meb4e25f736" x="130.724146" y="274.406988" style="fill: #863d3a; stroke: #000000; stroke-width: 0.3"/>
+      <use xlink:href="#meb4e25f736" x="151.593957" y="274.406988" style="fill: #863d3a; stroke: #000000; stroke-width: 0.3"/>
      </g>
     </g>
     <g id="text_24">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="138.524146" y="276.506988" transform="rotate(-0 138.524146 276.506988)">Phosphoproteome</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="159.393957" y="276.506988" transform="rotate(-0 159.393957 276.506988)">Phosphoproteome</text>
     </g>
     <g id="line2d_138">
      <defs>
@@ -2005,11 +2005,11 @@ z
 " style="stroke: #000000; stroke-width: 0.3"/>
      </defs>
      <g>
-      <use xlink:href="#m22027b16ce" x="130.724146" y="281.394176" style="fill: #6e5479; stroke: #000000; stroke-width: 0.3"/>
+      <use xlink:href="#m22027b16ce" x="151.593957" y="281.394176" style="fill: #6e5479; stroke: #000000; stroke-width: 0.3"/>
      </g>
     </g>
     <g id="text_25">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="138.524146" y="283.494176" transform="rotate(-0 138.524146 283.494176)">Product titer</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="159.393957" y="283.494176" transform="rotate(-0 159.393957 283.494176)">Product titer</text>
     </g>
     <g id="line2d_139">
      <defs>
@@ -2026,11 +2026,11 @@ z
 " style="stroke: #000000; stroke-width: 0.3"/>
      </defs>
      <g>
-      <use xlink:href="#m39e49e5106" x="130.724146" y="288.381363" style="fill: #9c853f; stroke: #000000; stroke-width: 0.3"/>
+      <use xlink:href="#m39e49e5106" x="151.593957" y="288.381363" style="fill: #9c853f; stroke: #000000; stroke-width: 0.3"/>
      </g>
     </g>
     <g id="text_26">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="138.524146" y="290.481363" transform="rotate(-0 138.524146 290.481363)">Promoter activity</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="159.393957" y="290.481363" transform="rotate(-0 159.393957 290.481363)">Promoter activity</text>
     </g>
     <g id="line2d_140">
      <defs>
@@ -2047,11 +2047,11 @@ z
 " style="stroke: #000000; stroke-width: 0.3"/>
      </defs>
      <g>
-      <use xlink:href="#m9dce2cc154" x="198.354458" y="260.362301" style="fill: #4f688b; stroke: #000000; stroke-width: 0.3"/>
+      <use xlink:href="#m9dce2cc154" x="219.22427" y="260.362301" style="fill: #4f688b; stroke: #000000; stroke-width: 0.3"/>
      </g>
     </g>
     <g id="text_27">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="206.154458" y="262.462301" transform="rotate(-0 206.154458 262.462301)">Protein abundance</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="227.02427" y="262.462301" transform="rotate(-0 227.02427 262.462301)">Protein abundance</text>
     </g>
     <g id="line2d_141">
      <defs>
@@ -2068,11 +2068,11 @@ z
 " style="stroke: #000000; stroke-width: 0.3"/>
      </defs>
      <g>
-      <use xlink:href="#mdc0aa1da05" x="198.354458" y="267.422613" style="fill: #4a4a4a; stroke: #000000; stroke-width: 0.3"/>
+      <use xlink:href="#mdc0aa1da05" x="219.22427" y="267.422613" style="fill: #4a4a4a; stroke: #000000; stroke-width: 0.3"/>
      </g>
     </g>
     <g id="text_28">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="206.154458" y="269.522613" transform="rotate(-0 206.154458 269.522613)">Protein synthesis / turnover</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="227.02427" y="269.522613" transform="rotate(-0 227.02427 269.522613)">Protein synthesis / turnover</text>
     </g>
     <g id="line2d_142">
      <defs>
@@ -2089,11 +2089,11 @@ z
 " style="stroke: #000000; stroke-width: 0.3"/>
      </defs>
      <g>
-      <use xlink:href="#m4466ce49f5" x="198.354458" y="274.480113" style="fill: #c48161; stroke: #000000; stroke-width: 0.3"/>
+      <use xlink:href="#m4466ce49f5" x="219.22427" y="274.480113" style="fill: #c48161; stroke: #000000; stroke-width: 0.3"/>
      </g>
     </g>
     <g id="text_29">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="206.154458" y="276.580113" transform="rotate(-0 206.154458 276.580113)">Viability</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="227.02427" y="276.580113" transform="rotate(-0 227.02427 276.580113)">Viability</text>
     </g>
     <g id="line2d_143">
      <defs>
@@ -2110,11 +2110,11 @@ z
 " style="stroke: #000000; stroke-width: 0.5"/>
      </defs>
      <g>
-      <use xlink:href="#m2a27617788" x="198.354458" y="281.537613" style="fill: #ffffff; stroke: #000000; stroke-width: 0.5"/>
+      <use xlink:href="#m2a27617788" x="219.22427" y="281.537613" style="fill: #ffffff; stroke: #000000; stroke-width: 0.5"/>
      </g>
     </g>
     <g id="text_30">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="206.154458" y="283.637613" transform="rotate(-0 206.154458 283.637613)">E. coli</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="227.02427" y="283.637613" transform="rotate(-0 227.02427 283.637613)">E. coli</text>
     </g>
     <g id="line2d_144">
      <defs>
@@ -2126,11 +2126,11 @@ z
 " style="stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter"/>
      </defs>
      <g>
-      <use xlink:href="#me466c9847d" x="198.354458" y="288.524801" style="fill: #ffffff; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter"/>
+      <use xlink:href="#me466c9847d" x="219.22427" y="288.524801" style="fill: #ffffff; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter"/>
      </g>
     </g>
     <g id="text_31">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="206.154458" y="290.624801" transform="rotate(-0 206.154458 290.624801)">P. putida</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="227.02427" y="290.624801" transform="rotate(-0 227.02427 290.624801)">P. putida</text>
     </g>
    </g>
   </g>

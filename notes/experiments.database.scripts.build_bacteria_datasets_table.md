@@ -17,8 +17,8 @@ build. Both are measured in one script and rendered as views:
   datasets, all built in the dev tree, 32.6 GB) and writes
   `experiments/database/results/pre-build/2026-10-14/ecoli-pputida_datasets.json`.
   Per-dataset rows are cached by LMDB fingerprint in
-  `experiments/database/scripts/bacteria_signals_cache.json` (committed, like the yeast
-  cache), so a rerun recomputes only rebuilt stores. Two streaming passes, 24 workers,
+  `experiments/database/scripts/dataset_probe_cache.json` (committed, like the yeast
+  table's cache; one file for every organism), so a rerun recomputes only rebuilt stores. Two streaming passes, 24 workers,
   about 8 minutes wall clock (Fuhrer 2017's wide metabolome was the straggler at 489 s).
 - `render_bacteria_datasets_table.py` writes the generated note
   [[experiments.database.bacteria-datasets-table]], the `.tex` fragment beside the JSON and
@@ -85,3 +85,46 @@ their environment bytes are short; the yeast 2026-07-17 snapshot predates intern
 two tables' Signal columns are not directly comparable on that axis. The binarization sets a
 constant path and a NaN leaf to 0. Noise keeps the digit count of `repr`, so a random digit
 string ending in 0 can print one character shorter than the original.
+
+## 2026.10.14 - Yeast run of the same probes (hypothesis above now measured)
+
+`--organisms scerevisiae` over the 69 yeast datasets the adapter map serves (all built in the
+dev tree, 377 GB; 24 workers, 3 h 32 min wall clock, Hoepfner 2014 with 30.3 M records took
+12,717 s on its own). Output
+`experiments/database/results/pre-build/2026-10-14/scerevisiae_datasets.json`, generated view
+[[experiments.database.yeast-datasets-table]], preview PDF
+`notes/assets/pdf-output/experiments.database.yeast-datasets-table.pdf`.
+
+![](./assets/images/database/yeast_datasets_signal.svg)
+
+### Totals (measured, 69 datasets, 93,266,786 instances, 886,671,302 numeric leaves)
+
+| Quantity | bits | ratio to Signal | median per-dataset ratio | bacteria ratio (above) |
+| :-- | --: | --: | --: | --: |
+| Signal | 7.19e10 | 1.000 | 1.000 | 1.000 |
+| Structure only | 1.26e10 | 0.176 | 0.159 | 0.292 |
+| Shuffled within key path | 7.35e10 | 1.023 | 1.012 | 1.022 |
+| Digit noise at stored precision | 7.92e10 | 1.102 | 1.096 | 1.066 |
+| 1-bit z-score, in place | 4.83e10 | 0.672 | 0.724 | 0.528 |
+| 1-bit z-score, packed | 5.75e8 | 0.008 | 0.007 | 0.009 |
+
+Packed floor 0.63 bits per numeric leaf (bacteria 0.60). The yeast dev-tree Signal total here
+(7.19e10 bits) is not the paper table's 2026-07-17 number: the set of built stores, the
+interned environments and several rebuilt loaders differ, so compare ratios, not totals.
+
+### Findings (measured)
+
+1. **Yeast decomposes the same way as bacteria.** Shuffled 1.023 and digit noise 1.102 of
+   Signal; the hypothesis in the section above is now measured. The largest stores are the
+   cleanest cases: Hoepfner 2014 shuffled 1.001, noise 1.015, packed 0.0017; Costanzo dmi
+   shuffled 1.001, noise 1.090.
+2. **Structure is a smaller share in yeast** (0.176 vs 0.292) because the big yeast stores
+   are long scalar tables whose per-record schema is small relative to their digits; the one
+   yeast store above 0.5 is Jackson 2020 pseudobulk (0.72), the two bacterial ones are
+   Fuhrer 2017 (0.56) and Caglar 2017 proteome (0.67).
+3. **Datasets where shuffling does change the size are the exception and are small.** The
+   yeast maximum is 1.67 and the bacterial 1.48, both on stores with few records where the
+   per-path permutation breaks a within-record pattern gzip had found.
+
+Hypothesis (untested): the within-record pattern of finding 3 is repeated identical values
+across a record's vector (replicate counts, shared SE), not biological structure.

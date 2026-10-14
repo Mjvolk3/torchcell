@@ -160,8 +160,8 @@ def main() -> None:
     ]
     ax_a.legend(
         handles=handles,
-        loc="upper center",
-        bbox_to_anchor=(0.5, -0.17),
+        loc="upper left",
+        bbox_to_anchor=(-0.09, -0.17),
         ncol=3,
         frameon=False,
         handletextpad=0.3,

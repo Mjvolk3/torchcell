@@ -40,6 +40,7 @@ ORANGE, RED, PURPLE, YELLOW, BLUE, GRAY = PLOT_PALETTE[:6]
 CLUSTER_COLORS = [ORANGE, RED, PURPLE, YELLOW, BLUE]
 plt.rcParams.update({"font.family": "Arial", "font.size": 6, "axes.titlesize": 6, "svg.fonttype": "none"})
 
+CHOSEN: dict[str, Any] = {"perplexity": 30, "early_exaggeration": 4.0}
 SETTINGS: list[dict[str, Any]] = [
     {"perplexity": 30, "early_exaggeration": 12.0},
     {"perplexity": 50, "early_exaggeration": 12.0},
@@ -94,6 +95,15 @@ def main() -> None:
     axes[1, 0].text(-0.02, 0.5, "encoder clusters", transform=axes[1, 0].transAxes, rotation=90, ha="right", va="center")
     fig.text(0.5, 0.01, "t-SNE of the wild-type encoder embedding, 6,607 genes, PCA 50 first; top: red = in a training triple, gray = in none; bottom: the five best-enriched encoder clusters", ha="center", va="bottom", fontsize=6)
     np.savez(osp.join(WT, "tsne.npz"), **out)
+    # The setting the sheet draws (review 2026-10-13: perplexity 30, exaggeration 4), for the
+    # encoder and for the input gene table under the same PCA-50 reduction, one row per gene.
+    chosen = CHOSEN
+    T = np.load(osp.join(WT, "gene_table.npy"))
+    Yt = TSNE(n_components=2, init="pca", learning_rate="auto", random_state=0, **chosen).fit_transform(PCA(n_components=50, random_state=0).fit_transform(T))
+    Ye = out[f"p{chosen['perplexity']}_e{chosen['early_exaggeration']:g}"]
+    coords = pd.DataFrame({"gene": genes, "encoder_tsne_1": Ye[:, 0], "encoder_tsne_2": Ye[:, 1], "table_tsne_1": Yt[:, 0], "table_tsne_2": Yt[:, 1]})
+    coords.to_csv(osp.join(WT, "tsne_coords.csv"), index=False)
+    print(f"wrote tsne_coords.csv at perplexity {chosen['perplexity']}, exaggeration {chosen['early_exaggeration']:g}")
     os.makedirs(IMG_DIR, exist_ok=True)
     stem = osp.join(IMG_DIR, f"wt_gene_embedding_tsne_{timestamp()}")
     fig.savefig(stem + ".png", dpi=300)

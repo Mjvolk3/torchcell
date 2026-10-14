@@ -84,6 +84,8 @@ LIGHT = "#8A8A8A"
 STATUS_SYMBOL = {"ready": "●", "partial": "◐", "todo": "○"}
 STATUS_WORD = {"ready": "on file", "partial": "partial", "todo": "idea only"}
 CROSS = ("✗", "#E53935")  # section status: not yet reviewed by the author
+MAP = "tsne"  # which 2-D map the gene panels draw: "tsne" or "umap"
+MAP_NAME = {"tsne": "t-SNE", "umap": "UMAP"}[MAP]
 STATUS_MARKS = True  # the review marks beside each panel letter
 STATUS_KEY = False  # their key at the foot of the sheet; off on the author's request (2026-10-13)
 
@@ -510,7 +512,11 @@ CLUSTER_COLORS = [ORANGE, RED, PURPLE, YELLOW, BLUE]  # the five best-enriched c
 
 
 def wt_data() -> tuple[pd.DataFrame, pd.DataFrame, dict[str, Any]]:
-    assign = pd.read_csv(osp.join(WT, "cluster_assignments.csv"))
+    # The maps draw the t-SNE at perplexity 30, exaggeration 4 (tsne_coords.csv, from
+    # wt_gene_embedding_tsne.py; review 2026-10-13), which gives the trained cloud the
+    # panel; the UMAP columns stay in cluster_assignments.csv.
+    assign = pd.read_csv(osp.join(WT, "cluster_assignments.csv")).merge(pd.read_csv(osp.join(WT, "tsne_coords.csv")), on="gene", how="left")
+    assert assign.encoder_tsne_1.notna().all()
     enr = pd.read_csv(osp.join(WT, "go_enrichment.csv"))
     summary = json.load(open(osp.join(WT, "summary.json")))
     return assign, enr, summary
@@ -526,7 +532,7 @@ def umap_by_cluster(ax: Axes, assign: pd.DataFrame, enr: pd.DataFrame, rep: str,
     best = best_terms(enr, rep)
     top = [int(c) for c in best[best.q < 0.05].cluster.head(len(CLUSTER_COLORS))]
     color_of = {c: CLUSTER_COLORS[i] for i, c in enumerate(top)}
-    x, y, lab = assign[f"{rep}_umap_1"], assign[f"{rep}_umap_2"], assign[f"{rep}_cluster"]
+    x, y, lab = assign[f"{rep}_{MAP}_1"], assign[f"{rep}_{MAP}_2"], assign[f"{rep}_cluster"]
     other = ~lab.isin(top)
     ax.scatter(x[other], y[other], s=1.2, color="#C8C8C8", linewidths=0, rasterized=True, zorder=2)
     for c in top:
@@ -539,7 +545,7 @@ def umap_by_cluster(ax: Axes, assign: pd.DataFrame, enr: pd.DataFrame, rep: str,
     for sp in ax.spines.values():
         sp.set_visible(False)
     ax.set_title(title)
-    ax.text(0.0, -0.06, "UMAP of 6,607 genes", transform=ax.transAxes, fontsize=5, color="black", ha="left", va="bottom")
+    ax.text(0.0, -0.06, f"{MAP_NAME} of 6,607 genes", transform=ax.transAxes, fontsize=5, color="black", ha="left", va="bottom")
 
 
 def panel_m(ax: Axes, assign: pd.DataFrame, enr: pd.DataFrame, summary: dict[str, Any]) -> None:
@@ -572,7 +578,7 @@ def panel_n(ax: Axes, enr: pd.DataFrame) -> None:
 
 
 def panel_o(ax: Axes, assign: pd.DataFrame) -> None:
-    x, y, it = assign.encoder_umap_1, assign.encoder_umap_2, assign.in_train_triple.astype(bool)
+    x, y, it = assign[f"encoder_{MAP}_1"], assign[f"encoder_{MAP}_2"], assign.in_train_triple.astype(bool)
     ax.scatter(x[~it], y[~it], s=1.2, color="#C8C8C8", linewidths=0, rasterized=True, zorder=2)
     ax.scatter(x[it], y[it], s=1.2, color=RED, linewidths=0, rasterized=True, zorder=3)
     ax.margins(0.02)
@@ -583,7 +589,7 @@ def panel_o(ax: Axes, assign: pd.DataFrame) -> None:
     for sp in ax.spines.values():
         sp.set_visible(False)
     n_in = int(it.sum())
-    ax.set_title("the arc: genes in no training triple")
+    ax.set_title("the slivers: genes in no training triple")
     ax.legend(
         handles=[
             Patch(facecolor=RED, edgecolor="none", label=f"in a training triple, {n_in:,}"),
@@ -591,7 +597,7 @@ def panel_o(ax: Axes, assign: pd.DataFrame) -> None:
         ],
         loc="upper right", frameon=False, handlelength=1.0, handletextpad=0.4, borderpad=0.2, labelspacing=0.25,
     )
-    ax.text(0.0, -0.06, "UMAP of 6,607 genes", transform=ax.transAxes, fontsize=5, color="black", ha="left", va="bottom")
+    ax.text(0.0, -0.06, f"{MAP_NAME} of 6,607 genes", transform=ax.transAxes, fontsize=5, color="black", ha="left", va="bottom")
 
 
 def panel_p(ax: Axes, assign: pd.DataFrame, enr: pd.DataFrame, summary: dict[str, Any]) -> None:

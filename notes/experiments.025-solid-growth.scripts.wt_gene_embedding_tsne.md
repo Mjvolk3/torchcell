@@ -19,3 +19,5 @@ What the grid shows (observed on this run, seed 0):
 - Clusters 0, 3, 7 and 11 keep their UMAP arrangement in every t-SNE: 0 (ribonucleoprotein) at the bottom, 3 (cell periphery) at the top, 11 (Golgi) and 7 (mitotic cell cycle) between them.
 
 Embeddings for every setting are saved to `experiments/025-solid-growth/results/wt_gene_embeddings/tsne.npz` (keys p<perplexity>_e<exaggeration>).
+
+The sheet takes perplexity 30, exaggeration 4 (owner's pick, 2026-10-13, from the grid above); the script writes that setting's coordinates for the encoder and for the input gene table to `results/wt_gene_embeddings/tsne_coords.csv`.

@@ -62,7 +62,7 @@ from dotenv import load_dotenv
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
-from matplotlib.patches import Patch
+from matplotlib.patches import Patch, Rectangle
 from matplotlib.ticker import MultipleLocator
 from scipy import stats
 
@@ -291,7 +291,7 @@ def panel_c(ax: Axes) -> None:
     ax.set_ylim(0, 0.52)
     ax.yaxis.set_major_locator(MultipleLocator(0.1))
     ax.set_ylabel("Pearson r, trigenic interaction")
-    ax.set_title("learned models lead; the ridge is at 0.40")
+    ax.set_title("CGT tops bio-inspired DL and the CBM")
     strip(ax)
 
 
@@ -352,7 +352,7 @@ def panel_d(ax: Axes) -> None:
     ax.set_ylim(0, 0.9)
     ax.yaxis.set_major_locator(MultipleLocator(0.1))
     ax.set_ylabel("held-out Pearson, trigenic interaction")
-    ax.set_title("a no-interaction null reaches 0.40")
+    ax.set_title("the closure pool lifts the CGT most")
     handles = [Patch(facecolor=c, edgecolor="black", linewidth=0.4, label=l) for l, _, c in learners]
     handles.append(Patch(facecolor=DARK_RED, edgecolor="black", linewidth=0.4, label="CGT, S3 + fitness, 1 seed"))
     ax.legend(handles=handles, loc="upper right", bbox_to_anchor=(1.02, 1.04), frameon=True, facecolor="white", edgecolor="none", framealpha=1.0, handlelength=1.0, handletextpad=0.3, borderpad=0.2, borderaxespad=0.0, labelspacing=0.2).set_zorder(5)
@@ -389,7 +389,8 @@ def panel_e(ax: Axes, done: pd.DataFrame, summary: dict[str, Any]) -> None:
     ax.set_ylim(0.38, 0.49)
     ax.yaxis.set_major_locator(MultipleLocator(0.02))
     ax.set_ylabel("validation Pearson, epoch 29")
-    ax.set_title("a soft prior helps, a mask does not")
+    ax.set_title("soft priors help, masks do not", pad=8)
+    ax.text(0.5, 1.01, "learnable gene table", transform=ax.transAxes, fontsize=5, ha="center", va="bottom")
     strip(ax)
 
 
@@ -550,12 +551,23 @@ def panel_k(ax: Axes, hist: pd.DataFrame) -> None:
 def panel_l(ax: Axes, hist: pd.DataFrame) -> None:
     for z, (arm, label, color) in enumerate([("kl_1", "learnable gene table, soft prior", RED), ("kl_1_emb", "composite embedding, soft prior", YELLOW), ("kl_0_emb", "composite embedding, no penalty", GRAY)]):
         curve(ax, hist, arm, "val/gene_interaction/Pearson", color, "-", label, 20 + z)
-    # The gene table without the prior does train (e, i, k: 0.42); the flat line is the
-    # composite embedding without it, train Pearson 0 on every seed, so the two "no
-    # penalty" lines of the sheet are different inputs, and the panel says so.
-    ax.text(0.98, 0.08, "learnable gene table, no penalty: 0.42 ($\\bf{e}$)", transform=ax.get_yaxis_transform(), ha="right", va="bottom", fontsize=5)
+    # What the composite embedding is: an inset gene schematic with the four sequence
+    # models and their windows (cgt_s0_q_kl_emb_017.yaml, fungal_up_down_transformer.py).
+    ins = ax.inset_axes([0.12, 0.72, 0.86, 0.27])
+    ins.set_xlim(0, 100)
+    ins.set_ylim(0, 10)
+    ins.axis("off")
+    for x0, wd, fill, top, bottom in [
+        (0, 27, PLOT_PALETTE_FILL[3], "5' 1,003 bp", "FUDT"),
+        (27, 46, PLOT_PALETTE_FILL[0], "ORF", "CaLM + ProtT5"),
+        (73, 27, PLOT_PALETTE_FILL[3], "3' 300 bp", "FUDT"),
+    ]:
+        ins.add_patch(Rectangle((x0, 4.6), wd, 2.4, facecolor=fill, edgecolor="black", linewidth=0.4))
+        ins.text(x0 + wd / 2, 7.4, top, ha="center", va="bottom", fontsize=5)
+        ins.text(x0 + wd / 2, 4.1, bottom, ha="center", va="top", fontsize=5)
+    ins.text(50, 0.0, "composite embedding: concatenated, 3,328 dims per gene", ha="center", va="bottom", fontsize=5)
     ax.set_xlim(0, 29)
-    ax.set_ylim(-0.05, 0.47)
+    ax.set_ylim(-0.05, 0.64)
     ax.yaxis.set_major_locator(MultipleLocator(0.1))
     ax.set_xlabel("epoch")
     ax.set_ylabel("validation Pearson")

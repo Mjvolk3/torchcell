@@ -1499,3 +1499,114 @@ own basis (28 compounds with a molar dose, folds 0 to 2) and is read in its own 
 tables. Supplement seven draws the ladder by encoder with the best learner as the bar
 and every learner as a point, colored by family, and the paired encoder-versus-control
 read sorted by the control's score.
+
+## 2026.10.14 - The environment experiments against the three goals, Delta's 27 jobs read, and round 10
+
+Delta ran every one of the 27 queued 040 jobs on 2026-10-13 (rounds 7 to 9 on the
+new trainer, 22862402 to 22862427 and 22862611 to 22862614, 2.6 to 6.5 h each), so
+every cell-readout arm now has three folds at seed 0 on BOTH machines and the seed
+twins (`_s12`, `_s345`) are in. The tables were pulled to `results/mixture-delta/`
+and the per-well host predictions to `$DATA_ROOT/.../predictions-delta/`;
+`r3_host_predictions.py` reads both roots with a `machine` column and the gate's
+`host_mean` averages every run an arm has (six for the Bliss arms: three folds on two
+machines). The four GilaHyper jobs the KG session had held (4595, 4601 to 4603) had
+FAILED at 14:12 on 2026-10-13 within a minute of starting, not from memory but from a
+full scratch disk (`No space left on device` on the predictions directory; 1.6 TB free
+again by 10:30 today); their configs are the Delta twins that completed, so nothing
+is lost and nothing was resubmitted.
+
+The three goals of the environment section, read against what has been run. The
+thesis figures for the gene level (`fig-prelim-interactions`: the training pools S0
+and S3, "lower-order data adds 0.04 r", "closure lifts the CGT most";
+`fig-prelim-betaxanthin-module`: a model ladder from baselines through inductive and
+transductive, each model's reach in genes, the top-50 call) are the template: a
+ladder of data pools, a ladder of models against a rule, and a held-out level at
+which the claim is made. The environment analog is the source ladder (which public
+screens train with Vanacloig), the model ladder (Bliss and Loewe rules, ridge, the
+mixture model fitted and zero-shot), and the private Bioscreen data as the held-out
+level that no public screen reaches (titrations and combinations at dose).
+
+**Goal 1 and 3, do the sources help one another, is any pair synergistic.** Measured
+so far: nothing clears the noise floor. Under the gene readout the three-seed
+ensemble on folds 0 to 2 read van 0.290, van + Hoepfner 0.271, van + Hoepfner +
+Hillenmeyer 0.267 (round 4); under the cell readout at seed 0 the same ladder reads
+0.335 / 0.344 / 0.175 on GilaHyper and 0.199 / 0.236 / 0.292 on Delta; under Bliss
+0.238 / - / 0.211 and 0.156 / - / 0.311. The same config at the same seed differs by
+up to 0.2 between the machines, so no single-seed ladder can be read. The other
+direction (does Vanacloig plus the rest help a public screen) is the per-source
+held-out compound score, and it is near zero everywhere: Hoepfner 0.02 to 0.13 against
+ridge's 0.189, Hillenmeyer -0.02 to 0.06 against 0.126; only Wildenhain is learned
+(0.13 to 0.29, round 3). On the private readout the three-source Bliss arm (0.883
+over six runs) equals the single-source arm (0.887). Hypothesis (untested): the
+public screens are not learned at a held-out compound by this model, so they cannot
+help the target at one; a different fact from "they do not help", which the
+three-seed Bliss ladder of round 10 is the first measurement of.
+
+**Goal 2, concentration.** The private data is read at dose on every arm (`ex21`
+titration Spearman, `ex23` growth AUROC and Spearman, the three isobole grids), so
+the evaluation the goal asks for exists; what has not existed is a dose channel that
+reads dose without cost. FiLM reads it (titration fit 0.93 on every FiLM arm) and
+costs the public score under every readout (0.13 to 0.21 against 0.2 to 0.35) and,
+under Bliss, the host too (AUROC 0.684 against 0.887 over six runs); without it the
+host's single-agent curve is flat in dose (titration Spearman fixed at 0.434 by the
+compound ordering), so the Bliss composition multiplies flat readings. Added `dose:
+offset` to the trainer (commit below): the compound tokens stay dose-free, and the
+dose enters as a gain on the medium offset alone, `offset x (1 + g(dose))` with `g`
+an MLP started at zero, so the gene path reads the same token at every dose and only
+the medium's potency moves with it; under Bliss each split single-compound medium
+carries its own gain. CPU-checked (zero gain equals `dose: off` at one and three
+compounds; the host reading moves with dose once the gain learns) and smoked on
+GilaHyper (4902, both the fitted single-source arm and the two-source arm with a
+held-out Hoepfner dose, 98 s, clean).
+
+**The six-run ensemble of rounds 7 to 9** (`r3_host_predictions.py`, per-well mean
+over every run, 63 combinations, 55 titration wells):
+
+| arm | runs | ex23 growth AUROC | ex23 Spearman | fitness at 1 / 2 / 3 inhibitors | titration |
+|---|---|---|---|---|---|
+| cell, mean pooling (r7 van) | 6 | 0.517 | 0.068 | 0.63 / 0.60 / 0.60 | 0.434 |
+| cell, mean pooling, seeds 3 to 5 on five folds (r9 s345) | 8 | 0.477 | -0.014 | 0.66 / 0.65 / 0.65 | 0.451 |
+| cell, mean pooling, zero-shot (r8 anchors) | 6 | 0.574 | 0.205 | 0.70 / 0.69 / 0.68 | -0.24 (not trained) |
+| cell, sum pooling | 6 | 0.270 | -0.380 | 0.65 / 0.72 / 0.82 | 0.451 |
+| **cell, Bliss** | 6 | **0.887** | **0.665** | 0.58 / 0.34 / 0.21 | 0.451 |
+| **cell, Bliss, zero-shot** | 6 | **0.924** | **0.717** | 0.67 / 0.45 / 0.31 | -0.10 (not trained) |
+| cell, Bliss, three sources | 6 | 0.883 | 0.654 | 0.65 / 0.42 / 0.27 | 0.434 |
+| cell, Bliss with dose FiLM | 6 | 0.684 | 0.331 | 0.82 / 0.70 / 0.60 | 0.932 |
+| observed | | | | 0.81 / 0.35 / 0.05 | |
+
+The round-9 reading holds on the second machine: composition is the whole
+difference, zero-shot is the best arm, and the gate's headline moved from 0.891 to
+0.887 (fitted) with the grown Spearman 0.677 to 0.647 when the Delta folds joined
+the GilaHyper folds (the gate rebuilt clean, 0 errors).
+
+**Round 10** (`r3_sweep.py --wave 10`, `r10_*`, 34 jobs, 48 configs, 249 estimated
+A40 hours): the three questions under the one readout that composes, with seeds.
+Submitted on Delta 2026-10-14 11:00 as 22897949 to 22897982 on bfjt-delta-gpu (the
+040 account of every earlier round; 14,240 h left and no other campaign on it, the
+other accounts carry the 030 and 025 scaling packs and the 031 series).
+
+1. The source ladder under Bliss at three seeds on the screening folds: van (seeds
+   1 and 2 join round 9's seed 0), van + Hoepfner, van + Hillenmeyer, van +
+   Wildenhain, all four, van + Hoepfner + Hillenmeyer (seeds 1 and 2), every
+   auxiliary source with a held-out compound set.
+2. Zero-shot on more sources: anchors-only on one (seeds 1 and 2), two and three
+   sources.
+3. Dose: FiLM at three seeds (is the cost real), FiLM zero-shot (the channel trained
+   on the public doses alone, applied to the titration it never saw), FiLM with a
+   held-out public dose on the two-source arm, the titration fine-tune with FiLM,
+   and `dose: offset` fitted, zero-shot and on two sources, three seeds each.
+
+GilaHyper carries the cells Delta does not: the Bliss arm on fold seeds 1 and 2
+(4903, 4904, running on two cards at two CPUs and 6.5 GB) and its seed ensemble
+(seeds 3 to 5 on folds 0 to 4, 4905 and 4906 chained behind them). The 040a view was
+rebuilt over both machines' runs.
+
+W&B, the 040a project, fold 2 seed 0 of the Bliss arms on each machine:
+
+- Bliss, fitted, GilaHyper: https://wandb.ai/zhao-group/torchcell_040a-inhibitor-synergy-cell/runs/t8zyll99
+- Bliss, fitted, Delta: https://wandb.ai/zhao-group/torchcell_040a-inhibitor-synergy-cell/runs/lp2yygir
+- Bliss, zero-shot, GilaHyper: https://wandb.ai/zhao-group/torchcell_040a-inhibitor-synergy-cell/runs/m077oum8
+- Bliss, zero-shot, Delta: https://wandb.ai/zhao-group/torchcell_040a-inhibitor-synergy-cell/runs/8nswd4xs
+- Bliss, three sources, Delta: https://wandb.ai/zhao-group/torchcell_040a-inhibitor-synergy-cell/runs/e00fsib2
+- Bliss with FiLM, Delta: https://wandb.ai/zhao-group/torchcell_040a-inhibitor-synergy-cell/runs/k6hseoge
+- the view over every cell-readout run: https://wandb.ai/zhao-group/torchcell_040a-inhibitor-synergy-cell?nw=dpr4810ts7s

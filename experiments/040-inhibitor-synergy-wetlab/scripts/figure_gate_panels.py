@@ -374,7 +374,10 @@ class Reads:
         return out[out.member.str.startswith("seed")]
 
     def host_mean(self, sweep: str) -> pd.DataFrame:
-        """One arm's host prediction per medium, mean over its folds."""
+        """One arm's host prediction per medium, mean over its runs (every fold on
+        every machine the arm ran on; ``folds`` counts the distinct folds, ``runs``
+        the prediction files averaged).
+        """
         d = self.host_pred[self.host_pred.sweep == sweep].copy()
         assert len(d), f"no host predictions for {sweep}"
         # the control medium has no compounds, which the CSV holds as an empty cell
@@ -393,9 +396,14 @@ class Reads:
             "trained_on",
         ]
         out = d.groupby("key").agg(
-            {**{k: "first" for k in keep}, "predicted": "mean", "fold": "nunique"}
+            {
+                **{k: "first" for k in keep},
+                "predicted": "mean",
+                "fold": "nunique",
+                "machine": "size",
+            }
         )
-        return out.rename(columns={"fold": "folds"})
+        return out.rename(columns={"fold": "folds", "machine": "runs"})
 
     def round_scores(self) -> pd.DataFrame:
         """Every round-3 and round-4 score row, on this machine and pulled from Delta.

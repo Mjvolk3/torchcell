@@ -591,6 +591,148 @@ def round9_arms() -> list[dict[str, object]]:
     ]
 
 
+def round10_arms() -> list[dict[str, object]]:
+    """Round 10: the three questions of the environment section, asked under the one
+    readout that composes (``readout: cell``, ``compound_pool: bliss``), with seeds.
+
+    1. Do the sources help one another, and are any synergistic? The source ladder
+       under Bliss, every arm at three seeds on the screening folds: the Vanacloig
+       score says whether a public screen helps the target, the per-source held-out
+       compound score (``aux_holdout: compound``) says whether the target and the other
+       screens help that screen; round 9 ran only the one- and three-source Bliss arms
+       at one seed. Wildenhain is the fourth screen the gene readout found learnable.
+    2. Does public data help the ZERO-SHOT private readout, the best arm of round 9?
+       The anchors-only arm on one, two and three sources.
+    3. Concentration. The private data is titrations and combinations at dose, so the
+       model has to read dose to be evaluated on it at all; FiLM reads it but has cost
+       the public score under every readout and, under Bliss, the host too (one seed).
+       Three dose arms: FiLM at three seeds (is the cost real), FiLM zero-shot (the
+       dose channel trained on the public doses alone and applied to the titration it
+       never saw), FiLM with a held-out public dose on the two-source arm (the direct
+       test of the channel), the fine-tune on the titration with FiLM, and ``dose:
+       offset``, a dose gain on the medium offset that leaves the gene path's tokens
+       dose-free, fitted and zero-shot.
+    """
+    seeds = [0, 1, 2]
+    bliss = {"readout": "cell", "compound_pool": "bliss"}
+    out: list[dict[str, object]] = []
+    # 1. the source ladder under Bliss; the seed-0 single- and three-source arms exist
+    #    (r9), so those two run seeds 1 and 2 as ``_s12`` and the rest all three seeds
+    out.append(
+        arm(
+            "van_e150_cell_bliss", "van", 150, name_suffix="_s12", seeds=[1, 2], **bliss
+        )
+    )
+    for sources in ("vanhop", "vanhet", "vanwil", "vanhophetwil"):
+        out.append(
+            arm(f"{sources}_e150_cell_bliss", sources, 150, seeds=seeds, **bliss)
+        )
+    out.append(
+        arm(
+            "vanhophet_e150_cell_bliss",
+            "vanhophet",
+            150,
+            name_suffix="_s12",
+            seeds=[1, 2],
+            **bliss,
+        )
+    )
+    # 2. zero-shot on more sources
+    out.append(
+        arm(
+            "van_e150_cell_anchors_bliss",
+            "van",
+            150,
+            name_suffix="_s12",
+            seeds=[1, 2],
+            host_train="anchors",
+            **bliss,
+        )
+    )
+    for sources in ("vanhop", "vanhophet"):
+        out.append(
+            arm(
+                f"{sources}_e150_cell_anchors_bliss",
+                sources,
+                150,
+                seeds=seeds,
+                host_train="anchors",
+                **bliss,
+            )
+        )
+    # 3. dose
+    out.append(
+        arm(
+            "van_e150_cell_bliss_film",
+            "van",
+            150,
+            name_suffix="_s12",
+            seeds=[1, 2],
+            dose="film",
+            **bliss,
+        )
+    )
+    out.append(
+        arm(
+            "van_e150_cell_anchors_bliss_film",
+            "van",
+            150,
+            seeds=seeds,
+            host_train="anchors",
+            dose="film",
+            **bliss,
+        )
+    )
+    out.append(
+        arm(
+            "vanhop_e150_cell_bliss_film_dose",
+            "vanhop",
+            150,
+            aux_holdout="dose",
+            seeds=seeds,
+            dose="film",
+            **bliss,
+        )
+    )
+    out.append(
+        arm(
+            "van_e150_cell_ft_bliss_film",
+            "van",
+            150,
+            seeds=seeds,
+            host_train="finetune_ex21",
+            finetune_scope="host_head+env_encoder",
+            dose="film",
+            **bliss,
+        )
+    )
+    out.append(
+        arm("van_e150_cell_bliss_doff", "van", 150, seeds=seeds, dose="offset", **bliss)
+    )
+    out.append(
+        arm(
+            "van_e150_cell_anchors_bliss_doff",
+            "van",
+            150,
+            seeds=seeds,
+            host_train="anchors",
+            dose="offset",
+            **bliss,
+        )
+    )
+    out.append(
+        arm(
+            "vanhop_e150_cell_bliss_doff",
+            "vanhop",
+            150,
+            seeds=seeds,
+            dose="offset",
+            **bliss,
+        )
+    )
+    return out
+
+
 def configs(spec: dict[str, object], folds: list[int]) -> list[dict[str, object]]:
     """One config per fold of ``spec``."""
     out = []
@@ -653,12 +795,13 @@ def main() -> None:
         "--wave",
         type=int,
         default=1,
-        choices=(1, 2, 3, 4, 5, 6, 7, 8, 9),
+        choices=(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
         help=(
             "1 writes the r3_* screen, 2 the r3w2_* second wave, 3 the r4_* seed"
             " ensemble, 4 the r5_* Delta round, 5 the r5b_* convergence follow-up,"
             " 6 the r6_* graph regularization, 7 the r7_* cell readout, 8 the r8_*"
-            " round-5 questions under the cell readout, 9 the r9_* composition round"
+            " round-5 questions under the cell readout, 9 the r9_* composition round,"
+            " 10 the r10_* source ladder, zero-shot and dose arms under Bliss"
         ),
     )
     args = parser.parse_args()
@@ -674,6 +817,7 @@ def main() -> None:
         7: "r7",
         8: "r8",
         9: "r9",
+        10: "r10",
     }[args.wave]
     waves = {
         1: arms,
@@ -685,6 +829,7 @@ def main() -> None:
         7: round7_arms,
         8: round8_arms,
         9: round9_arms,
+        10: round10_arms,
     }
     specs = waves[args.wave]()
     label = {
@@ -697,6 +842,7 @@ def main() -> None:
         7: "ROUND 7",
         8: "ROUND 8",
         9: "ROUND 9",
+        10: "ROUND 10",
     }[args.wave]
 
     rows, lines = [], []

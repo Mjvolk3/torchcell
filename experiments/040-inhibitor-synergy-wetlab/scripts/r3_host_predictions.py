@@ -47,12 +47,17 @@ EXPERIMENT = osp.dirname(osp.dirname(osp.abspath(__file__)))
 RESULTS = osp.join(EXPERIMENT, "results")
 CONF = osp.join(EXPERIMENT, "conf", "mixture")
 WELLS_CSV = osp.join(RESULTS, "wetlab_wells.csv")
-PREDICTIONS = osp.join(
-    os.environ["DATA_ROOT"],
-    "experiments",
-    "040-inhibitor-synergy-wetlab",
-    "predictions",
-)
+#: the per-well prediction roots: this machine's, and the Delta tree's, rsynced from
+#: ``/scratch/bbub/mjvolk3/torchcell/experiments/040-inhibitor-synergy-wetlab/
+#: predictions/`` into ``predictions-delta/`` beside it (no checkpoints). The same arm
+#: can have run on both; the ``machine`` column keeps the runs apart and a reader that
+#: averages an arm takes every run it has.
+PREDICTIONS = {
+    machine: osp.join(
+        os.environ["DATA_ROOT"], "experiments", "040-inhibitor-synergy-wetlab", sub
+    )
+    for machine, sub in (("gilahyper", "predictions"), ("delta", "predictions-delta"))
+}
 FILE = re.compile(r"^(?P<name>.+)_fold(?P<fold>\d+)_seed(?P<fold_seed>\d+)_host\.npy$")
 ABBR_OF = ABBREVIATION  # long name to the wells table column suffix
 
@@ -96,9 +101,17 @@ def main() -> None:
         well_ids[key] = list(group["well"])
 
     rows = []
-    for path in sorted(glob.glob(osp.join(PREDICTIONS, "*", "*_host.npy"))):
+    paths = [
+        (machine, path)
+        for machine, root in PREDICTIONS.items()
+        for path in sorted(glob.glob(osp.join(root, "*", "*_host.npy")))
+    ]
+    for machine, path in paths:
         sweep = osp.basename(osp.dirname(path))
-        if "smoke" in sweep:
+        # round 1 ran under the pool-and-last protocol before the Hoepfner anchors
+        # joined the host set, so its 733-record vectors do not join today's records;
+        # no round reads it through this table
+        if "smoke" in sweep or sweep.startswith("r1_"):
             continue
         m = FILE.match(osp.basename(path))
         assert m, path
@@ -113,6 +126,7 @@ def main() -> None:
             )
             rows.append(
                 {
+                    "machine": machine,
                     "sweep": sweep,
                     "name": m["name"],
                     "fold": int(m["fold"]),
@@ -139,7 +153,7 @@ def main() -> None:
     table = pd.DataFrame(rows)
     out = osp.join(RESULTS, "host_predictions.csv")
     table.to_csv(out, index=False)
-    print(table.groupby(["sweep"]).size().to_string())
+    print(table.groupby(["sweep", "machine"]).size().to_string())
     print(f"{len(table)} rows, {table.name.nunique()} configs -> {out}")
 
 

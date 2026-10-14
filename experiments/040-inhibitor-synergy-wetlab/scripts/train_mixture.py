@@ -13,8 +13,11 @@ switchable pieces so each is an ablation rather than an assumption:
                   under the whole mixture. ``mean``: the tokens are averaged into one
                   before the transformer, which is 038's single-token model.
 ``dose``          ``film``: an MLP of the standardized log10 molar dose produces a scale
-                  and a shift on each compound token (FiLM). ``off``: 038's dose-free
-                  token.
+                  and a shift on each compound token (FiLM). ``offset``: the tokens stay
+                  dose-free and the dose enters as a gain on the medium OFFSET alone,
+                  ``offset x (1 + g(dose))`` with ``g`` an MLP started at zero, so the
+                  gene path reads the same compound token at every dose and only the
+                  medium's potency moves with it. ``off``: 038's dose-free token.
 ``host_head``     a second readout, MLP([mean over genes of ``H^c`` ; mean of the
                   compound tokens after they have read the genome]) through a sigmoid to
                   a host fitness. It reads no genotype, which is what the bAID host is.
@@ -243,7 +246,11 @@ class MixtureConfig(BaseModel):
     #: shares (``train_loss/total``, ``val_loss/total`` and their terms, by epoch), in a
     #: project of its own so the cell-readout program is not mixed with the gene-head runs
     wandb_project: str = "torchcell_040a-inhibitor-synergy-cell"
-    dose: Literal["film", "off"] = "film"
+    #: ``film`` modulates every compound token by its dose before the transformer;
+    #: ``offset`` leaves the tokens dose-free and scales the medium offset by
+    #: ``1 + g(dose)`` (round 10: FiLM read dose but cost the public score under every
+    #: readout, and under Bliss the host too); ``off`` reads no dose
+    dose: Literal["film", "offset", "off"] = "film"
     host_train: Literal["anchors", "anchors+ex21", "finetune_ex21"] = "anchors"
     lambda_host: float = 1.0
     host_batch: int = 16
@@ -593,6 +600,13 @@ class MixtureModel(nn.Module):
         )
         nn.init.zeros_(self.film[-1].weight)
         nn.init.zeros_(self.film[-1].bias)
+        # the gain on the medium offset under ``dose: offset``; zero at the start, so
+        # the model starts as the dose-free offset
+        self.dose_gain = nn.Sequential(
+            nn.Linear(1, cfg.hidden), nn.GELU(), nn.Linear(cfg.hidden, 1)
+        )
+        nn.init.zeros_(self.dose_gain[-1].weight)
+        nn.init.zeros_(self.dose_gain[-1].bias)
         self.offset = nn.Linear(d, 1)
         self.layers = nn.ModuleList(
             TokenLayer(d, cfg.cgt_heads, cfg.dropout) for _ in range(cfg.env_layers)
@@ -614,7 +628,7 @@ class MixtureModel(nn.Module):
 
     def env_parameters(self) -> list[nn.Parameter]:
         """The compound representation and the medium transformer, for the fine-tune."""
-        modules = [self.compound, self.film, self.layers, self.offset]
+        modules = [self.compound, self.film, self.dose_gain, self.layers, self.offset]
         return [p for module in modules for p in module.parameters()]
 
     def cell(self, strain: torch.Tensor, cell_graph):
@@ -633,6 +647,12 @@ class MixtureModel(nn.Module):
         if self.cfg.compound_set == "mean" and medium.k > 1:
             e = e.mean(dim=1, keepdim=True)
         return e
+
+    def gain(self, medium: Medium) -> torch.Tensor | None:
+        """[C, k] gain on the medium offset under ``dose: offset``, else None."""
+        if self.cfg.dose != "offset" or not medium.k:
+            return None
+        return 1.0 + self.dose_gain(medium.dose.unsqueeze(-1)).squeeze(-1)
 
     def pool_compounds(self, tokens: torch.Tensor) -> torch.Tensor:
         """[C, k, d] -> [C, d]: the medium's compound tokens reduced by ``compound_pool``."""
@@ -693,6 +713,7 @@ class MixtureModel(nn.Module):
         strain: torch.Tensor | None,
         source_index: int,
         e: torch.Tensor,
+        gain: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """[B, C] predictions on the standardized target for the source's conditions.
 
@@ -700,7 +721,9 @@ class MixtureModel(nn.Module):
         a strain with two deletions carries both. ``strain`` ``None`` is the EMPTY
         genotype (the host under ``readout: cell``): the perturbed-gene blocks are zero
         and there is no gene bias, so the cell is read at its gene mean and its medium
-        alone, through the same head and with its own source scale and shift.
+        alone, through the same head and with its own source scale and shift. ``gain``
+        is ``[C, k]`` under ``dose: offset`` and multiplies the medium offset (split
+        like ``e`` under Bliss, averaged over a medium's compounds otherwise).
         """
         k_set = e.shape[1]
         e = self.split_media(e)
@@ -729,6 +752,9 @@ class MixtureModel(nn.Module):
         # token, and the mean over an empty set is NaN; its offset is zero
         if e.shape[1]:
             offset = self.offset(self.pool_compounds(e)).T.expand(b, c)
+            if gain is not None:
+                g = self.split_media(gain.unsqueeze(-1)).squeeze(-1).mean(dim=1)
+                offset = offset * g[None, :].expand(b, c)
         else:
             offset = torch.zeros(b, c, device=env.device, dtype=torch.float32)
         head = self.gene_head(self.gene_norm(state.float())).squeeze(-1)
@@ -753,12 +779,18 @@ class MixtureModel(nn.Module):
         return gene + out
 
     def host_logits(
-        self, pooled: torch.Tensor, token: torch.Tensor, e: torch.Tensor
+        self,
+        pooled: torch.Tensor,
+        token: torch.Tensor,
+        e: torch.Tensor,
+        gain: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """[C] host fitness per medium: the sigmoid head, or the shared head at the empty set."""
         if self.cfg.readout == "gene":
             return self.host_fitness(pooled, token)
-        return self.gene_logits(None, None, pooled, token, None, self.host_source, e)[0]
+        return self.gene_logits(
+            None, None, pooled, token, None, self.host_source, e, gain
+        )[0]
 
     def host_parameters(self) -> list[nn.Parameter]:
         """What a host fine-tune unfreezes: the host head, or the shared head and tokens."""
@@ -1023,7 +1055,14 @@ def predict_gene_matrix(
                 env, pooled, token = model.medium_state(h, e, strain)
                 assert env is not None
                 pred = model.gene_logits(
-                    env, h_del, pooled, token, strain, source.index, e
+                    env,
+                    h_del,
+                    pooled,
+                    token,
+                    strain,
+                    source.index,
+                    e,
+                    model.gain(medium),
                 )
                 columns = np.array(medium.rows)
                 out[np.ix_(index.numpy(), columns)] = pred.float().cpu().numpy()
@@ -1048,7 +1087,10 @@ def predict_host(
             e = model.tokens(medium)
             _, pooled, token = model.medium_state(h, e, None)
             out[np.array(medium.rows)] = (
-                model.host_logits(pooled, token, e).float().cpu().numpy()
+                model.host_logits(pooled, token, e, model.gain(medium))
+                .float()
+                .cpu()
+                .numpy()
             )
     return out
 
@@ -1299,7 +1341,14 @@ def train_seed(
                         1,
                         torch.tensor(medium.rows, device=device),
                         model.gene_logits(
-                            env, h_del, pooled, token, strain, source.index, e
+                            env,
+                            h_del,
+                            pooled,
+                            token,
+                            strain,
+                            source.index,
+                            e,
+                            model.gain(medium),
                         ).float(),
                     )
             penalties.append(penalty)
@@ -1323,7 +1372,7 @@ def train_seed(
                 predicted = predicted.index_copy(
                     0,
                     torch.tensor(medium.rows, device=device),
-                    model.host_logits(pooled, token, e).float(),
+                    model.host_logits(pooled, token, e, model.gain(medium)).float(),
                 )
         host_loss = ((predicted - host_fitness[picked]) ** 2).mean()
 
@@ -1533,7 +1582,7 @@ def finetune_host(
                     predicted = predicted.index_copy(
                         0,
                         torch.tensor(medium.rows, device=device),
-                        model.host_logits(pooled, token, e).float(),
+                        model.host_logits(pooled, token, e, model.gain(medium)).float(),
                     )
             loss = ((predicted - observed[picked]) ** 2).mean()
             optimizer.zero_grad(set_to_none=True)

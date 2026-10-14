@@ -94,6 +94,10 @@ STATUS_KEY = False  # their key at the foot of the sheet; off on the author's re
 
 plt.rcParams.update(
     {
+        "mathtext.fontset": "custom",
+        "mathtext.rm": "Arial",
+        "mathtext.it": "Arial:italic",
+        "mathtext.bf": "Arial:bold",
         "font.family": "Arial",
         "font.size": 6,
         "axes.labelsize": 6,
@@ -341,7 +345,7 @@ def panel_d(ax: Axes) -> None:
     # replicates is around 0.59 ... an approximate upper bound"). The manuscript's 0.74 to
     # 0.81 is for adjusted scores and is not drawn here (review 2026-10-14).
     ax.axhline(0.59, color="black", lw=0.5, ls="--", zorder=1)
-    ax.text(-0.5, 0.60, "replicate ceiling, 0.59", ha="left", va="bottom", fontsize=5, zorder=1)
+    ax.text(-0.5, 0.60, "two single replicates agree at 0.59", ha="left", va="bottom", fontsize=5, zorder=1)
     ax.set_xticks([GX["random"], GX["disjoint"]])
     ax.set_xticklabels(["random split\nover triples", "held-out\nquery pairs"])
     ax.set_xlim(-0.55, 2.1)
@@ -463,10 +467,24 @@ CURVES = [("random_1", "random graphs, λ = 1", PURPLE, "--"), ("kl_1", "soft pr
 
 
 def panel_i(ax: Axes, hist: pd.DataFrame) -> None:
+    for z, (arm, label, color, ls) in enumerate(CURVES):
+        curve(ax, hist, arm, "val/gene_interaction/Pearson", color, ls, label, 20 + z)
+    ax.set_xlim(0, 29)
+    ax.set_ylim(0.34, 0.47)
+    ax.yaxis.set_major_locator(MultipleLocator(0.02))
+    ax.set_xlabel("epoch")
+    ax.set_ylabel("validation Pearson")
+    ax.set_title("the prior removes the late decline")
+    ax.legend(loc="lower right", frameon=False, handlelength=1.6, handletextpad=0.4, borderpad=0.2, labelspacing=0.25)
+    strip(ax)
+
+
+def panel_i_spearman(ax: Axes) -> None:
     """Pearson beside Spearman on the random split's test triples, for the models that have
     both scored: the 025 baselines (additive_baselines_025.csv, arm R, split test) and the
     three 010 transformers scored directly on the same triples (cgt_direct_scoring.csv).
-    The sweep arms logged no Spearman, so they are not here."""
+    Held back from the sheet until the sweep's checkpoints are scored too (GitHub issue
+    #1101); the sheet shows Pearson only for now."""
     base = pd.read_csv(osp.join(R025, "additive_baselines_025.csv"))
     base = base[(base.arm == "R") & (base.split == "test")]
     cgt = pd.read_csv(osp.join(R010, "cgt_direct_scoring.csv"))
@@ -517,9 +535,6 @@ def panel_j(ax: Axes, done: pd.DataFrame) -> None:
 def panel_k(ax: Axes, hist: pd.DataFrame) -> None:
     for z, (arm, label, color) in enumerate([("kl_1_60ep", "soft prior, λ = 1", RED), ("mask_60ep", "hard mask", ORANGE), ("kl_0_60ep", "no penalty", GRAY)]):
         curve(ax, hist, arm, "val/gene_interaction/Pearson", color, "-", label, 20 + z)
-    # The 30-epoch runs of the same arms, and the random-graph prior, dashed (they were i).
-    for z, (arm, label, color, _) in enumerate(CURVES):
-        curve(ax, hist, arm, "val/gene_interaction/Pearson", color, "--", "prior, random graphs" if arm == "random_1" else "_", 10 + z)
     ax.axvline(29, color="black", lw=0.4, ls=":")
     ax.text(29.8, 0.468, "30-epoch protocol", ha="left", va="top", fontsize=5, color="black")
     ax.set_xlim(0, 59)
@@ -528,9 +543,7 @@ def panel_k(ax: Axes, hist: pd.DataFrame) -> None:
     ax.set_xlabel("epoch")
     ax.set_ylabel("validation Pearson")
     ax.set_title("at 60 epochs only the prior holds")
-    arms_key = ax.legend(loc="lower right", bbox_to_anchor=(1.0, 0.0), frameon=False, handlelength=1.6, handletextpad=0.4, borderpad=0.2, labelspacing=0.25)
-    ax.add_artist(arms_key)
-    ax.legend(handles=[Line2D([], [], color="black", lw=0.9, ls="-", label="60 epochs"), Line2D([], [], color="black", lw=0.9, ls="--", label="30 epochs")], loc="upper left", bbox_to_anchor=(0.0, 1.05), frameon=False, handlelength=1.6, handletextpad=0.4, borderpad=0.2, labelspacing=0.25)
+    ax.legend(loc="lower right", bbox_to_anchor=(1.0, 0.0), frameon=True, facecolor="white", edgecolor="none", framealpha=1.0, handlelength=1.6, handletextpad=0.4, borderpad=0.3, labelspacing=0.25).set_zorder(50)
     strip(ax)
 
 
@@ -540,7 +553,7 @@ def panel_l(ax: Axes, hist: pd.DataFrame) -> None:
     # The gene table without the prior does train (e, i, k: 0.42); the flat line is the
     # composite embedding without it, train Pearson 0 on every seed, so the two "no
     # penalty" lines of the sheet are different inputs, and the panel says so.
-    ax.text(0.98, 0.08, "learnable gene table, no penalty: 0.42 (e)", transform=ax.get_yaxis_transform(), ha="right", va="bottom", fontsize=5)
+    ax.text(0.98, 0.08, "learnable gene table, no penalty: 0.42 ($\\bf{e}$)", transform=ax.get_yaxis_transform(), ha="right", va="bottom", fontsize=5)
     ax.set_xlim(0, 29)
     ax.set_ylim(-0.05, 0.47)
     ax.yaxis.set_major_locator(MultipleLocator(0.1))

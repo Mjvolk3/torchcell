@@ -83,7 +83,8 @@ LIGHT = "#8A8A8A"
 STATUS_SYMBOL = {"ready": "●", "partial": "◐", "todo": "○"}
 STATUS_WORD = {"ready": "on file", "partial": "partial", "todo": "idea only"}
 CROSS = ("✗", "#E53935")  # section status: not yet reviewed by the author
-STATUS_MARKS = False  # the review marks and their key at the foot; off on the author's request
+STATUS_MARKS = True  # the review marks beside each panel letter
+STATUS_KEY = False  # their key at the foot of the sheet; off on the author's request (2026-10-13)
 
 plt.rcParams.update(
     {
@@ -189,7 +190,7 @@ def keys(fig: Figure, y_key: float) -> None:
         Patch(facecolor=YELLOW, edgecolor="black", linewidth=0.4, label="other arm"),
     ]
     fig.legend(handles=handles, loc="center", bbox_to_anchor=(0.52, y_key), ncol=6, frameon=False, fontsize=5, handlelength=1.2, handletextpad=0.4, columnspacing=1.2, borderpad=0)
-    if not STATUS_MARKS:
+    if not STATUS_KEY:
         return
     x = 0.03
     fig.text(x, 0.004, "section status", fontsize=5, color=LIGHT, ha="left", va="bottom", style="italic")
@@ -267,9 +268,10 @@ def panel_c(ax: Axes) -> None:
     add = pd.read_csv(osp.join(R010, "additive_baseline_gene_interaction.csv"))
     ridge = float(add[(add.model == "B1_additive_gene") & (add.split == "test")].pearson.iloc[0])
     ax.axhline(ridge, color=GRAY, lw=0.7, ls="--", zorder=2)
-    ax.text(-0.45, ridge - 0.008, f"ridge, {ridge:.2f}", ha="left", va="top", fontsize=5, color=GRAY)
+    ax.text(-0.45, ridge - 0.008, f"ridge, {ridge:.2f}", ha="left", va="top", fontsize=5, color="black")
     for x, (_, vals, _) in enumerate(models):
-        ax.text(x, vals.max() + 0.015, f"{vals.mean():.3f}" if vals.mean() > 0.01 else f"{vals.mean():.4f}", ha="center", va="bottom", fontsize=5)
+        # An opaque box so the DANGO value reads over the ridge line it sits on.
+        ax.text(x, vals.max() + 0.015, f"{vals.mean():.3f}" if vals.mean() > 0.01 else f"{vals.mean():.4f}", ha="center", va="bottom", fontsize=5, zorder=6, bbox=dict(facecolor="white", edgecolor="none", pad=0.6))
     ax.set_xticks(range(4))
     ax.set_xticklabels([m[0] for m in models])
     ax.set_ylim(0, 0.52)
@@ -315,7 +317,9 @@ def panel_d(ax: Axes) -> None:
     ax.set_ylabel("held-out Pearson, trigenic interaction")
     ax.set_title("a no-interaction null reaches 0.40")
     ax.legend(handles=[Patch(facecolor=c, edgecolor="black", linewidth=0.4, label=l) for l, _, c in learners], loc="upper right", bbox_to_anchor=(1.02, 1.0), frameon=False, handlelength=1.0, handletextpad=0.3, borderpad=0.1, labelspacing=0.2)
-    ax.text(1.0, 0.21, "CGT: validation at epoch 29,\none split, three seeds", ha="center", va="bottom", fontsize=5, color=LIGHT)
+    # The transformer's reading on that split differs from the baselines' (validation on one
+    # split, epoch 29, three seeds, against five-fold test), so the note hangs under that group.
+    ax.text(1.0, -0.22, "CGT: validation, one split", transform=ax.get_xaxis_transform(), ha="center", va="top", fontsize=5, color="black")
     strip(ax)
 
 
@@ -394,7 +398,7 @@ def panel_g(ax: Axes, done: pd.DataFrame, summary: dict[str, Any]) -> None:
     ax.yaxis.set_major_locator(MultipleLocator(0.02))
     ax.set_ylabel("validation Pearson, epoch 29")
     ax.set_title("rises to λ = 1 and holds to 100")
-    ax.text(0.98, 0.03, "stars: paired t vs none\n* p < 0.05, ** 0.01, *** 0.001", transform=ax.transAxes, ha="right", va="bottom", fontsize=5, color=LIGHT)
+    ax.text(0.98, 0.03, "stars: paired t vs none\n* p < 0.05, ** 0.01, *** 0.001", transform=ax.transAxes, ha="right", va="bottom", fontsize=5, color="black")
     strip(ax)
 
 
@@ -464,7 +468,7 @@ def panel_k(ax: Axes, hist: pd.DataFrame) -> None:
     for z, (arm, label, color) in enumerate([("kl_1_60ep", "soft prior, λ = 1", RED), ("mask_60ep", "hard mask", ORANGE), ("kl_0_60ep", "no penalty", GRAY)]):
         curve(ax, hist, arm, "val/gene_interaction/Pearson", color, "-", label, 20 + z)
     ax.axvline(29, color="black", lw=0.4, ls=":")
-    ax.text(29.8, 0.468, "30-epoch protocol", ha="left", va="top", fontsize=5, color=LIGHT)
+    ax.text(29.8, 0.468, "30-epoch protocol", ha="left", va="top", fontsize=5, color="black")
     ax.set_xlim(0, 59)
     ax.set_ylim(0.34, 0.47)
     ax.yaxis.set_major_locator(MultipleLocator(0.02))
@@ -517,12 +521,13 @@ def umap_by_cluster(ax: Axes, assign: pd.DataFrame, enr: pd.DataFrame, rep: str,
         m = lab == c
         ax.scatter(x[m], y[m], s=1.2, color=color_of[c], linewidths=0, rasterized=True, zorder=3)
         ax.text(x[m].median(), y[m].median(), str(c), fontsize=6, fontweight="bold", ha="center", va="center", zorder=5)
+    ax.margins(0.02)
     ax.set_xticks([])
     ax.set_yticks([])
     for sp in ax.spines.values():
         sp.set_visible(False)
     ax.set_title(title)
-    ax.text(0.0, -0.06, "UMAP of 6,607 genes", transform=ax.transAxes, fontsize=5, color=LIGHT, ha="left", va="bottom")
+    ax.text(0.0, -0.06, "UMAP of 6,607 genes", transform=ax.transAxes, fontsize=5, color="black", ha="left", va="bottom")
 
 
 def panel_m(ax: Axes, assign: pd.DataFrame, enr: pd.DataFrame, summary: dict[str, Any]) -> None:
@@ -558,6 +563,9 @@ def panel_o(ax: Axes, assign: pd.DataFrame) -> None:
     x, y, it = assign.encoder_umap_1, assign.encoder_umap_2, assign.in_train_triple.astype(bool)
     ax.scatter(x[~it], y[~it], s=1.2, color="#C8C8C8", linewidths=0, rasterized=True, zorder=2)
     ax.scatter(x[it], y[it], s=1.2, color=RED, linewidths=0, rasterized=True, zorder=3)
+    ax.margins(0.02)
+    lo, hi = float(y.min()), float(y.max())
+    ax.set_ylim(lo - 0.02 * (hi - lo), hi + 0.30 * (hi - lo))
     ax.set_xticks([])
     ax.set_yticks([])
     for sp in ax.spines.values():
@@ -569,14 +577,14 @@ def panel_o(ax: Axes, assign: pd.DataFrame) -> None:
             Patch(facecolor=RED, edgecolor="none", label=f"in a training triple, {n_in:,}"),
             Patch(facecolor="#C8C8C8", edgecolor="none", label=f"in none, {len(it) - n_in:,}"),
         ],
-        loc="lower right", frameon=False, handlelength=1.0, handletextpad=0.4, borderpad=0.2, labelspacing=0.25,
+        loc="upper right", frameon=False, handlelength=1.0, handletextpad=0.4, borderpad=0.2, labelspacing=0.25,
     )
-    ax.text(0.0, -0.06, "UMAP of 6,607 genes", transform=ax.transAxes, fontsize=5, color=LIGHT, ha="left", va="bottom")
+    ax.text(0.0, -0.06, "UMAP of 6,607 genes", transform=ax.transAxes, fontsize=5, color="black", ha="left", va="bottom")
 
 
 def panel_p(ax: Axes, assign: pd.DataFrame, enr: pd.DataFrame, summary: dict[str, Any]) -> None:
     rep = next(r for r in summary["representations"] if r["name"] == "table")
-    umap_by_cluster(ax, assign, enr, "table", f"gene table before the encoder\n{rep['n_clusters']} clusters, {rep['n_enriched_clusters']} GO-enriched")
+    umap_by_cluster(ax, assign, enr, "table", f"input table: {rep['n_clusters']} clusters, {rep['n_enriched_clusters']} enriched")
 
 
 # ----------------------------------------------------------------------------- sheet

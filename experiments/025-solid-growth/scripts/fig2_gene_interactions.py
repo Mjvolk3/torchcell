@@ -322,7 +322,7 @@ def panel_d(ax: Axes) -> None:
     ax.set_xticks([0, 1])
     ax.set_xticklabels(["random split\nover triples", "held-out\nquery pairs"])
     ax.set_xlim(-0.55, 1.75)
-    ax.set_ylim(0, 0.75)
+    ax.set_ylim(0, 0.8)
     ax.yaxis.set_major_locator(MultipleLocator(0.1))
     ax.set_ylabel("held-out Pearson, trigenic interaction")
     ax.set_title("a no-interaction null reaches 0.40")

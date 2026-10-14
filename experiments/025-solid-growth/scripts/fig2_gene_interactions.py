@@ -664,9 +664,10 @@ def loss_sheet(hist: pd.DataFrame) -> None:
     strip(ax)
     letters_status(fig, list(axes), ["ready"] * 4)
     stem = osp.join(IMG_DIR, "fig2_loss_curves")
+    # The SVG is the note's copy, with the explainer as a raster. The sheet's PDF and PNG are
+    # written by notes/assets/drawio/Fig2-gene-interactions.sheet.py, which lays the explainer
+    # over slot a as vector type; this script leaves them alone.
     savefig_true_size_svg(fig, stem + ".svg")
-    fig.savefig(stem + ".png", dpi=300)
-    fig.savefig(stem + ".pdf", dpi=600)
     plt.close(fig)
     print("wrote", stem + ".png")
 
@@ -731,9 +732,10 @@ def main() -> None:
     keys(fig, y_key)
     os.makedirs(IMG_DIR, exist_ok=True)
     stem = osp.join(IMG_DIR, "fig2_gene_interactions")
+    # The SVG is the note's copy, with the explainer as a raster. The sheet's PDF and PNG are
+    # written by notes/assets/drawio/Fig2-gene-interactions.sheet.py, which lays the explainer
+    # over slot a as vector type; this script leaves them alone.
     savefig_true_size_svg(fig, stem + ".svg")
-    fig.savefig(stem + ".png", dpi=300)
-    fig.savefig(stem + ".pdf", dpi=600)
     savefig_true_size_svg(fig, f"{stem}_{timestamp()}.svg")
     print("wrote", stem + ".svg")
     # The same sheet with slot a empty (letter and title kept), for the draw.io composition

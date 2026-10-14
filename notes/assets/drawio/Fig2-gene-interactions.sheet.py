@@ -10,7 +10,8 @@ experiments/025-solid-growth/scripts/fig2_gene_interactions.py, takes the explai
 from Fig2-gene-interactions.drawio.svg with the same selection as the explainer export
 (first slot, frame and letter excluded), moves them so their top-left sits on the slot's
 top-left, unscaled, and writes Fig2-gene-interactions-sheet.drawio (plain XML, open it in
-draw.io). With DRAWIO set it also exports the composition to PDF and PNG beside the sheet.
+draw.io). With DRAWIO set it exports the composition as the sheet's own PDF and PNG,
+fig2_gene_interactions.pdf and .png, the one deliverable; the sheet script writes only SVGs.
 Type sizes follow the ladder (8.3 for figure text, 7 the floor), never a resized raster.
 """
 
@@ -145,6 +146,20 @@ def enlarge_tags(keep: list[ET.Element]) -> None:
         g.set("height", f"{nh:.2f}")
 
 
+NUDGES = {"154": (-12.0, 0.0)}  # the beige general-interaction box, left by 3 mm (review 2026-10-14)
+
+
+def nudge(keep: list[ET.Element]) -> None:
+    for c in keep:
+        d = NUDGES.get(c.get("id") or "")
+        if d is None:
+            continue
+        g = c.find("mxGeometry")
+        assert g is not None
+        g.set("x", f"{float(g.get('x') or 0) + d[0]:.2f}")
+        g.set("y", f"{float(g.get('y') or 0) + d[1]:.2f}")
+
+
 def main() -> None:
     fonts = os.environ.get("FIG2_FONTS", "uniform")
     slot = json.load(open(SLOT_JSON))
@@ -167,6 +182,7 @@ def main() -> None:
     s = min(sw / ew, sh / eh)
     scale_cells(keep, (min(xs), min(ys)), s, (sx, sy), fonts)
     enlarge_tags(keep)
+    nudge(keep)
     sheet_cell, _ = image_cell("sheet", SHEET_SVG, 0.0)
     # The slot's outline lives on a hidden layer: visible while editing, absent from exports.
     guide = (
@@ -189,7 +205,7 @@ def main() -> None:
     drawio = os.environ.get("DRAWIO")
     if drawio:
         for fmt in ("pdf", "png"):
-            out = osp.join(IMG_DIR, f"fig2_gene_interactions_composed.{fmt}")
+            out = osp.join(IMG_DIR, f"fig2_gene_interactions.{fmt}")
             cmd = ["xvfb-run", "-a", drawio, "--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage", "--export", "--format", fmt, "--crop", "--output", out, OUT]
             if fmt == "png":
                 cmd[-3:-3] = ["--scale", "4"]

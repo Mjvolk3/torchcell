@@ -31,3 +31,7 @@ The gene panels m, n and p now draw the t-SNE at perplexity 30, early exaggerati
 ![](./assets/images/025-solid-growth/fig2_loss_curves.svg)
 
 Same round: in d the transformer on triples alone is orange and the 030 closure arm red, with no epoch text; the color key sits just above e to h; the explainer in a is embedded at its own pixels (a resampling interpolation had let the PDF and SVG backends rebuild it at 100 dpi).
+
+## 2026.10.14 - One deliverable: the composed sheet
+
+`fig2_gene_interactions.pdf` and `.png` are now written by `notes/assets/drawio/Fig2-gene-interactions.sheet.py`, which places the sheet (drawn by this script with slot a empty, `fig2_gene_interactions_slot_a.svg`, and the slot's box in `_slot_a.json`) as a true-size image in draw.io and lays the explainer's cells over the slot as vector type, scaled uniformly to fit (0.925; equations 4.0 pt, labels 5.3 pt, the four gray tags retyped to 5.0 pt). This script writes only the SVGs. Row 1 is taller than the others (height ratio 1.32, sheet 210 mm) so the slot is 52 by 49.5 mm; b, c and d share the rest of the row at 30 mm each. The headless draw.io binary is named by `DRAWIO`; on GilaHyper it lives at `/home/michaelvolk/.local/opt/drawio-deb/opt/drawio/drawio`.

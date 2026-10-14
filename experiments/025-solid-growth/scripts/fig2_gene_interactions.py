@@ -700,6 +700,10 @@ def main() -> None:
     for k in (1, 2, 3):
         pk = ax[k].get_position()
         ax[k].set_position([x + (k - 1) * (w3 + gap), pk.y0, w3, pk.height])
+    # Rows 3 and 4 move up a little toward row 2 (review 2026-10-14).
+    for k, up_mm in [(8, 3.0), (9, 3.0), (10, 3.0), (11, 3.0), (12, 5.0), (13, 5.0), (14, 5.0), (15, 5.0)]:
+        pk = ax[k].get_position()
+        ax[k].set_position([pk.x0, pk.y0 + up_mm / SHEET_H_MM, pk.width, pk.height])
     pos = ax[0].get_position()
     slot_a = {"x_mm": pos.x0 * W, "y_mm": (1 - pos.y1) * SHEET_H_MM, "width_mm": pos.width * W, "height_mm": pos.height * SHEET_H_MM, "page_width_mm": W, "page_height_mm": SHEET_H_MM}
     print(f"slot a: {pos.width * W:.1f} x {pos.height * SHEET_H_MM:.1f} mm, top-left at x {pos.x0 * W:.1f} mm, y {(1 - pos.y1) * SHEET_H_MM:.1f} mm from the page's top-left; b, c, d {w3 * W:.1f} mm wide")

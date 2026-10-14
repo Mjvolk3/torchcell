@@ -69,6 +69,7 @@ from torchcell.datamodels.schema import (
     Media,
     MediaComponent,
     PhagePerturbation,
+    PhysicalExposurePerturbation,
     PreCulture,
     SmallMoleculePerturbation,
     Solvent,
@@ -91,8 +92,10 @@ __all__ = [
     "MEDIA_GAP_IDENTITY_FIELDS",
     "MEDIA_OPTIONAL_IDENTITY_FIELDS",
     "PHAGE_PERTURBATION_IDENTITY_FIELDS",
+    "PHYSICAL_EXPOSURE_IDENTITY_FIELDS",
     "PHYSICAL_PERTURBATION_IDENTITY_FIELDS",
     "PRE_CULTURE_IDENTITY_FIELDS",
+    "PROJECTED_PERTURBATION_CLASSES",
     "SMALL_MOLECULE_IDENTITY_FIELDS",
     "SOLVENT_IDENTITY_FIELDS",
     "STRAIN_BACKGROUND_IDENTITY_FIELDS",
@@ -181,6 +184,37 @@ The dose IS identity, as it is on the other dosed leaves: two MOIs of one phage 
 different edits to the environment, which is what keeps 68 challenges of 14 phages from
 collapsing onto one environment.
 """
+PHYSICAL_EXPOSURE_IDENTITY_FIELDS: tuple[str, ...] = (
+    "perturbation_type",
+    "factor",
+    "exposure_duration_seconds",
+    "irradiance_w_per_m2",
+    "fluence_j_per_m2",
+    "source_description",
+)
+"""A timed physical exposure is its factor at its dose, from the apparatus stated.
+
+The three dose fields are projected as stated, ``None`` included (absence is part of
+identity, property 2 above): Shiver 2016's ``UV [12 sec]`` states the time alone, and
+a release that states a fluence is a different exposure from one that states a time.
+``source_description`` (the lamp and its spectrum, verbatim) is identity because a
+254 nm germicidal lamp and sunlight are different exposures at one duration; it is
+normalized like a biologic's ``name``. ``provenance_gaps`` are not identity, as on
+every leaf. KG 4.0's first generation (job 4901) died at adapter 124 of 170 on this
+leaf having no projection: the class landed in 5dfd82f5 without one, and nothing
+compared the union with the projected set, which ``PROJECTED_PERTURBATION_CLASSES``
+and its test now do.
+"""
+PROJECTED_PERTURBATION_CLASSES: tuple[type, ...] = (
+    SmallMoleculePerturbation,
+    EnvironmentPhysicalPerturbation,
+    BiologicPerturbation,
+    PhagePerturbation,
+    PhysicalExposurePerturbation,
+)
+"""Every member of ``EnvironmentPerturbationType`` has a branch in
+``environment_perturbation_identity``; the test pins this tuple to the union's
+``get_args`` so a new leaf cannot land without its projection."""
 ENVIRONMENT_IDENTITY_FIELDS: tuple[str, ...] = (
     "media",
     "temperature",
@@ -370,7 +404,8 @@ def environment_perturbation_identity(perturbation: Any) -> dict[str, Any]:
     The discriminator plus the slots of the concrete leaf: compound key, dose and
     vehicle for a small molecule; factor, magnitude and realizing agent for a
     physical factor; agent class, name, accession, sequence and dose for a biologic;
-    phage name, taxon, genome accession and the multiplicity of infection for a phage.
+    phage name, taxon, genome accession and the multiplicity of infection for a phage;
+    factor, the three dose fields and the stated apparatus for a physical exposure.
     ``description`` is dropped (it is a per-dataset restatement of the leaf's own
     default). The dose IS part of identity on every dosed leaf: two doses of one
     compound are two different edits to the environment.
@@ -411,11 +446,23 @@ def environment_perturbation_identity(perturbation: Any) -> dict[str, Any]:
             "multiplicity_of_infection": perturbation.multiplicity_of_infection,
             "titer_pfu_per_ml": perturbation.titer_pfu_per_ml,
         }
+    if isinstance(perturbation, PhysicalExposurePerturbation):
+        return {
+            "perturbation_type": perturbation.perturbation_type,
+            "factor": perturbation.factor.value,
+            "exposure_duration_seconds": perturbation.exposure_duration_seconds,
+            "irradiance_w_per_m2": perturbation.irradiance_w_per_m2,
+            "fluence_j_per_m2": perturbation.fluence_j_per_m2,
+            "source_description": (
+                None
+                if perturbation.source_description is None
+                else perturbation.source_description.strip().lower()
+            ),
+        }
     raise TypeError(
         "no identity projection for "
         f"{type(perturbation).__name__}; an environment perturbation is one of "
-        "SmallMoleculePerturbation, EnvironmentPhysicalPerturbation, "
-        "BiologicPerturbation, PhagePerturbation"
+        + ", ".join(cls.__name__ for cls in PROJECTED_PERTURBATION_CLASSES)
     )
 
 

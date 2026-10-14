@@ -12,7 +12,7 @@ typed compositional slot, including a slot that is absent).
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, get_args
 
 import pytest
 from pydantic import BaseModel
@@ -28,7 +28,9 @@ from torchcell.datamodels.identity import (
     MEDIA_IDENTITY_FIELDS,
     MEDIA_OPTIONAL_IDENTITY_FIELDS,
     PHAGE_PERTURBATION_IDENTITY_FIELDS,
+    PHYSICAL_EXPOSURE_IDENTITY_FIELDS,
     PHYSICAL_PERTURBATION_IDENTITY_FIELDS,
+    PROJECTED_PERTURBATION_CLASSES,
     SMALL_MOLECULE_IDENTITY_FIELDS,
     SOLVENT_IDENTITY_FIELDS,
     TEMPERATURE_IDENTITY_FIELDS,
@@ -283,6 +285,63 @@ def test_an_unprojectable_perturbation_raises_rather_than_falling_back() -> None
         environment_perturbation_identity(base)
 
 
+def test_every_member_of_the_perturbation_union_has_a_projection() -> None:
+    """KG 4.0's first generation (job 4901) died at adapter 124 of 170 because
+    ``PhysicalExposurePerturbation`` joined the union without a projection branch.
+    """
+    assert set(get_args(s.EnvironmentPerturbationType)) == set(
+        PROJECTED_PERTURBATION_CLASSES
+    )
+
+
+def _uv(**kw: Any) -> s.PhysicalExposurePerturbation:
+    fields: dict[str, Any] = dict(
+        factor=s.PhysicalFactor.radiation,
+        exposure_duration_seconds=12.0,
+        provenance_gaps=[
+            ProvenanceGap(
+                field="irradiance_w_per_m2",
+                reason=ProvenanceGapReason.not_reported_by_primary,
+                looked_in=Provenance(
+                    source_uri="x", citation_key="shiver2016", sha256=_SHA
+                ),
+            )
+        ],
+    )
+    fields.update(kw)
+    return s.PhysicalExposurePerturbation(**fields)
+
+
+def test_a_physical_exposure_keys_on_factor_dose_and_source() -> None:
+    """Shiver 2016's ``UV [12 sec]``: the time alone, the lamp unstated."""
+    uv = _uv()
+    identity = environment_perturbation_identity(uv)
+    assert identity == {
+        "perturbation_type": "physical_exposure",
+        "factor": "radiation",
+        "exposure_duration_seconds": 12.0,
+        "irradiance_w_per_m2": None,
+        "fluence_j_per_m2": None,
+        "source_description": None,
+    }
+    assert set(identity) == set(PHYSICAL_EXPOSURE_IDENTITY_FIELDS)
+    # the dose is identity: 12 s and 24 s of UV are two edits to the environment
+    longer = uv.model_copy(update={"exposure_duration_seconds": 24.0})
+    assert identity_sha256(identity) != identity_sha256(
+        environment_perturbation_identity(longer)
+    )
+    # the stated apparatus is identity, normalized like a biologic's name
+    lamp = _uv(source_description="  Germicidal lamp, 254 nm ")
+    assert environment_perturbation_identity(lamp)["source_description"] == (
+        "germicidal lamp, 254 nm"
+    )
+    # the gap's wording and the per-dataset description are not
+    reworded = uv.model_copy(update={"description": "a differently worded UV edit"})
+    assert identity_sha256(identity) == identity_sha256(
+        environment_perturbation_identity(reworded)
+    )
+
+
 # --------------------------------------------------------------------------- #
 # Temperature and environment
 # --------------------------------------------------------------------------- #
@@ -448,6 +507,8 @@ _FIELDS_READ: dict[type[BaseModel], tuple[str, ...]] = {
     s.SmallMoleculePerturbation: SMALL_MOLECULE_IDENTITY_FIELDS,
     s.EnvironmentPhysicalPerturbation: PHYSICAL_PERTURBATION_IDENTITY_FIELDS,
     s.BiologicPerturbation: BIOLOGIC_PERTURBATION_IDENTITY_FIELDS,
+    s.PhagePerturbation: PHAGE_PERTURBATION_IDENTITY_FIELDS,
+    s.PhysicalExposurePerturbation: PHYSICAL_EXPOSURE_IDENTITY_FIELDS,
     s.Environment: ENVIRONMENT_IDENTITY_FIELDS,
 }
 

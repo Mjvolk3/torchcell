@@ -227,7 +227,7 @@ def panel_a(ax: Axes) -> None:
     ax.set_yticks([])
     for sp in ax.spines.values():
         sp.set_visible(False)
-    ax.set_title("what the lower orders do not explain")
+    ax.set_title("interactions are nonlinear by definition")
 
 
 def panel_b(ax: Axes) -> None:

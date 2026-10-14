@@ -1397,10 +1397,16 @@ def _phage_pair(adapter: Any, records: Any) -> list[Any]:
         ran[name] = adapter._all_chunked(records, SINGLE_PASS_NODES, inprocess=True)
     assert {n.get_label() for n in ran[PHAGE_NODE]} <= {PHAGE_NODE_LABEL}
     assert len(ran[PHAGE_NODE]) == _phage_leaves(records)
-    # these two datasets carry NO non-phage environment perturbation, so the served lane
-    # is empty here; a dataset carrying both would enable both lanes and see each leaf
-    # exactly once, which `test_environment_node_identity.py` drives on a record
-    assert ran[ENV_PERTURBATION_NODE] == []
+    # The partition: no phage id reaches the served lane, and nothing it emits is a
+    # phage. The lane itself need not be empty. Rousset 2018 carries small-molecule
+    # perturbations beside its phage challenges since ea37bd21 (the S1 growth screen),
+    # and Mutalik 2020's leading records carry none, so `== []` held only by accident
+    # of which records a dataset lists first. `test_environment_node_identity.py`
+    # drives a record carrying both leaves through both lanes.
+    phage_ids = {n.get_id() for n in ran[PHAGE_NODE]}
+    served = ran[ENV_PERTURBATION_NODE]
+    assert not phage_ids & {n.get_id() for n in served}
+    assert all(n.get_properties().get("perturbation_type") != "phage" for n in served)
     return ran[PHAGE_NODE]
 
 

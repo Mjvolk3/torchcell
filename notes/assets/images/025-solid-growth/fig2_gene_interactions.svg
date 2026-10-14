@@ -3804,22 +3804,22 @@ L 324.057394 418.483284
    </g>
    <g id="legend_4">
     <g id="line2d_290">
-     <path d="M 284.683355 344.865612 
-L 288.683355 344.865612 
-L 292.683355 344.865612 
+     <path d="M 284.683355 338.775343 
+L 288.683355 338.775343 
+L 292.683355 338.775343 
 " style="fill: none; stroke: #000000; stroke-width: 0.9; stroke-linecap: square"/>
     </g>
     <g id="text_175">
-     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="294.683355" y="346.615612" transform="rotate(-0 294.683355 346.615612)">60-epoch runs</text>
+     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="294.683355" y="340.525343" transform="rotate(-0 294.683355 340.525343)">60-epoch runs</text>
     </g>
     <g id="line2d_291">
-     <path d="M 284.683355 350.703112 
-L 288.683355 350.703112 
-L 292.683355 350.703112 
+     <path d="M 284.683355 344.612843 
+L 288.683355 344.612843 
+L 292.683355 344.612843 
 " style="fill: none; stroke-dasharray: 3.33,1.44; stroke-dashoffset: 0; stroke: #000000; stroke-width: 0.9"/>
     </g>
     <g id="text_176">
-     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="294.683355" y="352.453112" transform="rotate(-0 294.683355 352.453112)">30-epoch runs</text>
+     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="294.683355" y="346.362843" transform="rotate(-0 294.683355 346.362843)">30-epoch runs</text>
     </g>
    </g>
    <g id="FillBetweenPolyCollection_5">

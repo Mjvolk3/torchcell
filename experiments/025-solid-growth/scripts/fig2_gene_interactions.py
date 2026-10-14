@@ -19,7 +19,8 @@ fig2_gene_interactions.{svg,png} at PANEL_WIDTHS_MM["full"].
      no-interaction ridge as a line (SI notes si-note-fba, si-note-dcell-training,
      si-note-dango-full; 006 results dcell_training/checkpoints.csv)
   d  the additive null on the random split and on held-out query pairs (010 results:
-     additive_baseline_gene_interaction.csv, query_pair_disjoint_cv.csv)
+     additive_baseline_gene_interaction.csv, query_pair_disjoint_cv.csv; the transformer
+     on the disjoint split from 025 results: disjoint_embedding_readout.csv)
   e  the nine graphs absent, as a hard mask, as a soft prior, and toward random graphs
      (025 results: graph_reg_sweep_runs.csv, graph_reg_sweep_summary.json)
   f  the training pool: S0 triples, S0 with the fitness head, the S3 closure
@@ -157,10 +158,17 @@ def letters_status(fig: Figure, axes: list[Axes], statuses: list[str]) -> None:
     inv = fig.transFigure.inverted()
     tops = {id(ax): ax.get_tightbbox(renderer).y1 for ax in axes}
     near = 0.06 * fig.bbox.height
-    for ax, ch, status in zip(axes, "abcdefghijklmnop", statuses):
+    # One x per COLUMN: the leftmost extent of any panel in that column, so a panel with
+    # no axis label (a, the maps) carries its letter where its neighbors below do.
+    ncol = 4
+    col_x0 = {}
+    for k, ax in enumerate(axes):
+        c = k % ncol
+        col_x0[c] = min(col_x0.get(c, 1e9), ax.get_tightbbox(renderer).x0)
+    for k, (ax, ch, status) in enumerate(zip(axes, "abcdefghijklmnop", statuses)):
         box = ax.get_tightbbox(renderer)
         same = [tops[id(o)] for o in axes if abs(tops[id(o)] - tops[id(ax)]) < near]
-        x0, y1 = inv.transform((box.x0, max(same)))
+        x0, y1 = inv.transform((col_x0[k % ncol], max(same)))
         x0 = max(x0, 0.004)
         y = y1 + 0.004
         fig.text(x0, y, ch, fontsize=8, fontweight="bold", ha="left", va="bottom")
@@ -274,27 +282,40 @@ def panel_c(ax: Axes) -> None:
 def panel_d(ax: Axes) -> None:
     rnd = pd.read_csv(osp.join(R010, "additive_baseline_gene_interaction.csv"))
     cv = pd.read_csv(osp.join(R010, "query_pair_disjoint_cv.csv"))
-    learners = [("ridge", "B1_additive_gene", GRAY), ("ridge + pair", "B2_additive_plus_pair", YELLOW), ("MLP", "B5_gene_embedding_mlp", BLUE), ("CGT", "CGT_", RED)]
+    # The transformer on the query-pair-disjoint split: the learnable-table control of the
+    # 025 disjoint study (cgt_s0_q_kl_ctrl_016, three seeds on one split, validation Pearson
+    # at epoch 29, the sheet's fixed reading), from disjoint_embedding_readout.csv. The
+    # baselines on that split are test Pearson over five folds, so the two are drawn on one
+    # axis with the difference named in the panel.
+    dq = pd.read_csv(osp.join(R025, "disjoint_embedding_readout.csv"))
+    cgt_q = dq[dq.config == "cgt_s0_q_kl_ctrl_016"].val_pearson_epoch29.dropna().to_numpy(dtype=float)
+    learners = [
+        ("ridge, genes", "B1_additive_gene", GRAY),
+        ("ridge, genes + pairs", "B2_additive_plus_pair", YELLOW),
+        ("MLP, genes only", "B5_gene_embedding_mlp", BLUE),
+        ("CGT", "CGT_", RED),
+    ]
     w = 0.19
     for g, group in enumerate(("random", "disjoint")):
         for k, (label, prefix, color) in enumerate(learners):
             x = g + (k - 1.5) * w
             if group == "random":
                 vals = rnd[(rnd.split == "test") & rnd.model.str.startswith(prefix)].pearson.to_numpy(dtype=float)
+            elif prefix == "CGT_":
+                vals = cgt_q
             else:
                 vals = cv[cv.model.str.startswith(prefix)].pearson.to_numpy(dtype=float)
-            if len(vals) == 0:
-                not_run(ax, x, 0.015, "not\nrefit", color)
-                continue
             bars(ax, [x], [vals], [color], width=w * 0.9)
+            print(f"d {group:8s} {label:22s} n={len(vals)} mean {vals.mean():.3f}")
     ax.set_xticks([0, 1])
     ax.set_xticklabels(["random split\nover triples", "held-out\nquery pairs"])
     ax.set_xlim(-0.55, 1.55)
     ax.set_ylim(0, 0.6)
     ax.yaxis.set_major_locator(MultipleLocator(0.1))
-    ax.set_ylabel("test Pearson, trigenic interaction")
+    ax.set_ylabel("held-out Pearson, trigenic interaction")
     ax.set_title("a no-interaction null reaches 0.40")
     ax.legend(handles=[Patch(facecolor=c, edgecolor="black", linewidth=0.4, label=l) for l, _, c in learners], loc="upper right", bbox_to_anchor=(1.02, 1.0), frameon=False, handlelength=1.0, handletextpad=0.3, borderpad=0.1, labelspacing=0.2)
+    ax.text(1.0, 0.21, "CGT: validation at epoch 29,\none split, three seeds", ha="center", va="bottom", fontsize=5, color=LIGHT)
     strip(ax)
 
 
@@ -506,7 +527,7 @@ def umap_by_cluster(ax: Axes, assign: pd.DataFrame, enr: pd.DataFrame, rep: str,
 
 def panel_m(ax: Axes, assign: pd.DataFrame, enr: pd.DataFrame, summary: dict[str, Any]) -> None:
     rep = next(r for r in summary["representations"] if r["name"] == "encoder")
-    umap_by_cluster(ax, assign, enr, "encoder", f"encoder: {rep['n_clusters']} clusters, {rep['n_enriched_clusters']} GO-enriched")
+    umap_by_cluster(ax, assign, enr, "encoder", f"encoder output: {rep['n_clusters']} clusters, {rep['n_enriched_clusters']} GO-enriched")
 
 
 def panel_n(ax: Axes, enr: pd.DataFrame) -> None:
@@ -514,14 +535,21 @@ def panel_n(ax: Axes, enr: pd.DataFrame) -> None:
     top = [int(c) for c in best[best.q < 0.05].cluster.head(len(CLUSTER_COLORS))]
     color_of = {c: CLUSTER_COLORS[i] for i, c in enumerate(top)}
     ys = np.arange(len(best))[::-1]
-    for yy, (_, r) in zip(ys, best.iterrows()):
+    vals = [-np.log10(max(r.q, 1e-300)) for _, r in best.iterrows()]
+    xmax = max(vals) * 1.75
+    for yy, v, (_, r) in zip(ys, vals, best.iterrows()):
         c = int(r.cluster)
-        ax.barh(yy, -np.log10(max(r.q, 1e-300)), color=color_of.get(c, "#C8C8C8"), edgecolor="black", linewidth=0.4, height=0.7, zorder=3)
-    name = [f"{int(r.cluster)} {r.go_name[:17]}{'\u2026' if len(r.go_name) > 17 else ''}" for _, r in best.iterrows()]
+        ax.barh(yy, v, color=color_of.get(c, "#C8C8C8"), edgecolor="black", linewidth=0.4, height=0.7, zorder=3)
+        # The term name sits at the end of its bar; the tick label is the cluster number,
+        # which is what the map in n carries, so nothing hangs left into n.
+        name = r.go_name if len(r.go_name) <= 26 else r.go_name[:25] + "\u2026"
+        ax.text(v + xmax * 0.015, yy, name, fontsize=5, ha="left", va="center", zorder=4)
     ax.set_yticks(ys)
-    ax.set_yticklabels(name, fontsize=5)
+    ax.set_yticklabels([str(int(r.cluster)) for _, r in best.iterrows()], fontsize=5)
+    ax.set_xlim(0, xmax)
     ax.axvline(-np.log10(0.05), color="black", lw=0.5, ls="--")
     ax.set_xlabel("best GO term per cluster, \u2212log10 q (BH)")
+    ax.set_ylabel("cluster")
     ax.set_title("9 of 12 clusters carry a term at q < 0.05")
     strip(ax, grid="x")
 
@@ -548,7 +576,7 @@ def panel_o(ax: Axes, assign: pd.DataFrame) -> None:
 
 def panel_p(ax: Axes, assign: pd.DataFrame, enr: pd.DataFrame, summary: dict[str, Any]) -> None:
     rep = next(r for r in summary["representations"] if r["name"] == "table")
-    umap_by_cluster(ax, assign, enr, "table", f"raw table: {rep['n_clusters']} clusters, {rep['n_enriched_clusters']} enriched")
+    umap_by_cluster(ax, assign, enr, "table", f"gene table before the encoder\n{rep['n_clusters']} clusters, {rep['n_enriched_clusters']} GO-enriched")
 
 
 # ----------------------------------------------------------------------------- sheet
@@ -565,9 +593,6 @@ def main() -> None:
     for a_ in ax[4:]:
         pos = a_.get_position()
         a_.set_position([pos.x0, pos.y0 - key_strip, pos.width, pos.height])
-    # Panel o (the term bars) moves right into the room beside p so its labels clear n.
-    pos = ax[14].get_position()
-    ax[14].set_position([pos.x0 + 0.05, pos.y0, pos.width - 0.03, pos.height])
     panel_a(ax[0])
     panel_b(ax[1])
     panel_c(ax[2])
@@ -594,6 +619,7 @@ def main() -> None:
     stem = osp.join(IMG_DIR, "fig2_gene_interactions")
     savefig_true_size_svg(fig, stem + ".svg")
     fig.savefig(stem + ".png", dpi=300)
+    fig.savefig(stem + ".pdf")
     savefig_true_size_svg(fig, f"{stem}_{timestamp()}.svg")
     print("wrote", stem + ".svg")
 

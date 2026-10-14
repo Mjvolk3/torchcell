@@ -84,6 +84,7 @@ LIGHT = "#8A8A8A"
 STATUS_SYMBOL = {"ready": "●", "partial": "◐", "todo": "○"}
 STATUS_WORD = {"ready": "on file", "partial": "partial", "todo": "idea only"}
 CROSS = ("✗", "#E53935")  # section status: not yet reviewed by the author
+DARK_RED = PLOT_PALETTE[7]  # the transformer family under another training pool
 MAP = "tsne"  # which 2-D map the gene panels draw: "tsne" or "umap"
 MAP_NAME = {"tsne": "t-SNE", "umap": "UMAP"}[MAP]
 STATUS_MARKS = True  # the review marks beside each panel letter
@@ -312,24 +313,29 @@ def panel_d(ax: Axes) -> None:
                 vals = cv[cv.model.str.startswith(prefix)].pearson.to_numpy(dtype=float)
             bars(ax, [x], [vals], [color], width=w * 0.9)
             print(f"d {group:8s} {label:22s} n={len(vals)} mean {vals.mean():.3f}")
-    # The 030 closure arm on the same question (S3Q pool, composite embedding, fitness
-    # co-training, dataset token; one seed, in flight on IGB mmli): the latest epoch synced,
-    # from s3q_030_readout.csv, hatched because it is a partial reading of one seed.
-    q030 = pd.read_csv(osp.join(R025, "s3q_030_readout.csv")).sort_values("epoch")
-    last = q030.iloc[-1]
-    x030 = 1 + 2.6 * w
-    ax.bar(x030, last.val_pearson, width=w * 0.9, color=RED, edgecolor="black", linewidth=0.4, hatch="////", zorder=3)
-    ax.text(x030, last.val_pearson + 0.012, f"epoch {int(last.epoch)}\n1 seed", ha="center", va="bottom", fontsize=5)
-    print(f"d disjoint 030 closure + fitness, epoch {int(last.epoch)} val {last.val_pearson:.3f} ({last.state})")
+    # The 030 closure arm on both splits (closure pool of the per-entry build, composite
+    # embedding, fitness co-training, dataset token; seed 0 on IGB mmli), from
+    # s3q_030_readout.csv: the mean of the last ten logged epochs, the random split finished
+    # at epoch 183, the disjoint split still in flight. Dark red: the transformer family,
+    # another training pool.
+    r030 = pd.read_csv(osp.join(R025, "s3q_030_readout.csv"))
+    for g, split in enumerate(("random", "disjoint")):
+        sub = r030[r030.split == split].sort_values("epoch")
+        v = float(sub.val_pearson.tail(10).mean())
+        state = "" if split == "random" else "\nrunning"
+        x030 = g + 2.6 * w
+        ax.bar(x030, v, width=w * 0.9, color=DARK_RED, edgecolor="black", linewidth=0.4, zorder=3)
+        ax.text(x030, v + 0.012, f"epoch {int(sub.epoch.iloc[-1])}{state}", ha="center", va="bottom", fontsize=5)
+        print(f"d {split:8s} 030 closure + fitness, mean of epochs {int(sub.epoch.iloc[-10])}-{int(sub.epoch.iloc[-1])} val {v:.3f}")
     ax.set_xticks([0, 1])
     ax.set_xticklabels(["random split\nover triples", "held-out\nquery pairs"])
     ax.set_xlim(-0.55, 1.75)
-    ax.set_ylim(0, 0.8)
+    ax.set_ylim(0, 1.0)
     ax.yaxis.set_major_locator(MultipleLocator(0.1))
     ax.set_ylabel("held-out Pearson, trigenic interaction")
     ax.set_title("a no-interaction null reaches 0.40")
     handles = [Patch(facecolor=c, edgecolor="black", linewidth=0.4, label=l) for l, _, c in learners]
-    handles.append(Patch(facecolor=RED, edgecolor="black", linewidth=0.4, hatch="////", label="CGT + closure + fitness (030)"))
+    handles.append(Patch(facecolor=DARK_RED, edgecolor="black", linewidth=0.4, label="CGT + closure + fitness (030), 1 seed"))
     ax.legend(handles=handles, loc="upper right", bbox_to_anchor=(1.02, 1.0), frameon=False, handlelength=1.0, handletextpad=0.3, borderpad=0.1, labelspacing=0.2)
     # The transformer's reading on that split differs from the baselines' (validation on one
     # split, epoch 29, three seeds, against five-fold test), so the note hangs under that group.
@@ -373,17 +379,17 @@ def panel_e(ax: Axes, done: pd.DataFrame, summary: dict[str, Any]) -> None:
 
 def panel_f(ax: Axes) -> None:
     d = pd.read_csv(osp.join(R025, "s3_closure_readout.csv"))
-    pools = [("s0_ctrl_013", "S0\n\n377 k", GRAY), ("s0_fit_014", "S0 +\nfitness head\n377 k", YELLOW), ("s3_fit_031", "S3\nclosure\n1.12 M", RED)]
+    pools = [("s0_ctrl_013", "S0\ntriples only\n377 k", GRAY), ("s0_fit_014", "S0 + fitness\nhead\n377 k", YELLOW), ("s3_fit_031", "S3\nclosure\n1.12 M", RED)]
     for x, (arm, _, color) in enumerate(pools):
         vals = d[d.arm == arm]["val_gi_pearson_mean_ep10_29"].dropna().to_numpy(dtype=float)
         bars(ax, [x], [vals], [color])
     not_run(ax, 3, 0.383, "not run", RED)
     ax.set_xticks(range(4))
-    ax.set_xticklabels([p[1] for p in pools] + ["030\nper entry\n13.5 M"], fontsize=5)
+    ax.set_xticklabels([p[1] for p in pools] + ["030\nevery entry\n13.5 M"], fontsize=5)
     ax.set_ylim(0.38, 0.49)
     ax.yaxis.set_major_locator(MultipleLocator(0.02))
     ax.set_ylabel("validation Pearson, epochs 10 to 29")
-    ax.set_xlabel("training pool (records), same validation triples")
+    ax.set_xlabel("training pool, records\nS3: S0 + closure singles and doubles")
     ax.set_title("lower-order data adds 0.04")
     strip(ax)
 

@@ -201,7 +201,7 @@ def keys(fig: Figure, y_key: float) -> None:
     ]
     # One line: the pool statement at the left (every arm of e to l is S0, cgt_s0_r_kl_000
     # and its descendants; f alone varies the pool), the color key to its right.
-    fig.text(0.055, y_key, "e to l: S0, 376 k Kuzmin triples", ha="left", va="center", fontsize=5)
+    fig.text(0.055, y_key, "e to l: S0, 376 k Kuzmin triples", ha="left", va="center", fontsize=5, style="italic")
     fig.add_artist(Line2D([0.203, 0.203], [y_key - 1.4 / SHEET_H_MM, y_key + 1.4 / SHEET_H_MM], transform=fig.transFigure, color="black", lw=0.5))
     fig.legend(handles=handles, loc="center left", bbox_to_anchor=(0.215, y_key), ncol=6, frameon=False, fontsize=5, handlelength=1.1, handletextpad=0.35, columnspacing=0.9, borderpad=0, borderaxespad=0)
     if not STATUS_KEY:
@@ -476,7 +476,7 @@ def panel_i(ax: Axes, hist: pd.DataFrame) -> None:
     ax.set_xlabel("epoch")
     ax.set_ylabel("validation Pearson")
     ax.set_title("the prior removes the late decline")
-    ax.legend(loc="lower right", frameon=False, handlelength=1.6, handletextpad=0.4, borderpad=0.2, labelspacing=0.25)
+    ax.legend(loc="lower right", frameon=True, facecolor="white", edgecolor="none", framealpha=1.0, handlelength=1.6, handletextpad=0.4, borderpad=0.3, labelspacing=0.25).set_zorder(50)
     strip(ax)
 
 
@@ -553,26 +553,26 @@ def panel_l(ax: Axes, hist: pd.DataFrame) -> None:
         curve(ax, hist, arm, "val/gene_interaction/Pearson", color, "-", label, 20 + z)
     # What the composite embedding is: an inset gene schematic with the four sequence
     # models and their windows (cgt_s0_q_kl_emb_017.yaml, fungal_up_down_transformer.py).
-    ins = ax.inset_axes([0.12, 0.72, 0.86, 0.27])
+    ins = ax.inset_axes([0.04, 0.72, 0.96, 0.27])
     ins.set_xlim(0, 100)
     ins.set_ylim(0, 10)
     ins.axis("off")
     for x0, wd, fill, top, bottom in [
-        (0, 27, PLOT_PALETTE_FILL[3], "5' 1,003 bp", "FUDT"),
-        (27, 46, PLOT_PALETTE_FILL[0], "ORF", "CaLM + ProtT5"),
-        (73, 27, PLOT_PALETTE_FILL[3], "3' 300 bp", "FUDT"),
+        (0, 26, YELLOW, "5' 1,003 bp", "SpeciesLM"),
+        (26, 48, PURPLE, "ORF", "CaLM + ProtT5"),
+        (74, 26, YELLOW, "3' 300 bp", "SpeciesLM"),
     ]:
         ins.add_patch(Rectangle((x0, 4.6), wd, 2.4, facecolor=fill, edgecolor="black", linewidth=0.4))
         ins.text(x0 + wd / 2, 7.4, top, ha="center", va="bottom", fontsize=5)
         ins.text(x0 + wd / 2, 4.1, bottom, ha="center", va="top", fontsize=5)
-    ins.text(100, 0.0, "concatenated: 3,328 dims per gene, fixed", ha="right", va="bottom", fontsize=5)
+    ins.text(50, 0.0, "concatenated: 3,328 fixed dims per gene", ha="center", va="bottom", fontsize=5)
     ax.set_xlim(0, 29)
     ax.set_ylim(-0.05, 0.68)
     ax.yaxis.set_major_locator(MultipleLocator(0.1))
     ax.set_xlabel("epoch")
     ax.set_ylabel("validation Pearson")
     ax.set_title("composite embedding needs the prior")
-    ax.legend(loc="center right", bbox_to_anchor=(1.0, 0.4), frameon=False, handlelength=1.6, handletextpad=0.4, borderpad=0.2, labelspacing=0.25)
+    ax.legend(loc="center left", bbox_to_anchor=(0.02, 0.32), frameon=True, facecolor="white", edgecolor="none", framealpha=1.0, handlelength=1.6, handletextpad=0.4, borderpad=0.3, labelspacing=0.25).set_zorder(50)
     strip(ax)
 
 
@@ -680,7 +680,7 @@ def panel_o(ax: Axes, assign: pd.DataFrame) -> None:
     # m to p read one checkpoint: the S3 closure + fitness arm of f (cgt_s3_r_kl_fit_031,
     # seed 2, run 8fuwsk48, best-Pearson epoch 43), per results/wt_gene_embeddings/summary.json.
     ax.text(0.0, -0.06, f"{MAP_NAME} of 6,607 genes", transform=ax.transAxes, fontsize=5, color="black", ha="left", va="bottom")
-    ax.text(0.0, -0.11, "m to p: the S3 + fitness model of f, seed 2, epoch 43", transform=ax.transAxes, fontsize=5, color="black", ha="left", va="top")
+    # Placed by the sheet, in the row gap above the letters of m to p (see main).
 
 
 def panel_p(ax: Axes, assign: pd.DataFrame, enr: pd.DataFrame, summary: dict[str, Any]) -> None:
@@ -796,6 +796,8 @@ def main() -> None:
     # The color key sits just above the letters of e to h, the panels it serves.
     y_key = ax[4].get_position().y1 + 10.6 / SHEET_H_MM
     keys(fig, y_key)
+    # The maps' supplementary line, italic like the S0 line, in the gap above m to p.
+    fig.text(0.055, ax[12].get_position().y1 + 8.6 / SHEET_H_MM, "m to p: the S3 + fitness model of f, seed 2, epoch 43", ha="left", va="center", fontsize=5, style="italic")
     os.makedirs(IMG_DIR, exist_ok=True)
     stem = osp.join(IMG_DIR, "fig2_gene_interactions")
     # The SVG is the note's copy, with the explainer as a raster. The sheet's PDF and PNG are

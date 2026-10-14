@@ -120,6 +120,31 @@ def scale_cells(keep: list[ET.Element], origin: tuple[float, float], s: float, t
             c.set("style", re.sub(r"fontSize=([\d.]+)", lambda m: f"fontSize={retype(m.group(1))}", st))
 
 
+TAGS = {"161": "left", "162": "left", "163": "right", "200": "right"}  # growth, digenic, trigenic, general
+TAG_SIZE = 7.0  # the ladder's floor, 5.04 pt
+
+
+def enlarge_tags(keep: list[ET.Element]) -> None:
+    """Retype the four gray tags to the ladder's floor and grow their pills to match, keeping
+    the edge that faces the equation (review 2026-10-14: the tags were the smallest type)."""
+    for c in keep:
+        anchor = TAGS.get(c.get("id") or "")
+        if anchor is None:
+            continue
+        m = re.search(r"font-size:\s*([\d.]+)px", c.get("value") or "")
+        assert m is not None, f"tag {c.get('id')} has no inline size"
+        f = TAG_SIZE / float(m.group(1))
+        c.set("value", re.sub(r"font-size:\s*([\d.]+)px", f"font-size: {TAG_SIZE:g}px", c.get("value")))
+        g = c.find("mxGeometry")
+        assert g is not None
+        x, y, w, h = (float(g.get(k) or 0) for k in ("x", "y", "width", "height"))
+        nw, nh = w * f, h * f
+        g.set("x", f"{x if anchor == 'left' else x + w - nw:.2f}")
+        g.set("y", f"{y - (nh - h) / 2:.2f}")
+        g.set("width", f"{nw:.2f}")
+        g.set("height", f"{nh:.2f}")
+
+
 def main() -> None:
     fonts = os.environ.get("FIG2_FONTS", "uniform")
     slot = json.load(open(SLOT_JSON))
@@ -141,6 +166,7 @@ def main() -> None:
     ew, eh = max(x2) - min(xs), max(y2) - min(ys)
     s = min(sw / ew, sh / eh)
     scale_cells(keep, (min(xs), min(ys)), s, (sx, sy), fonts)
+    enlarge_tags(keep)
     sheet_cell, _ = image_cell("sheet", SHEET_SVG, 0.0)
     # The slot's outline lives on a hidden layer: visible while editing, absent from exports.
     guide = (

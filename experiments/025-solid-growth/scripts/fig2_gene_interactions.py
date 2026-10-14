@@ -198,7 +198,7 @@ def keys(fig: Figure, y_key: float) -> None:
     fig.legend(handles=handles, loc="center", bbox_to_anchor=(0.52, y_key), ncol=6, frameon=False, fontsize=5, handlelength=1.2, handletextpad=0.4, columnspacing=1.2, borderpad=0)
     # Every transformer arm of e to l is the S0 pool (cgt_s0_r_kl_000 and its descendants);
     # only f changes the pool, and d's closure bars are the 030 build.
-    fig.text(0.52, y_key - 2.6 / SHEET_H_MM, "e to l: every arm trains on S0, the 376,732 Kuzmin triples under the 010 split; f varies the pool", ha="center", va="top", fontsize=5)
+    fig.text(0.52, y_key + 2.4 / SHEET_H_MM, "e to l: every arm trains on S0, the 376,732 Kuzmin triples under the 010 split; f varies the pool", ha="center", va="bottom", fontsize=5)
     if not STATUS_KEY:
         return
     x = 0.03
@@ -709,8 +709,9 @@ def main() -> None:
     for k in (1, 2, 3):
         pk = ax[k].get_position()
         ax[k].set_position([x + (k - 1) * (w3 + gap), pk.y0, w3, pk.height])
-    # Rows 3 and 4 move up a little toward row 2 (review 2026-10-14).
-    for k, up_mm in [(8, 3.0), (9, 3.0), (10, 3.0), (11, 3.0), (12, 5.0), (13, 5.0), (14, 5.0), (15, 5.0)]:
+    # Row 2 drops 2.5 mm to make room for the pool statement above the color key; rows 3
+    # and 4 move up toward it (review 2026-10-14).
+    for k, up_mm in [(4, -2.5), (5, -2.5), (6, -2.5), (7, -2.5), (8, 0.5), (9, 0.5), (10, 0.5), (11, 0.5), (12, 2.5), (13, 2.5), (14, 2.5), (15, 2.5)]:
         pk = ax[k].get_position()
         ax[k].set_position([pk.x0, pk.y0 + up_mm / SHEET_H_MM, pk.width, pk.height])
     pos = ax[0].get_position()

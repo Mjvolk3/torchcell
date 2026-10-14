@@ -85,7 +85,7 @@ LIGHT = "#8A8A8A"
 STATUS_SYMBOL = {"ready": "●", "partial": "◐", "todo": "○"}
 STATUS_WORD = {"ready": "on file", "partial": "partial", "todo": "idea only"}
 CROSS = ("✗", "#E53935")  # section status: not yet reviewed by the author
-# In d the transformer on triples alone is orange and the closure arm red (review 2026-10-13).
+DARK_RED = PLOT_PALETTE[7]  # in d, the transformer family under the closure pool; plain CGT is red as in c (review 2026-10-14)
 SHEET_H_MM = 210  # the sheet's height; row 1 carries the extra 10 mm
 MAP = "tsne"  # which 2-D map the gene panels draw: "tsne" or "umap"
 MAP_NAME = {"tsne": "t-SNE", "umap": "UMAP"}[MAP]
@@ -305,7 +305,7 @@ def panel_d(ax: Axes) -> None:
         ("ridge, genes", "B1_additive_gene", GRAY),
         ("ridge, genes + pairs", "B2_additive_plus_pair", YELLOW),
         ("MLP, genes only", "B5_gene_embedding_mlp", BLUE),
-        ("CGT", "CGT_", ORANGE),
+        ("CGT, S0", "CGT_", RED),
     ]
     w = 0.19
     for g, group in enumerate(("random", "disjoint")):
@@ -329,7 +329,7 @@ def panel_d(ax: Axes) -> None:
         sub = r030[r030.split == split].sort_values("epoch")
         v = float(sub.val_pearson.tail(10).mean())
         x030 = g + 2.6 * w
-        ax.bar(x030, v, width=w * 0.9, color=RED, edgecolor="black", linewidth=0.4, zorder=3)
+        ax.bar(x030, v, width=w * 0.9, color=DARK_RED, edgecolor="black", linewidth=0.4, zorder=3)
         print(f"d {split:8s} 030 closure + fitness, mean of epochs {int(sub.epoch.iloc[-10])}-{int(sub.epoch.iloc[-1])} val {v:.3f}")
     # The replicate ceiling of adjusted trigenic interaction scores, r = 0.74 to 0.81 between
     # independent replicate measurements (Kuzmin et al. 2018; the manuscript's statement in
@@ -350,7 +350,7 @@ def panel_d(ax: Axes) -> None:
     ax.set_ylabel("held-out Pearson, trigenic interaction")
     ax.set_title("a no-interaction null reaches 0.40")
     handles = [Patch(facecolor=c, edgecolor="black", linewidth=0.4, label=l) for l, _, c in learners]
-    handles.append(Patch(facecolor=RED, edgecolor="black", linewidth=0.4, label="CGT + closure + fitness, 1 seed"))
+    handles.append(Patch(facecolor=DARK_RED, edgecolor="black", linewidth=0.4, label="CGT, S3 + fitness, 1 seed"))
     ax.legend(handles=handles, loc="upper right", bbox_to_anchor=(1.02, 1.04), frameon=True, facecolor="white", edgecolor="none", framealpha=1.0, handlelength=1.0, handletextpad=0.3, borderpad=0.2, borderaxespad=0.0, labelspacing=0.2).set_zorder(5)
     strip(ax)
 
@@ -630,7 +630,10 @@ def panel_o(ax: Axes, assign: pd.DataFrame) -> None:
         ],
         loc="upper right", frameon=False, handlelength=1.0, handletextpad=0.4, borderpad=0.2, labelspacing=0.25,
     )
+    # m to p read one checkpoint: the S3 closure + fitness arm of f (cgt_s3_r_kl_fit_031,
+    # seed 2, run 8fuwsk48, best-Pearson epoch 43), per results/wt_gene_embeddings/summary.json.
     ax.text(0.0, -0.06, f"{MAP_NAME} of 6,607 genes", transform=ax.transAxes, fontsize=5, color="black", ha="left", va="bottom")
+    ax.text(0.0, -0.11, "m to p: the S3 + fitness model of f, seed 2, epoch 43", transform=ax.transAxes, fontsize=5, color="black", ha="left", va="top")
 
 
 def panel_p(ax: Axes, assign: pd.DataFrame, enr: pd.DataFrame, summary: dict[str, Any]) -> None:

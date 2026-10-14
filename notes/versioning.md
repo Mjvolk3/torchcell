@@ -286,3 +286,7 @@ Between `v1.7.2` and this cut the eight schema gates and the genome-gate reversa
 ## 2026.10.13 - 1.7.4: the pair moves to the tip after the Messner 2021 join fix
 
 The `1.7.3` cut preceded #1096, which lifts Messner 2023's released UniProt keys to ORFs inside Messner 2021's L4 cross-check (the swept Messner 2021 store had failed that row with zero shared ORFs, so the zero-stale read could not pass at `v1.7.3`). No stored byte changes; the store is re-verified from the tip. This `DB(kg)` patch cuts `1.7.4` as the package KG 4.0 pairs with, so the build commit carries the verifier the sweep's last store was verified under.
+
+## 2026.10.14 - 1.7.5: the pair moves to the tip after the physical exposure identity fix
+
+The `1.7.4` generation (job 4901) died at adapter 124 of 170, Shiver 2016, because `environment_perturbation_identity` had no branch for `PhysicalExposurePerturbation` (5dfd82f5 added the leaf to the union without one; Shiver 2016 and Nichols 2011 use it). #1104 adds the projection (`PHYSICAL_EXPOSURE_IDENTITY_FIELDS`) and pins `PROJECTED_PERTURBATION_CLASSES` to the union in a test. No served record changes: the leaf had never serialized. Also since `1.7.4`: #1102 (the live rebuild resumes after generation, 48 h limit, `IMPORT DONE` marker) and #1103 (the `torchcell-db-build` skill and the per-adapter resource table). KG 4.0 is rebuilt from this tag.

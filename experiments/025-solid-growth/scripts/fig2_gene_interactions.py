@@ -528,16 +528,27 @@ def best_terms(enr: pd.DataFrame, rep: str) -> pd.DataFrame:
     return sub.groupby("cluster", as_index=False).first().sort_values("q")
 
 
-def umap_by_cluster(ax: Axes, assign: pd.DataFrame, enr: pd.DataFrame, rep: str, title: str) -> None:
+def umap_by_cluster(ax: Axes, assign: pd.DataFrame, enr: pd.DataFrame, rep: str, title: str, key: bool = False) -> None:
     best = best_terms(enr, rep)
     top = [int(c) for c in best[best.q < 0.05].cluster.head(len(CLUSTER_COLORS))]
     color_of = {c: CLUSTER_COLORS[i] for i, c in enumerate(top)}
     x, y, lab = assign[f"{rep}_{MAP}_1"], assign[f"{rep}_{MAP}_2"], assign[f"{rep}_cluster"]
+    if key:
+        # The table's clusters are its own partition, not the encoder's, so their best terms
+        # go in the panel (o lists only the encoder's); headroom above the cloud holds the key.
+        lo, hi = float(y.min()), float(y.max())
+        ax.set_ylim(lo - 0.02 * (hi - lo), hi + 0.42 * (hi - lo))
+        name_of = {int(r.cluster): r.go_name for _, r in best.iterrows()}
+        short = {"mitochondrial protein-containing complex": "mitochondrial complex", "organic acid metabolic process": "organic acid metabolism"}
+        ax.legend(
+            handles=[Patch(facecolor=color_of[c], edgecolor="none", label=f"{c} {short.get(name_of[c], name_of[c])}") for c in top],
+            loc="upper left", frameon=False, handlelength=1.0, handletextpad=0.4, borderpad=0.2, labelspacing=0.25, fontsize=5,
+        )
     other = ~lab.isin(top)
-    ax.scatter(x[other], y[other], s=1.2, color="#C8C8C8", linewidths=0, rasterized=True, zorder=2)
+    ax.scatter(x[other], y[other], s=1.2, color="#C8C8C8", linewidths=0, rasterized=False, zorder=2)
     for c in top:
         m = lab == c
-        ax.scatter(x[m], y[m], s=1.2, color=color_of[c], linewidths=0, rasterized=True, zorder=3)
+        ax.scatter(x[m], y[m], s=1.2, color=color_of[c], linewidths=0, rasterized=False, zorder=3)
         ax.text(x[m].median(), y[m].median(), str(c), fontsize=6, fontweight="bold", ha="center", va="center", zorder=5)
     ax.margins(0.02)
     ax.set_xticks([])
@@ -579,8 +590,8 @@ def panel_n(ax: Axes, enr: pd.DataFrame) -> None:
 
 def panel_o(ax: Axes, assign: pd.DataFrame) -> None:
     x, y, it = assign[f"encoder_{MAP}_1"], assign[f"encoder_{MAP}_2"], assign.in_train_triple.astype(bool)
-    ax.scatter(x[~it], y[~it], s=1.2, color="#C8C8C8", linewidths=0, rasterized=True, zorder=2)
-    ax.scatter(x[it], y[it], s=1.2, color=RED, linewidths=0, rasterized=True, zorder=3)
+    ax.scatter(x[~it], y[~it], s=1.2, color="#C8C8C8", linewidths=0, rasterized=False, zorder=2)
+    ax.scatter(x[it], y[it], s=1.2, color=RED, linewidths=0, rasterized=False, zorder=3)
     ax.margins(0.02)
     lo, hi = float(y.min()), float(y.max())
     ax.set_ylim(lo - 0.02 * (hi - lo), hi + 0.30 * (hi - lo))
@@ -602,7 +613,7 @@ def panel_o(ax: Axes, assign: pd.DataFrame) -> None:
 
 def panel_p(ax: Axes, assign: pd.DataFrame, enr: pd.DataFrame, summary: dict[str, Any]) -> None:
     rep = next(r for r in summary["representations"] if r["name"] == "table")
-    umap_by_cluster(ax, assign, enr, "table", f"input table: {rep['n_clusters']} clusters, {rep['n_enriched_clusters']} enriched")
+    umap_by_cluster(ax, assign, enr, "table", f"input table: {rep['n_clusters']} clusters, {rep['n_enriched_clusters']} enriched", key=True)
 
 
 # ----------------------------------------------------------------------------- sheet

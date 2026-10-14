@@ -20,7 +20,8 @@ fig2_gene_interactions.{svg,png} at PANEL_WIDTHS_MM["full"].
      si-note-dango-full; 006 results dcell_training/checkpoints.csv)
   d  the additive null on the random split and on held-out query pairs (010 results:
      additive_baseline_gene_interaction.csv, query_pair_disjoint_cv.csv; the transformer
-     on the disjoint split from 025 results: disjoint_embedding_readout.csv)
+     on the disjoint split from 025 results: disjoint_embedding_readout.csv; the 030
+     closure arm on that split from s3q_030_readout.csv, one seed, in flight)
   e  the nine graphs absent, as a hard mask, as a soft prior, and toward random graphs
      (025 results: graph_reg_sweep_runs.csv, graph_reg_sweep_summary.json)
   f  the training pool: S0 triples, S0 with the fitness head, the S3 closure
@@ -309,14 +310,25 @@ def panel_d(ax: Axes) -> None:
                 vals = cv[cv.model.str.startswith(prefix)].pearson.to_numpy(dtype=float)
             bars(ax, [x], [vals], [color], width=w * 0.9)
             print(f"d {group:8s} {label:22s} n={len(vals)} mean {vals.mean():.3f}")
+    # The 030 closure arm on the same question (S3Q pool, composite embedding, fitness
+    # co-training, dataset token; one seed, in flight on IGB mmli): the latest epoch synced,
+    # from s3q_030_readout.csv, hatched because it is a partial reading of one seed.
+    q030 = pd.read_csv(osp.join(R025, "s3q_030_readout.csv")).sort_values("epoch")
+    last = q030.iloc[-1]
+    x030 = 1 + 2.6 * w
+    ax.bar(x030, last.val_pearson, width=w * 0.9, color=RED, edgecolor="black", linewidth=0.4, hatch="////", zorder=3)
+    ax.text(x030, last.val_pearson + 0.012, f"epoch {int(last.epoch)}\n1 seed", ha="center", va="bottom", fontsize=5)
+    print(f"d disjoint 030 closure + fitness, epoch {int(last.epoch)} val {last.val_pearson:.3f} ({last.state})")
     ax.set_xticks([0, 1])
     ax.set_xticklabels(["random split\nover triples", "held-out\nquery pairs"])
-    ax.set_xlim(-0.55, 1.55)
-    ax.set_ylim(0, 0.6)
+    ax.set_xlim(-0.55, 1.75)
+    ax.set_ylim(0, 0.75)
     ax.yaxis.set_major_locator(MultipleLocator(0.1))
     ax.set_ylabel("held-out Pearson, trigenic interaction")
     ax.set_title("a no-interaction null reaches 0.40")
-    ax.legend(handles=[Patch(facecolor=c, edgecolor="black", linewidth=0.4, label=l) for l, _, c in learners], loc="upper right", bbox_to_anchor=(1.02, 1.0), frameon=False, handlelength=1.0, handletextpad=0.3, borderpad=0.1, labelspacing=0.2)
+    handles = [Patch(facecolor=c, edgecolor="black", linewidth=0.4, label=l) for l, _, c in learners]
+    handles.append(Patch(facecolor=RED, edgecolor="black", linewidth=0.4, hatch="////", label="CGT + closure + fitness (030)"))
+    ax.legend(handles=handles, loc="upper right", bbox_to_anchor=(1.02, 1.0), frameon=False, handlelength=1.0, handletextpad=0.3, borderpad=0.1, labelspacing=0.2)
     # The transformer's reading on that split differs from the baselines' (validation on one
     # split, epoch 29, three seeds, against five-fold test), so the note hangs under that group.
     ax.text(1.0, -0.22, "CGT: validation, one split", transform=ax.get_xaxis_transform(), ha="center", va="top", fontsize=5, color="black")

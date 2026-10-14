@@ -25155,7 +25155,7 @@ z
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="407.821489" y="548.569005" transform="rotate(-0 407.821489 548.569005)">t-SNE of 6,607 genes</text>
    </g>
    <g id="text_231">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="455.074524" y="448.762301" transform="rotate(-0 455.074524 448.762301)">input embeddings: 6 of 7 clusters enriched</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="455.074524" y="448.762301" transform="rotate(-0 455.074524 448.762301)">input embeddings: 6 of 7 enriched</text>
    </g>
    <g id="text_232">
     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="457.089903" y="528.161429" transform="rotate(-0 457.089903 528.161429)">4</text>

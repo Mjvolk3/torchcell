@@ -620,7 +620,7 @@ def panel_o(ax: Axes, assign: pd.DataFrame) -> None:
 
 def panel_p(ax: Axes, assign: pd.DataFrame, enr: pd.DataFrame, summary: dict[str, Any]) -> None:
     rep = next(r for r in summary["representations"] if r["name"] == "table")
-    umap_by_cluster(ax, assign, enr, "table", f"input embeddings: {rep['n_enriched_clusters']} of {rep['n_clusters']} clusters enriched", key=True)
+    umap_by_cluster(ax, assign, enr, "table", f"input embeddings: {rep['n_enriched_clusters']} of {rep['n_clusters']} enriched", key=True)
 
 
 # ----------------------------------------------------------------------------- sheet

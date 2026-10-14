@@ -84,7 +84,7 @@ LIGHT = "#8A8A8A"
 STATUS_SYMBOL = {"ready": "●", "partial": "◐", "todo": "○"}
 STATUS_WORD = {"ready": "on file", "partial": "partial", "todo": "idea only"}
 CROSS = ("✗", "#E53935")  # section status: not yet reviewed by the author
-LIGHT_RED = PLOT_PALETTE_FILL[1]  # the transformer family under another training pool
+LIGHT_RED = PLOT_PALETTE_FILL[1]  # in d, the transformer on triples alone; red is the closure arm (review 2026-10-13)
 MAP = "tsne"  # which 2-D map the gene panels draw: "tsne" or "umap"
 MAP_NAME = {"tsne": "t-SNE", "umap": "UMAP"}[MAP]
 STATUS_MARKS = True  # the review marks beside each panel letter
@@ -299,7 +299,7 @@ def panel_d(ax: Axes) -> None:
         ("ridge, genes", "B1_additive_gene", GRAY),
         ("ridge, genes + pairs", "B2_additive_plus_pair", YELLOW),
         ("MLP, genes only", "B5_gene_embedding_mlp", BLUE),
-        ("CGT", "CGT_", RED),
+        ("CGT", "CGT_", LIGHT_RED),
     ]
     w = 0.19
     for g, group in enumerate(("random", "disjoint")):
@@ -323,7 +323,7 @@ def panel_d(ax: Axes) -> None:
         sub = r030[r030.split == split].sort_values("epoch")
         v = float(sub.val_pearson.tail(10).mean())
         x030 = g + 2.6 * w
-        ax.bar(x030, v, width=w * 0.9, color=LIGHT_RED, edgecolor="black", linewidth=0.4, zorder=3)
+        ax.bar(x030, v, width=w * 0.9, color=RED, edgecolor="black", linewidth=0.4, zorder=3)
         print(f"d {split:8s} 030 closure + fitness, mean of epochs {int(sub.epoch.iloc[-10])}-{int(sub.epoch.iloc[-1])} val {v:.3f}")
     ax.set_xticks([0, 1])
     ax.set_xticklabels(["random split\nover triples", "held-out\nquery pairs"])
@@ -333,7 +333,7 @@ def panel_d(ax: Axes) -> None:
     ax.set_ylabel("held-out Pearson, trigenic interaction")
     ax.set_title("a no-interaction null reaches 0.40")
     handles = [Patch(facecolor=c, edgecolor="black", linewidth=0.4, label=l) for l, _, c in learners]
-    handles.append(Patch(facecolor=LIGHT_RED, edgecolor="black", linewidth=0.4, label="CGT + closure + fitness (030), 1 seed"))
+    handles.append(Patch(facecolor=RED, edgecolor="black", linewidth=0.4, label="CGT + closure + fitness (030), 1 seed"))
     ax.legend(handles=handles, loc="upper right", bbox_to_anchor=(1.02, 1.04), frameon=False, handlelength=1.0, handletextpad=0.3, borderpad=0.0, borderaxespad=0.0, labelspacing=0.2)
     # The transformer's reading on that split differs from the baselines' (validation on one
     # split, epoch 29, three seeds, against five-fold test), so the note hangs under that group.
@@ -654,7 +654,8 @@ def main() -> None:
     panel_n(ax[14], enr)
     panel_p(ax[15], assign, enr, wt)
     letters_status(fig, list(ax), ["ready"] * 16)
-    y_key = (ax[0].get_position().y0 + ax[4].get_position().y1) / 2 - 0.004
+    # The color key sits just above the letters of e to h, the panels it serves.
+    y_key = ax[4].get_position().y1 + 0.05
     keys(fig, y_key)
     fig.subplots_adjust(bottom=0.04)
     os.makedirs(IMG_DIR, exist_ok=True)

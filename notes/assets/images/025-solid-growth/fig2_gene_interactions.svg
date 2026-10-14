@@ -1113,7 +1113,7 @@ L 445.644462 109.332187
 L 445.644462 62.428067 
 L 438.618141 62.428067 
 z
-" clip-path="url(#p281ef7283f)" style="fill: #b85450; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
+" clip-path="url(#p281ef7283f)" style="fill: #f8cecc; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
    <g id="patch_34">
     <path d="M 456.286667 109.332187 
@@ -1145,7 +1145,7 @@ L 486.734057 109.332187
 L 486.734057 95.677116 
 L 479.707737 95.677116 
 z
-" clip-path="url(#p281ef7283f)" style="fill: #b85450; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
+" clip-path="url(#p281ef7283f)" style="fill: #f8cecc; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
    <g id="patch_38">
     <path d="M 447.205866 109.332187 
@@ -1153,7 +1153,7 @@ L 454.232187 109.332187
 L 454.232187 49.886695 
 L 447.205866 49.886695 
 z
-" clip-path="url(#p281ef7283f)" style="fill: #f8cecc; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
+" clip-path="url(#p281ef7283f)" style="fill: #b85450; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
    <g id="patch_39">
     <path d="M 488.295462 109.332187 
@@ -1161,7 +1161,7 @@ L 495.321783 109.332187
 L 495.321783 66.527772 
 L 488.295462 66.527772 
 z
-" clip-path="url(#p281ef7283f)" style="fill: #f8cecc; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
+" clip-path="url(#p281ef7283f)" style="fill: #b85450; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
    <g id="text_49">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: middle" x="471.510362" y="132.659757" transform="rotate(-0 471.510362 132.659757)">CGT: validation, one split</text>
@@ -1367,7 +1367,7 @@ L 419.437993 36.735589
 L 419.437993 33.235589 
 L 414.437993 33.235589 
 z
-" style="fill: #b85450; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
+" style="fill: #f8cecc; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
     </g>
     <g id="text_54">
      <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="420.937993" y="36.735589" transform="rotate(-0 420.937993 36.735589)">CGT</text>
@@ -1378,7 +1378,7 @@ L 419.437993 42.369183
 L 419.437993 38.869183 
 L 414.437993 38.869183 
 z
-" style="fill: #f8cecc; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
+" style="fill: #b85450; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
     </g>
     <g id="text_55">
      <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="420.937993" y="42.369183" transform="rotate(-0 420.937993 42.369183)">CGT + closure + fitness (030), 1 seed</text>
@@ -25373,70 +25373,70 @@ z
   </g>
   <g id="legend_7">
    <g id="patch_105">
-    <path d="M 73.813272 141.168518 
-L 79.813272 141.168518 
-L 79.813272 137.668518 
-L 73.813272 137.668518 
+    <path d="M 73.813272 143.182761 
+L 79.813272 143.182761 
+L 79.813272 139.682761 
+L 73.813272 139.682761 
 z
 " style="fill: #666666; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
    <g id="text_289">
-    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="81.813272" y="141.168518" transform="rotate(-0 81.813272 141.168518)">no graphs, or a no-interaction null</text>
+    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="81.813272" y="143.182761" transform="rotate(-0 81.813272 143.182761)">no graphs, or a no-interaction null</text>
    </g>
    <g id="patch_106">
-    <path d="M 162.296866 141.168518 
-L 168.296866 141.168518 
-L 168.296866 137.668518 
-L 162.296866 137.668518 
+    <path d="M 162.296866 143.182761 
+L 168.296866 143.182761 
+L 168.296866 139.682761 
+L 162.296866 139.682761 
 z
 " style="fill: #b85450; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
    <g id="text_290">
-    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="170.296866" y="141.168518" transform="rotate(-0 170.296866 141.168518)">cell graph transformer, soft prior</text>
+    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="170.296866" y="143.182761" transform="rotate(-0 170.296866 143.182761)">cell graph transformer, soft prior</text>
    </g>
    <g id="patch_107">
-    <path d="M 246.875772 141.168518 
-L 252.875772 141.168518 
-L 252.875772 137.668518 
-L 246.875772 137.668518 
+    <path d="M 246.875772 143.182761 
+L 252.875772 143.182761 
+L 252.875772 139.682761 
+L 246.875772 139.682761 
 z
 " style="fill: #d79b00; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
    <g id="text_291">
-    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="254.875772" y="141.168518" transform="rotate(-0 254.875772 141.168518)">hard mask</text>
+    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="254.875772" y="143.182761" transform="rotate(-0 254.875772 143.182761)">hard mask</text>
    </g>
    <g id="patch_108">
-    <path d="M 284.216397 141.168518 
-L 290.216397 141.168518 
-L 290.216397 137.668518 
-L 284.216397 137.668518 
+    <path d="M 284.216397 143.182761 
+L 290.216397 143.182761 
+L 290.216397 139.682761 
+L 284.216397 139.682761 
 z
 " style="fill: #9673a6; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
    <g id="text_292">
-    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="292.216397" y="141.168518" transform="rotate(-0 292.216397 141.168518)">degree-matched random graphs</text>
+    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="292.216397" y="143.182761" transform="rotate(-0 292.216397 143.182761)">degree-matched random graphs</text>
    </g>
    <g id="patch_109">
-    <path d="M 369.640616 141.168518 
-L 375.640616 141.168518 
-L 375.640616 137.668518 
-L 369.640616 137.668518 
+    <path d="M 369.640616 143.182761 
+L 375.640616 143.182761 
+L 375.640616 139.682761 
+L 369.640616 139.682761 
 z
 " style="fill: #6c8ebf; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
    <g id="text_293">
-    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="377.640616" y="141.168518" transform="rotate(-0 377.640616 141.168518)">learned null (MLP)</text>
+    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="377.640616" y="143.182761" transform="rotate(-0 377.640616 143.182761)">learned null (MLP)</text>
    </g>
    <g id="patch_110">
-    <path d="M 424.489835 141.168518 
-L 430.489835 141.168518 
-L 430.489835 137.668518 
-L 424.489835 137.668518 
+    <path d="M 424.489835 143.182761 
+L 430.489835 143.182761 
+L 430.489835 139.682761 
+L 424.489835 139.682761 
 z
 " style="fill: #d6b656; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
    <g id="text_294">
-    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="432.489835" y="141.168518" transform="rotate(-0 432.489835 141.168518)">other arm</text>
+    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="432.489835" y="143.182761" transform="rotate(-0 432.489835 143.182761)">other arm</text>
    </g>
   </g>
  </g>

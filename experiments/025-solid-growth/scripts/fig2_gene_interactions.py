@@ -442,7 +442,7 @@ def panel_h(ax: Axes, done: pd.DataFrame) -> None:
     ax.yaxis.set_major_locator(MultipleLocator(0.01))
     ax.set_ylabel("Pearson, biological − random graphs")
     ax.set_xlabel("same λ, same seed, epoch 29")
-    ax.set_title("the biology adds 0.017 r")
+    ax.set_title("biological networks add 0.017 r")
     strip(ax)
 
 
@@ -500,12 +500,12 @@ def panel_k(ax: Axes, hist: pd.DataFrame) -> None:
 
 
 def panel_l(ax: Axes, hist: pd.DataFrame) -> None:
-    for z, (arm, label, color) in enumerate([("kl_1", "gene table, soft prior", RED), ("kl_1_emb", "composite embedding, soft prior", YELLOW), ("kl_0_emb", "composite embedding, no penalty", GRAY)]):
+    for z, (arm, label, color) in enumerate([("kl_1", "learnable gene table, soft prior", RED), ("kl_1_emb", "composite embedding, soft prior", YELLOW), ("kl_0_emb", "composite embedding, no penalty", GRAY)]):
         curve(ax, hist, arm, "val/gene_interaction/Pearson", color, "-", label, 20 + z)
     # The gene table without the prior does train (e, i, k: 0.42); the flat line is the
     # composite embedding without it, train Pearson 0 on every seed, so the two "no
     # penalty" lines of the sheet are different inputs, and the panel says so.
-    ax.text(0.98, 0.08, "gene table, no penalty: 0.42 (e)", transform=ax.get_yaxis_transform(), ha="right", va="bottom", fontsize=5)
+    ax.text(0.98, 0.08, "learnable gene table, no penalty: 0.42 (e)", transform=ax.get_yaxis_transform(), ha="right", va="bottom", fontsize=5)
     ax.set_xlim(0, 29)
     ax.set_ylim(-0.05, 0.47)
     ax.yaxis.set_major_locator(MultipleLocator(0.1))
@@ -690,7 +690,7 @@ def main() -> None:
     # top-left corner. The box is printed in mm so the draw.io explainer can be laid out to
     # it at 1:1 (review 2026-10-13: the 56 x 54 mm explainer shrinks past 5 pt text here).
     pos = ax[0].get_position()
-    ax[0].set_position([0.012, pos.y0 - 0.05, pos.x1 - 0.012, pos.height + 0.05])
+    ax[0].set_position([0.004, pos.y0 - 0.046, pos.x1 + 0.016 - 0.004, pos.height + 0.046])
     pos = ax[0].get_position()
     print(f"slot a: {pos.width * PANEL_WIDTHS_MM['full']:.1f} x {pos.height * 200:.1f} mm, top-left at x {pos.x0 * PANEL_WIDTHS_MM['full']:.1f} mm, y {(1 - pos.y1) * 200:.1f} mm from the page's top-left")
     panel_a(ax[0])
@@ -713,7 +713,7 @@ def main() -> None:
     panel_p(ax[15], assign, enr, wt)
     letters_status(fig, list(ax), ["ready"] * 16)
     # The color key sits just above the letters of e to h, the panels it serves.
-    y_key = ax[4].get_position().y1 + 0.036
+    y_key = ax[4].get_position().y1 + 0.044
     keys(fig, y_key)
     os.makedirs(IMG_DIR, exist_ok=True)
     stem = osp.join(IMG_DIR, "fig2_gene_interactions")
@@ -722,6 +722,12 @@ def main() -> None:
     fig.savefig(stem + ".pdf", dpi=600)
     savefig_true_size_svg(fig, f"{stem}_{timestamp()}.svg")
     print("wrote", stem + ".svg")
+    # The same sheet with slot a empty (letter and title kept), for the draw.io composition
+    # that lays the explainer over the slot as vector cells at true size.
+    for im in ax[0].get_images():
+        im.remove()
+    savefig_true_size_svg(fig, stem + "_slot_a.svg")
+    print("wrote", stem + "_slot_a.svg")
     loss_sheet(hist)
 
 

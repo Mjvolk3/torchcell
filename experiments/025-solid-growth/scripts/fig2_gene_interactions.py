@@ -390,7 +390,7 @@ def panel_f(ax: Axes) -> None:
     ax.set_ylabel("validation Pearson, epochs 10 to 29")
     ax.set_xlabel("training pool, records")
     ax.text(0.02, 0.97, "S3 = S0 + the closure's\nsingles and doubles", transform=ax.transAxes, ha="left", va="top", fontsize=5)
-    ax.set_title("lower-order data adds 0.04")
+    ax.set_title("lower-order data adds 0.04 r")
     strip(ax)
 
 
@@ -442,7 +442,7 @@ def panel_h(ax: Axes, done: pd.DataFrame) -> None:
     ax.yaxis.set_major_locator(MultipleLocator(0.01))
     ax.set_ylabel("Pearson, biological − random graphs")
     ax.set_xlabel("same λ, same seed, epoch 29")
-    ax.set_title("the biology is worth 0.017")
+    ax.set_title("the biology adds 0.017 r")
     strip(ax)
 
 
@@ -502,12 +502,16 @@ def panel_k(ax: Axes, hist: pd.DataFrame) -> None:
 def panel_l(ax: Axes, hist: pd.DataFrame) -> None:
     for z, (arm, label, color) in enumerate([("kl_1", "gene table, soft prior", RED), ("kl_1_emb", "composite embedding, soft prior", YELLOW), ("kl_0_emb", "composite embedding, no penalty", GRAY)]):
         curve(ax, hist, arm, "val/gene_interaction/Pearson", color, "-", label, 20 + z)
+    # The gene table without the prior does train (e, i, k: 0.42); the flat line is the
+    # composite embedding without it, train Pearson 0 on every seed, so the two "no
+    # penalty" lines of the sheet are different inputs, and the panel says so.
+    ax.text(0.98, 0.08, "gene table, no penalty: 0.42 (e)", transform=ax.get_yaxis_transform(), ha="right", va="bottom", fontsize=5)
     ax.set_xlim(0, 29)
     ax.set_ylim(-0.05, 0.47)
     ax.yaxis.set_major_locator(MultipleLocator(0.1))
     ax.set_xlabel("epoch")
     ax.set_ylabel("validation Pearson")
-    ax.set_title("trains only with the prior")
+    ax.set_title("composite embedding trains only with the prior")
     ax.legend(loc="center right", bbox_to_anchor=(1.0, 0.4), frameon=False, handlelength=1.6, handletextpad=0.4, borderpad=0.2, labelspacing=0.25)
     strip(ax)
 

@@ -1884,7 +1884,7 @@ z
     <text style="font-size: 5px; font-family: 'Arial'" transform="translate(156.435342 176.367814)">singles and doubles</text>
    </g>
    <g id="text_84">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="201.798256" y="158.81578" transform="rotate(-0 201.798256 158.81578)">lower-order data adds 0.04</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="201.798256" y="158.81578" transform="rotate(-0 201.798256 158.81578)">lower-order data adds 0.04 r</text>
    </g>
    <g id="LineCollection_14">
     <path d="M 166.887335 208.63897 
@@ -2500,7 +2500,7 @@ z
     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="487.86636" y="185.227959" transform="rotate(-0 487.86636 185.227959)">*</text>
    </g>
    <g id="text_118">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="455.074524" y="158.81578" transform="rotate(-0 455.074524 158.81578)">the biology is worth 0.017</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="455.074524" y="158.81578" transform="rotate(-0 455.074524 158.81578)">the biology adds 0.017 r</text>
    </g>
    <g id="LineCollection_17">
     <path d="M 422.282688 224.828822 
@@ -4412,7 +4412,10 @@ L 502.327559 399.278708
 " style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
    </g>
    <g id="text_183">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="455.074524" y="303.789041" transform="rotate(-0 455.074524 303.789041)">trains only with the prior</text>
+    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: end" x="500.437438" y="375.853947" transform="rotate(-0 500.437438 375.853947)">gene table, no penalty: 0.42 (e)</text>
+   </g>
+   <g id="text_184">
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="455.074524" y="303.789041" transform="rotate(-0 455.074524 303.789041)">composite embedding trains only with the prior</text>
    </g>
    <g id="legend_4">
     <g id="line2d_297">
@@ -4421,7 +4424,7 @@ L 418.062715 357.114872
 L 422.062715 357.114872 
 " style="fill: none; stroke: #b85450; stroke-width: 0.9; stroke-linecap: square"/>
     </g>
-    <g id="text_184">
+    <g id="text_185">
      <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="424.062715" y="358.864872" transform="rotate(-0 424.062715 358.864872)">gene table, soft prior</text>
     </g>
     <g id="line2d_298">
@@ -4430,7 +4433,7 @@ L 418.062715 363.05706
 L 422.062715 363.05706 
 " style="fill: none; stroke: #d6b656; stroke-width: 0.9; stroke-linecap: square"/>
     </g>
-    <g id="text_185">
+    <g id="text_186">
      <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="424.062715" y="364.80706" transform="rotate(-0 424.062715 364.80706)">composite embedding, soft prior</text>
     </g>
     <g id="line2d_299">
@@ -4439,7 +4442,7 @@ L 418.062715 368.93831
 L 422.062715 368.93831 
 " style="fill: none; stroke: #666666; stroke-width: 0.9; stroke-linecap: square"/>
     </g>
-    <g id="text_186">
+    <g id="text_187">
      <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="424.062715" y="370.68831" transform="rotate(-0 424.062715 370.68831)">composite embedding, no penalty</text>
     </g>
    </g>
@@ -11409,10 +11412,10 @@ z
      <use xlink:href="#m8b8d86ef48" x="92.011151" y="494.774927" style="fill: #b85450"/>
     </g>
    </g>
-   <g id="text_187">
+   <g id="text_188">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="27.907087" y="548.569005" transform="rotate(-0 27.907087 548.569005)">t-SNE of 6,607 genes</text>
    </g>
-   <g id="text_188">
+   <g id="text_189">
     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="75.160122" y="448.762301" transform="rotate(-0 75.160122 448.762301)">genes in no training triple stray from the mass</text>
    </g>
    <g id="legend_5">
@@ -11424,7 +11427,7 @@ L 58.550657 458.356051
 z
 " style="fill: #b85450"/>
     </g>
-    <g id="text_189">
+    <g id="text_190">
      <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="65.550657" y="461.856051" transform="rotate(-0 65.550657 461.856051)">in a training triple, 4,352</text>
     </g>
     <g id="patch_82">
@@ -11435,7 +11438,7 @@ L 58.550657 464.237301
 z
 " style="fill: #c8c8c8"/>
     </g>
-    <g id="text_190">
+    <g id="text_191">
      <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="65.550657" y="467.737301" transform="rotate(-0 65.550657 467.737301)">in none, 2,255</text>
     </g>
    </g>
@@ -18134,25 +18137,25 @@ z
      <use xlink:href="#m79fc78e80c" x="211.388208" y="492.77967" style="fill: #6c8ebf"/>
     </g>
    </g>
-   <g id="text_191">
+   <g id="text_192">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="154.545221" y="548.569005" transform="rotate(-0 154.545221 548.569005)">t-SNE of 6,607 genes</text>
    </g>
-   <g id="text_192">
+   <g id="text_193">
     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="201.798256" y="448.762301" transform="rotate(-0 201.798256 448.762301)">encoder output: 12 clusters, 9 GO-enriched</text>
    </g>
-   <g id="text_193">
+   <g id="text_194">
     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="198.595745" y="519.693665" transform="rotate(-0 198.595745 519.693665)">0</text>
    </g>
-   <g id="text_194">
+   <g id="text_195">
     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="189.121185" y="501.172166" transform="rotate(-0 189.121185 501.172166)">11</text>
    </g>
-   <g id="text_195">
+   <g id="text_196">
     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="220.683903" y="525.045336" transform="rotate(-0 220.683903 525.045336)">7</text>
    </g>
-   <g id="text_196">
+   <g id="text_197">
     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="169.993067" y="522.326727" transform="rotate(-0 169.993067 522.326727)">5</text>
    </g>
-   <g id="text_197">
+   <g id="text_198">
     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="204.736605" y="482.01265" transform="rotate(-0 204.736605 482.01265)">3</text>
    </g>
   </g>
@@ -18177,7 +18180,7 @@ L 281.183355 454.762301
        <use xlink:href="#mdf096bfeda" x="281.183355" y="544.251969" style="stroke: #000000; stroke-width: 0.5"/>
       </g>
      </g>
-     <g id="text_198">
+     <g id="text_199">
       <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="281.183355" y="554.046656" transform="rotate(-0 281.183355 554.046656)">0</text>
      </g>
     </g>
@@ -18192,7 +18195,7 @@ L 306.861088 454.762301
        <use xlink:href="#mdf096bfeda" x="306.861088" y="544.251969" style="stroke: #000000; stroke-width: 0.5"/>
       </g>
      </g>
-     <g id="text_199">
+     <g id="text_200">
       <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="306.861088" y="554.046656" transform="rotate(-0 306.861088 554.046656)">50</text>
      </g>
     </g>
@@ -18207,7 +18210,7 @@ L 332.538822 454.762301
        <use xlink:href="#mdf096bfeda" x="332.538822" y="544.251969" style="stroke: #000000; stroke-width: 0.5"/>
       </g>
      </g>
-     <g id="text_200">
+     <g id="text_201">
       <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="332.538822" y="554.046656" transform="rotate(-0 332.538822 554.046656)">100</text>
      </g>
     </g>
@@ -18222,11 +18225,11 @@ L 358.216556 454.762301
        <use xlink:href="#mdf096bfeda" x="358.216556" y="544.251969" style="stroke: #000000; stroke-width: 0.5"/>
       </g>
      </g>
-     <g id="text_201">
+     <g id="text_202">
       <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="358.216556" y="554.046656" transform="rotate(-0 358.216556 554.046656)">150</text>
      </g>
     </g>
-    <g id="text_202">
+    <g id="text_203">
      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="328.43639" y="563.610719" transform="rotate(-0 328.43639 563.610719)">best GO term per cluster, −log10 q (BH)</text>
     </g>
    </g>
@@ -18237,7 +18240,7 @@ L 358.216556 454.762301
        <use xlink:href="#m96010ddeb5" x="281.183355" y="461.263688" style="stroke: #000000; stroke-width: 0.5"/>
       </g>
      </g>
-     <g id="text_203">
+     <g id="text_204">
       <text style="font-size: 5px; font-family: 'Arial'; text-anchor: end" x="275.683355" y="463.053141" transform="rotate(-0 275.683355 463.053141)">0</text>
      </g>
     </g>
@@ -18247,7 +18250,7 @@ L 358.216556 454.762301
        <use xlink:href="#m96010ddeb5" x="281.183355" y="468.217042" style="stroke: #000000; stroke-width: 0.5"/>
       </g>
      </g>
-     <g id="text_204">
+     <g id="text_205">
       <text style="font-size: 5px; font-family: 'Arial'; text-anchor: end" x="275.683355" y="470.006495" transform="rotate(-0 275.683355 470.006495)">11</text>
      </g>
     </g>
@@ -18257,7 +18260,7 @@ L 358.216556 454.762301
        <use xlink:href="#m96010ddeb5" x="281.183355" y="475.170396" style="stroke: #000000; stroke-width: 0.5"/>
       </g>
      </g>
-     <g id="text_205">
+     <g id="text_206">
       <text style="font-size: 5px; font-family: 'Arial'; text-anchor: end" x="275.683355" y="476.959849" transform="rotate(-0 275.683355 476.959849)">7</text>
      </g>
     </g>
@@ -18267,7 +18270,7 @@ L 358.216556 454.762301
        <use xlink:href="#m96010ddeb5" x="281.183355" y="482.12375" style="stroke: #000000; stroke-width: 0.5"/>
       </g>
      </g>
-     <g id="text_206">
+     <g id="text_207">
       <text style="font-size: 5px; font-family: 'Arial'; text-anchor: end" x="275.683355" y="483.913203" transform="rotate(-0 275.683355 483.913203)">5</text>
      </g>
     </g>
@@ -18277,7 +18280,7 @@ L 358.216556 454.762301
        <use xlink:href="#m96010ddeb5" x="281.183355" y="489.077104" style="stroke: #000000; stroke-width: 0.5"/>
       </g>
      </g>
-     <g id="text_207">
+     <g id="text_208">
       <text style="font-size: 5px; font-family: 'Arial'; text-anchor: end" x="275.683355" y="490.866557" transform="rotate(-0 275.683355 490.866557)">3</text>
      </g>
     </g>
@@ -18287,7 +18290,7 @@ L 358.216556 454.762301
        <use xlink:href="#m96010ddeb5" x="281.183355" y="496.030458" style="stroke: #000000; stroke-width: 0.5"/>
       </g>
      </g>
-     <g id="text_208">
+     <g id="text_209">
       <text style="font-size: 5px; font-family: 'Arial'; text-anchor: end" x="275.683355" y="497.819911" transform="rotate(-0 275.683355 497.819911)">1</text>
      </g>
     </g>
@@ -18297,7 +18300,7 @@ L 358.216556 454.762301
        <use xlink:href="#m96010ddeb5" x="281.183355" y="502.983812" style="stroke: #000000; stroke-width: 0.5"/>
       </g>
      </g>
-     <g id="text_209">
+     <g id="text_210">
       <text style="font-size: 5px; font-family: 'Arial'; text-anchor: end" x="275.683355" y="504.773265" transform="rotate(-0 275.683355 504.773265)">6</text>
      </g>
     </g>
@@ -18307,7 +18310,7 @@ L 358.216556 454.762301
        <use xlink:href="#m96010ddeb5" x="281.183355" y="509.937166" style="stroke: #000000; stroke-width: 0.5"/>
       </g>
      </g>
-     <g id="text_210">
+     <g id="text_211">
       <text style="font-size: 5px; font-family: 'Arial'; text-anchor: end" x="275.683355" y="511.726619" transform="rotate(-0 275.683355 511.726619)">2</text>
      </g>
     </g>
@@ -18317,7 +18320,7 @@ L 358.216556 454.762301
        <use xlink:href="#m96010ddeb5" x="281.183355" y="516.89052" style="stroke: #000000; stroke-width: 0.5"/>
       </g>
      </g>
-     <g id="text_211">
+     <g id="text_212">
       <text style="font-size: 5px; font-family: 'Arial'; text-anchor: end" x="275.683355" y="518.679973" transform="rotate(-0 275.683355 518.679973)">4</text>
      </g>
     </g>
@@ -18327,7 +18330,7 @@ L 358.216556 454.762301
        <use xlink:href="#m96010ddeb5" x="281.183355" y="523.843874" style="stroke: #000000; stroke-width: 0.5"/>
       </g>
      </g>
-     <g id="text_212">
+     <g id="text_213">
       <text style="font-size: 5px; font-family: 'Arial'; text-anchor: end" x="275.683355" y="525.633327" transform="rotate(-0 275.683355 525.633327)">8</text>
      </g>
     </g>
@@ -18337,7 +18340,7 @@ L 358.216556 454.762301
        <use xlink:href="#m96010ddeb5" x="281.183355" y="530.797228" style="stroke: #000000; stroke-width: 0.5"/>
       </g>
      </g>
-     <g id="text_213">
+     <g id="text_214">
       <text style="font-size: 5px; font-family: 'Arial'; text-anchor: end" x="275.683355" y="532.586681" transform="rotate(-0 275.683355 532.586681)">9</text>
      </g>
     </g>
@@ -18347,11 +18350,11 @@ L 358.216556 454.762301
        <use xlink:href="#m96010ddeb5" x="281.183355" y="537.750582" style="stroke: #000000; stroke-width: 0.5"/>
       </g>
      </g>
-     <g id="text_214">
+     <g id="text_215">
       <text style="font-size: 5px; font-family: 'Arial'; text-anchor: end" x="275.683355" y="539.540036" transform="rotate(-0 275.683355 539.540036)">10</text>
      </g>
     </g>
-    <g id="text_215">
+    <g id="text_216">
      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="264.929917" y="499.507135" transform="rotate(-90 264.929917 499.507135)">cluster</text>
     </g>
    </g>
@@ -18466,43 +18469,43 @@ L 281.183355 535.316909
 z
 " clip-path="url(#p8e92a669f0)" style="fill: #c8c8c8; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
-   <g id="text_216">
+   <g id="text_217">
     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="328.43639" y="448.762301" transform="rotate(-0 328.43639 448.762301)">9 of 12 clusters carry a term at q &lt; 0.05</text>
    </g>
-   <g id="text_217">
+   <g id="text_218">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="336.604415" y="462.556266" transform="rotate(-0 336.604415 462.556266)">ribonucleoprotein complex</text>
    </g>
-   <g id="text_218">
+   <g id="text_219">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="298.862553" y="469.510792" transform="rotate(-0 298.862553 469.510792)">Golgi vesicle transport</text>
    </g>
-   <g id="text_219">
+   <g id="text_220">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="291.367416" y="476.433677" transform="rotate(-0 291.367416 476.433677)">mitotic cell cycle process</text>
    </g>
-   <g id="text_220">
+   <g id="text_221">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="286.324789" y="483.416328" transform="rotate(-0 286.324789 483.416328)">ribonucleoprotein complex</text>
    </g>
-   <g id="text_221">
+   <g id="text_222">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="285.49607" y="490.340385" transform="rotate(-0 285.49607 490.340385)">cell periphery</text>
    </g>
-   <g id="text_222">
+   <g id="text_223">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="285.303955" y="497.323036" transform="rotate(-0 285.303955 497.323036)">oxoacid metabolic process</text>
    </g>
-   <g id="text_223">
+   <g id="text_224">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="284.612879" y="504.27639" transform="rotate(-0 284.612879 504.27639)">transmembrane transport</text>
    </g>
-   <g id="text_224">
+   <g id="text_225">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="284.160048" y="511.230916" transform="rotate(-0 284.160048 511.230916)">fungal-type vacuole</text>
    </g>
-   <g id="text_225">
+   <g id="text_226">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="283.838787" y="518.183098" transform="rotate(-0 283.838787 518.183098)">disulfide oxidoreductase …</text>
    </g>
-   <g id="text_226">
+   <g id="text_227">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="283.138786" y="525.107156" transform="rotate(-0 283.138786 525.107156)">cytochrome-c oxidase acti…</text>
    </g>
-   <g id="text_227">
+   <g id="text_228">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="282.600946" y="532.090978" transform="rotate(-0 282.600946 532.090978)">Group I intron splicing</text>
    </g>
-   <g id="text_228">
+   <g id="text_229">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="282.600946" y="539.013864" transform="rotate(-0 282.600946 539.013864)">mitochondrial respiratory…</text>
    </g>
   </g>
@@ -25148,25 +25151,25 @@ z
      <use xlink:href="#m79fc78e80c" x="446.427484" y="507.242682" style="fill: #6c8ebf"/>
     </g>
    </g>
-   <g id="text_229">
+   <g id="text_230">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="407.821489" y="548.569005" transform="rotate(-0 407.821489 548.569005)">t-SNE of 6,607 genes</text>
    </g>
-   <g id="text_230">
+   <g id="text_231">
     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="455.074524" y="448.762301" transform="rotate(-0 455.074524 448.762301)">input embeddings: 6 of 7 enriched</text>
    </g>
-   <g id="text_231">
+   <g id="text_232">
     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="457.089903" y="528.161429" transform="rotate(-0 457.089903 528.161429)">4</text>
    </g>
-   <g id="text_232">
+   <g id="text_233">
     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="476.275717" y="526.980018" transform="rotate(-0 476.275717 526.980018)">0</text>
    </g>
-   <g id="text_233">
+   <g id="text_234">
     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="472.217439" y="503.354828" transform="rotate(-0 472.217439 503.354828)">2</text>
    </g>
-   <g id="text_234">
+   <g id="text_235">
     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="450.777063" y="510.24326" transform="rotate(-0 450.777063 510.24326)">1</text>
    </g>
-   <g id="text_235">
+   <g id="text_236">
     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="487.429966" y="510.841676" transform="rotate(-0 487.429966 510.841676)">5</text>
    </g>
    <g id="legend_6">
@@ -25178,7 +25181,7 @@ L 411.321489 454.761621
 z
 " style="fill: #d79b00"/>
     </g>
-    <g id="text_236">
+    <g id="text_237">
      <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="418.321489" y="458.261621" transform="rotate(-0 418.321489 458.261621)">4 mitochondrial complex</text>
     </g>
     <g id="patch_101">
@@ -25189,7 +25192,7 @@ L 411.321489 460.599121
 z
 " style="fill: #b85450"/>
     </g>
-    <g id="text_237">
+    <g id="text_238">
      <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="418.321489" y="464.099121" transform="rotate(-0 418.321489 464.099121)">0 ribonucleoprotein complex</text>
     </g>
     <g id="patch_102">
@@ -25200,7 +25203,7 @@ L 411.321489 466.436621
 z
 " style="fill: #9673a6"/>
     </g>
-    <g id="text_238">
+    <g id="text_239">
      <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="418.321489" y="469.936621" transform="rotate(-0 418.321489 469.936621)">2 organic acid metabolism</text>
     </g>
     <g id="patch_103">
@@ -25211,7 +25214,7 @@ L 411.321489 472.332715
 z
 " style="fill: #d6b656"/>
     </g>
-    <g id="text_239">
+    <g id="text_240">
      <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="418.321489" y="475.832715" transform="rotate(-0 418.321489 475.832715)">1 cell periphery</text>
     </g>
     <g id="patch_104">
@@ -25222,153 +25225,153 @@ L 411.321489 478.274902
 z
 " style="fill: #6c8ebf"/>
     </g>
-    <g id="text_240">
+    <g id="text_241">
      <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="418.321489" y="481.774902" transform="rotate(-0 418.321489 481.774902)">5 protein folding</text>
     </g>
    </g>
   </g>
-  <g id="text_241">
+  <g id="text_242">
    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="2.029606" y="6.137303" transform="rotate(-0 2.029606 6.137303)">a</text>
   </g>
-  <g id="text_242">
+  <g id="text_243">
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #e53935" x="8.625827" y="6.10928" transform="rotate(-0 8.625827 6.10928)">✗</text>
   </g>
-  <g id="text_243">
+  <g id="text_244">
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #8a8a8a" x="13.192441" y="6.10928" transform="rotate(-0 13.192441 6.10928)">●</text>
   </g>
-  <g id="text_244">
+  <g id="text_245">
    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="128.541471" y="6.137303" transform="rotate(-0 128.541471 6.137303)">b</text>
   </g>
-  <g id="text_245">
+  <g id="text_246">
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #e53935" x="135.137691" y="6.10928" transform="rotate(-0 135.137691 6.10928)">✗</text>
   </g>
-  <g id="text_246">
+  <g id="text_247">
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #8a8a8a" x="139.704305" y="6.10928" transform="rotate(-0 139.704305 6.10928)">●</text>
   </g>
-  <g id="text_247">
+  <g id="text_248">
    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="255.179605" y="6.137303" transform="rotate(-0 255.179605 6.137303)">c</text>
   </g>
-  <g id="text_248">
+  <g id="text_249">
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #e53935" x="261.775825" y="6.10928" transform="rotate(-0 261.775825 6.10928)">✗</text>
   </g>
-  <g id="text_249">
+  <g id="text_250">
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #8a8a8a" x="266.342439" y="6.10928" transform="rotate(-0 266.342439 6.10928)">●</text>
   </g>
-  <g id="text_250">
+  <g id="text_251">
    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="378.746489" y="6.137303" transform="rotate(-0 378.746489 6.137303)">d</text>
   </g>
-  <g id="text_251">
+  <g id="text_252">
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #e53935" x="385.342709" y="6.10928" transform="rotate(-0 385.342709 6.10928)">✗</text>
   </g>
-  <g id="text_252">
+  <g id="text_253">
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #8a8a8a" x="389.909323" y="6.10928" transform="rotate(-0 389.909323 6.10928)">●</text>
   </g>
-  <g id="text_253">
+  <g id="text_254">
    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="2.029606" y="156.530251" transform="rotate(-0 2.029606 156.530251)">e</text>
   </g>
-  <g id="text_254">
+  <g id="text_255">
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #e53935" x="8.625827" y="156.502229" transform="rotate(-0 8.625827 156.502229)">✗</text>
   </g>
-  <g id="text_255">
+  <g id="text_256">
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #8a8a8a" x="13.192441" y="156.502229" transform="rotate(-0 13.192441 156.502229)">●</text>
   </g>
-  <g id="text_256">
+  <g id="text_257">
    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="128.541471" y="156.530251" transform="rotate(-0 128.541471 156.530251)">f</text>
   </g>
-  <g id="text_257">
+  <g id="text_258">
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #e53935" x="135.137691" y="156.502229" transform="rotate(-0 135.137691 156.502229)">✗</text>
   </g>
-  <g id="text_258">
+  <g id="text_259">
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #8a8a8a" x="139.704305" y="156.502229" transform="rotate(-0 139.704305 156.502229)">●</text>
   </g>
-  <g id="text_259">
+  <g id="text_260">
    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="255.179605" y="156.425251" transform="rotate(-0 255.179605 156.425251)">g</text>
   </g>
-  <g id="text_260">
+  <g id="text_261">
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #e53935" x="261.775825" y="156.502229" transform="rotate(-0 261.775825 156.502229)">✗</text>
   </g>
-  <g id="text_261">
+  <g id="text_262">
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #8a8a8a" x="266.342439" y="156.502229" transform="rotate(-0 266.342439 156.502229)">●</text>
   </g>
-  <g id="text_262">
+  <g id="text_263">
    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="378.746489" y="156.530251" transform="rotate(-0 378.746489 156.530251)">h</text>
   </g>
-  <g id="text_263">
+  <g id="text_264">
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #e53935" x="385.342709" y="156.502229" transform="rotate(-0 385.342709 156.502229)">✗</text>
   </g>
-  <g id="text_264">
+  <g id="text_265">
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #8a8a8a" x="389.909323" y="156.502229" transform="rotate(-0 389.909323 156.502229)">●</text>
   </g>
-  <g id="text_265">
+  <g id="text_266">
    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="2.029606" y="294.450759" transform="rotate(-0 2.029606 294.450759)">i</text>
   </g>
-  <g id="text_266">
+  <g id="text_267">
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #e53935" x="8.625827" y="294.422736" transform="rotate(-0 8.625827 294.422736)">✗</text>
   </g>
-  <g id="text_267">
+  <g id="text_268">
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #8a8a8a" x="13.192441" y="294.422736" transform="rotate(-0 13.192441 294.422736)">●</text>
   </g>
-  <g id="text_268">
+  <g id="text_269">
    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="128.541471" y="294.345759" transform="rotate(-0 128.541471 294.345759)">j</text>
   </g>
-  <g id="text_269">
+  <g id="text_270">
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #e53935" x="135.137691" y="294.422736" transform="rotate(-0 135.137691 294.422736)">✗</text>
   </g>
-  <g id="text_270">
+  <g id="text_271">
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #8a8a8a" x="139.704305" y="294.422736" transform="rotate(-0 139.704305 294.422736)">●</text>
   </g>
-  <g id="text_271">
+  <g id="text_272">
    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="255.179605" y="294.450759" transform="rotate(-0 255.179605 294.450759)">k</text>
   </g>
-  <g id="text_272">
+  <g id="text_273">
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #e53935" x="261.775825" y="294.422736" transform="rotate(-0 261.775825 294.422736)">✗</text>
   </g>
-  <g id="text_273">
+  <g id="text_274">
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #8a8a8a" x="266.342439" y="294.422736" transform="rotate(-0 266.342439 294.422736)">●</text>
   </g>
-  <g id="text_274">
+  <g id="text_275">
    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="378.746489" y="294.450759" transform="rotate(-0 378.746489 294.450759)">l</text>
   </g>
-  <g id="text_275">
+  <g id="text_276">
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #e53935" x="385.342709" y="294.422736" transform="rotate(-0 385.342709 294.422736)">✗</text>
   </g>
-  <g id="text_276">
+  <g id="text_277">
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #8a8a8a" x="389.909323" y="294.422736" transform="rotate(-0 389.909323 294.422736)">●</text>
   </g>
-  <g id="text_277">
+  <g id="text_278">
    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="2.029606" y="432.371266" transform="rotate(-0 2.029606 432.371266)">m</text>
   </g>
-  <g id="text_278">
+  <g id="text_279">
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #e53935" x="8.625827" y="432.343243" transform="rotate(-0 8.625827 432.343243)">✗</text>
   </g>
-  <g id="text_279">
+  <g id="text_280">
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #8a8a8a" x="13.192441" y="432.343243" transform="rotate(-0 13.192441 432.343243)">●</text>
   </g>
-  <g id="text_280">
+  <g id="text_281">
    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="128.541471" y="432.371266" transform="rotate(-0 128.541471 432.371266)">n</text>
   </g>
-  <g id="text_281">
+  <g id="text_282">
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #e53935" x="135.137691" y="432.343243" transform="rotate(-0 135.137691 432.343243)">✗</text>
   </g>
-  <g id="text_282">
+  <g id="text_283">
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #8a8a8a" x="139.704305" y="432.343243" transform="rotate(-0 139.704305 432.343243)">●</text>
   </g>
-  <g id="text_283">
+  <g id="text_284">
    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="255.179605" y="432.371266" transform="rotate(-0 255.179605 432.371266)">o</text>
   </g>
-  <g id="text_284">
+  <g id="text_285">
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #e53935" x="261.775825" y="432.343243" transform="rotate(-0 261.775825 432.343243)">✗</text>
   </g>
-  <g id="text_285">
+  <g id="text_286">
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #8a8a8a" x="266.342439" y="432.343243" transform="rotate(-0 266.342439 432.343243)">●</text>
   </g>
-  <g id="text_286">
+  <g id="text_287">
    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="378.746489" y="432.371266" transform="rotate(-0 378.746489 432.371266)">p</text>
   </g>
-  <g id="text_287">
+  <g id="text_288">
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #e53935" x="385.342709" y="432.343243" transform="rotate(-0 385.342709 432.343243)">✗</text>
   </g>
-  <g id="text_288">
+  <g id="text_289">
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #8a8a8a" x="389.909323" y="432.343243" transform="rotate(-0 389.909323 432.343243)">●</text>
   </g>
   <g id="legend_7">
@@ -25380,7 +25383,7 @@ L 73.813272 139.682761
 z
 " style="fill: #666666; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
-   <g id="text_289">
+   <g id="text_290">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="81.813272" y="143.182761" transform="rotate(-0 81.813272 143.182761)">no graphs, or a no-interaction null</text>
    </g>
    <g id="patch_106">
@@ -25391,7 +25394,7 @@ L 162.296866 139.682761
 z
 " style="fill: #b85450; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
-   <g id="text_290">
+   <g id="text_291">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="170.296866" y="143.182761" transform="rotate(-0 170.296866 143.182761)">cell graph transformer, soft prior</text>
    </g>
    <g id="patch_107">
@@ -25402,7 +25405,7 @@ L 246.875772 139.682761
 z
 " style="fill: #d79b00; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
-   <g id="text_291">
+   <g id="text_292">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="254.875772" y="143.182761" transform="rotate(-0 254.875772 143.182761)">hard mask</text>
    </g>
    <g id="patch_108">
@@ -25413,7 +25416,7 @@ L 284.216397 139.682761
 z
 " style="fill: #9673a6; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
-   <g id="text_292">
+   <g id="text_293">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="292.216397" y="143.182761" transform="rotate(-0 292.216397 143.182761)">degree-matched random graphs</text>
    </g>
    <g id="patch_109">
@@ -25424,7 +25427,7 @@ L 369.640616 139.682761
 z
 " style="fill: #6c8ebf; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
-   <g id="text_293">
+   <g id="text_294">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="377.640616" y="143.182761" transform="rotate(-0 377.640616 143.182761)">learned null (MLP)</text>
    </g>
    <g id="patch_110">
@@ -25435,7 +25438,7 @@ L 424.489835 139.682761
 z
 " style="fill: #d6b656; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
-   <g id="text_294">
+   <g id="text_295">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="432.489835" y="143.182761" transform="rotate(-0 432.489835 143.182761)">other arm</text>
    </g>
   </g>

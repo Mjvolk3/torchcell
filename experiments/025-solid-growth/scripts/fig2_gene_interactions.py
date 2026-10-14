@@ -530,7 +530,7 @@ def panel_k(ax: Axes, hist: pd.DataFrame) -> None:
     ax.set_title("at 60 epochs only the prior holds")
     arms_key = ax.legend(loc="lower right", bbox_to_anchor=(1.0, 0.0), frameon=False, handlelength=1.6, handletextpad=0.4, borderpad=0.2, labelspacing=0.25)
     ax.add_artist(arms_key)
-    ax.legend(handles=[Line2D([], [], color="black", lw=0.9, ls="-", label="60-epoch runs"), Line2D([], [], color="black", lw=0.9, ls="--", label="30-epoch runs")], loc="upper left", bbox_to_anchor=(0.0, 1.05), frameon=False, handlelength=1.6, handletextpad=0.4, borderpad=0.2, labelspacing=0.25)
+    ax.legend(handles=[Line2D([], [], color="black", lw=0.9, ls="-", label="60 epochs"), Line2D([], [], color="black", lw=0.9, ls="--", label="30 epochs")], loc="upper left", bbox_to_anchor=(0.0, 1.05), frameon=False, handlelength=1.6, handletextpad=0.4, borderpad=0.2, labelspacing=0.25)
     strip(ax)
 
 

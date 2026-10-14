@@ -86,6 +86,7 @@ STATUS_SYMBOL = {"ready": "●", "partial": "◐", "todo": "○"}
 STATUS_WORD = {"ready": "on file", "partial": "partial", "todo": "idea only"}
 CROSS = ("✗", "#E53935")  # section status: not yet reviewed by the author
 # In d the transformer on triples alone is orange and the closure arm red (review 2026-10-13).
+SHEET_H_MM = 210  # the sheet's height; row 1 carries the extra 10 mm
 MAP = "tsne"  # which 2-D map the gene panels draw: "tsne" or "umap"
 MAP_NAME = {"tsne": "t-SNE", "umap": "UMAP"}[MAP]
 STATUS_MARKS = True  # the review marks beside each panel letter
@@ -192,7 +193,7 @@ def keys(fig: Figure, y_key: float) -> None:
         Patch(facecolor=ORANGE, edgecolor="black", linewidth=0.4, label="hard mask"),
         Patch(facecolor=PURPLE, edgecolor="black", linewidth=0.4, label="degree-matched random graphs"),
         Patch(facecolor=BLUE, edgecolor="black", linewidth=0.4, label="learned null (MLP)"),
-        Patch(facecolor=YELLOW, edgecolor="black", linewidth=0.4, label="other arm"),
+        Patch(facecolor=YELLOW, edgecolor="black", linewidth=0.4, label="joint fitness head"),
     ]
     fig.legend(handles=handles, loc="center", bbox_to_anchor=(0.52, y_key), ncol=6, frameon=False, fontsize=5, handlelength=1.2, handletextpad=0.4, columnspacing=1.2, borderpad=0)
     if not STATUS_KEY:
@@ -583,8 +584,7 @@ def panel_n(ax: Axes, enr: pd.DataFrame) -> None:
         ax.barh(yy, v, color=color_of.get(c, "#C8C8C8"), edgecolor="black", linewidth=0.4, height=0.7, zorder=3)
         # The term name sits at the end of its bar; the tick label is the cluster number,
         # which is what the map in n carries, so nothing hangs left into n.
-        name = r.go_name if len(r.go_name) <= 26 else r.go_name[:25] + "\u2026"
-        ax.text(v + xmax * 0.015, yy, name, fontsize=5, ha="left", va="center", zorder=4)
+        ax.text(v + xmax * 0.015, yy, r.go_name, fontsize=5, ha="left", va="center", zorder=4)
     ax.set_yticks(ys)
     ax.set_yticklabels([str(int(r.cluster)) for _, r in best.iterrows()], fontsize=5)
     ax.set_xlim(0, xmax)
@@ -677,7 +677,9 @@ def loss_sheet(hist: pd.DataFrame) -> None:
 def main() -> None:
     done, hist, summary = sweep()
     assign, enr, wt = wt_data()
-    fig, axes = plt.subplots(4, 4, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(200)))
+    # Row 1 is taller than the others so the explainer in a keeps type at 4 pt or more
+    # when it is scaled into its slot (review 2026-10-14).
+    fig, axes = plt.subplots(4, 4, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(SHEET_H_MM)), gridspec_kw={"height_ratios": [1.32, 1, 1, 1]})
     # One grid call: a later subplots_adjust re-places every subplot and silently undoes the
     # manual moves below. The color key sits in the row gap above e to h.
     fig.subplots_adjust(left=0.055, right=0.99, bottom=0.04, top=0.965, wspace=0.34, hspace=0.62)
@@ -686,10 +688,21 @@ def main() -> None:
     # under row 1 below; the explainer is drawn into this box, image aspect kept, from its
     # top-left corner. The box is printed in mm so the draw.io explainer can be laid out to
     # it at 1:1 (review 2026-10-13: the 56 x 54 mm explainer shrinks past 5 pt text here).
+    # Slot a: 52 mm wide from the page margin, down into the label band under row 1; b, c
+    # and d share what remains of row 1 with the same gap as the grid's.
+    W = PANEL_WIDTHS_MM["full"]
     pos = ax[0].get_position()
-    ax[0].set_position([0.004, pos.y0 - 0.046, pos.x1 + 0.016 - 0.004, pos.height + 0.046])
+    a_x0, a_w = 0.7 / W, 52.0 / W
+    ax[0].set_position([a_x0, pos.y0 - 9.0 / SHEET_H_MM, a_w, pos.height + 9.0 / SHEET_H_MM])
+    gap = ax[1].get_position().x0 - pos.x1
+    x = a_x0 + a_w + gap
+    w3 = (0.99 - x - 2 * gap) / 3
+    for k in (1, 2, 3):
+        pk = ax[k].get_position()
+        ax[k].set_position([x + (k - 1) * (w3 + gap), pk.y0, w3, pk.height])
     pos = ax[0].get_position()
-    print(f"slot a: {pos.width * PANEL_WIDTHS_MM['full']:.1f} x {pos.height * 200:.1f} mm, top-left at x {pos.x0 * PANEL_WIDTHS_MM['full']:.1f} mm, y {(1 - pos.y1) * 200:.1f} mm from the page's top-left")
+    slot_a = {"x_mm": pos.x0 * W, "y_mm": (1 - pos.y1) * SHEET_H_MM, "width_mm": pos.width * W, "height_mm": pos.height * SHEET_H_MM, "page_width_mm": W, "page_height_mm": SHEET_H_MM}
+    print(f"slot a: {pos.width * W:.1f} x {pos.height * SHEET_H_MM:.1f} mm, top-left at x {pos.x0 * W:.1f} mm, y {(1 - pos.y1) * SHEET_H_MM:.1f} mm from the page's top-left; b, c, d {w3 * W:.1f} mm wide")
     panel_a(ax[0])
     panel_b(ax[1])
     panel_c(ax[2])
@@ -710,7 +723,7 @@ def main() -> None:
     panel_p(ax[15], assign, enr, wt)
     letters_status(fig, list(ax), ["ready"] * 16)
     # The color key sits just above the letters of e to h, the panels it serves.
-    y_key = ax[4].get_position().y1 + 0.044
+    y_key = ax[4].get_position().y1 + 8.8 / SHEET_H_MM
     keys(fig, y_key)
     os.makedirs(IMG_DIR, exist_ok=True)
     stem = osp.join(IMG_DIR, "fig2_gene_interactions")
@@ -724,11 +737,8 @@ def main() -> None:
     for im in ax[0].get_images():
         im.remove()
     savefig_true_size_svg(fig, stem + "_slot_a.svg")
-    pos = ax[0].get_position()
-    json.dump(
-        {"x_mm": pos.x0 * PANEL_WIDTHS_MM["full"], "y_mm": (1 - pos.y1) * 200, "width_mm": pos.width * PANEL_WIDTHS_MM["full"], "height_mm": pos.height * 200, "page_width_mm": PANEL_WIDTHS_MM["full"], "page_height_mm": 200},
-        open(stem + "_slot_a.json", "w"), indent=2,
-    )
+    # The slot's full box, not the narrower box the image's aspect leaves after drawing.
+    json.dump(slot_a, open(stem + "_slot_a.json", "w"), indent=2)
     print("wrote", stem + "_slot_a.svg", "and its slot geometry")
     loss_sheet(hist)
 

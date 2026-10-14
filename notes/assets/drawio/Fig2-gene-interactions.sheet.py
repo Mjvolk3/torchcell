@@ -19,6 +19,7 @@ from __future__ import annotations
 import json
 import os
 import os.path as osp
+import re
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
@@ -74,13 +75,58 @@ def explainer_cells() -> tuple[list[ET.Element], dict[str, ET.Element]]:
     return keep, by_id
 
 
+def scale_cells(keep: list[ET.Element], origin: tuple[float, float], s: float, target: tuple[float, float], fonts: str) -> None:
+    """Scale the explainer by s about its own top-left, move it to target, and set its type.
+
+    Geometry scales uniformly, children included (their geometry is relative to the parent,
+    so it scales the same way). Type does not scale with geometry: with fonts="keep" every
+    label keeps the size it was typed at; with fonts="ladder" each label is retyped to the
+    nearest ladder step at or above its current size (7, 8.3, 9.7 draw.io units, which
+    print at 5.0, 6.0 and 7.0 pt), the repo's rule for figure text.
+    """
+    ladder = [7.0, 8.3, 9.7]
+
+    def retype(px: str) -> str:
+        v = float(px)
+        if fonts == "keep":
+            return px
+        if fonts == "uniform":
+            # The whole explainer, type included, scales as one, so the composition is the
+            # sheet's own look with the type kept as vector.
+            return f"{v * s:.2f}"
+        return f"{next((step for step in ladder if step >= v - 1e-6), ladder[-1]):g}"
+
+    for c in keep:
+        top = c.get("parent") == "1"
+        g = c.find("mxGeometry")
+        if g is not None:
+            for k in ("x", "y", "width", "height"):
+                if g.get(k) is not None:
+                    v = float(g.get(k)) * s
+                    if top and k in ("x", "y"):
+                        v += target[0] - origin[0] * s if k == "x" else target[1] - origin[1] * s
+                    g.set(k, f"{v:.2f}")
+            for pt in g.iter("mxPoint"):
+                for k in ("x", "y"):
+                    if pt.get(k) is not None:
+                        v = float(pt.get(k)) * s
+                        if top:
+                            v += target[0] - origin[0] * s if k == "x" else target[1] - origin[1] * s
+                        pt.set(k, f"{v:.2f}")
+        if c.get("value"):
+            c.set("value", re.sub(r"font-size:\s*([\d.]+)px", lambda m: f"font-size: {retype(m.group(1))}px", c.get("value")))
+        st = c.get("style") or ""
+        if "fontSize=" in st:
+            c.set("style", re.sub(r"fontSize=([\d.]+)", lambda m: f"fontSize={retype(m.group(1))}", st))
+
+
 def main() -> None:
+    fonts = os.environ.get("FIG2_FONTS", "uniform")
     slot = json.load(open(SLOT_JSON))
     sx, sy = slot["x_mm"] * UNITS_PER_MM, slot["y_mm"] * UNITS_PER_MM
     sw, sh = slot["width_mm"] * UNITS_PER_MM, slot["height_mm"] * UNITS_PER_MM
     keep, _ = explainer_cells()
-    # The explainer's own top-left, over its top-level vertices and free edge points.
-    xs, ys = [], []
+    xs, ys, x2, y2 = [], [], [], []
     for c in keep:
         if c.get("parent") != "1":
             continue
@@ -88,25 +134,18 @@ def main() -> None:
         if c.get("edge") == "1":
             for pt in c.iter("mxPoint"):
                 if pt.get("x") is not None:
-                    xs.append(float(pt.get("x"))), ys.append(float(pt.get("y")))
+                    xs.append(float(pt.get("x"))), ys.append(float(pt.get("y"))), x2.append(float(pt.get("x"))), y2.append(float(pt.get("y")))
         elif g is not None:
-            xs.append(float(g.get("x") or 0)), ys.append(float(g.get("y") or 0))
-    dx, dy = sx - min(xs), sy - min(ys)
-    for c in keep:
-        if c.get("parent") != "1":
-            continue
-        g = c.find("mxGeometry")
-        if c.get("edge") == "1":
-            for pt in c.iter("mxPoint"):
-                if pt.get("x") is not None:
-                    pt.set("x", f"{float(pt.get('x')) + dx:.2f}")
-                    pt.set("y", f"{float(pt.get('y')) + dy:.2f}")
-        elif g is not None:
-            g.set("x", f"{float(g.get('x') or 0) + dx:.2f}")
-            g.set("y", f"{float(g.get('y') or 0) + dy:.2f}")
-    sheet_cell, sheet_w = image_cell("sheet", SHEET_SVG, 0.0)
+            x, y, w, h = (float(g.get(k) or 0) for k in ("x", "y", "width", "height"))
+            xs.append(x), ys.append(y), x2.append(x + w), y2.append(y + h)
+    ew, eh = max(x2) - min(xs), max(y2) - min(ys)
+    s = min(sw / ew, sh / eh)
+    scale_cells(keep, (min(xs), min(ys)), s, (sx, sy), fonts)
+    sheet_cell, _ = image_cell("sheet", SHEET_SVG, 0.0)
+    # The slot's outline lives on a hidden layer: visible while editing, absent from exports.
     guide = (
-        f'<mxCell id="slot_a_guide" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#B85450;dashed=1;strokeWidth=0.5;" vertex="1" parent="1">'
+        '<mxCell id="guides" value="guides" style="locked=1;" parent="0" visible="0" />'
+        f'<mxCell id="slot_a_guide" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#B85450;dashed=1;strokeWidth=0.5;" vertex="1" parent="guides">'
         f'<mxGeometry x="{sx:.2f}" y="{sy:.2f}" width="{sw:.2f}" height="{sh:.2f}" as="geometry" /></mxCell>'
     )
     page_w, page_h = slot["page_width_mm"] * UNITS_PER_MM, slot["page_height_mm"] * UNITS_PER_MM
@@ -115,11 +154,12 @@ def main() -> None:
         '<mxfile host="torchcell" type="device"><diagram id="fig2sheet" name="Fig2 sheet">'
         f'<mxGraphModel dx="0" dy="0" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="{page_w:.2f}" pageHeight="{page_h:.2f}" math="1" shadow="0">'
         '<root><mxCell id="0" /><mxCell id="1" parent="0" />'
-        f"{sheet_cell}{guide}{body}"
+        f"{sheet_cell}{body}{guide}"
         "</root></mxGraphModel></diagram></mxfile>"
     )
     open(OUT, "w", encoding="utf-8").write(mxfile)
-    print(f"{len(keep)} explainer cells moved by ({dx:.1f}, {dy:.1f}) units onto the slot {slot['width_mm']:.1f} x {slot['height_mm']:.1f} mm; wrote {OUT}")
+    sizes = sorted({float(m) for c in keep for m in re.findall(r"font-size:\s*([\d.]+)px", c.get("value") or "")})
+    print(f"{len(keep)} explainer cells, {ew * 0.254:.1f} x {eh * 0.254:.1f} mm, scaled by {s:.3f} into the slot {slot['width_mm']:.1f} x {slot['height_mm']:.1f} mm, type {fonts}: draw.io sizes {sizes} = {[round(v * 0.72, 1) for v in sizes]} pt; wrote {OUT}")
     drawio = os.environ.get("DRAWIO")
     if drawio:
         for fmt in ("pdf", "png"):

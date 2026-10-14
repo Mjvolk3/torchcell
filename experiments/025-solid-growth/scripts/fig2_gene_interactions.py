@@ -334,7 +334,7 @@ def panel_d(ax: Axes) -> None:
     ax.set_ylabel("held-out Pearson, trigenic interaction")
     ax.set_title("a no-interaction null reaches 0.40")
     handles = [Patch(facecolor=c, edgecolor="black", linewidth=0.4, label=l) for l, _, c in learners]
-    handles.append(Patch(facecolor=RED, edgecolor="black", linewidth=0.4, label="CGT + closure + fitness (030), 1 seed"))
+    handles.append(Patch(facecolor=RED, edgecolor="black", linewidth=0.4, label="CGT + closure + fitness, 1 seed"))
     ax.legend(handles=handles, loc="upper right", bbox_to_anchor=(1.02, 1.04), frameon=False, handlelength=1.0, handletextpad=0.3, borderpad=0.0, borderaxespad=0.0, labelspacing=0.2)
     # The transformer's reading on that split differs from the baselines' (validation on one
     # split, epoch 29, three seeds, against five-fold test), so the note hangs under that group.
@@ -384,7 +384,7 @@ def panel_f(ax: Axes) -> None:
         bars(ax, [x], [vals], [color])
     not_run(ax, 3, 0.383, "not run", RED)
     ax.set_xticks(range(4))
-    ax.set_xticklabels([p[1] for p in pools] + ["030\nevery entry\n13.5 M"], fontsize=5)
+    ax.set_xticklabels([p[1] for p in pools] + ["all entries\n13.5 M"], fontsize=5)
     ax.set_ylim(0.38, 0.49)
     ax.yaxis.set_major_locator(MultipleLocator(0.02))
     ax.set_ylabel("validation Pearson, epochs 10 to 29")
@@ -681,13 +681,18 @@ def main() -> None:
     done, hist, summary = sweep()
     assign, enr, wt = wt_data()
     fig, axes = plt.subplots(4, 4, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(200)))
-    fig.subplots_adjust(left=0.055, right=0.99, bottom=0.085, top=0.965, wspace=0.34, hspace=0.62)
+    # One grid call: a later subplots_adjust re-places every subplot and silently undoes the
+    # manual moves below. The color key sits in the row gap above e to h.
+    fig.subplots_adjust(left=0.055, right=0.99, bottom=0.04, top=0.965, wspace=0.34, hspace=0.62)
     ax = axes.ravel()
-    # Rows 2 to 4 drop by a strip that holds the color key under row 1, beside d, e, f.
-    key_strip = 0.022
-    for a_ in ax[4:]:
-        pos = a_.get_position()
-        a_.set_position([pos.x0, pos.y0 - key_strip, pos.width, pos.height])
+    # Slot a has no axis labels, so it takes the page margin on its left and the label band
+    # under row 1 below; the explainer is drawn into this box, image aspect kept, from its
+    # top-left corner. The box is printed in mm so the draw.io explainer can be laid out to
+    # it at 1:1 (review 2026-10-13: the 56 x 54 mm explainer shrinks past 5 pt text here).
+    pos = ax[0].get_position()
+    ax[0].set_position([0.012, pos.y0 - 0.05, pos.x1 - 0.012, pos.height + 0.05])
+    pos = ax[0].get_position()
+    print(f"slot a: {pos.width * PANEL_WIDTHS_MM['full']:.1f} x {pos.height * 200:.1f} mm, top-left at x {pos.x0 * PANEL_WIDTHS_MM['full']:.1f} mm, y {(1 - pos.y1) * 200:.1f} mm from the page's top-left")
     panel_a(ax[0])
     panel_b(ax[1])
     panel_c(ax[2])
@@ -708,9 +713,8 @@ def main() -> None:
     panel_p(ax[15], assign, enr, wt)
     letters_status(fig, list(ax), ["ready"] * 16)
     # The color key sits just above the letters of e to h, the panels it serves.
-    y_key = ax[4].get_position().y1 + 0.05
+    y_key = ax[4].get_position().y1 + 0.036
     keys(fig, y_key)
-    fig.subplots_adjust(bottom=0.04)
     os.makedirs(IMG_DIR, exist_ok=True)
     stem = osp.join(IMG_DIR, "fig2_gene_interactions")
     savefig_true_size_svg(fig, stem + ".svg")

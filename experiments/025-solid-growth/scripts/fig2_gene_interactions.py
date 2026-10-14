@@ -195,10 +195,10 @@ def keys(fig: Figure, y_key: float) -> None:
         Patch(facecolor=BLUE, edgecolor="black", linewidth=0.4, label="learned null (MLP)"),
         Patch(facecolor=YELLOW, edgecolor="black", linewidth=0.4, label="joint fitness head"),
     ]
-    fig.legend(handles=handles, loc="center", bbox_to_anchor=(0.52, y_key), ncol=6, frameon=False, fontsize=5, handlelength=1.2, handletextpad=0.4, columnspacing=1.2, borderpad=0)
-    # Every transformer arm of e to l is the S0 pool (cgt_s0_r_kl_000 and its descendants);
-    # only f changes the pool, and d's closure bars are the 030 build.
-    fig.text(0.52, y_key + 2.4 / SHEET_H_MM, "e to l: every arm trains on S0, the 376,732 Kuzmin triples under the 010 split; f varies the pool", ha="center", va="bottom", fontsize=5)
+    # One line: the pool statement at the left (every arm of e to l is S0, cgt_s0_r_kl_000
+    # and its descendants; f alone varies the pool), the color key to its right.
+    fig.text(0.055, y_key, "e to l: S0, 376 k Kuzmin triples  |", ha="left", va="center", fontsize=5)
+    fig.legend(handles=handles, loc="center left", bbox_to_anchor=(0.215, y_key), ncol=6, frameon=False, fontsize=5, handlelength=1.1, handletextpad=0.35, columnspacing=0.9, borderpad=0, borderaxespad=0)
     if not STATUS_KEY:
         return
     x = 0.03
@@ -737,7 +737,7 @@ def main() -> None:
     panel_p(ax[15], assign, enr, wt)
     letters_status(fig, list(ax), ["ready"] * 16)
     # The color key sits just above the letters of e to h, the panels it serves.
-    y_key = ax[4].get_position().y1 + 8.8 / SHEET_H_MM
+    y_key = ax[4].get_position().y1 + 10.6 / SHEET_H_MM
     keys(fig, y_key)
     os.makedirs(IMG_DIR, exist_ok=True)
     stem = osp.join(IMG_DIR, "fig2_gene_interactions")

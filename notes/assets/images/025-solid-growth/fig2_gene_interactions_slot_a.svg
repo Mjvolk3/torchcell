@@ -25481,74 +25481,74 @@ z
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #8a8a8a" x="389.909323" y="463.499138" transform="rotate(-0 389.909323 463.499138)">●</text>
   </g>
   <g id="text_296">
-   <text style="font-size: 5px; font-family: 'Arial'; text-anchor: middle" x="263.848819" y="168.223731" transform="rotate(-0 263.848819 168.223731)">e to l: every arm trains on S0, the 376,732 Kuzmin triples under the 010 split; f varies the pool</text>
+   <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="27.907087" y="172.270612" transform="rotate(-0 27.907087 172.270612)">e to l: S0, 376 k Kuzmin triples  |</text>
   </g>
   <g id="legend_7">
    <g id="patch_107">
-    <path d="M 65.7496 177.372974 
-L 71.7496 177.372974 
-L 71.7496 173.872974 
-L 65.7496 173.872974 
+    <path d="M 109.091339 172.270612 
+L 114.591339 172.270612 
+L 114.591339 168.770612 
+L 109.091339 168.770612 
 z
 " style="fill: #666666; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
    <g id="text_297">
-    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="73.7496" y="177.372974" transform="rotate(-0 73.7496 177.372974)">no graphs, or a no-interaction null</text>
+    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="116.341339" y="172.270612" transform="rotate(-0 116.341339 172.270612)">no graphs, or a no-interaction null</text>
    </g>
    <g id="patch_108">
-    <path d="M 154.233194 177.372974 
-L 160.233194 177.372974 
-L 160.233194 173.872974 
-L 154.233194 173.872974 
+    <path d="M 195.324932 172.270612 
+L 200.824932 172.270612 
+L 200.824932 168.770612 
+L 195.324932 168.770612 
 z
 " style="fill: #b85450; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
    <g id="text_298">
-    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="162.233194" y="177.372974" transform="rotate(-0 162.233194 177.372974)">cell graph transformer, soft prior</text>
+    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="202.574932" y="172.270612" transform="rotate(-0 202.574932 172.270612)">cell graph transformer, soft prior</text>
    </g>
    <g id="patch_109">
-    <path d="M 238.8121 177.372974 
-L 244.8121 177.372974 
-L 244.8121 173.872974 
-L 238.8121 173.872974 
+    <path d="M 277.653839 172.270612 
+L 283.153839 172.270612 
+L 283.153839 168.770612 
+L 277.653839 168.770612 
 z
 " style="fill: #d79b00; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
    <g id="text_299">
-    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="246.8121" y="177.372974" transform="rotate(-0 246.8121 177.372974)">hard mask</text>
+    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="284.903839" y="172.270612" transform="rotate(-0 284.903839 172.270612)">hard mask</text>
    </g>
    <g id="patch_110">
-    <path d="M 276.152725 177.372974 
-L 282.152725 177.372974 
-L 282.152725 173.872974 
-L 276.152725 173.872974 
+    <path d="M 312.744464 172.270612 
+L 318.244464 172.270612 
+L 318.244464 168.770612 
+L 312.744464 168.770612 
 z
 " style="fill: #9673a6; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
    <g id="text_300">
-    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="284.152725" y="177.372974" transform="rotate(-0 284.152725 177.372974)">degree-matched random graphs</text>
+    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="319.994464" y="172.270612" transform="rotate(-0 319.994464 172.270612)">degree-matched random graphs</text>
    </g>
    <g id="patch_111">
-    <path d="M 361.576944 177.372974 
-L 367.576944 177.372974 
-L 367.576944 173.872974 
-L 361.576944 173.872974 
+    <path d="M 395.918682 172.270612 
+L 401.418682 172.270612 
+L 401.418682 168.770612 
+L 395.918682 168.770612 
 z
 " style="fill: #6c8ebf; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
    <g id="text_301">
-    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="369.576944" y="177.372974" transform="rotate(-0 369.576944 177.372974)">learned null (MLP)</text>
+    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="403.168682" y="172.270612" transform="rotate(-0 403.168682 172.270612)">learned null (MLP)</text>
    </g>
    <g id="patch_112">
-    <path d="M 416.426163 177.372974 
-L 422.426163 177.372974 
-L 422.426163 173.872974 
-L 416.426163 173.872974 
+    <path d="M 448.517901 172.270612 
+L 454.017901 172.270612 
+L 454.017901 168.770612 
+L 448.517901 168.770612 
 z
 " style="fill: #d6b656; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
    <g id="text_302">
-    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="424.426163" y="177.372974" transform="rotate(-0 424.426163 177.372974)">joint fitness head</text>
+    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="455.767901" y="172.270612" transform="rotate(-0 455.767901 172.270612)">joint fitness head</text>
    </g>
   </g>
  </g>

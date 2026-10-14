@@ -61,6 +61,7 @@ import pandas as pd
 from dotenv import load_dotenv
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
+from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 from matplotlib.ticker import MultipleLocator
 from scipy import stats
@@ -643,8 +644,14 @@ def loss_sheet(hist: pd.DataFrame) -> None:
         ax.set_title(title)
         ax.set_xlabel("epoch")
         ax.set_ylabel("point loss, z-scored MSE")
-        # Arms in the key; the line style is one rule for the sheet, written under it.
-        ax.legend(frameon=False, fontsize=5, handlelength=1.6, labelspacing=0.2, loc="lower left")
+        # Two keys: the arms by color at the lower left, train and validation by line style at
+        # the upper right, so each panel names both on its own.
+        arms_key = ax.legend(frameon=False, fontsize=5, handlelength=1.6, labelspacing=0.2, loc="lower left")
+        ax.add_artist(arms_key)
+        ax.legend(
+            handles=[Line2D([], [], color="black", lw=0.9, ls="-", label="validation"), Line2D([], [], color="black", lw=0.9, ls="--", label="train")],
+            frameon=False, fontsize=5, handlelength=1.6, labelspacing=0.2, loc="upper right",
+        )
         strip(ax)
     ax = axes[3]
     for z, (arm, label, color) in enumerate([("kl_1", "soft prior, λ = 1", RED), ("mask", "hard mask", ORANGE), ("random_1", "prior, random graphs", PURPLE)]):
@@ -655,7 +662,6 @@ def loss_sheet(hist: pd.DataFrame) -> None:
     ax.legend(frameon=False, fontsize=5, handlelength=1.6, labelspacing=0.2, loc="upper right")
     strip(ax)
     letters_status(fig, list(axes), ["ready"] * 4)
-    fig.text(0.055, 0.01, "solid: validation, dashed: train; mean and sd band over seeds", fontsize=5, ha="left", va="bottom")
     stem = osp.join(IMG_DIR, "fig2_loss_curves")
     savefig_true_size_svg(fig, stem + ".svg")
     fig.savefig(stem + ".png", dpi=300)

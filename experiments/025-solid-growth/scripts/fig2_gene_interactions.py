@@ -94,6 +94,8 @@ STATUS_KEY = False  # their key at the foot of the sheet; off on the author's re
 
 plt.rcParams.update(
     {
+        "legend.edgecolor": "black",
+        "patch.linewidth": 0.5,
         "mathtext.fontset": "custom",
         "mathtext.rm": "Arial",
         "mathtext.it": "Arial:italic",
@@ -355,7 +357,7 @@ def panel_d(ax: Axes) -> None:
     ax.set_title("the closure pool lifts the CGT most")
     handles = [Patch(facecolor=c, edgecolor="black", linewidth=0.4, label=l) for l, _, c in learners]
     handles.append(Patch(facecolor=DARK_RED, edgecolor="black", linewidth=0.4, label="CGT, S3 + fitness, 1 seed"))
-    ax.legend(handles=handles, loc="upper right", bbox_to_anchor=(1.02, 1.04), frameon=True, facecolor="white", edgecolor="none", framealpha=1.0, handlelength=1.0, handletextpad=0.3, borderpad=0.2, borderaxespad=0.0, labelspacing=0.2).set_zorder(5)
+    ax.legend(handles=handles, loc="upper right", bbox_to_anchor=(1.02, 1.04), frameon=True, facecolor="white", edgecolor="black", framealpha=1.0, fancybox=False, handlelength=1.0, handletextpad=0.3, borderpad=0.2, borderaxespad=0.0, labelspacing=0.2).set_zorder(5)
     strip(ax)
 
 
@@ -476,7 +478,7 @@ def panel_i(ax: Axes, hist: pd.DataFrame) -> None:
     ax.set_xlabel("epoch")
     ax.set_ylabel("validation Pearson")
     ax.set_title("the prior removes the late decline")
-    ax.legend(loc="lower right", frameon=True, facecolor="white", edgecolor="none", framealpha=1.0, handlelength=1.6, handletextpad=0.4, borderpad=0.3, labelspacing=0.25).set_zorder(50)
+    ax.legend(loc="lower right", frameon=True, facecolor="white", edgecolor="black", framealpha=1.0, fancybox=False, handlelength=1.6, handletextpad=0.4, borderpad=0.3, labelspacing=0.25).set_zorder(50)
     strip(ax)
 
 
@@ -544,7 +546,7 @@ def panel_k(ax: Axes, hist: pd.DataFrame) -> None:
     ax.set_xlabel("epoch")
     ax.set_ylabel("validation Pearson")
     ax.set_title("at 60 epochs only the prior holds")
-    ax.legend(loc="lower right", bbox_to_anchor=(1.0, 0.0), frameon=True, facecolor="white", edgecolor="none", framealpha=1.0, handlelength=1.6, handletextpad=0.4, borderpad=0.3, labelspacing=0.25).set_zorder(50)
+    ax.legend(loc="lower right", bbox_to_anchor=(1.0, 0.0), frameon=True, facecolor="white", edgecolor="black", framealpha=1.0, fancybox=False, handlelength=1.6, handletextpad=0.4, borderpad=0.3, labelspacing=0.25).set_zorder(50)
     strip(ax)
 
 
@@ -553,14 +555,19 @@ def panel_l(ax: Axes, hist: pd.DataFrame) -> None:
         curve(ax, hist, arm, "val/gene_interaction/Pearson", color, "-", label, 20 + z)
     # What the composite embedding is: an inset gene schematic with the four sequence
     # models and their windows (cgt_s0_q_kl_emb_017.yaml, fungal_up_down_transformer.py).
-    ins = ax.inset_axes([0.04, 0.72, 0.96, 0.27])
-    ins.set_xlim(0, 100)
-    ins.set_ylim(0, 10)
-    ins.axis("off")
+    ins = ax.inset_axes([0.04, 0.71, 0.96, 0.28])
+    ins.set_xlim(-4, 104)
+    ins.set_ylim(-0.6, 10.6)
+    ins.set_xticks([])
+    ins.set_yticks([])
+    ins.set_facecolor("white")
+    ins.set_zorder(40)
+    for sp in ins.spines.values():
+        sp.set_linewidth(0.5)
     for x0, wd, fill, top, bottom in [
-        (0, 26, YELLOW, "5' 1,003 bp", "SpeciesLM"),
+        (0, 26, BLUE, "5' 1,003 bp", "SpeciesLM"),
         (26, 48, PURPLE, "ORF", "CaLM + ProtT5"),
-        (74, 26, YELLOW, "3' 300 bp", "SpeciesLM"),
+        (74, 26, RED, "3' 300 bp", "SpeciesLM"),
     ]:
         ins.add_patch(Rectangle((x0, 4.6), wd, 2.4, facecolor=fill, edgecolor="black", linewidth=0.4))
         ins.text(x0 + wd / 2, 7.4, top, ha="center", va="bottom", fontsize=5)
@@ -572,7 +579,7 @@ def panel_l(ax: Axes, hist: pd.DataFrame) -> None:
     ax.set_xlabel("epoch")
     ax.set_ylabel("validation Pearson")
     ax.set_title("composite embedding needs the prior")
-    ax.legend(loc="center left", bbox_to_anchor=(0.02, 0.32), frameon=True, facecolor="white", edgecolor="none", framealpha=1.0, handlelength=1.6, handletextpad=0.4, borderpad=0.3, labelspacing=0.25).set_zorder(50)
+    ax.legend(loc="center left", bbox_to_anchor=(0.1, 0.34), frameon=True, facecolor="white", edgecolor="black", framealpha=1.0, fancybox=False, handlelength=1.6, handletextpad=0.4, borderpad=0.3, labelspacing=0.25).set_zorder(50)
     strip(ax)
 
 

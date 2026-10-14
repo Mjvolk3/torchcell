@@ -1409,17 +1409,12 @@ L 487.322065 118.280618
    </g>
    <g id="legend_1">
     <g id="patch_40">
-     <path d="M 439.708956 45.279905 
-L 503.037863 45.279905 
-Q 504.037863 45.279905 504.037863 44.279905 
-L 504.037863 17.240843 
-Q 504.037863 16.240843 503.037863 16.240843 
-L 439.708956 16.240843 
-Q 438.708956 16.240843 438.708956 17.240843 
-L 438.708956 44.279905 
-Q 438.708956 45.279905 439.708956 45.279905 
+     <path d="M 438.708956 45.279905 
+L 504.037863 45.279905 
+L 504.037863 16.240843 
+L 438.708956 16.240843 
 z
-" style="fill: #ffffff"/>
+" style="fill: #ffffff; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter"/>
     </g>
     <g id="patch_41">
      <path d="M 439.708956 20.819749 
@@ -3249,17 +3244,12 @@ L 122.413157 368.032087
    </g>
    <g id="legend_2">
     <g id="patch_71">
-     <path d="M 60.528782 422.285628 
-L 118.913157 422.285628 
-Q 119.913157 422.285628 119.913157 421.285628 
-L 119.913157 398.052034 
-Q 119.913157 397.052034 118.913157 397.052034 
-L 60.528782 397.052034 
-Q 59.528782 397.052034 59.528782 398.052034 
-L 59.528782 421.285628 
-Q 59.528782 422.285628 60.528782 422.285628 
+     <path d="M 59.528782 422.285628 
+L 119.913157 422.285628 
+L 119.913157 397.052034 
+L 59.528782 397.052034 
 z
-" style="fill: #ffffff"/>
+" style="fill: #ffffff; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter"/>
     </g>
     <g id="line2d_245">
      <path d="M 61.028782 400.395784 
@@ -4357,17 +4347,12 @@ L 375.689425 384.763154
    </g>
    <g id="legend_3">
     <g id="patch_79">
-     <path d="M 328.258175 422.285628 
-L 372.189425 422.285628 
-Q 373.189425 422.285628 373.189425 421.285628 
-L 373.189425 403.948128 
-Q 373.189425 402.948128 372.189425 402.948128 
-L 328.258175 402.948128 
-Q 327.258175 402.948128 327.258175 403.948128 
-L 327.258175 421.285628 
-Q 327.258175 422.285628 328.258175 422.285628 
+     <path d="M 327.258175 422.285628 
+L 373.189425 422.285628 
+L 373.189425 402.948128 
+L 327.258175 402.948128 
 z
-" style="fill: #ffffff"/>
+" style="fill: #ffffff; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter"/>
     </g>
     <g id="line2d_292">
      <path d="M 328.758175 406.337972 
@@ -4564,53 +4549,6 @@ L 502.327559 424.785628
    </g>
    <g id="text_191">
     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="455.074524" y="331.781785" transform="rotate(-0 455.074524 331.781785)">composite embedding needs the prior</text>
-   </g>
-   <g id="axes_13">
-    <g id="patch_83">
-     <path d="M 411.601732 351.336984 
-L 435.190447 351.336984 
-L 435.190447 345.699135 
-L 411.601732 345.699135 
-z
-" clip-path="url(#p0ecd130d19)" style="fill: #d6b656; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
-    </g>
-    <g id="patch_84">
-     <path d="M 435.190447 351.336984 
-L 478.738844 351.336984 
-L 478.738844 345.699135 
-L 435.190447 345.699135 
-z
-" clip-path="url(#p0ecd130d19)" style="fill: #9673a6; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
-    </g>
-    <g id="patch_85">
-     <path d="M 478.738844 351.336984 
-L 502.327559 351.336984 
-L 502.327559 345.699135 
-L 478.738844 345.699135 
-z
-" clip-path="url(#p0ecd130d19)" style="fill: #d6b656; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
-    </g>
-    <g id="text_192">
-     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: middle" x="423.396089" y="343.765743" transform="rotate(-0 423.396089 343.765743)">5' 1,003 bp</text>
-    </g>
-    <g id="text_193">
-     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: middle" x="423.396089" y="356.151379" transform="rotate(-0 423.396089 356.151379)">SpeciesLM</text>
-    </g>
-    <g id="text_194">
-     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: middle" x="456.964645" y="343.765743" transform="rotate(-0 456.964645 343.765743)">ORF</text>
-    </g>
-    <g id="text_195">
-     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: middle" x="456.964645" y="356.090442" transform="rotate(-0 456.964645 356.090442)">CaLM + ProtT5</text>
-    </g>
-    <g id="text_196">
-     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: middle" x="490.533201" y="343.765743" transform="rotate(-0 490.533201 343.765743)">3' 300 bp</text>
-    </g>
-    <g id="text_197">
-     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: middle" x="490.533201" y="356.151379" transform="rotate(-0 490.533201 356.151379)">SpeciesLM</text>
-    </g>
-    <g id="text_198">
-     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: middle" x="456.964645" y="361.090517" transform="rotate(-0 456.964645 361.090517)">concatenated: 3,328 fixed dims per gene</text>
-    </g>
    </g>
    <g id="FillBetweenPolyCollection_8">
     <defs>
@@ -4925,51 +4863,123 @@ L 499.068729 418.974691
 L 502.327559 419.510036 
 " clip-path="url(#p68b3ae6559)" style="fill: none; stroke: #666666; stroke-width: 0.9; stroke-linecap: square"/>
    </g>
-   <g id="legend_4">
-    <g id="patch_86">
-     <path d="M 413.21161 406.702211 
-L 498.976454 406.702211 
-Q 499.976454 406.702211 499.976454 405.702211 
-L 499.976454 388.186586 
-Q 499.976454 387.186586 498.976454 387.186586 
-L 413.21161 387.186586 
-Q 412.21161 387.186586 412.21161 388.186586 
-L 412.21161 405.702211 
-Q 412.21161 406.702211 413.21161 406.702211 
+   <g id="axes_13">
+    <g id="patch_83">
+     <path d="M 411.601732 363.012899 
+L 502.327559 363.012899 
+L 502.327559 338.651823 
+L 411.601732 338.651823 
 z
 " style="fill: #ffffff"/>
     </g>
+    <g id="patch_84">
+     <path d="M 414.961947 351.7024 
+L 436.80335 351.7024 
+L 436.80335 346.482169 
+L 414.961947 346.482169 
+z
+" clip-path="url(#pa695fc831c)" style="fill: #6c8ebf; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
+    </g>
+    <g id="patch_85">
+     <path d="M 436.80335 351.7024 
+L 477.12594 351.7024 
+L 477.12594 346.482169 
+L 436.80335 346.482169 
+z
+" clip-path="url(#pa695fc831c)" style="fill: #9673a6; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
+    </g>
+    <g id="patch_86">
+     <path d="M 477.12594 351.7024 
+L 498.967343 351.7024 
+L 498.967343 346.482169 
+L 477.12594 346.482169 
+z
+" clip-path="url(#pa695fc831c)" style="fill: #b85450; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
+    </g>
+    <g id="matplotlib.axis_25"/>
+    <g id="matplotlib.axis_26"/>
+    <g id="patch_87">
+     <path d="M 411.601732 363.012899 
+L 411.601732 338.651823 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+    </g>
+    <g id="patch_88">
+     <path d="M 502.327559 363.012899 
+L 502.327559 338.651823 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+    </g>
+    <g id="patch_89">
+     <path d="M 411.601732 363.012899 
+L 502.327559 363.012899 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+    </g>
+    <g id="patch_90">
+     <path d="M 411.601732 338.651823 
+L 502.327559 338.651823 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+    </g>
+    <g id="text_192">
+     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: middle" x="425.882649" y="344.618381" transform="rotate(-0 425.882649 344.618381)">5' 1,003 bp</text>
+    </g>
+    <g id="text_193">
+     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: middle" x="425.882649" y="356.429792" transform="rotate(-0 425.882649 356.429792)">SpeciesLM</text>
+    </g>
+    <g id="text_194">
+     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: middle" x="456.964645" y="344.618381" transform="rotate(-0 456.964645 344.618381)">ORF</text>
+    </g>
+    <g id="text_195">
+     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: middle" x="456.964645" y="356.368854" transform="rotate(-0 456.964645 356.368854)">CaLM + ProtT5</text>
+    </g>
+    <g id="text_196">
+     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: middle" x="488.046642" y="344.618381" transform="rotate(-0 488.046642 344.618381)">3' 300 bp</text>
+    </g>
+    <g id="text_197">
+     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: middle" x="488.046642" y="356.429792" transform="rotate(-0 488.046642 356.429792)">SpeciesLM</text>
+    </g>
+    <g id="text_198">
+     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: middle" x="456.964645" y="360.655498" transform="rotate(-0 456.964645 360.655498)">concatenated: 3,328 fixed dims per gene</text>
+    </g>
+   </g>
+   <g id="legend_4">
+    <g id="patch_91">
+     <path d="M 419.772096 404.962134 
+L 507.53694 404.962134 
+L 507.53694 385.446509 
+L 419.772096 385.446509 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter"/>
+    </g>
     <g id="line2d_315">
-     <path d="M 413.71161 390.576429 
-L 417.71161 390.576429 
-L 421.71161 390.576429 
+     <path d="M 421.272096 388.836353 
+L 425.272096 388.836353 
+L 429.272096 388.836353 
 " style="fill: none; stroke: #b85450; stroke-width: 0.9; stroke-linecap: square"/>
     </g>
     <g id="text_199">
-     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="423.71161" y="392.326429" transform="rotate(-0 423.71161 392.326429)">learnable gene table, soft prior</text>
+     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="431.272096" y="390.586353" transform="rotate(-0 431.272096 390.586353)">learnable gene table, soft prior</text>
     </g>
     <g id="line2d_316">
-     <path d="M 413.71161 396.518617 
-L 417.71161 396.518617 
-L 421.71161 396.518617 
+     <path d="M 421.272096 394.77854 
+L 425.272096 394.77854 
+L 429.272096 394.77854 
 " style="fill: none; stroke: #d6b656; stroke-width: 0.9; stroke-linecap: square"/>
     </g>
     <g id="text_200">
-     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="423.71161" y="398.268617" transform="rotate(-0 423.71161 398.268617)">composite embedding, soft prior</text>
+     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="431.272096" y="396.52854" transform="rotate(-0 431.272096 396.52854)">composite embedding, soft prior</text>
     </g>
     <g id="line2d_317">
-     <path d="M 413.71161 402.399867 
-L 417.71161 402.399867 
-L 421.71161 402.399867 
+     <path d="M 421.272096 400.65979 
+L 425.272096 400.65979 
+L 429.272096 400.65979 
 " style="fill: none; stroke: #666666; stroke-width: 0.9; stroke-linecap: square"/>
     </g>
     <g id="text_201">
-     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="423.71161" y="404.149867" transform="rotate(-0 423.71161 404.149867)">composite embedding, no penalty</text>
+     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="431.272096" y="402.40979" transform="rotate(-0 431.272096 402.40979)">composite embedding, no penalty</text>
     </g>
    </g>
   </g>
   <g id="axes_14">
-   <g id="patch_87">
+   <g id="patch_92">
     <path d="M 27.907087 564.377953 
 L 122.413157 564.377953 
 L 122.413157 477.37411 
@@ -4977,8 +4987,8 @@ L 27.907087 477.37411
 z
 " style="fill: #ffffff"/>
    </g>
-   <g id="matplotlib.axis_25"/>
-   <g id="matplotlib.axis_26"/>
+   <g id="matplotlib.axis_27"/>
+   <g id="matplotlib.axis_28"/>
    <g id="PathCollection_44">
     <defs>
      <path id="mb4da0e6cbb" d="M 0 0.547723 
@@ -11627,7 +11637,7 @@ z
     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="75.160122" y="471.37411" transform="rotate(-0 75.160122 471.37411)">genes in no training triple stray</text>
    </g>
    <g id="legend_5">
-    <g id="patch_88">
+    <g id="patch_93">
      <path d="M 74.945969 484.46786 
 L 79.945969 484.46786 
 L 79.945969 480.96786 
@@ -11638,7 +11648,7 @@ z
     <g id="text_204">
      <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="81.945969" y="484.46786" transform="rotate(-0 81.945969 484.46786)">in training, 4,352</text>
     </g>
-    <g id="patch_89">
+    <g id="patch_94">
      <path d="M 74.945969 490.34911 
 L 79.945969 490.34911 
 L 79.945969 486.84911 
@@ -11652,7 +11662,7 @@ z
    </g>
   </g>
   <g id="axes_15">
-   <g id="patch_90">
+   <g id="patch_95">
     <path d="M 154.545221 564.377953 
 L 249.051291 564.377953 
 L 249.051291 477.37411 
@@ -11660,8 +11670,8 @@ L 154.545221 477.37411
 z
 " style="fill: #ffffff"/>
    </g>
-   <g id="matplotlib.axis_27"/>
-   <g id="matplotlib.axis_28"/>
+   <g id="matplotlib.axis_29"/>
+   <g id="matplotlib.axis_30"/>
    <g id="PathCollection_46">
     <g clip-path="url(#p01c5721451)">
      <use xlink:href="#mb4da0e6cbb" x="171.754014" y="507.267952" style="fill: #c8c8c8"/>
@@ -18368,7 +18378,7 @@ z
    </g>
   </g>
   <g id="axes_16">
-   <g id="patch_91">
+   <g id="patch_96">
     <path d="M 281.183355 564.377953 
 L 375.689425 564.377953 
 L 375.689425 477.37411 
@@ -18376,7 +18386,7 @@ L 281.183355 477.37411
 z
 " style="fill: #ffffff"/>
    </g>
-   <g id="matplotlib.axis_29">
+   <g id="matplotlib.axis_31">
     <g id="xtick_58">
      <g id="line2d_318">
       <path d="M 281.183355 564.377953 
@@ -18441,7 +18451,7 @@ L 358.216556 477.37411
      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="328.43639" y="583.736703" transform="rotate(-0 328.43639 583.736703)">best GO term per cluster, −log10 q (BH)</text>
     </g>
    </g>
-   <g id="matplotlib.axis_30">
+   <g id="matplotlib.axis_32">
     <g id="ytick_73">
      <g id="line2d_326">
       <g>
@@ -18571,17 +18581,17 @@ L 358.216556 477.37411
 L 281.851505 477.37411 
 " clip-path="url(#p495bb228fe)" style="fill: none; stroke-dasharray: 1.85,0.8; stroke-dashoffset: 0; stroke: #000000; stroke-width: 0.5"/>
    </g>
-   <g id="patch_92">
+   <g id="patch_97">
     <path d="M 281.183355 564.377953 
 L 281.183355 477.37411 
 " style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
    </g>
-   <g id="patch_93">
+   <g id="patch_98">
     <path d="M 281.183355 564.377953 
 L 375.689425 564.377953 
 " style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
    </g>
-   <g id="patch_94">
+   <g id="patch_99">
     <path d="M 281.183355 486.060974 
 L 335.186823 486.060974 
 L 335.186823 481.32883 
@@ -18589,7 +18599,7 @@ L 281.183355 481.32883
 z
 " clip-path="url(#p495bb228fe)" style="fill: #d79b00; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
-   <g id="patch_95">
+   <g id="patch_100">
     <path d="M 281.183355 492.821179 
 L 297.444962 492.821179 
 L 297.444962 488.089035 
@@ -18597,7 +18607,7 @@ L 281.183355 488.089035
 z
 " clip-path="url(#p495bb228fe)" style="fill: #b85450; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
-   <g id="patch_96">
+   <g id="patch_101">
     <path d="M 281.183355 499.581384 
 L 289.949825 499.581384 
 L 289.949825 494.849241 
@@ -18605,7 +18615,7 @@ L 281.183355 494.849241
 z
 " clip-path="url(#p495bb228fe)" style="fill: #9673a6; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
-   <g id="patch_97">
+   <g id="patch_102">
     <path d="M 281.183355 506.34159 
 L 284.907198 506.34159 
 L 284.907198 501.609446 
@@ -18613,7 +18623,7 @@ L 281.183355 501.609446
 z
 " clip-path="url(#p495bb228fe)" style="fill: #d6b656; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
-   <g id="patch_98">
+   <g id="patch_103">
     <path d="M 281.183355 513.101795 
 L 284.078479 513.101795 
 L 284.078479 508.369651 
@@ -18621,7 +18631,7 @@ L 281.183355 508.369651
 z
 " clip-path="url(#p495bb228fe)" style="fill: #6c8ebf; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
-   <g id="patch_99">
+   <g id="patch_104">
     <path d="M 281.183355 519.862 
 L 283.886364 519.862 
 L 283.886364 515.129857 
@@ -18629,7 +18639,7 @@ L 281.183355 515.129857
 z
 " clip-path="url(#p495bb228fe)" style="fill: #c8c8c8; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
-   <g id="patch_100">
+   <g id="patch_105">
     <path d="M 281.183355 526.622206 
 L 283.195288 526.622206 
 L 283.195288 521.890062 
@@ -18637,7 +18647,7 @@ L 281.183355 521.890062
 z
 " clip-path="url(#p495bb228fe)" style="fill: #c8c8c8; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
-   <g id="patch_101">
+   <g id="patch_106">
     <path d="M 281.183355 533.382411 
 L 282.742457 533.382411 
 L 282.742457 528.650267 
@@ -18645,7 +18655,7 @@ L 281.183355 528.650267
 z
 " clip-path="url(#p495bb228fe)" style="fill: #c8c8c8; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
-   <g id="patch_102">
+   <g id="patch_107">
     <path d="M 281.183355 540.142617 
 L 282.421196 540.142617 
 L 282.421196 535.410473 
@@ -18653,7 +18663,7 @@ L 281.183355 535.410473
 z
 " clip-path="url(#p495bb228fe)" style="fill: #c8c8c8; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
-   <g id="patch_103">
+   <g id="patch_108">
     <path d="M 281.183355 546.902822 
 L 281.721195 546.902822 
 L 281.721195 542.170678 
@@ -18661,7 +18671,7 @@ L 281.183355 542.170678
 z
 " clip-path="url(#p495bb228fe)" style="fill: #c8c8c8; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
-   <g id="patch_104">
+   <g id="patch_109">
     <path d="M 281.183355 553.663027 
 L 281.183355 553.663027 
 L 281.183355 548.930884 
@@ -18669,7 +18679,7 @@ L 281.183355 548.930884
 z
 " clip-path="url(#p495bb228fe)" style="fill: #c8c8c8; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
-   <g id="patch_105">
+   <g id="patch_110">
     <path d="M 281.183355 560.423233 
 L 281.183355 560.423233 
 L 281.183355 555.691089 
@@ -18718,7 +18728,7 @@ z
    </g>
   </g>
   <g id="axes_17">
-   <g id="patch_106">
+   <g id="patch_111">
     <path d="M 407.821489 564.377953 
 L 502.327559 564.377953 
 L 502.327559 477.37411 
@@ -18726,8 +18736,8 @@ L 407.821489 477.37411
 z
 " style="fill: #ffffff"/>
    </g>
-   <g id="matplotlib.axis_31"/>
-   <g id="matplotlib.axis_32"/>
+   <g id="matplotlib.axis_33"/>
+   <g id="matplotlib.axis_34"/>
    <g id="PathCollection_52">
     <g clip-path="url(#pc292c2f914)">
      <use xlink:href="#mb4da0e6cbb" x="416.360517" y="544.253362" style="fill: #c8c8c8"/>
@@ -25381,7 +25391,7 @@ z
     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="487.429966" y="531.938927" transform="rotate(-0 487.429966 531.938927)">5</text>
    </g>
    <g id="legend_6">
-    <g id="patch_107">
+    <g id="patch_112">
      <path d="M 411.321489 480.972862 
 L 416.321489 480.972862 
 L 416.321489 477.472862 
@@ -25392,7 +25402,7 @@ z
     <g id="text_251">
      <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="418.321489" y="480.972862" transform="rotate(-0 418.321489 480.972862)">4 mitochondrial complex</text>
     </g>
-    <g id="patch_108">
+    <g id="patch_113">
      <path d="M 411.321489 486.810362 
 L 416.321489 486.810362 
 L 416.321489 483.310362 
@@ -25403,7 +25413,7 @@ z
     <g id="text_252">
      <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="418.321489" y="486.810362" transform="rotate(-0 418.321489 486.810362)">0 ribonucleoprotein complex</text>
     </g>
-    <g id="patch_109">
+    <g id="patch_114">
      <path d="M 411.321489 492.647862 
 L 416.321489 492.647862 
 L 416.321489 489.147862 
@@ -25414,7 +25424,7 @@ z
     <g id="text_253">
      <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="418.321489" y="492.647862" transform="rotate(-0 418.321489 492.647862)">2 organic acid metabolism</text>
     </g>
-    <g id="patch_110">
+    <g id="patch_115">
      <path d="M 411.321489 498.543956 
 L 416.321489 498.543956 
 L 416.321489 495.043956 
@@ -25425,7 +25435,7 @@ z
     <g id="text_254">
      <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="418.321489" y="498.543956" transform="rotate(-0 418.321489 498.543956)">1 cell periphery</text>
     </g>
-    <g id="patch_111">
+    <g id="patch_116">
      <path d="M 411.321489 504.486144 
 L 416.321489 504.486144 
 L 416.321489 500.986144 
@@ -25594,7 +25604,7 @@ L 103.00252 167.008358
    <text style="font-style: italic; font-size: 5px; font-family: 'Arial'; text-anchor: start" x="27.907087" y="454.319204" transform="rotate(-0 27.907087 454.319204)">m to p: the S3 + fitness model of f, seed 2, epoch 43</text>
   </g>
   <g id="legend_7">
-   <g id="patch_112">
+   <g id="patch_117">
     <path d="M 109.091339 172.270612 
 L 114.591339 172.270612 
 L 114.591339 168.770612 
@@ -25605,7 +25615,7 @@ z
    <g id="text_306">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="116.341339" y="172.270612" transform="rotate(-0 116.341339 172.270612)">no graphs, or a no-interaction null</text>
    </g>
-   <g id="patch_113">
+   <g id="patch_118">
     <path d="M 195.324932 172.270612 
 L 200.824932 172.270612 
 L 200.824932 168.770612 
@@ -25616,7 +25626,7 @@ z
    <g id="text_307">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="202.574932" y="172.270612" transform="rotate(-0 202.574932 172.270612)">cell graph transformer, soft prior</text>
    </g>
-   <g id="patch_114">
+   <g id="patch_119">
     <path d="M 277.653839 172.270612 
 L 283.153839 172.270612 
 L 283.153839 168.770612 
@@ -25627,7 +25637,7 @@ z
    <g id="text_308">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="284.903839" y="172.270612" transform="rotate(-0 284.903839 172.270612)">hard mask</text>
    </g>
-   <g id="patch_115">
+   <g id="patch_120">
     <path d="M 312.744464 172.270612 
 L 318.244464 172.270612 
 L 318.244464 168.770612 
@@ -25638,7 +25648,7 @@ z
    <g id="text_309">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="319.994464" y="172.270612" transform="rotate(-0 319.994464 172.270612)">degree-matched random graphs</text>
    </g>
-   <g id="patch_116">
+   <g id="patch_121">
     <path d="M 395.918682 172.270612 
 L 401.418682 172.270612 
 L 401.418682 168.770612 
@@ -25649,7 +25659,7 @@ z
    <g id="text_310">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="403.168682" y="172.270612" transform="rotate(-0 403.168682 172.270612)">learned null (MLP)</text>
    </g>
-   <g id="patch_117">
+   <g id="patch_122">
     <path d="M 448.517901 172.270612 
 L 454.017901 172.270612 
 L 454.017901 168.770612 
@@ -25699,8 +25709,8 @@ z
   <clipPath id="p68b3ae6559">
    <rect x="407.821489" y="337.781785" width="94.50607" height="87.003843"/>
   </clipPath>
-  <clipPath id="p0ecd130d19">
-   <rect x="411.601732" y="338.651823" width="90.725827" height="23.491038"/>
+  <clipPath id="pa695fc831c">
+   <rect x="411.601732" y="338.651823" width="90.725827" height="24.361076"/>
   </clipPath>
   <clipPath id="p16a621091e">
    <rect x="27.907087" y="477.37411" width="94.50607" height="87.003843"/>

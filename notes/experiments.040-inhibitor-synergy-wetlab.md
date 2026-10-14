@@ -1596,10 +1596,12 @@ other accounts carry the 030 and 025 scaling packs and the 031 series).
    held-out public dose on the two-source arm, the titration fine-tune with FiLM,
    and `dose: offset` fitted, zero-shot and on two sources, three seeds each.
 
-GilaHyper carries the cells Delta does not: the Bliss arm on fold seeds 1 and 2
-(4903, 4904, running on two cards at two CPUs and 6.5 GB) and its seed ensemble
-(seeds 3 to 5 on folds 0 to 4, 4905 and 4906 chained behind them). The 040a view was
-rebuilt over both machines' runs.
+The four cells written for GilaHyper (the Bliss arm on fold seeds 1 and 2 and its
+seed ensemble, seeds 3 to 5 on folds 0 to 4, `r10gh_*`) started there as 4903 to
+4906 and were cancelled twelve minutes in: during the database build GilaHyper is
+for smokes alone, at minimal memory and CPU, so they run on Delta as 22898135 to
+22898138, 38 round-10 jobs in all. The 040a view was rebuilt over both machines'
+runs.
 
 W&B, the 040a project, fold 2 seed 0 of the Bliss arms on each machine:
 

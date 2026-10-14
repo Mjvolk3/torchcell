@@ -31,6 +31,40 @@ if TYPE_CHECKING:
     from torchcell.losses.distributional import DistHead
 
 
+def khop_reach(
+    edge_index: torch.Tensor, num_nodes: int, hops: int, symmetric: bool
+) -> torch.Tensor:
+    """Boolean [N, N] reachability within 1 to ``hops`` steps along ``edge_index``.
+
+    The one function behind both ways a graph enters attention (2026-09-27): the hard
+    mask restricts a head to this support and the soft prior row-normalizes it as its
+    target, so the two mechanisms are compared on identical k-hop targets. ``symmetric``
+    adds the reverse of every edge first, which is what the mask did unconditionally
+    before the ``attention_mask.symmetric`` flag and what the prior never did. The
+    diagonal is whatever the walks produce (a two-step walk returns to its start); the
+    callers decide about self-loops. Built with sparse products, so a dense STRING
+    channel at three hops costs seconds rather than a dense 6,607-cube matmul.
+    """
+    assert hops >= 1, f"hops must be >= 1, got {hops}"
+    import scipy.sparse as sp
+
+    src = edge_index[0].cpu().numpy()
+    dst = edge_index[1].cpu().numpy()
+    A = sp.csr_matrix(
+        (np.ones(len(src), dtype=np.float32), (src, dst)), shape=(num_nodes, num_nodes)
+    )
+    if symmetric:
+        A = A.maximum(A.T).tocsr()
+    A.data[:] = 1.0
+    reach = A.copy()
+    power = A
+    for _ in range(hops - 1):
+        power = (power @ A).tocsr()
+        power.data[:] = 1.0
+        reach = reach.maximum(power).tocsr()
+    return torch.from_numpy(reach.toarray() > 0)
+
+
 class GraphRegularizedTransformerLayer(nn.Module):
     """Transformer layer with graph-regularized attention heads.
 
@@ -2076,8 +2110,14 @@ class CellGraphTransformer(nn.Module):
         # Graph regularization is enabled when graph_reg_lambda > 0
         self.adjacency_matrices: dict[str, torch.Tensor] | None
         if self.graph_reg_lambda > 0.0 and graph_regularization_config is not None:
-            # Normalize adjacency matrices from cell_graph
-            self.adjacency_matrices = self._normalize_adjacency_matrices(cell_graph)
+            # Normalize adjacency matrices from cell_graph. `hops` widens the target to
+            # the k-hop neighborhood and `symmetrize` adds the reverse of every edge
+            # (both default to today's behavior: one hop, directed as stored).
+            self.adjacency_matrices = self._normalize_adjacency_matrices(
+                cell_graph,
+                hops=int(graph_regularization_config.get("hops", 1)),
+                symmetrize=bool(graph_regularization_config.get("symmetrize", False)),
+            )
             self.regularized_head_config = graph_regularization_config.get(
                 "regularized_heads", {}
             )
@@ -2194,7 +2234,11 @@ class CellGraphTransformer(nn.Module):
                     "(use [] to mask every layer)"
                 )
             self.attention_head_mask = self._build_head_mask(
-                cell_graph, dict(mask_cfg.get("head_graphs", {})), num_attention_heads
+                cell_graph,
+                dict(mask_cfg.get("head_graphs", {})),
+                num_attention_heads,
+                hops=int(mask_cfg.get("hops", 1)),
+                symmetric=bool(mask_cfg.get("symmetric", True)),
             )
 
         # === Pair-(p, i) routing: propagate the deletion along the graphs ===
@@ -2425,7 +2469,12 @@ class CellGraphTransformer(nn.Module):
         return gpr_incidence_T, mr_incidence, num_met
 
     def _build_head_mask(
-        self, cell_graph: HeteroData, head_graphs: dict[Any, str], num_heads: int
+        self,
+        cell_graph: HeteroData,
+        head_graphs: dict[Any, str],
+        num_heads: int,
+        hops: int = 1,
+        symmetric: bool = True,
     ) -> torch.Tensor:
         """Build a [heads, N+1, N+1] bool mask, True where attention is ALLOWED.
 
@@ -2434,10 +2483,17 @@ class CellGraphTransformer(nn.Module):
         everywhere and is attended by everyone, and every gene keeps a self-loop, so no
         softmax row can be entirely -inf (which would produce NaN).
 
+        ``symmetric`` (the default, and the only behavior before 2026-09-27) writes the
+        reverse of every edge too, so the regulatory and TFLink heads lose direction under
+        the mask while the KL prior keeps it; ``symmetric=False`` masks along the stored
+        direction. ``hops`` widens the support to the k-hop reachability of the graph.
+
         Args:
             cell_graph: HeteroData providing (gene, rel, gene) edges.
             head_graphs: head index -> relation name.
             num_heads: Total attention heads.
+            hops: reach of the support, in steps along the graph.
+            symmetric: allow attention against the edge direction as well.
 
         Returns:
             [num_heads, N+1, N+1] boolean mask.
@@ -2459,8 +2515,12 @@ class CellGraphTransformer(nn.Module):
                 )
             edge_index = available[rel]
             head_mask = torch.zeros(num_nodes + 1, num_nodes + 1, dtype=torch.bool)
-            head_mask[edge_index[0] + 1, edge_index[1] + 1] = True
-            head_mask[edge_index[1] + 1, edge_index[0] + 1] = True  # symmetric
+            if hops == 1:
+                head_mask[edge_index[0] + 1, edge_index[1] + 1] = True
+                if symmetric:
+                    head_mask[edge_index[1] + 1, edge_index[0] + 1] = True
+            else:
+                head_mask[1:, 1:] = khop_reach(edge_index, num_nodes, hops, symmetric)
             head_mask.fill_diagonal_(True)  # self-loops: no all -inf row
             head_mask[0, :] = True  # CLS attends to everything
             head_mask[:, 0] = True  # everything attends to CLS
@@ -2519,12 +2579,23 @@ class CellGraphTransformer(nn.Module):
         return out
 
     def _normalize_adjacency_matrices(
-        self, cell_graph: HeteroData
+        self, cell_graph: HeteroData, hops: int = 1, symmetrize: bool = False
     ) -> dict[str, torch.Tensor]:
         """Normalize adjacency matrices row-wise: A_tilde[i,:] = A[i,:] / (degree[i] + eps).
 
+        With ``hops > 1`` the support is the k-hop reachability of the graph (see
+        :func:`khop_reach`) with the diagonal replaced by the one-hop diagonal, so a
+        gene's self entry is in the target exactly when the stored graph has its
+        self-loop (``to_cell_data`` adds one to every gene by default, so every round-1
+        target held one) and the even-length walks that return home on an undirected
+        graph add nothing; ``symmetrize`` adds the reverse of every edge before
+        normalization. At ``hops == 1`` and ``symmetrize == False`` the matrices are
+        bit-identical to the original path.
+
         Args:
             cell_graph: HeteroData with (gene, edge_type, gene) edges
+            hops: reach of the target, in steps along the graph
+            symmetrize: treat every edge as undirected
 
         Returns:
             Dictionary of normalized adjacency matrices
@@ -2544,8 +2615,21 @@ class CellGraphTransformer(nn.Module):
 
             # Create dense adjacency matrix
             num_nodes = self.gene_num
-            A = torch.zeros(num_nodes, num_nodes)
-            A[edge_index[0], edge_index[1]] = 1.0
+            if hops == 1 and not symmetrize:
+                A = torch.zeros(num_nodes, num_nodes)
+                A[edge_index[0], edge_index[1]] = 1.0
+            else:
+                one_hop = torch.zeros(num_nodes, num_nodes)
+                one_hop[edge_index[0], edge_index[1]] = 1.0
+                A = khop_reach(edge_index, num_nodes, hops, symmetrize).float()
+                # The reach's diagonal says nothing about the graph (every even walk on
+                # an undirected graph returns home). Keep exactly the diagonal the
+                # one-hop target has, so the k-hop and symmetric targets differ from
+                # round 1 in reach or direction alone. The real-size smoke of
+                # 2026-09-27 caught the earlier `fill_diagonal_(0)`: it emptied 6,147 of
+                # 6,607 regulatory rows that the one-hop target constrains to self.
+                idx = torch.arange(num_nodes)
+                A[idx, idx] = one_hop[idx, idx]
 
             # Compute row-wise normalization
             row_sums = A.sum(dim=1, keepdim=True) + 1e-10  # [num_nodes, 1]

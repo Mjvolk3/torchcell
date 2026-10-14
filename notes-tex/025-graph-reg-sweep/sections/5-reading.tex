@@ -1,0 +1,93 @@
+%% notes-tex/025-graph-reg-sweep/sections/5-reading.tex
+
+\section{Reading, and what is still missing\secstatus{todo}}
+\label{sec:reading}
+
+\notesec{On the hypothesis}
+Stated as proposed: the graphs help, but only when the model is optimized through the
+divergence; imposing them as a mask does not help. The mask half holds on both readings
+and all three seeds: the mask is indistinguishable from no penalty (0.421 against 0.425
+at epoch 29, 0.446 against 0.448 at the best epoch), and it trains without the collapse
+the earlier cosine-schedule runs showed. The prior half holds on the fixed-epoch reading
+from $\lambda = 10^{-3}$ up, with the gain growing to 0.021 to 0.023 at $\lambda = 1$ and
+holding through $\lambda = 100$, and holds weakly on the best-epoch reading (0.003 to
+0.007 at $\lambda = 1$, positive on every seed). The word ``help'' needs its reading
+attached: a best-checkpoint deployment gains at most 0.006 from the prior; a fixed-budget
+run gains 0.02, because the prior removes the decline after epoch 16 rather than raising
+the peak. The random-graph control at $\lambda = 10^{-1}$ and 1 (Section~\ref{sec:control})
+establishes that the help comes from the biology of the graphs: a prior of the same
+weight toward degree-matched rewirings gives 0.003 to 0.004 over no penalty at epoch 29
+where the biological graphs give 0.020 to 0.022, and at the best epoch it falls 0.011 to
+0.012 below no penalty on every seed. The alternative, that a strong prior toward any
+graph of the same degree sequence helps as much, is rejected at both $\lambda$; what
+stays open is whether the biological gain at the peak (0.004 to 0.006 over no penalty)
+is worth a prior that costs 0.011 when its target is wrong.
+
+\notesec{What the mock-up predicted and what was measured}
+The figure design (\file{notes/assets/drawio/FigS-graph-regularization-sweep.gen.py})
+drew six panels. Panel a, contraction with $\lambda$: measured, and it saturates at
+$10^{-2}$. Panel b, accuracy peaking between the extremes: measured, and there is no
+interior peak; the maximum is at the top of the ladder. Panel c, the penalty carrying the
+gradient before the point loss can: measured, and the penalty dominates the gradient at
+every probe epoch for $\lambda \geq 10^{-2}$, not only early. Panels d and e, discovery
+of edges outside a head's prior and overruling of cataloged edges by the digenic
+interaction, need the layer-1 attention of the saved checkpoints, which are on Delta
+\texttt{/scratch} and have not been read; the edge-recovery precision logged at $k =
+32$ (0.21 for every prior arm from $10^{-3}$ up, 0.006 with no penalty) is the nearest
+logged quantity and is not the discovery statistic. Panel f, the random-graph control:
+measured first at the wrong $\lambda$, then in round 1b at the two $\lambda$ where the
+gain is largest, where it separates.
+
+\notesec{The panel titles, checked}
+Each title of Figure~\ref{fig:sweep} states a finding, which is a place for bias to
+enter, so each is set against the number it rests on. (a) ``Prior gains at epoch 29,
+little at the peak'': $+0.022$ at $\lambda = 1$ on the fixed reading against $+0.004$ on
+the max reading (Table~\ref{tab:paired}). (b) ``Held-out loss falls with $\lambda$ from
+0.001 up'': 0.859, 0.839, 0.826, 0.825 at $10^{-3}$ to 1 against 0.867 with no penalty;
+the two smallest weights are above no penalty (0.880, 0.878), which the title's ``from
+0.001 up'' carries (Table~\ref{tab:arms}). (c) ``Any $\lambda$ tested moves attention
+onto its target'': 0.782 at $10^{-5}$ against 0.006 at 0. (d) ``Divergence floors near
+300 from $\lambda = 0.01$'': 300, 297, 298, 298, 297, 298 from $10^{-2}$ to 100. (e)
+``Penalty dominates the gradient from
+$\lambda = 0.01$'': ratio 15 to 24 at $10^{-2}$ by epoch 20 against 1.1 to 1.5 at
+$10^{-3}$, and $1.0 \times 10^{4}$ and $9.6 \times 10^{4}$ at 10 and 100. (f) ``Biology beats random graphs by $\approx$0.017 at $\lambda \geq 0.1$'':
+biological minus random on seeds 1 to 3 is $+0.017$ at epoch 29 at both $10^{-1}$
+($t = 14.5$, $p = 0.005$) and 1 ($t = 8.8$, $p = 0.013$), $+0.018$ and $+0.015$ at the
+max ($p = 0.03$ and $0.014$), and $+0.019$ and $+0.012$ at minimum validation loss
+($p = 0.06$ and $0.26$); at $10^{-3}$ it is $+0.012$ at epoch 29 ($p = 0.11$) and within
+noise on the other readings. (g)
+``Strong prior removes the decline after epoch 16'': seed-mean 0.441 to 0.425 with no
+penalty against 0.435 to 0.447 at $\lambda = 1$ and 0.441 to 0.445 at $10^{-1}$. (h)
+``Strong priors fit training like no penalty'': 0.625 and 0.624 against 0.624. (i)
+``Held-out loss rises less under a strong prior'': from the epoch-13 minimum, 0.801 to
+0.867 with no penalty against 0.803 to 0.825 at $\lambda = 1$.
+
+\notesec{Open items}
+\begin{enumerate}
+\item Closed in round 1b: $\lambda = 10$ and 100 (Delta jobs 22461968 to 22461973)
+  found no turnover (Section~\ref{sec:ladder}), and seed 2 of $\lambda = 10^{-5}$,
+  whose first job (22055161) never reached W\&B, is in the tables.
+\item The mechanism and budget figures the round-2 wireframe promised
+  (Figure~\ref{fig:round2}, rows 2 and 3) are not drawn; their numbers are in
+  Tables~\ref{tab:arms}, \ref{tab:paired} and \ref{tab:runs} and read in
+  Section~\ref{sec:round2}.
+\item Panels d and e from the checkpoints: pull the best-Pearson checkpoint of one seed
+  per arm from Delta and score layer-1 attention against TFLink-only and
+  STRING-experimental-only edges and against Costanzo digenic $\varepsilon$.
+\item A per-parameter-group gradient probe, to test the hypothesis of
+  Section~\ref{sec:training} about where the penalty's gradient lands.
+\end{enumerate}
+
+%% Ninety-one rows: a longtable that breaks across pages, caption in the generated file's
+%% \caption{\runsCaption}, so the prose stays here.
+\newcommand{\runsCaption}{Every run read, one row per seed. Epochs is the number of
+validation epochs logged, with the count of epochs whose validation Pearson was
+undefined (NaN, constant predictions) where there were any; Pearson at epoch 29 and the
+max over epochs with its epoch;
+the gradient-probe ratio (penalty over point loss) at epoch 0; the W\&B run id in
+project \texttt{torchcell\_025-solid-growth\_equivariant\_cell\_graph\_transformer}.
+Generated by \texttt{graph\_reg\_sweep\_readout.py}.}
+\begingroup
+\footnotesize
+\input{tables/t2-runs}
+\endgroup

@@ -1,0 +1,18 @@
+{
+  "n_tensors": 160,
+  "edge_counts": {
+    "physical_interaction": 144211,
+    "regulatory_interaction": 44310,
+    "string12_0_coexpression": 1002806,
+    "string12_0_cooccurence": 17692,
+    "string12_0_database": 79224,
+    "string12_0_experimental": 828701,
+    "string12_0_fusion": 18394,
+    "string12_0_neighborhood": 153320,
+    "tflink": 207250
+  },
+  "val_n": 37673,
+  "val_pearson_recomputed": 0.5007212514743843,
+  "val_pearson_recorded": 0.5009,
+  "abs_diff": 0.00017874852561572396
+}

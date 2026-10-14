@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-21-11-29-45",
+  "generated": "2026-10-13-11-53-10",
   "project": "zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer",
   "scoring_rule": "score = mean of val/gene_interaction/Pearson over the fixed epoch window ep10_29 (epochs 10-29), reported only when every epoch of the window is present; the S3 cell also reports the 100-129 window. The max over epochs is an upward-biased order statistic recorded for checkpoint selection, never the score.",
   "excluded_run_ids": [
@@ -14,12 +14,12 @@
       "label": "S3 closure, joint fitness 1.0",
       "graph_reg_lambda": null,
       "budget_epochs": 130,
-      "n_seeds_present": 1,
-      "n_seeds_scored": 1,
+      "n_seeds_present": 3,
+      "n_seeds_scored": 3,
       "window": "ep10_29",
-      "window_mean_mean": 0.4777,
-      "window_mean_sd": null,
-      "last_epoch_mean": 0.4799,
+      "window_mean_mean": 0.4789,
+      "window_mean_sd": 0.0011,
+      "last_epoch_mean": 0.4888,
       "seeds": {
         "1": {
           "run_id": "yb4gjh51",
@@ -30,6 +30,26 @@
           "partial": true,
           "score": 0.4777,
           "val_gi_pearson_last": 0.4799
+        },
+        "2": {
+          "run_id": "8fuwsk48",
+          "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/8fuwsk48",
+          "state": "finished",
+          "epochs_logged": 50,
+          "val_epochs_logged": 50,
+          "partial": true,
+          "score": 0.4797,
+          "val_gi_pearson_last": 0.4902
+        },
+        "3": {
+          "run_id": "srl1xzdf",
+          "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/srl1xzdf",
+          "state": "finished",
+          "epochs_logged": 50,
+          "val_epochs_logged": 50,
+          "partial": true,
+          "score": 0.4794,
+          "val_gi_pearson_last": 0.4962
         }
       },
       "window_ep100_129_mean": null,
@@ -193,61 +213,69 @@
       "graph_reg_lambda": 0.0,
       "budget_epochs": 30,
       "n_seeds_present": 3,
-      "n_seeds_scored": 2,
+      "n_seeds_scored": 3,
       "window": "ep10_29",
-      "window_mean_mean": 0.4352,
-      "window_mean_sd": 0.0037,
-      "last_epoch_mean": 0.4251,
+      "window_mean_mean": 0.4307,
+      "window_mean_sd": 0.0008,
+      "last_epoch_mean": 0.3998,
       "seeds": {
         "1": {
-          "run_id": "776b7nc2",
-          "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/776b7nc2",
-          "state": "failed",
-          "epochs_logged": 0,
-          "val_epochs_logged": 0,
-          "partial": true,
-          "score": null,
-          "val_gi_pearson_last": null
+          "run_id": "htqyeonz",
+          "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/htqyeonz",
+          "state": "finished",
+          "epochs_logged": 60,
+          "val_epochs_logged": 60,
+          "partial": false,
+          "score": 0.4306,
+          "val_gi_pearson_last": 0.4039
         },
         "2": {
-          "run_id": "4vgeyw2i",
-          "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/4vgeyw2i",
+          "run_id": "ye4iu9ra",
+          "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/ye4iu9ra",
           "state": "finished",
-          "epochs_logged": 30,
-          "val_epochs_logged": 30,
+          "epochs_logged": 60,
+          "val_epochs_logged": 60,
           "partial": false,
-          "score": 0.4326,
-          "val_gi_pearson_last": 0.4248
+          "score": 0.4315,
+          "val_gi_pearson_last": 0.3906
         },
         "3": {
-          "run_id": "mmiydyws",
-          "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/mmiydyws",
+          "run_id": "beggtb67",
+          "run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/beggtb67",
           "state": "finished",
-          "epochs_logged": 30,
-          "val_epochs_logged": 30,
+          "epochs_logged": 60,
+          "val_epochs_logged": 60,
           "partial": false,
-          "score": 0.4378,
-          "val_gi_pearson_last": 0.4253
+          "score": 0.43,
+          "val_gi_pearson_last": 0.4048
         }
       }
     }
   },
   "paired_s3_vs_fit_014": {
     "window": "ep10_29",
-    "n_paired_seeds": 1,
+    "n_paired_seeds": 3,
     "seeds": [
-      1
+      1,
+      2,
+      3
     ],
     "s3": {
-      "1": 0.4777
+      "1": 0.4777,
+      "2": 0.4797,
+      "3": 0.4794
     },
     "fit_014": {
-      "1": 0.4428
+      "1": 0.4428,
+      "2": 0.4383,
+      "3": 0.4366
     },
     "paired_diff": [
-      0.0349
+      0.0349,
+      0.0414,
+      0.0428
     ],
-    "paired_diff_mean": 0.0349,
-    "paired_diff_sd": null
+    "paired_diff_mean": 0.0397,
+    "paired_diff_sd": 0.0042
   }
 }

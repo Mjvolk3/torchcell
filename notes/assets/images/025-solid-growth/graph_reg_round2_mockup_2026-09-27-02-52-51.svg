@@ -1,0 +1,1085 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="704.7244" height="590.5512" viewBox="0 0 704.7244 590.5512" xmlns="http://www.w3.org/2000/svg" version="1.1"><g transform="scale(1.3888888889)">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.10.7, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 425.19685 
+L 507.401575 425.19685 
+L 507.401575 0 
+L 0 0 
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 25.370079 107.716535 
+L 78.365354 107.716535 
+L 78.365354 29.76378 
+L 25.370079 29.76378 
+z
+" style="fill: #ffffff"/>
+   </g>
+   <g id="matplotlib.axis_1">
+    <g id="text_1">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="51.867717" y="116.029035" transform="rotate(-0 51.867717 116.029035)">log10 λ, none, mask, rand</text>
+    </g>
+   </g>
+   <g id="matplotlib.axis_2">
+    <g id="text_2">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="20.177579" y="68.740157" transform="rotate(-90 20.177579 68.740157)">held-out Pearson</text>
+    </g>
+   </g>
+   <g id="patch_3">
+    <path d="M 25.370079 107.716535 
+L 25.370079 29.76378 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 78.365354 107.716535 
+L 78.365354 29.76378 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_5">
+    <path d="M 25.370079 107.716535 
+L 78.365354 107.716535 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_6">
+    <path d="M 25.370079 29.76378 
+L 78.365354 29.76378 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="text_3">
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #666666" transform="translate(32.480607 61.996017)">ladder to λ = 100;</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #666666" transform="translate(23.729045 67.357579)">random at λ = 1 (and 0.1)</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #666666" transform="translate(24.077092 72.722423)">replaces random at 1e-3;</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #666666" transform="translate(33.109513 78.010861)">stars per reading</text>
+   </g>
+   <g id="text_4">
+    <g id="patch_7">
+     <path d="M 12.027717 18.72378 
+L 18.396467 18.72378 
+L 18.396467 9.49878 
+L 12.027717 9.49878 
+z
+" style="fill: #ffffff"/>
+    </g>
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="12.987717" y="16.18503" transform="rotate(-0 12.987717 16.18503)">a</text>
+   </g>
+   <g id="text_5">
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="51.867717" y="23.76378" transform="rotate(-0 51.867717 23.76378)">F1a  Pearson, three readings</text>
+   </g>
+  </g>
+  <g id="axes_2">
+   <g id="patch_8">
+    <path d="M 110.16252 107.716535 
+L 163.157795 107.716535 
+L 163.157795 29.76378 
+L 110.16252 29.76378 
+z
+" style="fill: #ffffff"/>
+   </g>
+   <g id="matplotlib.axis_3">
+    <g id="text_6">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="136.660157" y="116.029035" transform="rotate(-0 136.660157 116.029035)">log10 λ</text>
+    </g>
+   </g>
+   <g id="matplotlib.axis_4">
+    <g id="text_7">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="104.97002" y="68.740157" transform="rotate(-90 104.97002 68.740157)">point loss</text>
+    </g>
+   </g>
+   <g id="patch_9">
+    <path d="M 110.16252 107.716535 
+L 110.16252 29.76378 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_10">
+    <path d="M 163.157795 107.716535 
+L 163.157795 29.76378 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_11">
+    <path d="M 110.16252 107.716535 
+L 163.157795 107.716535 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_12">
+    <path d="M 110.16252 29.76378 
+L 163.157795 29.76378 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="text_8">
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #666666" transform="translate(121.508986 67.395939)">epoch 29 and</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #666666" transform="translate(120.822267 72.684376)">at min val loss</text>
+   </g>
+   <g id="text_9">
+    <g id="patch_13">
+     <path d="M 100.62377 18.72378 
+L 107.43002 18.72378 
+L 107.43002 9.49878 
+L 100.62377 9.49878 
+z
+" style="fill: #ffffff"/>
+    </g>
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="101.58377" y="16.18503" transform="rotate(-0 101.58377 16.18503)">b</text>
+   </g>
+   <g id="text_10">
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="136.660157" y="23.76378" transform="rotate(-0 136.660157 23.76378)">F1b  held-out loss</text>
+   </g>
+  </g>
+  <g id="axes_3">
+   <g id="patch_14">
+    <path d="M 194.954961 107.716535 
+L 247.950236 107.716535 
+L 247.950236 29.76378 
+L 194.954961 29.76378 
+z
+" style="fill: #ffffff"/>
+   </g>
+   <g id="matplotlib.axis_5">
+    <g id="text_11">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="221.452598" y="116.029035" transform="rotate(-0 221.452598 116.029035)">log10 λ</text>
+    </g>
+   </g>
+   <g id="matplotlib.axis_6">
+    <g id="text_12">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="189.692148" y="68.740157" transform="rotate(-90 189.692148 68.740157)">recall at degree</text>
+    </g>
+   </g>
+   <g id="patch_15">
+    <path d="M 194.954961 107.716535 
+L 194.954961 29.76378 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_16">
+    <path d="M 247.950236 107.716535 
+L 247.950236 29.76378 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_17">
+    <path d="M 194.954961 107.716535 
+L 247.950236 107.716535 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_18">
+    <path d="M 194.954961 29.76378 
+L 247.950236 29.76378 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="text_13">
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #666666" transform="translate(205.89088 61.946329)">vs own target;</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #666666" transform="translate(201.446739 67.293361)">random arms also</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #666666" transform="translate(203.665489 72.581798)">vs the biological</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #666666" transform="translate(201.170958 78.001954)">graphs (from ckpt)</text>
+   </g>
+   <g id="text_14">
+    <g id="patch_19">
+     <path d="M 185.416211 18.72378 
+L 191.784961 18.72378 
+L 191.784961 9.49878 
+L 185.416211 9.49878 
+z
+" style="fill: #ffffff"/>
+    </g>
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="186.376211" y="16.18503" transform="rotate(-0 186.376211 16.18503)">c</text>
+   </g>
+   <g id="text_15">
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="221.452598" y="23.76378" transform="rotate(-0 221.452598 23.76378)">F1c  edge recall</text>
+   </g>
+  </g>
+  <g id="axes_4">
+   <g id="patch_20">
+    <path d="M 279.747402 107.716535 
+L 332.742677 107.716535 
+L 332.742677 29.76378 
+L 279.747402 29.76378 
+z
+" style="fill: #ffffff"/>
+   </g>
+   <g id="matplotlib.axis_7">
+    <g id="text_16">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="306.245039" y="116.029035" transform="rotate(-0 306.245039 116.029035)">log10 λ</text>
+    </g>
+   </g>
+   <g id="matplotlib.axis_8">
+    <g id="text_17">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="274.484589" y="68.740157" transform="rotate(-90 274.484589 68.740157)">divergence</text>
+    </g>
+   </g>
+   <g id="patch_21">
+    <path d="M 279.747402 107.716535 
+L 279.747402 29.76378 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_22">
+    <path d="M 332.742677 107.716535 
+L 332.742677 29.76378 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_23">
+    <path d="M 279.747402 107.716535 
+L 332.742677 107.716535 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_24">
+    <path d="M 279.747402 29.76378 
+L 332.742677 29.76378 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="text_18">
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #666666" transform="translate(291.58293 64.744298)">floor at ~300:</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #666666" transform="translate(291.789571 70.032736)">does 10, 100</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #666666" transform="translate(296.657149 75.321173)">break it?</text>
+   </g>
+   <g id="text_19">
+    <g id="patch_25">
+     <path d="M 270.467402 18.72378 
+L 277.273652 18.72378 
+L 277.273652 9.49878 
+L 270.467402 9.49878 
+z
+" style="fill: #ffffff"/>
+    </g>
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="271.427402" y="16.18503" transform="rotate(-0 271.427402 16.18503)">d</text>
+   </g>
+   <g id="text_20">
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="306.245039" y="23.76378" transform="rotate(-0 306.245039 23.76378)">F1d  divergence</text>
+   </g>
+  </g>
+  <g id="axes_5">
+   <g id="patch_26">
+    <path d="M 364.539843 107.716535 
+L 417.535118 107.716535 
+L 417.535118 29.76378 
+L 364.539843 29.76378 
+z
+" style="fill: #ffffff"/>
+   </g>
+   <g id="matplotlib.axis_9">
+    <g id="text_21">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="391.03748" y="116.011223" transform="rotate(-0 391.03748 116.011223)">probe epoch</text>
+    </g>
+   </g>
+   <g id="matplotlib.axis_10">
+    <g id="text_22">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="359.27703" y="68.740157" transform="rotate(-90 359.27703 68.740157)">penalty / point</text>
+    </g>
+   </g>
+   <g id="patch_27">
+    <path d="M 364.539843 107.716535 
+L 364.539843 29.76378 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_28">
+    <path d="M 417.535118 107.716535 
+L 417.535118 29.76378 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_29">
+    <path d="M 364.539843 107.716535 
+L 417.535118 107.716535 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_30">
+    <path d="M 364.539843 29.76378 
+L 417.535118 29.76378 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="text_23">
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #666666" transform="translate(376.582012 67.388517)">adds 10, 100</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #666666" transform="translate(375.611699 72.676954)">and random 1</text>
+   </g>
+   <g id="text_24">
+    <g id="patch_31">
+     <path d="M 355.001093 18.72378 
+L 361.369843 18.72378 
+L 361.369843 9.49878 
+L 355.001093 9.49878 
+z
+" style="fill: #ffffff"/>
+    </g>
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="355.961093" y="16.18503" transform="rotate(-0 355.961093 16.18503)">e</text>
+   </g>
+   <g id="text_25">
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="391.03748" y="23.76378" transform="rotate(-0 391.03748 23.76378)">F1e  gradient ratio</text>
+   </g>
+  </g>
+  <g id="axes_6">
+   <g id="patch_32">
+    <path d="M 449.332283 107.716535 
+L 502.327559 107.716535 
+L 502.327559 29.76378 
+L 449.332283 29.76378 
+z
+" style="fill: #ffffff"/>
+   </g>
+   <g id="matplotlib.axis_11">
+    <g id="text_26">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="475.829921" y="115.94091" transform="rotate(-0 475.829921 115.94091)">target</text>
+    </g>
+   </g>
+   <g id="matplotlib.axis_12">
+    <g id="text_27">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="444.139783" y="68.740157" transform="rotate(-90 444.139783 68.740157)">Pearson, ep 29</text>
+    </g>
+   </g>
+   <g id="patch_33">
+    <path d="M 449.332283 107.716535 
+L 449.332283 29.76378 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_34">
+    <path d="M 502.327559 107.716535 
+L 502.327559 29.76378 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_35">
+    <path d="M 449.332283 107.716535 
+L 502.327559 107.716535 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_36">
+    <path d="M 449.332283 29.76378 
+L 502.327559 29.76378 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="text_28">
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #9673a6" transform="translate(453.042031 64.649142)">biological vs random</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #9673a6" transform="translate(456.672499 69.996173)">vs none, AT λ = 1</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #9673a6" transform="translate(462.420156 75.357736)">(n = 3 each)</text>
+   </g>
+   <g id="text_29">
+    <g id="patch_37">
+     <path d="M 440.007283 18.72378 
+L 444.591033 18.72378 
+L 444.591033 9.49878 
+L 440.007283 9.49878 
+z
+" style="fill: #ffffff"/>
+    </g>
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="440.967283" y="16.18503" transform="rotate(-0 440.967283 16.18503)">f</text>
+   </g>
+   <g id="text_30">
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="475.829921" y="23.76378" transform="rotate(-0 475.829921 23.76378)">F1f  random control</text>
+   </g>
+  </g>
+  <g id="axes_7">
+   <g id="patch_38">
+    <path d="M 25.370079 255.826772 
+L 78.365354 255.826772 
+L 78.365354 177.874016 
+L 25.370079 177.874016 
+z
+" style="fill: #ffffff"/>
+   </g>
+   <g id="matplotlib.axis_13">
+    <g id="text_31">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="51.867717" y="264.194584" transform="rotate(-0 51.867717 264.194584)">mechanism, reach and direction (9 columns)</text>
+    </g>
+   </g>
+   <g id="matplotlib.axis_14">
+    <g id="text_32">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="20.177579" y="216.850394" transform="rotate(-90 20.177579 216.850394)">held-out Pearson</text>
+    </g>
+   </g>
+   <g id="patch_39">
+    <path d="M 25.370079 255.826772 
+L 25.370079 177.874016 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_40">
+    <path d="M 78.365354 255.826772 
+L 78.365354 177.874016 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_41">
+    <path d="M 25.370079 255.826772 
+L 78.365354 255.826772 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_42">
+    <path d="M 25.370079 177.874016 
+L 78.365354 177.874016 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="text_33">
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #d79b00" transform="translate(20.466154 215.498753)">one column per mechanism;</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #d79b00" transform="translate(37.000529 220.787191)">stars vs none</text>
+   </g>
+   <g id="text_34">
+    <g id="patch_43">
+     <path d="M 11.982717 166.834016 
+L 18.788967 166.834016 
+L 18.788967 157.609016 
+L 11.982717 157.609016 
+z
+" style="fill: #ffffff"/>
+    </g>
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="12.942717" y="164.190266" transform="rotate(-0 12.942717 164.190266)">g</text>
+   </g>
+   <g id="text_35">
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="51.867717" y="171.874016" transform="rotate(-0 51.867717 171.874016)">F2a  Pearson, three readings</text>
+   </g>
+  </g>
+  <g id="axes_8">
+   <g id="patch_44">
+    <path d="M 110.16252 255.826772 
+L 163.157795 255.826772 
+L 163.157795 177.874016 
+L 110.16252 177.874016 
+z
+" style="fill: #ffffff"/>
+   </g>
+   <g id="matplotlib.axis_15">
+    <g id="text_36">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="136.660157" y="264.121459" transform="rotate(-0 136.660157 264.121459)">mechanism</text>
+    </g>
+   </g>
+   <g id="matplotlib.axis_16">
+    <g id="text_37">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="104.97002" y="216.850394" transform="rotate(-90 104.97002 216.850394)">point loss</text>
+    </g>
+   </g>
+   <g id="patch_45">
+    <path d="M 110.16252 255.826772 
+L 110.16252 177.874016 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_46">
+    <path d="M 163.157795 255.826772 
+L 163.157795 177.874016 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_47">
+    <path d="M 110.16252 255.826772 
+L 163.157795 255.826772 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_48">
+    <path d="M 110.16252 177.874016 
+L 163.157795 177.874016 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="text_38">
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #666666" transform="translate(121.508986 215.506175)">epoch 29 and</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #666666" transform="translate(120.822267 220.794612)">at min val loss</text>
+   </g>
+   <g id="text_39">
+    <g id="patch_49">
+     <path d="M 100.62377 166.834016 
+L 107.43002 166.834016 
+L 107.43002 157.609016 
+L 100.62377 157.609016 
+z
+" style="fill: #ffffff"/>
+    </g>
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="101.58377" y="164.295266" transform="rotate(-0 101.58377 164.295266)">h</text>
+   </g>
+   <g id="text_40">
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="136.660157" y="171.874016" transform="rotate(-0 136.660157 171.874016)">F2b  held-out loss</text>
+   </g>
+  </g>
+  <g id="axes_9">
+   <g id="patch_50">
+    <path d="M 194.954961 255.826772 
+L 247.950236 255.826772 
+L 247.950236 177.874016 
+L 194.954961 177.874016 
+z
+" style="fill: #ffffff"/>
+   </g>
+   <g id="matplotlib.axis_17">
+    <g id="text_41">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="221.452598" y="264.121459" transform="rotate(-0 221.452598 264.121459)">mechanism</text>
+    </g>
+   </g>
+   <g id="matplotlib.axis_18">
+    <g id="text_42">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="189.692148" y="216.850394" transform="rotate(-90 189.692148 216.850394)">recall at degree</text>
+    </g>
+   </g>
+   <g id="patch_51">
+    <path d="M 194.954961 255.826772 
+L 194.954961 177.874016 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_52">
+    <path d="M 247.950236 255.826772 
+L 247.950236 177.874016 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_53">
+    <path d="M 194.954961 255.826772 
+L 247.950236 255.826772 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_54">
+    <path d="M 194.954961 177.874016 
+L 247.950236 177.874016 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="text_43">
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #666666" transform="translate(203.810802 210.159144)">mask arms 1 by</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #666666" transform="translate(198.942052 215.506175)">construction on their</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #666666" transform="translate(197.136583 220.794612)">own support; score all</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #666666" transform="translate(197.966661 226.08305)">vs one-hop biological</text>
+   </g>
+   <g id="text_44">
+    <g id="patch_55">
+     <path d="M 185.416211 166.834016 
+L 189.558711 166.834016 
+L 189.558711 157.609016 
+L 185.416211 157.609016 
+z
+" style="fill: #ffffff"/>
+    </g>
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="186.376211" y="164.295266" transform="rotate(-0 186.376211 164.295266)">i</text>
+   </g>
+   <g id="text_45">
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="221.452598" y="171.874016" transform="rotate(-0 221.452598 171.874016)">F2c  edge recall</text>
+   </g>
+  </g>
+  <g id="axes_10">
+   <g id="patch_56">
+    <path d="M 279.747402 255.826772 
+L 332.742677 255.826772 
+L 332.742677 177.874016 
+L 279.747402 177.874016 
+z
+" style="fill: #ffffff"/>
+   </g>
+   <g id="matplotlib.axis_19">
+    <g id="text_46">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="306.245039" y="264.121459" transform="rotate(-0 306.245039 264.121459)">epoch</text>
+    </g>
+   </g>
+   <g id="matplotlib.axis_20">
+    <g id="text_47">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="274.554902" y="216.850394" transform="rotate(-90 274.554902 216.850394)">Pearson</text>
+    </g>
+   </g>
+   <g id="patch_57">
+    <path d="M 279.747402 255.826772 
+L 279.747402 177.874016 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_58">
+    <path d="M 332.742677 255.826772 
+L 332.742677 177.874016 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_59">
+    <path d="M 279.747402 255.826772 
+L 332.742677 255.826772 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_60">
+    <path d="M 279.747402 177.874016 
+L 332.742677 177.874016 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="text_48">
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #6c8ebf" transform="translate(281.37043 210.072503)">none, mask 1/2/3-hop,</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #6c8ebf" transform="translate(290.539571 215.434066)">KL1 1/2/3-hop</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #6c8ebf" transform="translate(281.375117 220.795628)">(the curves move here</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #6c8ebf" transform="translate(294.716524 226.215784)">from F1 g)</text>
+   </g>
+   <g id="text_49">
+    <g id="patch_61">
+     <path d="M 269.420039 166.834016 
+L 273.562539 166.834016 
+L 273.562539 157.504016 
+L 269.420039 157.504016 
+z
+" style="fill: #ffffff"/>
+    </g>
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="270.380039" y="164.190266" transform="rotate(-0 270.380039 164.190266)">j</text>
+   </g>
+   <g id="text_50">
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="306.245039" y="171.874016" transform="rotate(-0 306.245039 171.874016)">F2d  val Pearson by epoch</text>
+   </g>
+  </g>
+  <g id="axes_11">
+   <g id="patch_62">
+    <path d="M 364.539843 255.826772 
+L 417.535118 255.826772 
+L 417.535118 177.874016 
+L 364.539843 177.874016 
+z
+" style="fill: #ffffff"/>
+   </g>
+   <g id="matplotlib.axis_21">
+    <g id="text_51">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="391.03748" y="264.121459" transform="rotate(-0 391.03748 264.121459)">epoch</text>
+    </g>
+   </g>
+   <g id="matplotlib.axis_22">
+    <g id="text_52">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="359.347343" y="216.850394" transform="rotate(-90 359.347343 216.850394)">Pearson</text>
+    </g>
+   </g>
+   <g id="patch_63">
+    <path d="M 364.539843 255.826772 
+L 364.539843 177.874016 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_64">
+    <path d="M 417.535118 255.826772 
+L 417.535118 177.874016 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_65">
+    <path d="M 364.539843 255.826772 
+L 417.535118 255.826772 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_66">
+    <path d="M 364.539843 177.874016 
+L 417.535118 177.874016 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="text_53">
+    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: middle; fill: #666666" x="391.03748" y="218.142972" transform="rotate(-0 391.03748 218.142972)">same arms</text>
+   </g>
+   <g id="text_54">
+    <g id="patch_67">
+     <path d="M 352.27748 166.834016 
+L 358.64623 166.834016 
+L 358.64623 157.609016 
+L 352.27748 157.609016 
+z
+" style="fill: #ffffff"/>
+    </g>
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="353.23748" y="164.295266" transform="rotate(-0 353.23748 164.295266)">k</text>
+   </g>
+   <g id="text_55">
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="391.03748" y="171.874016" transform="rotate(-0 391.03748 171.874016)">F2e  train Pearson by epoch</text>
+   </g>
+  </g>
+  <g id="axes_12">
+   <g id="patch_68">
+    <path d="M 449.332283 255.826772 
+L 502.327559 255.826772 
+L 502.327559 177.874016 
+L 449.332283 177.874016 
+z
+" style="fill: #ffffff"/>
+   </g>
+   <g id="matplotlib.axis_23">
+    <g id="text_56">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="475.829921" y="264.121459" transform="rotate(-0 475.829921 264.121459)">epoch</text>
+    </g>
+   </g>
+   <g id="matplotlib.axis_24">
+    <g id="text_57">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="444.139783" y="216.850394" transform="rotate(-90 444.139783 216.850394)">point loss</text>
+    </g>
+   </g>
+   <g id="patch_69">
+    <path d="M 449.332283 255.826772 
+L 449.332283 177.874016 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_70">
+    <path d="M 502.327559 255.826772 
+L 502.327559 177.874016 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_71">
+    <path d="M 449.332283 255.826772 
+L 502.327559 255.826772 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_72">
+    <path d="M 449.332283 177.874016 
+L 502.327559 177.874016 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="text_58">
+    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: middle; fill: #666666" x="475.829921" y="218.142972" transform="rotate(-0 475.829921 218.142972)">same arms</text>
+   </g>
+   <g id="text_59">
+    <g id="patch_73">
+     <path d="M 439.793533 166.834016 
+L 443.936033 166.834016 
+L 443.936033 157.609016 
+L 439.793533 157.609016 
+z
+" style="fill: #ffffff"/>
+    </g>
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="440.753533" y="164.295266" transform="rotate(-0 440.753533 164.295266)">l</text>
+   </g>
+   <g id="text_60">
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="475.829921" y="171.874016" transform="rotate(-0 475.829921 171.874016)">F2f  val loss by epoch</text>
+   </g>
+  </g>
+  <g id="axes_13">
+   <g id="patch_74">
+    <path d="M 25.370079 403.937008 
+L 78.365354 403.937008 
+L 78.365354 325.984252 
+L 25.370079 325.984252 
+z
+" style="fill: #ffffff"/>
+   </g>
+   <g id="matplotlib.axis_25">
+    <g id="text_61">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="51.867717" y="412.30482" transform="rotate(-0 51.867717 412.30482)">epoch (0-59)</text>
+    </g>
+   </g>
+   <g id="matplotlib.axis_26">
+    <g id="text_62">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="20.177579" y="364.96063" transform="rotate(-90 20.177579 364.96063)">Pearson</text>
+    </g>
+   </g>
+   <g id="patch_75">
+    <path d="M 25.370079 403.937008 
+L 25.370079 325.984252 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_76">
+    <path d="M 78.365354 403.937008 
+L 78.365354 325.984252 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_77">
+    <path d="M 25.370079 403.937008 
+L 78.365354 403.937008 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_78">
+    <path d="M 25.370079 325.984252 
+L 78.365354 325.984252 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="text_63">
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #6c8ebf" transform="translate(31.812638 360.860708)">none, mask, KL 1;</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #6c8ebf" transform="translate(27.225529 366.166958)">does KL 1 keep rising,</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #6c8ebf" transform="translate(26.850138 371.587114)">does none keep falling</text>
+   </g>
+   <g id="text_64">
+    <g id="patch_79">
+     <path d="M 12.522717 314.944252 
+L 21.556467 314.944252 
+L 21.556467 305.719252 
+L 12.522717 305.719252 
+z
+" style="fill: #ffffff"/>
+    </g>
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="13.482717" y="312.405502" transform="rotate(-0 13.482717 312.405502)">m</text>
+   </g>
+   <g id="text_65">
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="51.867717" y="319.984252" transform="rotate(-0 51.867717 319.984252)">F3a  60 epochs, val Pearson</text>
+   </g>
+  </g>
+  <g id="axes_14">
+   <g id="patch_80">
+    <path d="M 110.16252 403.937008 
+L 163.157795 403.937008 
+L 163.157795 325.984252 
+L 110.16252 325.984252 
+z
+" style="fill: #ffffff"/>
+   </g>
+   <g id="matplotlib.axis_27">
+    <g id="text_66">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="136.660157" y="412.231695" transform="rotate(-0 136.660157 412.231695)">epoch</text>
+    </g>
+   </g>
+   <g id="matplotlib.axis_28">
+    <g id="text_67">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="104.97002" y="364.96063" transform="rotate(-90 104.97002 364.96063)">Pearson</text>
+    </g>
+   </g>
+   <g id="patch_81">
+    <path d="M 110.16252 403.937008 
+L 110.16252 325.984252 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_82">
+    <path d="M 163.157795 403.937008 
+L 163.157795 325.984252 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_83">
+    <path d="M 110.16252 403.937008 
+L 163.157795 403.937008 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_84">
+    <path d="M 110.16252 325.984252 
+L 163.157795 325.984252 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="text_68">
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #666666" transform="translate(112.618751 363.54313)">val Pearson by epoch</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #666666" transform="translate(111.095704 368.963286)">for the placement arms</text>
+   </g>
+   <g id="text_69">
+    <g id="patch_85">
+     <path d="M 100.88252 314.944252 
+L 107.68877 314.944252 
+L 107.68877 305.719252 
+L 100.88252 305.719252 
+z
+" style="fill: #ffffff"/>
+    </g>
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="101.84252" y="312.405502" transform="rotate(-0 101.84252 312.405502)">n</text>
+   </g>
+   <g id="text_70">
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="136.660157" y="319.984252" transform="rotate(-0 136.660157 319.984252)">F3b  placement curves</text>
+   </g>
+  </g>
+  <g id="axes_15">
+   <g id="patch_86">
+    <path d="M 194.954961 403.937008 
+L 247.950236 403.937008 
+L 247.950236 325.984252 
+L 194.954961 325.984252 
+z
+" style="fill: #ffffff"/>
+   </g>
+   <g id="matplotlib.axis_29">
+    <g id="text_71">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="221.452598" y="412.30482" transform="rotate(-0 221.452598 412.30482)">top-k off-graph attention</text>
+    </g>
+   </g>
+   <g id="matplotlib.axis_30">
+    <g id="text_72">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="189.692148" y="364.96063" transform="rotate(-90 189.692148 364.96063)">recall of unseen edges</text>
+    </g>
+   </g>
+   <g id="patch_87">
+    <path d="M 194.954961 403.937008 
+L 194.954961 325.984252 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_88">
+    <path d="M 247.950236 403.937008 
+L 247.950236 325.984252 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_89">
+    <path d="M 194.954961 403.937008 
+L 247.950236 403.937008 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_90">
+    <path d="M 194.954961 325.984252 
+L 247.950236 325.984252 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="text_73">
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #b85450" transform="translate(196.443223 358.26313)">from best checkpoints:</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #b85450" transform="translate(200.886583 363.551567)">regulatory head vs</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #b85450" transform="translate(200.194395 368.898599)">TFLink-only edges;</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #b85450" transform="translate(197.968223 374.24563)">null: degree-matched</text>
+   </g>
+   <g id="text_74">
+    <g id="patch_91">
+     <path d="M 185.674961 314.944252 
+L 192.481211 314.944252 
+L 192.481211 305.719252 
+L 185.674961 305.719252 
+z
+" style="fill: #ffffff"/>
+    </g>
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="186.634961" y="312.405502" transform="rotate(-0 186.634961 312.405502)">o</text>
+   </g>
+   <g id="text_75">
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="221.452598" y="319.984252" transform="rotate(-0 221.452598 319.984252)">F3c  discovery</text>
+   </g>
+  </g>
+  <g id="axes_16">
+   <g id="patch_92">
+    <path d="M 279.747402 403.937008 
+L 332.742677 403.937008 
+L 332.742677 325.984252 
+L 279.747402 325.984252 
+z
+" style="fill: #ffffff"/>
+   </g>
+   <g id="matplotlib.axis_31">
+    <g id="text_76">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="306.245039" y="412.30482" transform="rotate(-0 306.245039 412.30482)">α_ij / (1/d_i), binned</text>
+    </g>
+   </g>
+   <g id="matplotlib.axis_32">
+    <g id="text_77">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="274.484589" y="364.96063" transform="rotate(-90 274.484589 364.96063)">share with |ε| &gt; 0.08</text>
+    </g>
+   </g>
+   <g id="patch_93">
+    <path d="M 279.747402 403.937008 
+L 279.747402 325.984252 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_94">
+    <path d="M 332.742677 403.937008 
+L 332.742677 325.984252 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_95">
+    <path d="M 279.747402 403.937008 
+L 332.742677 403.937008 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_96">
+    <path d="M 279.747402 325.984252 
+L 332.742677 325.984252 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="text_78">
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #b85450" transform="translate(281.235664 358.226567)">from best checkpoints:</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #b85450" transform="translate(280.815742 363.515005)">kept vs down-weighted</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #b85450" transform="translate(284.983321 368.862036)">prior edges against</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #b85450" transform="translate(285.258711 374.282192)">Costanzo digenic ε</text>
+   </g>
+   <g id="text_79">
+    <g id="patch_97">
+     <path d="M 270.208652 314.944252 
+L 277.014902 314.944252 
+L 277.014902 305.719252 
+L 270.208652 305.719252 
+z
+" style="fill: #ffffff"/>
+    </g>
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="271.168652" y="312.405502" transform="rotate(-0 271.168652 312.405502)">p</text>
+   </g>
+   <g id="text_80">
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="306.245039" y="319.984252" transform="rotate(-0 306.245039 319.984252)">F3d  overruling</text>
+   </g>
+  </g>
+  <g id="axes_17">
+   <g id="patch_98">
+    <path d="M 364.539843 403.937008 
+L 417.535118 403.937008 
+L 417.535118 325.984252 
+L 364.539843 325.984252 
+z
+" style="fill: #ffffff"/>
+   </g>
+   <g id="matplotlib.axis_33">
+    <g id="text_81">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="391.03748" y="412.231695" transform="rotate(-0 391.03748 412.231695)">arm</text>
+    </g>
+   </g>
+   <g id="matplotlib.axis_34">
+    <g id="text_82">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="359.27703" y="364.96063" transform="rotate(-90 359.27703 364.96063)">divergence to biological Ã</text>
+    </g>
+   </g>
+   <g id="patch_99">
+    <path d="M 364.539843 403.937008 
+L 364.539843 325.984252 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_100">
+    <path d="M 417.535118 403.937008 
+L 417.535118 325.984252 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_101">
+    <path d="M 364.539843 403.937008 
+L 417.535118 403.937008 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_102">
+    <path d="M 364.539843 325.984252 
+L 417.535118 325.984252 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="text_83">
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #666666" transform="translate(367.555449 360.898911)">none, mask, random,</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #666666" transform="translate(367.28748 366.260474)">symmetric: from ckpt,</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #666666" transform="translate(365.473808 371.607505)">fills the crosses of F1 d</text>
+   </g>
+   <g id="text_84">
+    <g id="patch_103">
+     <path d="M 353.999843 314.944252 
+L 360.806093 314.944252 
+L 360.806093 305.719252 
+L 353.999843 305.719252 
+z
+" style="fill: #ffffff"/>
+    </g>
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="354.959843" y="312.405502" transform="rotate(-0 354.959843 312.405502)">q</text>
+   </g>
+   <g id="text_85">
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="391.03748" y="319.984252" transform="rotate(-0 391.03748 319.984252)">F3e  divergence, all arms</text>
+   </g>
+  </g>
+  <g id="axes_18">
+   <g id="patch_104">
+    <path d="M 449.332283 403.937008 
+L 502.327559 403.937008 
+L 502.327559 325.984252 
+L 449.332283 325.984252 
+z
+" style="fill: #ffffff"/>
+   </g>
+   <g id="matplotlib.axis_35"/>
+   <g id="matplotlib.axis_36"/>
+   <g id="patch_105">
+    <path d="M 449.332283 403.937008 
+L 449.332283 325.984252 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_106">
+    <path d="M 502.327559 403.937008 
+L 502.327559 325.984252 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_107">
+    <path d="M 449.332283 403.937008 
+L 502.327559 403.937008 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_108">
+    <path d="M 449.332283 325.984252 
+L 502.327559 325.984252 
+" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="text_86">
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #666666" transform="translate(452.069765 360.927739)">per-run table of every</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #666666" transform="translate(451.237734 366.274771)">round-2 run, W&amp;B ids,</text>
+    <text style="font-size: 5px; font-family: 'Arial'; fill: #666666" transform="translate(463.600624 371.581021)">as t2 today</text>
+   </g>
+   <g id="text_87">
+    <g id="patch_109">
+     <path d="M 448.372283 314.944252 
+L 453.406033 314.944252 
+L 453.406033 305.719252 
+L 448.372283 305.719252 
+z
+" style="fill: #ffffff"/>
+    </g>
+    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="449.332283" y="312.405502" transform="rotate(-0 449.332283 312.405502)">r</text>
+   </g>
+   <g id="text_88">
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="475.829921" y="319.984252" transform="rotate(-0 475.829921 319.984252)">F3f  seed table</text>
+   </g>
+  </g>
+  <g id="text_89">
+   <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle; fill: #b85450" x="253.700787" y="10.629921" transform="rotate(-0 253.700787 10.629921)">PLANNED, no data: three figures of round 2. Row 1 revises Figure 2 of this document; rows 2 and 3 are new.</text>
+  </g>
+ </g>
+</g></svg>

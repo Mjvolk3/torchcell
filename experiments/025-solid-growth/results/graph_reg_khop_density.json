@@ -1,0 +1,269 @@
+{
+ "n_genes": 6607,
+ "rows": [
+  {
+   "graph": "physical",
+   "symmetric": true,
+   "hops": 1,
+   "pairs": 275208,
+   "fraction": 0.006305480370844948,
+   "mean_out_degree": 41.654003329801725
+  },
+  {
+   "graph": "physical",
+   "symmetric": true,
+   "hops": 2,
+   "pairs": 26802212,
+   "fraction": 0.6140839716186481,
+   "mean_out_degree": 4056.6387165127894
+  },
+  {
+   "graph": "physical",
+   "symmetric": true,
+   "hops": 3,
+   "pairs": 32654202,
+   "fraction": 0.748162952154755,
+   "mean_out_degree": 4942.364461934312
+  },
+  {
+   "graph": "regulatory",
+   "symmetric": false,
+   "hops": 1,
+   "pairs": 37703,
+   "fraction": 0.0008638394466075371,
+   "mean_out_degree": 5.70652338428939
+  },
+  {
+   "graph": "regulatory",
+   "symmetric": false,
+   "hops": 2,
+   "pairs": 175451,
+   "fraction": 0.0040198789153844255,
+   "mean_out_degree": 26.555320115029513
+  },
+  {
+   "graph": "regulatory",
+   "symmetric": false,
+   "hops": 3,
+   "pairs": 456385,
+   "fraction": 0.010456551622947266,
+   "mean_out_degree": 69.07598002118965
+  },
+  {
+   "graph": "regulatory",
+   "symmetric": true,
+   "hops": 1,
+   "pairs": 75354,
+   "fraction": 0.0017264874853370911,
+   "mean_out_degree": 11.405176328136825
+  },
+  {
+   "graph": "regulatory",
+   "symmetric": true,
+   "hops": 2,
+   "pairs": 19987212,
+   "fraction": 0.45794080453299535,
+   "mean_out_degree": 3025.1569547449676
+  },
+  {
+   "graph": "regulatory",
+   "symmetric": true,
+   "hops": 3,
+   "pairs": 35588774,
+   "fraction": 0.8153989559876059,
+   "mean_out_degree": 5386.5255032541245
+  },
+  {
+   "graph": "tflink",
+   "symmetric": false,
+   "hops": 1,
+   "pairs": 200643,
+   "fraction": 0.004597070208887252,
+   "mean_out_degree": 30.368245799909186
+  },
+  {
+   "graph": "tflink",
+   "symmetric": false,
+   "hops": 2,
+   "pairs": 1120065,
+   "fraction": 0.025662582016403764,
+   "mean_out_degree": 169.52701680036324
+  },
+  {
+   "graph": "tflink",
+   "symmetric": false,
+   "hops": 3,
+   "pairs": 1375907,
+   "fraction": 0.031524354599459896,
+   "mean_out_degree": 208.2498864840321
+  },
+  {
+   "graph": "tflink",
+   "symmetric": true,
+   "hops": 1,
+   "pairs": 399102,
+   "fraction": 0.00914410128689922,
+   "mean_out_degree": 60.405933101256245
+  },
+  {
+   "graph": "tflink",
+   "symmetric": true,
+   "hops": 2,
+   "pairs": 25564126,
+   "fraction": 0.5857173290413322,
+   "mean_out_degree": 3869.248675647041
+  },
+  {
+   "graph": "tflink",
+   "symmetric": true,
+   "hops": 3,
+   "pairs": 25740336,
+   "fraction": 0.5897545979293972,
+   "mean_out_degree": 3895.9188739215983
+  },
+  {
+   "graph": "string12_0_neighborhood",
+   "symmetric": true,
+   "hops": 1,
+   "pairs": 293426,
+   "fraction": 0.00672288553855829,
+   "mean_out_degree": 44.41138186771606
+  },
+  {
+   "graph": "string12_0_neighborhood",
+   "symmetric": true,
+   "hops": 2,
+   "pairs": 3606426,
+   "fraction": 0.08262931438005022,
+   "mean_out_degree": 545.8492507946117
+  },
+  {
+   "graph": "string12_0_neighborhood",
+   "symmetric": true,
+   "hops": 3,
+   "pairs": 4748602,
+   "fraction": 0.10879849677318632,
+   "mean_out_degree": 718.7228696836688
+  },
+  {
+   "graph": "string12_0_fusion",
+   "symmetric": true,
+   "hops": 1,
+   "pairs": 23574,
+   "fraction": 0.0005401201791455873,
+   "mean_out_degree": 3.56803390343575
+  },
+  {
+   "graph": "string12_0_fusion",
+   "symmetric": true,
+   "hops": 2,
+   "pairs": 240440,
+   "fraction": 0.005508886734273565,
+   "mean_out_degree": 36.39170576661117
+  },
+  {
+   "graph": "string12_0_fusion",
+   "symmetric": true,
+   "hops": 3,
+   "pairs": 1496380,
+   "fraction": 0.03428459462415687,
+   "mean_out_degree": 226.48403208718025
+  },
+  {
+   "graph": "string12_0_cooccurence",
+   "symmetric": true,
+   "hops": 1,
+   "pairs": 22170,
+   "fraction": 0.0005079521664400472,
+   "mean_out_degree": 3.355532011502951
+  },
+  {
+   "graph": "string12_0_cooccurence",
+   "symmetric": true,
+   "hops": 2,
+   "pairs": 57528,
+   "fraction": 0.0013180637000885446,
+   "mean_out_degree": 8.707128802784926
+  },
+  {
+   "graph": "string12_0_cooccurence",
+   "symmetric": true,
+   "hops": 3,
+   "pairs": 140166,
+   "fraction": 0.0032114399351030965,
+   "mean_out_degree": 21.214772211291056
+  },
+  {
+   "graph": "string12_0_coexpression",
+   "symmetric": true,
+   "hops": 1,
+   "pairs": 1992398,
+   "fraction": 0.045649205255336806,
+   "mean_out_degree": 301.558649916755
+  },
+  {
+   "graph": "string12_0_coexpression",
+   "symmetric": true,
+   "hops": 2,
+   "pairs": 30308836,
+   "fraction": 0.6944266535171896,
+   "mean_out_degree": 4587.382473134554
+  },
+  {
+   "graph": "string12_0_coexpression",
+   "symmetric": true,
+   "hops": 3,
+   "pairs": 40929632,
+   "fraction": 0.9377670386104592,
+   "mean_out_degree": 6194.889057060694
+  },
+  {
+   "graph": "string12_0_experimental",
+   "symmetric": true,
+   "hops": 1,
+   "pairs": 1644188,
+   "fraction": 0.037671125693943534,
+   "mean_out_degree": 248.85545633419102
+  },
+  {
+   "graph": "string12_0_experimental",
+   "symmetric": true,
+   "hops": 2,
+   "pairs": 29447402,
+   "fraction": 0.6746897447871437,
+   "mean_out_degree": 4457.000454063872
+  },
+  {
+   "graph": "string12_0_experimental",
+   "symmetric": true,
+   "hops": 3,
+   "pairs": 35873190,
+   "fraction": 0.8219154071996136,
+   "mean_out_degree": 5429.573179960647
+  },
+  {
+   "graph": "string12_0_database",
+   "symmetric": true,
+   "hops": 1,
+   "pairs": 145234,
+   "fraction": 0.0033275563798265137,
+   "mean_out_degree": 21.981837445133948
+  },
+  {
+   "graph": "string12_0_database",
+   "symmetric": true,
+   "hops": 2,
+   "pairs": 1625818,
+   "fraction": 0.03725023794935609,
+   "mean_out_degree": 246.07507189344634
+  },
+  {
+   "graph": "string12_0_database",
+   "symmetric": true,
+   "hops": 3,
+   "pairs": 7094852,
+   "fraction": 0.16255504934467754,
+   "mean_out_degree": 1073.83865597094
+  }
+ ]
+}

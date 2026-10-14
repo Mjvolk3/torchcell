@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="227.5591" height="177.9528" viewBox="0 0 227.5591 177.9528" xmlns="http://www.w3.org/2000/svg" version="1.1"><g transform="scale(1.3888888889)">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.10.7, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 128.125984 
+L 163.84252 128.125984 
+L 163.84252 0 
+L 0 0 
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 95.028661 102.614173 
+L 157.288819 102.614173 
+L 157.288819 17.007874 
+L 95.028661 17.007874 
+z
+" style="fill: #ffffff"/>
+   </g>
+   <g id="patch_3">
+    <path d="M 95.028661 23.849361 
+L 154.324049 23.849361 
+L 154.324049 18.586679 
+L 95.028661 18.586679 
+z
+" clip-path="url(#pcb4009ba7e)" style="fill: #d79b00"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 95.028661 30.866271 
+L 112.883779 30.866271 
+L 112.883779 25.603588 
+L 95.028661 25.603588 
+z
+" clip-path="url(#pcb4009ba7e)" style="fill: #b85450"/>
+   </g>
+   <g id="patch_5">
+    <path d="M 95.028661 37.883181 
+L 104.654178 37.883181 
+L 104.654178 32.620498 
+L 95.028661 32.620498 
+z
+" clip-path="url(#pcb4009ba7e)" style="fill: #9673a6"/>
+   </g>
+   <g id="patch_6">
+    <path d="M 95.028661 44.90009 
+L 99.117413 44.90009 
+L 99.117413 39.637408 
+L 95.028661 39.637408 
+z
+" clip-path="url(#pcb4009ba7e)" style="fill: #d6b656"/>
+   </g>
+   <g id="patch_7">
+    <path d="M 95.028661 51.917 
+L 98.207485 51.917 
+L 98.207485 46.654318 
+L 95.028661 46.654318 
+z
+" clip-path="url(#pcb4009ba7e)" style="fill: #6c8ebf"/>
+   </g>
+   <g id="patch_8">
+    <path d="M 95.028661 58.93391 
+L 97.996544 58.93391 
+L 97.996544 53.671228 
+L 95.028661 53.671228 
+z
+" clip-path="url(#pcb4009ba7e)" style="fill: #666666; fill-opacity: 0.35"/>
+   </g>
+   <g id="patch_9">
+    <path d="M 95.028661 65.95082 
+L 97.237748 65.95082 
+L 97.237748 60.688137 
+L 95.028661 60.688137 
+z
+" clip-path="url(#pcb4009ba7e)" style="fill: #666666; fill-opacity: 0.35"/>
+   </g>
+   <g id="patch_10">
+    <path d="M 95.028661 72.967729 
+L 96.740544 72.967729 
+L 96.740544 67.705047 
+L 95.028661 67.705047 
+z
+" clip-path="url(#pcb4009ba7e)" style="fill: #666666; fill-opacity: 0.35"/>
+   </g>
+   <g id="patch_11">
+    <path d="M 95.028661 79.984639 
+L 96.387802 79.984639 
+L 96.387802 74.721957 
+L 95.028661 74.721957 
+z
+" clip-path="url(#pcb4009ba7e)" style="fill: #666666; fill-opacity: 0.35"/>
+   </g>
+   <g id="patch_12">
+    <path d="M 95.028661 87.001549 
+L 95.619206 87.001549 
+L 95.619206 81.738867 
+L 95.028661 81.738867 
+z
+" clip-path="url(#pcb4009ba7e)" style="fill: #666666; fill-opacity: 0.35"/>
+   </g>
+   <g id="patch_13">
+    <path d="M 95.028661 94.018459 
+L 95.028661 94.018459 
+L 95.028661 88.755776 
+L 95.028661 88.755776 
+z
+" clip-path="url(#pcb4009ba7e)" style="fill: #666666; fill-opacity: 0.35"/>
+   </g>
+   <g id="patch_14">
+    <path d="M 95.028661 101.035369 
+L 95.028661 101.035369 
+L 95.028661 95.772686 
+L 95.028661 95.772686 
+z
+" clip-path="url(#pcb4009ba7e)" style="fill: #666666; fill-opacity: 0.35"/>
+   </g>
+   <g id="matplotlib.axis_1">
+    <g id="xtick_1">
+     <g id="line2d_1">
+      <defs>
+       <path id="m1b9c4ff700" d="M 0 0 
+L 0 1.5 
+" style="stroke: #000000; stroke-width: 0.5"/>
+      </defs>
+      <g>
+       <use xlink:href="#m1b9c4ff700" x="95.028661" y="102.614173" style="stroke: #000000; stroke-width: 0.5"/>
+      </g>
+     </g>
+     <g id="text_1">
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="95.028661" y="109.408861" transform="rotate(-0 95.028661 109.408861)">0</text>
+     </g>
+    </g>
+    <g id="xtick_2">
+     <g id="line2d_2">
+      <g>
+       <use xlink:href="#m1b9c4ff700" x="123.222613" y="102.614173" style="stroke: #000000; stroke-width: 0.5"/>
+      </g>
+     </g>
+     <g id="text_2">
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="123.222613" y="109.408861" transform="rotate(-0 123.222613 109.408861)">50</text>
+     </g>
+    </g>
+    <g id="xtick_3">
+     <g id="line2d_3">
+      <g>
+       <use xlink:href="#m1b9c4ff700" x="151.416564" y="102.614173" style="stroke: #000000; stroke-width: 0.5"/>
+      </g>
+     </g>
+     <g id="text_3">
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="151.416564" y="109.408861" transform="rotate(-0 151.416564 109.408861)">100</text>
+     </g>
+    </g>
+    <g id="text_4">
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="126.15874" y="115.969173" transform="rotate(-0 126.15874 115.969173)">top term, -log10 q (BH)</text>
+    </g>
+   </g>
+   <g id="matplotlib.axis_2">
+    <g id="ytick_1">
+     <g id="line2d_4"/>
+     <g id="text_5">
+      <text style="font-size: 5px; font-family: 'Arial'; text-anchor: end" x="94.028661" y="23.014895" transform="rotate(-0 94.028661 23.014895)">0 ribonucleoprotein complex</text>
+     </g>
+    </g>
+    <g id="ytick_2">
+     <g id="line2d_5"/>
+     <g id="text_6">
+      <text style="font-size: 5px; font-family: 'Arial'; text-anchor: end" x="94.028661" y="30.054852" transform="rotate(-0 94.028661 30.054852)">11 Golgi vesicle transport</text>
+     </g>
+    </g>
+    <g id="ytick_3">
+     <g id="line2d_6"/>
+     <g id="text_7">
+      <text style="font-size: 5px; font-family: 'Arial'; text-anchor: end" x="94.028661" y="37.041293" transform="rotate(-0 94.028661 37.041293)">7 mitotic cell cycle process</text>
+     </g>
+    </g>
+    <g id="ytick_4">
+     <g id="line2d_7"/>
+     <g id="text_8">
+      <text style="font-size: 5px; font-family: 'Arial'; text-anchor: end" x="94.028661" y="44.058202" transform="rotate(-0 94.028661 44.058202)">5 ribonucleoprotein complex</text>
+     </g>
+    </g>
+    <g id="ytick_5">
+     <g id="line2d_8"/>
+     <g id="text_9">
+      <text style="font-size: 5px; font-family: 'Arial'; text-anchor: end" x="94.028661" y="51.082534" transform="rotate(-0 94.028661 51.082534)">3 cell periphery</text>
+     </g>
+    </g>
+    <g id="ytick_6">
+     <g id="line2d_9"/>
+     <g id="text_10">
+      <text style="font-size: 5px; font-family: 'Arial'; text-anchor: end" x="94.028661" y="58.099444" transform="rotate(-0 94.028661 58.099444)">1 oxoacid metabolic process</text>
+     </g>
+    </g>
+    <g id="ytick_7">
+     <g id="line2d_10"/>
+     <g id="text_11">
+      <text style="font-size: 5px; font-family: 'Arial'; text-anchor: end" x="94.028661" y="65.116354" transform="rotate(-0 94.028661 65.116354)">6 transmembrane transport</text>
+     </g>
+    </g>
+    <g id="ytick_8">
+     <g id="line2d_11"/>
+     <g id="text_12">
+      <text style="font-size: 5px; font-family: 'Arial'; text-anchor: end" x="94.028661" y="72.133263" transform="rotate(-0 94.028661 72.133263)">2 storage vacuole</text>
+     </g>
+    </g>
+    <g id="ytick_9">
+     <g id="line2d_12"/>
+     <g id="text_13">
+      <text style="font-size: 5px; font-family: 'Arial'; text-anchor: end" x="94.028661" y="79.142751" transform="rotate(-0 94.028661 79.142751)">4 disulfide oxidoreductase…</text>
+     </g>
+    </g>
+    <g id="ytick_10">
+     <g id="line2d_13"/>
+     <g id="text_14">
+      <text style="font-size: 5px; font-family: 'Arial'; text-anchor: end" x="94.028661" y="86.167083" transform="rotate(-0 94.028661 86.167083)">8 cytochrome-c oxidase acti…</text>
+     </g>
+    </g>
+    <g id="ytick_11">
+     <g id="line2d_14"/>
+     <g id="text_15">
+      <text style="font-size: 5px; font-family: 'Arial'; text-anchor: end" x="94.028661" y="93.183993" transform="rotate(-0 94.028661 93.183993)">10 mitochondrial respiratory…</text>
+     </g>
+    </g>
+    <g id="ytick_12">
+     <g id="line2d_15"/>
+     <g id="text_16">
+      <text style="font-size: 5px; font-family: 'Arial'; text-anchor: end" x="94.028661" y="100.223949" transform="rotate(-0 94.028661 100.223949)">9 Group I intron splicing</text>
+     </g>
+    </g>
+   </g>
+   <g id="line2d_16">
+    <path d="M 95.762285 102.614173 
+L 95.762285 17.007874 
+" clip-path="url(#pcb4009ba7e)" style="fill: none; stroke-dasharray: 1.85,0.8; stroke-dashoffset: 0; stroke: #000000; stroke-width: 0.5"/>
+   </g>
+   <g id="text_17">
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="157.288819" y="15.007874" transform="rotate(-0 157.288819 15.007874)">Best GO term per cluster (9 of 12 at q &lt; 0.05)</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="pcb4009ba7e">
+   <rect x="95.028661" y="17.007874" width="62.260157" height="85.606299"/>
+  </clipPath>
+ </defs>
+</g></svg>

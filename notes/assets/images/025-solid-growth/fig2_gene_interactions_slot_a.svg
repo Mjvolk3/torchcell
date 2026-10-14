@@ -4897,22 +4897,22 @@ z
     <g id="patch_87">
      <path d="M 411.601732 363.012899 
 L 411.601732 338.651823 
-" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+" style="fill: none; stroke: #000000; stroke-width: 0.3; stroke-linejoin: miter; stroke-linecap: square"/>
     </g>
     <g id="patch_88">
      <path d="M 502.327559 363.012899 
 L 502.327559 338.651823 
-" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+" style="fill: none; stroke: #000000; stroke-width: 0.3; stroke-linejoin: miter; stroke-linecap: square"/>
     </g>
     <g id="patch_89">
      <path d="M 411.601732 363.012899 
 L 502.327559 363.012899 
-" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+" style="fill: none; stroke: #000000; stroke-width: 0.3; stroke-linejoin: miter; stroke-linecap: square"/>
     </g>
     <g id="patch_90">
      <path d="M 411.601732 338.651823 
 L 502.327559 338.651823 
-" style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
+" style="fill: none; stroke: #000000; stroke-width: 0.3; stroke-linejoin: miter; stroke-linecap: square"/>
     </g>
     <g id="text_192">
      <text style="font-size: 5px; font-family: 'Arial'; text-anchor: middle" x="425.882649" y="344.618381" transform="rotate(-0 425.882649 344.618381)">5' 1,003 bp</text>

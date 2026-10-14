@@ -576,7 +576,7 @@ def panel_l(ax: Axes, hist: pd.DataFrame) -> None:
     ins.set_facecolor("white")
     ins.set_zorder(40)
     for sp in ins.spines.values():
-        sp.set_linewidth(0.5)
+        sp.set_linewidth(FRAME_LW)
     for x0, wd, fill, top, bottom in [
         (0, 26, BLUE, "5' 1,003 bp", "SpeciesLM"),
         (26, 48, PURPLE, "ORF", "CaLM + ProtT5"),

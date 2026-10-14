@@ -327,16 +327,23 @@ def panel_d(ax: Axes) -> None:
         x030 = g + 2.6 * w
         ax.bar(x030, v, width=w * 0.9, color=RED, edgecolor="black", linewidth=0.4, zorder=3)
         print(f"d {split:8s} 030 closure + fitness, mean of epochs {int(sub.epoch.iloc[-10])}-{int(sub.epoch.iloc[-1])} val {v:.3f}")
+    # The replicate ceiling of adjusted trigenic interaction scores, r = 0.74 to 0.81 between
+    # independent replicate measurements (Kuzmin et al. 2018; the manuscript's statement in
+    # paper/nature-biotech/sections/backmatter.tex, "How far below the achievable").
+    ax.axhspan(0.74, 0.81, color="#E6E6E6", lw=0, zorder=0)
+    ax.text(-0.5, 0.775, "replicate ceiling, 0.74 to 0.81", ha="left", va="center", fontsize=5, zorder=1)
     ax.set_xticks([0, 1])
     ax.set_xticklabels(["random split\nover triples", "held-out\nquery pairs"])
     ax.set_xlim(-0.55, 1.75)
-    ax.set_ylim(0, 0.85)
+    ax.set_ylim(0, 1.06)
+    ax.yaxis.set_major_locator(MultipleLocator(0.2))
+    ax.yaxis.set_minor_locator(MultipleLocator(0.1))
     ax.yaxis.set_major_locator(MultipleLocator(0.1))
     ax.set_ylabel("held-out Pearson, trigenic interaction")
     ax.set_title("a no-interaction null reaches 0.40")
     handles = [Patch(facecolor=c, edgecolor="black", linewidth=0.4, label=l) for l, _, c in learners]
     handles.append(Patch(facecolor=RED, edgecolor="black", linewidth=0.4, label="CGT + closure + fitness, 1 seed"))
-    ax.legend(handles=handles, loc="upper right", bbox_to_anchor=(1.02, 1.04), frameon=False, handlelength=1.0, handletextpad=0.3, borderpad=0.0, borderaxespad=0.0, labelspacing=0.2)
+    ax.legend(handles=handles, loc="upper right", bbox_to_anchor=(1.02, 1.04), frameon=True, facecolor="white", edgecolor="none", framealpha=1.0, handlelength=1.0, handletextpad=0.3, borderpad=0.2, borderaxespad=0.0, labelspacing=0.2).set_zorder(5)
     strip(ax)
 
 

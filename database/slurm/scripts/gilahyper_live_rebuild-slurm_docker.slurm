@@ -3,7 +3,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=64
 #SBATCH --mem=256G
-#SBATCH --time=12:00:00
+#SBATCH --time=48:00:00
 #SBATCH --output=/scratch/projects/torchcell/database/slurm/output/%j_%x.out
 #SBATCH --error=/scratch/projects/torchcell/database/slurm/output/%j_%x.out
 #SBATCH --no-requeue
@@ -25,6 +25,28 @@
 # the restart: count, validate, swap, record. The manifest is bootstrapped at the
 # generation commit (kg_manifest reads the schema surface with git show at that ref), so
 # the checkout may be ahead of it.
+#
+# RESUME after a failure past the generation. When the job dies between the end of
+# generation and the end of the import (job 4901 hit its 12 h time limit at 10:27 CDT on
+# 2026-10-14 with the generation container still running), the CSVs are complete or
+# completing and nothing has been imported:
+#
+#   sbatch --export=ALL,RESUME_JOB=<old job id>,RESUME_FROM=generation database/slurm/scripts/gilahyper_live_rebuild-slurm_docker.slurm
+#
+# The resume reads the old job's logs for the commit, the organism set and the dataset
+# count as above, requires its generate log to end in GENERATION_CALL= (the generator
+# finished and handed the CSVs to uid 7474), re-digests the dev tree against the old
+# job's fence, then imports, validates, swaps and records as a fresh run does. A job
+# that dies by time limit does NOT stop its generation container: docker runs it
+# outside the job's cgroup, and `--rm` removes it, and its log, the moment it exits.
+# Keep the rest of its output before that happens, then append it to the generate log
+# the resume reads (same stream, captured by a different process):
+#
+#   nohup docker logs -f --since <UTC time the job died>Z tc-neo4j-gen > <OUTDIR>/<job>_generate_after_timeout.log 2>&1 &
+#   ... wait for the container to exit ...
+#   cat <OUTDIR>/<job>_generate_after_timeout.log >> <OUTDIR>/<job>_generate.log
+#
+# `--since` without the trailing Z is read as local time and captures nothing.
 #
 # HOW IT DIFFERS from gilahyper_uncapped_build-slurm_docker.slurm, which stops the
 # serving container first and rebuilds in place (a day of downtime, and no way back):
@@ -78,7 +100,14 @@
 # that list on commas, so a set of two or more is exported from the caller's
 # environment (KG_ORGANISMS=scerevisiae,ecoli sbatch --export=ALL ...).
 #
-# RESOURCES. 64 CPUs, 256 G, 12 h, measured. SLURM_CPUS_PER_TASK sets the adapter worker
+# RESOURCES. 64 CPUs, 256 G, 48 h. The 12 h this header carried until 2026-10-14 was
+# measured on 51 datasets; job 4901 (170 datasets, three organisms) was killed by it at
+# 12 h 00 min inside the serial adapter pass, where Hoepfner 2014 alone (30.3 M
+# experiments, 39 KB resolved per record) took 4 h 14 min of single-threaded node
+# writing and about 2 h 15 min of edge writing, with the node 96% idle. 48 h is a
+# ceiling for the job, not a reservation of anything but the slot: the generation ran
+# 12 h to 106 of 170 adapters, and the import, validation and swap are an hour or
+# two on top of the generation. SLURM_CPUS_PER_TASK sets the adapter worker
 # count (get_num_workers in create_scerevisiae_kg_small), so it is a build parameter and
 # not just a reservation; MaxMemPerCPU=4100 makes 256 G a 64-CPU floor in any case
 # (ceil(262144 / 4100)), which is why 24 in this header got job 2032 allocated 48. Jobs
@@ -161,6 +190,19 @@ OUTDIR="$BUILD_ROOT/database/slurm/output"
 mem_mb=$((SLURM_MEM_PER_NODE))
 CS='cypher-shell -u neo4j -p torchcell'
 RESUME_JOB="${RESUME_JOB:-}"
+# RESUME_FROM names the last stage the resumed job finished: `import` (the default, the
+# resume starts at the post-import restart) or `generation` (the resume starts at the
+# import). GENERATE and IMPORT are what THIS job runs.
+RESUME_FROM="${RESUME_FROM:-import}"
+case "$RESUME_FROM" in
+    import|generation) ;;
+    *) echo "RESUME_FROM must be import or generation, got '$RESUME_FROM'"; exit 1 ;;
+esac
+GENERATE=1; IMPORT=1
+if [ -n "$RESUME_JOB" ]; then
+    GENERATE=0
+    [ "$RESUME_FROM" = generation ] || IMPORT=0
+fi
 # The container installs torchcell from GitHub at this commit; the manifest records it.
 # A resume takes the commit the CSVs were generated at from the old job's log.
 git -C "$TORCHCELL_SRC" fetch origin main --quiet
@@ -190,7 +232,7 @@ PACKAGE_TAG=$(git -C "$TORCHCELL_SRC" describe --tags --exact-match --match 'v[0
     || { echo "$TORCHCELL_SRC HEAD is not $BUILD_COMMIT ($PACKAGE_TAG); check out the tag so the stamp records it"; exit 1; }
 echo "package tag $PACKAGE_TAG at $BUILD_COMMIT: the release will be paired with it"
 
-echo "Running on $(hostname) at $(date); job $JOB${RESUME_JOB:+ (resuming job $RESUME_JOB)}"
+echo "Running on $(hostname) at $(date); job $JOB${RESUME_JOB:+ (resuming job $RESUME_JOB after its $RESUME_FROM)}"
 echo "config $KG_CONFIG; commit $BUILD_COMMIT; dev tree $DEV_DATA_ROOT; serve $SERVE_ROOT; next $NEXT_ROOT; include private $INCLUDE_PRIVATE; organisms $KG_ORGANISMS"
 echo "SLURM_CPUS_PER_TASK=$SLURM_CPUS_PER_TASK SLURM_MEM_PER_NODE=$SLURM_MEM_PER_NODE"
 cd "$TORCHCELL_SRC"
@@ -205,16 +247,44 @@ echo "served now: $BEFORE nodes, $BEFORE_DS datasets"
 NEXT_PARENT=$(dirname "$NEXT_ROOT"); NEXT_NAME=$(basename "$NEXT_ROOT")
 if [ -n "$RESUME_JOB" ]; then
     # The old job's preflight counted the mapped datasets against fresh dev stores and its
-    # generation covered them all; the import into $NEXT_ROOT/data completed and the
-    # build container was left stopped. Nothing here regenerates or reimports.
+    # generation covered them all. Nothing here regenerates.
     N_DATASETS=$(grep -oE '^[0-9]+ mapped datasets' "$PREV_OUT" | head -1 | grep -oE '[0-9]+')
-    grep -q '^IMPORT DONE in ' "$PREV_OUT" || { echo "job $RESUME_JOB did not finish its import"; exit 1; }
-    STATE=$(docker inspect "$BUILD_CONTAINER" --format '{{.State.Status}}' 2>/dev/null || echo absent)
-    # exited after the import, or still running from an earlier resume that failed later
-    [ "$STATE" = "exited" ] || [ "$STATE" = "running" ] || { echo "$BUILD_CONTAINER is $STATE, expected exited or running"; exit 1; }
     if docker inspect "$GEN_CONTAINER" >/dev/null 2>&1; then echo "$GEN_CONTAINER still exists"; exit 1; fi
-    [ -d "$NEXT_ROOT/data/databases/$NEO4J_DATABASE" ] || { echo "no imported $NEO4J_DATABASE under $NEXT_ROOT/data"; exit 1; }
-    echo "resuming: $N_DATASETS mapped datasets, imported store $(du -sh "$NEXT_ROOT/data" | cut -f1)"
+    if [ "$IMPORT" = 0 ]; then
+        # The import into $NEXT_ROOT/data completed and the build container was left
+        # stopped. Nothing here reimports.
+        grep -q '^IMPORT DONE in ' "$PREV_OUT" || { echo "job $RESUME_JOB did not finish its import"; exit 1; }
+        STATE=$(docker inspect "$BUILD_CONTAINER" --format '{{.State.Status}}' 2>/dev/null || echo absent)
+        # exited after the import, or still running from an earlier resume that failed later
+        [ "$STATE" = "exited" ] || [ "$STATE" = "running" ] || { echo "$BUILD_CONTAINER is $STATE, expected exited or running"; exit 1; }
+        [ -d "$NEXT_ROOT/data/databases/$NEO4J_DATABASE" ] || { echo "no imported $NEO4J_DATABASE under $NEXT_ROOT/data"; exit 1; }
+        echo "resuming: $N_DATASETS mapped datasets, imported store $(du -sh "$NEXT_ROOT/data" | cut -f1)"
+    else
+        # The generator finished (its last line hands the CSVs over) and nothing was
+        # imported: the build container must not exist and $NEXT_ROOT/data must be empty,
+        # as for a fresh run. The dev fence is the generating job's, re-digested below.
+        grep -q '^GENERATION_CALL=' "$GEN_LOG" \
+            || { echo "job $RESUME_JOB left no GENERATION_CALL in $GEN_LOG: its generation did not finish (or its tail was not appended; see the header)"; exit 1; }
+        if docker inspect "$BUILD_CONTAINER" >/dev/null 2>&1; then echo "$BUILD_CONTAINER already exists; remove it first"; exit 1; fi
+        FREE_GB=$(df --output=avail -BG /db | tail -1 | tr -dc 0-9)
+        [ "$FREE_GB" -ge "$MIN_FREE_GB" ] || { echo "/db has ${FREE_GB}G free, need ${MIN_FREE_GB}G"; exit 1; }
+        if [ -e "$NEXT_ROOT/data" ] && [ -n "$(ls -A "$NEXT_ROOT/data")" ]; then
+            echo "$NEXT_ROOT/data exists and is not empty; move it aside first"; exit 1
+        fi
+        DEV_FENCE_PY="$OUTDIR/${RESUME_JOB}_dev_fence.py"
+        DEV_FENCE="$OUTDIR/${RESUME_JOB}_dev_fence.txt"
+        for f in "$DEV_FENCE_PY" "$DEV_FENCE"; do [ -f "$f" ] || { echo "job $RESUME_JOB left no $f"; exit 1; }; done
+        docker run --rm --entrypoint bash -v "$NEXT_PARENT":/parent "$IMAGE" -c \
+            "mkdir -p /parent/$NEXT_NAME/data /parent/$NEXT_NAME/logs /parent/$NEXT_NAME/metrics \
+             && chown -R 7474:7474 /parent/$NEXT_NAME && ls -la /parent/$NEXT_NAME"
+        docker run --rm --entrypoint bash -v "$BUILD_ROOT/database":/bt "$IMAGE" -c \
+            "chown -R $(id -u):$(id -g) /bt/conf /bt/biocypher && chmod -R u+rwX,go+rX /bt/conf /bt/biocypher"
+        DATA_ROOT="$BUILD_ROOT" python -m torchcell.database.directory_setup --env-file "$DATABASE_ENV_FILE"
+        cmp "$TORCHCELL_SRC/biocypher/config/torchcell_schema_config.yaml" \
+            "$BUILD_ROOT/database/biocypher/config/torchcell_schema_config.yaml"
+        echo "resuming after generation: $N_DATASETS mapped datasets, CSVs named by $GEN_LOG, fence $DEV_FENCE"
+        df -h /db /scratch
+    fi
 else
 # The fingerprint repo must carry the same code the container installs.
 if ! git -C "$TORCHCELL_SRC" diff --quiet "$BUILD_COMMIT" HEAD -- torchcell biocypher; then
@@ -293,7 +363,7 @@ cmp "$TORCHCELL_SRC/biocypher/config/torchcell_schema_config.yaml" \
 df -h /db /scratch
 fi
 
-if [ -z "$RESUME_JOB" ]; then
+if [ "$GENERATE" = 1 ]; then
 echo "---------------- 1 GENERATE (ephemeral container; dev tree read-only) $(date)"
 # The dev tree's data/torchcell shadows the build tree's copy read-only (loaders open
 # LMDB readonly, lock=False); yeast genome/graph caches (data/sgd, go, string, tflink)
@@ -335,9 +405,10 @@ fi
 N_ADAPTERS=$(grep -oE 'across [0-9]+ adapters' "$GEN_LOG" | tail -1 | grep -oE '[0-9]+')
 [ "$N_ADAPTERS" = "$N_DATASETS" ] || { echo "generation covered '$N_ADAPTERS' adapters, expected $N_DATASETS"; exit 1; }
 # The fence: the dev tree must be byte-identical to what the preflight saw, or the CSVs
-# mix two schema versions. A resume regenerates nothing, so its fence was already honored
-# by the job that generated.
-if [ -z "$RESUME_JOB" ]; then
+# mix two schema versions. A resume after the import regenerates and reimports nothing,
+# so its fence was already honored by the job that generated; a resume after the
+# generation re-digests against the generating job's fence before it imports.
+if [ "$IMPORT" = 1 ]; then
     DEV_FENCE_AFTER="$OUTDIR/${JOB}_dev_fence_after.txt"
     python "$DEV_FENCE_PY" "$DEV_DATA_ROOT" "$INCLUDE_PRIVATE" "$KG_ORGANISMS" > "$DEV_FENCE_AFTER"
     if diff "$DEV_FENCE" "$DEV_FENCE_AFTER"; then
@@ -356,8 +427,9 @@ OUT_CONT="/var/lib/neo4j/biocypher-out/$OUT_TS"
 echo "CSVs: $OUT_HOST ($CALL_REL)"
 df -h /db
 
-if [ -z "$RESUME_JOB" ]; then
+if [ "$IMPORT" = 1 ]; then
 echo "---------------- 2 IMPORT into $NEXT_ROOT ($BUILD_CONTAINER, no host ports) $(date)"
+IMPORT_T0=$(date +%s)
 docker run \
     --cpus="$SLURM_CPUS_PER_TASK" --memory="${mem_mb}m" \
     --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes \
@@ -387,6 +459,9 @@ for i in $(seq 1 180); do
     echo "  $NEO4J_DATABASE is $STATUS ($((i*10))s)"; sleep 10
 done
 [ "$STATUS" = "online" ] || { echo "$NEO4J_DATABASE never came online in $BUILD_CONTAINER"; exit 1; }
+# The marker a RESUME_FROM=import reads (the header's "RESUME after a failure past the
+# import"); it was documented but never written before job 4901.
+echo "IMPORT DONE in $(( $(date +%s) - IMPORT_T0 )) s at $(date)"
 else
 echo "---------------- 2 IMPORT done by job $RESUME_JOB; restarting $BUILD_CONTAINER $(date)"
 fi

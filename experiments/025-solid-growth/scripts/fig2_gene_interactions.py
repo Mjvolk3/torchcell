@@ -196,6 +196,9 @@ def keys(fig: Figure, y_key: float) -> None:
         Patch(facecolor=YELLOW, edgecolor="black", linewidth=0.4, label="joint fitness head"),
     ]
     fig.legend(handles=handles, loc="center", bbox_to_anchor=(0.52, y_key), ncol=6, frameon=False, fontsize=5, handlelength=1.2, handletextpad=0.4, columnspacing=1.2, borderpad=0)
+    # Every transformer arm of e to l is the S0 pool (cgt_s0_r_kl_000 and its descendants);
+    # only f changes the pool, and d's closure bars are the 030 build.
+    fig.text(0.52, y_key - 2.6 / SHEET_H_MM, "e to l: every arm trains on S0, the 376,732 Kuzmin triples under the 010 split; f varies the pool", ha="center", va="top", fontsize=5)
     if not STATUS_KEY:
         return
     x = 0.03
@@ -336,8 +339,6 @@ def panel_d(ax: Axes) -> None:
     ax.set_xticklabels(["random split\nover triples", "held-out\nquery pairs"])
     ax.set_xlim(-0.55, 1.75)
     ax.set_ylim(0, 1.06)
-    ax.yaxis.set_major_locator(MultipleLocator(0.2))
-    ax.yaxis.set_minor_locator(MultipleLocator(0.1))
     ax.yaxis.set_major_locator(MultipleLocator(0.1))
     ax.set_ylabel("held-out Pearson, trigenic interaction")
     ax.set_title("a no-interaction null reaches 0.40")

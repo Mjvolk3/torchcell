@@ -25484,6 +25484,9 @@ z
   <g id="text_295">
    <text style="font-size: 5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #8a8a8a" x="389.909323" y="456.412524" transform="rotate(-0 389.909323 456.412524)">●</text>
   </g>
+  <g id="text_296">
+   <text style="font-size: 5px; font-family: 'Arial'; text-anchor: middle" x="263.848819" y="180.002532" transform="rotate(-0 263.848819 180.002532)">e to l: every arm trains on S0, the 376,732 Kuzmin triples under the 010 split; f varies the pool</text>
+  </g>
   <g id="legend_7">
    <g id="patch_107">
     <path d="M 65.7496 170.28636 
@@ -25493,7 +25496,7 @@ L 65.7496 166.78636
 z
 " style="fill: #666666; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
-   <g id="text_296">
+   <g id="text_297">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="73.7496" y="170.28636" transform="rotate(-0 73.7496 170.28636)">no graphs, or a no-interaction null</text>
    </g>
    <g id="patch_108">
@@ -25504,7 +25507,7 @@ L 154.233194 166.78636
 z
 " style="fill: #b85450; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
-   <g id="text_297">
+   <g id="text_298">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="162.233194" y="170.28636" transform="rotate(-0 162.233194 170.28636)">cell graph transformer, soft prior</text>
    </g>
    <g id="patch_109">
@@ -25515,7 +25518,7 @@ L 238.8121 166.78636
 z
 " style="fill: #d79b00; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
-   <g id="text_298">
+   <g id="text_299">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="246.8121" y="170.28636" transform="rotate(-0 246.8121 170.28636)">hard mask</text>
    </g>
    <g id="patch_110">
@@ -25526,7 +25529,7 @@ L 276.152725 166.78636
 z
 " style="fill: #9673a6; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
-   <g id="text_299">
+   <g id="text_300">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="284.152725" y="170.28636" transform="rotate(-0 284.152725 170.28636)">degree-matched random graphs</text>
    </g>
    <g id="patch_111">
@@ -25537,7 +25540,7 @@ L 361.576944 166.78636
 z
 " style="fill: #6c8ebf; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
-   <g id="text_300">
+   <g id="text_301">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="369.576944" y="170.28636" transform="rotate(-0 369.576944 170.28636)">learned null (MLP)</text>
    </g>
    <g id="patch_112">
@@ -25548,7 +25551,7 @@ L 416.426163 166.78636
 z
 " style="fill: #d6b656; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
-   <g id="text_301">
+   <g id="text_302">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="424.426163" y="170.28636" transform="rotate(-0 424.426163 170.28636)">joint fitness head</text>
    </g>
   </g>

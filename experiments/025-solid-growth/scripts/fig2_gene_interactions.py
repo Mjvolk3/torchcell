@@ -96,6 +96,9 @@ plt.rcParams.update(
     {
         "legend.edgecolor": "black",
         "patch.linewidth": 0.5,
+        "legend.fancybox": False,
+        "legend.framealpha": 1.0,
+        "legend.facecolor": "white",
         "mathtext.fontset": "custom",
         "mathtext.rm": "Arial",
         "mathtext.it": "Arial:italic",
@@ -162,6 +165,16 @@ def curve(ax: Axes, hist: pd.DataFrame, arm: str, key: str, color: str, ls: str,
     ax.plot(mean.index, mean.to_numpy(), color=color, lw=0.9, ls=ls, label=label, zorder=z)
     if (n.max() > 1) and sd.notna().any():
         ax.fill_between(mean.index, (mean - sd).to_numpy(), (mean + sd).to_numpy(), color=color, alpha=0.15, lw=0, zorder=z - 10)
+
+
+FRAME_LW = 0.3  # the gate sheet's legend frame (figure_gate_panels.py FRAME_LW)
+
+
+def frame_legend(leg: Any) -> Any:
+    """The sheet's one legend frame: 0.3 pt black on white, square corners."""
+    leg.get_frame().set_edgecolor("black")
+    leg.get_frame().set_linewidth(FRAME_LW)
+    return leg
 
 
 def letters_status(fig: Figure, axes: list[Axes], statuses: list[str]) -> None:
@@ -357,7 +370,7 @@ def panel_d(ax: Axes) -> None:
     ax.set_title("the closure pool lifts the CGT most")
     handles = [Patch(facecolor=c, edgecolor="black", linewidth=0.4, label=l) for l, _, c in learners]
     handles.append(Patch(facecolor=DARK_RED, edgecolor="black", linewidth=0.4, label="CGT, S3 + fitness, 1 seed"))
-    ax.legend(handles=handles, loc="upper right", bbox_to_anchor=(1.02, 1.04), frameon=True, facecolor="white", edgecolor="black", framealpha=1.0, fancybox=False, handlelength=1.0, handletextpad=0.3, borderpad=0.2, borderaxespad=0.0, labelspacing=0.2).set_zorder(5)
+    frame_legend(ax.legend(handles=handles, loc="upper right", bbox_to_anchor=(1.02, 1.04), frameon=True, handlelength=1.0, handletextpad=0.3, borderpad=0.2, borderaxespad=0.0, labelspacing=0.2)).set_zorder(5)
     strip(ax)
 
 
@@ -478,7 +491,7 @@ def panel_i(ax: Axes, hist: pd.DataFrame) -> None:
     ax.set_xlabel("epoch")
     ax.set_ylabel("validation Pearson")
     ax.set_title("the prior removes the late decline")
-    ax.legend(loc="lower right", frameon=True, facecolor="white", edgecolor="black", framealpha=1.0, fancybox=False, handlelength=1.6, handletextpad=0.4, borderpad=0.3, labelspacing=0.25).set_zorder(50)
+    frame_legend(ax.legend(loc="lower right", frameon=True, handlelength=1.6, handletextpad=0.4, borderpad=0.3, labelspacing=0.25)).set_zorder(50)
     strip(ax)
 
 
@@ -546,7 +559,7 @@ def panel_k(ax: Axes, hist: pd.DataFrame) -> None:
     ax.set_xlabel("epoch")
     ax.set_ylabel("validation Pearson")
     ax.set_title("at 60 epochs only the prior holds")
-    ax.legend(loc="lower right", bbox_to_anchor=(1.0, 0.0), frameon=True, facecolor="white", edgecolor="black", framealpha=1.0, fancybox=False, handlelength=1.6, handletextpad=0.4, borderpad=0.3, labelspacing=0.25).set_zorder(50)
+    frame_legend(ax.legend(loc="lower right", bbox_to_anchor=(1.0, 0.0), frameon=True, handlelength=1.6, handletextpad=0.4, borderpad=0.3, labelspacing=0.25)).set_zorder(50)
     strip(ax)
 
 
@@ -579,7 +592,7 @@ def panel_l(ax: Axes, hist: pd.DataFrame) -> None:
     ax.set_xlabel("epoch")
     ax.set_ylabel("validation Pearson")
     ax.set_title("composite embedding needs the prior")
-    ax.legend(loc="center left", bbox_to_anchor=(0.1, 0.34), frameon=True, facecolor="white", edgecolor="black", framealpha=1.0, fancybox=False, handlelength=1.6, handletextpad=0.4, borderpad=0.3, labelspacing=0.25).set_zorder(50)
+    frame_legend(ax.legend(loc="center left", bbox_to_anchor=(0.1, 0.34), frameon=True, handlelength=1.6, handletextpad=0.4, borderpad=0.3, labelspacing=0.25)).set_zorder(50)
     strip(ax)
 
 

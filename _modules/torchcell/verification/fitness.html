@@ -147,7 +147,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.common</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">GeneNameResolver</span><span class="p">,</span>
     <span class="n">SharedRecordRules</span><span class="p">,</span>
-    <span class="n">declared_first_union_validator</span><span class="p">,</span>
     <span class="n">declared_member_validator</span><span class="p">,</span>
     <span class="n">key_digest</span><span class="p">,</span>
 <span class="p">)</span>
@@ -351,7 +350,11 @@
 <span class="sd">    canonical-name rule; without them the caller owns L4 (:func:`fitness_gene_set` is the</span>
 <span class="sd">    overlap key).</span>
 <span class="sd">    """</span>
-    <span class="n">validate</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="n">declared_first_union_validator</span><span class="p">()</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeAdapter</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentType</span>
+
+    <span class="n">validate</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="n">TypeAdapter</span><span class="p">(</span><span class="n">ExperimentType</span><span class="p">)</span><span class="o">.</span><span class="n">validate_python</span>
 
     <span class="n">report</span> <span class="o">=</span> <span class="n">VerificationReport</span><span class="p">(</span><span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">provenance</span><span class="o">=</span><span class="n">provenance</span><span class="p">)</span>
     <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">l0_structural</span><span class="p">((</span><span class="n">rec</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span> <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">records</span><span class="p">),</span> <span class="n">validate</span><span class="p">))</span>

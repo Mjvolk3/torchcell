@@ -308,9 +308,10 @@ def panel_d(ax: Axes) -> None:
         ("CGT, S0", "CGT_", RED),
     ]
     w = 0.19
+    GX = {"random": 0.0, "disjoint": 1.35}  # group centers, the held-out group set apart
     for g, group in enumerate(("random", "disjoint")):
         for k, (label, prefix, color) in enumerate(learners):
-            x = g + (k - 1.5) * w
+            x = GX[group] + (k - 1.5) * w
             if group == "random":
                 vals = rnd[(rnd.split == "test") & rnd.model.str.startswith(prefix)].pearson.to_numpy(dtype=float)
             elif prefix == "CGT_":
@@ -328,24 +329,23 @@ def panel_d(ax: Axes) -> None:
     for g, split in enumerate(("random", "disjoint")):
         sub = r030[r030.split == split].sort_values("epoch")
         v = float(sub.val_pearson.tail(10).mean())
-        x030 = g + 2.6 * w
+        x030 = GX[split] + 2.6 * w
         ax.bar(x030, v, width=w * 0.9, color=DARK_RED, edgecolor="black", linewidth=0.4, zorder=3)
         print(f"d {split:8s} 030 closure + fitness, mean of epochs {int(sub.epoch.iloc[-10])}-{int(sub.epoch.iloc[-1])} val {v:.3f}")
     # The replicate ceiling of adjusted trigenic interaction scores, r = 0.74 to 0.81 between
     # independent replicate measurements (Kuzmin et al. 2018; the manuscript's statement in
     # paper/nature-biotech/sections/backmatter.tex, "How far below the achievable").
-    ax.axhspan(0.74, 0.81, color="#E6E6E6", lw=0, zorder=0)
-    ax.text(-0.5, 0.775, "replicate ceiling, 0.74 to 0.81", ha="left", va="center", fontsize=5, zorder=1)
-    # DANGO's reading of the same screen: Pearson 0.59 between the two individual replicates
-    # (Zhang et al. 2020, Results, "The Pearson correlation between the trigenic interaction
-    # scores of two individual replicates is around 0.59"), which it calls an approximate
-    # upper bound; the adjusted-score range above is Kuzmin 2018's own figure.
+    # The replicate ceiling measured on the scores the bars predict: Pearson 0.59 between the
+    # two individual replicates of the Kuzmin 2018 screen (Zhang et al. 2020, DANGO, Results:
+    # "The Pearson correlation between the trigenic interaction scores of two individual
+    # replicates is around 0.59 ... an approximate upper bound"). The manuscript's 0.74 to
+    # 0.81 is for adjusted scores and is not drawn here (review 2026-10-14).
     ax.axhline(0.59, color="black", lw=0.5, ls="--", zorder=1)
-    ax.text(-0.5, 0.60, "two raw replicates, 0.59", ha="left", va="bottom", fontsize=5, zorder=1)
-    ax.set_xticks([0, 1])
+    ax.text(-0.5, 0.60, "replicate ceiling, 0.59", ha="left", va="bottom", fontsize=5, zorder=1)
+    ax.set_xticks([GX["random"], GX["disjoint"]])
     ax.set_xticklabels(["random split\nover triples", "held-out\nquery pairs"])
-    ax.set_xlim(-0.55, 1.75)
-    ax.set_ylim(0, 1.06)
+    ax.set_xlim(-0.55, 2.1)
+    ax.set_ylim(0, 0.9)
     ax.yaxis.set_major_locator(MultipleLocator(0.1))
     ax.set_ylabel("held-out Pearson, trigenic interaction")
     ax.set_title("a no-interaction null reaches 0.40")
@@ -463,15 +463,32 @@ CURVES = [("random_1", "random graphs, λ = 1", PURPLE, "--"), ("kl_1", "soft pr
 
 
 def panel_i(ax: Axes, hist: pd.DataFrame) -> None:
-    for z, (arm, label, color, ls) in enumerate(CURVES):
-        curve(ax, hist, arm, "val/gene_interaction/Pearson", color, ls, label, 20 + z)
-    ax.set_xlim(0, 29)
-    ax.set_ylim(0.34, 0.47)
+    """Pearson beside Spearman on the random split's test triples, for the models that have
+    both scored: the 025 baselines (additive_baselines_025.csv, arm R, split test) and the
+    three 010 transformers scored directly on the same triples (cgt_direct_scoring.csv).
+    The sweep arms logged no Spearman, so they are not here."""
+    base = pd.read_csv(osp.join(R025, "additive_baselines_025.csv"))
+    base = base[(base.arm == "R") & (base.split == "test")]
+    cgt = pd.read_csv(osp.join(R010, "cgt_direct_scoring.csv"))
+    cgt = cgt[(cgt.split == "test") & cgt.spearman.notna()]
+    models = [
+        ("ridge\ngenes", base[base.model == "B1_additive_gene"], GRAY, PLOT_PALETTE_FILL[5]),
+        ("ridge\n+ pairs", base[base.model == "B2_additive_plus_pair"], YELLOW, PLOT_PALETTE_FILL[3]),
+        ("MLP\ngenes", base[base.model == "B5_gene_embedding_mlp"], BLUE, PLOT_PALETTE_FILL[4]),
+        ("CGT\nS0", cgt, RED, PLOT_PALETTE_FILL[1]),
+    ]
+    w = 0.38
+    for x, (label, d, color, fill) in enumerate(models):
+        bars(ax, [x - w / 2], [d.pearson.to_numpy(dtype=float)], [color], width=w * 0.9)
+        bars(ax, [x + w / 2], [d.spearman.to_numpy(dtype=float)], [fill], width=w * 0.9)
+        print(f"i {label.replace(chr(10), ' '):16s} n={len(d)} Pearson {d.pearson.mean():.3f} Spearman {d.spearman.mean():.3f}")
+    ax.set_xticks(range(len(models)))
+    ax.set_xticklabels([m[0] for m in models])
+    ax.set_ylim(0.38, 0.47)
     ax.yaxis.set_major_locator(MultipleLocator(0.02))
-    ax.set_xlabel("epoch")
-    ax.set_ylabel("validation Pearson")
-    ax.set_title("the prior removes the late decline")
-    ax.legend(loc="lower right", frameon=False, handlelength=1.6, handletextpad=0.4, borderpad=0.2, labelspacing=0.25)
+    ax.set_ylabel("test correlation, trigenic interaction")
+    ax.set_title("by rank the models sit closer together")
+    ax.legend(handles=[Patch(facecolor="#9A9A9A", edgecolor="black", linewidth=0.4, label="Pearson"), Patch(facecolor="#E0E0E0", edgecolor="black", linewidth=0.4, label="Spearman")], loc="upper left", frameon=False, handlelength=1.0, handletextpad=0.3, borderpad=0.1, labelspacing=0.2)
     strip(ax)
 
 
@@ -500,6 +517,9 @@ def panel_j(ax: Axes, done: pd.DataFrame) -> None:
 def panel_k(ax: Axes, hist: pd.DataFrame) -> None:
     for z, (arm, label, color) in enumerate([("kl_1_60ep", "soft prior, λ = 1", RED), ("mask_60ep", "hard mask", ORANGE), ("kl_0_60ep", "no penalty", GRAY)]):
         curve(ax, hist, arm, "val/gene_interaction/Pearson", color, "-", label, 20 + z)
+    # The 30-epoch runs of the same arms, and the random-graph prior, dashed (they were i).
+    for z, (arm, label, color, _) in enumerate(CURVES):
+        curve(ax, hist, arm, "val/gene_interaction/Pearson", color, "--", "prior, random graphs" if arm == "random_1" else "_", 10 + z)
     ax.axvline(29, color="black", lw=0.4, ls=":")
     ax.text(29.8, 0.468, "30-epoch protocol", ha="left", va="top", fontsize=5, color="black")
     ax.set_xlim(0, 59)
@@ -508,7 +528,9 @@ def panel_k(ax: Axes, hist: pd.DataFrame) -> None:
     ax.set_xlabel("epoch")
     ax.set_ylabel("validation Pearson")
     ax.set_title("at 60 epochs only the prior holds")
-    ax.legend(loc="lower right", bbox_to_anchor=(1.0, 0.0), frameon=False, handlelength=1.6, handletextpad=0.4, borderpad=0.2, labelspacing=0.25)
+    arms_key = ax.legend(loc="lower right", bbox_to_anchor=(1.0, 0.0), frameon=False, handlelength=1.6, handletextpad=0.4, borderpad=0.2, labelspacing=0.25)
+    ax.add_artist(arms_key)
+    ax.legend(handles=[Line2D([], [], color="black", lw=0.9, ls="-", label="60-epoch runs"), Line2D([], [], color="black", lw=0.9, ls="--", label="30-epoch runs")], loc="upper left", bbox_to_anchor=(0.0, 0.98), frameon=False, handlelength=1.6, handletextpad=0.4, borderpad=0.2, labelspacing=0.25)
     strip(ax)
 
 

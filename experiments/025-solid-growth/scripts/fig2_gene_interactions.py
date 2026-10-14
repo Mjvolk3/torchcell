@@ -336,9 +336,6 @@ def panel_d(ax: Axes) -> None:
     handles = [Patch(facecolor=c, edgecolor="black", linewidth=0.4, label=l) for l, _, c in learners]
     handles.append(Patch(facecolor=RED, edgecolor="black", linewidth=0.4, label="CGT + closure + fitness, 1 seed"))
     ax.legend(handles=handles, loc="upper right", bbox_to_anchor=(1.02, 1.04), frameon=False, handlelength=1.0, handletextpad=0.3, borderpad=0.0, borderaxespad=0.0, labelspacing=0.2)
-    # The transformer's reading on that split differs from the baselines' (validation on one
-    # split, epoch 29, three seeds, against five-fold test), so the note hangs under that group.
-    ax.text(1.0, -0.22, "CGT: validation, one split", transform=ax.get_xaxis_transform(), ha="center", va="top", fontsize=5, color="black")
     strip(ax)
 
 
@@ -727,7 +724,12 @@ def main() -> None:
     for im in ax[0].get_images():
         im.remove()
     savefig_true_size_svg(fig, stem + "_slot_a.svg")
-    print("wrote", stem + "_slot_a.svg")
+    pos = ax[0].get_position()
+    json.dump(
+        {"x_mm": pos.x0 * PANEL_WIDTHS_MM["full"], "y_mm": (1 - pos.y1) * 200, "width_mm": pos.width * PANEL_WIDTHS_MM["full"], "height_mm": pos.height * 200, "page_width_mm": PANEL_WIDTHS_MM["full"], "page_height_mm": 200},
+        open(stem + "_slot_a.json", "w"), indent=2,
+    )
+    print("wrote", stem + "_slot_a.svg", "and its slot geometry")
     loss_sheet(hist)
 
 

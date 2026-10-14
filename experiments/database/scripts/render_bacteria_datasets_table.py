@@ -5,10 +5,10 @@ r"""Render the bacteria datasets table and the Signal-controls table off the JSO
 written by build_bacteria_datasets_table.py. Reads only the JSON, never an LMDB.
 
 Views written:
-  - notes/experiments.database.bacteria-datasets-table.md        (generated note; frontmatter kept)
-  - <pre-build dir>/bacteria_datasets_table.tex                   (both tables, \input-able)
-  - <pre-build dir>/bacteria_datasets_table_preview.pdf           (standalone preview, gitignored)
-  - notes/assets/pdf-output/experiments.database.bacteria-datasets-table.pdf  (committed copy)
+  - notes/experiments.database.<view>-datasets-table.md  (generated note; frontmatter kept; view = bacteria | yeast)
+  - <pre-build dir>/<view>_datasets_table.tex                      (both tables, \input-able)
+  - <pre-build dir>/<view>_datasets_table_preview.pdf              (standalone preview, gitignored)
+  - notes/assets/pdf-output/experiments.database.<view>-datasets-table.pdf  (committed copy)
 
 Run from the repo root (defaults to the newest pre-build snapshot):
   python experiments/database/scripts/render_bacteria_datasets_table.py
@@ -37,14 +37,32 @@ from torchcell.paper.tables import (
 SCRIPT = Path(__file__).resolve()
 REPO = SCRIPT.parents[3]
 RESULTS = SCRIPT.parent.parent / "results"
-MD_OUT = REPO / "notes" / "experiments.database.bacteria-datasets-table.md"
-PDF_OUT = (
-    REPO
-    / "notes"
-    / "assets"
-    / "pdf-output"
-    / "experiments.database.bacteria-datasets-table.pdf"
-)
+# Output names follow the organism set of the JSON: the bacteria pair renders to the
+# bacteria note, a yeast run to its own note, any other set to its raw joined label.
+VIEW_NAME = {"ecoli-pputida": "bacteria", "scerevisiae": "yeast"}
+
+
+def view_name(organisms: list[str]) -> str:
+    """``["ecoli", "pputida"]`` -> ``bacteria``; the raw joined label otherwise."""
+    label = "-".join(organisms)
+    return VIEW_NAME.get(label, label)
+
+
+def md_out(name: str) -> Path:
+    """The generated note for one organism set."""
+    return REPO / "notes" / f"experiments.database.{name}-datasets-table.md"
+
+
+def pdf_out(name: str) -> Path:
+    """The committed preview PDF for one organism set."""
+    return (
+        REPO
+        / "notes"
+        / "assets"
+        / "pdf-output"
+        / f"experiments.database.{name}-datasets-table.pdf"
+    )
+
 
 BITS_PER_BYTE = 8
 SIGNAL = "Signal (gzip, bits)"
@@ -82,14 +100,14 @@ CONTROL_COLUMNS = [
 ]
 
 MD_INTRO = """\
-## Bacteria datasets: Instances vs Signal (gzip), with the Signal controls
+## {title} datasets: Instances vs Signal (gzip), with the Signal controls
 
 <!-- GENERATED: raw data from experiments/database/scripts/build_bacteria_datasets_table.py
-(-> results/pre-build/<date>/ecoli-pputida_datasets.json); this note is a VIEW rendered by
+(-> results/pre-build/<date>/<organisms>_datasets.json); this note is a VIEW rendered by
 render_bacteria_datasets_table.py. Do not edit tables by hand. -->
 
-Pre-build inventory of the *E. coli* and *P. putida* datasets built as LMDBs in the dev tree
-(the set `build_adapter_map(organisms={ecoli, pputida})` serves), the bacterial counterpart of
+Pre-build inventory of the {hosts} datasets built as LMDBs in the dev tree
+(the set `build_adapter_map(organisms={{{organisms}}})` serves), a temporary counterpart of
 [[paper.supported-datasets-and-databases]] (issue #1098), with the Signal-column controls of
 issue #1099 measured in the same pass. Commentary and findings:
 [[experiments.database.scripts.build_bacteria_datasets_table]].
@@ -239,19 +257,20 @@ def main() -> None:
     records = [DatasetProbeRecord(**d) for d in payload["datasets"]]
     sections = payload["sections"]
     hosts = " + ".join(ORGANISM_LABEL[o] for o in payload["organisms"])
+    name = view_name(payload["organisms"])
     main_t = main_table(records, sections)
     ctrl_t = control_table(records, sections)
 
     tex = (
         main_t.to_latex(
             caption=(
-                f"Bacterial datasets ({payload['status']}, {payload['date']}; {hosts}) built as LMDBs in the "
+                f"{hosts} datasets ({payload['status']}, {payload['date']}; {hosts}) built as LMDBs in the "
                 "TorchCell dev tree. \\emph{Genotypes} and \\emph{Env} count distinct stored genotype and "
                 "environment payloads; \\emph{Instances} is the record count; \\emph{Signal (gzip, bits)} the "
                 "gzip size in bits of the concatenated stored instances (perturbation + environment + "
                 "phenotype), as in the yeast table."
             ),
-            label="tab:bacteria-datasets",
+            label=f"tab:{name}-datasets",
             header_comment=f"GENERATED off {data_path.relative_to(REPO)} by render_bacteria_datasets_table.py -- do not edit by hand.",
         )
         + "\n"
@@ -262,21 +281,26 @@ def main() -> None:
                 "leaves redrawn uniformly at stored precision. \\emph{Binary}: per-path z-score thresholded at "
                 "0, written in place. \\emph{Packed 1-bit}: gzip of those bits alone, 8 per byte."
             ),
-            label="tab:bacteria-signal-controls",
+            label=f"tab:{name}-signal-controls",
             colsep_pt=3,
             size="scriptsize",
         )
     )
-    tex_out = data_path.parent / "bacteria_datasets_table.tex"
+    tex_out = data_path.parent / f"{name}_datasets_table.tex"
     tex_out.write_text(tex)
     print(f"Wrote {tex_out.relative_to(REPO)}")
 
-    front = read_frontmatter(MD_OUT, default_title="Bacteria Datasets Table")
+    front = read_frontmatter(
+        md_out(name), default_title=f"{name.title()} Datasets Table"
+    )
+    intro = MD_INTRO.format(
+        title=name.title(), hosts=hosts, organisms=", ".join(payload["organisms"])
+    )
     note = "\n".join(
         [
             front.rstrip("\n"),
             "",
-            MD_INTRO,
+            intro,
             "### Datasets",
             "",
             main_t.to_markdown(sectioned=True, heading_level=4),
@@ -289,15 +313,17 @@ def main() -> None:
             f"`{payload['probe_variant']}`, gzip level {payload['gzip_level']}, seed {payload['seed']}).",
         ]
     )
-    MD_OUT.write_text(note.rstrip("\n") + "\n")
-    print(f"Wrote {MD_OUT.relative_to(REPO)}")
-    _preview_pdf(data_path.parent, tex_out, len(records) * 2 + len(sections) * 2)
+    md_out(name).write_text(note.rstrip("\n") + "\n")
+    print(f"Wrote {md_out(name).relative_to(REPO)}")
+    _preview_pdf(
+        data_path.parent, tex_out, pdf_out(name), len(records) * 2 + len(sections) * 2
+    )
 
 
-def _preview_pdf(out_dir: Path, tex_out: Path, n_lines: int) -> None:
+def _preview_pdf(out_dir: Path, tex_out: Path, pdf_path: Path, n_lines: int) -> None:
     r"""Standalone pdflatex canvas sized to the row count (a ``table*`` never paginates)."""
     height_in = 4.0 + n_lines * 0.17
-    wrapper = out_dir / "_preview_bacteria.tex"
+    wrapper = out_dir / f"_preview_{tex_out.stem}.tex"
     wrapper.write_text(
         "\\documentclass[9pt]{article}\n"
         f"\\usepackage[paperwidth=14in,paperheight={height_in:.1f}in,margin=0.4in]{{geometry}}\n"
@@ -320,14 +346,14 @@ def _preview_pdf(out_dir: Path, tex_out: Path, n_lines: int) -> None:
             capture_output=True,
             check=False,
         )
-    pdf = out_dir / "_preview_bacteria.pdf"
+    pdf = out_dir / f"_preview_{tex_out.stem}.pdf"
     if not pdf.exists():
         raise RuntimeError("preview PDF not built (pdflatex log in the pre-build dir)")
-    final = out_dir / "bacteria_datasets_table_preview.pdf"
+    final = out_dir / f"{tex_out.stem}_preview.pdf"
     pdf.rename(final)
-    PDF_OUT.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(final, PDF_OUT)
-    print(f"Wrote {final.relative_to(REPO)}\nWrote {PDF_OUT.relative_to(REPO)}")
+    pdf_path.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(final, pdf_path)
+    print(f"Wrote {final.relative_to(REPO)}\nWrote {pdf_path.relative_to(REPO)}")
 
 
 if __name__ == "__main__":

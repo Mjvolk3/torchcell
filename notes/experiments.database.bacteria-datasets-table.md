@@ -9,11 +9,11 @@ created: 1791955932313
 ## Bacteria datasets: Instances vs Signal (gzip), with the Signal controls
 
 <!-- GENERATED: raw data from experiments/database/scripts/build_bacteria_datasets_table.py
-(-> results/pre-build/<date>/ecoli-pputida_datasets.json); this note is a VIEW rendered by
+(-> results/pre-build/<date>/<organisms>_datasets.json); this note is a VIEW rendered by
 render_bacteria_datasets_table.py. Do not edit tables by hand. -->
 
-Pre-build inventory of the *E. coli* and *P. putida* datasets built as LMDBs in the dev tree
-(the set `build_adapter_map(organisms={ecoli, pputida})` serves), the bacterial counterpart of
+Pre-build inventory of the E. coli + P. putida datasets built as LMDBs in the dev tree
+(the set `build_adapter_map(organisms={ecoli, pputida})` serves), a temporary counterpart of
 [[paper.supported-datasets-and-databases]] (issue #1098), with the Signal-column controls of
 issue #1099 measured in the same pass. Commentary and findings:
 [[experiments.database.scripts.build_bacteria_datasets_table]].

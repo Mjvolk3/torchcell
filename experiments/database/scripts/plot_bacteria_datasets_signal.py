@@ -216,7 +216,9 @@ def main() -> None:
     _box(ax_a)
     _box(ax_b)
 
-    stem = "bacteria_datasets_signal" + ("" if args.no_timestamp else f"_{timestamp()}")
+    label = "-".join(payload["organisms"])
+    name = {"ecoli-pputida": "bacteria", "scerevisiae": "yeast"}.get(label, label)
+    stem = f"{name}_datasets_signal" + ("" if args.no_timestamp else f"_{timestamp()}")
     png = osp.join(out_dir, stem + ".png")
     svg = osp.join(out_dir, stem + ".svg")
     fig.savefig(png, dpi=300)

@@ -10,6 +10,7 @@ from typing import Any
 from torchcell.verification.construct_placement import (
     RULE_NAME,
     ConstructPlacementState,
+    addition_perturbation_types,
     construct_placement_census,
     construct_placement_result,
     l1_construct_placement,
@@ -231,3 +232,95 @@ def test_the_states_are_exactly_three() -> None:
         "host_placed_without_coordinate",
         "composition_only",
     ]
+
+
+# --------------------------------------------------------------------------- #
+# 2026.10.15 (lane R's finding, fixed in lane T): the addition family is DERIVED
+# from the schema union, because the hand-written copy of it was already wrong.
+# --------------------------------------------------------------------------- #
+def test_the_addition_family_is_every_subclass_of_the_addition_leaf() -> None:
+    """The family is the subclasses of ``GeneAdditionPerturbation``, all four of them.
+
+    The literal that used to stand here named ``gene_addition`` and
+    ``heterologous_pathway`` only, so this row was silent on every
+    ``promoter_driven_gene_integration`` and every ``variable_promoter_reporter``
+    record -- 71,158 of the 71,158 addition records of the built
+    ``pooled_promoter_expression_vaishnav2022`` store, measured. A derivation cannot
+    miss a leaf that lands later, which is why the set is computed and not typed.
+    """
+    from typing import get_args
+
+    from torchcell.datamodels.schema import (
+        GeneAdditionPerturbation,
+        GenePerturbationType,
+    )
+
+    leaves = get_args(GenePerturbationType)
+    expected = {
+        str(leaf.model_fields["perturbation_type"].default)
+        for leaf in leaves
+        if issubclass(leaf, GeneAdditionPerturbation)
+    }
+    assert addition_perturbation_types() == expected
+    assert addition_perturbation_types() == {
+        "gene_addition",
+        "heterologous_pathway",
+        "promoter_driven_gene_integration",
+        "variable_promoter_reporter",
+    }
+
+
+def test_the_addition_family_is_exactly_the_leaves_that_carry_a_placement() -> None:
+    """Two independent properties of the class give the same family, so neither drifts.
+
+    Subclassing ``GeneAdditionPerturbation`` says "this adds DNA"; declaring
+    ``placement`` says "this can point at the sequence that was added". They must name
+    the same leaves: a leaf that adds DNA with no placement would be counted by a row
+    that then cannot read it, and a leaf with a placement that does not add DNA would be
+    read by a row that does not count it. Either is a design question, and this test is
+    where it surfaces.
+    """
+    from typing import get_args
+
+    from torchcell.datamodels.schema import GenePerturbationType
+
+    declaring = {
+        str(leaf.model_fields["perturbation_type"].default)
+        for leaf in get_args(GenePerturbationType)
+        if "placement" in leaf.model_fields
+    }
+    assert addition_perturbation_types() == declaring
+
+
+def test_the_two_promoter_leaves_are_counted_by_the_census() -> None:
+    """A record of each formerly missed leaf reaches the census and lands in a state.
+
+    The regression the derivation exists to prevent, asserted on the behaviour rather
+    than on the constant: before the fix both of these records were skipped and the
+    census reported ``n_additions=0`` for a store full of them.
+    """
+    census = construct_placement_census(
+        [
+            {
+                "perturbation_type": "promoter_driven_gene_integration",
+                "placement": None,
+                "provenance_gaps": [
+                    {"field": "placement", "reason": "not_reported_by_primary"}
+                ],
+            },
+            {
+                "perturbation_type": "variable_promoter_reporter",
+                "placement": None,
+                "provenance_gaps": [
+                    {"field": "placement", "reason": "not_released_by_primary"}
+                ],
+            },
+        ]
+    )
+    assert census.n_additions == 2
+    assert census.n_composition_only == 2
+    assert census.n_untyped == 0
+    assert census.gap_reasons == {
+        "not_released_by_primary": 1,
+        "not_reported_by_primary": 1,
+    }

@@ -22,9 +22,9 @@ from openpyxl import Workbook
 
 from torchcell.data.experiment_dataset import file_sha256
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
     DeletionStrainPerturbation,
     LocusVariantCallPerturbation,
+    ReferenceGenome,
     RNASeqExpressionPhenotype,
     SiteVariantCallPerturbation,
     VariantCallMode,
@@ -213,7 +213,7 @@ def test_resolve_symbols_refuses_a_symbol_off_the_annotation(tmp_path: Path) -> 
         m.resolve_symbols(_Genome(), [lib], {})  # type: ignore[arg-type]
 
 
-REFERENCE = AssemblyReferenceGenome(
+REFERENCE = ReferenceGenome(
     species="Escherichia coli",
     strain="BW25113",
     assembly_set="ecoli_K12_BW25113_ASM75055v1",

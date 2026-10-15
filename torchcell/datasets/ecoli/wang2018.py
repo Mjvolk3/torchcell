@@ -8,7 +8,7 @@ Wang et al. 2018 (Nat Commun 9, 2475; doi:10.1038/s41467-018-04899-x) designed a
 genome-scale sgRNA library of 55,671 guides plus 400 non-targeting controls against
 ``NC_000913.3`` and ran it through five pooled CRISPRi screens. This module serves the
 per-guide readout the paper releases, :class:`CrispriGuideFitnessWang2018Dataset`, one
-``BacterialEnvironmentResponseExperiment`` per (guide, screen) row of Supplementary
+``EnvironmentResponseExperiment`` per (guide, screen) row of Supplementary
 Data 6-10, and the per-gene call, :class:`CrispriGeneFitnessWang2018Dataset`, one
 record per (gene, screen) row of Supplementary Data 5 (#879).
 
@@ -141,9 +141,6 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import LB, MOPS_CASAMINO_WANG2018, MOPS_MINIMAL
 from torchcell.datamodels.schema import (
     AssayType,
-    AssemblyReferenceGenome,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     BacterialGeneNamespace,
     Concentration,
     ConcentrationUnit,
@@ -152,6 +149,8 @@ from torchcell.datamodels.schema import (
     Environment,
     EnvironmentPerturbationType,
     EnvironmentPhysicalPerturbation,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
@@ -159,6 +158,7 @@ from torchcell.datamodels.schema import (
     MeasurementType,
     PhysicalFactor,
     Publication,
+    ReferenceGenome,
     SampleUnit,
     SmallMoleculePerturbation,
     Temperature,
@@ -654,7 +654,7 @@ REFERENCE_BACKGROUND = _paper(
     _Q_MCM,
     page=_PAGE_METHODS_STRAINS,
     note="the screening host is MG1655 carrying one marker cassette and two plasmids. "
-    "AssemblyReferenceGenome.background is None and the cassette is NOT a perturbation: "
+    "ReferenceGenome.background is None and the cassette is NOT a perturbation: "
     "it is identical in all 240,481 records, the paper gives it no locus tag, and the "
     "library was designed against plain NC_000913.3, which is the assembly the stored "
     "b-numbers mean",
@@ -1296,7 +1296,7 @@ def publication() -> Publication:
     return Publication(doi=DOI, doi_url=f"https://doi.org/{DOI}")
 
 
-def host_reference(data_root: str | None = None) -> AssemblyReferenceGenome:
+def host_reference(data_root: str | None = None) -> ReferenceGenome:
     """Plain MG1655, pinned to ``GCA_000005845.2``, with no asserted background.
 
     The screening host MCm carries a chloramphenicol cassette in ``smf`` and two
@@ -1447,10 +1447,10 @@ def guide_phenotype(
 
 
 def build_reference(
-    dataset_name: str, screen: Screen, genome_reference: AssemblyReferenceGenome
-) -> BacterialEnvironmentResponseExperimentReference:
+    dataset_name: str, screen: Screen, genome_reference: ReferenceGenome
+) -> EnvironmentResponseExperimentReference:
     """The non-targeting baseline of one screen: fitness 0 by the normalization."""
-    return BacterialEnvironmentResponseExperimentReference(
+    return EnvironmentResponseExperimentReference(
         dataset_name=dataset_name,
         genome_reference=genome_reference,
         environment_reference=control_environment(screen),
@@ -1642,12 +1642,12 @@ class CrispriGuideFitnessWang2018Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperiment
+        return EnvironmentResponseExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperimentReference
+        return EnvironmentResponseExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -1787,7 +1787,7 @@ class CrispriGuideFitnessWang2018Dataset(ExperimentDataset):
                     phenotype = guide_phenotype(screen, float(fitness), float(z_score))
                     record = {
                         "experiment": {
-                            "experiment_type": "bacterial_environment_response",
+                            "experiment_type": "environment_response",
                             "dataset_name": self.name,
                             "genotype": genotype,
                             "environment": env_ptr,
@@ -1857,12 +1857,12 @@ class CrispriGuideFitnessWang2018Dataset(ExperimentDataset):
         genotype: dict[str, Any],
         environment: Environment,
         phenotype: EnvironmentResponsePhenotype,
-        reference: BacterialEnvironmentResponseExperimentReference,
+        reference: EnvironmentResponseExperimentReference,
         pub: Publication,
         itxn: Any,
     ) -> None:
         """The fast-path record equals what ``_intern_record`` writes for the same objects."""
-        experiment = BacterialEnvironmentResponseExperiment(
+        experiment = EnvironmentResponseExperiment(
             dataset_name=self.name,
             genotype=Genotype.model_validate(genotype),
             environment=environment,
@@ -2220,7 +2220,7 @@ class GeneBuildAccounting(BaseModel):
 class CrispriGeneFitnessWang2018Dataset(ExperimentDataset):
     """Wang 2018 gene-level CRISPRi calls (Supplementary Data 5) across five screens.
 
-    One ``BacterialEnvironmentResponseExperiment`` per (gene, screen) row, 20,158 in
+    One ``EnvironmentResponseExperiment`` per (gene, screen) row, 20,158 in
     all, every released row stored. The record carries the released ``gene fitness`` as
     the response, the ``Z score`` on ``environment_response_z_score``, the ``FPRvalue``
     (a p-value, by the paper's own words) on ``environment_response_p_value`` and the
@@ -2248,12 +2248,12 @@ class CrispriGeneFitnessWang2018Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperiment
+        return EnvironmentResponseExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperimentReference
+        return EnvironmentResponseExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -2334,7 +2334,7 @@ class CrispriGeneFitnessWang2018Dataset(ExperimentDataset):
                     strict=True,
                 ):
                     cluster = by_symbol[gene]
-                    experiment = BacterialEnvironmentResponseExperiment(
+                    experiment = EnvironmentResponseExperiment(
                         dataset_name=self.name,
                         genotype=build_gene_genotype(cluster, n_guides),
                         environment=environment,
@@ -2568,7 +2568,7 @@ def verify_gene_build(
             sha256=GENE_FITNESS_FILE.sha256,
             method=(
                 "Supplementary Data 5 (MOESM8, one sheet per screen): one "
-                "BacterialEnvironmentResponseExperiment per released (gene, screen) "
+                "EnvironmentResponseExperiment per released (gene, screen) "
                 "row, 20,158, none dropped. environment_response = 'gene fitness' "
                 "(median sgRNA fitness of the selected subset, log2_ratio); "
                 "environment_response_z_score = 'Z score'; environment_response_p_value "
@@ -2626,7 +2626,7 @@ def verify_guide_build(
             sha256=LIBRARY_FILE.sha256,
             method=(
                 "Supplementary Data 6-10 (one sheet each, MOESM9-13): one "
-                "BacterialEnvironmentResponseExperiment per (sgRNA, screen) row. "
+                "EnvironmentResponseExperiment per (sgRNA, screen) row. "
                 "measurement_type=log2_ratio, assay_type="
                 "pooled_competitive_growth_barcode (the barcode is the guide's own N20 "
                 "spacer), environment_response = the released 'sgRNA fitness' = "

@@ -70,8 +70,17 @@ from torchcell.datamodels.identity import (
 )
 from torchcell.fast_csv import RenderedChunk
 from torchcell.loader import CpuExperimentLoaderMultiprocessing
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
-GENOME = s.ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
+GENOME = s.ReferenceGenome(
+    species="Saccharomyces cerevisiae",
+    strain="S288C",
+    assembly_set=SGD_S288C_R64,
+    assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
+)
 MEDIA = s.Media(name="YPD", state="liquid", is_synthetic=False)
 NACL = s.Compound(name="NaCl", inchikey="FAPWRFPIFSIZLT-UHFFFAOYSA-M")
 HCL = s.Compound(name="HCl", inchikey="VEXZGXHMUGYJMC-UHFFFAOYSA-N")

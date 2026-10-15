@@ -8,7 +8,7 @@ Mori et al. 2021 (Mol Syst Biol 17:e9536, doi:10.15252/msb.20209536, PMID 340320
 measured absolute protein abundances for *E. coli* over 66 LC-MS samples spanning
 nutrient limitations, non-metabolic stresses and non-planktonic states, using DIA/SWATH
 with the xTop protein-inference algorithm. :class:`ProteomeMori2021Dataset` serves one
-``BacterialProteinAbundanceExperiment`` per loaded sample.
+``ProteinAbundanceExperiment`` per loaded sample.
 
 WHICH PER-PROTEIN QUANTITY IS STORED, AND ITS DEFINITION. The release carries several
 per-protein quantities and they are NOT interchangeable: ribosome-profiling synthesis
@@ -196,8 +196,6 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import MOPS_MINIMAL
 from torchcell.datamodels.schema import (
     BacterialAssemblySet,
-    BacterialProteinAbundanceExperiment,
-    BacterialProteinAbundanceExperimentReference,
     BacterialStrainBackground,
     Concentration,
     ConcentrationUnit,
@@ -208,6 +206,8 @@ from torchcell.datamodels.schema import (
     ExperimentReference,
     Genotype,
     PhysicalFactor,
+    ProteinAbundanceExperiment,
+    ProteinAbundanceExperimentReference,
     ProteinAbundancePhenotype,
     Publication,
     Temperature,
@@ -1501,12 +1501,12 @@ class ProteomeMori2021Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialProteinAbundanceExperiment
+        return ProteinAbundanceExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialProteinAbundanceExperimentReference
+        return ProteinAbundanceExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -1614,13 +1614,13 @@ class ProteomeMori2021Dataset(ExperimentDataset):
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for idx, spec in enumerate(tqdm(LOADED, desc="mori2021")):
                 phenotype = phenotypes[spec.column]
-                experiment = BacterialProteinAbundanceExperiment(
+                experiment = ProteinAbundanceExperiment(
                     dataset_name=self.name,
                     genotype=Genotype(perturbations=[]),
                     environment=environment,
                     phenotype=phenotype,
                 )
-                reference = BacterialProteinAbundanceExperimentReference(
+                reference = ProteinAbundanceExperimentReference(
                     dataset_name=self.name,
                     genome_reference=reference_genome,
                     environment_reference=environment,
@@ -1962,7 +1962,7 @@ def verify_build(
             sha256=DATA_SHA256[EV9],
             method=(
                 "Dataset EV9 'EV9-AbsoluteMassFractions-2': one "
-                "BacterialProteinAbundanceExperiment per loaded MG1655 (EQ353) "
+                "ProteinAbundanceExperiment per loaded MG1655 (EQ353) "
                 "calibration sample, storing that column's absolute protein mass "
                 "fraction verbatim, with the reference the mean of the three culture "
                 "means and SE = stdev(culture means) / sqrt(n)"

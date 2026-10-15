@@ -1,6 +1,6 @@
 # Butland 2008 unfiltered eSGA interaction matrix: 296,390 (query strain, recipient
 # isolate) records from Supplementary Table 4's S-score sheet,
-# BacterialGeneInteractionExperiment. Two gene-level BacterialDeletionPerturbation leaves
+# GeneInteractionExperiment. Two gene-level BacterialDeletionPerturbation leaves
 # per record, served as `bacterial perturbation` (never the yeast `perturbation` class),
 # and the signed S score as the served `gene interaction phenotype` -- no new graph
 # class: the yeast interaction datasets already declare that one and the sibling Babu

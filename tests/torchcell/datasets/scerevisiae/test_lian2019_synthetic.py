@@ -95,6 +95,10 @@ from torchcell.literature.manifest import (
     RetrievalMethod,
     RetrievalRecord,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 
 _GENES = {"YGL013C", "YDR409W", "YMR263W", "YDL040C"}
@@ -323,6 +327,8 @@ def _reference(rnd: int) -> StrainEnvironmentResponseExperimentReference:
             strain="bAID",
             ploidy="haploid",
             background=baid_background(),
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=_ENVIRONMENT[rnd],
         phenotype_reference=EnvironmentResponsePhenotype(

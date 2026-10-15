@@ -62,13 +62,13 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
 from torchcell.datamodels.media import LB
 from torchcell.datamodels.schema import (
     AssayType,
-    AssemblyReferenceGenome,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     ConcentrationUnit,
     DoseBasis,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     MeasurementType,
     MediaComponentRole,
+    ReferenceGenome,
     SmallMoleculePerturbation,
 )
 from torchcell.literature.manifest import Manifest, RetrievalMethod
@@ -108,7 +108,7 @@ CHOE_LOCI = [
     ),
 ]
 
-REFERENCE = AssemblyReferenceGenome(
+REFERENCE = ReferenceGenome(
     species="Escherichia coli",
     strain="MG1655",
     assembly_set="ecoli_K12_MG1655_ASM584v2",
@@ -839,16 +839,14 @@ def test_build_experiment_and_reference_round_trip(
     experiment = m.build_experiment(
         "choe", guide, condition, m.knockdown_genotype(guide), m.environment(condition)
     )
-    assert isinstance(experiment, BacterialEnvironmentResponseExperiment)
-    assert experiment.experiment_type == "bacterial_environment_response"
+    assert isinstance(experiment, EnvironmentResponseExperiment)
+    assert experiment.experiment_type == "environment_response"
     assert experiment.phenotype.environment_response == pytest.approx(1.0)
-    restored = BacterialEnvironmentResponseExperiment.model_validate(
-        experiment.model_dump()
-    )
+    restored = EnvironmentResponseExperiment.model_validate(experiment.model_dump())
     assert restored == experiment
 
     reference = m.build_reference("choe", REFERENCE)
-    assert isinstance(reference, BacterialEnvironmentResponseExperimentReference)
+    assert isinstance(reference, EnvironmentResponseExperimentReference)
     assert reference.phenotype_reference.environment_response == 0.0
     assert reference.environment_reference.perturbations == []
     assert reference.genome_reference == REFERENCE
@@ -979,8 +977,8 @@ def test_process_writes_one_record_per_kept_guide_and_antibiotic(
     built: m.CrispriChemgenChoe2025Dataset,
 ) -> None:
     assert len(built) == 8 * 12 - 1
-    assert built.experiment_class is BacterialEnvironmentResponseExperiment
-    assert built.reference_class is BacterialEnvironmentResponseExperimentReference
+    assert built.experiment_class is EnvironmentResponseExperiment
+    assert built.reference_class is EnvironmentResponseExperimentReference
     assert built.raw_file_names == [m.TABLE_S1_FILE, m.TABLE_S2_FILE, m.TABLE_S6_FILE]
     assert set(built.gene_set) == {"b0001", "b0002", "b0003", "b9999"}
 

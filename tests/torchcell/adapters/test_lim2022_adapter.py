@@ -4,7 +4,7 @@
 """``torchcell/adapters/lim2022_adapter.py``: the conf it loads, the gate's view of it,
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
-putidaPRECISE321 (Lim 2022): 180 KT2440 samples, BacterialRNASeqExpressionExperiment.
+putidaPRECISE321 (Lim 2022): 180 KT2440 samples, RNASeqExpressionExperiment.
 9 of 180 records carry one DeletionStrainPerturbation, served as `bacterial
 perturbation`. 15 environment perturbations (EnvironmentPhysicalPerturbation) across the
 experiments and 12 on the references, so the environment-perturbation pair is enabled.

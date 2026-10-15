@@ -1,5 +1,5 @@
 # Guzman 2018 (BMC Syst Biol) own release, GEO GSE117303: 14 libraries,
-# BacterialRNASeqExpressionExperiment. The 12 deletion-strain libraries carry one
+# RNASeqExpressionExperiment. The 12 deletion-strain libraries carry one
 # BacterialDeletionPerturbation (`bacterial perturbation`) and their breseq calls as
 # BacterialSequenceVariantPerturbation / BacterialSiteVariantPerturbation (`bacterial
 # sequence variant perturbation`); the 2 wild-type libraries carry none. The carbon

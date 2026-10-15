@@ -27,7 +27,7 @@ import yaml
 
 import torchcell.adapters.volk2021_inhibitor_bioscreen_adapter as adapter_module
 from torchcell.adapters.cell_adapter import CellAdapter
-from torchcell.datamodels.schema import StrainReferenceGenome
+from torchcell.datamodels.schema import StrainBackground, StrainReferenceGenome
 from torchcell.datasets.private_torchcell import bioscreen as b
 from torchcell.datasets.private_torchcell import volk2021_inhibitor_bioscreen as v
 from torchcell.knowledge_graphs.kg_manifest import adapter_conf_name
@@ -194,6 +194,7 @@ def test_the_genome_node_carries_bAID_and_its_cassette(records: v.RunRecords) ->
     props = node.get_properties()
     assert props["strain"] == "bAID"
     genome = StrainReferenceGenome.model_validate_json(props["serialized_data"])
+    assert isinstance(genome.background, StrainBackground)
     assert [c.name for c in genome.background.integrations] == [
         "Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]"
     ]

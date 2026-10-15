@@ -145,6 +145,10 @@ from torchcell.literature.manifest import (
     RetrievalMethod,
     RetrievalRecord,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import SourcedValue
@@ -621,7 +625,10 @@ class FattyAcidSmith2006Dataset(ExperimentDataset):
         return EnvironmentResponseExperimentReference(
             dataset_name=self.name,
             genome_reference=ReferenceGenome(
-                species="Saccharomyces cerevisiae", strain="BY4742"
+                species="Saccharomyces cerevisiae",
+                strain="BY4742",
+                assembly_set=SGD_S288C_R64,
+                assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
             ),
             environment_reference=environment.model_copy(),
             phenotype_reference=EnvironmentResponsePhenotype(

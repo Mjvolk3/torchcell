@@ -44,9 +44,9 @@ import pytest
 import torchcell.datasets.pputida.thompson2019_valerolactam as vl
 from torchcell.datamodels.media import MEDIA_LIBRARY
 from torchcell.datamodels.schema import (
-    BacterialEnvironmentResponseExperiment,
     Censoring,
     ConcentrationUnit,
+    EnvironmentResponseExperiment,
     MeasurementType,
     PhysicalFactor,
     ProductTiterExperiment,
@@ -868,7 +868,7 @@ def test_the_growth_store_holds_every_released_table_s1_cell(
     records = load_records(growth_root)
     assert len(records) == vl.EXPECTED_GROWTH_RECORDS
     for record in records:
-        BacterialEnvironmentResponseExperiment.model_validate(record["experiment"])
+        EnvironmentResponseExperiment.model_validate(record["experiment"])
     ledger = pd.read_csv(osp.join(growth_root, "preprocess", "growth_rows.csv"))
     assert dict(ledger["carbon_source"].value_counts()) == {
         "5AVA": 3,

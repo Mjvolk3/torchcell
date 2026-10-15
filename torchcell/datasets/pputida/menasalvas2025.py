@@ -11,13 +11,13 @@ that selection on an isoprenol-producing KT2440 chassis. This module serves four
 families, one per released readout:
 
 - :class:`IsoprenolSelectionMenasalvas2025Dataset` -- a
-  ``BacterialEnvironmentResponseExperiment`` per enriched knockdown target of
+  ``EnvironmentResponseExperiment`` per enriched knockdown target of
   Supplementary Tables 1 and 2 (58 records).
-- :class:`ProteomeMenasalvas2025Dataset` -- a ``BacterialProteinAbundanceExperiment``
+- :class:`ProteomeMenasalvas2025Dataset` -- a ``ProteinAbundanceExperiment``
   per released sample of the Dryad deposit's Supplementary Data 2 sheet 4: the three
   designed strains in the growth and the production phase (6 records over 2,090 loci).
 - :class:`MetaboliteGrowthPhaseMenasalvas2025Dataset` and
-  :class:`MetaboliteProductionPhaseMenasalvas2025Dataset` -- a ``BacterialMetaboliteExperiment``
+  :class:`MetaboliteProductionPhaseMenasalvas2025Dataset` -- a ``MetaboliteExperiment``
   per released strain of data S1-1's 48 ``Absolute`` rows, one dataset per growth phase
   because the two phases are two environments (3 records each).
 
@@ -90,7 +90,7 @@ variants and four different strains, each with varied base isoprenol titers and
 isoprenol activation thresholds". Four unnamed producer strains with four reporter
 variants is not a genotype, and none of them appears in Supplementary Table 4, which
 lists ``TEAM-862`` (a non-producing ΔpyrF strain) and the producer lineage but no
-producing ΔpyrF strain. So ``AssemblyReferenceGenome.background`` is ``None``: the
+producing ΔpyrF strain. So ``ReferenceGenome.background`` is ``None``: the
 reference is plain KT2440 and every stated edit is a perturbation. The chassis
 elements that distinguish TEAM-2595 from TEAM-2777 (the ``PJ23100``-``PP_2666,PP_2665``
 biosensor sensitization, the second ``PpedF``-RBS-mCherry copy, ``ΔPP_2664``,
@@ -208,14 +208,7 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import M9_NREL_MOPS_MENASALVAS2025
 from torchcell.datamodels.schema import (
     AssayType,
-    AssemblyReferenceGenome,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     BacterialGeneNamespace,
-    BacterialMetaboliteExperiment,
-    BacterialMetaboliteExperimentReference,
-    BacterialProteinAbundanceExperiment,
-    BacterialProteinAbundanceExperimentReference,
     BacterialVariantCall,
     BacterialVariantType,
     Concentration,
@@ -225,6 +218,8 @@ from torchcell.datamodels.schema import (
     DeletionStrainPerturbation,
     Environment,
     EnvironmentPhysicalPerturbation,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
@@ -232,10 +227,15 @@ from torchcell.datamodels.schema import (
     HeterologousPathwayPerturbation,
     LocusVariantCallPerturbation,
     MeasurementType,
+    MetaboliteExperiment,
+    MetaboliteExperimentReference,
     MetabolitePhenotype,
     PhysicalFactor,
+    ProteinAbundanceExperiment,
+    ProteinAbundanceExperimentReference,
     ProteinAbundancePhenotype,
     Publication,
+    ReferenceGenome,
     ResponseCategory,
     SampleUnit,
     SiteVariantCallPerturbation,
@@ -798,7 +798,7 @@ HOST_UNNAMED = _paper(
     "four unnamed producing dpyrF strains",
     _Q_FOUR_STRAINS,
     page=_PAGE_RESULTS_SELECTION,
-    note="why AssemblyReferenceGenome.background is None: no selection host is named, "
+    note="why ReferenceGenome.background is None: no selection host is named, "
     "and none appears in Supplementary Table 4",
 )
 MEDIUM = _paper(
@@ -1798,7 +1798,7 @@ def publication() -> Publication:
     )
 
 
-def host_reference(data_root: str | None = None) -> AssemblyReferenceGenome:
+def host_reference(data_root: str | None = None) -> ReferenceGenome:
     """Plain KT2440, pinned to its GenBank assembly, with no asserted background.
 
     ``background`` is ``None`` deliberately: the selection hosts are "four different
@@ -2162,12 +2162,12 @@ class IsoprenolSelectionMenasalvas2025Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperiment
+        return EnvironmentResponseExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperimentReference
+        return EnvironmentResponseExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -2215,7 +2215,7 @@ class IsoprenolSelectionMenasalvas2025Dataset(ExperimentDataset):
         control = _environment(induced=False)
         host = host_perturbations()
         references = {
-            number: BacterialEnvironmentResponseExperimentReference(
+            number: EnvironmentResponseExperimentReference(
                 dataset_name=self.name,
                 genome_reference=reference_genome,
                 environment_reference=control.model_copy(),
@@ -2236,7 +2236,7 @@ class IsoprenolSelectionMenasalvas2025Dataset(ExperimentDataset):
                     crispri_perturbation(stored_by_tag[tag], common[stored_by_tag[tag]])
                     for tag in target.locus_tags
                 ]
-                experiment = BacterialEnvironmentResponseExperiment(
+                experiment = EnvironmentResponseExperiment(
                     dataset_name=self.name,
                     genotype=Genotype(perturbations=[*host, *knockdowns]),
                     environment=induced,
@@ -3433,7 +3433,7 @@ def _variant_locus_index(
 class ProteomeMenasalvas2025Dataset(ExperimentDataset):
     """Menasalvas 2025 growth-phase and production-phase proteome of the three strains.
 
-    One ``BacterialProteinAbundanceExperiment`` per released sample of Supplementary
+    One ``ProteinAbundanceExperiment`` per released sample of Supplementary
     Data 2 sheet 4: the control TEAM-2595 and the two improved producers TEAM-3174 and
     TEAM-3185, each sampled in the growth phase and in the production phase. The
     reference of every record is the matching-phase TEAM-2595 profile, which is a real
@@ -3466,12 +3466,12 @@ class ProteomeMenasalvas2025Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialProteinAbundanceExperiment
+        return ProteinAbundanceExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialProteinAbundanceExperimentReference
+        return ProteinAbundanceExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -3544,7 +3544,7 @@ class ProteomeMenasalvas2025Dataset(ExperimentDataset):
         pub = publication()
         environments = {phase: production_environment(phase) for phase in PHASES}
         references = {
-            phase: BacterialProteinAbundanceExperimentReference(
+            phase: ProteinAbundanceExperimentReference(
                 dataset_name=self.name,
                 genome_reference=reference_genome,
                 environment_reference=environments[phase].model_copy(),
@@ -3569,7 +3569,7 @@ class ProteomeMenasalvas2025Dataset(ExperimentDataset):
                     *designed_perturbations(strain, common),
                     *attached.get(strain, []),
                 ]
-                experiment = BacterialProteinAbundanceExperiment(
+                experiment = ProteinAbundanceExperiment(
                     dataset_name=self.name,
                     genotype=Genotype(perturbations=perturbations),
                     environment=environments[phase],
@@ -3721,12 +3721,12 @@ class _MetabolitePhaseDataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialMetaboliteExperiment
+        return MetaboliteExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialMetaboliteExperimentReference
+        return MetaboliteExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -3816,13 +3816,13 @@ class _MetabolitePhaseDataset(ExperimentDataset):
                     *designed_perturbations(strain, common),
                     *attached.get(strain, []),
                 ]
-                experiment = BacterialMetaboliteExperiment(
+                experiment = MetaboliteExperiment(
                     dataset_name=self.name,
                     genotype=Genotype(perturbations=perturbations),
                     environment=environment,
                     phenotype=metabolite_phenotype(measured, n_replicates=n_replicates),
                 )
-                reference = BacterialMetaboliteExperimentReference(
+                reference = MetaboliteExperimentReference(
                     dataset_name=self.name,
                     genome_reference=reference_genome,
                     environment_reference=environment.model_copy(),

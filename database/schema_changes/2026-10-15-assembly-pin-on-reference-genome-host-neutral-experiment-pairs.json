@@ -1,0 +1,3121 @@
+{
+  "record_version": 1,
+  "slug": "assembly-pin-on-reference-genome-host-neutral-experiment-pairs",
+  "date": "2026-10-15",
+  "pr": null,
+  "author_kind": "agent",
+  "base_commit": "1914c98355d1bbe24d645896d308de22501ec52b",
+  "python_version": "3.13.0",
+  "symbols": [
+    {
+      "symbol": "ASSEMBLY_SET_ACCESSIONS",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "47bca819d9c4918134c5ac9edcf9beefbc37f7886386a20e55b7e0e58a58f50c",
+      "fingerprint_after": "dbac67b06e08bf2244c948a18ad1c392d1f266f37845786559c3824568fe4849",
+      "impact": "stale",
+      "reasons": [
+        "gained members [\"'scerevisiae_CENPK113-7D_ASM257140v2': ('GCA_002571405.2',)\", \"'sgd_S288C_R64-4-1_20230830': ('GCA_000146045.2', 'GCF_000146045.2')\"]"
+      ]
+    },
+    {
+      "symbol": "AssemblyReferenceGenome",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "73d71850caf5b0c5f3a898b9bb8836bcf331a4c415cc2b9ce645e63c5a093272",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "AssemblySet",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "79555e4c1668a91a334bb63b73cb0c6c476fb2fb1b9053ca03465af4357e8965",
+      "impact": "stale",
+      "reasons": [
+        "new module-level binding"
+      ]
+    },
+    {
+      "symbol": "BacterialEnvironmentResponseExperiment",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "723e8c423334de74f896c8a91bae9fa3a3686df9cb79922166436b1d576639a4",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialEnvironmentResponseExperimentReference",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "b2a043769cb7b44c48a164ea50093389faf399591b7d559997e0a9535f5aac2c",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialFitnessContrastExperiment",
+      "status": "removed",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": "6479ef2f4d3887a0803c64ba3104585531b487209a85ee12c6af90ee21cd4a10",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialFitnessContrastExperimentReference",
+      "status": "removed",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": "0956a9100962dfbc0ee712e67af7c7e5f106e37120143e3af99bf163dee27a6c",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialFitnessExperiment",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "d6e6f7680d1f65a2886f0a2b7380428651cc5d7e07dbe3c500968ed772d9c3db",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialFitnessExperimentReference",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "027e9a20f83badab5d6e90ef333397457f16872aa3d50231e850acdf4ef3c560",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialGeneEssentialityExperiment",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "e8f3a40f465386b1c7c7dd10a8aac6ac02ff5ee0b43230ccc711dc8b59fd438c",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialGeneEssentialityExperimentReference",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "fdf66fdbbe44f6d2504bfa7b5e5834f83fc5e1c47f3a552cb8fd6c7c28635b04",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialGeneInteractionExperiment",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "bc285a9f77ca9ccd92c7fc7ff3da696b29329faa7bdcc918e59bc677e7246b8b",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialGeneInteractionExperimentReference",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "aa5f2564546e43428ee5e5be9e627df4ed64fc48e037aaa4adababdc97b88f49",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialGradedGeneEssentialityExperiment",
+      "status": "removed",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": "785e5874c5e37d9f0d5d7999fe7de424653cda90dfe34f7ff01cbce33c6eca9d",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialGradedGeneEssentialityExperimentReference",
+      "status": "removed",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": "c60e5aef24e6f62e7c099b0cd41689d5e965d62114c7d64bc60e23a7ff444daa",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialMetaboliteExperiment",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "94016a88d229b81a6e911442384cdcc17764ce9f7a25f78de088f8f1d52bdf7c",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialMetaboliteExperimentReference",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "f38b33abcee1b690ee41b2243b73a022b2e319e4125e08c763879eec42e31538",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialMorphologyExperiment",
+      "status": "removed",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": "dc49cef33d686c75eac263bcc0b9bf0ba5f2761693259dbb466d4cac0456c33c",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialMorphologyExperimentReference",
+      "status": "removed",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": "3c08b91332ac445ed04d3b2a22f8e8ed382c0944fa2197e4cfed0ba66d260a4d",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialPhosphositeIntensityExperiment",
+      "status": "removed",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": "06d7b6f045469b83957440d6514982a276edfefb042b05ebaaa983778b5719b7",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialPhosphositeIntensityExperimentReference",
+      "status": "removed",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": "739a305daf3522fcdb705fc63d3fcdb25c91b499d5cab22d52e27958839eaf65",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialProteinAbundanceExperiment",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "0f6cc6730f801724e5c6fd17cbdad43650ef2e8bb61a9d66ab9e6756ddad6ec5",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialProteinAbundanceExperimentReference",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "c254f1e80cc5e49df2bb8b8a71688a5816dd47814fe274c8524d0b89d641e021",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialProteinFoldChangeExperiment",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "5e8c062b87ad95fdb14632cdc3403e131a9a5521e0c738d8c5781154a93c7939",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialProteinFoldChangeExperimentReference",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "fea10a4c43a4a760970f2db02928dab5e62738a86f0caa052d756169abea7bd0",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialRNASeqExpressionExperiment",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "c3366150c5f65785437ef37139111a7bdc1da9ebb43ec832726d8bbc0fe54776",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialRNASeqExpressionExperimentReference",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "12d32f86f1412e5e701821ee8861cb16a6d0edea4c5e615e80b178df556fc83f",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialVisualScoreExperiment",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "9d4de653095734ac9f3863774ca22bb557f3bac2c2857fcaf053d22c78ca9d72",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialVisualScoreExperimentReference",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "db52fb53e4a67a645276c2e7e8f1d6bcd9cbda2a3fb0f8ab6596c34b1b8cd87d",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "EXPERIMENT_REFERENCE_TYPE_MAP",
+      "status": "modified",
+      "kinds": [
+        "removal",
+        "rename",
+        "enum_member_added"
+      ],
+      "fingerprint_before": "4e2dba018e6b262535c2f741934f820dd5cddbb688ccaea89d818c9283c20788",
+      "fingerprint_after": "ef2915edf057cfa073c7c828d47b6d5073a75ac7ff61240b8efd49b050481a25",
+      "impact": "breaking",
+      "reasons": [
+        "lost members [\"'bacterial_environment_response': BacterialEnvironmentResponseExperimentReference\", \"'bacterial_fitness': BacterialFitnessExperimentReference\", \"'bacterial_fitness_contrast': BacterialFitnessContrastExperimentReference\", \"'bacterial_gene_essentiality': BacterialGeneEssentialityExperimentReference\", \"'bacterial_gene_interaction': BacterialGeneInteractionExperimentReference\", \"'bacterial_graded_gene_essentiality': BacterialGradedGeneEssentialityExperimentReference\", \"'bacterial_metabolite': BacterialMetaboliteExperimentReference\", \"'bacterial_morphology': BacterialMorphologyExperimentReference\", \"'bacterial_phosphosite_intensity': BacterialPhosphositeIntensityExperimentReference\", \"'bacterial_protein_abundance': BacterialProteinAbundanceExperimentReference\", \"'bacterial_protein_fold_change': BacterialProteinFoldChangeExperimentReference\", \"'bacterial_rnaseq_expression': BacterialRNASeqExpressionExperimentReference\", \"'bacterial_visual_score': BacterialVisualScoreExperimentReference\", \"'yeast_protein_turnover': YeastProteinTurnoverExperimentReference\"]",
+        "gained members [\"'fitness_contrast': FitnessContrastExperimentReference\", \"'graded_gene_essentiality': GradedGeneEssentialityExperimentReference\", \"'morphology': MorphologyExperimentReference\", \"'phosphosite_intensity': PhosphositeIntensityExperimentReference\"]"
+      ]
+    },
+    {
+      "symbol": "EXPERIMENT_TYPE_MAP",
+      "status": "modified",
+      "kinds": [
+        "removal",
+        "rename",
+        "enum_member_added"
+      ],
+      "fingerprint_before": "169e8cd70a7530578d6c9d06d00ae86efeda2483ef33734ca932c574e13e0724",
+      "fingerprint_after": "2a9386706001f8ec79680c94a44a1c812108a5350963982e703cce6a24bb95de",
+      "impact": "breaking",
+      "reasons": [
+        "lost members [\"'bacterial_environment_response': BacterialEnvironmentResponseExperiment\", \"'bacterial_fitness': BacterialFitnessExperiment\", \"'bacterial_fitness_contrast': BacterialFitnessContrastExperiment\", \"'bacterial_gene_essentiality': BacterialGeneEssentialityExperiment\", \"'bacterial_gene_interaction': BacterialGeneInteractionExperiment\", \"'bacterial_graded_gene_essentiality': BacterialGradedGeneEssentialityExperiment\", \"'bacterial_metabolite': BacterialMetaboliteExperiment\", \"'bacterial_morphology': BacterialMorphologyExperiment\", \"'bacterial_phosphosite_intensity': BacterialPhosphositeIntensityExperiment\", \"'bacterial_protein_abundance': BacterialProteinAbundanceExperiment\", \"'bacterial_protein_fold_change': BacterialProteinFoldChangeExperiment\", \"'bacterial_rnaseq_expression': BacterialRNASeqExpressionExperiment\", \"'bacterial_visual_score': BacterialVisualScoreExperiment\", \"'yeast_protein_turnover': YeastProteinTurnoverExperiment\"]",
+        "gained members [\"'fitness_contrast': FitnessContrastExperiment\", \"'graded_gene_essentiality': GradedGeneEssentialityExperiment\", \"'morphology': MorphologyExperiment\", \"'phosphosite_intensity': PhosphositeIntensityExperiment\"]"
+      ]
+    },
+    {
+      "symbol": "ExperimentReference",
+      "status": "modified",
+      "kinds": [
+        "field_required_loosened"
+      ],
+      "fingerprint_before": "79d2e88ab60c9a498f08bfd2796d466f8f33bffd4be9309b6504738d25942305",
+      "fingerprint_after": "87a045d8561d31aac11147db96d59f6de5415bc7a6ae6a3e570f8c4aa67d4c5d",
+      "impact": "breaking",
+      "reasons": [
+        "field 'genome_reference' type changed: ReferenceGenome -> ReferenceGenome | StrainReferenceGenome"
+      ]
+    },
+    {
+      "symbol": "ExperimentReferenceType",
+      "status": "modified",
+      "kinds": [
+        "removal",
+        "rename",
+        "enum_member_added"
+      ],
+      "fingerprint_before": "a19b1591fc74f2cdeb36652f6b1efbb2a26d7aaf0646084295bdf684a535000d",
+      "fingerprint_after": "c4b9cfdec364b2dd290f28a7565dd077a10b71c7a404b5ab485ad5cd136c26f7",
+      "impact": "breaking",
+      "reasons": [
+        "lost members ['BacterialEnvironmentResponseExperimentReference', 'BacterialFitnessContrastExperimentReference', 'BacterialFitnessExperimentReference', 'BacterialGeneEssentialityExperimentReference', 'BacterialGeneInteractionExperimentReference', 'BacterialGradedGeneEssentialityExperimentReference', 'BacterialMetaboliteExperimentReference', 'BacterialMorphologyExperimentReference', 'BacterialPhosphositeIntensityExperimentReference', 'BacterialProteinAbundanceExperimentReference', 'BacterialProteinFoldChangeExperimentReference', 'BacterialRNASeqExpressionExperimentReference', 'BacterialVisualScoreExperimentReference', 'YeastProteinTurnoverExperimentReference']",
+        "gained members ['FitnessContrastExperimentReference', 'GradedGeneEssentialityExperimentReference', 'MorphologyExperimentReference', 'PhosphositeIntensityExperimentReference']"
+      ]
+    },
+    {
+      "symbol": "ExperimentType",
+      "status": "modified",
+      "kinds": [
+        "removal",
+        "rename",
+        "enum_member_added"
+      ],
+      "fingerprint_before": "e60bcccb20b43b8960264cebae0faf5945c8d554d63ad478633794ad626d5a16",
+      "fingerprint_after": "9d645923c0e2f6c45370f5a797d2ef62d07d650e6ffcee09bfa1613ec9fd75f6",
+      "impact": "breaking",
+      "reasons": [
+        "lost members ['BacterialEnvironmentResponseExperiment', 'BacterialFitnessContrastExperiment', 'BacterialFitnessExperiment', 'BacterialGeneEssentialityExperiment', 'BacterialGeneInteractionExperiment', 'BacterialGradedGeneEssentialityExperiment', 'BacterialMetaboliteExperiment', 'BacterialMorphologyExperiment', 'BacterialPhosphositeIntensityExperiment', 'BacterialProteinAbundanceExperiment', 'BacterialProteinFoldChangeExperiment', 'BacterialRNASeqExpressionExperiment', 'BacterialVisualScoreExperiment', 'YeastProteinTurnoverExperiment']",
+        "gained members ['FitnessContrastExperiment', 'GradedGeneEssentialityExperiment', 'MorphologyExperiment', 'PhosphositeIntensityExperiment']"
+      ]
+    },
+    {
+      "symbol": "FitnessContrastExperiment",
+      "status": "added",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "7093012b15fb6b9be2f31ab3bacdd7df92e5b54822d00062840ebd1d8ad03123",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "FitnessContrastExperimentReference",
+      "status": "added",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "ea2d64a226a02e68204f483662bcde88851c4b5ddf812320b237090c042d5cdc",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "FluxExperimentReference",
+      "status": "modified",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "531e44dae1bd74d5ffde2d57a504ad5216c035675b3a3ae33b09595f94cb3ad2",
+      "fingerprint_after": "b34e0103105d4283bab51e09df3340491559712d1e76254c7f74480b14673d9c",
+      "impact": "breaking",
+      "reasons": [
+        "removed field 'genome_reference'"
+      ]
+    },
+    {
+      "symbol": "GenomicSpan",
+      "status": "modified",
+      "kinds": [
+        "contract_tightened"
+      ],
+      "fingerprint_before": "0516258367f1e081306fb121e959aba9beaa2b52bb426d95e504f59b9f3be7d5",
+      "fingerprint_after": "12b48ce0011f3dfe67723264c7ddf07a76219f43b0e4c8f456580cd94bd045cf",
+      "impact": "breaking",
+      "reasons": [
+        "field 'assembly' type changed: str -> AssemblySet",
+        "validator/serializer changed: ['_check_span']"
+      ]
+    },
+    {
+      "symbol": "GradedGeneEssentialityExperiment",
+      "status": "added",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "0f8d1b981669948d1d9118ea5e54e09285c49f7d18628ff4ba62012e7063486f",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "GradedGeneEssentialityExperimentReference",
+      "status": "added",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "0e59d90c981411a10043b51e97a801707818f74a6f18edf6171e8b5bf83fd173",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "MorphologyExperiment",
+      "status": "added",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "0a13f8176b9a293003936077685e45fa8f5fe403fbf385c414f54a96af2bd1ec",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "MorphologyExperimentReference",
+      "status": "added",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "9fa93d2f00554cb33362ce9e993bac784c2c4a6ef19407ce0d7d650777ce5a6d",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "MrnaNumberFractionExperimentReference",
+      "status": "modified",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "d2c1966c14cf04635cb9367679013daf30196ab234dd4829903ce24287e9464c",
+      "fingerprint_after": "582847da5b69f03ab67fb8af19eb0b0f09ee7a8b03235fda2ffb4461a4230e45",
+      "impact": "breaking",
+      "reasons": [
+        "removed field 'genome_reference'"
+      ]
+    },
+    {
+      "symbol": "NON_ASSEMBLY_REGISTRY_SETS",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "224c90366abcb71a025f0c630353d144438619c8b6b9df5a5d0cf8481a02749c",
+      "impact": "stale",
+      "reasons": [
+        "new module-level binding"
+      ]
+    },
+    {
+      "symbol": "PhosphositeIntensityExperiment",
+      "status": "added",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "8ec0a4539cbf5cfd111dfba88529bea301d7d0f0eb8f257660cd47e166c196e0",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "PhosphositeIntensityExperimentReference",
+      "status": "added",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "8fb8e39137316b07869866462571d559fdbc0776bcaaffec326320ef8aac8f47",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "ProductTiterExperimentReference",
+      "status": "modified",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "374eadfae9744d0de15c394ac37f172ea6eb02aeda9a29ef450e63832d5d74a9",
+      "fingerprint_after": "78cbcc5022648b2e91b3b30d5309082a2321f584aec20df6898228311403059e",
+      "impact": "breaking",
+      "reasons": [
+        "removed field 'genome_reference'"
+      ]
+    },
+    {
+      "symbol": "PromoterActivityExperimentReference",
+      "status": "modified",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "03ef79f603cd151e5e01b3b6dbc2370187693592fff2188cedffc3fdf8ec8775",
+      "fingerprint_after": "4ba08806bf036c2695431ea9ccd5692eade41c68257417ca9496b439fdb9581d",
+      "impact": "breaking",
+      "reasons": [
+        "removed field 'genome_reference'"
+      ]
+    },
+    {
+      "symbol": "ProteinSynthesisRateExperimentReference",
+      "status": "modified",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "3ce8c61f4005383de331985bddd275705ee9ec74e4c761e8fd36833e918b6b3d",
+      "fingerprint_after": "4dc39bbe3444f1f97074b71fb40bbd0d38d389e2ea48526312ccdf07f37ba291",
+      "impact": "breaking",
+      "reasons": [
+        "removed field 'genome_reference'"
+      ]
+    },
+    {
+      "symbol": "ProteinTurnoverExperimentReference",
+      "status": "modified",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "d83ad2d3b047b4e930c26505dc1679055708f17a469b69158c4bb8b1deaff752",
+      "fingerprint_after": "3bc963b94263693703cba6daf66bd5edca3d2197a6e0ea4d0147bbbca5f0dd8d",
+      "impact": "breaking",
+      "reasons": [
+        "removed field 'genome_reference'"
+      ]
+    },
+    {
+      "symbol": "RETIRED_EXPERIMENT_TYPES",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "c9bb965f4ad6660a5d7b8a19ac4e02a73f27c23520fa31d55225c0581d2535f0",
+      "impact": "stale",
+      "reasons": [
+        "new module-level binding"
+      ]
+    },
+    {
+      "symbol": "ReferenceGenome",
+      "status": "modified",
+      "kinds": [
+        "contract_tightened",
+        "typed_gap"
+      ],
+      "fingerprint_before": "8db03ac8bf9a1ebdb5a19e772d1047f678dad623af67a171b7b3ffc4b1166f31",
+      "fingerprint_after": "2189142dafe708bc4cfb7fe7b8940523e14d2d2a4909d81e2e94e0aeab8ec006",
+      "impact": "breaking",
+      "reasons": [
+        "base classes changed: ['ModelStrict'] -> ['HashableProvenanceGapMixin']",
+        "added required field 'assembly_accession'",
+        "added required field 'assembly_set'",
+        "validator/serializer changed: ['_check_assembly_pin', '_validate_accession']"
+      ]
+    },
+    {
+      "symbol": "SGD_S288C_ASSEMBLY_SET",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "df2475b8864c7f5848ee0a4df08f7e672599d87d4b4525236c84fe52ad46b252",
+      "impact": "stale",
+      "reasons": [
+        "new module-level binding"
+      ]
+    },
+    {
+      "symbol": "StrainReferenceGenome",
+      "status": "modified",
+      "kinds": [
+        "field_required_loosened"
+      ],
+      "fingerprint_before": "164a7056e53afb7a0583af3383e8014ee78b68dc4102e8d45654f55bb4a02301",
+      "fingerprint_after": "66eb3840c7ddf3e578c1427b64b7325edc5b1e80e3f607da553f79d7bdebae0c",
+      "impact": "breaking",
+      "reasons": [
+        "field 'background' type changed: StrainBackground -> StrainBackground | BacterialStrainBackground",
+        "validator/serializer changed: ['_check_background_agrees']"
+      ]
+    },
+    {
+      "symbol": "YeastAssemblySet",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "23044e7ef35c66db312100f379239675c490d47af8957e9250ebf23ef1549ea0",
+      "impact": "stale",
+      "reasons": [
+        "new module-level binding"
+      ]
+    },
+    {
+      "symbol": "YeastProteinTurnoverExperiment",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "bd22101f63352963becb53513bab016a3cafbc521fdc2ef76d221588b51baff0",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "YeastProteinTurnoverExperimentReference",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "ba380e93843a5d9dffec46622c69f48e6c6006e348a74d55a85b1a942e1a6c06",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    }
+  ],
+  "correctness_argument": "P2 of the ontology unification (Path U, stage 4b): the assembly pin moves to ReferenceGenome, and the 14 host-prefixed experiment pairs retire.\n\nWHY IT IS MORE CORRECT. A fitness measurement is host-neutral: the same Bioscreen, the same colony-area pipeline and the same RB-TnSeq read count are run on BY4741 and on BW25113, and the record is a typed genotype x environment -> phenotype whatever the host (constitution principles 1 and 4). Before this change the schema held 13 Bacterial*Experiment / *Reference pairs beside the general pairs and a YeastProteinTurnover pair beside the bacterial one, and each pair differed from its twin in exactly two things, measured over schema.py at main 5b81bbce7 by review 1 and re-measured here: the experiment_type / experiment_reference_type tag string, and the annotation genome_reference: AssemblyReferenceGenome (audit A section 1d; review 1, 'what is sound'). Nothing but the tag string dispatched on a pair (Experiment.experiment_type is a plain str; EXPERIMENT_TYPE_MAP is the only reader). The clones existed for one documented reason, the pydantic declared-type defect: pydantic v2 serializes a field by its DECLARED type, so an AssemblyReferenceGenome placed in a slot annotated ReferenceGenome dumped only {species, strain, ploidy} and the pin was lost; every bacterial family therefore re-annotated genome_reference to the subclass, and a yeast record silently had no pin at all. AssemblyReferenceGenome's own docstring records the cost reason for that shape ('moves 0 of 36 served closures instead of 36 of 36'), which constitution principle 8 rules out as a reason. The owner's words on the pairs, 2026-10-15: 'like why a bacterial experiment! it seems this is unnecessary distinction. we can run many same fitness experiments on both yeast and bacteria.'\n\nTHE SHAPE. (1) ReferenceGenome gains assembly_set: AssemblySet | None and assembly_accession: str | None, both REQUIRED keyword arguments with no default, on HashableProvenanceGapMixin so the pin is a value or a typed ProvenanceGap on 'assembly_set' (_require_value_or_gap); the class stays hashable (the mixin hashes the canonical JSON), as it was before it carried a gap list. The accession is required whenever a set is pinned and must be one of that set's own (ASSEMBLY_SET_ACCESSIONS), and must be None exactly when the set is gapped; the accession pattern check moves from the retired subclass. A silent default to S288C would be a fallback and is refused by construction: every loader states its reference (59 yeast constructions in 41 loader files now pass the registry's SGD_S288C_R64 and SGD_S288C_R64_GENBANK_ACCESSION; every bacterial loader already went through bacteria_common.assembly_reference). (2) THE ONE MEANING of assembly_set: the deposited reference the record's identifiers and the background's edits are written against, never 'this strain's own assembly'. 22 of 48 yeast references in torchcell/datasets/scerevisiae/ are BY4741, BY4742, BY4743 or FY4 and every one pins sgd_S288C_R64-4-1_20230830, because its systematic names and background alleles are edits against the S288C release, exactly as a BW25113 record pins the BW25113 set because its locus tags are that assembly's. The bacterial cross-check (BacterialStrainBackground.assembly_set equals the strain's set) and the new yeast one (a StrainBackground, whose reference_strain is Literal['S288C'], requires the S288C set) are one rule read on each family. A host whose reference is not deposited (BL21 ECBD_ tags, an isolate's own annotation) states a typed gap with reason deferred_pending_source_review and a note naming the set to deposit, because depositing it is what closes the gap; no served loader needs one today (every yeast loader writes an S288C-derivative strain and SGD systematic names; YeastPhenome's strains come from the collection background, BY4741/2/3). (3) AssemblySet is the closed vocabulary of the tier's deposited ASSEMBLY sets: the 5 bacterial ids (BacterialAssemblySet, unchanged, still the sub-vocabulary BacterialStrainBackground pins) plus YeastAssemblySet = {sgd_S288C_R64-4-1_20230830, scerevisiae_CENPK113-7D_ASM257140v2}; the registry's non-assembly sets are excluded by name with a reason in NON_ASSEMBLY_REGISTRY_SETS (peter2018_1011_assemblies, a panel plus pangenome matrices; hale2024_322134S_variants, a variant table; go_release_2026-08-05, an ontology), and test_the_assembly_set_vocabulary_equals_the_registry_ids now proves AssemblySet plus the exclusions is exactly the registry's ids. The Literal stays restated in schema.py because of the import cycle (torchcell.sequence imports torchcell.datamodels). (4) assembly_accession stays REQUIRED when a set is pinned because R64 HAS an NCBI accession, verified rather than assumed: NCBI dataset report for GCA_000146045.2 (assembly 'R64', submitter Saccharomyces Genome Database, released 2011-04-18, paired GCF_000146045.2), and all 16 nuclear chromosomes of the deposited S288C_reference_sequence_R64-4-1_20230830.fsa are byte-identical to the 16 sequences of GCA_000146045.2_R64_genomic.fna.gz (sha256 b764924296b034817bbde44a87b36611c0918e7d00c650be4497118e70c3c43c), only the mitochondrion (NC_001224) lying outside the NCBI set; R64-2-1 through R64-4-1 revised annotation, not sequence, so a coordinate read on any R64 release is a coordinate on this accession (review 2 finding 7, now measured). The CEN.PK set's deposited report names a GenBank accession and no RefSeq one, and NCBI lists no paired RefSeq assembly, so ASSEMBLY_SET_ACCESSIONS becomes dict[str, tuple[str, ...]] (one or two accessions) and gains the two yeast rows. (5) ExperimentReference.genome_reference becomes ReferenceGenome | StrainReferenceGenome. Measured on pydantic 2.12.3: a subclass instance in a base-or-subclass union dumps its own fields and revalidates to the subclass (the base forbids extras), so a StrainReferenceGenome survives the base slot through dict and JSON. That closes the declared-type defect at its root instead of per cloned pair: no family ever needs a narrowed clone to carry a pin or a background again. The six general references that narrowed to AssemblyReferenceGenome (product titer, protein turnover, protein synthesis rate, flux, promoter activity, mRNA number fraction) drop the override and inherit the base slot; the impact tool reports that as 'removed field genome_reference' on each, which is the declaration leaving the class body, not the field leaving the record. The four references that REQUIRE a background (induction timecourse, strain environment response, pseudobulk UMI count, genome architecture) keep narrowing to StrainReferenceGenome. (6) StrainReferenceGenome.background stays REQUIRED (it is required today and in 6 served closures: Lian 2019, Hoepfner 2014, Vanacloig 2022, Wildenhain 2015, both Hillenmeyer 2008; review 1 finding 5) and admits StrainBackground | BacterialStrainBackground, the typed home the retired AssemblyReferenceGenome's optional background had: 41 bacterial loader sites pass a BacterialStrainBackground through bacteria_common.assembly_reference, which now returns a StrainReferenceGenome when a background is given and a ReferenceGenome otherwise. The union collapses to the shared background base when P5 lands. AssemblyReferenceGenome retires into this existing pair; no pair is merged and no required field is loosened. (7) GenomicSpan.assembly is typed AssemblySet (it carried a release name on the yeast side, 'R64-1-1' from torchcell/sequence/natural_isolate.py, and a set id on the bacterial side, Kang 2026 and Carruthers 2025: two meanings in one free string). The Peter 2018 loss-of-function spans now pin the SGD set, which the sequence-identity measurement above licenses, and the release's own 'R64-1-1' stays verbatim in the loader's release_assembly SourcedValue. (8) The 14 pairs: 10 whose general twin shares the phenotype class (fitness, environment response, gene interaction, gene essentiality, protein abundance, protein fold change, metabolite, RNA-seq expression, visual score, and the yeast protein turnover pair beside the bacterial one) are removed and their records move to the general pair; 4 with no twin (graded gene essentiality, phosphosite intensity, morphology, fitness contrast) are renamed to the general name with the host prefix dropped from the class and the tag (bacterial_morphology -> morphology, and so on), per the owner's 'yes rename' ruling. ExperimentType, ExperimentReferenceType, EXPERIMENT_TYPE_MAP and EXPERIMENT_REFERENCE_TYPE_MAP each lose the 14 members or keys and gain the 4 renamed ones; the map-coverage tests in test_schema_invariants.py pass by construction. RETIRED_EXPERIMENT_TYPES names the 14 retired tags and their successors.\n\nREADERS OF THE STORED TAGS. torchcell/data/aggregate.py and torchcell/data/deduplicate.py key every record on EXPERIMENT_TYPE_MAP[experiment_type]; a dev LMDB written under a retired tag (bacterial_fitness, yeast_protein_turnover, ...) is therefore UNREADABLE by them until it is rebuilt, not merely stale (review 1 finding 10). Both now read through torchcell/data/experiment_types.py, which raises RetiredExperimentTypeError naming the retired tag, its successor and the rebuild, and never maps a retired tag onto its successor for the caller: a record's class, and so its id in the graph, is decided by a rebuild and never by a reader. torchcell/verification/runners.py reads assembly_set off every reference instead of inferring the yeast set from the species, and refuses a gapped pin with the gap stated.\n\nEVERY SERVED NODE ID RE-KEYS. A genome node id and an experiment-reference node id are sha256 of model_dump() (cell_adapter.py), and the dump of every ReferenceGenome now carries assembly_set, assembly_accession and provenance_gaps; every experiment and experiment-reference id of all 51 served datasets moves with it, and every bacterial dev store moves to a general pair. Content ids are not comparable with KG 3.0, superset admission by content id is impossible across 3.0 to 4.0, and the release note for 4.0 says so (review 1 finding 7). This change ships in the one Path U rebuild with P1 (record 2026-10-15-gene-id-namespace-on-gene-perturbation) and never through incremental admission.\n\nWHAT IS NOT CHANGED. BacterialStrainBackground and StrainBackground (P5, after 4.0); BacterialMorphologyPhenotype and CalMorphPhenotype (their rename is P5); GeneAdditionPerturbation (lane G, P4); the released leaves (lane E, P3); the adapter and the graph yaml (lane G), which read the genome through model_dump and so carry the pin with no per-field change.",
+  "measurement_type_decision": false,
+  "source_quotes": [],
+  "alternatives_rejected": [
+    {
+      "alternative": "Keep AssemblyReferenceGenome and merge the two reference subclasses into one StrainReferenceGenome(background: StrainBackground | None) (audit A's P2 as drafted).",
+      "why_rejected": "It silently loosens StrainReferenceGenome.background, required today and in 6 served closures, which is field_required_loosened without a stated reason (review 1 finding 5; constitution 7 never weakens a required field), and it makes P2 depend on P5's shared background base. The pin on the base plus a required background that admits both families keeps every contract that was required, required."
+    },
+    {
+      "alternative": "A class default of the S288C set on ReferenceGenome so the 59 yeast constructions need no edit.",
+      "why_rejected": "A default is a fallback: it would stamp S288C on a BL21 or an isolate-annotated record without anyone stating it (constitution 7; review 2 finding 5: 'a default to S288C is a fallback'). The field has no default, every loader states its reference, and the host with no deposited set states a typed gap."
+    },
+    {
+      "alternative": "Make assembly_accession plain-optional because the SGD release ships no assembly report (audit A P2, agent B 3.2).",
+      "why_rejected": "The policy prefers a required field, and the premise was untested. Measured: the SGD R64-4-1 sequence is NCBI GCA_000146045.2 (all 16 nuclear chromosomes byte-identical), so the accession is known and stays required whenever a set is pinned; it is None exactly when the set is gapped."
+    },
+    {
+      "alternative": "Keep the 13 pairs and re-annotate each to the new StrainReferenceGenome instead of widening the base slot.",
+      "why_rejected": "That is the declared-type workaround the clones already were, under a new name: every family that stores a background would need its own narrowed pair, and principle 1 (a class exists for a different measurement, never for a host) would still be violated by the pairs that remained. The base union carries both reference shapes through every family, measured on pydantic 2.12.3."
+    },
+    {
+      "alternative": "Put peter2018_1011_assemblies and hale2024_322134S_variants into AssemblySet since the registry deposits them.",
+      "why_rejected": "Neither is a reference a record's identifiers are written against: one is a panel of 1,011 assemblies plus pangenome matrices, the other a variant table against S288C. Admitting them would let a record pin a set that resolve() cannot read coordinates on; they are excluded by name with the reason, and the vocabulary test proves the two sides partition the registry (review 1 finding 6)."
+    },
+    {
+      "alternative": "Delete the four pairs with no general twin (graded essentiality, phosphosite intensity, morphology, fitness contrast) and re-add them later.",
+      "why_rejected": "Their phenotypes are host-neutral measurements with records in dev stores (Goodall 2018, Royet 2025, Potel 2018, Campos 2018, Borchert 2023); the owner ruled rename, not delete, on 2026-10-15, and a rename keeps the class and its tests under the general name."
+    }
+  ],
+  "served_release": "2026.10.06-4b293d34",
+  "affected_loaders": [
+    {
+      "loader": "torchcell/datasets/bacteria_common.py",
+      "dataset_classes": [],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/baba2006.py",
+      "dataset_classes": [
+        "GeneEssentialityBaba2006Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/baba2006_growth.py",
+      "dataset_classes": [
+        "GrowthYieldBaba2006Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/babu2014.py",
+      "dataset_classes": [
+        "GeneInteractionBabu2014Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/balakrishnan2022.py",
+      "dataset_classes": [
+        "MrnaFractionBalakrishnan2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblyReferenceGenome",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "MrnaNumberFractionExperimentReference",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/brunk2016.py",
+      "dataset_classes": [
+        "_MetaboliteBrunk2016Dataset",
+        "MetabolomeBrunk2016Dataset",
+        "ExometaboliteBrunk2016Dataset",
+        "ProteomeBrunk2016Dataset",
+        "BiofuelTiterBrunk2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblyReferenceGenome",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ProductTiterExperimentReference",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/butland2008.py",
+      "dataset_classes": [
+        "GeneInteractionButland2008Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/caglar2017.py",
+      "dataset_classes": [
+        "RnaseqCaglar2017Dataset",
+        "ProteomeCaglar2017Dataset",
+        "ProteinFoldChangeCaglar2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "ExperimentType",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/caglar2017_doubling_time.py",
+      "dataset_classes": [
+        "DoublingTimeCaglar2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/campos2018.py",
+      "dataset_classes": [
+        "GrowthRateCampos2018Dataset",
+        "MorphologyCampos2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "MorphologyExperiment",
+        "MorphologyExperimentReference",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/choe2019_growth_rate.py",
+      "dataset_classes": [
+        "GrowthRateChoe2019Dataset",
+        "TranscriptionFactorKnockoutChoe2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/choe2025.py",
+      "dataset_classes": [
+        "CrispriChemgenChoe2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/cui2018.py",
+      "dataset_classes": [
+        "CrispriKnockdownCui2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/fang2025.py",
+      "dataset_classes": [
+        "CrispriGuideFfaEnrichmentFang2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/fitness_browser_ecoli.py",
+      "dataset_classes": [
+        "FitnessBrowserEcoliDataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/foo2014.py",
+      "dataset_classes": [
+        "IsopentenolTiterFoo2014Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblyReferenceGenome",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ProductTiterExperimentReference",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/fuhrer2017.py",
+      "dataset_classes": [
+        "MetabolomeFuhrer2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/gerdes2003.py",
+      "dataset_classes": [
+        "GeneEssentialityGerdes2003Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/girgis2009.py",
+      "dataset_classes": [
+        "EnvChemgenGirgis2009Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/goodall2018.py",
+      "dataset_classes": [
+        "GeneEssentialityGoodall2018Dataset",
+        "GradedGeneEssentialityGoodall2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "GradedGeneEssentialityExperiment",
+        "GradedGeneEssentialityExperimentReference",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/gupta2024.py",
+      "dataset_classes": [
+        "ProteinTurnoverGupta2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblyReferenceGenome",
+        "AssemblySet",
+        "ExperimentReference",
+        "ExperimentType",
+        "GenomicSpan",
+        "ProteinTurnoverExperimentReference",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/guzman2018.py",
+      "dataset_classes": [
+        "RnaseqGuzman2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/hawkins2020.py",
+      "dataset_classes": [
+        "MismatchCrispriFitnessHawkins2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/ishii2007.py",
+      "dataset_classes": [
+        "_Ishii2007Dataset",
+        "MetabolomeIshii2007Dataset",
+        "ProteomeIshii2007Dataset",
+        "FluxIshii2007Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblyReferenceGenome",
+        "AssemblySet",
+        "ExperimentReference",
+        "ExperimentType",
+        "FluxExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/lamoureux2023.py",
+      "dataset_classes": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/lamoureux2023_growth.py",
+      "dataset_classes": [
+        "GrowthRateLamoureux2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/lamoureux2023_public_k12.py",
+      "dataset_classes": [
+        "RnaseqPublicK12Lamoureux2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/li2014.py",
+      "dataset_classes": [
+        "ProteinSynthesisRateLi2014Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblyReferenceGenome",
+        "AssemblySet",
+        "ExperimentReference",
+        "ExperimentType",
+        "GenomicSpan",
+        "ProteinSynthesisRateExperimentReference",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/li2021.py",
+      "dataset_classes": [
+        "FluxLi2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblyReferenceGenome",
+        "AssemblySet",
+        "ExperimentReference",
+        "ExperimentType",
+        "FluxExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/mohiuddin2022.py",
+      "dataset_classes": [
+        "PromoterReporterMohiuddin2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblyReferenceGenome",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "PromoterActivityExperimentReference",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/mori2021.py",
+      "dataset_classes": [
+        "ProteomeMori2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/mutalik2020.py",
+      "dataset_classes": [
+        "PhageRbTnseqMutalik2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/nichols2011.py",
+      "dataset_classes": [
+        "EnvChemgenNichols2011Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/niu2019.py",
+      "dataset_classes": [
+        "CrisprPineneToleranceNiu2019Dataset",
+        "PineneFoldChangeNiu2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblyReferenceGenome",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ProductTiterExperimentReference",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/potel2018.py",
+      "dataset_classes": [
+        "PhosphositeIntensityPotel2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "PhosphositeIntensityExperiment",
+        "PhosphositeIntensityExperimentReference",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/price2018.py",
+      "dataset_classes": [
+        "RbTnseqPrice2018EcoliDataset",
+        "GeneEssentialityPrice2018EcoliDataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rachwalski2024.py",
+      "dataset_classes": [
+        "CrispriCrossRachwalski2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rapp2026.py",
+      "dataset_classes": [
+        "MetabolomeRapp2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rapp2026_platforms.py",
+      "dataset_classes": [
+        "_Rapp2026Dataset",
+        "GrowthAucRapp2026Dataset",
+        "_AccumulationDataset",
+        "TargetedMetabolomeRapp2026Dataset",
+        "MetaboliteIntensityRapp2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rousset2018.py",
+      "dataset_classes": [
+        "CrispriScreenRousset2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schastnaya2021.py",
+      "dataset_classes": [
+        "MetabolomeSchastnaya2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "ExperimentType",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016.py",
+      "dataset_classes": [
+        "ProteomeSchmidt2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016_growth_rate.py",
+      "dataset_classes": [
+        "GrowthRateSchmidt2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016_s23_growth_rate.py",
+      "dataset_classes": [
+        "GrowthRateS23Schmidt2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016_srm.py",
+      "dataset_classes": [
+        "_SrmSchmidt2016Dataset",
+        "ProteomeSrmSet1Schmidt2016Dataset",
+        "ProteomeSrmSet2Schmidt2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/shiver2016.py",
+      "dataset_classes": [
+        "EnvChemgenShiver2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/teteneva2024.py",
+      "dataset_classes": [
+        "RbTnseqTeteneva2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/tong2020.py",
+      "dataset_classes": [
+        "CarbonSourceTong2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2015.py",
+      "dataset_classes": [
+        "EnvChemgenWang2015Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2015_growth.py",
+      "dataset_classes": [
+        "GrowthWang2015Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2018.py",
+      "dataset_classes": [
+        "CrispriGuideFitnessWang2018Dataset",
+        "CrispriGeneFitnessWang2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2024.py",
+      "dataset_classes": [
+        "EnvChemgenWang2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wetmore2015.py",
+      "dataset_classes": [
+        "RbTnseqWetmore2015Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/banerjee2024.py",
+      "dataset_classes": [
+        "IsoprenolTiterBanerjee2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblyReferenceGenome",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ProductTiterExperimentReference",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/banerjee2025.py",
+      "dataset_classes": [
+        "ProteomeBanerjee2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/borchert2023.py",
+      "dataset_classes": [
+        "RbTnseqBorchert2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/borchert2023_contrast.py",
+      "dataset_classes": [
+        "FitnessContrastBorchert2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "ExperimentType",
+        "FitnessContrastExperiment",
+        "FitnessContrastExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/borchert2024.py",
+      "dataset_classes": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/carruthers2025.py",
+      "dataset_classes": [
+        "IsoprenolTiterCarruthers2025Dataset",
+        "ProteomeCarruthers2025Dataset",
+        "CampaignProteomeCarruthers2025Dataset",
+        "ProteomeFoldChangeCarruthers2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblyReferenceGenome",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ProductTiterExperimentReference",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/desiqueira2025.py",
+      "dataset_classes": [
+        "ProteomeDeSiqueira2025Dataset",
+        "ProteomePercentDeSiqueira2025Dataset",
+        "ProteomeLog10PercentDeSiqueira2025Dataset",
+        "IsoprenolTiterDeSiqueira2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblyReferenceGenome",
+        "AssemblySet",
+        "ExperimentReference",
+        "ExperimentType",
+        "GenomicSpan",
+        "ProductTiterExperimentReference",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/fitness_browser_putida.py",
+      "dataset_classes": [
+        "FitnessBrowserPutidaDataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/kang2026.py",
+      "dataset_classes": [
+        "IsoprenylAcetateTiterKang2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblyReferenceGenome",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ProductTiterExperimentReference",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/lim2022.py",
+      "dataset_classes": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "ExperimentType",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/lim2025.py",
+      "dataset_classes": [
+        "IsoprenolToleranceLim2025Dataset",
+        "ProteomeLim2025Dataset",
+        "ProteomeFoldChangeLim2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/menasalvas2025.py",
+      "dataset_classes": [
+        "IsoprenolSelectionMenasalvas2025Dataset",
+        "ProteomeMenasalvas2025Dataset",
+        "_MetabolitePhaseDataset",
+        "MetaboliteGrowthPhaseMenasalvas2025Dataset",
+        "MetaboliteProductionPhaseMenasalvas2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/royet2025.py",
+      "dataset_classes": [
+        "EnvMetalTnseqRoyet2025Dataset",
+        "GradedGeneEssentialityRoyet2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "GradedGeneEssentialityExperiment",
+        "GradedGeneEssentialityExperimentReference",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/thompson2019_valerolactam.py",
+      "dataset_classes": [
+        "_Thompson2019Dataset",
+        "ValerolactamTiterThompson2019Dataset",
+        "LactamGrowthRateThompson2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblyReferenceGenome",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ProductTiterExperimentReference",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/yunus2026.py",
+      "dataset_classes": [
+        "_Yunus2026Dataset",
+        "_Yunus2026BenchlingDataset",
+        "CrispriKnockdownYunus2026Dataset",
+        "CrispriArrayYunus2026Dataset",
+        "CrispriDifferentialProteomeYunus2026Dataset",
+        "IsoprenolTiterYunus2026Dataset",
+        "CrispriPanelProteomeYunus2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblyReferenceGenome",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ProductTiterExperimentReference",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/private_torchcell/volk2021_inhibitor_bioscreen.py",
+      "dataset_classes": [
+        "InhibitorBioscreenVolk2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "ExperimentType",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/auesukaree2009.py",
+      "dataset_classes": [
+        "EnvChemgenAuesukaree2009Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenAuesukaree2009Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/baryshnikova2010.py",
+      "dataset_classes": [
+        "SmfBaryshnikova2010Dataset"
+      ],
+      "served_classes": [
+        "SmfBaryshnikova2010Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/bloom2019.py",
+      "dataset_classes": [
+        "Bloom2019Dataset"
+      ],
+      "served_classes": [
+        "Bloom2019Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/boocock2025.py",
+      "dataset_classes": [
+        "Boocock2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/cachera2023.py",
+      "dataset_classes": [
+        "BetaxanthinCachera2023Dataset"
+      ],
+      "served_classes": [
+        "BetaxanthinCachera2023Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/caudal2024.py",
+      "dataset_classes": [
+        "CaudalPanTranscriptome2024Dataset"
+      ],
+      "served_classes": [
+        "CaudalPanTranscriptome2024Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/cooper2010.py",
+      "dataset_classes": [
+        "AminoAcidCooper2010Dataset"
+      ],
+      "served_classes": [
+        "AminoAcidCooper2010Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/costanzo2016.py",
+      "dataset_classes": [
+        "SmfCostanzo2016Dataset",
+        "DmfCostanzo2016Dataset",
+        "DmiCostanzo2016Dataset"
+      ],
+      "served_classes": [
+        "DmfCostanzo2016Dataset",
+        "DmiCostanzo2016Dataset",
+        "SmfCostanzo2016Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/costanzo2021.py",
+      "dataset_classes": [
+        "EnvChemgenCostanzo2021Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenCostanzo2021Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/dasilveira2014.py",
+      "dataset_classes": [
+        "MetaboliteDaSilveira2014Dataset"
+      ],
+      "served_classes": [
+        "MetaboliteDaSilveira2014Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/dechiara2022.py",
+      "dataset_classes": [
+        "_DeChiara2022Dataset",
+        "_GrowthDeChiara2022Dataset",
+        "DoublingTimeDeChiara2022Dataset",
+        "CellYieldDeChiara2022Dataset",
+        "LifeCycleDeChiara2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "EXPERIMENT_REFERENCE_TYPE_MAP",
+        "EXPERIMENT_TYPE_MAP",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hackett2020.py",
+      "dataset_classes": [
+        "InductionTimecourseHackett2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hale2024.py",
+      "dataset_classes": [
+        "CrispriSegregantHale2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hillenmeyer2008.py",
+      "dataset_classes": [
+        "HetHillenmeyer2008Dataset",
+        "HomHillenmeyer2008Dataset"
+      ],
+      "served_classes": [
+        "HetHillenmeyer2008Dataset",
+        "HomHillenmeyer2008Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hoepfner2014.py",
+      "dataset_classes": [
+        "EnvChemgenHoepfner2014Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenHoepfner2014Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "ExperimentType",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hu2007.py",
+      "dataset_classes": [
+        "MicroarrayScoreHu2007Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/jackson2020.py",
+      "dataset_classes": [
+        "TfDeletionPseudobulkJackson2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/kemmeren2014.py",
+      "dataset_classes": [
+        "MicroarrayKemmeren2014Dataset"
+      ],
+      "served_classes": [
+        "MicroarrayKemmeren2014Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/kuzmin2018.py",
+      "dataset_classes": [
+        "SmfKuzmin2018Dataset",
+        "DmfKuzmin2018Dataset",
+        "TmfKuzmin2018Dataset",
+        "DmiKuzmin2018Dataset",
+        "TmiKuzmin2018Dataset"
+      ],
+      "served_classes": [
+        "DmfKuzmin2018Dataset",
+        "DmiKuzmin2018Dataset",
+        "SmfKuzmin2018Dataset",
+        "TmfKuzmin2018Dataset",
+        "TmiKuzmin2018Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/kuzmin2020.py",
+      "dataset_classes": [
+        "SmfKuzmin2020Dataset",
+        "DmfKuzmin2020Dataset",
+        "TmfKuzmin2020Dataset",
+        "DmiKuzmin2020Dataset",
+        "TmiKuzmin2020Dataset"
+      ],
+      "served_classes": [
+        "DmfKuzmin2020Dataset",
+        "DmiKuzmin2020Dataset",
+        "SmfKuzmin2020Dataset",
+        "TmfKuzmin2020Dataset",
+        "TmiKuzmin2020Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/lian2019.py",
+      "dataset_classes": [
+        "CrisprMagicLian2019Dataset"
+      ],
+      "served_classes": [
+        "CrisprMagicLian2019Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/lopez2024.py",
+      "dataset_classes": [
+        "IsobutanolScreenLopez2024Dataset",
+        "IsobutanolValidatedLopez2024Dataset"
+      ],
+      "served_classes": [
+        "IsobutanolScreenLopez2024Dataset",
+        "IsobutanolValidatedLopez2024Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/messner2021.py",
+      "dataset_classes": [
+        "ProteomeMessner2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/messner2023.py",
+      "dataset_classes": [
+        "ProteomeMessner2023Dataset"
+      ],
+      "served_classes": [
+        "ProteomeMessner2023Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/mormino2022.py",
+      "dataset_classes": [
+        "CrispriMormino2022Dataset"
+      ],
+      "served_classes": [
+        "CrispriMormino2022Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/mota2024.py",
+      "dataset_classes": [
+        "EnvChemgenMota2024Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenMota2024Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/muenzner2024.py",
+      "dataset_classes": [
+        "_MuenznerIsolateDataset",
+        "ProteomeMuenzner2024Dataset",
+        "ProteinTurnoverMuenzner2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblyReferenceGenome",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ProteinTurnoverExperimentReference",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/mulleder2016.py",
+      "dataset_classes": [
+        "AminoAcidMulleder2016Dataset"
+      ],
+      "served_classes": [
+        "AminoAcidMulleder2016Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/nadal_ribelles2025.py",
+      "dataset_classes": [
+        "NadalRibellesPerturbSeq2025Dataset"
+      ],
+      "served_classes": [
+        "NadalRibellesPerturbSeq2025Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/nguessan2025.py",
+      "dataset_classes": [
+        "Nguessan2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/oduibhir2014.py",
+      "dataset_classes": [
+        "SmfODuibhir2014Dataset"
+      ],
+      "served_classes": [
+        "SmfODuibhir2014Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ohnuki2018.py",
+      "dataset_classes": [
+        "ScmdOhnuki2018Dataset"
+      ],
+      "served_classes": [
+        "ScmdOhnuki2018Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ohnuki2022.py",
+      "dataset_classes": [
+        "ScmdOhnuki2022Dataset"
+      ],
+      "served_classes": [
+        "ScmdOhnuki2022Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ohya2005.py",
+      "dataset_classes": [
+        "ScmdOhya2005Dataset"
+      ],
+      "served_classes": [
+        "ScmdOhya2005Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ozaydin2013.py",
+      "dataset_classes": [
+        "CarotenoidOzaydin2013Dataset"
+      ],
+      "served_classes": [
+        "CarotenoidOzaydin2013Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/parsons2006.py",
+      "dataset_classes": [
+        "EnvChemgenParsons2006Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/peter2018.py",
+      "dataset_classes": [
+        "IsolateGrowthPeter2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/piotrowski2017.py",
+      "dataset_classes": [
+        "EnvChemgenPiotrowski2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "ExperimentType",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/puddu2019.py",
+      "dataset_classes": [
+        "GenomeArchitecturePuddu2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/sameith2015.py",
+      "dataset_classes": [
+        "SmMicroarraySameith2015Dataset",
+        "DmMicroarraySameith2015Dataset"
+      ],
+      "served_classes": [
+        "DmMicroarraySameith2015Dataset",
+        "SmMicroarraySameith2015Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/sgd.py",
+      "dataset_classes": [
+        "GeneEssentialitySgdDataset"
+      ],
+      "served_classes": [
+        "GeneEssentialitySgdDataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/smith2006.py",
+      "dataset_classes": [
+        "FattyAcidSmith2006Dataset"
+      ],
+      "served_classes": [
+        "FattyAcidSmith2006Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/smith2016.py",
+      "dataset_classes": [
+        "CrispriChemgenSmith2016Dataset"
+      ],
+      "served_classes": [
+        "CrispriChemgenSmith2016Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/synth_leth_db.py",
+      "dataset_classes": [
+        "SynthLethalityYeastSynthLethDbDataset",
+        "SynthRescueYeastSynthLethDbDataset"
+      ],
+      "served_classes": [
+        "SynthLethalityYeastSynthLethDbDataset",
+        "SynthRescueYeastSynthLethDbDataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/vaishnav2022.py",
+      "dataset_classes": [
+        "PooledPromoterExpressionVaishnav2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/vanacloig2022.py",
+      "dataset_classes": [
+        "EnvChemgenVanacloig2022Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenVanacloig2022Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/wildenhain2015.py",
+      "dataset_classes": [
+        "EnvChemgenWildenhain2015Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenWildenhain2015Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/xue2025.py",
+      "dataset_classes": [
+        "FattyAcidXue2025Dataset"
+      ],
+      "served_classes": [
+        "FattyAcidXue2025Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/yeastphenome.py",
+      "dataset_classes": [
+        "YeastPhenomeDataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/yoshida2012.py",
+      "dataset_classes": [
+        "OrganicAcidYoshida2012Dataset"
+      ],
+      "served_classes": [
+        "OrganicAcidYoshida2012Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/yoshikawa2009.py",
+      "dataset_classes": [
+        "EnvChemgenYoshikawa2009Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/zelezniak2018.py",
+      "dataset_classes": [
+        "ProteomeZelezniak2018Dataset",
+        "MetaboliteZelezniak2018Dataset"
+      ],
+      "served_classes": [
+        "MetaboliteZelezniak2018Dataset",
+        "ProteomeZelezniak2018Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "AssemblySet",
+        "ExperimentReference",
+        "GenomicSpan",
+        "ReferenceGenome",
+        "SGD_S288C_ASSEMBLY_SET",
+        "StrainReferenceGenome"
+      ]
+    }
+  ],
+  "served_datasets": [
+    "AminoAcidCooper2010Dataset",
+    "AminoAcidMulleder2016Dataset",
+    "BetaxanthinCachera2023Dataset",
+    "Bloom2019Dataset",
+    "CarotenoidOzaydin2013Dataset",
+    "CaudalPanTranscriptome2024Dataset",
+    "CrisprMagicLian2019Dataset",
+    "CrispriChemgenSmith2016Dataset",
+    "CrispriMormino2022Dataset",
+    "DmMicroarraySameith2015Dataset",
+    "DmfCostanzo2016Dataset",
+    "DmfKuzmin2018Dataset",
+    "DmfKuzmin2020Dataset",
+    "DmiCostanzo2016Dataset",
+    "DmiKuzmin2018Dataset",
+    "DmiKuzmin2020Dataset",
+    "EnvChemgenAuesukaree2009Dataset",
+    "EnvChemgenCostanzo2021Dataset",
+    "EnvChemgenHoepfner2014Dataset",
+    "EnvChemgenMota2024Dataset",
+    "EnvChemgenVanacloig2022Dataset",
+    "EnvChemgenWildenhain2015Dataset",
+    "FattyAcidSmith2006Dataset",
+    "FattyAcidXue2025Dataset",
+    "GeneEssentialitySgdDataset",
+    "HetHillenmeyer2008Dataset",
+    "HomHillenmeyer2008Dataset",
+    "IsobutanolScreenLopez2024Dataset",
+    "IsobutanolValidatedLopez2024Dataset",
+    "MetaboliteDaSilveira2014Dataset",
+    "MetaboliteZelezniak2018Dataset",
+    "MicroarrayKemmeren2014Dataset",
+    "NadalRibellesPerturbSeq2025Dataset",
+    "OrganicAcidYoshida2012Dataset",
+    "ProteomeMessner2023Dataset",
+    "ProteomeZelezniak2018Dataset",
+    "ScmdOhnuki2018Dataset",
+    "ScmdOhnuki2022Dataset",
+    "ScmdOhya2005Dataset",
+    "SmMicroarraySameith2015Dataset",
+    "SmfBaryshnikova2010Dataset",
+    "SmfCostanzo2016Dataset",
+    "SmfKuzmin2018Dataset",
+    "SmfKuzmin2020Dataset",
+    "SmfODuibhir2014Dataset",
+    "SynthLethalityYeastSynthLethDbDataset",
+    "SynthRescueYeastSynthLethDbDataset",
+    "TmfKuzmin2018Dataset",
+    "TmfKuzmin2020Dataset",
+    "TmiKuzmin2018Dataset",
+    "TmiKuzmin2020Dataset"
+  ],
+  "rebuild_scope": "full_kg_rebuild",
+  "owner_sign_off": {
+    "signed": true,
+    "quote": "Owner, 2026-10-15, in conversation: 'like why a bacterial experiment! it seems this is unnecessary distinction. we can run many same fitness experiments on both yeast and bacteria.'; 'we care most about correctness and are willing right now to do full rebuilds if we identify even small semantically prudent change in onto'; 'we want to unify then build, we are prepped for full rebuild path U.'; on the host-prefixed names: 'yes rename, no major bump minor bump. go !'",
+    "url": null
+  }
+}

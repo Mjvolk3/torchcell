@@ -5,7 +5,7 @@
 gate's view of it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Caglar 2017 Table S5: 55 records, one per released biological-replicate growth curve,
-``BacterialEnvironmentResponseExperiment``. Every genotype is the wild type (0
+``EnvironmentResponseExperiment``. Every genotype is the wild type (0
 perturbations in 55 of 55 records), so neither ``bacterial perturbation`` nor
 ``perturbation to genotype`` is enabled. The environment carries
 ``SmallMoleculePerturbation`` and ``EnvironmentPhysicalPerturbation`` edits (carbon

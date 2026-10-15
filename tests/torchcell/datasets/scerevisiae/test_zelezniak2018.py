@@ -107,6 +107,10 @@ from torchcell.datasets.scerevisiae.zelezniak2018 import (
 from torchcell.datasets.scerevisiae.zelezniak2018 import (
     MEASUREMENT_TYPE as PROTEOME_MEASUREMENT_TYPE,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification import runners
 from torchcell.verification.sourced import audit_sourced_value
 
@@ -117,7 +121,12 @@ MTYPE_2 = ZELEZNIAK_METABOLITE_PROTOCOLS[2].measurement_type
 # Shared expected pieces
 # --------------------------------------------------------------------------- #
 
-BY4741 = ReferenceGenome(species="Saccharomyces cerevisiae", strain="BY4741")
+BY4741 = ReferenceGenome(
+    species="Saccharomyces cerevisiae",
+    strain="BY4741",
+    assembly_set=SGD_S288C_R64,
+    assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
+)
 ENVIRONMENT = Environment(media=SM_DEFERRED, temperature=Temperature(value=30))
 PUBLICATION = Publication(
     pubmed_id="30195436",

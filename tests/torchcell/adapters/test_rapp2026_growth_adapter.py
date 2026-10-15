@@ -5,7 +5,7 @@
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Rapp 2026 CRISPRi growth: 1,514 MG1655-pinned strains,
-BacterialFitnessExperiment carrying the trapezoid AUC of the released OD600
+FitnessExperiment carrying the trapezoid AUC of the released OD600
 curve over the control strains' mean. One
 CrisprInterferencePerturbation per record, served as `bacterial
 perturbation` (never the yeast `perturbation` class) with its CrisprConstruct.

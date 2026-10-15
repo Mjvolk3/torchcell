@@ -1,4 +1,4 @@
-# de Siqueira 2025 proteome: 5 samples, BacterialProteinAbundanceExperiment.
+# de Siqueira 2025 proteome: 5 samples, ProteinAbundanceExperiment.
 # The 2 PT records carry one BacterialDeletionPerturbation each (the 3 KT2440 records
 # carry none), served as `bacterial perturbation`. The environment carries
 # EnvironmentPhysicalPerturbation edits, so the environment-perturbation pair is enabled.

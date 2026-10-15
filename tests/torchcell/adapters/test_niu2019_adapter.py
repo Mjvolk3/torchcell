@@ -4,7 +4,7 @@
 """``torchcell/adapters/niu2019_adapter.py``: the conf it loads, the gate's view of it,
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
-Niu 2019 CRISPRa/CRISPRi pinene tolerance: BacterialEnvironmentResponseExperiment.
+Niu 2019 CRISPRa/CRISPRi pinene tolerance: EnvironmentResponseExperiment.
 One ``CrisprActivationPerturbation`` (#799) or
 ``CrisprInterferencePerturbation`` per targeted gene, six on the interference
 combination strain, served as ``bacterial perturbation`` with the shared

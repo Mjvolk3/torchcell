@@ -61,6 +61,10 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.datasets.scerevisiae import baryshnikova2010 as m
 from torchcell.literature.manifest import ROLE_RAW_DATA, ArtifactRecord, Manifest
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
@@ -165,7 +169,10 @@ def _reference(temperature: float) -> dict[str, object]:
     return FitnessExperimentReference(
         dataset_name="SmfBaryshnikova2010Dataset",
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4741"
+            species="Saccharomyces cerevisiae",
+            strain="BY4741",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=_environment(temperature),
         phenotype_reference=FitnessPhenotype(

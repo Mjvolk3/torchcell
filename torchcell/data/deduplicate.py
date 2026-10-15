@@ -14,9 +14,9 @@ from typing import Any, cast
 import lmdb
 from tqdm import tqdm
 
-from torchcell.datamodels.schema import (
-    EXPERIMENT_REFERENCE_TYPE_MAP,
-    EXPERIMENT_TYPE_MAP,
+from torchcell.data.experiment_types import experiment_class as experiment_class_for
+from torchcell.data.experiment_types import (
+    experiment_reference_class as experiment_reference_class_for,
 )
 
 log = logging.getLogger(__name__)
@@ -137,12 +137,12 @@ class Deduplicator(ABC):
                 duplicate_experiments = []
                 for input_key in input_keys:
                     json_data = json.loads(txn_input.get(input_key).decode("utf-8"))
-                    experiment_class = EXPERIMENT_TYPE_MAP[
+                    experiment_class = experiment_class_for(
                         json_data["experiment"]["experiment_type"]
-                    ]
-                    experiment_reference_class = EXPERIMENT_REFERENCE_TYPE_MAP[
+                    )
+                    experiment_reference_class = experiment_reference_class_for(
                         json_data["experiment_reference"]["experiment_reference_type"]
-                    ]
+                    )
                     duplicate_experiments.append(
                         {
                             "experiment": experiment_class(**json_data["experiment"]),
@@ -195,12 +195,12 @@ class Deduplicator(ABC):
             if value is None:
                 raise IndexError(f"No item found at index {index}")
             json_data = json.loads(value.decode("utf-8"))
-            experiment_class = EXPERIMENT_TYPE_MAP[
+            experiment_class = experiment_class_for(
                 json_data["experiment"]["experiment_type"]
-            ]
-            experiment_reference_class = EXPERIMENT_REFERENCE_TYPE_MAP[
+            )
+            experiment_reference_class = experiment_reference_class_for(
                 json_data["experiment_reference"]["experiment_reference_type"]
-            ]
+            )
             return {
                 "experiment": experiment_class(**json_data["experiment"]),
                 "experiment_reference": experiment_reference_class(
@@ -219,12 +219,12 @@ class Deduplicator(ABC):
                 value = txn.get(key)
                 if value is not None:
                     json_data = json.loads(value.decode())
-                    experiment_class = EXPERIMENT_TYPE_MAP[
+                    experiment_class = experiment_class_for(
                         json_data["experiment"]["experiment_type"]
-                    ]
-                    experiment_reference_class = EXPERIMENT_REFERENCE_TYPE_MAP[
+                    )
+                    experiment_reference_class = experiment_reference_class_for(
                         json_data["experiment_reference"]["experiment_reference_type"]
-                    ]
+                    )
                     reconstructed_data = {
                         "experiment": experiment_class(**json_data["experiment"]),
                         "experiment_reference": experiment_reference_class(

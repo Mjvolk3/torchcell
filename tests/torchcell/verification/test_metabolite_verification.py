@@ -32,6 +32,10 @@ from torchcell.datamodels.schema import (
     ReferenceGenome,
     Temperature,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.metabolite import (
     metabolite_gene_set,
     verify_metabolite_dataset,
@@ -72,7 +76,10 @@ def _record(gene: str, level: float, *, ref_level: float = 0.0) -> dict[str, Any
     reference = MetaboliteExperimentReference(
         dataset_name="test",
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4741"
+            species="Saccharomyces cerevisiae",
+            strain="BY4741",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=env.model_copy(),
         phenotype_reference=_phenotype(ref_level, ref=True),

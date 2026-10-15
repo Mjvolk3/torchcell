@@ -83,6 +83,10 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.scerevisiae import costanzo2021 as c
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
 
@@ -325,7 +329,10 @@ def _reference() -> dict[str, Any]:
     return EnvironmentResponseExperimentReference(
         dataset_name="EnvChemgenCostanzo2021Dataset",
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae",
+            strain="S288C",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=Environment(
             media=SGA_DM_SELECTION,

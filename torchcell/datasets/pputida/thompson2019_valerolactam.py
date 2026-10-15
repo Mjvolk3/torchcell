@@ -108,8 +108,6 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import LB
 from torchcell.datamodels.schema import (
     AssayType,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     BacterialGeneNamespace,
     BacterialReferenceStrain,
     Censoring,
@@ -122,6 +120,8 @@ from torchcell.datamodels.schema import (
     EndpointRule,
     Environment,
     EnvironmentPhysicalPerturbation,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
@@ -1727,12 +1727,12 @@ class LactamGrowthRateThompson2019Dataset(_Thompson2019Dataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperiment
+        return EnvironmentResponseExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperimentReference
+        return EnvironmentResponseExperimentReference
 
     @post_process
     def process(self) -> None:
@@ -1762,7 +1762,7 @@ class LactamGrowthRateThompson2019Dataset(_Thompson2019Dataset):
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for row in tqdm(rows, desc="thompson2019-valerolactam-growth"):
                 genotype = deletion_genotype(row.strain, resolution.locus_tags)
-                reference = BacterialEnvironmentResponseExperimentReference(
+                reference = EnvironmentResponseExperimentReference(
                     dataset_name=self.name,
                     genome_reference=reference_genome,
                     environment_reference=growth_environment(GROWTH_REFERENCE_CARBON),
@@ -1770,7 +1770,7 @@ class LactamGrowthRateThompson2019Dataset(_Thompson2019Dataset):
                         baseline[row.strain].rate_per_hour
                     ),
                 )
-                experiment = BacterialEnvironmentResponseExperiment(
+                experiment = EnvironmentResponseExperiment(
                     dataset_name=self.name,
                     genotype=genotype,
                     environment=growth_environment(row.carbon_source),
@@ -2082,7 +2082,7 @@ def verify_growth_build(
             source_uri=SI_TEXT.relpath,
             citation_key=CITATION_KEY,
             sha256=SI_TEXT.sha256,
-            method="Supplementary Table S1: one BacterialEnvironmentResponseExperiment "
+            method="Supplementary Table S1: one EnvironmentResponseExperiment "
             "per released (strain, carbon source) maximal specific growth rate in h^-1, "
             "MeasurementType.growth_rate; the reference is the same strain on glucose",
             page="Table S1",

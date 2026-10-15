@@ -30,10 +30,10 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
     write_assembly,
 )
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
     ComponentDefinition,
     ProteinSynthesisRateExperiment,
     ProteinSynthesisRateExperimentReference,
+    ReferenceGenome,
     SynthesisRateUnit,
 )
 from torchcell.literature.manifest import ArtifactRecord, Manifest
@@ -231,9 +231,9 @@ def genome(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> EcoliK12MG1655Gen
     return EcoliK12MG1655Genome(genome_root=str(tmp_path / "mg1655"), overwrite=True)
 
 
-def _pin(strain: Any, **_: Any) -> AssemblyReferenceGenome:
+def _pin(strain: Any, **_: Any) -> ReferenceGenome:
     """The assembly pin, without reading the genomes tier's assembly report."""
-    return AssemblyReferenceGenome(
+    return ReferenceGenome(
         species="Escherichia coli",
         strain=strain,
         assembly_set=cast(Any, li.MG1655_ASSEMBLY_SET),

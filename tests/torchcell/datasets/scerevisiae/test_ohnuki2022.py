@@ -77,6 +77,10 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.scerevisiae import ohnuki2022 as m
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 _FEATURES = ["A101_A", "C103_A1B", "ACV103_A1B", "CCV103_A1B"]
 _MUTANT_ROWS = [
@@ -117,7 +121,10 @@ _WT_PHENOTYPE = CalMorphPhenotype(
 _REFERENCE = CalMorphExperimentReference(
     dataset_name="ScmdOhnuki2022Dataset",
     genome_reference=ReferenceGenome(
-        species="Saccharomyces cerevisiae", strain="BY4741"
+        species="Saccharomyces cerevisiae",
+        strain="BY4741",
+        assembly_set=SGD_S288C_R64,
+        assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
     ),
     environment_reference=_ENVIRONMENT,
     phenotype_reference=_WT_PHENOTYPE,
@@ -390,7 +397,10 @@ def test_clean_base_only_matrix(
         == CalMorphExperimentReference(
             dataset_name="ScmdOhnuki2022Dataset",
             genome_reference=ReferenceGenome(
-                species="Saccharomyces cerevisiae", strain="BY4741"
+                species="Saccharomyces cerevisiae",
+                strain="BY4741",
+                assembly_set=SGD_S288C_R64,
+                assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
             ),
             environment_reference=_ENVIRONMENT,
             phenotype_reference=CalMorphPhenotype(

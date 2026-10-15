@@ -15,7 +15,7 @@ and 57 are this study's own screen (batches 1 and 4). 3,975 x 57 = 226,575 relea
 cells, and those 57 columns of work are what this loader serves.
 
 RECORD = one (deletion strain x screen condition)
-``BacterialEnvironmentResponseExperiment``:
+``EnvironmentResponseExperiment``:
 
 - GENOTYPE: one perturbation against BW25113 (``ecoli_k12_bw25113_locus_tag``), because
   "The KEIO deletion library is derived from BW25113". The release labels its columns
@@ -256,8 +256,6 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import LB_LENNOX, M9
 from torchcell.datamodels.schema import (
     AssayType,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     Concentration,
     ConcentrationUnit,
     DegronPerturbation,
@@ -267,6 +265,8 @@ from torchcell.datamodels.schema import (
     Environment,
     EnvironmentPerturbationType,
     EnvironmentPhysicalPerturbation,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
@@ -1950,12 +1950,12 @@ class EnvChemgenShiver2016Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperiment
+        return EnvironmentResponseExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperimentReference
+        return EnvironmentResponseExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -2001,7 +2001,7 @@ class EnvChemgenShiver2016Dataset(ExperimentDataset):
         genome_reference = assembly_reference(self.REFERENCE_STRAIN)
         environments = {spec.label: environment(spec) for spec in CONDITIONS}
         references = {
-            spec.label: BacterialEnvironmentResponseExperimentReference(
+            spec.label: EnvironmentResponseExperimentReference(
                 dataset_name=self.name,
                 genome_reference=genome_reference,
                 environment_reference=environments[spec.label],
@@ -2024,7 +2024,7 @@ class EnvChemgenShiver2016Dataset(ExperimentDataset):
                     if cell == "":
                         n_blank_cells += 1
                         continue
-                    experiment = BacterialEnvironmentResponseExperiment(
+                    experiment = EnvironmentResponseExperiment(
                         dataset_name=self.name,
                         genotype=genotype(column),
                         environment=environments[spec.label],
@@ -2189,7 +2189,7 @@ def verify_build(
             citation_key=CITATION_KEY,
             sha256=DATA_SHA256,
             method="S1 Dataset integrated fitness-score matrix, the 57 condition rows "
-            "of batches 1 and 4; one BacterialEnvironmentResponseExperiment per "
+            "of batches 1 and 4; one EnvironmentResponseExperiment per "
             "(deletion strain, condition), z_score fitness-score",
             page="S1 Dataset (pgen.1006124.s005.txt), rows '... {1}' and '... {4}'",
             retrieved=DATA_RETRIEVED_AT,

@@ -38,10 +38,10 @@ import pytest
 import torchcell.datasets.ecoli.mori2021 as mo
 from torchcell.data import file_sha256
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
     BacterialAssemblySet,
     BacterialGeneNamespace,
     EnvironmentPhysicalPerturbation,
+    ReferenceGenome,
 )
 from torchcell.datasets.bacteria_common import LocusTagReconciliation
 from torchcell.sequence.genome.base import GeneNameStatus
@@ -574,8 +574,8 @@ def _identity_reconciliation(
     return names, _reconciliation(names, label)
 
 
-def _reference_genome() -> AssemblyReferenceGenome:
-    return AssemblyReferenceGenome(
+def _reference_genome() -> ReferenceGenome:
+    return ReferenceGenome(
         species="Escherichia coli",
         strain=mo.EQ353_BACKGROUND.name,
         ploidy="haploid",

@@ -1,5 +1,5 @@
 # Fitness Browser P. putida KT2440, the browser's own experiments keyed by publication:
-# BacterialEnvironmentResponseExperiment.
+# EnvironmentResponseExperiment.
 # One TransposonInsertionPerturbation per record (`build_genotype`), served as `bacterial
 # perturbation`. The environment always carries condition_1 as an
 # EnvironmentPhysicalPerturbation and, when present, condition_2 as a

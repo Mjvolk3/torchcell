@@ -13,7 +13,7 @@ readout is "the normalized log2 change in the abundance of mutants in that gene"
 The module carries three layers. It pins and deposits the raw artifacts, binds every
 statistical value to a verbatim quote in a sha256-pinned mirror, parses the experiment
 (environment) axis, and registers :class:`PhageRbTnseqMutalik2020Dataset`, one
-``BacterialEnvironmentResponseExperiment`` per (gene, experiment). The dataset class
+``EnvironmentResponseExperiment`` per (gene, experiment). The dataset class
 waited on ``PhagePerturbation``, the typed environment leaf for a bacteriophage: a virion
 is none of the other three leaves (no InChIKey, not a scalar physical factor, not a
 peptide / protein / antibody / toxin), and the dose is a multiplicity of infection, which
@@ -38,7 +38,7 @@ no-phage controls the paper's own ``Keio_exps_used.tab`` names: **286,344 record
 3,697 genes and 78 experiments** (measured, see ``EXPECTED_RECORDS``). The phenotype is
 ``EnvironmentResponsePhenotype`` (``measurement_type=log2_ratio``,
 ``assay_type=pooled_competitive_growth_barcode``) under
-``BacterialEnvironmentResponseExperiment``, NOT ``FitnessPhenotype``: the value is a
+``EnvironmentResponseExperiment``, NOT ``FitnessPhenotype``: the value is a
 signed log2 ratio, and 106,536 of the 250,960 released S1 Table cells (42.45%) are
 negative, which ``FitnessPhenotype.validate_fitness`` would clamp to 0.0. The genotype is
 one ``TransposonInsertionPerturbation`` per gene, and the environment of a challenge
@@ -62,7 +62,7 @@ were not suitable", which is why the selection rule is the paper's own
 ``Keio_exps_used.tab`` and not ``u``. The flag is reported in ``assay_ledger.json``.
 
 THE ASSAY FORMAT IS PART OF THE ENVIRONMENT, in three places a plain ``Environment`` can
-hold (``BacterialEnvironmentResponseExperiment.environment`` is ``Environment``, not
+hold (``EnvironmentResponseExperiment.environment`` is ``Environment``, not
 ``CultureEnvironment``, so a vessel cannot be stored):
 
 1. the ``Media`` object and its ``state`` -- ``MUTALIK2020_LB_SM_BUFFER`` (liquid) for the
@@ -125,8 +125,6 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     AssayType,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     BacterialGeneNamespace,
     BacterialReferenceStrain,
     ComponentDefinition,
@@ -135,6 +133,8 @@ from torchcell.datamodels.schema import (
     ConcentrationUnit,
     Environment,
     EnvironmentPerturbationType,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
@@ -2172,9 +2172,9 @@ def build_phenotype(
 
 def build_reference(
     dataset_name: str, assay_environment: Environment, *, exp_name: str, state: str
-) -> BacterialEnvironmentResponseExperimentReference:
+) -> EnvironmentResponseExperimentReference:
     """The typical gene of the same experiment: fitness 0 by the normalization."""
-    return BacterialEnvironmentResponseExperimentReference(
+    return EnvironmentResponseExperimentReference(
         dataset_name=dataset_name,
         genome_reference=assembly_reference(REFERENCE_STRAIN),
         environment_reference=assay_environment,
@@ -2389,12 +2389,12 @@ class PhageRbTnseqMutalik2020Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperiment
+        return EnvironmentResponseExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperimentReference
+        return EnvironmentResponseExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -2568,7 +2568,7 @@ class PhageRbTnseqMutalik2020Dataset(ExperimentDataset):
                         genes, values, standard_errors, t_values, strict=True
                     ):
                         genotype = genotypes[b_number]
-                        experiment = BacterialEnvironmentResponseExperiment(
+                        experiment = EnvironmentResponseExperiment(
                             dataset_name=self.name,
                             genotype=genotype,
                             environment=assay_environment,
@@ -2803,7 +2803,7 @@ VERIFY_PROVENANCE = Provenance(
     sha256=artifact(TARBALL_REL).sha256,
     method=(
         "the deposited figshare RB-TnSeq release (10.6084/m9.figshare.11413128): one "
-        "BacterialEnvironmentResponseExperiment per (gene, experiment), the normalized "
+        "EnvironmentResponseExperiment per (gene, experiment), the normalized "
         "log2 change in the abundance of a gene's insertion mutants with the release's "
         "own estimated standard error; experiments selected by the paper's "
         "Keio_exps_used.tab, doses by the S13 Table"

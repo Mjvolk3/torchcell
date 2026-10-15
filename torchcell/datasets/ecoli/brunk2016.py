@@ -166,12 +166,7 @@ from torchcell.data import (
 )
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
     BacterialGeneNamespace,
-    BacterialMetaboliteExperiment,
-    BacterialMetaboliteExperimentReference,
-    BacterialProteinAbundanceExperiment,
-    BacterialProteinAbundanceExperimentReference,
     BacterialStrainBackground,
     ComponentDefinition,
     Compound,
@@ -187,12 +182,17 @@ from torchcell.datamodels.schema import (
     Media,
     MediaComponent,
     MediaComponentRole,
+    MetaboliteExperiment,
+    MetaboliteExperimentReference,
     MetabolitePhenotype,
     ProductTiterExperiment,
     ProductTiterExperimentReference,
     ProductTiterPhenotype,
+    ProteinAbundanceExperiment,
+    ProteinAbundanceExperimentReference,
     ProteinAbundancePhenotype,
     Publication,
+    ReferenceGenome,
     SmallMoleculePerturbation,
     Temperature,
 )
@@ -1601,7 +1601,7 @@ def host_background() -> BacterialStrainBackground:
     )
 
 
-def host_reference(data_root: str | None = None) -> AssemblyReferenceGenome:
+def host_reference(data_root: str | None = None) -> ReferenceGenome:
     """The DH1 host pinned to the MG1655 GenBank assembly."""
     return assembly_reference(
         REFERENCE_STRAIN, background=host_background(), data_root=data_root
@@ -2013,12 +2013,12 @@ class _MetaboliteBrunk2016Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialMetaboliteExperiment
+        return MetaboliteExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialMetaboliteExperimentReference
+        return MetaboliteExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -2087,13 +2087,13 @@ class _MetaboliteBrunk2016Dataset(ExperimentDataset):
                     unshared.append(f"{strain}@{hour:g}h")
                     continue
                 culture = environment(strain, hour)
-                experiment = BacterialMetaboliteExperiment(
+                experiment = MetaboliteExperiment(
                     dataset_name=self.name,
                     genotype=genotype(strain, context.parts[strain], context.locus_of),
                     environment=culture,
                     phenotype=metabolite_phenotype(measured, self.MEASUREMENT_TYPE),
                 )
-                reference = BacterialMetaboliteExperimentReference(
+                reference = MetaboliteExperimentReference(
                     dataset_name=self.name,
                     genome_reference=reference_genome,
                     environment_reference=culture.model_copy(),
@@ -2293,12 +2293,12 @@ class ProteomeBrunk2016Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialProteinAbundanceExperiment
+        return ProteinAbundanceExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialProteinAbundanceExperimentReference
+        return ProteinAbundanceExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -2426,7 +2426,7 @@ class ProteomeBrunk2016Dataset(ExperimentDataset):
                             f"{WILD_TYPE} sample of that hour does not"
                         )
                     culture = environment(strain, hour)
-                    experiment = BacterialProteinAbundanceExperiment(
+                    experiment = ProteinAbundanceExperiment(
                         dataset_name=self.name,
                         genotype=genotype(
                             strain, context.parts[strain], context.locus_of
@@ -2434,7 +2434,7 @@ class ProteomeBrunk2016Dataset(ExperimentDataset):
                         environment=culture,
                         phenotype=protein_phenotype(measured),
                     )
-                    reference = BacterialProteinAbundanceExperimentReference(
+                    reference = ProteinAbundanceExperimentReference(
                         dataset_name=self.name,
                         genome_reference=reference_genome,
                         environment_reference=culture.model_copy(),

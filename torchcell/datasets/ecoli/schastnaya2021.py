@@ -107,10 +107,7 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     BACTERIAL_ASSEMBLY_SETS,
-    AssemblyReferenceGenome,
     BacterialAssemblySet,
-    BacterialMetaboliteExperiment,
-    BacterialMetaboliteExperimentReference,
     BacterialReleasedStrainPerturbation,
     BacterialStrainBackground,
     Concentration,
@@ -122,8 +119,11 @@ from torchcell.datamodels.schema import (
     Media,
     MediaComponent,
     MediaComponentRole,
+    MetaboliteExperiment,
+    MetaboliteExperimentReference,
     MetabolitePhenotype,
     Publication,
+    ReferenceGenome,
     ReleasedStrainKind,
     Temperature,
 )
@@ -1249,9 +1249,9 @@ def phosphomutant_genotype(column: StrainColumn) -> Genotype:
 
 def build_phosphomutant_experiment(
     dataset_name: str, column: StrainColumn, ions: Sequence[IonRow]
-) -> BacterialMetaboliteExperiment:
+) -> MetaboliteExperiment:
     """The record of one phosphomutant strain in one carbon source."""
-    return BacterialMetaboliteExperiment(
+    return MetaboliteExperiment(
         dataset_name=dataset_name,
         genotype=phosphomutant_genotype(column),
         environment=environment(column.carbon_source),
@@ -1261,9 +1261,9 @@ def build_phosphomutant_experiment(
 
 def build_experiment(
     dataset_name: str, column: StrainColumn, ions: Sequence[IonRow]
-) -> BacterialMetaboliteExperiment:
+) -> MetaboliteExperiment:
     """The record of one deletion strain in one carbon source."""
-    return BacterialMetaboliteExperiment(
+    return MetaboliteExperiment(
         dataset_name=dataset_name,
         genotype=deletion_genotype(column),
         environment=environment(column.carbon_source),
@@ -1273,11 +1273,11 @@ def build_experiment(
 
 def build_reference(
     dataset_name: str,
-    genome_reference: AssemblyReferenceGenome,
-    experiment: BacterialMetaboliteExperiment,
-) -> BacterialMetaboliteExperimentReference:
+    genome_reference: ReferenceGenome,
+    experiment: MetaboliteExperiment,
+) -> MetaboliteExperimentReference:
     """The wild type in the same medium, on the same key set, at 0."""
-    return BacterialMetaboliteExperimentReference(
+    return MetaboliteExperimentReference(
         dataset_name=dataset_name,
         genome_reference=genome_reference,
         environment_reference=experiment.environment.model_copy(),
@@ -1310,12 +1310,12 @@ class MetabolomeSchastnaya2021Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialMetaboliteExperiment
+        return MetaboliteExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialMetaboliteExperimentReference
+        return MetaboliteExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -1543,7 +1543,7 @@ VERIFIER_PROVENANCE = Provenance(
     source_uri=f"$DATA_ROOT/{RAW_DIR_REL}/data/{SD3_FILE}",
     citation_key=CITATION_KEY,
     sha256=DATA_SHA256[SD3_FILE],
-    method="Supplementary Data 3: one BacterialMetaboliteExperiment per (strain, carbon "
+    method="Supplementary Data 3: one MetaboliteExperiment per (strain, carbon "
     "source), the 29 KEIO deletion columns and the 171 phosphomutant columns, log2 fold "
     "change of each annotated ion against the MG1655 dmutS wild type",
     page="Nat Commun 12:5650, Supplementary Data 3",

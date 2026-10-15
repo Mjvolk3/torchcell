@@ -4,7 +4,7 @@
 """``torchcell/adapters/price2018_ecoli_adapter.py``: the conf it loads, the gate's view of it,
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
-Price 2018 RB-TnSeq, E. coli KEIO_ML9: BacterialEnvironmentResponseExperiment.
+Price 2018 RB-TnSeq, E. coli KEIO_ML9: EnvironmentResponseExperiment.
 One TransposonInsertionPerturbation per record (`build_genotype`), served as `bacterial
 perturbation`. The environment carries the sample's carbon or nitrogen source as an
 EnvironmentPhysicalPerturbation or its stress compound as a SmallMoleculePerturbation

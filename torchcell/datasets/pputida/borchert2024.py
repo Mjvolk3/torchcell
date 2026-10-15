@@ -18,7 +18,7 @@ fModule." That repository holds one file, ``fModule_Metadata.xlsx`` (sheets ``me
 ``torchcell.literature.retrieve.direct_url`` and sha256-pinned in the raw mirror
 ``$DATA_ROOT/torchcell-raw/borchertMachineLearningAnalysis2024/``.
 
-RECORDS. One ``BacterialEnvironmentResponseExperiment`` per (gene, sample): the genotype is
+RECORDS. One ``EnvironmentResponseExperiment`` per (gene, sample): the genotype is
 a ``TransposonInsertionPerturbation`` of the gene's GenBank locus tag in the sample's mutant
 library, the environment is the sample's medium plus its carbon / nitrogen / stress
 variable, and the phenotype is the gene fitness. Replicate samples are NOT averaged (the
@@ -93,9 +93,6 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import MOPS_MINIMAL, RCH2_DEFINED_NOCARBON_PRICE2018
 from torchcell.datamodels.schema import (
     AssayType,
-    AssemblyReferenceGenome,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     Compound,
     Concentration,
     ConcentrationUnit,
@@ -103,6 +100,8 @@ from torchcell.datamodels.schema import (
     Environment,
     EnvironmentPerturbationType,
     EnvironmentPhysicalPerturbation,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
@@ -113,6 +112,7 @@ from torchcell.datamodels.schema import (
     MediaComponentRole,
     PhysicalFactor,
     Publication,
+    ReferenceGenome,
     SmallMoleculePerturbation,
     Temperature,
     TransposonInsertionPerturbation,
@@ -1606,10 +1606,10 @@ def build_reference(
     dataset_name: str,
     sample: SampleMetadata,
     environment: Environment,
-    genome_reference: AssemblyReferenceGenome,
-) -> BacterialEnvironmentResponseExperimentReference:
+    genome_reference: ReferenceGenome,
+) -> EnvironmentResponseExperimentReference:
     """The typical gene of the same sample: fitness 0 by the normalization."""
-    return BacterialEnvironmentResponseExperimentReference(
+    return EnvironmentResponseExperimentReference(
         dataset_name=dataset_name,
         genome_reference=genome_reference,
         environment_reference=environment,
@@ -1798,12 +1798,12 @@ class RbTnseqBorchert2024Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperiment
+        return EnvironmentResponseExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperimentReference
+        return EnvironmentResponseExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -1899,7 +1899,7 @@ class RbTnseqBorchert2024Dataset(ExperimentDataset):
                     ] += 1
                     record = {
                         "experiment": {
-                            "experiment_type": "bacterial_environment_response",
+                            "experiment_type": "environment_response",
                             "dataset_name": self.name,
                             "genotype": genotypes[key],
                             "environment": env_ptr,
@@ -1933,12 +1933,12 @@ class RbTnseqBorchert2024Dataset(ExperimentDataset):
         genotype: dict[str, Any],
         environment: Environment,
         phenotype: EnvironmentResponsePhenotype,
-        reference: BacterialEnvironmentResponseExperimentReference,
+        reference: EnvironmentResponseExperimentReference,
         publication: Publication,
         itxn: Any,
     ) -> None:
         """The fast-path record equals what ``_intern_record`` writes for the same objects."""
-        experiment = BacterialEnvironmentResponseExperiment(
+        experiment = EnvironmentResponseExperiment(
             dataset_name=self.name,
             genotype=Genotype.model_validate(genotype),
             environment=environment,
@@ -2050,7 +2050,7 @@ def verify_build(
             citation_key=CITATION_KEY,
             sha256=DATA_SHA256,
             method="fModule_Metadata.xlsx (github.com/beckham-lab/fModule @ "
-            f"{DATA_COMMIT[:8]}): one BacterialEnvironmentResponseExperiment per (gene, "
+            f"{DATA_COMMIT[:8]}): one EnvironmentResponseExperiment per (gene, "
             "kept sample), log2_ratio gene fitness",
             page="sheets metadata, fitness_measurements, T-like_statistics",
             retrieved=RAW_RETRIEVED_AT,

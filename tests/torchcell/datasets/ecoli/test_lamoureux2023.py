@@ -59,7 +59,6 @@ from torchcell.data import ManifestPinMismatchError
 from torchcell.datamodels.identity import media_identity
 from torchcell.datamodels.media import MEDIA_LIBRARY
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
     BacterialReleasedStrainPerturbation,
     BacterialStrainBackground,
     ComponentDefinition,
@@ -68,8 +67,10 @@ from torchcell.datamodels.schema import (
     EnvironmentPhysicalPerturbation,
     MediaComponentRole,
     PhysicalFactor,
+    ReferenceGenome,
     ReleasedStrainKind,
     SmallMoleculePerturbation,
+    StrainReferenceGenome,
 )
 from torchcell.sequence.genome.ecoli.k12 import MG1655_ASSEMBLY
 from torchcell.verification.report import FindingClass, finding_class_of
@@ -906,7 +907,7 @@ def test_download_links_each_verified_member_and_refuses_an_off_pin_manifest(
         _bare_dataset(tmp_path / "build2").download()
 
 
-MG1655_PIN = AssemblyReferenceGenome(
+MG1655_PIN = ReferenceGenome(
     species="Escherichia coli",
     strain="MG1655",
     assembly_set="ecoli_K12_MG1655_ASM584v2",
@@ -916,12 +917,12 @@ MG1655_PIN = AssemblyReferenceGenome(
 
 def _pinned(
     strain: str, *, background: BacterialStrainBackground | None = None
-) -> AssemblyReferenceGenome:
+) -> ReferenceGenome:
     """The MG1655 pin, on a released strain's background when one is given."""
     if background is None:
         return MG1655_PIN
-    return MG1655_PIN.model_copy(
-        update={"strain": background.name, "background": background}
+    return StrainReferenceGenome.model_validate(
+        MG1655_PIN.model_dump() | {"strain": background.name, "background": background}
     )
 
 

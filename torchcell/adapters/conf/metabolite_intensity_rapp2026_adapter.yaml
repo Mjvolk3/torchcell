@@ -1,5 +1,5 @@
 # Rapp 2026 absolute FI-MS intensities: 406 MG1655-pinned strains,
-# BacterialMetaboliteExperiment on its own `measurement_type` (the absolute annotated
+# MetaboliteExperiment on its own `measurement_type` (the absolute annotated
 # feature intensity, the mean of the strain's two plates), a different scale from the
 # fold changes of metabolome_rapp2026. One BacterialCrisprInterferencePerturbation per
 # record, served as `bacterial perturbation` (never the yeast `perturbation` class) with

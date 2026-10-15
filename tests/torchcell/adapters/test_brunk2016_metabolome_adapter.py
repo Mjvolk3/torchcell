@@ -4,7 +4,7 @@
 """``torchcell/adapters/brunk2016_metabolome_adapter.py``: the conf it loads, the gate's
 view of it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
-Brunk 2016: the 51 LC-MS (uM) columns, 117 records, BacterialMetaboliteExperiment. Every engineered strain's pathway genes are served as
+Brunk 2016: the 51 LC-MS (uM) columns, 117 records, MetaboliteExperiment. Every engineered strain's pathway genes are served as
 `bacterial perturbation`; the shared CultureEnvironment carries IPTG on every record
 and a dodecane overlay on the terpene ones, so the environment-perturbation pair is on.
 """

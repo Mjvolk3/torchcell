@@ -65,6 +65,7 @@ from torchcell.datamodels.schema import (
     BacterialAssemblySet,
     BacterialReferenceStrain,
     BacterialStrainBackground,
+    StrainReferenceGenome,
 )
 from torchcell.sequence.genome.bacterial import GenomeAnnotationMismatchError
 from torchcell.sequence.genome.base import GeneNameResolution, GeneNameStatus
@@ -465,13 +466,14 @@ def test_assembly_reference_pins_the_genbank_accession_of_the_report(
     _serve_report(monkeypatch, tmp_path, REPORT)
     reference = bc.assembly_reference("MG1655")
     assert reference.model_dump() == {
+        "provenance_gaps": [],
         "species": "Escherichia coli",
         "strain": "MG1655",
         "ploidy": "haploid",
         "assembly_set": ECOLI_K12_MG1655,
         "assembly_accession": "GCA_000005845.2",
-        "background": None,
     }
+    assert not isinstance(reference, StrainReferenceGenome)
 
 
 REL606_REPORT = """# Assembly name:  ASM1798v1
@@ -497,12 +499,12 @@ def test_assembly_reference_pins_rel606_to_its_genbank_accession(
         (ECOLI_B_REL606, "GCA_000017985.1_ASM1798v1_assembly_report.txt", "/dr")
     ]
     assert reference.model_dump() == {
+        "provenance_gaps": [],
         "species": "Escherichia coli",
         "strain": "REL606",
         "ploidy": "haploid",
         "assembly_set": ECOLI_B_REL606,
         "assembly_accession": "GCA_000017985.1",
-        "background": None,
     }
 
 

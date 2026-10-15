@@ -73,6 +73,10 @@ from torchcell.literature.manifest import (
     RetrievalMethod,
     RetrievalRecord,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 _ORF = {
     "QCR8": "YJL166W",
@@ -178,7 +182,10 @@ def _experiment(common: str, rfp: str) -> EnvironmentResponseExperiment:
 _REFERENCE = EnvironmentResponseExperimentReference(
     dataset_name="CrispriMormino2022Dataset",
     genome_reference=ReferenceGenome(
-        species="Saccharomyces cerevisiae", strain="BY4742"
+        species="Saccharomyces cerevisiae",
+        strain="BY4742",
+        assembly_set=SGD_S288C_R64,
+        assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
     ),
     environment_reference=_ENVIRONMENT,
     phenotype_reference=EnvironmentResponsePhenotype(

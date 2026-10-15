@@ -91,6 +91,10 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.graph.sgd import data_root
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import (
     ProvenanceGap,
@@ -742,7 +746,10 @@ class GeneEssentialitySgdDataset(ExperimentDataset):
     ]:
         """Build the experiment, reference, and publication for one annotation."""
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae",
+            strain="S288C",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
 
         genotype = Genotype(perturbations=[sgd_perturbation(annotation)])

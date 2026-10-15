@@ -1,5 +1,5 @@
 # Borchert 2023 KT2440 RB-TnSeq, the 271 loci the Borchert 2024 compendium dropped:
-# BacterialEnvironmentResponseExperiment. One TransposonInsertionPerturbation per record
+# EnvironmentResponseExperiment. One TransposonInsertionPerturbation per record
 # (`borchert2024.build_genotype`), served as `bacterial perturbation`. The environment
 # always carries D-glucose as an EnvironmentPhysicalPerturbation and, for the twelve
 # stressed cultures, the stressor as a SmallMoleculePerturbation (`build_environment`),

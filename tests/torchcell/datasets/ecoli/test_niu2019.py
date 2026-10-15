@@ -43,14 +43,15 @@ from torchcell.datamodels.schema import (
     ASSEMBLY_SET_ACCESSIONS,
     BACTERIAL_ASSEMBLY_SETS,
     AssayType,
-    AssemblyReferenceGenome,
     BacterialReleasedCrisprPerturbation,
     ConcentrationUnit,
     MeasurementType,
     ProductTiterExperiment,
     ProductTiterExperimentReference,
+    ReferenceGenome,
     SampleUnit,
     SmallMoleculePerturbation,
+    StrainReferenceGenome,
     UncertaintyType,
 )
 from torchcell.datasets.bacteria_common import BacterialGenomeInjector
@@ -619,9 +620,9 @@ def test_the_recorded_retrieval_names_the_pmc_article_datasets_object() -> None:
 # --------------------------------------------------------------------------- #
 # The loader end to end, hermetic
 # --------------------------------------------------------------------------- #
-def _pin(strain: EcoliK12StrainName, background: Any = None) -> AssemblyReferenceGenome:
+def _pin(strain: EcoliK12StrainName, background: Any = None) -> ReferenceGenome:
     assembly_set = BACTERIAL_ASSEMBLY_SETS[strain]
-    return AssemblyReferenceGenome(
+    return ReferenceGenome(
         species="Escherichia coli",
         strain=strain,
         assembly_set=cast("Any", assembly_set),
@@ -631,12 +632,19 @@ def _pin(strain: EcoliK12StrainName, background: Any = None) -> AssemblyReferenc
 
 def _pin_with_background(
     strain: EcoliK12StrainName, background: Any = None
-) -> AssemblyReferenceGenome:
+) -> ReferenceGenome:
     """``_pin``, but carrying the background, which the pinene rules read back."""
     assembly_set = BACTERIAL_ASSEMBLY_SETS[strain]
-    return AssemblyReferenceGenome(
+    if background is None:
+        return ReferenceGenome(
+            species="Escherichia coli",
+            strain=strain,
+            assembly_set=cast("Any", assembly_set),
+            assembly_accession=ASSEMBLY_SET_ACCESSIONS[assembly_set][0],
+        )
+    return StrainReferenceGenome(
         species="Escherichia coli",
-        strain=strain if background is None else background.name,
+        strain=background.name,
         assembly_set=cast("Any", assembly_set),
         assembly_accession=ASSEMBLY_SET_ACCESSIONS[assembly_set][0],
         background=background,

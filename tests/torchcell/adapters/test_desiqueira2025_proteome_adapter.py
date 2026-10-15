@@ -4,7 +4,7 @@
 """``torchcell/adapters/desiqueira2025_proteome_adapter.py``: the conf it loads, the gate's view of it,
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
-de Siqueira 2025 proteome: 5 samples, BacterialProteinAbundanceExperiment.
+de Siqueira 2025 proteome: 5 samples, ProteinAbundanceExperiment.
 The 2 PT records carry one DeletionStrainPerturbation each (the 3 KT2440 records
 carry none), served as `bacterial perturbation`. The environment carries
 EnvironmentPhysicalPerturbation edits, so the environment-perturbation pair is enabled.

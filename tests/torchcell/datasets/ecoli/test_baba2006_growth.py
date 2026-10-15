@@ -20,10 +20,10 @@ import pytest
 
 from torchcell.data.experiment_dataset import file_sha256
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
     DeletionStrainPerturbation,
     EnvironmentResponsePhenotype,
     MeasurementType,
+    ReferenceGenome,
 )
 from torchcell.datasets.ecoli import baba2006 as bb
 from torchcell.datasets.ecoli import baba2006_growth as m
@@ -244,7 +244,7 @@ def fake_table(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     return data_root
 
 
-REFERENCE = AssemblyReferenceGenome(
+REFERENCE = ReferenceGenome(
     species="Escherichia coli",
     strain="BW25113",
     assembly_set="ecoli_K12_BW25113_ASM75055v1",

@@ -35,9 +35,9 @@ import pytest
 import torchcell.datasets.pputida.menasalvas2025 as mv
 from torchcell.datamodels.media import M9_NREL_MOPS_MENASALVAS2025
 from torchcell.datamodels.schema import (
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     BacterialVariantType,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     SmallMoleculePerturbation,
 )
 from torchcell.datasets.bacteria_common import reconcile_locus_tags
@@ -1392,8 +1392,8 @@ def built(synthetic_mirror: Path, synthetic_kt2440: Any, tmp_path: Path) -> Any:
 def test_the_build_writes_one_record_per_selected_target(built: Any) -> None:
     """Record count equals the parsed rows, and the two references are the rounds'."""
     assert len(built) == len(ROUND1_CELLS) + len(ROUND2_CELLS)
-    assert built.experiment_class is BacterialEnvironmentResponseExperiment
-    assert built.reference_class is BacterialEnvironmentResponseExperimentReference
+    assert built.experiment_class is EnvironmentResponseExperiment
+    assert built.reference_class is EnvironmentResponseExperimentReference
     assert built.raw_file_names == [mv.SI1_MD_FILENAME]
 
 

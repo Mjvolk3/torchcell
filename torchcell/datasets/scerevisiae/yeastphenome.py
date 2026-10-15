@@ -122,6 +122,10 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification import Provenance, ProvenanceGap, ProvenanceGapReason
 
 logging.basicConfig(level=logging.INFO)
@@ -875,7 +879,11 @@ class YeastPhenomeDataset(ExperimentDataset):
         return EnvironmentResponseExperimentReference(
             dataset_name=self.name,
             genome_reference=ReferenceGenome(
-                species="Saccharomyces cerevisiae", strain=strain, ploidy=ploidy
+                species="Saccharomyces cerevisiae",
+                strain=strain,
+                ploidy=ploidy,
+                assembly_set=SGD_S288C_R64,
+                assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
             ),
             environment_reference=environment.model_copy(),
             phenotype_reference=phenotype_reference,

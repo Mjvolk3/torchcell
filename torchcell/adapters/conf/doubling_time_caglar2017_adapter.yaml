@@ -1,5 +1,5 @@
 # Caglar 2017 Table S5 doubling times: 55 records, one per released biological-replicate
-# growth curve, BacterialEnvironmentResponseExperiment carrying the ABSOLUTE doubling
+# growth curve, EnvironmentResponseExperiment carrying the ABSOLUTE doubling
 # time in minutes with both released 95% confidence limits (#776). Every genotype is the
 # wild type (0 perturbations in 55 of 55 records), so neither `bacterial perturbation`
 # nor `perturbation to genotype` is enabled. The environment carries

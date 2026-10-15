@@ -36,10 +36,10 @@ import torchcell.datasets.ecoli.schmidt2016 as sm
 import torchcell.datasets.ecoli.schmidt2016_growth_rate as gr
 from torchcell.data import file_sha256
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
     BacterialAssemblySet,
     BacterialGeneNamespace,
     EnvironmentPhysicalPerturbation,
+    ReferenceGenome,
     ReleasedStrainKind,
     SampleUnit,
     UncertaintyType,
@@ -410,8 +410,8 @@ class FakeGenome:
         )
 
 
-def _reference_genome() -> AssemblyReferenceGenome:
-    return AssemblyReferenceGenome(
+def _reference_genome() -> ReferenceGenome:
+    return ReferenceGenome(
         species="Escherichia coli",
         strain=sm.SCHMIDT_REFERENCE_STRAIN,
         ploidy="haploid",

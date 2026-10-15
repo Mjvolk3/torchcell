@@ -26,13 +26,13 @@ import pytest
 
 import torchcell.datasets.ecoli.potel2018 as po
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
-    BacterialPhosphositeIntensityExperiment,
-    BacterialPhosphositeIntensityExperimentReference,
     ConcentrationUnit,
     CultureGrowthPhase,
     PhosphoResidue,
+    PhosphositeIntensityExperiment,
+    PhosphositeIntensityExperimentReference,
     PhosphositeQuantification,
+    ReferenceGenome,
 )
 from torchcell.literature.manifest import ArtifactRecord, Manifest
 from torchcell.verification.levels import l3_convention
@@ -145,8 +145,8 @@ def write_table_5(path: Path, rows: tuple[tuple[Any, ...], ...]) -> Path:
     return path
 
 
-def _w3110() -> AssemblyReferenceGenome:
-    return AssemblyReferenceGenome(
+def _w3110() -> ReferenceGenome:
+    return ReferenceGenome(
         species="Escherichia coli",
         strain="W3110",
         assembly_set="ecoli_K12_W3110_ASM1024v1",
@@ -415,8 +415,8 @@ def test_the_verifier_passes_the_synthetic_build_and_fails_a_changed_cell(
 def test_the_loader_declares_its_schema_pair_its_host_and_its_raw_file() -> None:
     cls = po.PhosphositeIntensityPotel2018Dataset
     dataset = cls.__new__(cls)
-    assert dataset.experiment_class is BacterialPhosphositeIntensityExperiment
-    assert dataset.reference_class is (BacterialPhosphositeIntensityExperimentReference)
+    assert dataset.experiment_class is PhosphositeIntensityExperiment
+    assert dataset.reference_class is (PhosphositeIntensityExperimentReference)
     assert dataset.raw_file_names == [po.TABLE_2_FILENAME]
     assert (cls.REFERENCE_STRAIN, cls.has_gene_perturbations) == ("W3110", False)
     assert str(cls.organism) == "ecoli"

@@ -72,6 +72,10 @@ from torchcell.datamodels.schema import (
     VisualScorePhenotype,
 )
 from torchcell.datasets.dataset_registry import register_dataset
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import SourcedValue
 
@@ -453,7 +457,10 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
         """Build the VisualScore experiment/reference/publication for one ORF."""
         # The row's own Strain cell, as released (BY4741 where the cell is blank).
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain=str(row["strain"])
+            species="Saccharomyces cerevisiae",
+            strain=str(row["strain"]),
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
         genotype = Genotype(
             perturbations=[_released_deletion(row["orf"]), *_carotenogenic_cassette()]

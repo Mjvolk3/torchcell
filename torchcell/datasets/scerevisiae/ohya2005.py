@@ -91,6 +91,10 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import SourcedValue
 
@@ -357,7 +361,10 @@ class ScmdOhya2005Dataset(ExperimentDataset):
         """Build a CalMorph experiment and reference pair from one data row."""
         # Genome reference - haploid BY4741 (MATa his3D1 leu2D0 lys2D0 ura3D0).
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4741"
+            species="Saccharomyces cerevisiae",
+            strain="BY4741",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
 
         # Create genotype for the non-essential single-gene deletion mutant (kanMX4).

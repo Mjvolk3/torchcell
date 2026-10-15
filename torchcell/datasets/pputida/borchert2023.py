@@ -28,7 +28,7 @@ comparison sheet**, which is 10,824 (locus, arm) values the compendium does not 
 are the records this dataset stores, and they are disjoint from the served store by
 construction and by a build-time check of the served LMDB's own gene set.
 
-RECORDS. One ``BacterialEnvironmentResponseExperiment`` per (locus, arm): the genotype is a
+RECORDS. One ``EnvironmentResponseExperiment`` per (locus, arm): the genotype is a
 ``TransposonInsertionPerturbation`` of the locus in ``Putida_ML5_JBEI``, the environment is
 M9 + 20 mM glucose plus the arm's stressor at the Methods dose, and the phenotype is the
 replicate's gene fitness. Replicates are NOT averaged, matching the compendium; the
@@ -100,14 +100,13 @@ from torchcell.data import (
 )
 from torchcell.datamodels.schema import (
     AssayType,
-    AssemblyReferenceGenome,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     Concentration,
     ConcentrationUnit,
     Environment,
     EnvironmentPerturbationType,
     EnvironmentPhysicalPerturbation,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
@@ -115,6 +114,7 @@ from torchcell.datamodels.schema import (
     MeasurementType,
     PhysicalFactor,
     Publication,
+    ReferenceGenome,
     SmallMoleculePerturbation,
     Temperature,
 )
@@ -1294,10 +1294,10 @@ def build_reference(
     dataset_name: str,
     arm: str,
     environment: Environment,
-    genome_reference: AssemblyReferenceGenome,
-) -> BacterialEnvironmentResponseExperimentReference:
+    genome_reference: ReferenceGenome,
+) -> EnvironmentResponseExperimentReference:
     """The typical gene of the same culture: fitness 0 by the normalization."""
-    return BacterialEnvironmentResponseExperimentReference(
+    return EnvironmentResponseExperimentReference(
         dataset_name=dataset_name,
         genome_reference=genome_reference,
         environment_reference=environment,
@@ -1554,12 +1554,12 @@ class RbTnseqBorchert2023Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperiment
+        return EnvironmentResponseExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperimentReference
+        return EnvironmentResponseExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -1661,7 +1661,7 @@ class RbTnseqBorchert2023Dataset(ExperimentDataset):
                         phenotype = build_phenotype(float(values[row_of[tag]]), arm)
                         record = {
                             "experiment": {
-                                "experiment_type": "bacterial_environment_response",
+                                "experiment_type": "environment_response",
                                 "dataset_name": self.name,
                                 "genotype": genotypes[tag],
                                 "environment": env_ptr,
@@ -1697,12 +1697,12 @@ class RbTnseqBorchert2023Dataset(ExperimentDataset):
         genotype: dict[str, Any],
         environment: Environment,
         phenotype: EnvironmentResponsePhenotype,
-        reference: BacterialEnvironmentResponseExperimentReference,
+        reference: EnvironmentResponseExperimentReference,
         publication: Publication,
         itxn: Any,
     ) -> None:
         """The fast-path record equals what ``_intern_record`` writes for the same objects."""
-        experiment = BacterialEnvironmentResponseExperiment(
+        experiment = EnvironmentResponseExperiment(
             dataset_name=self.name,
             genotype=Genotype.model_validate(genotype),
             environment=environment,
@@ -1792,7 +1792,7 @@ def verify_build(
             citation_key=CITATION_KEY,
             sha256=DATA_SHA256,
             method="si1.xlsx (Elsevier mmc1.xlsx): one "
-            "BacterialEnvironmentResponseExperiment per (locus, culture) for the 271 "
+            "EnvironmentResponseExperiment per (locus, culture) for the 271 "
             "loci the Borchert 2024 compendium eliminated, log2_ratio gene fitness",
             page=f"{N_COMPARISONS} pairwise comparison sheets",
             retrieved=RAW_RETRIEVED_AT,

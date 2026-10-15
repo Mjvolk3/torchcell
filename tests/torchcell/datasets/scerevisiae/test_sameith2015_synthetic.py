@@ -74,6 +74,10 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.scerevisiae import sameith2015 as m
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 _SM = "SmMicroarraySameith2015Dataset"
 _DM = "DmMicroarraySameith2015Dataset"
@@ -257,7 +261,10 @@ def _record(
     reference = MicroarrayExpressionExperimentReference(
         dataset_name=dataset,
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain=strain
+            species="Saccharomyces cerevisiae",
+            strain=strain,
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=_ENVIRONMENT,
         phenotype_reference=MicroarrayExpressionPhenotype(

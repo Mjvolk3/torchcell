@@ -19,6 +19,10 @@ from torchcell.datamodels.schema import (
     ReferenceGenome,
     Temperature,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.protein import protein_gene_set, verify_protein_dataset
 from torchcell.verification.report import Level, Provenance
 
@@ -57,7 +61,10 @@ def _record(gene: str, scale: float, *, ref_scale: float = 9.0) -> dict[str, Any
     reference = ProteinAbundanceExperimentReference(
         dataset_name="test",
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4741"
+            species="Saccharomyces cerevisiae",
+            strain="BY4741",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=env.model_copy(),
         phenotype_reference=_phenotype(ref_scale),

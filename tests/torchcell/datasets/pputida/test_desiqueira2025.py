@@ -43,8 +43,6 @@ import torchcell.datasets.pputida.desiqueira2025 as ds
 from torchcell.datamodels.media import M9_NREL_DESIQUEIRA2025
 from torchcell.datamodels.schema import (
     AlleleEdit,
-    BacterialProteinAbundanceExperiment,
-    BacterialProteinAbundanceExperimentReference,
     BacterialVariantType,
     ConcentrationUnit,
     EnvironmentPhysicalPerturbation,
@@ -52,8 +50,11 @@ from torchcell.datamodels.schema import (
     ProductTiterExperiment,
     ProductTiterExperimentReference,
     ProductTiterPhenotype,
+    ProteinAbundanceExperiment,
+    ProteinAbundanceExperimentReference,
     SampleUnit,
     SmallMoleculePerturbation,
+    StrainReferenceGenome,
     VariantCallMode,
     VariantFrequencyBasis,
     VariantSiteKind,
@@ -144,12 +145,12 @@ def test_the_wild_type_reference_carries_no_background_and_pt_carries_one(
 ) -> None:
     """A WT record IS the reference assembly; a PT record names its own strain."""
     wild = ds.strain_reference(ds.WT_LABEL)
-    assert wild.background is None
+    assert not isinstance(wild, StrainReferenceGenome)
     assert wild.strain == ds.WT_STRAIN
     assert wild.assembly_set == ds.KT2440_ASSEMBLY_SET
     assert wild.assembly_accession == "GCA_000007565.2"
     pt = ds.strain_reference(ds.PT_STRAIN)
-    assert pt.background is not None
+    assert isinstance(pt, StrainReferenceGenome)
     assert pt.strain == ds.PT_STRAIN
 
 
@@ -159,7 +160,7 @@ def test_a_sequenced_isolate_is_referenced_against_pts_background(
 ) -> None:
     """PT's deletion is the content an isolate HOLDS CONSTANT, so it is the reference."""
     reference = ds.strain_reference(strain)
-    assert reference.background is not None
+    assert isinstance(reference, StrainReferenceGenome)
     assert reference.background == ds.pt_background()
     assert reference.strain == ds.PT_STRAIN
     assert reference.assembly_set == ds.KT2440_ASSEMBLY_SET
@@ -1317,10 +1318,8 @@ def test_the_proteome_loader_writes_only_the_writable_strains(
 ) -> None:
     """17 of the 20 released samples; the unsequenced isolate's three are left out."""
     assert len(built_proteome) == ds.EXPECTED_PROTEOME_RECORDS == 17
-    assert built_proteome.experiment_class is BacterialProteinAbundanceExperiment
-    assert (
-        built_proteome.reference_class is BacterialProteinAbundanceExperimentReference
-    )
+    assert built_proteome.experiment_class is ProteinAbundanceExperiment
+    assert built_proteome.reference_class is ProteinAbundanceExperimentReference
     assert built_proteome.raw_file_names == [ds.PROTEOME_FILENAME, ds.VARIANTS_FILENAME]
     strains = set()
     genotypes = set()

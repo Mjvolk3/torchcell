@@ -38,6 +38,10 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.scerevisiae import lopez2024 as m
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 # Table S2 rows (Gene-knockout strain, Fold change). Two rows for YAL001C (one lowercase:
 # two plate measurements, two records), six other ORF-shaped names each stored as released
@@ -179,7 +183,10 @@ def _reference(dataset_name: str, n: int) -> dict[str, object]:
     return MetaboliteExperimentReference(
         dataset_name=dataset_name,
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4741"
+            species="Saccharomyces cerevisiae",
+            strain="BY4741",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=_ENVIRONMENT,
         phenotype_reference=_phenotype(1.0, None, n),
@@ -279,9 +286,12 @@ def test_screen_reference_is_one_shared_wt_control_with_n_one(
         "isobutanol": 1
     }
     assert index[0]["reference"]["genome_reference"] == {
+        "provenance_gaps": [],
         "species": "Saccharomyces cerevisiae",
         "strain": "BY4741",
         "ploidy": "haploid",
+        "assembly_set": "sgd_S288C_R64-4-1_20230830",
+        "assembly_accession": "GCA_000146045.2",
     }
 
 

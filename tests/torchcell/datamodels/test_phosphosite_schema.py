@@ -231,18 +231,22 @@ def test_the_leaf_is_a_sibling_of_protein_abundance_not_a_child() -> None:
     assert not issubclass(s.ProteinAbundancePhenotype, s.PhosphositeIntensityPhenotype)
 
 
-def test_the_bacterial_pair_is_registered_and_pins_the_assembly() -> None:
-    experiment = s.BacterialPhosphositeIntensityExperiment
-    reference = s.BacterialPhosphositeIntensityExperimentReference
-    assert s.EXPERIMENT_TYPE_MAP["bacterial_phosphosite_intensity"] is experiment
-    assert s.EXPERIMENT_REFERENCE_TYPE_MAP["bacterial_phosphosite_intensity"] is (
-        reference
+def test_the_pair_is_registered_host_neutral_and_inherits_the_pinned_slot() -> None:
+    """P2: the pair carries no host prefix; the pin lives on ``ReferenceGenome``."""
+    experiment = s.PhosphositeIntensityExperiment
+    reference = s.PhosphositeIntensityExperimentReference
+    assert s.EXPERIMENT_TYPE_MAP["phosphosite_intensity"] is experiment
+    assert s.EXPERIMENT_REFERENCE_TYPE_MAP["phosphosite_intensity"] is (reference)
+    assert "bacterial_phosphosite_intensity" not in s.EXPERIMENT_TYPE_MAP
+    assert s.RETIRED_EXPERIMENT_TYPES["bacterial_phosphosite_intensity"] == (
+        "phosphosite_intensity"
     )
     assert experiment in get_args(s.ExperimentType)
     assert reference in get_args(s.ExperimentReferenceType)
     assert s.PhosphositeIntensityPhenotype in get_args(s.PhenotypeType)
-    assert reference.model_fields["genome_reference"].annotation is (
-        s.AssemblyReferenceGenome
+    assert (
+        reference.model_fields["genome_reference"].annotation
+        == s.ExperimentReference.model_fields["genome_reference"].annotation
     )
     assert experiment.model_fields["phenotype"].annotation is (
         s.PhosphositeIntensityPhenotype

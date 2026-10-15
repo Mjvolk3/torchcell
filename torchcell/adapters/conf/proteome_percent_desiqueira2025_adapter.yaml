@@ -1,5 +1,5 @@
 # de Siqueira 2025 percent-of-total relative abundance (the paper's own scale): 5 samples,
-# BacterialProteinAbundanceExperiment on a second released normalization of the same
+# ProteinAbundanceExperiment on a second released normalization of the same
 # proteome. Same graph shape as proteome_desiqueira2025_adapter.yaml: the 2 PT records
 # carry one BacterialDeletionPerturbation each (the 3 KT2440 records carry none),
 # served as `bacterial perturbation`, and the environment carries

@@ -203,7 +203,6 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import MOPS_MINIMAL
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
     BacterialAssemblySet,
     BacterialGeneNamespace,
     BacterialStrainBackground,
@@ -226,6 +225,7 @@ from torchcell.datamodels.schema import (
     ProteinTurnoverExperimentReference,
     ProteinTurnoverPhenotype,
     Publication,
+    ReferenceGenome,
     Temperature,
 )
 from torchcell.datasets.bacteria_common import (
@@ -1731,7 +1731,7 @@ def ncm3722_background() -> BacterialStrainBackground:
     )
 
 
-def strain_reference(data_root: str | None = None) -> AssemblyReferenceGenome:
+def strain_reference(data_root: str | None = None) -> ReferenceGenome:
     """The assembly-pinned reference every record of this paper is written against."""
     return assembly_reference(
         MG1655_STRAIN, background=ncm3722_background(), data_root=data_root

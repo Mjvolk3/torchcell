@@ -83,6 +83,10 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.datasets.scerevisiae.zelezniak2018 import build_metabolite_s_id_map
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import SourcedValue
 
@@ -523,7 +527,10 @@ class OrganicAcidYoshida2012Dataset(ExperimentDataset):
         """Build the Metabolite experiment/reference/publication for one deletion strain."""
         # Background = BY4742/BY4741 haploid KanMX4 deletion collection.
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4742"
+            species="Saccharomyces cerevisiae",
+            strain="BY4742",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
         genotype = Genotype(perturbations=[self._released_deletion(row["gene"])])
         # Static (no shaking) YPD liquid, 25 C, 72 h (Methods; Table 3 caption).

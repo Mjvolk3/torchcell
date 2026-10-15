@@ -13,7 +13,7 @@ genomic DNA was amplified, labeled and hybridized against labeled genomic DNA on
 arrays. Each locus therefore gets a signed per-drug score saying whether disrupting it
 helped or hurt in that drug.
 
-RECORD = one (gene x antibiotic) ``BacterialEnvironmentResponseExperiment``, from Dataset
+RECORD = one (gene x antibiotic) ``EnvironmentResponseExperiment``, from Dataset
 S5, "Combined Z-scores for all loci". 3,976 released loci x 17 antibiotics = 67,592 cells;
 63,766 are stored (the arithmetic is in RETENTION below).
 
@@ -184,15 +184,14 @@ from torchcell.datamodels.media import M9
 from torchcell.datamodels.schema import (
     BACTERIAL_ASSEMBLY_SETS,
     AssayType,
-    AssemblyReferenceGenome,
     BacterialAssemblySet,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     BacterialStrainBackground,
     ComponentDefinition,
     Concentration,
     ConcentrationUnit,
     Environment,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
@@ -202,6 +201,7 @@ from torchcell.datamodels.schema import (
     MediaComponent,
     MediaComponentRole,
     Publication,
+    ReferenceGenome,
     SampleUnit,
     SmallMoleculePerturbation,
     Temperature,
@@ -1840,7 +1840,7 @@ def library_background() -> BacterialStrainBackground:
     )
 
 
-def reference_genome(data_root: str | None = None) -> AssemblyReferenceGenome:
+def reference_genome(data_root: str | None = None) -> ReferenceGenome:
     """MG1655 pinned to its GenBank assembly, carrying the library's background."""
     return assembly_reference(
         REFERENCE_STRAIN_NAME, background=library_background(), data_root=data_root
@@ -1854,9 +1854,9 @@ def build_experiment(
     value: float,
     spec: DrugSpec,
     env: Environment,
-) -> BacterialEnvironmentResponseExperiment:
+) -> EnvironmentResponseExperiment:
     """The record of one (gene, drug) cell of Dataset S5."""
-    return BacterialEnvironmentResponseExperiment(
+    return EnvironmentResponseExperiment(
         dataset_name=dataset_name,
         genotype=insertion_genotype(locus_tag, symbol),
         environment=env,
@@ -1865,10 +1865,10 @@ def build_experiment(
 
 
 def build_reference(
-    dataset_name: str, genome: AssemblyReferenceGenome, spec: DrugSpec, env: Environment
-) -> BacterialEnvironmentResponseExperimentReference:
+    dataset_name: str, genome: ReferenceGenome, spec: DrugSpec, env: Environment
+) -> EnvironmentResponseExperimentReference:
     """The unperturbed parent of one condition, scoring 0."""
-    return BacterialEnvironmentResponseExperimentReference(
+    return EnvironmentResponseExperimentReference(
         dataset_name=dataset_name,
         genome_reference=genome,
         environment_reference=env.model_copy(),
@@ -1993,12 +1993,12 @@ class EnvChemgenGirgis2009Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperiment
+        return EnvironmentResponseExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperimentReference
+        return EnvironmentResponseExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -2217,7 +2217,7 @@ def verify_build(
             citation_key=CITATION_KEY,
             sha256=DATA_SHA256[DATASET_S5],
             method="Dataset S5, the combined z-score of every locus in each of the 17 "
-            "antibiotics; one BacterialEnvironmentResponseExperiment per (gene, drug), "
+            "antibiotics; one EnvironmentResponseExperiment per (gene, drug), "
             "gene-level TransposonInsertionPerturbation against MG1655, reference = the "
             "unperturbed MG1655 delta-lacZ parent at 0",
             page="Dataset S5 (pone.0005629.s024.xls), sheet 'S5-Scores of All'",

@@ -35,11 +35,12 @@ import torchcell.datasets.ecoli.balakrishnan2022 as bk
 import torchcell.datasets.ecoli.mori2021 as mori2021
 from torchcell.data import file_sha256
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
     DeletionStrainPerturbation,
     EnvironmentPhysicalPerturbation,
     PromoterReplacementPerturbation,
+    ReferenceGenome,
     SmallMoleculePerturbation,
+    StrainReferenceGenome,
 )
 from torchcell.literature.manifest import RetrievalMethod
 from torchcell.literature.manual_deposit import extend_manifest, verify_deposit
@@ -441,8 +442,8 @@ def test_download_links_this_mirror_and_the_mori_appendix(
     assert sorted(os.listdir(raw)) == sorted(bk.RAW_SHA256)
 
 
-def _reference_genome(*_: Any, background: Any = None) -> AssemblyReferenceGenome:
-    return AssemblyReferenceGenome(
+def _reference_genome(*_: Any, background: Any = None) -> ReferenceGenome:
+    return StrainReferenceGenome(
         species="Escherichia coli",
         strain=background.name,
         ploidy="haploid",

@@ -129,6 +129,10 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import SourcedValue
 
@@ -473,7 +477,10 @@ class MetaboliteDaSilveira2014Dataset(ExperimentDataset):
         # BY4741 nonessential kinase/phosphatase KanMX deletion collection (see docstring:
         # BY4741 appears as a WT control row in the released matrix).
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4741"
+            species="Saccharomyces cerevisiae",
+            strain="BY4741",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
         genotype = Genotype(
             perturbations=[

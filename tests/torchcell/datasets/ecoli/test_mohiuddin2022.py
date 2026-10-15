@@ -539,9 +539,9 @@ def test_the_deposit_refuses_a_missing_source(
 # --------------------------------------------------------------------------- #
 def _pin_assembly(monkeypatch: pytest.MonkeyPatch) -> None:
     """Pin ``assembly_reference`` so no assembly report has to be served."""
-    from torchcell.datamodels.schema import AssemblyReferenceGenome
+    from torchcell.datamodels.schema import ReferenceGenome
 
-    reference = AssemblyReferenceGenome(
+    reference = ReferenceGenome(
         species="Escherichia coli",
         strain="MG1655",
         assembly_set="ecoli_K12_MG1655_ASM584v2",

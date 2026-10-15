@@ -43,6 +43,10 @@ from torchcell.datamodels.schema import (
     StrainBackground,
     StrainReferenceGenome,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import (
     ProvenanceGap,
@@ -100,6 +104,8 @@ def _reference_genome() -> StrainReferenceGenome:
         strain="FY4/FY5",
         ploidy="diploid",
         background=background,
+        assembly_set=SGD_S288C_R64,
+        assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
     )
 
 
@@ -277,7 +283,10 @@ def test_the_reference_keeps_its_typed_background() -> None:
             {
                 "dataset_name": "d",
                 "genome_reference": ReferenceGenome(
-                    species="Saccharomyces cerevisiae", strain="S288C"
+                    species="Saccharomyces cerevisiae",
+                    strain="S288C",
+                    assembly_set=SGD_S288C_R64,
+                    assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
                 ),
                 "environment_reference": CultureEnvironment(media=YPD_LIQUID),
                 "phenotype_reference": _phenotype(),

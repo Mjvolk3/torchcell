@@ -84,6 +84,10 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.scerevisiae import kemmeren2014 as m
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 _DATASET = "MicroarrayKemmeren2014Dataset"
 _NAN = "NaN"
@@ -349,7 +353,10 @@ def _reference(
     return MicroarrayExpressionExperimentReference(
         dataset_name=_DATASET,
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain=strain
+            species="Saccharomyces cerevisiae",
+            strain=strain,
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=_ENVIRONMENT,
         phenotype_reference=MicroarrayExpressionPhenotype(

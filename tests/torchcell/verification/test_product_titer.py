@@ -22,7 +22,6 @@ import pytest
 
 from torchcell.datamodels.media import M9_NREL_CARRUTHERS2025
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
     Compound,
     ConcentrationUnit,
     CultureEnvironment,
@@ -32,6 +31,7 @@ from torchcell.datamodels.schema import (
     ProductTiterExperiment,
     ProductTiterExperimentReference,
     ProductTiterPhenotype,
+    ReferenceGenome,
     SampleUnit,
     Temperature,
     UncertaintyType,
@@ -46,7 +46,7 @@ PRODUCT = "isoprenol"
 PATHWAY_GENES = ("MvaSEf", "MvaEEf")
 HOST_DELETION = "PP_5003"
 NAMESPACE: Literal["pputida_kt2440_locus_tag"] = "pputida_kt2440_locus_tag"
-REFERENCE = AssemblyReferenceGenome(
+REFERENCE = ReferenceGenome(
     species="Pseudomonas putida",
     strain="IY1449b",
     assembly_set="pputida_KT2440_ASM756v2",

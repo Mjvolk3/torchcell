@@ -37,6 +37,10 @@ from torchcell.datamodels.interned_constant import (
     verified_constant,
 )
 from torchcell.sequence import GeneSet
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import SourcedValue
 
@@ -74,7 +78,12 @@ def _environment(n_components: int) -> s.Environment:
 
 
 ENVIRONMENTS = [_environment(0), _environment(5)]
-GENOME = s.ReferenceGenome(species="Saccharomyces cerevisiae", strain="BY4741")
+GENOME = s.ReferenceGenome(
+    species="Saccharomyces cerevisiae",
+    strain="BY4741",
+    assembly_set=SGD_S288C_R64,
+    assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 
 def _genotype(i: int) -> s.Genotype:

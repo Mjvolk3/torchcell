@@ -58,6 +58,10 @@ from torchcell.datamodels.schema import (
     SyntheticRescuePhenotype,
 )
 from torchcell.datasets.dataset_registry import register_dataset
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import (
@@ -557,7 +561,10 @@ class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
     ]:
         """Build the experiment, reference, and publication objects for one row."""
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae",
+            strain="S288C",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
 
         genotype = Genotype(
@@ -681,7 +688,10 @@ class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
     ]:
         """Build the experiment, reference, and publication objects for one row."""
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae",
+            strain="S288C",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
 
         genotype = Genotype(

@@ -34,7 +34,7 @@ across records and ``screen_id`` = ``Keio:<sample name>`` keeps them distinct.
 
 * Phenotype: ``EnvironmentResponsePhenotype(measurement_type=log2_ratio,
   assay_type=pooled_competitive_growth_barcode)`` in the assembly-pinned
-  ``BacterialEnvironmentResponseExperiment`` family. Gene fitness is a signed log2 ratio,
+  ``EnvironmentResponseExperiment`` family. Gene fitness is a signed log2 ratio,
   which ``FitnessPhenotype`` would clamp at 0.
 * Uncertainty: the paper's standard error, ``UncertaintyType.standard_error``. Price 2018:
   "The standard error is the maximum of two estimates", the strain-consistency estimate
@@ -92,7 +92,7 @@ library (``MOPS_RICH_DEFINED_NOCARBON_PRICE2018``); they are stored now.
 ESSENTIALITY (:class:`GeneEssentialityPrice2018EcoliDataset`). Supplementary Table 1's
 324 ``orgId == "Keio"`` rows, one record each, as
 ``GeneEssentialityPhenotype(is_essential=True)`` in
-``BacterialGeneEssentialityExperiment``.
+``GeneEssentialityExperiment``.
 
 * THE LABEL IS NOT PLAIN ESSENTIALITY, and the records must not be read as though it
   were. The paper's own label is "essential or important for growth (nearly essential)",
@@ -186,17 +186,14 @@ from torchcell.datamodels.media import (
 from torchcell.datamodels.schema import (
     BW25113_BACKGROUND_LESIONS,
     AssayType,
-    AssemblyReferenceGenome,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
-    BacterialGeneEssentialityExperiment,
-    BacterialGeneEssentialityExperimentReference,
     BacterialGeneNamespace,
     Concentration,
     ConcentrationUnit,
     Environment,
     EnvironmentPerturbationType,
     EnvironmentPhysicalPerturbation,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
     EssentialityEvidenceClass,
     EssentialityEvidenceType,
@@ -205,6 +202,8 @@ from torchcell.datamodels.schema import (
     Experiment,
     ExperimentReference,
     GeneEssentialityEvidence,
+    GeneEssentialityExperiment,
+    GeneEssentialityExperimentReference,
     GeneEssentialityPhenotype,
     Genotype,
     MeasurementType,
@@ -213,6 +212,7 @@ from torchcell.datamodels.schema import (
     MediaComponentRole,
     PhysicalFactor,
     Publication,
+    ReferenceGenome,
     SmallMoleculePerturbation,
     Solvent,
     Temperature,
@@ -1905,11 +1905,11 @@ def build_phenotype(
 def build_reference(
     dataset_name: str,
     environment: Environment,
-    genome_reference: AssemblyReferenceGenome,
+    genome_reference: ReferenceGenome,
     screen_id: str,
-) -> BacterialEnvironmentResponseExperimentReference:
+) -> EnvironmentResponseExperimentReference:
     """The typical gene of the same sample: fitness 0 by the normalization."""
-    return BacterialEnvironmentResponseExperimentReference(
+    return EnvironmentResponseExperimentReference(
         dataset_name=dataset_name,
         genome_reference=genome_reference,
         environment_reference=environment,
@@ -1931,7 +1931,7 @@ class SampleRecords(BaseModel):
     spec: SampleSpec
     column: int
     environment: Environment
-    reference: BacterialEnvironmentResponseExperimentReference
+    reference: EnvironmentResponseExperimentReference
     publication: Publication
 
 
@@ -1939,7 +1939,7 @@ def sample_records(
     dataset_name: str,
     specs: Sequence[SampleSpec],
     release: ReleaseTables,
-    genome_reference: AssemblyReferenceGenome,
+    genome_reference: ReferenceGenome,
     solvents: Mapping[str, str],
 ) -> list[SampleRecords]:
     """The kept samples, in Table S5 order, each with its release column."""
@@ -1970,8 +1970,8 @@ def iter_records(
     genes: Mapping[str, StoredGene],
 ) -> Iterator[
     tuple[
-        BacterialEnvironmentResponseExperiment,
-        BacterialEnvironmentResponseExperimentReference,
+        EnvironmentResponseExperiment,
+        EnvironmentResponseExperimentReference,
         Publication,
     ]
 ]:
@@ -1981,7 +1981,7 @@ def iter_records(
         j = sample.column
         for i, genotype in rows:
             yield (
-                BacterialEnvironmentResponseExperiment(
+                EnvironmentResponseExperiment(
                     dataset_name=dataset_name,
                     genotype=genotype,
                     environment=sample.environment,
@@ -2126,12 +2126,12 @@ class RbTnseqPrice2018EcoliDataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperiment
+        return EnvironmentResponseExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperimentReference
+        return EnvironmentResponseExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -2693,11 +2693,11 @@ def essentiality_evidence(
 
 def build_essentiality_experiment(
     dataset_name: str, gene: EssentialGene, environment: Environment
-) -> BacterialGeneEssentialityExperiment:
+) -> GeneEssentialityExperiment:
     """One likely-essential gene: ``is_essential=True``, with the label's caveat and the
     gene's Table S1 coverage as evidence.
     """
-    return BacterialGeneEssentialityExperiment(
+    return GeneEssentialityExperiment(
         dataset_name=dataset_name,
         genotype=build_essentiality_genotype(gene),
         environment=environment,
@@ -2708,17 +2708,15 @@ def build_essentiality_experiment(
 
 
 def build_essentiality_reference(
-    dataset_name: str,
-    genome_reference: AssemblyReferenceGenome,
-    environment: Environment,
-) -> BacterialGeneEssentialityExperimentReference:
+    dataset_name: str, genome_reference: ReferenceGenome, environment: Environment
+) -> GeneEssentialityExperimentReference:
     """The unperturbed BW25113 parent on the same plates: viable, by construction.
 
     The library was built in that parent and isolated on those plates
     (``ESSENTIAL_CONDITION``), so its viability there is a fact of the experiment rather
     than an inference.
     """
-    return BacterialGeneEssentialityExperimentReference(
+    return GeneEssentialityExperimentReference(
         dataset_name=dataset_name,
         genome_reference=genome_reference,
         environment_reference=environment.model_copy(),
@@ -2752,12 +2750,12 @@ class GeneEssentialityPrice2018EcoliDataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialGeneEssentialityExperiment
+        return GeneEssentialityExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialGeneEssentialityExperimentReference
+        return GeneEssentialityExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -3082,7 +3080,7 @@ def verify_essentiality_records(
     report.add(
         l0_structural(
             (r["experiment"] for r in records),
-            BacterialGeneEssentialityExperiment.model_validate,
+            GeneEssentialityExperiment.model_validate,
         )
     )
     report.add(l1_count(len(records), expected_count))

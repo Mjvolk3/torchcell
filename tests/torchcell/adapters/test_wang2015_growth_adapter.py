@@ -4,7 +4,7 @@
 """``torchcell/adapters/wang2015_growth_adapter.py``: the conf it loads, the gate's
 view of it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
-Wang 2015 Table S3's ``No isoprenol`` column: 46 records, ``BacterialFitnessExperiment``
+Wang 2015 Table S3's ``No isoprenol`` column: 46 records, ``FitnessExperiment``
 carrying the plain-2YT endpoint OD600 of each Keio deletion over BW25113's. Each
 genotype carries one ``DeletionStrainPerturbation``, so the perturbation pair is
 enabled; the medium's pH is an ``EnvironmentPhysicalPerturbation`` on every record and on

@@ -12,7 +12,7 @@ growth (OD600)`` (sub-columns ``LB_22hr``, ``MOPS_24hr``, ``MOPS_48hr``). The si
 :mod:`torchcell.datasets.ecoli.baba2006` loads the same table's construction outcomes;
 this module loads the growth arm (issue #927).
 
-WHAT IS STORED. One ``BacterialEnvironmentResponseExperiment`` per released numeric OD600
+WHAT IS STORED. One ``EnvironmentResponseExperiment`` per released numeric OD600
 cell, ``MeasurementType.optical_density`` (absolute, unnormalized), in one of three
 environments that differ in medium and in ``duration_hours``. The record keeps the
 released identity: the MG1655 ``b number`` of Table 3 as ``systematic_gene_name``
@@ -72,12 +72,12 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import LB_LENNOX
 from torchcell.datamodels.schema import (
     AssayType,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     Concentration,
     ConcentrationUnit,
     DeletionStrainPerturbation,
     Environment,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
@@ -474,12 +474,12 @@ class GrowthYieldBaba2006Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperiment
+        return EnvironmentResponseExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperimentReference
+        return EnvironmentResponseExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -527,7 +527,7 @@ class GrowthYieldBaba2006Dataset(ExperimentDataset):
 
         genome_reference = assembly_reference(REFERENCE_STRAIN)
         references = {
-            name: BacterialEnvironmentResponseExperimentReference(
+            name: EnvironmentResponseExperimentReference(
                 dataset_name=self.name,
                 genome_reference=genome_reference,
                 environment_reference=environment(name, kanamycin=False),
@@ -544,7 +544,7 @@ class GrowthYieldBaba2006Dataset(ExperimentDataset):
                 for name, _ in CONDITIONS:
                     if name not in row.readings:
                         continue
-                    experiment = BacterialEnvironmentResponseExperiment(
+                    experiment = EnvironmentResponseExperiment(
                         dataset_name=self.name,
                         genotype=genotype(row),
                         environment=environments[name],
@@ -631,7 +631,7 @@ VERIFIER_PROVENANCE: Final = Provenance(
     source_uri=f"$DATA_ROOT/{bb.RAW_DIR_REL}/{bb.mirror_relpath(TABLE_S3)}",
     citation_key=bb.CITATION_KEY,
     sha256=TABLE_S3_SHA256,
-    method="one BacterialEnvironmentResponseExperiment per released numeric OD600 cell "
+    method="one EnvironmentResponseExperiment per released numeric OD600 cell "
     "of a Table 3 row with a b-number, MeasurementType.optical_density; the parent's "
     "reading is a typed gap on each of the three references",
     page="Supplementary Table 3, column 8",

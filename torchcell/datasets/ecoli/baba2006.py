@@ -108,9 +108,6 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import LB_LENNOX
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
-    BacterialGeneEssentialityExperiment,
-    BacterialGeneEssentialityExperimentReference,
     BacterialReleasedStrainPerturbation,
     Concentration,
     ConcentrationUnit,
@@ -122,12 +119,15 @@ from torchcell.datamodels.schema import (
     Experiment,
     ExperimentReference,
     GeneEssentialityEvidence,
+    GeneEssentialityExperiment,
+    GeneEssentialityExperimentReference,
     GeneEssentialityPhenotype,
     Genotype,
     Media,
     MediaComponent,
     MediaComponentRole,
     Publication,
+    ReferenceGenome,
     ReleasedStrainKind,
     Temperature,
 )
@@ -796,9 +796,9 @@ def essentiality_phenotype(row: KeioRow) -> GeneEssentialityPhenotype:
 
 def build_experiment(
     dataset_name: str, row: KeioRow, env: Environment
-) -> BacterialGeneEssentialityExperiment:
+) -> GeneEssentialityExperiment:
     """One targeted Table 3 row."""
-    return BacterialGeneEssentialityExperiment(
+    return GeneEssentialityExperiment(
         dataset_name=dataset_name,
         genotype=deletion_genotype(row),
         environment=env,
@@ -807,10 +807,10 @@ def build_experiment(
 
 
 def build_reference(
-    dataset_name: str, genome_reference: AssemblyReferenceGenome
-) -> BacterialGeneEssentialityExperimentReference:
+    dataset_name: str, genome_reference: ReferenceGenome
+) -> GeneEssentialityExperimentReference:
     """The unperturbed parent, viable, on the same LB agar without the kanamycin."""
-    return BacterialGeneEssentialityExperimentReference(
+    return GeneEssentialityExperimentReference(
         dataset_name=dataset_name,
         genome_reference=genome_reference,
         environment_reference=environment(kanamycin=False),
@@ -845,12 +845,12 @@ class GeneEssentialityBaba2006Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialGeneEssentialityExperiment
+        return GeneEssentialityExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialGeneEssentialityExperimentReference
+        return GeneEssentialityExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -994,8 +994,8 @@ PLACED_STATUSES = frozenset(
 
 def _validate_record(record: Record) -> None:
     """L0: the experiment and its reference validate as the assembly-pinned pair."""
-    BacterialGeneEssentialityExperiment.model_validate(record["experiment"])
-    BacterialGeneEssentialityExperimentReference.model_validate(record["reference"])
+    GeneEssentialityExperiment.model_validate(record["experiment"])
+    GeneEssentialityExperimentReference.model_validate(record["reference"])
 
 
 def _perturbation(record: Record) -> Mapping[str, Any]:

@@ -5,7 +5,7 @@
 gate's view of it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Lamoureux 2023's released ``Growth Rate (1/hr)`` column: 89 records,
-``BacterialEnvironmentResponseExperiment`` carrying the absolute rate against the
+``EnvironmentResponseExperiment`` carrying the absolute rate against the
 declared base condition. 34 genotypes carry one ``DeletionStrainPerturbation``, so the
 perturbation pair is enabled, and the other 55 are wild type; every record carries at
 least one environment perturbation, so the environment-perturbation pair is enabled too.

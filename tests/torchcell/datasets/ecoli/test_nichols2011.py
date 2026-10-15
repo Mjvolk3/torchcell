@@ -29,10 +29,10 @@ import pytest
 import torchcell.datasets.ecoli.nichols2011 as n
 from torchcell.datamodels.schema import (
     AssayType,
-    BacterialEnvironmentResponseExperiment,
     BacterialReleasedStrainPerturbation,
     ConcentrationUnit,
     EnvironmentPhysicalPerturbation,
+    EnvironmentResponseExperiment,
     MeasurementType,
     PhysicalExposurePerturbation,
     PhysicalFactor,
@@ -633,7 +633,7 @@ def test_the_dataset_declares_its_strain_organism_files_and_classes() -> None:
     assert "ecoli_genome" not in cls.__init__.__code__.co_varnames
     dataset = object.__new__(cls)
     assert dataset.raw_file_names == ["mmc1.xls", "mmc2.xls"]
-    assert dataset.experiment_class is BacterialEnvironmentResponseExperiment
+    assert dataset.experiment_class is EnvironmentResponseExperiment
 
 
 def test_sourced_values_point_at_the_raw_mirror(tmp_path: Path) -> None:

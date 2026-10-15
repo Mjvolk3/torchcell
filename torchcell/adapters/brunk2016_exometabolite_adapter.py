@@ -2,7 +2,7 @@
 # [[torchcell.adapters.brunk2016_exometabolite_adapter]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/brunk2016_exometabolite_adapter.py
 # Test file: tests/torchcell/adapters/test_brunk2016_exometabolite_adapter.py
-"""BioCypher adapter exposing the six HPLC g/L columns, 126 records, BacterialMetaboliteExperiment as knowledge-graph nodes and edges.
+"""BioCypher adapter exposing the six HPLC g/L columns, 126 records, MetaboliteExperiment as knowledge-graph nodes and edges.
 
 One record per released strain-hour sample of the Brunk 2016 time course. Every
 engineered strain's pathway genes are served as `bacterial perturbation` nodes; the

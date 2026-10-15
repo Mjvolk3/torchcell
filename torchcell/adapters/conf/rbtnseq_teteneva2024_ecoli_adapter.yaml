@@ -1,5 +1,5 @@
 # Teteneva 2024 lake-water RB-TnSeq, E. coli K-12 W3110 RpoS+:
-# BacterialEnvironmentResponseExperiment.
+# EnvironmentResponseExperiment.
 # One TransposonInsertionPerturbation per record (`build_genotype`), served as `bacterial
 # perturbation`. Each condition is its own lake water Media (water sample, filtration)
 # with the sampling day as duration_hours and NO environment perturbation

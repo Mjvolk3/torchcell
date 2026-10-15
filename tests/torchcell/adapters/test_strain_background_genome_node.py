@@ -21,6 +21,10 @@ from torchcell.data.data import ExperimentReferenceIndex
 from torchcell.datamodels import schema as s
 from torchcell.datamodels.media import MEDIA_LIBRARY
 from torchcell.datamodels.strain_background import BRACHMANN_1998, standard_background
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
 SPECIES = "Saccharomyces cerevisiae"
@@ -34,6 +38,8 @@ def _reference() -> s.StrainEnvironmentResponseExperimentReference:
             strain="BY4743",
             ploidy="diploid",
             background=standard_background("BY4743", resolve_with=BRACHMANN_1998),
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=s.CultureEnvironment(
             media=MEDIA_LIBRARY["YPD"], temperature=s.Temperature(value=30.0)
@@ -146,6 +152,8 @@ def _baid_reference() -> s.StrainEnvironmentResponseExperimentReference:
             strain="bAID",
             ploidy="haploid",
             background=_baid_background(),
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=s.CultureEnvironment(
             media=MEDIA_LIBRARY["YPD"], temperature=s.Temperature(value=30.0)
@@ -168,6 +176,7 @@ def test_integrations_ride_to_the_graph_the_way_the_alleles_do() -> None:
     assert props["strain"] == "bAID"
     back = s.StrainReferenceGenome.model_validate_json(props["serialized_data"])
     assert back == reference.genome_reference
+    assert isinstance(back.background, s.StrainBackground)
     (cassette,) = back.background.integrations
     assert cassette.locus == "Delta"
     assert cassette.elements[0] == "KanMX"

@@ -153,6 +153,10 @@ from torchcell.literature.manifest import (
     RetrievalRecord,
     sha256_file,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import (
     ProvenanceGap,
@@ -699,7 +703,10 @@ class EnvChemgenCostanzo2021Dataset(ExperimentDataset):
         return EnvironmentResponseExperimentReference(
             dataset_name=self.name,
             genome_reference=ReferenceGenome(
-                species="Saccharomyces cerevisiae", strain="S288C"
+                species="Saccharomyces cerevisiae",
+                strain="S288C",
+                assembly_set=SGD_S288C_R64,
+                assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
             ),
             environment_reference=Environment(
                 media=SGA_DM_SELECTION,

@@ -44,7 +44,9 @@ _MATRIX = ArtifactRef(
     path="1011LossOfFunction.xls.gz",
     sha256="b" * 64,
 )
-_SPAN = GenomicSpan(chromosome="chrI", start=147594, end=151166, assembly="R64-1-1")
+_SPAN = GenomicSpan(
+    chromosome="chrI", start=147594, end=151166, assembly="sgd_S288C_R64-4-1_20230830"
+)
 _WORKBOOK = ArtifactRef(
     tier="genomes",
     key="peter2018_1011_assemblies",

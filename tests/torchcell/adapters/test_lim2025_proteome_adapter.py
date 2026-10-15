@@ -4,7 +4,7 @@
 """``torchcell/adapters/lim2025_proteome_adapter.py``: the conf it loads, the gate's view of it,
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
-Lim 2025 proteome: 1 IPL400 record, BacterialProteinAbundanceExperiment.
+Lim 2025 proteome: 1 IPL400 record, ProteinAbundanceExperiment.
 7 DeletionStrainPerturbation, served as `bacterial perturbation`. Isoprenol is a
 SmallMoleculePerturbation on the experiment environment, so the environment-perturbation
 pair is enabled. The record gaps temperature; the temperature methods emit nothing.

@@ -4,7 +4,7 @@
 """``torchcell/adapters/caglar2017_proteome_adapter.py``: the conf it loads, the gate's view of it,
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
-Caglar 2017 proteome: 105 REL606 LC-MS/MS samples, BacterialProteinAbundanceExperiment.
+Caglar 2017 proteome: 105 REL606 LC-MS/MS samples, ProteinAbundanceExperiment.
 Every genotype is the wild type (0 perturbations in 105 of 105 records), so neither
 `bacterial perturbation` nor `perturbation to genotype` is enabled. The environment
 carries SmallMoleculePerturbation and EnvironmentPhysicalPerturbation edits, so the

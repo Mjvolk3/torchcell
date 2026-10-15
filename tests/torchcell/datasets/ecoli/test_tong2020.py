@@ -50,15 +50,15 @@ from torchcell.datamodels.media import MEDIA_LIBRARY, MOPS_MINIMAL
 from torchcell.datamodels.schema import (
     ASSEMBLY_SET_ACCESSIONS,
     BACTERIAL_ASSEMBLY_SETS,
-    AssemblyReferenceGenome,
-    BacterialFitnessExperiment,
-    BacterialFitnessExperimentReference,
     BacterialGeneNamespace,
     Concentration,
     ConcentrationUnit,
     EnvironmentPhysicalPerturbation,
+    FitnessExperiment,
+    FitnessExperimentReference,
     MediaComponentRole,
     PhysicalFactor,
+    ReferenceGenome,
     SampleUnit,
 )
 from torchcell.datasets.bacteria_common import (
@@ -610,8 +610,8 @@ def test_the_loader_is_registered_and_receives_the_bw25113_genome(
     assert isinstance(kwargs["ecoli_genome"], FakeBW25113Genome)
     assert [name for name, _ in log] == ["FakeBW25113Genome"]
     dataset = t.CarbonSourceTong2020Dataset.__new__(t.CarbonSourceTong2020Dataset)
-    assert dataset.experiment_class is BacterialFitnessExperiment
-    assert dataset.reference_class is BacterialFitnessExperimentReference
+    assert dataset.experiment_class is FitnessExperiment
+    assert dataset.reference_class is FitnessExperimentReference
 
 
 # --------------------------------------------------------------------------- #
@@ -875,9 +875,9 @@ _FRAME = [
 _KEIO = ["b0001", "b0003", "b0002", "thrA1", "b0005", "b0099", "PRO2"]
 
 
-def _pin(strain: EcoliK12StrainName) -> AssemblyReferenceGenome:
+def _pin(strain: EcoliK12StrainName) -> ReferenceGenome:
     assembly_set = BACTERIAL_ASSEMBLY_SETS[strain]
-    return AssemblyReferenceGenome(
+    return ReferenceGenome(
         species="Escherichia coli",
         strain=strain,
         assembly_set=cast(Any, assembly_set),

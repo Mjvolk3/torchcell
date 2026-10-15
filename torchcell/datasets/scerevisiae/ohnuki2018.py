@@ -85,6 +85,10 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import SourcedValue
 
@@ -313,7 +317,11 @@ class ScmdOhnuki2018Dataset(ExperimentDataset):
         """Build a CalMorph experiment and reference pair from one data row."""
         # Reference genome - diploid BY4743 wild type (Methods).
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4743", ploidy="diploid"
+            species="Saccharomyces cerevisiae",
+            strain="BY4743",
+            ploidy="diploid",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
 
         # HIP-style heterozygous deletion: one essential-gene copy dropped 2 -> 1 in the

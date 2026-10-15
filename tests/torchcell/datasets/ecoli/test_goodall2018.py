@@ -56,16 +56,16 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
 from torchcell.data import ManifestPinMismatchError, RawSha256MismatchError
 from torchcell.datamodels.media import LB
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
-    BacterialGeneEssentialityExperiment,
-    BacterialGeneEssentialityExperimentReference,
-    BacterialGradedGeneEssentialityExperiment,
     BacterialReleasedTransposonPerturbation,
     EssentialityEvidenceClass,
     EssentialityEvidenceType,
     EssentialityStatementRole,
+    GeneEssentialityExperiment,
+    GeneEssentialityExperimentReference,
     Genotype,
+    GradedGeneEssentialityExperiment,
     MediaComponentRole,
+    ReferenceGenome,
     TradisCall,
     TransposonInsertionPerturbation,
 )
@@ -92,7 +92,7 @@ LB_ROWS: list[Row] = [
     ("proB", 0.03, 3.59, False, False, True),
 ]
 SYNTHETIC_TL_COUNTS = {"essential": 2, "non_essential": 3, "unclear": 1}
-REFERENCE = AssemblyReferenceGenome(
+REFERENCE = ReferenceGenome(
     species="Escherichia coli",
     strain="BW25113",
     assembly_set="ecoli_K12_BW25113_ASM75055v1",
@@ -426,7 +426,7 @@ def test_build_experiment_is_one_gene_level_insertion() -> None:
         m.environment("LB"),
     )
     dumped = experiment.model_dump()
-    assert dumped["experiment_type"] == "bacterial_gene_essentiality"
+    assert dumped["experiment_type"] == "gene essentiality"
     assert dumped["phenotype"]["is_essential"] is True
     (perturbation,) = dumped["genotype"]["perturbations"]
     assert {
@@ -615,8 +615,8 @@ def test_process_verifies_the_real_pins(
 
 
 def test_unused_hooks_are_inert(built: m.GeneEssentialityGoodall2018Dataset) -> None:
-    assert built.experiment_class is BacterialGeneEssentialityExperiment
-    assert built.reference_class is BacterialGeneEssentialityExperimentReference
+    assert built.experiment_class is GeneEssentialityExperiment
+    assert built.reference_class is GeneEssentialityExperimentReference
     assert built.raw_file_names == [m.TABLE_S1, m.TABLE_S4]
     sentinel = object()
     assert built.preprocess_raw(sentinel) is sentinel  # type: ignore[arg-type]
@@ -1096,7 +1096,7 @@ def test_build_graded_experiment_stores_the_unclear_call_as_released() -> None:
         reason="ratio 1.0",
     )
     experiment = m.build_graded_experiment("x", outcome, m.environment("TL"))
-    assert isinstance(experiment, BacterialGradedGeneEssentialityExperiment)
+    assert isinstance(experiment, GradedGeneEssentialityExperiment)
     assert isinstance(experiment.genotype, Genotype)
     (perturbation,) = experiment.genotype.perturbations
     assert isinstance(perturbation, BacterialReleasedTransposonPerturbation)
@@ -1179,7 +1179,7 @@ def test_graded_store_holds_exactly_the_placed_unclear_rows(
         "unclear"
     }
     assert {r["experiment"]["experiment_type"] for r in records} == {
-        "bacterial_graded_gene_essentiality"
+        "graded_gene_essentiality"
     }
 
 

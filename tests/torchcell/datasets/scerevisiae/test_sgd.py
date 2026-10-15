@@ -63,6 +63,10 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.scerevisiae import sgd as m
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
 
@@ -232,7 +236,12 @@ def dataset(
     return _build(tmp_path, monkeypatch, _DUMP)
 
 
-_GENOME = ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
+_GENOME = ReferenceGenome(
+    species="Saccharomyces cerevisiae",
+    strain="S288C",
+    assembly_set=SGD_S288C_R64,
+    assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
+)
 _PIN = "1cb4ed59556b1534e28eb79ad21135cdb5a149f78dca8df4924f473e39eef409"
 
 

@@ -2022,6 +2022,8 @@
       "served_classes": [],
       "impact": "breaking",
       "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
         "GenePerturbationType"
       ]
     },
@@ -2083,6 +2085,8 @@
       ],
       "impact": "breaking",
       "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
         "GenePerturbationType"
       ]
     },
@@ -2094,6 +2098,8 @@
       "served_classes": [],
       "impact": "breaking",
       "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
         "GenePerturbationType"
       ]
     },
@@ -2551,6 +2557,8 @@
       "served_classes": [],
       "impact": "breaking",
       "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
         "GenePerturbationType"
       ]
     },
@@ -2701,6 +2709,8 @@
       "served_classes": [],
       "impact": "breaking",
       "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
         "GenePerturbationType"
       ]
     },

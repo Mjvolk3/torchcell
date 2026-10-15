@@ -121,11 +121,8 @@ from torchcell.data import (
 from torchcell.data.experiment_dataset import file_sha256
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
     BacterialAssemblySet,
     BacterialReleasedStrainPerturbation,
-    BacterialRNASeqExpressionExperiment,
-    BacterialRNASeqExpressionExperimentReference,
     BacterialStrainBackground,
     ComponentDefinition,
     Compound,
@@ -141,7 +138,10 @@ from torchcell.datamodels.schema import (
     MediaComponentRole,
     PhysicalFactor,
     Publication,
+    ReferenceGenome,
     ReleasedStrainKind,
+    RNASeqExpressionExperiment,
+    RNASeqExpressionExperimentReference,
     RNASeqExpressionPhenotype,
 )
 from torchcell.datasets.bacteria_common import (
@@ -1757,12 +1757,12 @@ class PutidaPrecise321Lim2022Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialRNASeqExpressionExperiment
+        return RNASeqExpressionExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialRNASeqExpressionExperimentReference
+        return RNASeqExpressionExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -1881,7 +1881,7 @@ class PutidaPrecise321Lim2022Dataset(ExperimentDataset):
         counts: pd.DataFrame,
         pairing: CountPairing,
         calls: Mapping[str, StrainCall],
-        reference: AssemblyReferenceGenome,
+        reference: ReferenceGenome,
     ) -> tuple[list[SampleRecord], list[dict[str, Any]]]:
         """The ledger rows of every compendium sample and the records of the stored ones."""
         sources = {
@@ -1979,9 +1979,9 @@ class PutidaPrecise321Lim2022Dataset(ExperimentDataset):
         environment: Environment,
         tpm: Mapping[str, float],
         counts: Mapping[str, int],
-    ) -> BacterialRNASeqExpressionExperiment:
+    ) -> RNASeqExpressionExperiment:
         """One sample's experiment: its genotype on KT2440, its condition, its profile."""
-        return BacterialRNASeqExpressionExperiment(
+        return RNASeqExpressionExperiment(
             dataset_name=self.name,
             genotype=Genotype(perturbations=list(perturbations)),
             environment=environment,
@@ -1996,8 +1996,8 @@ class PutidaPrecise321Lim2022Dataset(ExperimentDataset):
         pairing: CountPairing,
         calls: Mapping[str, StrainCall],
         environments: Mapping[str, Environment],
-        reference: AssemblyReferenceGenome,
-    ) -> dict[str, BacterialRNASeqExpressionExperimentReference]:
+        reference: ReferenceGenome,
+    ) -> dict[str, RNASeqExpressionExperimentReference]:
         """Each project's baseline-condition reference (projects with a stored sample).
 
         The baseline is a reference-strain condition, or a condition on a released
@@ -2010,7 +2010,7 @@ class PutidaPrecise321Lim2022Dataset(ExperimentDataset):
             for _, row in compendium.iterrows()
             if calls[str(row["full_name"])].kind is not StrainKind.dropped
         }
-        references: dict[str, BacterialRNASeqExpressionExperimentReference] = {}
+        references: dict[str, RNASeqExpressionExperimentReference] = {}
         for project in sorted(stored_projects):
             members = compendium[compendium["project"] == project]
             baselines = members["reference_condition"].unique()
@@ -2032,7 +2032,7 @@ class PutidaPrecise321Lim2022Dataset(ExperimentDataset):
             replicates = members[members["full_name"] == baseline]
             names = replicates["Sample_name"].astype(str).tolist()
             columns = [pairing.pairs[n] for n in names]
-            references[project] = BacterialRNASeqExpressionExperimentReference(
+            references[project] = RNASeqExpressionExperimentReference(
                 dataset_name=self.name,
                 genome_reference=genome_reference,
                 environment_reference=environments[baseline],

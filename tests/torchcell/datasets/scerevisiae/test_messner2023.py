@@ -97,6 +97,10 @@ from torchcell.datasets.scerevisiae.messner2023 import (
     build_orf_to_gene_name_map,
     build_uniprot_to_orf_map,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 KO_A = "10_9_hpr1_ko_YAL059W_ECM1_0.47"
 KO_B = "3_4_ko_YML009c_yml009c_0.9"
@@ -130,7 +134,12 @@ GFF_TEXT = (
     "short\tline\tUniProtKB:P99999\n"
 )
 
-BY4741 = ReferenceGenome(species="Saccharomyces cerevisiae", strain="BY4741")
+BY4741 = ReferenceGenome(
+    species="Saccharomyces cerevisiae",
+    strain="BY4741",
+    assembly_set=SGD_S288C_R64,
+    assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
+)
 ENVIRONMENT = Environment(media=SM, temperature=Temperature(value=30))
 PUBLICATION = Publication(
     pubmed_id="37080200",

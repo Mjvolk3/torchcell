@@ -143,7 +143,12 @@ from torchcell.literature.manifest import (
     RetrievalRecord,
     sha256_file,
 )
-from torchcell.sequence.genome.registry import PETER2018_1011, load_genome_manifest
+from torchcell.sequence.genome.registry import (
+    PETER2018_1011,
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+    load_genome_manifest,
+)
 from torchcell.sequence.natural_isolate import (
     GENOTYPE_FILES,
     NaturalIsolateGenotypes,
@@ -1340,7 +1345,12 @@ def _publication() -> Publication:
 
 
 def _genome_reference() -> ReferenceGenome:
-    return ReferenceGenome(species=SPECIES, strain="S288C")
+    return ReferenceGenome(
+        species=SPECIES,
+        strain="S288C",
+        assembly_set=SGD_S288C_R64,
+        assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
+    )
 
 
 # --------------------------------------------------------------------------- #

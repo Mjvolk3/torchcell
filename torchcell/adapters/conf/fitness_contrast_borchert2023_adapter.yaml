@@ -1,4 +1,4 @@
-# Borchert 2023 KT2440 two-arm fitness contrasts (#913): BacterialFitnessContrastExperiment,
+# Borchert 2023 KT2440 two-arm fitness contrasts (#913): FitnessContrastExperiment,
 # 64,853 records, one per released (gene, comparison sheet) row. One
 # TransposonInsertionPerturbation per record (the released locus), served as `bacterial
 # perturbation`. Both arms' environments carry D-glucose as an

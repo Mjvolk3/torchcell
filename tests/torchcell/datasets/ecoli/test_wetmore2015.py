@@ -46,11 +46,11 @@ from torchcell.datamodels.media import (
     MOPS_RICH_DEFINED_NOCARBON_PRICE2018,
 )
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
     ConcentrationUnit,
     EnvironmentPhysicalPerturbation,
     MeasurementType,
     PhysicalFactor,
+    ReferenceGenome,
     UncertaintyType,
 )
 from torchcell.datasets.bacteria_common import LocusTagResolutionError
@@ -1251,8 +1251,8 @@ def mirrored(
     return data_root
 
 
-def _pin() -> AssemblyReferenceGenome:
-    return AssemblyReferenceGenome(
+def _pin() -> ReferenceGenome:
+    return ReferenceGenome(
         species="Escherichia coli",
         strain="BW25113",
         assembly_set="ecoli_K12_BW25113_ASM75055v1",

@@ -144,7 +144,6 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import MM9_FOO2014
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
     BacterialGeneNamespace,
     BacterialStrainBackground,
     Compound,
@@ -161,6 +160,7 @@ from torchcell.datamodels.schema import (
     ProductTiterExperimentReference,
     ProductTiterPhenotype,
     Publication,
+    ReferenceGenome,
     SampleUnit,
     SmallMoleculePerturbation,
     Temperature,
@@ -985,7 +985,7 @@ def chassis_background(composition: str) -> BacterialStrainBackground:
 
 def chassis_reference(
     composition: str, data_root: str | None = None
-) -> AssemblyReferenceGenome:
+) -> ReferenceGenome:
     """The PS chassis pinned to the MG1655 GenBank assembly."""
     return assembly_reference(
         REFERENCE_STRAIN,

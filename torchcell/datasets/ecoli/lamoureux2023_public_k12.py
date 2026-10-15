@@ -159,8 +159,6 @@ from torchcell.data import (
     verify_raw_files,
 )
 from torchcell.datamodels.schema import (
-    BacterialRNASeqExpressionExperiment,
-    BacterialRNASeqExpressionExperimentReference,
     ConcentrationUnit,
     Environment,
     Experiment,
@@ -169,6 +167,8 @@ from torchcell.datamodels.schema import (
     PhysicalFactor,
     Publication,
     ReleasedStrainKind,
+    RNASeqExpressionExperiment,
+    RNASeqExpressionExperimentReference,
     RNASeqExpressionPhenotype,
 )
 from torchcell.datasets.bacteria_common import assembly_reference, bacterial_genome
@@ -1462,12 +1462,12 @@ class RnaseqPublicK12Lamoureux2023Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialRNASeqExpressionExperiment
+        return RNASeqExpressionExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialRNASeqExpressionExperimentReference
+        return RNASeqExpressionExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -1604,11 +1604,10 @@ class RnaseqPublicK12Lamoureux2023Dataset(ExperimentDataset):
         # keyed by the whole spec and its untyped flag, never the name alone (#1045
         # part 2): two settlings of one Strain Description are two backgrounds
         backgrounds: dict[
-            tuple[StrainBackgroundSpec, bool],
-            BacterialRNASeqExpressionExperimentReference,
+            tuple[StrainBackgroundSpec, bool], RNASeqExpressionExperimentReference
         ] = {}
 
-        def reference_of(sample: str) -> BacterialRNASeqExpressionExperimentReference:
+        def reference_of(sample: str) -> RNASeqExpressionExperimentReference:
             """The control reference, on the sample's own released strain (#1057)."""
             verdict = genotype_verdicts[sample]
             spec = verdict.background
@@ -1645,7 +1644,7 @@ class RnaseqPublicK12Lamoureux2023Dataset(ExperimentDataset):
         groups: dict[str, ReplicateGroup] = {}
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for idx, sample in enumerate(kept):
-                experiment = BacterialRNASeqExpressionExperiment(
+                experiment = RNASeqExpressionExperiment(
                     dataset_name=self.name,
                     genotype=self._genotype(
                         genotype_verdicts[sample], rows[sample][COL_DESCRIPTION]
@@ -1828,7 +1827,7 @@ class RnaseqPublicK12Lamoureux2023Dataset(ExperimentDataset):
         source_genes: Sequence[str],
         lengths: np.ndarray[Any, np.dtype[np.float64]],
         genome: EcoliK12Genome,
-    ) -> BacterialRNASeqExpressionExperimentReference:
+    ) -> RNASeqExpressionExperimentReference:
         """The PRECISE-1K control condition, the condition the release centers on."""
         p1k_metadata = read_metadata(osp.join(self.raw_dir, P1K_METADATA.name))
         controls = sorted(
@@ -1876,7 +1875,7 @@ class RnaseqPublicK12Lamoureux2023Dataset(ExperimentDataset):
             "reference are covered by the PRECISE-1K MultiQC table, which no loader "
             "consumes",
         )
-        return BacterialRNASeqExpressionExperimentReference(
+        return RNASeqExpressionExperimentReference(
             dataset_name=self.name,
             genome_reference=assembly_reference(self.REFERENCE_STRAIN),
             environment_reference=build_public_environment(specs.pop()),

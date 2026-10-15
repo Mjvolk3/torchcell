@@ -92,6 +92,10 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.scerevisiae import dasilveira2014 as m
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -186,7 +190,10 @@ def _reference(level: dict[str, float], n: dict[str, int]) -> dict[str, Any]:
     return MetaboliteExperimentReference(
         dataset_name="MetaboliteDaSilveira2014Dataset",
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4741"
+            species="Saccharomyces cerevisiae",
+            strain="BY4741",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=_ENVIRONMENT,
         phenotype_reference=_phenotype(level, n),

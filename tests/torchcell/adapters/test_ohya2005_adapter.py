@@ -85,10 +85,19 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.scerevisiae.ohya2005 import OHYA_YPD, ScmdOhya2005Dataset
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 DATASET = "ScmdOhya2005Dataset"
 FEATURES = ["A101_A", "C103_A1B", "ACV103_A1B", "CCV103_A1B"]
-GENOME = ReferenceGenome(species="Saccharomyces cerevisiae", strain="BY4741")
+GENOME = ReferenceGenome(
+    species="Saccharomyces cerevisiae",
+    strain="BY4741",
+    assembly_set=SGD_S288C_R64,
+    assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
+)
 MEDIA = OHYA_YPD
 TEMPERATURE = Temperature(value=25)
 ENVIRONMENT = Environment(media=MEDIA, temperature=TEMPERATURE)
@@ -491,8 +500,10 @@ def test_ids_are_the_sha256_of_the_literal_json() -> None:
     served Ohya node is keyed on, and this is the test that notices.
     """
     genome_json = (
-        '{"species": "Saccharomyces cerevisiae", "strain": "BY4741", '
-        '"ploidy": "haploid"}'
+        '{"provenance_gaps": [], "species": "Saccharomyces cerevisiae", '
+        '"strain": "BY4741", "ploidy": "haploid", '
+        '"assembly_set": "sgd_S288C_R64-4-1_20230830", '
+        '"assembly_accession": "GCA_000146045.2"}'
     )
     assert _sha(GENOME) == hashlib.sha256(genome_json.encode()).hexdigest()
     assert TEMPERATURE_ID == identity_sha256({"value": 25.0, "unit": "Celsius"})

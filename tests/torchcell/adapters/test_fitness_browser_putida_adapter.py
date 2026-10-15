@@ -5,7 +5,7 @@
 view of it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 The Fitness Browser's own KT2440 experiments keyed by publication (#931): one transposon
-insertion per record, BacterialEnvironmentResponseExperiment, the sample's carbon or nitrogen source (and a second added species) an
+insertion per record, EnvironmentResponseExperiment, the sample's carbon or nitrogen source (and a second added species) an
 environment perturbation, so both the bacterial-perturbation and the
 environment-perturbation pairs are enabled.
 """

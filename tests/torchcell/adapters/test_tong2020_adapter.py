@@ -5,7 +5,7 @@
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Tong 2020 carbon sources: 111,420 Keio and sRNA-library growth records,
-BacterialFitnessExperiment. One DeletionStrainPerturbation per record, served as
+FitnessExperiment. One DeletionStrainPerturbation per record, served as
 `bacterial perturbation`. The varied carbon source is an EnvironmentPhysicalPerturbation
 on the experiment and the reference environment, so the environment-perturbation pair is
 enabled.

@@ -59,6 +59,7 @@ from torchcell.datamodels.schema import (
     GeneAdditionPerturbation,
     Genotype,
     KanMxDeletionPerturbation,
+    Localization,
     Media,
     MediaComponent,
     MediaComponentRole,
@@ -73,7 +74,11 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.verification.report import Provenance
-from torchcell.verification.sourced import SourcedValue
+from torchcell.verification.sourced import (
+    ProvenanceGap,
+    ProvenanceGapReason,
+    SourcedValue,
+)
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -157,12 +162,48 @@ made solid with an agar row whose amount the paper does not print. Loader-local:
 other served dataset states this plate, and ``media.py``'s ``SC_URA`` is liquid."""
 
 
+#: The backbone name Table 2 prints for YB/I/BTS1, verbatim.
+REPLICON_STATEMENT = "YEplac195"
+
+#: What was read before concluding that no construct sequence is available.
+_PLACEMENT_GAP_NOTE = (
+    "Table 2 'Plasmids used in this study' describes YB/I/BTS1 as 'YEplac195 "
+    "TDH3p-crtYB-CYC1t; TDH3p-crtI-CYC1t; TDH3p-BTS1-CYC1t' and cites Verwaal et al. "
+    "(2007); the paper deposits no GenBank map and states only 'Information about all "
+    "the strains and plasmids have been deposited in the public instance of the JBEI "
+    "Registry (https://public-registry.jbei.org/)', which answers 403 anonymously"
+)
+
+
+def _placement_gap() -> ProvenanceGap:
+    """The typed absence of a construct sequence for the YB/I/BTS1 cassette."""
+    return ProvenanceGap(
+        field="placement",
+        reason=ProvenanceGapReason.not_released_by_primary,
+        looked_in=_PAPER,
+        note=_PLACEMENT_GAP_NOTE,
+    )
+
+
 # The constant engineered background: every screened strain carries the carotenogenic
-# 2-micron plasmid YB/I/BTS1 (YEplac195; Ozaydin Table 2 / Verwaal et al. 2007). Two
-# heterologous genes from X. dendrorhous + one extra native copy of BTS1 (YPL069C).
-# plasmid_contig_id/locus_tag stay None until the plasmid-sequence store lands; the
-# raw sequence is Euroscarf P30796 (physical-only) -> reconstruct-from-parts. See
+# plasmid YB/I/BTS1, whose backbone Table 2 names as ``YEplac195`` (Ozaydin Table 2 /
+# Verwaal et al. 2007). Two heterologous genes from X. dendrorhous + one extra native
+# copy of BTS1 (YPL069C). See
 # [[torchcell.datamodels.gene-addition-perturbation-design]].
+#
+# ``replicon_statement`` carries the backbone name the paper prints and nothing more.
+# The localization token this loader used before P4 asserted a 2-micron replicon, which
+# this paper never writes: measured, ``paper.md`` carries no "2 micron", "2\mu" or
+# "multicopy" string for YB/I/BTS1, and the 2-micron claim comes from the YEplac195
+# backbone's own literature. ``Localization`` therefore reads ``episomal_replicon`` and
+# the source's own word for the replicon is kept verbatim beside it.
+#
+# ``placement`` is a typed gap. The paper deposits no map and releases no sequence; what
+# it states is a registry deposit, "Information about all the strains and plasmids have
+# been deposited in the public instance of the JBEI Registry
+# (https://public-registry.jbei.org/)", and that registry answers 403 to an anonymous
+# REST request (measured 2026-10-15), so the artifact exists and is withheld rather than
+# never reported.
 def _carotenogenic_cassette() -> list[GeneAdditionPerturbation]:
     """Fresh YB/I/BTS1 cassette perturbations (new objects per record)."""
     return [
@@ -172,8 +213,11 @@ def _carotenogenic_cassette() -> list[GeneAdditionPerturbation]:
             perturbed_gene_name="crtYB",
             source_organism="Xanthophyllomyces dendrorhous",
             is_heterologous=True,
-            localization="episomal_2micron",
+            localization=Localization.episomal_replicon,
+            replicon_statement=REPLICON_STATEMENT,
             construct_name="YB/I/BTS1",
+            placement=None,
+            provenance_gaps=[_placement_gap()],
         ),
         GeneAdditionPerturbation(
             systematic_gene_name="crtI",
@@ -181,8 +225,11 @@ def _carotenogenic_cassette() -> list[GeneAdditionPerturbation]:
             perturbed_gene_name="crtI",
             source_organism="Xanthophyllomyces dendrorhous",
             is_heterologous=True,
-            localization="episomal_2micron",
+            localization=Localization.episomal_replicon,
+            replicon_statement=REPLICON_STATEMENT,
             construct_name="YB/I/BTS1",
+            placement=None,
+            provenance_gaps=[_placement_gap()],
         ),
         GeneAdditionPerturbation(
             systematic_gene_name="YPL069C",
@@ -190,8 +237,11 @@ def _carotenogenic_cassette() -> list[GeneAdditionPerturbation]:
             perturbed_gene_name="BTS1",
             source_organism="Saccharomyces cerevisiae",
             is_heterologous=False,
-            localization="episomal_2micron",
+            localization=Localization.episomal_replicon,
+            replicon_statement=REPLICON_STATEMENT,
             construct_name="YB/I/BTS1",
+            placement=None,
+            provenance_gaps=[_placement_gap()],
         ),
     ]
 

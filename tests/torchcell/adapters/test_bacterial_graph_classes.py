@@ -114,10 +114,23 @@ def _bacterial_leaves() -> list[Any]:
             gene_namespace=MG1655,
             source_organism="Enterococcus faecalis",
             is_heterologous=True,
-            localization="plasmid",
+            localization=s.Localization.episomal_replicon,
             pathway_name="isoprenol via mevalonate",
+            placement=None,
+            provenance_gaps=[_placement_gap()],
         ),
     ]
+
+
+#: P4: ``GeneAdditionPerturbation.placement`` is required with no default and gap-able,
+#: so a fixture that points at no deposited construct states the typed absence.
+def _placement_gap() -> ProvenanceGap:
+    """The typed absence of a construct sequence, for a fixture's leaf."""
+    return ProvenanceGap(
+        field="placement",
+        reason=ProvenanceGapReason.not_released_by_primary,
+        note="the fixture's leaf points at no deposited construct",
+    )
 
 
 #: One call of each shape the #731 leaves carry, as rows of the Lim 2025 released

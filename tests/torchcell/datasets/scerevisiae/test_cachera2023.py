@@ -73,6 +73,7 @@ from torchcell.datamodels.schema import (
     GeneAdditionPerturbation,
     Genotype,
     KanMxDeletionPerturbation,
+    Localization,
     MetaboliteExperiment,
     MetaboliteExperimentReference,
     MetabolitePhenotype,
@@ -149,6 +150,14 @@ def built(
 
 
 def _cassette() -> list[GeneAdditionPerturbation]:
+    """The four Btx-cassette additions, each placed on the deposited pBTX1 contig.
+
+    The placement is built from the loader's own pinned constants rather than copied,
+    because the point of P4 is that the pointer is one composed object: a contig named
+    by its sha256 with an ``ArtifactRef`` pinning the same bytes, the gene's feature key
+    on that contig, the XII-5 host site with both of its spans typed absent, and the two
+    designed alleles as contig coordinates.
+    """
     return [
         GeneAdditionPerturbation(
             systematic_gene_name=systematic,
@@ -156,10 +165,11 @@ def _cassette() -> list[GeneAdditionPerturbation]:
             perturbed_gene_name=name,
             source_organism=organism,
             is_heterologous=heterologous,
-            localization="chromosomal_integration",
+            localization=Localization.chromosomal_integration,
             integration_locus="XII-5",
             construct_name="Btx-cassette",
             variant=variant,
+            placement=c._placement(systematic),
         )
         for systematic, name, organism, heterologous, variant in [
             ("CYP76AD1", "CYP76AD1", "Beta vulgaris", True, None),
@@ -168,6 +178,50 @@ def _cassette() -> list[GeneAdditionPerturbation]:
             ("YPR060C", "ARO7", "Saccharomyces cerevisiae", False, "G141S"),
         ]
     ]
+
+
+def test_the_btx_cassette_points_at_the_deposited_pbtx1_contig() -> None:
+    """P4: each addition names pBTX1 by sha256, with its feature and its allele.
+
+    Measured by
+    ``experiments/036-dataset-fixes-before-kg-build/scripts/cachera2023_btx_cassette_placement.py``:
+    the paper builds the CRI-SPA donor with pBTX1 ("the integrative plasmid pBTX1
+    harboring the betaxanthin-synthesizing genes CYP76AD1 and DOD"), that contig indexes
+    cleanly while pBTX2 is one of the 11 maps blocked for an origin-wrapping location,
+    and codon 229 of its ARO4 feature reads ``TTA`` (Leu) at contig 3368-3370 while
+    codon 141 of its ARO7 feature reads ``AGT`` (Ser) at 820-822.
+    """
+    by_gene = {p.systematic_gene_name: p for p in c._betaxanthin_cassette()}
+    assert set(by_gene) == {"CYP76AD1", "DOD", "YBR249C", "YPR060C"}
+    for gene, placement in ((g, p.placement) for g, p in by_gene.items()):
+        assert placement is not None, gene
+        assert placement.contig_sha256 == c.PBTX1_SHA256
+        assert placement.contig_ref.sha256 == c.PBTX1_SHA256
+        assert placement.contig_ref.path == c.PBTX1_PATH
+        assert placement.feature_key.so_id == "SO:0000704"
+        host = placement.host_placement
+        assert host is not None and host.site_label == "XII-5"
+        assert host.assembly_set == "sgd_S288C_R64-4-1_20230830"
+        assert host.span is None and host.insert_span is None
+        assert host.gapped_fields() == {"span", "insert_span"}
+    aro4_placement = by_gene["YBR249C"].placement
+    aro7_placement = by_gene["YPR060C"].placement
+    assert aro4_placement is not None and aro7_placement is not None
+    assert aro4_placement.feature_key.token == "ARO4-K229L@SO:0000704:2684-3796+"
+    aro4 = aro4_placement.variants
+    aro7 = aro7_placement.variants
+    assert [(v.variant_statement, v.position_start, v.position_end) for v in aro4] == [
+        ("K229L", 3368, 3370)
+    ]
+    assert [(v.variant_statement, v.position_start, v.position_end) for v in aro7] == [
+        ("G141S", 820, 822)
+    ]
+    assert aro4[0].codon_number == 229 and aro7[0].codon_number == 141
+    assert [v.reference_contig_sha256 for v in aro4 + aro7] == [c.PBTX1_SHA256] * 2
+    # the heterologous genes carry no designed allele, so no call
+    for gene in ("CYP76AD1", "DOD"):
+        plant = by_gene[gene].placement
+        assert plant is not None and plant.variants == []
 
 
 def _environment() -> Environment:

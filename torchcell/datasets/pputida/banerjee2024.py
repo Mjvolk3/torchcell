@@ -132,6 +132,7 @@ from torchcell.datamodels.schema import (
     ExperimentReference,
     Genotype,
     HeterologousPathwayPerturbation,
+    Localization,
     Media,
     PhysicalFactor,
     ProductTiterExperiment,
@@ -1183,6 +1184,34 @@ def deletion_perturbations(symbol: str) -> list[DeletionStrainPerturbation]:
     ]
 
 
+#: What was read before concluding that no construct sequence is available.
+_PLACEMENT_GAP_NOTE = (
+    "Supplementary Table 1 lists every plasmid by name and composition, and the "
+    "Methods state 'Strains and plasmids along with their associated information "
+    "have been deposited in the public domain of the JBEI Registry "
+    "(https://public-registry.jbei.org) and are available from the authors upon "
+    "request'; no map is released with the article and that registry answers 403 "
+    "to an anonymous REST request (measured 2026-10-15)"
+)
+
+
+def placement_gap() -> ProvenanceGap:
+    """The typed absence of a construct sequence for this dataset's plasmids."""
+    return ProvenanceGap(
+        field="placement",
+        reason=ProvenanceGapReason.not_released_by_primary,
+        looked_in=Provenance(
+            source_uri=PAPER_MD,
+            citation_key=CITATION_KEY,
+            sha256=PAPER_MD_SHA256,
+            method="MinerU OCR of the published PDF (mirror), Methods 2.4 "
+            "and Supplementary Table 1",
+            page=_METHODS_STRAINS,
+        ),
+        note=_PLACEMENT_GAP_NOTE,
+    )
+
+
 def cassette_perturbations(cassette: Cassette) -> list[HeterologousPathwayPerturbation]:
     """Every heterologous gene of one plasmid, as its own typed perturbation.
 
@@ -1203,12 +1232,14 @@ def cassette_perturbations(cassette: Cassette) -> list[HeterologousPathwayPertur
             pathway_name=PATHWAY_ISOPRENOL,
             source_organism=gene.organism,
             is_heterologous=True,
-            localization="episomal_plasmid",
+            localization=Localization.episomal_replicon,
             construct_name=cassette.name,
             integration_locus=None,
             variant=gene.variant,
             promoter_name=gene.promoter,
             copy_number=1.0,
+            placement=None,
+            provenance_gaps=[placement_gap()],
         )
         for gene in cassette.genes
     ]

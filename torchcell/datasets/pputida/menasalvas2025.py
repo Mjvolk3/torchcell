@@ -230,6 +230,7 @@ from torchcell.datamodels.schema import (
     ExperimentReference,
     Genotype,
     HeterologousPathwayPerturbation,
+    Localization,
     LocusVariantCallPerturbation,
     MeasurementType,
     MetabolitePhenotype,
@@ -1879,14 +1880,45 @@ def pathway_perturbations() -> list[HeterologousPathwayPerturbation]:
                 pathway_name=str(PATHWAY_NAME.value),
                 source_organism=None,
                 is_heterologous=True,
-                localization="chromosomal_integration",
+                localization=Localization.chromosomal_integration,
                 integration_locus=gene["locus"],
                 promoter_name=gene["promoter"],
                 copy_number=1.0,
-                provenance_gaps=[unstated_organism_gap(PATHWAY_ORGANISM_GAP_NOTE)],
+                placement=None,
+                provenance_gaps=[
+                    unstated_organism_gap(PATHWAY_ORGANISM_GAP_NOTE),
+                    placement_gap(),
+                ],
             )
         )
     return built
+
+
+#: What was read before concluding that no construct sequence is available.
+_PLACEMENT_GAP_NOTE = (
+    "Supplementary Table 5 lists the plasmids by name and composition, and the data "
+    "statement says 'Plasmid sequences are available from public-registry.jbei.org "
+    "after the user generates a free user login and password'; a login-gated "
+    "registry is a withheld artifact, and the registry answers 403 to an anonymous "
+    "REST request (measured 2026-10-15)"
+)
+
+
+def placement_gap() -> ProvenanceGap:
+    """The typed absence of a construct sequence for this dataset's plasmids."""
+    return ProvenanceGap(
+        field="placement",
+        reason=ProvenanceGapReason.not_released_by_primary,
+        looked_in=Provenance(
+            source_uri=PAPER_MD,
+            citation_key=CITATION_KEY,
+            sha256=PAPER_MD_SHA256,
+            method="MinerU OCR of the published PDF (mirror), Supplementary "
+            "Table 5 and the data-availability statement",
+            page=_PAGE_SI_TABLE5,
+        ),
+        note=_PLACEMENT_GAP_NOTE,
+    )
 
 
 def reporter_perturbation() -> HeterologousPathwayPerturbation:
@@ -1898,10 +1930,12 @@ def reporter_perturbation() -> HeterologousPathwayPerturbation:
         pathway_name="PpedF-RBS-pyrF growth-coupled isoprenol biosensor",
         source_organism="Teredinibacter turnerae T7901",
         is_heterologous=True,
-        localization="episomal_plasmid",
+        localization=Localization.episomal_replicon,
         construct_name="RSF1010 PpedF-RBS-pyrF",
         promoter_name="PpedF",
         copy_number=1.0,
+        placement=None,
+        provenance_gaps=[placement_gap()],
     )
 
 
@@ -3137,11 +3171,15 @@ def mcherry_perturbation(locus: str) -> HeterologousPathwayPerturbation:
         pathway_name="PpedF-RBS-mCherry isoprenol biosensor",
         source_organism=None,
         is_heterologous=True,
-        localization="chromosomal_integration",
+        localization=Localization.chromosomal_integration,
         integration_locus=locus,
         promoter_name="PpedF",
         copy_number=1.0,
-        provenance_gaps=[unstated_organism_gap(MCHERRY_ORGANISM_GAP_NOTE)],
+        placement=None,
+        provenance_gaps=[
+            unstated_organism_gap(MCHERRY_ORGANISM_GAP_NOTE),
+            placement_gap(),
+        ],
     )
 
 
@@ -3154,10 +3192,12 @@ def mvas_overexpression_perturbation(locus: str) -> HeterologousPathwayPerturbat
         pathway_name=str(PATHWAY_NAME.value),
         source_organism=str(MVAS_ORGANISM.value),
         is_heterologous=True,
-        localization="chromosomal_integration",
+        localization=Localization.chromosomal_integration,
         integration_locus=locus,
         promoter_name="Pcv",
         copy_number=1.0,
+        placement=None,
+        provenance_gaps=[placement_gap()],
     )
 
 

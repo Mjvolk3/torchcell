@@ -24,6 +24,7 @@ from torchcell.datamodels.schema import (
     Environment,
     Genotype,
     HeterologousPathwayPerturbation,
+    Localization,
     PromoterActivityExperiment,
     PromoterActivityExperimentReference,
     PromoterActivityPhenotype,
@@ -35,6 +36,7 @@ from torchcell.verification.promoter_activity import (
     verify_promoter_activity_dataset_streaming,
 )
 from torchcell.verification.report import Level, Provenance, VerificationReport
+from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
 PROVENANCE = Provenance(
     source_uri="data/release.xlsx",
@@ -89,6 +91,17 @@ def _phenotype(
     )
 
 
+#: P4: ``GeneAdditionPerturbation.placement`` is required with no default and gap-able,
+#: so a fixture that points at no deposited construct states the typed absence.
+def _placement_gap() -> ProvenanceGap:
+    """The typed absence of a construct sequence, for a fixture's leaf."""
+    return ProvenanceGap(
+        field="placement",
+        reason=ProvenanceGapReason.not_released_by_primary,
+        note="the fixture's leaf points at no deposited construct",
+    )
+
+
 def _record(
     value: float,
     hour: float,
@@ -110,9 +123,11 @@ def _record(
                 pathway_name="promoter-GFP reporter",
                 source_organism="unreported",
                 is_heterologous=True,
-                localization="episomal_plasmid",
+                localization=Localization.episomal_replicon,
                 promoter_name=promoter,
                 copy_number=1.0,
+                placement=None,
+                provenance_gaps=[_placement_gap()],
             )
         ]
     )

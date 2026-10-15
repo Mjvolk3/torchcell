@@ -188,6 +188,7 @@ from torchcell.datamodels.schema import (
     GenomicSpan,
     Genotype,
     HeterologousPathwayPerturbation,
+    Localization,
     Media,
     PhysicalFactor,
     ProductTiterExperiment,
@@ -1432,7 +1433,7 @@ class Cassette(BaseModel):
     name: str
     construct_string: str
     pathway: str
-    localization: Literal["episomal_plasmid", "chromosomal_integration"]
+    localization: Localization
     integration_locus: str | None
     genes: tuple[CassetteGene, ...]
 
@@ -1441,7 +1442,7 @@ PIY670 = Cassette(
     name="pIY670",
     construct_string=_Q_PIY670_PARTS,
     pathway=PATHWAY_ISOPRENOL,
-    localization="episomal_plasmid",
+    localization=Localization.episomal_replicon,
     integration_locus=None,
     genes=(
         CassetteGene(
@@ -1508,7 +1509,7 @@ def _aat_cassette(
         name=plasmid,
         construct_string=f"pRSF1010-Gm-NagR-{AAT_PROMOTER}-{token}-rrnB T1",
         pathway=PATHWAY_ESTER,
-        localization="episomal_plasmid",
+        localization=Localization.episomal_replicon,
         integration_locus=None,
         genes=(
             CassetteGene(
@@ -1545,7 +1546,7 @@ XYL_CASSETTE_SPEC = Cassette(
     name="pXyl",
     construct_string="PxylE*-xylE:Ptac-xylAB:talB:tktA",
     pathway=PATHWAY_XYLOSE,
-    localization="chromosomal_integration",
+    localization=Localization.chromosomal_integration,
     integration_locus=XYL_INTEGRATION_LOCUS,
     genes=(
         CassetteGene(
@@ -1597,7 +1598,7 @@ ACS_XFPK_CASSETTE_SPEC = Cassette(
     name="pO15",
     construct_string="Pm-acsEc-xfpkBa_RBS1",
     pathway=PATHWAY_ACETYL_COA,
-    localization="chromosomal_integration",
+    localization=Localization.chromosomal_integration,
     integration_locus=ACS_XFPK_INTEGRATION_LOCUS,
     genes=(
         CassetteGene(
@@ -2650,9 +2651,37 @@ def cassette_perturbations(cassette: Cassette) -> list[HeterologousPathwayPertur
             variant=gene.variant,
             promoter_name=gene.promoter,
             copy_number=1.0,
+            placement=None,
+            provenance_gaps=[placement_gap()],
         )
         for gene in cassette.genes
     ]
+
+
+#: What was read before concluding that no construct sequence is available.
+_PLACEMENT_GAP_NOTE = (
+    "Table S2 details every strain and plasmid, and the Methods state 'These "
+    "strains and plasmids, along with relevant information, have been deposited in "
+    "the public domain through the JBEI Registry (https://public-registry.jbei.org) "
+    "and are available upon request'; no map is released with the article and that "
+    "registry answers 403 to an anonymous REST request (measured 2026-10-15)"
+)
+
+
+def placement_gap() -> ProvenanceGap:
+    """The typed absence of a construct sequence for this dataset's plasmids."""
+    return ProvenanceGap(
+        field="placement",
+        reason=ProvenanceGapReason.not_released_by_primary,
+        looked_in=Provenance(
+            source_uri=PAPER_MD,
+            citation_key=CITATION_KEY,
+            sha256=PAPER_MD_SHA256,
+            method="MinerU OCR of the published PDF (mirror), Methods 2.1 and Table S2",
+            page=_METHODS_STRAINS,
+        ),
+        note=_PLACEMENT_GAP_NOTE,
+    )
 
 
 def strain_genotype(strain: str, symbols: dict[str, str]) -> Genotype:

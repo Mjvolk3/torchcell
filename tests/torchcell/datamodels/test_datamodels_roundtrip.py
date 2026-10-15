@@ -303,7 +303,12 @@ EXAMPLES: dict[str, dict[str, Any]] = {
         "perturbed_gene_name": "YFP",
         "source_organism": "synthetic construct",
         "is_heterologous": True,
-        "localization": "episomal_cen_plasmid",
+        "localization": "episomal_replicon",
+        "replicon_statement": "CEN plasmid",
+        "placement": None,
+        "provenance_gaps": [
+            {"field": "placement", "reason": "not_released_by_primary"}
+        ],
         "promoter_variant_id": "HQ_28",
         "promoter_sequence": (
             "TGCATTTTTTTCACATCAAAAGTAGGTTCTTGCAGCATTCTGATGCACGTATAGGCGCGATGG"
@@ -518,9 +523,9 @@ EXAMPLES: dict[str, dict[str, Any]] = {
     # two gap-able spans are set or carry a ProvenanceGap, never a silent None. The
     # example is Cachera's Btx cassette at XII-5: a named landing pad with no published
     # coordinate, which is the common case and the reason the gap exists.
-    "torchcell.datamodels.construct.HostPlacement": _HOST_PLACEMENT_EXAMPLE,
-    "torchcell.datamodels.construct.ConstructVariantCall": _CONSTRUCT_CALL_EXAMPLE,
-    "torchcell.datamodels.construct.ConstructPlacement": {
+    "torchcell.datamodels.schema.HostPlacement": _HOST_PLACEMENT_EXAMPLE,
+    "torchcell.datamodels.schema.ConstructVariantCall": _CONSTRUCT_CALL_EXAMPLE,
+    "torchcell.datamodels.schema.ConstructPlacement": {
         "contig_sha256": _CONSTRUCT_CONTIG_SHA256,
         "contig_ref": {
             "tier": "library",

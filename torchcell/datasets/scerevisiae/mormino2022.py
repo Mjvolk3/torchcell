@@ -117,6 +117,7 @@ from torchcell.datamodels.schema import (
     ExperimentReference,
     GeneAdditionPerturbation,
     Genotype,
+    Localization,
     MeasurementType,
     PhysicalFactor,
     Publication,
@@ -140,7 +141,11 @@ from torchcell.literature.manifest import (
     RetrievalRecord,
 )
 from torchcell.verification.report import Provenance
-from torchcell.verification.sourced import SourcedValue
+from torchcell.verification.sourced import (
+    ProvenanceGap,
+    ProvenanceGapReason,
+    SourcedValue,
+)
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -330,6 +335,34 @@ def audit_table_1(paper_md: str) -> None:
         )
 
 
+#: What was read before concluding that no construct sequence is available. The paper
+#: states a repository deposit and no sequence: "All plasmids and primers used in the
+#: study are listed in Additional file 2. Plasmids used in the study are shared through
+#: Addgene." An Addgene handle is the artifact withheld, not an artifact released, and
+#: no accession number for pMM4_14L appears in the paper or Additional file 2.
+_PLACEMENT_GAP_NOTE = (
+    "Additional file 2 lists the plasmids by name and the paper states 'Plasmids used "
+    "in the study are shared through Addgene'; no Addgene accession for pMM4_14L and no "
+    "GenBank map is released, so there are no construct bytes of ours to point at"
+)
+
+
+def _placement_gap() -> ProvenanceGap:
+    """The typed absence of a construct sequence for the pMM4_14L cassette."""
+    return ProvenanceGap(
+        field="placement",
+        reason=ProvenanceGapReason.not_released_by_primary,
+        looked_in=Provenance(
+            source_uri=PAPER_MD,
+            citation_key=CITATION_KEY,
+            sha256=PAPER_MD_SHA256,
+            method="MinerU OCR of the publisher PDF (torchcell-library mirror)",
+            page="Methods, 'Design of constructs and modular cloning'; Additional file 2",
+        ),
+        note=_PLACEMENT_GAP_NOTE,
+    )
+
+
 def biosensor_cassette() -> list[GeneAdditionPerturbation]:
     """The pMM4_14L biosensor cassette every CBL strain carries, integrated at HO."""
     return [
@@ -342,9 +375,11 @@ def biosensor_cassette() -> list[GeneAdditionPerturbation]:
                 "Saccharomyces cerevisiae, mTurquoise2 a synthetic fluorescent protein)"
             ),
             is_heterologous=True,
-            localization="chromosomal_integration",
+            localization=Localization.chromosomal_integration,
             construct_name="pMM4_14L",
             integration_locus="HO",
+            placement=None,
+            provenance_gaps=[_placement_gap()],
         ),
         GeneAdditionPerturbation(
             systematic_gene_name="sfpHluorin",
@@ -352,9 +387,11 @@ def biosensor_cassette() -> list[GeneAdditionPerturbation]:
             perturbed_gene_name="sfpHluorin",
             source_organism="synthetic (superfolder pHluorin, an Aequorea victoria GFP variant)",
             is_heterologous=True,
-            localization="chromosomal_integration",
+            localization=Localization.chromosomal_integration,
             construct_name="pMM4_14L",
             integration_locus="HO",
+            placement=None,
+            provenance_gaps=[_placement_gap()],
         ),
     ]
 

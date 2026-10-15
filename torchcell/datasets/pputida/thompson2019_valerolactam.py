@@ -127,6 +127,7 @@ from torchcell.datamodels.schema import (
     ExperimentReference,
     Genotype,
     HeterologousPathwayPerturbation,
+    Localization,
     MeasurementType,
     Media,
     MediaComponent,
@@ -1101,11 +1102,13 @@ def plasmid_perturbations(
             pathway_name=PATHWAY_NAME,
             source_organism=NATIVE_ORGANISM,
             is_heterologous=False,
-            localization="episomal_plasmid",
+            localization=Localization.episomal_replicon,
             construct_name=PLASMID_NAME,
             integration_locus=None,
             promoter_name=PROMOTER_NAME,
             copy_number=1.0,
+            placement=None,
+            provenance_gaps=[placement_gap()],
         )
         for symbol in PLASMID_NATIVE_SYMBOLS
     ]
@@ -1117,14 +1120,43 @@ def plasmid_perturbations(
             pathway_name=PATHWAY_NAME,
             source_organism=ORF26_ORGANISM,
             is_heterologous=True,
-            localization="episomal_plasmid",
+            localization=Localization.episomal_replicon,
             construct_name=PLASMID_NAME,
             integration_locus=None,
             promoter_name=PROMOTER_NAME,
             copy_number=1.0,
+            placement=None,
+            provenance_gaps=[placement_gap()],
         )
     )
     return genes
+
+
+#: What was read before concluding that no construct sequence is available.
+_PLACEMENT_GAP_NOTE = (
+    "Table 1 lists every strain and plasmid and the Methods state 'All strains and "
+    "plasmids created in this work are available through the public instance of the "
+    "JBEI registry. (public-registry.jbei.org/folders/456)'; no map is released "
+    "with the article and that registry answers 403 to an anonymous REST request "
+    "(measured 2026-10-15)"
+)
+
+
+def placement_gap() -> ProvenanceGap:
+    """The typed absence of a construct sequence for the pathway plasmid."""
+    return ProvenanceGap(
+        field="placement",
+        reason=ProvenanceGapReason.not_released_by_primary,
+        looked_in=Provenance(
+            source_uri=PAPER_TEXT.relpath,
+            citation_key=CITATION_KEY,
+            sha256=PAPER_TEXT.sha256,
+            method="PMC full text (raw mirror), section 4.2 'Strains and plasmids'",
+            page="4.2. Strains and plasmids; Table 1",
+            retrieved=RETRIEVED_AT,
+        ),
+        note=_PLACEMENT_GAP_NOTE,
+    )
 
 
 def deletion_genotype(strain: str, locus_tags: dict[str, str]) -> Genotype:

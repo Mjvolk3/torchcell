@@ -29,6 +29,7 @@ from torchcell.datamodels.schema import (
     DeletionStrainPerturbation,
     Genotype,
     HeterologousPathwayPerturbation,
+    Localization,
     ProductTiterExperiment,
     ProductTiterExperimentReference,
     ProductTiterPhenotype,
@@ -62,6 +63,17 @@ def _environment() -> CultureEnvironment:
     )
 
 
+#: P4: ``GeneAdditionPerturbation.placement`` is required with no default and gap-able,
+#: so a fixture that points at no deposited construct states the typed absence.
+def _placement_gap() -> ProvenanceGap:
+    """The typed absence of a construct sequence, for a fixture's leaf."""
+    return ProvenanceGap(
+        field="placement",
+        reason=ProvenanceGapReason.not_released_by_primary,
+        note="the fixture's leaf points at no deposited construct",
+    )
+
+
 def _genotype() -> Genotype:
     return Genotype(
         perturbations=[
@@ -71,9 +83,11 @@ def _genotype() -> Genotype:
                     perturbed_gene_name=token,
                     source_organism="Enterococcus faecalis",
                     is_heterologous=True,
-                    localization="plasmid",
+                    localization=Localization.episomal_replicon,
                     gene_namespace=NAMESPACE,
                     pathway_name="isoprenol via mevalonate",
+                    placement=None,
+                    provenance_gaps=[_placement_gap()],
                 )
                 for token in PATHWAY_GENES
             ),

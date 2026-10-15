@@ -148,7 +148,10 @@ NOT ASSERTED. The general Methods state that kanamycin at 50 ug/mL was used to m
 plasmids, but the screening section names only LB for both the preculture and the assay
 plate, so no selection agent is put on the medium. The paper calls the backbone "a
 low-copy-number plasmid" and names the supplier, and never says which of the
-collection's two backbones carries which promoter, so ``construct_name`` is left unset and the reporter's origin reads ``unreported``; a perturbation leaf has no gap field, so both absences are stated here and in ``SOURCED_VALUES`` rather than guessed.
+collection's two backbones carries which promoter, so ``construct_name`` is left
+unset and the reporter's origin reads ``unreported``; both absences are stated here
+and in ``SOURCED_VALUES`` rather than guessed. The backbone's SEQUENCE is a typed
+``ProvenanceGap`` on ``placement`` (:func:`placement_gap`), deferred to reference 28.
 The paper does not state whether the hour-five reading was taken immediately before or
 immediately after the dose went in; the drug is placed on hour five by the paper's own
 statement that treatment began at hour five and ran five hours to hour ten, and the
@@ -198,6 +201,7 @@ from torchcell.datamodels.schema import (
     ExperimentReference,
     Genotype,
     HeterologousPathwayPerturbation,
+    Localization,
     PromoterActivityExperiment,
     PromoterActivityExperimentReference,
     PromoterActivityPhenotype,
@@ -1051,6 +1055,39 @@ def promoter_genes(
 # --------------------------------------------------------------------------- #
 # Records
 # --------------------------------------------------------------------------- #
+#: The replicon as the paper writes it, verbatim; the class of the backbone (pUA66 or
+#: pUA139) is deferred to reference 28 and never stated here.
+REPLICON_STATEMENT = "low-copy-number plasmid"
+
+#: What was read before concluding that no construct sequence is available. The paper
+#: names neither backbone nor map: it defers the collection to reference 28, Zaslaver
+#: 2006, which is where the reporter plasmid's sequence would be sourced from, so this
+#: gap is RECOVERABLE work (follow the deferral) rather than a withheld artifact.
+_PLACEMENT_GAP_NOTE = (
+    "the article calls the backbone only 'a low-copy-number plasmid (28)' and defers "
+    "the collection to reference 28, Zaslaver 2006, naming neither pUA66 nor pUA139 "
+    "for a given promoter; closing this gap means sourcing the backbone's sequence "
+    "from that cited paper, not another pass over this article"
+)
+
+
+def placement_gap() -> ProvenanceGap:
+    """The typed absence of a construct sequence for the promoter-GFP reporter."""
+    return ProvenanceGap(
+        field="placement",
+        reason=ProvenanceGapReason.deferred_pending_source_review,
+        looked_in=Provenance(
+            source_uri=PAPER_TEXT_REL,
+            citation_key=CITATION_KEY,
+            sha256=PAPER_TEXT_SHA256,
+            method="the publisher's own plain text of the article (raw mirror), the "
+            "Results and the strains-and-plasmids Methods",
+            page=_STRAINS,
+        ),
+        note=_PLACEMENT_GAP_NOTE,
+    )
+
+
 def reporter_genotype(promoter: str) -> Genotype:
     """The plasmid-borne promoter-GFP reporter the well carries.
 
@@ -1063,9 +1100,10 @@ def reporter_genotype(promoter: str) -> Genotype:
     :data:`REPORTER_SOURCE_ORGANISM`: the paper calls the backbone "a low-copy-number
     plasmid", defers the collection to reference 28 and never says which of the
     collection's two backbones carries which promoter, nor the reporter's organism of
-    origin. A perturbation leaf carries no ``provenance_gaps`` field, so those two
-    absences are recorded in this module's docstring and in ``SOURCED_VALUES`` instead
-    of being guessed.
+    origin. Those two absences are recorded in this module's docstring and in
+    ``SOURCED_VALUES`` instead of being guessed; the backbone's SEQUENCE is the leaf's
+    own typed gap on ``placement``, which defers to reference 28, and
+    ``replicon_statement`` keeps the paper's words for the replicon.
     """
     return Genotype(
         perturbations=[
@@ -1076,9 +1114,12 @@ def reporter_genotype(promoter: str) -> Genotype:
                 pathway_name=PATHWAY_NAME,
                 source_organism=REPORTER_SOURCE_ORGANISM,
                 is_heterologous=True,
-                localization="episomal_plasmid",
+                localization=Localization.episomal_replicon,
+                replicon_statement=REPLICON_STATEMENT,
                 promoter_name=promoter,
                 copy_number=1.0,
+                placement=None,
+                provenance_gaps=[placement_gap()],
             )
         ]
     )

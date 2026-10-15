@@ -120,6 +120,7 @@ from torchcell.datamodels.schema import (
     Experiment,
     ExperimentReference,
     Genotype,
+    Localization,
     PooledSortSeqExpressionExperiment,
     PooledSortSeqExpressionExperimentReference,
     PooledSortSeqExpressionPhenotype,
@@ -190,7 +191,13 @@ REPORTER_GENE = "YFP"
 REPORTER_IDENTIFIER = "addgene127546:YFP"
 REPORTER_SOURCE_ORGANISM = "synthetic construct"
 CONSTRUCT_NAME = "pTpA-YFP dual-reporter CEN plasmid (Addgene 127546)"
-LOCALIZATION = "episomal_cen_plasmid"
+LOCALIZATION = Localization.episomal_replicon
+#: The replicon as the method states it, verbatim: "cloned into the promoter of a YFP
+#: gene within a CEN plasmid (Addgene: 127546)". The CEN/ARS class is a property of the
+#: plasmid, and that plasmid's bytes are an Addgene handle rather than a deposit, so the
+#: words are kept here and the typed ``Localization`` says only that the construct is a
+#: replicon of its own.
+REPLICON_STATEMENT = "CEN plasmid"
 STRAIN = "S288C::ura3"
 EXPECTED_RECORDS = 71158
 EXPECTED_ROWS = 75487
@@ -599,7 +606,10 @@ def genotype(sequence_id: str, sequence: str) -> Genotype:
                 source_organism=REPORTER_SOURCE_ORGANISM,
                 is_heterologous=True,
                 localization=LOCALIZATION,
+                replicon_statement=REPLICON_STATEMENT,
                 construct_name=CONSTRUCT_NAME,
+                placement=None,
+                provenance_gaps=[placement_gap()],
                 promoter_variant_id=sequence_id,
                 promoter_sequence=sequence,
                 scaffold_name=SCAFFOLD_NAME,
@@ -607,6 +617,28 @@ def genotype(sequence_id: str, sequence: str) -> Genotype:
                 variable_region_end=end,
             )
         ]
+    )
+
+
+def placement_gap() -> ProvenanceGap:
+    """The typed absence of construct bytes for the reporter plasmid.
+
+    What the release DOES carry is the 110-base variable region of each promoter, and
+    that is stored in the record (``promoter_sequence``), not pointed at. What is absent
+    is the plasmid the region sits in: the method names it as an Addgene handle,
+    "cloned into the promoter of a YFP gene within a CEN plasmid (Addgene: 127546)",
+    and neither the paper nor the Zenodo deposit releases its map, so the artifact is
+    withheld rather than unreported.
+    """
+    return ProvenanceGap(
+        field="placement",
+        reason=ProvenanceGapReason.not_released_by_primary,
+        looked_in=_PAPER,
+        note=(
+            "the method names the backbone by an Addgene handle, 'within a CEN plasmid "
+            "(Addgene: 127546)', and deposits no map; the released sequence is the "
+            "110-base variable promoter region, which is stored on the record itself"
+        ),
     )
 
 

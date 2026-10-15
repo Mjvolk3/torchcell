@@ -231,6 +231,7 @@ from torchcell.datamodels.schema import (
     ExperimentReference,
     Genotype,
     HeterologousPathwayPerturbation,
+    Localization,
     LocusVariantCallPerturbation,
     PhysicalFactor,
     ProductTiterExperiment,
@@ -1797,6 +1798,34 @@ def assert_piy670_matches_carruthers() -> None:
         )
 
 
+#: What was read before concluding that no construct sequence is available.
+_PLACEMENT_GAP_NOTE = (
+    "Table 1 names each plasmid with its parts and its JBEI id (and an Addgene "
+    "number for the two plasmids taken from earlier work), and the data statement "
+    "says 'Plasmid sequences are available via the public JBEI registry, "
+    "accessible at https://public-registry.jbei.org/ upon making a free login "
+    "account'; a login-gated registry is a withheld artifact, and the registry "
+    "answers 403 to an anonymous REST request (measured 2026-10-15)"
+)
+
+
+def placement_gap() -> ProvenanceGap:
+    """The typed absence of a construct sequence for this dataset's plasmids."""
+    return ProvenanceGap(
+        field="placement",
+        reason=ProvenanceGapReason.not_released_by_primary,
+        looked_in=Provenance(
+            source_uri=PAPER_MD,
+            citation_key=CITATION_KEY,
+            sha256=PAPER_MD_SHA256,
+            method="MinerU OCR of the published PDF (mirror), Table 1 and the "
+            "data-availability statement",
+            page=_METHODS_STRAINS,
+        ),
+        note=_PLACEMENT_GAP_NOTE,
+    )
+
+
 def pathway_perturbations() -> list[HeterologousPathwayPerturbation]:
     """The five heterologous pIY670 genes carried by a titer strain.
 
@@ -1813,11 +1842,13 @@ def pathway_perturbations() -> list[HeterologousPathwayPerturbation]:
             pathway_name=str(PATHWAY_SOURCE.value),
             source_organism=str(gene["organism"]),
             is_heterologous=True,
-            localization="episomal_plasmid",
+            localization=Localization.episomal_replicon,
             construct_name=str(PIY670.value),
             variant=gene["variant"],
             promoter_name=gene["promoter"],
             copy_number=1.0,
+            placement=None,
+            provenance_gaps=[placement_gap()],
         )
         for gene in PATHWAY_GENES
     ]

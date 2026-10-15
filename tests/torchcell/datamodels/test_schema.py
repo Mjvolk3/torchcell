@@ -275,7 +275,14 @@ _RELAXED: list[tuple[Any, dict[str, Any]]] = [
         {
             "source_organism": "Xanthophyllomyces dendrorhous",
             "is_heterologous": True,
-            "localization": "plasmid",
+            "localization": "episomal_replicon",
+            "placement": None,
+            "provenance_gaps": [
+                ProvenanceGap(
+                    field="placement",
+                    reason=ProvenanceGapReason.not_released_by_primary,
+                )
+            ],
             **_S288C,
         },
     ),
@@ -1129,6 +1136,26 @@ def test_environment_with_every_perturbation_leaf_round_trips_through_json() -> 
     ]
 
 
+#: P4 (2026-10-15): ``GeneAdditionPerturbation.placement`` is required with no default
+#: and gap-able, so a leaf built in a test that is not ABOUT the placement states the
+#: typed absence rather than leaving a silent None. The reason is the one 11 of the 13
+#: gene-addition loaders carry: the primary names a registry handle and releases no
+#: construct sequence.
+def _placement_gap() -> ProvenanceGap:
+    """The typed absence of a construct sequence, for a leaf built in a test."""
+    return ProvenanceGap(
+        field="placement",
+        reason=ProvenanceGapReason.not_released_by_primary,
+        note="the test's leaf points at no deposited construct",
+    )
+
+
+NO_PLACEMENT: dict[str, Any] = {
+    "placement": None,
+    "provenance_gaps": [_placement_gap()],
+}
+
+
 def test_genotype_of_mixed_leaves_round_trips_and_sorts_by_gene() -> None:
     """Perturbations are sorted by systematic name on construction; JSON reload keeps
     each leaf class, and the relaxed-name addition sorts before the ``Y`` genes.
@@ -1142,7 +1169,8 @@ def test_genotype_of_mixed_leaves_round_trips_and_sorts_by_gene() -> None:
                 perturbed_gene_name="crtYB",
                 source_organism="Xanthophyllomyces dendrorhous",
                 is_heterologous=True,
-                localization="plasmid",
+                localization=s.Localization.episomal_replicon,
+                **NO_PLACEMENT,
             ),
             s.SgaDampPerturbation(
                 systematic_gene_name="YAL001C",
@@ -1354,8 +1382,9 @@ _BACTERIAL_LEAF_CASES: list[tuple[type[s.GenePerturbation], dict[str, Any]]] = [
             gene_namespace="pputida_kt2440_locus_tag",
             source_organism="Enterococcus faecalis",
             is_heterologous=True,
-            localization="chromosomal_integration",
+            localization=s.Localization.chromosomal_integration,
             pathway_name="isoprenol via mevalonate",
+            **NO_PLACEMENT,
         ),
     ),
     (
@@ -2373,8 +2402,9 @@ def test_a_product_titer_record_round_trips_through_the_type_maps() -> None:
                     gene_namespace="pputida_kt2440_locus_tag",
                     source_organism="Enterococcus faecalis",
                     is_heterologous=True,
-                    localization="chromosomal_integration",
+                    localization=s.Localization.chromosomal_integration,
                     pathway_name="isoprenol via mevalonate",
+                    **NO_PLACEMENT,
                 )
             ]
         ),
@@ -4390,23 +4420,25 @@ def test_promoter_driven_integration_requires_its_locus_and_promoter() -> None:
         perturbed_gene_name="TRP2",
         source_organism="Saccharomyces cerevisiae",
         is_heterologous=False,
-        localization="chromosomal_integration",
+        localization=s.Localization.chromosomal_integration,
         promoter_name="pTEF1",
         integration_locus="EasyClone XII-5",
+        **NO_PLACEMENT,
     )
     assert leaf.perturbation_type == "promoter_driven_gene_integration"
     assert (leaf.state, leaf.mechanism_so_id) == ("present", "SO:0000667")
     assert isinstance(leaf, s.GeneAdditionPerturbation)
     assert leaf.promoter_sequence is None and leaf.is_inducible is False
     with pytest.raises(ValidationError):
-        s.PromoterDrivenGeneIntegrationPerturbation(  # type: ignore[call-arg]
+        s.PromoterDrivenGeneIntegrationPerturbation(
             systematic_gene_name="YER090W",
             gene_namespace="scerevisiae_s288c_sgd_systematic",
             perturbed_gene_name="TRP2",
             source_organism="Saccharomyces cerevisiae",
             is_heterologous=False,
-            localization="chromosomal_integration",
+            localization=s.Localization.chromosomal_integration,
             promoter_name="pTEF1",
+            **NO_PLACEMENT,
         )
     with pytest.raises(ValidationError, match="cannot be empty"):
         s.PromoterDrivenGeneIntegrationPerturbation(
@@ -4415,9 +4447,10 @@ def test_promoter_driven_integration_requires_its_locus_and_promoter() -> None:
             perturbed_gene_name="TRP2",
             source_organism="Saccharomyces cerevisiae",
             is_heterologous=False,
-            localization="chromosomal_integration",
+            localization=s.Localization.chromosomal_integration,
             promoter_name="   ",
             integration_locus="EasyClone XII-5",
+            **NO_PLACEMENT,
         )
 
 
@@ -4432,10 +4465,11 @@ def test_promoter_driven_integration_refuses_a_deposited_sequence_that_is_not_dn
             perturbed_gene_name="TRP2",
             source_organism="Saccharomyces cerevisiae",
             is_heterologous=False,
-            localization="chromosomal_integration",
+            localization=s.Localization.chromosomal_integration,
             promoter_name="pTEF1",
             promoter_sequence="acgtn",
             integration_locus="EasyClone XII-5",
+            **NO_PLACEMENT,
         )
 
 
@@ -4451,9 +4485,11 @@ def test_variable_promoter_reporter_requires_the_sequence_and_a_whole_span() -> 
             perturbed_gene_name="YFP",
             source_organism="synthetic construct",
             is_heterologous=True,
-            localization="episomal_cen_plasmid",
+            localization=s.Localization.episomal_replicon,
+            replicon_statement="CEN plasmid",
             promoter_variant_id="HQ_28",
             promoter_sequence=sequence,  # type: ignore[arg-type]
+            **NO_PLACEMENT,
             scaffold_name="pTpA",
             variable_region_start=start,
             variable_region_end=end,
@@ -4478,9 +4514,10 @@ def test_both_promoter_leaves_are_members_of_the_genotype_union() -> None:
         perturbed_gene_name="TRP2",
         source_organism="Saccharomyces cerevisiae",
         is_heterologous=False,
-        localization="chromosomal_integration",
+        localization=s.Localization.chromosomal_integration,
         promoter_name="pTEF1",
         integration_locus="EasyClone XII-5",
+        **NO_PLACEMENT,
     )
     reporter = s.VariablePromoterReporterPerturbation(
         systematic_gene_name="addgene127546:YFP",
@@ -4488,10 +4525,12 @@ def test_both_promoter_leaves_are_members_of_the_genotype_union() -> None:
         perturbed_gene_name="YFP",
         source_organism="synthetic construct",
         is_heterologous=True,
-        localization="episomal_cen_plasmid",
+        localization=s.Localization.episomal_replicon,
+        replicon_statement="CEN plasmid",
         promoter_variant_id="HQ_28",
         promoter_sequence="ACGTACGTAC",
         scaffold_name="pTpA",
+        **NO_PLACEMENT,
     )
     genotype = s.Genotype(perturbations=[integration, reporter])
     assert sorted(genotype.perturbation_types) == [
@@ -4794,6 +4833,12 @@ def _pathway_part(**overrides: Any) -> Any:
         "pathway_name": "isoprenol via mevalonate",
     }
     kwargs.update(overrides)
+    kwargs.setdefault("placement", None)
+    if kwargs["placement"] is None:
+        kwargs["provenance_gaps"] = [
+            *kwargs.get("provenance_gaps", []),
+            _placement_gap(),
+        ]
     return s.HeterologousPathwayPerturbation(**kwargs)
 
 
@@ -4811,10 +4856,11 @@ def test_a_pathway_part_states_its_organism_or_carries_a_typed_gap() -> None:
     """The organism is stated, or None beside a gap naming it; never a bare None."""
     stated = _pathway_part(source_organism="Enterococcus faecalis")
     assert stated.source_organism == "Enterococcus faecalis"
-    assert stated.provenance_gaps == []
+    # the helper carries no construct, so its one gap is the P4 placement gap
+    assert stated.gapped_fields() == {"placement"}
     gapped = _pathway_part(source_organism=None, provenance_gaps=[_organism_gap()])
     assert gapped.source_organism is None
-    assert gapped.gapped_fields() == {"source_organism"}
+    assert gapped.gapped_fields() == {"source_organism", "placement"}
     with _refuses(
         "HeterologousPathwayPerturbation.source_organism is unset and carries no "
         "ProvenanceGap"
@@ -4830,8 +4876,9 @@ def test_a_pathway_part_states_its_organism_or_carries_a_typed_gap() -> None:
             perturbed_gene_name="mvaS",
             gene_namespace="pputida_kt2440_locus_tag",
             is_heterologous=True,
-            localization="chromosomal_integration",
+            localization=s.Localization.chromosomal_integration,
             pathway_name="isoprenol via mevalonate",
+            placement=None,
         )
 
 

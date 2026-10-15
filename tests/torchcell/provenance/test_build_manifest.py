@@ -56,6 +56,7 @@ from torchcell.datamodels.schema import (
     FitnessPhenotype,
     Genotype,
     KanMxDeletionPerturbation,
+    Localization,
     Media,
     Publication,
     ReferenceGenome,
@@ -959,12 +960,23 @@ def test_walk_perturbation_leaves_reads_every_record_and_resolves_interned_parts
 
     slug_dir = tmp_path / "data" / "torchcell" / "walked"
     (slug_dir / "processed" / "lmdb").mkdir(parents=True)
+    from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
+
     addition = GeneAdditionPerturbation(
         systematic_gene_name="PP_0001",
         perturbed_gene_name="PP_0001",
+        # P1 (lane D, on the integration branch) made gene_namespace required; this
+        # fixture reached the branch from main, where it was not yet.
+        gene_namespace="pputida_kt2440_locus_tag",
         source_organism="Pseudomonas putida",
         is_heterologous=False,
-        localization="plasmid",
+        localization=Localization.episomal_replicon,
+        placement=None,
+        provenance_gaps=[
+            ProvenanceGap(
+                field="placement", reason=ProvenanceGapReason.not_released_by_primary
+            )
+        ],
     )
     small_molecule = SmallMoleculePerturbation(
         compound=Compound(name="rapamycin"),

@@ -1047,3 +1047,97 @@ def test_l0_validated_row_fails_an_empty_store_and_names_the_class() -> None:
         "2 records validated as X",
         "X",
     )
+
+
+# --------------------------------------------------------------------------- #
+# L1 construct_placement_states (P4, 2026-10-15): the addition coverage row
+# --------------------------------------------------------------------------- #
+def _addition(
+    *,
+    placement: dict[str, Any] | None,
+    gaps: list[dict[str, Any]] | None = None,
+    perturbation_type: str = "gene_addition",
+) -> dict[str, Any]:
+    """One stored gene-addition perturbation mapping, as an LMDB yields it."""
+    return {
+        "systematic_gene_name": "crtYB",
+        "perturbed_gene_name": "crtYB",
+        "perturbation_type": perturbation_type,
+        "placement": placement,
+        "provenance_gaps": gaps or [],
+    }
+
+
+_SEQUENCE_BACKED: dict[str, Any] = {
+    "contig_sha256": "b" * 64,
+    "feature_key": {"label": "crtYB", "so_id": "SO:0000704"},
+    "host_placement": None,
+}
+_PLACED_NO_COORDINATE: dict[str, Any] = {
+    "contig_sha256": "b" * 64,
+    "feature_key": {"label": "ARO4-K229L", "so_id": "SO:0000704"},
+    "host_placement": {"site_label": "XII-5", "span": None},
+}
+_PLACEMENT_GAP: dict[str, Any] = {
+    "field": "placement",
+    "reason": "not_released_by_primary",
+}
+
+
+def test_a_store_with_no_additions_emits_no_placement_row() -> None:
+    """The 23 stores that add no gene keep exactly the row set they had."""
+    results = _run([_record(perturbations=[_deletion("YAL001C", "TFC3")])])
+    assert "construct_placement_states" not in results
+
+
+def test_the_placement_row_separates_the_three_typed_states() -> None:
+    """Sequence-backed, host-placed without a coordinate, and composition-only."""
+    records = [
+        _record(perturbations=[_addition(placement=_SEQUENCE_BACKED)]),
+        _record(perturbations=[_addition(placement=_PLACED_NO_COORDINATE)]),
+        _record(perturbations=[_addition(placement=None, gaps=[_PLACEMENT_GAP])]),
+    ]
+    result = _run(records)["construct_placement_states"]
+    assert result.level == Level.L1
+    assert result.passed is True
+    assert result.details["n_additions"] == 3
+    assert result.details["n_sequence_backed"] == 1
+    assert result.details["n_host_placed_without_coordinate"] == 1
+    assert result.details["n_composition_only"] == 1
+    assert result.details["n_untyped"] == 0
+    assert result.details["gap_reasons"] == {"not_released_by_primary": 1}
+    assert result.details["by_contig"] == {"b" * 12: 2}
+
+
+def test_an_untyped_absence_is_counted_and_reported_but_never_gates() -> None:
+    """A silent None is the defect the typed states abolish, so it is its own count.
+
+    ``passed`` is False and the row is still report-class, so it is listed under the
+    verdict and does not fail the store.
+    """
+    result = _run([_record(perturbations=[_addition(placement=None)])])[
+        "construct_placement_states"
+    ]
+    assert result.details["n_untyped"] == 1
+    assert result.details["n_composition_only"] == 0
+    assert result.passed is False
+    assert "UNTYPED" in result.message
+
+
+def test_the_placement_row_reads_the_pathway_leaf_too_and_skips_a_deletion() -> None:
+    """``heterologous_pathway`` is an addition; a deletion is not an addition at all."""
+    records = [
+        _record(
+            perturbations=[
+                _addition(
+                    placement=None,
+                    gaps=[_PLACEMENT_GAP],
+                    perturbation_type="heterologous_pathway",
+                ),
+                _deletion("YAL001C", "TFC3"),
+            ]
+        )
+    ]
+    result = _run(records)["construct_placement_states"]
+    assert result.details["n_additions"] == 1
+    assert result.details["n_composition_only"] == 1

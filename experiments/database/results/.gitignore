@@ -36,3 +36,16 @@
 # the cross-dataset scan of the dev stores. The store half is reproducible only against the
 # PRE-fix dev stores that the KG 4.0 rebuild replaces, so the file is tracked.
 !media_name_composition_scan.json
+# The content-id collision scan (lanes Q and V, 2026-10-15): the whole-tree result over 176
+# stores and the three per-store results for the datasets too large to scan with them
+# (dmf_costanzo2016, dmi_costanzo2016, env_chemgen_hoepfner2014). Reproducible only against
+# the PRE-fix dev stores the KG 4.0 rebuild replaces, so they are tracked -- the files were
+# committed without this exception, which left them tracked and ignored at the same time, so
+# a regenerated one would not be picked up by `git add`.
+!content_id_collision_scan.json
+!content_id_collision_scan_*.json
+# The pre-build verification of the integrated branch (lane P, 2026-10-15): the nine stores
+# built from it and the CSV endpoint gate over their generated directories. Same reason, and
+# the same missing exception.
+!prebuild_verify_stores.json
+!prebuild_verify_csv_endpoint_gate.json

@@ -332,13 +332,14 @@ each from a rule already in force:
   build and no commit may land between the tag and the import. That makes the bump commit
   the last commit on `main` before the sweep by construction.
 
-At the time of writing, `main` is `7da9bfac0` and the integration branch is
-`b5c5549d8`. The pairing commit does not exist yet: it is created by step 2 below, after
-`ontology-unify` and this release prep have landed, after lane U's P5 record is on the
-branch, and after lane Q's two fixes land or are deferred in writing. P5 moves the schema
-surface, so a tag cut before it lands would pair the release with a package whose surface
-the store was not serialized under, which is exactly the failure the pairing gates exist
-to prevent. The release id will be `<build date>-<that commit's first 8 hex>`.
+At integration 3, `main` is `b123a9d56` and the integration branch's gate head is
+`77facd140`, carrying all twelve schema-change records (P5 and lane Q's two fixes among
+them, so both conditions this paragraph used to wait on are met). The pairing commit still
+does not exist: it is created by step 2 below, after `ontology-unify` and this release prep
+have landed. P5 moves the schema surface, so a tag cut before it lands would pair the
+release with a package whose surface the store was not serialized under, which is exactly
+the failure the pairing gates exist to prevent. The release id will be
+`<build date>-<that commit's first 8 hex>`.
 
 **The changelog entry.** `CHANGELOG.md` stops at `v0.2.8` by its own note and releases
 from `v1.0.0` on are listed on the GitHub Releases page, so the entry is this section

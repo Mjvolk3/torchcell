@@ -14,11 +14,14 @@ command. Nothing here has run: this is the plan the measurements of lanes A to Q
 [[database.kg-4-pre-build-verification]]). The release note the build ships with is
 [[database.kg-4-release-note]]; the version and pairing rules are in [[versioning]].
 
-KG 4.0 carries **ten** schema-change records, not the four this checklist was first
+KG 4.0 carries **twelve** schema-change records, not the four this checklist was first
 written for: the owner folded P5 (the strain background) into this rebuild, lane Q added
-the deletion `construction` field, lane R corrected the three audit flags and lane T
-gave a construct span its parts. All ten are integrated on `ontology-unify` at
-`21456d696`. Step 0 below is what holds the build until the branch lands.
+the deletion `construction` field, lane R corrected the three audit flags, lane T gave a
+construct span its parts, lane V put the curated reference on an essentiality call and
+lane X typed a medium's composition. All twelve are integrated on `ontology-unify` at
+`77facd140` (integration 3, which also folded lane W, a verification fix carrying no
+schema symbol and so no record). Step 0 below is what holds the build until the branch
+lands, and the GO/NO-GO page at the end of this note is the one-page version of it.
 
 Read [[database.constitution]] and the `/torchcell-db-build` skill before step 1.
 
@@ -26,14 +29,15 @@ Read [[database.constitution]] and the `/torchcell-db-build` skill before step 1
 
 | # | step | how | source |
 |---|---|---|---|
-| 0.1 | **DONE** Lane Q's two fixes are on the branch (Ozaydin's 31 byte-identical records, Caudal's out-of-vocabulary `host_genome`) | `git log origin/ontology-unify` reads `958a4f4be` | integration 2, 2026-10-15 |
-| 0.2 | **DONE** Lane U's P5 integrated: the shared strain-background base and the merged `BackgroundAllele` in `schema.py`, `BacterialGeneNamespace` and `BACTERIAL_LOCUS_TAG_PATTERNS` gone, `StrainReferenceGenome.background` collapsed onto the base and still required | `ls database/schema_changes/2026-10-15-*` reads ten; head `21456d696` | coordinator, 2026-10-15: P5 is in this rebuild, not the next |
-| 0.3 | `ontology-unify` landed on `main`, with all ten schema-change records and this release prep | merge queue | lane P verdict: the branch is safe to sweep and build |
-| 0.4 | **DONE** `tests/torchcell/datamodels/test_schema_change_records.py` AND `scripts/check_schema_change_records.py` pass with NO `TORCHCELL_SCHEMA_RECORD_ACK`, with the ten records owning 146 of 146 moved symbols, one owner each | pytest plus the tripwire | integration 2: 4 passed, tripwire "every schema change vs origin/main is recorded" |
-| 0.5 | **DONE on the branch head**, to be re-run on the landed head: ruff, format, strict mypy, the FULL `tests/torchcell` tree | pre-commit plus pytest | integration 2 on `21456d696`: 15,913 passed, 1,164 skipped, 10 xfailed, 1 failed in 15 min 38 s; the one failure is `test_s288c_synthetic.py::test_concurrent_processes_keep_the_original_pair_over_an_earlier_one`, a four-real-subprocess race over a hot SQLite journal that passes 5 of 5 in isolation and 262 of 262 with its whole file, did not fail in the earlier full run of this same tree, and lives in a file no lane on this branch touches; mypy clean over 549 changed files |
-| 0.6 | **DONE** The four supported queries parse and name no retired label, re-run after P5, R and T | `PYTHONPATH=. python experiments/database/scripts/kg4_release_prep_checks.py queries` | integration 2: all four clean, result byte-identical to lane M's |
-| 0.7 | **DONE** The release note's `pending` P5 rows carry the record's tool-computed numbers, and the ten records' scope is the one measured on the integrated head | read `database/schema_changes/2026-10-15-*.json` | [[database.kg-4-release-note]], the ten-record table |
-| 0.8 | Lanes V, S and W closed out or deferred in writing (V: the remaining content-id collisions; S: the generation profile; W: the environment-identity verdict) | check-in log | integration 2, 2026-10-15: all three still out when the ten records were consolidated |
+| 0.1 | **DONE** Lane Q's two fixes are on the branch (Ozaydin's 31 byte-identical records, Caudal's out-of-vocabulary `host_genome`) | `git log origin/main..ontology-unify` reads "the deletion strain's collection position is on the record" | integration 2, re-based at integration 3 |
+| 0.2 | **DONE** Lane U's P5 integrated: the shared strain-background base and the merged `BackgroundAllele` in `schema.py`, `BacterialGeneNamespace` and `BACTERIAL_LOCUS_TAG_PATTERNS` gone, `StrainReferenceGenome.background` collapsed onto the base and still required | `ls database/schema_changes/2026-10-15-*` reads twelve; head `77facd140` | coordinator, 2026-10-15: P5 is in this rebuild, not the next |
+| 0.3 | `ontology-unify` landed on `main`, with all twelve schema-change records and this release prep | merge queue | lane P verdict: the branch is safe to sweep and build |
+| 0.4 | **DONE** `tests/torchcell/datamodels/test_schema_change_records.py` AND `scripts/check_schema_change_records.py` pass with NO `TORCHCELL_SCHEMA_RECORD_ACK`, with the twelve records owning 149 of 149 moved symbols, one owner each and none exempt | pytest plus the tripwire | integration 3: 4 passed, tripwire "every schema change vs origin/main is recorded" |
+| 0.5 | **DONE on the branch head**, to be re-run on the landed head: ruff, format, strict mypy, the FULL `tests/torchcell` tree | pre-commit plus pytest | integration 3 on `77facd140`, numbers in the GO/NO-GO page below; `ruff check torchcell tests` and `ruff format --check` clean, strict mypy clean over the 555 changed gate-scope files |
+| 0.6 | **DONE** The four supported queries parse and name no retired label, re-run on the final head after V, W and X | `PYTHONPATH=$PWD python experiments/database/scripts/kg4_release_prep_checks.py queries --worktree` | integration 3: all four parse, 0 missing labels, 0 missing relationship types, 0 missing properties, and the only drift is the same ten `contract_changed` details lane M measured from `main`. The output file is regenerable and deliberately untracked, so it is re-run rather than diffed |
+| 0.7 | **DONE** The release note's `pending` P5 rows carry the record's tool-computed numbers, and the twelve records' scope is the one measured on the integrated head | read `database/schema_changes/2026-10-15-*.json` | [[database.kg-4-release-note]], the twelve-record table |
+| 0.8 | **DONE** Lanes V, S, W and X all closed out in writing (V: the remaining content-id collisions and the manifest guard; S: the bacterial generation profile, landed on `main`; W: the environment-identity verdict; X: the media composition fidelity) | check-in log | integration 3, 2026-10-15: all four folded in, S on `main` underneath the branch |
+| 0.9 | **ONE OWNER DECISION OPEN, and it is a label rather than a change**: lane V's essentiality record carries `ESSENTIALITY_EVIDENCE_FIELDS[rename]`, which `SIGN_OFF_KINDS` makes a sign-off kind, although the dict's 6 keys are identical before and after and only one key's tuple gained a name | measured in the GO/NO-GO page below | integration 3 verified it is a `binding_members` rendering artifact |
 
 ### 1. Cut the pairing release, and build only from its tag
 
@@ -78,11 +82,21 @@ so the driver either copies them out or runs the loop above and releases by hand
 
 ### 3. Prune the superseded store copies on `/scratch`
 
-Measured 2026-10-15: `/scratch` is **78 percent full with 1.6 T free**, and **405
-`*superseded*` directories hold 669 G** under
-`/scratch/projects/torchcell-scratch/data/torchcell/`. Each is a previous `processed/` or
-`preprocess/` that an earlier `--retire-existing` renamed aside, and the sweep in step 4
-creates one more per store.
+Measured 2026-10-15, re-measured at integration 3: `/scratch` is **78 percent full with
+1.6 T free**, and **407 `*superseded*` directories hold 669 G** under
+`/scratch/projects/torchcell-scratch/`. Each is a previous `processed/` or `preprocess/`
+that an earlier `--retire-existing` renamed aside, and the sweep in step 4 creates one
+more per store.
+
+`/db` is **68 percent full with 2.4 T free**, and 414 G of it is the Hoepfner generation
+study's three output directories
+(`/db/database/biocypher-out/hoepfner-study-2026-10-15_04-20-20`, `-04-21-22-chunk256`
+and `-04-21-22-w32`, 138 G each, measured at integration 3). The study is CLOSED and its
+numbers are in [[experiments.database.hoepfner-generation-study]], so the directories are
+reproducible output rather than evidence, and reclaiming them is the owner's call. The
+job 4901 partial is a further 383 G (`biocypher-out/2026-10-14_03-53-33`) and an earlier
+partial 170 G; the 4.0 build writes about 380 G of CSV, so `/db` does not gate the build
+either way.
 
 Move them, never delete them, and `trash` is not installed on this host (memory:
 `trash-not-installed-on-gilahyper`):
@@ -106,8 +120,9 @@ sbatch --array=1-$(wc -l < "$CLASSES")%4 --export=ALL,CLASSES_FILE="$CLASSES" \
 ```
 
 Every store reads stale against the landed branch, which is correct: the records
-move every closure, and lane A's `MANIFEST_SCHEMA_VERSION = 2` adds
-`BuildManifest.perturbation_leaves`, so a version 1 manifest is stale on its own.
+move every closure, and the manifest schema is now at **version 3**, lane A's
+`perturbation_leaves` plus lane V's `content_id_collisions`, so a version 1 or 2 manifest
+is stale on its own.
 
 The tier sizes, from the 2026-10-13 arrays (4685, 4686, 4687, 4866, 4897; 194 task logs)
 and the decision note's overestimated sizing table. The committed array script is a
@@ -124,6 +139,24 @@ Lane P's nine stores confirm the tiers hold with at least **3x memory margin** (
 store 10.0 GB peak resident against the 32 G small tier). Calendar floor **7 to 11 h**,
 set by the longest `l` store plus the `l` tier at `%3`. Tasks are independent, so recovery
 is re-running the named task alone.
+
+**Add lane V's collision guard to this step, not to generation.** The manifest now hashes
+every record's resolved experiment dump in the same single pass as the leaf walk, which
+lane V measured at about **+48 min on Hoepfner's `write_build_manifest` and +30 min per
+Costanzo store, roughly 1 h 48 min across the three largest**. All three are `l`-tier
+stores running at `%3`, so the guard lands on the tier that already sets the calendar: the
+7 to 11 h floor becomes roughly **9 to 13 h**. The digest form is bounded rather than
+convenient (whole 32-byte digests in one buffer plus the keys as a blob with offsets,
+grouped by a stable numpy argsort, about 1.5 GB for Hoepfner's 30.3 M records against
+roughly 6.5 GB for the dict-and-list form), so the tier memory does not move.
+
+**The guard REFUSES at the rebuild preflight, so a surprise here stops the build rather
+than being reported.** `build_dataset_lmdb.mapped_store_collisions` runs in the live
+rebuild's preflight right beside the lane walk, and the only written escape is
+`EXPECTED_CONTENT_ID_COLLISIONS`, which names `env_chemgen_mota2024` at exactly 2 and
+nothing else. If the sweep surfaces a collision in a store nobody has scanned, the
+preflight names it and the build does not start; that is the intended behavior and not a
+failure of the sweep.
 
 One adapter to watch that lane P's sample did not cover: **Mutalik 2020** (286,344
 records, 37 G store-build resident on 2026-10-13) stays in the standard tier, so check it
@@ -184,6 +217,52 @@ itself with `--dependency=afterany` and exits so the node is not held by a waiti
 Startup is 15.8 s mean on the prebuilt image against 255.9 s on the install path, which
 saves about 11.3 h of CPU time and 2.8 h of wall clock across 170 tasks; a same-commit
 rebuild of the image is free on the layer cache, so a resume pays no image time (lane C2).
+The conductor resolves the image once and passes it to every task as `GEN_IMAGE`, which is
+lane S's hook on `main` at `0a238c967`.
+
+**The array's calendar, now measured rather than estimated (lane S, job 4974, 141 tasks
+completed, 47 adapters profiled).** Every one of the 170 tasks is charged a number measured
+somewhere, and only the arithmetic is projected:
+
+| tier | tasks | concurrency | measured tasks | task seconds | projected wall | basis |
+|---|---:|---:|---:|---:|---:|---|
+| `standard` | 157 | 4 | 47 | 14,368 | 1.00 h | 47 this run, 86 the job 4901 fold, 24 bounded above by one 5 s sampling interval |
+| `large` | 12 | 2 | 1 | 18,759 | 2.61 h | 1 at this tier in another run, 11 from the 4901 fold |
+| `hoepfner` | 1 | 1 | 1 | 4,569 | 1.27 h | job 4919_64's 320 G baseline |
+
+The three arrays are submitted together and run concurrently, so **the calendar is the
+largest row, about 2.6 h, not the 4.88 h serial sum**, and the bacterial tail that lane S
+existed to measure is not the cost: 157 of 170 tasks project to 1.00 h.
+
+**Critical path adapter: `PooledPromoterExpressionVaishnav2022Adapter` at 6,175 s
+(1.72 h).** It is the longest single task of the array, longer than Hoepfner's 4,558 s, and
+the `large` tier cannot go below it however the other 11 are packed. Job 4901 measured it
+at 1.1 cores mean of 64 with 0 recycles at a mean 110 G, so it is neither core-bound nor
+memory-throttled but **parent-bound**, and the `large` tier's 32 CPUs will not shorten it.
+
+Two caveats lane S labeled, both of which can only make the array slower:
+
+- **97 of the 170 charges come from the job 4901 serial container**, which gave every
+  adapter 64 CPUs and a cumulative heap. `DmfCostanzo2016Adapter`, `DmiCostanzo2016Adapter`
+  and `Hale2024Adapter` ran at 60.8, 60.0 and 51.4 cores mean there and get 32 in the
+  `large` tier, so the understatement is bounded at about 2x on three tasks of the tier
+  that sets the calendar: a `large` tier at 2x its charge is **5.2 h rather than 2.6 h**.
+- **Pool recycling is the one thing that could invalidate it.** Every task of lane S's run
+  recycled 0 times, and the Hoepfner study measured a 5.1x penalty once a container crosses
+  0.8 of its memory limit, so an adapter approaching its tier is multiples slower rather
+  than a few percent. That is the whole argument for the one tier change below.
+
+**The one tier change lane S proposed is NOT in the committed table, and that is a
+one-line owner decision.** `RbTnseqBorchert2024Adapter` (1,466,920 records, the largest
+count of the bacterial tail) peaked at **33.93 GiB of its 64 G standard container, 53.0
+percent**, with 0 recycles at 14.4 of 16 cores in 522 s; the 0.8 recycling threshold of a
+64 G container is 51.2 G, which that run came within 17 GiB of on a quiet filesystem, and
+the branch is 6.6 percent heavier than `main` on the one adapter both sides measured
+(Nichols, 219 s and 12.5 GiB on the branch against 205.7 s and 11.73 GiB on `main`), which
+puts it at about 56.5 percent. `torchcell/knowledge_graphs/conf/generation_tiers.yaml`
+still lists 12 `large` adapters and Borchert is not among them, so the build as configured
+runs it at `standard`. Moving it is one line and costs the array about 4 min (522 s at
+`%2`); leaving it accepts a 1.9x margin on the adapter nearest its ceiling.
 
 **Recovery, the command to keep at hand:**
 
@@ -333,10 +412,204 @@ check `squeue` rather than `pgrep` for anything still ours (memory:
   decision for the first build, not a step here.
 - **Ozaydin 2013's 31 byte-identical records** are a loader gap the build would otherwise
   bake in, and lane Q owns it; step 0.1 is the gate.
+- **Lane W carries no record and needs none.** Its `_stored_identity_projection` change is
+  in `torchcell/verification/`, moves no schema symbol and rebuilds nothing; what it moves
+  is the L1 duplicate allowance, which is a verification property of a store and not a
+  served value.
 - **P5 is now IN this rebuild** (lane U), so it is a step-0 gate rather than future work.
-  What the plan grouped with P5 and the coordinator did not name for lane U stays open and
-  needs lane U's own answer: the `CalMorphPhenotype` and `BacterialMorphologyPhenotype`
-  rename, whose names are backwards, and the `BW25113_BACKGROUND_GENOTYPE` and `_LESIONS`
-  constants, one strain's verbatim genotype string living in `schema.py` and read by 84
-  loader closures. A rename of a served phenotype class after 4.0 is another full rebuild,
-  so if it is to happen it should happen here; that is the owner's call, not the driver's.
+  The two items the plan grouped with P5 and did not name for lane U are **done, by lane R**,
+  and they are in this rebuild rather than costing a second one: `BacterialMorphologyPhenotype`
+  became `MorphologyPhenotype` while `CalMorphPhenotype` KEPT its name (the program name
+  already states what it is specific to, and `YeastMorphologyPhenotype` would be false), and
+  the `BW25113_BACKGROUND_GENOTYPE` and `_LESIONS` constants moved to the genomes tier beside
+  the assembly set whose GenBank note they come from. Lane R also corrected the audit's radius
+  on the second one: the constants sit in 1 and 0 loader closures on THIS branch, not the 84
+  measured on `main` before the unification, so the defect was the location and not the reach.
+
+## 2026.10.15 - GO/NO-GO for the KG 4.0 sweep and build, one page
+
+Written at the end of integration 3, which folded the last three lanes (V, W, X) onto
+`ontology-unify`. The sweep is the first irreversible step of this program, so this page
+is the whole decision in one place: what is ready, what it costs, what is still unknown.
+Every number is measured and says where; nothing here is an estimate dressed as a result.
+
+### The verdict
+
+**GO on the gates. The branch is ready and nothing in it is waiting on more work.** What
+is not DONE is the landing, and it has to come first rather than alongside: the branch
+lands on `main` behind the `REL(kg):` bump commit and its tag (step 1 and step 0.3 above),
+because every landing after the sweep re-stales the dev stores and the build gate refuses
+an untagged build commit. Three smaller decisions are listed below and none of them blocks
+a start.
+
+### The branch
+
+| | |
+|---|---|
+| branch | `ontology-unify`, draft PR #1112 |
+| gate head | `77facd140` (the head this page's gate numbers were measured on) |
+| rebased onto | `main` at `b123a9d56` (lanes A, B, C, C2, N, P and S all underneath) |
+| commits ahead of `main` | 37 (36 at the gate head plus this note's own commit), linear, no merge commits, no duplicated commits |
+| schema-change records | **12**, all dated 2026-10-15, ten signed and two needing no sign-off |
+| lane PRs stacked in | #1113 #1115 #1116 #1117 #1120 #1121 #1122 #1123 #1124 #1125 #1126 #1127 |
+| schema symbols moved | **149**, each named by exactly one record, none exempt |
+| version pairing | `1.8.0`, prepared and NOT cut; the tag must point at the semantic-release bump commit the `REL` push creates |
+
+### Gate state
+
+| gate | state | measured |
+|---|---|---|
+| `ruff check` + `ruff format --check` at gate scope (`torchcell`, `tests`, `experiments/016+`) | **green** | clean, 1,313 files formatted; 21 findings remain in frozen `experiments/006`, `009`, `010`, where `main` has 44 |
+| strict mypy over the branch's 555 changed gate-scope files | **green** | `Success: no issues found` |
+| full `tests/torchcell` | **green, 0 failed** | **15,943 passed, 1,165 skipped, 10 xfailed, 0 failed** in 15 min 43 s. Integration 3 ran the tree TWICE: on `f157f6e5a` it was 8 failed / 15,935 passed, every failure one cause (two stale fake manifests against lane V's `content_id_collisions`), fixed in `77facd140`, and the re-run is clean. The known flake `test_s288c_synthetic.py::test_concurrent_processes_keep_the_original_pair_over_an_earlier_one` did NOT reproduce in either run |
+| `scripts/check_schema_change_records.py` (the tripwire) | **green, NO ack** | "every schema change vs origin/main is recorded"; liveness verified by perturbing a record and seeing 3 problems |
+| `tests/torchcell/datamodels/test_schema_change_records.py` | **green, NO ack** | 4 passed |
+| `schema_change check` | **green** | 31 records carry every change since `eb07bd213ca1` |
+| loader-to-lane exhaustiveness | **green** | lane P: 9 of 9 built stores, 170 of 170 mapped |
+| CSV endpoint gate on real generated CSVs | **green** | lane P, nine directories: 2,683,077 node rows in 20 labels, 7,972,416 edge rows in 13 labels, **0 dangling, 0 mislabeled, 0 id collisions**, 19 s |
+| `host_genome` equals the genome node's `assembly_set` | **green on real data** | lane P, every perturbation row of every adapter; this is the join the whole unification was for |
+| supported-query revalidation | **green** | re-run on this head: all four parse, 0 missing labels, 0 missing relationship types, 0 missing properties; the only drift is the same ten `contract_changed` details lane M measured from `main`, so it predates this work |
+| `TORCHCELL_SCHEMA_ACK=1`, `TORCHCELL_QUERY_DRIFT_ACK=1` | **expected** | the rebuild gate and the KG 3.0 query drift; both are the point of this branch |
+| `TORCHCELL_SCHEMA_RECORD_ACK` | **not set anywhere** | every lane needed it; the integrated branch does not |
+
+### What the compute costs, measured
+
+| step | calendar | basis |
+|---|---|---|
+| prune `/scratch` | minutes | 407 directories, `scripts/deprecate.sh`, a rename on the same filesystem |
+| sweep, 170 dev stores | **9 to 13 h** | the 2026-10-13 arrays' 7-to-11 h floor (longest `l` store 4 h 32 min, `l` tier at `%3`) plus lane V's collision guard at about +48 min on Hoepfner and +30 min per Costanzo store, roughly 1 h 48 min on the tier that sets the floor |
+| zero-stale read | minutes | `--list-stale` must print nothing |
+| generation, per-adapter array | **about 2.6 h**, and 5.2 h if the three core-bound `large` adapters run at 2x their serial-container charge | lane S, job 4974, 141 tasks completed: `standard` 157 tasks at `%4` project 1.00 h, `large` 12 at `%2` project 2.61 h, `hoepfner` 1 projects 1.27 h; the three arrays run concurrently so the calendar is the largest row, not the 4.88 h sum |
+| critical path inside it | **1.72 h, `PooledPromoterExpressionVaishnav2022Adapter`** | 6,175 s, longer than Hoepfner's 4,558 s; 1.1 cores mean of 64 at a mean 110 G with 0 recycles, so **parent-bound** and 32 CPUs will not shorten it |
+| merge plus the duplicate check | 10 min to 2 h | worst case measured at two full copies with every row duplicated on a contended disk: 1 h 55 min, 43.9 GB peak resident, 0 conflicts. Production hypothesis, untested: 10 to 30 min at 16 processes on a quiet disk |
+| CSV endpoint gate on the full build | about 25 min | 1,473 s and 40.1 GB max resident on the 383 G job 4901 partial with dataset resolution on |
+| import, validate, swap | 1 to 3 h | KG 3.0 imported 100 M node rows and 361 M edge rows in 7 min; 4.0 writes about 380 G of CSV and its import is **unmeasured** |
+| ship plus swap Radiant | about 1 h | `kg_release.sh backup/archive/ship` |
+
+**Total, about 14 to 25 h of node time** (the rows added at their low and their high ends:
+9 + 2.6 + 0.2 + 0.4 + 1 + 1 against 13 + 5.2 + 2 + 0.4 + 3 + 1), dominated by the sweep.
+The sweep and the generation array both have per-task recovery, so a failure costs the
+failed task and not the step. Hold the GPU packs from the sweep's start until the import
+finishes, and keep any other job under 24 G during the window.
+
+### Disk, measured at integration 3
+
+| | |
+|---|---|
+| `/scratch` | 7.0 T, **78 percent full, 1.6 T free**; **407 `*superseded*` directories hold 669 G** and are reclaimable |
+| `/db` | 7.3 T, **68 percent full, 2.4 T free** |
+| Hoepfner study output on `/db` | **414 G** in three directories of 138 G each; the study is CLOSED and reproducible, so this is the owner's call |
+| job 4901 partial on `/db` | 383 G, plus an earlier partial at 170 G |
+| served store and its predecessor | 150 G plus 135 G (`data.superseded.2026-10-06_04-41-16`, the rollback copy) |
+| what 4.0 needs | about 380 G of CSV on `/db`, plus one new `processed/` per store on `/scratch` |
+
+`/db` does not gate the build at 2.4 T free. `/scratch` is the one to watch: the sweep
+writes a new `processed/` per store and retires the old one aside, and the three largest
+stores are 126 GB (Hoepfner) and 78 GB each (the Costanzo pair). Pruning the 669 G first
+is not strictly required but it is the cheap way to stop watching.
+
+### Two corrections to the lane reports, so the numbers are read right
+
+- **`YeastPhenomeDataset` is NOT in the 169-entry `dataset_adapter_map`**, measured at
+  integration 3. So lane X's headline figures (474,837 of 524,682 records carrying a
+  truncated medium name, 6 tokens collapsing onto `SC`, and the 14,508 declared duplicate
+  pairs that lanes W and X together take to 0) are DEV-store fidelity facts, not served-store
+  facts. What lane X moves in the served store is `Media.dropout_roles` on every closure,
+  which is why its record is `full_kg_rebuild` over 51 served datasets, and
+  `gene_essentiality_sgd`'s "YPD with 2% glucose" carbon source across its 1,329 served
+  records. That makes the fix better rather than smaller: the defect is closed before that
+  store is served for the first time, which is the whole point of fixing it now.
+- **`experiments/database/results/kg4_release_prep_checks.json` is not tracked**, so the
+  earlier claim that a re-run was "byte-identical to the one lane M committed" was imprecise:
+  nothing was committed. The check was re-run on this head instead, and its result is in the
+  gate table above.
+
+### One thing to do before the sweep, found while measuring
+
+**A leftover lane W process is holding 117 GB of the node's 513 G and has produced
+nothing.** PID 2830717, started 13:56 CDT, 2 h 55 min elapsed and 2.6 h of CPU at
+integration 3:
+
+```
+python experiments/database/scripts/environment_response_identity_outcomes.py   --dataset env_chemgen_hoepfner2014 --data-root /scratch/projects/torchcell-scratch
+```
+
+It is reading `env_chemgen_hoepfner2014/processed/lmdb/data.mdb` and its log holds nothing
+but import warnings. **Lane W's verdict does not depend on it**: lane W re-keyed 15 stores
+end to end (9,602,177 records) and stated that Hoepfner's 30.3 M follows by monotonicity, so
+it concluded without this arm and left the process running. It is squatting 22 percent of
+the node's memory, it is the reason integration 3's own full-tree re-run ran several times
+slower than the first, and the sweep's budget is 480 G of 513 G with everything else held.
+**Reap it before the sweep**, and if its result is wanted, re-run it after the build on a
+quiet node rather than against the budget.
+
+### Three decisions for the owner, none of them blocking
+
+1. **Lane V's `rename` kind on the essentiality record is a tooling artifact, verified.**
+   The dict has 6 keys before and 6 after, identical sets; one key's tuple gained one name;
+   `binding_members` renders a dict member as `"key: value"`, so a value edit can only read
+   as one lost plus one gained, and all three kinds admissible for a "lost members" reason
+   (`rename`, `removal`, `enum_member_removed`) are sign-off kinds, so no honest label
+   avoids the sign-off. The record was left as lane V wrote it, signed with a quote that
+   says exactly this. **Confirm the reading, or tell it to re-label.** The durable fix is in
+   `schema_impact` and would move every dict-binding record's kinds, so it is its own change.
+2. **Reclaim the 669 G of superseded copies and the 414 G of Hoepfner study output, or not.**
+   Neither is evidence any more (the study's numbers are written up and reproducible), and
+   neither blocks the build.
+3. **`RbTnseqBorchert2024Adapter`'s tier.** Lane S proposed moving it from `standard` to
+   `large` and `torchcell/knowledge_graphs/conf/generation_tiers.yaml` still lists 12 `large`
+   adapters without it, so the build as configured runs it at `standard`. It peaked at
+   **33.93 GiB of 64 G, 53.0 percent**, with 0 recycles in 522 s, and the branch is about
+   6.6 percent heavier than `main` on the one adapter both sides measured, which puts it near
+   56.5 percent. The 0.8 recycling threshold of a 64 G container is 51.2 G. Moving it is one
+   line and costs the array about 4 min; leaving it accepts a 1.9x margin on the adapter
+   closest to its ceiling.
+
+### What is still unknown, stated plainly
+
+- **The 4.0 import is unmeasured.** KG 3.0's 7 min is the only datum and 4.0 writes about
+  380 G of CSV against 3.0's smaller set. The 1-to-3 h figure is a hypothesis.
+- **The per-adapter generation array has never run end to end.** Lane C's array, lane C2's
+  image and lane S's 141-task measurement all ran, but no full 170-task array has. The merge
+  step's duplicate check has only its synthetic worst case and lane P's nine directories.
+- **97 of the 170 generation charges come from job 4901's single cumulative container**, not
+  from a per-adapter container. Three of them are core-bound there (`DmfCostanzo2016Adapter`
+  60.8 cores mean, `DmiCostanzo2016Adapter` 60.0, `Hale2024Adapter` 51.4) and get 32 CPUs in
+  the array, which is the whole reason the `large` tier could be 5.2 h instead of 2.6 h.
+- **24 adapters are charged one 5 s sampling interval**, which bounds them above rather than
+  estimating them. 29 of lane S's 47 also finished inside two intervals, so the shape holds.
+- **The bacterial tail has never been generated from the branch.** Lane S measured it at
+  `main`, because a main-built dev store cannot be unpickled by branch code (`ReleasedGeneKind`
+  retired), and the transfer is calibrated on one adapter: Nichols at 219 s and 12.5 GiB on
+  the branch against 205.7 s and 11.73 GiB on `main`, so about 6.6 percent slower and heavier.
+  That is one ratio, not a fitted model. The sweep is what makes a branch measurement possible
+  at all, which is why it comes first.
+- **`Mutalik 2020` is the sweep task to watch**: 286,344 records and 37 G store-build resident
+  on 2026-10-13 against the 64 G standard tier, and lane P's nine-store sample did not cover it.
+- **The three dev stores that can no longer be unpickled** (`betaxanthin_cachera2023`,
+  `carotenoid_ozaydin2013`, `crispri_mormino2022`) are expected, not a defect: `ReleasedGeneKind`
+  retired and those are exactly the served datasets the records name. The sweep rebuilds them.
+- **A collision the sweep surfaces stops the build**, by design: the preflight refuses on any
+  undeclared `content_id_collisions` and the only written escape names `EnvChemgenMota2024Dataset`
+  at exactly 2. 179 stores and 102,263,636 records have been scanned, so a surprise is unlikely
+  rather than impossible.
+- **The sweep procedure as executed on 2026-10-13 is not reproducible from the repository**:
+  `sweep_conductor.sh` and `release_held.sh` exist only in a session scratchpad (lane M). That
+  is a provenance gap of exactly the kind the constitution exists to prevent, and it should be
+  committed before the 4.0 sweep rather than after.
+- **Two retired bacterial graph labels and every content id change**, so no KG 3.0 query that
+  names them and no id-based comparison survives. That is intended and disclosed in
+  [[database.kg-4-release-note]].
+- **Lane T's compound-span shape is the one breaking design in this program decided by an
+  agent rather than by an owner ruling**, and lane T said so in its own sign-off. It is right
+  by the INSDC grammar and round-trips 570 of 570 features byte for byte, but it deserves a
+  look before the branch lands.
+
+### The irreversibility boundary
+
+Nothing before `neo4j-admin database import` touches the served store. The sweep rewrites
+the dev tree (recoverable: every store rebuilds from its sha256-pinned raw mirror, which is
+what the 9-to-13 h is), the generation array writes CSV beside it, and the import builds a
+NEW store on `/db` which only then swaps in, leaving the old one as `data.superseded.<ts>`
+for rollback. So the honest reading is that the expensive irreversible thing is **time**,
+not data: a sweep that has to be redone costs most of a day.

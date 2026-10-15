@@ -9,16 +9,17 @@ created: 1792084483185
 ## 2026.10.15 - KG 4.0 release note, prepared before the build
 
 **Status: nothing described here is served yet.** This is the note the KG 4.0 release
-ships with, written from the branch that will be built (`ontology-unify`, at
-`b5c5549d8` when this was written, rebased on `main` at `d9eefcbd7`) and from the
-measurements lanes A to U recorded while that branch was made
+ships with, written from the branch that will be built (`ontology-unify`) and from the
+measurements lanes A to X recorded while that branch was made
 ([[scratch.2026.10.15.ontology-unification-decision]],
-[[database.kg-4-pre-build-verification]]). Lanes Q, M, R, T and U are integrated and the
-branch head is `21456d696`; the numbers below are that head's, not the per-lane ones.
-Lanes V (the remaining content-id collisions), S (the generation profile) and W (the
-environment-identity verdict) are still out. The release id, the node and relationship
-totals and the final per-dataset counts are filled in by the build; every other number
-below is measured and cited. The store being served today is KG 3.0
+[[database.kg-4-pre-build-verification]]). **Every lane is integrated** and the branch's
+gate head is `77facd140`, rebased on `main` at `b123a9d56`; the numbers below are that
+head's, not the per-lane ones. Lane S's bacterial generation profile landed on `main`
+underneath it, and lane W is on the branch carrying no record, because its change is in
+`torchcell/verification/` and moves no schema symbol. The decision this note supports is on
+one page at the end of [[database.kg-4-pre-build-checklist]]. The release id, the node and
+relationship totals and the final per-dataset counts are filled in by the build; every
+other number below is measured and cited. The store being served today is KG 3.0
 (`2026.10.06-4b293d34`), paired with package `v1.6.2`.
 
 The one thing a current user must read is **The KG 3.0 defect a 4.0 query no longer
@@ -55,19 +56,21 @@ KG 4.0 serves **170 mapped datasets** (169 public plus 1 private,
 *E. coli* and *P. putida*, against KG 3.0's 51 yeast datasets. It is the first store
 built after the ontology unification, which removes the split that let the same physical
 measurement exist as two classes depending on which host the data came from
-([[database.constitution]], principle 1). Ten schema changes carry it, each with its own
-record under `database/schema_changes/`, nine of them signed off by the owner on
-2026-10-15 and the tenth (Q's `construction` field) adding an optional field, which needs
-no sign-off. Five were not in this note's first version: Q's deletion `construction`, the
-three names it listed as deliberately left alone and which lane R corrected instead, and
-T's compound construct span. So KG 4.0 carries the whole unification and no bacterial
-class survives into the next release.
+([[database.constitution]], principle 1). Twelve schema changes carry it, each with its
+own record under `database/schema_changes/`, ten of them signed off by the owner on
+2026-10-15 and two (Q's `construction` field and X's `Media.dropout_roles`) adding an
+optional field, which needs no sign-off. Seven were not in this note's first version: Q's
+deletion `construction`, the three names it listed as deliberately left alone and which
+lane R corrected instead, T's compound construct span, V's curated reference id and X's
+media composition. So KG 4.0 carries the whole unification and no bacterial class
+survives into the next release.
 
-The ten records partition the change exactly: 146 schema symbols moved against
-`origin/main`, every one of them is named by exactly one record, and no record names a
-symbol that did not move (measured on the integrated head).
+The twelve records partition the change exactly: 149 schema symbols moved against
+`origin/main`, every one of them is named by exactly one record, no record names a symbol
+that did not move, and none is exempt under the "new symbol in no served closure" escape
+hatch (measured on the integrated head, integration 3).
 
-### The ten schema changes, and what each makes true that was not true before
+### The twelve schema changes, and what each makes true that was not true before
 
 | record | what it makes true | symbols | served datasets | loaders |
 |---|---|---:|---:|---:|
@@ -81,6 +84,8 @@ symbol that did not move (measured on the integrated head).
 | `2026-10-15-morphology-phenotype-is-the-general-class-calmorph-is-the-specific-one.json` (R, PR #1122) | The general morphology class is `MorphologyPhenotype` and the specific one is `CalMorphPhenotype`, which was backwards | 3 | 0 | 1 |
 | `2026-10-15-bw25113-background-genotype-leaves-the-schema-surface.json` (R, PR #1122) | A strain's verbatim background genotype is data about one deposited assembly set, so it lives in the genomes tier beside that set and not on the schema surface | 2 | 0 | 0 |
 | `2026-10-15-construct-span-holds-the-parts-of-a-compound-location.json` (T, PR #1123) | A feature's location is the ordered parts it is made of plus how they compose, so an origin-wrapping or joined span is the span the source wrote and not its envelope | 3 | 51 | 121 |
+| `2026-10-15-curated-reference-pubmed-id-on-gene-essentiality-evidence.json` (V, PR #1125) | A curated essentiality call states which report it was curated from, so one gene curated from three papers is three annotations and not one node | 2 | 1 | 6 |
+| `2026-10-15-media-dropout-roles-and-growth-phase-identity.json` (X, PR #1127) | A medium's dropout is a typed role on the medium, so a composition the source states only inside the medium's name reaches a field instead of being dropped; and the growth phase is identity-bearing | 1 | 51 | 120 |
 
 The served and loader columns are the record's own tool-computed scope on the integrated
 head, which is not the scope each lane measured alone, and the difference is the
@@ -88,7 +93,10 @@ unification composing: P5 puts a `ConstructPlacement` on `IntegratedCassette`, w
 hangs off every `StrainReferenceGenome`, so P4's placement classes, T's span parts and
 R's variant vocabulary reach every served closure (51 datasets, 121 loaders) instead of
 the 3 datasets each measured on its own branch. Every one of them was already a
-`full_kg_rebuild`, so the build decision does not move; the recorded radius does.
+`full_kg_rebuild`, so the build decision does not move; the recorded radius does. V is the
+counter-example that shows the effect is a real reach and not an artifact of the tool: its
+two symbols sit inside `GeneEssentialityEvidence` and reach 1 served dataset and 6 loaders,
+measured on the same integrated head.
 
 In more detail, and with what each closes:
 
@@ -179,11 +187,45 @@ In more detail, and with what each closes:
   pairs of byte-identical records are 31 pairs of distinct records rather than 31 nodes
   lost to content-id dedup. A scan of 176 dev stores and 30,543,838 records found the
   collision in that one store ([[experiments.database.scripts.content_id_collision_scan]]).
+- **V, a curated call states its reference.**
+  `GeneEssentialityEvidence.curated_reference_pubmed_id` carries the PubMed id of the
+  annotation the call rests on, under `ESSENTIALITY_EVIDENCE_FIELDS[curated_null_phenotype]`.
+  It recovers **18 of `gene_essentiality_sgd`'s 1,329 records**, which KG 3.0 serves and
+  which the graph held as 1,311 `Experiment` nodes, because 17 (gene, allele, condition)
+  groups are curated from two or three different papers (MRS6 from PubMed 7750142, 8132658
+  and 7882424) and the PubMed id lived only on the record's `Publication`, outside the
+  experiment dump. Lane V also extended the scan to the three stores lane Q was too large
+  to read: `dmf_costanzo2016`, `dmi_costanzo2016` and `env_chemgen_hoepfner2014`,
+  **71,719,798 records, 0 collision groups**, so the dev tree is measured end to end at
+  179 stores and 102,263,636 records and the damage is bounded at the four small stores.
+  `env_chemgen_mota2024`'s 2 collisions are a **source duplication with no fix** (the rows
+  are equal in every released column but a trailing non-breaking space that 19 to 23 rows
+  per sheet carry as noise), so the store keeps both released rows, the graph holds one
+  node, and the number is declared in `EXPECTED_CONTENT_ID_COLLISIONS` as an exact count.
+  From 4.0 on, `BuildManifest.content_id_collisions` records the count on every store at
+  build time (`MANIFEST_SCHEMA_VERSION` 3) and the rebuild preflight REFUSES on an
+  undeclared one, because 65 records went into three KG releases while the number was
+  computable all along.
+- **X, a medium's composition reaches a field.** `Media.dropout_roles` types the carbon and
+  nitrogen dropout forms, and `Environment.growth_phase` joins the optional identity
+  fields. In the served store the change that moves data is
+  `gene_essentiality_sgd`'s `YPD with 2% glucose`, whose carbon source and dose reached no
+  typed field and now do, across all 1,329 served records. `growth_phase` is correct but
+  currently inert: 4 of 181 dev stores state it, all Schmidt 2016, and 0 environments merge
+  without it. The larger half of lane X's measurement is a DEV-store fidelity fix and not a
+  served-store change, because `YeastPhenomeDataset` is not in the 169-entry
+  `dataset_adapter_map`: that loader stored `media_field.split("+")[0]` and so
+  **474,837 of 524,682 records carried a name that is not the released token**, with 6
+  tokens collapsing onto `SC`, 6 onto `YPD` and 5 onto `SD`, and 3 environment identities
+  each reached from more than one released medium across 53,951 records. It is fixed before
+  that store is ever served. The shape is not confined to it: 7 of 181 readable stores
+  carry composition inside a name, one more is fixed here (`gene_essentiality_sgd`) and
+  four are listed with counts and reasons for being left.
 
-The records chain into one coherent change: on the integrated head of all ten,
+The records chain into one coherent change: on the integrated head of all twelve,
 `tests/torchcell/datamodels/test_schema_change_records.py` and
 `scripts/check_schema_change_records.py` both pass **without**
-`TORCHCELL_SCHEMA_RECORD_ACK`, with each of the 146 moved symbols owned by exactly one
+`TORCHCELL_SCHEMA_RECORD_ACK`, with each of the 149 moved symbols owned by exactly one
 record.
 
 ### Two bacterial graph classes are retired, and what replaces them
@@ -357,11 +399,14 @@ only if the sweep reproduces it; the branch reproduces the main-built dev tree r
 record on all nine stores lane P verified (0 lost, 0 extra). And one row is a known
 undercount in the graph rather than in the store: Ozaydin 2013's 4,607 records contain 31
 pairs that are byte-identical as records, because the released sheet distinguishes them
-by record number, plate and well and the record carries none of those, so the graph holds
-4,576 `Experiment` nodes for 4,607 records and **31 released measurements are in the LMDB
-and not in the graph**. That is pre-existing on `main`, not caused by the unification, and
-whether the loader carries the source's record number before or after 4.0 is the owner's
-call.
+by record number, plate and well and the record carries none of those. That was
+pre-existing on `main` and not caused by the unification, and **it is fixed in 4.0**: lane
+Q puts the released batch, plate and well on the record, so the graph holds 4,607
+`Experiment` nodes for 4,607 records. Lane V closed the same class on the three remaining
+stores, so across the dev tree **63 records that KG 3.0 and its two predecessors lost to
+content-id dedup are recovered** (31 Ozaydin, 18 SGD essentiality, 14 Lamoureux growth
+rate), and the only declared remainder is Mota 2024's 2, where the source itself duplicated
+the row.
 
 ### Supported queries: expected drift
 
@@ -382,9 +427,12 @@ checkout's own graph schema (the schema 4.0 will serve):
   every class under that label, and every dataset each query selects is still served.
   `BacterialPerturbation` is absent from all four.
 - The `contract_changed` drifts are **expected and pre-existing**, not caused by the
-  unification: the identical ten drift details are reported from `main` at `7da9bfac0`
-  and from the branch at `b5c5549d8`, so they describe the distance from KG 3.0's
-  recorded closures, which this release closes by rebuilding.
+  unification: lane M reported the identical ten drift details from `main` at `7da9bfac0`,
+  and the same ten come back from the branch's gate head `77facd140` (re-run at integration
+  3: 1, 2, 3 and 4 details over the four queries), so they describe the distance from KG
+  3.0's recorded closures, which this release closes by rebuilding. The check's output file
+  `experiments/database/results/kg4_release_prep_checks.json` is regenerable and
+  deliberately not tracked, so it is re-run rather than compared.
 - Each query's `dataset_composite` **will change**, and the new value cannot be computed
   before the build. The composite is the sha256 over the selected datasets'
   `content_sha256` values, which are the swept dev stores' content hashes recorded by
@@ -415,7 +463,7 @@ with `git show <tag>:torchcell/datamodels/schema.py` and `pydant.py`, the same i
 | `v1.7.3` | incompatible | 51 | 0 | 51 |
 | `v1.7.4` | incompatible | 51 | 0 | 51 |
 | `v1.7.5` | incompatible | 51 | 0 | 51 |
-| branch `b5c5549d8` | incompatible | 51 | 0 | 51 |
+| branch `77facd140` | incompatible | 51 | 0 | 51 |
 
 So for a **`v1.7.5` client**:
 

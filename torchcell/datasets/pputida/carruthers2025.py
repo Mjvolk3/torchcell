@@ -40,9 +40,9 @@ Everything added on top of it is a perturbation in ``Genotype``:
 
 - the five heterologous pIY670 pathway genes as ``HeterologousPathwayPerturbation``
   (IY1449b + pIY670 IS the production strain IY1452b), and
-- each guide target as a ``BacterialCrisprInterferencePerturbation`` with its ``PP_``
+- each guide target as a ``CrisprInterferencePerturbation`` with its ``PP_``
   locus tag (``ProteomeCarruthers2025Dataset`` adds the chromosomal ``PP_0815``
-  knockout its panel was built in as a ``BacterialDeletionPerturbation``).
+  knockout its panel was built in as a ``DeletionStrainPerturbation``).
 
 THE CHASSIS, AND A SOURCE DISAGREEMENT KEPT RATHER THAN RESOLVED BY PREFERENCE. Two
 mirrored statements of IY1449b's genotype do not match. Methods: "The selected chassis
@@ -180,8 +180,6 @@ from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
     BacterialAssemblySet,
     BacterialBackgroundAllele,
-    BacterialCrisprInterferencePerturbation,
-    BacterialDeletionPerturbation,
     BacterialGeneNamespace,
     BacterialProteinAbundanceExperiment,
     BacterialProteinAbundanceExperimentReference,
@@ -191,8 +189,10 @@ from torchcell.datamodels.schema import (
     Concentration,
     ConcentrationUnit,
     CrisprConstruct,
+    CrisprInterferencePerturbation,
     CultureEnvironment,
     CultureFormat,
+    DeletionStrainPerturbation,
     EndpointRule,
     Experiment,
     ExperimentReference,
@@ -1792,9 +1792,9 @@ def pathway_perturbations() -> list[HeterologousPathwayPerturbation]:
 
 def crispri_perturbation(
     locus_tag: str, gene_name: str
-) -> BacterialCrisprInterferencePerturbation:
+) -> CrisprInterferencePerturbation:
     """One dCas9 knockdown of a KT2440 gene; the spacer was never released."""
-    return BacterialCrisprInterferencePerturbation(
+    return CrisprInterferencePerturbation(
         systematic_gene_name=locus_tag,
         perturbed_gene_name=gene_name,
         gene_namespace=KT2440_NAMESPACE,
@@ -1804,16 +1804,14 @@ def crispri_perturbation(
     )
 
 
-def deletion_perturbation(
-    locus_tag: str, gene_name: str
-) -> BacterialDeletionPerturbation:
+def deletion_perturbation(locus_tag: str, gene_name: str) -> DeletionStrainPerturbation:
     """One chromosomal gene deletion of a Cpf1-built KO background.
 
     Built from exactly the three fields the proteome family's ``PP_0815`` deletion
     already carries, so the same genotype is the same object in both families: the
     JBEI registry part id of each background goes to ``preprocess/``, not here.
     """
-    return BacterialDeletionPerturbation(
+    return DeletionStrainPerturbation(
         systematic_gene_name=locus_tag,
         perturbed_gene_name=gene_name,
         gene_namespace=KT2440_NAMESPACE,
@@ -1844,6 +1842,7 @@ def native_copy_perturbation(
     """
     return GeneAdditionPerturbation(
         systematic_gene_name=locus_tag,
+        gene_namespace=KT2440_NAMESPACE,
         perturbed_gene_name=gene_name,
         source_organism=SPECIES,
         is_heterologous=False,
@@ -4111,7 +4110,7 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
         self,
         sample: str,
         pathway: list[HeterologousPathwayPerturbation],
-        background_deletion: BacterialDeletionPerturbation,
+        background_deletion: DeletionStrainPerturbation,
         common: dict[str, str],
     ) -> Genotype:
         """The strain one proteome sample was taken from.
@@ -4216,7 +4215,7 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
         reference_genome = chassis_reference(genome)
         environment = production_environment()
         pathway = pathway_perturbations()
-        background_deletion = BacterialDeletionPerturbation(
+        background_deletion = DeletionStrainPerturbation(
             systematic_gene_name=PROTEOME_BACKGROUND_DELETION,
             perturbed_gene_name=PROTEOME_BACKGROUND_DELETION,
             gene_namespace=KT2440_NAMESPACE,
@@ -5650,7 +5649,7 @@ def _is_campaign_record(record: Mapping[str, Any]) -> bool:
     -- is scoped by this predicate, so a panel record can never be joined to an oracle
     that does not describe it.
     """
-    return not ({"bacterial_deletion", "gene_addition"} & _perturbation_types(record))
+    return not ({"deletion_strain", "gene_addition"} & _perturbation_types(record))
 
 
 def _l1_panel_partition(records: Sequence[dict[str, Any]]) -> LevelResult:
@@ -5716,12 +5715,12 @@ def _l4_ko_array_titer_vs_results_text(
             frozenset(
                 perturbation["systematic_gene_name"]
                 for perturbation in experiment["genotype"]["perturbations"]
-                if perturbation["perturbation_type"] == "bacterial_deletion"
+                if perturbation["perturbation_type"] == "deletion_strain"
             ),
             frozenset(
                 perturbation["systematic_gene_name"]
                 for perturbation in experiment["genotype"]["perturbations"]
-                if perturbation["perturbation_type"] == "bacterial_crispr_interference"
+                if perturbation["perturbation_type"] == "crispr_interference"
             ),
         )
         for label, genotype in genotypes.items():
@@ -5856,7 +5855,7 @@ def _l4_titer_vs_supplementary_data_1(
         targets = [
             perturbation["systematic_gene_name"]
             for perturbation in experiment["genotype"]["perturbations"]
-            if perturbation["perturbation_type"] == "bacterial_crispr_interference"
+            if perturbation["perturbation_type"] == "crispr_interference"
         ]
         if len(targets) == 1:
             by_tag.setdefault(targets[0], []).append(experiment["phenotype"]["titer"])
@@ -5898,7 +5897,7 @@ def _l4_proteome_vs_released_sheet(
         for record in records
         if any(
             perturbation["systematic_gene_name"] == PROTEOME_BACKGROUND_DELETION
-            and perturbation["perturbation_type"] == "bacterial_crispr_interference"
+            and perturbation["perturbation_type"] == "crispr_interference"
             for perturbation in record["experiment"]["genotype"]["perturbations"]
         )
     )
@@ -5936,7 +5935,7 @@ def _l3_panel_reference_is_stored_once(
         if {
             perturbation["systematic_gene_name"]
             for perturbation in record["experiment"]["genotype"]["perturbations"]
-            if perturbation["perturbation_type"] == "bacterial_deletion"
+            if perturbation["perturbation_type"] == "deletion_strain"
         }
         == {PROTEOME_BACKGROUND_DELETION}
     ]
@@ -6090,7 +6089,7 @@ def _l1_campaign_strain_cycles_pair_the_titers(
             sorted(
                 str(perturbation["systematic_gene_name"])
                 for perturbation in record["experiment"]["genotype"]["perturbations"]
-                if perturbation["perturbation_type"] == "bacterial_crispr_interference"
+                if perturbation["perturbation_type"] == "crispr_interference"
             )
         )
 
@@ -6196,8 +6195,7 @@ def _l4_campaign_profile_vs_deposited_matrix(
                     for perturbation in record["experiment"]["genotype"][
                         "perturbations"
                     ]
-                    if perturbation["perturbation_type"]
-                    == "bacterial_crispr_interference"
+                    if perturbation["perturbation_type"] == "crispr_interference"
                 )
             )
             == want
@@ -6273,12 +6271,12 @@ def _fold_change_contrast(record: Mapping[str, Any]) -> tuple[str, str]:
     knockdowns = sorted(
         str(perturbation["systematic_gene_name"])
         for perturbation in record["experiment"]["genotype"]["perturbations"]
-        if perturbation["perturbation_type"] == "bacterial_crispr_interference"
+        if perturbation["perturbation_type"] == "crispr_interference"
     )
     deletions = sorted(
         str(perturbation["systematic_gene_name"])
         for perturbation in record["experiment"]["genotype"]["perturbations"]
-        if perturbation["perturbation_type"] == "bacterial_deletion"
+        if perturbation["perturbation_type"] == "deletion_strain"
     )
     if len(knockdowns) != 1:
         raise AssertionError(

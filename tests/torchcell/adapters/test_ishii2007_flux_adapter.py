@@ -7,7 +7,7 @@ and (``--data``) the graph it emits from its dev-tree LMDB.
 Ishii 2007 13C net fluxes: the SAME 24 cultures, FluxExperiment. This is the FIRST
 served consumer of the `flux phenotype` graph class, which was declared with its
 `CellAdapter` methods before any dataset used it, so this test is what first
-exercises that emission path end to end. One BacterialDeletionPerturbation per
+exercises that emission path end to end. One DeletionStrainPerturbation per
 record; no environment perturbation (0 in 24).
 """
 

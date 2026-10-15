@@ -5,7 +5,7 @@
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Rousset 2018 CRISPR-dCas9 screens: BacterialEnvironmentResponseExperiment. One
-BacterialCrisprInterferencePerturbation per record, served as `bacterial perturbation`
+CrisprInterferencePerturbation per record, served as `bacterial perturbation`
 with its spacer on a `crispr construct` node. The four phage-derived screens carry
 exactly one PhagePerturbation each (`phage perturbation`); the growth screen (#905)
 carries Cui 2018's 1 nM aTc (`environment perturbation`). The two lanes partition the

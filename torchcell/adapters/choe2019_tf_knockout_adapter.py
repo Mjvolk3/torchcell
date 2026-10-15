@@ -5,7 +5,7 @@
 """BioCypher adapter exposing Choe 2019's two Keio transcription-factor knockouts as
 knowledge-graph nodes and edges.
 
-One record per strain: a single ``BacterialDeletionPerturbation`` on the BW25113
+One record per strain: a single ``DeletionStrainPerturbation`` on the BW25113
 locus-tag namespace, served as ``bacterial perturbation``, and the growth rate the
 Supplementary Fig. 6 legend states as a fraction of wild-type BW25113 in the same
 medium. One medium at one temperature with no added compound, so the

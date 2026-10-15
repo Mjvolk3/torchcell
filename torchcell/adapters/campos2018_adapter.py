@@ -5,7 +5,7 @@
 """BioCypher adapter exposing the Campos 2018 Keio growth-rate screen as
 knowledge-graph nodes and edges.
 
-One record per deletion strain: a single ``BacterialDeletionPerturbation`` served as a
+One record per deletion strain: a single ``DeletionStrainPerturbation`` served as a
 ``bacterial perturbation`` node, and the strain's maximal growth rate relative to the
 parent as a ``FitnessPhenotype``. The screen is one medium at one temperature, so no
 environment perturbation is served.

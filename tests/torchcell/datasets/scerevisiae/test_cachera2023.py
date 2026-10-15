@@ -152,6 +152,7 @@ def _cassette() -> list[GeneAdditionPerturbation]:
     return [
         GeneAdditionPerturbation(
             systematic_gene_name=systematic,
+            gene_namespace="scerevisiae_s288c_sgd_systematic",
             perturbed_gene_name=name,
             source_organism=organism,
             is_heterologous=heterologous,
@@ -182,6 +183,7 @@ def _deletion(gene: str) -> KanMxDeletionPerturbation | ReleasedGeneNamePerturba
         )
     return ReleasedGeneNamePerturbation(
         systematic_gene_name=gene,
+        gene_namespace="scerevisiae_s288c_sgd_systematic",
         perturbed_gene_name=gene,
         released_gene_name=gene,
         released_kind=ReleasedGeneKind.deletion,

@@ -812,7 +812,7 @@ def test_knockdown_genotype_is_one_crispri_perturbation_with_its_spacer(
 ) -> None:
     genotype = m.knockdown_genotype(retention.kept[0])
     (perturbation,) = genotype.perturbations
-    assert perturbation.perturbation_type == "bacterial_crispr_interference"
+    assert perturbation.perturbation_type == "crispr_interference"
     assert perturbation.systematic_gene_name == "b0001"
     assert perturbation.perturbed_gene_name == "thrL"
     assert perturbation.gene_namespace == "ecoli_k12_mg1655_bnumber"

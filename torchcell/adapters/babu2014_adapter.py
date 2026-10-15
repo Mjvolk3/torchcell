@@ -6,7 +6,7 @@
 knowledge-graph nodes and edges.
 
 One record per released (donor, recipient) pair: a two-leaf genotype of gene-level
-``BacterialDeletionPerturbation`` objects served as ``bacterial perturbation`` nodes,
+``DeletionStrainPerturbation`` objects served as ``bacterial perturbation`` nodes,
 and the signed eSGA S score as a ``GeneInteractionPhenotype``. No new graph node class
 is needed: ``gene interaction phenotype`` is already a served class (the yeast
 interaction datasets declare it), and the two leaves differ only in their ``collection``

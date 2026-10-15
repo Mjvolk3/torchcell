@@ -7,7 +7,7 @@ and (``--data``) the graph it emits from its dev-tree LMDB.
 Rapp 2026 absolute FI-MS intensities: 406 MG1655-pinned strains,
 BacterialMetaboliteExperiment on its own `measurement_type`, so an intensity is
 never compared with the fold changes metabolome_rapp2026 serves. One
-BacterialCrisprInterferencePerturbation per record, served as `bacterial
+CrisprInterferencePerturbation per record, served as `bacterial
 perturbation` with its CrisprConstruct, plus the inducer's environment
 perturbation.
 """

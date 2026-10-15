@@ -486,8 +486,8 @@ def probe_perturbation_classes() -> list[dict[str, Any]]:
             ),
         ),
         _probe(
-            "BacterialCrisprInterferencePerturbation(systematic_gene_name='b1659')",
-            lambda: s.BacterialCrisprInterferencePerturbation(
+            "CrisprInterferencePerturbation(systematic_gene_name='b1659')",
+            lambda: s.CrisprInterferencePerturbation(
                 systematic_gene_name="b1659",
                 perturbed_gene_name="ydiJ",
                 crispr=construct,

@@ -25,9 +25,9 @@ RECORD = one (deletion strain x screen condition)
   ``identifier_mapping=DerivedIdentifierMapping(route="gene_symbol")``. No ECK crosswalk
   is needed or used: the release names symbols, not another strain's locus tags. WHICH
   leaf follows the label's own suffix, since "Unless otherwise specified, the mutations
-  are precise gene deletions": a bare symbol is a ``BacterialDeletionPerturbation``, a
-  ``-SPA`` or ``-kan`` column a ``BacterialMarkedAllelePerturbation``, a ``-DAS`` or
-  ``-DAS+4`` column a ``BacterialDegronPerturbation``.
+  are precise gene deletions": a bare symbol is a ``DeletionStrainPerturbation``, a
+  ``-SPA`` or ``-kan`` column a ``MarkedAllelePerturbation``, a ``-DAS`` or
+  ``-DAS+4`` column a ``DegronPerturbation``.
 - ENVIRONMENT: the screen plate. ``SHIVER2016_LB_LENNOX_AGAR`` by default ("Chemical
   sensitivity screens used LB Lennox agar plates ... unless otherwise specified"), or
   ``SHIVER2016_M9_MINIMAL_AGAR`` for the nine conditions the release prefixes "M9min".
@@ -184,9 +184,9 @@ them, and each one carries ONLY the suffix the release wrote:
 
 | suffix | columns | leaf | fields stored |
 |---|---|---|---|
-| ``-SPA`` | 114 | ``BacterialMarkedAllelePerturbation`` | ``tag="SPA"`` |
-| ``-kan`` | 7 | ``BacterialMarkedAllelePerturbation`` | ``cassette="kan"`` |
-| ``-DAS`` / ``-DAS+4`` | 5 | ``BacterialDegronPerturbation`` | ``degron="DAS"`` / ``"DAS+4"`` |
+| ``-SPA`` | 114 | ``MarkedAllelePerturbation`` | ``tag="SPA"`` |
+| ``-kan`` | 7 | ``MarkedAllelePerturbation`` | ``cassette="kan"`` |
+| ``-DAS`` / ``-DAS+4`` | 5 | ``DegronPerturbation`` | ``degron="DAS"`` / ``"DAS+4"`` |
 
 The locus tag comes from a SECOND resolution pass: a suffixed label is not a symbol the
 annotation carries, so the suffix is stripped and the BASE symbol is resolved. All 126
@@ -256,13 +256,12 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import LB_LENNOX, M9
 from torchcell.datamodels.schema import (
     AssayType,
-    BacterialDegronPerturbation,
-    BacterialDeletionPerturbation,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
-    BacterialMarkedAllelePerturbation,
     Concentration,
     ConcentrationUnit,
+    DegronPerturbation,
+    DeletionStrainPerturbation,
     DerivedIdentifierMapping,
     DoseBasis,
     Environment,
@@ -272,6 +271,7 @@ from torchcell.datamodels.schema import (
     Experiment,
     ExperimentReference,
     Genotype,
+    MarkedAllelePerturbation,
     MeasurementType,
     Media,
     MediaComponent,
@@ -1401,9 +1401,9 @@ def _mapping(source_label: str) -> DerivedIdentifierMapping:
 
 def deletion_perturbation(
     source_label: str, locus_tag: str
-) -> BacterialDeletionPerturbation:
+) -> DeletionStrainPerturbation:
     """One precise gene deletion of the arrayed KEIO library."""
-    return BacterialDeletionPerturbation(
+    return DeletionStrainPerturbation(
         systematic_gene_name=locus_tag,
         perturbed_gene_name=source_label,
         gene_namespace=BW25113_NAMESPACE,
@@ -1414,7 +1414,7 @@ def deletion_perturbation(
 
 def marked_allele_perturbation(
     source_label: str, locus_tag: str, *, gene_name: str, kind: str, token: str
-) -> BacterialMarkedAllelePerturbation:
+) -> MarkedAllelePerturbation:
     """A ``-SPA`` or ``-kan`` column of the essential-gene arrays.
 
     Only what the RELEASE states is stored. The token is the label's own suffix, so a
@@ -1439,7 +1439,7 @@ def marked_allele_perturbation(
     while the only thing this paper says about the rest of the array is that it screened
     "the previously screened library [8,10]", which names no strain set.
     """
-    return BacterialMarkedAllelePerturbation(
+    return MarkedAllelePerturbation(
         systematic_gene_name=locus_tag,
         perturbed_gene_name=gene_name,
         gene_namespace=BW25113_NAMESPACE,
@@ -1453,7 +1453,7 @@ def marked_allele_perturbation(
 
 def degron_perturbation(
     source_label: str, locus_tag: str, *, gene_name: str, token: str
-) -> BacterialDegronPerturbation:
+) -> DegronPerturbation:
     """A ``-DAS`` or ``-DAS+4`` column of the essential-gene arrays.
 
     ``degron`` is the label's own token, so ``imp-DAS`` and ``imp-DAS+4`` stay two
@@ -1461,7 +1461,7 @@ def degron_perturbation(
     terminus are all ``None``: this paper names none of them, and its deferral target
     (Nichols 2011) is not mirrored.
     """
-    return BacterialDegronPerturbation(
+    return DegronPerturbation(
         systematic_gene_name=locus_tag,
         perturbed_gene_name=gene_name,
         gene_namespace=BW25113_NAMESPACE,
@@ -1769,7 +1769,7 @@ def resolve_columns(
     """Map each gene column to a BW25113 locus tag, applying the five column rules.
 
     The retain-all reconciliation decides which labels resolve; this function decides
-    which of the rest can be WRITTEN, because ``BacterialDeletionPerturbation`` stores a
+    which of the rest can be WRITTEN, because ``DeletionStrainPerturbation`` stores a
     locus tag of the declared namespace and nothing else. Every dropped column is
     attributed to exactly one rule, in :data:`COLUMN_RULES` order.
     """

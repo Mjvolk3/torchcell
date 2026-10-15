@@ -5,7 +5,7 @@
 """BioCypher adapter exposing the Lim 2025 IPL400 Top3 proteome as
 knowledge-graph nodes and edges.
 
-One record: IPL400's deletions as ``BacterialDeletionPerturbation`` leaves served as
+One record: IPL400's deletions as ``DeletionStrainPerturbation`` leaves served as
 ``bacterial perturbation`` nodes, the abundances under 4 g/L isoprenol as a
 ``ProteinAbundancePhenotype``, and isoprenol as an environment perturbation.
 """

@@ -7,7 +7,7 @@ gate's view of it, and (``--data``) the graph it emits from its dev-tree LMDB.
 Lim 2025's four released evolved-isolate-over-IPL400 proteome contrasts: two isolates
 (A10_F63_I1, A12_F53_I1) x two conditions (M9 at 4 g/L glucose, the same with 4 g/L
 isoprenol), BacterialProteinFoldChangeExperiment. Each record's numerator genotype carries
-IPL400's seven BacterialDeletionPerturbation leaves served as `bacterial perturbation`
+IPL400's seven DeletionStrainPerturbation leaves served as `bacterial perturbation`
 plus that isolate's called variants served as `bacterial sequence variant perturbation`
 (#731), and the per-protein log2 fold changes with their unadjusted and BH-adjusted
 p-values as the already-served `protein fold change phenotype` -- never `protein

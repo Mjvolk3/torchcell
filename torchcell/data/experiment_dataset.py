@@ -442,10 +442,10 @@ def parse_organisms(text: str) -> frozenset[Organism]:
 
 
 #: ``perturbation_type`` of the called-variant leaf whose identifier is a genomic SITE
-#: rather than a locus tag (``BacterialSequenceVariantPerturbation``'s sibling, issue
+#: rather than a locus tag (``LocusVariantCallPerturbation``'s sibling, issue
 #: #731). Stated as a string, not imported as a class, because this module is the
 #: dataset base and must not depend on which leaves exist.
-SITE_VARIANT_PERTURBATION_TYPE = "bacterial_site_variant"
+SITE_VARIANT_PERTURBATION_TYPE = "site_variant_call"
 
 
 class ExperimentDataset(Dataset, ABC):  # type: ignore[misc]  # Dataset is untyped (Any) in torch_geometric

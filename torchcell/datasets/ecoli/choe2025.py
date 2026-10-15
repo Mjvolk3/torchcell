@@ -15,7 +15,7 @@ replicate samples of each of the thirteen culture conditions.
 
 RECORD = one (guide x antibiotic) ``BacterialEnvironmentResponseExperiment``:
 
-- GENOTYPE: one ``BacterialCrisprInterferencePerturbation`` keyed by the gene's
+- GENOTYPE: one ``CrisprInterferencePerturbation`` keyed by the gene's
   released Table S2 b-number with its released symbol, on the
   ``ecoli_k12_mg1655_bnumber`` namespace, whose ``crispr`` construct carries the
   effector ``dCas9``, the 20 nt spacer joined from Table S6 by the guide's released
@@ -181,12 +181,12 @@ from torchcell.datamodels.media import LB
 from torchcell.datamodels.schema import (
     AssayType,
     AssemblyReferenceGenome,
-    BacterialCrisprInterferencePerturbation,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
     Concentration,
     ConcentrationUnit,
     CrisprConstruct,
+    CrisprInterferencePerturbation,
     DoseBasis,
     Environment,
     EnvironmentResponsePhenotype,
@@ -1674,7 +1674,7 @@ def knockdown_genotype(guide: GuideIdentity) -> Genotype:
     """The one CRISPRi knockdown this guide is, keyed by its released b-number."""
     return Genotype(
         perturbations=[
-            BacterialCrisprInterferencePerturbation(
+            CrisprInterferencePerturbation(
                 systematic_gene_name=guide.b_number,
                 perturbed_gene_name=guide.released_symbol,
                 gene_namespace=GENE_NAMESPACE,
@@ -1929,7 +1929,7 @@ VERIFIER_PROVENANCE = Provenance(
         "columns cancel out of this ratio (log2(ER_abx/ER_LB) = log2(a_abx/a_LB)) and are "
         "used only for the build's ER reproduction check. n_samples=2 with sample_unit a "
         "typed gap (the Methods say only 'two replicate measurements'); the ratio's "
-        "dispersion is a typed gap. Genotype = BacterialCrisprInterferencePerturbation on "
+        "dispersion is a typed gap. Genotype = CrisprInterferencePerturbation on "
         "the MG1655 locus the released b-number resolves to, effector dCas9, "
         "guide_sequence = the 20 nt Table S6 spacer joined by the row's released genomic "
         "window, n_guides = the gene's Table S1 guide count; the key is the released "

@@ -265,6 +265,10 @@ def test_gene_perturbation_names_and_provenance_vocabulary() -> None:
         _kanmx(provenance="wild")
 
 
+#: The host every relaxed yeast leaf states since P1: no default on a relaxed leaf,
+#: so the loader (here, the test) names the namespace the identifiers are written against.
+_S288C: dict[str, str] = {"gene_namespace": s.SGD_S288C_NAMESPACE}
+
 _RELAXED: list[tuple[Any, dict[str, Any]]] = [
     (
         s.GeneAdditionPerturbation,
@@ -272,11 +276,15 @@ _RELAXED: list[tuple[Any, dict[str, Any]]] = [
             "source_organism": "Xanthophyllomyces dendrorhous",
             "is_heterologous": True,
             "localization": "plasmid",
+            **_S288C,
         },
     ),
-    (s.NaturalGeneAbsencePerturbation, {"strain_id": "AAB"}),
-    (s.NaturalGenePresencePerturbation, {"strain_id": "AAB"}),
-    (s.CopyNumberVariantPerturbation, {"strain_id": "AAB", "copy_number": 2.0}),
+    (s.NaturalGeneAbsencePerturbation, {"strain_id": "AAB", **_S288C}),
+    (s.NaturalGenePresencePerturbation, {"strain_id": "AAB", **_S288C}),
+    (
+        s.CopyNumberVariantPerturbation,
+        {"strain_id": "AAB", "copy_number": 2.0, **_S288C},
+    ),
 ]
 
 
@@ -1130,6 +1138,7 @@ def test_genotype_of_mixed_leaves_round_trips_and_sorts_by_gene() -> None:
             _kanmx("YAL002W", "VPS8"),
             s.GeneAdditionPerturbation(
                 systematic_gene_name="crtYB",
+                gene_namespace="scerevisiae_s288c_sgd_systematic",
                 perturbed_gene_name="crtYB",
                 source_organism="Xanthophyllomyces dendrorhous",
                 is_heterologous=True,
@@ -1297,13 +1306,16 @@ def test_pre_culture_quantities_must_be_non_negative(field: str) -> None:
 
 
 # --------------------------------------------------------------------------- #
-# Bacterial additions (plan 3a, 3b, 3c, 3e: [[plan.bacteria-ontology-genome]]).
+# Bacterial additions (plan 3a, 3b, 3c, 3e: [[plan.bacteria-ontology-genome]]),
+# re-read under P1 (ontology-unify, 2026-10-15: one ``gene_namespace`` on
+# ``GenePerturbation``, the host-prefixed leaves folded or renamed).
 #
 # Three properties are what the whole bacterial expansion rests on and each is
 # checked here rather than assumed:
-#   1. the two identifier families stay SEPARATE -- a bacterial tag fails on a yeast
-#      leaf and a yeast name fails on a bacterial one, so one id space cannot leak
-#      into the other through ``Genotype``'s content identity;
+#   1. the identifier spaces stay SEPARATE through the NAMESPACE, not the class: an
+#      identifier of one host's form is refused under any other host's namespace, and
+#      a yeast leaf's S288C default refuses a bacterial tag, so one id space cannot
+#      leak into another through ``Genotype``'s content identity;
 #   2. the assembly pin is only honored where a field is re-annotated to the
 #      subclass, which is a pydantic fact and therefore a test, not a comment;
 #   3. the vocabularies (assembly set ids, locus-tag patterns, the BW25113 genotype)
@@ -1316,7 +1328,7 @@ _MG1655: dict[str, Any] = dict(
 )
 
 _BACTERIAL_LEAF_CASES: list[tuple[type[s.GenePerturbation], dict[str, Any]]] = [
-    (s.BacterialDeletionPerturbation, {**_MG1655}),
+    (s.DeletionStrainPerturbation, {**_MG1655}),
     (
         s.TransposonInsertionPerturbation,
         {
@@ -1327,7 +1339,7 @@ _BACTERIAL_LEAF_CASES: list[tuple[type[s.GenePerturbation], dict[str, Any]]] = [
         },
     ),
     (
-        s.BacterialCrisprInterferencePerturbation,
+        s.CrisprInterferencePerturbation,
         {**_MG1655, "crispr": s.CrisprConstruct(effector="dCas9-Mxi1")},
     ),
     (
@@ -1347,7 +1359,7 @@ _BACTERIAL_LEAF_CASES: list[tuple[type[s.GenePerturbation], dict[str, Any]]] = [
         ),
     ),
     (
-        s.BacterialMarkedAllelePerturbation,
+        s.MarkedAllelePerturbation,
         {
             **_MG1655,
             "cassette": "kan",
@@ -1357,9 +1369,9 @@ _BACTERIAL_LEAF_CASES: list[tuple[type[s.GenePerturbation], dict[str, Any]]] = [
             "allele_effect": "hypomorphic",
         },
     ),
-    (s.BacterialDegronPerturbation, {**_MG1655, "degron": "DAS+4", "terminus": "C"}),
+    (s.DegronPerturbation, {**_MG1655, "degron": "DAS+4", "terminus": "C"}),
     (
-        s.BacterialCrisprActivationPerturbation,
+        s.CrisprActivationPerturbation,
         {**_MG1655, "crispr": s.CrisprConstruct(effector="dCas9*-MCPSoxS")},
     ),
 ]
@@ -1399,43 +1411,69 @@ def _reference_cls(kind: str) -> type[s.ExperimentReference]:
     return cls
 
 
-# --- 1. the two identifier families stay separate -------------------------- #
-def test_the_yeast_validator_still_refuses_a_b_number() -> None:
-    """The base yeast validator is UNTOUCHED, which is the point of the new leaves.
-
-    Widening ``GenePerturbation.validate_sys_gene_name`` to admit bacterial tags would
-    let ``b0002`` into an SGA deletion leaf, and it was measured to move 35 of 36
-    served dataset closures. So the yeast leaves must keep refusing, and a bacterial
-    record must be impossible to file as a yeast one.
+# --- 1. the identifier spaces stay separate through the namespace ----------- #
+def test_a_yeast_leaf_defaults_to_s288c_and_refuses_a_bacterial_tag_under_it() -> None:
+    """A leaf whose name validator pins the S288C form defaults ``gene_namespace`` to
+    S288C, so ``b0002`` on an SGA deletion leaf is refused by the agreement check: the
+    tag's own namespace is MG1655, the record's is S288C. The same leaf accepts the
+    tag when the record STATES the host, which is P1's point: the host is a field,
+    never a class.
     """
-    with _refuses("Invalid systematic gene name format"):
-        s.DeletionPerturbation(systematic_gene_name="b0002", perturbed_gene_name="thrA")
+    assert s.DeletionPerturbation.model_fields["gene_namespace"].default == (
+        s.SGD_S288C_NAMESPACE
+    )
+    for cls in (s.DeletionPerturbation, s.KanMxDeletionPerturbation):
+        with _refuses(
+            "'b0002' is a ecoli_k12_mg1655_bnumber tag but gene_namespace is "
+            "'scerevisiae_s288c_sgd_systematic'"
+        ):
+            cls(systematic_gene_name="b0002", perturbed_gene_name="thrA")
+    with _refuses(
+        "'PP_0002' is a pputida_kt2440_locus_tag tag but gene_namespace is "
+        "'scerevisiae_s288c_sgd_systematic'"
+    ):
+        _kanmx(name="PP_0002", pert="x")
+    stated = s.KanMxDeletionPerturbation(
+        systematic_gene_name="b0002",
+        perturbed_gene_name="thrA",
+        gene_namespace="ecoli_k12_mg1655_bnumber",
+    )
+    assert stated.gene_namespace == "ecoli_k12_mg1655_bnumber"
+    # a name of no host's form is refused on a pinned leaf whatever the namespace
     with _refuses("Invalid systematic gene name format"):
         s.KanMxDeletionPerturbation(
-            systematic_gene_name="b0002", perturbed_gene_name="thrA"
+            systematic_gene_name="thrA", perturbed_gene_name="x"
         )
-    with _refuses("Invalid systematic gene name format"):
-        _kanmx(name="PP_0002", pert="x")
 
 
-def test_the_bacterial_leaf_validates_exactly_what_the_yeast_leaf_refuses() -> None:
-    """The same identifier: refused as a yeast deletion, accepted as a bacterial one."""
-    with _refuses("Invalid systematic gene name format"):
-        s.DeletionPerturbation(systematic_gene_name="b0002", perturbed_gene_name="thrA")
-    accepted = s.BacterialDeletionPerturbation(**_MG1655)
+def test_the_same_identifier_is_valid_under_exactly_its_own_namespace() -> None:
+    """Namespace dispatch: ``b0002`` is accepted under MG1655 and refused under every
+    other member, on a leaf that pins no host (``DeletionStrainPerturbation``), and the
+    accepted record is still a deletion for every ``issubclass`` filter.
+    """
+    accepted = s.DeletionStrainPerturbation(**_MG1655)
     assert accepted.systematic_gene_name == "b0002"
     assert accepted.gene_namespace == "ecoli_k12_mg1655_bnumber"
-    # and it is still a deletion, so an "every knockout" filter keeps catching it
     assert isinstance(accepted, s.DeletionPerturbation)
     assert accepted.state == "absent"
     assert accepted.mechanism_so_id == "SO:0000159"
+    assert s.DeletionStrainPerturbation.model_fields["gene_namespace"].is_required()
+    for namespace in typing.get_args(s.GeneIdNamespace):
+        if namespace == "ecoli_k12_mg1655_bnumber":
+            continue
+        with _refuses(
+            f"'b0002' is a ecoli_k12_mg1655_bnumber tag but gene_namespace is "
+            f"'{namespace}'"
+        ):
+            s.DeletionStrainPerturbation(**{**_MG1655, "gene_namespace": namespace})
 
 
 @pytest.mark.parametrize("cls,kwargs", _BACTERIAL_LEAF_CASES, ids=_LEAF_IDS)
-def test_a_bacterial_leaf_refuses_a_yeast_systematic_name(
+def test_a_host_stated_leaf_refuses_an_identifier_of_another_host(
     cls: type[s.GenePerturbation], kwargs: dict[str, Any]
 ) -> None:
-    """Symmetry: a yeast ORF name is not a locus tag.
+    """Symmetry: a yeast ORF name under the MG1655 namespace is refused by the same
+    agreement rule, and accepted once the namespace says S288C.
 
     The gene-addition-derived leaf is the documented exception -- it relaxes the name
     validator because a heterologous gene has no host locus tag at all -- so it is
@@ -1445,8 +1483,19 @@ def test_a_bacterial_leaf_refuses_a_yeast_systematic_name(
         with _refuses("systematic_gene_name must be non-empty"):
             cls(**{**kwargs, "systematic_gene_name": ""})
         return
-    with pytest.raises(ValidationError, match="Invalid bacterial locus tag"):
+    with _refuses(
+        "'YAL001C' is a scerevisiae_s288c_sgd_systematic tag but gene_namespace is "
+        "'ecoli_k12_mg1655_bnumber'"
+    ):
         cls(**{**kwargs, "systematic_gene_name": "YAL001C"})
+    restated = cls(
+        **{
+            **kwargs,
+            "systematic_gene_name": "YAL001C",
+            "gene_namespace": s.SGD_S288C_NAMESPACE,
+        }
+    )
+    assert restated.gene_namespace == s.SGD_S288C_NAMESPACE
 
 
 def test_the_namespace_must_agree_with_the_tag_it_carries() -> None:
@@ -1460,14 +1509,14 @@ def test_the_namespace_must_agree_with_the_tag_it_carries() -> None:
         "'PP_0002' is a pputida_kt2440_locus_tag tag but gene_namespace is "
         "'ecoli_k12_mg1655_bnumber'"
     ):
-        s.BacterialDeletionPerturbation(
+        s.DeletionStrainPerturbation(
             systematic_gene_name="PP_0002",
             perturbed_gene_name="x",
             gene_namespace="ecoli_k12_mg1655_bnumber",
         )
     # the matching namespace is accepted
     assert (
-        s.BacterialDeletionPerturbation(
+        s.DeletionStrainPerturbation(
             systematic_gene_name="PP_0002",
             perturbed_gene_name="x",
             gene_namespace="pputida_kt2440_locus_tag",
@@ -1476,27 +1525,122 @@ def test_the_namespace_must_agree_with_the_tag_it_carries() -> None:
     )
 
 
-def test_the_three_locus_tag_patterns_are_pairwise_disjoint() -> None:
-    """No identifier can belong to two namespaces, which is what makes the id space safe."""
-    samples = {
-        "ecoli_k12_mg1655_bnumber": ["b0001", "b4651"],
-        "ecoli_k12_bw25113_locus_tag": ["BW25113_0001", "BW25113_4490"],
-        "pputida_kt2440_locus_tag": [
-            "PP_0002",
-            "PP_16SA",
-            "PP_23SG",
-            "PP_t01",
-            "PP_mr01",
-        ],
-    }
-    for owner, tags in samples.items():
+#: One or more identifiers of each namespace, in the form its deposited file writes
+#: them (the yeast forms measured by
+#: ``experiments/database/scripts/measure_gene_id_namespaces.py``).
+_NAMESPACE_SAMPLES: dict[str, list[str]] = {
+    "ecoli_k12_mg1655_bnumber": ["b0001", "b4651"],
+    "ecoli_k12_bw25113_locus_tag": ["BW25113_0001", "BW25113_4490"],
+    "pputida_kt2440_locus_tag": ["PP_0002", "PP_16SA", "PP_23SG", "PP_t01", "PP_mr01"],
+    "ecoli_b_rel606_locus_tag": ["ECB_00001", "ECB_t00085", "ECB_r00022"],
+    "ecoli_k12_w3110_refseq_locus_tag": ["Y75_RS00005", "Y75_RS25635"],
+    "scerevisiae_s288c_sgd_systematic": ["YAL001C", "YAL001C-A", "Q0010", "YNCA0001W"],
+    "scerevisiae_cenpk113_7d_locus_tag": [
+        "SCEN_A00120",
+        "SCEN_P37530",
+        "SCEN_Q0001",
+        "SCEN_R0012",
+        "SCEN_Rtrna8N",
+        "SCEN_Btrna11D",
+        "SCEN_Etrna1",
+    ],
+    "scerevisiae_peter2018_pangenome_orf": [
+        "13-EC1118_1N26_0012g",
+        "1107-augustus_masked.AFA_4.7928",
+    ],
+}
+
+#: Identifiers that are legitimately NOT host identifiers: a CURIE (a heterologous
+#: gene in its source organism's namespace), a variant site id, a released symbol.
+_NON_HOST_IDENTIFIERS = ["Efa:mvaE", "addgene127546:YFP", "AE015451:4586057", "ADE2"]
+
+
+def test_every_namespace_pattern_is_pairwise_disjoint_from_every_other() -> None:
+    """No identifier can belong to two namespaces, which is what makes the namespace a
+    load-bearing field: ``Genotype`` identity is the sorted identifiers, so a form that
+    read as two hosts' would merge their id spaces. Checked on the measured forms of
+    every member, and the non-host forms match no member at all.
+    """
+    assert set(_NAMESPACE_SAMPLES) == set(s.GENE_ID_NAMESPACE_PATTERNS)
+    assert set(s.GENE_ID_NAMESPACE_PATTERNS) == set(typing.get_args(s.GeneIdNamespace))
+    for owner, tags in _NAMESPACE_SAMPLES.items():
         for tag in tags:
             matching = {
                 namespace
-                for namespace, pattern in s.BACTERIAL_LOCUS_TAG_PATTERNS.items()
+                for namespace, pattern in s.GENE_ID_NAMESPACE_PATTERNS.items()
                 if re.match(pattern, tag)
             }
             assert matching == {owner}, (tag, matching)
+            assert s._namespace_of_identifier(tag) == owner
+    for identifier in _NON_HOST_IDENTIFIERS:
+        assert s._namespace_of_identifier(identifier) is None, identifier
+
+
+def test_the_bacterial_vocabulary_is_the_bacterial_restriction_of_the_general_one() -> (
+    None
+):
+    """``BacterialGeneNamespace`` and ``BACTERIAL_LOCUS_TAG_PATTERNS`` survive P1 only as
+    the bacterial rows of the general vocabulary (for ``BacterialBackgroundAllele``, which
+    P5 retires), so they cannot drift from it.
+    """
+    bacterial = set(typing.get_args(s.BacterialGeneNamespace))
+    assert bacterial < set(typing.get_args(s.GeneIdNamespace))
+    assert set(s.BACTERIAL_LOCUS_TAG_PATTERNS) == bacterial
+    for namespace, pattern in s.BACTERIAL_LOCUS_TAG_PATTERNS.items():
+        assert pattern == s.GENE_ID_NAMESPACE_PATTERNS[namespace]
+    yeast = set(typing.get_args(s.GeneIdNamespace)) - bacterial
+    assert yeast == {
+        "scerevisiae_s288c_sgd_systematic",
+        "scerevisiae_cenpk113_7d_locus_tag",
+        "scerevisiae_peter2018_pangenome_orf",
+    }
+    for namespace in yeast:
+        assert s._namespace_of_locus_tag(_NAMESPACE_SAMPLES[namespace][0]) is None
+
+
+def test_gene_namespace_is_required_on_the_base_and_defaulted_on_pinned_leaves_only() -> (
+    None
+):
+    """P1's default rule, measured by reflection: a leaf defaults ``gene_namespace`` to
+    S288C exactly when its name validator is ``GenePerturbation``'s (the S288C form is
+    then proved by the name); every leaf with a relaxed or host-neutral validator
+    requires the field.
+    """
+    assert s.GenePerturbation.model_fields["gene_namespace"].is_required()
+    assert s.GenePerturbation.model_fields["identifier_mapping"].default is None
+    seen: set[type[s.GenePerturbation]] = set()
+    stack: list[type[s.GenePerturbation]] = [s.GenePerturbation]
+    while stack:
+        parent = stack.pop()
+        for child in parent.__subclasses__():
+            if child in seen:
+                continue
+            seen.add(child)
+            stack.append(child)
+    abstract_bases = {
+        s.PresenceAbsencePerturbation,
+        s.SequencePerturbation,
+        s.ExpressionModulationPerturbation,
+    }
+    host_neutral = {
+        s.DeletionStrainPerturbation,
+        s.SpanDeletionCallPerturbation,
+        s.TransposonInsertionPerturbation,
+        s.PromoterReplacementPerturbation,
+        s.MarkedAllelePerturbation,
+        s.DegronPerturbation,
+        s.VariantCallPerturbation,
+        s.LocusVariantCallPerturbation,
+        s.SiteVariantCallPerturbation,
+    }
+    for cls in seen - abstract_bases:
+        field = cls.model_fields["gene_namespace"]
+        owner = next(k for k in cls.__mro__ if "validate_sys_gene_name" in k.__dict__)
+        pinned = owner is s.GenePerturbation and cls not in host_neutral
+        if pinned:
+            assert field.default == s.SGD_S288C_NAMESPACE, cls.__name__
+        else:
+            assert field.is_required(), cls.__name__
 
 
 def test_the_rel606_namespace_owns_its_tags_and_no_other_namespace_does() -> None:
@@ -1522,14 +1666,14 @@ def test_the_rel606_namespace_owns_its_tags_and_no_other_namespace_does() -> Non
         "ECB_RS00005",
     ):
         assert not re.match(pattern, tag), tag
-    leaf = s.BacterialDeletionPerturbation(
+    leaf = s.DeletionStrainPerturbation(
         systematic_gene_name="ECB_00002",
         perturbed_gene_name="thrA",
         gene_namespace="ecoli_b_rel606_locus_tag",
     )
     assert leaf.gene_namespace == "ecoli_b_rel606_locus_tag"
     with pytest.raises(ValidationError, match="is a ecoli_b_rel606_locus_tag tag"):
-        s.BacterialDeletionPerturbation(
+        s.DeletionStrainPerturbation(
             systematic_gene_name="ECB_00002",
             perturbed_gene_name="thrA",
             gene_namespace="ecoli_k12_mg1655_bnumber",
@@ -2266,7 +2410,7 @@ def test_a_product_titer_record_round_trips_through_the_type_maps() -> None:
 def _bacterial_fitness_experiment() -> s.BacterialFitnessExperiment:
     return s.BacterialFitnessExperiment(
         dataset_name="Toy",
-        genotype=Genotype(perturbations=[s.BacterialDeletionPerturbation(**_MG1655)]),
+        genotype=Genotype(perturbations=[s.DeletionStrainPerturbation(**_MG1655)]),
         environment=Environment(media=_lb()),
         phenotype=FitnessPhenotype(fitness=0.82),
     )
@@ -2314,7 +2458,7 @@ def test_a_new_phenotype_family_is_discriminated_by_its_own_fields() -> None:
     """
     experiment = s.ProductTiterExperiment(
         dataset_name="Toy",
-        genotype=Genotype(perturbations=[s.BacterialDeletionPerturbation(**_MG1655)]),
+        genotype=Genotype(perturbations=[s.DeletionStrainPerturbation(**_MG1655)]),
         environment=s.CultureEnvironment(media=_lb()),
         phenotype=_titer(),
     )
@@ -2437,7 +2581,7 @@ def test_a_derived_identifier_mapping_records_the_route_it_was_reached_by() -> N
     mapping = s.DerivedIdentifierMapping(
         source_identifier="b0002", route="eck_crosswalk"
     )
-    deletion = s.BacterialDeletionPerturbation(
+    deletion = s.DeletionStrainPerturbation(
         systematic_gene_name="BW25113_0002",
         perturbed_gene_name="thrA",
         gene_namespace="ecoli_k12_bw25113_locus_tag",
@@ -2449,7 +2593,7 @@ def test_a_derived_identifier_mapping_records_the_route_it_was_reached_by() -> N
         "source_identifier": "b0002",
         "route": "eck_crosswalk",
     }
-    assert s.BacterialDeletionPerturbation.model_validate(dumped) == deletion
+    assert s.DeletionStrainPerturbation.model_validate(dumped) == deletion
 
     # every bacterial leaf carries the field, and it defaults to None
     for cls, fields in _BACTERIAL_LEAF_CASES:
@@ -2491,7 +2635,7 @@ def test_a_mapping_cannot_claim_a_tag_was_derived_from_itself() -> None:
         "identifier_mapping says 'BW25113_0002' was derived from itself; a tag the "
         "source released verbatim carries no mapping"
     ):
-        s.BacterialDeletionPerturbation(
+        s.DeletionStrainPerturbation(
             systematic_gene_name="BW25113_0002",
             perturbed_gene_name="thrA",
             gene_namespace="ecoli_k12_bw25113_locus_tag",
@@ -2503,7 +2647,7 @@ def test_a_mapping_cannot_claim_a_tag_was_derived_from_itself() -> None:
         "an eck_crosswalk crosses namespaces, but 'BW25113_0003' is already a "
         "ecoli_k12_bw25113_locus_tag tag"
     ):
-        s.BacterialDeletionPerturbation(
+        s.DeletionStrainPerturbation(
             systematic_gene_name="BW25113_0002",
             perturbed_gene_name="thrA",
             gene_namespace="ecoli_k12_bw25113_locus_tag",
@@ -2512,7 +2656,7 @@ def test_a_mapping_cannot_claim_a_tag_was_derived_from_itself() -> None:
             ),
         )
     # a gene-symbol route is fine on the same namespace: it is not a cross-strain join
-    symbol = s.BacterialDeletionPerturbation(
+    symbol = s.DeletionStrainPerturbation(
         systematic_gene_name="BW25113_0002",
         perturbed_gene_name="thrA",
         gene_namespace="ecoli_k12_bw25113_locus_tag",
@@ -2541,7 +2685,7 @@ def test_a_culture_environment_survives_the_product_titer_slot() -> None:
     )
     titer = s.ProductTiterExperiment(
         dataset_name="Toy",
-        genotype=Genotype(perturbations=[s.BacterialDeletionPerturbation(**_MG1655)]),
+        genotype=Genotype(perturbations=[s.DeletionStrainPerturbation(**_MG1655)]),
         environment=culture,
         phenotype=_titer(),
     )
@@ -2557,7 +2701,7 @@ def test_a_culture_environment_survives_the_product_titer_slot() -> None:
     # the same culture in a base-typed slot (the bacterial fitness family) loses it
     fitness = s.BacterialFitnessExperiment(
         dataset_name="Toy",
-        genotype=Genotype(perturbations=[s.BacterialDeletionPerturbation(**_MG1655)]),
+        genotype=Genotype(perturbations=[s.DeletionStrainPerturbation(**_MG1655)]),
         environment=culture,
         phenotype=FitnessPhenotype(fitness=0.9),
     )
@@ -2567,9 +2711,7 @@ def test_a_culture_environment_survives_the_product_titer_slot() -> None:
     with pytest.raises(ValidationError, match="valid dictionary or instance of"):
         s.ProductTiterExperiment(
             dataset_name="Toy",
-            genotype=Genotype(
-                perturbations=[s.BacterialDeletionPerturbation(**_MG1655)]
-            ),
+            genotype=Genotype(perturbations=[s.DeletionStrainPerturbation(**_MG1655)]),
             # the refusal under test: mypy sees it too, which is the point
             environment=Environment(media=_lb()),  # type: ignore[arg-type]
             phenotype=_titer(),
@@ -2803,7 +2945,7 @@ def test_a_marked_allele_is_a_sequence_change_and_not_an_absence() -> None:
     state at all. Its mechanism is the insertion of recombinant bases, which is what
     was done to the DNA.
     """
-    allele = s.BacterialMarkedAllelePerturbation(
+    allele = s.MarkedAllelePerturbation(
         **_MG1655,
         cassette="kan",
         insertion_site="3'-UTR",
@@ -2812,28 +2954,24 @@ def test_a_marked_allele_is_a_sequence_change_and_not_an_absence() -> None:
         allele_effect="hypomorphic",
         collection="SPA-tag essential",
     )
-    assert allele.perturbation_type == "bacterial_marked_allele"
+    assert allele.perturbation_type == "marked_allele"
     assert isinstance(allele, s.SequencePerturbation)
     assert not isinstance(allele, s.PresenceAbsencePerturbation)
     assert not isinstance(allele, s.DeletionPerturbation)
-    assert "state" not in s.BacterialMarkedAllelePerturbation.model_fields
+    assert "state" not in s.MarkedAllelePerturbation.model_fields
     assert allele.mechanism_so_id == "SO:0001218"
     assert allele.mechanism_so_name == "transgenic_insertion"
     # no magnitude field: no bacterial source releases a knockdown fold change
-    assert "expression_range" not in s.BacterialMarkedAllelePerturbation.model_fields
-    assert "expression_direction" not in (
-        s.BacterialMarkedAllelePerturbation.model_fields
-    )
+    assert "expression_range" not in s.MarkedAllelePerturbation.model_fields
+    assert "expression_direction" not in (s.MarkedAllelePerturbation.model_fields)
 
 
 def test_a_marked_allele_must_say_what_the_source_says_about_its_function() -> None:
     """``allele_effect`` is required and three-valued, so silence is not a False."""
-    assert s.BacterialMarkedAllelePerturbation.model_fields[
-        "allele_effect"
-    ].is_required()
+    assert s.MarkedAllelePerturbation.model_fields["allele_effect"].is_required()
     with pytest.raises(ValidationError):
-        s.BacterialMarkedAllelePerturbation(**_MG1655, cassette="kan")
-    unstated = s.BacterialMarkedAllelePerturbation(
+        s.MarkedAllelePerturbation(**_MG1655, cassette="kan")
+    unstated = s.MarkedAllelePerturbation(
         **_MG1655, cassette="kan", allele_effect="not_stated"
     )
     assert unstated.allele_effect == "not_stated"
@@ -2841,9 +2979,7 @@ def test_a_marked_allele_must_say_what_the_source_says_about_its_function() -> N
     with pytest.raises(ValidationError):
         # an effect outside the vocabulary; typed as Any so mypy sees the runtime path
         bad: Any = "maybe"
-        s.BacterialMarkedAllelePerturbation(
-            **_MG1655, cassette="kan", allele_effect=bad
-        )
+        s.MarkedAllelePerturbation(**_MG1655, cassette="kan", allele_effect=bad)
 
 
 def test_a_marked_allele_terminus_names_a_tag() -> None:
@@ -2851,11 +2987,11 @@ def test_a_marked_allele_terminus_names_a_tag() -> None:
     with _refuses(
         "terminus 'C' is stated with no tag; a terminus without a fusion names nothing"
     ):
-        s.BacterialMarkedAllelePerturbation(
+        s.MarkedAllelePerturbation(
             **_MG1655, cassette="kan", terminus="C", allele_effect="not_stated"
         )
     # a tag whose end the source does not state is legal: Shiver's '-SPA' columns
-    tag_only = s.BacterialMarkedAllelePerturbation(
+    tag_only = s.MarkedAllelePerturbation(
         **_MG1655, tag="SPA", allele_effect="not_stated"
     )
     assert tag_only.terminus is None
@@ -2864,7 +3000,7 @@ def test_a_marked_allele_terminus_names_a_tag() -> None:
 
 def test_a_degron_is_its_own_leaf_carrying_its_inducing_condition() -> None:
     """A degron asserts regulated proteolysis, which a marked allele does not."""
-    degron = s.BacterialDegronPerturbation(
+    degron = s.DegronPerturbation(
         **_MG1655,
         degron="DAS+4",
         terminus="C",
@@ -2872,13 +3008,13 @@ def test_a_degron_is_its_own_leaf_carrying_its_inducing_condition() -> None:
         adaptor="SspB",
         inducing_condition="sspB expressed from an arabinose-inducible promoter",
     )
-    assert degron.perturbation_type == "bacterial_degron"
+    assert degron.perturbation_type == "degron"
     assert isinstance(degron, s.SequencePerturbation)
-    assert not isinstance(degron, s.BacterialMarkedAllelePerturbation)
+    assert not isinstance(degron, s.MarkedAllelePerturbation)
     # degron is the one required field; a release that names only the degron is legal,
     # which is Shiver 2016's '-DAS' columns
-    assert s.BacterialDegronPerturbation.model_fields["degron"].is_required()
-    token_only = s.BacterialDegronPerturbation(**_MG1655, degron="DAS+4")
+    assert s.DegronPerturbation.model_fields["degron"].is_required()
+    token_only = s.DegronPerturbation(**_MG1655, degron="DAS+4")
     assert (token_only.terminus, token_only.protease, token_only.adaptor) == (
         None,
         None,
@@ -2886,32 +3022,35 @@ def test_a_degron_is_its_own_leaf_carrying_its_inducing_condition() -> None:
     )
     assert token_only.inducing_condition is None
     with pytest.raises(ValidationError):
-        s.BacterialDegronPerturbation(**_MG1655)
+        s.DegronPerturbation(**_MG1655)
 
 
-def test_the_bacterial_crispra_leaf_states_increased_where_crispri_cannot() -> None:
-    """The expression axis's missing direction, and the leaf that supplies it."""
-    activation = s.BacterialCrisprActivationPerturbation(
+def test_the_general_crispr_leaves_serve_a_bacterial_host_by_namespace() -> None:
+    """P1 folded ``BacterialCrisprActivationPerturbation`` and
+    ``BacterialCrisprInterferencePerturbation`` into the general leaves: Niu 2019's
+    ``dCas9*-MCPSoxS`` activator against a BW25113 locus is a
+    ``CrisprActivationPerturbation`` whose record states the host.
+    """
+    activation = s.CrisprActivationPerturbation(
         **_MG1655, crispr=s.CrisprConstruct(effector="dCas9*-MCPSoxS")
     )
-    assert activation.perturbation_type == "bacterial_crispr_activation"
+    assert activation.perturbation_type == "crispr_activation"
     assert activation.expression_direction == "increased"
-    assert activation.state == "present"
-    assert activation.mechanism_so_id == "SO:0001998"
-    assert isinstance(activation, s.CrisprActivationPerturbation)
-    assert isinstance(activation, s.ExpressionModulationPerturbation)
-    # the interference leaf cannot state it, which is why this leaf exists
-    interference = s.BacterialCrisprInterferencePerturbation(
+    assert activation.gene_namespace == "ecoli_k12_mg1655_bnumber"
+    interference = s.CrisprInterferencePerturbation(
         **_MG1655, crispr=s.CrisprConstruct(effector="dCas9-Mxi1")
     )
     assert interference.expression_direction == "decreased"
-    # and the yeast CRISPRa leaf still refuses the identifier
-    with _refuses("Invalid systematic gene name format"):
-        s.CrisprActivationPerturbation(
-            systematic_gene_name="b0002",
-            perturbed_gene_name="thrA",
-            crispr=s.CrisprConstruct(effector="dCas9*-MCPSoxS"),
-        )
+    assert interference.perturbation_type == "crispr_interference"
+    # the same leaf on a yeast record keeps its S288C default
+    yeast = s.CrisprActivationPerturbation(
+        systematic_gene_name="YAL001C",
+        perturbed_gene_name="TFC3",
+        crispr=s.CrisprConstruct(effector="dLbCas12a-VP"),
+    )
+    assert yeast.gene_namespace == s.SGD_S288C_NAMESPACE
+    assert not hasattr(s, "BacterialCrisprActivationPerturbation")
+    assert not hasattr(s, "BacterialCrisprInterferencePerturbation")
 
 
 def test_an_exposure_dose_is_a_time_not_a_concentration() -> None:
@@ -3076,7 +3215,7 @@ def test_the_fold_change_family_round_trips_through_the_type_maps() -> None:
     )
     experiment = s.BacterialProteinFoldChangeExperiment(
         dataset_name="Toy",
-        genotype=Genotype(perturbations=[s.BacterialDeletionPerturbation(**_MG1655)]),
+        genotype=Genotype(perturbations=[s.DeletionStrainPerturbation(**_MG1655)]),
         environment=Environment(media=_lb()),
         phenotype=_fold_change(),
     )
@@ -3219,7 +3358,7 @@ def test_the_two_new_identifier_routes_check_the_form_they_read() -> None:
         s.DerivedIdentifierMapping(source_identifier="phnE", route="locus_tag_synonym")
     # the namespace rule lives on the leaf, where the stored tag's namespace is known
     assert (
-        s.BacterialDeletionPerturbation(
+        s.DeletionStrainPerturbation(
             **_MG1655,
             identifier_mapping=s.DerivedIdentifierMapping(
                 source_identifier="b4104", route="locus_tag_synonym"
@@ -3232,7 +3371,7 @@ def test_the_two_new_identifier_routes_check_the_form_they_read() -> None:
         "ecoli_k12_bw25113_locus_tag tag while gene_namespace is "
         "'ecoli_k12_mg1655_bnumber' (a tag of another strain is an eck_crosswalk)"
     ):
-        s.BacterialDeletionPerturbation(
+        s.DeletionStrainPerturbation(
             **_MG1655,
             identifier_mapping=s.DerivedIdentifierMapping(
                 source_identifier="BW25113_0002", route="locus_tag_synonym"
@@ -3493,6 +3632,7 @@ def _yeast_turnover_experiment() -> s.YeastProteinTurnoverExperiment:
             perturbations=[
                 s.NaturalGeneAbsencePerturbation(
                     systematic_gene_name="YAL001C",
+                    gene_namespace="scerevisiae_s288c_sgd_systematic",
                     perturbed_gene_name="TFC3",
                     strain_id="AAA",
                     pangenome_orf_id="1-YAL001C",
@@ -4093,6 +4233,7 @@ _RELEASED_NAME: dict[str, Any] = dict(
     systematic_gene_name="ADE2",
     perturbed_gene_name="ADE2",
     released_gene_name="ADE2",
+    gene_namespace=s.SGD_S288C_NAMESPACE,
     released_kind=s.ReleasedGeneKind.deletion,
 )
 
@@ -4163,6 +4304,7 @@ def test_released_gene_name_leaf_carries_a_systematic_name_whose_kind_is_a_gap()
     )
     leaf = s.ReleasedGeneNamePerturbation(
         systematic_gene_name="YPR108W-A",
+        gene_namespace="scerevisiae_s288c_sgd_systematic",
         perturbed_gene_name="YPR108W-A",
         released_gene_name="YPR108W-A",
         released_gene_id="1466522",
@@ -4244,6 +4386,7 @@ def test_promoter_driven_integration_requires_its_locus_and_promoter() -> None:
     """The integration leaf narrows the parent's optional locus to a required one."""
     leaf = s.PromoterDrivenGeneIntegrationPerturbation(
         systematic_gene_name="YER090W",
+        gene_namespace="scerevisiae_s288c_sgd_systematic",
         perturbed_gene_name="TRP2",
         source_organism="Saccharomyces cerevisiae",
         is_heterologous=False,
@@ -4258,6 +4401,7 @@ def test_promoter_driven_integration_requires_its_locus_and_promoter() -> None:
     with pytest.raises(ValidationError):
         s.PromoterDrivenGeneIntegrationPerturbation(  # type: ignore[call-arg]
             systematic_gene_name="YER090W",
+            gene_namespace="scerevisiae_s288c_sgd_systematic",
             perturbed_gene_name="TRP2",
             source_organism="Saccharomyces cerevisiae",
             is_heterologous=False,
@@ -4267,6 +4411,7 @@ def test_promoter_driven_integration_requires_its_locus_and_promoter() -> None:
     with pytest.raises(ValidationError, match="cannot be empty"):
         s.PromoterDrivenGeneIntegrationPerturbation(
             systematic_gene_name="YER090W",
+            gene_namespace="scerevisiae_s288c_sgd_systematic",
             perturbed_gene_name="TRP2",
             source_organism="Saccharomyces cerevisiae",
             is_heterologous=False,
@@ -4283,6 +4428,7 @@ def test_promoter_driven_integration_refuses_a_deposited_sequence_that_is_not_dn
     with pytest.raises(ValidationError, match="unambiguous DNA"):
         s.PromoterDrivenGeneIntegrationPerturbation(
             systematic_gene_name="YER090W",
+            gene_namespace="scerevisiae_s288c_sgd_systematic",
             perturbed_gene_name="TRP2",
             source_organism="Saccharomyces cerevisiae",
             is_heterologous=False,
@@ -4301,6 +4447,7 @@ def test_variable_promoter_reporter_requires_the_sequence_and_a_whole_span() -> 
     ) -> s.VariablePromoterReporterPerturbation:
         return s.VariablePromoterReporterPerturbation(
             systematic_gene_name="addgene127546:YFP",
+            gene_namespace="scerevisiae_s288c_sgd_systematic",
             perturbed_gene_name="YFP",
             source_organism="synthetic construct",
             is_heterologous=True,
@@ -4327,6 +4474,7 @@ def test_both_promoter_leaves_are_members_of_the_genotype_union() -> None:
     """A Genotype admits each leaf and keeps its own type through the union."""
     integration = s.PromoterDrivenGeneIntegrationPerturbation(
         systematic_gene_name="YER090W",
+        gene_namespace="scerevisiae_s288c_sgd_systematic",
         perturbed_gene_name="TRP2",
         source_organism="Saccharomyces cerevisiae",
         is_heterologous=False,
@@ -4336,6 +4484,7 @@ def test_both_promoter_leaves_are_members_of_the_genotype_union() -> None:
     )
     reporter = s.VariablePromoterReporterPerturbation(
         systematic_gene_name="addgene127546:YFP",
+        gene_namespace="scerevisiae_s288c_sgd_systematic",
         perturbed_gene_name="YFP",
         source_organism="synthetic construct",
         is_heterologous=True,
@@ -4594,7 +4743,7 @@ def test_released_construct_leaves_are_gene_perturbation_siblings_of_the_strain_
         assert not issubclass(cls, s.ExpressionModulationPerturbation)
         assert not issubclass(cls, s.PresenceAbsencePerturbation)
     assert s.BacterialReleasedStrainPerturbation.__mro__[1] is s.GenePerturbation
-    placed = s.BacterialCrisprInterferencePerturbation.model_fields
+    placed = s.CrisprInterferencePerturbation.model_fields
     assert "strain_label" not in placed and "identifier_kind" not in placed
 
 

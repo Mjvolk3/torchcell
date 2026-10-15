@@ -8,7 +8,7 @@ knowledge-graph nodes and edges.
 The same five writable-strain samples as the Top3 family on a second released
 normalization, so the graph shape is identical and only the phenotype's
 ``measurement_type`` differs: the 2 PT records carry one
-BacterialDeletionPerturbation each, served as `bacterial perturbation`, and the
+DeletionStrainPerturbation each, served as `bacterial perturbation`, and the
 environment carries EnvironmentPhysicalPerturbation edits.
 """
 

@@ -6,7 +6,7 @@ and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Carruthers 2025 proteome: 19 samples, BacterialProteinAbundanceExperiment.
 7 perturbations per record: HeterologousPathwayPerturbation (95),
-BacterialCrisprInterferencePerturbation (19) and BacterialDeletionPerturbation (19), all
+CrisprInterferencePerturbation (19) and DeletionStrainPerturbation (19), all
 served as `bacterial perturbation`. Every CRISPRi leaf carries a CrisprConstruct, so the
 crispr-construct pair is enabled. The environment carries a SmallMoleculePerturbation,
 so the environment-perturbation pair is enabled.

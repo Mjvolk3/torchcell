@@ -41,7 +41,7 @@ pair; a consumer that wants the measurement reads the phenotype.
 
 RECORD = one released sgRNA with a measured fitness:
 
-- GENOTYPE: one ``BacterialCrisprInterferencePerturbation`` keyed by the released
+- GENOTYPE: one ``CrisprInterferencePerturbation`` keyed by the released
   MG1655 b-number of the target gene (``locus_tag`` column) with the released ``gene``
   symbol, carrying the mismatched spacer on the shared ``crispr`` construct
   (``effector="dCas9"``, the S. pyogenes dCas9 of the Tn7att PlLac-O1 cassette).
@@ -177,7 +177,6 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     AssayType,
     AssemblyReferenceGenome,
-    BacterialCrisprInterferencePerturbation,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
     BacterialStrainBackground,
@@ -185,6 +184,7 @@ from torchcell.datamodels.schema import (
     Concentration,
     ConcentrationUnit,
     CrisprConstruct,
+    CrisprInterferencePerturbation,
     Environment,
     EnvironmentResponsePhenotype,
     Experiment,
@@ -1109,7 +1109,7 @@ def build_genotype(
     """
     if BNUMBER_RE.match(b_number) is None:
         raise RuntimeError(f"released locus_tag {b_number!r} is not a b-number")
-    leaf = BacterialCrisprInterferencePerturbation(
+    leaf = CrisprInterferencePerturbation(
         systematic_gene_name=b_number,
         perturbed_gene_name=released_symbol,
         gene_namespace=MG1655_NAMESPACE,
@@ -1683,7 +1683,7 @@ def verify_build(
                 "depletion from the pool. Uncertainty = the released 'relative fitness "
                 "(stddev)' as sample_sd over n_samples=4 biological replicates, with "
                 "typed gaps on the 1,873 records whose SD cell is blank. Genotype = one "
-                "BacterialCrisprInterferencePerturbation keyed by the released MG1655 "
+                "CrisprInterferencePerturbation keyed by the released MG1655 "
                 "b-number with the released symbol (no annotation read, no mapping; "
                 "the host BW25113 is the reference's pin), effector dCas9, "
                 "guide_sequence = the released 20-nt "

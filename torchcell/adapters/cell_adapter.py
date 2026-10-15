@@ -34,20 +34,20 @@ from torchcell.datamodels.identity import (
 )
 from torchcell.datamodels.interned_constant import split_experiment_dump
 from torchcell.datamodels.schema import (
-    BacterialCrisprActivationPerturbation,
-    BacterialCrisprInterferencePerturbation,
-    BacterialDegronPerturbation,
-    BacterialDeletionPerturbation,
-    BacterialMarkedAllelePerturbation,
     BacterialReleasedCrisprPerturbation,
     BacterialReleasedStrainPerturbation,
     BacterialReleasedTransposonPerturbation,
-    BacterialSequenceVariantPerturbation,
-    BacterialSiteVariantPerturbation,
-    BacterialSpanDeletionPerturbation,
+    CrisprActivationPerturbation,
+    CrisprInterferencePerturbation,
+    DegronPerturbation,
+    DeletionStrainPerturbation,
     HeterologousPathwayPerturbation,
+    LocusVariantCallPerturbation,
+    MarkedAllelePerturbation,
     PhagePerturbation,
     PromoterReplacementPerturbation,
+    SiteVariantCallPerturbation,
+    SpanDeletionCallPerturbation,
     TransposonInsertionPerturbation,
 )
 from torchcell.fast_csv import RenderedChunk, RowSpecs
@@ -78,19 +78,19 @@ r7: the budget is a per-adapter attribute (``single_pass_chunk_budget_bytes``) b
 """
 SINGLE_PASS_MIN_CHUNK = 256
 BACTERIAL_PERTURBATION_LEAVES: tuple[type, ...] = (
-    BacterialDeletionPerturbation,
+    DeletionStrainPerturbation,
     TransposonInsertionPerturbation,
-    BacterialCrisprInterferencePerturbation,
+    CrisprInterferencePerturbation,
     PromoterReplacementPerturbation,
     HeterologousPathwayPerturbation,
     # round-2 leaves (#749, #792, #799). Each projects the same five properties the
     # `bacterial perturbation` graph class declares; their leaf-specific fields
     # (cassette, tag, degron, insertion_site, collection) carry no node property, as
-    # `BacterialDeletionPerturbation.collection` does not, and travel in the
+    # `DeletionStrainPerturbation.collection` does not, and travel in the
     # serialized record.
-    BacterialMarkedAllelePerturbation,
-    BacterialDegronPerturbation,
-    BacterialCrisprActivationPerturbation,
+    MarkedAllelePerturbation,
+    DegronPerturbation,
+    CrisprActivationPerturbation,
     # #691: a strain under its released identifier. The same five properties; its
     # strain_label, released_kind, identifier_kind, cassette and collection travel in the
     # serialized record, as the round-2 leaves' own fields do.
@@ -111,14 +111,14 @@ exclude them: a bacterial adapter conf enables ``bacterial perturbation (chunked
 instead of ``perturbation (chunked)``.
 """
 BACTERIAL_VARIANT_PERTURBATION_LEAVES: tuple[type, ...] = (
-    BacterialSequenceVariantPerturbation,
-    BacterialSiteVariantPerturbation,
-    BacterialSpanDeletionPerturbation,
+    LocusVariantCallPerturbation,
+    SiteVariantCallPerturbation,
+    SpanDeletionCallPerturbation,
 )
 """The leaves written as ``bacterial sequence variant perturbation`` nodes (#731).
 
 Exactly the leaves that compose a ``BacterialVariantCall``.
-``BacterialSpanDeletionPerturbation`` is also a ``BacterialDeletionPerturbation``, so the
+``SpanDeletionCallPerturbation`` is also a ``DeletionStrainPerturbation``, so the
 ``bacterial perturbation`` method excludes this tuple explicitly; without that a span
 deletion would be written twice, once under each label.
 """
@@ -1273,7 +1273,7 @@ class CellAdapter:
         """One node per perturbation of a bacterial leaf class; none for a yeast leaf.
 
         A called-variant leaf is excluded even when it is a subclass of one of these
-        (``BacterialSpanDeletionPerturbation`` is a ``BacterialDeletionPerturbation``):
+        (``SpanDeletionCallPerturbation`` is a ``DeletionStrainPerturbation``):
         it belongs to ``bacterial sequence variant perturbation`` and writing it here
         too would serve one perturbation as two nodes.
         """

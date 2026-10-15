@@ -5,7 +5,7 @@
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Rapp 2026 CRISPRi metabolome: 1,496 MG1655-pinned strains,
-BacterialMetaboliteExperiment. One BacterialCrisprInterferencePerturbation per record,
+BacterialMetaboliteExperiment. One CrisprInterferencePerturbation per record,
 served as `bacterial perturbation` (never the yeast `perturbation` class) with its
 CrisprConstruct. Every record carries one environment perturbation, the
 anhydrotetracycline that induces the knockdown, so that pair is enabled too.

@@ -6,7 +6,7 @@ of it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Rachwalski 2024 mobile CRISPRi crosses: 48,900 (strain, medium, aTc dose) records,
 BacterialFitnessExperiment. A genotype carries a
-BacterialCrisprInterferencePerturbation, a BacterialDeletionPerturbation or BOTH, all
+CrisprInterferencePerturbation, a DeletionStrainPerturbation or BOTH, all
 served as `bacterial perturbation`; every knockdown carries a CrisprConstruct with the
 20 nt spacer, and an induced plate carries anhydrotetracycline as a
 SmallMoleculePerturbation.

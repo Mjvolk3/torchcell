@@ -34,7 +34,7 @@ Table S5 + Table S9.
 
 STRAIN. Identical to the metabolome loader: records pin the MG1655 GenBank assembly the
 released b-numbers mean, with ``YYdCas9`` as the ``BacterialStrainBackground``, and one
-``BacterialCrisprInterferencePerturbation`` per record carrying the Table S1 spacer.
+``CrisprInterferencePerturbation`` per record carrying the Table S1 spacer.
 Every family carries the same single retention rule as the metabolome loader
 (``b_number_remapped_by_the_annotation``), and in every family it now removes NOTHING.
 ``phnE``'s ``b4104`` is not a locus tag of the pinned annotation and is a
@@ -106,12 +106,12 @@ from torchcell.data import (
     verify_raw_files,
 )
 from torchcell.datamodels.schema import (
-    BacterialCrisprInterferencePerturbation,
     BacterialFitnessExperiment,
     BacterialFitnessExperimentReference,
     BacterialMetaboliteExperiment,
     BacterialMetaboliteExperimentReference,
     CrisprConstruct,
+    CrisprInterferencePerturbation,
     DerivedIdentifierMapping,
     Experiment,
     ExperimentReference,
@@ -688,7 +688,7 @@ def crispri_genotype(resolved: ResolvedGene) -> Genotype:
     """The one guide-directed knockdown, named by its MG1655 b-number."""
     return Genotype(
         perturbations=[
-            BacterialCrisprInterferencePerturbation(
+            CrisprInterferencePerturbation(
                 systematic_gene_name=resolved.locus_tag,
                 perturbed_gene_name=resolved.symbol,
                 gene_namespace=STRAIN_GENE_NAMESPACES[REFERENCE_STRAIN_NAME],

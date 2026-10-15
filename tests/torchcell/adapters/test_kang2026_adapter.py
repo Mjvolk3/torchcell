@@ -6,7 +6,7 @@ and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Kang 2026 isoprenyl acetate titer: 19 records, ProductTiterExperiment.
 6 to 20 perturbations per record: HeterologousPathwayPerturbation (192) and
-BacterialDeletionPerturbation (75), served as `bacterial perturbation`. The
+DeletionStrainPerturbation (75), served as `bacterial perturbation`. The
 CultureEnvironment carries EnvironmentPhysicalPerturbation and SmallMoleculePerturbation
 edits, so the environment-perturbation pair is enabled.
 """

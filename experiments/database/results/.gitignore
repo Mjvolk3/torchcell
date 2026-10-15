@@ -16,3 +16,8 @@
 # projection charged, which is the only surviving record of the job 4901 fold.
 !bacterial_generation_profile_bacterial-tail.json
 !bacterial_generation_csv_endpoint_gate.json
+# The measured gene identifier vocabulary of the served stores is the evidence a
+# schema-change record cites (P1, 2026-10-15); it is reproducible only against the
+# served dev stores, so these two files are tracked.
+!gene_id_namespace_vocabulary.md
+!gene_id_namespace_vocabulary.json

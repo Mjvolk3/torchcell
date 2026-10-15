@@ -36,7 +36,7 @@ import torchcell.datasets.ecoli.mori2021 as mori2021
 from torchcell.data import file_sha256
 from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
-    BacterialDeletionPerturbation,
+    DeletionStrainPerturbation,
     EnvironmentPhysicalPerturbation,
     PromoterReplacementPerturbation,
     SmallMoleculePerturbation,
@@ -170,7 +170,7 @@ def test_strain_genotypes_type_the_table_s1_edits() -> None:
             True,
         )
     gdha, gogat = bk.strain_genotype("NQ393").perturbations
-    assert isinstance(gdha, BacterialDeletionPerturbation)
+    assert isinstance(gdha, DeletionStrainPerturbation)
     assert (gdha.systematic_gene_name, gdha.perturbed_gene_name) == ("b1761", "gdhA")
     assert gdha.identifier_mapping is not None
     assert gdha.identifier_mapping.route == "gene_symbol"

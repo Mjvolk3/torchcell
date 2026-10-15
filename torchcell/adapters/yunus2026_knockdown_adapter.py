@@ -5,7 +5,7 @@
 """BioCypher adapter exposing the Yunus 2026 single-target CRISPRi knockdowns as
 knowledge-graph nodes and edges.
 
-One record per strain: one ``BacterialCrisprInterferencePerturbation`` served as a
+One record per strain: one ``CrisprInterferencePerturbation`` served as a
 ``bacterial perturbation`` node, its ``CrisprConstruct`` as a ``crispr construct`` node,
 and the relative expression of its own target against the control strain as a
 ``ProteinFoldChangePhenotype`` (linear scale, one proteomics sample per strain).

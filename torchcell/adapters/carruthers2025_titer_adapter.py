@@ -7,7 +7,7 @@ knowledge-graph nodes and edges.
 
 One record per strain on the IY1449b chassis: the heterologous isoprenol pathway as
 ``HeterologousPathwayPerturbation`` leaves and one or more CRISPRi knockdowns as
-``BacterialCrisprInterferencePerturbation`` leaves, all served as ``bacterial
+``CrisprInterferencePerturbation`` leaves, all served as ``bacterial
 perturbation`` nodes. Each CRISPRi leaf carries its ``CrisprConstruct``, which is served
 as a ``crispr construct`` node. The titer is a ``ProductTiterPhenotype``.
 """

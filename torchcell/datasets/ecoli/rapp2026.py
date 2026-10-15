@@ -108,7 +108,6 @@ from torchcell.datamodels.schema import (
     BACTERIAL_ASSEMBLY_SETS,
     AssemblyReferenceGenome,
     BacterialAssemblySet,
-    BacterialCrisprInterferencePerturbation,
     BacterialMetaboliteExperiment,
     BacterialMetaboliteExperimentReference,
     BacterialReferenceStrain,
@@ -116,6 +115,7 @@ from torchcell.datamodels.schema import (
     Concentration,
     ConcentrationUnit,
     CrisprConstruct,
+    CrisprInterferencePerturbation,
     DerivedIdentifierMapping,
     Environment,
     Experiment,
@@ -1889,7 +1889,7 @@ def crispri_genotype(resolved: ResolvedStrain) -> Genotype:
     """The one guide-directed knockdown, named by its MG1655 b-number."""
     return Genotype(
         perturbations=[
-            BacterialCrisprInterferencePerturbation(
+            CrisprInterferencePerturbation(
                 systematic_gene_name=resolved.locus_tag,
                 perturbed_gene_name=resolved.symbol,
                 gene_namespace=STRAIN_GENE_NAMESPACES[REFERENCE_STRAIN_NAME],

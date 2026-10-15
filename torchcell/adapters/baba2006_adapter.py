@@ -5,7 +5,7 @@
 """BioCypher adapter exposing the Baba 2006 Keio construction outcomes of BW25113
 ORFs as knowledge-graph nodes and edges.
 
-One record per targeted ORF: a single ``BacterialDeletionPerturbation`` served as a
+One record per targeted ORF: a single ``DeletionStrainPerturbation`` served as a
 ``bacterial perturbation`` node, and the construction outcome as a
 ``GeneEssentialityPhenotype``. The reference's environment is the same LB agar without
 the kanamycin, so its environment and media reference nodes differ from the records'.

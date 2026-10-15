@@ -32,18 +32,18 @@ blank), crossed against 49 clone columns as 443 per-clone calls (431 at frequenc
 0.9). The three leaves #731 added hold all of it, and the released row SHAPE decides
 which (:func:`released_row_representation`, measured and partitioning all 159 rows):
 
-1. ``Details`` starts ``intergenic`` (17 rows) -> ``BacterialSiteVariantPerturbation``
+1. ``Details`` starts ``intergenic`` (17 rows) -> ``SiteVariantCallPerturbation``
    with ``site_kind=intergenic``, keyed on the derived site id
    ``AE015451:<position>``, with both flanking loci resolved into
    ``flanking_systematic_gene_names`` and the ``Gene`` cell verbatim in
    ``flanking_gene_statement``. A locus tag there is refused by the leaf itself, so no
    neighbor is ever invented.
 2. ``Mutation Type == DEL`` with an EMPTY ``Details`` (25 rows) ->
-   ``BacterialSpanDeletionPerturbation``, one per covered locus, all sharing the event's
+   ``SpanDeletionCallPerturbation``, one per covered locus, all sharing the event's
    ``span_designation``. breseq reports no coding offset exactly when the named loci lie
    wholly inside the deleted interval; 19 of the 25 name more than one locus (up to the
    53 of ``PP_3024``-``PP_5558``) and 6 name one, which is the same shape.
-3. everything else (117 rows) -> ``BacterialSequenceVariantPerturbation`` on its one
+3. everything else (117 rows) -> ``LocusVariantCallPerturbation`` on its one
    locus. ``PP_3415`` carries TWO of these within A12_F53_I1 (P293S at 3,866,001 and
    V46I at 3,866,742), which ``Genotype.perturbations`` admits: it has no
    one-entry-per-locus rule, unlike ``BacterialStrainBackground``.
@@ -66,7 +66,7 @@ of the position the length runs to, neither of which the source states.
 
 A CALL THAT RESTATES A DESIGNED LESION IS DROPPED, AND THE DROP IS COUNTED. A call whose
 resolved locus the record's own strain already carries as a designed
-``BacterialDeletionPerturbation`` is not written a second time, so absence has one
+``DeletionStrainPerturbation`` is not written a second time, so absence has one
 encoding. Measured, and larger than it looks before the symbols are resolved: ``3063719
 DEL PP_2675``, ``4362918 DEL adhP`` (``PP_3839``) and the four loci of ``4588139 DEL
 ivd,mccB,liuC,mccA`` (``PP_4064``-``PP_4067``) restate IPL300's six designed deletions,
@@ -100,7 +100,7 @@ WHAT STILL REFUSES, WITH COUNTS.
   released are records of :class:`ProteomeLim2025Dataset`.
 - ``PP_2676``'s 14-codon N-terminal truncation on the PERTURBATION axis. The release
   gives no coordinate for it and no coding range, so it cannot be a
-  ``BacterialSequenceVariantPerturbation`` of deletion type either; it stays a
+  ``LocusVariantCallPerturbation`` of deletion type either; it stays a
   ``BacterialBackgroundAllele(partial_deletion)`` on the IPL400 background and a stated
   gap in ``preprocess/genotype_gaps.json``.
 - A called variant on the strain-BACKGROUND axis. ``BacterialBackgroundAllele`` requires
@@ -119,7 +119,7 @@ identifiers) into ``preprocess/called_variant_perturbations.json``.
 THE WRITABLE STRAINS, AND WHY ONLY THREE CARRY A NUMBER. IPL300
 (``dPP_2675 dPP_3839 dPP_4064-dPP_4067``), IPL400 (the same plus ``dttgB``/``PP_1385``)
 and the seven reverse-engineered KT2440 deletions are all expressible as
-``BacterialDeletionPerturbation``s on the ``pputida_kt2440_locus_tag`` namespace, and the
+``DeletionStrainPerturbation``s on the ``pputida_kt2440_locus_tag`` namespace, and the
 eight pIY670 strains as ``HeterologousPathwayPerturbation``s. The campaign releases a
 per-strain NUMBER for only three of them: Supplementary Table 3's initial growth rates
 (IPL300, IPL400) and the 1.6-fold the Fig. 3A text gives for ``dPP_3024``. Figures 2A, 3A,
@@ -133,7 +133,7 @@ in-frame deletion of PP_2675 and partial truncation of the first fourteen amino 
 PP_2676" -- one deletion event, since ``PP_2676``'s ORF overlaps ``PP_2675``'s CDS, and
 the same physical lesion row 14's ``PT`` strain carries from the same Thompson 2020
 strain. The bacterial PERTURBATION axis has no partial-deletion leaf
-(``BacterialDeletionPerturbation`` is ``state="absent"``), so:
+(``DeletionStrainPerturbation`` is ``state="absent"``), so:
 
 - :class:`ProteomeLim2025Dataset`, whose comparison is IPL400-stressed against
   IPL400-unstressed, states the whole strain on a ``BacterialStrainBackground``: seven
@@ -262,7 +262,6 @@ from torchcell.datamodels.schema import (
     AssayType,
     BacterialAssemblySet,
     BacterialBackgroundAllele,
-    BacterialDeletionPerturbation,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
     BacterialGeneNamespace,
@@ -270,15 +269,13 @@ from torchcell.datamodels.schema import (
     BacterialProteinAbundanceExperimentReference,
     BacterialProteinFoldChangeExperiment,
     BacterialProteinFoldChangeExperimentReference,
-    BacterialSequenceVariantPerturbation,
-    BacterialSiteVariantPerturbation,
-    BacterialSpanDeletionPerturbation,
     BacterialStrainBackground,
     BacterialVariantCall,
     BacterialVariantType,
     Compound,
     Concentration,
     ConcentrationUnit,
+    DeletionStrainPerturbation,
     DerivedIdentifierMapping,
     Environment,
     EnvironmentResponsePhenotype,
@@ -287,12 +284,15 @@ from torchcell.datamodels.schema import (
     FoldChangeScale,
     GenePerturbationType,
     Genotype,
+    LocusVariantCallPerturbation,
     MeasurementType,
     ProteinAbundancePhenotype,
     ProteinFoldChangePhenotype,
     Publication,
     SampleUnit,
+    SiteVariantCallPerturbation,
     SmallMoleculePerturbation,
+    SpanDeletionCallPerturbation,
     StrainConstruction,
     VariantCallMode,
     VariantFrequencyBasis,
@@ -607,7 +607,7 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
     "seven_deletion_strains": _paper(
         7,
         "A total of seven deletion strains were generated.",
-        note="all seven are expressible as BacterialDeletionPerturbations; only "
+        note="all seven are expressible as DeletionStrainPerturbations; only "
         "dPP_3024 carries a released number",
     ),
     "proteome_conditions": _paper(
@@ -1593,7 +1593,7 @@ VARIANT_TYPE_BY_STATEMENT: dict[str, BacterialVariantType] = {
 CLONE_FREQUENCY_BASIS = VariantFrequencyBasis.fraction
 
 VariantRepresentation = Literal[
-    "bacterial_sequence_variant", "bacterial_site_variant", "bacterial_span_deletion"
+    "locus_variant_call", "site_variant_call", "span_deletion_call"
 ]
 """Which #731 perturbation leaf a released row's SHAPE maps to.
 
@@ -1621,11 +1621,11 @@ def released_row_representation(
       :func:`called_variant_perturbations` asserts rather than assumes.
     """
     if is_intergenic:
-        return "bacterial_site_variant"
+        return "site_variant_call"
     kind = VARIANT_TYPE_BY_STATEMENT[mutation_type]
     if kind is BacterialVariantType.deletion and not detail.strip():
-        return "bacterial_span_deletion"
-    return "bacterial_sequence_variant"
+        return "span_deletion_call"
+    return "locus_variant_call"
 
 
 class CalledVariant(BaseModel):
@@ -1962,7 +1962,7 @@ def called_variant_perturbations(
     name), which ties for those two, and ``sorted`` is stable, so the input order decides.
 
     DEDUPLICATION. A call whose resolved locus is one the record's own strain already
-    carries as a designed ``BacterialDeletionPerturbation`` is DROPPED, because it
+    carries as a designed ``DeletionStrainPerturbation`` is DROPPED, because it
     restates a lesion the genotype already states and absence has one encoding. Measured
     on the pinned sheet, this is not a corner case: ``3063719 DEL PP_2675``, ``4362918
     DEL adhP`` (``PP_3839``) and the four loci of ``4588139 DEL ivd,mccB,liuC,mccA``
@@ -1982,14 +1982,12 @@ def called_variant_perturbations(
     counts: Counter[VariantRepresentation] = Counter()
     for row in rows:
         call = _clone_call(row, clone_column)
-        if row.representation == "bacterial_site_variant":
+        if row.representation == "site_variant_call":
             candidates += 1
             counts[row.representation] += 1
             written.append(
-                BacterialSiteVariantPerturbation(
-                    systematic_gene_name=(
-                        BacterialSiteVariantPerturbation.site_id(call)
-                    ),
+                SiteVariantCallPerturbation(
+                    systematic_gene_name=(SiteVariantCallPerturbation.site_id(call)),
                     perturbed_gene_name=row.gene_field,
                     gene_namespace=KT2440_NAMESPACE,
                     call=call,
@@ -2001,9 +1999,9 @@ def called_variant_perturbations(
                 )
             )
             continue
-        if row.representation == "bacterial_span_deletion":
+        if row.representation == "span_deletion_call":
             tags = tuple(loci[token] for token in row.loci)
-            designation = BacterialSpanDeletionPerturbation.designation(call)
+            designation = SpanDeletionCallPerturbation.designation(call)
             for released, tag in zip(row.loci, tags, strict=True):
                 candidates += 1
                 if tag in designed:
@@ -2011,7 +2009,7 @@ def called_variant_perturbations(
                     continue
                 counts[row.representation] += 1
                 written.append(
-                    BacterialSpanDeletionPerturbation(
+                    SpanDeletionCallPerturbation(
                         systematic_gene_name=tag,
                         perturbed_gene_name=released,
                         gene_namespace=KT2440_NAMESPACE,
@@ -2037,7 +2035,7 @@ def called_variant_perturbations(
             continue
         counts[row.representation] += 1
         written.append(
-            BacterialSequenceVariantPerturbation(
+            LocusVariantCallPerturbation(
                 systematic_gene_name=tag,
                 perturbed_gene_name=released,
                 gene_namespace=KT2440_NAMESPACE,
@@ -2051,9 +2049,9 @@ def called_variant_perturbations(
         n_called_rows=len(rows),
         n_candidate_perturbations=candidates,
         n_written=len(written),
-        n_sequence_variants=counts["bacterial_sequence_variant"],
-        n_intergenic_variants=counts["bacterial_site_variant"],
-        n_span_deletion_loci=counts["bacterial_span_deletion"],
+        n_sequence_variants=counts["locus_variant_call"],
+        n_intergenic_variants=counts["site_variant_call"],
+        n_span_deletion_loci=counts["span_deletion_call"],
         n_restating_a_designed_deletion=len(restated),
         restated_loci=tuple(sorted(restated)),
         written_identifiers=tuple(p.systematic_gene_name for p in written),
@@ -2307,14 +2305,14 @@ def unstressed_environment() -> Environment:
 
 def deletion(
     locus_tag: str, symbol: str, *, construction: StrainConstruction | None = None
-) -> BacterialDeletionPerturbation:
+) -> DeletionStrainPerturbation:
     """One markerless in-frame deletion on the KT2440 locus-tag namespace.
 
     ``cassette`` is None by design: "Scarless gene deletion was performed by following
     the conjugation protocol", so there is no replacement cassette to name. ``collection``
     is None because these are this study's own strains, not a catalogued collection.
     """
-    return BacterialDeletionPerturbation(
+    return DeletionStrainPerturbation(
         systematic_gene_name=locus_tag,
         perturbed_gene_name=symbol,
         gene_namespace=KT2440_NAMESPACE,
@@ -2758,7 +2756,7 @@ def genotype_gaps() -> list[GenotypeGap]:
             content=f"{PP2676_LOCUS}'s 14-codon N-terminal truncation, on the "
             "PERTURBATION axis only",
             reason="the bacterial perturbation axis has no partial-deletion leaf "
-            "(BacterialDeletionPerturbation is state='absent'), so a strain-against-"
+            "(DeletionStrainPerturbation is state='absent'), so a strain-against-"
             "KT2440 record cannot state it. It IS typed as a "
             "BacterialBackgroundAllele(partial_deletion) on the IPL400 background the "
             "proteome loader writes, which is the same typing the de Siqueira 2025 "
@@ -2902,7 +2900,7 @@ class IsoprenolToleranceLim2025Dataset(ExperimentDataset):
                     rule="call_restates_a_designed_deletion",
                     scope="perturbation",
                     description="a called variant whose resolved locus the record's own "
-                    "strain already carries as a designed BacterialDeletionPerturbation "
+                    "strain already carries as a designed DeletionStrainPerturbation "
                     "is dropped, so absence has one encoding. Measured on the loaded "
                     "records: PP_2675 (position 3063719), adhP/PP_3839 (4362918), the "
                     "four loci of ivd,mccB,liuC,mccA/PP_4064-PP_4067 (4588139) and, for "
@@ -3384,7 +3382,7 @@ class ProteomeLim2025Dataset(ExperimentDataset):
                     rule="call_restates_a_designed_deletion",
                     scope="perturbation",
                     description="a called variant whose resolved locus the isolate's "
-                    "parent already carries as a designed BacterialDeletionPerturbation "
+                    "parent already carries as a designed DeletionStrainPerturbation "
                     "is dropped from its genotype, so absence has one encoding",
                     n_items=sum(
                         row.n_restating_a_designed_deletion for row in accounting
@@ -4102,7 +4100,7 @@ def _assert_site_identifiers(
 ) -> set[str]:
     """Split stored identifiers into locus tags and site ids; check the site ids.
 
-    A ``BacterialSiteVariantPerturbation`` is keyed on ``AE015451:<position>`` precisely
+    A ``SiteVariantCallPerturbation`` is keyed on ``AE015451:<position>`` precisely
     because no locus tag of the pinned assembly holds the call, so asking the gene
     universe to contain one would fail by design. The site ids get their own L4 row --
     the replicon is the one the assembly carries and the position is inside it -- and

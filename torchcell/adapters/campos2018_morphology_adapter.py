@@ -4,7 +4,7 @@
 # Test file: tests/torchcell/adapters/test_campos2018_morphology_adapter.py
 """BioCypher adapter exposing the Campos 2018 Keio cell-morphology screen.
 
-One record per deletion strain: a single ``BacterialDeletionPerturbation`` served as a
+One record per deletion strain: a single ``DeletionStrainPerturbation`` served as a
 ``bacterial perturbation`` node, and the strain's 26-feature profile as a
 ``bacterial morphology phenotype``. The screen is one medium at one temperature, so no
 environment perturbation is served.

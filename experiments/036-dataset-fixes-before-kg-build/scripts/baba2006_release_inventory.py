@@ -36,7 +36,7 @@ Measurements, all off the deposited bytes:
    BW25113 assembly (the strain the paper names), whose GenBank file carries JW ids as
    ``gene_synonym``.
 5. **Schema fit**: the call is a construction outcome; ``GeneEssentialityPhenotype`` is
-   constructed both ways and ``BacterialDeletionPerturbation`` with the derived
+   constructed both ways and ``DeletionStrainPerturbation`` with the derived
    ``jw_synonym`` mapping, so the verdict is the validators', not an assertion.
 
 Run from the repo root::
@@ -66,7 +66,7 @@ from pydantic import BaseModel, ConfigDict
 load_dotenv()
 
 from torchcell.datamodels.schema import (  # noqa: E402
-    BacterialDeletionPerturbation,
+    DeletionStrainPerturbation,
     DerivedIdentifierMapping,
     GeneEssentialityPhenotype,
 )
@@ -424,7 +424,7 @@ def schema_fit(root: Path) -> dict[str, Any]:
     tag = bacterial_genome("ecoli", "BW25113").resolve_gene_name("JW0001")
     if tag.systematic_name is None:
         raise RuntimeError("JW0001 does not resolve on BW25113")
-    leaf = BacterialDeletionPerturbation(
+    leaf = DeletionStrainPerturbation(
         systematic_gene_name=tag.systematic_name,
         perturbed_gene_name="thrA",
         gene_namespace=STRAIN_GENE_NAMESPACES["BW25113"],

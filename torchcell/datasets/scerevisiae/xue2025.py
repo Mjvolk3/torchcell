@@ -182,6 +182,7 @@ def _released_deletion(
         )
     return ReleasedGeneNamePerturbation(
         systematic_gene_name=gene,
+        gene_namespace="scerevisiae_s288c_sgd_systematic",
         perturbed_gene_name=gene,
         released_gene_name=gene,
         released_kind=ReleasedGeneKind.deletion,

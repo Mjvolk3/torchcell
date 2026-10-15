@@ -6,7 +6,7 @@
 knowledge-graph nodes and edges.
 
 One record per (KEIO deletion strain, medium): a single
-``BacterialDeletionPerturbation`` served as a ``bacterial perturbation`` node, and the
+``DeletionStrainPerturbation`` served as a ``bacterial perturbation`` node, and the
 strain's growth rate relative to the wild type of the SAME medium as a
 ``FitnessPhenotype``. The two media differ by their carbon source, which rides on
 ``environment.perturbations``, so the environment-perturbation pair is enabled.

@@ -108,7 +108,6 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import LB
 from torchcell.datamodels.schema import (
     AssayType,
-    BacterialDeletionPerturbation,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
     BacterialGeneNamespace,
@@ -119,6 +118,7 @@ from torchcell.datamodels.schema import (
     ConcentrationUnit,
     CultureEnvironment,
     CultureFormat,
+    DeletionStrainPerturbation,
     EndpointRule,
     Environment,
     EnvironmentPhysicalPerturbation,
@@ -1070,7 +1070,7 @@ def strain_genotype(strain: str, locus_tags: dict[str, str]) -> Genotype:
     grow only plasmid-bearing strains, and that is the whole point of the comparison.
     """
     perturbations: list[Any] = [
-        BacterialDeletionPerturbation(
+        DeletionStrainPerturbation(
             systematic_gene_name=locus_tags[symbol],
             perturbed_gene_name=symbol,
             gene_namespace=KT2440_NAMESPACE,
@@ -1135,7 +1135,7 @@ def deletion_genotype(strain: str, locus_tags: dict[str, str]) -> Genotype:
     """
     return Genotype(
         perturbations=[
-            BacterialDeletionPerturbation(
+            DeletionStrainPerturbation(
                 systematic_gene_name=locus_tags[symbol],
                 perturbed_gene_name=symbol,
                 gene_namespace=KT2440_NAMESPACE,
@@ -1846,7 +1846,7 @@ def _strain_of_record(record: dict[str, Any], *, with_plasmid: bool) -> str:
     deleted = {
         pert["perturbed_gene_name"]
         for pert in perturbations
-        if pert["perturbation_type"] == "bacterial_deletion"
+        if pert["perturbation_type"] == "deletion_strain"
     }
     plasmid = {
         pert["perturbed_gene_name"]

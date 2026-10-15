@@ -645,6 +645,7 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
                 else:
                     target = ReleasedGeneNamePerturbation(
                         systematic_gene_name=orf,
+                        gene_namespace="scerevisiae_s288c_sgd_systematic",
                         perturbed_gene_name=gene,
                         released_gene_name=orf,
                         released_kind=ReleasedGeneKind.crispr_interference,

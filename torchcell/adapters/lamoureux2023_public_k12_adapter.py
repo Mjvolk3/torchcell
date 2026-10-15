@@ -6,7 +6,7 @@
 nodes and edges.
 
 One record per reprocessed public MG1655 RNA-seq library: the wild type or up to two
-``BacterialDeletionPerturbation`` leaves, served as ``bacterial perturbation`` nodes, and
+``DeletionStrainPerturbation`` leaves, served as ``bacterial perturbation`` nodes, and
 the medium's supplements and physical settings as environment perturbations.
 """
 

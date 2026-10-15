@@ -1,0 +1,138 @@
+{
+  "alleles": [
+    {
+      "carries_designed_residue": true,
+      "codon_number": 229,
+      "codon_on_contig": "TTA",
+      "contig_position_end": 3370,
+      "contig_position_start": 3368,
+      "expected_residue": "L",
+      "label": "ARO4-K229L",
+      "translates_to": "L"
+    },
+    {
+      "carries_designed_residue": true,
+      "codon_number": 141,
+      "codon_on_contig": "AGT",
+      "contig_position_end": 822,
+      "contig_position_start": 820,
+      "expected_residue": "S",
+      "label": "ARO7-G141S",
+      "translates_to": "S"
+    }
+  ],
+  "arms": [
+    {
+      "end": 220,
+      "label": "XII-5 up B",
+      "start": 10
+    },
+    {
+      "end": 9859,
+      "label": "XII-5 dw A",
+      "start": 9598
+    }
+  ],
+  "blocked_paths": [
+    "si/plasmids/pBTX002.gb",
+    "si/plasmids/pCCM023.gb",
+    "si/plasmids/pbtx013.gb",
+    "si/plasmids/pbtx014.gb",
+    "si/plasmids/pbtx016.gb",
+    "si/plasmids/pbtx017.gb",
+    "si/plasmids/pbtx019.gb",
+    "si/plasmids/pbtx020.gb",
+    "si/plasmids/pbtx021.gb",
+    "si/plasmids/pbtx022.gb",
+    "si/plasmids/pbtx023.gb"
+  ],
+  "construct_set": "cachera2023_cri_spa_plasmids",
+  "contig": {
+    "handle": "bbaca60509e0",
+    "length": 15098,
+    "record_name": "ANTE113_with_NatMX",
+    "ref": {
+      "bytes": 31895,
+      "key": "cacheraCRISPAHighthroughputMethod2023",
+      "media_type": null,
+      "member": null,
+      "path": "si/plasmids/pBTX001(ante113).gb",
+      "sha256": "bbaca60509e079222f7cdd1bb54b70d93445af3a699c65109d94b553fc0087f7",
+      "tier": "library"
+    },
+    "source_name": "pBTX1",
+    "source_quote": "the integrative plasmid pBTX1 harboring the betaxanthin-synthesizing genes CYP76AD1 and DOD",
+    "topology": "circular"
+  },
+  "genes": [
+    {
+      "end": 5887,
+      "gene_key": "CYP76AD1",
+      "in_frame": true,
+      "internal_stop": false,
+      "label": "CYP76AD/P450 fusion",
+      "length": 1500,
+      "n_residues": 499,
+      "orientation": "reverse_complement",
+      "so_id": "SO:0000704",
+      "start": 4388,
+      "starts_atg": true,
+      "terminal_stop": true,
+      "token": "CYP76AD/P450 fusion@SO:0000704:4388-5887-"
+    },
+    {
+      "end": 7999,
+      "gene_key": "DOD",
+      "in_frame": true,
+      "internal_stop": false,
+      "label": "DOPA 4,5 dioxygenase",
+      "length": 810,
+      "n_residues": 269,
+      "orientation": "inline",
+      "so_id": "SO:0000704",
+      "start": 7190,
+      "starts_atg": true,
+      "terminal_stop": true,
+      "token": "DOPA 4,5 dioxygenase@SO:0000704:7190-7999+"
+    },
+    {
+      "end": 3796,
+      "gene_key": "YBR249C",
+      "in_frame": true,
+      "internal_stop": false,
+      "label": "ARO4-K229L",
+      "length": 1113,
+      "n_residues": 370,
+      "orientation": "inline",
+      "so_id": "SO:0000704",
+      "start": 2684,
+      "starts_atg": true,
+      "terminal_stop": true,
+      "token": "ARO4-K229L@SO:0000704:2684-3796+"
+    },
+    {
+      "end": 1242,
+      "gene_key": "YPR060C",
+      "in_frame": true,
+      "internal_stop": false,
+      "label": "ARO7-G141S",
+      "length": 771,
+      "n_residues": 256,
+      "orientation": "reverse_complement",
+      "so_id": "SO:0000704",
+      "start": 472,
+      "starts_atg": true,
+      "terminal_stop": true,
+      "token": "ARO7-G141S@SO:0000704:472-1242-"
+    }
+  ],
+  "insert_span_candidates": {
+    "agree": false,
+    "arm_to_arm_inclusive_bp": 9850,
+    "between_arms_exclusive_bp": 9377,
+    "paper_statement": "the considerable size, 9.3 kb, of the Btx-cassette"
+  },
+  "n_blocked": 11,
+  "n_indexed": 6,
+  "sequence_status": "design"
+}

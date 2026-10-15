@@ -179,6 +179,7 @@ from torchcell.datamodels.schema import (
     ExperimentReference,
     Genotype,
     HeterologousPathwayPerturbation,
+    Localization,
     Media,
     MediaComponent,
     MediaComponentRole,
@@ -1714,10 +1715,39 @@ def pathway_perturbation(
         pathway_name=f"heterologous mevalonate pathway to {product}",
         source_organism=gene.source_organism,
         is_heterologous=gene.is_heterologous,
-        localization="episomal_plasmid",
+        localization=Localization.episomal_replicon,
         construct_name=part.plasmid_name,
         variant=part.variant,
-        provenance_gaps=gaps,
+        placement=None,
+        provenance_gaps=[*gaps, placement_gap()],
+    )
+
+
+#: What was read before concluding that no construct sequence is available. Table S1
+#: names each plasmid by its part composition and a JBEI registry id, and the table is a
+#: raster image inside ``mmc1.pdf``; the article deposits no map.
+_PLACEMENT_GAP_NOTE = (
+    "Table S1 '(Related to Figure 2) Strains and plasmids used in this study' names "
+    "each production plasmid by its part composition (e.g. 'pBbA5c-MevTsa-MK-PMK') and "
+    "by a JBEI registry id (the JPUB_/JBx_ keys this loader parses); no GenBank map is "
+    "released with the article and the public JBEI registry answers 403 to an anonymous "
+    "REST request (measured 2026-10-15), so the construct bytes exist and are withheld"
+)
+
+
+def placement_gap() -> ProvenanceGap:
+    """The typed absence of a construct sequence for a production plasmid."""
+    return ProvenanceGap(
+        field="placement",
+        reason=ProvenanceGapReason.not_released_by_primary,
+        looked_in=Provenance(
+            source_uri=SI_OCR_REL,
+            citation_key=CITATION_KEY,
+            sha256=SI_OCR_SHA256,
+            method="MinerU OCR of the supplementary PDF (raw mirror), Table S1",
+            page="Table S1, '(Related to Figure 2) Strains and plasmids used in this study'",
+        ),
+        note=_PLACEMENT_GAP_NOTE,
     )
 
 

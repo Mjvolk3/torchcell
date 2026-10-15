@@ -1,0 +1,442 @@
+{
+  "record_version": 1,
+  "slug": "construct-placement-on-gene-addition",
+  "date": "2026-10-15",
+  "pr": null,
+  "author_kind": "agent",
+  "base_commit": "1914c98355d1bbe24d645896d308de22501ec52b",
+  "python_version": "3.13.0",
+  "symbols": [
+    {
+      "symbol": "ConstructPlacement",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "62af0c5a381f72fbf116dd8a59b720dca876f1f5c1fa47de3049f0fe684fb39a",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "ConstructSpan",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "7fdf162fea7c7bf92fc1c7a737071712eb038d3d6e668121cab480344de89a50",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "ConstructVariantCall",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "4ff4edb940266777683ffc92ddc74105d61600cc8b7742ee826ed4cb3a042ebc",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "FeatureKey",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "a67e906ee63c46e022a3da6f4eee57056ce124b26abaadf096415610cbe9c2a4",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "GeneAdditionPerturbation",
+      "status": "modified",
+      "kinds": [
+        "removal",
+        "additive_field",
+        "typed_gap",
+        "field_meaning",
+        "contract_tightened"
+      ],
+      "fingerprint_before": "8798b35ee2e7002475e62bc9916b02951b107a6d339601d17224dce616aa310b",
+      "fingerprint_after": "347d34073bcac503d87315b7c20ae062f931b21f39dabd46c62d88f0622ae2be",
+      "impact": "breaking",
+      "reasons": [
+        "base classes changed: ['PresenceAbsencePerturbation', 'ModelStrict'] -> ['HashableProvenanceGapMixin', 'PresenceAbsencePerturbation', 'ModelStrict']",
+        "added required field 'placement'",
+        "added optional field 'replicon_statement'",
+        "removed field 'locus_tag'",
+        "removed field 'plasmid_contig_id'",
+        "field 'localization' type changed: str -> Localization",
+        "validator/serializer changed: ['_placement_stated_or_gapped']"
+      ]
+    },
+    {
+      "symbol": "HeterologousPathwayPerturbation",
+      "status": "modified",
+      "kinds": [
+        "equivalent_refactor"
+      ],
+      "fingerprint_before": "b824c9e79af4be2f36e858febd8d46b70d79e08eb4fe54a49a61103271fbe63f",
+      "fingerprint_after": "b1eaf6f48fcce1d54ddab363b24c4c1a5d153ffe6b256cd500fd69b5ebd76b7b",
+      "impact": "breaking",
+      "reasons": [
+        "base classes changed: ['HashableProvenanceGapMixin', 'GeneAdditionPerturbation', 'ModelStrict'] -> ['GeneAdditionPerturbation', 'ModelStrict']"
+      ]
+    },
+    {
+      "symbol": "HostPlacement",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "69cfa3b2e89d026200c424fedbf0692c779a8e0858ed11e64088325695fb4ccd",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "Localization",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "215fbf99f286a891b4cbd8f0977da3bb3586864db186536e0d792a590f484210",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "PLACEMENT_TARGET_REFUSED_SO",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "165ef93c100412c4741c46ffd54f77c7fa1eb6586ecf779a1a75c2ec0af4ab6a",
+      "impact": "stale",
+      "reasons": [
+        "new module-level binding"
+      ]
+    }
+  ],
+  "correctness_argument": "P4 of the ontology unification: an added gene points at real sequence, or says in a typed statement that there is none. Four measurements decide it. (1) Two free strings pointing at a store that did not exist could not be verified: plasmid_contig_id and locus_tag carried no hash, nothing dereferenced them, and they were None in 26 of 26 served gene-addition stores, so a hand-typed parts list and a sequence-backed record were the same record. The composed placement cannot be half-filled, and its ArtifactRef carries its own sha256, so a stored record verifies itself without the construct index being present (the refusal is in ConstructPlacement._check_placement: contig_ref.sha256 must equal contig_sha256). (2) The absence is now countable instead of silent: placement is required with no default and gap-able, the shape Media.name and HeterologousPathwayPerturbation.source_organism already use, and torchcell.verification.construct_placement separates sequence_backed, host_placed_without_coordinate and composition_only. Measured over the 13 gene-addition loaders: 1 states a real placement (Cachera 2023's four Btx-cassette genes on pBTX1), 11 state not_released_by_primary (the primary names a registry handle, Addgene or JBEI, and releases no sequence), 1 states deferred_pending_source_review (Mohiuddin 2022 defers the reporter backbone to reference 28, Zaslaver 2006). Each gap carries its own looked_in, per dataset, never one shared constant. (3) localization becomes the two-member Localization vocabulary because the replicon's identity (2 micron, CEN/ARS, a broad-host-range origin) is a property of the CONTIG, read from its origin-of-replication feature, and not of the gene riding on it. Four distinct strings were in use (chromosomal_integration 12, episomal_plasmid 12, episomal_2micron 3, episomal_cen_plasmid 1 via Vaishnav's module constant), and nothing is lost: the new verbatim replicon_statement keeps the source's own words for the three datasets whose token carried replicon information, and Ozaydin's case shows why the fold is more correct than the string it replaces, because episomal_2micron asserted a replicon class the paper never writes (measured: paper.md carries no '2 micron', '2\\mu' or 'multicopy' for YB/I/BTS1) while Table 2's own word for the backbone is YEplac195, which is what the record now stores. (4) Every served node id re-keys, so this is a full rebuild whatever the diff size, and the owner's ruling is that correctness decides that. The Cachera placement is measured, not designed: experiments/036-dataset-fixes-before-kg-build/scripts/cachera2023_btx_cassette_placement.py reads the deposited construct set, confirms the four gene features are CDSs in frame against the contig's own bases, and derives ARO4 K229L to contig 3368-3370 and ARO7 G141S to 820-822 from the feature span and the codon number, each confirmed by translating the construct's own codon (TTA = Leu, AGT = Ser), so the two former free strings ('K229L', 'G141S') now have coordinates beside them. The host coordinate of XII-5 and the transferred interval of the vector are typed gaps, because the paper names the pad without a coordinate and the three readings its two annotated homology arms admit (9,850 bp arm to arm, 9,377 bp between arms) disagree with the paper's own '9.3 kb'. No typed PromoterPart was created: a promoter singleton fails an operon (Kang's xylAB), a bidirectional promoter, an RBS library and a promoter that is itself a point mutation (Kang's PxylE*), so promoter_name stays verbatim and the promoter is derived from the contig. PromoterDrivenGeneIntegrationPerturbation and PromoterReplacementPerturbation do share field names (promoter_name, promoter_sequence, is_inducible), which is stated here and left alone: they sit on different axes (an addition against an expression modulation) and unifying them is its own proposal. HeterologousPathwayPerturbation's only change is that it no longer lists HashableProvenanceGapMixin in its bases: the mixin is inherited from the parent leaf, which took it in this change, and listing it first makes the MRO linearization inconsistent. Its fields, its hash and its serialization are unchanged.",
+  "measurement_type_decision": false,
+  "source_quotes": [],
+  "alternatives_rejected": [
+    {
+      "alternative": "Audit A's P4 shape: sequence_ref: ArtifactRef | None plus contig_locus_tag: str | None, both defaulting to None.",
+      "why_rejected": "That is the defect being fixed, re-spelled. A defaulted None is exactly what left 26 of 26 served stores with plasmid_contig_id=None, and two independent optional fields can still be half-filled (a ref with no feature, a feature with no ref). Review 2 finding 4 is explicit that A's shape reproduces the silent-None defect, and constitution principle 7 requires a value or a typed gap."
+    },
+    {
+      "alternative": "Keep plasmid_contig_id and locus_tag beside the new placement, so no served record changes.",
+      "why_rejected": "Two fields asserting one fact is principle 5's defect, and leaving an unverifiable pointer in place for diff size is the cost-over-correctness reasoning the owner ruled out. Every served gene-addition record re-keys anyway once placement joins the closure, so keeping the strings buys nothing and leaves a second way to say where a gene came from."
+    },
+    {
+      "alternative": "Keep localization as a free string, so the four spellings survive untouched.",
+      "why_rejected": "A property of a record with a closed vocabulary is a typed field (principle 5), and the free string carried two facts at once: whether the DNA is chromosomal, which is real, and which replicon class it sits on, which belongs to the contig and which Ozaydin's token asserted without the paper saying it. The typed enum plus a verbatim replicon_statement separates them and loses no word the source wrote."
+    },
+    {
+      "alternative": "Define ConstructPlacement in torchcell/datamodels/construct.py and import it into schema.py.",
+      "why_rejected": "It cannot be imported: the construct modules reach torchcell.artifacts.resolve, which imports the dataset loaders, which import schema, so schema importing them closes a cycle. A record class's field types belong on the fingerprinted surface in any case, which is why ArtifactRef is defined in schema and re-exported by torchcell/artifacts/ref.py. The construct modules now re-export the four classes under the names their own readers use."
+    },
+    {
+      "alternative": "Infer the Cachera insert span from the two annotated homology arms and store a coordinate.",
+      "why_rejected": "The arms admit two readings, 9,850 bp inclusive of them and 9,377 bp between them, and the paper's own figure for the cassette is 9.3 kb; none of the three agrees, so any one of them would be our inference presented as the source's value. The field is gap-able for exactly this case, and the gap note carries both arm features with their coordinates so the derivation stays visible."
+    }
+  ],
+  "served_release": "2026.10.06-4b293d34",
+  "affected_loaders": [
+    {
+      "loader": "torchcell/datasets/ecoli/brunk2016.py",
+      "dataset_classes": [
+        "_MetaboliteBrunk2016Dataset",
+        "MetabolomeBrunk2016Dataset",
+        "ExometaboliteBrunk2016Dataset",
+        "ProteomeBrunk2016Dataset",
+        "BiofuelTiterBrunk2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ConstructPlacement",
+        "ConstructSpan",
+        "ConstructVariantCall",
+        "FeatureKey",
+        "GeneAdditionPerturbation",
+        "HeterologousPathwayPerturbation",
+        "HostPlacement",
+        "Localization",
+        "PLACEMENT_TARGET_REFUSED_SO"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/foo2014.py",
+      "dataset_classes": [
+        "IsopentenolTiterFoo2014Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ConstructPlacement",
+        "ConstructSpan",
+        "ConstructVariantCall",
+        "FeatureKey",
+        "GeneAdditionPerturbation",
+        "HeterologousPathwayPerturbation",
+        "HostPlacement",
+        "Localization",
+        "PLACEMENT_TARGET_REFUSED_SO"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/mohiuddin2022.py",
+      "dataset_classes": [
+        "PromoterReporterMohiuddin2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ConstructPlacement",
+        "ConstructSpan",
+        "ConstructVariantCall",
+        "FeatureKey",
+        "GeneAdditionPerturbation",
+        "HeterologousPathwayPerturbation",
+        "HostPlacement",
+        "Localization",
+        "PLACEMENT_TARGET_REFUSED_SO"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/banerjee2024.py",
+      "dataset_classes": [
+        "IsoprenolTiterBanerjee2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ConstructPlacement",
+        "ConstructSpan",
+        "ConstructVariantCall",
+        "FeatureKey",
+        "GeneAdditionPerturbation",
+        "HeterologousPathwayPerturbation",
+        "HostPlacement",
+        "Localization",
+        "PLACEMENT_TARGET_REFUSED_SO"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/carruthers2025.py",
+      "dataset_classes": [
+        "IsoprenolTiterCarruthers2025Dataset",
+        "ProteomeCarruthers2025Dataset",
+        "CampaignProteomeCarruthers2025Dataset",
+        "ProteomeFoldChangeCarruthers2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ConstructPlacement",
+        "ConstructSpan",
+        "ConstructVariantCall",
+        "FeatureKey",
+        "GeneAdditionPerturbation",
+        "HeterologousPathwayPerturbation",
+        "HostPlacement",
+        "Localization",
+        "PLACEMENT_TARGET_REFUSED_SO"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/desiqueira2025.py",
+      "dataset_classes": [
+        "ProteomeDeSiqueira2025Dataset",
+        "ProteomePercentDeSiqueira2025Dataset",
+        "ProteomeLog10PercentDeSiqueira2025Dataset",
+        "IsoprenolTiterDeSiqueira2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ConstructPlacement",
+        "ConstructSpan",
+        "ConstructVariantCall",
+        "FeatureKey",
+        "GeneAdditionPerturbation",
+        "HeterologousPathwayPerturbation",
+        "HostPlacement",
+        "Localization",
+        "PLACEMENT_TARGET_REFUSED_SO"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/kang2026.py",
+      "dataset_classes": [
+        "IsoprenylAcetateTiterKang2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ConstructPlacement",
+        "ConstructSpan",
+        "ConstructVariantCall",
+        "FeatureKey",
+        "GeneAdditionPerturbation",
+        "HeterologousPathwayPerturbation",
+        "HostPlacement",
+        "Localization",
+        "PLACEMENT_TARGET_REFUSED_SO"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/menasalvas2025.py",
+      "dataset_classes": [
+        "IsoprenolSelectionMenasalvas2025Dataset",
+        "ProteomeMenasalvas2025Dataset",
+        "_MetabolitePhaseDataset",
+        "MetaboliteGrowthPhaseMenasalvas2025Dataset",
+        "MetaboliteProductionPhaseMenasalvas2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ConstructPlacement",
+        "ConstructSpan",
+        "ConstructVariantCall",
+        "FeatureKey",
+        "GeneAdditionPerturbation",
+        "HeterologousPathwayPerturbation",
+        "HostPlacement",
+        "Localization",
+        "PLACEMENT_TARGET_REFUSED_SO"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/thompson2019_valerolactam.py",
+      "dataset_classes": [
+        "_Thompson2019Dataset",
+        "ValerolactamTiterThompson2019Dataset",
+        "LactamGrowthRateThompson2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ConstructPlacement",
+        "ConstructSpan",
+        "ConstructVariantCall",
+        "FeatureKey",
+        "GeneAdditionPerturbation",
+        "HeterologousPathwayPerturbation",
+        "HostPlacement",
+        "Localization",
+        "PLACEMENT_TARGET_REFUSED_SO"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/cachera2023.py",
+      "dataset_classes": [
+        "BetaxanthinCachera2023Dataset"
+      ],
+      "served_classes": [
+        "BetaxanthinCachera2023Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ConstructPlacement",
+        "ConstructSpan",
+        "ConstructVariantCall",
+        "FeatureKey",
+        "GeneAdditionPerturbation",
+        "HostPlacement",
+        "Localization",
+        "PLACEMENT_TARGET_REFUSED_SO"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/mormino2022.py",
+      "dataset_classes": [
+        "CrispriMormino2022Dataset"
+      ],
+      "served_classes": [
+        "CrispriMormino2022Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ConstructPlacement",
+        "ConstructSpan",
+        "ConstructVariantCall",
+        "FeatureKey",
+        "GeneAdditionPerturbation",
+        "HostPlacement",
+        "Localization",
+        "PLACEMENT_TARGET_REFUSED_SO"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ozaydin2013.py",
+      "dataset_classes": [
+        "CarotenoidOzaydin2013Dataset"
+      ],
+      "served_classes": [
+        "CarotenoidOzaydin2013Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ConstructPlacement",
+        "ConstructSpan",
+        "ConstructVariantCall",
+        "FeatureKey",
+        "GeneAdditionPerturbation",
+        "HostPlacement",
+        "Localization",
+        "PLACEMENT_TARGET_REFUSED_SO"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/vaishnav2022.py",
+      "dataset_classes": [
+        "PooledPromoterExpressionVaishnav2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ConstructPlacement",
+        "ConstructSpan",
+        "ConstructVariantCall",
+        "FeatureKey",
+        "GeneAdditionPerturbation",
+        "HostPlacement",
+        "Localization",
+        "PLACEMENT_TARGET_REFUSED_SO"
+      ]
+    }
+  ],
+  "served_datasets": [
+    "BetaxanthinCachera2023Dataset",
+    "CarotenoidOzaydin2013Dataset",
+    "CrispriMormino2022Dataset"
+  ],
+  "rebuild_scope": "full_kg_rebuild",
+  "owner_sign_off": {
+    "signed": true,
+    "quote": "Owner, 2026-10-15: 'we care most about correctness and are willing right now to do full rebuilds if we identify even small semantically prudent change in onto' (constitution principle 8); 'we want to unify then build, we are prepped for full rebuild path U' (the Path U decision note); and, on what a record may drop, owner 2026-10-12, quoted as principle 2 and governing the typed gaps here: 'the data is the data!!!! it is what they reported ... the genome is separate.. it doesn't gate anything'.",
+    "url": null
+  }
+}

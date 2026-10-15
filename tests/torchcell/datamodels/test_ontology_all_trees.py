@@ -58,6 +58,7 @@ from torchcell.datamodels.schema import (
     GenePerturbation,
     GenePerturbationType,
     Genotype,
+    Localization,
     MeasurementType,
     Phenotype,
     PhenotypeType,
@@ -65,6 +66,7 @@ from torchcell.datamodels.schema import (
     Temperature,
     TemperatureUnit,
 )
+from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
 # --------------------------------------------------------------------------- #
 # Generic leaf discovery: BFS over __subclasses__ from a root, minus the abstract
@@ -393,8 +395,15 @@ def test_m2_copy_number_must_be_positive(cls: type[GenePerturbation]) -> None:
             gene_namespace="pputida_kt2440_locus_tag",
             source_organism="Enterococcus faecalis",
             is_heterologous=True,
-            localization="chromosomal_integration",
+            localization=Localization.chromosomal_integration,
             pathway_name="isoprenol via mevalonate",
+            placement=None,
+            provenance_gaps=[
+                ProvenanceGap(
+                    field="placement",
+                    reason=ProvenanceGapReason.not_released_by_primary,
+                )
+            ],
         )
     else:  # natural CNV / accessory-presence leaves are pangenome-keyed
         base |= dict(

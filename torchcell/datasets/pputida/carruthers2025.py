@@ -196,6 +196,7 @@ from torchcell.datamodels.schema import (
     GenomicSpan,
     Genotype,
     HeterologousPathwayPerturbation,
+    Localization,
     ProductTiterExperiment,
     ProductTiterExperimentReference,
     ProductTiterPhenotype,
@@ -1780,14 +1781,45 @@ def pathway_perturbations() -> list[HeterologousPathwayPerturbation]:
             pathway_name=str(PATHWAY_SOURCE.value),
             source_organism=str(gene["organism"]),
             is_heterologous=True,
-            localization="episomal_plasmid",
+            localization=Localization.episomal_replicon,
             construct_name="pIY670",
             variant=gene["variant"],
             promoter_name=gene["promoter"],
             copy_number=1.0,
+            placement=None,
+            provenance_gaps=[placement_gap()],
         )
         for gene in PATHWAY_GENES
     ]
+
+
+#: What was read before concluding that no construct sequence is available.
+_PLACEMENT_GAP_NOTE = (
+    "Supplementary Data 2-4 and Supplementary Table 2 describe the plasmids, the "
+    "Methods state 'Plasmid sequences were verified by whole plasmid sequencing "
+    "(Primordium Labs)' and the data statement says 'Plasmids and strains are "
+    "available in the public domain of the JBEI Registry "
+    "(https://public-registry.jbei.org)'; the verified sequence therefore exists "
+    "and is not released, and that registry answers 403 to an anonymous REST "
+    "request (measured 2026-10-15)"
+)
+
+
+def placement_gap() -> ProvenanceGap:
+    """The typed absence of a construct sequence for this dataset's plasmids."""
+    return ProvenanceGap(
+        field="placement",
+        reason=ProvenanceGapReason.not_released_by_primary,
+        looked_in=Provenance(
+            source_uri=PAPER_MD,
+            citation_key=CITATION_KEY,
+            sha256=PAPER_MD_SHA256,
+            method="MinerU OCR of the published PDF (mirror), the Methods and "
+            "the data-availability statement",
+            page=_METHODS_STRAIN,
+        ),
+        note=_PLACEMENT_GAP_NOTE,
+    )
 
 
 def crispri_perturbation(
@@ -1846,8 +1878,10 @@ def native_copy_perturbation(
         perturbed_gene_name=gene_name,
         source_organism=SPECIES,
         is_heterologous=False,
-        localization="episomal_plasmid",
+        localization=Localization.episomal_replicon,
         construct_name=None,
+        placement=None,
+        provenance_gaps=[placement_gap()],
     )
 
 

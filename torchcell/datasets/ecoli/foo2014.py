@@ -156,6 +156,7 @@ from torchcell.datamodels.schema import (
     ExperimentReference,
     Genotype,
     HeterologousPathwayPerturbation,
+    Localization,
     ProductTiterExperiment,
     ProductTiterExperimentReference,
     ProductTiterPhenotype,
@@ -1014,10 +1015,41 @@ def overexpression_perturbation(
         pathway_name=PATHWAY_REPORTER if is_control else PATHWAY_TOLERANCE,
         source_organism=None if is_control else str(TOLERANCE_GENE_ORIGIN.value),
         is_heterologous=is_control,
-        localization="episomal_plasmid",
+        localization=Localization.episomal_replicon,
         construct_name=plasmid,
         promoter_name=str(PROMOTER.value),
-        provenance_gaps=[reporter_organism_gap()] if is_control else [],
+        placement=None,
+        provenance_gaps=(
+            [reporter_organism_gap(), placement_gap()]
+            if is_control
+            else [placement_gap()]
+        ),
+    )
+
+
+#: What was read before concluding that no construct sequence is available.
+_PLACEMENT_GAP_NOTE = (
+    "Table S3 'Description of plasmids and strains' gives each plasmid's composition "
+    "and names the chassis plasmids by their JBEI ids (pJBEI-6830, pJBEI-6833); no "
+    "GenBank map is released with the article and the public JBEI registry answers 403 "
+    "to an anonymous REST request (measured 2026-10-15), so the construct bytes exist "
+    "and are withheld"
+)
+
+
+def placement_gap() -> ProvenanceGap:
+    """The typed absence of a construct sequence for a pBbS5k plasmid."""
+    return ProvenanceGap(
+        field="placement",
+        reason=ProvenanceGapReason.not_released_by_primary,
+        looked_in=Provenance(
+            source_uri=SI_TABLE3_REL,
+            citation_key=CITATION_KEY,
+            sha256=SI_TABLE3_SHA256,
+            method="the deposited Table S3 and the article's Methods",
+            page=_SI_TABLE3,
+        ),
+        note=_PLACEMENT_GAP_NOTE,
     )
 
 

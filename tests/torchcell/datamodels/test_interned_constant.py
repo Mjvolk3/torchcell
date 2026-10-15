@@ -46,7 +46,6 @@ from torchcell.datamodels.interned_constant import (
     verified_constant,
 )
 
-_SHA_EMPTY = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 _SHA_BRACES = "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
 
 
@@ -78,10 +77,22 @@ def test_labels_key_and_thresholds() -> None:
     assert EXPERIMENT_POINTER_MIN_BYTES == {"environment": 512, "genotype": 8192}
 
 
-def test_constant_id_is_sha256_of_utf8_payload() -> None:
-    assert constant_id("") == _SHA_EMPTY
-    assert constant_id("{}") == _SHA_BRACES
-    assert constant_id('{"name": "é"}') == _sha('{"name": "é"}')
+def test_constant_id_is_namespaced_by_label_and_kind() -> None:
+    """The preimage starts with the label and carries the kind, so an interned
+    constant's id is never the bare sha256 of its payload (the id of the sub-object's
+    own node) and the same bytes under two kinds are two ids.
+    """
+    assert constant_id("environment", "") == _sha(
+        "interned constant\x00environment\x00"
+    )
+    assert constant_id("environment", "{}") == _sha(
+        "interned constant\x00environment\x00{}"
+    )
+    assert constant_id("environment", "{}") != _SHA_BRACES
+    assert constant_id("genotype", "{}") != constant_id("genotype.background", "{}")
+    assert constant_id("genotype", '{"name": "é"}') == _sha(
+        'interned constant\x00genotype\x00{"name": "é"}'
+    )
 
 
 def test_payload_sizes_are_as_derived() -> None:
@@ -97,7 +108,7 @@ def test_environment_at_floor_becomes_pointer_and_round_trips() -> None:
     out, constants = split_experiment_dump(dump)
 
     env_payload = json.dumps(_environment(500))
-    env_id = _sha(env_payload)
+    env_id = constant_id("environment", env_payload)
     assert constants == [(env_id, "environment", env_payload)]
     assert out == {
         "experiment_type": "fitness",
@@ -135,7 +146,8 @@ def test_genotype_at_floor_becomes_pointer_and_round_trips() -> None:
 
     env_payload = json.dumps(_environment(500))
     geno_payload = json.dumps(_genotype(8178))
-    env_id, geno_id = _sha(env_payload), _sha(geno_payload)
+    env_id = constant_id("environment", env_payload)
+    geno_id = constant_id("genotype", geno_payload)
     assert constants == [
         (env_id, "environment", env_payload),
         (geno_id, "genotype", geno_payload),
@@ -146,7 +158,9 @@ def test_genotype_at_floor_becomes_pointer_and_round_trips() -> None:
     refs: set[str] = set()
     collect_pointers(out, refs)
     assert refs == {env_id, geno_id}
-    store = {ref: verified_constant(ref, payload) for ref, _, payload in constants}
+    store = {
+        ref: verified_constant(ref, kind, payload) for ref, kind, payload in constants
+    }
     assert resolve_pointers(out, store) == original
 
 
@@ -170,13 +184,21 @@ def test_resolve_missing_id_raises_key_error() -> None:
 
 
 def test_verified_constant_accepts_matching_and_rejects_mismatch() -> None:
-    assert verified_constant(_SHA_BRACES, "{}") == {}
+    braces = constant_id("environment", "{}")
+    assert verified_constant(braces, "environment", "{}") == {}
+    empty = constant_id("environment", "")
     with pytest.raises(
         ValueError,
-        match=f"interned constant {_SHA_EMPTY} holds a payload hashing to "
-        f"{_SHA_BRACES}; the store is corrupt",
+        match=f"interned constant {empty} of kind 'environment' holds a payload hashing "
+        f"to {braces}; the store is corrupt",
     ):
-        verified_constant(_SHA_EMPTY, "{}")
+        verified_constant(empty, "environment", "{}")
+    # The bare payload hash, the pre-2026-10-15 id, is refused as well.
+    with pytest.raises(ValueError, match="holds a payload hashing to"):
+        verified_constant(_SHA_BRACES, "environment", "{}")
+    # The kind is part of the id: the right payload under another kind is corrupt.
+    with pytest.raises(ValueError, match="of kind 'genotype'"):
+        verified_constant(braces, "genotype", "{}")
 
 
 def _perturbed(background_k: int, perturbation_k: int) -> dict[str, Any]:
@@ -198,7 +220,7 @@ def test_background_at_floor_is_pointed_and_the_genotype_stays_inline() -> None:
 
     bg_payload = json.dumps({"blocks": "z" * 8178})
     assert len(bg_payload) == 8192
-    bg_id = _sha(bg_payload)
+    bg_id = constant_id("genotype.background", bg_payload)
     # The perturbation list alone is above the genotype floor, yet the genotype is not
     # pointed at: it already holds the background pointer.
     assert constants == [(bg_id, "genotype.background", bg_payload)]
@@ -213,7 +235,9 @@ def test_background_at_floor_is_pointed_and_the_genotype_stays_inline() -> None:
     refs: set[str] = set()
     collect_pointers(out, refs)
     assert refs == {bg_id}
-    resolved = resolve_pointers(out, {bg_id: verified_constant(bg_id, bg_payload)})
+    resolved = resolve_pointers(
+        out, {bg_id: verified_constant(bg_id, "genotype.background", bg_payload)}
+    )
     assert json.dumps(resolved) == json.dumps(original)
 
 
@@ -224,10 +248,13 @@ def test_background_below_floor_leaves_the_top_level_rule_in_charge() -> None:
     geno_payload = json.dumps(dump["genotype"])
     env_payload = json.dumps(_environment(500))
     assert constants == [
-        (_sha(env_payload), "environment", env_payload),
-        (_sha(geno_payload), "genotype", geno_payload),
+        (constant_id("environment", env_payload), "environment", env_payload),
+        (constant_id("genotype", geno_payload), "genotype", geno_payload),
     ]
-    assert out["genotype"] == {"$ref": _sha(geno_payload), "kind": "genotype"}
+    assert out["genotype"] == {
+        "$ref": constant_id("genotype", geno_payload),
+        "kind": "genotype",
+    }
 
 
 def test_a_genotype_without_a_background_is_unchanged_by_the_nested_rule() -> None:

@@ -118,15 +118,15 @@ def _ref_serialized(i: int) -> str:
     return json.dumps(dump)
 
 
-def _records(layout: str) -> tuple[list[dict[str, str]], dict[str, str]]:
+def _records(layout: str) -> tuple[list[dict[str, str]], dict[str, tuple[str, str]]]:
     """Cypher-shaped records and the interned-constant store for one layout."""
-    store: dict[str, str] = {}
+    store: dict[str, tuple[str, str]] = {}
     records = []
     for i in range(N_RECORDS):
         dump = _experiment(i).model_dump()
         if layout == "pointer":
             pointered, constants = split_experiment_dump(dump)
-            store.update({ref: payload for ref, _, payload in constants})
+            store.update({ref: (kind, payload) for ref, kind, payload in constants})
             dump = pointered
         records.append(
             {"e_serialized": json.dumps(dump), "ref_serialized": _ref_serialized(i)}
@@ -144,13 +144,13 @@ class _StoreQueryRaw(Neo4jQueryRaw):
         self.lmdb_dir = osp.join(self.raw_dir, "lmdb")
         os.makedirs(self.raw_dir, exist_ok=True)
         self.records: list[dict[str, str]] = []
-        self.store: dict[str, str] = {}
+        self.store: dict[str, tuple[str, str]] = {}
 
     def fetch_data(self) -> Iterator[Any]:
         yield from self.records
 
     def fetch_constants(self, refs: list[str]) -> dict[str, Any]:
-        return {r: verified_constant(r, self.store[r]) for r in refs}
+        return {r: verified_constant(r, *self.store[r]) for r in refs}
 
 
 def _old_build(query: _StoreQueryRaw) -> None:
@@ -426,7 +426,7 @@ def test_strain_record_environment_keeps_its_subclass_fields(
         dump = model.model_dump()
         if layout == "pointer":
             dump, constants = split_experiment_dump(dump)
-            query.store.update({r: payload for r, _, payload in constants})
+            query.store.update({r: (kind, payload) for r, kind, payload in constants})
         records.append(
             {
                 "e_serialized": json.dumps(dump),

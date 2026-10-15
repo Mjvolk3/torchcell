@@ -114,9 +114,11 @@ def _record(dataset: str, i: int) -> tuple[s.FitnessExperiment, str]:
     return experiment, json.dumps(reference.model_dump())
 
 
-def _blocks(layout: str) -> tuple[list[list[dict[str, str]]], dict[str, str]]:
+def _blocks(
+    layout: str,
+) -> tuple[list[list[dict[str, str]]], dict[str, tuple[str, str]]]:
     """Per block, the records sorted by e.id, as the server orders them."""
-    store: dict[str, str] = {}
+    store: dict[str, tuple[str, str]] = {}
     blocks = []
     for dataset in DATASETS:
         rows = []
@@ -126,7 +128,7 @@ def _blocks(layout: str) -> tuple[list[list[dict[str, str]]], dict[str, str]]:
             e_id = hashlib.sha256(json.dumps(dump).encode()).hexdigest()
             if layout == "pointer":
                 dump, constants = split_experiment_dump(dump)
-                store.update({ref: payload for ref, _, payload in constants})
+                store.update({ref: (kind, payload) for ref, kind, payload in constants})
             rows.append(
                 {
                     "e_id": e_id,
@@ -142,7 +144,7 @@ class _ServerStub(Neo4jQueryRaw):
     """Answers single-session and partition queries from class state, no bolt."""
 
     BLOCKS: list[list[dict[str, str]]] = []
-    STORE: dict[str, str] = {}
+    STORE: dict[str, tuple[str, str]] = {}
 
     def fetch_query(self, query: str) -> Iterator[Any]:
         if re.search(r"\bUNION\s+ALL\b", query):
@@ -161,7 +163,7 @@ class _ServerStub(Neo4jQueryRaw):
             yield from (r for r in block if not re.fullmatch(guard.group(1), r["e_id"]))
 
     def fetch_constants(self, refs: list[str]) -> dict[str, Any]:
-        return {r: verified_constant(r, type(self).STORE[r]) for r in refs}
+        return {r: verified_constant(r, *type(self).STORE[r]) for r in refs}
 
 
 def _key(record: dict[str, Any]) -> str:

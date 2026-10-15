@@ -2,3 +2,10 @@
 # the dated pre-build JSON is reproducible from the committed cache + registry.
 *
 !.gitignore
+# The interned-id collision measured on the job 4901 partial (deleted after the build)
+# and on the served KG 3.0 store (lane N, 2026-10-15): the evidence the fix and the
+# release note cite, reproducible only against those two stores, so both are tracked.
+!interned_id_collision_4901.json
+!interned_id_collision_served.json
+# The extended CSV endpoint gate (label check) run on the job 4901 partial, 2026-10-15.
+!csv_endpoint_gate_labels_4901.json

@@ -28,14 +28,63 @@ def _write(path: Path, rows: list[list[str]]) -> None:
     path.write_text("".join("\t".join(row) + "\n" for row in rows), encoding="utf-8")
 
 
-def _nodes(out_dir: Path, label: str, ids: list[str], blob: str = "'{}'") -> None:
+def _nodes(
+    out_dir: Path,
+    label: str,
+    ids: list[str],
+    blob: str = "'{}'",
+    ancestry: str | None = None,
+) -> None:
     _write(
         out_dir / f"{label}-header.csv", [[":ID", "id", "serialized_data", ":LABEL"]]
     )
     _write(
         out_dir / f"{label}-part000.csv",
-        [[i, f"'{i}'", blob, f"'{label}|Entity'"] for i in ids],
+        [[i, f"'{i}'", blob, f"'{ancestry or f'{label}|Entity'}'"] for i in ids],
     )
+
+
+SCHEMA_YAML = """\
+dataset:
+    represented_as: node
+experiment:
+    represented_as: node
+genotype:
+    represented_as: node
+perturbed segregant genotype:
+    is_a: genotype
+    represented_as: node
+perturbation:
+    is_a: genotype
+    represented_as: node
+interned constant:
+    is_a: information content entity
+    represented_as: node
+perturbation member of:
+    represented_as: edge
+    source: perturbation
+    target: genotype
+genotype member of:
+    represented_as: edge
+    source: [genotype, perturbed segregant genotype]
+    target: experiment
+experiment member of:
+    represented_as: edge
+    source: experiment
+    target: dataset
+publication mentions experiment:
+    is_a: mentions
+    represented_as: edge
+    source: publication
+    target: experiment
+"""
+INTERNED_ANCESTRY = "InternedConstant|InformationContentEntity|Entity"
+
+
+def _schema(tmp_path: Path) -> Path:
+    path = tmp_path / "schema.yaml"
+    path.write_text(SCHEMA_YAML, encoding="utf-8")
+    return path
 
 
 def _edges(out_dir: Path, label: str, pairs: list[tuple[str, str]]) -> None:
@@ -267,3 +316,152 @@ def test_a_per_adapter_output_is_checked_across_its_directories(tmp_path: Path) 
     _edges(b, "Mentions", [("'1'", _h("nowhere"))])
     _nodes(b, "Publication", ["'1'"])
     assert not gate.check_endpoints(tmp_path, resolve_datasets=False).ok
+
+
+def test_edge_declarations_are_pascal_cased_file_labels(tmp_path: Path) -> None:
+    declarations = gate.read_edge_declarations(_schema(tmp_path))
+    assert sorted(declarations) == [
+        "ExperimentMemberOf",
+        "GenotypeMemberOf",
+        "PerturbationMemberOf",
+        "PublicationMentionsExperiment",
+    ]
+    assert declarations["GenotypeMemberOf"] == gate.EdgeDeclaration(
+        edge_label="GenotypeMemberOf",
+        start_labels=["Genotype", "PerturbedSegregantGenotype"],
+        end_labels=["Experiment"],
+    )
+    assert declarations["PerturbationMemberOf"].end_labels == ["Genotype"]
+
+
+def test_a_clean_directory_passes_the_label_check_and_lists_undeclared_edges(
+    clean_dir: Path,
+) -> None:
+    report = gate.check_endpoints(clean_dir, schema_path=_schema(clean_dir))
+    assert report.ok
+    assert report.label_gaps == [] and report.id_collisions == []
+    # ``Mentions`` is the Biolink predicate the adapter emits itself, not the
+    # ``publication mentions experiment`` class: no declaration, labels not checked.
+    assert report.undeclared_edges == ["Mentions"]
+    text = gate.format_report(report)
+    assert "undeclared (labels not checked): Mentions" in text
+    assert "OK: every edge endpoint is the id of a node of a declared label" in text
+
+
+def test_an_endpoint_that_is_only_an_interned_constant_is_a_label_gap(
+    clean_dir: Path,
+) -> None:
+    """The 4901 shape: the genotype of experiment E2 exists only as an
+    ``InternedConstant`` node, so both edges that name it resolve to SOME node (the
+    existence check passes) but to a node of an undeclared label. Each gap is
+    attributed to ``FitnessBDataset`` through the ladder from its other end.
+    """
+    constant = _h("a whole genotype interned under its own node id")
+    _nodes(clean_dir, "InternedConstant", [constant], ancestry=INTERNED_ANCESTRY)
+    _edges(clean_dir, "PerturbationMemberOf", [(P1, G1), (P2, constant)])
+    _edges(clean_dir, "GenotypeMemberOf", [(G1, E1), (constant, E2)])
+    report = gate.check_endpoints(clean_dir, schema_path=_schema(clean_dir))
+    assert not report.ok
+    assert report.gaps == []
+    assert report.n_mislabeled == 2
+    assert report.label_gaps == [
+        gate.LabelGap(
+            edge_label="GenotypeMemberOf",
+            side=":START_ID",
+            node_label="InternedConstant",
+            n_rows=1,
+            allowed_labels=["Genotype", "PerturbedSegregantGenotype"],
+            sample_ids=[constant],
+            anchor_labels=["Experiment"],
+            datasets={DS_B: 1},
+            n_unresolved=0,
+        ),
+        gate.LabelGap(
+            edge_label="PerturbationMemberOf",
+            side=":END_ID",
+            node_label="InternedConstant",
+            n_rows=1,
+            allowed_labels=["Genotype"],
+            sample_ids=[constant],
+            anchor_labels=["Perturbation"],
+            datasets={DS_B: 1},
+            n_unresolved=0,
+        ),
+    ]
+    text = gate.format_report(report)
+    assert "MISLABELED: 2 edge rows name a node of an undeclared label" in text
+    assert (
+        "PerturbationMemberOf :END_ID: 1 rows on InternedConstant nodes, declared "
+        "['Genotype']; other end ['Perturbation']; datasets: FitnessBDataset=1"
+    ) in text
+
+
+def test_a_subclass_in_the_ancestry_satisfies_the_declared_label(
+    clean_dir: Path,
+) -> None:
+    """A perturbed segregant genotype row carries ``Genotype`` in its ancestry, as
+    Neo4j gives it every ancestor label, so ``target: genotype`` is met: the check is
+    the store's own ``MATCH (g:Genotype)`` semantics, not the leaf name.
+    """
+    segregant = _h("a perturbed segregant genotype")
+    _nodes(
+        clean_dir,
+        "PerturbedSegregantGenotype",
+        [segregant],
+        ancestry="PerturbedSegregantGenotype|Genotype|Entity",
+    )
+    _edges(clean_dir, "PerturbationMemberOf", [(P1, G1), (P2, segregant)])
+    _edges(clean_dir, "GenotypeMemberOf", [(G1, E1), (segregant, E2)])
+    report = gate.check_endpoints(clean_dir, schema_path=_schema(clean_dir))
+    assert report.ok
+    assert report.node_rows["PerturbedSegregantGenotype"] == 1
+
+
+def test_an_id_written_under_two_labels_is_a_collision(clean_dir: Path) -> None:
+    """One id in two node files with different ancestries: the import keeps one row
+    and says nothing, so the gate refuses the directory even with every edge fine.
+    """
+    _nodes(
+        clean_dir,
+        "InternedConstant",
+        [G2, _h("another constant")],
+        ancestry=INTERNED_ANCESTRY,
+    )
+    report = gate.check_endpoints(clean_dir, schema_path=_schema(clean_dir))
+    assert not report.ok
+    assert report.gaps == [] and report.label_gaps == []
+    assert report.id_collisions == [
+        gate.IdCollision(
+            first_label="Genotype",
+            second_label="InternedConstant",
+            n_ids=1,
+            sample_ids=[G2],
+        )
+    ]
+    assert report.n_node_ids == 10
+    text = gate.format_report(report)
+    assert "ID COLLISIONS: 1 node ids written under two labels" in text
+    assert f"Genotype and InternedConstant: 1 ids; sample ['{G2}']" in text
+
+
+def test_the_cli_takes_a_schema_and_reports_label_gaps(
+    clean_dir: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    constant = _h("a whole genotype interned under its own node id")
+    _nodes(clean_dir, "InternedConstant", [constant], ancestry=INTERNED_ANCESTRY)
+    _edges(clean_dir, "GenotypeMemberOf", [(G1, E1), (constant, E2)])
+    report_path = clean_dir / "report.json"
+    code = gate.main(
+        [
+            str(clean_dir),
+            "--schema",
+            str(_schema(clean_dir)),
+            "--report",
+            str(report_path),
+        ]
+    )
+    assert code == 1
+    assert "MISLABELED: 1 edge rows" in capsys.readouterr().out
+    written = json.loads(report_path.read_text(encoding="utf-8"))
+    assert written["schema_path"] == str(_schema(clean_dir))
+    assert [g["node_label"] for g in written["label_gaps"]] == ["InternedConstant"]

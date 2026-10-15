@@ -1142,7 +1142,7 @@ CONSTANT_A = '{"media":"YPD"}'
 CONSTANT_B = '{"temperature":30}'
 CONSTANT_QUERY = (
     "UNWIND $ids AS ref MATCH (n:InternedConstant {id: ref}) "
-    "RETURN ref, n.serialized_data AS payload"
+    "RETURN ref, n.kind AS kind, n.serialized_data AS payload"
 )
 
 
@@ -1154,11 +1154,19 @@ def test_fetch_constants_runs_one_unwind_and_parses_verified_payloads(
     its sha256 matched the id it was fetched by.
     """
     monkeypatch.setenv("TORCHCELL_KG_VERSION", "pinned")
-    ids = [constant_id(CONSTANT_A), constant_id(CONSTANT_B)]
-    assert ids[0] == hashlib.sha256(CONSTANT_A.encode()).hexdigest()
+    ids = [
+        constant_id("environment", CONSTANT_A),
+        constant_id("environment", CONSTANT_B),
+    ]
+    assert (
+        ids[0]
+        == hashlib.sha256(
+            b"interned constant\x00environment\x00" + CONSTANT_A.encode()
+        ).hexdigest()
+    )
     fake_neo4j.records = [
-        {"ref": ids[1], "payload": CONSTANT_B},
-        {"ref": ids[0], "payload": CONSTANT_A},
+        {"ref": ids[1], "kind": "environment", "payload": CONSTANT_B},
+        {"ref": ids[0], "kind": "environment", "payload": CONSTANT_A},
     ]
     found = view.fetch_constants(ids)
     assert found == {ids[0]: {"media": "YPD"}, ids[1]: {"temperature": 30}}
@@ -1178,8 +1186,8 @@ def test_fetch_constants_refuses_ids_the_store_does_not_serve(
     driver closed.
     """
     monkeypatch.setenv("TORCHCELL_KG_VERSION", "pinned")
-    served = constant_id(CONSTANT_A)
-    fake_neo4j.records = [{"ref": served, "payload": CONSTANT_A}]
+    served = constant_id("environment", CONSTANT_A)
+    fake_neo4j.records = [{"ref": served, "kind": "environment", "payload": CONSTANT_A}]
     missing = ["c" * 64, "a" * 64, "b" * 64]
     message = (
         f"3 interned constants are missing from the store, first {sorted(missing)[:3]}"
@@ -1199,10 +1207,11 @@ def test_fetch_constants_on_a_corrupt_payload_raises_without_closing_the_driver(
     the build either way. Pinned until the close moves into a ``finally``.
     """
     monkeypatch.setenv("TORCHCELL_KG_VERSION", "pinned")
-    ref = constant_id(CONSTANT_A)
-    fake_neo4j.records = [{"ref": ref, "payload": CONSTANT_B}]
+    ref = constant_id("environment", CONSTANT_A)
+    fake_neo4j.records = [{"ref": ref, "kind": "environment", "payload": CONSTANT_B}]
     message = (
-        f"interned constant {ref} holds a payload hashing to {constant_id(CONSTANT_B)}; "
+        f"interned constant {ref} of kind 'environment' holds a payload hashing to "
+        f"{constant_id('environment', CONSTANT_B)}; "
         "the store is corrupt or was written by a different serializer"
     )
     with pytest.raises(ValueError, match=re.escape(message)):
@@ -1218,15 +1227,15 @@ def test_fetch_constants_on_a_corrupt_payload_raises_without_closing_the_driver(
 def _pointered(record: dict[str, Any]) -> tuple[dict[str, str], dict[str, str]]:
     """Property-shape row whose environment and phenotype are ``$ref`` pointers.
 
-    Each pointer is ``{"$ref": id, "kind": field}`` with id = sha256 of the field's
-    ``json.dumps`` (the layout ``split_experiment_dump`` writes above its size
+    Each pointer is ``{"$ref": id, "kind": field}`` with id = ``constant_id(field,
+    json.dumps(value))`` (the layout ``split_experiment_dump`` writes above its size
     threshold); returns the row and the {id: payload} store it needs.
     """
     dump = record["experiment"].model_dump()
     store = {}
     for name in ("environment", "phenotype"):
         payload = json.dumps(dump[name])
-        ref = constant_id(payload)
+        ref = constant_id(name, payload)
         store[ref] = payload
         dump[name] = {"$ref": ref, "kind": name}
     row = {
@@ -1282,9 +1291,12 @@ def test_partition_constants_persist_and_only_unseen_ids_are_fetched(
     """
     fetched, store = pointer_server
     monkeypatch.setattr(neo4j_query_raw, "PROCESS_BATCH", 2)
-    env = constant_id(json.dumps(RECORDS[0]["experiment"].environment.model_dump()))
+    env = constant_id(
+        "environment", json.dumps(RECORDS[0]["experiment"].environment.model_dump())
+    )
     pheno = [
-        constant_id(json.dumps(r["experiment"].phenotype.model_dump())) for r in RECORDS
+        constant_id("phenotype", json.dumps(r["experiment"].phenotype.model_dump()))
+        for r in RECORDS
     ]
     assert sorted(store) == sorted({env, *pheno})
     rows_a = neo4j_query_raw._render_partition("A")

@@ -71,7 +71,10 @@ from torchcell.datamodels.identity import (
     media_identity,
     temperature_identity,
 )
-from torchcell.datamodels.interned_constant import EXPERIMENT_POINTER_MIN_BYTES
+from torchcell.datamodels.interned_constant import (
+    EXPERIMENT_POINTER_MIN_BYTES,
+    constant_id,
+)
 from torchcell.datamodels.media import YPD_LIQUID
 from torchcell.datamodels.schema import (
     CalMorphExperiment,
@@ -172,8 +175,11 @@ REFERENCE_ID = _sha(REFERENCE)
 # ``MEDIA_ID`` nor ``ENVIRONMENT_ID`` moved, because ``media_identity`` projects a
 # medium's gaps only when it carries one.
 ENVIRONMENT_JSON = json.dumps(ENVIRONMENT.model_dump())
+# ``ENVIRONMENT_CONSTANT_ID`` moved once more on 2026-10-15, when the interned id became
+# the namespaced hash of the label, the kind and the payload (a whole-genotype constant
+# had been taking its own genotype node's id; [[torchcell.datamodels.interned_constant]]).
 ENVIRONMENT_CONSTANT_ID = (
-    "f8acb954bbf25e9ee967bad4ce80ae16df96d4e8c4cbdebcc559a3182ac04990"
+    "8b2e851dffbef0b80e3dbe3be43d6487177135ad79657fb077ec518213dc642a"
 )
 
 
@@ -522,9 +528,7 @@ def test_get_nodes_emits_the_exact_ohya_node_list(
     # The sourced medium takes the environment past the Neo4j pointer floor, so each
     # Experiment node points at one ``interned constant`` node (emitted per record,
     # deduplicated by the sink: 23 nodes before #622, 25 now); the genotype is not.
-    assert (
-        ENVIRONMENT_CONSTANT_ID == hashlib.sha256(ENVIRONMENT_JSON.encode()).hexdigest()
-    )
+    assert ENVIRONMENT_CONSTANT_ID == constant_id("environment", ENVIRONMENT_JSON)
     assert len(json.dumps(ENVIRONMENT.model_dump())) == 5223
     assert EXPERIMENT_POINTER_MIN_BYTES["environment"] == 512
     genotypes = [e.genotype for e in EXPERIMENTS]

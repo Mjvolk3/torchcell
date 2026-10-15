@@ -67,7 +67,7 @@ class SliceQueryRaw(Neo4jQueryRaw):
     """``Neo4jQueryRaw`` whose Cypher result and constants come from class state."""
 
     RECORDS: list[dict[str, str]] = []
-    STORE: dict[str, str] = {}
+    STORE: dict[str, tuple[str, str]] = {}
 
     def fetch_data(self) -> Iterator[Any]:
         """Yield the slice records."""
@@ -75,7 +75,7 @@ class SliceQueryRaw(Neo4jQueryRaw):
 
     def fetch_constants(self, refs: list[str]) -> dict[str, Any]:
         """Serve and verify interned constants from memory."""
-        return {r: verified_constant(r, type(self).STORE[r]) for r in refs}
+        return {r: verified_constant(r, *type(self).STORE[r]) for r in refs}
 
 
 def timer(name: str, fn: Callable[..., Any]) -> Callable[..., Any]:
@@ -200,11 +200,11 @@ def main() -> None:
         }
         for r in records
     ]
-    store: dict[str, str] = {}
+    store: dict[str, tuple[str, str]] = {}
     pointer = []
     for r, rec in zip(records, inline):
         pointered, constants = split_experiment_dump(r["experiment"])
-        store.update({cid: payload for cid, _, payload in constants})
+        store.update({cid: (kind, payload) for cid, kind, payload in constants})
         pointer.append(
             {
                 "e_serialized": json.dumps(pointered),

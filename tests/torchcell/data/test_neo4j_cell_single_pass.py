@@ -125,15 +125,15 @@ def _record(i: int) -> tuple[Any, Any]:
     return fitness, fitness_ref
 
 
-def _records(layout: str) -> tuple[list[dict[str, str]], dict[str, str]]:
-    store: dict[str, str] = {}
+def _records(layout: str) -> tuple[list[dict[str, str]], dict[str, tuple[str, str]]]:
+    store: dict[str, tuple[str, str]] = {}
     records = []
     for i in range(N_RECORDS):
         experiment, reference = _record(i)
         dump = experiment.model_dump()
         if layout == "pointer":
             dump, constants = split_experiment_dump(dump)
-            store.update({ref: payload for ref, _, payload in constants})
+            store.update({ref: (kind, payload) for ref, kind, payload in constants})
         records.append(
             {
                 "e_serialized": json.dumps(dump),
@@ -147,13 +147,13 @@ class _MemoryQueryRaw(Neo4jQueryRaw):
     """``Neo4jQueryRaw`` whose Cypher result and constants come from class state."""
 
     RECORDS: list[dict[str, str]] = []
-    STORE: dict[str, str] = {}
+    STORE: dict[str, tuple[str, str]] = {}
 
     def fetch_data(self) -> Iterator[Any]:
         yield from type(self).RECORDS
 
     def fetch_constants(self, refs: list[str]) -> dict[str, Any]:
-        return {r: verified_constant(r, type(self).STORE[r]) for r in refs}
+        return {r: verified_constant(r, *type(self).STORE[r]) for r in refs}
 
 
 def _build(

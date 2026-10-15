@@ -24,6 +24,23 @@ LMDB interns it under the same 512-byte floor) and ``genotype`` when it is large
 (segregant genotypes carry haplotype blocks, tens of KB, repeated across a cross's
 phenotypes). A gene-perturbation genotype (about 1 KB) and every phenotype stay
 inline: they vary per record, and a pointer would only move bytes and add a lookup.
+
+The id of an interned constant is namespaced: sha256 over the label, a NUL byte, the
+kind, a NUL byte and the payload, never the bare sha256 of the payload. The bare hash
+was the id of the sub-object's OWN graph node (a ``genotype`` or ``segregant genotype``
+node is ``sha256(json.dumps(genotype.model_dump()))``, the same bytes a whole-genotype
+constant holds), and ``torchcell.fast_csv.FastCsvSink`` deduplicates node ids across
+every label, so the interned constant (written first, by the experiment node method)
+owned the id and the genotype node was never written: on the job 4901 partial 218,258
+whole genotypes and 135 Hale 2024 backgrounds existed only as ``InternedConstant``
+nodes, with 1,948,098 ``GenotypeMemberOf``, 121,180 ``PerturbationMemberOf`` and
+709,716 ``SegregantBackgroundOf`` rows pointing at them, and on the served KG 3.0 store
+14,573 Bloom 2019 and Caudal 2024 genotypes (518,883 ``GenotypeMemberOf`` rows). Every
+other content id in the graph hashes a JSON document (first byte ``{``), so a preimage
+that begins with the label cannot equal one, and the kind is in the preimage because
+the same bytes can be a whole ``genotype`` in one record and a ``genotype.background``
+in another, and the node's ``kind`` property must be true of the node, not of whichever
+record wrote it first (``interned_id_collision_counts.py``, 2026-10-15).
 """
 
 from __future__ import annotations
@@ -59,9 +76,18 @@ class) is untouched, so every other dataset's blob is byte-identical to before.
 """
 
 
-def constant_id(payload: str) -> str:
-    """The node id of an interned constant: sha256 of its exact JSON payload."""
-    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+def constant_id(kind: str, payload: str) -> str:
+    """The node id of an interned constant: sha256 over label, kind and exact payload.
+
+    The preimage is the label, a NUL byte, the kind, a NUL byte and the payload (UTF-8).
+    It starts with the label, so it is never the preimage of a sub-object's own node id
+    (the bare ``json.dumps`` of its dump), and it carries the kind, so the same bytes
+    interned under two kinds are two nodes, each with a true ``kind`` property.
+    """
+    digest = hashlib.sha256()
+    digest.update(f"{INTERNED_CONSTANT_LABEL}\x00{kind}\x00".encode())
+    digest.update(payload.encode("utf-8"))
+    return digest.hexdigest()
 
 
 def split_experiment_dump(
@@ -88,8 +114,8 @@ def split_experiment_dump(
         payload = json.dumps(value[sub])
         if len(payload) < min_bytes:
             continue
-        ref = constant_id(payload)
         kind = f"{field}.{sub}"
+        ref = constant_id(kind, payload)
         constants.append((ref, kind, payload))
         out[field] = {**value, sub: {POINTER_KEY: ref, "kind": kind}}
         nested.add(field)
@@ -99,7 +125,7 @@ def split_experiment_dump(
         payload = json.dumps(dump[field])
         if len(payload) < min_bytes:
             continue
-        ref = constant_id(payload)
+        ref = constant_id(field, payload)
         constants.append((ref, field, payload))
         out[field] = {POINTER_KEY: ref, "kind": field}
     return out, constants
@@ -135,12 +161,17 @@ def resolve_pointers(obj: Any, constants: dict[str, Any]) -> Any:
     return obj
 
 
-def verified_constant(ref: str, payload: str) -> Any:
-    """Parse a fetched payload after checking it hashes to the id it was fetched by."""
-    actual = constant_id(payload)
+def verified_constant(ref: str, kind: str, payload: str) -> Any:
+    """Parse a fetched payload after checking that (kind, payload) hashes to its id.
+
+    ``kind`` is the node's own ``kind`` property: a node whose id is not the hash of
+    its own kind and payload is corrupt, and a pointer's id was computed from the kind
+    it sits under, so a matching id also proves the node's kind is the pointer's.
+    """
+    actual = constant_id(kind, payload)
     if actual != ref:
         raise ValueError(
-            f"interned constant {ref} holds a payload hashing to {actual}; the store "
-            "is corrupt or was written by a different serializer"
+            f"interned constant {ref} of kind {kind!r} holds a payload hashing to "
+            f"{actual}; the store is corrupt or was written by a different serializer"
         )
     return json.loads(payload)

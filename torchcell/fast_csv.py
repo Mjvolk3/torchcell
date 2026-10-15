@@ -20,9 +20,17 @@ BioCypher writer would produce, and ship compact (key, line) lists. The parent's
 BioCypher's own output directory, then hands the property dicts back to BioCypher so
 its ``write_import_call`` writes the headers and the neo4j-admin call unchanged.
 
-Dedup semantics match BioCypher's: node ids are unique globally; an edge is unique per
-type by ``relationship_id`` or ``f"{source}_{target}"``. The sink keeps the full node id
-set. For edges it keeps a full key set only where a duplicate is possible: an edge type
+Dedup semantics match BioCypher's: node ids are unique globally (neo4j-admin import
+has one id space, and ``--skip-duplicate-nodes`` keeps the first row of an id whatever
+its label); an edge is unique per type by ``relationship_id`` or
+``f"{source}_{target}"``. The sink keeps the full node id table, id to the PascalCase
+label that wrote it: a repeat under the SAME label is the legitimate dedup of a shared
+constant (an environment on every record of a dataset), while an id emitted under a
+SECOND label is refused with ``ValueError`` naming both, because dropping either row
+makes an edge of one class land on a node of another. That silent drop is what the
+pre-namespaced interned-constant ids did to 218,258 genotype nodes on the job 4901
+partial (torchcell/datamodels/interned_constant.py); the sink now fails the build
+instead of writing it. For edges it keeps a full key set only where a duplicate is possible: an edge type
 with an Experiment endpoint can only repeat when that experiment node itself repeated
 (the experiment id is the record's content hash), so the sink tracks the set of
 duplicated experiment ids (small) and checks the full key only for edges touching one.
@@ -229,6 +237,16 @@ def render_edge(edge: BioCypherEdge, specs: RowSpecs) -> tuple[str, str, str, st
     return spec.pascal, edge.source_id, edge.target_id, delim.join(entries) + "\n"
 
 
+def _refuse_second_label(node_id: str, owner: str, pascal: str) -> None:
+    """Raise when ``node_id``, already written under ``owner``, arrives under ``pascal``."""
+    if pascal != owner:
+        raise ValueError(
+            f"node id {node_id} was written under {owner} and is emitted again under "
+            f"{pascal}: one id names one node, and the sink drops neither row "
+            "(an edge of one class would land on a node of the other)"
+        )
+
+
 class RenderedChunk:
     """One chunk's rows, deduplicated within the chunk, as compact lists.
 
@@ -248,16 +266,23 @@ class RenderedChunk:
     def from_rows(cls, rows: Iterable[Any], specs: RowSpecs) -> RenderedChunk:
         """Render a chunk's BioCypher objects into one compact, chunk-deduplicated bundle."""
         chunk = cls()
-        seen_nodes: set[str] = set()
+        seen_nodes: dict[str, str] = {}
         seen_edges: dict[str, set[tuple[str, str]]] = {}
         for item in rows:
             if isinstance(item, BioCypherNode):
                 # Dedup before rendering: a constant node (environment, interned
                 # constant) repeats on every record of a chunk, and its line is KBs.
-                if item.node_id in seen_nodes:
+                owner = seen_nodes.get(item.node_id)
+                if owner is not None:
+                    spec = specs.nodes.get(item.node_label)
+                    _refuse_second_label(
+                        item.node_id,
+                        owner,
+                        item.node_label if spec is None else spec.pascal,
+                    )
                     continue
                 pascal, node_id, line = render_node(item, specs)
-                seen_nodes.add(node_id)
+                seen_nodes[node_id] = pascal
                 bucket = chunk.nodes.setdefault(pascal, ([], []))
                 bucket[0].append(node_id)
                 bucket[1].append(line)
@@ -293,7 +318,7 @@ class FastCsvSink:
         self.outdir = Path(bc._writer.outdir)
         self.outdir.mkdir(parents=True, exist_ok=True)
         self._files: dict[str, Any] = {}
-        self.seen_nodes: set[str] = set()
+        self.seen_nodes: dict[str, str] = {}
         self.dup_experiments: set[str] = set()
         self.seen_edges: dict[str, set[tuple[str, str]]] = {}
         self.node_rows: dict[str, int] = {}
@@ -350,12 +375,14 @@ class FastCsvSink:
         is_experiment = pascal == self._experiment_pascal
         out: list[str] = []
         for node_id, line in zip(ids, lines, strict=True):
-            if node_id in seen:
+            owner = seen.get(node_id)
+            if owner is not None:
+                _refuse_second_label(node_id, owner, pascal)
                 self.node_dups += 1
                 if is_experiment:
                     self.dup_experiments.add(node_id)
                 continue
-            seen.add(node_id)
+            seen[node_id] = pascal
             out.append(line)
         if out:
             self._file(pascal).write("".join(out))

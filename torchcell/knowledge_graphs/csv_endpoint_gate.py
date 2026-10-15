@@ -2,7 +2,7 @@
 # [[torchcell.knowledge_graphs.csv_endpoint_gate]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/csv_endpoint_gate
 # Test file: tests/torchcell/knowledge_graphs/test_csv_endpoint_gate.py
-r"""The CSV endpoint gate: every edge endpoint names a node, checked before the import.
+r"""The CSV endpoint gate: every edge endpoint names a node of a declared label.
 
 ``neo4j-admin database import full`` runs with ``skip_bad_relationships: true`` in every
 config under ``biocypher/config/`` (the full build's config, loaded through
@@ -13,32 +13,59 @@ how the Carruthers ``GeneAdditionPerturbation`` records lost their ``perturbatio
 of`` rows: the leaf was built under a conf whose only genotype lane is ``bacterial
 perturbation``, the edge method walked it anyway, and the import discarded the row.
 
+An endpoint that names SOME node is not enough either. ``neo4j-admin import`` has one
+id space, so an edge row whose endpoint id was written under another label is imported
+and lands on that other node. That is how 218,258 whole genotypes and 135 Hale 2024
+backgrounds of the job 4901 partial, and 14,573 Bloom 2019 and Caudal 2024 genotypes of
+the served KG 3.0 store, came to exist only as ``InternedConstant`` nodes: the interned
+id was the bare sha256 of the same bytes the genotype node hashes, the sink
+deduplicates ids across labels, and ``GenotypeMemberOf`` rows pointed at a constant
+(``torchcell.datamodels.interned_constant``, 2026-10-15). An existence check passes
+that; a label check does not.
+
 This module reads the BioCypher output directory the generator wrote, loads the ``:ID``
-column of every node CSV into one id table, streams every edge CSV's ``:START_ID`` and
-``:END_ID`` columns against it, and reports every endpoint with no node, grouped by edge
-label and side, with the datasets the dangling rows belong to where the graph lets that
-be derived (the known endpoint is walked along the ``member of`` ladder to a ``Dataset``
-node, the ladder itself read off the CSVs). The live rebuild runs it as a hard stop
-right before ``neo4j-admin import`` (``gilahyper_live_rebuild-slurm_docker.slurm``), so a
-dangling row stops the job with the dataset and label named instead of an opaque
-import report twenty hours in. Flipping ``skip_bad_relationships`` to ``false`` alone
-would only move that failure into the import (review 3 finding 8, 2026-10-15); it stays
-as it is for now, and this gate is the mandatory check.
+and ``:LABEL`` columns of every node CSV into one id table (id to its ancestry string),
+reads the schema yaml's ``source`` and ``target`` of every edge class, streams every
+edge CSV's ``:START_ID`` and ``:END_ID`` columns against both, and reports
+
+* every endpoint with no node (a dangling row),
+* every endpoint whose node carries NONE of the labels the edge class declares for
+  that side (a mislabeled row), where a node's labels are its whole BioCypher ancestry,
+  as Neo4j gives it (``PerturbedSegregantGenotype|Genotype|...`` satisfies ``target:
+  genotype`` exactly as ``MATCH (g:Genotype)`` matches that node in the store),
+* every node id written under two different labels (an id collision), with or without
+  an edge on it, since the import keeps one of the two rows and never says which,
+
+grouped by edge label and side, with the datasets the rows belong to where the graph
+lets that be derived (the known endpoint is walked along the ``member of`` ladder to a
+``Dataset`` node, the ladder itself read off the CSVs). An edge file whose label no
+schema class declares (``Mentions``, a Biolink predicate the adapter emits itself) is
+listed as undeclared and its labels are not checked. The live rebuild runs the gate as
+a hard stop right before ``neo4j-admin import``
+(``gilahyper_live_rebuild-slurm_docker.slurm``), so a bad row stops the job with the
+dataset and label named instead of an opaque import report twenty hours in. Flipping
+``skip_bad_relationships`` to ``false`` alone would only move that failure into the
+import (review 3 finding 8, 2026-10-15); it stays as it is for now, and this gate is
+the mandatory check.
 
 Ids are stored packed (a 64-hex content id as its 32 raw bytes, any other id as its
-bytes), so the id table of a full build (about 100 M node rows on KG 3.0) is held in
-memory once. Rows are read as bytes and split on the tab delimiter: BioCypher writes no
-quoted delimiter and no multiline field (the import call passes no
-``--multiline-fields``), and a node id is the row's first field.
+bytes) against a small integer, the index of the row's ancestry string among the
+distinct ones seen (about a hundred in a build), so the id table of a full build
+(about 100 M node rows on KG 3.0) is held in memory once and the label check is one
+list index per endpoint. Rows are read as bytes and split on the tab delimiter:
+BioCypher writes no quoted delimiter and no multiline field (the import call passes no
+``--multiline-fields``), a node id is the row's first field and its ancestry the last.
 
 CLI::
 
     python -m torchcell.knowledge_graphs.csv_endpoint_gate <biocypher-out dir> \\
-        [--header-dir DIR] [--no-resolve-datasets] [--report PATH]
+        [--header-dir DIR] [--schema YAML] [--no-resolve-datasets] [--report PATH]
 
 ``--header-dir`` names a directory holding the ``<Label>-header.csv`` files when the
 output directory has none: BioCypher writes the headers after the last adapter, so a
 generation killed mid-way (job 4901, 2026-10-14) leaves part files without them.
+``--schema`` is the schema config yaml; the default is the repository's
+``biocypher/config/torchcell_schema_config.yaml`` next to the imported package.
 """
 
 from __future__ import annotations
@@ -54,16 +81,25 @@ from itertools import islice
 from pathlib import Path
 from typing import BinaryIO
 
+import yaml
+from biocypher._misc import sentencecase_to_pascalcase
 from pydantic import BaseModel, ConfigDict, Field
 
+import torchcell
 from torchcell.knowledge_graphs.generation_array import ADAPTERS_DIRNAME
 from torchcell.knowledge_graphs.incremental_import import CsvGroup, discover_csv_groups
 
 __all__ = [
+    "EdgeDeclaration",
     "EndpointGap",
     "EndpointReport",
+    "IdCollision",
+    "LabelGap",
     "DATASET_LABEL",
+    "SCHEMA_CONFIG_RELPATH",
     "pack_id",
+    "default_schema_path",
+    "read_edge_declarations",
     "discover_groups",
     "check_endpoints",
     "format_report",
@@ -72,8 +108,12 @@ __all__ = [
 
 DATASET_LABEL = "Dataset"
 """The node label the dataset-resolution ladder ends at (BioCypher's file name for it)."""
+SCHEMA_CONFIG_RELPATH = "biocypher/config/torchcell_schema_config.yaml"
+"""The schema config yaml, relative to the repository root."""
 _DELIMITER = b"\t"
 _QUOTE = b"'"
+_ANCESTRY_SEPARATOR = "|"
+_LABEL_COLUMN = ":LABEL"
 _HEADER_RE = re.compile(r"^(?P<label>.+)-header\.csv$")
 _PART_RE = re.compile(r"^(?P<label>.+)-part\d+\.csv$")
 _LADDER_SAMPLE_ROWS = 1000
@@ -81,6 +121,17 @@ _LADDER_SAMPLE_ROWS = 1000
 _MAX_HOPS = 4
 """The longest ``member of`` ladder to a ``Dataset`` node (crispr construct ->
 perturbation -> genotype -> experiment -> dataset is four edges)."""
+_SIDES = (":START_ID", ":END_ID")
+
+
+class EdgeDeclaration(BaseModel):
+    """The node labels one edge class declares for its start and its end."""
+
+    model_config = ConfigDict(frozen=True)
+
+    edge_label: str  # PascalCase, as BioCypher names the edge file
+    start_labels: list[str]  # PascalCase node labels declared as ``source``
+    end_labels: list[str]  # PascalCase node labels declared as ``target``
 
 
 class EndpointGap(BaseModel):
@@ -101,6 +152,33 @@ class EndpointGap(BaseModel):
     n_unresolved: int = 0  # dangling rows whose other end reached no Dataset node
 
 
+class LabelGap(BaseModel):
+    """Edge rows of one label whose ``side`` endpoint is a node of an undeclared label."""
+
+    model_config = ConfigDict(frozen=True)
+
+    edge_label: str
+    side: str  # ":START_ID" | ":END_ID"
+    node_label: str  # the leaf label the endpoint's node row carries
+    n_rows: int
+    allowed_labels: list[str]  # what the schema declares for this side
+    sample_ids: list[str] = Field(default_factory=list)
+    anchor_labels: list[str] = Field(default_factory=list)
+    datasets: dict[str, int] = Field(default_factory=dict)
+    n_unresolved: int = 0
+
+
+class IdCollision(BaseModel):
+    """Node ids written under two different labels (the import keeps one row)."""
+
+    model_config = ConfigDict(frozen=True)
+
+    first_label: str  # the label whose row was read first
+    second_label: str
+    n_ids: int
+    sample_ids: list[str] = Field(default_factory=list)
+
+
 class EndpointReport(BaseModel):
     """What the gate found in one BioCypher output directory."""
 
@@ -111,18 +189,29 @@ class EndpointReport(BaseModel):
     edge_rows: dict[str, int]  # edge label -> rows
     n_node_ids: int  # distinct node ids
     gaps: list[EndpointGap]
+    label_gaps: list[LabelGap] = Field(default_factory=list)
+    id_collisions: list[IdCollision] = Field(default_factory=list)
+    undeclared_edges: list[str] = Field(
+        default_factory=list
+    )  # edge files no schema class declares; their labels are not checked
+    schema_path: str | None = None
     elapsed_s: float
     datasets_resolved: bool = True  # False under --no-resolve-datasets
 
     @property
     def ok(self) -> bool:
-        """True when every edge endpoint is the id of a node."""
-        return not self.gaps
+        """True when every endpoint is a node of a declared label and no id collides."""
+        return not (self.gaps or self.label_gaps or self.id_collisions)
 
     @property
     def n_dangling(self) -> int:
         """Edge rows with at least one endpoint that is no node, summed over the gaps."""
         return sum(gap.n_rows for gap in self.gaps)
+
+    @property
+    def n_mislabeled(self) -> int:
+        """Edge rows with an endpoint of an undeclared label, summed over the label gaps."""
+        return sum(gap.n_rows for gap in self.label_gaps)
 
 
 def pack_id(raw: bytes) -> bytes:
@@ -149,8 +238,44 @@ def _unpack_id(packed: bytes) -> str:
     return packed.decode("utf-8")
 
 
+def _unquote(raw: bytes) -> str:
+    if len(raw) >= 2 and raw[0:1] == _QUOTE and raw[-1:] == _QUOTE:
+        raw = raw[1:-1]
+    return raw.decode("utf-8")
+
+
 def _read_header(path: Path) -> list[str]:
     return path.read_text(encoding="utf-8").rstrip("\n").split("\t")
+
+
+def default_schema_path() -> Path:
+    """The repository's schema config yaml, located next to the imported package."""
+    return Path(torchcell.__file__).resolve().parent.parent / SCHEMA_CONFIG_RELPATH
+
+
+def read_edge_declarations(schema_path: Path) -> dict[str, EdgeDeclaration]:
+    """``edge file label -> declaration`` for every ``represented_as: edge`` class.
+
+    The file label is the PascalCase of the class name, as BioCypher names the file;
+    the declared sources and targets are PascalCased the same way, so they compare
+    with the ancestry strings the node rows carry.
+    """
+    raw = yaml.safe_load(schema_path.read_text(encoding="utf-8")) or {}
+    declarations: dict[str, EdgeDeclaration] = {}
+    for name, spec in raw.items():
+        if not isinstance(spec, dict) or spec.get("represented_as") != "edge":
+            continue
+        source = spec.get("source", [])
+        target = spec.get("target", [])
+        sources = source if isinstance(source, list) else [source]
+        targets = target if isinstance(target, list) else [target]
+        label = sentencecase_to_pascalcase(name)
+        declarations[label] = EdgeDeclaration(
+            edge_label=label,
+            start_labels=sorted(sentencecase_to_pascalcase(s) for s in sources),
+            end_labels=sorted(sentencecase_to_pascalcase(t) for t in targets),
+        )
+    return declarations
 
 
 def discover_groups(out_dir: Path, header_dir: Path | None = None) -> list[CsvGroup]:
@@ -230,19 +355,29 @@ def _id_column(columns: list[str]) -> int:
     raise ValueError(f"no :ID column in {columns}")
 
 
-def _node_ids_of_file(handle: BinaryIO, id_index: int, n_columns: int) -> list[bytes]:
-    """The packed ids of one node part file.
+def _node_rows_of_file(
+    handle: BinaryIO, id_index: int, label_index: int | None, n_columns: int
+) -> Iterator[tuple[bytes, bytes]]:
+    """``(packed id, ancestry)`` of every row of one node part file.
 
-    The first field is read off each line directly when the id is the first column
-    (BioCypher's layout); otherwise the row is parsed with the csv module, which
-    handles the quoted multi-MB ``serialized_data`` blobs a node row carries.
+    The first and last fields are read off each line directly when the id is the first
+    column and the ``:LABEL`` column the last (BioCypher's layout); otherwise the row
+    is parsed with the csv module, which handles the quoted multi-MB
+    ``serialized_data`` blobs a node row carries. A file with no ``:LABEL`` column
+    yields an empty ancestry, and the caller uses the file's label.
     """
-    ids: list[bytes] = []
-    if id_index == 0:
+    if id_index == 0 and (label_index is None or label_index == n_columns - 1):
         for line in handle:
+            line = line.rstrip(b"\n")
             tab = line.find(_DELIMITER)
-            ids.append(pack_id(line[:tab] if tab >= 0 else line.rstrip(b"\n")))
-        return ids
+            if tab < 0:
+                yield pack_id(line), b""
+                continue
+            ancestry = (
+                b"" if label_index is None else line[line.rfind(_DELIMITER) + 1 :]
+            )
+            yield pack_id(line[:tab]), ancestry
+        return
     csv.field_size_limit(sys.maxsize)
     import io
 
@@ -255,25 +390,73 @@ def _node_ids_of_file(handle: BinaryIO, id_index: int, n_columns: int) -> list[b
     for row in reader:
         if len(row) != n_columns:
             raise ValueError(f"node row has {len(row)} fields, header {n_columns}")
-        ids.append(pack_id(row[id_index].encode("utf-8")))
-    return ids
+        labels = "" if label_index is None else row[label_index]
+        yield pack_id(row[id_index].encode("utf-8")), labels.encode("utf-8")
 
 
-def _load_node_table(groups: list[CsvGroup]) -> tuple[dict[bytes, int], dict[str, int]]:
-    """``packed id -> label index`` over every node group, and rows per label."""
-    table: dict[bytes, int] = {}
-    rows: dict[str, int] = {}
-    for label_index, group in enumerate(g for g in groups if g.kind == "node"):
+class _NodeTable:
+    """Every node id, keyed packed, to the index of its ancestry string."""
+
+    def __init__(self) -> None:
+        self.table: dict[bytes, int] = {}
+        self.ancestries: list[str] = []
+        self.leaves: list[str] = []  # the first label of each ancestry
+        self._index: dict[str, int] = {}
+        self.rows: dict[str, int] = {}
+        self.collisions: dict[tuple[str, str], list[bytes]] = {}
+        self.n_collisions: Counter[tuple[str, str]] = Counter()
+
+    def ancestry_index(self, ancestry: str) -> int:
+        index = self._index.get(ancestry)
+        if index is None:
+            index = len(self.ancestries)
+            self._index[ancestry] = index
+            self.ancestries.append(ancestry)
+            self.leaves.append(ancestry.split(_ANCESTRY_SEPARATOR, 1)[0])
+        return index
+
+    def add(self, packed: bytes, index: int, sample: int) -> None:
+        held = self.table.get(packed)
+        if held is None:
+            self.table[packed] = index
+            return
+        if held == index:
+            return
+        key = (self.leaves[held], self.leaves[index])
+        self.n_collisions[key] += 1
+        samples = self.collisions.setdefault(key, [])
+        if len(samples) < sample:
+            samples.append(packed)
+
+
+def _load_node_table(groups: list[CsvGroup], sample: int) -> _NodeTable:
+    """The id table over every node group, with the rows per label and the collisions."""
+    nodes = _NodeTable()
+    for group in groups:
+        if group.kind != "node":
+            continue
         id_index = _id_column(group.columns)
+        label_index = (
+            group.columns.index(_LABEL_COLUMN)
+            if _LABEL_COLUMN in group.columns
+            else None
+        )
+        file_index = nodes.ancestry_index(group.label)
         n_rows = 0
         for part in group.part_paths:
             with open(part, "rb") as handle:
-                ids = _node_ids_of_file(handle, id_index, len(group.columns))
-            n_rows += len(ids)
-            for packed in ids:
-                table[packed] = label_index
-        rows[group.label] = n_rows
-    return table, rows
+                for packed, ancestry in _node_rows_of_file(
+                    handle, id_index, label_index, len(group.columns)
+                ):
+                    n_rows += 1
+                    index = (
+                        file_index
+                        if not ancestry
+                        else nodes.ancestry_index(_unquote(ancestry))
+                    )
+                    nodes.add(packed, index, sample)
+        nodes.rows[group.label] = nodes.rows.get(group.label, 0) + n_rows
+    return nodes
 
 
 def _iter_edge_rows(group: CsvGroup) -> Iterator[tuple[bytes, bytes]]:
@@ -293,40 +476,103 @@ def _iter_edge_rows(group: CsvGroup) -> Iterator[tuple[bytes, bytes]]:
 
 
 class _EdgeScan:
-    """One edge group's dangling endpoints and their known other ends."""
+    """One edge group's dangling and mislabeled endpoints and their known other ends."""
 
-    def __init__(self, label: str) -> None:
+    def __init__(self, label: str, declaration: EdgeDeclaration | None) -> None:
         self.label = label
+        self.declaration = declaration
         self.n_rows = 0
-        self.dangling: dict[str, int] = {":START_ID": 0, ":END_ID": 0}
-        self.samples: dict[str, list[bytes]] = {":START_ID": [], ":END_ID": []}
+        self.dangling: dict[str, int] = {side: 0 for side in _SIDES}
+        self.samples: dict[str, list[bytes]] = {side: [] for side in _SIDES}
         # side -> the OTHER endpoint of each dangling row (its anchor), for resolution
-        self.anchors: dict[str, list[bytes]] = {":START_ID": [], ":END_ID": []}
+        self.anchors: dict[str, list[bytes]] = {side: [] for side in _SIDES}
+        # side -> leaf label of the endpoint's node -> rows, samples and anchors
+        self.mislabeled: dict[str, Counter[str]] = {side: Counter() for side in _SIDES}
+        self.mis_samples: dict[str, dict[str, list[bytes]]] = {
+            side: {} for side in _SIDES
+        }
+        self.mis_anchors: dict[str, dict[str, list[bytes]]] = {
+            side: {} for side in _SIDES
+        }
+
+    def allowed_masks(self, nodes: _NodeTable) -> tuple[list[bool], list[bool]] | None:
+        """Per ancestry index, whether the node satisfies the declared start / end."""
+        if self.declaration is None:
+            return None
+        masks: list[list[bool]] = []
+        for labels in (self.declaration.start_labels, self.declaration.end_labels):
+            allowed = set(labels)
+            masks.append(
+                [
+                    any(part in allowed for part in a.split(_ANCESTRY_SEPARATOR))
+                    for a in nodes.ancestries
+                ]
+            )
+        return masks[0], masks[1]
+
+    def note_mislabeled(
+        self,
+        side: str,
+        leaf: str,
+        endpoint: bytes,
+        anchor: bytes,
+        sample: int,
+        keep: bool,
+    ) -> None:
+        self.mislabeled[side][leaf] += 1
+        samples = self.mis_samples[side].setdefault(leaf, [])
+        if len(samples) < sample:
+            samples.append(endpoint)
+        if keep:
+            self.mis_anchors[side].setdefault(leaf, []).append(anchor)
 
 
 def _scan_edges(
-    groups: list[CsvGroup], table: dict[bytes, int], sample: int, collect_anchors: bool
+    groups: list[CsvGroup],
+    nodes: _NodeTable,
+    declarations: dict[str, EdgeDeclaration],
+    sample: int,
+    collect_anchors: bool,
 ) -> list[_EdgeScan]:
-    """Every edge group's dangling endpoints; anchors kept only when they will be walked."""
+    """Every edge group's dangling and mislabeled endpoints; anchors kept when walked."""
+    table = nodes.table
+    leaves = nodes.leaves
     scans: list[_EdgeScan] = []
     for group in groups:
         if group.kind != "edge":
             continue
-        scan = _EdgeScan(group.label)
+        scan = _EdgeScan(group.label, declarations.get(group.label))
+        masks = scan.allowed_masks(nodes)
+        start_ok, end_ok = masks if masks is not None else (None, None)
         for start, end in _iter_edge_rows(group):
             scan.n_rows += 1
-            if start not in table:
+            start_index = table.get(start)
+            end_index = table.get(end)
+            if start_index is None:
                 scan.dangling[":START_ID"] += 1
                 if len(scan.samples[":START_ID"]) < sample:
                     scan.samples[":START_ID"].append(start)
                 if collect_anchors:
                     scan.anchors[":START_ID"].append(end)
-            if end not in table:
+            elif start_ok is not None and not start_ok[start_index]:
+                scan.note_mislabeled(
+                    ":START_ID",
+                    leaves[start_index],
+                    start,
+                    end,
+                    sample,
+                    collect_anchors,
+                )
+            if end_index is None:
                 scan.dangling[":END_ID"] += 1
                 if len(scan.samples[":END_ID"]) < sample:
                     scan.samples[":END_ID"].append(end)
                 if collect_anchors:
                     scan.anchors[":END_ID"].append(start)
+            elif end_ok is not None and not end_ok[end_index]:
+                scan.note_mislabeled(
+                    ":END_ID", leaves[end_index], end, start, sample, collect_anchors
+                )
         scans.append(scan)
     return scans
 
@@ -393,81 +639,153 @@ def _walk(
     return reached
 
 
+def _resolve(
+    groups: list[CsvGroup],
+    nodes: _NodeTable,
+    ladder: dict[str, list[tuple[str, str]]],
+    anchors: list[bytes],
+    resolve_datasets: bool,
+) -> tuple[list[str], dict[str, int], int]:
+    """``(anchor labels, dataset -> rows, unresolved rows)`` for one set of anchors."""
+    table, leaves = nodes.table, nodes.leaves
+    anchor_labels = sorted({leaves[table[a]] for a in anchors if a in table})
+    datasets: Counter[str] = Counter()
+    n_unresolved = len(anchors)
+    if resolve_datasets and DATASET_LABEL in leaves and anchor_labels:
+        n_unresolved = 0
+        for anchor_label in anchor_labels:
+            path = _paths_to_dataset(ladder, anchor_label)
+            labeled = [
+                a for a in anchors if a in table and leaves[table[a]] == anchor_label
+            ]
+            if path is None:
+                n_unresolved += len(labeled)
+                continue
+            for _anchor, reached in _walk(groups, path, labeled).items():
+                names = sorted(_unpack_id(r) for r in reached if r in table)
+                if not names:
+                    n_unresolved += 1
+                for name in names:
+                    datasets[name] += 1
+        n_unresolved += sum(1 for a in anchors if a not in table)
+    return anchor_labels, dict(sorted(datasets.items())), n_unresolved
+
+
 def check_endpoints(
     out_dir: Path,
     header_dir: Path | None = None,
     *,
+    schema_path: Path | None = None,
     resolve_datasets: bool = True,
     sample: int = 5,
 ) -> EndpointReport:
-    """Read every node id, stream every edge endpoint against them, report the gaps.
+    """Read every node id and label, stream every edge endpoint against them, report.
 
-    With ``resolve_datasets`` the known end of each dangling row is walked along the
-    ``member of`` ladder to a ``Dataset`` node (one pass over each edge file on the
-    path, only when a gap exists), so the report names the dataset whose records
-    produced the row.
+    ``schema_path`` is the schema config yaml whose edge classes declare the allowed
+    labels (the repository's by default). With ``resolve_datasets`` the known end of
+    each bad row is walked along the ``member of`` ladder to a ``Dataset`` node (one
+    pass over each edge file on the path, only when a gap exists), so the report names
+    the dataset whose records produced the row.
     """
     t0 = time.monotonic()
+    schema = default_schema_path() if schema_path is None else schema_path
+    declarations = read_edge_declarations(schema)
     groups = discover_groups(out_dir, header_dir)
-    node_labels = [g.label for g in groups if g.kind == "node"]
-    table, node_rows = _load_node_table(groups)
-    scans = _scan_edges(groups, table, sample, collect_anchors=resolve_datasets)
+    nodes = _load_node_table(groups, sample)
+    scans = _scan_edges(
+        groups, nodes, declarations, sample, collect_anchors=resolve_datasets
+    )
     edge_rows = {scan.label: scan.n_rows for scan in scans}
+    any_bad = any(
+        any(scan.dangling.values()) or any(scan.mislabeled.values()) for scan in scans
+    )
     ladder = (
-        _ladder(groups, table, node_labels)
-        if resolve_datasets and any(any(scan.dangling.values()) for scan in scans)
+        _ladder(groups, nodes.table, nodes.leaves)
+        if resolve_datasets and any_bad
         else {}
     )
     gaps: list[EndpointGap] = []
+    label_gaps: list[LabelGap] = []
     for scan in scans:
-        for side in (":START_ID", ":END_ID"):
-            if scan.dangling[side] == 0:
-                continue
-            anchors = scan.anchors[side]
-            anchor_labels = sorted(
-                {node_labels[table[a]] for a in anchors if a in table}
-            )
-            datasets: Counter[str] = Counter()
-            n_unresolved = len(anchors)
-            if resolve_datasets and DATASET_LABEL in node_labels and anchor_labels:
-                n_unresolved = 0
-                for anchor_label in anchor_labels:
-                    path = _paths_to_dataset(ladder, anchor_label)
-                    labeled = [
-                        a
-                        for a in anchors
-                        if a in table and node_labels[table[a]] == anchor_label
-                    ]
-                    if path is None:
-                        n_unresolved += len(labeled)
-                        continue
-                    for _anchor, reached in _walk(groups, path, labeled).items():
-                        names = sorted(_unpack_id(r) for r in reached if r in table)
-                        if not names:
-                            n_unresolved += 1
-                        for name in names:
-                            datasets[name] += 1
-                n_unresolved += sum(1 for a in anchors if a not in table)
-            gaps.append(
-                EndpointGap(
-                    edge_label=scan.label,
-                    side=side,
-                    n_rows=scan.dangling[side],
-                    sample_ids=[_unpack_id(s) for s in scan.samples[side]],
-                    anchor_labels=anchor_labels,
-                    datasets=dict(sorted(datasets.items())),
-                    n_unresolved=n_unresolved,
+        for side in _SIDES:
+            if scan.dangling[side]:
+                anchor_labels, datasets, n_unresolved = _resolve(
+                    groups, nodes, ladder, scan.anchors[side], resolve_datasets
                 )
-            )
+                gaps.append(
+                    EndpointGap(
+                        edge_label=scan.label,
+                        side=side,
+                        n_rows=scan.dangling[side],
+                        sample_ids=[_unpack_id(s) for s in scan.samples[side]],
+                        anchor_labels=anchor_labels,
+                        datasets=datasets,
+                        n_unresolved=n_unresolved,
+                    )
+                )
+            declaration = scan.declaration
+            for leaf, n_rows in sorted(scan.mislabeled[side].items()):
+                assert declaration is not None
+                anchor_labels, datasets, n_unresolved = _resolve(
+                    groups,
+                    nodes,
+                    ladder,
+                    scan.mis_anchors[side].get(leaf, []),
+                    resolve_datasets,
+                )
+                label_gaps.append(
+                    LabelGap(
+                        edge_label=scan.label,
+                        side=side,
+                        node_label=leaf,
+                        n_rows=n_rows,
+                        allowed_labels=(
+                            declaration.start_labels
+                            if side == ":START_ID"
+                            else declaration.end_labels
+                        ),
+                        sample_ids=[
+                            _unpack_id(s) for s in scan.mis_samples[side].get(leaf, [])
+                        ],
+                        anchor_labels=anchor_labels,
+                        datasets=datasets,
+                        n_unresolved=n_unresolved,
+                    )
+                )
+    id_collisions = [
+        IdCollision(
+            first_label=first,
+            second_label=second,
+            n_ids=nodes.n_collisions[(first, second)],
+            sample_ids=[_unpack_id(s) for s in samples],
+        )
+        for (first, second), samples in sorted(nodes.collisions.items())
+    ]
     return EndpointReport(
         out_dir=str(out_dir),
-        node_rows=node_rows,
+        node_rows=nodes.rows,
         edge_rows=edge_rows,
-        n_node_ids=len(table),
+        n_node_ids=len(nodes.table),
         gaps=gaps,
+        label_gaps=label_gaps,
+        id_collisions=id_collisions,
+        undeclared_edges=[s.label for s in scans if s.declaration is None],
+        schema_path=str(schema),
         elapsed_s=time.monotonic() - t0,
         datasets_resolved=resolve_datasets,
     )
+
+
+def _where(datasets: dict[str, int], n_unresolved: int, resolved: bool) -> str:
+    if not resolved:
+        return "datasets not resolved (--no-resolve-datasets)"
+    where = (
+        "; ".join(f"{name}={n}" for name, n in datasets.items())
+        if datasets
+        else "unresolved"
+    )
+    unresolved = f", {n_unresolved} unresolved" if datasets and n_unresolved else ""
+    return f"datasets: {where}{unresolved}"
 
 
 def format_report(report: EndpointReport) -> str:
@@ -477,43 +795,65 @@ def format_report(report: EndpointReport) -> str:
         f"  nodes: {sum(report.node_rows.values())} rows in {len(report.node_rows)} "
         f"labels ({report.n_node_ids} distinct ids); edges: "
         f"{sum(report.edge_rows.values())} rows in {len(report.edge_rows)} labels; "
-        f"{report.elapsed_s:.0f} s",
+        f"schema {report.schema_path}; {report.elapsed_s:.0f} s",
     ]
+    if report.undeclared_edges:
+        lines.append(
+            f"  undeclared (labels not checked): {', '.join(report.undeclared_edges)}"
+        )
     if report.ok:
-        lines.append("  OK: every edge endpoint is the id of a node")
+        lines.append(
+            "  OK: every edge endpoint is the id of a node of a declared label, and no "
+            "id is written under two labels"
+        )
         return "\n".join(lines)
-    lines.append(f"  DANGLING: {report.n_dangling} edge rows name no node")
+    if report.gaps:
+        lines.append(f"  DANGLING: {report.n_dangling} edge rows name no node")
     for gap in report.gaps:
         if not report.datasets_resolved:
             lines.append(
-                f"  {gap.edge_label} {gap.side}: {gap.n_rows} rows; datasets not "
-                f"resolved (--no-resolve-datasets); sample {gap.sample_ids}"
+                f"  {gap.edge_label} {gap.side}: {gap.n_rows} rows; "
+                f"{_where({}, 0, False)}; sample {gap.sample_ids}"
             )
             continue
-        where = (
-            "; ".join(f"{name}={n}" for name, n in gap.datasets.items())
-            if gap.datasets
-            else "unresolved"
-        )
-        unresolved = (
-            f", {gap.n_unresolved} unresolved"
-            if gap.datasets and gap.n_unresolved
-            else ""
-        )
         lines.append(
             f"  {gap.edge_label} {gap.side}: {gap.n_rows} rows; other end "
-            f"{gap.anchor_labels or ['(no node either)']}; datasets: {where}{unresolved}; "
-            f"sample {gap.sample_ids}"
+            f"{gap.anchor_labels or ['(no node either)']}; "
+            f"{_where(gap.datasets, gap.n_unresolved, True)}; sample {gap.sample_ids}"
+        )
+    if report.label_gaps:
+        lines.append(
+            f"  MISLABELED: {report.n_mislabeled} edge rows name a node of an "
+            "undeclared label"
+        )
+    for label_gap in report.label_gaps:
+        lines.append(
+            f"  {label_gap.edge_label} {label_gap.side}: {label_gap.n_rows} rows on "
+            f"{label_gap.node_label} nodes, declared {label_gap.allowed_labels}; other "
+            f"end {label_gap.anchor_labels or ['(unknown)']}; "
+            f"{_where(label_gap.datasets, label_gap.n_unresolved, report.datasets_resolved)}; "
+            f"sample {label_gap.sample_ids}"
+        )
+    if report.id_collisions:
+        lines.append(
+            f"  ID COLLISIONS: {sum(c.n_ids for c in report.id_collisions)} node ids "
+            "written under two labels"
+        )
+    for collision in report.id_collisions:
+        lines.append(
+            f"  {collision.first_label} and {collision.second_label}: "
+            f"{collision.n_ids} ids; sample {collision.sample_ids}"
         )
     return "\n".join(lines)
 
 
 def main(argv: list[str] | None = None) -> int:
-    """CLI: print the report, write it as JSON when asked, exit 1 on any gap."""
+    """CLI: print the report, write it as JSON when asked, exit 1 on any finding."""
     parser = argparse.ArgumentParser(
         prog="python -m torchcell.knowledge_graphs.csv_endpoint_gate",
         description="Refuse a BioCypher output directory with an edge endpoint that is "
-        "the id of no node, before neo4j-admin import drops the row.",
+        "the id of no node, or of a node of a label the schema does not declare for "
+        "that edge, before neo4j-admin import drops or misplaces the row.",
     )
     parser.add_argument("out_dir", help="the biocypher-out/<timestamp> directory")
     parser.add_argument(
@@ -521,6 +861,11 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="directory holding <Label>-header.csv when out_dir has none (a generation "
         "killed before BioCypher wrote its headers)",
+    )
+    parser.add_argument(
+        "--schema",
+        default=None,
+        help=f"the schema config yaml (default: the repository's {SCHEMA_CONFIG_RELPATH})",
     )
     parser.add_argument(
         "--no-resolve-datasets",
@@ -532,6 +877,7 @@ def main(argv: list[str] | None = None) -> int:
     report = check_endpoints(
         Path(args.out_dir),
         Path(args.header_dir) if args.header_dir else None,
+        schema_path=Path(args.schema) if args.schema else None,
         resolve_datasets=not args.no_resolve_datasets,
     )
     print(format_report(report))

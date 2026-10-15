@@ -568,22 +568,24 @@ class Neo4jQueryRaw:
         yield from self.fetch_query(single_session_query(self.query))
 
     def fetch_constants(self, refs: list[str]) -> dict[str, Any]:
-        """Fetch interned constants by id and verify each payload against its id.
+        """Fetch interned constants by id and verify each (kind, payload) against its id.
 
         Every id must resolve: a pointer the store cannot serve is a broken build,
-        so a missing one raises instead of leaving a ``$ref`` in the record.
+        so a missing one raises instead of leaving a ``$ref`` in the record. The id is
+        the namespaced hash of the node's own ``kind`` and ``serialized_data``
+        (``torchcell.datamodels.interned_constant.constant_id``), so both are fetched.
         """
         driver, database = self._connect()
         found: dict[str, Any] = {}
         with driver.session(database=database) as session:
             result = session.run(
                 f"UNWIND $ids AS ref MATCH (n:{INTERNED_CONSTANT_NEO4J_LABEL} {{id: ref}}) "
-                "RETURN ref, n.serialized_data AS payload",
+                "RETURN ref, n.kind AS kind, n.serialized_data AS payload",
                 ids=refs,
             )
             for record in result:
                 found[record["ref"]] = verified_constant(
-                    record["ref"], record["payload"]
+                    record["ref"], record["kind"], record["payload"]
                 )
         driver.close()
         missing = sorted(set(refs) - found.keys())

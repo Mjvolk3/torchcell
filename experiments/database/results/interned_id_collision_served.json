@@ -1,0 +1,63 @@
+{
+  "uri": "bolt://localhost:7687",
+  "database": "torchcell",
+  "n_nodes_by_label": {
+    "Genotype": 22657896,
+    "SegregantGenotype": 320,
+    "PerturbedSegregantGenotype": 0,
+    "InternedConstant": 21020,
+    "Perturbation": 173766,
+    "BacterialPerturbation": 0,
+    "Experiment": 52668931
+  },
+  "n_interned_by_kind": {
+    "genotype": 14573,
+    "environment": 6447
+  },
+  "edges": [
+    {
+      "edge": "PerturbationMemberOf",
+      "side": "end",
+      "n_rows_total": 45297656,
+      "n_rows_to_interned": 0,
+      "n_distinct_interned": 0
+    },
+    {
+      "edge": "GenotypeMemberOf",
+      "side": "start",
+      "n_rows_total": 52668931,
+      "n_rows_to_interned": 518883,
+      "n_distinct_interned": 14573
+    },
+    {
+      "edge": "SegregantBackgroundOf",
+      "side": "start",
+      "n_rows_total": 0,
+      "n_rows_to_interned": 0,
+      "n_distinct_interned": 0
+    }
+  ],
+  "datasets": [
+    {
+      "dataset": "Bloom2019Dataset",
+      "lost_by_kind": {
+        "genotype": 13630
+      },
+      "n_genotype_member_of_rows": 517940,
+      "n_sampled_experiments": 500,
+      "n_sampled_pointers": 441,
+      "n_sampled_pointers_unresolved": 0
+    },
+    {
+      "dataset": "CaudalPanTranscriptome2024Dataset",
+      "lost_by_kind": {
+        "genotype": 943
+      },
+      "n_genotype_member_of_rows": 943,
+      "n_sampled_experiments": 500,
+      "n_sampled_pointers": 500,
+      "n_sampled_pointers_unresolved": 0
+    }
+  ],
+  "elapsed_s": 8.14096265938133
+}

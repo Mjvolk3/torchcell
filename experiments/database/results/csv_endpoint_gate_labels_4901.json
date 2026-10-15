@@ -1,0 +1,424 @@
+{
+  "out_dir": "/db/database/biocypher-out/2026-10-14_03-53-33",
+  "node_rows": {
+    "BacterialMorphologyPhenotype": 3665,
+    "BacterialPerturbation": 252060,
+    "BacterialSequenceVariantPerturbation": 0,
+    "CalmorphPhenotype": 7815,
+    "CrisprConstruct": 232640,
+    "Dataset": 0,
+    "Environment": 24552,
+    "EnvironmentPerturbation": 20289,
+    "EnvironmentResponsePhenotype": 49894565,
+    "Experiment": 95916158,
+    "ExperimentReference": 97826,
+    "FitnessPhenotype": 7797280,
+    "FluxPhenotype": 0,
+    "GeneEssentialityPhenotype": 10744,
+    "GeneInteractionPhenotype": 9498235,
+    "Genome": 0,
+    "GenomeArchitecturePhenotype": 8836,
+    "Genotype": 23168154,
+    "GradedGeneEssentialityPhenotype": 297,
+    "InductionTimecourseExpressionPhenotype": 1752,
+    "InternedConstant": 242984,
+    "LifeCyclePhenotype": 1892,
+    "Media": 110,
+    "MetabolitePhenotype": 26708,
+    "MicroarrayExpressionPhenotype": 3112,
+    "MicroarrayExpressionScorePhenotype": 523,
+    "MrnaNumberFractionPhenotype": 30,
+    "Perturbation": 269629,
+    "PerturbedSegregantGenotype": 772609,
+    "PhagePerturbation": 0,
+    "PhosphositeIntensityPhenotype": 12,
+    "PooledSortSeqExpressionPhenotype": 70432,
+    "ProductTiterPhenotype": 0,
+    "PromoterActivityPhenotype": 68975,
+    "ProteinAbundancePhenotype": 10674,
+    "ProteinFoldChangePhenotype": 10,
+    "ProteinSynthesisRatePhenotype": 0,
+    "ProteinTurnoverPhenotype": 69,
+    "PseudobulkExpressionPhenotype": 6190,
+    "Publication": 1857,
+    "RnaseqExpressionPhenotype": 3826,
+    "SegregantGenotype": 0,
+    "SingleCellExpressionPhenotype": 83267,
+    "SyntheticLethalityPhenotype": 0,
+    "SyntheticRescuePhenotype": 0,
+    "Temperature": 0,
+    "VisualScorePhenotype": 0
+  },
+  "edge_rows": {
+    "CrisprConstructMemberOf": 277237,
+    "EnvironmentMemberOf": 96007911,
+    "EnvironmentPerturbationMemberOf": 23704,
+    "ExperimentMemberOf": 95910118,
+    "ExperimentReferenceMemberOf": 90861,
+    "ExperimentReferenceOf": 95910132,
+    "GenomeMemberOf": 91728,
+    "GenotypeMemberOf": 95910118,
+    "MediaMemberOf": 20196,
+    "Mentions": 95910136,
+    "PerturbationMemberOf": 47251386,
+    "PhenotypeMemberOf": 96007911,
+    "SegregantBackgroundOf": 894907,
+    "TemperatureMemberOf": 17362
+  },
+  "n_node_ids": 188497777,
+  "gaps": [
+    {
+      "edge_label": "CrisprConstructMemberOf",
+      "side": ":START_ID",
+      "n_rows": 3424,
+      "sample_ids": [
+        "11446cd66a5cbc2b788df6659b0e323490f704386049bff5ad8ea8677df9d2ae",
+        "cf282ec243d91bc53223a2135cbff6c774219b4ed04847a8a30a2b3b1f48eb86",
+        "b98e9ece36b269b9991c9f52d3107b416b76ff52ddc3d007230df1430eb62967",
+        "73f12d36d002b8cbc70474f9f7377d4e612df874fedd27cc61a0a9038ce0a494",
+        "a3ad48ee1cce7fa68b548595bf93ad54bf36f8f133dbbd58c3e44931e2065ae3"
+      ],
+      "anchor_labels": [
+        "BacterialPerturbation"
+      ],
+      "datasets": {},
+      "n_unresolved": 3424
+    },
+    {
+      "edge_label": "CrisprConstructMemberOf",
+      "side": ":END_ID",
+      "n_rows": 174,
+      "sample_ids": [
+        "bac01b3adda936df7a4258d5e92d107aaf675f0d40018e69d60c641d2b40bb72",
+        "e9399a3f387af67c199c68a4ad6602dbf1772f8de5a6083b5b22050c692d7021",
+        "5496b3277dfce75b89e1548984e163e8dec8be265b335755bb540ef2577601e7",
+        "95a1f19d28b9c7dc15a4b19ba02f5ff066e98378762911525c4fc2e63f9a5283",
+        "463426035fb59fb14d27f841faa1e6632f3216a4e2f5f1331c95b927bf7f0cdb"
+      ],
+      "anchor_labels": [
+        "CrisprConstruct"
+      ],
+      "datasets": {},
+      "n_unresolved": 174
+    },
+    {
+      "edge_label": "EnvironmentMemberOf",
+      "side": ":START_ID",
+      "n_rows": 75477,
+      "sample_ids": [
+        "04878b6d06aa5fffc1de0faebfccc7dfa9458ee84dcf7cd123d5a9f8c4771530",
+        "ecf9743b6a326c95edb36fc94b37088d63b34accd4ae7162362263840367f637",
+        "ec49bee433c7cbcf2b535ed4d396a20ea9537c44c2457523f19a324f407805c8",
+        "20891d9d1123ab72fb5204526b58a60bdf9b04ddedc6a96b9f8d302b4d58ca17",
+        "3bb4524e8b2e119c1749e70a906e1ceecaf0159263cabd2fbb951acfada86b91"
+      ],
+      "anchor_labels": [
+        "Experiment",
+        "ExperimentReference"
+      ],
+      "datasets": {},
+      "n_unresolved": 75477
+    },
+    {
+      "edge_label": "EnvironmentPerturbationMemberOf",
+      "side": ":START_ID",
+      "n_rows": 733,
+      "sample_ids": [
+        "de22b572a8ebd8a66bc127cf754a0004d7ac3d69f0304a369535fa2ebe03be5c",
+        "ed436ba2ad6e63d0a6fb41eac56e2bd2eb1c1cadb4eb0840374b3c72b6857a21",
+        "a0a162a7ba33b1087a5802e6ef198bcb45bcddab7564d40943e33c0b587d30a5",
+        "8c5c76adb9f210c69a09f82fce0379b629431a5f1485865507090655682249d3",
+        "437e65483d2dd873984fdc4ab0d9643bca84a90dabb768de43b24ecd6eeb4eec"
+      ],
+      "anchor_labels": [
+        "Environment"
+      ],
+      "datasets": {},
+      "n_unresolved": 733
+    },
+    {
+      "edge_label": "ExperimentMemberOf",
+      "side": ":END_ID",
+      "n_rows": 95910118,
+      "sample_ids": [
+        "SmfCostanzo2016Dataset",
+        "SmfCostanzo2016Dataset",
+        "SmfCostanzo2016Dataset",
+        "SmfCostanzo2016Dataset",
+        "SmfCostanzo2016Dataset"
+      ],
+      "anchor_labels": [
+        "Experiment"
+      ],
+      "datasets": {},
+      "n_unresolved": 95910118
+    },
+    {
+      "edge_label": "ExperimentReferenceMemberOf",
+      "side": ":END_ID",
+      "n_rows": 90861,
+      "sample_ids": [
+        "SmfCostanzo2016Dataset",
+        "SmfCostanzo2016Dataset",
+        "DmfCostanzo2016Dataset",
+        "DmfCostanzo2016Dataset",
+        "DmiCostanzo2016Dataset"
+      ],
+      "anchor_labels": [
+        "ExperimentReference"
+      ],
+      "datasets": {},
+      "n_unresolved": 90861
+    },
+    {
+      "edge_label": "GenomeMemberOf",
+      "side": ":START_ID",
+      "n_rows": 91728,
+      "sample_ids": [
+        "82764cfb2fb1890fae51368c4bcc6055fcae5fb74a31397355cc2e021bb2c780",
+        "82764cfb2fb1890fae51368c4bcc6055fcae5fb74a31397355cc2e021bb2c780",
+        "82764cfb2fb1890fae51368c4bcc6055fcae5fb74a31397355cc2e021bb2c780",
+        "82764cfb2fb1890fae51368c4bcc6055fcae5fb74a31397355cc2e021bb2c780",
+        "82764cfb2fb1890fae51368c4bcc6055fcae5fb74a31397355cc2e021bb2c780"
+      ],
+      "anchor_labels": [
+        "ExperimentReference"
+      ],
+      "datasets": {},
+      "n_unresolved": 91728
+    },
+    {
+      "edge_label": "GenotypeMemberOf",
+      "side": ":START_ID",
+      "n_rows": 22241,
+      "sample_ids": [
+        "4a935c817173dcb9f6222b493057e62f8821a212d30c45a99522133efe3cf032",
+        "4a935c817173dcb9f6222b493057e62f8821a212d30c45a99522133efe3cf032",
+        "4a935c817173dcb9f6222b493057e62f8821a212d30c45a99522133efe3cf032",
+        "4a935c817173dcb9f6222b493057e62f8821a212d30c45a99522133efe3cf032",
+        "4a935c817173dcb9f6222b493057e62f8821a212d30c45a99522133efe3cf032"
+      ],
+      "anchor_labels": [
+        "Experiment"
+      ],
+      "datasets": {},
+      "n_unresolved": 22241
+    },
+    {
+      "edge_label": "Mentions",
+      "side": ":START_ID",
+      "n_rows": 51584548,
+      "sample_ids": [
+        "932247fa16bea9b6427ecb5e0372172252a7eee1552841675f78d75027709691",
+        "70a0689bc2cef9d209c2433665a7829d70bdcb32ad5c63b6a58e548b5d355ac7",
+        "70a0689bc2cef9d209c2433665a7829d70bdcb32ad5c63b6a58e548b5d355ac7",
+        "70a0689bc2cef9d209c2433665a7829d70bdcb32ad5c63b6a58e548b5d355ac7",
+        "70a0689bc2cef9d209c2433665a7829d70bdcb32ad5c63b6a58e548b5d355ac7"
+      ],
+      "anchor_labels": [
+        "Experiment"
+      ],
+      "datasets": {},
+      "n_unresolved": 51584548
+    },
+    {
+      "edge_label": "PerturbationMemberOf",
+      "side": ":START_ID",
+      "n_rows": 2302,
+      "sample_ids": [
+        "728fed34d1ea81b078292bbfaa7b53bc75b8130cb5dba7a59bf5bb5fb8af9045",
+        "38170a0de92b4e57a3230851c3c931acf6fbddaf7e1826e1b7642b8759725088",
+        "cc7d6ff1d9074772a1ce70ee3c8748b7f843c6ed93213d90d55dd6ac826cee5b",
+        "db1c958f928335f9f167f2808482ac19653a640af6e2da768acd149a44196320",
+        "56deebdda09077e863fe46ad04f0601cbeefb392aecab55af4023e9fa83c8c2e"
+      ],
+      "anchor_labels": [
+        "Genotype"
+      ],
+      "datasets": {},
+      "n_unresolved": 2302
+    },
+    {
+      "edge_label": "PerturbationMemberOf",
+      "side": ":END_ID",
+      "n_rows": 1931,
+      "sample_ids": [
+        "2a66217782e9752de5924bef77ba4b25002affc464ee42000f7105491b69fce4",
+        "0ec7ad1d187fd66d39289c06fbba55074b92845fb0fd5c80c5723fb5614b6145",
+        "3a1a6b96d9d7892025e84c444eaadde79547af3e03634812ea1cdd641bd4c8ce",
+        "e308844848caea008d2c2491590c69bdce30d1efa4d24085546a3d2d5329382b",
+        "bc15806a518e17690d1d2b65e793f6dad5728956754dac2e94a6cc06f8a445f9"
+      ],
+      "anchor_labels": [
+        "BacterialPerturbation",
+        "Perturbation"
+      ],
+      "datasets": {},
+      "n_unresolved": 1931
+    },
+    {
+      "edge_label": "PhenotypeMemberOf",
+      "side": ":START_ID",
+      "n_rows": 29860,
+      "sample_ids": [
+        "d658731b73c10400cccc77ee503db1f4e24a010c42d5100d3e73f48aa67cc342",
+        "ddbc9937b2b52cdbfc6face000806e02e43dfbcd9284bf47ae5b52f910c860fd",
+        "ddbc9937b2b52cdbfc6face000806e02e43dfbcd9284bf47ae5b52f910c860fd",
+        "ddbc9937b2b52cdbfc6face000806e02e43dfbcd9284bf47ae5b52f910c860fd",
+        "ddbc9937b2b52cdbfc6face000806e02e43dfbcd9284bf47ae5b52f910c860fd"
+      ],
+      "anchor_labels": [
+        "Experiment",
+        "ExperimentReference"
+      ],
+      "datasets": {},
+      "n_unresolved": 29860
+    },
+    {
+      "edge_label": "SegregantBackgroundOf",
+      "side": ":START_ID",
+      "n_rows": 185191,
+      "sample_ids": [
+        "17206a52dc46ff22baee088960d1dde7cbf4221f95c2e56585fe51f7dd967e57",
+        "17206a52dc46ff22baee088960d1dde7cbf4221f95c2e56585fe51f7dd967e57",
+        "17206a52dc46ff22baee088960d1dde7cbf4221f95c2e56585fe51f7dd967e57",
+        "17206a52dc46ff22baee088960d1dde7cbf4221f95c2e56585fe51f7dd967e57",
+        "17206a52dc46ff22baee088960d1dde7cbf4221f95c2e56585fe51f7dd967e57"
+      ],
+      "anchor_labels": [
+        "InternedConstant",
+        "PerturbedSegregantGenotype"
+      ],
+      "datasets": {},
+      "n_unresolved": 185191
+    },
+    {
+      "edge_label": "SegregantBackgroundOf",
+      "side": ":END_ID",
+      "n_rows": 1188,
+      "sample_ids": [
+        "2a66217782e9752de5924bef77ba4b25002affc464ee42000f7105491b69fce4",
+        "0ec7ad1d187fd66d39289c06fbba55074b92845fb0fd5c80c5723fb5614b6145",
+        "3a1a6b96d9d7892025e84c444eaadde79547af3e03634812ea1cdd641bd4c8ce",
+        "e308844848caea008d2c2491590c69bdce30d1efa4d24085546a3d2d5329382b",
+        "bc15806a518e17690d1d2b65e793f6dad5728956754dac2e94a6cc06f8a445f9"
+      ],
+      "anchor_labels": [
+        "InternedConstant"
+      ],
+      "datasets": {},
+      "n_unresolved": 1188
+    },
+    {
+      "edge_label": "TemperatureMemberOf",
+      "side": ":START_ID",
+      "n_rows": 17362,
+      "sample_ids": [
+        "49f13e9bf0a8e34e40f8355a094109bf4fdd343040e105aae1db94a3f2c3b421",
+        "f088c34b2dc32b6aedad3b3b01e40d18b2f1f5ff916412a1b3e91f100fdb1737",
+        "f088c34b2dc32b6aedad3b3b01e40d18b2f1f5ff916412a1b3e91f100fdb1737",
+        "49f13e9bf0a8e34e40f8355a094109bf4fdd343040e105aae1db94a3f2c3b421",
+        "bf77438eb29797b7b6327e438312610f60bf62fd858b6b8f7933f9f273fc1bce"
+      ],
+      "anchor_labels": [
+        "Environment"
+      ],
+      "datasets": {},
+      "n_unresolved": 17362
+    }
+  ],
+  "label_gaps": [
+    {
+      "edge_label": "GenotypeMemberOf",
+      "side": ":START_ID",
+      "node_label": "InternedConstant",
+      "n_rows": 1948098,
+      "allowed_labels": [
+        "Genotype",
+        "PerturbedSegregantGenotype",
+        "SegregantGenotype"
+      ],
+      "sample_ids": [
+        "4521b61fb6486e9a7f56493a93e14feba5e123ea86c61c644b974031442e54e7",
+        "6f3d9680f2ac0ca6da9f267c2a821cce4c5dc4331787c080edb9491b0cbacaae",
+        "efd37c929200e69382cc4225b8daa150a4cdc803018ae5d454fd9a122d32282f",
+        "dab2b7603a89ce3f1fa64721f93615eb5afd66f8875e98a3fa1ae5e3543cb115",
+        "19916377c6e0315627eb844253fe22cfa2935c47346c902cdfa1a2c0b1a3be01"
+      ],
+      "anchor_labels": [
+        "Experiment"
+      ],
+      "datasets": {},
+      "n_unresolved": 1948098
+    },
+    {
+      "edge_label": "PerturbationMemberOf",
+      "side": ":END_ID",
+      "node_label": "InternedConstant",
+      "n_rows": 121180,
+      "allowed_labels": [
+        "Genotype"
+      ],
+      "sample_ids": [
+        "e0450630579b3126f870d7a626fc4f050b361660b4fbcc5cf41642e1efb91c9c",
+        "7cdd6c3d21c2dc577380d31d747f23144d08c84e8c4cead6bd004ec0fc0bffd1",
+        "bd41f87daa72924741b1bf9a6a5f995b368b1a4f1d99b37e43034f739205dbc9",
+        "d1b2206ee1cc81b8e09df55a79290b87b3c462a8933e53ec13da603ff557f5bf",
+        "b04e45b4843869f50ae6fa865be37a6155417b8009dfd39061fb64653a89b78b"
+      ],
+      "anchor_labels": [
+        "BacterialPerturbation",
+        "Perturbation"
+      ],
+      "datasets": {},
+      "n_unresolved": 121180
+    },
+    {
+      "edge_label": "SegregantBackgroundOf",
+      "side": ":START_ID",
+      "node_label": "InternedConstant",
+      "n_rows": 709716,
+      "allowed_labels": [
+        "SegregantGenotype"
+      ],
+      "sample_ids": [
+        "0589c0e6b316ea91f9ba6c4d803e2405375e516c06a327e2b69626af5ebd44e9",
+        "0589c0e6b316ea91f9ba6c4d803e2405375e516c06a327e2b69626af5ebd44e9",
+        "0589c0e6b316ea91f9ba6c4d803e2405375e516c06a327e2b69626af5ebd44e9",
+        "0589c0e6b316ea91f9ba6c4d803e2405375e516c06a327e2b69626af5ebd44e9",
+        "0589c0e6b316ea91f9ba6c4d803e2405375e516c06a327e2b69626af5ebd44e9"
+      ],
+      "anchor_labels": [
+        "PerturbedSegregantGenotype"
+      ],
+      "datasets": {},
+      "n_unresolved": 709716
+    },
+    {
+      "edge_label": "SegregantBackgroundOf",
+      "side": ":END_ID",
+      "node_label": "InternedConstant",
+      "n_rows": 121110,
+      "allowed_labels": [
+        "PerturbedSegregantGenotype"
+      ],
+      "sample_ids": [
+        "e0450630579b3126f870d7a626fc4f050b361660b4fbcc5cf41642e1efb91c9c",
+        "7cdd6c3d21c2dc577380d31d747f23144d08c84e8c4cead6bd004ec0fc0bffd1",
+        "bd41f87daa72924741b1bf9a6a5f995b368b1a4f1d99b37e43034f739205dbc9",
+        "d1b2206ee1cc81b8e09df55a79290b87b3c462a8933e53ec13da603ff557f5bf",
+        "b04e45b4843869f50ae6fa865be37a6155417b8009dfd39061fb64653a89b78b"
+      ],
+      "anchor_labels": [],
+      "datasets": {},
+      "n_unresolved": 121110
+    }
+  ],
+  "id_collisions": [],
+  "undeclared_edges": [
+    "Mentions"
+  ],
+  "schema_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/interned-id-collision/biocypher/config/torchcell_schema_config.yaml",
+  "elapsed_s": 1472.0048791049048,
+  "datasets_resolved": true
+}

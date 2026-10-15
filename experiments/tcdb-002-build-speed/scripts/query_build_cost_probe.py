@@ -342,7 +342,9 @@ def single_pass(
                 env_model, env_frag, env_ident = cache.env_by_key[env_id]
             else:
                 env_model, env_frag, env_ident = cache.environment(
-                    env_id, verified_constant(env_id, constants[env_id]), env_cls
+                    env_id,
+                    verified_constant(env_id, "environment", constants[env_id]),
+                    env_cls,
                 )
         else:
             env_key = json.dumps(e["environment"])

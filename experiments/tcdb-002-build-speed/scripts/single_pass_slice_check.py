@@ -70,7 +70,7 @@ class SliceQueryRaw(nqr.Neo4jQueryRaw):
     """``Neo4jQueryRaw`` serving in-memory records and constants instead of bolt."""
 
     records: list[dict[str, str]]
-    store: dict[str, str]
+    store: dict[str, tuple[str, str]]
     write_s: float
     last_stream: Any
 
@@ -96,11 +96,11 @@ class SliceQueryRaw(nqr.Neo4jQueryRaw):
 
     def fetch_constants(self, refs: list[str]) -> dict[str, Any]:
         """Serve and verify interned constants from memory."""
-        return {r: verified_constant(r, self.store[r]) for r in refs}
+        return {r: verified_constant(r, *self.store[r]) for r in refs}
 
 
 def make_query(
-    records: list[dict[str, str]], store: dict[str, str], tag: str
+    records: list[dict[str, str]], store: dict[str, tuple[str, str]], tag: str
 ) -> SliceQueryRaw:
     """A query over a fresh scratch directory."""
     query = SliceQueryRaw(
@@ -223,11 +223,11 @@ def main() -> None:
         }
         for r in records
     ]
-    store: dict[str, str] = {}
+    store: dict[str, tuple[str, str]] = {}
     pointer = []
     for r, rec in zip(records, inline):
         pointered, constants = split_experiment_dump(r["experiment"])
-        store.update({cid: payload for cid, _, payload in constants})
+        store.update({cid: (kind, payload) for cid, kind, payload in constants})
         pointer.append(
             {
                 "e_serialized": json.dumps(pointered),

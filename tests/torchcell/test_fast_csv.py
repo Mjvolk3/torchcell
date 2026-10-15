@@ -466,3 +466,38 @@ def test_sink_errors(bc: FakeBioCypher) -> None:
         match=re.escape(f"{blocked} exists; the sink writes each label once"),
     ):
         FastCsvSink(bc, specs).write_nodes(iter([exp1()]))
+
+
+def test_an_id_under_a_second_label_is_refused_not_dropped(bc: FakeBioCypher) -> None:
+    """Regression for the interned-id collision (2026-10-15): before, a node id
+    already written under one label was silently dropped when it arrived under
+    another, and 218,258 genotype nodes of the job 4901 partial went missing that
+    way. A repeat under the SAME label is still the dedup of a shared constant.
+    """
+    specs = build_row_specs(bc)
+    twin = BioCypherNode(
+        "exp1",
+        "gene perturbation",
+        properties={
+            "systematic_gene_name": "YAL001C",
+            "aliases": [],
+            "essential": False,
+            "count": 1,
+        },
+    )
+    message = (
+        "node id exp1 was written under Experiment and is emitted again under "
+        "GenePerturbation: one id names one node, and the sink drops neither row"
+    )
+    with pytest.raises(ValueError, match=re.escape(message)):
+        RenderedChunk.from_rows([exp1(), twin], specs)
+    sink = FastCsvSink(bc, specs)
+    assert sink.write_nodes(iter([exp1()])) == 1
+    with pytest.raises(ValueError, match=re.escape(message)):
+        sink.write_nodes(iter([twin]))
+    with pytest.raises(ValueError, match=re.escape(message)):
+        sink.write_nodes(iter([RenderedChunk.from_rows([twin], specs)]))
+    assert sink.write_nodes(iter([exp1()])) == 0
+    assert (sink.node_dups, sink.dup_experiments) == (1, {"exp1"})
+    assert sink.node_rows == {"Experiment": 1}
+    assert sink.seen_nodes == {"exp1": "Experiment"}

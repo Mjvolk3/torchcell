@@ -44,6 +44,7 @@ from torchcell.datamodels.identity import (
     media_identity,
     temperature_identity,
 )
+from torchcell.datamodels.interned_constant import constant_id
 
 GENOME = s.ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
 FIXED_NOW = datetime(2026, 9, 28, 12, 0, 0)
@@ -265,14 +266,14 @@ def experiment_nodes(experiment: Any) -> list[BioCypherNode]:
     environment as an ``interned constant``.
 
     The Experiment id is the sha256 of the fully inlined dump; its blob replaces the
-    environment with ``{"$ref": <sha256 of the environment JSON>, "kind":
-    "environment"}``. The genotype stays inline (asserted under its floor).
+    environment with ``{"$ref": constant_id("environment", <environment JSON>),
+    "kind": "environment"}``. The genotype stays inline (asserted under its floor).
     """
     dump = experiment.model_dump()
     environment_payload = json.dumps(dump["environment"])
     assert len(environment_payload) >= ENVIRONMENT_POINTER_MIN_BYTES
     assert len(json.dumps(dump["genotype"])) < GENOTYPE_POINTER_MIN_BYTES
-    ref = hashlib.sha256(environment_payload.encode("utf-8")).hexdigest()
+    ref = constant_id("environment", environment_payload)
     pointered = {**dump, "environment": {"$ref": ref, "kind": "environment"}}
     return [
         BioCypherNode(

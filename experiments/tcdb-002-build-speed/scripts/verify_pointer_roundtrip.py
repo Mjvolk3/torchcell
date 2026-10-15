@@ -67,8 +67,8 @@ def main() -> None:
         # job 2959) and reported the store as corrupt.
         ref = _unquote(row[id_col])
         payload = _unquote(row[data_col])
-        store[ref] = verified_constant(ref, payload)
         kind = _unquote(row[kind_col])
+        store[ref] = verified_constant(ref, kind, payload)
         kinds[kind] += 1
         constant_bytes[kind] += len(payload)
 

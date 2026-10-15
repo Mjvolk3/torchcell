@@ -1,0 +1,208 @@
+{
+  "out_dir": "/db/database/biocypher-out/2026-10-14_03-53-33",
+  "n_node_ids": {
+    "Genotype": 23168154,
+    "SegregantGenotype": 0,
+    "PerturbedSegregantGenotype": 772609,
+    "InternedConstant": 242984,
+    "Perturbation": 269629,
+    "BacterialPerturbation": 252060,
+    "BacterialSequenceVariantPerturbation": 0,
+    "PhagePerturbation": 0
+  },
+  "n_interned_by_kind": {
+    "environment": 24591,
+    "genotype": 218258,
+    "genotype.background": 135
+  },
+  "n_interned_genotype_kind_also_a_genotype_node": 0,
+  "edges": [
+    {
+      "edge": "PerturbationMemberOf",
+      "side": "end",
+      "n_rows": 47251386,
+      "n_resolving_to_genotype_node": 47128275,
+      "n_resolving_to_interned_only": {
+        "genotype": 121180
+      },
+      "n_resolving_to_nothing": 1931,
+      "n_distinct_interned_only": 121143
+    },
+    {
+      "edge": "GenotypeMemberOf",
+      "side": "start",
+      "n_rows": 95910118,
+      "n_resolving_to_genotype_node": 93939779,
+      "n_resolving_to_interned_only": {
+        "genotype": 1948098
+      },
+      "n_resolving_to_nothing": 22241,
+      "n_distinct_interned_only": 218258
+    },
+    {
+      "edge": "SegregantBackgroundOf",
+      "side": "start",
+      "n_rows": 894907,
+      "n_resolving_to_genotype_node": 0,
+      "n_resolving_to_interned_only": {
+        "genotype.background": 709716
+      },
+      "n_resolving_to_nothing": 185191,
+      "n_distinct_interned_only": 135
+    }
+  ],
+  "datasets": [
+    {
+      "dataset": "BiofuelTiterBrunk2016Dataset",
+      "n_lost_genotype_nodes": 2,
+      "lost_by_kind": {
+        "genotype": 2
+      },
+      "n_perturbation_member_of_rows": 19,
+      "n_genotype_member_of_rows": 90
+    },
+    {
+      "dataset": "Bloom2019Dataset",
+      "n_lost_genotype_nodes": 13720,
+      "lost_by_kind": {
+        "genotype": 13720
+      },
+      "n_perturbation_member_of_rows": 0,
+      "n_genotype_member_of_rows": 521360
+    },
+    {
+      "dataset": "Boocock2025Dataset",
+      "n_lost_genotype_nodes": 79443,
+      "lost_by_kind": {
+        "genotype": 79443
+      },
+      "n_perturbation_member_of_rows": 0,
+      "n_genotype_member_of_rows": 79443
+    },
+    {
+      "dataset": "CaudalPanTranscriptome2024Dataset",
+      "n_lost_genotype_nodes": 943,
+      "lost_by_kind": {
+        "genotype": 943
+      },
+      "n_perturbation_member_of_rows": 0,
+      "n_genotype_member_of_rows": 106399
+    },
+    {
+      "dataset": "CellYieldDeChiara2022Dataset",
+      "n_lost_genotype_nodes": 906,
+      "lost_by_kind": {
+        "genotype": 906
+      },
+      "n_perturbation_member_of_rows": 0,
+      "n_genotype_member_of_rows": 109200
+    },
+    {
+      "dataset": "CrispriSegregantHale2024Dataset",
+      "n_lost_genotype_nodes": 121140,
+      "lost_by_kind": {
+        "genotype": 121140
+      },
+      "n_perturbation_member_of_rows": 121140,
+      "n_genotype_member_of_rows": 1231859
+    },
+    {
+      "dataset": "DoublingTimeDeChiara2022Dataset",
+      "n_lost_genotype_nodes": 906,
+      "lost_by_kind": {
+        "genotype": 906
+      },
+      "n_perturbation_member_of_rows": 0,
+      "n_genotype_member_of_rows": 109200
+    },
+    {
+      "dataset": "ExometaboliteBrunk2016Dataset",
+      "n_lost_genotype_nodes": 2,
+      "lost_by_kind": {
+        "genotype": 2
+      },
+      "n_perturbation_member_of_rows": 19,
+      "n_genotype_member_of_rows": 90
+    },
+    {
+      "dataset": "GrowthRateChoe2019Dataset",
+      "n_lost_genotype_nodes": 1,
+      "lost_by_kind": {
+        "genotype": 1
+      },
+      "n_perturbation_member_of_rows": 21,
+      "n_genotype_member_of_rows": 1
+    },
+    {
+      "dataset": "IsolateGrowthPeter2018Dataset",
+      "n_lost_genotype_nodes": 971,
+      "lost_by_kind": {
+        "genotype": 971
+      },
+      "n_perturbation_member_of_rows": 0,
+      "n_genotype_member_of_rows": 111320
+    },
+    {
+      "dataset": "LifeCycleDeChiara2022Dataset",
+      "n_lost_genotype_nodes": 905,
+      "lost_by_kind": {
+        "genotype": 905
+      },
+      "n_perturbation_member_of_rows": 0,
+      "n_genotype_member_of_rows": 103212
+    },
+    {
+      "dataset": "MetabolomeBrunk2016Dataset",
+      "n_lost_genotype_nodes": 2,
+      "lost_by_kind": {
+        "genotype": 2
+      },
+      "n_perturbation_member_of_rows": 19,
+      "n_genotype_member_of_rows": 90
+    },
+    {
+      "dataset": "Nguessan2025Dataset",
+      "n_lost_genotype_nodes": 2948,
+      "lost_by_kind": {
+        "genotype": 2948
+      },
+      "n_perturbation_member_of_rows": 0,
+      "n_genotype_member_of_rows": 2948
+    },
+    {
+      "dataset": "ProteinTurnoverMuenzner2024Dataset",
+      "n_lost_genotype_nodes": 55,
+      "lost_by_kind": {
+        "genotype": 55
+      },
+      "n_perturbation_member_of_rows": 0,
+      "n_genotype_member_of_rows": 6602
+    },
+    {
+      "dataset": "ProteomeBrunk2016Dataset",
+      "n_lost_genotype_nodes": 2,
+      "lost_by_kind": {
+        "genotype": 2
+      },
+      "n_perturbation_member_of_rows": 19,
+      "n_genotype_member_of_rows": 90
+    },
+    {
+      "dataset": "ProteomeMuenzner2024Dataset",
+      "n_lost_genotype_nodes": 794,
+      "lost_by_kind": {
+        "genotype": 794
+      },
+      "n_perturbation_member_of_rows": 0,
+      "n_genotype_member_of_rows": 90824
+    }
+  ],
+  "n_lost_genotype_ids_unattributed": 135,
+  "n_pointers": {
+    "genotype": 1948098,
+    "genotype.background": 6629132
+  },
+  "n_pointers_lost_to_genotype_label": {},
+  "n_pointers_resolving_to_nothing": {},
+  "elapsed_s": 132.83506400696933
+}

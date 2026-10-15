@@ -68,6 +68,7 @@ from torchcell.datamodels.identity import (
     media_identity,
     temperature_identity,
 )
+from torchcell.datamodels.interned_constant import constant_id
 from torchcell.fast_csv import RenderedChunk
 from torchcell.loader import CpuExperimentLoaderMultiprocessing
 
@@ -495,7 +496,7 @@ def _environment_payload(experiment: s.FitnessExperiment) -> str:
 
 
 def _environment_constant_id(experiment: s.FitnessExperiment) -> str:
-    return hashlib.sha256(_environment_payload(experiment).encode("utf-8")).hexdigest()
+    return constant_id("environment", _environment_payload(experiment))
 
 
 def test_experiment_genotype_and_publication_nodes_are_content_addressed() -> None:

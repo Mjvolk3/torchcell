@@ -6,7 +6,8 @@ environment, a large genotype) as ``interned constant`` nodes and leaves pointer
 the Experiment blob; ``torchcell.data.neo4j_query_raw`` splices them back on query.
 What is pinned: the Experiment id is still the sha256 of the inlined record, the
 pointered blob is smaller than the inlined one, every pointed-to node's id is the
-sha256 of its payload, resolving the pointers reproduces the inlined record byte for
+namespaced sha256 of its kind and payload (never the bare payload hash, which is the
+id of the sub-object's own node), resolving the pointers reproduces the inlined record byte for
 byte (so the id can be recomputed from a query result), and a small sub-object stays
 inline. The query-side batch writer is exercised with a stub store, so a missing or
 corrupt constant is a hard error and never a silently dropped record.
@@ -129,9 +130,13 @@ def test_large_environment_becomes_a_pointer_and_resolves_to_the_same_record() -
     assert [c.get_label() for c in constants] == [INTERNED_CONSTANT_LABEL]
     payload = constants[0].get_properties()["serialized_data"]
     assert constants[0].get_properties()["kind"] == "environment"
-    assert constants[0].get_id() == constant_id(payload)
+    assert constants[0].get_id() == constant_id("environment", payload)
 
-    store = {constants[0].get_id(): verified_constant(constants[0].get_id(), payload)}
+    store = {
+        constants[0].get_id(): verified_constant(
+            constants[0].get_id(), "environment", payload
+        )
+    }
     resolved = resolve_pointers(json.loads(blob), store)
     assert json.dumps(resolved) == inline
 
@@ -159,7 +164,9 @@ def test_split_does_not_mutate_the_dump_and_collects_every_pointer() -> None:
 
 def test_verified_constant_rejects_a_payload_that_does_not_hash_to_its_id() -> None:
     with pytest.raises(ValueError, match="hashing to"):
-        verified_constant(constant_id('{"a": 1}'), '{"a": 2}')
+        verified_constant(
+            constant_id("environment", '{"a": 1}'), "environment", '{"a": 2}'
+        )
 
 
 class _StoreQueryRaw(Neo4jQueryRaw):
@@ -170,7 +177,7 @@ class _StoreQueryRaw(Neo4jQueryRaw):
         self.lmdb_dir = osp.join(self.raw_dir, "lmdb")
         os.makedirs(self.lmdb_dir, exist_ok=True)
         self._init_lmdb(readonly=False)
-        self.store: dict[str, str] = {}
+        self.store: dict[str, tuple[str, str]] = {}
         self.fetched: list[list[str]] = []
 
     def fetch_constants(self, refs: list[str]) -> dict[str, Any]:
@@ -178,7 +185,7 @@ class _StoreQueryRaw(Neo4jQueryRaw):
         missing = [r for r in refs if r not in self.store]
         if missing:
             raise KeyError(f"{len(missing)} interned constants are missing")
-        return {r: verified_constant(r, self.store[r]) for r in refs}
+        return {r: verified_constant(r, *self.store[r]) for r in refs}
 
 
 def _query(tmp_path: Any) -> _StoreQueryRaw:
@@ -191,7 +198,7 @@ def test_query_side_batch_resolves_pointers_once_per_id(tmp_path: Any) -> None:
     experiments = [_experiment(n_components=8) for _ in range(3)]
     emitted = [_emit(e) for e in experiments]
     store = {
-        c.get_id(): c.get_properties()["serialized_data"]
+        c.get_id(): (c.get_properties()["kind"], c.get_properties()["serialized_data"])
         for nodes in emitted
         for c in nodes[1:]
     }

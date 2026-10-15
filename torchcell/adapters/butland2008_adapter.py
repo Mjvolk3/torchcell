@@ -8,8 +8,8 @@ knowledge-graph nodes and edges.
 One record per cell of Supplementary Table 4's S-score sheet: a two-leaf genotype of
 gene-level bacterial perturbation objects served as ``bacterial perturbation`` nodes, and
 the signed eSGA S score as a ``GeneInteractionPhenotype``. The query leaf is always a
-``BacterialDeletionPerturbation``; the recipient is one too for a Keio row and a
-``BacterialMarkedAllelePerturbation`` for one of the 149 ``SPA-tag essential`` rows
+``DeletionStrainPerturbation``; the recipient is one too for a Keio row and a
+``MarkedAllelePerturbation`` for one of the 149 ``SPA-tag essential`` rows
 (issue #792), which is a leaf the base adapter already serves under the same graph class
 (``BACTERIAL_PERTURBATION_LEAVES``, PR #837) with the same five declared properties. No
 new graph class is needed: ``gene interaction phenotype`` is already a served class

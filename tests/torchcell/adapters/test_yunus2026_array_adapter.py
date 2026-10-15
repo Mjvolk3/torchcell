@@ -7,7 +7,7 @@ and (``--data``) the graph it emits from its dev-tree LMDB.
 Yunus 2026 CRISPRi arrays: 25 IY1452 strains,
 BacterialProteinFoldChangeExperiment (linear ratio to the control strain, with the
 sample SD over sqrt(3) as its SE).
-1 to 5 BacterialCrisprInterferencePerturbation per record (72 in all), served as
+1 to 5 CrisprInterferencePerturbation per record (72 in all), served as
 `bacterial perturbation`, each carrying a CrisprConstruct, so the crispr-construct pair
 is enabled. The environment carries EnvironmentPhysicalPerturbation and
 SmallMoleculePerturbation edits, so the environment-perturbation pair is enabled.

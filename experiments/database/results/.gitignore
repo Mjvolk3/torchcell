@@ -9,3 +9,8 @@
 !interned_id_collision_served.json
 # The extended CSV endpoint gate (label check) run on the job 4901 partial, 2026-10-15.
 !csv_endpoint_gate_labels_4901.json
+# The measured gene identifier vocabulary of the served stores is the evidence a
+# schema-change record cites (P1, 2026-10-15); it is reproducible only against the
+# served dev stores, so these two files are tracked.
+!gene_id_namespace_vocabulary.md
+!gene_id_namespace_vocabulary.json

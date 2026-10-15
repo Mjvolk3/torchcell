@@ -80,6 +80,7 @@ def _write_raw(root: Path, filename: str, rows: list[str]) -> None:
 def _side(name: str, entrez: int) -> ReleasedGeneNamePerturbation:
     return ReleasedGeneNamePerturbation(
         systematic_gene_name=name,
+        gene_namespace="scerevisiae_s288c_sgd_systematic",
         perturbed_gene_name=name,
         released_gene_name=name,
         released_gene_id=str(entrez),

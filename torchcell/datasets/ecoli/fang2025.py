@@ -55,7 +55,7 @@ ROUND 2's GENOTYPE CARRIES TWO KNOCKDOWNS, BECAUSE THE REFERENCE CLASS CANNOT CA
 Round 1 screens the library in strain CF; round 2 screens the same library in the pcnBi
 strain, CF carrying the round-1 winner's ``pcnB_956`` guide on a pCF-pcnBi plasmid. That
 repression is a real edit to the cell and it is present in every round-2 record, so it
-is a ``BacterialCrisprInterferencePerturbation`` leaf on ``b0143`` beside the library
+is a ``CrisprInterferencePerturbation`` leaf on ``b0143`` beside the library
 guide's. It is not pushed into the reference because
 ``BacterialEnvironmentResponseExperimentReference`` holds a genome, an environment and a
 phenotype and has no genotype field, so a reference cannot express "the pcnBi strain" at
@@ -155,7 +155,6 @@ from torchcell.datamodels.schema import (
     AssayType,
     AssemblyReferenceGenome,
     BacterialAssemblySet,
-    BacterialCrisprInterferencePerturbation,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
     BacterialGeneNamespace,
@@ -163,6 +162,7 @@ from torchcell.datamodels.schema import (
     Concentration,
     ConcentrationUnit,
     CrisprConstruct,
+    CrisprInterferencePerturbation,
     Environment,
     EnvironmentResponsePhenotype,
     Experiment,
@@ -1018,9 +1018,9 @@ def build_reference(
 
 def _knockdown(
     bnumber: str, gene_name: str, spacer: str
-) -> BacterialCrisprInterferencePerturbation:
+) -> CrisprInterferencePerturbation:
     """One dCas9 knockdown leaf carrying its released 20-mer spacer."""
-    return BacterialCrisprInterferencePerturbation(
+    return CrisprInterferencePerturbation(
         systematic_gene_name=bnumber,
         perturbed_gene_name=gene_name,
         gene_namespace=MG1655_NAMESPACE,
@@ -1505,7 +1505,7 @@ def verify_build(
                 "equation 2 to 1.8e-15). n_samples=1 pooled library per arm per round, "
                 "so no dispersion exists and the uncertainty fields are typed "
                 "ProvenanceGaps. Genotype = one "
-                "BacterialCrisprInterferencePerturbation per member of the guide's "
+                "CrisprInterferencePerturbation per member of the guide's "
                 "BLASTN cluster, effector dCas9, guide_sequence = the 20-mer spacer of "
                 "Wang 2018 Supplementary Data 3 (the screened set is Wang's 55,671 "
                 "targeting guides, measured id for id), plus in round 2 the constant "

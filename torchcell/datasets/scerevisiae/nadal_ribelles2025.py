@@ -541,6 +541,7 @@ class NadalRibellesPerturbSeq2025Dataset(ExperimentDataset):
         else:
             perturbation = ReleasedGeneNamePerturbation(
                 systematic_gene_name=row["systematic_gene_name"],
+                gene_namespace="scerevisiae_s288c_sgd_systematic",
                 perturbed_gene_name=row["perturbed_gene_name"],
                 released_gene_name=row["systematic_gene_name"],
                 released_kind=ReleasedGeneKind.deletion,

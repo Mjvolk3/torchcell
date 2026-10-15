@@ -514,7 +514,7 @@ def test_the_final_strain_genotype_is_every_edit_on_top_of_pipa() -> None:
     deletions = [
         pert
         for pert in genotype.perturbations
-        if pert.perturbation_type == "bacterial_deletion"
+        if pert.perturbation_type == "deletion_strain"
     ]
     assert sorted(p.systematic_gene_name for p in deletions) == [
         "PP_1021",
@@ -542,7 +542,7 @@ def test_the_source_symbol_wins_over_the_annotations_where_the_source_gives_one(
     by_tag = {
         pert.systematic_gene_name: pert.perturbed_gene_name
         for pert in genotype.perturbations
-        if pert.perturbation_type == "bacterial_deletion"
+        if pert.perturbation_type == "deletion_strain"
     }
     assert by_tag["PP_5292"] == "crc"
     assert by_tag["PP_1021"] == "hexR"
@@ -554,7 +554,7 @@ def test_a_locus_the_source_names_only_by_tag_takes_the_annotations_symbol() -> 
     by_tag = {
         pert.systematic_gene_name: pert.perturbed_gene_name
         for pert in genotype.perturbations
-        if pert.perturbation_type == "bacterial_deletion"
+        if pert.perturbation_type == "deletion_strain"
     }
     assert by_tag["PP_1127"] == "estC"
     assert by_tag["PP_3812"] == "PP_3812"
@@ -1014,7 +1014,7 @@ def test_a_genotype_that_matches_no_strain_spec_is_refused() -> None:
                 None,
                 [
                     {
-                        "perturbation_type": "bacterial_deletion",
+                        "perturbation_type": "deletion_strain",
                         "systematic_gene_name": "PP_9999",
                     }
                 ],

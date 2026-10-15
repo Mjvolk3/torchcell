@@ -6,7 +6,7 @@ and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Wang 2018 pooled CRISPRi guide fitness: 240,481 records,
 BacterialEnvironmentResponseExperiment. 242,294 perturbations, every one a
-BacterialCrisprInterferencePerturbation served as `bacterial perturbation`; a record
+CrisprInterferencePerturbation served as `bacterial perturbation`; a record
 carries more than one where its guide targets a multi-member BLASTN cluster. Every leaf
 carries a CrisprConstruct (the 20-mer spacer), so the crispr-construct pair is enabled.
 The environment carries SmallMoleculePerturbation and EnvironmentPhysicalPerturbation

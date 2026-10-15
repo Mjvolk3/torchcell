@@ -58,7 +58,6 @@ from torchcell.datamodels.calmorph_labels import CALMORPH_LABELS, CALMORPH_STATI
 from torchcell.datamodels.media import M9_NREL_CARRUTHERS2025, SC, YP_GALACTOSE
 from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
-    BacterialDeletionPerturbation,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
     BacterialMetaboliteExperiment,
@@ -74,6 +73,7 @@ from torchcell.datamodels.schema import (
     Concentration,
     ConcentrationUnit,
     CultureEnvironment,
+    DeletionStrainPerturbation,
     DoseBasis,
     Environment,
     EnvironmentResponseExperiment,
@@ -1620,7 +1620,7 @@ def _bacterial_env_record(locus: str, value: float) -> Record:
             dataset_name="env_bacterial",
             genotype=Genotype(
                 perturbations=[
-                    BacterialDeletionPerturbation(
+                    DeletionStrainPerturbation(
                         systematic_gene_name=locus,
                         perturbed_gene_name=locus,
                         gene_namespace=KT2440_NAMESPACE,
@@ -2438,7 +2438,7 @@ def _bacterial_metabolite_record(locus: str, level: float) -> Record:
         dataset_name="test",
         genotype=Genotype(
             perturbations=[
-                BacterialDeletionPerturbation(
+                DeletionStrainPerturbation(
                     systematic_gene_name=locus,
                     perturbed_gene_name="thrA",
                     gene_namespace="ecoli_k12_bw25113_locus_tag",
@@ -2673,7 +2673,7 @@ def _kt2440_genotype(deleted: list[str], *, native_copy: str | None = None) -> G
     if native_copy is not None:
         perturbations.append(_pathway_perturbation(native_copy, "Pseudomonas putida"))
     perturbations += [
-        BacterialDeletionPerturbation(
+        DeletionStrainPerturbation(
             systematic_gene_name=gene,
             perturbed_gene_name=gene,
             gene_namespace=KT2440_NAMESPACE,

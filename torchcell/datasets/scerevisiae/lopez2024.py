@@ -261,6 +261,7 @@ class _IsobutanolLopez2024Base(ExperimentDataset):
             )
         return ReleasedGeneNamePerturbation(
             systematic_gene_name=upper,
+            gene_namespace="scerevisiae_s288c_sgd_systematic",
             perturbed_gene_name=upper,
             released_gene_name=upper,
             released_kind=ReleasedGeneKind.deletion,

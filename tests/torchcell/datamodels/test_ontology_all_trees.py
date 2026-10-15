@@ -400,6 +400,7 @@ def test_m2_copy_number_must_be_positive(cls: type[GenePerturbation]) -> None:
         base |= dict(
             systematic_gene_name="pangenome1011:orf1",
             perturbed_gene_name="orf1",
+            gene_namespace="scerevisiae_s288c_sgd_systematic",
             strain_id="AAB",
         )
     with pytest.raises(ValueError):
@@ -417,7 +418,10 @@ def test_m2_absence_has_single_encoding() -> None:
     """
     assert "copy_number" not in s.NaturalGeneAbsencePerturbation.model_fields
     absent = s.NaturalGeneAbsencePerturbation(
-        systematic_gene_name="YAL001C", perturbed_gene_name="TFC3", strain_id="AAB"
+        systematic_gene_name="YAL001C",
+        gene_namespace="scerevisiae_s288c_sgd_systematic",
+        perturbed_gene_name="TFC3",
+        strain_id="AAB",
     )
     assert absent.state == "absent"
 

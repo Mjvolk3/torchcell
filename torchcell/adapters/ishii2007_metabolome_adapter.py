@@ -6,7 +6,7 @@
 knowledge-graph nodes and edges.
 
 One record per BW25113 Keio disruptant grown in a glucose-limited chemostat at
-0.2 h-1: a single ``BacterialDeletionPerturbation`` served as a
+0.2 h-1: a single ``DeletionStrainPerturbation`` served as a
 ``bacterial perturbation`` node, and the culture's intracellular concentrations in
 mM as a ``MetabolitePhenotype``. The environment is one medium with no
 perturbation, and the reference is the wild-type control of the record's own series.

@@ -45,10 +45,10 @@ import torchcell.datasets.pputida.carruthers2025 as c25
 from torchcell.datamodels.media import M9_NREL_CARRUTHERS2025
 from torchcell.datamodels.schema import (
     AlleleEdit,
-    BacterialDeletionPerturbation,
     BacterialProteinAbundanceExperiment,
     ConcentrationUnit,
     CultureEnvironment,
+    DeletionStrainPerturbation,
     EndpointRule,
     Genotype,
     ProductTiterExperiment,
@@ -210,7 +210,7 @@ def test_a_crispri_perturbation_carries_dcas9_one_guide_and_no_released_spacer()
 ):
     """The spacers were never released, so ``guide_sequence`` stays None."""
     pert = c25.crispri_perturbation("PP_0815", "PP_0815")
-    assert pert.perturbation_type == "bacterial_crispr_interference"
+    assert pert.perturbation_type == "crispr_interference"
     assert pert.gene_namespace == "pputida_kt2440_locus_tag"
     assert pert.crispr is not None
     assert pert.crispr.effector == "dCas9"
@@ -2020,7 +2020,7 @@ def test_the_titer_loader_writes_one_record_per_construct_and_cycle(
     experiment = record["experiment"]
     dumped = experiment if isinstance(experiment, dict) else experiment.model_dump()
     kinds = {pert["perturbation_type"] for pert in dumped["genotype"]["perturbations"]}
-    assert kinds == {"heterologous_pathway", "bacterial_crispr_interference"}
+    assert kinds == {"heterologous_pathway", "crispr_interference"}
     assert dumped["phenotype"]["titer_unit"] == ConcentrationUnit.ug_per_ml.value
     assert dumped["phenotype"]["sample_unit"] == SampleUnit.biological_replicate.value
 
@@ -2132,8 +2132,8 @@ def test_the_proteome_loader_writes_one_record_per_sample_and_drops_two_keys(
         pert["perturbation_type"] for pert in dumped["genotype"]["perturbations"]
     )
     assert kinds["heterologous_pathway"] == 5
-    assert kinds["bacterial_deletion"] == 1
-    assert kinds["bacterial_crispr_interference"] == 1
+    assert kinds["deletion_strain"] == 1
+    assert kinds["crispr_interference"] == 1
 
     dropped = pd.read_csv(
         osp.join(built_proteome.root, "preprocess/dropped_protein_keys.csv")
@@ -2157,7 +2157,7 @@ def test_the_proteome_loader_records_the_target_control_and_the_off_target_sampl
         targets.extend(
             pert["systematic_gene_name"]
             for pert in dumped["genotype"]["perturbations"]
-            if pert["perturbation_type"] == "bacterial_crispr_interference"
+            if pert["perturbation_type"] == "crispr_interference"
         )
     assert sorted(targets) == ["PP_0378", "PP_0815", "PP_0977"]
     samples = pd.read_csv(osp.join(built_proteome.root, "preprocess/samples.csv"))
@@ -2527,7 +2527,7 @@ def test_the_proteome_genotype_refuses_a_sample_name_of_no_known_form() -> None:
     dataset = c25.ProteomeCarruthers2025Dataset.__new__(
         c25.ProteomeCarruthers2025Dataset
     )
-    deletion = BacterialDeletionPerturbation(
+    deletion = DeletionStrainPerturbation(
         systematic_gene_name="PP_0815",
         perturbed_gene_name="PP_0815",
         gene_namespace="pputida_kt2440_locus_tag",
@@ -3039,7 +3039,7 @@ def test_a_native_extra_copy_is_a_gene_addition_of_the_host_species() -> None:
     assert addition.source_organism == c25.SPECIES
     assert addition.construct_name is None
     deletion = c25.deletion_perturbation("PP_0815", "PP_0815")
-    assert deletion.perturbation_type == "bacterial_deletion"
+    assert deletion.perturbation_type == "deletion_strain"
     assert deletion.gene_namespace == c25.KT2440_NAMESPACE
     assert deletion.collection is None
 
@@ -3412,7 +3412,7 @@ def test_the_campaign_loader_writes_one_record_per_strain_cycle(
         pert["perturbation_type"] for pert in dumped["genotype"]["perturbations"]
     )
     assert kinds["heterologous_pathway"] == 5
-    assert kinds["bacterial_crispr_interference"] >= 1
+    assert kinds["crispr_interference"] >= 1
 
 
 def test_the_campaign_reference_is_its_cycles_control_over_the_records_own_keys(

@@ -6,7 +6,7 @@
 nodes and edges.
 
 One record per knockdown strain the targeted screen covered: a single
-``BacterialCrisprInterferencePerturbation`` served as a ``bacterial perturbation`` node
+``CrisprInterferencePerturbation`` served as a ``bacterial perturbation`` node
 with its ``CrisprConstruct``, and that strain's EIC peak-height fold changes as a
 ``MetabolitePhenotype`` on its own ``measurement_type``, which is what keeps this
 platform's values from being compared with the FI-MS ones. The environment is one medium

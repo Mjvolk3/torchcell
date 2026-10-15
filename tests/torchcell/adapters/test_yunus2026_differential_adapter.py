@@ -7,7 +7,7 @@ gate's view of it, and (``--data``) the graph it emits from its dev-tree LMDB.
 Yunus 2026 PP_4188 differential proteome: 1 IY1452 strain,
 BacterialProteinFoldChangeExperiment over 305 released protein keys, each carrying its
 released unadjusted equal-variance t-test p-value. One
-BacterialCrisprInterferencePerturbation carrying a CrisprConstruct, served as `bacterial
+CrisprInterferencePerturbation carrying a CrisprConstruct, served as `bacterial
 perturbation`, and the environment carries EnvironmentPhysicalPerturbation and
 SmallMoleculePerturbation edits.
 """

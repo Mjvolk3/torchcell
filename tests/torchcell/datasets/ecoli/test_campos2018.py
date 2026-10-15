@@ -47,11 +47,11 @@ from torchcell.datamodels.schema import (
     ASSEMBLY_SET_ACCESSIONS,
     BACTERIAL_ASSEMBLY_SETS,
     AssemblyReferenceGenome,
-    BacterialDeletionPerturbation,
     BacterialFitnessExperiment,
     BacterialFitnessExperimentReference,
     ComponentDefinition,
     ConcentrationUnit,
+    DeletionStrainPerturbation,
     MediaComponentRole,
     SampleUnit,
 )
@@ -255,7 +255,7 @@ def test_the_genotype_is_one_keio_deletion_with_its_cassette_and_well() -> None:
     )
     genotype = c.genotype(record)
     (perturbation,) = genotype.perturbations
-    assert isinstance(perturbation, BacterialDeletionPerturbation)
+    assert isinstance(perturbation, DeletionStrainPerturbation)
     assert perturbation.systematic_gene_name == "BW25113_0002"
     assert perturbation.perturbed_gene_name == "thrA"
     assert perturbation.gene_namespace == "ecoli_k12_bw25113_locus_tag"
@@ -273,7 +273,7 @@ def test_the_genotype_is_one_keio_deletion_with_its_cassette_and_well() -> None:
 
 def test_a_locus_tag_of_another_strains_namespace_is_refused() -> None:
     with pytest.raises(ValueError):
-        BacterialDeletionPerturbation(
+        DeletionStrainPerturbation(
             systematic_gene_name="b0002",
             perturbed_gene_name="thrA",
             gene_namespace=c.BW25113_NAMESPACE,

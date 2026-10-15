@@ -480,6 +480,7 @@ def test_the_genotype_leaf_refuses_a_span_outside_the_sequence() -> None:
     with pytest.raises(ValueError, match="past the end of promoter_sequence"):
         VariablePromoterReporterPerturbation(
             systematic_gene_name=v.REPORTER_IDENTIFIER,
+            gene_namespace="scerevisiae_s288c_sgd_systematic",
             perturbed_gene_name="YFP",
             source_organism="synthetic construct",
             is_heterologous=True,

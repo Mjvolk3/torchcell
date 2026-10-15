@@ -138,6 +138,7 @@ def _genotype(genes: list[str]) -> Genotype:
         perturbations=[
             ReleasedGeneNamePerturbation(
                 systematic_gene_name=g,
+                gene_namespace="scerevisiae_s288c_sgd_systematic",
                 perturbed_gene_name=g,
                 released_gene_name=g,
                 released_kind=ReleasedGeneKind.deletion,

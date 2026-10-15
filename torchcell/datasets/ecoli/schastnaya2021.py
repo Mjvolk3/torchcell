@@ -1690,7 +1690,7 @@ def verify_build(
         p["systematic_gene_name"]
         for r in records
         for p in r["experiment"]["genotype"]["perturbations"]
-        if p["perturbation_type"] == "bacterial_deletion"
+        if p["perturbation_type"] == "deletion_strain"
     }
     released = sorted(
         {

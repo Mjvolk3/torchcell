@@ -38,7 +38,7 @@ RECORD (pinene) = one (target gene set x arm) ``ProductTiterExperiment``:
   reference carries 1.0, which is what the ratio's denominator is.
 
 WHY THE CRISPR ARMS EXIST ONLY NOW. Issue #799: until
-``BacterialCrisprActivationPerturbation`` landed, the activation arm had nowhere to go.
+``CrisprActivationPerturbation`` landed, the activation arm had nowhere to go.
 ``CrisprActivationPerturbation`` inherits the R64 systematic-name validator and refuses
 both ``b3417`` and ``dxs``, and the only bacterial expression leaves were CRISPRi, whose
 direction is fixed to ``decreased``, and ``PromoterReplacementPerturbation``, which
@@ -56,8 +56,8 @@ varies).
 THE EVOLVED ISOLATE ``YZFP`` HAS A WRITABLE GENOTYPE AND NO MEASURED PHENOTYPE, SO IT IS
 NOT A RECORD HERE. Suppl. Table 2's 374 called variants are its subject, and since the
 #835 leaves landed they are writable: 322 rows carry a b-number and take
-``BacterialSequenceVariantPerturbation``, 48 are intergenic and take
-``BacterialSiteVariantPerturbation``, which is 373 of 374 with the one blank-mutation-site
+``LocusVariantCallPerturbation``, 48 are intergenic and take
+``SiteVariantCallPerturbation``, which is 373 of 374 with the one blank-mutation-site
 row refusing on its missing coordinate and 4 rows neither b-numbered nor intergenic
 (counts from
 ``experiments/036-dataset-fixes-before-kg-build/results/niu2019_release_loadability.json``,
@@ -1124,8 +1124,8 @@ NOT_LOADED: tuple[dict[str, Any], ...] = (
         "n_writable_on_the_variant_leaves": 373,
         "reason": "the genotype is writable and the PHENOTYPE does not exist. Since the "
         "#835 leaves landed, 322 b-numbered rows take "
-        "BacterialSequenceVariantPerturbation and 48 intergenic rows take "
-        "BacterialSiteVariantPerturbation (373 of 374; the one blank-mutation-site row "
+        "LocusVariantCallPerturbation and 48 intergenic rows take "
+        "SiteVariantCallPerturbation (373 of 374; the one blank-mutation-site row "
         "refuses on its missing coordinate, and 4 rows are neither b-numbered nor "
         "intergenic). But this release measures no number of YZFP: the two CRISPRa/i "
         "target tables are measured in the UNEVOLVED parent, the evolved strain's own "

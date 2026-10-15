@@ -123,7 +123,7 @@ THE GENOTYPE AXIS IS NOT PURELY WILD TYPE. Table 1's conditions 1-8 are the unpe
 strain, so those records carry ``Genotype(perturbations=[])`` -- the environment is what
 varies and the genotype says so rather than inventing a perturbation. Conditions 9-13 are
 protease and SsrA-pathway knockouts in the same strain and carry one
-``BacterialDeletionPerturbation`` per deleted gene (three for the triple knockout).
+``DeletionStrainPerturbation`` per deleted gene (three for the triple knockout).
 
 THE STRAIN IS NCM3722 AND THE ASSEMBLY PIN IS MG1655, WHICH IS A DERIVED CHOICE. The
 paper names only "E. coli strain NCM3722"; no NCM3722 assembly is in the genomes tier,
@@ -205,12 +205,12 @@ from torchcell.datamodels.media import MOPS_MINIMAL
 from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
     BacterialAssemblySet,
-    BacterialDeletionPerturbation,
     BacterialGeneNamespace,
     BacterialStrainBackground,
     Censoring,
     Concentration,
     ConcentrationUnit,
+    DeletionStrainPerturbation,
     DerivedIdentifierMapping,
     DerivedIdentifierRoute,
     Environment,
@@ -1738,7 +1738,7 @@ def strain_reference(data_root: str | None = None) -> AssemblyReferenceGenome:
     )
 
 
-def deletion_perturbation(symbol: str, locus_tag: str) -> BacterialDeletionPerturbation:
+def deletion_perturbation(symbol: str, locus_tag: str) -> DeletionStrainPerturbation:
     """One released protease / SsrA deletion, keyed on the pinned assembly's b-number.
 
     The route is ``gene_symbol`` and stays so: the paper releases its knockouts only as
@@ -1748,7 +1748,7 @@ def deletion_perturbation(symbol: str, locus_tag: str) -> BacterialDeletionPertu
     the per-protein LABEL keys, which the release does write as accessions.
     """
     keio = symbol in KEIO_DERIVED_SYMBOLS
-    return BacterialDeletionPerturbation(
+    return DeletionStrainPerturbation(
         systematic_gene_name=locus_tag,
         perturbed_gene_name=symbol,
         gene_namespace=MG1655_NAMESPACE,

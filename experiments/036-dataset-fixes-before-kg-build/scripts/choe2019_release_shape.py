@@ -71,8 +71,8 @@ from torchcell.datamodels.schema import (
     AlleleEdit,
     AllelePerturbation,
     BacterialBackgroundAllele,
-    BacterialDeletionPerturbation,
     BacterialStrainBackground,
+    DeletionStrainPerturbation,
     FitnessPhenotype,
     Genotype,
     RNASeqExpressionPhenotype,
@@ -463,8 +463,8 @@ def probe_perturbation_leaves(root: str) -> dict[str, Any]:
         ),
     )
     attempt(
-        "BacterialDeletionPerturbation(b_number)",
-        lambda: BacterialDeletionPerturbation(
+        "DeletionStrainPerturbation(b_number)",
+        lambda: DeletionStrainPerturbation(
             systematic_gene_name=str(locus_tag),
             perturbed_gene_name=str(row[0]),
             gene_namespace="ecoli_k12_mg1655_bnumber",
@@ -633,14 +633,14 @@ def measure_keio_fitness_arm(root: str) -> dict[str, Any]:
     construction panel instead.) The only quantitative per-strain numbers the panel
     releases are the two growth-rate percentages its legend states. Both are built as
     real ``FitnessPhenotype`` records and both deletions as real
-    ``BacterialDeletionPerturbation``s on the BW25113 namespace, so the claim that this
+    ``DeletionStrainPerturbation``s on the BW25113 namespace, so the claim that this
     arm is writable is a construction, not a reading.
     """
     genome = bacterial_genome("ecoli", "BW25113")
     records: dict[str, Any] = {}
     for symbol, percent in (("ydaS", 72.4), ("abgR", 69.8)):
         resolution = genome.resolve_gene_name(symbol)
-        perturbation = BacterialDeletionPerturbation(
+        perturbation = DeletionStrainPerturbation(
             systematic_gene_name=str(resolution.systematic_name),
             perturbed_gene_name=symbol,
             gene_namespace="ecoli_k12_bw25113_locus_tag",
@@ -709,15 +709,14 @@ STRAIN_TABLE: tuple[dict[str, str], ...] = (
         "strain": "MS56 421 kb",
         "genotype": "MS56, (hycEDCBA-hypABCDE-fhlA-ygbA-mutS-pphB-ygbIJKLMN-rpoS)::kan",
         "verdict": "writable",
-        "why": "21 named genes, each a BacterialDeletionPerturbation on the MG1655 "
+        "why": "21 named genes, each a DeletionStrainPerturbation on the MG1655 "
         "b-number namespace with cassette 'kan', on the MS56 background",
     },
     {
         "strain": "MS56 drpoS",
         "genotype": "MS56, rpoS::kan",
         "verdict": "writable",
-        "why": "one named gene, one BacterialDeletionPerturbation, on the MS56 "
-        "background",
+        "why": "one named gene, one DeletionStrainPerturbation, on the MS56 background",
     },
     {
         "strain": "cspCWT / cspCmut",

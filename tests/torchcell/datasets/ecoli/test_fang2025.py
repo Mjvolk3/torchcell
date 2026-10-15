@@ -67,10 +67,10 @@ from torchcell.datamodels.media import M9_MODIFIED_FANG2025
 from torchcell.datamodels.schema import (
     AssayType,
     AssemblyReferenceGenome,
-    BacterialCrisprInterferencePerturbation,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
     ConcentrationUnit,
+    CrisprInterferencePerturbation,
     MeasurementType,
     SampleUnit,
     SmallMoleculePerturbation,
@@ -551,7 +551,7 @@ def test_build_genotype_adds_the_background_knockdown_only_when_asked() -> None:
     knockdowns = [
         p
         for p in doubled.perturbations
-        if isinstance(p, BacterialCrisprInterferencePerturbation)
+        if isinstance(p, CrisprInterferencePerturbation)
     ]
     assert len(knockdowns) == len(doubled.perturbations)
     assert knockdowns[-1].crispr is not None

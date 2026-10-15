@@ -4,7 +4,7 @@
 """Re-measure the Butland 2008 / Babu 2014 partition after both loaders took the leaf.
 
 PR #837 moved Babu 2014's 3,420 hypomorph pairs from a drop rule onto the new
-``BacterialMarkedAllelePerturbation`` leaf, so the served Babu store grew from 38,579 to
+``MarkedAllelePerturbation`` leaf, so the served Babu store grew from 38,579 to
 41,988 records. 398 of the admitted pairs carry ``screen_id="Butland et al."``, which is
 the set Butland 2008's loader partitions itself against, so the served-by-Babu side of
 that partition grew from 727 pairs to 1,125 and the Butland build stopped on its own pin

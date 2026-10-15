@@ -26,21 +26,13 @@ from pydantic import BaseModel, TypeAdapter
 
 from torchcell.datamodels import schema
 from torchcell.datamodels.schema import (
+    SGD_S288C_NAMESPACE,
     AllelePerturbation,
     ArtifactRef,
-    BacterialCrisprActivationPerturbation,
-    BacterialCrisprInterferencePerturbation,
-    BacterialDegronPerturbation,
-    BacterialDeletionPerturbation,
-    BacterialMarkedAllelePerturbation,
     BacterialReleasedCrisprPerturbation,
     BacterialReleasedStrainPerturbation,
     BacterialReleasedTransposonPerturbation,
-    BacterialSequenceVariantPerturbation,
-    BacterialSiteVariantPerturbation,
-    BacterialSpanDeletionPerturbation,
     BacterialVariantCall,
-    BacterialVariantPerturbation,
     BacterialVariantType,
     BarcodedKanMxDeletionPerturbation,
     ConditionalAllelePerturbation,
@@ -50,7 +42,9 @@ from torchcell.datamodels.schema import (
     CrisprDeletionPerturbation,
     CrisprInterferencePerturbation,
     DampPerturbation,
+    DegronPerturbation,
     DeletionPerturbation,
+    DeletionStrainPerturbation,
     EngineeredCopyNumberPerturbation,
     ExpressionModulationPerturbation,
     GeneAdditionPerturbation,
@@ -61,6 +55,8 @@ from torchcell.datamodels.schema import (
     HeterozygousDeletionPerturbation,
     InduciblePromoterInsertionPerturbation,
     KanMxDeletionPerturbation,
+    LocusVariantCallPerturbation,
+    MarkedAllelePerturbation,
     MarkerDeletionPerturbation,
     MeanDeletionPerturbation,
     NamedAllelePerturbation,
@@ -83,31 +79,30 @@ from torchcell.datamodels.schema import (
     SgaNatMxDeletionPerturbation,
     SgaSuppressorAllelePerturbation,
     SgaTsAllelePerturbation,
+    SiteVariantCallPerturbation,
+    SpanDeletionCallPerturbation,
     SuppressorAllelePerturbation,
     TransposonInsertionPerturbation,
     TsAllelePerturbation,
     VariablePromoterReporterPerturbation,
     VariantCallMode,
+    VariantCallPerturbation,
     VariantFrequencyBasis,
     VariantSiteKind,
 )
 
 SO_ID_RE = re.compile(r"^SO:\d{7}$")
 
-# A CURIE ``prefix:local``, a bare S288C systematic gene name, or a bacterial locus
-# tag of one of the three deposited namespaces. The bacterial forms are the patterns
-# ``schema.BACTERIAL_LOCUS_TAG_PATTERNS`` validates against, restated here so this
-# module checks the identity rule independently of the validator that enforces it --
-# a leaf whose identifier matched neither family would fail here even if its own
-# validator let it through.
+# A CURIE ``prefix:local`` (a heterologous gene in its source organism's namespace),
+# or a host identifier of one of the ``GeneIdNamespace`` members (P1): the identity
+# families are the member patterns of ``schema.GENE_ID_NAMESPACE_PATTERNS`` plus the
+# CURIE form, and the tests below assert the patterns are pairwise disjoint and that a
+# host-form identifier validates against exactly the namespace its record declares.
 _CURIE_RE = re.compile(r"^[A-Za-z0-9_.]+:[A-Za-z0-9_.\-]+$")
-_SYSTEMATIC_RE = re.compile(
-    r"^(Y[A-P][LR]\d{3}[WC](-[A-Z])?|Q\d{4}|YNC[A-Q]\d{4}[WC])$"
-)
-_BACTERIAL_TAG_RE = re.compile(
-    r"^(b\d{4}|BW25113_\d{4}"
-    r"|PP_(?:\d{4}|(?:5|16|23)S[A-G]|t\d{2}|tm\d{2}|mr\d{2}|r\d{2}))$"
-)
+_NAMESPACE_RES: dict[str, re.Pattern[str]] = {
+    namespace: re.compile(pattern)
+    for namespace, pattern in schema.GENE_ID_NAMESPACE_PATTERNS.items()
+}
 
 
 def _members(union: object) -> tuple[type[GenePerturbation], ...]:
@@ -145,7 +140,7 @@ ABSTRACT: frozenset[type[GenePerturbation]] = frozenset(
         # The called-variant base (#731) defines what a call is and which host it
         # is written against; its three leaves below say WHERE the call sits, and
         # only they are ever stored.
-        BacterialVariantPerturbation,
+        VariantCallPerturbation,
     }
 )
 
@@ -262,6 +257,7 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
         "systematic_gene_name": "ADE2",
         "perturbed_gene_name": "ADE2",
         "released_gene_name": "ADE2",
+        "gene_namespace": SGD_S288C_NAMESPACE,
         "released_kind": ReleasedGeneKind.deletion,
         "marker": "KanMX",
     },
@@ -278,6 +274,7 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
     GeneAdditionPerturbation: dict(
         systematic_gene_name="Xden:crtYB",
         perturbed_gene_name="crtYB",
+        gene_namespace=SGD_S288C_NAMESPACE,
         source_organism="Xanthophyllomyces dendrorhous",
         is_heterologous=True,
         localization="episomal_2micron",
@@ -288,6 +285,7 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
     PromoterDrivenGeneIntegrationPerturbation: dict(
         systematic_gene_name="YER090W",
         perturbed_gene_name="TRP2",
+        gene_namespace=SGD_S288C_NAMESPACE,
         source_organism="Saccharomyces cerevisiae",
         is_heterologous=False,
         localization="chromosomal_integration",
@@ -301,6 +299,7 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
     VariablePromoterReporterPerturbation: dict(
         systematic_gene_name="addgene127546:YFP",
         perturbed_gene_name="YFP",
+        gene_namespace=SGD_S288C_NAMESPACE,
         source_organism="synthetic construct",
         is_heterologous=True,
         localization="episomal_cen_plasmid",
@@ -313,10 +312,18 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
         variable_region_start=18,
         variable_region_end=97,
     ),
-    NaturalGeneAbsencePerturbation: {**_SYS, "strain_id": "AAB", **_URI},
+    NaturalGeneAbsencePerturbation: {
+        **_SYS,
+        "gene_namespace": SGD_S288C_NAMESPACE,
+        "strain_id": "AAB",
+        **_URI,
+    },
+    # Caudal 2024 stores the Peter 2018 pangenome column id (``<n>-<ORF name>``), so
+    # the identity is a pangenome ORF id in the pangenome namespace.
     NaturalGenePresencePerturbation: dict(
-        systematic_gene_name="pangenome1011:orf1",
-        perturbed_gene_name="orf1",
+        systematic_gene_name="13-EC1118_1N26_0012g",
+        perturbed_gene_name="13-EC1118_1N26_0012g",
+        gene_namespace="scerevisiae_peter2018_pangenome_orf",
         strain_id="AAB",
         **_URI,
     ),
@@ -327,6 +334,7 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
     NaturalLossOfFunctionPerturbation: dict(
         systematic_gene_name="YAL001C",
         perturbed_gene_name="YAL001C",
+        gene_namespace=SGD_S288C_NAMESPACE,
         strain_id="AAB",
         cause=NaturalLossOfFunctionCause.nonsense_or_sift,
         call_ref=ArtifactRef(
@@ -345,6 +353,7 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
     CopyNumberVariantPerturbation: dict(
         systematic_gene_name="pangenome1011:orf1",
         perturbed_gene_name="orf1",
+        gene_namespace=SGD_S288C_NAMESPACE,
         copy_number=2.0,
         strain_id="AAB",
         **_URI,
@@ -384,10 +393,12 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
         "native_promoter_retained": True,
         "strain_id": "SMY2049",
     },
-    # Bacterial leaves: the identity is a locus tag of the namespace the record
-    # declares, so each one names a REAL tag of its host (measured from that host's
-    # deposited GenBank file), never a placeholder.
-    BacterialDeletionPerturbation: {
+    # Leaves written for the bacterial hosts first (general names since P1): the
+    # identity is a locus tag of the namespace the record declares, so each one names a
+    # REAL tag of its host (measured from that host's deposited GenBank file), never a
+    # placeholder. The folded CRISPR leaves are the yeast entries above, which serve a
+    # bacterial host by namespace.
+    DeletionStrainPerturbation: {
         **_BNUM,
         "collection": "Keio collection",
         "cassette": "FRT-kan-FRT",
@@ -401,14 +412,6 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
         "insertion_strand": "+",
         "transposon": "mariner Himar1",
     },
-    BacterialCrisprInterferencePerturbation: {
-        "systematic_gene_name": "BW25113_0344",
-        "perturbed_gene_name": "lacZ",
-        "gene_namespace": "ecoli_k12_bw25113_locus_tag",
-        "crispr": CrisprConstruct(
-            effector="dCas9-Mxi1", guide_sequence="CGTACTACCAGATAACCTAA"
-        ),
-    },
     PromoterReplacementPerturbation: {
         **_BNUM,
         "expression_direction": "increased",
@@ -418,13 +421,13 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
     # The called-variant leaves (#731). Every value is a row of the Lim 2025 released
     # matrix (the PP_3415 P293S SNP, the PP_4061/PP_4063 intergenic insertion, the
     # 5,553 bp deletion at 4,588,139), so the instances carry real coordinates.
-    BacterialSequenceVariantPerturbation: dict(
+    LocusVariantCallPerturbation: dict(
         systematic_gene_name="PP_3415",
         perturbed_gene_name="PP_3415",
         gene_namespace="pputida_kt2440_locus_tag",
         call=_SNV_CALL,
     ),
-    BacterialSiteVariantPerturbation: dict(
+    SiteVariantCallPerturbation: dict(
         systematic_gene_name="AE015451:4586057",
         perturbed_gene_name="PP_4061, PP_4063",
         gene_namespace="pputida_kt2440_locus_tag",
@@ -433,7 +436,7 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
         flanking_systematic_gene_names=("PP_4061", "PP_4063"),
         flanking_gene_statement="PP_4061, PP_4063",
     ),
-    BacterialSpanDeletionPerturbation: dict(
+    SpanDeletionCallPerturbation: dict(
         systematic_gene_name="PP_4061",
         perturbed_gene_name="PP_4061",
         gene_namespace="pputida_kt2440_locus_tag",
@@ -443,7 +446,7 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
     ),
     # Round-2 bacterial leaves (#749, #792, #799). Each identity is a REAL tag of the
     # host it declares, as the five above are.
-    BacterialMarkedAllelePerturbation: {
+    MarkedAllelePerturbation: {
         "systematic_gene_name": "BW25113_0344",
         "perturbed_gene_name": "lacZ-SPA",
         "gene_namespace": "ecoli_k12_bw25113_locus_tag",
@@ -454,7 +457,7 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
         "allele_effect": "hypomorphic",
         "collection": "SPA-tag essential",
     },
-    BacterialDegronPerturbation: {
+    DegronPerturbation: {
         "systematic_gene_name": "BW25113_0344",
         "perturbed_gene_name": "lacZ-DAS",
         "gene_namespace": "ecoli_k12_bw25113_locus_tag",
@@ -462,14 +465,6 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
         "terminus": "C",
         "protease": "ClpXP",
         "adaptor": "SspB",
-    },
-    BacterialCrisprActivationPerturbation: {
-        "systematic_gene_name": "BW25113_0344",
-        "perturbed_gene_name": "lacZ",
-        "gene_namespace": "ecoli_k12_bw25113_locus_tag",
-        "crispr": CrisprConstruct(
-            effector="dCas9*-MCPSoxS", guide_sequence="CGTACTACCAGATAACCTAA"
-        ),
     },
     # #691: a strain under its released identifier, an ECK accession no assembly is
     # consulted for.
@@ -682,41 +677,69 @@ def test_provenance_is_declared(cls: type[GenePerturbation]) -> None:
 # --------------------------------------------------------------------------- #
 # 8. Identity well-formedness.
 # --------------------------------------------------------------------------- #
+def _namespaces_matching(name: str) -> set[str]:
+    return {ns for ns, pattern in _NAMESPACE_RES.items() if pattern.match(name)}
+
+
 @pytest.mark.parametrize("cls", _LEAVES_SORTED)
-def test_identity_is_curie_or_systematic(cls: type[GenePerturbation]) -> None:
-    name = _instance(cls).systematic_gene_name
+def test_identity_is_a_host_identifier_of_its_own_namespace_or_a_curie(
+    cls: type[GenePerturbation],
+) -> None:
+    """A host-form identifier belongs to exactly the namespace the record declares; a
+    non-host identifier (a CURIE, a released name, a variant site id) is admitted only
+    by a leaf whose validator relaxes the host form, and never reads as any host's.
+    """
+    inst = _instance(cls)
+    name = inst.systematic_gene_name
+    matching = _namespaces_matching(name)
     if cls in _RELEASED_LEAVES:
-        # #691: the fourth family, a source's own identifier stored as released. Only
-        # the released leaves carry it, and it is disjoint from the other three by
-        # their shared validator (a locus tag is refused) and by form.
-        assert not (
-            _SYSTEMATIC_RE.match(name)
-            or _BACTERIAL_TAG_RE.match(name)
-            or _CURIE_RE.match(name)
-        ), name
+        # #691 / #1045: the fourth family, a source's own identifier stored as released,
+        # disjoint from the host forms by the leaves' validators (a locus tag is refused)
+        # and from the CURIE form.
+        assert not _CURIE_RE.match(name), name
+        assert inst.gene_namespace in _NAMESPACE_RES
         return
-    assert (
-        _SYSTEMATIC_RE.match(name)
-        or _BACTERIAL_TAG_RE.match(name)
-        or _CURIE_RE.match(name)
-    ), name
+    assert matching <= {inst.gene_namespace}, (name, matching, inst.gene_namespace)
+    if not matching:
+        assert _CURIE_RE.match(name), name
 
 
-def test_the_three_identity_families_do_not_overlap() -> None:
-    """A yeast name, a bacterial tag and a CURIE are three disjoint identifier spaces.
+def test_the_identity_families_do_not_overlap() -> None:
+    """Every ``GeneIdNamespace`` pattern is pairwise disjoint from every other, and the
+    CURIE form matches none of them: three bacterial hosts, S288C, CEN.PK113-7D and
+    the Peter 2018 pangenome are separate identifier spaces.
 
     This is what makes the namespace field load-bearing rather than decorative:
     ``Genotype`` content identity is the sorted systematic names, so if a b-number
     could also read as a yeast ORF name the two hosts' records would share an id
     space. Checked on the real forms rather than asserted.
     """
-    yeast = ["YAL001C", "YAL001C-A", "Q0010", "YNCA0001W"]
-    bacterial = ["b0002", "BW25113_0002", "PP_0002", "PP_16SA", "PP_t01", "PP_mr01"]
-    for name in yeast:
-        assert _SYSTEMATIC_RE.match(name) and not _BACTERIAL_TAG_RE.match(name), name
-    for name in bacterial:
-        assert _BACTERIAL_TAG_RE.match(name) and not _SYSTEMATIC_RE.match(name), name
-        assert not _CURIE_RE.match(name), name
+    samples = {
+        "scerevisiae_s288c_sgd_systematic": [
+            "YAL001C",
+            "YAL001C-A",
+            "Q0010",
+            "YNCA0001W",
+        ],
+        "scerevisiae_cenpk113_7d_locus_tag": [
+            "SCEN_A00120",
+            "SCEN_Rtrna8N",
+            "SCEN_Q0001",
+        ],
+        "scerevisiae_peter2018_pangenome_orf": ["13-EC1118_1N26_0012g"],
+        "ecoli_k12_mg1655_bnumber": ["b0002"],
+        "ecoli_k12_bw25113_locus_tag": ["BW25113_0002"],
+        "pputida_kt2440_locus_tag": ["PP_0002", "PP_16SA", "PP_t01", "PP_mr01"],
+        "ecoli_b_rel606_locus_tag": ["ECB_00002", "ECB_t00085"],
+        "ecoli_k12_w3110_refseq_locus_tag": ["Y75_RS00005"],
+    }
+    assert set(samples) == set(_NAMESPACE_RES)
+    for owner, names in samples.items():
+        for name in names:
+            assert _namespaces_matching(name) == {owner}, name
+            assert not _CURIE_RE.match(name), name
+    for curie in ("Xden:crtYB", "Efa:mvaE", "addgene127546:YFP", "AE015451:4586057"):
+        assert _CURIE_RE.match(curie) and not _namespaces_matching(curie), curie
 
 
 @pytest.mark.parametrize("cls", _LEAVES_SORTED)

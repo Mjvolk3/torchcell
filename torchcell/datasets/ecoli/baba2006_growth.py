@@ -72,11 +72,11 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import LB_LENNOX
 from torchcell.datamodels.schema import (
     AssayType,
-    BacterialDeletionPerturbation,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
     Concentration,
     ConcentrationUnit,
+    DeletionStrainPerturbation,
     Environment,
     EnvironmentResponsePhenotype,
     Experiment,
@@ -437,7 +437,7 @@ def genotype(row: GrowthRow) -> Genotype:
     """The Keio deletion under its released b-number, gene and JW id."""
     return Genotype(
         perturbations=[
-            BacterialDeletionPerturbation(
+            DeletionStrainPerturbation(
                 systematic_gene_name=row.b_number,
                 perturbed_gene_name=row.gene,
                 gene_namespace=MG1655_NAMESPACE,

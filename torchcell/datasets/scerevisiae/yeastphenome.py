@@ -897,6 +897,7 @@ class YeastPhenomeDataset(ExperimentDataset):
         if not _SYSTEMATIC_RE.match(orf):
             perturbation = ReleasedGeneNamePerturbation(
                 systematic_gene_name=orf,
+                gene_namespace="scerevisiae_s288c_sgd_systematic",
                 perturbed_gene_name=orf,
                 released_gene_name=orf,
                 released_kind=(

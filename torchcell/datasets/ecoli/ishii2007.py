@@ -166,13 +166,13 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     BACTERIAL_ASSEMBLY_SETS,
-    BacterialDeletionPerturbation,
     BacterialMetaboliteExperiment,
     BacterialMetaboliteExperimentReference,
     BacterialProteinAbundanceExperiment,
     BacterialProteinAbundanceExperimentReference,
     Concentration,
     ConcentrationUnit,
+    DeletionStrainPerturbation,
     Environment,
     Experiment,
     ExperimentReference,
@@ -1857,7 +1857,7 @@ def deletion_genotype(resolved: ResolvedGene) -> Genotype:
     """The one Keio deletion of a disruptant, named by its BW25113 locus tag."""
     return Genotype(
         perturbations=[
-            BacterialDeletionPerturbation(
+            DeletionStrainPerturbation(
                 systematic_gene_name=resolved.locus_tag,
                 perturbed_gene_name=resolved.released_symbol,
                 gene_namespace=STRAIN_GENE_NAMESPACES["BW25113"],

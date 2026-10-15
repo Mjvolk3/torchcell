@@ -6,7 +6,7 @@ view of it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Wang 2015 Table S3's ``No isoprenol`` column: 46 records, ``BacterialFitnessExperiment``
 carrying the plain-2YT endpoint OD600 of each Keio deletion over BW25113's. Each
-genotype carries one ``BacterialDeletionPerturbation``, so the perturbation pair is
+genotype carries one ``DeletionStrainPerturbation``, so the perturbation pair is
 enabled; the medium's pH is an ``EnvironmentPhysicalPerturbation`` on every record and on
 the reference, so the environment-perturbation pair is enabled too, and the isoprenol
 edit of the sibling ``EnvChemgenWang2015Adapter`` is absent.

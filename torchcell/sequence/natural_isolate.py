@@ -758,6 +758,7 @@ def content_perturbations(
         presence.append(
             NaturalGenePresencePerturbation(
                 systematic_gene_name=orf_id,
+                gene_namespace="scerevisiae_peter2018_pangenome_orf",
                 perturbed_gene_name=orf_id,
                 copy_number=copy_number,
                 strain_id=strain,
@@ -776,6 +777,7 @@ def content_perturbations(
         absence.append(
             NaturalGeneAbsencePerturbation(
                 systematic_gene_name=name,
+                gene_namespace="scerevisiae_s288c_sgd_systematic",
                 perturbed_gene_name=name,
                 strain_id=strain,
                 pangenome_orf_id=pangenome.orf_ids[j],
@@ -1151,6 +1153,7 @@ class NaturalIsolateGenotypes:
         return [
             NaturalLossOfFunctionPerturbation(
                 systematic_gene_name=call.systematic_gene_name,
+                gene_namespace="scerevisiae_s288c_sgd_systematic",
                 perturbed_gene_name=call.systematic_gene_name,
                 strain_id=isolate,
                 cause=call.cause,

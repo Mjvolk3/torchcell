@@ -25,8 +25,8 @@ symbol kept on ``identifier_mapping``) plus every breseq call Additional file 4 
 for the matching DNA sample (``FPS <gene> A<n> F<n> I<n> R1``), each with its released
 frequency. The GEO sample record says whether a library is a ``Clone`` (an isolate,
 ``I1``) or a ``Population`` (``I0``), which is the call mode. A call in a gene is a
-``BacterialSequenceVariantPerturbation`` on that gene's locus; an intergenic call is a
-``BacterialSiteVariantPerturbation`` keyed on ``CP009273.1:<position>`` with the
+``LocusVariantCallPerturbation`` on that gene's locus; an intergenic call is a
+``SiteVariantCallPerturbation`` keyed on ``CP009273.1:<position>`` with the
 released flanking-gene cell verbatim and no flanking lookup. 12 calls over the 6 strains.
 
 ENVIRONMENT. M9 with 2 g/L D-glucose, aerobic, 37 C; the deletion strains with 50 mg/L
@@ -74,26 +74,26 @@ from torchcell.data import (
 from torchcell.data.experiment_dataset import verify_sha256
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
-    BacterialDeletionPerturbation,
     BacterialRNASeqExpressionExperiment,
     BacterialRNASeqExpressionExperimentReference,
-    BacterialSequenceVariantPerturbation,
-    BacterialSiteVariantPerturbation,
     BacterialVariantCall,
     BacterialVariantType,
     Concentration,
     ConcentrationUnit,
+    DeletionStrainPerturbation,
     DerivedIdentifierMapping,
     Environment,
     Experiment,
     ExperimentReference,
     GenePerturbationType,
     Genotype,
+    LocusVariantCallPerturbation,
     Media,
     MediaComponent,
     MediaComponentRole,
     Publication,
     RNASeqExpressionPhenotype,
+    SiteVariantCallPerturbation,
     Temperature,
     VariantCallMode,
     VariantFrequencyBasis,
@@ -497,7 +497,7 @@ def call_perturbation(
     """An intergenic call keyed on its site, any other on its released gene's locus."""
     if is_intergenic(call):
         site = f"{REPLICON}:{call.position}"
-        return BacterialSiteVariantPerturbation(
+        return SiteVariantCallPerturbation(
             systematic_gene_name=site,
             perturbed_gene_name=site,
             gene_namespace=GENE_NAMESPACE,
@@ -505,7 +505,7 @@ def call_perturbation(
             site_kind=VariantSiteKind.intergenic,
             flanking_gene_statement=call.gene,
         )
-    return BacterialSequenceVariantPerturbation(
+    return LocusVariantCallPerturbation(
         systematic_gene_name=loci[call.gene],
         perturbed_gene_name=call.gene,
         gene_namespace=GENE_NAMESPACE,
@@ -523,7 +523,7 @@ def genotype(
     if library.gene is None or library.call_mode is None:
         return Genotype(perturbations=[])
     perturbations: list[GenePerturbationType] = [
-        BacterialDeletionPerturbation(
+        DeletionStrainPerturbation(
             systematic_gene_name=loci[library.gene],
             perturbed_gene_name=library.gene,
             gene_namespace=GENE_NAMESPACE,

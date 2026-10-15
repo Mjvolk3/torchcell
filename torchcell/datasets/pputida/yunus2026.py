@@ -276,7 +276,6 @@ from torchcell.datamodels.schema import (
     BACTERIAL_ASSEMBLY_SETS,
     AssemblyReferenceGenome,
     BacterialAssemblySet,
-    BacterialCrisprInterferencePerturbation,
     BacterialGeneNamespace,
     BacterialProteinAbundanceExperiment,
     BacterialProteinAbundanceExperimentReference,
@@ -287,6 +286,7 @@ from torchcell.datamodels.schema import (
     Concentration,
     ConcentrationUnit,
     CrisprConstruct,
+    CrisprInterferencePerturbation,
     CultureEnvironment,
     CultureFormat,
     EndpointRule,
@@ -2374,9 +2374,9 @@ def production_environment() -> Environment:
 
 def crispri_perturbation(
     locus_tag: str, gene_name: str, assignment: GuideAssignment
-) -> BacterialCrisprInterferencePerturbation:
+) -> CrisprInterferencePerturbation:
     """One dCas9 knockdown, carrying its Table S7 spacer when the source states it."""
-    return BacterialCrisprInterferencePerturbation(
+    return CrisprInterferencePerturbation(
         systematic_gene_name=locus_tag,
         perturbed_gene_name=gene_name,
         gene_namespace=KT2440_NAMESPACE,

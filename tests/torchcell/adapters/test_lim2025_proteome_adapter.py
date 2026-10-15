@@ -5,7 +5,7 @@
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Lim 2025 proteome: 1 IPL400 record, BacterialProteinAbundanceExperiment.
-7 BacterialDeletionPerturbation, served as `bacterial perturbation`. Isoprenol is a
+7 DeletionStrainPerturbation, served as `bacterial perturbation`. Isoprenol is a
 SmallMoleculePerturbation on the experiment environment, so the environment-perturbation
 pair is enabled. The record gaps temperature; the temperature methods emit nothing.
 """

@@ -595,6 +595,8 @@ def test_build_serves_every_listed_array(
     assert InduciblePromoterInsertionPerturbation.model_validate(pert).model_dump() == {
         "systematic_gene_name": "YER045C",
         "perturbed_gene_name": "ACA1",
+        "gene_namespace": "scerevisiae_s288c_sgd_systematic",
+        "identifier_mapping": None,
         "provenance": "engineered",
         "state": "present",
         "mechanism_so_id": "SO:0000667",

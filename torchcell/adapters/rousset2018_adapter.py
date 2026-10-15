@@ -5,7 +5,7 @@
 """BioCypher adapter exposing the Rousset 2018 CRISPR-dCas9 screens as knowledge-graph
 nodes and edges.
 
-One record per (sgRNA, screen): a single ``BacterialCrisprInterferencePerturbation``
+One record per (sgRNA, screen): a single ``CrisprInterferencePerturbation``
 served as a ``bacterial perturbation`` node with its guide on a ``crispr construct``
 node, and the guide's log2 fold change as an ``EnvironmentResponsePhenotype``.
 

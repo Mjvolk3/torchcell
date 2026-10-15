@@ -1,0 +1,1988 @@
+{
+  "release": "2026.10.06-4b293d34",
+  "forms": {
+    "sgd_systematic": "^(Y[A-P][LR]\\d{3}[WC](-[A-Z])?|Q\\d{4}|YNC[A-Q]\\d{4}[WC])$",
+    "cenpk113_7d_locus_tag": "^SCEN_(?:[A-P]\\d{5}|[QR]\\d+|[A-R]trna\\d{1,2}[A-Z]?)$",
+    "ecoli_k12_mg1655_bnumber": "^b\\d{4}$",
+    "ecoli_k12_bw25113_locus_tag": "^BW25113_\\d{4}$",
+    "pputida_kt2440_locus_tag": "^PP_(?:\\d{4}|(?:5|16|23)S[A-G]|t\\d{2}|tm\\d{2}|mr\\d{2}|r\\d{2})$",
+    "ecoli_b_rel606_locus_tag": "^ECB_[rt]?\\d{5}$",
+    "ecoli_k12_w3110_refseq_locus_tag": "^Y75_RS\\d{5}$",
+    "peter2018_pangenome_x_id": "^X\\d+-\\S+$",
+    "peter2018_pangenome_orf": "^[A-Za-z0-9]+_[A-Za-z0-9]+_\\d{4}g$",
+    "variant_site_id": "^[^\\s]+:\\d+$",
+    "curie": "^[A-Za-z0-9_.]+:[A-Za-z0-9_.\\-]+$"
+  },
+  "stores": [
+    {
+      "dataset_class": "AminoAcidCooper2010Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/amino_acid_cooper2010",
+      "n_records": 4382,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / BY4741": 4382
+      },
+      "perturbation_types": {
+        "kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 4382
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YBR208C",
+              "YGL234W",
+              "YBR162W-A",
+              "YHR047C",
+              "YOR371C"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "AminoAcidMulleder2016Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/amino_acid_mulleder2016",
+      "n_records": 4678,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / BY4741": 4678
+      },
+      "perturbation_types": {
+        "kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 4678
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL002W",
+              "YAL004W",
+              "YAL015C",
+              "YBL036C",
+              "YDR352W"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "BetaxanthinCachera2023Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/betaxanthin_cachera2023",
+      "n_records": 4759,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / BY4741": 4759
+      },
+      "perturbation_types": {
+        "released_gene_name": {
+          "forms": {
+            "other": 3592
+          },
+          "examples": {
+            "other": [
+              "AAC1",
+              "AAC3",
+              "ABM1",
+              "AIM33",
+              "FYV12"
+            ]
+          }
+        },
+        "gene_addition": {
+          "forms": {
+            "other": 9518,
+            "sgd_systematic": 9518
+          },
+          "examples": {
+            "other": [
+              "CYP76AD1",
+              "DOD"
+            ],
+            "sgd_systematic": [
+              "YBR249C",
+              "YPR060C"
+            ]
+          }
+        },
+        "kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 1167
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL004W",
+              "YAL018C",
+              "YAL037W",
+              "YAL043C-A",
+              "YAL045C"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "Bloom2019Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/bloom2019",
+      "n_records": 530100,
+      "n_records_without_perturbations": 530100,
+      "strains": {
+        "Saccharomyces cerevisiae / S288C": 530100
+      },
+      "perturbation_types": {}
+    },
+    {
+      "dataset_class": "CarotenoidOzaydin2013Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/carotenoid_ozaydin2013",
+      "n_records": 4607,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / BY4741": 4596,
+        "Saccharomyces cerevisiae / BY4730": 11
+      },
+      "perturbation_types": {
+        "kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 4606
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL068C",
+              "YAL067C",
+              "YAL055W",
+              "YLL063C",
+              "YDR420W"
+            ]
+          }
+        },
+        "gene_addition": {
+          "forms": {
+            "sgd_systematic": 4607,
+            "other": 9214
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YPL069C"
+            ],
+            "other": [
+              "crtI",
+              "crtYB"
+            ]
+          }
+        },
+        "released_gene_name": {
+          "forms": {
+            "other": 1
+          },
+          "examples": {
+            "other": [
+              "YLR287-A"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "CaudalPanTranscriptome2024Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/caudal_pantranscriptome2024",
+      "n_records": 943,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / S288C": 943
+      },
+      "perturbation_types": {
+        "natural_gene_presence": {
+          "forms": {
+            "other": 79016
+          },
+          "examples": {
+            "other": [
+              "1107-augustus_masked.AFA_4.7928",
+              "13-EC1118_1N26_0012g",
+              "14-EC1118_1N26_0023g",
+              "144-augustus_masked.182.ABQ_6",
+              "1496-maker.CHB_4.9987"
+            ]
+          }
+        },
+        "natural_loss_of_function": {
+          "forms": {
+            "other": 1748,
+            "sgd_systematic": 359876
+          },
+          "examples": {
+            "other": [
+              "BUD19",
+              "ENA1",
+              "HSP33",
+              "HXT13",
+              "AAD16"
+            ],
+            "sgd_systematic": [
+              "YAL059W",
+              "YAL063C",
+              "YAR028W",
+              "YAR029W",
+              "YAR030C"
+            ]
+          }
+        },
+        "natural_gene_absence": {
+          "forms": {
+            "sgd_systematic": 126839
+          },
+          "examples": {
+            "sgd_systematic": [
+              "Q0045",
+              "Q0160",
+              "Q0255",
+              "YAL016C-A",
+              "YAL019W-A"
+            ]
+          }
+        },
+        "sequence_variant": {
+          "forms": {
+            "sgd_systematic": 4759608
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL001C",
+              "YAL002W",
+              "YAL003W",
+              "YAL004W",
+              "YAL005C"
+            ]
+          }
+        },
+        "deletion": {
+          "forms": {
+            "sgd_systematic": 116
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YDL227C"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "CrisprMagicLian2019Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/crispr_magic_lian2019",
+      "n_records": 266304,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / bAID": 266304
+      },
+      "perturbation_types": {
+        "crispr_activation": {
+          "forms": {
+            "sgd_systematic": 190185
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL054C",
+              "YAL046C",
+              "YAR007C",
+              "YCR079W",
+              "YPR058W"
+            ]
+          }
+        },
+        "crispr_interference": {
+          "forms": {
+            "sgd_systematic": 279625
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YDR409W",
+              "YAL054C",
+              "YAR015W",
+              "YAL049C",
+              "YAL020C"
+            ]
+          }
+        },
+        "crispr_deletion": {
+          "forms": {
+            "sgd_systematic": 62766
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL054C",
+              "YAR015W",
+              "YAL049C",
+              "YAL020C",
+              "YAL060W"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "CrispriChemgenSmith2016Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/crispri_chemgen_smith2016",
+      "n_records": 14463,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / BY4741": 14463
+      },
+      "perturbation_types": {
+        "crispr_interference": {
+          "forms": {
+            "sgd_systematic": 14463
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YMR079W",
+              "YGR060W",
+              "YML130C",
+              "YDR367W",
+              "YML126C"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "CrispriMormino2022Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/crispri_mormino2022",
+      "n_records": 12,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / BY4742": 12
+      },
+      "perturbation_types": {
+        "gene_addition": {
+          "forms": {
+            "other": 24
+          },
+          "examples": {
+            "other": [
+              "BM3R1-HAA1-mTurquoise2",
+              "sfpHluorin"
+            ]
+          }
+        },
+        "released_gene_name": {
+          "forms": {
+            "other": 12
+          },
+          "examples": {
+            "other": [
+              "QCR8",
+              "TIF34",
+              "HSH49",
+              "LCB1",
+              "MSN5"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "DmMicroarraySameith2015Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/dm_microarray_sameith2015",
+      "n_records": 72,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / BY4742": 68,
+        "Saccharomyces cerevisiae / BY4741": 4
+      },
+      "perturbation_types": {
+        "sga_kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 72
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YDR423C",
+              "YPR015C",
+              "YIL131C",
+              "YFL021W",
+              "YLR013W"
+            ]
+          }
+        },
+        "sga_natmx_deletion": {
+          "forms": {
+            "sgd_systematic": 72
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YML007W",
+              "YMR280C",
+              "YNL068C",
+              "YCR065W",
+              "YER040W"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "DmfCostanzo2016Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/dmf_costanzo2016",
+      "n_records": 20705612,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / S288C": 20705612
+      },
+      "perturbation_types": {
+        "damp": {
+          "forms": {
+            "sgd_systematic": 1391958
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL001C",
+              "YAL012W",
+              "YAL025C",
+              "YBR256C",
+              "YMR125W"
+            ]
+          }
+        },
+        "sga_kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 17620242
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YBL007C",
+              "YPR059C",
+              "YOR070C",
+              "YOR083W",
+              "YLR451W"
+            ]
+          }
+        },
+        "temperature_sensitive_allele": {
+          "forms": {
+            "sgd_systematic": 7854119
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YBL023C",
+              "YBL041W",
+              "YDL017W",
+              "YBR109C",
+              "YOR074C"
+            ]
+          }
+        },
+        "sga_natmx_deletion": {
+          "forms": {
+            "sgd_systematic": 14132335
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YDR076W",
+              "YDR077W",
+              "YDR079W",
+              "YDR080W",
+              "YDR083W"
+            ]
+          }
+        },
+        "suppressor_allele": {
+          "forms": {
+            "sgd_systematic": 412570
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YDR079C-A",
+              "YDR115W",
+              "YDR175C",
+              "YDR484W",
+              "YEL013W"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "DmfKuzmin2018Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/dmf_kuzmin2018",
+      "n_records": 410571,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / S288C": 410571
+      },
+      "perturbation_types": {
+        "sga_kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 693442
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL048C",
+              "YAR002W",
+              "YAL051W",
+              "YBR288C",
+              "YBR086C"
+            ]
+          }
+        },
+        "temperature_sensitive_allele": {
+          "forms": {
+            "sgd_systematic": 66240
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YBL023C",
+              "YOL135C",
+              "YML065W",
+              "YML069W",
+              "YML114C"
+            ]
+          }
+        },
+        "allele": {
+          "forms": {
+            "sgd_systematic": 61460
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YBR087W",
+              "YBR152W",
+              "YMR013C",
+              "YMR117C",
+              "YNL126W"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "DmfKuzmin2020Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/dmf_kuzmin2020",
+      "n_records": 632998,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / S288C": 632998
+      },
+      "perturbation_types": {
+        "sga_kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 1162985
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL015C",
+              "YBL007C",
+              "YBL008W",
+              "YBL051C",
+              "YCL025C"
+            ]
+          }
+        },
+        "temperature_sensitive_allele": {
+          "forms": {
+            "sgd_systematic": 103011
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YBL041W",
+              "YBL050W",
+              "YBL084C",
+              "YBL097W",
+              "YBL105C"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "DmiCostanzo2016Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/dmi_costanzo2016",
+      "n_records": 20705612,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / S288C": 20705612
+      },
+      "perturbation_types": {
+        "damp": {
+          "forms": {
+            "sgd_systematic": 1391958
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL001C",
+              "YAL012W",
+              "YAL025C",
+              "YBR256C",
+              "YMR125W"
+            ]
+          }
+        },
+        "sga_kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 17620242
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YBL007C",
+              "YPR059C",
+              "YOR070C",
+              "YOR083W",
+              "YLR451W"
+            ]
+          }
+        },
+        "temperature_sensitive_allele": {
+          "forms": {
+            "sgd_systematic": 7854119
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YBL023C",
+              "YBL041W",
+              "YDL017W",
+              "YBR109C",
+              "YOR074C"
+            ]
+          }
+        },
+        "sga_natmx_deletion": {
+          "forms": {
+            "sgd_systematic": 14132335
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YDR076W",
+              "YDR077W",
+              "YDR079W",
+              "YDR080W",
+              "YDR083W"
+            ]
+          }
+        },
+        "suppressor_allele": {
+          "forms": {
+            "sgd_systematic": 412570
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YDR079C-A",
+              "YDR115W",
+              "YDR175C",
+              "YDR484W",
+              "YEL013W"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "DmiKuzmin2018Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/dmi_kuzmin2018",
+      "n_records": 410399,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / S288C": 410399
+      },
+      "perturbation_types": {
+        "sga_kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 693147
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL048C",
+              "YAR002W",
+              "YAL051W",
+              "YBR288C",
+              "YBR086C"
+            ]
+          }
+        },
+        "temperature_sensitive_allele": {
+          "forms": {
+            "sgd_systematic": 66240
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YBL023C",
+              "YOL135C",
+              "YML065W",
+              "YML069W",
+              "YML114C"
+            ]
+          }
+        },
+        "allele": {
+          "forms": {
+            "sgd_systematic": 61411
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YBR087W",
+              "YBR152W",
+              "YMR013C",
+              "YMR117C",
+              "YNL126W"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "DmiKuzmin2020Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/dmi_kuzmin2020",
+      "n_records": 632797,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / S288C": 632797
+      },
+      "perturbation_types": {
+        "sga_kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 1162583
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL015C",
+              "YBL007C",
+              "YBL008W",
+              "YBL051C",
+              "YCL025C"
+            ]
+          }
+        },
+        "temperature_sensitive_allele": {
+          "forms": {
+            "sgd_systematic": 103011
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YBL041W",
+              "YBL050W",
+              "YBL084C",
+              "YBL097W",
+              "YBL105C"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "EnvChemgenAuesukaree2009Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/env_chemgen_auesukaree2009",
+      "n_records": 525,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / BY4742": 525
+      },
+      "perturbation_types": {
+        "released_gene_name": {
+          "forms": {
+            "other": 525
+          },
+          "examples": {
+            "other": [
+              "PEP3",
+              "PEP5",
+              "VMA11",
+              "VMA21",
+              "VPH2"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "EnvChemgenCostanzo2021Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/env_chemgen_costanzo2021",
+      "n_records": 61640,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / S288C": 61640
+      },
+      "perturbation_types": {
+        "temperature_sensitive_allele": {
+          "forms": {
+            "sgd_systematic": 10766
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL001C",
+              "YDR062W",
+              "YDR064W",
+              "YDR081C",
+              "YDR082W"
+            ]
+          }
+        },
+        "sga_kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 50874
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL011W",
+              "YAR029W",
+              "YDR063W",
+              "YDR066C",
+              "YDR067C"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "EnvChemgenHoepfner2014Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/env_chemgen_hoepfner2014",
+      "n_records": 30308574,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / BY4743": 30308574
+      },
+      "perturbation_types": {
+        "heterozygous_deletion": {
+          "forms": {
+            "sgd_systematic": 17104778
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL001C",
+              "YAL004W",
+              "YAL035C-A",
+              "YBR150C",
+              "YKR063C"
+            ]
+          }
+        },
+        "barcoded_kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 13203796
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL001C",
+              "YAL002W",
+              "YAL004W",
+              "YAL005C",
+              "YAL007C"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "EnvChemgenMota2024Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/env_chemgen_mota2024",
+      "n_records": 1289,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / BY4741": 1289
+      },
+      "perturbation_types": {
+        "released_gene_name": {
+          "forms": {
+            "other": 1174
+          },
+          "examples": {
+            "other": [
+              "ADK1",
+              "AFG3",
+              "APQ13",
+              "IBA57",
+              "MRPL51"
+            ]
+          }
+        },
+        "kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 115
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YBL094C",
+              "YBR085C-A",
+              "YBR196C-B",
+              "YBR209W",
+              "YCL007C"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "EnvChemgenVanacloig2022Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/env_chemgen_vanacloig2022",
+      "n_records": 164205,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / 3DeltaAlpha SGA MATa progeny (Y13206 x MATa xxx\u0394::kanMX array)": 164205
+      },
+      "perturbation_types": {
+        "barcoded_kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 164205
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL002W",
+              "YAL004W",
+              "YAL018C",
+              "YBL061C",
+              "YER149C"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "EnvChemgenWildenhain2015Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/env_chemgen_wildenhain2015",
+      "n_records": 449033,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / BY4741": 449033
+      },
+      "perturbation_types": {
+        "barcoded_kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 447093
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL030W",
+              "YDR502C",
+              "YEL003W",
+              "YEL037C",
+              "YEL061C"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "FattyAcidSmith2006Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/env_chemgen_smith2006",
+      "n_records": 14310,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / BY4742": 14310
+      },
+      "perturbation_types": {
+        "kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 14310
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YMR056C",
+              "YDL243C",
+              "YGL234W",
+              "YNR027W",
+              "YBR209W"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "FattyAcidXue2025Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/ffa_xue2025",
+      "n_records": 176,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / BY4741": 176
+      },
+      "perturbation_types": {
+        "released_gene_name": {
+          "forms": {
+            "other": 988
+          },
+          "examples": {
+            "other": [
+              "FAA1",
+              "FAA4",
+              "POX1",
+              "RPD3",
+              "SPT3"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "GeneEssentialitySgdDataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/gene_essentiality_sgd",
+      "n_records": 1329,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / S288C": 1329
+      },
+      "perturbation_types": {
+        "sga_kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 1287
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL001C",
+              "YAL003W",
+              "YBR265W",
+              "YNL038W",
+              "YNL039W"
+            ]
+          }
+        },
+        "named_allele": {
+          "forms": {
+            "sgd_systematic": 42
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL041W",
+              "YNL031C",
+              "YNL267W",
+              "YNR017W",
+              "YOR262W"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "HetHillenmeyer2008Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/env_chemgen_hillenmeyer2008_het",
+      "n_records": 3074132,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / BY4743": 3074132
+      },
+      "perturbation_types": {
+        "heterozygous_deletion": {
+          "forms": {
+            "sgd_systematic": 3074132
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL001C",
+              "YAL002W",
+              "YAL020C",
+              "YBL106C",
+              "YGL087C"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "HomHillenmeyer2008Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/env_chemgen_hillenmeyer2008_hom",
+      "n_records": 1228676,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / BY4743": 1228676
+      },
+      "perturbation_types": {
+        "barcoded_kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 1228676
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL002W",
+              "YAL007C",
+              "YAL051W",
+              "YBR273C",
+              "YNR013C"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "IsobutanolScreenLopez2024Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/isobutanol_screen_lopez2024",
+      "n_records": 4805,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / BY4741": 4805
+      },
+      "perturbation_types": {
+        "kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 4804
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL004W",
+              "YAL005C",
+              "YAL016C-B",
+              "YBL038W",
+              "YDR314C"
+            ]
+          }
+        },
+        "released_gene_name": {
+          "forms": {
+            "other": 1
+          },
+          "examples": {
+            "other": [
+              "YLR287-A"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "IsobutanolValidatedLopez2024Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/isobutanol_validated_lopez2024",
+      "n_records": 227,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / BY4741": 227
+      },
+      "perturbation_types": {
+        "kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 227
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YGL007C-A",
+              "YNL119W",
+              "YHL031C",
+              "YGL214W",
+              "YPL141C"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "MetaboliteDaSilveira2014Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/metabolite_dasilveira2014",
+      "n_records": 127,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / BY4741": 127
+      },
+      "perturbation_types": {
+        "kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 127
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YBR059C",
+              "YGL021W",
+              "YOR061W",
+              "YDR523C",
+              "YNR031C"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "MetaboliteZelezniak2018Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/metabolite_zelezniak2018",
+      "n_records": 129,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / BY4741": 129
+      },
+      "perturbation_types": {
+        "kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 129
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL017W",
+              "YAR018C",
+              "YDL025C",
+              "YDR122W",
+              "YDR477W"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "MicroarrayKemmeren2014Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/microarray_kemmeren2014",
+      "n_records": 1484,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / BY4742": 1474,
+        "Saccharomyces cerevisiae / BY4741": 10
+      },
+      "perturbation_types": {
+        "kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 1484
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YJL095W",
+              "YPL042C",
+              "YKL048C",
+              "YEL044W",
+              "YDR283C"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "NadalRibellesPerturbSeq2025Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/nadal_ribelles_perturbseq2025",
+      "n_records": 6188,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / S288C": 6188
+      },
+      "perturbation_types": {
+        "marker_deletion": {
+          "forms": {
+            "sgd_systematic": 6188
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL012W",
+              "YAL024C",
+              "YBL003C",
+              "YBR072C-A",
+              "YGL114W"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "OrganicAcidYoshida2012Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/organic_acid_yoshida2012",
+      "n_records": 17,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / BY4742": 17
+      },
+      "perturbation_types": {
+        "released_gene_name": {
+          "forms": {
+            "other": 16
+          },
+          "examples": {
+            "other": [
+              "ASM4",
+              "EMI5",
+              "PLM2",
+              "RTG1",
+              "RTG2"
+            ]
+          }
+        },
+        "kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 1
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YDR379C-A"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "ProteomeMessner2023Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/proteome_messner2023",
+      "n_records": 4699,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / BY4741": 4699
+      },
+      "perturbation_types": {
+        "kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 4699
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL059W",
+              "YBR174C",
+              "YLL051C",
+              "YPL227C",
+              "YLR386W"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "ProteomeZelezniak2018Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/proteome_zelezniak2018",
+      "n_records": 97,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / BY4741": 97
+      },
+      "perturbation_types": {
+        "kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 97
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL017W",
+              "YAR018C",
+              "YDL025C",
+              "YDL079C",
+              "YDL159W"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "ScmdOhnuki2018Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/scmd_ohnuki2018",
+      "n_records": 1112,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / BY4743": 1112
+      },
+      "perturbation_types": {
+        "engineered_copy_number": {
+          "forms": {
+            "sgd_systematic": 1112
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL001C",
+              "YAL003W",
+              "YAR007C",
+              "YCR052W",
+              "YOR287C"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "ScmdOhnuki2022Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/scmd_ohnuki2022",
+      "n_records": 1982,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / BY4741": 1982
+      },
+      "perturbation_types": {
+        "kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 1982
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL005C",
+              "YAL007C",
+              "YAL026C",
+              "YBR083W",
+              "YJL163C"
+            ]
+          }
+        },
+        "marker_deletion": {
+          "forms": {
+            "sgd_systematic": 3964
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YBL005W",
+              "YDR011W"
+            ]
+          }
+        },
+        "natmx_deletion": {
+          "forms": {
+            "sgd_systematic": 1982
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YGL013C"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "ScmdOhya2005Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/scmd_ohya2005",
+      "n_records": 4718,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / BY4741": 4718
+      },
+      "perturbation_types": {
+        "kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 4718
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL002W",
+              "YAL004W",
+              "YAL014C",
+              "YBL033C",
+              "YDR360W"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "SmMicroarraySameith2015Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/sm_microarray_sameith2015",
+      "n_records": 82,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / BY4742": 82
+      },
+      "perturbation_types": {
+        "sga_kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 82
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YER088C",
+              "YOR304W",
+              "YMR037C",
+              "YKL062W",
+              "YDR043C"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "SmfBaryshnikova2010Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/smf_baryshnikova2010",
+      "n_records": 6023,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / BY4741": 6023
+      },
+      "perturbation_types": {
+        "damp": {
+          "forms": {
+            "sgd_systematic": 1082
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL001C",
+              "YDR045C",
+              "YDR047W",
+              "YDR052C",
+              "YDR054C"
+            ]
+          }
+        },
+        "temperature_sensitive_allele": {
+          "forms": {
+            "sgd_systematic": 306
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL001C",
+              "YDR052C",
+              "YDR060W",
+              "YDR082W",
+              "YDR087C"
+            ]
+          }
+        },
+        "sga_kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 4635
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL011W",
+              "YAR050W",
+              "YDR043C",
+              "YDR046C",
+              "YDR049W"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "SmfCostanzo2016Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/smf_costanzo2016",
+      "n_records": 20484,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / S288C": 20484
+      },
+      "perturbation_types": {
+        "damp": {
+          "forms": {
+            "sgd_systematic": 1466
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL001C",
+              "YPR055W",
+              "YPR056W",
+              "YPR072W",
+              "YPR082C"
+            ]
+          }
+        },
+        "temperature_sensitive_allele": {
+          "forms": {
+            "sgd_systematic": 3559
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL001C",
+              "YPR055W",
+              "YPR056W",
+              "YPR082C",
+              "YPR085C"
+            ]
+          }
+        },
+        "sga_natmx_deletion": {
+          "forms": {
+            "sgd_systematic": 7690
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL008W",
+              "YAL054C",
+              "YPR054W",
+              "YPR057W",
+              "YCL038C"
+            ]
+          }
+        },
+        "sga_kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 7769
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YCL038C",
+              "YPR057W",
+              "YPR058W",
+              "YPR059C",
+              "YPR060C"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "SmfKuzmin2018Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/smf_kuzmin2018",
+      "n_records": 1539,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / S288C": 1539
+      },
+      "perturbation_types": {
+        "sga_kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 1293
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL048C",
+              "YAL051W",
+              "YBR288C",
+              "YOL136C",
+              "YOL141W"
+            ]
+          }
+        },
+        "temperature_sensitive_allele": {
+          "forms": {
+            "sgd_systematic": 191
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YBL023C",
+              "YOL135C",
+              "YOR074C",
+              "YOR103C",
+              "YOR116C"
+            ]
+          }
+        },
+        "allele": {
+          "forms": {
+            "sgd_systematic": 55
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YBR070C",
+              "YBR087W",
+              "YBR152W",
+              "YDL017W",
+              "YDL058W"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "SmfKuzmin2020Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/smf_kuzmin2020",
+      "n_records": 472,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / S288C": 472
+      },
+      "perturbation_types": {
+        "sga_kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 472
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YDL227C",
+              "YLR187W",
+              "YGL096W",
+              "YAL028W",
+              "YAL051W"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "SmfODuibhir2014Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/smf_oduibhir2014",
+      "n_records": 1312,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / BY4741": 1312
+      },
+      "perturbation_types": {
+        "kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 1312
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL009W",
+              "YAL011W",
+              "YAL044W-A",
+              "YBR279W",
+              "YMR294W"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "SynthLethalityYeastSynthLethDbDataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/syn_leth_db_yeast",
+      "n_records": 14000,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / S288C": 14000
+      },
+      "perturbation_types": {
+        "released_gene_name": {
+          "forms": {
+            "other": 27846,
+            "sgd_systematic": 154
+          },
+          "examples": {
+            "other": [
+              "ACS2",
+              "GCN5",
+              "VMA5",
+              "ARP6",
+              "CLA4"
+            ],
+            "sgd_systematic": [
+              "YEL043W",
+              "YPR084W",
+              "YKL069W",
+              "YJR142W",
+              "YGL015C"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "SynthRescueYeastSynthLethDbDataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/syn_rescue_db_yeast",
+      "n_records": 6948,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / S288C": 6948
+      },
+      "perturbation_types": {
+        "released_gene_name": {
+          "forms": {
+            "other": 13774,
+            "sgd_systematic": 122
+          },
+          "examples": {
+            "other": [
+              "ACS2",
+              "PHO23",
+              "HOS3",
+              "SAP30",
+              "HDA2"
+            ],
+            "sgd_systematic": [
+              "YCR061W",
+              "YNR048W",
+              "YBR137W",
+              "YPR117W",
+              "YNL011C"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "TmfKuzmin2018Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/tmf_kuzmin2018",
+      "n_records": 91111,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / S288C": 91111
+      },
+      "perturbation_types": {
+        "sga_kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 232304
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL054C",
+              "YAR002W",
+              "YML107C",
+              "YAL055W",
+              "YBL067C"
+            ]
+          }
+        },
+        "temperature_sensitive_allele": {
+          "forms": {
+            "sgd_systematic": 14349
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YDR164C",
+              "YOL102C",
+              "YOL135C",
+              "YOR074C",
+              "YOR232W"
+            ]
+          }
+        },
+        "allele": {
+          "forms": {
+            "sgd_systematic": 26680
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YDL058W",
+              "YDL195W",
+              "YDL145C",
+              "YMR013C",
+              "YDR016C"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "TmfKuzmin2020Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/tmf_kuzmin2020",
+      "n_records": 301798,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / S288C": 301798
+      },
+      "perturbation_types": {
+        "sga_kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 856296
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL015C",
+              "YBL007C",
+              "YOL043C",
+              "YBL008W",
+              "YBL051C"
+            ]
+          }
+        },
+        "temperature_sensitive_allele": {
+          "forms": {
+            "sgd_systematic": 49098
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YBR236C",
+              "YBR254C",
+              "YDL008W",
+              "YDL017W",
+              "YDL097C"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "TmiKuzmin2018Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/tmi_kuzmin2018",
+      "n_records": 91111,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / S288C": 91111
+      },
+      "perturbation_types": {
+        "sga_kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 232304
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL054C",
+              "YAR002W",
+              "YML107C",
+              "YAL055W",
+              "YBL067C"
+            ]
+          }
+        },
+        "temperature_sensitive_allele": {
+          "forms": {
+            "sgd_systematic": 14349
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YDR164C",
+              "YOL102C",
+              "YOL135C",
+              "YOR074C",
+              "YOR232W"
+            ]
+          }
+        },
+        "allele": {
+          "forms": {
+            "sgd_systematic": 26680
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YDL058W",
+              "YDL195W",
+              "YDL145C",
+              "YMR013C",
+              "YDR016C"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "dataset_class": "TmiKuzmin2020Dataset",
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/tmi_kuzmin2020",
+      "n_records": 301798,
+      "n_records_without_perturbations": 0,
+      "strains": {
+        "Saccharomyces cerevisiae / S288C": 301798
+      },
+      "perturbation_types": {
+        "sga_kanmx_deletion": {
+          "forms": {
+            "sgd_systematic": 856296
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YAL015C",
+              "YBL007C",
+              "YOL043C",
+              "YBL008W",
+              "YBL051C"
+            ]
+          }
+        },
+        "temperature_sensitive_allele": {
+          "forms": {
+            "sgd_systematic": 49098
+          },
+          "examples": {
+            "sgd_systematic": [
+              "YBR236C",
+              "YBR254C",
+              "YDL008W",
+              "YDL017W",
+              "YDL097C"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "yeast_locus_tags": {
+    "cenpk113_7d": {
+      "assembly_set": "scerevisiae_CENPK113-7D_ASM257140v2",
+      "file": "GCA_002571405.2_ASM257140v2_genomic.gbff.gz",
+      "pattern": "^SCEN_(?:[A-P]\\d{5}|[QR]\\d+|[A-R]trna\\d{1,2}[A-Z]?)$",
+      "n_locus_tags": 6171,
+      "n_unmatched": 0,
+      "unmatched_examples": [],
+      "shapes": {
+        "SCEN_DN": 751,
+        "SCEN_GN": 547,
+        "SCEN_ON": 526,
+        "SCEN_LN": 499,
+        "SCEN_PN": 473,
+        "SCEN_MN": 454,
+        "SCEN_BN": 399,
+        "SCEN_NN": 389,
+        "SCEN_JN": 361,
+        "SCEN_KN": 326,
+        "SCEN_EN": 279,
+        "SCEN_HN": 267
+      }
+    },
+    "sgd_s288c_r64": {
+      "assembly_set": "sgd_S288C_R64-4-1_20230830",
+      "file": "saccharomyces_cerevisiae_R64-4-1_20230830.gff",
+      "pattern": "^(Y[A-P][LR]\\d{3}[WC](-[A-Z])?|Q\\d{4}|YNC[A-Q]\\d{4}[WC])$",
+      "n_gene_features": 7148,
+      "by_type": {
+        "gene": 6607,
+        "ncRNA_gene": 31,
+        "tRNA_gene": 299,
+        "snoRNA_gene": 77,
+        "transposable_element_gene": 91,
+        "pseudogene": 12,
+        "telomerase_RNA_gene": 1,
+        "snRNA_gene": 6,
+        "rRNA_gene": 24
+      },
+      "n_unmatched": 1,
+      "unmatched": [
+        [
+          "ncRNA_gene",
+          "YNCI0012"
+        ]
+      ]
+    }
+  }
+}

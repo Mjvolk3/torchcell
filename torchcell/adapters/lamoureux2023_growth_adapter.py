@@ -5,7 +5,7 @@
 """BioCypher adapter exposing Lamoureux 2023's released growth rates as graph nodes.
 
 One record per released PRECISE-1K sample whose ``Growth Rate (1/hr)`` cell is positive,
-89 in all. 34 genotypes carry one ``BacterialDeletionPerturbation``, served as
+89 in all. 34 genotypes carry one ``DeletionStrainPerturbation``, served as
 ``bacterial perturbation``, and the other 55 are wild type; the carbon source, the
 supplements and the salts are environment perturbations and are first-class nodes. The
 phenotype is ``environment response phenotype``, carrying the absolute rate in 1/hr with

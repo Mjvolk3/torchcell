@@ -6,7 +6,7 @@ and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Babu 2014 eSGA digenic interaction map: 38,579 (donor, recipient) records from Table S2's
 GI score, BacterialGeneInteractionExperiment. TWO gene-level
-BacterialDeletionPerturbation leaves per record, served as `bacterial perturbation`, and
+DeletionStrainPerturbation leaves per record, served as `bacterial perturbation`, and
 the signed S score as the already-served `gene interaction phenotype`. The screen is one
 condition and its two marker drugs are selection_agent components of the medium, so no
 record carries an environment perturbation; no phage and no CRISPRi construct appears in

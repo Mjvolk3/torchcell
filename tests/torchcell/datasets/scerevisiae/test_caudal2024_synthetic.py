@@ -330,6 +330,7 @@ def _present(
 ) -> NaturalGenePresencePerturbation:
     return NaturalGenePresencePerturbation(
         systematic_gene_name=orf,
+        gene_namespace="scerevisiae_peter2018_pangenome_orf",
         perturbed_gene_name=orf,
         copy_number=copy_number,
         strain_id=strain,
@@ -342,6 +343,7 @@ def _present(
 def _absent(strain: str, name: str, orf: str) -> NaturalGeneAbsencePerturbation:
     return NaturalGeneAbsencePerturbation(
         systematic_gene_name=name,
+        gene_namespace="scerevisiae_s288c_sgd_systematic",
         perturbed_gene_name=name,
         strain_id=strain,
         pangenome_orf_id=orf,
@@ -502,6 +504,8 @@ def test_side_files_gene_set_reference_index_and_strain_list(
         "ARTIFACT_URI_SCHEME",
         "ArtifactRef",
         "ArtifactTier",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialGeneNamespace",
         "CHEBI_ID_PATTERN",
         "ChromosomeCopyChange",
         "ComponentDefinition",
@@ -510,11 +514,15 @@ def test_side_files_gene_set_reference_index_and_strain_list(
         "ConcentrationUnit",
         "CultureGrowthPhase",
         "DeletionPerturbation",
+        "DerivedIdentifierMapping",
+        "DerivedIdentifierRoute",
         "DoseBasis",
         "Environment",
         "EnvironmentPerturbationType",
         "Experiment",
         "ExperimentReference",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
         "GenePerturbation",
         "GenePerturbationType",
         "GenomeZygosity",
@@ -523,6 +531,7 @@ def test_side_files_gene_set_reference_index_and_strain_list(
         "HashableProvenanceGapMixin",
         "INCHIKEY_PATTERN",
         "IsolateManipulation",
+        "JW_IDENTIFIER_PATTERN",
         "Media",
         "MediaComponent",
         "MediaComponentRole",
@@ -540,6 +549,7 @@ def test_side_files_gene_set_reference_index_and_strain_list(
         "RNASeqExpressionExperimentReference",
         "RNASeqExpressionPhenotype",
         "ReferenceGenome",
+        "SGD_S288C_NAMESPACE",
         "SO_ID_PATTERN",
         "SequencePerturbation",
         "SequenceVariantPerturbation",
@@ -547,10 +557,13 @@ def test_side_files_gene_set_reference_index_and_strain_list(
         "SourceType",
         "Temperature",
         "TemperatureUnit",
+        "UNIPROT_ACCESSION_PATTERN",
         "_ARTIFACT_SHA256",
-        # #901/#902/#903: Media's label validator calls the shared gap helper
-        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_namespace_of_locus_tag",
         "_require_value_or_gap",
+        "_validate_host_identifier",
         "_validate_so_id",
     ]
     assert dataset.experiment_class is RNASeqExpressionExperiment

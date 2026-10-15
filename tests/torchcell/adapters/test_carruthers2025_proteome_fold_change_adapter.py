@@ -6,7 +6,7 @@ loads, the gate's view of it, and (``--data``) the graph it emits from its dev-t
 
 Carruthers 2025 differential proteomics: 16 contrasts,
 BacterialProteinFoldChangeExperiment. 80 HeterologousPathwayPerturbation, 16
-BacterialCrisprInterferencePerturbation and 2 BacterialDeletionPerturbation leaves, all
+CrisprInterferencePerturbation and 2 DeletionStrainPerturbation leaves, all
 served as `bacterial perturbation`. Every CRISPRi leaf carries a CrisprConstruct, so the
 crispr-construct pair is enabled. The environment carries a SmallMoleculePerturbation,
 so the environment-perturbation pair is enabled. The phenotype node class is

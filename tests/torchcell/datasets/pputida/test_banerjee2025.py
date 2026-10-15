@@ -474,7 +474,7 @@ def test_the_parental_genotype_carries_no_perturbation() -> None:
 def test_the_deletion_genotype_is_one_bacterial_deletion_on_pp_0897() -> None:
     genotype = ds.strain_genotype(ds.STRAIN_DELETION)
     (perturbation,) = genotype.perturbations
-    assert perturbation.perturbation_type == "bacterial_deletion"
+    assert perturbation.perturbation_type == "deletion_strain"
     assert perturbation.systematic_gene_name == ds.PP_0897
     assert perturbation.gene_namespace == ds.KT2440_NAMESPACE
     assert perturbation.cassette is None
@@ -1246,7 +1246,7 @@ def test_the_perturbations_are_two_promoter_swaps_and_two_deletions(built: Any) 
                 kinds.get(perturbation["perturbation_type"], 0) + 1
             )
             assert perturbation["systematic_gene_name"] == ds.PP_0897
-    assert kinds == {"promoter_replacement": 2, "bacterial_deletion": 2}
+    assert kinds == {"promoter_replacement": 2, "deletion_strain": 2}
 
 
 def test_the_build_writes_its_accounting_samples_and_oracles(built: Any) -> None:

@@ -745,7 +745,7 @@ def test_crispri_genotype_is_one_knockdown_on_the_b_number_namespace() -> None:
     } == {
         "systematic_gene_name": "b0002",
         "perturbed_gene_name": "thrA",
-        "perturbation_type": "bacterial_crispr_interference",
+        "perturbation_type": "crispr_interference",
         "gene_namespace": "ecoli_k12_mg1655_bnumber",
         "identifier_mapping": None,
         "state": "present",

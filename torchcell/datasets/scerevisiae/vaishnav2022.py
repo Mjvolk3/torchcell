@@ -594,6 +594,7 @@ def genotype(sequence_id: str, sequence: str) -> Genotype:
         perturbations=[
             VariablePromoterReporterPerturbation(
                 systematic_gene_name=REPORTER_IDENTIFIER,
+                gene_namespace="scerevisiae_s288c_sgd_systematic",
                 perturbed_gene_name=REPORTER_GENE,
                 source_organism=REPORTER_SOURCE_ORGANISM,
                 is_heterologous=True,

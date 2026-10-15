@@ -7,7 +7,7 @@ and (``--data``) the graph it emits from its dev-tree LMDB.
 de Siqueira 2025 mean log10 percent-of-total abundance, the mean of the replicates' logs: 5 samples,
 BacterialProteinAbundanceExperiment. The same five writable-strain samples as the Top3
 family on a second released normalization, so the graph shape is identical: the 2 PT
-records carry one BacterialDeletionPerturbation each (the 3 KT2440 records carry none),
+records carry one DeletionStrainPerturbation each (the 3 KT2440 records carry none),
 served as `bacterial perturbation`, and the environment carries
 EnvironmentPhysicalPerturbation edits.
 """

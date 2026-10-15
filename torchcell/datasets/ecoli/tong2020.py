@@ -13,7 +13,7 @@ sources, 113,880 cells, one value per (strain, carbon source).
 
 RECORD = one (deletion strain x carbon source) ``BacterialFitnessExperiment``:
 
-- GENOTYPE: one ``BacterialDeletionPerturbation``. Two collections, two backgrounds, so
+- GENOTYPE: one ``DeletionStrainPerturbation``. Two collections, two backgrounds, so
   two ``AssemblyReferenceGenome`` pins. A Keio strain is written against BW25113
   (``ecoli_k12_bw25113_locus_tag``, collection "Keio collection", cassette "kanamycin
   cassette"); a strain of the sRNA and small protein library against MG1655
@@ -161,12 +161,12 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import MOPS_MINIMAL
 from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
-    BacterialDeletionPerturbation,
     BacterialFitnessExperiment,
     BacterialFitnessExperimentReference,
     BacterialGeneNamespace,
     Concentration,
     ConcentrationUnit,
+    DeletionStrainPerturbation,
     Environment,
     EnvironmentPhysicalPerturbation,
     Experiment,
@@ -1482,7 +1482,7 @@ def genotype(strain: StrainRecord) -> Genotype:
     keio = strain.collection == "keio"
     return Genotype(
         perturbations=[
-            BacterialDeletionPerturbation(
+            DeletionStrainPerturbation(
                 systematic_gene_name=strain.systematic_gene_name,
                 perturbed_gene_name=strain.perturbed_gene_name,
                 gene_namespace=strain.gene_namespace,

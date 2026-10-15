@@ -15,9 +15,9 @@ alleviating, which is the instance count the bacterial schedule row states.
 RECORD = one ``BacterialGeneInteractionExperiment`` per Table S2 row: a two-gene
 ``Genotype`` holding the donor allele and the recipient allele, distinguished by their
 ``collection`` and ``cassette``, and a ``GeneInteractionPhenotype`` holding that row's
-``GI score`` verbatim. Each side is a ``BacterialDeletionPerturbation`` or, for the
+``GI score`` verbatim. Each side is a ``DeletionStrainPerturbation`` or, for the
 156 strains whose own source calls them hypomorphs, a
-``BacterialMarkedAllelePerturbation``.
+``MarkedAllelePerturbation``.
 
 WHICH OF THE 37 RELEASED SI FILES IS AUTHORITATIVE, AND WHY. The release is 21 PDFs
 (Figures S1-S5 = ``si1``-``si5``, Protocols S1-S16 = ``si6``-``si21``) and 16
@@ -77,7 +77,7 @@ THE HYPOMORPHS ARE STORED, AND THE TWO SIDES ARE SOURCED DIFFERENTLY. The recipi
 array is "3,968 non-essential single gene deletions ... and 149 hypomorphic mutant
 strains ... in which a Kan-R marker was integrated into the 3'-UTR", and 7 of the 163
 donors are essential-gene hypomorphs (Table S1 ``Essentiality``). Until
-``BacterialMarkedAllelePerturbation`` landed (issue #792) no leaf could type a 3'-end
+``MarkedAllelePerturbation`` landed (issue #792) no leaf could type a 3'-end
 cassette that alters transcript abundance, and the 3,420 pairs involving one were
 dropped; they are now records, with each side carrying only what ITS OWN source says:
 
@@ -202,18 +202,18 @@ from torchcell.datamodels.schema import (
     BACTERIAL_ASSEMBLY_SETS,
     AssemblyReferenceGenome,
     BacterialAssemblySet,
-    BacterialDeletionPerturbation,
     BacterialGeneInteractionExperiment,
     BacterialGeneInteractionExperimentReference,
     BacterialGeneNamespace,
-    BacterialMarkedAllelePerturbation,
     BacterialReleasedStrainPerturbation,
     BacterialStrainBackground,
+    DeletionStrainPerturbation,
     Environment,
     Experiment,
     ExperimentReference,
     GeneInteractionPhenotype,
     Genotype,
+    MarkedAllelePerturbation,
     Media,
     MediaComponent,
     MediaComponentRole,
@@ -1379,9 +1379,9 @@ P_VALUE_GAP = ProvenanceGap(
 )
 
 
-def donor_perturbation(locus_tag: str, symbol: str) -> BacterialDeletionPerturbation:
+def donor_perturbation(locus_tag: str, symbol: str) -> DeletionStrainPerturbation:
     """The donor side: the Hfr C query deletion, marked with ``cat``."""
-    return BacterialDeletionPerturbation(
+    return DeletionStrainPerturbation(
         systematic_gene_name=locus_tag,
         perturbed_gene_name=symbol,
         gene_namespace=MG1655_NAMESPACE,
@@ -1392,7 +1392,7 @@ def donor_perturbation(locus_tag: str, symbol: str) -> BacterialDeletionPerturba
 
 def recipient_perturbation(
     locus_tag: str, symbol: str
-) -> BacterialDeletionPerturbation | BacterialReleasedStrainPerturbation:
+) -> DeletionStrainPerturbation | BacterialReleasedStrainPerturbation:
     """The recipient side: the arrayed Keio deletion, marked with ``kan``.
 
     A recipient Table S2 names by an id that is no b-number (a Keio JW number, a
@@ -1411,7 +1411,7 @@ def recipient_perturbation(
             cassette=RECIPIENT_CASSETTE,
             collection=RECIPIENT_COLLECTION,
         )
-    return BacterialDeletionPerturbation(
+    return DeletionStrainPerturbation(
         systematic_gene_name=locus_tag,
         perturbed_gene_name=symbol,
         gene_namespace=MG1655_NAMESPACE,
@@ -1436,7 +1436,7 @@ HYPOMORPH_RECIPIENT_COLLECTION = SPA_TAG_ESSENTIAL
 
 def donor_hypomorph_perturbation(
     locus_tag: str, symbol: str
-) -> BacterialMarkedAllelePerturbation:
+) -> MarkedAllelePerturbation:
     """The donor side of an ESSENTIAL-gene query: a cat-marked hypomorphic allele.
 
     Sourced differently from the recipient hypomorph, and the asymmetry is real. The
@@ -1449,7 +1449,7 @@ def donor_hypomorph_perturbation(
     seven a tag, a terminus or an insertion site, so those stay None rather than
     borrowing the recipient array's SPA tag.
     """
-    return BacterialMarkedAllelePerturbation(
+    return MarkedAllelePerturbation(
         systematic_gene_name=locus_tag,
         perturbed_gene_name=symbol,
         gene_namespace=MG1655_NAMESPACE,
@@ -1461,7 +1461,7 @@ def donor_hypomorph_perturbation(
 
 def recipient_hypomorph_perturbation(
     locus_tag: str, symbol: str
-) -> BacterialMarkedAllelePerturbation:
+) -> MarkedAllelePerturbation:
     """The recipient side of a SPA-tagged essential gene: kan in the 3'-UTR, SPA tag.
 
     Every field is a verbatim source value, and the magnitude of the knockdown is NOT a
@@ -1470,7 +1470,7 @@ def recipient_hypomorph_perturbation(
     transcript "abundance or stability", so neither a direction multiplier nor a fold
     change exists to store.
     """
-    return BacterialMarkedAllelePerturbation(
+    return MarkedAllelePerturbation(
         systematic_gene_name=locus_tag,
         perturbed_gene_name=symbol,
         gene_namespace=MG1655_NAMESPACE,
@@ -2001,8 +2001,8 @@ VERIFIER_PROVENANCE = Provenance(
     method="Table S2, the GI score of every released high-confidence (donor, "
     "recipient) pair; one BacterialGeneInteractionExperiment per row, a two-leaf "
     "genotype against MG1655 whose donor carries cat and whose recipient carries kan "
-    "(a BacterialDeletionPerturbation on each side, or a "
-    "BacterialMarkedAllelePerturbation where the source calls the strain a hypomorph), "
+    "(a DeletionStrainPerturbation on each side, or a "
+    "MarkedAllelePerturbation where the source calls the strain a hypomorph), "
     "reference = the unperturbed conjugant chassis at 0",
     page="Table S2 (pgen.1004120.s023.xls), sheet 'WG_GI_Score_Mar_06_2013'",
     retrieved=DATA_RETRIEVED_AT,
@@ -2076,9 +2076,7 @@ def _l1_hypomorph_sides_are_marked_alleles(
             ),
         )
         for side, is_hypomorph, collection, tag, site in expectations:
-            want = (
-                {"bacterial_marked_allele"} if is_hypomorph else {"bacterial_deletion"}
-            )
+            want = {"marked_allele"} if is_hypomorph else {"deletion_strain"}
             if side is recipient and not is_hypomorph:
                 # a recipient released under no b-number is on the released-strain
                 # leaf (#1057)

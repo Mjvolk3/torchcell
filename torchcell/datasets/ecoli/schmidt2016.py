@@ -135,7 +135,7 @@ assay of proteins this block also covers, under its own ``measurement_type``), a
 rim-deletion growth rates, which are this paper's only gene-perturbation phenotype. They
 are separate MODULES on purpose: ``build_manifest`` keys a built store's staleness on the
 schema closure of the loader module's own ``torchcell.datamodels`` imports, so adding
-``FitnessPhenotype`` or ``BacterialDeletionPerturbation`` here would mark the already-served
+``FitnessPhenotype`` or ``DeletionStrainPerturbation`` here would mark the already-served
 ``proteome_schmidt2016`` store stale for a change that touches none of its records. They
 import the pinned artifact, the condition table, :func:`build_environment`,
 :func:`check_environments_distinct`, :func:`publication` and the three supplementary

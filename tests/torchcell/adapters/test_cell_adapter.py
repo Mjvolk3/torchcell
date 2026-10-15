@@ -503,7 +503,9 @@ def test_experiment_genotype_and_publication_nodes_are_content_addressed() -> No
     """The experiment handler returns the experiment node, whose id is the sha256 of
     the fully inlined record but whose blob holds a ``$ref`` pointer in place of the
     756-byte environment (floor 512), followed by one ``interned constant`` node
-    carrying that environment. The 922-byte genotype stays inline (floor 8192).
+    carrying that environment. The 1086-byte genotype (922 before P1 put
+    ``gene_namespace`` and ``identifier_mapping`` on every perturbation) stays
+    inline (floor 8192).
     Genotype names come back sorted by systematic name (YAL001C before YAL002W);
     the genotype node carries no ``serialized_data``.
     """
@@ -511,7 +513,7 @@ def test_experiment_genotype_and_publication_nodes_are_content_addressed() -> No
     data = {"experiment": experiment, "publication": PUBLICATION}
     adapter = _bare()
     dump = experiment.model_dump()
-    assert len(json.dumps(dump["genotype"])) == 922
+    assert len(json.dumps(dump["genotype"])) == 1086
     env_payload = _environment_payload(experiment)
     env_id = _environment_constant_id(experiment)
     pointered = {**dump, "environment": {"$ref": env_id, "kind": "environment"}}

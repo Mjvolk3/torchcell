@@ -49,16 +49,16 @@ from torchcell.datamodels.schema import (
     BACTERIAL_ASSEMBLY_SETS,
     AssayType,
     AssemblyReferenceGenome,
-    BacterialDegronPerturbation,
-    BacterialDeletionPerturbation,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
-    BacterialMarkedAllelePerturbation,
     Concentration,
     ConcentrationUnit,
+    DegronPerturbation,
+    DeletionStrainPerturbation,
     DoseBasis,
     EnvironmentPhysicalPerturbation,
     FitnessPhenotype,
+    MarkedAllelePerturbation,
     MeasurementType,
     MediaComponentRole,
     PhysicalExposurePerturbation,
@@ -541,7 +541,7 @@ def test_the_genotype_names_the_collection_and_the_symbol_route_and_no_cassette(
 ):
     genotype = s.genotype(_column("thrA", "BW25113_0002"))
     (perturbation,) = genotype.perturbations
-    assert isinstance(perturbation, BacterialDeletionPerturbation)
+    assert isinstance(perturbation, DeletionStrainPerturbation)
     assert perturbation.systematic_gene_name == "BW25113_0002"
     assert perturbation.perturbed_gene_name == "thrA"
     assert perturbation.gene_namespace == "ecoli_k12_bw25113_locus_tag"
@@ -567,7 +567,7 @@ def test_an_allele_column_stores_only_the_suffix_the_release_wrote() -> None:
     tag = s.genotype(
         _column("fusA-SPA", "BW25113_3340", kind="tag", token="SPA", base="fusA")
     ).perturbations[0]
-    assert isinstance(tag, BacterialMarkedAllelePerturbation)
+    assert isinstance(tag, MarkedAllelePerturbation)
     assert (tag.tag, tag.cassette, tag.terminus) == ("SPA", None, None)
     assert tag.allele_effect == "not_stated"
     assert (tag.collection, tag.insertion_site) == (None, None)
@@ -580,13 +580,13 @@ def test_an_allele_column_stores_only_the_suffix_the_release_wrote() -> None:
     marker = s.genotype(
         _column("fabZ-kan", "BW25113_0180", kind="marker", token="kan", base="fabZ")
     ).perturbations[0]
-    assert isinstance(marker, BacterialMarkedAllelePerturbation)
+    assert isinstance(marker, MarkedAllelePerturbation)
     assert (marker.cassette, marker.tag, marker.terminus) == ("kan", None, None)
 
     degron = s.genotype(
         _column("imp-DAS+4", "BW25113_0054", kind="degron", token="DAS+4", base="imp")
     ).perturbations[0]
-    assert isinstance(degron, BacterialDegronPerturbation)
+    assert isinstance(degron, DegronPerturbation)
     assert degron.degron == "DAS+4"
     assert (degron.terminus, degron.protease, degron.adaptor) == (None, None, None)
     assert degron.inducing_condition is None

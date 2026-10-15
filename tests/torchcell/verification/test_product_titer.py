@@ -23,10 +23,10 @@ import pytest
 from torchcell.datamodels.media import M9_NREL_CARRUTHERS2025
 from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
-    BacterialDeletionPerturbation,
     Compound,
     ConcentrationUnit,
     CultureEnvironment,
+    DeletionStrainPerturbation,
     Genotype,
     HeterologousPathwayPerturbation,
     ProductTiterExperiment,
@@ -77,7 +77,7 @@ def _genotype() -> Genotype:
                 )
                 for token in PATHWAY_GENES
             ),
-            BacterialDeletionPerturbation(
+            DeletionStrainPerturbation(
                 systematic_gene_name=HOST_DELETION,
                 perturbed_gene_name=HOST_DELETION,
                 gene_namespace=NAMESPACE,

@@ -221,6 +221,7 @@ EXAMPLES: dict[str, dict[str, Any]] = {
     # fills in, and states the released name once more in released_gene_name.
     "torchcell.datamodels.schema.ReleasedGeneNamePerturbation": {
         "systematic_gene_name": "ADE2",
+        "gene_namespace": "scerevisiae_s288c_sgd_systematic",
         "perturbed_gene_name": "ADE2",
         "released_gene_name": "ADE2",
         "released_kind": "deletion",
@@ -231,6 +232,7 @@ EXAMPLES: dict[str, dict[str, Any]] = {
     # Gene, verbatim.
     "torchcell.datamodels.schema.NaturalLossOfFunctionPerturbation": {
         "systematic_gene_name": "PAU8",
+        "gene_namespace": "scerevisiae_s288c_sgd_systematic",
         "perturbed_gene_name": "PAU8",
         "strain_id": "AAB",
         "cause": "homozygous_frameshift",
@@ -297,6 +299,7 @@ EXAMPLES: dict[str, dict[str, Any]] = {
     # (Vaishnav 2022 origID HQ_28, GSE163045 MolEvol SC-Ura table, abbreviated insert).
     "torchcell.datamodels.schema.VariablePromoterReporterPerturbation": {
         "systematic_gene_name": "addgene127546:YFP",
+        "gene_namespace": "scerevisiae_s288c_sgd_systematic",
         "perturbed_gene_name": "YFP",
         "source_organism": "synthetic construct",
         "is_heterologous": True,
@@ -317,6 +320,7 @@ EXAMPLES: dict[str, dict[str, Any]] = {
     },
     "torchcell.datamodels.schema.ExpressionModulationPerturbation": {
         "systematic_gene_name": "YAL001C",
+        "gene_namespace": "scerevisiae_s288c_sgd_systematic",
         "perturbed_gene_name": "TFC3",
         "expression_direction": "increased",
         "crispr": {"effector": "dCas9-VPR"},
@@ -370,6 +374,7 @@ EXAMPLES: dict[str, dict[str, Any]] = {
         "harvest_optical_density": 0.6,
     },
     "torchcell.datamodels.schema.PresenceAbsencePerturbation": {
+        "gene_namespace": "scerevisiae_s288c_sgd_systematic",
         "systematic_gene_name": "YAL001C",
         "perturbed_gene_name": "TFC3",
         "state": "present",
@@ -422,11 +427,6 @@ EXAMPLES: dict[str, dict[str, Any]] = {
         "source_identifier": "b0002",
         "route": "eck_crosswalk",
     },
-    "torchcell.datamodels.schema.BacterialDeletionPerturbation": {
-        "systematic_gene_name": "b0002",
-        "perturbed_gene_name": "thrA",
-        "gene_namespace": "ecoli_k12_mg1655_bnumber",
-    },
     # The called-variant family (#731): the generic builder cannot invent a call whose
     # site id agrees with its own coordinates, nor a frequency with a stated basis, so
     # each one is committed. Values are rows of the Lim 2025 released matrix.
@@ -443,19 +443,7 @@ EXAMPLES: dict[str, dict[str, Any]] = {
         "frequency": 1.0,
         "frequency_basis": "fraction",
     },
-    "torchcell.datamodels.schema.BacterialVariantPerturbation": {
-        "systematic_gene_name": "PP_3415",
-        "perturbed_gene_name": "PP_3415",
-        "gene_namespace": "pputida_kt2440_locus_tag",
-        "call": _VARIANT_CALL_EXAMPLE,
-    },
-    "torchcell.datamodels.schema.BacterialSequenceVariantPerturbation": {
-        "systematic_gene_name": "PP_3415",
-        "perturbed_gene_name": "PP_3415",
-        "gene_namespace": "pputida_kt2440_locus_tag",
-        "call": _VARIANT_CALL_EXAMPLE,
-    },
-    "torchcell.datamodels.schema.BacterialSiteVariantPerturbation": {
+    "torchcell.datamodels.schema.SiteVariantCallPerturbation": {
         "systematic_gene_name": "AE015451:4586057",
         "perturbed_gene_name": "PP_4061, PP_4063",
         "gene_namespace": "pputida_kt2440_locus_tag",
@@ -464,24 +452,13 @@ EXAMPLES: dict[str, dict[str, Any]] = {
         "flanking_systematic_gene_names": ["PP_4061", "PP_4063"],
         "flanking_gene_statement": "PP_4061, PP_4063",
     },
-    "torchcell.datamodels.schema.BacterialSpanDeletionPerturbation": {
+    "torchcell.datamodels.schema.SpanDeletionCallPerturbation": {
         "systematic_gene_name": "PP_4061",
         "perturbed_gene_name": "PP_4061",
         "gene_namespace": "pputida_kt2440_locus_tag",
         "call": _SPAN_CALL_EXAMPLE,
         "span_designation": "AE015451:4588139 \u03945,553 bp",
         "span_systematic_gene_names": ["PP_4061", "PP_4063"],
-    },
-    "torchcell.datamodels.schema.TransposonInsertionPerturbation": {
-        "systematic_gene_name": "b0002",
-        "perturbed_gene_name": "thrA",
-        "gene_namespace": "ecoli_k12_mg1655_bnumber",
-    },
-    "torchcell.datamodels.schema.BacterialCrisprInterferencePerturbation": {
-        "systematic_gene_name": "b0002",
-        "perturbed_gene_name": "thrA",
-        "gene_namespace": "ecoli_k12_mg1655_bnumber",
-        "crispr": {"effector": "dCas9-Mxi1"},
     },
     # #691 round 2: the released CRISPR leaf serves both directions, so its direction
     # is required with no default and the generic builder cannot invent it.
@@ -500,31 +477,6 @@ EXAMPLES: dict[str, dict[str, Any]] = {
         "gene_namespace": "ecoli_k12_mg1655_bnumber",
         "expression_direction": "increased",
         "promoter_name": "Ptac",
-    },
-    # The round-2 bacterial leaves (#749, #792, #799): each needs a real locus tag of
-    # the namespace it declares, which the generic builder cannot invent.
-    "torchcell.datamodels.schema.BacterialMarkedAllelePerturbation": {
-        "systematic_gene_name": "b0002",
-        "perturbed_gene_name": "thrA",
-        "gene_namespace": "ecoli_k12_mg1655_bnumber",
-        "cassette": "kan",
-        "insertion_site": "3'-UTR",
-        "tag": "SPA",
-        "terminus": "C",
-        "allele_effect": "hypomorphic",
-    },
-    "torchcell.datamodels.schema.BacterialDegronPerturbation": {
-        "systematic_gene_name": "b0002",
-        "perturbed_gene_name": "thrA",
-        "gene_namespace": "ecoli_k12_mg1655_bnumber",
-        "degron": "DAS+4",
-        "terminus": "C",
-    },
-    "torchcell.datamodels.schema.BacterialCrisprActivationPerturbation": {
-        "systematic_gene_name": "b0002",
-        "perturbed_gene_name": "thrA",
-        "gene_namespace": "ecoli_k12_mg1655_bnumber",
-        "crispr": {"effector": "dCas9*-MCPSoxS"},
     },
     # An exposure states a dose or declares a typed gap; the generic builder sets
     # neither, so the example carries the one Shiver 2016 releases.

@@ -6,7 +6,7 @@
 knowledge-graph nodes and edges.
 
 One record per (guide, antibiotic): a single
-``BacterialCrisprInterferencePerturbation`` served as a ``bacterial perturbation`` node
+``CrisprInterferencePerturbation`` served as a ``bacterial perturbation`` node
 carrying its ``CrisprConstruct``, the response as an ``EnvironmentResponsePhenotype``, and
 the antibiotic at its Table S3 dose as an environment perturbation.
 """

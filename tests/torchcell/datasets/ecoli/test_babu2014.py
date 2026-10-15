@@ -57,13 +57,13 @@ from torchcell.data import ManifestPinMismatchError, check_manifest_pin
 from torchcell.datamodels.media import MEDIA_LIBRARY
 from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
-    BacterialDeletionPerturbation,
     BacterialGeneInteractionExperiment,
     BacterialGeneInteractionExperimentReference,
-    BacterialMarkedAllelePerturbation,
     BacterialReleasedStrainPerturbation,
+    DeletionStrainPerturbation,
     GeneInteractionPhenotype,
     Genotype,
+    MarkedAllelePerturbation,
     MediaComponentRole,
     ReleasedStrainKind,
     SampleUnit,
@@ -452,7 +452,7 @@ def test_the_genotype_is_two_leaves_distinguished_by_cassette() -> None:
     by_tag = {
         p.systematic_gene_name: p
         for p in genotype.perturbations
-        if isinstance(p, BacterialDeletionPerturbation)
+        if isinstance(p, DeletionStrainPerturbation)
     }
     assert len(by_tag) == 2
     assert by_tag["b0002"].cassette == m.DONOR_CASSETTE
@@ -482,8 +482,8 @@ def test_a_hypomorph_side_is_a_marked_allele_and_the_two_sides_differ() -> None:
     by_tag = {p.systematic_gene_name: p for p in genotype.perturbations}
     donor = by_tag["b0002"]
     recipient = by_tag["b0006"]
-    assert isinstance(donor, BacterialMarkedAllelePerturbation)
-    assert isinstance(recipient, BacterialMarkedAllelePerturbation)
+    assert isinstance(donor, MarkedAllelePerturbation)
+    assert isinstance(recipient, MarkedAllelePerturbation)
     assert donor.allele_effect == "hypomorphic"
     assert donor.cassette == m.DONOR_CASSETTE
     assert donor.collection == m.DONOR_COLLECTION
@@ -495,7 +495,7 @@ def test_a_hypomorph_side_is_a_marked_allele_and_the_two_sides_differ() -> None:
     assert recipient.insertion_site == "3'-UTR"
     assert recipient.collection == m.SPA_TAG_ESSENTIAL
     # no magnitude is stored: Butland says the defect's nature is unknown
-    assert "expression_range" not in BacterialMarkedAllelePerturbation.model_fields
+    assert "expression_range" not in MarkedAllelePerturbation.model_fields
     # a non-hypomorph side stays a deletion, so the leaf is not applied by position
     deletion_only = m.pair_genotype(
         "b0001",
@@ -506,8 +506,7 @@ def test_a_hypomorph_side_is_a_marked_allele_and_the_two_sides_differ() -> None:
         recipient_is_hypomorph=False,
     )
     assert all(
-        isinstance(p, BacterialDeletionPerturbation)
-        for p in deletion_only.perturbations
+        isinstance(p, DeletionStrainPerturbation) for p in deletion_only.perturbations
     )
 
 
@@ -628,8 +627,8 @@ def test_the_build_keeps_every_pair_the_identifier_rules_allow(
             for p in genotype.perturbations
             if isinstance(
                 p,
-                BacterialDeletionPerturbation
-                | BacterialMarkedAllelePerturbation
+                DeletionStrainPerturbation
+                | MarkedAllelePerturbation
                 | BacterialReleasedStrainPerturbation,
             )
         ]

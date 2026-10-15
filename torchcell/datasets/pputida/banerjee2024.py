@@ -74,7 +74,7 @@ reference is a strain the paper names as the comparison WITH a released number.
 
 The genome is a separate layer: this loader stores the identifiers the paper releases and
 never asks the annotation whether one exists. ``gacA`` is the clear case -- Banerjee
-names the gene and never gives it a locus tag. ``BacterialDeletionPerturbation`` requires
+names the gene and never gives it a locus tag. ``DeletionStrainPerturbation`` requires
 one, and the three mirrored P. putida papers that do print a tag for that gene contradict
 each other (PP_4099 in Schmidt 2022 and Thompson 2020, PP_1650 in Borchert 2023), so
 IY1485's ΔgacA is recorded untyped with its quote and that contradiction rather than
@@ -118,7 +118,6 @@ from torchcell.datamodels.media import (
     M9_MODIFIED_TUBE_BANERJEE2024,
 )
 from torchcell.datamodels.schema import (
-    BacterialDeletionPerturbation,
     BacterialGeneNamespace,
     BacterialReferenceStrain,
     Compound,
@@ -126,6 +125,7 @@ from torchcell.datamodels.schema import (
     ConcentrationUnit,
     CultureEnvironment,
     CultureFormat,
+    DeletionStrainPerturbation,
     EndpointRule,
     EnvironmentPhysicalPerturbation,
     Experiment,
@@ -583,7 +583,7 @@ PHA_CLUSTER = _paper(
 )
 #: ``gacA`` is the one deleted gene this paper never gives a locus tag, and it is the
 #: one genotype element of this dataset that no served leaf can hold:
-#: ``BacterialDeletionPerturbation.systematic_gene_name`` takes a KT2440 locus tag and
+#: ``DeletionStrainPerturbation.systematic_gene_name`` takes a KT2440 locus tag and
 #: refuses a bare symbol. The deferral the sentence offers ("as previously reported (Eng
 #: et al., 2021)") does not close it either, and the three mirrored P. putida papers that
 #: DO print a tag for this gene CONTRADICT each other:
@@ -603,7 +603,7 @@ GACA_NO_TAG = _paper(
     _Q_IY1485_GENOTYPE,
     page=_RESULTS_FEDBATCH,
     note="the released identity is the SYMBOL: Banerjee states no locus tag for it, and "
-    "the genome tier is not consulted to supply one. BacterialDeletionPerturbation "
+    "the genome tier is not consulted to supply one. DeletionStrainPerturbation "
     "requires a locus tag, so this deletion is carried as a recorded finding rather "
     "than as a typed perturbation; the mirrored papers that print a tag disagree "
     "(PP_4099 in Schmidt 2022 and Thompson 2020, PP_1650 in Borchert 2023), which is "
@@ -614,7 +614,7 @@ GENOTYPE_NOT_TYPED: tuple[tuple[str, str, str], ...] = (
     (
         "IY1485",
         "gacA",
-        "BacterialDeletionPerturbation requires a KT2440 locus tag and Banerjee states "
+        "DeletionStrainPerturbation requires a KT2440 locus tag and Banerjee states "
         "none for gacA; the mirrored siblings that do print one contradict each other "
         "(PP_4099 in Schmidt 2022 and Thompson 2020, PP_1650 in Borchert 2023), so no "
         "tag is chosen here",
@@ -1149,7 +1149,7 @@ STRAIN_SPECS: dict[str, StrainSpec] = {
 }
 
 
-def deletion_perturbations(symbol: str) -> list[BacterialDeletionPerturbation]:
+def deletion_perturbations(symbol: str) -> list[DeletionStrainPerturbation]:
     """Every chromosomal deletion one released SYMBOL stands for.
 
     ``phaABC`` is three loci, because the paper states the cluster as a tag RANGE;
@@ -1158,7 +1158,7 @@ def deletion_perturbations(symbol: str) -> list[BacterialDeletionPerturbation]:
     """
     if symbol == "phaABC":
         return [
-            BacterialDeletionPerturbation(
+            DeletionStrainPerturbation(
                 systematic_gene_name=tag,
                 perturbed_gene_name=f"pha{letter}",
                 gene_namespace=KT2440_NAMESPACE,
@@ -1173,7 +1173,7 @@ def deletion_perturbations(symbol: str) -> list[BacterialDeletionPerturbation]:
         return []
     tag = str(DELETION_LOCUS_TAGS[symbol].value)
     return [
-        BacterialDeletionPerturbation(
+        DeletionStrainPerturbation(
             systematic_gene_name=tag,
             perturbed_gene_name=symbol,
             gene_namespace=KT2440_NAMESPACE,
@@ -2537,7 +2537,7 @@ def _genome_reference_l4(experiments: Sequence[dict[str, Any]]) -> LevelResult:
         pert["systematic_gene_name"]
         for exp in experiments
         for pert in exp["genotype"]["perturbations"]
-        if pert["perturbation_type"] == "bacterial_deletion"
+        if pert["perturbation_type"] == "deletion_strain"
     }
     return l3_convention(
         "released_locus_tags_are_reported_not_gated",

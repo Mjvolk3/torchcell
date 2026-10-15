@@ -11,7 +11,7 @@ import re
 from collections import Counter
 from collections.abc import Mapping
 from enum import StrEnum
-from typing import Any, Literal, Self, get_args
+from typing import Any, Final, Literal, Self, get_args
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 from sortedcontainers import SortedDict
@@ -338,27 +338,67 @@ BacterialGeneNamespace = Literal[
     "ecoli_k12_w3110_refseq_locus_tag",
     # --- end #910 ---------------------------------------------------------------- #
 ]
-"""The identifier namespace a bacterial locus tag belongs to.
+"""The bacterial members of :data:`GeneIdNamespace`: the locus-tag space of one
+deposited bacterial assembly set.
 
 One member per deposited strain assembly set, because a ``BW25113_`` number is NOT an
 MG1655 b-number (measured: joining the two by gene name leaves 45 disagreements and 230
-BW25113 genes absent from MG1655, so no string surgery relates them). A record states
-which namespace its ``systematic_gene_name`` is written in; the assembly those bytes
-come from is pinned by ``AssemblyReferenceGenome.assembly_set``.
+BW25113 genes absent from MG1655, so no string surgery relates them). Since the P1
+unification (ontology-unify, 2026-10-15) every gene perturbation carries
+``gene_namespace: GeneIdNamespace``; this sub-vocabulary remains only as the type of
+``BacterialBackgroundAllele.gene_namespace`` and of the loaders' strain-to-namespace
+tables, and retires with that class (P5).
 """
 
-BACTERIAL_LOCUS_TAG_PATTERNS: dict[str, str] = {
+GeneIdNamespace = Literal[
+    "scerevisiae_s288c_sgd_systematic",
+    "scerevisiae_cenpk113_7d_locus_tag",
+    "scerevisiae_peter2018_pangenome_orf",
+    "ecoli_k12_mg1655_bnumber",
+    "ecoli_k12_bw25113_locus_tag",
+    "pputida_kt2440_locus_tag",
+    "ecoli_b_rel606_locus_tag",
+    "ecoli_k12_w3110_refseq_locus_tag",
+]
+"""The HOST genome a gene perturbation's identifiers are written against (P1).
+
+One member per identifier space a served record carries or the genomes tier deposits,
+measured rather than assumed (``experiments/database/scripts/measure_gene_id_namespaces.py``
+over the 51 served stores of release ``2026.10.06-4b293d34`` and the deposited yeast
+sets): the five bacterial locus-tag spaces above, the SGD S288C R64 systematic names every
+yeast leaf stores (``YAL001C``, ``Q0010``, ``YNCA0001W``), the ``SCEN_`` locus tags of
+the deposited CEN.PK113-7D assembly (``scerevisiae_CENPK113-7D_ASM257140v2``, #990), and
+the Peter 2018 pangenome ORF ids Caudal 2024 stores on its accessory-presence leaf
+(``13-EC1118_1N26_0012g``, 79,016 identifiers of the served store).
+
+The field means the host, never "which pattern the string matches": a heterologous gene
+symbol on an addition leaf, a released ECK accession, a CURIE and a variant site id match
+no member's pattern, and the namespace still names the host the construct was built in
+or the study wrote its strains against. There is deliberately no ``released``, ``other``
+or ``mixed`` member: "resolved or released" is a property of the identifier and is
+stated by the leaf class, and a member that skipped the pattern check would erase the
+host in the same value (constitution, principle 5).
+"""
+
+GENE_ID_NAMESPACE_PATTERNS: dict[str, str] = {
     "ecoli_k12_mg1655_bnumber": r"^b\d{4}$",
     "ecoli_k12_bw25113_locus_tag": r"^BW25113_\d{4}$",
     "pputida_kt2440_locus_tag": (
         r"^PP_(?:\d{4}|(?:5|16|23)S[A-G]|t\d{2}|tm\d{2}|mr\d{2}|r\d{2})$"
     ),
     "ecoli_b_rel606_locus_tag": r"^ECB_[rt]?\d{5}$",
-    # --- begin #910: E. coli K-12 W3110, read RefSeq-primary --------------------- #
     "ecoli_k12_w3110_refseq_locus_tag": r"^Y75_RS\d{5}$",
-    # --- end #910 ---------------------------------------------------------------- #
+    "scerevisiae_s288c_sgd_systematic": (
+        r"^(Y[A-P][LR]\d{3}[WC](-[A-Z])?|Q\d{4}|YNC[A-Q]\d{4}[WC])$"
+    ),
+    "scerevisiae_cenpk113_7d_locus_tag": (
+        r"^SCEN_(?:[A-P]\d{5}|[QR]\d+|[A-R]trna\d{1,2}[A-Z]?)$"
+    ),
+    "scerevisiae_peter2018_pangenome_orf": r"^\d+-\S+$",
 }
-"""Locus-tag pattern of each namespace, measured from the deposited GenBank files.
+"""Identifier pattern of each :data:`GeneIdNamespace` member, measured from the
+deposited files of each assembly set, pairwise disjoint (pinned by
+``tests/torchcell/datamodels/test_schema.py``).
 
 MG1655 and BW25113 are uniform four-digit tags. KT2440 is four-digit for its 5,621
 protein-coding genes plus the named structural-RNA tags its annotation uses: the
@@ -371,29 +411,44 @@ the one namespace read off a RefSeq file, because its GenBank annotation
 (GCA_000010245.1, the 2006 DDBJ/NIG submission) carries 4,444 gene features and not one
 ``locus_tag``: all 4,531 gene and pseudogene features of the RefSeq flat file are
 ``Y75_RSNNNNN`` (owner route #910, 2026-10-12; measured in ``teteneva2024``).
+
+S288C is the SGD systematic feature name: protein-coding genes, pseudogenes and
+transposable-element genes (``YAL001C``, ``YAL001C-A``), mitochondrial genes
+(``Q0010``) and the non-coding ``YNC`` names; 7,147 of the 7,148 gene-class features of
+the R64-4-1 GFF match it (the one exception, ``YNCI0012``, carries no strand letter and
+was never stored). CEN.PK113-7D (GCA_002571405.2): 5,865 ``SCEN_<chromosome><5
+digits>`` tags, 21 mitochondrial ``SCEN_Q``/``SCEN_R`` tags and 285 tRNA tags of the form
+``SCEN_<chromosome>trna<n><amino acid>``; all 6,171 locus tags of the deposited GenBank
+match. The Peter 2018 pangenome id is ``<column number>-<ORF name>`` as the presence
+matrix heads its columns, the leading ``X`` stripped by ``torchcell.sequence.natural_isolate``.
 """
+
+BACTERIAL_LOCUS_TAG_PATTERNS: dict[str, str] = {
+    namespace: GENE_ID_NAMESPACE_PATTERNS[namespace]
+    for namespace in get_args(BacterialGeneNamespace)
+}
+"""The bacterial rows of :data:`GENE_ID_NAMESPACE_PATTERNS`, keyed as
+:data:`BacterialGeneNamespace` lists them; what ``_validate_bacterial_locus_tag`` and
+the loaders' ``LOCUS_TAG_PATTERNS`` read."""
 
 BACTERIAL_LOCUS_TAG_PATTERN = (
     "^(?:"
     + "|".join(pattern[1:-1] for pattern in BACTERIAL_LOCUS_TAG_PATTERNS.values())
     + ")$"
 )
-"""Any of the three namespaces' tags -- what a bacterial leaf's name validator accepts.
+"""Any bacterial namespace's tag -- what ``BacterialBackgroundAllele`` accepts.
 
-A leaf accepts any host's tag (one leaf class serves all three hosts) and the
-namespace field is then required to AGREE with the tag's own form, so the pair cannot
-disagree. A yeast systematic name matches none of the three and is rejected, which is
-the behavior that keeps the two families' identifier spaces separate.
+Before P1 every bacterial perturbation leaf overrode the name validator with this
+union; the leaves now share ``GenePerturbation``'s validator over every
+:data:`GeneIdNamespace` member, and this union serves the one bacterial-only class left.
 """
 
 
 def _validate_bacterial_locus_tag(value: str) -> str:
-    """Return ``value`` if it is a locus tag of one of the three bacterial namespaces.
+    """Return ``value`` if it is a locus tag of one of the bacterial namespaces.
 
-    The bacterial counterpart of ``GenePerturbation.validate_sys_gene_name``. The yeast
-    validator is deliberately left untouched (widening it would move 35 of 36 served
-    dataset closures and would admit ``b0002`` into a yeast SGA leaf), so each bacterial
-    leaf overrides the name validator with this one instead.
+    Used by ``BacterialBackgroundAllele`` (retired with it in P5); every gene
+    perturbation leaf validates through ``_validate_host_identifier`` instead.
     """
     if not re.match(BACTERIAL_LOCUS_TAG_PATTERN, value):
         raise ValueError(
@@ -407,11 +462,12 @@ def _validate_bacterial_locus_tag(value: str) -> str:
 
 
 def _namespace_of_locus_tag(value: str) -> str | None:
-    """The namespace whose pattern ``value`` matches, or ``None`` for a foreign id.
+    """The BACTERIAL namespace whose pattern ``value`` matches, or ``None``.
 
-    ``None`` is not a failure: a heterologous gene carried on an expression cassette
-    has no host locus tag at all (``HeterologousPathwayPerturbation``), and that case is
-    distinguished from a tag written in the wrong namespace.
+    What the released leaves and ``BacterialBackgroundAllele`` read: a released
+    identifier is refused when it is a locus tag of a pinned bacterial assembly, because
+    such a tag is stored on the placed leaf of its technology. ``None`` is not a
+    failure.
     """
     for namespace, pattern in BACTERIAL_LOCUS_TAG_PATTERNS.items():
         if re.match(pattern, value):
@@ -419,23 +475,61 @@ def _namespace_of_locus_tag(value: str) -> str | None:
     return None
 
 
+def _namespace_of_identifier(value: str) -> str | None:
+    """The :data:`GeneIdNamespace` member whose pattern ``value`` matches, or ``None``.
+
+    ``None`` is not a failure: a heterologous gene symbol on an addition leaf, a released
+    ECK accession, a CURIE and a variant site id match no host's pattern, and the leaf
+    class decides whether such an identifier is admissible.
+    """
+    for namespace, pattern in GENE_ID_NAMESPACE_PATTERNS.items():
+        if re.match(pattern, value):
+            return namespace
+    return None
+
+
+def _validate_host_identifier(value: str) -> str:
+    """Return ``value`` if it has the form of some :data:`GeneIdNamespace` member.
+
+    ``GenePerturbation.validate_sys_gene_name``: the identifier of a placed leaf is a
+    host identifier of SOME deposited namespace; ``_check_gene_namespace`` then requires
+    it to be the declared host's. A leaf whose identifiers are legitimately not host
+    identifiers (an addition, a natural pangenome ORF, a released name, a variant site)
+    overrides this with its own rule.
+    """
+    if _namespace_of_identifier(value) is None:
+        raise ValueError(
+            f"Invalid systematic gene name format: {value!r} matches no gene identifier "
+            "namespace pattern (expected one of "
+            + ", ".join(
+                f"{namespace} ({pattern})"
+                for namespace, pattern in GENE_ID_NAMESPACE_PATTERNS.items()
+            )
+            + ")"
+        )
+    return value
+
+
 def _check_gene_namespace(model: "GenePerturbation") -> None:
-    """Raise when a record's locus tag belongs to a namespace other than its own.
+    """Raise when a record's identifier belongs to a namespace other than its own.
 
     ``gene_namespace`` names the HOST genome the record is written against. When the
-    identifier IS a host locus tag the two must agree, so a KT2440 tag cannot be filed
-    under the MG1655 namespace. When the identifier is foreign to all three (a
-    heterologous gene symbol on an addition leaf) the namespace still names the host the
-    construct was built in, and there is nothing to cross-check.
+    identifier IS a host identifier (a locus tag, an SGD systematic name, a pangenome
+    ORF id) the two must agree, so a KT2440 tag cannot be filed under the MG1655
+    namespace and a b-number cannot be filed under S288C. When the identifier is foreign
+    to every namespace (a heterologous gene symbol on an addition leaf, a released ECK
+    accession) the namespace still names the host the construct was built in, and there
+    is nothing to cross-check. The ``identifier_mapping`` routes are checked against the
+    same namespaces.
     """
-    namespace = getattr(model, "gene_namespace")
-    tag_namespace = _namespace_of_locus_tag(model.systematic_gene_name)
+    namespace = model.gene_namespace
+    tag_namespace = _namespace_of_identifier(model.systematic_gene_name)
     if tag_namespace is not None and tag_namespace != namespace:
         raise ValueError(
             f"{model.systematic_gene_name!r} is a {tag_namespace} tag but "
             f"gene_namespace is {namespace!r}"
         )
-    mapping = getattr(model, "identifier_mapping")
+    mapping = model.identifier_mapping
     if mapping is None:
         return
     if mapping.source_identifier == model.systematic_gene_name:
@@ -444,7 +538,7 @@ def _check_gene_namespace(model: "GenePerturbation") -> None:
             "itself; a tag the source released verbatim carries no mapping"
         )
     if mapping.route == "eck_crosswalk":
-        source_namespace = _namespace_of_locus_tag(mapping.source_identifier)
+        source_namespace = _namespace_of_identifier(mapping.source_identifier)
         if source_namespace == namespace:
             raise ValueError(
                 f"an eck_crosswalk crosses namespaces, but {mapping.source_identifier!r} "
@@ -452,7 +546,7 @@ def _check_gene_namespace(model: "GenePerturbation") -> None:
             )
     # --- begin #753: two routes two landed loaders could not name --------------- #
     if mapping.route == "locus_tag_synonym":
-        source_namespace = _namespace_of_locus_tag(mapping.source_identifier)
+        source_namespace = _namespace_of_identifier(mapping.source_identifier)
         if source_namespace != namespace:
             raise ValueError(
                 f"a locus_tag_synonym stays inside one namespace, but "
@@ -1399,33 +1493,66 @@ class SOTerm(ModelStrict):
 
 #: An S288C systematic feature name: protein-coding genes, pseudogenes and
 #: transposable-element genes (``YAL001C``, ``YAL001C-A``), mitochondrial genes
-#: (``Q0010``) and the non-coding ``YNC`` names. The identity form of every placed yeast
-#: leaf.
+#: (``Q0010``) and the non-coding ``YNC`` names. The S288C row of
+#: :data:`GENE_ID_NAMESPACE_PATTERNS`, compiled; the identity form of every yeast leaf
+#: whose ``gene_namespace`` defaults to S288C.
 _SYSTEMATIC_GENE_NAME_RE = re.compile(
-    r"^(Y[A-P][LR]\d{3}[WC](-[A-Z])?|Q\d{4}|YNC[A-Q]\d{4}[WC])$"
+    GENE_ID_NAMESPACE_PATTERNS["scerevisiae_s288c_sgd_systematic"]
 )
+
+#: The S288C member of :data:`GeneIdNamespace`, the class default of every leaf whose
+#: name validator pins the S288C systematic form (the stored name's form proves the
+#: namespace, so the default asserts nothing the record does not already say).
+SGD_S288C_NAMESPACE: Final = "scerevisiae_s288c_sgd_systematic"
 
 
 class GenePerturbation(ModelStrict):
     """Base perturbation of a single gene by systematic and common name.
 
-    ``provenance`` records whether the difference from the S288C reference was
-    ENGINEERED in the lab or arose NATURALLY in an isolate. It defaults to
-    ``"engineered"`` so the many engineered perturbation types need not repeat it;
-    natural types set ``provenance="natural"`` as a class default.
+    ``gene_namespace`` names the HOST genome the record's identifiers are written
+    against (P1, ontology-unify 2026-10-15): the host is a fact of every record, and
+    before this field it was expressible only by choosing a bacterial leaf class. It is
+    REQUIRED on the base. A leaf whose name validator pins the S288C systematic form
+    defaults it to :data:`SGD_S288C_NAMESPACE`, because the stored name's form already
+    proves the namespace; a leaf whose validator is relaxed (an addition, a natural
+    pangenome ORF, a released name, a variant site) carries no default, so the loader
+    states the host. When the identifier has the form of some namespace it must be the
+    declared one (``_check_gene_namespace``); when it has none, the leaf decides what is
+    admissible.
+
+    ``identifier_mapping`` records how a stored identifier was DERIVED from the one the
+    source released, when the two differ; ``None`` when the source released it as stored.
+
+    ``provenance`` records whether the difference from the reference was ENGINEERED in
+    the lab or arose NATURALLY in an isolate. It defaults to ``"engineered"`` so the many
+    engineered perturbation types need not repeat it; natural types set
+    ``provenance="natural"`` as a class default.
     """
 
     systematic_gene_name: str
     perturbed_gene_name: str
+    gene_namespace: GeneIdNamespace = Field(
+        description="the HOST genome this record's identifiers are written against; "
+        "when systematic_gene_name has the form of a namespace it must be this one"
+    )
+    identifier_mapping: DerivedIdentifierMapping | None = Field(
+        default=None,
+        description="how systematic_gene_name was derived from the identifier the "
+        "source released; None when the source released it as stored",
+    )
     provenance: str = "engineered"
 
     @field_validator("systematic_gene_name", mode="after")
     @classmethod
     def validate_sys_gene_name(cls, v: str) -> str:
-        """Validate the systematic gene name matches an allowed feature pattern."""
-        if not _SYSTEMATIC_GENE_NAME_RE.match(v):
-            raise ValueError("Invalid systematic gene name format")
-        return v
+        """The identifier has the form of some host namespace (see the class doc)."""
+        return _validate_host_identifier(v)
+
+    @model_validator(mode="after")
+    def _identifier_agrees_with_namespace(self) -> Self:
+        """A host-form identifier belongs to the declared host; mappings stay in it."""
+        _check_gene_namespace(self)
+        return self
 
     @field_validator("perturbed_gene_name", mode="after")
     @classmethod
@@ -1661,6 +1788,10 @@ class DeletionPerturbation(PresenceAbsencePerturbation, ModelStrict):
 
     description: str = "Deletion via KanMX or NatMX gene replacement"
     perturbation_type: Literal["deletion"] = "deletion"
+    gene_namespace: GeneIdNamespace = Field(
+        default=SGD_S288C_NAMESPACE,
+        description="the host genome; S288C by default because this leaf's name validator pins the S288C systematic form",
+    )
     state: str = "absent"
     mechanism_so_id: str = "SO:0000159"
     mechanism_so_name: str = "deletion"
@@ -1758,6 +1889,10 @@ class HeterozygousDeletionPerturbation(
         "Heterozygous deletion: one allele of a diploid replaced by a cassette"
     )
     perturbation_type: Literal["heterozygous_deletion"] = "heterozygous_deletion"
+    gene_namespace: GeneIdNamespace = Field(
+        default=SGD_S288C_NAMESPACE,
+        description="the host genome; S288C by default because this leaf's name validator pins the S288C systematic form",
+    )
     state: str = "present"
     mechanism_so_id: str = "SO:0000159"
     mechanism_so_name: str = "deletion"
@@ -1838,6 +1973,10 @@ class DampPerturbation(SequencePerturbation, ModelStrict):
         description="Gene expression is decreased by 4-10 fold",
     )
     perturbation_type: Literal["damp"] = "damp"
+    gene_namespace: GeneIdNamespace = Field(
+        default=SGD_S288C_NAMESPACE,
+        description="the host genome; S288C by default because this leaf's name validator pins the S288C systematic form",
+    )
 
 
 class SgaDampPerturbation(DampPerturbation, ModelStrict):
@@ -1858,6 +1997,10 @@ class TsAllelePerturbation(SequencePerturbation, ModelStrict):
     perturbation_type: Literal["temperature_sensitive_allele"] = (
         "temperature_sensitive_allele"
     )
+    gene_namespace: GeneIdNamespace = Field(
+        default=SGD_S288C_NAMESPACE,
+        description="the host genome; S288C by default because this leaf's name validator pins the S288C systematic form",
+    )
 
 
 class AllelePerturbation(SequencePerturbation, ModelStrict):
@@ -1869,6 +2012,10 @@ class AllelePerturbation(SequencePerturbation, ModelStrict):
     )
     # seq: str = "NOT IMPLEMENTED"
     perturbation_type: Literal["allele"] = "allele"
+    gene_namespace: GeneIdNamespace = Field(
+        default=SGD_S288C_NAMESPACE,
+        description="the host genome; S288C by default because this leaf's name validator pins the S288C systematic form",
+    )
 
 
 class SuppressorAllelePerturbation(SequencePerturbation, ModelStrict):
@@ -1879,6 +2026,10 @@ class SuppressorAllelePerturbation(SequencePerturbation, ModelStrict):
         "of a perturbation, compared to the fitness of the perturbation alone."
     )
     perturbation_type: Literal["suppressor_allele"] = "suppressor_allele"
+    gene_namespace: GeneIdNamespace = Field(
+        default=SGD_S288C_NAMESPACE,
+        description="the host genome; S288C by default because this leaf's name validator pins the S288C systematic form",
+    )
 
 
 class SgaSuppressorAllelePerturbation(SuppressorAllelePerturbation, ModelStrict):
@@ -1949,6 +2100,10 @@ class ConditionalAllelePerturbation(
         "Conditional allele of an essential gene (ts, DAmP, promoter replacement)"
     )
     perturbation_type: Literal["conditional_allele"] = "conditional_allele"
+    gene_namespace: GeneIdNamespace = Field(
+        default=SGD_S288C_NAMESPACE,
+        description="the host genome; S288C by default because this leaf's name validator pins the S288C systematic form",
+    )
     provenance: str = "engineered"
     allele_class: ConditionalAlleleClass | None = Field(
         description="how the allele reduces function; None only with a gap"
@@ -2232,6 +2387,10 @@ class SequenceVariantPerturbation(SequencePerturbation, ModelStrict):
         "sequence by off-graph pointer"
     )
     perturbation_type: Literal["sequence_variant"] = "sequence_variant"
+    gene_namespace: GeneIdNamespace = Field(
+        default=SGD_S288C_NAMESPACE,
+        description="the host genome; S288C by default because this leaf's name validator pins the S288C systematic form",
+    )
     provenance: str = "natural"
     mechanism_so_id: str = "SO:0001483"
     mechanism_so_name: str = "SNV"
@@ -2593,6 +2752,10 @@ class EngineeredCopyNumberPerturbation(GenePerturbation, ModelStrict):
 
     description: str = "Engineered copy-number/dosage change of a present native gene"
     perturbation_type: Literal["engineered_copy_number"] = "engineered_copy_number"
+    gene_namespace: GeneIdNamespace = Field(
+        default=SGD_S288C_NAMESPACE,
+        description="the host genome; S288C by default because this leaf's name validator pins the S288C systematic form",
+    )
     provenance: str = "engineered"
     state: str = "present"
     mechanism_so_id: str = "SO:0001019"
@@ -2681,6 +2844,10 @@ class CrisprActivationPerturbation(ExpressionModulationPerturbation, ModelStrict
 
     description: str = "CRISPR activation (increased expression of a present gene)"
     perturbation_type: Literal["crispr_activation"] = "crispr_activation"
+    gene_namespace: GeneIdNamespace = Field(
+        default=SGD_S288C_NAMESPACE,
+        description="the host genome; S288C by default because this leaf's name validator pins the S288C systematic form",
+    )
     expression_direction: str = "increased"
 
 
@@ -2692,6 +2859,10 @@ class CrisprInterferencePerturbation(ExpressionModulationPerturbation, ModelStri
 
     description: str = "CRISPR interference (decreased expression of a present gene)"
     perturbation_type: Literal["crispr_interference"] = "crispr_interference"
+    gene_namespace: GeneIdNamespace = Field(
+        default=SGD_S288C_NAMESPACE,
+        description="the host genome; S288C by default because this leaf's name validator pins the S288C systematic form",
+    )
     expression_direction: str = "decreased"
 
 
@@ -2701,9 +2872,8 @@ class CrisprInterferencePerturbation(ExpressionModulationPerturbation, ModelStri
 # coding sequence and copy number are unchanged, and a synthetic promoter (with its
 # selection marker) is INSERTED between the native promoter and the start codon, so the
 # native DNA is displaced rather than removed. The mechanism is therefore SO:0000667
-# ``insertion``, not the ``delins`` of the bacterial ``PromoterReplacementPerturbation``
-# (whose locus-tag validator and required ``gene_namespace`` make it bacterial-only).
-# A new leaf and a new member of ``GenePerturbationType``; nothing above changes.
+# ``insertion``, not the ``delins`` of ``PromoterReplacementPerturbation``, which
+# removes the native promoter. A new leaf and a new member of ``GenePerturbationType``.
 # --------------------------------------------------------------------------- #
 class InduciblePromoterInsertionPerturbation(
     ExpressionModulationPerturbation, ModelStrict
@@ -2734,6 +2904,10 @@ class InduciblePromoterInsertionPerturbation(
     )
     perturbation_type: Literal["inducible_promoter_insertion"] = (
         "inducible_promoter_insertion"
+    )
+    gene_namespace: GeneIdNamespace = Field(
+        default=SGD_S288C_NAMESPACE,
+        description="the host genome; S288C by default because this leaf's name validator pins the S288C systematic form",
     )
     mechanism_so_id: str = "SO:0000667"
     mechanism_so_name: str = "insertion"
@@ -2796,39 +2970,38 @@ class InduciblePromoterInsertionPerturbation(
 
 
 # --------------------------------------------------------------------------- #
-# Bacterial perturbation leaves (plan 3a).
-#
-# Each is a subclass of the axis leaf its OUTCOME already belongs to, so every
-# existing filter keeps working: ``issubclass(_, DeletionPerturbation)`` still
-# catches a bacterial knockout, and the expression axis still holds every
-# modulation. Each carries a required ``gene_namespace`` and overrides the name
-# validator with the bacterial patterns, so the yeast validator on
-# ``GenePerturbation`` is untouched and a bacterial tag still FAILS on a yeast leaf
-# (widening the base would admit ``b0002`` into an SGA leaf and would move 35 of 36
-# served dataset closures for no benefit). A new leaf moves 0 of 36.
+# Host-neutral perturbation leaves that were written for the bacterial hosts first
+# (plan 3a, #731, #749, #792, #799) and took general names in P1 (ontology-unify,
+# 2026-10-15). Each is a subclass of the axis leaf its OUTCOME belongs to, so every
+# existing filter keeps working: ``issubclass(_, DeletionPerturbation)`` still catches
+# a knockout, and the expression axis still holds every modulation. The host is the
+# base class's ``gene_namespace``, stated by the loader; none of these leaves defaults
+# it, because none of them pins one host's identifier form.
 # --------------------------------------------------------------------------- #
-class BacterialDeletionPerturbation(DeletionPerturbation, ModelStrict):
-    """A bacterial gene deletion, identified by a namespaced locus tag.
+class DeletionStrainPerturbation(DeletionPerturbation, ModelStrict):
+    """A gene deletion STRAIN: the deletion plus the strain-level facts the source states.
 
     Serves the catalogued single-deletion rows (the Keio collection and the
-    chemical-genomics screens built on it) and the Keio-derived deletion pairs. Same
-    AXIS-1 ``state="absent"`` and SO ``deletion`` mechanism as the yeast deletion
-    leaves; what differs is the identifier space, which is why this is a leaf rather
-    than a reuse. ``collection`` and ``cassette`` are strain discriminators in the
-    same sense they are on the yeast barcoded leaf: two records that delete the same
-    gene from different collections are two strains, not two replicates.
+    chemical-genomics screens built on it), the Keio-derived deletion pairs and the
+    designed deletion strains of the engineered-chassis releases. Same AXIS-1
+    ``state="absent"`` and SO ``deletion`` mechanism as the marker-specific yeast
+    deletion leaves. ``collection``, ``cassette`` and ``construction`` are each stated
+    verbatim when the source states them and are strain discriminators in the same sense
+    they are on ``BarcodedKanMxDeletionPerturbation``: two records that delete the same
+    gene from different collections are two strains, not two replicates. Unlike that
+    leaf it asserts no marker (a Keio strain carries ``FRT-kan-FRT``, a scarless
+    deletion none), and unlike ``DeletionPerturbation`` it can state one. Before P1 this
+    was ``BacterialDeletionPerturbation``; the host is now ``gene_namespace``.
     """
 
-    description: str = "Bacterial gene deletion, identified by a namespaced locus tag"
-    perturbation_type: Literal["bacterial_deletion"] = "bacterial_deletion"  # type: ignore[assignment]
-    deletion_type: str = "bacterial"
-    gene_namespace: BacterialGeneNamespace = Field(
-        description="which host's locus-tag namespace systematic_gene_name is written in"
+    description: str = (
+        "Gene deletion strain, with its collection, cassette and construction as stated"
     )
-    identifier_mapping: DerivedIdentifierMapping | None = Field(
-        default=None,
-        description="how systematic_gene_name was derived from the identifier the "
-        "source released; None when the source released it as stored",
+    perturbation_type: Literal["deletion_strain"] = "deletion_strain"  # type: ignore[assignment]
+    deletion_type: str = "strain"
+    gene_namespace: GeneIdNamespace = Field(
+        description="the host genome the deletion is written against; required, no "
+        "default, because this leaf pins no one host's identifier form"
     )
     collection: str | None = Field(
         default=None,
@@ -2843,18 +3016,6 @@ class BacterialDeletionPerturbation(DeletionPerturbation, ModelStrict):
     construction: StrainConstruction | None = Field(
         default=None, description="accession / lab / batch / plate of this strain"
     )
-
-    @field_validator("systematic_gene_name", mode="after")
-    @classmethod
-    def validate_sys_gene_name(cls, v: str) -> str:
-        """A bacterial locus tag, not a yeast systematic name."""
-        return _validate_bacterial_locus_tag(v)
-
-    @model_validator(mode="after")
-    def _check_namespace(self) -> "BacterialDeletionPerturbation":
-        """The locus tag's own namespace is the one the record declares."""
-        _check_gene_namespace(self)
-        return self
 
 
 class TransposonInsertionPerturbation(PresenceAbsencePerturbation, ModelStrict):
@@ -2883,14 +3044,6 @@ class TransposonInsertionPerturbation(PresenceAbsencePerturbation, ModelStrict):
     mechanism_so_id: str = "SO:0001218"
     mechanism_so_name: str = "transgenic_insertion"
     provenance: str = "engineered"
-    gene_namespace: BacterialGeneNamespace = Field(
-        description="which host's locus-tag namespace systematic_gene_name is written in"
-    )
-    identifier_mapping: DerivedIdentifierMapping | None = Field(
-        default=None,
-        description="how systematic_gene_name was derived from the identifier the "
-        "source released; None when the source released it as stored",
-    )
     barcode: str | None = Field(
         default=None,
         description="the random barcode the strain is counted by in a pooled assay; "
@@ -2917,12 +3070,6 @@ class TransposonInsertionPerturbation(PresenceAbsencePerturbation, ModelStrict):
         "the strain identity",
     )
 
-    @field_validator("systematic_gene_name", mode="after")
-    @classmethod
-    def validate_sys_gene_name(cls, v: str) -> str:
-        """A bacterial locus tag, not a yeast systematic name."""
-        return _validate_bacterial_locus_tag(v)
-
     @field_validator("mechanism_so_id", mode="after")
     @classmethod
     def validate_mechanism_so_id(cls, v: str) -> str:
@@ -2936,51 +3083,6 @@ class TransposonInsertionPerturbation(PresenceAbsencePerturbation, ModelStrict):
         if v is not None and v < 1:
             raise ValueError(f"insertion_position is 1-based, got {v}")
         return v
-
-    @model_validator(mode="after")
-    def _check_namespace(self) -> "TransposonInsertionPerturbation":
-        """The locus tag's own namespace is the one the record declares."""
-        _check_gene_namespace(self)
-        return self
-
-
-class BacterialCrisprInterferencePerturbation(
-    CrisprInterferencePerturbation, ModelStrict
-):
-    """CRISPRi knockdown of a bacterial gene, reusing the shared guide construct.
-
-    The ``+guide`` rows. It inherits the whole expression axis unchanged -- present
-    gene, ``sgRNA`` mechanism, ``expression_direction="decreased"`` -- and the
-    ``crispr`` construct the yeast CRISPRi leaf already defines, so the guide payload
-    is described once for both families. Only the identifier space differs.
-    """
-
-    description: str = (
-        "CRISPR interference (decreased expression) of a bacterial gene by locus tag"
-    )
-    perturbation_type: Literal["bacterial_crispr_interference"] = (
-        "bacterial_crispr_interference"  # type: ignore[assignment]
-    )
-    gene_namespace: BacterialGeneNamespace = Field(
-        description="which host's locus-tag namespace systematic_gene_name is written in"
-    )
-    identifier_mapping: DerivedIdentifierMapping | None = Field(
-        default=None,
-        description="how systematic_gene_name was derived from the identifier the "
-        "source released; None when the source released it as stored",
-    )
-
-    @field_validator("systematic_gene_name", mode="after")
-    @classmethod
-    def validate_sys_gene_name(cls, v: str) -> str:
-        """A bacterial locus tag, not a yeast systematic name."""
-        return _validate_bacterial_locus_tag(v)
-
-    @model_validator(mode="after")
-    def _check_namespace(self) -> "BacterialCrisprInterferencePerturbation":
-        """The locus tag's own namespace is the one the record declares."""
-        _check_gene_namespace(self)
-        return self
 
 
 class PromoterReplacementPerturbation(ExpressionModulationPerturbation, ModelStrict):
@@ -3004,14 +3106,6 @@ class PromoterReplacementPerturbation(ExpressionModulationPerturbation, ModelStr
     perturbation_type: Literal["promoter_replacement"] = "promoter_replacement"
     mechanism_so_id: str = "SO:1000032"
     mechanism_so_name: str = "delins"
-    gene_namespace: BacterialGeneNamespace = Field(
-        description="which host's locus-tag namespace systematic_gene_name is written in"
-    )
-    identifier_mapping: DerivedIdentifierMapping | None = Field(
-        default=None,
-        description="how systematic_gene_name was derived from the identifier the "
-        "source released; None when the source released it as stored",
-    )
     promoter_name: str = Field(
         description="identity of the promoter part installed, verbatim (e.g. 'Ptac', "
         "'P14g', 'ParaBAD')"
@@ -3038,18 +3132,6 @@ class PromoterReplacementPerturbation(ExpressionModulationPerturbation, ModelStr
         "field is inherited from the expression axis and stays None",
     )
 
-    @field_validator("systematic_gene_name", mode="after")
-    @classmethod
-    def validate_sys_gene_name(cls, v: str) -> str:
-        """A bacterial locus tag, not a yeast systematic name."""
-        return _validate_bacterial_locus_tag(v)
-
-    @model_validator(mode="after")
-    def _check_namespace(self) -> "PromoterReplacementPerturbation":
-        """The locus tag's own namespace is the one the record declares."""
-        _check_gene_namespace(self)
-        return self
-
 
 class HeterologousPathwayPerturbation(
     HashableProvenanceGapMixin, GeneAdditionPerturbation, ModelStrict
@@ -3065,9 +3147,9 @@ class HeterologousPathwayPerturbation(
 
     ``gene_namespace`` names the HOST genome the construct was built in, not the
     namespace of ``systematic_gene_name`` (which is typically a heterologous gene
-    symbol). That is the one place the field means the host rather than the identifier's
-    own space, and it is checked only when the identifier IS a host locus tag -- which
-    it legitimately is for an extra copy of a NATIVE gene in the same pathway.
+    symbol), as it does on every leaf since P1; it is cross-checked only when the
+    identifier IS a host identifier, which it legitimately is for an extra copy of a
+    NATIVE gene in the same pathway. No default: the loader states the host.
 
     ``source_organism`` is stated or a typed ``ProvenanceGap`` (#915). A production
     paper can name a pathway part by its token alone (Menasalvas 2025's pIY670 writes
@@ -3095,15 +3177,6 @@ class HeterologousPathwayPerturbation(
         "names no organism for this part"
     )
     # --- end #915 ---------------------------------------------------------------- #
-    gene_namespace: BacterialGeneNamespace = Field(
-        description="the HOST genome the construct was built in (not the namespace of "
-        "systematic_gene_name, which is usually a heterologous symbol)"
-    )
-    identifier_mapping: DerivedIdentifierMapping | None = Field(
-        default=None,
-        description="how systematic_gene_name was derived from the identifier the "
-        "source released; None when the source released it as stored",
-    )
     pathway_name: str = Field(
         description="the pathway this gene is part of, verbatim (e.g. 'isoprenol via "
         "mevalonate'), so one pathway's genes form a recoverable set"
@@ -3128,12 +3201,6 @@ class HeterologousPathwayPerturbation(
                 "leaf, never copy_number=0)"
             )
         return v
-
-    @model_validator(mode="after")
-    def _check_namespace(self) -> "HeterologousPathwayPerturbation":
-        """When the identifier is a host locus tag it must be this host's."""
-        _check_gene_namespace(self)
-        return self
 
     # --- begin #915: a typed gap on the source organism ------------------------- #
     @model_validator(mode="after")
@@ -3196,7 +3263,7 @@ class BacterialVariantType(StrEnum):
     - ``snv``: one base replaced by one base.
     - ``insertion``: bases gained.
     - ``deletion``: bases lost (an IN-GENE deletion; a deletion that removes whole
-      loci is ``BacterialSpanDeletionPerturbation``, on the presence/absence axis).
+      loci is ``SpanDeletionCallPerturbation``, on the presence/absence axis).
     - ``substitution``: a multi-base replacement (Lim's ``2 bp->CG``).
     """
 
@@ -3469,7 +3536,7 @@ VARIANT_SITE_ID_PATTERN = r"^[^\s].*:\d+$"
 """The shape of a site id, so a locus tag can never be stored in one's place."""
 
 
-class BacterialVariantPerturbation(SequencePerturbation, ModelStrict):
+class VariantCallPerturbation(SequencePerturbation, ModelStrict):
     """AXIS-3 base of the called-variant leaves: a sequence change the caller FOUND.
 
     Abstract. ``provenance`` defaults to ``"natural"`` because the motivating case is a
@@ -3479,41 +3546,16 @@ class BacterialVariantPerturbation(SequencePerturbation, ModelStrict):
 
     ``mechanism_so_id`` stays the generic ``SO:0001060 sequence_variant``: it is true of
     every call whatever its kind, and the kind-specific pair is read off
-    ``call.mechanism_so``, so the two cannot disagree.
+    ``call.mechanism_so``, so the two cannot disagree. The host the call is written
+    against is the base class's ``gene_namespace`` (no default: a call is a statement
+    about one deposited assembly, named by the loader). Before P1 this family carried a
+    ``Bacterial`` prefix; a caller's released call is host-neutral.
     """
 
-    gene_namespace: BacterialGeneNamespace = Field(
-        description="the HOST genome this call is written against"
-    )
-    identifier_mapping: DerivedIdentifierMapping | None = Field(
-        default=None,
-        description="how systematic_gene_name was derived from the identifier the "
-        "release named (a gene symbol, a RefSeq locus tag); None when the release "
-        "named the stored tag itself",
-    )
     call: BacterialVariantCall = Field(
         description="the called variant, exactly as the release states it"
     )
     provenance: str = "natural"
-
-    @field_validator("systematic_gene_name", mode="after")
-    @classmethod
-    def validate_sys_gene_name(cls, v: str) -> str:
-        """A bacterial locus tag, not a yeast systematic name.
-
-        The intergenic leaf overrides this: a call between loci is keyed on its site.
-        """
-        return _validate_bacterial_locus_tag(v)
-
-    @model_validator(mode="after")
-    def _check_namespace(self) -> "BacterialVariantPerturbation":
-        """The locus tag's own namespace is the one the record declares.
-
-        A site id matches no namespace pattern, so this is a no-op on the intergenic
-        leaf, exactly as it is for a heterologous gene symbol on the addition leaf.
-        """
-        _check_gene_namespace(self)
-        return self
 
     @property
     def mechanism_so(self) -> tuple[str, str]:
@@ -3521,10 +3563,10 @@ class BacterialVariantPerturbation(SequencePerturbation, ModelStrict):
         return self.call.mechanism_so
 
 
-class BacterialSequenceVariantPerturbation(
-    HashableProvenanceGapMixin, BacterialVariantPerturbation, ModelStrict
+class LocusVariantCallPerturbation(
+    HashableProvenanceGapMixin, VariantCallPerturbation, ModelStrict
 ):
-    """A called variant that sits INSIDE a named bacterial locus.
+    """A called variant that sits INSIDE a named locus of the pinned assembly.
 
     The 58 de Siqueira calls carrying a GenBank locus tag, the 123 single-locus Lim
     rows, and every designed single-allele strain of the same shape. A partial deletion
@@ -3535,16 +3577,14 @@ class BacterialSequenceVariantPerturbation(
     """
 
     description: str = (
-        "Called sequence variant inside a bacterial locus, with its replicon, position, "
-        "change and call frequency"
+        "Called sequence variant inside a locus, with its replicon, position, change "
+        "and call frequency"
     )
-    perturbation_type: Literal["bacterial_sequence_variant"] = (
-        "bacterial_sequence_variant"
-    )
+    perturbation_type: Literal["locus_variant_call"] = "locus_variant_call"
 
 
-class BacterialSiteVariantPerturbation(
-    HashableProvenanceGapMixin, BacterialVariantPerturbation, ModelStrict
+class SiteVariantCallPerturbation(
+    HashableProvenanceGapMixin, VariantCallPerturbation, ModelStrict
 ):
     """A called variant keyed on its genomic SITE, because no locus tag holds it.
 
@@ -3572,7 +3612,7 @@ class BacterialSiteVariantPerturbation(
         "Called sequence variant keyed on its genomic site, because no locus tag of the "
         "pinned assembly holds it"
     )
-    perturbation_type: Literal["bacterial_site_variant"] = "bacterial_site_variant"
+    perturbation_type: Literal["site_variant_call"] = "site_variant_call"
     site_kind: VariantSiteKind = Field(
         description="why the call is keyed on its site rather than on a locus tag"
     )
@@ -3595,12 +3635,12 @@ class BacterialSiteVariantPerturbation(
     @field_validator("systematic_gene_name", mode="after")
     @classmethod
     def validate_sys_gene_name(cls, v: str) -> str:
-        """A site id, never a locus tag (a tag would claim the variant is in a gene)."""
-        if _namespace_of_locus_tag(v) is not None:
+        """A site id, never a host identifier (one would claim the variant is in a gene)."""
+        if _namespace_of_identifier(v) is not None:
             raise ValueError(
-                f"{v!r} is a bacterial locus tag; a site-keyed call is keyed on its "
-                "site, and a call inside a locus of the pinned assembly is a "
-                "BacterialSequenceVariantPerturbation"
+                f"{v!r} is a gene identifier of a host namespace; a site-keyed call is "
+                "keyed on its site, and a call inside a locus of the pinned assembly "
+                "is a LocusVariantCallPerturbation"
             )
         if not re.match(VARIANT_SITE_ID_PATTERN, v):
             raise ValueError(
@@ -3609,7 +3649,7 @@ class BacterialSiteVariantPerturbation(
         return v
 
     @model_validator(mode="after")
-    def _check_site(self) -> "BacterialSiteVariantPerturbation":
+    def _check_site(self) -> "SiteVariantCallPerturbation":
         """The site id matches its own call; flanks are tags; the locus rule holds."""
         expected = _variant_site_id(
             self.call.reference_sequence, self.call.position_start
@@ -3620,7 +3660,7 @@ class BacterialSiteVariantPerturbation(
                 f"({expected!r})"
             )
         for tag in self.flanking_systematic_gene_names:
-            if _namespace_of_locus_tag(tag) != self.gene_namespace:
+            if _namespace_of_identifier(tag) != self.gene_namespace:
                 raise ValueError(
                     f"flanking locus {tag!r} is not a {self.gene_namespace} tag"
                 )
@@ -3645,8 +3685,8 @@ class BacterialSiteVariantPerturbation(
         return _variant_site_id(call.reference_sequence, call.position_start)
 
 
-class BacterialSpanDeletionPerturbation(
-    HashableProvenanceGapMixin, BacterialDeletionPerturbation, ModelStrict
+class SpanDeletionCallPerturbation(
+    HashableProvenanceGapMixin, DeletionStrainPerturbation, ModelStrict
 ):
     """One locus removed ENTIRELY by a called deletion that spans a run of loci.
 
@@ -3665,10 +3705,10 @@ class BacterialSpanDeletionPerturbation(
     """
 
     description: str = (
-        "Bacterial locus removed entirely by a called deletion spanning a run of loci"
+        "Locus removed entirely by a called deletion spanning a run of loci"
     )
-    perturbation_type: Literal["bacterial_span_deletion"] = "bacterial_span_deletion"  # type: ignore[assignment]
-    deletion_type: str = "bacterial_span"
+    perturbation_type: Literal["span_deletion_call"] = "span_deletion_call"  # type: ignore[assignment]
+    deletion_type: str = "called_span"
     call: BacterialVariantCall = Field(
         description="the called deletion, exactly as the release states it"
     )
@@ -3688,7 +3728,7 @@ class BacterialSpanDeletionPerturbation(
     )
 
     @model_validator(mode="after")
-    def _check_span(self) -> "BacterialSpanDeletionPerturbation":
+    def _check_span(self) -> "SpanDeletionCallPerturbation":
         """The event names at least this locus, and the call is a deletion."""
         if self.call.variant_type is not BacterialVariantType.deletion:
             raise ValueError(
@@ -3696,9 +3736,7 @@ class BacterialSpanDeletionPerturbation(
                 f"{self.call.variant_type.value}"
             )
         if not self.span_designation.strip():
-            raise ValueError(
-                "BacterialSpanDeletionPerturbation needs a span_designation"
-            )
+            raise ValueError("SpanDeletionCallPerturbation needs a span_designation")
         if self.systematic_gene_name not in self.span_systematic_gene_names:
             raise ValueError(
                 f"{self.systematic_gene_name} is not among the loci its own event "
@@ -3713,18 +3751,17 @@ class BacterialSpanDeletionPerturbation(
 
 
 # --------------------------------------------------------------------------- #
-# Bacterial perturbation leaves, round 2 (issues #749, #792, #799).
+# Round-2 leaves (issues #749, #792, #799), general names since P1.
 #
-# Three more leaves on the same contract as the five above: each subclasses the
-# axis leaf its OUTCOME already belongs to, carries a required ``gene_namespace``
-# and overrides the name validator with the bacterial patterns, so the yeast
-# validator on ``GenePerturbation`` is untouched. The block is additive and
-# self-contained; nothing above it is edited.
+# Two leaves on the same contract as those above: each subclasses the axis leaf its
+# OUTCOME already belongs to; the host is the base class's ``gene_namespace``. The
+# third leaf of the round, ``BacterialCrisprActivationPerturbation``, differed from
+# ``CrisprActivationPerturbation`` by the namespace alone and folded into it in P1.
 #
 # Each leaf exists because a landed loader MEASURED released rows it could not
 # type, and the counts are in the PR body and the dataset notes:
 #
-# - ``BacterialMarkedAllelePerturbation``: Shiver 2016 drops 134 Nichols 2011
+# - ``MarkedAllelePerturbation``: Shiver 2016 drops 134 Nichols 2011
 #   columns whose strains are tags and marked insertions rather than deletions
 #   (#749), and Babu 2014 drops 3,420 of 42,705 released interaction pairs whose
 #   donor or recipient is one of Butland 2008's 149 kan-marked, SPA-tagged
@@ -3732,18 +3769,18 @@ class BacterialSpanDeletionPerturbation(
 #   describe the same construct: a selectable cassette integrated at a gene's
 #   terminus with the open reading frame intact, with or without an in-frame tag.
 #   Splitting them would file one physical collection under two labels.
-# - ``BacterialDegronPerturbation``: the Nichols ``-DAS`` columns, whose construct
+# - ``DegronPerturbation``: the Nichols ``-DAS`` columns, whose construct
 #   asserts regulated PROTEOLYSIS of the product conditional on an adaptor, which a
 #   marked allele does not assert (#749).
-# - ``BacterialCrisprActivationPerturbation``: Niu 2019's 57-target activation arm,
+# - ``CrisprActivationPerturbation`` (folded): Niu 2019's 57-target activation arm,
 #   four fifths of that release's numeric cells (#799).
 #
 # Point mutants and codon substitutions are deliberately NOT here: a called or
 # designed single-base allele is issue #731's leaf, and inventing a second one
 # would put one kind of record in two classes.
 # --------------------------------------------------------------------------- #
-class BacterialMarkedAllelePerturbation(SequencePerturbation, ModelStrict):
-    """A bacterial gene carrying a selectable cassette at a terminus, ORF intact.
+class MarkedAllelePerturbation(SequencePerturbation, ModelStrict):
+    """A gene carrying a selectable cassette at a terminus, ORF intact.
 
     The leaf #749 asks for as a tagged-allele leaf and #792 as a hypomorph leaf. It is
     one class because the two releases describe one construct: a selectable marker
@@ -3777,25 +3814,17 @@ class BacterialMarkedAllelePerturbation(SequencePerturbation, ModelStrict):
     """
 
     description: str = (
-        "Bacterial gene with a selectable cassette integrated at a terminus, "
-        "optionally fusing an in-frame tag; the open reading frame is intact"
+        "Gene with a selectable cassette integrated at a terminus, optionally fusing "
+        "an in-frame tag; the open reading frame is intact"
     )
-    perturbation_type: Literal["bacterial_marked_allele"] = "bacterial_marked_allele"
+    perturbation_type: Literal["marked_allele"] = "marked_allele"
     mechanism_so_id: str = "SO:0001218"
     mechanism_so_name: str = "transgenic_insertion"
-    gene_namespace: BacterialGeneNamespace = Field(
-        description="which host's locus-tag namespace systematic_gene_name is written in"
-    )
-    identifier_mapping: DerivedIdentifierMapping | None = Field(
-        default=None,
-        description="how systematic_gene_name was derived from the identifier the "
-        "source released; None when the source released it as stored",
-    )
     cassette: str | None = Field(
         default=None,
         description="the selectable cassette integrated at the locus, verbatim (e.g. "
         "'kan'); None when the source does not name it. Optional for the same reason "
-        "``BacterialDeletionPerturbation.cassette`` is: a gene-perturbation leaf is not "
+        "``DeletionStrainPerturbation.cassette`` is: a gene-perturbation leaf is not "
         "a ``ProvenanceGapMixin`` carrier, and an array whose strain construction lives "
         "in an unmirrored method paper names no marker",
     )
@@ -3834,12 +3863,6 @@ class BacterialMarkedAllelePerturbation(SequencePerturbation, ModelStrict):
         default=None, description="accession / lab / batch / plate of this strain"
     )
 
-    @field_validator("systematic_gene_name", mode="after")
-    @classmethod
-    def validate_sys_gene_name(cls, v: str) -> str:
-        """A bacterial locus tag, not a yeast systematic name."""
-        return _validate_bacterial_locus_tag(v)
-
     @field_validator("mechanism_so_id", mode="after")
     @classmethod
     def validate_mechanism_so_id(cls, v: str) -> str:
@@ -3847,9 +3870,8 @@ class BacterialMarkedAllelePerturbation(SequencePerturbation, ModelStrict):
         return _validate_so_id(v)
 
     @model_validator(mode="after")
-    def _check_namespace_and_fusion(self) -> "BacterialMarkedAllelePerturbation":
-        """The tag's own namespace agrees, and a terminus names a tag."""
-        _check_gene_namespace(self)
+    def _check_fusion(self) -> "MarkedAllelePerturbation":
+        """A terminus names a tag."""
         if self.tag is None and self.terminus is not None:
             raise ValueError(
                 f"terminus {self.terminus!r} is stated with no tag; a terminus without "
@@ -3858,11 +3880,11 @@ class BacterialMarkedAllelePerturbation(SequencePerturbation, ModelStrict):
         return self
 
 
-class BacterialDegronPerturbation(SequencePerturbation, ModelStrict):
-    """A bacterial gene fused to a degron that directs its product to a protease.
+class DegronPerturbation(SequencePerturbation, ModelStrict):
+    """A gene fused to a degron that directs its product to a protease.
 
     The Nichols 2011 ``-DAS`` columns (#749). It is a SEPARATE leaf from
-    ``BacterialMarkedAllelePerturbation`` although the DNA edit is the same kind of
+    ``MarkedAllelePerturbation`` although the DNA edit is the same kind of
     in-frame cassette, because the construct asserts something the marked allele does
     not: the product is targeted for REGULATED PROTEOLYSIS, and in the ssrA/DAS system
     that degradation happens only when the adaptor is present. The adaptor's inducing
@@ -3879,20 +3901,10 @@ class BacterialDegronPerturbation(SequencePerturbation, ModelStrict):
     'imp-DAS+4') are two strains on the strength of that field alone.
     """
 
-    description: str = (
-        "Bacterial gene fused to a degron directing its product to a protease"
-    )
-    perturbation_type: Literal["bacterial_degron"] = "bacterial_degron"
+    description: str = "Gene fused to a degron directing its product to a protease"
+    perturbation_type: Literal["degron"] = "degron"
     mechanism_so_id: str = "SO:0001218"
     mechanism_so_name: str = "transgenic_insertion"
-    gene_namespace: BacterialGeneNamespace = Field(
-        description="which host's locus-tag namespace systematic_gene_name is written in"
-    )
-    identifier_mapping: DerivedIdentifierMapping | None = Field(
-        default=None,
-        description="how systematic_gene_name was derived from the identifier the "
-        "source released; None when the source released it as stored",
-    )
     degron: str = Field(
         description="the degron fused to the product, verbatim (e.g. 'DAS+4', "
         "'ssrA-DAS')"
@@ -3940,73 +3952,15 @@ class BacterialDegronPerturbation(SequencePerturbation, ModelStrict):
         default=None, description="accession / lab / batch / plate of this strain"
     )
 
-    @field_validator("systematic_gene_name", mode="after")
-    @classmethod
-    def validate_sys_gene_name(cls, v: str) -> str:
-        """A bacterial locus tag, not a yeast systematic name."""
-        return _validate_bacterial_locus_tag(v)
-
     @field_validator("mechanism_so_id", mode="after")
     @classmethod
     def validate_mechanism_so_id(cls, v: str) -> str:
         """Mechanism SO id is well-formed."""
         return _validate_so_id(v)
 
-    @model_validator(mode="after")
-    def _check_namespace(self) -> "BacterialDegronPerturbation":
-        """The locus tag's own namespace is the one the record declares."""
-        _check_gene_namespace(self)
-        return self
-
-
-class BacterialCrisprActivationPerturbation(CrisprActivationPerturbation, ModelStrict):
-    """CRISPRa of a bacterial gene, reusing the shared guide construct.
-
-    The mirror image of ``BacterialCrisprInterferencePerturbation``, and the same
-    justification: the whole expression axis is inherited unchanged -- present gene,
-    ``sgRNA`` mechanism, ``expression_direction="increased"`` -- and the ``crispr``
-    construct the yeast CRISPRa leaf already defines carries the guide and the
-    dead-Cas activator, so the payload is described once for both families. Only the
-    identifier space differs.
-
-    Niu 2019's activation arm is what it was added for: a ``dCas9*-MCPSoxS`` activator
-    directed by a released ``N20`` spacer against a BW25113 locus. Before it, the only
-    bacterial leaf that could state ``increased`` was
-    ``PromoterReplacementPerturbation``, which asserts SO:1000032 ``delins`` -- a native
-    promoter removed and a characterized part put in its place -- an edit a
-    guide-directed activator never makes.
-    """
-
-    description: str = (
-        "CRISPR activation (increased expression) of a bacterial gene by locus tag"
-    )
-    perturbation_type: Literal["bacterial_crispr_activation"] = (
-        "bacterial_crispr_activation"  # type: ignore[assignment]
-    )
-    gene_namespace: BacterialGeneNamespace = Field(
-        description="which host's locus-tag namespace systematic_gene_name is written in"
-    )
-    identifier_mapping: DerivedIdentifierMapping | None = Field(
-        default=None,
-        description="how systematic_gene_name was derived from the identifier the "
-        "source released; None when the source released it as stored",
-    )
-
-    @field_validator("systematic_gene_name", mode="after")
-    @classmethod
-    def validate_sys_gene_name(cls, v: str) -> str:
-        """A bacterial locus tag, not a yeast systematic name."""
-        return _validate_bacterial_locus_tag(v)
-
-    @model_validator(mode="after")
-    def _check_namespace(self) -> "BacterialCrisprActivationPerturbation":
-        """The locus tag's own namespace is the one the record declares."""
-        _check_gene_namespace(self)
-        return self
-
 
 # --------------------------------------------------------------------------- #
-# End of the round-2 bacterial perturbation leaves.
+# End of the round-2 leaves.
 # --------------------------------------------------------------------------- #
 
 
@@ -4015,8 +3969,8 @@ class BacterialCrisprActivationPerturbation(CrisprActivationPerturbation, ModelS
 # source released, with no lookup against any assembly. A new leaf and its enum;
 # nothing above this block changes.
 #
-# Every bacterial leaf above requires ``systematic_gene_name`` to be a locus tag of a
-# pinned assembly, so a loader must resolve the released name through the genome
+# Every placed leaf above requires ``systematic_gene_name`` to be a host identifier of
+# a pinned assembly, so a loader must resolve the released name through the genome
 # before it can store a record, and a name the annotation lacks is refused. The owner
 # rule of 2026-10-12 is that the genome never gates a record: a strain is stored as the
 # source names it. Nichols 2011 labels its 3,979 strains by ECK accession and symbol
@@ -4108,10 +4062,6 @@ class BacterialReleasedStrainPerturbation(GenePerturbation, ModelStrict):
     )
     perturbation_type: Literal["bacterial_released_strain"] = (
         "bacterial_released_strain"
-    )
-    gene_namespace: BacterialGeneNamespace = Field(
-        description="the host namespace the study writes its strains against; the "
-        "released identifier is not a tag of it"
     )
     strain_label: str = Field(
         description="the source's whole strain identifier, verbatim (a row or column "
@@ -4415,8 +4365,8 @@ def _check_released_labels(model: "GenePerturbation") -> None:
 class BacterialReleasedCrisprPerturbation(GenePerturbation, ModelStrict):
     """A guide-directed dead-Cas construct against a gene named only as released.
 
-    The released-identifier counterpart of ``BacterialCrisprInterferencePerturbation``
-    and ``BacterialCrisprActivationPerturbation``, one leaf for both directions because
+    The released-identifier counterpart of ``CrisprInterferencePerturbation``
+    and ``CrisprActivationPerturbation``, one leaf for both directions because
     the construct is the same material entity and the direction is a released fact of
     the effector, so ``expression_direction`` is REQUIRED with no default rather than
     fixed per class. ``systematic_gene_name`` is the source's own target identifier,
@@ -4443,10 +4393,6 @@ class BacterialReleasedCrisprPerturbation(GenePerturbation, ModelStrict):
     )
     perturbation_type: Literal["bacterial_released_crispr"] = (
         "bacterial_released_crispr"
-    )
-    gene_namespace: BacterialGeneNamespace = Field(
-        description="the host namespace the study writes its strains against; the "
-        "released identifier is not a tag of it"
     )
     strain_label: str = Field(
         description="the source's whole released identifier of the guide or of the "
@@ -4520,10 +4466,6 @@ class BacterialReleasedTransposonPerturbation(GenePerturbation, ModelStrict):
     )
     perturbation_type: Literal["bacterial_released_transposon"] = (
         "bacterial_released_transposon"
-    )
-    gene_namespace: BacterialGeneNamespace = Field(
-        description="the host namespace the study writes its strains against; the "
-        "released identifier is not a tag of it"
     )
     strain_label: str = Field(
         description="the source's whole released identifier of the insertion mutant, "
@@ -4780,6 +4722,10 @@ class NamedAllelePerturbation(SequencePerturbation, ModelStrict):
 
     description: str = "An allele the source names, with no sequence change stated"
     perturbation_type: Literal["named_allele"] = "named_allele"
+    gene_namespace: GeneIdNamespace = Field(
+        default=SGD_S288C_NAMESPACE,
+        description="the host genome; S288C by default because this leaf's name validator pins the S288C systematic form",
+    )
     provenance: str = "engineered"
     allele_name: str = Field(
         description="the allele's name, verbatim, e.g. 'cdc42-111'"
@@ -4829,18 +4775,17 @@ GenePerturbationType = (
     | InduciblePromoterInsertionPerturbation  # Hackett 2020 (additive)
     | PromoterDrivenGeneIntegrationPerturbation  # Zhang 2020 (#990, additive)
     | VariablePromoterReporterPerturbation  # Vaishnav 2022 (#991, additive)
-    | BacterialDeletionPerturbation
+    # leaves written for the bacterial hosts first, general since P1 (ontology-unify)
+    | DeletionStrainPerturbation
     | TransposonInsertionPerturbation
-    | BacterialCrisprInterferencePerturbation
     | PromoterReplacementPerturbation
     | HeterologousPathwayPerturbation
-    | BacterialSequenceVariantPerturbation
-    | BacterialSiteVariantPerturbation
-    | BacterialSpanDeletionPerturbation
-    # round-2 bacterial leaves (#749, #792, #799)
-    | BacterialMarkedAllelePerturbation
-    | BacterialDegronPerturbation
-    | BacterialCrisprActivationPerturbation
+    | LocusVariantCallPerturbation
+    | SiteVariantCallPerturbation
+    | SpanDeletionCallPerturbation
+    # round-2 leaves (#749, #792); the CRISPRa leaf of #799 folded into the general one
+    | MarkedAllelePerturbation
+    | DegronPerturbation
     # a strain stored under its released identifier (#691)
     | BacterialReleasedStrainPerturbation
     # a CRISPR guide and a transposon insertion against a released identifier (#691)

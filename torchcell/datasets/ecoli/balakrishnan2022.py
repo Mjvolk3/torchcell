@@ -72,7 +72,7 @@ titration mechanism:
   or integration site (:data:`UNTYPED_EDITS`, #906). The two strains therefore share
   one typed genotype and differ only in that untyped driver.
 - NQ393: Table S1 reads "NCM3722, ∆gdhA, PLlac-01-gltBD". So its GDH-null background
-  is a ``BacterialDeletionPerturbation`` of ``gdhA`` (b1761), and its GOGAT edit a
+  is a ``DeletionStrainPerturbation`` of ``gdhA`` (b1761), and its GOGAT edit a
   ``PromoterReplacementPerturbation`` of ``gltB`` (b3212, the first gene of the gltBD
   operon) by ``PLlac-01``, expression decreased ("low GOGAT expression"). Table S3's
   description cell calls the same construct "Plac-GOGAT".
@@ -141,13 +141,13 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     BacterialAssemblySet,
-    BacterialDeletionPerturbation,
     BacterialGeneNamespace,
     BacterialStrainBackground,
     ComponentDefinition,
     Compound,
     Concentration,
     ConcentrationUnit,
+    DeletionStrainPerturbation,
     DerivedIdentifierMapping,
     Environment,
     EnvironmentPerturbationType,
@@ -593,7 +593,7 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         "gdhA",
         _Q_SI_NQ393,
         note="the GDH-null background is a deletion of gdhA ('∆gdhA'), typed as a "
-        "BacterialDeletionPerturbation of b1761 (#906)",
+        "DeletionStrainPerturbation of b1761 (#906)",
     ),
     "nq393_gogat_promoter": _si(
         "PLlac-01",
@@ -801,9 +801,9 @@ UNTYPED_EDITS: dict[str, str] = {
 }
 
 
-def _deletion(gene: tuple[str, str]) -> BacterialDeletionPerturbation:
+def _deletion(gene: tuple[str, str]) -> DeletionStrainPerturbation:
     symbol, tag = gene
-    return BacterialDeletionPerturbation(
+    return DeletionStrainPerturbation(
         systematic_gene_name=tag,
         perturbed_gene_name=symbol,
         gene_namespace=GENE_NAMESPACE,

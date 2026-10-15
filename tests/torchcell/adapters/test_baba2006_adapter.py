@@ -5,7 +5,7 @@
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Baba 2006 Keio construction outcomes: 4,116 BW25113 ORF records,
-BacterialGeneEssentialityExperiment. One BacterialDeletionPerturbation per record, served
+BacterialGeneEssentialityExperiment. One DeletionStrainPerturbation per record, served
 as `bacterial perturbation`. No record carries an environment perturbation.
 """
 

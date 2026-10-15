@@ -5,7 +5,7 @@
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
 putidaPRECISE321 (Lim 2022): 180 KT2440 samples, BacterialRNASeqExpressionExperiment.
-9 of 180 records carry one BacterialDeletionPerturbation, served as `bacterial
+9 of 180 records carry one DeletionStrainPerturbation, served as `bacterial
 perturbation`. 15 environment perturbations (EnvironmentPhysicalPerturbation) across the
 experiments and 12 on the references, so the environment-perturbation pair is enabled.
 Every record gaps temperature; the temperature methods stay enabled (the slot is part of

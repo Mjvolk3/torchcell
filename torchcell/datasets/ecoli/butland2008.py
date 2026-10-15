@@ -12,10 +12,10 @@ interaction (S) scores **in full**. Supplementary Table 4's fourth sheet is a
 39 x 8,073 matrix whose banner reads, verbatim, "without any filtering parameters".
 
 RECORD = one ``BacterialGeneInteractionExperiment`` per CELL of that matrix: a two-gene
-``Genotype`` whose ``cat``-marked query is a ``BacterialDeletionPerturbation`` and whose
+``Genotype`` whose ``cat``-marked query is a ``DeletionStrainPerturbation`` and whose
 ``kan``-marked recipient is one of the array's two strain kinds -- a
-``BacterialDeletionPerturbation`` for a Keio isolate, a
-``BacterialMarkedAllelePerturbation`` for one of the 149 SPA-tagged essential genes --
+``DeletionStrainPerturbation`` for a Keio isolate, a
+``MarkedAllelePerturbation`` for one of the 149 SPA-tagged essential genes --
 and a ``GeneInteractionPhenotype`` holding that cell's S score verbatim.
 
 WHY THIS IS A LOADER AND NOT A PROVENANCE RECORD. Two earlier passes concluded the
@@ -50,7 +50,7 @@ editorial filter rather than by anything this release states, and "all 799 non-e
 high-confidence pairs" keeps a sourced |Z| threshold but discards the null distribution,
 which is the one thing no other bacterial interaction store carries. BOTH halves of the
 array are in scope: the 149 SPA-tag essential rows were dropped until
-``BacterialMarkedAllelePerturbation`` existed to type them (THE SPA-TAG HALF below), and
+``MarkedAllelePerturbation`` existed to type them (THE SPA-TAG HALF below), and
 they are the half that carries 489 of the release's own 1,288 high-confidence
 interactions.
 
@@ -121,7 +121,7 @@ THE SPA-TAG HALF, AND THE ONE FIELD IT DOES NOT STATE. 149 of the 8,073 recipien
 are not deletions: Supplementary Table 1 labels them ``SPA-tag essential`` and footnote a
 of every Table 4 sheet says what they are, verbatim -- "Hypomorphic, KanR- marked,
 strains with C-terminal Sequential Peptide Affinity (SPA)-tags on essential genes". Until
-``BacterialMarkedAllelePerturbation`` landed (issue #792, PR #837) no leaf could type
+``MarkedAllelePerturbation`` landed (issue #792, PR #837) no leaf could type
 that construct and their 5,811 cells were dropped; they are now stored on it, with
 ``cassette="kan"``, ``tag="SPA"``, ``terminus="C"``, ``allele_effect="hypomorphic"`` and
 ``collection="SPA-tag essential"``, each a field this release's own bytes state.
@@ -269,18 +269,18 @@ from torchcell.datamodels.schema import (
     BACTERIAL_ASSEMBLY_SETS,
     AssemblyReferenceGenome,
     BacterialAssemblySet,
-    BacterialDeletionPerturbation,
     BacterialGeneInteractionExperiment,
     BacterialGeneInteractionExperimentReference,
     BacterialGeneNamespace,
-    BacterialMarkedAllelePerturbation,
     BacterialReleasedStrainPerturbation,
     BacterialStrainBackground,
+    DeletionStrainPerturbation,
     Environment,
     Experiment,
     ExperimentReference,
     GeneInteractionPhenotype,
     Genotype,
+    MarkedAllelePerturbation,
     Media,
     MediaComponent,
     MediaComponentRole,
@@ -670,7 +670,7 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         sha256=DATA_SHA256[TABLE_S4],
         page="Supplementary Table 4, every sheet, header cell A3",
         note="the other 149 recipient rows. A SPA-tagged essential gene is a hypomorph, "
-        "stored on BacterialMarkedAllelePerturbation (issue #792) rather than typed as "
+        "stored on MarkedAllelePerturbation (issue #792) rather than typed as "
         "a deletion; all 5,811 of its cells are records since #1057, the 398 pairs the "
         "Babu 2014 store also holds included",
     ),
@@ -1675,8 +1675,8 @@ HYPOMORPH_TERMINUS: Literal["N", "C"] = "C"
 HYPOMORPH_ALLELE_EFFECT: Literal["hypomorphic"] = "hypomorphic"
 #: The two recipient leaf discriminators, as the schema's own ``perturbation_type``
 #: literals spell them; the verifier reads the stored string rather than the class.
-DELETION_TYPE = "bacterial_deletion"
-MARKED_ALLELE_TYPE = "bacterial_marked_allele"
+DELETION_TYPE = "deletion_strain"
+MARKED_ALLELE_TYPE = "marked_allele"
 RELEASED_STRAIN_TYPE = "bacterial_released_strain"
 #: A released-strain recipient's label: the released id and its "Strain Versions" token.
 _RELEASED_LABEL = re.compile(r"^(?P<id>.+) \((?P<version>[^()]+)\)$")
@@ -1714,9 +1714,9 @@ P_VALUE_GAP = ProvenanceGap(
 )
 
 
-def query_perturbation(locus_tag: str, symbol: str) -> BacterialDeletionPerturbation:
+def query_perturbation(locus_tag: str, symbol: str) -> DeletionStrainPerturbation:
     """The query side: the Hfr C deletion transferred by conjugation, marked ``cat``."""
-    return BacterialDeletionPerturbation(
+    return DeletionStrainPerturbation(
         systematic_gene_name=locus_tag,
         perturbed_gene_name=symbol,
         gene_namespace=MG1655_NAMESPACE,
@@ -1727,7 +1727,7 @@ def query_perturbation(locus_tag: str, symbol: str) -> BacterialDeletionPerturba
 
 def recipient_perturbation(
     locus_tag: str, symbol: str, version: str
-) -> BacterialDeletionPerturbation | BacterialReleasedStrainPerturbation:
+) -> DeletionStrainPerturbation | BacterialReleasedStrainPerturbation:
     """The recipient side of a Keio row: one arrayed isolate, marked ``kan``.
 
     ``version`` is the "Strain Versions" token verbatim and is stored as the
@@ -1748,7 +1748,7 @@ def recipient_perturbation(
             cassette=RECIPIENT_CASSETTE,
             collection=RECIPIENT_COLLECTION,
         )
-    return BacterialDeletionPerturbation(
+    return DeletionStrainPerturbation(
         systematic_gene_name=locus_tag,
         perturbed_gene_name=symbol,
         gene_namespace=MG1655_NAMESPACE,
@@ -1760,7 +1760,7 @@ def recipient_perturbation(
 
 def recipient_hypomorph_perturbation(
     locus_tag: str, symbol: str
-) -> BacterialMarkedAllelePerturbation:
+) -> MarkedAllelePerturbation:
     """The recipient side of a ``SPA-tag essential`` row: kan-marked, C-terminal SPA tag.
 
     Every field is a value this release's own bytes state, and footnote a of every Table 4
@@ -1776,7 +1776,7 @@ def recipient_hypomorph_perturbation(
     "Strain Versions" cell repeats the label instead of naming an isolate, so there is no
     second construction of these genes to distinguish.
     """
-    return BacterialMarkedAllelePerturbation(
+    return MarkedAllelePerturbation(
         systematic_gene_name=locus_tag,
         perturbed_gene_name=symbol,
         gene_namespace=MG1655_NAMESPACE,
@@ -1811,8 +1811,8 @@ def pair_genotype(
                 f"{version!r}; the release repeats the label there and names no isolate"
             )
         recipient: (
-            BacterialDeletionPerturbation
-            | BacterialMarkedAllelePerturbation
+            DeletionStrainPerturbation
+            | MarkedAllelePerturbation
             | BacterialReleasedStrainPerturbation
         ) = recipient_hypomorph_perturbation(recipient_tag, recipient_gene)
     else:
@@ -1947,7 +1947,7 @@ def build_reference(
 #: tree by
 #: ``experiments/036-dataset-fixes-before-kg-build/scripts/butland2008_babu2014_partition.py``.
 #: It was 727 until PR #837 put Babu 2014's hypomorph pairs on
-#: ``BacterialMarkedAllelePerturbation`` (1,125), and is 1,129 since #1057 stored Babu's
+#: ``MarkedAllelePerturbation`` (1,125), and is 1,129 since #1057 stored Babu's
 #: retired and synonym b-numbers as released. A drift in either store moves this and
 #: stops the build.
 SERVED_BUTLAND_RECORDS: Final = 1129
@@ -2047,7 +2047,7 @@ def assert_served_partition(
     pair in none of the three raises, as does a drift in either store.
 
     The SPA-tag group is a SUBSET of the overlap, because this loader types those
-    recipients on ``BacterialMarkedAllelePerturbation``; the containment is asserted, so
+    recipients on ``MarkedAllelePerturbation``; the containment is asserted, so
     a served pair that moved off such a row cannot pass the count pins unrecorded.
     """
     stored = set(stored_pairs)
@@ -2735,9 +2735,9 @@ VERIFIER_PROVENANCE = Provenance(
     method="Supplementary Table 4, sheet 'S scores': the interaction score of every "
     "(query strain, recipient strain) cell of the unfiltered 39 x 8,073 matrix. One "
     "BacterialGeneInteractionExperiment per cell, a two-leaf genotype against MG1655 "
-    "whose query is a cat-marked BacterialDeletionPerturbation and whose recipient is a "
-    "kan-marked BacterialDeletionPerturbation carrying its isolate token (a Keio row) or "
-    "a kan-marked BacterialMarkedAllelePerturbation with a C-terminal SPA tag (a "
+    "whose query is a cat-marked DeletionStrainPerturbation and whose recipient is a "
+    "kan-marked DeletionStrainPerturbation carrying its isolate token (a Keio row) or "
+    "a kan-marked MarkedAllelePerturbation with a C-terminal SPA tag (a "
     "'SPA-tag essential' row), reference = the unperturbed conjugant chassis at 0",
     page="Supplementary Table 4 (41592_2008_BFnmeth1239_MOESM309_ESM.xls), sheet "
     "'S scores'",
@@ -2797,7 +2797,7 @@ def _l1_recipient_leaf_states_its_row(records: Sequence[Record]) -> LevelResult:
     A Keio recipient is a deletion carrying its isolate as the construction ``batch``,
     which is the only thing distinguishing the two records of one gene pair, so a record
     missing it would be an unexplained duplicate of its sibling. A ``SPA-tag essential``
-    recipient is a ``BacterialMarkedAllelePerturbation`` with the four fields footnote a
+    recipient is a ``MarkedAllelePerturbation`` with the four fields footnote a
     states and NO construction, because that row carries no isolate id. The query leaf
     carries neither a batch nor a tag in either case.
     """

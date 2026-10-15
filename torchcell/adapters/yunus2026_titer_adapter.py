@@ -6,7 +6,7 @@
 knowledge-graph nodes and edges.
 
 One record per strain row of the hand-deposited Supplementary Note 1 input table: a
-single ``BacterialCrisprInterferencePerturbation`` served as a ``bacterial
+single ``CrisprInterferencePerturbation`` served as a ``bacterial
 perturbation`` node, carrying its ``CrisprConstruct``, which is served as a ``crispr
 construct`` node. The titer is a ``ProductTiterPhenotype`` read with its vessel, so the
 ``CultureEnvironment`` and both of its perturbation families are served too.

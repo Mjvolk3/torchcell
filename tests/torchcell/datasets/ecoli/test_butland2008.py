@@ -29,7 +29,7 @@ The synthetic release is a 2 x 10 matrix, and every cell exercises one outcome:
 Nineteen records survive the one drop left (#1057: the all-zero cell and the two cells
 the Babu store also holds are stored); ``b0010`` (a /gene_synonym of ``b0003``) and
 ``b0099`` (on no locus) are stored under their released b-numbers since #1057; the ``b0006`` row is the hypomorph case, stored on
-``BacterialMarkedAllelePerturbation`` since issue #792. Data-gated tests (``--data``)
+``MarkedAllelePerturbation`` since issue #792. Data-gated tests (``--data``)
 read the real raw mirror
 and the built dev-tree LMDB under ``$DATA_ROOT`` (they never build it): the manifest
 pins, the provenance audit of every sourced value including the seven quoted from
@@ -62,10 +62,10 @@ from torchcell.data import ManifestPinMismatchError, check_manifest_pin
 from torchcell.datamodels.media import MEDIA_LIBRARY
 from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
-    BacterialDeletionPerturbation,
     BacterialGeneInteractionExperiment,
     BacterialGeneInteractionExperimentReference,
-    BacterialMarkedAllelePerturbation,
+    DeletionStrainPerturbation,
+    MarkedAllelePerturbation,
     MediaComponentRole,
     SampleUnit,
 )
@@ -654,14 +654,12 @@ def test_the_high_confidence_table_refuses_a_count_the_paper_does_not_state(
 # --------------------------------------------------------------------------- #
 def _leaves(
     genotype: Any,
-) -> list[BacterialDeletionPerturbation | BacterialMarkedAllelePerturbation]:
+) -> list[DeletionStrainPerturbation | MarkedAllelePerturbation]:
     """The genotype's two bacterial gene-perturbation leaves, typed."""
     leaves = [
         leaf
         for leaf in genotype.perturbations
-        if isinstance(
-            leaf, BacterialDeletionPerturbation | BacterialMarkedAllelePerturbation
-        )
+        if isinstance(leaf, DeletionStrainPerturbation | MarkedAllelePerturbation)
     ]
     assert len(leaves) == 2
     return leaves
@@ -674,7 +672,7 @@ def _recipient(genotype: Any) -> str:
     carries no construction and the row's own label as its ``collection``.
     """
     leaf = next(leaf for leaf in _leaves(genotype) if leaf.cassette == "kan")
-    if isinstance(leaf, BacterialMarkedAllelePerturbation):
+    if isinstance(leaf, MarkedAllelePerturbation):
         assert leaf.construction is None
         return str(leaf.collection)
     assert leaf.construction is not None
@@ -709,8 +707,8 @@ def test_a_spa_tag_row_is_a_marked_allele_with_no_isolate() -> None:
         "b0005", "proB", "b0006", "proC", m.LABEL_SPA_TAG, recipient_is_hypomorph=True
     )
     query, recipient = genotype.perturbations
-    assert isinstance(query, BacterialDeletionPerturbation)
-    assert isinstance(recipient, BacterialMarkedAllelePerturbation)
+    assert isinstance(query, DeletionStrainPerturbation)
+    assert isinstance(recipient, MarkedAllelePerturbation)
     assert recipient.systematic_gene_name == "b0006"
     assert recipient.perturbed_gene_name == "proC"
     assert recipient.cassette == "kan"

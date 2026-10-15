@@ -59,6 +59,7 @@ def _call(**overrides: Any) -> NaturalLossOfFunctionPerturbation:
     fields: dict[str, Any] = dict(
         systematic_gene_name="YAL001C",
         perturbed_gene_name="YAL001C",
+        gene_namespace="scerevisiae_s288c_sgd_systematic",
         strain_id="AAB",
         cause=NaturalLossOfFunctionCause.nonsense_or_sift,
         call_ref=_MATRIX,

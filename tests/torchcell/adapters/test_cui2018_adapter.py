@@ -5,7 +5,7 @@
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Cui 2018 genome-wide dCas9 knockdown screen, E. coli MG1655:
-BacterialEnvironmentResponseExperiment. One BacterialCrisprInterferencePerturbation per
+BacterialEnvironmentResponseExperiment. One CrisprInterferencePerturbation per
 gene the guide's perfect matches lie in (`crispri_perturbations`), served as `bacterial
 perturbation`, each carrying the record's single CrisprConstruct, so the crispr-construct
 pair is enabled. The environment carries the 1 nM anhydrotetracycline inducer as a

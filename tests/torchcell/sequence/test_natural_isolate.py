@@ -220,6 +220,7 @@ def _call(
 ) -> NaturalLossOfFunctionPerturbation:
     return NaturalLossOfFunctionPerturbation(
         systematic_gene_name=key,
+        gene_namespace="scerevisiae_s288c_sgd_systematic",
         perturbed_gene_name=key,
         strain_id=isolate,
         cause=NaturalLossOfFunctionCause.nonsense_or_sift
@@ -257,6 +258,7 @@ def test_ccc_is_its_variants_absence_ho_deletion_calls_and_descriptor(
             ),
             NaturalGeneAbsencePerturbation(
                 systematic_gene_name="YBR001W",
+                gene_namespace="scerevisiae_s288c_sgd_systematic",
                 perturbed_gene_name="YBR001W",
                 strain_id="CCC",
                 pangenome_orf_id="4-YBR001W",

@@ -387,6 +387,7 @@ def released_side(name: str, entrez: int) -> ReleasedGeneNamePerturbation:
     """One side of a pair, exactly as the release names it (#1045)."""
     return ReleasedGeneNamePerturbation(
         systematic_gene_name=name,
+        gene_namespace="scerevisiae_s288c_sgd_systematic",
         perturbed_gene_name=name,
         released_gene_name=name,
         released_gene_id=str(entrez),

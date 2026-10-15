@@ -23,10 +23,10 @@ from openpyxl import Workbook
 from torchcell.data.experiment_dataset import file_sha256
 from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
-    BacterialDeletionPerturbation,
-    BacterialSequenceVariantPerturbation,
-    BacterialSiteVariantPerturbation,
+    DeletionStrainPerturbation,
+    LocusVariantCallPerturbation,
     RNASeqExpressionPhenotype,
+    SiteVariantCallPerturbation,
     VariantCallMode,
 )
 from torchcell.datasets.ecoli import guzman2018 as m
@@ -135,13 +135,11 @@ def test_genotype_keys_the_deletion_and_both_call_shapes(tmp_path: Path) -> None
     )
     perturbations = m.genotype(clone, calls["FPS thrA A1 F5 I1 R1"], LOCI).perturbations
     deletion = next(
-        p for p in perturbations if isinstance(p, BacterialDeletionPerturbation)
+        p for p in perturbations if isinstance(p, DeletionStrainPerturbation)
     )
     assert deletion.systematic_gene_name == "BW25113_0002"
     assert deletion.collection == "Keio collection"
-    site = next(
-        p for p in perturbations if isinstance(p, BacterialSiteVariantPerturbation)
-    )
+    site = next(p for p in perturbations if isinstance(p, SiteVariantCallPerturbation))
     assert site.systematic_gene_name == "CP009273.1:4118534"
     assert site.flanking_gene_statement == "metJ, metB"
     assert site.call.call_mode is VariantCallMode.clone
@@ -150,9 +148,7 @@ def test_genotype_keys_the_deletion_and_both_call_shapes(tmp_path: Path) -> None
         calls["FPS thrA A2 F1 I0 R1"],
         LOCI,
     ).perturbations
-    variant = next(
-        p for p in population if isinstance(p, BacterialSequenceVariantPerturbation)
-    )
+    variant = next(p for p in population if isinstance(p, LocusVariantCallPerturbation))
     assert (variant.systematic_gene_name, variant.call.frequency) == (
         "BW25113_2942",
         0.46,

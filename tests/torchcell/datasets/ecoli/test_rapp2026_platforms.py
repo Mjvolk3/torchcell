@@ -61,7 +61,7 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
 )
 from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
-    BacterialCrisprInterferencePerturbation,
+    CrisprInterferencePerturbation,
     SampleUnit,
     UncertaintyType,
 )
@@ -994,7 +994,7 @@ def test_crispri_genotype_carries_the_released_spacer_and_the_b_number(
     guides = metabolome.read_guides(raw_dir / metabolome.TABLE_S1)
     kept, _, _ = m.resolve_genes(mg1655, ["thrA"], guides, label="synthetic")
     (perturbation,) = m.crispri_genotype(kept[0]).perturbations
-    assert isinstance(perturbation, BacterialCrisprInterferencePerturbation)
+    assert isinstance(perturbation, CrisprInterferencePerturbation)
     assert perturbation.systematic_gene_name == "b0002"
     assert perturbation.gene_namespace == "ecoli_k12_mg1655_bnumber"
     assert perturbation.crispr is not None

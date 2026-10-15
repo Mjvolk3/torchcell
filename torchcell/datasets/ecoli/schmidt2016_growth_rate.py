@@ -14,7 +14,7 @@ references**, the wild-type row of each medium being that medium's reference.
 It is a SEPARATE MODULE from ``schmidt2016.py`` on purpose. ``build_manifest`` keys a
 built store's staleness on the schema closure of the loader MODULE's own
 ``torchcell.datamodels`` imports (``provenance/schema_deps.py:loader_closure``), so
-adding ``FitnessPhenotype`` and ``BacterialDeletionPerturbation`` to ``schmidt2016.py``
+adding ``FitnessPhenotype`` and ``DeletionStrainPerturbation`` to ``schmidt2016.py``
 would mark the already-served ``proteome_schmidt2016`` store stale and force a full
 rebuild for a change that does not touch one of its records. The pinned artifact, the
 media objects and the condition table are imported FROM ``schmidt2016`` instead, so
@@ -305,7 +305,7 @@ _GAP_CONSTRUCTION = ProvenanceGap(
     reason=ProvenanceGapReason.not_reported_by_primary,
     note="no plate, well or strain accession of the three KEIO strains is released",
 )
-#: ``BacterialDeletionPerturbation`` is not a ``ProvenanceGapMixin``, so these two
+#: ``DeletionStrainPerturbation`` is not a ``ProvenanceGapMixin``, so these two
 #: absences are recorded in ``preprocess/provenance_gaps.json`` rather than on the leaf.
 #: That is where ``schmidt2016.py`` already files the BW25113 background lesions for the
 #: same reason: the field exists, the carrier for its typed absence does not.

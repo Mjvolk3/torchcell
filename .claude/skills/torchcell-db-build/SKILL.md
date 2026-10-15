@@ -246,3 +246,40 @@ under a running job: check `scontrol show job | grep WorkDir` first).
   and the `IMPORT DONE` marker (which the post-import resume had required since job 2032
   but nothing wrote) landed in PR #1102.
 - 2026-10-14: Hoepfner is memory-throttled at the 256 G limit, not CPU-bound (section 6).
+
+## 10. The generation image (2026-10-15; `GEN_IMAGE_MODE`)
+
+Every generation container used to pip-install the build commit, biocypher and CaLM
+before the generator started: 278 s per container (job 4919_64), 13.1 h of CPU time
+across the 170-task array. The array now runs from ONE prebuilt image,
+`tc-neo4j-gen:<first 12 of BUILD_COMMIT>` (`database/docker/Dockerfile.tc-neo4j-gen`,
+[[torchcell.knowledge_graphs.generation_image]]): the serving base plus those three
+installs, with the commit pip recorded checked at build time, stamped as the label
+`org.torchcell.build_commit`, and checked again inside every task's container.
+Wiring: the image module, its Dockerfile, the tests and the measurement are on main;
+the three hooks (the conductor's `ensure` before the sbatch lines and `--gen-image-mode`,
+the task's `resolve` before its container and `$RUN_IMAGE`, the follow-up's `remove`
+after the merge) go on top of lane C's array (PR #1110) as soon as it lands; until then
+the image is built and checked by hand through the CLI below.
+
+- **Lifecycle.** The conductor builds it before any sbatch (`generation_image ensure`,
+  skipped when the tag exists), every task of the arrays and of a re-run uses it, and
+  the follow-up removes it after the merge succeeds (`generation_image remove`) while
+  keeping it when any task lacks `DONE`, so the re-run is cheap. Docker is outside slurm
+  (section 0): a cancelled or timed-out job leaves the image; `docker images tc-neo4j-gen`
+  lists what is there and `python -m torchcell.knowledge_graphs.generation_image remove
+  --build-commit <sha>` is the by-hand cleanup.
+- **No fallback.** The tag carries the commit. A task under `GEN_IMAGE_MODE=image`
+  whose tag is absent stops in its preflight with the build command in the message; it
+  never installs instead. `GEN_IMAGE_MODE=install` keeps the serial build's in-container
+  install for every task (the serial `GENERATION_MODE` is unchanged and always
+  installs). `auto` is resolved once by the conductor (image when the tag exists) and
+  passed explicitly. `DRY_RUN=1` on the conductor prints the `docker build` line with the
+  sbatch lines and runs none.
+- **Measured (jobs 4923 and 4924, [[experiments.database.scripts.gen_image_startup_measurement]]).**
+  Cold image build 259 s (main) and 216 s (lane C head); a rebuild of the same commit is
+  free on the layer cache. One small adapter, `docker run` to the generator's first line:
+  install path 255.9 s (239 s of it the pip installs), image path 17.3, 17.0 and 13.1 s;
+  the 13 to 17 s left is python importing torchcell, hydra and wandb. Saving about 240 s
+  per task: 11.3 h of CPU time and 2.8 h of wall clock at concurrency 4 over 170 tasks
+  (12.4 h and 3.1 h against the 278 s figure).

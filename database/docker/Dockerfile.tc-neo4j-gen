@@ -1,0 +1,55 @@
+# database/docker/Dockerfile.tc-neo4j-gen
+# [[database.docker.Dockerfile.tc-neo4j-gen]]
+#
+# The prebuilt GENERATION image of the per-adapter KG generation array: the serving
+# base image plus the torchcell commit the build runs, biocypher and CaLM already
+# installed, so an array task's container starts straight into the generator instead
+# of paying the three pip installs first (278 s per task in job 4919_64 on 2026-10-15;
+# 170 tasks make that 13.1 h of CPU time). The three installs are the same lines the
+# live rebuild's serial container runs at start (gilahyper_live_rebuild-slurm_docker.slurm,
+# stage 1 GENERATE); only WHEN they run differs.
+#
+# The tag carries the commit (`tc-neo4j-gen:<first 12 of BUILD_COMMIT>`), the image
+# carries it again as a label and pip records it in torchcell's direct_url.json; the
+# build below refuses when the installed commit is not the one asked for, and a task
+# re-reads the label before it runs. A stale image can therefore never serve a
+# different commit silently. Built, checked and removed through
+# torchcell.knowledge_graphs.generation_image (never `docker build` by hand):
+#
+#   python -m torchcell.knowledge_graphs.generation_image build --build-commit <sha>
+#
+# which runs, with the repo's database/docker as the (empty) context:
+#
+#   docker build --build-arg BUILD_COMMIT=<sha> --build-arg BASE_IMAGE=<base> \
+#       -t tc-neo4j-gen:<sha12> -f database/docker/Dockerfile.tc-neo4j-gen database/docker
+#
+# Lifecycle: the conductor builds it once before the arrays are submitted, every task
+# of the array runs from it, and the live rebuild's follow-up removes it after the
+# merge succeeds (kept while any task lacks its DONE marker, so the re-run is cheap).
+# Docker runs outside the slurm cgroup, so the image outlives any job: `generation_image
+# remove --build-commit <sha>` is the by-hand cleanup.
+ARG BASE_IMAGE=michaelvolk/tc-neo4j:5.26.28-browser.1
+FROM ${BASE_IMAGE}
+ARG BASE_IMAGE
+ARG BUILD_COMMIT
+RUN test -n "$BUILD_COMMIT" || { echo "BUILD_COMMIT build-arg is required"; exit 1; }
+
+# The same three installs as the serial generation container, in the same order.
+RUN python -m pip install --no-cache-dir --force-reinstall --no-deps "git+https://github.com/Mjvolk3/torchcell.git@${BUILD_COMMIT}" >/dev/null \
+    && python -m pip install --no-cache-dir biocypher==0.15.2 >/dev/null \
+    && python -m pip install --no-cache-dir git+https://github.com/oxpig/CaLM@main >/dev/null
+
+# pip records the installed commit (direct_url.json); the image refuses to exist when
+# it is not the one asked for.
+RUN python - "$BUILD_COMMIT" <<'EOF'
+import importlib.metadata as m, json, sys
+want = sys.argv[1]
+got = json.loads(m.distribution("torchcell").read_text("direct_url.json"))["vcs_info"]["commit_id"]
+if got != want:
+    sys.exit(f"installed torchcell commit {got} is not BUILD_COMMIT {want}")
+print(f"torchcell {m.version('torchcell')} at {got}")
+EOF
+
+LABEL org.torchcell.build_commit=${BUILD_COMMIT} \
+      org.torchcell.base_image=${BASE_IMAGE}
+ENV TORCHCELL_BUILD_COMMIT=${BUILD_COMMIT}

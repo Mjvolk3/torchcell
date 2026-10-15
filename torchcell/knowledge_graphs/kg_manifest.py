@@ -338,6 +338,26 @@ class KgEvent(BaseModel):
     acknowledged_value_drift: list[str] = Field(default_factory=list)
 
 
+class GenerationRecord(BaseModel):
+    """How the CSVs of a full build were generated, and what the merge found.
+
+    ``serial`` is one container over every adapter; ``array`` is one task per adapter
+    merged by ``torchcell.knowledge_graphs.generation_array`` (2026-10-15). The
+    duplicate counts are the rows whose content id recurred across adapter
+    directories: nodes are skipped by ``--skip-duplicate-nodes`` after the merge proved
+    them byte-identical, edges were dropped into rewritten part files.
+    """
+
+    mode: Literal["serial", "array"]
+    n_adapter_directories: int | None = None
+    node_duplicates: dict[str, int] = Field(default_factory=dict)
+    edge_duplicates: dict[str, int] = Field(default_factory=dict)
+    rewritten_part_files: int = 0
+    merge_report: str | None = Field(
+        default=None, description="path of the merge_report.json the counts came from"
+    )
+
+
 class KgBuildManifest(BaseModel):
     """What the served knowledge graph was built from, dataset by dataset."""
 
@@ -373,6 +393,9 @@ class KgBuildManifest(BaseModel):
     # took the whole adapter map, and ``served_organisms`` reads the set off the served
     # datasets' classes.
     organisms: list[OrganismName] | None = None
+    # How the CSVs were generated (2026-10-15). None for a manifest stamped before the
+    # per-adapter array existed; those builds were all serial.
+    generation: GenerationRecord | None = None
     datasets: dict[str, KgDatasetEntry]
     events: list[KgEvent]
     created_at: str
@@ -976,6 +999,23 @@ def save_manifest(manifest: KgBuildManifest, path: Path) -> None:
     path.write_text(manifest.model_dump_json(indent=2), encoding="utf-8")
 
 
+def generation_record_from_merge(merge_report: Path | None) -> GenerationRecord:
+    """The manifest's generation record: serial without a report, array from one."""
+    if merge_report is None:
+        return GenerationRecord(mode="serial")
+    from torchcell.knowledge_graphs.generation_array import load_merge_report
+
+    report = load_merge_report(merge_report)
+    return GenerationRecord(
+        mode="array",
+        n_adapter_directories=report.n_adapters,
+        node_duplicates=report.node_duplicates,
+        edge_duplicates=report.edge_duplicates,
+        rewritten_part_files=len(report.rewritten),
+        merge_report=str(merge_report),
+    )
+
+
 def bootstrap_manifest(
     *,
     repo_root: Path,
@@ -989,6 +1029,7 @@ def bootstrap_manifest(
     biocypher_out: str,
     built_at: str,
     organisms: frozenset[Organism],
+    generation: GenerationRecord | None = None,
 ) -> KgBuildManifest:
     """Reconstruct the manifest of a store built by a FULL build at ``commit``.
 
@@ -1059,6 +1100,7 @@ def bootstrap_manifest(
         adapter_files=adapter_files,
         value_surface=value_surface_at_ref(repo_root, commit),
         organisms=stated,
+        generation=generation,
         datasets=datasets,
         events=[
             KgEvent(
@@ -2162,6 +2204,12 @@ def main(argv: list[str] | None = None) -> int:
         "--organisms, KG_ORGANISMS in the live rebuild), e.g. scerevisiae or "
         "scerevisiae,ecoli,pputida; a served dataset outside it is an error",
     )
+    p_boot.add_argument(
+        "--merge-report",
+        default=None,
+        help="merge_report.json of an array-mode generation; records the mode and the "
+        "per-label duplicate counts (absent: a serial generation)",
+    )
 
     p_admit = sub.add_parser("admit", help="check whether a dataset can be added")
     p_admit.add_argument(
@@ -2260,6 +2308,9 @@ def main(argv: list[str] | None = None) -> int:
             biocypher_out=args.biocypher_out,
             built_at=args.built_at,
             organisms=parse_organisms(args.organisms),
+            generation=generation_record_from_merge(
+                Path(args.merge_report) if args.merge_report else None
+            ),
         )
         save_manifest(manifest, manifest_path)
         print(

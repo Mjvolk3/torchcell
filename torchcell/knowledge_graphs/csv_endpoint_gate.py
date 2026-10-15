@@ -56,6 +56,7 @@ from typing import BinaryIO
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from torchcell.knowledge_graphs.generation_array import ADAPTERS_DIRNAME
 from torchcell.knowledge_graphs.incremental_import import CsvGroup, discover_csv_groups
 
 __all__ = [
@@ -161,6 +162,8 @@ def discover_groups(out_dir: Path, header_dir: Path | None = None) -> list[CsvGr
     the files being checked.
     """
     if header_dir is None:
+        if (out_dir / ADAPTERS_DIRNAME).is_dir():
+            return discover_array_groups(out_dir / ADAPTERS_DIRNAME)
         return discover_csv_groups(out_dir)
     parts: dict[str, list[Path]] = {}
     for path in sorted(out_dir.iterdir()):
@@ -195,6 +198,29 @@ def discover_groups(out_dir: Path, header_dir: Path | None = None) -> list[CsvGr
             )
         )
     return groups
+
+
+def discover_array_groups(adapters_dir: Path) -> list[CsvGroup]:
+    """The label groups of a per-adapter generation, every directory's parts together.
+
+    An array run (``generation_array``) writes one directory per adapter under
+    ``<out>/adapters/``; an edge in one directory may point at a node written by
+    another, so the gate's node table and edge scan span all of them. Each directory is
+    discovered as a flat BioCypher output; a label's parts are concatenated in directory
+    order under the first directory's header (the merge checks the headers are
+    byte-identical). A ``<dir>.incomplete.<ts>`` directory (an attempt moved aside by a
+    re-run) is not part of the output and is skipped.
+    """
+    groups: dict[str, CsvGroup] = {}
+    for directory in sorted(p for p in adapters_dir.iterdir() if p.is_dir()):
+        if ".incomplete." in directory.name:
+            continue
+        for group in discover_csv_groups(directory):
+            if group.label in groups:
+                groups[group.label].part_paths.extend(group.part_paths)
+            else:
+                groups[group.label] = group
+    return [groups[label] for label in sorted(groups)]
 
 
 def _id_column(columns: list[str]) -> int:

@@ -290,3 +290,86 @@ def test_the_csv_endpoint_gate_is_a_hard_stop_before_the_import() -> None:
     assert '"$OUT_HOST" --report "$ENDPOINT_REPORT"' in block
     assert "CSV endpoint gate FAILED" in block and "exit 1" in block
     assert "skip_bad_relationships: true" in TEXT
+
+
+# ------------------------------------------------------- GENERATION_MODE (2026-10-15)
+
+MODE_FIRST = 'RESUME_FROM="${RESUME_FROM:-import}"'
+MODE_LAST = 'ARRAY_FOLLOWUP="${ARRAY_FOLLOWUP:-0}"'
+
+
+def _mode_dispatch() -> str:
+    """The RESUME_FROM check and the GENERATION_MODE assignment plus its case, verbatim."""
+    lines = TEXT.splitlines()
+    start = lines.index(MODE_FIRST)
+    end = lines.index(MODE_LAST, start)
+    return "\n".join(lines[start:end])
+
+
+def _run_mode(mode: str | None, resume_from: str | None = None) -> tuple[int, str]:
+    env = {"PATH": "/usr/bin:/bin"}
+    if mode is not None:
+        env["GENERATION_MODE"] = mode
+    if resume_from is not None:
+        env["RESUME_FROM"] = resume_from
+    result = subprocess.run(
+        [
+            "bash",
+            "-c",
+            f'set -eu\n{_mode_dispatch()}\necho "mode=[$GENERATION_MODE] resume=[$RESUME_FROM]"',
+        ],
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    return result.returncode, result.stdout.strip()
+
+
+def test_generation_is_serial_unless_the_owner_flips_it() -> None:
+    """The default stays serial; array is opt-in; RESUME_FROM=array implies array."""
+    assert _run_mode(None) == (0, "mode=[serial] resume=[import]")
+    assert _run_mode("array") == (0, "mode=[array] resume=[import]")
+    assert _run_mode(None, "array") == (0, "mode=[array] resume=[array]")
+    assert _run_mode("serial", "generation") == (0, "mode=[serial] resume=[generation]")
+    assert _run_mode("parallel") == (
+        1,
+        "GENERATION_MODE must be serial or array, got 'parallel'",
+    )
+    assert _run_mode(None, "merge") == (
+        1,
+        "RESUME_FROM must be import, generation or array, got 'merge'",
+    )
+
+
+def test_the_array_mode_chains_a_follow_up_that_never_re_runs_a_task() -> None:
+    """The generating job submits the arrays through the conductor and resubmits itself
+    with --dependency=afterany and ARRAY_FOLLOWUP=1; a follow-up with missing markers
+    prints the recovery command and exits 1, a by-hand resume re-runs them.
+    """
+    assert "bash database/scripts/kg_generation_array_conductor.sh" not in TEXT
+    assert (
+        'CONDUCTOR="$TORCHCELL_SRC/database/scripts/kg_generation_array_conductor.sh"'
+        in TEXT
+    )
+    assert '--dependency="afterany:${ARRAY_JOBS//,/:}"' in TEXT
+    assert "RESUME_FROM=array,ARRAY_FOLLOWUP=1" in TEXT
+    assert 'if [ "$ARRAY_FOLLOWUP" = 1 ]; then' in TEXT
+    assert "this follow-up never re-runs a task" in TEXT
+    assert 'INDICES="$MISSING_IDS"' in TEXT
+    assert (
+        "python -m torchcell.knowledge_graphs.generation_array merge --out-dir" in TEXT
+    )
+    # the array path reaches the import branch's endpoint gate with OUT_HOST set to the
+    # <ts> directory, whose adapters/*/ the gate walks as one output
+    merge = TEXT.index("python -m torchcell.knowledge_graphs.generation_array merge")
+    gate = TEXT.index("python -m torchcell.knowledge_graphs.csv_endpoint_gate")
+    assert merge < gate
+    assert "kg_csv_endpoint_check" not in TEXT
+    assert '${MERGE_REPORT:+--merge-report "$MERGE_REPORT"}' in TEXT
+    # the serial path is intact: its generation container, its generate-log checks
+    assert 'docker run --rm --entrypoint bash --name "$GEN_CONTAINER"' in TEXT
+    assert (
+        "python -m $KG_MODULE --config-name $KG_CONFIG $PRIVATE_FLAG --organisms $KG_ORGANISMS"
+        in TEXT
+    )
+    assert "grep -oE 'across [0-9]+ adapters'" in TEXT

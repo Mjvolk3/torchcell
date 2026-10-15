@@ -247,6 +247,57 @@ under a running job: check `scontrol show job | grep WorkDir` first).
   but nothing wrote) landed in PR #1102.
 - 2026-10-14: Hoepfner is memory-throttled at the 256 G limit, not CPU-bound (section 6).
 
+## 9. The per-adapter generation array (2026-10-15; `GENERATION_MODE=array`)
+
+The serial generation has no checkpoint (job 4901: 17 h 38 min to adapter 124 of 170,
+nothing reusable). `GENERATION_MODE=array` runs the generation as one slurm array task
+per adapter, each in its own container `tc-neo4j-gen-<i>`, each into
+`biocypher-out/<ts>/adapters/<iii>_<Adapter>/` with a `DONE` marker written last, and
+merges the directories into one import call. The default stays `serial` until the
+owner flips it. Pieces: [[torchcell.knowledge_graphs.generation_array]] (order, tiers,
+merge, duplicate check), [[torchcell.knowledge_graphs.generate_adapter]] (the task
+entry), [[database.slurm.scripts.gilahyper_generate_adapter_array-slurm_docker]],
+[[database.scripts.kg_generation_array_conductor]], the tier table
+`torchcell/knowledge_graphs/conf/generation_tiers.yaml` (standard 16 CPU / 64 G / 8 h,
+large 32 / 160 G / 16 h, hoepfner 64 / 320 G / 36 h; edit `adapters:` to move one).
+
+```bash
+# submit (the first job only preflights, fences, starts the arrays, and chains the follow-up)
+KG_ORGANISMS=scerevisiae,ecoli,pputida INCLUDE_PRIVATE=1 GENERATION_MODE=array \
+    sbatch --export=ALL,TORCHCELL_SRC=<wt>,BUILD_COMMIT=<sha> database/slurm/scripts/gilahyper_live_rebuild-slurm_docker.slurm
+# the follow-up (submitted by the job itself with --dependency=afterany:<array ids>,
+# RESUME_FROM=array ARRAY_FOLLOWUP=1) merges, passes the CSV endpoint gate (which walks
+# adapters/*/ as one output), imports,
+# validates, swaps and records. Its log says which tasks lack DONE if any.
+```
+
+- **Recovery is per adapter.** A failed task leaves no marker and touches nothing
+  else. Fix the cause, then re-run exactly the missing tasks and chain a new follow-up:
+  `sbatch --export=ALL,RESUME_JOB=<array-mode job>,RESUME_FROM=array,TORCHCELL_SRC=<wt>,BUILD_COMMIT=<sha> database/slurm/scripts/gilahyper_live_rebuild-slurm_docker.slurm`
+  (the organism set in the environment). By hand instead:
+  `python -m torchcell.knowledge_graphs.generation_array missing --out-dir /db/database/biocypher-out/<ts> --out-name <ts> --torchcell-src <wt> --build-commit <sha> --include-private --organisms <set>`
+  prints the indices and the exact per-tier `sbatch --array=<ids>%N` lines, then
+  `generation_array merge --out-dir <dir> --workers 16 --expect <N>`.
+- **A follow-up never re-runs a task** (a recurring failure would loop); it refuses and
+  prints the command above. Only a by-hand `RESUME_FROM=array` re-submits.
+- **Watching:** `squeue -h --name=gen_adapter_standard,gen_adapter_large,gen_adapter_hoepfner`,
+  one `.out` per task under `$OUTDIR/<array job>_<i>_gen_adapter.out`, the container
+  stream in `<array job>_<i>_generate.log`, and `ls biocypher-out/<ts>/adapters/*/DONE | wc -l`
+  against the order's length. Every task re-checks the fence first; a stale store
+  stops that task, not the whole array.
+- **The merge** keeps the adapter directories read-only: duplicate node ids across
+  directories are proven byte-identical and left to `--skip-duplicate-nodes=true`;
+  duplicate edge rows are dropped into `biocypher-out/<ts>/merged/<dir>/` copies the
+  call references; `merge_report.json` carries the counts and reaches the manifest's
+  `generation` record. A duplicate that is not byte-identical refuses the merge and
+  names the label, the key and the files.
+- **A cancelled task's container outlives it** (section 0 applies per task):
+  `docker ps --filter name=tc-neo4j-gen-`, remove the dead index's container before
+  re-running it.
+- **The Hoepfner measurement** runs one task alone through the conductor
+  (`OUT_NAME=hoepfner-study-<ts> INDICES=64`, `GEN_OVERRIDES` for a knob):
+  [[experiments.database.hoepfner-generation-study]].
+
 ## 10. The generation image (2026-10-15; `GEN_IMAGE_MODE`)
 
 Every generation container used to pip-install the build commit, biocypher and CaLM

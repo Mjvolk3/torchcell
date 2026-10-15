@@ -971,3 +971,56 @@ def test_dataset_visibility_reads_the_loader_class() -> None:
     assert dataset_visibility(_Public) == "public"
     assert dataset_visibility(_Private) == "private"
     assert dataset_visibility(_Undeclared) == "public"
+
+
+def test_the_generation_record_is_serial_without_a_merge_report_and_array_with_one(
+    tmp_path: Path,
+) -> None:
+    """The manifest carries how the CSVs were generated; an array build records the
+    per-label duplicate counts the merge found and the part files it rewrote.
+    """
+    from torchcell.knowledge_graphs.generation_array import LabelDuplicates, MergeReport
+    from torchcell.knowledge_graphs.kg_manifest import (
+        GenerationRecord,
+        generation_record_from_merge,
+    )
+
+    assert generation_record_from_merge(None) == GenerationRecord(mode="serial")
+    report = MergeReport(
+        out_dir="/out",
+        n_adapters=170,
+        labels={
+            "Genome": LabelDuplicates(
+                label="Genome",
+                kind="node",
+                rows=200,
+                duplicate_rows=150,
+                duplicate_keys=3,
+                conflicting_keys=0,
+            ),
+            "MediaMemberOf": LabelDuplicates(
+                label="MediaMemberOf",
+                kind="edge",
+                rows=900,
+                duplicate_rows=700,
+                duplicate_keys=9,
+                conflicting_keys=0,
+            ),
+        },
+        rewritten={
+            "/out/adapters/001_B/MediaMemberOf-part000.csv": "/out/merged/001_B/MediaMemberOf-part000.csv"
+        },
+        import_call="/out/neo4j-admin-import-call.sh",
+        merged_at="2026-10-15T00:00:00+00:00",
+    )
+    path = tmp_path / "merge_report.json"
+    path.write_text(report.model_dump_json())
+    record = generation_record_from_merge(path)
+    assert record == GenerationRecord(
+        mode="array",
+        n_adapter_directories=170,
+        node_duplicates={"Genome": 150},
+        edge_duplicates={"MediaMemberOf": 700},
+        rewritten_part_files=1,
+        merge_report=str(path),
+    )

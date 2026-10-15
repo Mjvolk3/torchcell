@@ -48,6 +48,40 @@
 #
 # `--since` without the trailing Z is read as local time and captures nothing.
 #
+# GENERATION_MODE=array (2026-10-15; the default stays serial until the owner flips it).
+# Generation runs as ONE SLURM ARRAY TASK PER ADAPTER
+# (database/slurm/scripts/gilahyper_generate_adapter_array-slurm_docker.slurm, one
+# container tc-neo4j-gen-<i> each, one directory biocypher-out/<ts>/adapters/<iii>_<Adapter>/
+# each, a DONE marker written last) instead of one serial container, so a failure at
+# adapter 124 costs adapter 124, not adapters 1 to 123. This job then:
+#
+#   1. preflights and fences as a serial run does, starts the array through
+#      database/scripts/kg_generation_array_conductor.sh (one sbatch per resource tier,
+#      torchcell/knowledge_graphs/conf/generation_tiers.yaml; the fence is recorded at
+#      biocypher-out/<ts>/dev_fence.txt and every task re-checks it), prints
+#      ARRAY_OUT=<ts> and ARRAY_JOBS=<ids>,
+#   2. submits ITSELF again with --dependency=afterany:<ids> and
+#      RESUME_JOB=<this job> RESUME_FROM=array ARRAY_FOLLOWUP=1, and exits, so the node
+#      is not held by a waiting job while the array runs,
+#   3. the follow-up verifies every directory carries DONE (refusing with the exact
+#      re-run command when one does not), re-digests the fence, MERGES the directories
+#      into one neo4j-admin-import-call.sh (torchcell.knowledge_graphs.generation_array
+#      merge: per label one header and the comma-joined part files; duplicate
+#      content-id nodes proven byte-identical and skipped by --skip-duplicate-nodes;
+#      duplicate edges dropped into rewritten part files), then passes the CSV endpoint
+#      gate the import branch runs in every mode (torchcell.knowledge_graphs.csv_endpoint_gate
+#      walks adapters/*/ as one output), imports, validates, swaps and records.
+#
+# RECOVERY in array mode: fix the cause, then
+#
+#   sbatch --export=ALL,RESUME_JOB=<array-mode job>,RESUME_FROM=array database/slurm/scripts/gilahyper_live_rebuild-slurm_docker.slurm
+#
+# re-runs exactly the tasks without a DONE marker (the other directories are untouched)
+# and chains a new follow-up. A follow-up itself never re-runs a task: it refuses and
+# prints the command, so a failure that recurs cannot loop. In array mode the job that
+# imports needs the import container's size, not a generation container's:
+# IMPORT_CPUS / IMPORT_MEM_MB (default: this job's SLURM_CPUS_PER_TASK / SLURM_MEM_PER_NODE).
+#
 # HOW IT DIFFERS from gilahyper_uncapped_build-slurm_docker.slurm, which stops the
 # serving container first and rebuilds in place (a day of downtime, and no way back):
 #
@@ -190,18 +224,32 @@ OUTDIR="$BUILD_ROOT/database/slurm/output"
 mem_mb=$((SLURM_MEM_PER_NODE))
 CS='cypher-shell -u neo4j -p torchcell'
 RESUME_JOB="${RESUME_JOB:-}"
+MERGE_REPORT=""
 # RESUME_FROM names the last stage the resumed job finished: `import` (the default, the
 # resume starts at the post-import restart) or `generation` (the resume starts at the
 # import). GENERATE and IMPORT are what THIS job runs.
 RESUME_FROM="${RESUME_FROM:-import}"
 case "$RESUME_FROM" in
-    import|generation) ;;
-    *) echo "RESUME_FROM must be import or generation, got '$RESUME_FROM'"; exit 1 ;;
+    import|generation|array) ;;
+    *) echo "RESUME_FROM must be import, generation or array, got '$RESUME_FROM'"; exit 1 ;;
 esac
+# GENERATION_MODE: serial (one container, the default) or array (one task per adapter;
+# see the header). A RESUME_FROM=array implies the array mode.
+GENERATION_MODE="${GENERATION_MODE:-serial}"
+[ "$RESUME_FROM" = array ] && GENERATION_MODE=array
+case "$GENERATION_MODE" in
+    serial|array) ;;
+    *) echo "GENERATION_MODE must be serial or array, got '$GENERATION_MODE'"; exit 1 ;;
+esac
+# ARRAY_FOLLOWUP=1 marks the job the array-mode run chained after its arrays; it never
+# re-submits tasks (a recurring failure would otherwise loop).
+ARRAY_FOLLOWUP="${ARRAY_FOLLOWUP:-0}"
+IMPORT_CPUS="${IMPORT_CPUS:-$SLURM_CPUS_PER_TASK}"
+IMPORT_MEM_MB="${IMPORT_MEM_MB:-$SLURM_MEM_PER_NODE}"
 GENERATE=1; IMPORT=1
 if [ -n "$RESUME_JOB" ]; then
     GENERATE=0
-    [ "$RESUME_FROM" = generation ] || IMPORT=0
+    case "$RESUME_FROM" in generation|array) ;; *) IMPORT=0 ;; esac
 fi
 # The container installs torchcell from GitHub at this commit; the manifest records it.
 # A resume takes the commit the CSVs were generated at from the old job's log.
@@ -209,7 +257,10 @@ git -C "$TORCHCELL_SRC" fetch origin main --quiet
 if [ -n "$RESUME_JOB" ]; then
     PREV_OUT="$OUTDIR/${RESUME_JOB}_live_rebuild_kg.out"
     GEN_LOG="$OUTDIR/${RESUME_JOB}_generate.log"
-    for f in "$PREV_OUT" "$GEN_LOG"; do [ -f "$f" ] || { echo "job $RESUME_JOB left no $f"; exit 1; }; done
+    [ -f "$PREV_OUT" ] || { echo "job $RESUME_JOB left no $PREV_OUT"; exit 1; }
+    if [ "$GENERATION_MODE" = serial ]; then
+        [ -f "$GEN_LOG" ] || { echo "job $RESUME_JOB left no $GEN_LOG"; exit 1; }
+    fi
     BUILD_COMMIT="${BUILD_COMMIT:-$(grep -oE '; commit [0-9a-f]{40}' "$PREV_OUT" | head -1 | grep -oE '[0-9a-f]{40}')}"
     # `|| true`: under set -e + pipefail a log with no organisms line (a job that predates
     # KG_ORGANISMS) would otherwise end the job here without the message below
@@ -234,6 +285,7 @@ echo "package tag $PACKAGE_TAG at $BUILD_COMMIT: the release will be paired with
 
 echo "Running on $(hostname) at $(date); job $JOB${RESUME_JOB:+ (resuming job $RESUME_JOB after its $RESUME_FROM)}"
 echo "config $KG_CONFIG; commit $BUILD_COMMIT; dev tree $DEV_DATA_ROOT; serve $SERVE_ROOT; next $NEXT_ROOT; include private $INCLUDE_PRIVATE; organisms $KG_ORGANISMS"
+echo "generation mode $GENERATION_MODE${RESUME_JOB:+ (resume from $RESUME_FROM)}${ARRAY_FOLLOWUP/1/ (array follow-up)}"
 echo "SLURM_CPUS_PER_TASK=$SLURM_CPUS_PER_TASK SLURM_MEM_PER_NODE=$SLURM_MEM_PER_NODE"
 cd "$TORCHCELL_SRC"
 export PYTHONPATH="$TORCHCELL_SRC"
@@ -250,7 +302,34 @@ if [ -n "$RESUME_JOB" ]; then
     # generation covered them all. Nothing here regenerates.
     N_DATASETS=$(grep -oE '^[0-9]+ mapped datasets' "$PREV_OUT" | head -1 | grep -oE '[0-9]+')
     if docker inspect "$GEN_CONTAINER" >/dev/null 2>&1; then echo "$GEN_CONTAINER still exists"; exit 1; fi
-    if [ "$IMPORT" = 0 ]; then
+    if [ "$RESUME_FROM" = array ]; then
+        # The array-mode job printed the directory the conductor created; the merge
+        # below needs every task's DONE marker there. Nothing here regenerates unless
+        # a task is missing and this is not a follow-up (stage 1 handles that).
+        ARRAY_OUT=$(grep -oE '^ARRAY_OUT=.*' "$PREV_OUT" | tail -1 | cut -d= -f2-)
+        [ -n "$ARRAY_OUT" ] || { echo "job $RESUME_JOB printed no ARRAY_OUT line: it was not an array-mode generation"; exit 1; }
+        OUT_HOST="$SERVE_ROOT/biocypher-out/$ARRAY_OUT"
+        for f in "$OUT_HOST/adapter_order.json" "$OUT_HOST/dev_fence.txt"; do
+            [ -f "$f" ] || { echo "$f is absent; the conductor of job $RESUME_JOB did not run"; exit 1; }
+        done
+        if docker inspect "$BUILD_CONTAINER" >/dev/null 2>&1; then echo "$BUILD_CONTAINER already exists; remove it first"; exit 1; fi
+        FREE_GB=$(df --output=avail -BG /db | tail -1 | tr -dc 0-9)
+        [ "$FREE_GB" -ge "$MIN_FREE_GB" ] || { echo "/db has ${FREE_GB}G free, need ${MIN_FREE_GB}G"; exit 1; }
+        if [ -e "$NEXT_ROOT/data" ] && [ -n "$(ls -A "$NEXT_ROOT/data")" ]; then
+            echo "$NEXT_ROOT/data exists and is not empty; move it aside first"; exit 1
+        fi
+        DEV_FENCE="$OUT_HOST/dev_fence.txt"
+        docker run --rm --entrypoint bash -v "$NEXT_PARENT":/parent "$IMAGE" -c \
+            "mkdir -p /parent/$NEXT_NAME/data /parent/$NEXT_NAME/logs /parent/$NEXT_NAME/metrics \
+             && chown -R 7474:7474 /parent/$NEXT_NAME && ls -la /parent/$NEXT_NAME"
+        docker run --rm --entrypoint bash -v "$BUILD_ROOT/database":/bt "$IMAGE" -c \
+            "chown -R $(id -u):$(id -g) /bt/conf /bt/biocypher && chmod -R u+rwX,go+rX /bt/conf /bt/biocypher"
+        DATA_ROOT="$BUILD_ROOT" python -m torchcell.database.directory_setup --env-file "$DATABASE_ENV_FILE"
+        cmp "$TORCHCELL_SRC/biocypher/config/torchcell_schema_config.yaml" \
+            "$BUILD_ROOT/database/biocypher/config/torchcell_schema_config.yaml"
+        echo "resuming after the array: $N_DATASETS mapped datasets, directories under $OUT_HOST/adapters, fence $DEV_FENCE"
+        df -h /db /scratch
+    elif [ "$IMPORT" = 0 ]; then
         # The import into $NEXT_ROOT/data completed and the build container was left
         # stopped. Nothing here reimports.
         grep -q '^IMPORT DONE in ' "$PREV_OUT" || { echo "job $RESUME_JOB did not finish its import"; exit 1; }
@@ -374,7 +453,79 @@ cmp "$TORCHCELL_SRC/biocypher/config/torchcell_schema_config.yaml" \
 df -h /db /scratch
 fi
 
+if [ "$GENERATION_MODE" = array ] && { [ "$GENERATE" = 1 ] || [ "$RESUME_FROM" = array ]; }; then
+echo "---------------- 1 GENERATE as an array (one task per adapter) $(date)"
+ARRAY_SCRIPT="$TORCHCELL_SRC/database/slurm/scripts/gilahyper_generate_adapter_array-slurm_docker.slurm"
+CONDUCTOR="$TORCHCELL_SRC/database/scripts/kg_generation_array_conductor.sh"
 if [ "$GENERATE" = 1 ]; then
+    ARRAY_OUT=$(date +%Y-%m-%d_%H-%M-%S)
+    OUT_HOST="$SERVE_ROOT/biocypher-out/$ARRAY_OUT"
+    CONDUCTOR_LOG="$OUTDIR/${JOB}_conductor.log"
+    OUT_NAME="$ARRAY_OUT" TORCHCELL_SRC="$TORCHCELL_SRC" BUILD_COMMIT="$BUILD_COMMIT" \
+        DEV_DATA_ROOT="$DEV_DATA_ROOT" BUILD_ROOT="$BUILD_ROOT" SERVE_ROOT="$SERVE_ROOT" IMAGE="$IMAGE" \
+        INCLUDE_PRIVATE="$INCLUDE_PRIVATE" KG_ORGANISMS="$KG_ORGANISMS" KG_CONFIG="$KG_CONFIG" \
+        bash "$CONDUCTOR" 2>&1 | tee "$CONDUCTOR_LOG"
+    # The conductor's fence is the one this build is held to; the preflight's own digest
+    # must agree with it (both read the same tree minutes apart).
+    diff "$DEV_FENCE" "$OUT_HOST/dev_fence.txt" || { echo "the conductor's fence differs from the preflight's; a store changed between them"; exit 1; }
+    DEV_FENCE="$OUT_HOST/dev_fence.txt"
+    MISSING_IDS=""
+else
+    # A resume: the tasks without a marker are re-run (by hand), or refused (follow-up).
+    MISSING_IDS=$(python - "$OUT_HOST" <<'EOF'
+import sys
+from pathlib import Path
+from torchcell.knowledge_graphs.generation_array import compress_ids, missing_slots, read_order
+out = Path(sys.argv[1])
+missing = missing_slots(out, read_order(out / "adapter_order.json"))
+print(compress_ids(s.index for s in missing) if missing else "")
+EOF
+)
+fi
+if [ "$GENERATE" = 1 ] || [ -n "$MISSING_IDS" ]; then
+    if [ "$GENERATE" = 0 ]; then
+        echo "tasks without DONE: $MISSING_IDS"
+        if [ "$ARRAY_FOLLOWUP" = 1 ]; then
+            echo "this follow-up never re-runs a task. Fix the cause, then re-run them and chain a new follow-up with:"
+            echo "  sbatch --export=ALL,RESUME_JOB=$RESUME_JOB,RESUME_FROM=array,TORCHCELL_SRC=$TORCHCELL_SRC,BUILD_COMMIT=$BUILD_COMMIT $0"
+            echo "  (KG_ORGANISMS=$KG_ORGANISMS INCLUDE_PRIVATE=$INCLUDE_PRIVATE in the environment)"
+            exit 1
+        fi
+        CONDUCTOR_LOG="$OUTDIR/${JOB}_conductor.log"
+        OUT_NAME="$ARRAY_OUT" INDICES="$MISSING_IDS" TORCHCELL_SRC="$TORCHCELL_SRC" BUILD_COMMIT="$BUILD_COMMIT" \
+            DEV_DATA_ROOT="$DEV_DATA_ROOT" BUILD_ROOT="$BUILD_ROOT" SERVE_ROOT="$SERVE_ROOT" IMAGE="$IMAGE" \
+            INCLUDE_PRIVATE="$INCLUDE_PRIVATE" KG_ORGANISMS="$KG_ORGANISMS" KG_CONFIG="$KG_CONFIG" \
+            bash "$CONDUCTOR" 2>&1 | tee "$CONDUCTOR_LOG"
+    fi
+    ARRAY_JOBS=$(grep -oE '^JOB_IDS=.*' "$CONDUCTOR_LOG" | tail -1 | cut -d= -f2-)
+    [ -n "$ARRAY_JOBS" ] || { echo "the conductor printed no JOB_IDS"; exit 1; }
+    echo "ARRAY_OUT=$ARRAY_OUT"
+    echo "ARRAY_JOBS=$ARRAY_JOBS"
+    # The follow-up: this script again, after every array, resuming at the merge. The
+    # array-mode job that generated is the one a resume names (its log carries ARRAY_OUT),
+    # so a follow-up of a follow-up still points at the generating job.
+    GENERATING_JOB="${RESUME_JOB:-$JOB}"
+    # IMPORT_CPUS / IMPORT_MEM_MB are not passed on: the follow-up sizes its import
+    # container from its own reservation (the header's), whatever this job was given.
+    FOLLOWUP=$(KG_ORGANISMS="$KG_ORGANISMS" INCLUDE_PRIVATE="$INCLUDE_PRIVATE" KG_CONFIG="$KG_CONFIG" \
+        sbatch --parsable --dependency="afterany:${ARRAY_JOBS//,/:}" \
+        --export=ALL,RESUME_JOB="$GENERATING_JOB",RESUME_FROM=array,ARRAY_FOLLOWUP=1,TORCHCELL_SRC="$TORCHCELL_SRC",BUILD_COMMIT="$BUILD_COMMIT" \
+        "$TORCHCELL_SRC/database/slurm/scripts/gilahyper_live_rebuild-slurm_docker.slurm")
+    echo "FOLLOWUP_JOB=$FOLLOWUP (after arrays $ARRAY_JOBS: merge, endpoint gate, import, validate, swap, record)"
+    echo "array submitted at $(date); this job ends here"
+    exit 0
+fi
+echo "every adapter directory carries DONE; merging $(date)"
+MERGE_LOG="$OUTDIR/${JOB}_merge.log"
+python -m torchcell.knowledge_graphs.generation_array merge --out-dir "$OUT_HOST" --workers "$SLURM_CPUS_PER_TASK" \
+    --expect "$N_DATASETS" 2>&1 | tee "$MERGE_LOG"
+grep -q '^MERGED_CALL=' "$MERGE_LOG" || { echo "the merge wrote no import call"; exit 1; }
+MERGE_REPORT="$OUT_HOST/merge_report.json"
+[ -f "$MERGE_REPORT" ] || { echo "no $MERGE_REPORT"; exit 1; }
+# The CSV endpoint gate runs in the import branch below for every generation mode
+# (csv_endpoint_gate discovers adapters/*/ as one output), after the fence re-digest.
+GEN_LOG=""
+elif [ "$GENERATE" = 1 ]; then
 echo "---------------- 1 GENERATE (ephemeral container; dev tree read-only) $(date)"
 # The dev tree's data/torchcell shadows the build tree's copy read-only (loaders open
 # LMDB readonly, lock=False); yeast genome/graph caches (data/sgd, go, string, tflink)
@@ -413,15 +564,22 @@ docker run --rm --entrypoint bash --name "$GEN_CONTAINER" \
         echo GENERATION_CALL=\$CALL" 2>&1 | tee "$GEN_LOG"
 echo "CSV generation completed at $(date)"
 fi
-N_ADAPTERS=$(grep -oE 'across [0-9]+ adapters' "$GEN_LOG" | tail -1 | grep -oE '[0-9]+')
-[ "$N_ADAPTERS" = "$N_DATASETS" ] || { echo "generation covered '$N_ADAPTERS' adapters, expected $N_DATASETS"; exit 1; }
+if [ "$GENERATION_MODE" = serial ]; then
+    N_ADAPTERS=$(grep -oE 'across [0-9]+ adapters' "$GEN_LOG" | tail -1 | grep -oE '[0-9]+')
+    [ "$N_ADAPTERS" = "$N_DATASETS" ] || { echo "generation covered '$N_ADAPTERS' adapters, expected $N_DATASETS"; exit 1; }
+fi
 # The fence: the dev tree must be byte-identical to what the preflight saw, or the CSVs
 # mix two schema versions. A resume after the import regenerates and reimports nothing,
 # so its fence was already honored by the job that generated; a resume after the
 # generation re-digests against the generating job's fence before it imports.
 if [ "$IMPORT" = 1 ]; then
     DEV_FENCE_AFTER="$OUTDIR/${JOB}_dev_fence_after.txt"
-    python "$DEV_FENCE_PY" "$DEV_DATA_ROOT" "$INCLUDE_PRIVATE" "$KG_ORGANISMS" > "$DEV_FENCE_AFTER"
+    if [ "$GENERATION_MODE" = array ]; then
+        python -m torchcell.knowledge_graphs.generation_array fence --dev-data-root "$DEV_DATA_ROOT" \
+            $PRIVATE_FLAG --organisms "$KG_ORGANISMS" > "$DEV_FENCE_AFTER"
+    else
+        python "$DEV_FENCE_PY" "$DEV_DATA_ROOT" "$INCLUDE_PRIVATE" "$KG_ORGANISMS" > "$DEV_FENCE_AFTER"
+    fi
     if diff "$DEV_FENCE" "$DEV_FENCE_AFTER"; then
         echo "dev fence intact: all $N_DATASETS build manifests unchanged across generation"
     else
@@ -430,7 +588,11 @@ if [ "$IMPORT" = 1 ]; then
         exit 1
     fi
 fi
-CALL_REL=$(grep -oE '^GENERATION_CALL=.*' "$GEN_LOG" | tail -1 | cut -d= -f2-)
+if [ "$GENERATION_MODE" = array ]; then
+    CALL_REL="biocypher-out/$ARRAY_OUT/neo4j-admin-import-call.sh"
+else
+    CALL_REL=$(grep -oE '^GENERATION_CALL=.*' "$GEN_LOG" | tail -1 | cut -d= -f2-)
+fi
 [ -n "$CALL_REL" ] || { echo "no import call reported"; exit 1; }
 OUT_TS=$(basename "$(dirname "$CALL_REL")")
 OUT_HOST="$SERVE_ROOT/biocypher-out/$OUT_TS"
@@ -458,7 +620,7 @@ fi
 echo "---------------- 2 IMPORT into $NEXT_ROOT ($BUILD_CONTAINER, no host ports) $(date)"
 IMPORT_T0=$(date +%s)
 docker run \
-    --cpus="$SLURM_CPUS_PER_TASK" --memory="${mem_mb}m" \
+    --cpus="$IMPORT_CPUS" --memory="${IMPORT_MEM_MB}m" \
     --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes \
     -d --name "$BUILD_CONTAINER" --restart=no \
     -v "$NEXT_ROOT/data":/var/lib/neo4j/data \
@@ -542,13 +704,19 @@ from pathlib import Path
 from torchcell.knowledge_graphs.incremental_import import discover_csv_groups
 csv.field_size_limit(sys.maxsize)
 out_dir = Path(sys.argv[1])
-group = next(g for g in discover_csv_groups(out_dir) if g.label == "ExperimentMemberOf")
-end = group.columns.index(":END_ID")
+# serial: the CSVs sit in out_dir; array: one directory per adapter under adapters/
+adapters_dir = out_dir / "adapters"
+csv_dirs = sorted(p for p in adapters_dir.iterdir() if p.is_dir() and ".incomplete." not in p.name) if adapters_dir.is_dir() else [out_dir]
 counts: Counter[str] = Counter()
-for part in group.part_paths:
-    with open(part, encoding="utf-8", newline="") as handle:
-        for row in csv.reader(handle, delimiter="\t", quotechar="'", strict=True):
-            counts[row[end].strip("'")] += 1
+for csv_dir in csv_dirs:
+    group = next((g for g in discover_csv_groups(csv_dir) if g.label == "ExperimentMemberOf"), None)
+    if group is None:
+        continue
+    end = group.columns.index(":END_ID")
+    for part in group.part_paths:
+        with open(part, encoding="utf-8", newline="") as handle:
+            for row in csv.reader(handle, delimiter="\t", quotechar="'", strict=True):
+                counts[row[end].strip("'")] += 1
 for name, n in sorted(counts.items()):
     print(f"{name}={n}")
 EOF
@@ -635,6 +803,7 @@ BUILT_AT=$(date -Iseconds)
 python -m torchcell.knowledge_graphs.kg_manifest --manifest "$KG_MANIFEST" --repo "$TORCHCELL_SRC" \
     bootstrap --commit "$BUILD_COMMIT" --biocypher-out "$OUT_TS" --built-at "$BUILT_AT" \
     --biocypher-version 0.15.2 --database "$NEO4J_DATABASE" --neo4j-uri bolt://localhost:7687 \
+    ${MERGE_REPORT:+--merge-report "$MERGE_REPORT"} \
     --organisms "$KG_ORGANISMS"
 python -m torchcell.knowledge_graphs.kg_manifest --manifest "$KG_MANIFEST" --repo "$TORCHCELL_SRC" show
 # Release: a full build bumps the MAJOR version of the store it replaces (the superseded

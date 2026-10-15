@@ -228,3 +228,42 @@ def test_the_cli_exits_non_zero_on_a_gap_and_writes_the_report(
     assert "DANGLING: 1 edge rows name no node" in out
     written = json.loads(report_path.read_text())
     assert written["gaps"][0]["datasets"] == {DS_A: 1}
+
+
+def test_a_per_adapter_output_is_checked_across_its_directories(tmp_path: Path) -> None:
+    """An array run (``generation_array``) writes ``adapters/<dir>/`` per adapter; an edge
+    in one directory may end at a node written by another, so the node table spans
+    them all, a label's parts are concatenated under the first directory's header, and
+    a ``.incomplete.<ts>`` attempt moved aside by a re-run is not read.
+    """
+    a = tmp_path / "adapters" / "000_AAdapter"
+    b = tmp_path / "adapters" / "001_BAdapter"
+    aside = tmp_path / "adapters" / "001_BAdapter.incomplete.2026-10-15_00-00-00"
+    for d in (a, b, aside):
+        d.mkdir(parents=True)
+    _nodes(a, "Dataset", [DS_A])
+    _nodes(a, "Experiment", [E1])
+    _nodes(a, "Genotype", [G1])
+    _edges(a, "GenotypeMemberOf", [(G1, E1)])
+    _edges(a, "ExperimentMemberOf", [(E1, DS_A)])
+    _nodes(b, "Dataset", [DS_B])
+    _nodes(b, "Experiment", [E2])
+    _edges(b, "GenotypeMemberOf", [(G1, E2)])  # G1 is A's node: fine across directories
+    _edges(b, "ExperimentMemberOf", [(E2, DS_B)])
+    _nodes(aside, "Experiment", ["deadbeef"])
+    _edges(aside, "ExperimentMemberOf", [("deadbeef", "NoDataset")])
+    groups = {g.label: g for g in gate.discover_groups(tmp_path)}
+    assert [Path(p).parent.name for p in groups["Experiment"].part_paths] == [
+        "000_AAdapter",
+        "001_BAdapter",
+    ]
+    assert Path(groups["Experiment"].header_path).parent.name == "000_AAdapter"
+    assert "Genotype" in groups and len(groups["Genotype"].part_paths) == 1
+    report = gate.check_endpoints(tmp_path)
+    assert report.ok
+    assert report.node_rows == {"Dataset": 2, "Experiment": 2, "Genotype": 1}
+    assert report.edge_rows == {"ExperimentMemberOf": 2, "GenotypeMemberOf": 2}
+    # a dangling end in B is found against the global table
+    _edges(b, "Mentions", [("'1'", _h("nowhere"))])
+    _nodes(b, "Publication", ["'1'"])
+    assert not gate.check_endpoints(tmp_path, resolve_datasets=False).ok

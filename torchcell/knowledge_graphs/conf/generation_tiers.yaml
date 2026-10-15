@@ -1,0 +1,58 @@
+# torchcell/knowledge_graphs/conf/generation_tiers.yaml
+# [[torchcell.knowledge_graphs.conf.generation_tiers.yaml]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/conf/generation_tiers.yaml
+#
+# Resource tiers of the per-adapter generation array
+# (database/slurm/scripts/gilahyper_generate_adapter_array-slurm_docker.slurm,
+# torchcell.knowledge_graphs.generation_array). One slurm array per tier, because an
+# array carries one resource spec; a task's container gets `--cpus=<cpus>` and
+# `--memory=<mem_gb>g` from its tier, and the slurm reservation is the same numbers.
+# Both are OVERESTIMATED on purpose (owner, 2026-10-15: nothing may end short):
+#
+#   standard  every adapter not named below; minutes each inside the cumulative
+#             container of job 4901, per-task peak unmeasured, so 64 G is the ceiling
+#   large     > 5 M records: 0.2 to 1.7 h each in the cumulative container
+#   hoepfner  EnvChemgenHoepfner2014Adapter alone: 8 h 36 min at the 256 G limit in
+#             job 4901, memory-throttled (139 pool recycles in the node pass)
+#
+# `hours` is the slurm --time; `concurrency` the `%N` cap of that tier's array. The
+# node is 128 CPUs / 513 G; slurm's own memory accounting gates what runs at once, so
+# the caps only bound each tier's share. MaxMemPerCPU=4100 raises an allocation's CPU
+# count (160 G -> 40 CPUs, 320 G -> 80 CPUs); the container limits stay at the tier's.
+#
+# To move an adapter between tiers, edit `adapters:` below. An adapter name that is not
+# a mapped adapter class fails tests/torchcell/knowledge_graphs/test_generation_array.py.
+
+default_tier: standard
+
+tiers:
+  standard:
+    cpus: 16
+    mem_gb: 64
+    hours: 8
+    concurrency: 4
+  large:
+    cpus: 32
+    mem_gb: 160
+    hours: 16
+    concurrency: 2
+  hoepfner:
+    cpus: 64
+    mem_gb: 320
+    hours: 36
+    concurrency: 1
+
+adapters:
+  EnvChemgenHoepfner2014Adapter: hoepfner
+  DmfCostanzo2016Adapter: large
+  DmiCostanzo2016Adapter: large
+  HetHillenmeyer2008Adapter: large
+  HomHillenmeyer2008Adapter: large
+  PooledPromoterExpressionVaishnav2022Adapter: large
+  Hale2024Adapter: large
+  EnvChemgenPiotrowski2017Adapter: large
+  CaudalPanTranscriptome2024Adapter: large
+  IsolateGrowthPeter2018Adapter: large
+  ProteomeMuenzner2024Adapter: large
+  ProteinTurnoverMuenzner2024Adapter: large
+  NadalRibellesPerturbSeq2025Adapter: large

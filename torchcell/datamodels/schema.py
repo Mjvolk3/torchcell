@@ -2273,7 +2273,447 @@ class CrisprDeletionPerturbation(DeletionPerturbation, ModelStrict):
     )
 
 
-class GeneAdditionPerturbation(PresenceAbsencePerturbation, ModelStrict):
+# --------------------------------------------------------------------------- #
+# The MATERIAL of an added gene (P4 of the ontology unification, 2026-10-15).
+#
+# A gain-of-function perturbation is an edit to the total genomic content of the cell,
+# so its record has to say WHICH DNA was added, WHERE in the host it went, and WHAT in
+# it differs from the part it was built from. Before P4 the leaf said that in two free
+# strings, ``plasmid_contig_id`` and ``locus_tag``: they pointed into a store that did
+# not exist, neither carried a hash, and both were ``None`` in 26 of 26 served
+# gene-addition stores, so a hand-typed parts list was indistinguishable from a
+# sequence-backed record.
+#
+# The classes below are composed onto ``GeneAdditionPerturbation.placement``, which is
+# required with no default and gap-able, the shape ``Media.name`` and
+# ``HeterologousPathwayPerturbation.source_organism`` already use. They are DEFINED
+# here, on the fingerprinted surface, for the reason ``ArtifactRef`` is
+# (``torchcell/artifacts/ref.py``): a record class carries them, so their contract
+# belongs to the schema, and the modules that own the construct store reach the
+# resolver, which imports the dataset loaders, which import this module.
+# ``torchcell.datamodels.construct`` and ``torchcell.sequence.construct.registry``
+# re-export them under the names their own readers use.
+#
+# Every identity rule here was measured on the 17 Cachera 2023 maps rather than chosen
+# (a contig's identity is its file's sha256, because ``pBTX002.gb`` carries ``LOCUS
+# pBTX001``; a feature's key is label plus SO id plus span, because 0 of 570 features
+# carry a ``/locus_tag`` and one map carries a gene and a CDS both labelled
+# ``Ampicillin`` at one span). The measurements are in
+# [[torchcell.sequence.construct.registry]].
+#
+# The three called-variant vocabularies are defined here rather than beside the
+# bacterial called-variant leaves below, because a designed allele on a construct and a
+# called variant in a clone are the same physical statement and share one vocabulary
+# (principle 5), and this is the first class in file order that needs them.
+# --------------------------------------------------------------------------- #
+
+
+class BacterialVariantType(StrEnum):
+    """The kind of sequence change a called bacterial variant is.
+
+    The four shapes the two releases carry, read from their own type columns rather
+    than chosen: Lim's ``Mutation Type`` is ``SNP`` / ``DEL`` / ``INS`` / ``SUB``
+    (measured: 100 / 47 / 11 / 1 of its 159 rows) and de Siqueira's ``Polymorphism
+    Type`` is ``SNP (transition)`` 68, ``SNP (transversion)`` 47, ``Insertion`` 23,
+    ``Substitution`` 21, ``Insertion (tandem repeat)`` 5, ``Deletion`` 5, ``Deletion
+    (tandem repeat)`` 4. Both vocabularies collapse onto these four, and the released
+    string is kept verbatim beside the enum in ``type_statement`` so the transition /
+    transversion / tandem-repeat distinction is not lost.
+
+    - ``snv``: one base replaced by one base.
+    - ``insertion``: bases gained.
+    - ``deletion``: bases lost (an IN-GENE deletion; a deletion that removes whole
+      loci is ``SpanDeletionCallPerturbation``, on the presence/absence axis).
+    - ``substitution``: a multi-base replacement (Lim's ``2 bp->CG``).
+    """
+
+    snv = "snv"
+    insertion = "insertion"
+    deletion = "deletion"
+    substitution = "substitution"
+
+
+BACTERIAL_VARIANT_TYPE_SO: dict[BacterialVariantType, tuple[str, str]] = {
+    BacterialVariantType.snv: ("SO:0001483", "SNV"),
+    BacterialVariantType.insertion: ("SO:0000667", "insertion"),
+    BacterialVariantType.deletion: ("SO:0000159", "deletion"),
+    BacterialVariantType.substitution: ("SO:1000032", "delins"),
+}
+"""Sequence Ontology mechanism of each variant kind.
+
+Every pair is one the schema ALREADY pins (``SO_ALLOWED`` in
+``test_ontology_all_trees.py``), so these leaves introduce no new SO term: a
+multi-base replacement is the same ``delins`` a promoter replacement is, and the other
+three are the deletion / insertion / SNV terms the yeast leaves use. The leaves keep
+the generic ``SO:0001060 sequence_variant`` as their class-default ``mechanism_so_id``
+-- true of every call whatever its kind -- and expose the specific pair as a property,
+so the mechanism field cannot desync from ``variant_type``.
+"""
+
+
+class VariantCallMode(StrEnum):
+    """Whether a frequency is a clone's within-isolate fraction or a population's.
+
+    The distinction is load-bearing and the releases differ on it. de Siqueira and Lim
+    sequenced ISOLATED clones, so a frequency below 1 means that clone is not pure at
+    that site (Lim: 431 calls at 1 and 12 at 0.9; de Siqueira: 0.96, 1, ...). Choe 2019
+    released POPULATION allele frequencies per timepoint, where a frequency is the
+    share of the evolving population carrying the allele and no clone genotype follows
+    from it without a threshold the authors never set. A consumer that cannot tell the
+    two apart would read a 0.5 as half a genome in one case and half a population in
+    the other.
+    """
+
+    clone = "clone"
+    population = "population"
+
+
+class VariantFrequencyBasis(StrEnum):
+    """The scale a released variant frequency is written on, never assumed.
+
+    Lim's matrix is a FRACTION (``1``, ``0.9``) and de Siqueira's Geneious ``Variant
+    Frequency`` column is also a fraction (``0.96``, ``1``), while other releases write
+    percents. The scale is a property of the release, so it is stated rather than
+    inferred from whether a value exceeds 1.
+    """
+
+    fraction = "fraction"
+    percent = "percent"
+
+
+#: Feature roles a placement may NOT point at, each with the reason. A primer binding
+#: site (``SO:0005850``) is an oligo's footprint on the map rather than a part of the
+#: construct, and 297 of the 570 features in the Cachera set are primers, so without
+#: the refusal the modal feature of the store would be a legal target for an integrated
+#: gene. Such a feature stays INDEXED (it is real annotation of the canonical bytes, and
+#: the data is the data) and is refused as a POINTER TARGET, which is a property of the
+#: pointer and not of the feature.
+PLACEMENT_TARGET_REFUSED_SO: dict[str, str] = {
+    "SO:0005850": "a primer binding site is an oligo footprint, not a part"
+}
+
+
+class ConstructSpan(ModelStrict):
+    """A 1-based, end-inclusive interval on one construct contig, plus its orientation.
+
+    The same convention as ``GenomicSpan``, deliberately: one store serves native and
+    construct genes, so it cannot carry two coordinate conventions. Single-range only,
+    which is why an origin-wrapping or compound GenBank location is refused at the
+    parser instead of being flattened into one interval.
+    """
+
+    start: int
+    end: int
+    orientation: Literal["inline", "reverse_complement"]
+
+    @model_validator(mode="after")
+    def _check_span(self) -> "ConstructSpan":
+        """Positions are 1-based and ordered."""
+        if self.start < 1 or self.end < self.start:
+            raise ValueError(
+                f"ConstructSpan needs 1 <= start <= end, got {self.start}..{self.end}"
+            )
+        return self
+
+    @property
+    def length(self) -> int:
+        """Bases the span covers (end-inclusive)."""
+        return self.end - self.start + 1
+
+
+class FeatureKey(ModelStrict):
+    """The stable handle of one feature within one contig: label, SO id, span.
+
+    Measured, not chosen: no map in the Cachera set carries a ``/locus_tag``, label
+    alone collides in 4 of 17 maps, label plus span still collides in 1 of 17 (a
+    gene/CDS pair at one span), and the triple is unique in all 17. ``label`` is the
+    ``/label`` or ``/gene`` qualifier verbatim and may be empty (12 of 570 features
+    carry neither), which the span and the SO id then disambiguate.
+    """
+
+    label: str
+    so_id: str
+    span: ConstructSpan
+
+    @field_validator("so_id", mode="after")
+    @classmethod
+    def _check_so_id(cls, value: str) -> str:
+        """The id must be a well-formed SO id (``SOTerm`` owns the pattern)."""
+        return SOTerm(so_id=value, name="checked").so_id
+
+    @property
+    def token(self) -> str:
+        """``<label>@<so_id>:<start>-<end><strand>``, the key as one readable string."""
+        strand = "+" if self.span.orientation == "inline" else "-"
+        return f"{self.label}@{self.so_id}:{self.span.start}-{self.span.end}{strand}"
+
+    @property
+    def is_placement_target(self) -> bool:
+        """Whether a placement may point at this feature (``PLACEMENT_TARGET_REFUSED_SO``)."""
+        return self.so_id not in PLACEMENT_TARGET_REFUSED_SO
+
+
+class Localization(StrEnum):
+    """Where added DNA resides in the cell: in a chromosome, or on its own replicon.
+
+    Two members, because there are two physical situations and the replicon's identity
+    (2 micron, CEN/ARS, a bacterial broad-host-range origin) is a property of the
+    CONTIG, read from its origin-of-replication feature, not of the gene that rides on
+    it. Folding the former ``episomal_2micron`` and ``episomal_plasmid`` strings into
+    ``episomal_replicon`` is lossless exactly when a contig exists to carry the
+    distinction, so ``GeneAdditionPerturbation.replicon_statement`` keeps the source's
+    own words verbatim for the records that have no deposited construct.
+    """
+
+    chromosomal_integration = "chromosomal_integration"
+    episomal_replicon = "episomal_replicon"
+
+
+class ConstructVariantCall(HashableProvenanceGapMixin):
+    """One variant on a construct contig, as a coordinate rather than a name.
+
+    The field shape is ``BacterialVariantCall``'s, deliberately: the same physical
+    statement (this base at this position became that base) gets the same fields and
+    the same closed vocabularies, which is why ``BacterialVariantType``,
+    ``VariantCallMode`` and ``VariantFrequencyBasis`` are reused here rather than
+    copied. One difference, and it is the point of the class:
+    ``reference_contig_sha256`` is a sha256, not a free replicon string, because a
+    construct's identity IS its hash and the coordinate is meaningless against
+    anything else. ``variant_statement`` keeps what the source wrote (``K229L``,
+    ``Y20F``, ``a single A inserted at -10``), so the verbatim claim survives beside
+    the typed coordinate and a disagreement between them stays visible.
+
+    ``position_start`` / ``position_end`` are 1-based end-inclusive on the contig, as
+    ``ConstructSpan`` is; for an insertion ``position_end`` may be
+    ``position_start - 1``, the zero-length reference interval an insertion sits in.
+    """
+
+    variant_type: BacterialVariantType
+    variant_statement: str = Field(
+        description="the source's own statement of the variant, verbatim (e.g. 'K229L')"
+    )
+    reference_contig_sha256: str = Field(
+        description="sha256 of the construct contig the coordinates are on"
+    )
+    position_start: int = Field(description="1-based start of the change on the contig")
+    position_end: int = Field(
+        description="1-based, end-INCLUSIVE end; equals position_start for a point "
+        "change and may be position_start - 1 for an insertion"
+    )
+    sequence_change: str | None = Field(
+        default=None, description="the change as the source writes it (e.g. 'G->A')"
+    )
+    reference_allele: str | None = Field(
+        default=None, description="the reference base(s), when stated separately"
+    )
+    alternate_allele: str | None = Field(
+        default=None, description="the alternate base(s), on the same condition"
+    )
+    amino_acid_change: str | None = Field(
+        default=None,
+        description="the protein-level change, verbatim, when the source states it",
+    )
+    codon_number: int | None = Field(
+        default=None, description="the 1-based codon of the CDS the change sits in"
+    )
+    call_mode: VariantCallMode | None = Field(
+        default=None,
+        description="set only for a CALLED variant (a resequenced construct); None for "
+        "a DESIGNED allele, which has no frequency to be a fraction of",
+    )
+    frequency: float | None = Field(
+        default=None, description="the frequency, when the source gives one value"
+    )
+    frequency_basis: VariantFrequencyBasis | None = Field(
+        default=None,
+        description="the scale `frequency` is on; required whenever frequency is set",
+    )
+
+    @model_validator(mode="after")
+    def _check_call(self) -> "ConstructVariantCall":
+        """A hex contig identity, ordered 1-based coordinates, a stated frequency scale."""
+        if not _ARTIFACT_SHA256.fullmatch(self.reference_contig_sha256):
+            raise ValueError(
+                "reference_contig_sha256 must be 64 lowercase hex, got "
+                f"{self.reference_contig_sha256!r}"
+            )
+        if not self.variant_statement.strip():
+            raise ValueError("ConstructVariantCall needs a variant_statement")
+        if self.position_start < 1:
+            raise ValueError(f"position_start is 1-based, got {self.position_start}")
+        floor = (
+            self.position_start - 1
+            if self.variant_type is BacterialVariantType.insertion
+            else self.position_start
+        )
+        if self.position_end < floor:
+            raise ValueError(
+                f"a call needs position_start <= position_end, got "
+                f"{self.position_start}..{self.position_end}"
+            )
+        if self.frequency is None and self.frequency_basis is not None:
+            raise ValueError(
+                "frequency_basis names the scale of a frequency, but frequency is None"
+            )
+        if self.frequency is not None and self.frequency_basis is None:
+            raise ValueError(
+                "frequency is set with no frequency_basis; a fraction is never read as "
+                "a percent"
+            )
+        if self.frequency is not None and self.call_mode is None:
+            raise ValueError(
+                "a frequency without a call_mode cannot be read: a clone's within-"
+                "isolate fraction and a population allele frequency are different facts"
+            )
+        return self
+
+
+class HostPlacement(HashableProvenanceGapMixin):
+    r"""Where an integrated construct landed in the host, as sequence rather than a label.
+
+    ``assembly_set`` is a set id the genomes registry knows, so the coordinates are
+    written against deposited bytes rather than a release name. ``site_label`` is the
+    source's own name for the landing pad, verbatim (``"XII-5"``, ``"Delta"``,
+    ``"PP_5322intergenic"``, ``"EasyClone XII-5"``), and it is required: a named pad is
+    what the source actually states, and it is a different fact from a coordinate.
+
+    ``span`` is the host interval the insert landed in and is set OR carries a typed
+    ``ProvenanceGap``, never a silent ``None``. The gap is the common case and is
+    honest: Cachera's ``XII-5`` and Lian's ``X3`` are named pads with no published
+    coordinate, and the genome never gates a record. ``replaced_span`` is the interval
+    the insert REPLACED, for a delins integration, and is optional because a clean
+    insertion replaces nothing, which is a real ``None`` rather than an absent value.
+    ``insert_span`` is the interval OF THE CONTIG that was transferred and is likewise
+    set or gapped, because the arms are not always annotated and a source that states
+    only an approximate cassette size has not stated an interval.
+    """
+
+    assembly_set: str = Field(
+        description="an assembly-set id the genomes registry holds, e.g. "
+        "'sgd_S288C_R64-4-1_20230830'"
+    )
+    site_label: str = Field(
+        description="the source's own name for the landing site, verbatim"
+    )
+    span: GenomicSpan | None = Field(
+        default=None, description="the host interval the insert landed in, or gapped"
+    )
+    insert_span: ConstructSpan | None = Field(
+        default=None,
+        description="the interval OF THE CONTIG that was transferred, or gapped",
+    )
+    replaced_span: GenomicSpan | None = Field(
+        default=None,
+        description="the host interval the insert replaced; None for a clean insertion",
+    )
+
+    @model_validator(mode="after")
+    def _check_placement(self) -> "HostPlacement":
+        """A named site and an assembly set; the two gap-able spans set or typed absent."""
+        if not self.assembly_set.strip():
+            raise ValueError("HostPlacement needs an assembly_set")
+        if not self.site_label.strip():
+            raise ValueError(
+                "HostPlacement needs the source's own site_label; a coordinate does "
+                "not replace what the source called the site"
+            )
+        _require_value_or_gap(self, ("span", "insert_span"))
+        if self.span is not None and self.span.assembly != self.assembly_set:
+            raise ValueError(
+                f"span is on assembly {self.span.assembly!r} but the placement pins "
+                f"{self.assembly_set!r}"
+            )
+        if self.replaced_span is not None and (
+            self.replaced_span.assembly != self.assembly_set
+        ):
+            raise ValueError(
+                f"replaced_span is on assembly {self.replaced_span.assembly!r} but the "
+                f"placement pins {self.assembly_set!r}"
+            )
+        return self
+
+
+class ConstructPlacement(HashableProvenanceGapMixin):
+    """The composed pointer from an added gene to the construct sequence it came from.
+
+    ``contig_sha256`` is the construct's identity and ``contig_ref`` pins the same
+    bytes, so the two must agree and a stored record verifies itself without the
+    construct index being present; ``feature_key`` names the feature within that contig
+    by label, SO id and 1-based span, which is the only key the released maps support.
+    A primer binding site is refused as a target (``PLACEMENT_TARGET_REFUSED_SO``).
+
+    ``host_placement`` is set for a chromosomal integration and ``None`` for an
+    episomal construct, which is a replicon of its own and sits at no host site.
+    ``variants`` are contig-relative calls and must every one name THIS contig: a
+    coordinate against another sequence is not a variant of this construct.
+    """
+
+    contig_sha256: str = Field(description="sha256 of the construct contig")
+    contig_ref: ArtifactRef = Field(
+        description="the sha256-pinned bytes, so a stored record verifies itself"
+    )
+    feature_key: FeatureKey = Field(
+        description="the feature within the contig: label, SO id, 1-based span"
+    )
+    host_placement: HostPlacement | None = Field(
+        default=None,
+        description="set for a chromosomal integration, None for an episomal replicon",
+    )
+    variants: list[ConstructVariantCall] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _check_placement(self) -> "ConstructPlacement":
+        """One contig identity throughout, and a feature a pointer may point at."""
+        if not _ARTIFACT_SHA256.fullmatch(self.contig_sha256):
+            raise ValueError(
+                f"contig_sha256 must be 64 lowercase hex, got {self.contig_sha256!r}"
+            )
+        if self.contig_ref.sha256 != self.contig_sha256:
+            raise ValueError(
+                f"contig_ref pins {self.contig_ref.sha256} but the placement names "
+                f"contig {self.contig_sha256}"
+            )
+        if self.feature_key.so_id in PLACEMENT_TARGET_REFUSED_SO:
+            raise ValueError(
+                f"feature {self.feature_key.token!r} may not be a placement target: "
+                f"{PLACEMENT_TARGET_REFUSED_SO[self.feature_key.so_id]}"
+            )
+        wrong = sorted(
+            {
+                call.reference_contig_sha256
+                for call in self.variants
+                if call.reference_contig_sha256 != self.contig_sha256
+            }
+        )
+        if wrong:
+            raise ValueError(
+                f"variants name contigs {wrong}, not this placement's "
+                f"{self.contig_sha256}; a call is relative to the contig it is on"
+            )
+        return self
+
+    @property
+    def insert_span(self) -> ConstructSpan | None:
+        """The interval of the contig that was transferred into the host, if integrated.
+
+        A property, not a field: the fact is one fact, it belongs with the integration,
+        and an episomal construct has none because the whole replicon is present.
+        """
+        return None if self.host_placement is None else self.host_placement.insert_span
+
+    @property
+    def localization(self) -> Localization:
+        """Which of the two physical situations this placement describes."""
+        return (
+            Localization.episomal_replicon
+            if self.host_placement is None
+            else Localization.chromosomal_integration
+        )
+
+
+class GeneAdditionPerturbation(
+    HashableProvenanceGapMixin, PresenceAbsencePerturbation, ModelStrict
+):
     """Gain-of-function: a gene ADDED to the strain (heterologous expression or an
     extra native copy), carried on a plasmid or integrated at a chromosomal locus.
 
@@ -2282,11 +2722,29 @@ class GeneAdditionPerturbation(PresenceAbsencePerturbation, ModelStrict):
     has NO S. cerevisiae systematic name -- ``systematic_gene_name`` then carries the
     heterologous gene symbol and the native-name validator is relaxed for this class.
     For an extra NATIVE copy (Ozaydin BTS1) ``systematic_gene_name`` is the real
-    systematic name and ``is_heterologous`` is False. ``localization`` distinguishes
-    the plasmid vs chromosome context; ``plasmid_contig_id``/``locus_tag`` point at the
-    raw sequence in the (future) plasmid-sequence store -- ``None`` until it lands, and
-    embeddings are constructed downstream from the raw sequence, never baked here.
-    Design: ``[[torchcell.datamodels.gene-addition-perturbation-design]]``.
+    systematic name and ``is_heterologous`` is False.
+
+    ``placement`` is the material of the addition: which contig the DNA came from, by
+    its sha256 and an ``ArtifactRef`` that pins the same bytes, which feature of that
+    contig the added gene is, where in the host it landed, and which contig-relative
+    variants it carries. It is REQUIRED with no default and gap-able (the shape
+    ``Media.name`` and ``HeterologousPathwayPerturbation.source_organism`` use), so a
+    loader states the pointer or a typed ``ProvenanceGap`` naming its reason and where
+    it looked. It replaces the former ``plasmid_contig_id`` and ``locus_tag``, two free
+    strings into a store that did not exist which were ``None`` in 26 of 26 served
+    stores: a typed absence is countable
+    (``torchcell.verification.construct_placement``) and a silent one is not.
+
+    ``localization`` is the two-member ``Localization`` vocabulary, since the replicon's
+    identity is a property of the CONTIG rather than of the gene riding on it, and
+    ``replicon_statement`` keeps the source's own words (``"episomal 2 micron"``, ``"low
+    copy CEN plasmid"``) verbatim for the records that have no deposited construct.
+    ``variant`` stays the source's verbatim statement; the same allele as a coordinate
+    is a ``ConstructVariantCall`` on the placement, and the two are kept side by side so
+    a disagreement between them stays visible.
+
+    Embeddings are constructed downstream from the referenced sequence, never baked
+    here. Design: ``[[torchcell.datamodels.gene-addition-perturbation-design]]``.
     """
 
     description: str = "Gene addition (heterologous expression or extra native copy)"
@@ -2301,8 +2759,14 @@ class GeneAdditionPerturbation(PresenceAbsencePerturbation, ModelStrict):
     is_heterologous: bool = Field(
         description="True if the gene is non-native to S. cerevisiae"
     )
-    localization: str = Field(
-        description="engineered location, e.g. 'episomal_2micron' | 'chromosomal_integration'"
+    localization: Localization = Field(
+        description="whether the added DNA sits in a chromosome or on its own replicon"
+    )
+    replicon_statement: str | None = Field(
+        default=None,
+        description="the source's own words for the replicon, verbatim (e.g. 'episomal "
+        "2 micron plasmid', 'low-copy-number plasmid'), kept for the records with no "
+        "deposited construct, where the contig cannot carry the replicon's identity",
     )
     construct_name: str | None = Field(
         default=None,
@@ -2312,16 +2776,16 @@ class GeneAdditionPerturbation(PresenceAbsencePerturbation, ModelStrict):
         default=None,
         description="chromosomal integration site (integration only), e.g. 'XII-5'",
     )
-    plasmid_contig_id: str | None = Field(
-        default=None,
-        description="pointer into the plasmid-sequence store; None until that store lands",
-    )
-    locus_tag: str | None = Field(
-        default=None, description="feature id of the added gene on the plasmid contig"
+    placement: ConstructPlacement | None = Field(
+        description="the construct contig, the feature on it, the host site and the "
+        "contig-relative variants; None ONLY with a ProvenanceGap(field='placement') "
+        "naming why no construct sequence is available and where the loader looked"
     )
     variant: str | None = Field(
         default=None,
-        description="expressed variant, e.g. 'K229L' for a feedback-resistant allele",
+        description="expressed variant, e.g. 'K229L' for a feedback-resistant allele, "
+        "verbatim as the source writes it; the same allele as a contig coordinate is a "
+        "ConstructVariantCall on `placement`",
     )
 
     @field_validator("systematic_gene_name", mode="after")
@@ -2333,6 +2797,17 @@ class GeneAdditionPerturbation(PresenceAbsencePerturbation, ModelStrict):
         if not v:
             raise ValueError("systematic_gene_name must be non-empty")
         return v
+
+    @model_validator(mode="after")
+    def _placement_stated_or_gapped(self) -> "GeneAdditionPerturbation":
+        """``placement`` is stated or a typed gap; never a silent ``None``.
+
+        The mixin enforces the converse (a gapped field must be ``None``), so the two
+        together are what make "no construct sequence" a counted statement rather than
+        an absence indistinguishable from a sequence-backed record.
+        """
+        _require_value_or_gap(self, ("placement",))
+        return self
 
 
 class NaturalGeneAbsencePerturbation(PresenceAbsencePerturbation, ModelStrict):
@@ -3208,9 +3683,7 @@ class PromoterReplacementPerturbation(ExpressionModulationPerturbation, ModelStr
     )
 
 
-class HeterologousPathwayPerturbation(
-    HashableProvenanceGapMixin, GeneAdditionPerturbation, ModelStrict
-):
+class HeterologousPathwayPerturbation(GeneAdditionPerturbation, ModelStrict):
     """One heterologous gene of an expressed pathway, with its cassette and copy context.
 
     The engineered-chassis production rows. It inherits the gene-addition axis whole
@@ -3236,6 +3709,12 @@ class HeterologousPathwayPerturbation(
     on this leaf alone, as ``PromoterReplacementPerturbation`` re-declares ``crispr``:
     the yeast ``GeneAdditionPerturbation`` loaders state every organism, and their
     closures do not move.
+
+    ``HashableProvenanceGapMixin`` is no longer listed in the bases and is INHERITED
+    from the parent leaf, which took it in P4 for its own ``placement`` gap. Listing it
+    here as well is not a style choice but an error: a base that is also a base of
+    ``GeneAdditionPerturbation`` has to follow it in the MRO, and naming it first makes
+    the linearization inconsistent. The hash and the gap list are unchanged.
     """
 
     description: str = (
@@ -3323,79 +3802,6 @@ class HeterologousPathwayPerturbation(
 # leaf, so what a call is is defined once and the three leaves differ only in WHERE
 # the call sits: in a locus, between two loci, or spanning a run of them.
 # --------------------------------------------------------------------------- #
-class BacterialVariantType(StrEnum):
-    """The kind of sequence change a called bacterial variant is.
-
-    The four shapes the two releases carry, read from their own type columns rather
-    than chosen: Lim's ``Mutation Type`` is ``SNP`` / ``DEL`` / ``INS`` / ``SUB``
-    (measured: 100 / 47 / 11 / 1 of its 159 rows) and de Siqueira's ``Polymorphism
-    Type`` is ``SNP (transition)`` 68, ``SNP (transversion)`` 47, ``Insertion`` 23,
-    ``Substitution`` 21, ``Insertion (tandem repeat)`` 5, ``Deletion`` 5, ``Deletion
-    (tandem repeat)`` 4. Both vocabularies collapse onto these four, and the released
-    string is kept verbatim beside the enum in ``type_statement`` so the transition /
-    transversion / tandem-repeat distinction is not lost.
-
-    - ``snv``: one base replaced by one base.
-    - ``insertion``: bases gained.
-    - ``deletion``: bases lost (an IN-GENE deletion; a deletion that removes whole
-      loci is ``SpanDeletionCallPerturbation``, on the presence/absence axis).
-    - ``substitution``: a multi-base replacement (Lim's ``2 bp->CG``).
-    """
-
-    snv = "snv"
-    insertion = "insertion"
-    deletion = "deletion"
-    substitution = "substitution"
-
-
-BACTERIAL_VARIANT_TYPE_SO: dict[BacterialVariantType, tuple[str, str]] = {
-    BacterialVariantType.snv: ("SO:0001483", "SNV"),
-    BacterialVariantType.insertion: ("SO:0000667", "insertion"),
-    BacterialVariantType.deletion: ("SO:0000159", "deletion"),
-    BacterialVariantType.substitution: ("SO:1000032", "delins"),
-}
-"""Sequence Ontology mechanism of each variant kind.
-
-Every pair is one the schema ALREADY pins (``SO_ALLOWED`` in
-``test_ontology_all_trees.py``), so these leaves introduce no new SO term: a
-multi-base replacement is the same ``delins`` a promoter replacement is, and the other
-three are the deletion / insertion / SNV terms the yeast leaves use. The leaves keep
-the generic ``SO:0001060 sequence_variant`` as their class-default ``mechanism_so_id``
--- true of every call whatever its kind -- and expose the specific pair as a property,
-so the mechanism field cannot desync from ``variant_type``.
-"""
-
-
-class VariantCallMode(StrEnum):
-    """Whether a frequency is a clone's within-isolate fraction or a population's.
-
-    The distinction is load-bearing and the releases differ on it. de Siqueira and Lim
-    sequenced ISOLATED clones, so a frequency below 1 means that clone is not pure at
-    that site (Lim: 431 calls at 1 and 12 at 0.9; de Siqueira: 0.96, 1, ...). Choe 2019
-    released POPULATION allele frequencies per timepoint, where a frequency is the
-    share of the evolving population carrying the allele and no clone genotype follows
-    from it without a threshold the authors never set. A consumer that cannot tell the
-    two apart would read a 0.5 as half a genome in one case and half a population in
-    the other.
-    """
-
-    clone = "clone"
-    population = "population"
-
-
-class VariantFrequencyBasis(StrEnum):
-    """The scale a released variant frequency is written on, never assumed.
-
-    Lim's matrix is a FRACTION (``1``, ``0.9``) and de Siqueira's Geneious ``Variant
-    Frequency`` column is also a fraction (``0.96``, ``1``), while other releases write
-    percents. The scale is a property of the release, so it is stated rather than
-    inferred from whether a value exceeds 1.
-    """
-
-    fraction = "fraction"
-    percent = "percent"
-
-
 class VariantSiteKind(StrEnum):
     """Why a called variant is keyed on its genomic SITE rather than on a locus tag.
 

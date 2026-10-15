@@ -45,6 +45,14 @@ Three identity rules, each measured on the 17 mirrored Cachera maps rather than 
    carries a ``gene`` and a ``CDS`` both labelled ``Ampicillin`` at 1543..2403, the
    ordinary GenBank gene/CDS pair), while the triple is unique in all 17.
 
+``ConstructSpan``, ``FeatureKey`` and ``PLACEMENT_TARGET_REFUSED_SO`` are DEFINED in
+``torchcell.datamodels.schema`` and re-exported here. They were moved there when
+``GeneAdditionPerturbation.placement`` started carrying them (P4): a record class's
+field types belong to the fingerprinted schema surface, and this module cannot be the
+definition site because it reaches the resolver, which imports the dataset loaders,
+which import ``schema``. It is the same split ``torchcell/artifacts/ref.py`` makes for
+``ArtifactRef``.
+
 Units: ``plasmid.Location`` is 0-based half-open and ``GenomicSpan`` is 1-based
 end-inclusive. A store serving native and construct genes through one extraction path
 must not carry two conventions, so the conversion happens here, at the parser boundary,
@@ -61,11 +69,16 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from torchcell.artifacts.ref import ArtifactRef
 from torchcell.artifacts.resolve import resolve as resolve_ref
 from torchcell.datamodels.pydant import ModelStrict
+from torchcell.datamodels.schema import (
+    PLACEMENT_TARGET_REFUSED_SO as PLACEMENT_TARGET_REFUSED_SO,
+)
+from torchcell.datamodels.schema import ConstructSpan as ConstructSpan
+from torchcell.datamodels.schema import FeatureKey as FeatureKey
 from torchcell.datamodels.schema import SOTerm
 from torchcell.literature.manifest import ArtifactRecord, sha256_file
 from torchcell.sequence.plasmid import Component, Feature, parse_genbank_component
@@ -80,16 +93,6 @@ CONSTRUCT_MANIFEST_VERSION = 1
 #: pBTX2 (the betaxanthin integration vectors), pCCM023, the pbtx0xx series and the
 #: pHO CRISPR helpers, all under that key's ``si/plasmids/`` in the library tier.
 CACHERA2023_CRI_SPA_PLASMIDS = "cachera2023_cri_spa_plasmids"
-
-#: SO ids a placement may NOT point at, with the reason. A primer-binding site is an
-#: oligo's footprint on the map, not a part of the construct: 297 of 570 features in the
-#: Cachera set are primers, so a pointer that could land on one would make the modal
-#: feature of the store a target for an integrated gene. They stay INDEXED (they are
-#: real annotation of the canonical bytes, and the data is the data) and are refused as
-#: pointer targets, which is a property of the pointer, not of the feature.
-PLACEMENT_TARGET_REFUSED_SO: dict[str, str] = {
-    "SO:0005850": "a primer binding site is an oligo footprint, not a part"
-}
 
 
 class ConstructIntegrityError(RuntimeError):
@@ -131,65 +134,6 @@ class BlockedReason(StrEnum):
     origin_wrapping_location = "origin_wrapping_location"
     #: A compound ``join`` location, which a single-range span cannot hold.
     compound_location = "compound_location"
-
-
-class ConstructSpan(ModelStrict):
-    """A 1-based, end-inclusive interval on one construct contig, plus its orientation.
-
-    The same convention as ``GenomicSpan``, deliberately: one store serves native and
-    construct genes. Single-range only, which is why an origin-wrapping or compound
-    GenBank location is refused upstream instead of being flattened into one.
-    """
-
-    start: int
-    end: int
-    orientation: Literal["inline", "reverse_complement"]
-
-    @model_validator(mode="after")
-    def _check_span(self) -> ConstructSpan:
-        """Positions are 1-based and ordered."""
-        if self.start < 1 or self.end < self.start:
-            raise ValueError(
-                f"ConstructSpan needs 1 <= start <= end, got {self.start}..{self.end}"
-            )
-        return self
-
-    @property
-    def length(self) -> int:
-        """Bases the span covers (end-inclusive)."""
-        return self.end - self.start + 1
-
-
-class FeatureKey(ModelStrict):
-    """The stable handle of one feature within one contig: label, SO id, span.
-
-    Measured, not chosen: no map in the Cachera set carries a ``/locus_tag``, label
-    alone collides in 4 of 17 maps, label plus span in 1 of 17 (a gene/CDS pair at one
-    span), and the triple is unique in all 17. ``label`` is the ``/label`` or ``/gene``
-    qualifier verbatim and may be empty (12 of 570 features carry neither), which the
-    span and the SO id then disambiguate.
-    """
-
-    label: str
-    so_id: str
-    span: ConstructSpan
-
-    @field_validator("so_id", mode="after")
-    @classmethod
-    def _check_so_id(cls, value: str) -> str:
-        """The id must be a well-formed SO id (``SOTerm`` owns the pattern)."""
-        return SOTerm(so_id=value, name="checked").so_id
-
-    @property
-    def token(self) -> str:
-        """``<label>@<so_id>:<start>-<end><strand>``, the key as one readable string."""
-        strand = "+" if self.span.orientation == "inline" else "-"
-        return f"{self.label}@{self.so_id}:{self.span.start}-{self.span.end}{strand}"
-
-    @property
-    def is_placement_target(self) -> bool:
-        """Whether a placement may point at this feature (see ``PLACEMENT_TARGET_REFUSED_SO``)."""
-        return self.so_id not in PLACEMENT_TARGET_REFUSED_SO
 
 
 class ConstructFeature(ModelStrict):

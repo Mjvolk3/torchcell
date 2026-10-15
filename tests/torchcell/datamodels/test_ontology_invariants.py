@@ -33,6 +33,9 @@ from torchcell.datamodels.schema import (
     BacterialVariantType,
     BarcodedKanMxDeletionPerturbation,
     ConditionalAllelePerturbation,
+    ConstructPlacement,
+    ConstructSpan,
+    ConstructVariantCall,
     CopyNumberVariantPerturbation,
     CrisprActivationPerturbation,
     CrisprConstruct,
@@ -44,12 +47,14 @@ from torchcell.datamodels.schema import (
     DeletionStrainPerturbation,
     EngineeredCopyNumberPerturbation,
     ExpressionModulationPerturbation,
+    FeatureKey,
     GeneAdditionPerturbation,
     GenePerturbation,
     GenePerturbationType,
     GenomicSpan,
     HeterologousPathwayPerturbation,
     HeterozygousDeletionPerturbation,
+    HostPlacement,
     InduciblePromoterInsertionPerturbation,
     KanMxDeletionPerturbation,
     LocusVariantCallPerturbation,
@@ -86,6 +91,7 @@ from torchcell.datamodels.schema import (
     VariantFrequencyBasis,
     VariantSiteKind,
 )
+from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
 SO_ID_RE = re.compile(r"^SO:\d{7}$")
 
@@ -231,6 +237,57 @@ _RELEASED_LEAVES: frozenset[type[GenePerturbation]] = frozenset(
     {ReleasedIdentifierPerturbation}
 )
 
+# --------------------------------------------------------------------------- #
+# P4 (2026-10-15): an added gene points at its construct through ``placement``, which
+# is required with no default and gap-able. The example placement is the one deposited
+# construct a served store points at, Cachera 2023's pBTX1, including the ARO4-K229L
+# allele as a contig coordinate; the gap is what the other 11 addition loaders carry.
+# --------------------------------------------------------------------------- #
+_PBTX1_SHA256 = "bbaca60509e079222f7cdd1bb54b70d93445af3a699c65109d94b553fc0087f7"
+_PLACEMENT = ConstructPlacement(
+    contig_sha256=_PBTX1_SHA256,
+    contig_ref=ArtifactRef(
+        tier="library",
+        key="cacheraCRISPAHighthroughputMethod2023",
+        path="si/plasmids/pBTX001(ante113).gb",
+        sha256=_PBTX1_SHA256,
+        bytes=31895,
+    ),
+    feature_key=FeatureKey(
+        label="ARO4-K229L",
+        so_id="SO:0000704",
+        span=ConstructSpan(start=2684, end=3796, orientation="inline"),
+    ),
+    host_placement=HostPlacement(
+        assembly_set="sgd_S288C_R64-4-1_20230830",
+        site_label="XII-5",
+        span=None,
+        insert_span=None,
+        provenance_gaps=[
+            ProvenanceGap(
+                field="span", reason=ProvenanceGapReason.not_reported_by_primary
+            ),
+            ProvenanceGap(
+                field="insert_span", reason=ProvenanceGapReason.not_reported_by_primary
+            ),
+        ],
+    ),
+    variants=[
+        ConstructVariantCall(
+            variant_type=BacterialVariantType.substitution,
+            variant_statement="K229L",
+            reference_contig_sha256=_PBTX1_SHA256,
+            position_start=3368,
+            position_end=3370,
+            amino_acid_change="K229L",
+            codon_number=229,
+        )
+    ],
+)
+_PLACEMENT_GAP = ProvenanceGap(
+    field="placement", reason=ProvenanceGapReason.not_released_by_primary
+)
+
 FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
     KanMxDeletionPerturbation: {**_SYS},
     BarcodedKanMxDeletionPerturbation: {
@@ -261,7 +318,9 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
         gene_namespace=SGD_S288C_NAMESPACE,
         source_organism="Xanthophyllomyces dendrorhous",
         is_heterologous=True,
-        localization="episomal_2micron",
+        localization="episomal_replicon",
+        replicon_statement="YEplac195",
+        placement=_PLACEMENT,
     ),
     # #990 Zhang 2020: TRP2 re-integrated at EasyClone XII-5 under pTEF1, one of the
     # five genes of the cluster. An extra copy of a NATIVE gene, so the identity is the
@@ -275,6 +334,8 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
         localization="chromosomal_integration",
         promoter_name="pTEF1",
         integration_locus="EasyClone XII-5",
+        placement=None,
+        provenance_gaps=[_PLACEMENT_GAP],
     ),
     # #991 Vaishnav 2022: the HQ_28 construct of the GSE163045 MolEvol SC-Ura table.
     # The added gene is the plasmid's YFP reporter, so its identity is a CURIE in the
@@ -286,7 +347,10 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
         gene_namespace=SGD_S288C_NAMESPACE,
         source_organism="synthetic construct",
         is_heterologous=True,
-        localization="episomal_cen_plasmid",
+        localization="episomal_replicon",
+        replicon_statement="CEN plasmid",
+        placement=None,
+        provenance_gaps=[_PLACEMENT_GAP],
         promoter_variant_id="HQ_28",
         promoter_sequence=(
             "TGCATTTTTTTCACATCAAAAGTAGGTTCTTGCAGCATTCTGATGCACGTATAGGCGCGATGG"
@@ -473,6 +537,8 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
         localization="chromosomal_integration",
         pathway_name="isoprenol via mevalonate",
         copy_number=2.0,
+        placement=None,
+        provenance_gaps=[_PLACEMENT_GAP],
     ),
 }
 
@@ -725,16 +791,49 @@ def test_sequence_ref_round_trips_through_its_string_form(
         NaturalGeneAbsencePerturbation,
         NaturalGenePresencePerturbation,
         SequenceVariantPerturbation,
+        GeneAdditionPerturbation,
+        HeterologousPathwayPerturbation,
+        PromoterDrivenGeneIntegrationPerturbation,
+        VariablePromoterReporterPerturbation,
     ],
 )
 def test_sequence_pointer_is_one_ref_field(cls: type[GenePerturbation]) -> None:
-    """The natural-variation leaves point at sequence by ``sequence_ref`` alone."""
+    """One field points at sequence, and it carries its own sha256.
+
+    The natural-variation leaves point by ``sequence_ref``; the ADDITION leaves point by
+    ``placement`` (P4), which is required with no default so the pointer is stated or
+    typed absent rather than silently ``None``. Neither family may carry a loose
+    string pair beside it: a uri without its hash, or a contig id without the bytes, is
+    the shape that let 26 of 26 served gene-addition stores lose their plasmid pointers.
+    """
     fields = cls.model_fields
+    loose = {
+        "sequence_uri",
+        "sequence_sha256",
+        "plasmid_contig_id",
+        "locus_tag",
+        "contig_locus_tag",
+        "contig_sha256",
+    }
+    assert loose.isdisjoint(fields), (cls.__name__, sorted(loose & set(fields)))
+    if issubclass(cls, GeneAdditionPerturbation):
+        assert fields["placement"].is_required()
+        assert "sequence_ref" not in fields
+        instance = _instance(cls)
+        assert isinstance(instance, GeneAdditionPerturbation)
+        placement = instance.placement
+        if placement is None:
+            assert "placement" in instance.gapped_fields()
+        else:
+            assert placement.contig_ref.sha256 == placement.contig_sha256
+            assert all(
+                call.reference_contig_sha256 == placement.contig_sha256
+                for call in placement.variants
+            )
+        return
     assert "sequence_ref" in fields
     assert fields["sequence_ref"].default is None
     assert "sequence_source" in fields
-    assert "sequence_uri" not in fields
-    assert "sequence_sha256" not in fields
 
 
 def test_a_loss_of_function_call_points_at_its_matrix_never_a_sequence() -> None:

@@ -44,7 +44,7 @@ import pickle
 import re
 import urllib.request
 from collections.abc import Callable
-from typing import Any
+from typing import Any, Literal
 
 import lmdb
 import pandas as pd
@@ -61,14 +61,22 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import YPD
 from torchcell.datamodels.schema import (
+    ArtifactRef,
+    BacterialVariantType,
     Concentration,
     ConcentrationUnit,
+    ConstructPlacement,
+    ConstructSpan,
+    ConstructVariantCall,
     Environment,
     Experiment,
     ExperimentReference,
+    FeatureKey,
     GeneAdditionPerturbation,
     Genotype,
+    HostPlacement,
     KanMxDeletionPerturbation,
+    Localization,
     Media,
     MediaComponent,
     MediaComponentRole,
@@ -81,6 +89,7 @@ from torchcell.datamodels.schema import (
     ReleasedKind,
 )
 from torchcell.datasets.dataset_registry import register_dataset
+from torchcell.sequence.construct.registry import CACHERA2023_CRI_SPA_PLASMIDS
 from torchcell.sequence.genome.registry import (
     SGD_S288C_R64,
     SGD_S288C_R64_GENBANK_ACCESSION,
@@ -208,15 +217,157 @@ TEMPERATURE_GAP = ProvenanceGap(
 )
 
 
-# The constant engineered background transferred by CRI-SPA into every YKO strain: the
-# Btx-cassette, chromosomally integrated at site XII-5 (paper Methods; pBTX1/pBTX2). Two
-# heterologous plant genes (CYP76AD1, DOD) + two feedback-resistant mutant alleles of
-# NATIVE yeast genes (ARO4^K229L / YBR249C, ARO7^G141S / YPR060C) integrated ectopically
-# (hence GeneAddition with a variant, NOT AllelePerturbation at the native locus). The
-# natMX marker is not a betaxanthin gene and is omitted. source_organism for DOD needs
-# confirmation against DeLoache 2015 (ref 25) at review. plasmid_contig_id stays None
-# until the plasmid-sequence store lands (Cachera GenBank maps in the OUP SI zip). See
+# --------------------------------------------------------------------------- #
+# The Btx-cassette's MATERIAL: the pBTX1 contig, its four gene features, and the two
+# designed alleles as contig coordinates (P4, 2026-10-15).
+#
+# Every value below is measured by
+# ``experiments/036-dataset-fixes-before-kg-build/scripts/cachera2023_btx_cassette_placement.py``
+# (results JSON beside it) from the deposited construct set
+# ``cachera2023_cri_spa_plasmids``, and nothing here is read off a design note.
+#
+# WHY pBTX1 and not pBTX2. The paper, line 46: "CD-Btx was constructed from UC+XII-5a by
+# transforming with the integrative plasmid pBTX1 harboring the betaxanthin-synthesizing
+# genes CYP76AD1 and DOD, an NTC selectable marker, negative feedback resistant ARO4
+# K229L, ARO7 G141S and an sgRNA expression cassette for targeting the XII-5 site. The
+# BY-Btx strain was made by transforming the NotI excised insert of pBTX2". The screen
+# transfers the cassette FROM CD-Btx into the YKO library ("we then used CD-Btx to
+# transfer the Btx-cassette to the 4787 unique deletion strains"), so the cassette in
+# every screened strain is pBTX1's. pBTX2 is the BY-Btx vector and is one of the 11 maps
+# the parser blocks for an origin-wrapping location, which does not reach these records.
+#
+# WHY the host span is a typed gap. The paper names the landing pad "XII-5" and never
+# gives its S288C coordinates, which is the common case for a named pad; the genome
+# never gates a record, so the pad is stated verbatim and the coordinate is a gap.
+#
+# WHY the insert span is a typed gap. pBTX1 annotates both homology arms ("XII-5 up B"
+# at 10..220, "XII-5 dw A" at 9598..9859), but the three readings of "the transferred
+# interval" they admit disagree: arm to arm inclusive is 9,850 bp, between the arms
+# exclusive is 9,377 bp, and the paper's own figure is "the considerable size, 9.3 kb,
+# of the Btx-cassette". The source states no interval, so neither does the record.
+#
+# Two heterologous plant genes (CYP76AD1, DOD) plus two feedback-resistant mutant
+# alleles of NATIVE yeast genes (ARO4^K229L / YBR249C, ARO7^G141S / YPR060C) integrated
+# ectopically (hence GeneAddition with a variant, NOT AllelePerturbation at the native
+# locus). The natMX marker is not a betaxanthin gene and is omitted. source_organism for
+# DOD needs confirmation against DeLoache 2015 (ref 25) at review. See
 # [[torchcell.datamodels.gene-addition-perturbation-design]].
+# --------------------------------------------------------------------------- #
+#: The construct set the placement reads, and the contig's 12-hex handle in it.
+CONSTRUCT_SET = CACHERA2023_CRI_SPA_PLASMIDS
+PBTX1_HANDLE = "bbaca60509e0"
+#: The sha256 of ``si/plasmids/pBTX001(ante113).gb`` IS the contig's identity; the
+#: GenBank LOCUS line of that file reads ``ANTE113_with_NatMX``, so the name the paper
+#: uses is a quoted statement in the construct index and never a minted id.
+PBTX1_SHA256 = "bbaca60509e079222f7cdd1bb54b70d93445af3a699c65109d94b553fc0087f7"
+PBTX1_PATH = "si/plasmids/pBTX001(ante113).gb"
+PBTX1_BYTES = 31895
+PBTX1_REF = ArtifactRef(
+    tier="library",
+    key=CITATION_KEY,
+    path=PBTX1_PATH,
+    sha256=PBTX1_SHA256,
+    bytes=PBTX1_BYTES,
+)
+
+#: The landing pad, verbatim, and the assembly set its (unpublished) coordinate would be
+#: written against.
+INTEGRATION_SITE = "XII-5"
+ASSEMBLY_SET = SGD_S288C_R64
+
+#: The gene features of pBTX1, keyed by the loader's gene key: label, SO id
+#: (``SO:0000704`` gene), 1-based end-inclusive span and orientation. Each was checked
+#: to be a CDS in frame against the contig's own bases (length a multiple of three, ATG
+#: start, one terminal stop, no internal stop).
+_FEATURE_SPANS: dict[
+    str, tuple[str, int, int, Literal["inline", "reverse_complement"]]
+] = {
+    "CYP76AD1": ("CYP76AD/P450 fusion", 4388, 5887, "reverse_complement"),
+    "DOD": ("DOPA 4,5 dioxygenase", 7190, 7999, "inline"),
+    "YBR249C": ("ARO4-K229L", 2684, 3796, "inline"),
+    "YPR060C": ("ARO7-G141S", 472, 1242, "reverse_complement"),
+}
+
+#: The two designed alleles as contig coordinates, derived from the feature span and the
+#: codon number and CONFIRMED against the bytes: codon 229 of the ARO4 feature reads
+#: ``TTA`` (Leu) and codon 141 of the ARO7 feature reads ``AGT`` (Ser), so the map
+#: carries the designed residue at the coordinate the record states. The codon is three
+#: bases, so the call is a ``substitution`` over the codon's span rather than an SNV.
+_ALLELE_CALLS: dict[str, tuple[str, int, int, int]] = {
+    "YBR249C": ("K229L", 3368, 3370, 229),
+    "YPR060C": ("G141S", 820, 822, 141),
+}
+
+#: ``HostPlacement.span`` and ``.insert_span``: typed absences, with what was read.
+_SPAN_GAP_NOTE = (
+    "the paper names the landing pad 'XII-5' and gives no S288C coordinate for it; the "
+    "sgRNA target feature on pBTX1 ('target sequence XII-5', 14691..14710) is a "
+    "coordinate on the VECTOR, not on chromosome XII"
+)
+_INSERT_SPAN_GAP_NOTE = (
+    "pBTX1 annotates both homology arms ('XII-5 up B' 10..220, 'XII-5 dw A' "
+    "9598..9859), but the readings they admit disagree with each other and with the "
+    "paper's own figure: 9,850 bp arm to arm inclusive, 9,377 bp between the arms, "
+    "against 'the considerable size, 9.3 kb, of the Btx-cassette'. The source states no "
+    "interval of the vector as transferred, so the record states none"
+)
+
+
+def _host_placement() -> HostPlacement:
+    """The XII-5 landing pad: named by the paper, with both spans typed absent."""
+    return HostPlacement(
+        assembly_set=ASSEMBLY_SET,
+        site_label=INTEGRATION_SITE,
+        span=None,
+        insert_span=None,
+        provenance_gaps=[
+            ProvenanceGap(
+                field="span",
+                reason=ProvenanceGapReason.not_reported_by_primary,
+                looked_in=_PAPER,
+                note=_SPAN_GAP_NOTE,
+            ),
+            ProvenanceGap(
+                field="insert_span",
+                reason=ProvenanceGapReason.not_reported_by_primary,
+                looked_in=_PAPER,
+                note=_INSERT_SPAN_GAP_NOTE,
+            ),
+        ],
+    )
+
+
+def _placement(gene_key: str) -> ConstructPlacement:
+    """The pBTX1 placement of one Btx-cassette gene, with its designed allele."""
+    label, start, end, orientation = _FEATURE_SPANS[gene_key]
+    call = _ALLELE_CALLS.get(gene_key)
+    variants = []
+    if call is not None:
+        statement, position_start, position_end, codon_number = call
+        variants.append(
+            ConstructVariantCall(
+                variant_type=BacterialVariantType.substitution,
+                variant_statement=statement,
+                reference_contig_sha256=PBTX1_SHA256,
+                position_start=position_start,
+                position_end=position_end,
+                amino_acid_change=statement,
+                codon_number=codon_number,
+            )
+        )
+    return ConstructPlacement(
+        contig_sha256=PBTX1_SHA256,
+        contig_ref=PBTX1_REF,
+        feature_key=FeatureKey(
+            label=label,
+            so_id="SO:0000704",
+            span=ConstructSpan(start=start, end=end, orientation=orientation),
+        ),
+        host_placement=_host_placement(),
+        variants=variants,
+    )
+
+
 def _betaxanthin_cassette() -> list[GeneAdditionPerturbation]:
     """Fresh Btx-cassette perturbations (new objects per record)."""
     return [
@@ -226,9 +377,10 @@ def _betaxanthin_cassette() -> list[GeneAdditionPerturbation]:
             perturbed_gene_name="CYP76AD1",
             source_organism="Beta vulgaris",
             is_heterologous=True,
-            localization="chromosomal_integration",
-            integration_locus="XII-5",
+            localization=Localization.chromosomal_integration,
+            integration_locus=INTEGRATION_SITE,
             construct_name="Btx-cassette",
+            placement=_placement("CYP76AD1"),
         ),
         GeneAdditionPerturbation(
             systematic_gene_name="DOD",
@@ -236,9 +388,10 @@ def _betaxanthin_cassette() -> list[GeneAdditionPerturbation]:
             perturbed_gene_name="DOD",
             source_organism="Mirabilis jalapa",
             is_heterologous=True,
-            localization="chromosomal_integration",
-            integration_locus="XII-5",
+            localization=Localization.chromosomal_integration,
+            integration_locus=INTEGRATION_SITE,
             construct_name="Btx-cassette",
+            placement=_placement("DOD"),
         ),
         GeneAdditionPerturbation(
             systematic_gene_name="YBR249C",
@@ -246,10 +399,11 @@ def _betaxanthin_cassette() -> list[GeneAdditionPerturbation]:
             perturbed_gene_name="ARO4",
             source_organism="Saccharomyces cerevisiae",
             is_heterologous=False,
-            localization="chromosomal_integration",
-            integration_locus="XII-5",
+            localization=Localization.chromosomal_integration,
+            integration_locus=INTEGRATION_SITE,
             construct_name="Btx-cassette",
             variant="K229L",
+            placement=_placement("YBR249C"),
         ),
         GeneAdditionPerturbation(
             systematic_gene_name="YPR060C",
@@ -257,10 +411,11 @@ def _betaxanthin_cassette() -> list[GeneAdditionPerturbation]:
             perturbed_gene_name="ARO7",
             source_organism="Saccharomyces cerevisiae",
             is_heterologous=False,
-            localization="chromosomal_integration",
-            integration_locus="XII-5",
+            localization=Localization.chromosomal_integration,
+            integration_locus=INTEGRATION_SITE,
             construct_name="Btx-cassette",
             variant="G141S",
+            placement=_placement("YPR060C"),
         ),
     ]
 

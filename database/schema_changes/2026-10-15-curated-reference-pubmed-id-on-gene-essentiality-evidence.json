@@ -2,7 +2,7 @@
   "record_version": 1,
   "slug": "curated-reference-pubmed-id-on-gene-essentiality-evidence",
   "date": "2026-10-15",
-  "pr": null,
+  "pr": 1125,
   "author_kind": "agent",
   "base_commit": "9aafb98f27cc4e243e84442f58c0a38b88cffe44",
   "python_version": "3.13.0",

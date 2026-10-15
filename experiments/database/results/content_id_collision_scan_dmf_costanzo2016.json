@@ -1,0 +1,16 @@
+{
+ "data_root": "/scratch/projects/torchcell-scratch",
+ "skipped": {},
+ "stores": [
+  {
+   "slug": "dmf_costanzo2016",
+   "n_records": 20705612,
+   "n_distinct": 20705612,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 1791.7
+  }
+ ]
+}

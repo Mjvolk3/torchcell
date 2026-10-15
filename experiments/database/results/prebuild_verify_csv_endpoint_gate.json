@@ -1,0 +1,50 @@
+{
+  "out_dir": "/scratch/projects/torchcell-scratch/dev/prebuild-verify/serve-root/biocypher-out/prebuild-verify-docker",
+  "node_rows": {
+    "CrisprConstruct": 1036,
+    "Dataset": 9,
+    "Environment": 358,
+    "EnvironmentPerturbation": 341,
+    "EnvironmentResponsePhenotype": 1300249,
+    "Experiment": 1318720,
+    "ExperimentReference": 377,
+    "FitnessPhenotype": 6106,
+    "Genome": 10,
+    "Genotype": 22126,
+    "InternedConstant": 6492,
+    "Media": 11,
+    "MetabolitePhenotype": 4760,
+    "Perturbation": 20926,
+    "ProductTiterPhenotype": 518,
+    "Publication": 9,
+    "RnaseqExpressionPhenotype": 944,
+    "Schema_info": 9,
+    "Temperature": 15,
+    "VisualScorePhenotype": 61
+  },
+  "edge_rows": {
+    "CrisprConstructMemberOf": 1170,
+    "EnvironmentMemberOf": 1319097,
+    "EnvironmentPerturbationMemberOf": 355,
+    "ExperimentMemberOf": 1318720,
+    "ExperimentReferenceMemberOf": 377,
+    "ExperimentReferenceOf": 1318720,
+    "GenomeMemberOf": 377,
+    "GenotypeMemberOf": 1318720,
+    "MediaMemberOf": 358,
+    "Mentions": 1318720,
+    "PerturbationMemberOf": 56348,
+    "PhenotypeMemberOf": 1319097,
+    "TemperatureMemberOf": 357
+  },
+  "n_node_ids": 2681929,
+  "gaps": [],
+  "label_gaps": [],
+  "id_collisions": [],
+  "undeclared_edges": [
+    "Mentions"
+  ],
+  "schema_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/prebuild-verify/biocypher/config/torchcell_schema_config.yaml",
+  "elapsed_s": 18.85316810104996,
+  "datasets_resolved": true
+}

@@ -1,0 +1,1130 @@
+[
+ {
+  "dataset": "SmfKuzmin2018Dataset",
+  "slug": "smf_kuzmin2018",
+  "why": "plain yeast SGA deletion store: the P1 class-default path",
+  "n_records": 1539,
+  "n_distinct_experiments": 1539,
+  "n_served_3_0": 1539,
+  "n_shared_main_tree": 1539,
+  "experiment_types": {
+   "fitness": 1539
+  },
+  "reference_types": {
+   "fitness": 1539
+  },
+  "retired_types_seen": [],
+  "unknown_types_seen": [],
+  "perturbation_leaves_manifest": {
+   "genotype": [
+    "SgaAllelePerturbation",
+    "SgaKanMxDeletionPerturbation",
+    "SgaTsAllelePerturbation"
+   ],
+   "environment": []
+  },
+  "perturbation_types": {
+   "sga_kanmx_deletion": 1293,
+   "temperature_sensitive_allele": 191,
+   "allele": 55
+  },
+  "n_perturbations": 1539,
+  "namespaces": {
+   "scerevisiae_s288c_sgd_systematic": 1539
+  },
+  "perturbations_missing_namespace": 0,
+  "perturbations_off_expected_namespace": 0,
+  "expected_namespace": "scerevisiae_s288c_sgd_systematic",
+  "assembly_sets": {
+   "sgd_S288C_R64-4-1_20230830": 1539
+  },
+  "assembly": {
+   "present": 1539,
+   "gapped_with_reason_and_looked_in": 0,
+   "gapped_without_reason": 0,
+   "absent_no_gap": 0
+  },
+  "expected_assembly_set": "sgd_S288C_R64-4-1_20230830",
+  "references_off_expected_assembly": 0,
+  "placement": {
+   "additions": 0,
+   "placed": 0,
+   "placed_resolved_to_deposit": 0,
+   "placed_unresolved": [],
+   "gapped_with_reason_and_looked_in": 0,
+   "gapped_without_reason": 0,
+   "absent_no_gap": 0,
+   "gap_reasons": {},
+   "contigs": {}
+  },
+  "content_served_lost": 339,
+  "content_served_lost_sample": [
+   "{\"env_perturbations\": [], \"genes\": [\"YAR002W\"], \"label\": \"fitness\", \"media\": \"SGA triple-mutant selection (SD-MSG, -His/Arg/Lys/Ura, +canavanine/thialysine/G418/clonNAT)\", \"names\": [\"nup60_delta\"], \"statistic\": null, \"temperature\": 26.0, \"value\": 0.9528}",
+   "{\"env_perturbations\": [], \"genes\": [\"YAR003W\"], \"label\": \"fitness\", \"media\": \"SGA triple-mutant selection (SD-MSG, -His/Arg/Lys/Ura, +canavanine/thialysine/G418/clonNAT)\", \"names\": [\"swd1_delta\"], \"statistic\": null, \"temperature\": 26.0, \"value\": 0.8763}",
+   "{\"env_perturbations\": [], \"genes\": [\"YBL060W\"], \"label\": \"fitness\", \"media\": \"SGA triple-mutant selection (SD-MSG, -His/Arg/Lys/Ura, +canavanine/thialysine/G418/clonNAT)\", \"names\": [\"yel1_delta\"], \"statistic\": null, \"temperature\": 26.0, \"value\": 0.9413}"
+  ],
+  "content_new_only": 339,
+  "content_main_lost": 0,
+  "content_main_lost_sample": [],
+  "content_new_only_vs_main": 0,
+  "served_ids_in_new_csv": 0,
+  "build_wall_s": 14.89,
+  "build_time_s": 8.0,
+  "build_peak_rss_gb": 1.9299850463867188,
+  "verify_outcome": "no_per_dataset_verifier",
+  "csv": {
+   "rows_per_label": {
+    "Dataset": 1,
+    "Environment": 1,
+    "EnvironmentMemberOf": 1540,
+    "Experiment": 1539,
+    "ExperimentMemberOf": 1539,
+    "ExperimentReference": 1,
+    "ExperimentReferenceMemberOf": 1,
+    "ExperimentReferenceOf": 1539,
+    "FitnessPhenotype": 1210,
+    "Genome": 1,
+    "GenomeMemberOf": 1,
+    "Genotype": 1539,
+    "GenotypeMemberOf": 1539,
+    "InternedConstant": 1,
+    "Media": 1,
+    "MediaMemberOf": 1,
+    "Mentions": 1539,
+    "Perturbation": 1539,
+    "PerturbationMemberOf": 1539,
+    "PhenotypeMemberOf": 1540,
+    "Publication": 1,
+    "Schema_info": 1,
+    "Temperature": 1,
+    "TemperatureMemberOf": 1
+   },
+   "perturbation_host_genome": {
+    "sgd_S288C_R64-4-1_20230830": 1539
+   },
+   "genome_assembly_set": {
+    "sgd_S288C_R64-4-1_20230830": 1
+   },
+   "host_genome_outside_genome_assembly_sets": [],
+   "done": {
+    "index": 3,
+    "adapter_class": "SmfKuzmin2018Adapter",
+    "dataset_class": "SmfKuzmin2018Dataset",
+    "dataset_len": 1539,
+    "n_nodes": 5835,
+    "n_edges": 10779,
+    "generation_wall_s": 4.278146982192993,
+    "peak_memory_gb": 0.0,
+    "torchcell_version": "1.7.5",
+    "build_commit": "b5c5549d8f4752fc8ac89b6d1e5cd2c0ec5bf4a9",
+    "written_at": "2026-10-15T15:34:40.646341+00:00"
+   },
+   "n_experiment_ids": 1539
+  },
+  "generation_wall_s": 4.0,
+  "generation_peak_mem_gb": 0.0,
+  "generation_peak_rss_gb": null,
+  "generation_time_v_wall_s": null
+ },
+ {
+  "dataset": "SmfODuibhir2014Dataset",
+  "slug": "smf_oduibhir2014",
+  "why": "yeast loader that can emit the relaxed ReleasedIdentifierPerturbation leaf (no namespace default, S288C stated explicitly); its released names all resolve, so the built store holds KanMxDeletionPerturbation only",
+  "n_records": 1312,
+  "n_distinct_experiments": 1312,
+  "n_served_3_0": 1312,
+  "n_shared_main_tree": 1312,
+  "experiment_types": {
+   "fitness": 1312
+  },
+  "reference_types": {
+   "fitness": 1312
+  },
+  "retired_types_seen": [],
+  "unknown_types_seen": [],
+  "perturbation_leaves_manifest": {
+   "genotype": [
+    "KanMxDeletionPerturbation"
+   ],
+   "environment": []
+  },
+  "perturbation_types": {
+   "kanmx_deletion": 1312
+  },
+  "n_perturbations": 1312,
+  "namespaces": {
+   "scerevisiae_s288c_sgd_systematic": 1312
+  },
+  "perturbations_missing_namespace": 0,
+  "perturbations_off_expected_namespace": 0,
+  "expected_namespace": "scerevisiae_s288c_sgd_systematic",
+  "assembly_sets": {
+   "sgd_S288C_R64-4-1_20230830": 1312
+  },
+  "assembly": {
+   "present": 1312,
+   "gapped_with_reason_and_looked_in": 0,
+   "gapped_without_reason": 0,
+   "absent_no_gap": 0
+  },
+  "expected_assembly_set": "sgd_S288C_R64-4-1_20230830",
+  "references_off_expected_assembly": 0,
+  "placement": {
+   "additions": 0,
+   "placed": 0,
+   "placed_resolved_to_deposit": 0,
+   "placed_unresolved": [],
+   "gapped_with_reason_and_looked_in": 0,
+   "gapped_without_reason": 0,
+   "absent_no_gap": 0,
+   "gap_reasons": {},
+   "contigs": {}
+  },
+  "content_served_lost": 0,
+  "content_served_lost_sample": [],
+  "content_new_only": 0,
+  "content_main_lost": 0,
+  "content_main_lost_sample": [],
+  "content_new_only_vs_main": 0,
+  "served_ids_in_new_csv": 0,
+  "build_wall_s": 9.58,
+  "build_time_s": 3.0,
+  "build_peak_rss_gb": 1.3780593872070312,
+  "verify_outcome": "no_per_dataset_verifier",
+  "csv": {
+   "rows_per_label": {
+    "Dataset": 1,
+    "Environment": 1,
+    "EnvironmentMemberOf": 1313,
+    "Experiment": 1312,
+    "ExperimentMemberOf": 1312,
+    "ExperimentReference": 1,
+    "ExperimentReferenceMemberOf": 1,
+    "ExperimentReferenceOf": 1312,
+    "FitnessPhenotype": 1250,
+    "Genome": 1,
+    "GenomeMemberOf": 1,
+    "Genotype": 1312,
+    "GenotypeMemberOf": 1312,
+    "InternedConstant": 1,
+    "Media": 1,
+    "MediaMemberOf": 1,
+    "Mentions": 1312,
+    "Perturbation": 1312,
+    "PerturbationMemberOf": 1312,
+    "PhenotypeMemberOf": 1313,
+    "Publication": 1,
+    "Schema_info": 1,
+    "Temperature": 1,
+    "TemperatureMemberOf": 1
+   },
+   "perturbation_host_genome": {
+    "sgd_S288C_R64-4-1_20230830": 1312
+   },
+   "genome_assembly_set": {
+    "sgd_S288C_R64-4-1_20230830": 1
+   },
+   "host_genome_outside_genome_assembly_sets": [],
+   "done": {
+    "index": 4,
+    "adapter_class": "SmfODuibhir2014Adapter",
+    "dataset_class": "SmfODuibhir2014Dataset",
+    "dataset_len": 1312,
+    "n_nodes": 5194,
+    "n_edges": 9190,
+    "generation_wall_s": 7.514216899871826,
+    "peak_memory_gb": 1.2478408813476562,
+    "torchcell_version": "1.7.5",
+    "build_commit": "b5c5549d8f4752fc8ac89b6d1e5cd2c0ec5bf4a9",
+    "written_at": "2026-10-15T15:34:13.538723+00:00"
+   },
+   "n_experiment_ids": 1312
+  },
+  "generation_wall_s": 8.0,
+  "generation_peak_mem_gb": 1.2,
+  "generation_peak_rss_gb": null,
+  "generation_time_v_wall_s": null
+ },
+ {
+  "dataset": "CaudalPanTranscriptome2024Dataset",
+  "slug": "caudal_pantranscriptome2024",
+  "why": "the only pangenome-namespace member (presence/absence calls), beside S288C-keyed loss-of-function and deletion calls in the same genotype; natural isolates, no perturbation lane in its conf; large generation tier",
+  "n_records": 943,
+  "n_distinct_experiments": 943,
+  "n_served_3_0": 943,
+  "n_shared_main_tree": 943,
+  "experiment_types": {
+   "rnaseq_expression": 943
+  },
+  "reference_types": {
+   "rnaseq_expression": 943
+  },
+  "retired_types_seen": [],
+  "unknown_types_seen": [],
+  "perturbation_leaves_manifest": {
+   "genotype": [
+    "DeletionPerturbation",
+    "NaturalGeneAbsencePerturbation",
+    "NaturalGenePresencePerturbation",
+    "NaturalLossOfFunctionPerturbation",
+    "SequenceVariantPerturbation"
+   ],
+   "environment": []
+  },
+  "perturbation_types": {
+   "natural_gene_presence": 79016,
+   "natural_loss_of_function": 361624,
+   "natural_gene_absence": 126839,
+   "sequence_variant": 4759608,
+   "deletion": 116
+  },
+  "n_perturbations": 5327203,
+  "namespaces": {
+   "scerevisiae_peter2018_pangenome_orf": 79016,
+   "scerevisiae_s288c_sgd_systematic": 5248187
+  },
+  "perturbations_missing_namespace": 0,
+  "perturbations_off_expected_namespace": 0,
+  "expected_namespace": "scerevisiae_peter2018_pangenome_orf",
+  "assembly_sets": {
+   "sgd_S288C_R64-4-1_20230830": 943
+  },
+  "assembly": {
+   "present": 943,
+   "gapped_with_reason_and_looked_in": 0,
+   "gapped_without_reason": 0,
+   "absent_no_gap": 0
+  },
+  "expected_assembly_set": "sgd_S288C_R64-4-1_20230830",
+  "references_off_expected_assembly": 0,
+  "placement": {
+   "additions": 0,
+   "placed": 0,
+   "placed_resolved_to_deposit": 0,
+   "placed_unresolved": [],
+   "gapped_with_reason_and_looked_in": 0,
+   "gapped_without_reason": 0,
+   "absent_no_gap": 0,
+   "gap_reasons": {},
+   "contigs": {}
+  },
+  "content_served_lost": 943,
+  "content_served_lost_sample": [
+   "{\"env_perturbations\": [], \"genes\": [\"100-augustus_masked.1375.CFF_4\", \"101-augustus_masked.1375.CFF_4\", \"1325-augustus_masked.YBP.8463\", \"1367-augustus_masked.BPF_4.10460\", \"1370-augustus_masked.ALT_5.7832\", \"1441-maker.CLM_4.7921\", \"1442-maker.CDK_4.10433\", \"1496-maker.CHB_4.9987\", \"1500-maker.CPI_4.15903\", \"1503-maker.CEQ_4.7370\", \"1506-maker.AMH_5.6583\", \"1514-maker.CDL_3.6404\", \"1528-maker.CNT",
+   "{\"env_perturbations\": [], \"genes\": [\"1032-augustus_masked.BCH_5.11150\", \"1035-augustus_masked.CNP_1.20000\", \"1036-augustus_masked.CNP_1.20000\", \"1058-augustus_masked.AHF_3.9619\", \"1059-augustus_masked.AHF_3.9619\", \"1061-augustus_masked.BCB_3.14860\", \"1074-augustus_masked.BMV_2.11488\", \"1081-augustus_masked.ALI_5.15120\", \"1082-augustus_masked.ALI_5.15120\", \"1084-augustus_masked.BEE_6.12017\", \"1107-",
+   "{\"env_perturbations\": [], \"genes\": [\"1045-augustus_masked.AQD_4.6895\", \"107-augustus_masked.1645.AQT_4\", \"1102-augustus_masked.ANR_2.7082\", \"1210-augustus_masked.BTE_3.67763\", \"1211-augustus_masked.CGP_5.11818\", \"1283-augustus_masked.BDM_5.23139\", \"1284-augustus_masked.APC_4.8186\", \"14-EC1118_1N26_0023g\", \"143-augustus_masked.175.YCE\", \"1446-maker.CDM_4.7429\", \"1469-maker.API_4.23720\", \"1474-maker"
+  ],
+  "content_new_only": 943,
+  "content_main_lost": 0,
+  "content_main_lost_sample": [],
+  "content_new_only_vs_main": 0,
+  "served_ids_in_new_csv": 0,
+  "build_wall_s": 1741.4,
+  "build_time_s": 385.0,
+  "build_peak_rss_gb": 10.033607482910156,
+  "verify_outcome": "passed",
+  "csv": {
+   "rows_per_label": {
+    "Dataset": 1,
+    "Environment": 1,
+    "EnvironmentMemberOf": 944,
+    "Experiment": 943,
+    "ExperimentMemberOf": 943,
+    "ExperimentReference": 1,
+    "ExperimentReferenceMemberOf": 1,
+    "ExperimentReferenceOf": 943,
+    "Genome": 1,
+    "GenomeMemberOf": 1,
+    "Genotype": 943,
+    "GenotypeMemberOf": 943,
+    "InternedConstant": 944,
+    "Media": 1,
+    "MediaMemberOf": 1,
+    "Mentions": 943,
+    "PhenotypeMemberOf": 944,
+    "Publication": 1,
+    "RnaseqExpressionPhenotype": 944,
+    "Schema_info": 1,
+    "Temperature": 1,
+    "TemperatureMemberOf": 1
+   },
+   "perturbation_host_genome": {},
+   "genome_assembly_set": {
+    "sgd_S288C_R64-4-1_20230830": 1
+   },
+   "host_genome_outside_genome_assembly_sets": [],
+   "done": {
+    "index": 24,
+    "adapter_class": "CaudalPanTranscriptome2024Adapter",
+    "dataset_class": "CaudalPanTranscriptome2024Dataset",
+    "dataset_len": 943,
+    "n_nodes": 3781,
+    "n_edges": 5664,
+    "generation_wall_s": 726.9666984081268,
+    "peak_memory_gb": 18.217098236083984,
+    "torchcell_version": "1.7.5",
+    "build_commit": "b5c5549d8f4752fc8ac89b6d1e5cd2c0ec5bf4a9",
+    "written_at": "2026-10-15T16:15:33.325848+00:00"
+   },
+   "n_experiment_ids": 943
+  },
+  "generation_wall_s": 727.0,
+  "generation_peak_mem_gb": 18.2,
+  "generation_peak_rss_gb": null,
+  "generation_time_v_wall_s": null
+ },
+ {
+  "dataset": "BetaxanthinCachera2023Dataset",
+  "slug": "betaxanthin_cachera2023",
+  "why": "lane G's one real ConstructPlacement, pointing at the deposited pBTX1",
+  "n_records": 4759,
+  "n_distinct_experiments": 4759,
+  "n_served_3_0": 4719,
+  "n_shared_main_tree": 4759,
+  "experiment_types": {
+   "metabolite": 4759
+  },
+  "reference_types": {
+   "metabolite": 4759
+  },
+  "retired_types_seen": [],
+  "unknown_types_seen": [],
+  "perturbation_leaves_manifest": {
+   "genotype": [
+    "GeneAdditionPerturbation",
+    "KanMxDeletionPerturbation",
+    "ReleasedIdentifierPerturbation"
+   ],
+   "environment": []
+  },
+  "perturbation_types": {
+   "released_identifier": 3592,
+   "gene_addition": 19036,
+   "kanmx_deletion": 1167
+  },
+  "n_perturbations": 23795,
+  "namespaces": {
+   "scerevisiae_s288c_sgd_systematic": 23795
+  },
+  "perturbations_missing_namespace": 0,
+  "perturbations_off_expected_namespace": 0,
+  "expected_namespace": "scerevisiae_s288c_sgd_systematic",
+  "assembly_sets": {
+   "sgd_S288C_R64-4-1_20230830": 4759
+  },
+  "assembly": {
+   "present": 4759,
+   "gapped_with_reason_and_looked_in": 0,
+   "gapped_without_reason": 0,
+   "absent_no_gap": 0
+  },
+  "expected_assembly_set": "sgd_S288C_R64-4-1_20230830",
+  "references_off_expected_assembly": 0,
+  "placement": {
+   "additions": 19036,
+   "placed": 19036,
+   "placed_resolved_to_deposit": 19036,
+   "placed_unresolved": [],
+   "gapped_with_reason_and_looked_in": 0,
+   "gapped_without_reason": 0,
+   "absent_no_gap": 0,
+   "gap_reasons": {},
+   "contigs": {
+    "bbaca60509e079222f7cdd1bb54b70d93445af3a699c65109d94b553fc0087f7": 19036
+   }
+  },
+  "content_served_lost": 3949,
+  "content_served_lost_sample": [
+   "{\"env_perturbations\": [], \"genes\": [\"CYP76AD1\", \"DOD\", \"YBR249C\", \"YMR175W\", \"YPR060C\"], \"label\": \"metabolite_level\", \"media\": \"YPD + G418 (solid, 2% agar; Cachera 2023 final CRI-SPA screen plate)\", \"names\": [\"ARO4\", \"ARO7\", \"CYP76AD1\", \"DOD\", \"SIP18\"], \"statistic\": {\"betaxanthin\": 0.14790961695337074}, \"temperature\": null, \"value\": {\"betaxanthin\": 0.1130293227942638}}",
+   "{\"env_perturbations\": [], \"genes\": [\"CYP76AD1\", \"DOD\", \"YBR249C\", \"YGL208W\", \"YPR060C\"], \"label\": \"metabolite_level\", \"media\": \"YPD + G418 (solid, 2% agar; Cachera 2023 final CRI-SPA screen plate)\", \"names\": [\"ARO4\", \"ARO7\", \"CYP76AD1\", \"DOD\", \"SIP2\"], \"statistic\": {\"betaxanthin\": 0.15733062307082593}, \"temperature\": null, \"value\": {\"betaxanthin\": 0.33576813866578}}",
+   "{\"env_perturbations\": [], \"genes\": [\"CYP76AD1\", \"DOD\", \"YBR249C\", \"YNL257C\", \"YPR060C\"], \"label\": \"metabolite_level\", \"media\": \"YPD + G418 (solid, 2% agar; Cachera 2023 final CRI-SPA screen plate)\", \"names\": [\"ARO4\", \"ARO7\", \"CYP76AD1\", \"DOD\", \"SIP3\"], \"statistic\": {\"betaxanthin\": 0.2468373860476518}, \"temperature\": null, \"value\": {\"betaxanthin\": -0.7955780426081196}}"
+  ],
+  "content_new_only": 3989,
+  "content_main_lost": 0,
+  "content_main_lost_sample": [],
+  "content_new_only_vs_main": 0,
+  "served_ids_in_new_csv": 0,
+  "build_wall_s": 14.81,
+  "build_time_s": 8.0,
+  "build_peak_rss_gb": 1.6120986938476562,
+  "verify_outcome": "no_per_dataset_verifier",
+  "csv": {
+   "rows_per_label": {
+    "Dataset": 1,
+    "Environment": 1,
+    "EnvironmentMemberOf": 4760,
+    "Experiment": 4759,
+    "ExperimentMemberOf": 4759,
+    "ExperimentReference": 1,
+    "ExperimentReferenceMemberOf": 1,
+    "ExperimentReferenceOf": 4759,
+    "Genome": 1,
+    "GenomeMemberOf": 1,
+    "Genotype": 4759,
+    "GenotypeMemberOf": 4759,
+    "InternedConstant": 4760,
+    "Media": 1,
+    "MediaMemberOf": 1,
+    "Mentions": 4759,
+    "MetabolitePhenotype": 4760,
+    "Perturbation": 4763,
+    "PerturbationMemberOf": 23795,
+    "PhenotypeMemberOf": 4760,
+    "Publication": 1,
+    "Schema_info": 1
+   },
+   "perturbation_host_genome": {
+    "sgd_S288C_R64-4-1_20230830": 4763
+   },
+   "genome_assembly_set": {
+    "sgd_S288C_R64-4-1_20230830": 1
+   },
+   "host_genome_outside_genome_assembly_sets": [],
+   "done": {
+    "index": 31,
+    "adapter_class": "BetaxanthinCachera2023Adapter",
+    "dataset_class": "BetaxanthinCachera2023Dataset",
+    "dataset_len": 4759,
+    "n_nodes": 23807,
+    "n_edges": 52354,
+    "generation_wall_s": 35.415945291519165,
+    "peak_memory_gb": 1.3368415832519531,
+    "torchcell_version": "1.7.5",
+    "build_commit": "b5c5549d8f4752fc8ac89b6d1e5cd2c0ec5bf4a9",
+    "written_at": "2026-10-15T15:40:35.441515+00:00"
+   },
+   "n_experiment_ids": 4759
+  },
+  "generation_wall_s": 35.0,
+  "generation_peak_mem_gb": 1.3,
+  "generation_peak_rss_gb": null,
+  "generation_time_v_wall_s": null
+ },
+ {
+  "dataset": "CarotenoidOzaydin2013Dataset",
+  "slug": "carotenoid_ozaydin2013",
+  "why": "gene addition whose placement is a typed gap (not_released_by_primary)",
+  "n_records": 4607,
+  "n_distinct_experiments": 4576,
+  "n_served_3_0": 4474,
+  "n_shared_main_tree": 4607,
+  "experiment_types": {
+   "visual_score": 4607
+  },
+  "reference_types": {
+   "visual_score": 4607
+  },
+  "retired_types_seen": [],
+  "unknown_types_seen": [],
+  "perturbation_leaves_manifest": {
+   "genotype": [
+    "GeneAdditionPerturbation",
+    "KanMxDeletionPerturbation",
+    "ReleasedIdentifierPerturbation"
+   ],
+   "environment": []
+  },
+  "perturbation_types": {
+   "kanmx_deletion": 4606,
+   "gene_addition": 13821,
+   "released_identifier": 1
+  },
+  "n_perturbations": 18428,
+  "namespaces": {
+   "scerevisiae_s288c_sgd_systematic": 18428
+  },
+  "perturbations_missing_namespace": 0,
+  "perturbations_off_expected_namespace": 0,
+  "expected_namespace": "scerevisiae_s288c_sgd_systematic",
+  "assembly_sets": {
+   "sgd_S288C_R64-4-1_20230830": 4607
+  },
+  "assembly": {
+   "present": 4607,
+   "gapped_with_reason_and_looked_in": 0,
+   "gapped_without_reason": 0,
+   "absent_no_gap": 0
+  },
+  "expected_assembly_set": "sgd_S288C_R64-4-1_20230830",
+  "references_off_expected_assembly": 0,
+  "placement": {
+   "additions": 13821,
+   "placed": 0,
+   "placed_resolved_to_deposit": 0,
+   "placed_unresolved": [],
+   "gapped_with_reason_and_looked_in": 13821,
+   "gapped_without_reason": 0,
+   "absent_no_gap": 0,
+   "gap_reasons": {
+    "not_released_by_primary": 13821
+   },
+   "contigs": {}
+  },
+  "content_served_lost": 0,
+  "content_served_lost_sample": [],
+  "content_new_only": 133,
+  "content_main_lost": 0,
+  "content_main_lost_sample": [],
+  "content_new_only_vs_main": 0,
+  "served_ids_in_new_csv": 0,
+  "build_wall_s": 17.88,
+  "build_time_s": 11.0,
+  "build_peak_rss_gb": 1.7332267761230469,
+  "verify_outcome": "no_per_dataset_verifier",
+  "csv": {
+   "rows_per_label": {
+    "Dataset": 1,
+    "Environment": 1,
+    "EnvironmentMemberOf": 4578,
+    "Experiment": 4576,
+    "ExperimentMemberOf": 4576,
+    "ExperimentReference": 2,
+    "ExperimentReferenceMemberOf": 2,
+    "ExperimentReferenceOf": 4576,
+    "Genome": 2,
+    "GenomeMemberOf": 2,
+    "Genotype": 4475,
+    "GenotypeMemberOf": 4576,
+    "InternedConstant": 1,
+    "Media": 1,
+    "MediaMemberOf": 1,
+    "Mentions": 4576,
+    "Perturbation": 4478,
+    "PerturbationMemberOf": 17900,
+    "PhenotypeMemberOf": 4578,
+    "Publication": 1,
+    "Schema_info": 1,
+    "Temperature": 1,
+    "TemperatureMemberOf": 1,
+    "VisualScorePhenotype": 61
+   },
+   "perturbation_host_genome": {
+    "sgd_S288C_R64-4-1_20230830": 4478
+   },
+   "genome_assembly_set": {
+    "sgd_S288C_R64-4-1_20230830": 2
+   },
+   "host_genome_outside_genome_assembly_sets": [],
+   "done": {
+    "index": 30,
+    "adapter_class": "CarotenoidOzaydin2013Adapter",
+    "dataset_class": "CarotenoidOzaydin2013Dataset",
+    "dataset_len": 4607,
+    "n_nodes": 13600,
+    "n_edges": 45366,
+    "generation_wall_s": 36.816654205322266,
+    "peak_memory_gb": 1.3530426025390625,
+    "torchcell_version": "1.7.5",
+    "build_commit": "b5c5549d8f4752fc8ac89b6d1e5cd2c0ec5bf4a9",
+    "written_at": "2026-10-15T15:40:59.722472+00:00"
+   },
+   "n_experiment_ids": 4576
+  },
+  "generation_wall_s": 37.0,
+  "generation_peak_mem_gb": 1.4,
+  "generation_peak_rss_gb": null,
+  "generation_time_v_wall_s": null
+ },
+ {
+  "dataset": "GrowthRateCampos2018Dataset",
+  "slug": "ecoli_growth_rate_campos2018",
+  "why": "bacterial Keio store on the renamed DeletionStrainPerturbation leaf; bacterial_fitness retired into fitness; assembly pin on the reference",
+  "n_records": 3664,
+  "n_distinct_experiments": 3664,
+  "n_served_3_0": null,
+  "n_shared_main_tree": 3664,
+  "experiment_types": {
+   "fitness": 3664
+  },
+  "reference_types": {
+   "fitness": 3664
+  },
+  "retired_types_seen": [],
+  "unknown_types_seen": [],
+  "perturbation_leaves_manifest": {
+   "genotype": [
+    "DeletionStrainPerturbation"
+   ],
+   "environment": []
+  },
+  "perturbation_types": {
+   "deletion_strain": 3664
+  },
+  "n_perturbations": 3664,
+  "namespaces": {
+   "ecoli_k12_bw25113_locus_tag": 3664
+  },
+  "perturbations_missing_namespace": 0,
+  "perturbations_off_expected_namespace": 0,
+  "expected_namespace": "ecoli_k12_bw25113_locus_tag",
+  "assembly_sets": {
+   "ecoli_K12_BW25113_ASM75055v1": 3664
+  },
+  "assembly": {
+   "present": 3664,
+   "gapped_with_reason_and_looked_in": 0,
+   "gapped_without_reason": 0,
+   "absent_no_gap": 0
+  },
+  "expected_assembly_set": "ecoli_K12_BW25113_ASM75055v1",
+  "references_off_expected_assembly": 0,
+  "placement": {
+   "additions": 0,
+   "placed": 0,
+   "placed_resolved_to_deposit": 0,
+   "placed_unresolved": [],
+   "gapped_with_reason_and_looked_in": 0,
+   "gapped_without_reason": 0,
+   "absent_no_gap": 0,
+   "gap_reasons": {},
+   "contigs": {}
+  },
+  "content_served_lost": null,
+  "content_served_lost_sample": [],
+  "content_new_only": null,
+  "content_main_lost": 0,
+  "content_main_lost_sample": [],
+  "content_new_only_vs_main": 0,
+  "served_ids_in_new_csv": null,
+  "build_wall_s": 14.03,
+  "build_time_s": 5.0,
+  "build_peak_rss_gb": 1.4160995483398438,
+  "verify_outcome": "passed",
+  "csv": {
+   "rows_per_label": {
+    "Dataset": 1,
+    "Environment": 1,
+    "EnvironmentMemberOf": 3665,
+    "Experiment": 3664,
+    "ExperimentMemberOf": 3664,
+    "ExperimentReference": 1,
+    "ExperimentReferenceMemberOf": 1,
+    "ExperimentReferenceOf": 3664,
+    "FitnessPhenotype": 3646,
+    "Genome": 1,
+    "GenomeMemberOf": 1,
+    "Genotype": 3664,
+    "GenotypeMemberOf": 3664,
+    "InternedConstant": 1,
+    "Media": 1,
+    "MediaMemberOf": 1,
+    "Mentions": 3664,
+    "Perturbation": 3664,
+    "PerturbationMemberOf": 3664,
+    "PhenotypeMemberOf": 3665,
+    "Publication": 1,
+    "Schema_info": 1,
+    "Temperature": 1,
+    "TemperatureMemberOf": 1
+   },
+   "perturbation_host_genome": {
+    "ecoli_K12_BW25113_ASM75055v1": 3664
+   },
+   "genome_assembly_set": {
+    "ecoli_K12_BW25113_ASM75055v1": 1
+   },
+   "host_genome_outside_genome_assembly_sets": [],
+   "done": {
+    "index": 78,
+    "adapter_class": "GrowthRateCampos2018Adapter",
+    "dataset_class": "GrowthRateCampos2018Dataset",
+    "dataset_len": 3664,
+    "n_nodes": 14646,
+    "n_edges": 25654,
+    "generation_wall_s": 10.723723888397217,
+    "peak_memory_gb": 1.1898689270019531,
+    "torchcell_version": "1.7.5",
+    "build_commit": "b5c5549d8f4752fc8ac89b6d1e5cd2c0ec5bf4a9",
+    "written_at": "2026-10-15T15:46:34.659282+00:00"
+   },
+   "n_experiment_ids": 3664
+  },
+  "generation_wall_s": 11.0,
+  "generation_peak_mem_gb": 1.2,
+  "generation_peak_rss_gb": null,
+  "generation_time_v_wall_s": null
+ },
+ {
+  "dataset": "EnvChemgenNichols2011Dataset",
+  "slug": "ecoli_env_chemgen_nichols2011",
+  "why": "bacterial_environment_response retired into environment_response; a bacterial released-identifier leaf; the largest store of the sample",
+  "n_records": 1286962,
+  "n_distinct_experiments": 1286962,
+  "n_served_3_0": null,
+  "n_shared_main_tree": 1286962,
+  "experiment_types": {
+   "environment_response": 1286962
+  },
+  "reference_types": {
+   "environment_response": 1286962
+  },
+  "retired_types_seen": [],
+  "unknown_types_seen": [],
+  "perturbation_leaves_manifest": {
+   "genotype": [
+    "ReleasedIdentifierPerturbation"
+   ],
+   "environment": [
+    "EnvironmentPhysicalPerturbation",
+    "PhysicalExposurePerturbation",
+    "SmallMoleculePerturbation"
+   ]
+  },
+  "perturbation_types": {
+   "released_identifier": 1290506
+  },
+  "n_perturbations": 1290506,
+  "namespaces": {
+   "ecoli_k12_bw25113_locus_tag": 1290506
+  },
+  "perturbations_missing_namespace": 0,
+  "perturbations_off_expected_namespace": 0,
+  "expected_namespace": "ecoli_k12_bw25113_locus_tag",
+  "assembly_sets": {
+   "ecoli_K12_BW25113_ASM75055v1": 1286962
+  },
+  "assembly": {
+   "present": 1286962,
+   "gapped_with_reason_and_looked_in": 0,
+   "gapped_without_reason": 0,
+   "absent_no_gap": 0
+  },
+  "expected_assembly_set": "ecoli_K12_BW25113_ASM75055v1",
+  "references_off_expected_assembly": 0,
+  "placement": {
+   "additions": 0,
+   "placed": 0,
+   "placed_resolved_to_deposit": 0,
+   "placed_unresolved": [],
+   "gapped_with_reason_and_looked_in": 0,
+   "gapped_without_reason": 0,
+   "absent_no_gap": 0,
+   "gap_reasons": {},
+   "contigs": {}
+  },
+  "content_served_lost": null,
+  "content_served_lost_sample": [],
+  "content_new_only": null,
+  "content_main_lost": 0,
+  "content_main_lost_sample": [],
+  "content_new_only_vs_main": 0,
+  "served_ids_in_new_csv": null,
+  "build_wall_s": 1427.32,
+  "build_time_s": 615.0,
+  "build_peak_rss_gb": 8.976036071777344,
+  "verify_outcome": "passed",
+  "csv": {
+   "rows_per_label": {
+    "Dataset": 1,
+    "Environment": 324,
+    "EnvironmentMemberOf": 1287286,
+    "EnvironmentPerturbation": 314,
+    "EnvironmentPerturbationMemberOf": 327,
+    "EnvironmentResponsePhenotype": 1285824,
+    "Experiment": 1286962,
+    "ExperimentMemberOf": 1286962,
+    "ExperimentReference": 324,
+    "ExperimentReferenceMemberOf": 324,
+    "ExperimentReferenceOf": 1286962,
+    "Genome": 1,
+    "GenomeMemberOf": 324,
+    "Genotype": 3967,
+    "GenotypeMemberOf": 1286962,
+    "InternedConstant": 324,
+    "Media": 3,
+    "MediaMemberOf": 324,
+    "Mentions": 1286962,
+    "Perturbation": 3978,
+    "PerturbationMemberOf": 3978,
+    "PhenotypeMemberOf": 1287286,
+    "Publication": 1,
+    "Schema_info": 1,
+    "Temperature": 8,
+    "TemperatureMemberOf": 324
+   },
+   "perturbation_host_genome": {
+    "ecoli_K12_BW25113_ASM75055v1": 3978
+   },
+   "genome_assembly_set": {
+    "ecoli_K12_BW25113_ASM75055v1": 1
+   },
+   "host_genome_outside_genome_assembly_sets": [],
+   "done": {
+    "index": 124,
+    "adapter_class": "EnvChemgenNichols2011Adapter",
+    "dataset_class": "EnvChemgenNichols2011Dataset",
+    "dataset_len": 1286962,
+    "n_nodes": 2582031,
+    "n_edges": 7728021,
+    "generation_wall_s": 218.9083490371704,
+    "peak_memory_gb": 12.514095306396484,
+    "torchcell_version": "1.7.5",
+    "build_commit": "b5c5549d8f4752fc8ac89b6d1e5cd2c0ec5bf4a9",
+    "written_at": "2026-10-15T15:58:17.867608+00:00"
+   },
+   "n_experiment_ids": 1286962
+  },
+  "generation_wall_s": 219.0,
+  "generation_peak_mem_gb": 12.5,
+  "generation_peak_rss_gb": null,
+  "generation_time_v_wall_s": null
+ },
+ {
+  "dataset": "CrispriChemgenSmith2016Dataset",
+  "slug": "crispri_chemgen_smith2016",
+  "why": "spans a placed CrisprInterferencePerturbation AND a ReleasedIdentifierPerturbation, a shape no one designed for",
+  "n_records": 14463,
+  "n_distinct_experiments": 14463,
+  "n_served_3_0": 7053,
+  "n_shared_main_tree": 14463,
+  "experiment_types": {
+   "environment_response": 14463
+  },
+  "reference_types": {
+   "environment_response": 14463
+  },
+  "retired_types_seen": [],
+  "unknown_types_seen": [],
+  "perturbation_leaves_manifest": {
+   "genotype": [
+    "CrisprInterferencePerturbation"
+   ],
+   "environment": [
+    "SmallMoleculePerturbation"
+   ]
+  },
+  "perturbation_types": {
+   "crispr_interference": 14463
+  },
+  "n_perturbations": 14463,
+  "namespaces": {
+   "scerevisiae_s288c_sgd_systematic": 14463
+  },
+  "perturbations_missing_namespace": 0,
+  "perturbations_off_expected_namespace": 0,
+  "expected_namespace": "scerevisiae_s288c_sgd_systematic",
+  "assembly_sets": {
+   "sgd_S288C_R64-4-1_20230830": 14463
+  },
+  "assembly": {
+   "present": 14463,
+   "gapped_with_reason_and_looked_in": 0,
+   "gapped_without_reason": 0,
+   "absent_no_gap": 0
+  },
+  "expected_assembly_set": "sgd_S288C_R64-4-1_20230830",
+  "references_off_expected_assembly": 0,
+  "placement": {
+   "additions": 0,
+   "placed": 0,
+   "placed_resolved_to_deposit": 0,
+   "placed_unresolved": [],
+   "gapped_with_reason_and_looked_in": 0,
+   "gapped_without_reason": 0,
+   "absent_no_gap": 0,
+   "gap_reasons": {},
+   "contigs": {}
+  },
+  "content_served_lost": 0,
+  "content_served_lost_sample": [],
+  "content_new_only": 7410,
+  "content_main_lost": 0,
+  "content_main_lost_sample": [],
+  "content_new_only_vs_main": 0,
+  "served_ids_in_new_csv": 0,
+  "build_wall_s": 23.09,
+  "build_time_s": 16.0,
+  "build_peak_rss_gb": 1.389984130859375,
+  "verify_outcome": "no_per_dataset_verifier",
+  "csv": {
+   "rows_per_label": {
+    "CrisprConstruct": 1035,
+    "CrisprConstructMemberOf": 1035,
+    "Dataset": 1,
+    "Environment": 26,
+    "EnvironmentMemberOf": 14489,
+    "EnvironmentPerturbation": 26,
+    "EnvironmentPerturbationMemberOf": 26,
+    "EnvironmentResponsePhenotype": 14425,
+    "Experiment": 14463,
+    "ExperimentMemberOf": 14463,
+    "ExperimentReference": 26,
+    "ExperimentReferenceMemberOf": 26,
+    "ExperimentReferenceOf": 14463,
+    "Genome": 1,
+    "GenomeMemberOf": 26,
+    "Genotype": 1035,
+    "GenotypeMemberOf": 14463,
+    "InternedConstant": 26,
+    "Media": 1,
+    "MediaMemberOf": 26,
+    "Mentions": 14463,
+    "Perturbation": 1035,
+    "PerturbationMemberOf": 1035,
+    "PhenotypeMemberOf": 14489,
+    "Publication": 1,
+    "Schema_info": 1,
+    "Temperature": 1,
+    "TemperatureMemberOf": 26
+   },
+   "perturbation_host_genome": {
+    "sgd_S288C_R64-4-1_20230830": 1035
+   },
+   "genome_assembly_set": {
+    "sgd_S288C_R64-4-1_20230830": 1
+   },
+   "host_genome_outside_genome_assembly_sets": [],
+   "done": {
+    "index": 58,
+    "adapter_class": "Smith2016Adapter",
+    "dataset_class": "CrispriChemgenSmith2016Dataset",
+    "dataset_len": 14463,
+    "n_nodes": 32102,
+    "n_edges": 89030,
+    "generation_wall_s": 17.159768104553223,
+    "peak_memory_gb": 1.6977729797363281,
+    "torchcell_version": "1.7.5",
+    "build_commit": "b5c5549d8f4752fc8ac89b6d1e5cd2c0ec5bf4a9",
+    "written_at": "2026-10-15T15:46:07.915978+00:00"
+   },
+   "n_experiment_ids": 14463
+  },
+  "generation_wall_s": 17.0,
+  "generation_peak_mem_gb": 1.7,
+  "generation_peak_rss_gb": null,
+  "generation_time_v_wall_s": null
+ },
+ {
+  "dataset": "IsoprenolTiterCarruthers2025Dataset",
+  "slug": "isoprenol_titer_carruthers2025",
+  "why": "the dataset whose GeneAdditionPerturbation rows the old conf-keyed lane dropped (audit C 1.3); P. putida namespace; typed placement gap",
+  "n_records": 502,
+  "n_distinct_experiments": 502,
+  "n_served_3_0": null,
+  "n_shared_main_tree": 502,
+  "experiment_types": {
+   "product_titer": 502
+  },
+  "reference_types": {
+   "product_titer": 502
+  },
+  "retired_types_seen": [],
+  "unknown_types_seen": [],
+  "perturbation_leaves_manifest": {
+   "genotype": [
+    "CrisprInterferencePerturbation",
+    "DeletionStrainPerturbation",
+    "GeneAdditionPerturbation",
+    "HeterologousPathwayPerturbation"
+   ],
+   "environment": [
+    "SmallMoleculePerturbation"
+   ]
+  },
+  "perturbation_types": {
+   "heterologous_pathway": 2510,
+   "crispr_interference": 1085,
+   "deletion_strain": 52,
+   "gene_addition": 6
+  },
+  "n_perturbations": 3653,
+  "namespaces": {
+   "pputida_kt2440_locus_tag": 3653
+  },
+  "perturbations_missing_namespace": 0,
+  "perturbations_off_expected_namespace": 0,
+  "expected_namespace": "pputida_kt2440_locus_tag",
+  "assembly_sets": {
+   "pputida_KT2440_ASM756v2": 502
+  },
+  "assembly": {
+   "present": 502,
+   "gapped_with_reason_and_looked_in": 0,
+   "gapped_without_reason": 0,
+   "absent_no_gap": 0
+  },
+  "expected_assembly_set": "pputida_KT2440_ASM756v2",
+  "references_off_expected_assembly": 0,
+  "placement": {
+   "additions": 2516,
+   "placed": 0,
+   "placed_resolved_to_deposit": 0,
+   "placed_unresolved": [],
+   "gapped_with_reason_and_looked_in": 2516,
+   "gapped_without_reason": 0,
+   "absent_no_gap": 0,
+   "gap_reasons": {
+    "not_released_by_primary": 2516
+   },
+   "contigs": {}
+  },
+  "content_served_lost": null,
+  "content_served_lost_sample": [],
+  "content_new_only": null,
+  "content_main_lost": 0,
+  "content_main_lost_sample": [],
+  "content_new_only_vs_main": 0,
+  "served_ids_in_new_csv": null,
+  "build_wall_s": 54.74,
+  "build_time_s": 4.0,
+  "build_peak_rss_gb": 1.4239540100097656,
+  "verify_outcome": "passed",
+  "csv": {
+   "rows_per_label": {
+    "CrisprConstruct": 1,
+    "CrisprConstructMemberOf": 135,
+    "Dataset": 1,
+    "Environment": 2,
+    "EnvironmentMemberOf": 522,
+    "EnvironmentPerturbation": 1,
+    "EnvironmentPerturbationMemberOf": 2,
+    "Experiment": 502,
+    "ExperimentMemberOf": 502,
+    "ExperimentReference": 20,
+    "ExperimentReferenceMemberOf": 20,
+    "ExperimentReferenceOf": 502,
+    "Genome": 1,
+    "GenomeMemberOf": 20,
+    "Genotype": 432,
+    "GenotypeMemberOf": 502,
+    "InternedConstant": 434,
+    "Media": 1,
+    "MediaMemberOf": 2,
+    "Mentions": 502,
+    "Perturbation": 157,
+    "PerturbationMemberOf": 3125,
+    "PhenotypeMemberOf": 522,
+    "ProductTiterPhenotype": 518,
+    "Publication": 1,
+    "Schema_info": 1,
+    "Temperature": 1,
+    "TemperatureMemberOf": 2
+   },
+   "perturbation_host_genome": {
+    "pputida_KT2440_ASM756v2": 157
+   },
+   "genome_assembly_set": {
+    "pputida_KT2440_ASM756v2": 1
+   },
+   "host_genome_outside_genome_assembly_sets": [],
+   "done": {
+    "index": 142,
+    "adapter_class": "IsoprenolTiterCarruthers2025Adapter",
+    "dataset_class": "IsoprenolTiterCarruthers2025Dataset",
+    "dataset_len": 502,
+    "n_nodes": 2072,
+    "n_edges": 6358,
+    "generation_wall_s": 8.155275821685791,
+    "peak_memory_gb": 1.0410079956054688,
+    "torchcell_version": "1.7.5",
+    "build_commit": "b5c5549d8f4752fc8ac89b6d1e5cd2c0ec5bf4a9",
+    "written_at": "2026-10-15T15:54:48.688685+00:00"
+   },
+   "n_experiment_ids": 502
+  },
+  "generation_wall_s": 8.0,
+  "generation_peak_mem_gb": 1.0,
+  "generation_peak_rss_gb": null,
+  "generation_time_v_wall_s": null
+ }
+]

@@ -1,8 +1,8 @@
-# PRECISE-1K (Lamoureux 2023): 241 MG1655 libraries, BacterialRNASeqExpressionExperiment.
-# 0 to 3 BacterialDeletionPerturbation per record (120 of 241 carry at least one), served
-# as `bacterial perturbation`. The environment carries SmallMoleculePerturbation and
-# EnvironmentPhysicalPerturbation edits, and so does the reference environment, so the
-# environment-perturbation pair is enabled.
+# PRECISE-1K (Lamoureux 2023): 241 MG1655 libraries,
+# BacterialRNASeqExpressionExperiment. 0 to 3 BacterialDeletionPerturbation per record
+# (120 of 241 carry at least one), served as `perturbation`. The environment carries
+# SmallMoleculePerturbation and EnvironmentPhysicalPerturbation edits, and so does the
+# reference environment, so the environment-perturbation pair is enabled.
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"
@@ -11,7 +11,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

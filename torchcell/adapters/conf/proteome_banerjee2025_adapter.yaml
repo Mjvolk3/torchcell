@@ -1,9 +1,9 @@
-# Banerjee 2025 proteome: 6 samples, BacterialProteinAbundanceExperiment.
-# Four of the six records carry one bacterial perturbation each (two promoter
-# replacements on PP_0897 and two PP_0897 deletions); the two parental records carry
-# none, and all four strains share the D1b_gf background on the reference genome. The
-# environment carries EnvironmentPhysicalPerturbation carbon-source edits, so the
-# environment-perturbation pair is enabled.
+# Banerjee 2025 proteome: 6 samples, BacterialProteinAbundanceExperiment. Four of the
+# six records carry one gene perturbation each (two promoter replacements on PP_0897 and
+# two PP_0897 deletions); the two parental records carry none, and all four strains
+# share the D1b_gf background on the reference genome. The environment carries
+# EnvironmentPhysicalPerturbation carbon-source edits, so the environment-perturbation
+# pair is enabled.
 #
 # The temperature methods are enabled and EMIT NOTHING: the shotgun-proteomics Methods
 # state no incubation temperature, so every record's Environment.temperature is None
@@ -19,7 +19,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

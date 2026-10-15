@@ -6,7 +6,7 @@ and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Fang 2025 CRISPRi-FACS free-fatty-acid enrichment: 15,708 records,
 BacterialEnvironmentResponseExperiment. 16,187 perturbations, every one a
-CrisprInterferencePerturbation served as `bacterial perturbation`; a record
+CrisprInterferencePerturbation served as `perturbation`; a record
 carries more than one where its guide targets a multi-member BLASTN cluster, and every
 round-2 record carries one extra for the pcnBi host's constant pcnB repression. Every
 leaf carries a CrisprConstruct, so the crispr-construct pair is enabled. The environment

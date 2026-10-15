@@ -58,11 +58,20 @@ interned constant:
         kind: str
         serialized_data: str
 
+# `genome` is Biolink's own class (auto-mapped by name, no is_a). assembly_set is the
+# registry id of the deposited assembly set the reference pins
+# (torchcell.sequence.genome.registry: `ecoli_K12_MG1655_ASM584v2`,
+# `sgd_S288C_R64-4-1_20230830`, ...), read off `AssemblyReferenceGenome.assembly_set`
+# today and off every `ReferenceGenome` under P2 of the ontology unification (set or a
+# typed gap, which projects null). It is the value every `perturbation.host_genome` joins
+# on: one node per distinct reference (BY4741, BY4742 and S288C are three nodes), all
+# pinning the one S288C set, so the join is on the set and never on `strain`.
 genome:
     represented_as: node
     properties:
         species: str
         strain: str
+        assembly_set: str
         serialized_data: str
 
 # No serialized_data on genotype, segregant genotype, perturbation, crispr construct,
@@ -77,6 +86,23 @@ genotype:
         perturbed_gene_names: list
         perturbation_types: list
 
+# Every member of GenePerturbationType, whatever the host (ontology unification G,
+# 2026-10-15; constitution principle 1: a class names a different physical thing, never
+# which host the data came from). The former `bacterial perturbation` and `bacterial
+# sequence variant perturbation` siblings are RETIRED: they differed from this class by
+# the host alone, and choosing the label by conf left a leaf the conf did not list
+# (Carruthers 2025's GeneAdditionPerturbation under the bacterial-only confs) with a
+# `perturbation member of` edge and no node. One adapter method now serves the whole
+# union and picks the label by leaf.
+# host_genome is the deposited assembly set the record's identifiers are written against,
+# in the registry's vocabulary (the record's `gene_namespace`, a closed vocabulary with
+# one member per deposited set, projected by cell_adapter.HOST_GENOME_OF_NAMESPACE), so
+# `perturbation.host_genome = genome.assembly_set` is a value join with no hop through
+# genotype -> experiment -> experiment reference <- genome. It is mandatory on every
+# node; the `perturbation of genome` edge below is the optional traversal form.
+# is_a: genotype, as before; Biolink's `genotype` is the closest class to an edit of a
+# genome's content, and `sequence variant perturbation` is_a this class, so a served
+# `MATCH (:Perturbation)` returns every perturbation of every host.
 perturbation:
     is_a: genotype
     represented_as: node
@@ -85,55 +111,35 @@ perturbation:
         perturbed_gene_name: str
         perturbation_type: str
         description: str
+        host_genome: str
         strain_id: str
 
-# A gene perturbation of a bacterial host (the five bacterial leaves in schema.py:
-# BacterialDeletionPerturbation, TransposonInsertionPerturbation,
-# BacterialCrisprInterferencePerturbation, PromoterReplacementPerturbation,
-# HeterologousPathwayPerturbation). It is a SIBLING of `perturbation` under `genotype`,
-# not a child, and its own class rather than extra properties on `perturbation`:
-# `perturbation` is served, so adding `gene_namespace` to it would force a full rebuild,
-# and an `is_a: perturbation` would put bacterial nodes under every served
-# `MATCH (:Perturbation)`. gene_namespace names the host locus-tag space the
-# systematic_gene_name is written in (`b0002` alone does not say which genome). No
-# strain_id: none of the five leaves declares one, so it would be a column that is
-# always null. Same id rule as `perturbation` (sha256 of the leaf's model_dump), so the
-# existing `perturbation member of` edges already point at these nodes.
-bacterial perturbation:
-    is_a: genotype
+# A CALLED sequence variant (issue #731): the three VariantCallPerturbation leaves in
+# schema.py (LocusVariantCallPerturbation, SiteVariantCallPerturbation,
+# SpanDeletionCallPerturbation), each of which composes a BacterialVariantCall. It is a
+# CHILD of `perturbation` (is_a), not a sibling: it is a perturbation that additionally
+# carries the call, and the columns below (the replicon, the 1-based interval, the
+# variant kind, the call frequency and whether that frequency is a clone's or a
+# population's) are what a variant record is asked about and would be null on every
+# other leaf, which is the argument that keeps them off the parent. No strain_id: none
+# of the three leaves declares one. systematic_gene_name is a locus tag for an in-locus
+# or span call and the derived site id `<replicon>:<position>` for an intergenic one,
+# which is how a call that is in no gene stays out of the gene-keyed join rather than
+# being attributed to a neighbor. Emitted by the same adapter method as `perturbation`
+# (the label is chosen by leaf), under the same id rule (sha256 of the leaf's
+# model_dump), so `perturbation member of` addresses these nodes unchanged.
+# is_a: Biolink has no class for a called variant of an engineered strain that is also a
+# genotype element; `perturbation` (is_a genotype) is the honest parent, and the Biolink
+# chain is the parent's (genotype -> biological entity -> named thing -> entity).
+sequence variant perturbation:
+    is_a: perturbation
     represented_as: node
     properties:
         systematic_gene_name: str
         perturbed_gene_name: str
         perturbation_type: str
         description: str
-        gene_namespace: str
-
-# A CALLED bacterial variant (issue #731): the three variant leaves in schema.py
-# (BacterialSequenceVariantPerturbation, BacterialSiteVariantPerturbation,
-# BacterialSpanDeletionPerturbation), each of which composes a `BacterialVariantCall`.
-# It is its OWN class rather than rows of `bacterial perturbation`, for the reason the
-# `phage perturbation` class exists: the properties below (the replicon, the 1-based
-# interval, the variant kind, the call frequency and whether that frequency is a clone's
-# or a population's) are what a variant record is asked about, and `bacterial
-# perturbation` is served, so they cannot be added there without a full rebuild -- and
-# if they were, they would be null on every one of its other five leaves, exactly the
-# argument that keeps `strain_id` off it. A SIBLING of `bacterial perturbation` under
-# `genotype`, so no served `MATCH (:BacterialPerturbation)` changes.
-# systematic_gene_name is a locus tag for an in-locus or span call and the derived site
-# id `<replicon>:<position>` for an intergenic one, which is how a call that is in no
-# gene stays out of the gene-keyed join rather than being attributed to a neighbour.
-# Same id rule as `perturbation` (sha256 of the leaf's model_dump), so the existing
-# `perturbation member of` edges address these nodes unchanged.
-bacterial sequence variant perturbation:
-    is_a: genotype
-    represented_as: node
-    properties:
-        systematic_gene_name: str
-        perturbed_gene_name: str
-        perturbation_type: str
-        description: str
-        gene_namespace: str
+        host_genome: str
         reference_sequence: str
         position_start: int
         position_end: int
@@ -238,11 +244,11 @@ environment perturbation:
 
 # A bacteriophage challenge (PhagePerturbation): the environment axis of a phage-
 # resistance screen, content-addressed like the other environment perturbations. It is
-# its OWN class rather than a row of `environment perturbation`, for two reasons. The
-# served class would need new properties (the MOI, the phage's taxon and accession) and
-# `environment perturbation` is served, so that is a full rebuild; and the dose is not a
-# concentration, so it cannot ride the `concentration_value` / `concentration_unit`
-# columns without making a particle-to-cell ratio look like a dose.
+# its OWN class rather than a row of `environment perturbation` because the dose is not
+# a concentration: the MOI, the phage's taxon and accession are its columns, and they
+# cannot ride the `concentration_value` / `concentration_unit` columns without making a
+# particle-to-cell ratio look like a dose. Emitted by the same `environment perturbation
+# (chunked)` method as its sibling, the label chosen by leaf (ontology unification G).
 # is_a: Biolink defines `environmental exposure` as abiotic ("factor relating to abiotic
 # processes in the environment"), while `biotic exposure` is "an intake of (sometimes
 # pathological) biological organisms (including viruses)" and carries `viral exposure` as
@@ -889,16 +895,35 @@ genotype member of:
     source: [genotype, segregant genotype, perturbed segregant genotype]
     target: experiment
 
-# Three sources since `bacterial sequence variant perturbation` joined, so input_label
-# is required for the
-# same reason as on `genotype member of`. The adapter's relationship_label is unchanged
-# ("perturbation member of"), so the served PerturbationMemberOf edges keep their type.
+# Two sources (`sequence variant perturbation` is its own node class under
+# `perturbation`), so input_label is required for the same reason as on `genotype
+# member of`. The adapter's relationship_label is unchanged ("perturbation member of"),
+# so the served PerturbationMemberOf edges keep their type.
 perturbation member of:
     is_a: genetically associated with
     represented_as: edge
     input_label: perturbation member of
-    source: [perturbation, bacterial perturbation, bacterial sequence variant perturbation]
+    source: [perturbation, sequence variant perturbation]
     target: genotype
+
+# The host genome a perturbation is written against (ontology unification G): the
+# traversal form of `perturbation.host_genome`, OPTIONAL and off in every conf. The
+# property is the mandatory join key; this edge adds one row per perturbation per
+# record, the order of `perturbation member of` (47.3 M rows in 124 of 170 adapters of
+# the job 4901 partial, review 3 finding 9), so a conf opts in by listing
+# `perturbation to genome (chunked)` and the first build that does measures the cost.
+# is_a: Biolink's `is sequence variant of` "holds between a sequence variant and a
+# nucleic acid entity" (3.2.1 definition; domain sequence variant, range genomic
+# entity): a perturbation is an edit to the host's genomic content stated against that
+# genome's deposited sequence, and `genome` is a genomic entity. Neither `located in`
+# (defined between material entities) nor `part of` (the genome does not contain the
+# edit) says that. input_label for the two-source reason above.
+perturbation of genome:
+    is_a: is sequence variant of
+    represented_as: edge
+    input_label: perturbation of genome
+    source: [perturbation, sequence variant perturbation]
+    target: genome
 
 # The background mosaic a perturbed segregant genotype was built on (Hale 2024): one
 # `segregant genotype` node per segregant, shared by every perturbation measured on it.
@@ -908,13 +933,14 @@ segregant background of:
     source: segregant genotype
     target: perturbed segregant genotype
 
-# A bacterial CRISPRi leaf carries the shared CrisprConstruct, so its construct edge
-# targets a `bacterial perturbation` node.
+# Every CRISPR leaf of every host is a `perturbation` node (the retired `bacterial
+# perturbation` target folded into it), so the construct edge has the one target; the
+# `sequence variant perturbation` child carries no construct.
 crispr construct member of:
     is_a: part of
     represented_as: edge
     source: crispr construct
-    target: [perturbation, bacterial perturbation]
+    target: perturbation
 
 environment member of:
     is_a: participates in
@@ -979,7 +1005,10 @@ temperature member of:
 # Two sources since `phage perturbation` joined, so input_label is required (with a list
 # source and no input_label, OntologyMapping._horizontal_inheritance_source zips a list
 # against a string and builds one leaf per CHARACTER). The adapter's relationship label
-# is unchanged, so the written type stays EnvironmentPerturbationMemberOf.
+# is unchanged, so the written type stays EnvironmentPerturbationMemberOf. Both node
+# classes are emitted by the one `environment perturbation (chunked)` method, which
+# chooses the label by leaf (ontology unification G), so a conf cannot enable the edge
+# for a leaf no lane serves.
 environment perturbation member of:
     is_a: part of
     represented_as: edge

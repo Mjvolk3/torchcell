@@ -1,8 +1,8 @@
 # Caglar 2017 Table S5 doubling times: 55 records, one per released biological-replicate
 # growth curve, BacterialEnvironmentResponseExperiment carrying the ABSOLUTE doubling
 # time in minutes with both released 95% confidence limits (#776). Every genotype is the
-# wild type (0 perturbations in 55 of 55 records), so neither `bacterial perturbation`
-# nor `perturbation to genotype` is enabled. The environment carries
+# wild type (0 perturbations in 55 of 55 records), so neither `perturbation` nor
+# `perturbation to genotype` is enabled. The environment carries
 # SmallMoleculePerturbation and EnvironmentPhysicalPerturbation edits (carbon source,
 # Mg/Na levels), so the environment-perturbation pair is enabled; the 9 base-condition
 # records carry none, which is a measured condition for an absolute readout and not a

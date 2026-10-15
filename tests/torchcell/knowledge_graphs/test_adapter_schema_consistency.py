@@ -136,34 +136,36 @@ def test_adapter_confs_are_well_formed_yaml() -> None:
         assert set(conf["cell_adapter"]) == {"node_methods", "edge_methods"}, path.name
 
 
-def test_no_conf_enables_both_perturbation_classes() -> None:
-    """A bacterial conf enables ``bacterial perturbation (chunked)`` INSTEAD of
-    ``perturbation (chunked)``.
+def test_no_conf_names_a_retired_lane() -> None:
+    """The host-keyed lanes are gone (ontology unification G, 2026-10-15).
 
-    The served ``perturbation`` method emits every leaf of a genotype, bacterial ones
-    included, under the ``perturbation`` label, and the bacterial method emits the same
-    leaf under the same content id with the ``bacterial perturbation`` label. Enabling both
-    writes one id under two classes, and the import keeps whichever row it reads first.
+    ``bacterial perturbation (chunked)``, ``bacterial sequence variant perturbation
+    (chunked)``, ``phage perturbation (chunked)`` and ``phage perturbation reference``
+    are registered on no adapter, so a conf naming one would enable nothing and its
+    records' perturbations would get an edge and no node.
     """
-    both = sorted(
+    retired = {
+        "bacterial perturbation (chunked)",
+        "bacterial sequence variant perturbation (chunked)",
+        "phage perturbation (chunked)",
+        "phage perturbation reference",
+    }
+    naming = sorted(
         dataset_class.__name__
         for dataset_class in dataset_adapter_map
-        if {"perturbation (chunked)", "bacterial perturbation (chunked)"}
-        <= set(dataset_conf_methods(dataset_class, REPO_ROOT))
+        if retired & set(dataset_conf_methods(dataset_class, REPO_ROOT))
     )
-    assert both == []
+    assert naming == []
 
 
 def test_an_environment_perturbation_edge_has_a_node_lane_to_address() -> None:
-    """Issue #756: the two environment-perturbation node lanes PARTITION the leaves.
+    """The one environment-axis method serves every leaf, phages included.
 
-    ``_environment_perturbation_node`` now skips a ``PhagePerturbation`` and
-    ``_phage_perturbation_node`` emits only one, so a conf MAY enable both classes and no
-    content id is written under two labels (that split is driven on a record in
-    ``tests/torchcell/adapters/test_environment_node_identity.py``). What is left to
-    check here is the edge: ``environment perturbation member of`` is emitted for EVERY
-    perturbation, so a conf enabling it must enable at least one node lane, or that edge
-    addresses a node the graph does not contain.
+    ``environment perturbation member of`` is emitted for EVERY perturbation of the
+    environment, so a conf enabling the edge must enable the node lane, or that edge
+    addresses a node the graph does not contain (the lane itself cannot leave a leaf
+    out: it chooses the label by leaf, driven on a record in
+    ``tests/torchcell/adapters/test_environment_node_identity.py``).
     """
     edge_methods = {
         "environment perturbation to environment (chunked)",
@@ -172,8 +174,6 @@ def test_an_environment_perturbation_edge_has_a_node_lane_to_address() -> None:
     node_methods = {
         "environment perturbation (chunked)",
         "environment perturbation reference",
-        "phage perturbation (chunked)",
-        "phage perturbation reference",
     }
     dangling = sorted(
         dataset_class.__name__

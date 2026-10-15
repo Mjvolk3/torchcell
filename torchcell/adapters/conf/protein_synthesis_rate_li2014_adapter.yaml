@@ -5,8 +5,8 @@
 #
 # Li 2014 protein synthesis rates: 3 MOPS media, ProteinSynthesisRateExperiment. Every
 # genotype is the wild type (0 perturbations in 3 of 3 records), so neither
-# `bacterial perturbation` nor `perturbation to genotype` is enabled. No environment
-# carries a perturbation (the three media differ by their supplement component), so the
+# `perturbation` nor `perturbation to genotype` is enabled. No environment carries a
+# perturbation (the three media differ by their supplement component), so the
 # environment-perturbation pair is not enabled either.
 
 cell_adapter:

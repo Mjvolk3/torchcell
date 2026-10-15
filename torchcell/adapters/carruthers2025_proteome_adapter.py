@@ -6,7 +6,7 @@
 knowledge-graph nodes and edges.
 
 One record per proteome sample of the PP_0815 off-target-study strains: pathway,
-deletion and CRISPRi leaves served as ``bacterial perturbation`` nodes, the CRISPRi
+deletion and CRISPRi leaves served as ``perturbation`` nodes, the CRISPRi
 leaf's ``CrisprConstruct`` as a ``crispr construct`` node, and the Top3 abundances as a
 ``ProteinAbundancePhenotype``.
 """

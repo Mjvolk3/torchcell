@@ -1,9 +1,9 @@
 # Price 2018 Supplementary Table 1: 320 BW25113 likely-essential gene calls,
 # BacterialGeneEssentialityExperiment. One TransposonInsertionPerturbation per record,
-# served as `bacterial perturbation`. Every record shares the one library-selection
-# environment (LB Lennox agar with kanamycin at 37 C) and carries no environment
-# perturbation, so that pair is off; the temperature is stated for every record, so the
-# temperature methods are on.
+# served as `perturbation`. Every record shares the one library-selection environment
+# (LB Lennox agar with kanamycin at 37 C) and carries no environment perturbation, so
+# that pair is off; the temperature is stated for every record, so the temperature
+# methods are on.
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"
@@ -12,7 +12,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

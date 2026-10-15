@@ -6,7 +6,7 @@ it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Nichols 2011 chemical genomics: one (BW25113 strain x Table S2 screen) record per
 released score, BacterialEnvironmentResponseExperiment. Deletion, SPA, linked and DAS
-rows are served as `bacterial perturbation`; the screen plate carries its dosed
+rows are served as `perturbation`; the screen plate carries its dosed
 chemicals, buffered pH, carbon or nitrogen source and UV dose as environment
 perturbations on the experiment and the reference, so the environment-perturbation pair
 is enabled.

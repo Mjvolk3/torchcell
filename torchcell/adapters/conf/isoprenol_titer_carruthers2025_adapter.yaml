@@ -1,8 +1,8 @@
-# Carruthers 2025 isoprenol titer: 465 IY1449b strains, ProductTiterExperiment.
-# 6 to 9 perturbations per record: HeterologousPathwayPerturbation (2,325) and
-# BacterialCrisprInterferencePerturbation (1,051), all served as `bacterial perturbation`.
-# Every CRISPRi leaf carries a CrisprConstruct, so the crispr-construct pair is enabled.
-# The CultureEnvironment carries a SmallMoleculePerturbation on the experiment and the
+# Carruthers 2025 isoprenol titer: 465 IY1449b strains, ProductTiterExperiment. 6 to 9
+# perturbations per record: HeterologousPathwayPerturbation (2,325) and
+# BacterialCrisprInterferencePerturbation (1,051), all served as `perturbation`. Every
+# CRISPRi leaf carries a CrisprConstruct, so the crispr-construct pair is enabled. The
+# CultureEnvironment carries a SmallMoleculePerturbation on the experiment and the
 # reference, so the environment-perturbation pair is enabled.
 cell_adapter:
   node_methods:
@@ -12,7 +12,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "crispr construct (chunked)"
       memory_reduction_factor: 1.0

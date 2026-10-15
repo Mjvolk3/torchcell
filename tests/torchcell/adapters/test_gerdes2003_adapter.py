@@ -6,7 +6,7 @@ and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Gerdes 2003 genetic footprinting: 3,618 MG1655 gene calls,
 BacterialGeneEssentialityExperiment. One TransposonInsertionPerturbation per record,
-served as `bacterial perturbation`. No record carries an environment perturbation.
+served as `perturbation`. No record carries an environment perturbation.
 """
 
 from __future__ import annotations

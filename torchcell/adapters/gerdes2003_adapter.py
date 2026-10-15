@@ -6,7 +6,7 @@
 of MG1655 genes as knowledge-graph nodes and edges.
 
 One record per gene: a single ``TransposonInsertionPerturbation`` served as a
-``bacterial perturbation`` node, and the call as a ``GeneEssentialityPhenotype``. The
+``perturbation`` node, and the call as a ``GeneEssentialityPhenotype``. The
 reference's environment is the same fermentor medium without the kanamycin.
 """
 

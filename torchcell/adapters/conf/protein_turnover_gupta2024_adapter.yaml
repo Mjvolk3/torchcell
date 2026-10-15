@@ -6,9 +6,9 @@
 # Gupta 2024 protein turnover: 13 NCM3722 growth conditions, ProteinTurnoverExperiment.
 # Five of the 13 genotypes carry protease or SsrA-pathway deletions (clpP, lon, hslV,
 # smpB; three leaves in the triple knockout) and eight are the unperturbed strain, so
-# `bacterial perturbation` and `perturbation to genotype` are enabled. The 12 chemostat
-# conditions carry a controlled-pH EnvironmentPhysicalPerturbation, so the
-# environment-perturbation pair is enabled; the batch condition states no pH.
+# `perturbation` and `perturbation to genotype` are enabled. The 12 chemostat conditions
+# carry a controlled-pH EnvironmentPhysicalPerturbation, so the environment-perturbation
+# pair is enabled; the batch condition states no pH.
 
 cell_adapter:
   node_methods:
@@ -18,7 +18,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

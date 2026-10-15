@@ -7,7 +7,7 @@ nodes and edges.
 
 One record per MG1655 RNA-seq library whose genotype and environment the release states:
 the wild type or up to three ``DeletionStrainPerturbation`` leaves, served as
-``bacterial perturbation`` nodes, and the medium's supplements and physical settings as
+``perturbation`` nodes, and the medium's supplements and physical settings as
 environment perturbations.
 """
 

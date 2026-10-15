@@ -1,9 +1,9 @@
-# Li 2021 13C-MFA (Additional file 2), E. coli BW25113 EP-bifido strains: FluxExperiment.
-# Three records, one per released NETWORK block, each a PromoterReplacementPerturbation of
-# zwf served as `bacterial perturbation`; no environment perturbation. The reference's
-# flux map is a typed gap (net_flux None), which `flux phenotype reference` serves as a
-# null property. The labeling culture states no temperature, so no temperature node is
-# emitted for these environments.
+# Li 2021 13C-MFA (Additional file 2), E. coli BW25113 EP-bifido strains:
+# FluxExperiment. Three records, one per released NETWORK block, each a
+# PromoterReplacementPerturbation of zwf served as `perturbation`; no environment
+# perturbation. The reference's flux map is a typed gap (net_flux None), which `flux
+# phenotype reference` serves as a null property. The labeling culture states no
+# temperature, so no temperature node is emitted for these environments.
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"
@@ -12,7 +12,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

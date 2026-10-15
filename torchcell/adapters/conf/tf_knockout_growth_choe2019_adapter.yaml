@@ -1,8 +1,7 @@
-# Choe 2019 Supplementary Fig. 6 Keio knockouts: 2 records,
-# BacterialFitnessExperiment. One BacterialDeletionPerturbation per record (the Keio
-# BW25113 ydaS and abgR strains), served as `bacterial perturbation`. The panel is one
-# medium at one temperature with no environment perturbation, so the
-# environment-perturbation pair is left off.
+# Choe 2019 Supplementary Fig. 6 Keio knockouts: 2 records, BacterialFitnessExperiment.
+# One BacterialDeletionPerturbation per record (the Keio BW25113 ydaS and abgR strains),
+# served as `perturbation`. The panel is one medium at one temperature with no
+# environment perturbation, so the environment-perturbation pair is left off.
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"
@@ -11,7 +10,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

@@ -1,7 +1,7 @@
 # Baba 2006 Keio construction outcomes: 4,116 BW25113 ORF records,
 # BacterialGeneEssentialityExperiment. One BacterialDeletionPerturbation per record,
-# served as `bacterial perturbation`. No record carries an environment perturbation (0 in
-# 4,116). Every record and reference states its temperature (37 C).
+# served as `perturbation`. No record carries an environment perturbation (0 in 4,116).
+# Every record and reference states its temperature (37 C).
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"
@@ -10,7 +10,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

@@ -6,7 +6,7 @@
 knowledge-graph nodes and edges.
 
 One record per (KEIO deletion strain, carbon source): a single
-``DeletionStrainPerturbation`` served as a ``bacterial perturbation`` node, and the
+``DeletionStrainPerturbation`` served as a ``perturbation`` node, and the
 strain's FIA-TOF-MS ion log2 fold changes against the wild type as a
 ``MetabolitePhenotype``. The carbon source is part of the medium, so no record carries
 an environment perturbation and that pair is not enabled.

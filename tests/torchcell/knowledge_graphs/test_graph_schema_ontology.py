@@ -9,11 +9,13 @@ That failure used to surface only in a slurm generation job. Here the ontology i
 in-process from the sha256-pinned local mirror (``biocypher/ontology/``, issue #619) and
 the real ``OntologyMapping`` of the committed schema, which takes under a second.
 
-Pinned: every node class reaches the Biolink root ``entity``; the four bacterial-program
-classes sit where their ``is_a`` puts them; and the served ``perturbation`` class keeps
-its ancestry, with ``bacterial perturbation`` beside it under ``genotype`` rather than
-beneath it (a child would carry the ``Perturbation`` label, and every served
-``MATCH (:Perturbation)`` would start returning bacterial nodes).
+Pinned: every node class reaches the Biolink root ``entity``; the bacterial-program
+phenotype classes sit where their ``is_a`` puts them; the served ``perturbation`` class
+keeps its ancestry and ``sequence variant perturbation`` sits BENEATH it (ontology
+unification G, 2026-10-15: one perturbation class for every host, so a served
+``MATCH (:Perturbation)`` returns every perturbation, the called variants included); and
+the two retired labels, ``bacterial perturbation`` and ``bacterial sequence variant
+perturbation``, are declared nowhere.
 """
 
 from __future__ import annotations
@@ -73,9 +75,10 @@ def test_every_node_class_reaches_the_biolink_root(
     "label,ancestry",
     [
         (
-            "bacterial perturbation",
+            "sequence variant perturbation",
             [
-                "bacterial perturbation",
+                "sequence variant perturbation",
+                "perturbation",
                 "genotype",
                 "biological entity",
                 "named thing",
@@ -122,17 +125,19 @@ def test_the_bacterial_program_classes_resolve_through_biolink(
 ) -> None:
     _, ontology = built
     assert _ancestry(ontology, label) == ancestry
-    # the parent chain is Biolink's own, not a node BioCypher invented for a typo
+    # the parent chain is Biolink's own past our own `perturbation`, not a node
+    # BioCypher invented for a typo
     assert not any(
         ontology._nx_graph.nodes[parent].get("user_extension")
         for parent in ancestry[1:]
+        if parent != "perturbation"
     )
 
 
-def test_served_perturbation_ancestry_is_unchanged_and_has_no_bacterial_child(
+def test_served_perturbation_ancestry_is_unchanged_and_the_host_labels_are_gone(
     built: tuple[OntologyMapping, Ontology],
 ) -> None:
-    _, ontology = built
+    mapping, ontology = built
     graph = ontology._nx_graph
     assert _ancestry(ontology, "perturbation") == [
         "perturbation",
@@ -141,8 +146,11 @@ def test_served_perturbation_ancestry_is_unchanged_and_has_no_bacterial_child(
         "named thing",
         "entity",
     ]
-    assert not nx.has_path(graph, "bacterial perturbation", "perturbation")
-    assert not nx.has_path(graph, "perturbation", "bacterial perturbation")
+    assert nx.has_path(graph, "sequence variant perturbation", "perturbation")
+    assert "bacterial perturbation" not in mapping.extended_schema
+    assert "bacterial sequence variant perturbation" not in mapping.extended_schema
+    assert "bacterial perturbation" not in graph
+    assert "bacterial sequence variant perturbation" not in graph
 
 
 def test_widened_served_edges_keep_their_own_ancestry(
@@ -172,6 +180,17 @@ def test_widened_served_edges_keep_their_own_ancestry(
         if key.endswith(".perturbation member of")
     } == {
         "perturbation.perturbation member of",
-        "bacterial perturbation.perturbation member of",
-        "bacterial sequence variant perturbation.perturbation member of",
+        "sequence variant perturbation.perturbation member of",
+    }
+    assert _ancestry(ontology, "perturbation of genome") == [
+        "perturbation of genome",
+        "is sequence variant of",
+    ]
+    assert {
+        key
+        for key in mapping.extended_schema
+        if key.endswith(".perturbation of genome")
+    } == {
+        "perturbation.perturbation of genome",
+        "sequence variant perturbation.perturbation of genome",
     }

@@ -1,14 +1,13 @@
-# Mutalik 2020 phage-resistance RB-TnSeq: BacterialEnvironmentResponseExperiment.
-# One TransposonInsertionPerturbation per record (`build_genotype`), served as `bacterial
-# perturbation`. The environment of a phage challenge carries exactly one
-# PhagePerturbation and a no-phage control carries none, so the environment-perturbation
-# side enables `phage perturbation` and not `environment perturbation`: no record carries
-# a non-phage environment perturbation, so that lane would emit nothing. Since issue #756
-# the two lanes partition the environment's perturbations, so enabling both is permitted
-# and writes no content id twice; a revision that adds a non-phage perturbation here
-# enables `environment perturbation` beside the phage lane. The two
-# `environment perturbation to environment` edge methods stay enabled -- a phage node's
-# id is the same composition projection, so those edges address it unchanged.
+# Mutalik 2020 phage-resistance RB-TnSeq: BacterialEnvironmentResponseExperiment. One
+# TransposonInsertionPerturbation per record (`build_genotype`), served as
+# `perturbation`. The environment of a phage challenge carries exactly one
+# PhagePerturbation and a no-phage control carries none; `released_addition` can append
+# a SmallMoleculePerturbation for a released medium outside MEDIA_BY_LABEL with a
+# Condition_2 (0 records today). The one `environment perturbation (chunked)` method
+# serves both leaves, a phage as `phage perturbation` and a compound as `environment
+# perturbation`, the label chosen by leaf, so no record can carry a leaf this conf
+# leaves without a node (the retired phage-only lane could, audit C 1.3 item 2). The two
+# `environment perturbation to environment` edge methods address either node class.
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"
@@ -17,7 +16,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0
@@ -28,9 +27,9 @@ cell_adapter:
     - method_name: "temperature (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "temperature reference"
-    - method_name: "phage perturbation (chunked)"
+    - method_name: "environment perturbation (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "phage perturbation reference"
+    - method_name: "environment perturbation reference"
     - method_name: "environment response phenotype (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment response phenotype reference"

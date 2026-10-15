@@ -507,7 +507,12 @@ def test_real_schema_diagram(md: ModuleType) -> None:
     # joined, the same shape. 49 and 82 since `graded gene essentiality phenotype`
     # joined (issue #909), the same shape again.
     # 50 and 84 since #913's `fitness contrast phenotype` joined: the shape once more.
-    assert (len(gen.nodes), n_edges, n_data_lines) == (50, 14, 84)
+    # 49, 15 and 84 since the ontology unification (G, 2026-10-15): `bacterial
+    # perturbation` and `bacterial sequence variant perturbation` retired and `sequence
+    # variant perturbation` joined under `perturbation` (one node fewer, one source fewer
+    # on `perturbation member of`, one target fewer on `crispr construct member of`), and
+    # the new `perturbation of genome` edge carries two sources to one target.
+    assert (len(gen.nodes), n_edges, n_data_lines) == (49, 15, 84)
     # 182 = 158 + 4 + 4 + 4 + 4 + 4 + 4: one node is a declaration, an ``is_a`` line and
     # one data line per ``phenotype member of`` target, of which there are two. 186 =
     # 182 + 4 for Hale 2024: the node's declaration and ``is_a`` line, its ``genotype
@@ -519,18 +524,23 @@ def test_real_schema_diagram(md: ModuleType) -> None:
     # 202 = 198 + 4 for the phosphosite intensity phenotype (#921), 206 = 202 + 4
     # for the microarray expression ratio phenotype (#989), and 210 = 206 + 4 for the
     # graded gene essentiality phenotype (#909).
-    # 214 = 210 + 4 for #913's fitness contrast phenotype.
-    assert len(lines) == 214
-    assert lines[2:9] == [
+    # 214 = 210 + 4 for #913's fitness contrast phenotype. 213 = 214 - 1 under the
+    # ontology unification: one node fewer (two retired, one joined), the data lines
+    # unchanged in number.
+    assert len(lines) == 213
+    # `perturbation` is listed among the parents since `sequence variant perturbation`
+    # sits under it (ontology unification G); it is torchcell's own class, not Biolink's
+    assert lines[2:10] == [
         "    %% Biolink Classes (Parent Entity Types)",
         '    BioticExposure["biotic exposure"]',
         '    EnvironmentalExposure["environmental exposure"]',
         '    Genotype["genotype"]',
         '    InformationContentEntity["information content entity"]',
         '    NucleicAcidEntity["nucleic acid entity"]',
+        '    Perturbation["perturbation"]',
         '    PhenotypicFeature["phenotypic feature"]',
     ]
-    assert lines[10:15] == [
+    assert lines[11:16] == [
         "    %% Direct Biolink Usage (No Inheritance)",
         '    Dataset["dataset"]',
         '    Genome["genome"]',
@@ -538,17 +548,24 @@ def test_real_schema_diagram(md: ModuleType) -> None:
         '    Publication["publication"]',
     ]
     assert lines.count('    Genotype["genotype"]') == 2
+    assert lines.count('    Perturbation["perturbation"]') == 2
     assert [line for line in lines if "InternedConstant" in line][:2] == [
         '    InternedConstant["interned constant"]',
         "    InformationContentEntity -->|is_a| InternedConstant",
     ]
     assert "    Genotype -->|is_a| SegregantGenotype" in lines
-    assert "    Genotype -->|is_a| BacterialPerturbation" in lines
+    assert "    Perturbation -->|is_a| SequenceVariantPerturbation" in lines
+    assert not any("BacterialPerturbation" in line for line in lines)
+    assert not any("BacterialSequenceVariantPerturbation" in line for line in lines)
     # the phage sits under biotic exposure, NOT under environmental exposure
     assert "    BioticExposure -->|is_a| PhagePerturbation" in lines
     assert "    EnvironmentalExposure -->|is_a| PhagePerturbation" not in lines
     assert (
-        '    BacterialPerturbation -.->|"perturbation member of<br/>(is_a: genetically associated with)"| Genotype'
+        '    SequenceVariantPerturbation -.->|"perturbation member of<br/>(is_a: genetically associated with)"| Genotype'
+        in lines
+    )
+    assert (
+        '    Perturbation -.->|"perturbation of genome<br/>(is_a: is sequence variant of)"| Genome'
         in lines
     )
     assert (

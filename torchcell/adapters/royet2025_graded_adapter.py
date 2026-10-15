@@ -7,7 +7,7 @@ KT2440 gene on LB agar and after outgrowth in LB, as knowledge-graph nodes and e
 (#909).
 
 One record per (gene, stage): a single gene-level ``TransposonInsertionPerturbation``
-served as a ``bacterial perturbation`` node, and the released state as a
+served as a ``perturbation`` node, and the released state as a
 ``GradedGeneEssentialityPhenotype``. Neither stage carries an environment perturbation,
 so that pair is off; the two media and the one temperature are served.
 """

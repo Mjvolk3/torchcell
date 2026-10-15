@@ -2,11 +2,11 @@
 # reads), PromoterActivityExperiment. Every record's genotype carries one
 # HeterologousPathwayPerturbation, the episomal promoter-GFP reporter, which is a
 # namespaced bacterial leaf, so the perturbation pair is enabled. The three treated arms
-# carry a SmallMoleculePerturbation on their reads from hour five onward (34,740 of
-# the records), so the environment-perturbation pair is enabled; the untreated arm and the
-# three pre-dose reads of each treated well carry none, which is the point of the design.
-# The environment references are the untreated arm's, so they carry no perturbation and
-# the reference collector dedups them to the nine read hours.
+# carry a SmallMoleculePerturbation on their reads from hour five onward (34,740 of the
+# records), so the environment-perturbation pair is enabled; the untreated arm and the
+# three pre-dose reads of each treated well carry none, which is the point of the
+# design. The environment references are the untreated arm's, so they carry no
+# perturbation and the reference collector dedups them to the nine read hours.
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"
@@ -15,7 +15,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

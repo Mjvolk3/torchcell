@@ -6,7 +6,7 @@ it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Borchert 2023 KT2440 RB-TnSeq, the 271 loci the Borchert 2024 compendium dropped:
 BacterialEnvironmentResponseExperiment. One TransposonInsertionPerturbation per record,
-served as `bacterial perturbation`. The environment always carries D-glucose as an
+served as `perturbation`. The environment always carries D-glucose as an
 EnvironmentPhysicalPerturbation and, for the twelve stressed cultures, the stressor as a
 SmallMoleculePerturbation, so the environment-perturbation pair is enabled. Same record
 family and same graph classes as the compendium adapter, so this adds no graph class.

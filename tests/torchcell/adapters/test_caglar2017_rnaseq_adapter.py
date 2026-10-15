@@ -6,7 +6,7 @@ and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Caglar 2017 RNA-seq: 152 REL606 libraries, BacterialRNASeqExpressionExperiment.
 Every genotype is the wild type (0 perturbations in 152 of 152 records), so neither
-`bacterial perturbation` nor `perturbation to genotype` is enabled. The environment
+`perturbation` nor `perturbation to genotype` is enabled. The environment
 carries SmallMoleculePerturbation and EnvironmentPhysicalPerturbation edits (carbon
 source, Mg/Na levels), so the environment-perturbation pair is enabled.
 """

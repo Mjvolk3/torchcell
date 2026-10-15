@@ -6,7 +6,7 @@ and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Wetmore 2015 RB-TnSeq, this paper's own 1.0.0 release (owner policy 2026-10-10): one
 Tn5 insertion per record, BacterialEnvironmentResponseExperiment. Every genotype carries
-one ``bacterial perturbation`` and every stored sample but the plain LB one a carbon or
+one ``perturbation`` and every stored sample but the plain LB one a carbon or
 nitrogen source, so both the bacterial-perturbation and the environment-perturbation
 pairs are enabled.
 """

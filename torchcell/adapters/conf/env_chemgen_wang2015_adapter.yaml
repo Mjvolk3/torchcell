@@ -1,8 +1,8 @@
 # Wang 2015 isoprenol tolerance: 46 Keio transporter deletions,
 # BacterialEnvironmentResponseExperiment. One BacterialDeletionPerturbation per record,
-# served as `bacterial perturbation`. The environment carries isoprenol as a
-# SmallMoleculePerturbation and the medium pH as an EnvironmentPhysicalPerturbation, on the
-# experiment and the reference, so the environment-perturbation pair is enabled.
+# served as `perturbation`. The environment carries isoprenol as a
+# SmallMoleculePerturbation and the medium pH as an EnvironmentPhysicalPerturbation, on
+# the experiment and the reference, so the environment-perturbation pair is enabled.
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"
@@ -11,7 +11,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

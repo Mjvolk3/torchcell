@@ -1,10 +1,9 @@
 # Wetmore 2015 RB-TnSeq (its own 1.0.0 release), E. coli KEIO_ML9:
-# BacterialEnvironmentResponseExperiment.
-# One TransposonInsertionPerturbation per record (`build_genotype`), served as `bacterial
-# perturbation`. The environment carries the sample's carbon or nitrogen source as an
-# EnvironmentPhysicalPerturbation (`build_environment`), so the environment-perturbation
-# pair is enabled; no stress sample passed the paper's quality rules, and the one plain
-# LB sample carries no perturbation.
+# BacterialEnvironmentResponseExperiment. One TransposonInsertionPerturbation per record
+# (`build_genotype`), served as `perturbation`. The environment carries the sample's
+# carbon or nitrogen source as an EnvironmentPhysicalPerturbation (`build_environment`),
+# so the environment-perturbation pair is enabled; no stress sample passed the paper's
+# quality rules, and the one plain LB sample carries no perturbation.
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"
@@ -13,7 +12,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

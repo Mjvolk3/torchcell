@@ -5,7 +5,7 @@
 """BioCypher adapter exposing the 51 LC-MS (uM) columns, 117 records, BacterialMetaboliteExperiment as knowledge-graph nodes and edges.
 
 One record per released strain-hour sample of the Brunk 2016 time course. Every
-engineered strain's pathway genes are served as `bacterial perturbation` nodes; the
+engineered strain's pathway genes are served as `perturbation` nodes; the
 wild type carries none.
 """
 

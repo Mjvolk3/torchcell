@@ -5,11 +5,11 @@
 it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Mutalik 2020 phage-resistance RB-TnSeq: BacterialEnvironmentResponseExperiment. One
-TransposonInsertionPerturbation per record, served as `bacterial perturbation`. The only
-environment perturbation the row carries is the challenge's PhagePerturbation, so the
-conf enables `phage perturbation` and NOT `environment perturbation`; the shared cases
-check that the two are never both on, and that the records' phages are served under the
-phage class.
+TransposonInsertionPerturbation per record, served as `perturbation`. The environment
+of a challenge carries the PhagePerturbation, served as `phage perturbation` by the one
+`environment perturbation (chunked)` lane, which also serves the compound
+`released_addition` can append; the shared cases check that the records' phages come out
+under the phage label and nothing else does.
 """
 
 from __future__ import annotations
@@ -52,13 +52,13 @@ def test_kg_manifest_resolves_the_dataset_to_its_own_module_and_conf() -> None:
     assert_gate_resolves_own_files(CASE)
 
 
-def test_the_conf_serves_the_phage_class_and_not_the_served_environment_class() -> None:
-    """The mutual exclusion, read off this conf rather than off the shape.
+def test_the_conf_enables_the_one_environment_lane_with_its_edges() -> None:
+    """The lane and its edges, read off this conf rather than off the shape.
 
-    ``_environment_perturbation_node`` does not filter phages out, so enabling both
-    classes would write every phage twice under two labels on one content id. The
-    ``environment perturbation to environment`` edges stay enabled: a phage node's id is
-    the same composition projection, so they address it unchanged.
+    One ``environment perturbation (chunked)`` method serves the phage challenges (as
+    ``phage perturbation``) and the compound ``released_addition`` can append (as
+    ``environment perturbation``); the retired phage-only lane left the latter with an
+    edge and no node (audit C 1.3 item 2).
     """
     import os.path as osp
 
@@ -70,10 +70,10 @@ def test_the_conf_serves_the_phage_class_and_not_the_served_environment_class() 
     conf = yaml.safe_load(open(conf_path, encoding="utf-8"))
     nodes = [m["method_name"] for m in conf["cell_adapter"]["node_methods"]]
     edges = [m["method_name"] for m in conf["cell_adapter"]["edge_methods"]]
-    assert "phage perturbation (chunked)" in nodes
-    assert "phage perturbation reference" in nodes
-    assert "environment perturbation (chunked)" not in nodes
-    assert "environment perturbation reference" not in nodes
+    assert "phage perturbation (chunked)" not in nodes
+    assert "phage perturbation reference" not in nodes
+    assert "environment perturbation (chunked)" in nodes
+    assert "environment perturbation reference" in nodes
     assert "environment perturbation to environment (chunked)" in edges
     assert "environment perturbation to environment reference" in edges
 

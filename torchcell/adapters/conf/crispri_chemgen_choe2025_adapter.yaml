@@ -1,9 +1,9 @@
 # Choe 2025 genome-scale CRISPRi screen: 466,569 (guide, antibiotic) records,
-# BacterialEnvironmentResponseExperiment. One BacterialCrisprInterferencePerturbation per
-# record, served as `bacterial perturbation`, carrying a CrisprConstruct with the 20 nt
+# BacterialEnvironmentResponseExperiment. One BacterialCrisprInterferencePerturbation
+# per record, served as `perturbation`, carrying a CrisprConstruct with the 20 nt
 # spacer, so the crispr-construct pair is enabled. The environment carries the
-# condition's antibiotic as a SmallMoleculePerturbation, on the experiment but NOT on the
-# reference (the reference is untreated LB), so the environment-perturbation pair is
+# condition's antibiotic as a SmallMoleculePerturbation, on the experiment but NOT on
+# the reference (the reference is untreated LB), so the environment-perturbation pair is
 # enabled for both and the reference method emits nothing.
 cell_adapter:
   node_methods:
@@ -13,7 +13,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "crispr construct (chunked)"
       memory_reduction_factor: 1.0

@@ -8,7 +8,7 @@ de Siqueira 2025 percent-of-total relative abundance, the scale the paper's own 
 BacterialProteinAbundanceExperiment. The same five writable-strain samples as the Top3
 family on a second released normalization, so the graph shape is identical: the 2 PT
 records carry one DeletionStrainPerturbation each (the 3 KT2440 records carry none),
-served as `bacterial perturbation`, and the environment carries
+served as `perturbation`, and the environment carries
 EnvironmentPhysicalPerturbation edits.
 """
 

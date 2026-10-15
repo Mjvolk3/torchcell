@@ -1,6 +1,6 @@
 # Guzman 2018 (BMC Syst Biol) own release, GEO GSE117303: 14 libraries,
 # BacterialRNASeqExpressionExperiment. The 12 deletion-strain libraries carry one
-# BacterialDeletionPerturbation (`bacterial perturbation`) and their breseq calls as
+# BacterialDeletionPerturbation (`perturbation`) and their breseq calls as
 # BacterialSequenceVariantPerturbation / BacterialSiteVariantPerturbation (`bacterial
 # sequence variant perturbation`); the 2 wild-type libraries carry none. The carbon
 # source and kanamycin are medium components, so no environment perturbation.
@@ -12,12 +12,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
-      memory_reduction_factor: 1.0
-    # Issue #731: these records' genotypes carry CALLED variants, served as their own
-    # class. The two bacterial methods partition the leaves, so both are enabled and
-    # neither writes a perturbation the other does.
-    - method_name: "bacterial sequence variant perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

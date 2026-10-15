@@ -5,7 +5,7 @@
 view of it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Brunk 2016: the six HPLC g/L columns, 126 records, BacterialMetaboliteExperiment. Every engineered strain's pathway genes are served as
-`bacterial perturbation`; the shared CultureEnvironment carries IPTG on every record
+`perturbation`; the shared CultureEnvironment carries IPTG on every record
 and a dodecane overlay on the terpene ones, so the environment-perturbation pair is on.
 """
 

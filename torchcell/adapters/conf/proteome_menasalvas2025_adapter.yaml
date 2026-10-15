@@ -1,9 +1,9 @@
 # Menasalvas 2025 deposited proteome: 6 samples (three strains x two growth phases),
 # BacterialProteinAbundanceExperiment. Every genotype carries the five integrated
 # pathway genes, the mCherry biosensor copies and (for the two improved strains) seven
-# deletions, served as `bacterial perturbation`. The two TEAM-2595 records additionally
-# carry the 75 called variants of data S1-5, served as their own class. The environment
-# carries a SmallMoleculePerturbation (crystal violet) and an
+# deletions, served as `perturbation`. The two TEAM-2595 records additionally carry the
+# 75 called variants of data S1-5, served as `sequence variant perturbation`. The
+# environment carries a SmallMoleculePerturbation (crystal violet) and an
 # EnvironmentPhysicalPerturbation (pH), so the environment-perturbation pair is enabled.
 cell_adapter:
   node_methods:
@@ -13,12 +13,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
-      memory_reduction_factor: 1.0
-    # Issue #731: these records' genotypes carry CALLED variants, served as their own
-    # class. The two bacterial methods partition the leaves, so both are enabled and
-    # neither writes a perturbation the other does.
-    - method_name: "bacterial sequence variant perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

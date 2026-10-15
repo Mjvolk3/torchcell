@@ -1,7 +1,7 @@
 # Tong 2020 carbon sources: 111,420 Keio and sRNA-library growth records,
 # BacterialFitnessExperiment. One BacterialDeletionPerturbation per record, served as
-# `bacterial perturbation`. The varied carbon source is an EnvironmentPhysicalPerturbation
-# on the experiment and the reference environment, so the environment-perturbation pair is
+# `perturbation`. The varied carbon source is an EnvironmentPhysicalPerturbation on the
+# experiment and the reference environment, so the environment-perturbation pair is
 # enabled.
 cell_adapter:
   node_methods:
@@ -11,7 +11,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

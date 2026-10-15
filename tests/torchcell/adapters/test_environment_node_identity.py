@@ -269,57 +269,52 @@ class _FakeDataset:
         self.experiment_reference_index = [_FakeReferenceIndexEntry(environment)]
 
 
-def test_a_phage_is_written_by_the_phage_lane_only() -> None:
-    """A conf may enable BOTH lanes: each perturbation is written exactly once.
+def test_the_one_environment_lane_writes_each_leaf_once_under_its_own_label() -> None:
+    """One method serves every environment leaf and chooses the label by leaf.
 
-    Before the fix the served ``_environment_perturbation_node`` emitted every
-    perturbation, a phage included, so enabling both classes wrote one content id under
-    ``environment perturbation`` and again under ``phage perturbation``, and the import
-    kept whichever row it read first. The lanes now split on the leaf's type.
+    Before issue #756 the served ``_environment_perturbation_node`` emitted every
+    perturbation, a phage included, and a separate phage lane emitted the phage again,
+    so a conf enabling both wrote one content id under two labels and the import kept
+    whichever row it read first; after #756 the two lanes partitioned the leaves by
+    class, so a phage-only conf left a compound with an edge and no node. Since the
+    ontology unification (G, 2026-10-15) there is one lane: a ``PhagePerturbation`` is
+    written as ``phage perturbation`` and every other leaf as ``environment
+    perturbation``, exactly once each.
     """
     adapter = _adapter()
     environment = _phage_and_compound()
     record = _record(environment)
     phage, compound = environment.perturbations
 
-    environment_lane = _undecorated(CellAdapter._environment_perturbation_node)(
+    nodes = _undecorated(CellAdapter._environment_perturbation_node)(
         adapter, record, "environment perturbation"
     )
-    phage_lane = _undecorated(CellAdapter._phage_perturbation_node)(
-        adapter, record, "phage perturbation"
-    )
 
-    assert [node.get_label() for node in environment_lane] == [
-        "environment perturbation"
+    assert [(node.get_label(), node.get_id()) for node in nodes] == [
+        (
+            "phage perturbation",
+            identity_sha256(environment_perturbation_identity(phage)),
+        ),
+        (
+            "environment perturbation",
+            identity_sha256(environment_perturbation_identity(compound)),
+        ),
     ]
-    assert [node.get_label() for node in phage_lane] == ["phage perturbation"]
-    assert [node.get_id() for node in environment_lane] == [
-        identity_sha256(environment_perturbation_identity(compound))
-    ]
-    assert [node.get_id() for node in phage_lane] == [
-        identity_sha256(environment_perturbation_identity(phage))
-    ]
-    assert not {node.get_id() for node in environment_lane} & {
-        node.get_id() for node in phage_lane
-    }
 
 
-def test_both_lanes_together_cover_every_perturbation_edge() -> None:
-    """The edge method still emits one edge per perturbation, and both ends exist.
+def test_the_lane_covers_every_perturbation_edge() -> None:
+    """The edge method emits one edge per perturbation, and every source is a node.
 
-    The edge lane is unchanged, so a conf that enables it must enable the node lane of
-    every perturbation KIND its records carry; with both lanes on, every edge source is a
-    node one lane emitted.
+    The edge lane is unchanged; with the one node lane on, every edge source is a node
+    it emitted, whatever leaf the record carries.
     """
     adapter = _adapter()
     record = _record(_phage_and_compound())
     emitted = {
         node.get_id()
-        for lane in (
-            CellAdapter._environment_perturbation_node,
-            CellAdapter._phage_perturbation_node,
+        for node in _undecorated(CellAdapter._environment_perturbation_node)(
+            adapter, record, "node"
         )
-        for node in _undecorated(lane)(adapter, record, "node")
     }
     edges = _undecorated(CellAdapter._environment_perturbation_to_environment_edges)(
         adapter, record, "environment perturbation to environment"
@@ -328,17 +323,23 @@ def test_both_lanes_together_cover_every_perturbation_edge() -> None:
     assert {edge.get_source_id() for edge in edges} == emitted
 
 
-def test_the_reference_lanes_split_the_same_way() -> None:
-    """The reference-side pair splits on the same predicate as the chunked pair."""
+def test_the_reference_collector_labels_the_same_way() -> None:
+    """The reference-side collector chooses the label by the same predicate."""
     adapter = _adapter()
     environment = _phage_and_compound()
     adapter.dataset = cast(Any, _FakeDataset(environment))
     phage, compound = environment.perturbations
 
     assert [
-        node.get_id()
+        (node.get_label(), node.get_id())
         for node in adapter._get_environment_perturbation_reference_nodes()
-    ] == [identity_sha256(environment_perturbation_identity(compound))]
-    assert [
-        node.get_id() for node in adapter._get_phage_perturbation_reference_nodes()
-    ] == [identity_sha256(environment_perturbation_identity(phage))]
+    ] == [
+        (
+            "phage perturbation",
+            identity_sha256(environment_perturbation_identity(phage)),
+        ),
+        (
+            "environment perturbation",
+            identity_sha256(environment_perturbation_identity(compound)),
+        ),
+    ]

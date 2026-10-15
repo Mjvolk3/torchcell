@@ -1,15 +1,15 @@
 # Butland 2008 unfiltered eSGA interaction matrix: 296,390 (query strain, recipient
 # isolate) records from Supplementary Table 4's S-score sheet,
-# BacterialGeneInteractionExperiment. Two gene-level BacterialDeletionPerturbation leaves
-# per record, served as `bacterial perturbation` (never the yeast `perturbation` class),
-# and the signed S score as the served `gene interaction phenotype` -- no new graph
-# class: the yeast interaction datasets already declare that one and the sibling Babu
-# 2014 adapter already consumes it. The recipient leaf additionally carries its Keio
-# isolate as the construction batch, which the `bacterial perturbation` id rule covers.
-# The screen is ONE condition, so the environment is a single entity every record joins
-# on: the two marker drugs are selection_agent components of the medium, not
-# SmallMoleculePerturbations, so the environment-perturbation pair stays off. No phage
-# and no CRISPRi construct appears in any record, so those pairs stay off.
+# BacterialGeneInteractionExperiment. Two gene-level BacterialDeletionPerturbation
+# leaves per record, served as `perturbation`, and the signed S score as the served
+# `gene interaction phenotype` -- no new graph class: the yeast interaction datasets
+# already declare that one and the sibling Babu 2014 adapter already consumes it. The
+# recipient leaf additionally carries its Keio isolate as the construction batch, which
+# the `perturbation` id rule covers. The screen is ONE condition, so the environment is
+# a single entity every record joins on: the two marker drugs are selection_agent
+# components of the medium, not SmallMoleculePerturbations, so the
+# environment-perturbation pair stays off. No phage and no CRISPRi construct appears in
+# any record, so those pairs stay off.
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"
@@ -18,7 +18,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

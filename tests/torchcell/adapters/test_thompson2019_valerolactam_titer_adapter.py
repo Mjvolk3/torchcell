@@ -8,7 +8,7 @@ Thompson 2019 valerolactam titer: 8 records (24 and 48 h; the 48 h wild type is 
 left-censored floor, #867), ProductTiterExperiment.
 3 to 7 perturbations per record: HeterologousPathwayPerturbation (24, the three genes of
 pBADT-davBA-ORF26 on every record) and DeletionStrainPerturbation (18), both served as
-`bacterial perturbation`. The CultureEnvironment carries 24 SmallMoleculePerturbation
+`perturbation`. The CultureEnvironment carries 24 SmallMoleculePerturbation
 edits (lysine, arabinose, kanamycin), so the environment-perturbation pair is enabled.
 """
 

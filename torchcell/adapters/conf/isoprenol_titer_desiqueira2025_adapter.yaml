@@ -1,8 +1,8 @@
-# de Siqueira 2025 isoprenol titer: 2 records, ProductTiterExperiment.
-# 6 perturbations per record: HeterologousPathwayPerturbation (10) and
-# BacterialDeletionPerturbation (2), served as `bacterial perturbation`. The
-# CultureEnvironment carries EnvironmentPhysicalPerturbation and SmallMoleculePerturbation
-# edits, so the environment-perturbation pair is enabled.
+# de Siqueira 2025 isoprenol titer: 2 records, ProductTiterExperiment. 6 perturbations
+# per record: HeterologousPathwayPerturbation (10) and BacterialDeletionPerturbation
+# (2), served as `perturbation`. The CultureEnvironment carries
+# EnvironmentPhysicalPerturbation and SmallMoleculePerturbation edits, so the
+# environment-perturbation pair is enabled.
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"
@@ -11,12 +11,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
-      memory_reduction_factor: 1.0
-    # Issue #731: these records' genotypes carry CALLED variants, served as their own
-    # class. The two bacterial methods partition the leaves, so both are enabled and
-    # neither writes a perturbation the other does.
-    - method_name: "bacterial sequence variant perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

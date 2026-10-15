@@ -6,7 +6,7 @@ it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Schmidt 2016 proteome: 14 BW25113 growth conditions,
 BacterialProteinAbundanceExperiment. Every genotype is the wild type (0 perturbations in
-14 of 14 records), so neither `bacterial perturbation` nor `perturbation to genotype` is
+14 of 14 records), so neither `perturbation` nor `perturbation to genotype` is
 enabled; the paper's three deletion strains carry no abundance data and are not loaded.
 The environment carries EnvironmentPhysicalPerturbation and SmallMoleculePerturbation
 edits in 13 of the 14 records and in the glucose reference, so the

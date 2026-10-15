@@ -1,10 +1,10 @@
 # Borchert 2023 KT2440 RB-TnSeq, the 271 loci the Borchert 2024 compendium dropped:
 # BacterialEnvironmentResponseExperiment. One TransposonInsertionPerturbation per record
-# (`borchert2024.build_genotype`), served as `bacterial perturbation`. The environment
-# always carries D-glucose as an EnvironmentPhysicalPerturbation and, for the twelve
-# stressed cultures, the stressor as a SmallMoleculePerturbation (`build_environment`),
-# so the environment-perturbation pair is enabled. Same enable-list as the compendium's
-# conf, because the record family is the same.
+# (`borchert2024.build_genotype`), served as `perturbation`. The environment always
+# carries D-glucose as an EnvironmentPhysicalPerturbation and, for the twelve stressed
+# cultures, the stressor as a SmallMoleculePerturbation (`build_environment`), so the
+# environment-perturbation pair is enabled. Same enable-list as the compendium's conf,
+# because the record family is the same.
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"
@@ -13,7 +13,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

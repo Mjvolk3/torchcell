@@ -1,8 +1,8 @@
 # Cui 2018 genome-wide dCas9 knockdown screen in E. coli MG1655: 141,542
 # BacterialEnvironmentResponseExperiment records, one per (retained guide, screened
-# strain). Each genotype carries one BacterialCrisprInterferencePerturbation per gene the
-# guide's perfect matches lie in, served as `bacterial perturbation` rather than the
-# yeast `perturbation` class, and every one of them carries the record's single
+# strain). Each genotype carries one BacterialCrisprInterferencePerturbation per gene
+# the guide's perfect matches lie in, served as `perturbation` rather than the yeast
+# `perturbation` class, and every one of them carries the record's single
 # CrisprConstruct (dCas9, a 20-nt spacer), so the crispr-construct pair is enabled. The
 # environment carries the 1 nM anhydrotetracycline that induces dCas9 as a
 # SmallMoleculePerturbation on both the experiment and the reference
@@ -15,7 +15,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "crispr construct (chunked)"
       memory_reduction_factor: 1.0

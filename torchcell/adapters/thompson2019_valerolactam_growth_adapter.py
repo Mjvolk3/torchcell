@@ -6,7 +6,7 @@
 nodes and edges.
 
 One record per released Supplementary Table S1 cell, three strains on three carbon
-sources: the deletions served as ``bacterial perturbation`` nodes and the maximal
+sources: the deletions served as ``perturbation`` nodes and the maximal
 specific growth rate as an absolute ``EnvironmentResponsePhenotype``.
 """
 

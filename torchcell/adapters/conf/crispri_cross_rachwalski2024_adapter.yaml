@@ -1,11 +1,11 @@
 # Rachwalski 2024 mobile CRISPRi crosses: 48,900 BacterialFitnessExperiment records, one
 # per (strain, medium, aTc dose). Each genotype carries a
 # BacterialCrisprInterferencePerturbation, a BacterialDeletionPerturbation, or BOTH
-# (32,499 records), all served as `bacterial perturbation` rather than the yeast
-# `perturbation` class. Every knockdown carries the record's CrisprConstruct (dCas9 plus
-# the 20 nt Table S1 spacer), so the crispr-construct pair is enabled. The induced plates
-# carry anhydrotetracycline as a SmallMoleculePerturbation on the experiment environment,
-# so the environment-perturbation pair is enabled. The reference environment is the
+# (32,499 records), all served as `perturbation` rather than the yeast `perturbation`
+# class. Every knockdown carries the record's CrisprConstruct (dCas9 plus the 20 nt
+# Table S1 spacer), so the crispr-construct pair is enabled. The induced plates carry
+# anhydrotetracycline as a SmallMoleculePerturbation on the experiment environment, so
+# the environment-perturbation pair is enabled. The reference environment is the
 # uninduced plate, which carries no aTc, so the reference half of that pair emits
 # nothing; it stays enabled because the pair is what the records' shape implies.
 cell_adapter:
@@ -16,7 +16,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "crispr construct (chunked)"
       memory_reduction_factor: 1.0

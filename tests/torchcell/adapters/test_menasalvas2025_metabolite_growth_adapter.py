@@ -6,7 +6,7 @@
 Menasalvas 2025 data S1-1, growth phase: 3 records (one per released strain),
 BacterialMetaboliteExperiment over the 46 stored metabolites of the Absolute block.
 Every genotype carries the integrated pathway and biosensor leaves and, for the two
-improved strains, the seven deletions, served as `bacterial perturbation`; the TEAM-2595
+improved strains, the seven deletions, served as `perturbation`; the TEAM-2595
 record additionally carries the 75 called variants of data S1-5, served as `bacterial
 sequence variant perturbation`, so the variant pair is enabled. The Environment carries
 a SmallMoleculePerturbation (crystal violet) and an EnvironmentPhysicalPerturbation

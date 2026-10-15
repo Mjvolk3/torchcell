@@ -1,10 +1,9 @@
 # Rapp 2026 CRISPRi growth: 1,514 MG1655-pinned strains, BacterialFitnessExperiment
 # carrying the trapezoid AUC of the released OD600 curve over the control strains' mean.
-# One BacterialCrisprInterferencePerturbation per record, served as
-# `bacterial perturbation` (never the yeast `perturbation` class) with its
-# CrisprConstruct, so `crispr construct` and its linking edge are enabled. Every record
-# carries one environment perturbation (the 200 nM anhydrotetracycline that induces the
-# knockdown), so that pair is enabled too.
+# One BacterialCrisprInterferencePerturbation per record, served as `perturbation` with
+# its CrisprConstruct, so `crispr construct` and its linking edge are enabled. Every
+# record carries one environment perturbation (the 200 nM anhydrotetracycline that
+# induces the knockdown), so that pair is enabled too.
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"
@@ -13,7 +12,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "crispr construct (chunked)"
       memory_reduction_factor: 1.0

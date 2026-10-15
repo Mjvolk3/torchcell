@@ -6,7 +6,7 @@
 knowledge-graph nodes and edges.
 
 One record per (gene, screen) row of Supplementary Data 5: every cluster member's
-knockdown served as a ``bacterial perturbation`` node with its ``CrisprConstruct`` (the
+knockdown served as a ``perturbation`` node with its ``CrisprConstruct`` (the
 released guide-subset size, no spacer) as a ``crispr construct`` node, the released gene
 fitness, Z score, FPR and FDR on an ``EnvironmentResponsePhenotype``, and the screen's
 medium, 37 C temperature and added compounds as the environment.

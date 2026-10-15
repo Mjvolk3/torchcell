@@ -6,7 +6,7 @@
 likely-essential genes) as knowledge-graph nodes and edges.
 
 One record per gene: a single ``TransposonInsertionPerturbation`` served as a
-``bacterial perturbation`` node, and the TnSeq call as a ``GeneEssentialityPhenotype``.
+``perturbation`` node, and the TnSeq call as a ``GeneEssentialityPhenotype``.
 The environment is the one library-selection condition (LB Lennox agar with kanamycin at
 37 C) and carries no environment perturbation, so that pair is off; the medium and
 temperature methods are on.

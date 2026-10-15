@@ -1,8 +1,8 @@
 # Goodall 2018 TraDIS, the "unclear" calls (#909): 317 BW25113 gene calls,
 # BacterialGradedGeneEssentialityExperiment. One TransposonInsertionPerturbation per
-# record, served as `bacterial perturbation`. No record carries an environment
-# perturbation. The plated records gap their temperature; the temperature methods emit
-# nothing for a gapped record.
+# record, served as `perturbation`. No record carries an environment perturbation. The
+# plated records gap their temperature; the temperature methods emit nothing for a
+# gapped record.
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"
@@ -11,7 +11,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

@@ -10,8 +10,9 @@ its own adapter module, its own conf and its own paired test file,
 
 * ``assert_construction`` / ``assert_missing_conf`` (``_adapter_init_harness``): the
   constructor loads exactly the conf its graph shape implies and refuses a missing conf
-  by its exact path, with the perturbation nodes the ``bacterial perturbation`` class
-  rather than the served yeast ``perturbation`` class;
+  by its exact path; since the ontology unification (G, 2026-10-15) the perturbation
+  nodes are the one ``perturbation`` class of every host, and the shape carries no
+  host;
 * ``assert_conf_registered_and_declared``: every conf method name is registered on
   ``CellAdapter`` and every node class the conf can emit, the phenotype included, is
   declared in ``torchcell_schema_config.yaml`` (BioCypher drops an undeclared class
@@ -25,11 +26,11 @@ its own adapter module, its own conf and its own paired test file,
   the build runs them (one single-pass traversal for the chunked nodes, one for the
   chunked edges); the emitted graph is closed (every edge endpoint is an emitted node),
   every label and property is declared, and every sub-object family the conf leaves off
-  is absent from the records. For a phage dataset ``_phage_pair`` additionally runs the
-  phage method and the served environment-perturbation method over the same records and
-  requires the same node ids from both, which is the record-level form of the one-class
-  rule; it runs over a second view built from a phage-bearing reference's own records,
-  since the leading records of a store can all be unchallenged controls. A store that is
+  is absent from the records. For a dataset whose reference index carries a phage,
+  ``_phage_partition`` additionally runs the one environment-perturbation method over a
+  view built from that reference's own records (the leading records of a store can all
+  be unchallenged controls) and requires every phage leaf under ``phage perturbation``
+  and nothing else there, the record-level form of the label-by-leaf rule. A store that is
   absent or mid-rebuild (no ``build_manifest.json``) is skipped, and so is one without a
   cached ``experiment_reference_index.json``, because computing that index would write it
   into the store.
@@ -345,17 +346,12 @@ def _case(
     perturbation: bool = True,
     crispr: bool = False,
     env_perturbation: bool = True,
-    phage: bool = False,
-    variant: bool = False,
 ) -> Bacterial:
     shape = Shape(
         phenotype,
         perturbation=perturbation,
         crispr=crispr,
         env_perturbation=env_perturbation,
-        phage=phage,
-        bacterial=True,
-        variant=variant,
     )
     return Bacterial(
         AdapterCase(adapter_cls, f"{slug}_adapter.yaml", shape, dataset_cls),
@@ -582,7 +578,6 @@ BACTERIAL: list[Bacterial] = [
         RnaseqGuzman2018Dataset,
         RNASEQ,
         env_perturbation=False,
-        variant=True,
     ),
     _case(
         ProteinTurnoverGupta2024Adapter,
@@ -679,8 +674,6 @@ BACTERIAL: list[Bacterial] = [
         "phage_rbtnseq_mutalik2020",
         PhageRbTnseqMutalik2020Dataset,
         RESPONSE,
-        env_perturbation=False,
-        phage=True,
     ),
     _case(
         CrisprPineneToleranceNiu2019Adapter,
@@ -760,7 +753,6 @@ BACTERIAL: list[Bacterial] = [
         CrispriScreenRousset2018Dataset,
         RESPONSE,
         crispr=True,
-        phage=True,
     ),
     _case(
         MetabolomeSchastnaya2021Adapter,
@@ -972,7 +964,6 @@ BACTERIAL: list[Bacterial] = [
         "proteome_desiqueira2025",
         ProteomeDeSiqueira2025Dataset,
         PROTEOME,
-        variant=True,
     ),
     _case(
         ProteomePercentDeSiqueira2025Adapter,
@@ -980,7 +971,6 @@ BACTERIAL: list[Bacterial] = [
         "proteome_percent_desiqueira2025",
         ProteomePercentDeSiqueira2025Dataset,
         PROTEOME,
-        variant=True,
     ),
     _case(
         ProteomeLog10PercentDeSiqueira2025Adapter,
@@ -988,7 +978,6 @@ BACTERIAL: list[Bacterial] = [
         "proteome_log10_percent_desiqueira2025",
         ProteomeLog10PercentDeSiqueira2025Dataset,
         PROTEOME,
-        variant=True,
     ),
     _case(
         IsoprenolTiterDeSiqueira2025Adapter,
@@ -996,7 +985,6 @@ BACTERIAL: list[Bacterial] = [
         "isoprenol_titer_desiqueira2025",
         IsoprenolTiterDeSiqueira2025Dataset,
         TITER,
-        variant=True,
     ),
     _case(
         IsoprenylAcetateTiterKang2026Adapter,
@@ -1025,7 +1013,6 @@ BACTERIAL: list[Bacterial] = [
         "isoprenol_tolerance_lim2025",
         IsoprenolToleranceLim2025Dataset,
         RESPONSE,
-        variant=True,
     ),
     _case(
         ProteomeLim2025Adapter,
@@ -1033,7 +1020,6 @@ BACTERIAL: list[Bacterial] = [
         "proteome_lim2025",
         ProteomeLim2025Dataset,
         PROTEOME,
-        variant=True,
     ),
     _case(
         ProteomeFoldChangeLim2025Adapter,
@@ -1041,7 +1027,6 @@ BACTERIAL: list[Bacterial] = [
         "proteome_fold_change_lim2025",
         ProteomeFoldChangeLim2025Dataset,
         FOLD_CHANGE,
-        variant=True,
     ),
     _case(
         IsoprenolSelectionMenasalvas2025Adapter,
@@ -1057,7 +1042,6 @@ BACTERIAL: list[Bacterial] = [
         "proteome_menasalvas2025",
         ProteomeMenasalvas2025Dataset,
         PROTEOME,
-        variant=True,
     ),
     _case(
         MetaboliteGrowthPhaseMenasalvas2025Adapter,
@@ -1065,7 +1049,6 @@ BACTERIAL: list[Bacterial] = [
         "metabolite_growth_menasalvas2025",
         MetaboliteGrowthPhaseMenasalvas2025Dataset,
         METABOLITE,
-        variant=True,
     ),
     _case(
         MetaboliteProductionPhaseMenasalvas2025Adapter,
@@ -1073,7 +1056,6 @@ BACTERIAL: list[Bacterial] = [
         "metabolite_production_menasalvas2025",
         MetaboliteProductionPhaseMenasalvas2025Dataset,
         METABOLITE,
-        variant=True,
     ),
     _case(
         EnvMetalTnseqRoyet2025Adapter,
@@ -1260,16 +1242,10 @@ def assert_conf_registered_and_declared(bacterial: Bacterial) -> None:
     assert {n for n in names if n.endswith("phenotype (chunked)")} == {
         f"{phenotype} (chunked)"
     }
-    # a bacterial leaf is never written under the served yeast class, and no conf here
-    # serves a segregant genotype
-    assert "perturbation (chunked)" not in names
+    # one perturbation lane for every host, and no conf here serves a segregant genotype
+    assert ("perturbation (chunked)" in names) is bacterial.case.shape.perturbation
     assert "segregant genotype (chunked)" not in names
-    # a phage challenge is served as `phage perturbation`, and since issue #756 the two
-    # environment-side node methods PARTITION the environment's perturbations, so a conf
-    # may enable both: each case pins exactly which lanes its conf enables, and the two
-    # phage confs here enable the phage lane alone because no record of theirs carries a
-    # non-phage environment perturbation.
-    assert ("phage perturbation (chunked)" in names) is bacterial.case.shape.phage
+    # one environment lane, phages included: each case pins whether its conf enables it
     assert ("environment perturbation (chunked)" in names) is (
         bacterial.case.shape.env_perturbation
     )
@@ -1289,15 +1265,11 @@ def assert_gate_resolves_own_files(bacterial: Bacterial) -> None:
 RECORDS = 200
 # Chunked node methods a conf enables only when the records carry that sub-object.
 ENV_PERTURBATION_NODE = "environment perturbation (chunked)"
-PHAGE_NODE = "phage perturbation (chunked)"
-VARIANT_NODE = "bacterial sequence variant perturbation (chunked)"
 PHAGE_NODE_LABEL = "phage perturbation"
 OPTIONAL_FAMILIES = (
-    "bacterial perturbation (chunked)",
-    VARIANT_NODE,
+    "perturbation (chunked)",
     "crispr construct (chunked)",
     ENV_PERTURBATION_NODE,
-    PHAGE_NODE,
 )
 STORE_FILES = (
     "processed/lmdb",
@@ -1353,7 +1325,7 @@ def _phage_leaves(records: Any) -> int:
     return total
 
 
-def _phage_bearing_view(dataset: Any) -> Any:
+def _phage_bearing_view(dataset: Any) -> Any | None:
     """A view over the records of the first reference whose environment carries a phage.
 
     The prefix view the other checks run over is NOT guaranteed to hold one: a dataset
@@ -1362,7 +1334,8 @@ def _phage_bearing_view(dataset: Any) -> Any:
     perturbation at all (measured on its dev store, 2026.10.07). ``member_indices`` names
     the records of one reference, so a phage is present in this view by construction, and
     it is read off the reference index the store already caches (``STORE_FILES``) rather
-    than found by scanning records.
+    than found by scanning records. ``None`` when no reference carries a phage, which is
+    read off the data and not off a shape flag.
     """
     phage_references = [
         entry
@@ -1372,42 +1345,36 @@ def _phage_bearing_view(dataset: Any) -> Any:
             for perturbation in entry.reference.environment_reference.perturbations
         )
     ]
-    assert phage_references, "the shape says phage, but no reference carries one"
+    if not phage_references:
+        return None
     return dataset[phage_references[0].member_indices[:RECORDS]]
 
 
-def _phage_pair(adapter: Any, records: Any) -> list[Any]:
-    """The phage and the environment-perturbation node method over the SAME records.
+def _phage_partition(adapter: Any, records: Any) -> list[Any]:
+    """The one environment-perturbation method over records that carry a phage.
 
-    The two lanes PARTITION the environment's perturbations since issue #756: the served
-    ``_environment_perturbation_node`` skips a ``PhagePerturbation`` and the phage method
-    emits only one. Run side by side on records that do carry a phage, the phage lane
-    emits it and the served lane emits nothing, which is what proves the one content id
-    is written under one label. Before the filter both lanes emitted the same ids, so
-    enabling both classes wrote every phage twice. The phage node count is checked
-    against the phage leaves read straight off the records, so a view that carries none
-    asserts that both methods emit nothing instead of passing vacuously.
+    Since the ontology unification (G, 2026-10-15) one method serves every environment
+    leaf and chooses the label by leaf: a ``PhagePerturbation`` is written as ``phage
+    perturbation`` and every other leaf as ``environment perturbation``. Run on records
+    that do carry a phage, the phage node count equals the phage leaves read straight off
+    the records (so a view that carries none would assert nothing is a phage rather than
+    pass vacuously), no node labelled ``environment perturbation`` has
+    ``perturbation_type == "phage"``, and no id is written under both labels.
 
     Returns the phage nodes.
     """
     by_name = dict(adapter.node_methods)
-    ran: dict[str, list[Any]] = {}
-    for name in (PHAGE_NODE, ENV_PERTURBATION_NODE):
-        adapter._single_pass_methods = [(name, by_name[name])]
-        ran[name] = adapter._all_chunked(records, SINGLE_PASS_NODES, inprocess=True)
-    assert {n.get_label() for n in ran[PHAGE_NODE]} <= {PHAGE_NODE_LABEL}
-    assert len(ran[PHAGE_NODE]) == _phage_leaves(records)
-    # The partition: no phage id reaches the served lane, and nothing it emits is a
-    # phage. The lane itself need not be empty. Rousset 2018 carries small-molecule
-    # perturbations beside its phage challenges since ea37bd21 (the S1 growth screen),
-    # and Mutalik 2020's leading records carry none, so `== []` held only by accident
-    # of which records a dataset lists first. `test_environment_node_identity.py`
-    # drives a record carrying both leaves through both lanes.
-    phage_ids = {n.get_id() for n in ran[PHAGE_NODE]}
-    served = ran[ENV_PERTURBATION_NODE]
-    assert not phage_ids & {n.get_id() for n in served}
+    adapter._single_pass_methods = [
+        (ENV_PERTURBATION_NODE, by_name[ENV_PERTURBATION_NODE])
+    ]
+    nodes = adapter._all_chunked(records, SINGLE_PASS_NODES, inprocess=True)
+    phages = [n for n in nodes if n.get_label() == PHAGE_NODE_LABEL]
+    served = [n for n in nodes if n.get_label() != PHAGE_NODE_LABEL]
+    assert len(phages) == _phage_leaves(records)
+    assert {n.get_label() for n in served} <= {"environment perturbation"}
     assert all(n.get_properties().get("perturbation_type") != "phage" for n in served)
-    return ran[PHAGE_NODE]
+    assert not {n.get_id() for n in phages} & {n.get_id() for n in served}
+    return phages
 
 
 def assert_dev_store_graph(
@@ -1444,19 +1411,23 @@ def assert_dev_store_graph(
     assert dangling == []
     shape = bacterial.case.shape
     assert shape.phenotype in labels
-    assert "perturbation" not in labels
-    assert ("bacterial perturbation" in labels) is shape.perturbation
-    assert ("bacterial sequence variant perturbation" in labels) is shape.variant
+    # every gene-perturbation leaf of every host is a `perturbation` node, or a
+    # `sequence variant perturbation` node (is_a perturbation) when it composes a call;
+    # which leaves a store carries is read off its records, not off the shape
+    assert ("perturbation" in labels) is shape.perturbation
+    if "sequence variant perturbation" in labels:
+        assert shape.perturbation
     assert ("crispr construct" in labels) is shape.crispr
-    assert ("environment perturbation" in labels) is shape.env_perturbation
-    assert ("phage perturbation" in labels) is shape.phage
+    # the one environment lane: its two labels together are present exactly when the
+    # conf enables the lane and the leading records carry an environment leaf
+    assert (labels & {"environment perturbation", PHAGE_NODE_LABEL}) <= (
+        {"environment perturbation", PHAGE_NODE_LABEL}
+        if shape.env_perturbation
+        else set()
+    )
 
     # The converse: a sub-object family the conf leaves OFF is absent from the records,
-    # so the enable-list drops nothing they carry. A phage conf used to be exempted on
-    # `environment perturbation (chunked)`, because that method re-emitted the records'
-    # phages under the served label; since issue #756 it filters them, so the check runs
-    # unexempted on every family and a phage conf leaving the served lane off is held to
-    # the same standard as any other conf.
+    # so the enable-list drops nothing they carry.
     enabled = {m["method_name"] for m in adapter.config.cell_adapter.node_methods}
     left_off = [
         (name, method)
@@ -1466,11 +1437,11 @@ def assert_dev_store_graph(
     adapter._single_pass_methods = left_off
     assert adapter._all_chunked(view, SINGLE_PASS_NODES, inprocess=True) == []
 
-    if not bacterial.case.shape.phage:
+    phage_view = _phage_bearing_view(dataset)
+    if phage_view is None:
         return
-    # The phage pair over the first records, and then over records that carry a phage by
-    # construction, which is what keeps the pair's property from being vacuous for a
-    # dataset whose leading records are unchallenged controls.
-    _phage_pair(adapter, view)
-    phage_nodes = _phage_pair(adapter, _phage_bearing_view(dataset))
-    assert phage_nodes
+    # Over records that carry a phage by construction, which is what keeps the partition
+    # check from being vacuous for a dataset whose leading records are unchallenged
+    # controls; the conf must enable the lane, or the phage would get an edge and no node.
+    assert bacterial.case.shape.env_perturbation
+    assert _phage_partition(adapter, phage_view)

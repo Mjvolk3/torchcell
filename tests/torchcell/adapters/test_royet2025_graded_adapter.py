@@ -6,7 +6,7 @@ it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Royet 2025 Table S4 (#909): 11,458 KT2440 TRANSIT HMM states, one per (gene, stage),
 BacterialGradedGeneEssentialityExperiment. One gene-level TransposonInsertionPerturbation
-per record, served as `bacterial perturbation`; neither stage carries an environment
+per record, served as `perturbation`; neither stage carries an environment
 perturbation.
 """
 

@@ -1,6 +1,6 @@
-# Price 2018 RB-TnSeq, E. coli KEIO_ML9: BacterialEnvironmentResponseExperiment.
-# One TransposonInsertionPerturbation per record (`build_genotype`), served as `bacterial
-# perturbation`. The environment carries the sample's carbon or nitrogen source as an
+# Price 2018 RB-TnSeq, E. coli KEIO_ML9: BacterialEnvironmentResponseExperiment. One
+# TransposonInsertionPerturbation per record (`build_genotype`), served as
+# `perturbation`. The environment carries the sample's carbon or nitrogen source as an
 # EnvironmentPhysicalPerturbation or its stress compound as a SmallMoleculePerturbation
 # (`build_environment`), so the environment-perturbation pair is enabled.
 cell_adapter:
@@ -11,7 +11,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

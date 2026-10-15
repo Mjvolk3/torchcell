@@ -5,7 +5,7 @@
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Fuhrer 2017 Keio metabolome: 3,735 BW25113 strains, BacterialMetaboliteExperiment.
-One DeletionStrainPerturbation per record, served as `bacterial perturbation` (never
+One DeletionStrainPerturbation per record, served as `perturbation` (never
 the yeast `perturbation` class). No record carries an environment perturbation (0 in
 3,735), so that pair is not enabled.
 """

@@ -6,7 +6,7 @@
 knowledge-graph nodes and edges.
 
 One record per (gene, condition): a single gene-level Tn5
-``TransposonInsertionPerturbation`` served as a ``bacterial perturbation`` node, and the
+``TransposonInsertionPerturbation`` served as a ``perturbation`` node, and the
 TRANSIT log2 fold change as an ``EnvironmentResponsePhenotype``. Every record's
 environment carries exactly one ``SmallMoleculePerturbation``, rifampicin at its
 absolute dose, so the environment-perturbation pair is enabled and needs no

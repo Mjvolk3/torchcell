@@ -6,7 +6,7 @@
 nodes and edges.
 
 One record per released MOPS medium of *E. coli* MG1655, every genotype the wild type,
-so neither ``bacterial perturbation`` nor ``perturbation to genotype`` is served; no
+so neither ``perturbation`` nor ``perturbation to genotype`` is served; no
 environment carries a perturbation, so the environment-perturbation pair is off too.
 """
 

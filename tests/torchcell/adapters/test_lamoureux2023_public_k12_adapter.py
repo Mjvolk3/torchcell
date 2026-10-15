@@ -6,7 +6,7 @@ gate's view of it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Public K-12 (Lamoureux 2023): 240 reprocessed public MG1655 libraries,
 BacterialRNASeqExpressionExperiment. 0 to 2 DeletionStrainPerturbation per record (100
-of 240 carry at least one), served as `bacterial perturbation`. The environment carries
+of 240 carry at least one), served as `perturbation`. The environment carries
 SmallMoleculePerturbation and EnvironmentPhysicalPerturbation edits, and so does the
 reference environment (the PRECISE-1K control condition), so the environment-perturbation
 pair is enabled.

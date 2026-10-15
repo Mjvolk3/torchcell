@@ -6,7 +6,7 @@ it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Goodall 2018 TraDIS, the "unclear" calls (#909): 317 BW25113 gene calls,
 BacterialGradedGeneEssentialityExperiment. One TransposonInsertionPerturbation per
-record, served as `bacterial perturbation`; no record carries an environment
+record, served as `perturbation`; no record carries an environment
 perturbation.
 """
 

@@ -1,6 +1,6 @@
-# Borchert 2024 KT2440 RB-TnSeq: BacterialEnvironmentResponseExperiment.
-# One TransposonInsertionPerturbation per record (`build_genotype`), served as `bacterial
-# perturbation`. The environment always carries condition_1 as an
+# Borchert 2024 KT2440 RB-TnSeq: BacterialEnvironmentResponseExperiment. One
+# TransposonInsertionPerturbation per record (`build_genotype`), served as
+# `perturbation`. The environment always carries condition_1 as an
 # EnvironmentPhysicalPerturbation and, when present, condition_2 as a
 # SmallMoleculePerturbation or a nutrient dropout (`build_environment`), so the
 # environment-perturbation pair is enabled.
@@ -12,7 +12,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

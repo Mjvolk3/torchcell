@@ -32,10 +32,10 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
 )
 from torchcell.datamodels.media import MEDIA_LIBRARY
 from torchcell.datamodels.schema import (
-    BacterialCrisprInterferencePerturbation,
-    BacterialDeletionPerturbation,
     ComponentDefinition,
     ConcentrationUnit,
+    CrisprInterferencePerturbation,
+    DeletionStrainPerturbation,
     DoseBasis,
     Genotype,
     MediaComponentRole,
@@ -372,7 +372,7 @@ def _well(
 
 def test_a_knockdown_carries_the_wells_own_spacer_and_one_guide() -> None:
     perturbation = r.knockdown(_well(), "BW25113_0002")
-    assert isinstance(perturbation, BacterialCrisprInterferencePerturbation)
+    assert isinstance(perturbation, CrisprInterferencePerturbation)
     assert perturbation.systematic_gene_name == "BW25113_0002"
     assert perturbation.perturbed_gene_name == "thrA"
     assert perturbation.gene_namespace == "ecoli_k12_bw25113_locus_tag"
@@ -386,7 +386,7 @@ def test_a_knockdown_carries_the_wells_own_spacer_and_one_guide() -> None:
 
 def test_a_deletion_carries_the_keio_collection_and_its_cassette() -> None:
     perturbation = r.deletion("thrL", "BW25113_0001")
-    assert isinstance(perturbation, BacterialDeletionPerturbation)
+    assert isinstance(perturbation, DeletionStrainPerturbation)
     assert perturbation.collection == "Keio collection"
     assert perturbation.cassette == "kanamycin-resistance cassette"
     assert perturbation.construction is None
@@ -404,8 +404,8 @@ def test_the_crossed_genotype_is_one_knockdown_and_one_deletion() -> None:
         ]
     )
     assert sorted(genotype.perturbation_types) == [
-        "bacterial_crispr_interference",
-        "bacterial_deletion",
+        "crispr_interference",
+        "deletion_strain",
     ]
     assert len(genotype) == 2
 
@@ -835,12 +835,12 @@ def test_a_background_block_puts_a_deletion_beside_every_knockdown(
     assert len(wild_type.genotype) == 1
     assert len(deleted.genotype) == 2
     assert sorted(deleted.genotype.perturbation_types) == [
-        "bacterial_crispr_interference",
-        "bacterial_deletion",
+        "crispr_interference",
+        "deletion_strain",
     ]
 
 
-def _knockdowns() -> dict[str, BacterialCrisprInterferencePerturbation]:
+def _knockdowns() -> dict[str, CrisprInterferencePerturbation]:
     """One knockdown per Table S4A block, on the synthetic assembly's loci."""
     return {
         "thrA": r.knockdown(_well("thrA"), "BW25113_0002"),
@@ -872,7 +872,7 @@ def test_a_keio_label_heading_two_rows_is_dropped_whole(
         p.perturbed_gene_name
         for row in rows
         for p in row.genotype.perturbations
-        if p.perturbation_type == "bacterial_deletion"
+        if p.perturbation_type == "deletion_strain"
     }
     assert deleted == {"thrL"}
 
@@ -1188,17 +1188,14 @@ def test_the_crossed_row_counts_the_knockdown_by_deletion_records(
     monkeypatch.setattr(r, "EXPECTED_CROSSED_RECORDS", 1)
     result = r.crossed_genotypes_carry_both_kinds(
         [
-            _record(["bacterial_crispr_interference"]),
-            _record(["bacterial_deletion"]),
-            _record(["bacterial_crispr_interference", "bacterial_deletion"]),
+            _record(["crispr_interference"]),
+            _record(["deletion_strain"]),
+            _record(["crispr_interference", "deletion_strain"]),
         ]
     )
     assert result.passed
     assert result.level is Level.L1
-    assert (
-        result.details["shapes"]["bacterial_crispr_interference+bacterial_deletion"]
-        == 1
-    )
+    assert result.details["shapes"]["crispr_interference+deletion_strain"] == 1
 
 
 def test_an_unexpected_genotype_shape_fails_the_crossed_row(
@@ -1206,7 +1203,7 @@ def test_an_unexpected_genotype_shape_fails_the_crossed_row(
 ) -> None:
     monkeypatch.setattr(r, "EXPECTED_CROSSED_RECORDS", 0)
     result = r.crossed_genotypes_carry_both_kinds(
-        [_record(["bacterial_deletion", "bacterial_deletion"])]
+        [_record(["deletion_strain", "deletion_strain"])]
     )
     assert not result.passed
 

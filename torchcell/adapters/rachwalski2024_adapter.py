@@ -6,7 +6,7 @@
 knowledge-graph nodes and edges.
 
 One record per (strain, medium, inducer dose). A record's
-``BacterialCrisprInterferencePerturbation`` and ``BacterialDeletionPerturbation`` leaves
+``CrisprInterferencePerturbation`` and ``DeletionStrainPerturbation`` leaves
 are served as ``bacterial perturbation`` nodes, the ``CrisprConstruct`` each knockdown
 carries as a ``crispr construct`` node, the anhydrotetracycline of an induced plate as an
 ``environment perturbation`` node, and the released normalized colony growth as a

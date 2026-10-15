@@ -168,6 +168,7 @@ def _carotenogenic_cassette() -> list[GeneAdditionPerturbation]:
     return [
         GeneAdditionPerturbation(
             systematic_gene_name="crtYB",
+            gene_namespace="scerevisiae_s288c_sgd_systematic",
             perturbed_gene_name="crtYB",
             source_organism="Xanthophyllomyces dendrorhous",
             is_heterologous=True,
@@ -176,6 +177,7 @@ def _carotenogenic_cassette() -> list[GeneAdditionPerturbation]:
         ),
         GeneAdditionPerturbation(
             systematic_gene_name="crtI",
+            gene_namespace="scerevisiae_s288c_sgd_systematic",
             perturbed_gene_name="crtI",
             source_organism="Xanthophyllomyces dendrorhous",
             is_heterologous=True,
@@ -184,6 +186,7 @@ def _carotenogenic_cassette() -> list[GeneAdditionPerturbation]:
         ),
         GeneAdditionPerturbation(
             systematic_gene_name="YPL069C",
+            gene_namespace="scerevisiae_s288c_sgd_systematic",
             perturbed_gene_name="BTS1",
             source_organism="Saccharomyces cerevisiae",
             is_heterologous=False,
@@ -210,6 +213,7 @@ def _released_deletion(
         )
     return ReleasedGeneNamePerturbation(
         systematic_gene_name=orf,
+        gene_namespace="scerevisiae_s288c_sgd_systematic",
         perturbed_gene_name=orf,
         released_gene_name=orf,
         released_kind=ReleasedGeneKind.deletion,

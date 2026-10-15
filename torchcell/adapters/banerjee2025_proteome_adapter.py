@@ -8,7 +8,7 @@ nodes and edges.
 One record per released (strain, medium) sample of the p-coumarate growth-coupling
 cutset. Four of the six carry a ``bacterial perturbation`` node: a
 ``PromoterReplacementPerturbation`` on PP_0897 for the two promoter variants and a
-``BacterialDeletionPerturbation`` on PP_0897 for the two deletion samples; the two
+``DeletionStrainPerturbation`` on PP_0897 for the two deletion samples; the two
 parental samples carry none. The abundances are a ``ProteinAbundancePhenotype``.
 """
 

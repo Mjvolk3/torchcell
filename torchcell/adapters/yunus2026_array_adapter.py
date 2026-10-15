@@ -5,7 +5,7 @@
 """BioCypher adapter exposing the Yunus 2026 multiplexed CRISPRi array panels as
 knowledge-graph nodes and edges.
 
-One record per array strain: 1 to 5 ``BacterialCrisprInterferencePerturbation`` leaves
+One record per array strain: 1 to 5 ``CrisprInterferencePerturbation`` leaves
 served as ``bacterial perturbation`` nodes, each guide's ``CrisprConstruct`` as a
 ``crispr construct`` node, and the per-protein mean relative expression against the
 control strain as a ``ProteinFoldChangePhenotype`` (linear scale, with the sample SD

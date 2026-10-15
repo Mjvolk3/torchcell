@@ -1116,7 +1116,7 @@ def test_crispri_perturbation_carries_the_effector_and_the_sourced_spacer() -> N
         reason="the tag's only oligo spacer",
     )
     pert = y26.crispri_perturbation("PP_0100", "ppsA", assignment)
-    assert pert.perturbation_type == "bacterial_crispr_interference"
+    assert pert.perturbation_type == "crispr_interference"
     assert pert.gene_namespace == y26.KT2440_NAMESPACE
     assert pert.crispr is not None
     assert pert.crispr.effector == "dCas9"
@@ -2106,7 +2106,7 @@ def test_the_differential_genotype_is_the_knocked_down_gene_with_its_spacer(
     record = built_differential[0]
     perturbations = record["experiment"]["genotype"]["perturbations"]
     assert len(perturbations) == 1
-    assert perturbations[0]["perturbation_type"] == "bacterial_crispr_interference"
+    assert perturbations[0]["perturbation_type"] == "crispr_interference"
     assert perturbations[0]["systematic_gene_name"] == SCREEN_LOCI[0][0]
     assert perturbations[0]["crispr"]["guide_sequence"] == OLIGO_SPECS[0][1]
     assert (
@@ -3028,8 +3028,7 @@ def test_titer_record_genotype_is_one_crispri_knockdown_of_its_label(
         genotype = _dump(dataset[index]["experiment"])["genotype"]
         assert len(genotype["perturbations"]) == 1
         assert (
-            genotype["perturbations"][0]["perturbation_type"]
-            == "bacterial_crispr_interference"
+            genotype["perturbations"][0]["perturbation_type"] == "crispr_interference"
         )
 
 

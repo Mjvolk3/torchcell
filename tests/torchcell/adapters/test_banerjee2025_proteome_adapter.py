@@ -6,7 +6,7 @@ view of it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Banerjee 2025 proteome: 6 samples, BacterialProteinAbundanceExperiment. Four records
 carry one bacterial perturbation each (two PromoterReplacementPerturbation on PP_0897
-and two BacterialDeletionPerturbation on PP_0897); the two parental records carry none.
+and two DeletionStrainPerturbation on PP_0897); the two parental records carry none.
 The environment carries EnvironmentPhysicalPerturbation carbon-source edits, so the
 environment-perturbation pair is enabled. Every record GAPS temperature, so the
 canonical temperature methods emit nothing; the loader's own test asserts the gap.

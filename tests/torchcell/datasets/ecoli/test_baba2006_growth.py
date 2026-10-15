@@ -21,7 +21,7 @@ import pytest
 from torchcell.data.experiment_dataset import file_sha256
 from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
-    BacterialDeletionPerturbation,
+    DeletionStrainPerturbation,
     EnvironmentResponsePhenotype,
     MeasurementType,
 )
@@ -54,7 +54,7 @@ def test_keyable_reads_the_released_b_number_only() -> None:
 
 def test_genotype_stores_the_released_identity_without_a_crosswalk() -> None:
     [perturbation] = m.genotype(ROW).perturbations
-    assert isinstance(perturbation, BacterialDeletionPerturbation)
+    assert isinstance(perturbation, DeletionStrainPerturbation)
     assert perturbation.systematic_gene_name == "b0621"
     assert perturbation.gene_namespace == "ecoli_k12_mg1655_bnumber"
     assert perturbation.perturbed_gene_name == "dcuC"

@@ -6,7 +6,7 @@ and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Carruthers 2025 isoprenol titer: 465 IY1449b strains, ProductTiterExperiment.
 6 to 9 perturbations per record: HeterologousPathwayPerturbation (2,325) and
-BacterialCrisprInterferencePerturbation (1,051), all served as `bacterial perturbation`.
+CrisprInterferencePerturbation (1,051), all served as `bacterial perturbation`.
 Every CRISPRi leaf carries a CrisprConstruct, so the crispr-construct pair is enabled.
 The CultureEnvironment carries a SmallMoleculePerturbation on the experiment and the
 reference, so the environment-perturbation pair is enabled.

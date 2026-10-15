@@ -73,7 +73,7 @@ sequenced isolates are now loaded. What each reason became:
 
 1. ``SequenceVariantPerturbation`` admits only S288C ORF names and promises an off-graph
    allele sequence this paper never deposited (it released SRA reads, PRJNA1153078)
-   -> ``BacterialSequenceVariantPerturbation``, which validates a ``PP_`` locus tag and
+   -> ``LocusVariantCallPerturbation``, which validates a ``PP_`` locus tag and
    carries the CALL on the record rather than a pointer to a store that does not exist.
 2. ``BacterialBackgroundAllele(edit=sequence_variant)`` required a ``functional: bool``
    no release states for a missense SNP, and had no slot for the position, the reference
@@ -85,7 +85,7 @@ sequenced isolates are now loaded. What each reason became:
    Sigma4 (``PP_1656`` twice, ``PP_3827`` twice) -> ``Genotype.perturbations`` has no
    such rule, so two calls in one locus are two perturbations.
 4. 105 of the 173 calls carry no locus at all and 10 more carry only a RefSeq ``PP_RS``
-   tag -> ``BacterialSiteVariantPerturbation``, keyed on the derived site id
+   tag -> ``SiteVariantCallPerturbation``, keyed on the derived site id
    ``<replicon>:<position>``, with ``site_kind`` saying which of the two it is. The 10
    RefSeq-only calls are ``locus_not_in_assembly``, and that is measured rather than
    assumed: the two tags involved are ``PP_RS21780`` (9 rows) and ``PP_RS19075`` (1),
@@ -102,7 +102,7 @@ the PT it was evolved from.
 ONE CALL PER STRAIN IS DROPPED, AND COUNTED. All five sequenced clones carry a
 ``Deletion`` call at 3,063,718..3,064,173 on ``PP_2675``, 456 bp of the ``cytochrome
 c-550 PedF`` CDS, which IS the markerless in-frame deletion the strain was built with
-and which every record already carries as a ``BacterialDeletionPerturbation``. Absence
+and which every record already carries as a ``DeletionStrainPerturbation``. Absence
 has one encoding, so the call is dropped with the encoding
 ``restates_the_designed_pt_deletion`` rather than written twice.
 
@@ -120,10 +120,10 @@ predicted start codon residing within the CDS of PP_2675 (45)". The deferral to
 Thompson 2020 (reference 30, mirrored) settles the PP_2675 half verbatim: "Strain with
 complete internal in-frame deletion of PP_2675". So:
 
-- ``PP_2675`` is a ``BacterialDeletionPerturbation`` in ``Genotype`` -- the ML-facing
+- ``PP_2675`` is a ``DeletionStrainPerturbation`` in ``Genotype`` -- the ML-facing
   edit set and the gene node a record links to.
 - ``Delta14-PP_2676`` is a PARTIAL deletion, and the bacterial perturbation axis has no
-  partial-deletion leaf (``BacterialDeletionPerturbation`` is ``state="absent"``). It is
+  partial-deletion leaf (``DeletionStrainPerturbation`` is ``state="absent"``). It is
   typed where ``AlleleEdit.partial_deletion`` exists, as a ``BacterialBackgroundAllele``
   on the PT background, with a ``ProvenanceGap`` on ``deleted_span``: the source writes
   "Delta14" without saying whether 14 is base pairs or codons and without coordinates.
@@ -212,13 +212,10 @@ from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
     BacterialAssemblySet,
     BacterialBackgroundAllele,
-    BacterialDeletionPerturbation,
     BacterialGeneNamespace,
     BacterialProteinAbundanceExperiment,
     BacterialProteinAbundanceExperimentReference,
     BacterialReferenceStrain,
-    BacterialSequenceVariantPerturbation,
-    BacterialSiteVariantPerturbation,
     BacterialStrainBackground,
     BacterialVariantCall,
     BacterialVariantType,
@@ -226,6 +223,7 @@ from torchcell.datamodels.schema import (
     ConcentrationUnit,
     CultureEnvironment,
     CultureFormat,
+    DeletionStrainPerturbation,
     Environment,
     EnvironmentPerturbationType,
     EnvironmentPhysicalPerturbation,
@@ -233,6 +231,7 @@ from torchcell.datamodels.schema import (
     ExperimentReference,
     Genotype,
     HeterologousPathwayPerturbation,
+    LocusVariantCallPerturbation,
     PhysicalFactor,
     ProductTiterExperiment,
     ProductTiterExperimentReference,
@@ -240,6 +239,7 @@ from torchcell.datamodels.schema import (
     ProteinAbundancePhenotype,
     Publication,
     SampleUnit,
+    SiteVariantCallPerturbation,
     SmallMoleculePerturbation,
     StrainConstruction,
     Temperature,
@@ -1394,7 +1394,7 @@ def read_variant_calls(path: str) -> list[CalledVariant]:
       _DELETION``). Measured: all five sequenced clones carry one ``Deletion`` call at
       3,063,718..3,064,173 on ``PP_2675``, 456 bp of a ``cytochrome c-550 PedF`` CDS,
       which IS the markerless in-frame deletion the strain was built with. It is already
-      a ``BacterialDeletionPerturbation`` on every record, and absence has one encoding,
+      a ``DeletionStrainPerturbation`` on every record, and absence has one encoding,
       so the call is dropped and counted rather than written twice.
     - ``old_locus_tag`` names a GenBank locus -> in-locus sequence variant.
     - no locus at all -> a site variant, ``site_kind=intergenic``.
@@ -1539,7 +1539,7 @@ def called_variant_perturbations(
         if row.encoding == ENCODING_IN_LOCUS:
             assert row.genbank_locus_tag is not None
             perturbations.append(
-                BacterialSequenceVariantPerturbation(
+                LocusVariantCallPerturbation(
                     systematic_gene_name=row.genbank_locus_tag,
                     perturbed_gene_name=row.gene_symbol or row.genbank_locus_tag,
                     gene_namespace=KT2440_NAMESPACE,
@@ -1557,9 +1557,9 @@ def called_variant_perturbations(
             if site_kind is VariantSiteKind.locus_not_in_assembly
             else None
         )
-        site_id = BacterialSiteVariantPerturbation.site_id(call)
+        site_id = SiteVariantCallPerturbation.site_id(call)
         perturbations.append(
-            BacterialSiteVariantPerturbation(
+            SiteVariantCallPerturbation(
                 systematic_gene_name=site_id,
                 perturbed_gene_name=released_locus or site_id,
                 gene_namespace=KT2440_NAMESPACE,
@@ -1735,9 +1735,9 @@ def strain_reference(strain: str) -> AssemblyReferenceGenome:
     )
 
 
-def pt_perturbation() -> BacterialDeletionPerturbation:
+def pt_perturbation() -> DeletionStrainPerturbation:
     """PT's chromosomal edit as the ML-facing perturbation: the PP_2675 deletion."""
-    return BacterialDeletionPerturbation(
+    return DeletionStrainPerturbation(
         systematic_gene_name=PT_FULL_DELETION,
         perturbed_gene_name=PT_FULL_DELETION,
         gene_namespace=KT2440_NAMESPACE,
@@ -2956,7 +2956,7 @@ def gene_containment_rule(
             # assembly holds the call, so checking it against the locus universe would
             # fail the record for saying something true.
             if p["perturbation_type"]
-            not in ("heterologous_pathway", "bacterial_site_variant")
+            not in ("heterologous_pathway", "site_variant_call")
         )
     outside = sorted((measured | perturbed) - universe - heterologous)
     return LevelResult(

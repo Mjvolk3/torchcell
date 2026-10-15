@@ -291,7 +291,7 @@ def test_the_host_background_is_exactly_the_declared_seven_perturbations() -> No
     assert len(host) == 7
     assert {p.systematic_gene_name for p in host} == set(mv.HOST_BACKGROUND_NAMES)
     kinds = {p.perturbation_type for p in host}
-    assert kinds == {"bacterial_deletion", "heterologous_pathway"}
+    assert kinds == {"deletion_strain", "heterologous_pathway"}
 
 
 def test_the_host_background_refuses_to_drift_from_its_declared_name_set(
@@ -387,7 +387,7 @@ def test_the_reporter_is_the_teredinibacter_pyrf_homolog_on_a_plasmid() -> None:
 def test_a_knockdown_carries_three_designed_guides_and_no_spacer() -> None:
     """The library designs three guides per gene and released no enriched spacer."""
     knockdown = mv.crispri_perturbation("PP_2428", "sotB")
-    assert knockdown.perturbation_type == "bacterial_crispr_interference"
+    assert knockdown.perturbation_type == "crispr_interference"
     assert knockdown.crispr is not None
     assert knockdown.crispr.effector == "dCpf1/dCas12a"
     assert knockdown.crispr.n_guides == 3
@@ -1404,14 +1404,12 @@ def test_each_built_record_carries_the_host_background_plus_its_knockdowns(
     item = built[0]
     perturbations = item["experiment"]["genotype"]["perturbations"]
     knockdowns = [
-        p
-        for p in perturbations
-        if p["perturbation_type"] == "bacterial_crispr_interference"
+        p for p in perturbations if p["perturbation_type"] == "crispr_interference"
     ]
     others = {
         p["systematic_gene_name"]
         for p in perturbations
-        if p["perturbation_type"] != "bacterial_crispr_interference"
+        if p["perturbation_type"] != "crispr_interference"
     }
     assert others == set(mv.HOST_BACKGROUND_NAMES)
     assert len(knockdowns) == 3
@@ -1428,7 +1426,7 @@ def test_the_stored_gene_name_is_the_annotations_not_the_tables(built: Any) -> N
     by_tag = {
         p["systematic_gene_name"]: p["perturbed_gene_name"]
         for p in perturbations
-        if p["perturbation_type"] == "bacterial_crispr_interference"
+        if p["perturbation_type"] == "crispr_interference"
     }
     assert by_tag["PP_5004"] == "phaB"
     assert by_tag["PP_5005"] == "phaC-II"
@@ -1439,7 +1437,7 @@ def test_an_unannotated_locus_keeps_its_tag_as_the_common_name(built: Any) -> No
     names: dict[str, str] = {}
     for index in range(len(built)):
         for p in built[index]["experiment"]["genotype"]["perturbations"]:
-            if p["perturbation_type"] == "bacterial_crispr_interference":
+            if p["perturbation_type"] == "crispr_interference":
                 names[p["systematic_gene_name"]] = p["perturbed_gene_name"]
     assert names["PP_5007"] == "PP_5007"
     assert names["PP_2428"] == "sotB"
@@ -1614,7 +1612,7 @@ def test_the_supplementary_rows_fail_when_the_records_do_not_hold(
                     "perturbations": [
                         {
                             "systematic_gene_name": "PP_9999",
-                            "perturbation_type": "bacterial_crispr_interference",
+                            "perturbation_type": "crispr_interference",
                         }
                     ]
                 }

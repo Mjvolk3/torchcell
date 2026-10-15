@@ -1,0 +1,3264 @@
+{
+  "record_version": 1,
+  "slug": "gene-id-namespace-on-gene-perturbation",
+  "date": "2026-10-15",
+  "pr": null,
+  "author_kind": "agent",
+  "base_commit": "2fd68995cacaee928e927d67f8d4088c58239fa8",
+  "python_version": "3.13.0",
+  "symbols": [
+    {
+      "symbol": "AllelePerturbation",
+      "status": "modified",
+      "kinds": [
+        "additive_field"
+      ],
+      "fingerprint_before": "54e734e29b76c9d6bae205aa4eb917a901ee0933c6ce9d93070438f5a5c885e9",
+      "fingerprint_after": "ad523ba23e85f6759788f7e2b1a438ba84dfa02c5435275c219acbf577dfdee6",
+      "impact": "stale",
+      "reasons": [
+        "added optional field 'gene_namespace'"
+      ]
+    },
+    {
+      "symbol": "BACTERIAL_LOCUS_TAG_PATTERNS",
+      "status": "modified",
+      "kinds": [
+        "equivalent_refactor"
+      ],
+      "fingerprint_before": "a589dbd6f6d9c2e00e34fb3758641451446a9477c22cad4e4852a927b5b58f6a",
+      "fingerprint_after": "6e6cd8cb4bb681d556015e55120a2af2650ca5ebf7d486f49f5fb14f96c3d3ce",
+      "impact": "breaking",
+      "reasons": [
+        "module-level 'BACTERIAL_LOCUS_TAG_PATTERNS' changed"
+      ]
+    },
+    {
+      "symbol": "BacterialCrisprActivationPerturbation",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "93e6a5d76c5381b847ad30287395273e7d87e16e499329d013133269591dc7b1",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialCrisprInterferencePerturbation",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "b1f6500a57d0e9df050c2d4deca4916e171f29d2e336876c2d0a8c0e2a07297c",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialDegronPerturbation",
+      "status": "removed",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": "f1152a0050596f717919da3b076fc8eda9eb78c8d1cdd66e4c05812dd2a80fee",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialDeletionPerturbation",
+      "status": "removed",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": "24f8694afbe8655770735c1f32202d41324ca20ec57ef6067e453fbe351d12f7",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialMarkedAllelePerturbation",
+      "status": "removed",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": "f530b08646db46a6110a985dfc6d306e6b2f1f90ccc9fe8fe71f31526003b95b",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialReleasedCrisprPerturbation",
+      "status": "modified",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "c18ae629116413801a3d783f98da916f56fd73d7da22ba108d5c20f97d348036",
+      "fingerprint_after": "9dd8e27f66b6d562b967d1400158ac5345bd84b7000d077cff69067915293548",
+      "impact": "breaking",
+      "reasons": [
+        "removed field 'gene_namespace'"
+      ]
+    },
+    {
+      "symbol": "BacterialReleasedStrainPerturbation",
+      "status": "modified",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "b2c1c2ede58b7e535418d83cf716dfbca1679a0ee2f216c2382a4eff01848d41",
+      "fingerprint_after": "5956926b0198f62e7ba793ea551071fddbb49739d7f8d941dd53b0ab0e92affc",
+      "impact": "breaking",
+      "reasons": [
+        "removed field 'gene_namespace'"
+      ]
+    },
+    {
+      "symbol": "BacterialReleasedTransposonPerturbation",
+      "status": "modified",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "3d55c37a075e522b985a426b87d57b4473312508612fa31cc9cf4ea61b5d261c",
+      "fingerprint_after": "bbeb39fe2e87e283fc90eb6372281ba11264d999b3f57724236f8ecd9be00e37",
+      "impact": "breaking",
+      "reasons": [
+        "removed field 'gene_namespace'"
+      ]
+    },
+    {
+      "symbol": "BacterialSequenceVariantPerturbation",
+      "status": "removed",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": "dd6194b8d1a8f884df28f5281b7467a517442cddbdc5db9ddce557ffb88bd4df",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialSiteVariantPerturbation",
+      "status": "removed",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": "d5e805df14c9033ef89bb3e177a3370a0602e23b76c744da7fdeb12ba366d5b7",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialSpanDeletionPerturbation",
+      "status": "removed",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": "ef8ebdc5e5c41e3f725751adb67f444ec03ec254f1c04ed5e97f2bb15f5c3b1b",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialVariantPerturbation",
+      "status": "removed",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": "73349c9311fda562dd73d980f3a1d593112cd103c9da15393ec41a1e4eac0833",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "ConditionalAllelePerturbation",
+      "status": "modified",
+      "kinds": [
+        "additive_field"
+      ],
+      "fingerprint_before": "857340ad7b804e8106d9c28737657666f31c1bd37eb6de93671cdad3e2454fe7",
+      "fingerprint_after": "a04b7a06f233d39de808a368f30dfae536ab77cb909d5f0cd2d48efa9444361d",
+      "impact": "stale",
+      "reasons": [
+        "added optional field 'gene_namespace'"
+      ]
+    },
+    {
+      "symbol": "CrisprActivationPerturbation",
+      "status": "modified",
+      "kinds": [
+        "additive_field"
+      ],
+      "fingerprint_before": "a634f39c1b19940e4b100a158682cac4464e792793f9bd4f043896c26ab796b1",
+      "fingerprint_after": "453db0d14350686e24a9c576c754ad5e01450bf24cc2c33af9e1c6e39767ad25",
+      "impact": "stale",
+      "reasons": [
+        "added optional field 'gene_namespace'"
+      ]
+    },
+    {
+      "symbol": "CrisprInterferencePerturbation",
+      "status": "modified",
+      "kinds": [
+        "additive_field"
+      ],
+      "fingerprint_before": "a199be1be18926ea8853cf210e81ee80b11da84e81c27b5cb851d67d99ece74c",
+      "fingerprint_after": "de33a039c1c7c4d616189c11e0c4b8c1c8d78736b5b11441f6e6174754fc2745",
+      "impact": "stale",
+      "reasons": [
+        "added optional field 'gene_namespace'"
+      ]
+    },
+    {
+      "symbol": "DampPerturbation",
+      "status": "modified",
+      "kinds": [
+        "additive_field"
+      ],
+      "fingerprint_before": "e6b40bedcfc16f3dd932a4bcb8b324eca50bf491e27e1c16326adb6ea21bfff0",
+      "fingerprint_after": "5d4b57efbd6660d5a0a72f18f7e51c1e63adf39c34492049508c33874fc30a9e",
+      "impact": "stale",
+      "reasons": [
+        "added optional field 'gene_namespace'"
+      ]
+    },
+    {
+      "symbol": "DegronPerturbation",
+      "status": "added",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "f41da33765a8a9380072823b1ca6b57025375f1f0d18fd64b4f8a959244856bf",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "DeletionPerturbation",
+      "status": "modified",
+      "kinds": [
+        "additive_field"
+      ],
+      "fingerprint_before": "6a8acd9786fa1979db05c273ebf2aeb0cef7f0946ebe918553784495d3bbd81d",
+      "fingerprint_after": "6850cffc7dcc76f4f062cf3d06f2eb7384ec33474c06901d180dc7cadda654b6",
+      "impact": "stale",
+      "reasons": [
+        "added optional field 'gene_namespace'"
+      ]
+    },
+    {
+      "symbol": "DeletionStrainPerturbation",
+      "status": "added",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "cff2022020fbe8e10b00f963d8cbebe939a8af3a93838f77e0cc9919ed3f6352",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "EngineeredCopyNumberPerturbation",
+      "status": "modified",
+      "kinds": [
+        "additive_field"
+      ],
+      "fingerprint_before": "aa8eff94c6fe0fe9481f9c3f432f0fe8993ff34dae7e8ca43f30c851ae516154",
+      "fingerprint_after": "857adef01a14ce66d46dbe8be85c3212e6d43fe07da0f76a85fb415783db8bbe",
+      "impact": "stale",
+      "reasons": [
+        "added optional field 'gene_namespace'"
+      ]
+    },
+    {
+      "symbol": "GENE_ID_NAMESPACE_PATTERNS",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "788c873c9426c94f38600ba0e9772cb965ea171f0c1d94e490ba543303475d6b",
+      "impact": "stale",
+      "reasons": [
+        "new module-level binding"
+      ]
+    },
+    {
+      "symbol": "GeneIdNamespace",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "60c7eb779d8e3b1ca14fc7b765bb4c1c6f4ced83c5cf3338885a0170fbc7d4f0",
+      "impact": "stale",
+      "reasons": [
+        "new module-level binding"
+      ]
+    },
+    {
+      "symbol": "GenePerturbation",
+      "status": "modified",
+      "kinds": [
+        "contract_tightened",
+        "additive_field"
+      ],
+      "fingerprint_before": "3b77998d09b10010824e88b06f00e5e5ec5212cc8f107947bb3525a61766ed67",
+      "fingerprint_after": "051293d96006120da39fb08df892ea3e4a6b3483e26ad779bf2751bbd46a2b43",
+      "impact": "breaking",
+      "reasons": [
+        "added required field 'gene_namespace'",
+        "added optional field 'identifier_mapping'",
+        "validator/serializer changed: ['_identifier_agrees_with_namespace', 'validate_sys_gene_name']"
+      ]
+    },
+    {
+      "symbol": "GenePerturbationType",
+      "status": "modified",
+      "kinds": [
+        "rename",
+        "removal",
+        "enum_member_added"
+      ],
+      "fingerprint_before": "9fddb9b2c095de777300645cc129d00b3225584ed2c6872dc99dfb4fad2909e9",
+      "fingerprint_after": "39c1ac773fa2f4049231ac180ab370e584a0cf663fcad5fd25b37221f6c39cdc",
+      "impact": "breaking",
+      "reasons": [
+        "lost members ['BacterialCrisprActivationPerturbation', 'BacterialCrisprInterferencePerturbation', 'BacterialDegronPerturbation', 'BacterialDeletionPerturbation', 'BacterialMarkedAllelePerturbation', 'BacterialSequenceVariantPerturbation', 'BacterialSiteVariantPerturbation', 'BacterialSpanDeletionPerturbation']",
+        "gained members ['DegronPerturbation', 'DeletionStrainPerturbation', 'LocusVariantCallPerturbation', 'MarkedAllelePerturbation', 'SiteVariantCallPerturbation', 'SpanDeletionCallPerturbation']"
+      ]
+    },
+    {
+      "symbol": "HeterologousPathwayPerturbation",
+      "status": "modified",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "f68e8e36af3907ebb91631ecf11cc57c0aef83996b61dd3621a2ba243aeb1fdc",
+      "fingerprint_after": "b824c9e79af4be2f36e858febd8d46b70d79e08eb4fe54a49a61103271fbe63f",
+      "impact": "breaking",
+      "reasons": [
+        "removed field 'gene_namespace'",
+        "removed field 'identifier_mapping'",
+        "validator/serializer changed: ['_check_namespace']"
+      ]
+    },
+    {
+      "symbol": "HeterozygousDeletionPerturbation",
+      "status": "modified",
+      "kinds": [
+        "additive_field"
+      ],
+      "fingerprint_before": "15fe6099c86a106d9503e792f2b33ef9d98520fca2d4aa701a50ccf97ef0856d",
+      "fingerprint_after": "ca50ea352f5de0a3250d7b7eed8d58bf72e485f32a3a5a7c0e608da59c464525",
+      "impact": "stale",
+      "reasons": [
+        "added optional field 'gene_namespace'"
+      ]
+    },
+    {
+      "symbol": "InduciblePromoterInsertionPerturbation",
+      "status": "modified",
+      "kinds": [
+        "additive_field"
+      ],
+      "fingerprint_before": "04cc5c83f956fbe1a201c250bc6aa32c2e53b4464b23f039d09fed5e320a5a8c",
+      "fingerprint_after": "ff184df1c1b8c40dd9f270ccdf489aa57eb8be45ca45bc13493c8ad9933cf5d2",
+      "impact": "stale",
+      "reasons": [
+        "added optional field 'gene_namespace'"
+      ]
+    },
+    {
+      "symbol": "LocusVariantCallPerturbation",
+      "status": "added",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "e469131e3b00ca0682bb660748fb49fdf8fe41b2dd0e4d5007a7512702005d3b",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "MarkedAllelePerturbation",
+      "status": "added",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "e412f5b2ff6d8c055376ee47d86ce91e63669996469072a2c18dbfa6160b3e64",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "NamedAllelePerturbation",
+      "status": "modified",
+      "kinds": [
+        "additive_field"
+      ],
+      "fingerprint_before": "fa2fb2de976f9d03e8cfc94979957743fc6759f9c7d47e736a203b34cd8b2e8e",
+      "fingerprint_after": "2c3ce7f2b576be750dcf3901d5a28d6a381d69d92368dedc875eefaa3b650fa8",
+      "impact": "stale",
+      "reasons": [
+        "added optional field 'gene_namespace'"
+      ]
+    },
+    {
+      "symbol": "PromoterReplacementPerturbation",
+      "status": "modified",
+      "kinds": [
+        "removal",
+        "field_required_loosened"
+      ],
+      "fingerprint_before": "8a0d7d90e737c5b1e1afb5bfa0dbc260be481e2fef69c7f565f39072af01aa75",
+      "fingerprint_after": "6f24d34c484ebd2794be2474aaaccefc36f248c8d289ab6866bf0153d41154dc",
+      "impact": "breaking",
+      "reasons": [
+        "removed field 'gene_namespace'",
+        "removed field 'identifier_mapping'",
+        "validator/serializer changed: ['_check_namespace', 'validate_sys_gene_name']"
+      ]
+    },
+    {
+      "symbol": "SGD_S288C_NAMESPACE",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "2c0c3b3174814659c033ddba91afec57f4ad6410aae6df1f1159eb72810246f1",
+      "impact": "stale",
+      "reasons": [
+        "new module-level binding"
+      ]
+    },
+    {
+      "symbol": "SequenceVariantPerturbation",
+      "status": "modified",
+      "kinds": [
+        "additive_field"
+      ],
+      "fingerprint_before": "d0e656f3cc8b496d43a9e4283347b05a854ee618c46d2d3f4bff82ce3239fd2a",
+      "fingerprint_after": "41e1eb0ab50d3449700160d09dc88290de69ce865740eaa9ff50458ebeb748b5",
+      "impact": "stale",
+      "reasons": [
+        "added optional field 'gene_namespace'"
+      ]
+    },
+    {
+      "symbol": "SiteVariantCallPerturbation",
+      "status": "added",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "45dd70b3359cb2f660c947a1a4e4c6916f440c26605224036cd1a5837b5f4c84",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "SpanDeletionCallPerturbation",
+      "status": "added",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "140762b2f614a91697e3294e050a1af8e92b4b538e0cbd873d9ac1e08830d9df",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "SuppressorAllelePerturbation",
+      "status": "modified",
+      "kinds": [
+        "additive_field"
+      ],
+      "fingerprint_before": "7e279210c5a72b6bee5c1958299460832441f30a46ad3781062bd93850290f6a",
+      "fingerprint_after": "c8649f5356395fdb8f5d6bef72377fb14c2774aebe7d3f81850a1dc0a6749754",
+      "impact": "stale",
+      "reasons": [
+        "added optional field 'gene_namespace'"
+      ]
+    },
+    {
+      "symbol": "TransposonInsertionPerturbation",
+      "status": "modified",
+      "kinds": [
+        "removal",
+        "field_required_loosened"
+      ],
+      "fingerprint_before": "6a60eb3de88f9a3f99be078abfa71e09369e3ba92486aa4e7b201a8f11f04019",
+      "fingerprint_after": "cba3f5b27544f9edcc9199701f367f1d3e6121f1073ccee8c6ec390cb74b136f",
+      "impact": "breaking",
+      "reasons": [
+        "removed field 'gene_namespace'",
+        "removed field 'identifier_mapping'",
+        "validator/serializer changed: ['_check_namespace', 'validate_sys_gene_name']"
+      ]
+    },
+    {
+      "symbol": "TsAllelePerturbation",
+      "status": "modified",
+      "kinds": [
+        "additive_field"
+      ],
+      "fingerprint_before": "897c8930a8ee4bce50845162488988926f0f89d822ed1f6a054db421ab4ebdc7",
+      "fingerprint_after": "b64272fa382d54f0f5c525e0899a24b401f35ab49e9fec4838fee877ceb8bbfa",
+      "impact": "stale",
+      "reasons": [
+        "added optional field 'gene_namespace'"
+      ]
+    },
+    {
+      "symbol": "VariantCallPerturbation",
+      "status": "added",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "5e9a6442485cbcd6c6d90696acd939b02ac9731a518ea681251257498590b1cc",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "_SYSTEMATIC_GENE_NAME_RE",
+      "status": "modified",
+      "kinds": [
+        "equivalent_refactor"
+      ],
+      "fingerprint_before": "ef70f8d43cc1c91d56457773f7bea25053fb7125278aeb623c53af181efc4bab",
+      "fingerprint_after": "1dec2e44a6929a32c36f4d88df5224796308fa6f7131e1595c6ba3d00f6ab601",
+      "impact": "breaking",
+      "reasons": [
+        "module-level '_SYSTEMATIC_GENE_NAME_RE' changed"
+      ]
+    },
+    {
+      "symbol": "_check_gene_namespace",
+      "status": "modified",
+      "kinds": [
+        "contract_tightened"
+      ],
+      "fingerprint_before": "89debd174e00316d3dc8df8fc8412034d419e78b2c7d8d2528936edf3a3b832d",
+      "fingerprint_after": "cda2aa1d9ef624af50f88007674a6bb064269823b715e36bdddda879493a34a7",
+      "impact": "breaking",
+      "reasons": [
+        "module-level '_check_gene_namespace' changed"
+      ]
+    },
+    {
+      "symbol": "_namespace_of_identifier",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "5e46fa92b967312e561685c12da889153e0c99c531fe2f5e7f39b8c82ab07999",
+      "impact": "stale",
+      "reasons": [
+        "new module-level binding"
+      ]
+    },
+    {
+      "symbol": "_validate_host_identifier",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "5fc4543d090d7a488769f49ab83ef0b36f7795ae0024d6bdde24e0b48dc5808a",
+      "impact": "stale",
+      "reasons": [
+        "new module-level binding"
+      ]
+    }
+  ],
+  "correctness_argument": "P1 of the ontology unification (Path U, stage 3): one identifier namespace on GenePerturbation.\n\nWHY IT IS MORE CORRECT. The host genome a record's identifiers are written against is a fact of every gene perturbation, and before this change it was expressible only by choosing a class: 12 leaves (measured by reflection over torchcell.datamodels.schema at main 2fd68995c; the audit's 13 counted BacterialBackgroundAllele, which is not a GenePerturbation) declared gene_namespace, 9 declared the same identifier_mapping, 8 overrode validate_sys_gene_name with the bacterial locus-tag union, and every yeast leaf stated no host at all, so the Carruthers 2025 native phnW/phnX copies were stored on GeneAdditionPerturbation with no host and fell out of the served node lane (review 1, 'what is sound'). The constitution's principles 1, 4 and 5 (ontologize the experiment not the organism; the host is a property of the material and lives on the perturbation; one fact, one field, one closed vocabulary, never a choice of class) are what this change implements: gene_namespace: GeneIdNamespace is REQUIRED on GenePerturbation and means the HOST the record is written against, identifier_mapping moves to the base beside it, and the leaf classes no longer encode a host.\n\nTHE MEASURED VOCABULARY. GeneIdNamespace is measured, not assumed (constitution 5): experiments/database/scripts/measure_gene_id_namespaces.py opened all 51 served dev stores of release 2026.10.06-4b293d34 read-only and classified every stored systematic_gene_name (130,685,237 identifiers; results in experiments/database/results/gene_id_namespace_vocabulary.{json,md}). Found: SGD S288C systematic names on every pinned yeast leaf (130,537,788 identifiers, 51 of 51 stores); the Peter 2018 pangenome column ids <n>-<ORF name> on CaudalPanTranscriptome2024Dataset's natural_gene_presence (79,016 identifiers, e.g. 13-EC1118_1N26_0012g); and 68,433 non-host identifiers on relaxed leaves (released gene symbols on released_gene_name, heterologous symbols and construct names on gene_addition, standard names on natural_loss_of_function) that match no host pattern and whose record names the S288C-derived host it was built in. No served store carries a CURIE or a bacterial tag. The registry's deposited sets add the five bacterial locus-tag spaces (100 mapped, 0 served dev stores) and CEN.PK113-7D, whose 6,171 locus tags were measured from the deposited GenBank GCA_002571405.2 (5,865 SCEN_<chromosome><5 digits>, 21 mitochondrial SCEN_Q/SCEN_R, 285 SCEN_<chromosome>trna<n><amino acid>); the S288C pattern matches 7,147 of 7,148 gene-class features of the R64-4-1 GFF (the exception, YNCI0012, carries no strand letter and was never stored). So GeneIdNamespace has eight members: scerevisiae_s288c_sgd_systematic, scerevisiae_cenpk113_7d_locus_tag, scerevisiae_peter2018_pangenome_orf and the five bacterial members, with GENE_ID_NAMESPACE_PATTERNS pairwise disjoint (pinned by test_every_namespace_pattern_is_pairwise_disjoint_from_every_other and test_the_identity_families_do_not_overlap). There is no released, other or mixed member (review 1 finding 2; constitution 5): 'resolved or released' is a property of the identifier and stays a property of the leaf class, and every released leaf keeps the host in gene_namespace. BacterialGeneNamespace and BACTERIAL_LOCUS_TAG_PATTERNS survive unchanged in membership as the bacterial restriction of the general vocabulary (BACTERIAL_LOCUS_TAG_PATTERNS is now derived from GENE_ID_NAMESPACE_PATTERNS, an equivalent refactor) because BacterialBackgroundAllele still reads them; P5 retires both.\n\nVALIDATION. GenePerturbation.validate_sys_gene_name requires the identifier to have the form of SOME member (_validate_host_identifier), and the new base model validator _identifier_agrees_with_namespace requires a host-form identifier to be the DECLARED host's (_check_gene_namespace generalized over every member, with the eck_crosswalk and locus_tag_synonym route checks unchanged). A leaf whose identifiers are legitimately not host identifiers keeps its own validator (the addition family, the Natural* leaves, CopyNumberVariant, NaturalLossOfFunction, the released leaves, SiteVariantCall), so this is _check_gene_namespace generalized, not a pure namespace dispatch replacing the per-class validators (review 1, recommended changes).\n\nTHE DEFAULT RULE, MEASURED. gene_namespace defaults to scerevisiae_s288c_sgd_systematic on exactly the leaves whose name validator resolves to GenePerturbation's (the stored name's form already proves the namespace, so the default asserts nothing the record does not say) and on no leaf whose validator is relaxed or host-neutral. By reflection the 14 declarations are DeletionPerturbation (inherited by KanMx, NatMx, BarcodedKanMx, SgaKanMx, SgaNatMx, Mean, Marker and CrisprDeletion), HeterozygousDeletion, ConditionalAllele, Damp (SgaDamp), TsAllele (SgaTs), Allele (SgaAllele), SuppressorAllele (SgaSuppressor), NamedAllele, SequenceVariant, EngineeredCopyNumber, CrisprActivation, CrisprInterference and InduciblePromoterInsertion; the leaves with NO default are GeneAddition, PromoterDrivenGeneIntegration, VariablePromoterReporter, HeterologousPathway, NaturalGeneAbsence, NaturalGenePresence, CopyNumberVariant, NaturalLossOfFunction, ReleasedGeneName, the three BacterialReleased* leaves, and the host-neutral DeletionStrain, SpanDeletionCall, TransposonInsertion, PromoterReplacement, MarkedAllele, Degron, VariantCall, LocusVariantCall and SiteVariantCall (pinned by test_gene_namespace_is_required_on_the_base_and_defaulted_on_pinned_leaves_only). The measurement supports the rule: every pinned-leaf identifier in the 51 served stores is an S288C systematic name, and every served reference strain is S288C-derived (BY4741, BY4742, BY4743, FY4, S288C). Every bacterial call site stays byte-identical (the kwarg already existed); the 27 yeast call sites on relaxed leaves and the 3 in torchcell/sequence/natural_isolate.py now state the host (S288C, or the pangenome member on the accessory-presence leaf), and the Carruthers native copies state KT2440, which closes the defect that motivated the change.\n\nLEAF FATE (owner, 2026-10-15: 'yes rename'). The two leaves that differed from a general leaf by the namespace alone fold into it: BacterialCrisprInterferencePerturbation -> CrisprInterferencePerturbation and BacterialCrisprActivationPerturbation -> CrisprActivationPerturbation (removal; tags bacterial_crispr_interference -> crispr_interference, bacterial_crispr_activation -> crispr_activation). Every leaf that keeps a real material difference is renamed to a general name: BacterialDeletionPerturbation -> DeletionStrainPerturbation (bacterial_deletion -> deletion_strain, deletion_type bacterial -> strain), BacterialMarkedAllelePerturbation -> MarkedAllelePerturbation (marked_allele), BacterialDegronPerturbation -> DegronPerturbation (degron), BacterialVariantPerturbation -> VariantCallPerturbation (abstract), BacterialSequenceVariantPerturbation -> LocusVariantCallPerturbation (locus_variant_call), BacterialSiteVariantPerturbation -> SiteVariantCallPerturbation (site_variant_call), BacterialSpanDeletionPerturbation -> SpanDeletionCallPerturbation (span_deletion_call, deletion_type called_span). TransposonInsertionPerturbation, PromoterReplacementPerturbation and HeterologousPathwayPerturbation keep their names and lose only the per-leaf declarations. The three BacterialReleased* leaves are not renamed (lane E merges them); they lose only their gene_namespace declaration and inherit the base field, whose vocabulary is wider (the three yeast members), which is why the record claims removal on them. BacterialBackgroundAllele is untouched: folding it into BackgroundAllele moves StrainBackground's served contract (6 served closures), which is P5's record. The Keio home is named DeletionStrainPerturbation rather than a cataloged-collection name because the leaf's own loaders were measured: of its 25 constructor sites in torchcell/datasets, 10 state a collection and a cassette (the Keio screens), 2 a collection only, and 13 neither (the designed deletion strains of Choe 2019, Lim 2025, Thompson 2019, de Siqueira 2025, Kang 2026, Carruthers 2025, Menasalvas 2025, Banerjee 2024/2025, Balakrishnan 2022), so 'cataloged' or 'collection' would misstate 13 of 25 sites; the material the leaf states is a deletion STRAIN, the gene's deletion plus the strain-level facts the source states (collection, cassette, construction, each verbatim when stated), the discriminators that make two deletions of one gene two strains, which is what its docstring has always said. It asserts no marker (unlike BarcodedKanMxDeletionPerturbation) and can state one (unlike DeletionPerturbation, #988), so neither is a home for it.\n\nNODE IDS RE-KEY. A perturbation node id is sha256(json.dumps(model_dump())) (torchcell/adapters/cell_adapter.py, _perturbation_node), and the genotype and experiment ids inline the perturbations, so adding gene_namespace and identifier_mapping to GenePerturbation re-keys every perturbation, genotype and experiment node of all 51 served datasets even where the value is the class default; the yeast golden digests in tests/torchcell/adapters/test_bacterial_graph_classes.py moved for every node and edge method except the crispr construct and the phenotype (measured on the branch). Superset admission by content id is therefore impossible across this change: rebuild_scope is full_kg_rebuild as the tool computes it (GenePerturbation is in 50 served closures, GenePerturbationType in 51), the PR carries the schema-breaking label, and the KG 4.0 release note must say content ids are not comparable with 3.0. Every dev store built under a renamed or folded tag is unreadable by aggregate and deduplicate until rebuilt. The pairing is a MINOR package bump, not 2.0.0 (owner, 2026-10-15: 'no major bump minor bump').\n\nALSO TOUCHED. torchcell/datamodels/__init__.py exports; torchcell/adapters/cell_adapter.py imports and the two lane tuples renamed in place (the tuples now hold the general CRISPR leaves, so the class-keyed lane catches a yeast CRISPRi record: test_a_yeast_record_emits_no_bacterial_perturbation_node and test_the_bacterial_leaf_tuple_is_exactly_the_leaves_carrying_gene_namespace are xfail(strict=True) for lane H, which re-keys the lane); torchcell/verification/runners.py and torchcell/data/experiment_dataset.py keyed on the site-variant tag; the 40 bacterial loaders and the Lim/Menasalvas/Carruthers tag strings; the adapter conf yaml and the graph yaml are untouched (lane H).",
+  "measurement_type_decision": false,
+  "source_quotes": [],
+  "alternatives_rejected": [
+    {
+      "alternative": "Keep the 14 host-prefixed leaves and let them inherit gene_namespace from the base (the audit's P1 as drafted).",
+      "why_rejected": "A class would still name a host while the field names one, two assertions of one fact (constitution 5), and the Keio, marked-allele, degron and called-variant leaves would keep a Bacterial prefix for records that are host-neutral by construction (a caller's released call, a cassette at a terminus); the owner ruled 'yes rename' on 2026-10-15, and the two CRISPR leaves differ from the general ones by nothing but the namespace, so they fold rather than rename."
+    },
+    {
+      "alternative": "A released member of GeneIdNamespace for the released leaves (the audit's P1 vocabulary: 5 bacterial + 2 yeast + released).",
+      "why_rejected": "It erases the host: Nichols 2011 rows are BW25113 records with ECK identifiers and would become 'released' records with no host, and any leaf could declare the member to skip the pattern check, re-opening the escape hatch the two mutually exclusive validators close (review 1 finding 2; constitution 5: one enum that carries two facts is a defect). 'Resolved or released' stays a property of the leaf class; the host stays in the field."
+    },
+    {
+      "alternative": "A pure namespace dispatch: one base validator that checks every identifier against the declared namespace's pattern and replaces every per-class validator.",
+      "why_rejected": "It refuses what the served stores measurably carry: 68,433 identifiers on relaxed leaves match no host pattern (released symbols, heterologous gene symbols, construct names, standard names on loss-of-function rows) and are correct as stored (the data is the data). The base therefore checks AGREEMENT when the identifier has a host form and leaves admissibility of a non-host form to the leaf, which is _check_gene_namespace generalized (review 1, recommended changes)."
+    },
+    {
+      "alternative": "Fold the Keio deletion into BarcodedKanMxDeletionPerturbation or DeletionPerturbation instead of renaming it.",
+      "why_rejected": "BarcodedKanMxDeletionPerturbation asserts a KanMX cassette and SGA barcodes a Keio FRT-kan-FRT strain does not carry, and DeletionPerturbation (#988) means 'marker not stated'; either fold is a field_meaning change on a served class (review 1 finding 4)."
+    },
+    {
+      "alternative": "Name the Keio home CatalogedCollectionDeletionPerturbation or CollectionDeletionPerturbation.",
+      "why_rejected": "13 of the leaf's 25 constructor sites in torchcell/datasets state neither a collection nor a cassette (designed deletion strains of the engineered-chassis releases), so a name that asserts a catalog or a collection misstates them; DeletionStrainPerturbation states the material every site shares, a deletion strain with its stated strain-level facts."
+    },
+    {
+      "alternative": "A class default of S288C on every yeast leaf, including the relaxed ones, so no yeast loader changes.",
+      "why_rejected": "A silent default on a relaxed leaf asserts a host the record did not state (review 1, recommended changes; constitution 7: never default silently); on the pinned leaves the stored name's form proves S288C, on the relaxed leaves nothing does, so those loaders state the host per record, and Caudal's accessory-presence records state the pangenome member."
+    }
+  ],
+  "served_release": "2026.10.06-4b293d34",
+  "affected_loaders": [
+    {
+      "loader": "torchcell/datasets/bacteria_common.py",
+      "dataset_classes": [],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/baba2006.py",
+      "dataset_classes": [
+        "GeneEssentialityBaba2006Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialReleasedStrainPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/baba2006_growth.py",
+      "dataset_classes": [
+        "GrowthYieldBaba2006Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "DeletionStrainPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/babu2014.py",
+      "dataset_classes": [
+        "GeneInteractionBabu2014Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialReleasedStrainPerturbation",
+        "DeletionPerturbation",
+        "DeletionStrainPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "MarkedAllelePerturbation",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/balakrishnan2022.py",
+      "dataset_classes": [
+        "MrnaFractionBalakrishnan2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "DeletionStrainPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "PromoterReplacementPerturbation",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/brunk2016.py",
+      "dataset_classes": [
+        "_MetaboliteBrunk2016Dataset",
+        "MetabolomeBrunk2016Dataset",
+        "ExometaboliteBrunk2016Dataset",
+        "ProteomeBrunk2016Dataset",
+        "BiofuelTiterBrunk2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "HeterologousPathwayPerturbation",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/butland2008.py",
+      "dataset_classes": [
+        "GeneInteractionButland2008Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialReleasedStrainPerturbation",
+        "DeletionPerturbation",
+        "DeletionStrainPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "MarkedAllelePerturbation",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/caglar2017.py",
+      "dataset_classes": [
+        "RnaseqCaglar2017Dataset",
+        "ProteomeCaglar2017Dataset",
+        "ProteinFoldChangeCaglar2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/caglar2017_doubling_time.py",
+      "dataset_classes": [
+        "DoublingTimeCaglar2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/campos2018.py",
+      "dataset_classes": [
+        "GrowthRateCampos2018Dataset",
+        "MorphologyCampos2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "DeletionStrainPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/choe2019_growth_rate.py",
+      "dataset_classes": [
+        "GrowthRateChoe2019Dataset",
+        "TranscriptionFactorKnockoutChoe2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialReleasedStrainPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/choe2025.py",
+      "dataset_classes": [
+        "CrispriChemgenChoe2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "CrisprInterferencePerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/cui2018.py",
+      "dataset_classes": [
+        "CrispriKnockdownCui2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialReleasedCrisprPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/fang2025.py",
+      "dataset_classes": [
+        "CrispriGuideFfaEnrichmentFang2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "CrisprInterferencePerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/fitness_browser_ecoli.py",
+      "dataset_classes": [
+        "FitnessBrowserEcoliDataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "TransposonInsertionPerturbation",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/foo2014.py",
+      "dataset_classes": [
+        "IsopentenolTiterFoo2014Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "HeterologousPathwayPerturbation",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/fuhrer2017.py",
+      "dataset_classes": [
+        "MetabolomeFuhrer2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialReleasedStrainPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/gerdes2003.py",
+      "dataset_classes": [
+        "GeneEssentialityGerdes2003Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialReleasedTransposonPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "TransposonInsertionPerturbation",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/girgis2009.py",
+      "dataset_classes": [
+        "EnvChemgenGirgis2009Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "TransposonInsertionPerturbation",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/goodall2018.py",
+      "dataset_classes": [
+        "GeneEssentialityGoodall2018Dataset",
+        "GradedGeneEssentialityGoodall2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialReleasedTransposonPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/gupta2024.py",
+      "dataset_classes": [
+        "ProteinTurnoverGupta2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "DeletionStrainPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/guzman2018.py",
+      "dataset_classes": [
+        "RnaseqGuzman2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "DeletionStrainPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "LocusVariantCallPerturbation",
+        "SGD_S288C_NAMESPACE",
+        "SiteVariantCallPerturbation",
+        "VariantCallPerturbation",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/hawkins2020.py",
+      "dataset_classes": [
+        "MismatchCrispriFitnessHawkins2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "CrisprInterferencePerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/ishii2007.py",
+      "dataset_classes": [
+        "_Ishii2007Dataset",
+        "MetabolomeIshii2007Dataset",
+        "ProteomeIshii2007Dataset",
+        "FluxIshii2007Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "DeletionStrainPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/lamoureux2023.py",
+      "dataset_classes": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialReleasedStrainPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/lamoureux2023_growth.py",
+      "dataset_classes": [
+        "GrowthRateLamoureux2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/lamoureux2023_public_k12.py",
+      "dataset_classes": [
+        "RnaseqPublicK12Lamoureux2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/li2014.py",
+      "dataset_classes": [
+        "ProteinSynthesisRateLi2014Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/li2021.py",
+      "dataset_classes": [
+        "FluxLi2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "PromoterReplacementPerturbation",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/mohiuddin2022.py",
+      "dataset_classes": [
+        "PromoterReporterMohiuddin2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "HeterologousPathwayPerturbation",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/mori2021.py",
+      "dataset_classes": [
+        "ProteomeMori2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/mutalik2020.py",
+      "dataset_classes": [
+        "PhageRbTnseqMutalik2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "TransposonInsertionPerturbation",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/nichols2011.py",
+      "dataset_classes": [
+        "EnvChemgenNichols2011Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialReleasedStrainPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/niu2019.py",
+      "dataset_classes": [
+        "CrisprPineneToleranceNiu2019Dataset",
+        "PineneFoldChangeNiu2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialReleasedCrisprPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/potel2018.py",
+      "dataset_classes": [
+        "PhosphositeIntensityPotel2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/price2018.py",
+      "dataset_classes": [
+        "RbTnseqPrice2018EcoliDataset",
+        "GeneEssentialityPrice2018EcoliDataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "TransposonInsertionPerturbation",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rachwalski2024.py",
+      "dataset_classes": [
+        "CrispriCrossRachwalski2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "CrisprInterferencePerturbation",
+        "DeletionPerturbation",
+        "DeletionStrainPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rapp2026.py",
+      "dataset_classes": [
+        "MetabolomeRapp2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "CrisprInterferencePerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rapp2026_platforms.py",
+      "dataset_classes": [
+        "_Rapp2026Dataset",
+        "GrowthAucRapp2026Dataset",
+        "_AccumulationDataset",
+        "TargetedMetabolomeRapp2026Dataset",
+        "MetaboliteIntensityRapp2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "CrisprInterferencePerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rousset2018.py",
+      "dataset_classes": [
+        "CrispriScreenRousset2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialReleasedCrisprPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schastnaya2021.py",
+      "dataset_classes": [
+        "MetabolomeSchastnaya2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialReleasedStrainPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016.py",
+      "dataset_classes": [
+        "ProteomeSchmidt2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016_growth_rate.py",
+      "dataset_classes": [
+        "GrowthRateSchmidt2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialReleasedStrainPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016_s23_growth_rate.py",
+      "dataset_classes": [
+        "GrowthRateS23Schmidt2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016_srm.py",
+      "dataset_classes": [
+        "_SrmSchmidt2016Dataset",
+        "ProteomeSrmSet1Schmidt2016Dataset",
+        "ProteomeSrmSet2Schmidt2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/shiver2016.py",
+      "dataset_classes": [
+        "EnvChemgenShiver2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DegronPerturbation",
+        "DeletionPerturbation",
+        "DeletionStrainPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "MarkedAllelePerturbation",
+        "SGD_S288C_NAMESPACE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/teteneva2024.py",
+      "dataset_classes": [
+        "RbTnseqTeteneva2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialReleasedStrainPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/tong2020.py",
+      "dataset_classes": [
+        "CarbonSourceTong2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "DeletionStrainPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2015.py",
+      "dataset_classes": [
+        "EnvChemgenWang2015Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialReleasedStrainPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2015_growth.py",
+      "dataset_classes": [
+        "GrowthWang2015Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2018.py",
+      "dataset_classes": [
+        "CrispriGuideFitnessWang2018Dataset",
+        "CrispriGeneFitnessWang2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "CrisprInterferencePerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2024.py",
+      "dataset_classes": [
+        "EnvChemgenWang2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "TransposonInsertionPerturbation",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wetmore2015.py",
+      "dataset_classes": [
+        "RbTnseqWetmore2015Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "TransposonInsertionPerturbation",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/banerjee2024.py",
+      "dataset_classes": [
+        "IsoprenolTiterBanerjee2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "DeletionStrainPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "HeterologousPathwayPerturbation",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/banerjee2025.py",
+      "dataset_classes": [
+        "ProteomeBanerjee2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "DeletionStrainPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "PromoterReplacementPerturbation",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/borchert2023.py",
+      "dataset_classes": [
+        "RbTnseqBorchert2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/borchert2023_contrast.py",
+      "dataset_classes": [
+        "FitnessContrastBorchert2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "TransposonInsertionPerturbation",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/borchert2024.py",
+      "dataset_classes": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "TransposonInsertionPerturbation",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/carruthers2025.py",
+      "dataset_classes": [
+        "IsoprenolTiterCarruthers2025Dataset",
+        "ProteomeCarruthers2025Dataset",
+        "CampaignProteomeCarruthers2025Dataset",
+        "ProteomeFoldChangeCarruthers2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "CrisprInterferencePerturbation",
+        "DeletionPerturbation",
+        "DeletionStrainPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "HeterologousPathwayPerturbation",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/desiqueira2025.py",
+      "dataset_classes": [
+        "ProteomeDeSiqueira2025Dataset",
+        "ProteomePercentDeSiqueira2025Dataset",
+        "ProteomeLog10PercentDeSiqueira2025Dataset",
+        "IsoprenolTiterDeSiqueira2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "DeletionStrainPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "HeterologousPathwayPerturbation",
+        "LocusVariantCallPerturbation",
+        "SGD_S288C_NAMESPACE",
+        "SiteVariantCallPerturbation",
+        "VariantCallPerturbation",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/fitness_browser_putida.py",
+      "dataset_classes": [
+        "FitnessBrowserPutidaDataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "TransposonInsertionPerturbation",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/kang2026.py",
+      "dataset_classes": [
+        "IsoprenylAcetateTiterKang2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "DeletionStrainPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "HeterologousPathwayPerturbation",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/lim2022.py",
+      "dataset_classes": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialReleasedStrainPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/lim2025.py",
+      "dataset_classes": [
+        "IsoprenolToleranceLim2025Dataset",
+        "ProteomeLim2025Dataset",
+        "ProteomeFoldChangeLim2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "DeletionStrainPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "LocusVariantCallPerturbation",
+        "SGD_S288C_NAMESPACE",
+        "SiteVariantCallPerturbation",
+        "SpanDeletionCallPerturbation",
+        "VariantCallPerturbation",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/menasalvas2025.py",
+      "dataset_classes": [
+        "IsoprenolSelectionMenasalvas2025Dataset",
+        "ProteomeMenasalvas2025Dataset",
+        "_MetabolitePhaseDataset",
+        "MetaboliteGrowthPhaseMenasalvas2025Dataset",
+        "MetaboliteProductionPhaseMenasalvas2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "CrisprInterferencePerturbation",
+        "DeletionPerturbation",
+        "DeletionStrainPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "HeterologousPathwayPerturbation",
+        "LocusVariantCallPerturbation",
+        "SGD_S288C_NAMESPACE",
+        "SiteVariantCallPerturbation",
+        "VariantCallPerturbation",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/royet2025.py",
+      "dataset_classes": [
+        "EnvMetalTnseqRoyet2025Dataset",
+        "GradedGeneEssentialityRoyet2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "TransposonInsertionPerturbation",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/thompson2019_valerolactam.py",
+      "dataset_classes": [
+        "_Thompson2019Dataset",
+        "ValerolactamTiterThompson2019Dataset",
+        "LactamGrowthRateThompson2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "DeletionStrainPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "HeterologousPathwayPerturbation",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/yunus2026.py",
+      "dataset_classes": [
+        "_Yunus2026Dataset",
+        "_Yunus2026BenchlingDataset",
+        "CrispriKnockdownYunus2026Dataset",
+        "CrispriArrayYunus2026Dataset",
+        "CrispriDifferentialProteomeYunus2026Dataset",
+        "IsoprenolTiterYunus2026Dataset",
+        "CrispriPanelProteomeYunus2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "CrisprInterferencePerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/private_torchcell/volk2021_inhibitor_bioscreen.py",
+      "dataset_classes": [
+        "InhibitorBioscreenVolk2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/auesukaree2009.py",
+      "dataset_classes": [
+        "EnvChemgenAuesukaree2009Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenAuesukaree2009Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/baryshnikova2010.py",
+      "dataset_classes": [
+        "SmfBaryshnikova2010Dataset"
+      ],
+      "served_classes": [
+        "SmfBaryshnikova2010Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DampPerturbation",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "TsAllelePerturbation",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/bloom2019.py",
+      "dataset_classes": [
+        "Bloom2019Dataset"
+      ],
+      "served_classes": [
+        "Bloom2019Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/boocock2025.py",
+      "dataset_classes": [
+        "Boocock2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/cachera2023.py",
+      "dataset_classes": [
+        "BetaxanthinCachera2023Dataset"
+      ],
+      "served_classes": [
+        "BetaxanthinCachera2023Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/caudal2024.py",
+      "dataset_classes": [
+        "CaudalPanTranscriptome2024Dataset"
+      ],
+      "served_classes": [
+        "CaudalPanTranscriptome2024Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "SequenceVariantPerturbation",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/cooper2010.py",
+      "dataset_classes": [
+        "AminoAcidCooper2010Dataset"
+      ],
+      "served_classes": [
+        "AminoAcidCooper2010Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/costanzo2016.py",
+      "dataset_classes": [
+        "SmfCostanzo2016Dataset",
+        "DmfCostanzo2016Dataset",
+        "DmiCostanzo2016Dataset"
+      ],
+      "served_classes": [
+        "DmfCostanzo2016Dataset",
+        "DmiCostanzo2016Dataset",
+        "SmfCostanzo2016Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DampPerturbation",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "SuppressorAllelePerturbation",
+        "TsAllelePerturbation",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/costanzo2021.py",
+      "dataset_classes": [
+        "EnvChemgenCostanzo2021Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenCostanzo2021Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "TsAllelePerturbation",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/dasilveira2014.py",
+      "dataset_classes": [
+        "MetaboliteDaSilveira2014Dataset"
+      ],
+      "served_classes": [
+        "MetaboliteDaSilveira2014Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/dechiara2022.py",
+      "dataset_classes": [
+        "_DeChiara2022Dataset",
+        "_GrowthDeChiara2022Dataset",
+        "DoublingTimeDeChiara2022Dataset",
+        "CellYieldDeChiara2022Dataset",
+        "LifeCycleDeChiara2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "SequenceVariantPerturbation",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hackett2020.py",
+      "dataset_classes": [
+        "InductionTimecourseHackett2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "InduciblePromoterInsertionPerturbation",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hale2024.py",
+      "dataset_classes": [
+        "CrispriSegregantHale2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "CrisprInterferencePerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hillenmeyer2008.py",
+      "dataset_classes": [
+        "HetHillenmeyer2008Dataset",
+        "HomHillenmeyer2008Dataset"
+      ],
+      "served_classes": [
+        "HetHillenmeyer2008Dataset",
+        "HomHillenmeyer2008Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "HeterozygousDeletionPerturbation",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hoepfner2014.py",
+      "dataset_classes": [
+        "EnvChemgenHoepfner2014Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenHoepfner2014Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "HeterozygousDeletionPerturbation",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hu2007.py",
+      "dataset_classes": [
+        "MicroarrayScoreHu2007Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/jackson2020.py",
+      "dataset_classes": [
+        "TfDeletionPseudobulkJackson2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/kemmeren2014.py",
+      "dataset_classes": [
+        "MicroarrayKemmeren2014Dataset"
+      ],
+      "served_classes": [
+        "MicroarrayKemmeren2014Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/kuzmin2018.py",
+      "dataset_classes": [
+        "SmfKuzmin2018Dataset",
+        "DmfKuzmin2018Dataset",
+        "TmfKuzmin2018Dataset",
+        "DmiKuzmin2018Dataset",
+        "TmiKuzmin2018Dataset"
+      ],
+      "served_classes": [
+        "DmfKuzmin2018Dataset",
+        "DmiKuzmin2018Dataset",
+        "SmfKuzmin2018Dataset",
+        "TmfKuzmin2018Dataset",
+        "TmiKuzmin2018Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "AllelePerturbation",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "TsAllelePerturbation",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/kuzmin2020.py",
+      "dataset_classes": [
+        "SmfKuzmin2020Dataset",
+        "DmfKuzmin2020Dataset",
+        "TmfKuzmin2020Dataset",
+        "DmiKuzmin2020Dataset",
+        "TmiKuzmin2020Dataset"
+      ],
+      "served_classes": [
+        "DmfKuzmin2020Dataset",
+        "DmiKuzmin2020Dataset",
+        "SmfKuzmin2020Dataset",
+        "TmfKuzmin2020Dataset",
+        "TmiKuzmin2020Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "AllelePerturbation",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "TsAllelePerturbation",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/lian2019.py",
+      "dataset_classes": [
+        "CrisprMagicLian2019Dataset"
+      ],
+      "served_classes": [
+        "CrisprMagicLian2019Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "CrisprActivationPerturbation",
+        "CrisprInterferencePerturbation",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/lopez2024.py",
+      "dataset_classes": [
+        "IsobutanolScreenLopez2024Dataset",
+        "IsobutanolValidatedLopez2024Dataset"
+      ],
+      "served_classes": [
+        "IsobutanolScreenLopez2024Dataset",
+        "IsobutanolValidatedLopez2024Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/messner2021.py",
+      "dataset_classes": [
+        "ProteomeMessner2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/messner2023.py",
+      "dataset_classes": [
+        "ProteomeMessner2023Dataset"
+      ],
+      "served_classes": [
+        "ProteomeMessner2023Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/mormino2022.py",
+      "dataset_classes": [
+        "CrispriMormino2022Dataset"
+      ],
+      "served_classes": [
+        "CrispriMormino2022Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "CrisprInterferencePerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/mota2024.py",
+      "dataset_classes": [
+        "EnvChemgenMota2024Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenMota2024Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/muenzner2024.py",
+      "dataset_classes": [
+        "_MuenznerIsolateDataset",
+        "ProteomeMuenzner2024Dataset",
+        "ProteinTurnoverMuenzner2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "SequenceVariantPerturbation",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/mulleder2016.py",
+      "dataset_classes": [
+        "AminoAcidMulleder2016Dataset"
+      ],
+      "served_classes": [
+        "AminoAcidMulleder2016Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/nadal_ribelles2025.py",
+      "dataset_classes": [
+        "NadalRibellesPerturbSeq2025Dataset"
+      ],
+      "served_classes": [
+        "NadalRibellesPerturbSeq2025Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/nguessan2025.py",
+      "dataset_classes": [
+        "Nguessan2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/oduibhir2014.py",
+      "dataset_classes": [
+        "SmfODuibhir2014Dataset"
+      ],
+      "served_classes": [
+        "SmfODuibhir2014Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ohnuki2018.py",
+      "dataset_classes": [
+        "ScmdOhnuki2018Dataset"
+      ],
+      "served_classes": [
+        "ScmdOhnuki2018Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "EngineeredCopyNumberPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ohnuki2022.py",
+      "dataset_classes": [
+        "ScmdOhnuki2022Dataset"
+      ],
+      "served_classes": [
+        "ScmdOhnuki2022Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ohya2005.py",
+      "dataset_classes": [
+        "ScmdOhya2005Dataset"
+      ],
+      "served_classes": [
+        "ScmdOhya2005Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ozaydin2013.py",
+      "dataset_classes": [
+        "CarotenoidOzaydin2013Dataset"
+      ],
+      "served_classes": [
+        "CarotenoidOzaydin2013Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/parsons2006.py",
+      "dataset_classes": [
+        "EnvChemgenParsons2006Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/peter2018.py",
+      "dataset_classes": [
+        "IsolateGrowthPeter2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "SequenceVariantPerturbation",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/piotrowski2017.py",
+      "dataset_classes": [
+        "EnvChemgenPiotrowski2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/puddu2019.py",
+      "dataset_classes": [
+        "GenomeArchitecturePuddu2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/sameith2015.py",
+      "dataset_classes": [
+        "SmMicroarraySameith2015Dataset",
+        "DmMicroarraySameith2015Dataset"
+      ],
+      "served_classes": [
+        "DmMicroarraySameith2015Dataset",
+        "SmMicroarraySameith2015Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/sgd.py",
+      "dataset_classes": [
+        "GeneEssentialitySgdDataset"
+      ],
+      "served_classes": [
+        "GeneEssentialitySgdDataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "NamedAllelePerturbation",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/smith2006.py",
+      "dataset_classes": [
+        "FattyAcidSmith2006Dataset"
+      ],
+      "served_classes": [
+        "FattyAcidSmith2006Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/smith2016.py",
+      "dataset_classes": [
+        "CrispriChemgenSmith2016Dataset"
+      ],
+      "served_classes": [
+        "CrispriChemgenSmith2016Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "CrisprInterferencePerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/synth_leth_db.py",
+      "dataset_classes": [
+        "SynthLethalityYeastSynthLethDbDataset",
+        "SynthRescueYeastSynthLethDbDataset"
+      ],
+      "served_classes": [
+        "SynthLethalityYeastSynthLethDbDataset",
+        "SynthRescueYeastSynthLethDbDataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/vaishnav2022.py",
+      "dataset_classes": [
+        "PooledPromoterExpressionVaishnav2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/vanacloig2022.py",
+      "dataset_classes": [
+        "EnvChemgenVanacloig2022Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenVanacloig2022Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/wildenhain2015.py",
+      "dataset_classes": [
+        "EnvChemgenWildenhain2015Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenWildenhain2015Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/xue2025.py",
+      "dataset_classes": [
+        "FattyAcidXue2025Dataset"
+      ],
+      "served_classes": [
+        "FattyAcidXue2025Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/yeastphenome.py",
+      "dataset_classes": [
+        "YeastPhenomeDataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "EngineeredCopyNumberPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/yoshida2012.py",
+      "dataset_classes": [
+        "OrganicAcidYoshida2012Dataset"
+      ],
+      "served_classes": [
+        "OrganicAcidYoshida2012Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/yoshikawa2009.py",
+      "dataset_classes": [
+        "EnvChemgenYoshikawa2009Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/zelezniak2018.py",
+      "dataset_classes": [
+        "ProteomeZelezniak2018Dataset",
+        "MetaboliteZelezniak2018Dataset"
+      ],
+      "served_classes": [
+        "MetaboliteZelezniak2018Dataset",
+        "ProteomeZelezniak2018Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "DeletionPerturbation",
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "GenePerturbation",
+        "GenePerturbationType",
+        "SGD_S288C_NAMESPACE",
+        "_SYSTEMATIC_GENE_NAME_RE",
+        "_check_gene_namespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
+      ]
+    }
+  ],
+  "served_datasets": [
+    "AminoAcidCooper2010Dataset",
+    "AminoAcidMulleder2016Dataset",
+    "BetaxanthinCachera2023Dataset",
+    "Bloom2019Dataset",
+    "CarotenoidOzaydin2013Dataset",
+    "CaudalPanTranscriptome2024Dataset",
+    "CrisprMagicLian2019Dataset",
+    "CrispriChemgenSmith2016Dataset",
+    "CrispriMormino2022Dataset",
+    "DmMicroarraySameith2015Dataset",
+    "DmfCostanzo2016Dataset",
+    "DmfKuzmin2018Dataset",
+    "DmfKuzmin2020Dataset",
+    "DmiCostanzo2016Dataset",
+    "DmiKuzmin2018Dataset",
+    "DmiKuzmin2020Dataset",
+    "EnvChemgenAuesukaree2009Dataset",
+    "EnvChemgenCostanzo2021Dataset",
+    "EnvChemgenHoepfner2014Dataset",
+    "EnvChemgenMota2024Dataset",
+    "EnvChemgenVanacloig2022Dataset",
+    "EnvChemgenWildenhain2015Dataset",
+    "FattyAcidSmith2006Dataset",
+    "FattyAcidXue2025Dataset",
+    "GeneEssentialitySgdDataset",
+    "HetHillenmeyer2008Dataset",
+    "HomHillenmeyer2008Dataset",
+    "IsobutanolScreenLopez2024Dataset",
+    "IsobutanolValidatedLopez2024Dataset",
+    "MetaboliteDaSilveira2014Dataset",
+    "MetaboliteZelezniak2018Dataset",
+    "MicroarrayKemmeren2014Dataset",
+    "NadalRibellesPerturbSeq2025Dataset",
+    "OrganicAcidYoshida2012Dataset",
+    "ProteomeMessner2023Dataset",
+    "ProteomeZelezniak2018Dataset",
+    "ScmdOhnuki2018Dataset",
+    "ScmdOhnuki2022Dataset",
+    "ScmdOhya2005Dataset",
+    "SmMicroarraySameith2015Dataset",
+    "SmfBaryshnikova2010Dataset",
+    "SmfCostanzo2016Dataset",
+    "SmfKuzmin2018Dataset",
+    "SmfKuzmin2020Dataset",
+    "SmfODuibhir2014Dataset",
+    "SynthLethalityYeastSynthLethDbDataset",
+    "SynthRescueYeastSynthLethDbDataset",
+    "TmfKuzmin2018Dataset",
+    "TmfKuzmin2020Dataset",
+    "TmiKuzmin2018Dataset",
+    "TmiKuzmin2020Dataset"
+  ],
+  "rebuild_scope": "full_kg_rebuild",
+  "owner_sign_off": {
+    "signed": true,
+    "quote": "Owner, 2026-10-15, in conversation: 'yes rename, no major bump minor bump. go !'; 'we care most about correctness and are willing right now to do full rebuilds if we identify even small semantically prudent change in onto'; 'like why a bacterial experiment! it seems this is unnecessary distinction.'",
+    "url": null
+  }
+}

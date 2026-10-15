@@ -218,6 +218,7 @@ def _betaxanthin_cassette() -> list[GeneAdditionPerturbation]:
     return [
         GeneAdditionPerturbation(
             systematic_gene_name="CYP76AD1",
+            gene_namespace="scerevisiae_s288c_sgd_systematic",
             perturbed_gene_name="CYP76AD1",
             source_organism="Beta vulgaris",
             is_heterologous=True,
@@ -227,6 +228,7 @@ def _betaxanthin_cassette() -> list[GeneAdditionPerturbation]:
         ),
         GeneAdditionPerturbation(
             systematic_gene_name="DOD",
+            gene_namespace="scerevisiae_s288c_sgd_systematic",
             perturbed_gene_name="DOD",
             source_organism="Mirabilis jalapa",
             is_heterologous=True,
@@ -236,6 +238,7 @@ def _betaxanthin_cassette() -> list[GeneAdditionPerturbation]:
         ),
         GeneAdditionPerturbation(
             systematic_gene_name="YBR249C",
+            gene_namespace="scerevisiae_s288c_sgd_systematic",
             perturbed_gene_name="ARO4",
             source_organism="Saccharomyces cerevisiae",
             is_heterologous=False,
@@ -246,6 +249,7 @@ def _betaxanthin_cassette() -> list[GeneAdditionPerturbation]:
         ),
         GeneAdditionPerturbation(
             systematic_gene_name="YPR060C",
+            gene_namespace="scerevisiae_s288c_sgd_systematic",
             perturbed_gene_name="ARO7",
             source_organism="Saccharomyces cerevisiae",
             is_heterologous=False,
@@ -304,6 +308,7 @@ def _released_deletion(
         )
     return ReleasedGeneNamePerturbation(
         systematic_gene_name=gene,
+        gene_namespace="scerevisiae_s288c_sgd_systematic",
         perturbed_gene_name=gene,
         released_gene_name=gene,
         released_kind=ReleasedGeneKind.deletion,

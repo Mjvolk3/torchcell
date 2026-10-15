@@ -6,7 +6,7 @@
 nodes and edges.
 
 One record per knockdown strain of the arrayed library covering every iML1515 gene: a
-single ``BacterialCrisprInterferencePerturbation`` served as a
+single ``CrisprInterferencePerturbation`` served as a
 ``bacterial perturbation`` node with its ``CrisprConstruct``, and the strain's growth
 as a ``FitnessPhenotype`` (the trapezoid AUC of its released OD600 curve over the
 control strains' mean). The environment is one medium plus the anhydrotetracycline that

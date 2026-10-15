@@ -147,6 +147,7 @@ def _released_deletion(
         )
     return ReleasedGeneNamePerturbation(
         systematic_gene_name=orf,
+        gene_namespace="scerevisiae_s288c_sgd_systematic",
         perturbed_gene_name=common_name,
         released_gene_name=orf,
         released_kind=ReleasedGeneKind.deletion,

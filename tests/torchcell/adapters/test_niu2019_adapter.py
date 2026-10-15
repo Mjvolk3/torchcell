@@ -5,8 +5,8 @@
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Niu 2019 CRISPRa/CRISPRi pinene tolerance: BacterialEnvironmentResponseExperiment.
-One ``BacterialCrisprActivationPerturbation`` (#799) or
-``BacterialCrisprInterferencePerturbation`` per targeted gene, six on the interference
+One ``CrisprActivationPerturbation`` (#799) or
+``CrisprInterferencePerturbation`` per targeted gene, six on the interference
 combination strain, served as ``bacterial perturbation`` with the shared
 ``dCas9*-MCPSoxS`` effector on a ``crispr construct`` node. 0.5% pinene is a
 ``SmallMoleculePerturbation`` on the experiment and on the reference, so the

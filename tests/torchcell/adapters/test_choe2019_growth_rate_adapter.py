@@ -5,7 +5,7 @@
 view of it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Choe 2019 Fig. 2c: two designed MS56 deletion strains, BacterialFitnessExperiment. One
-``BacterialDeletionPerturbation`` per deleted gene, so the perturbation pair is enabled;
+``DeletionStrainPerturbation`` per deleted gene, so the perturbation pair is enabled;
 the panel adds no compound to its medium, so the environment-perturbation pair is off,
 and the environment declares a ``ProvenanceGap`` on temperature.
 """

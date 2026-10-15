@@ -5,7 +5,7 @@
 """BioCypher adapter exposing putidaPRECISE321 (Lim 2022) as knowledge-graph
 nodes and edges.
 
-One record per KT2440 sample: the wild type or a single ``BacterialDeletionPerturbation``
+One record per KT2440 sample: the wild type or a single ``DeletionStrainPerturbation``
 served as a ``bacterial perturbation`` node, and the absolute transcriptome as an
 ``RNASeqExpressionPhenotype``. The compendium does not carry temperature, so every
 record gaps it and the temperature methods emit nothing.

@@ -665,7 +665,12 @@ def test_no_perturbation_leaf_holds_a_called_bacterial_variant() -> None:
     specified alleles, so neither refusal is an evolved-population artefact; since #1057
     they are stored on the released-strain leaf instead (see the reconstruction tests).
     """
-    with pytest.raises(ValidationError, match="Invalid systematic gene name format"):
+    # Since P1 (ontology-unify) the refusal is the namespace agreement check: the leaf
+    # defaults gene_namespace to S288C, and a b-number is an MG1655 identifier.
+    with pytest.raises(
+        ValidationError,
+        match="'b0078' is a ecoli_k12_mg1655_bnumber tag but gene_namespace is",
+    ):
         SequenceVariantPerturbation(
             systematic_gene_name="b0078", perturbed_gene_name="ilvH", strain_id="eMS57"
         )

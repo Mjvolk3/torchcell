@@ -126,7 +126,7 @@ against wild-type KT2440 carrying a ``BacterialStrainBackground`` named ``D1b_gf
 four host-gene deletions the paper states with their locus tags (PP_1378/pcaT,
 PP_1755/fumC-II, PP_0944/fumC-I and fleQ/PP_4373) and which is itself from reference 21.
 The record's OWN edit is the perturbation: a ``PromoterReplacementPerturbation`` on
-PP_0897 for the two promoter groups and a ``BacterialDeletionPerturbation`` on PP_0897
+PP_0897 for the two promoter groups and a ``DeletionStrainPerturbation`` on PP_0897
 for the two ``2487`` groups, while the parental groups carry none.
 
 THE THREE HETEROLOGOUS GENES ARE NOT TYPED, AND THAT IS THE SOURCE'S LIMIT. D1b_gf also
@@ -195,7 +195,6 @@ from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
     BacterialAssemblySet,
     BacterialBackgroundAllele,
-    BacterialDeletionPerturbation,
     BacterialGeneNamespace,
     BacterialProteinAbundanceExperiment,
     BacterialProteinAbundanceExperimentReference,
@@ -203,6 +202,7 @@ from torchcell.datamodels.schema import (
     BacterialStrainBackground,
     Concentration,
     ConcentrationUnit,
+    DeletionStrainPerturbation,
     Environment,
     EnvironmentPerturbationType,
     EnvironmentPhysicalPerturbation,
@@ -1493,9 +1493,9 @@ def promoter_perturbation(strain: str) -> PromoterReplacementPerturbation:
     )
 
 
-def deletion_perturbation() -> BacterialDeletionPerturbation:
+def deletion_perturbation() -> DeletionStrainPerturbation:
     """The PP_0897 deletion that completes the cutset."""
-    return BacterialDeletionPerturbation(
+    return DeletionStrainPerturbation(
         systematic_gene_name=PP_0897,
         perturbed_gene_name=PP_0897,
         gene_namespace=KT2440_NAMESPACE,

@@ -2,3 +2,8 @@
 # the dated pre-build JSON is reproducible from the committed cache + registry.
 *
 !.gitignore
+# The measured gene identifier vocabulary of the served stores is the evidence a
+# schema-change record cites (P1, 2026-10-15); it is reproducible only against the
+# served dev stores, so these two files are tracked.
+!gene_id_namespace_vocabulary.md
+!gene_id_namespace_vocabulary.json

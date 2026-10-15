@@ -45,8 +45,8 @@ sample sheet's ``biosample_strain`` writes it (``KT2440 PP_5350'``), whose
 ``genotype_statement`` is its ``biosample_genotype`` cell verbatim ("9bp deletion in its
 PP_5350") (#1045 part 2). ``PP_5350`` is a released locus tag, so the released-strain leaf
 refuses it by design (a tag of the pinned assembly belongs on a placed leaf), and the
-placed leaves cannot hold the edit: a whole-gene ``BacterialDeletionPerturbation`` would
-misstate a 9 bp in-frame deletion, and ``BacterialSequenceVariantPerturbation`` needs a
+placed leaves cannot hold the edit: a whole-gene ``DeletionStrainPerturbation`` would
+misstate a 9 bp in-frame deletion, and ``LocusVariantCallPerturbation`` needs a
 ``BacterialVariantCall`` with replicon coordinates the release does not give. The
 background states the edit as released and types nothing it does not say.
 

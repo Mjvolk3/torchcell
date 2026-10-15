@@ -5,7 +5,7 @@
 """BioCypher adapter exposing Choe 2019's two designed MS56 deletions as
 knowledge-graph nodes and edges.
 
-One record per designed deletion strain: a ``BacterialDeletionPerturbation`` per deleted
+One record per designed deletion strain: a ``DeletionStrainPerturbation`` per deleted
 gene, served as ``bacterial perturbation`` (21 for the large deletion, 1 for ``rpoS``),
 and the strain's growth rate as a ratio to its isogenic parent MS56. The panel is one M9
 glucose medium with no added compound, so the environment-perturbation pair is off; the

@@ -5,7 +5,7 @@
 """BioCypher adapter exposing Wang 2015's plain-medium growth ratios as graph nodes.
 
 One record per Keio transporter deletion of Supplementary Table S3's ``No isoprenol``
-column, 46 in all. Each genotype carries one ``BacterialDeletionPerturbation``, served
+column, 46 in all. Each genotype carries one ``DeletionStrainPerturbation``, served
 as ``bacterial perturbation``; the medium's pH is an environment perturbation and is a
 first-class node, and the isoprenol edit of the sibling ``EnvChemgenWang2015Adapter`` is
 absent, because this is the plain-medium arm. The phenotype is ``fitness phenotype``,

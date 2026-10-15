@@ -42,7 +42,7 @@ cluster are regarded as functionally identical." Supplementary Data 2 names 4,20
 clusters (4,090 protein-coding, 115 ncRNA) over 4,317 member genes; 39 clusters hold
 more than one member and the largest holds ten (the ``insH1`` IS5 transposase copies,
 ahead of the eight 5S rRNA genes of ``rrfH``). One record is one (guide, screen) row and
-carries one ``BacterialCrisprInterferencePerturbation`` per member of its guide's
+carries one ``CrisprInterferencePerturbation`` per member of its guide's
 cluster, so the build writes 242,294 knockdown perturbations over 240,481 records.
 
 A SPACER CAN ALSO BE SHARED BETWEEN TWO CLUSTERS, which is why the stored strain identity
@@ -75,7 +75,7 @@ records:
 
 - **1,942 non-targeting control rows** (``sgRNA`` matching ``NC_<n>``, ``gene`` column
   ``0``). A guide with no genomic target cannot be a
-  ``BacterialCrisprInterferencePerturbation``, whose ``systematic_gene_name`` must be a
+  ``CrisprInterferencePerturbation``, whose ``systematic_gene_name`` must be a
   locus tag, and there is no non-targeting-guide leaf to type it with. These rows are
   not discarded information: their median IS the zero of every stored fitness (equation
   3) and their fitted sigma IS each screen's Z scale, both of which the build checks and
@@ -142,13 +142,13 @@ from torchcell.datamodels.media import LB, MOPS_CASAMINO_WANG2018, MOPS_MINIMAL
 from torchcell.datamodels.schema import (
     AssayType,
     AssemblyReferenceGenome,
-    BacterialCrisprInterferencePerturbation,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
     BacterialGeneNamespace,
     Concentration,
     ConcentrationUnit,
     CrisprConstruct,
+    CrisprInterferencePerturbation,
     Environment,
     EnvironmentPerturbationType,
     EnvironmentPhysicalPerturbation,
@@ -1471,7 +1471,7 @@ def build_genotype(targets: Sequence[tuple[str, str]], spacer: str) -> Genotype:
     """One guide repressing every ``(b-number, gene name)`` of its cluster."""
     return Genotype(
         perturbations=[
-            BacterialCrisprInterferencePerturbation(
+            CrisprInterferencePerturbation(
                 systematic_gene_name=bnumber,
                 perturbed_gene_name=gene_name,
                 gene_namespace=MG1655_NAMESPACE,
@@ -1600,7 +1600,7 @@ class BuildAccounting(BaseModel):
 DROP_RULES: list[str] = [
     "non_targeting: the sgRNA id is NC_<n> and the gene cell is the source's '0' "
     "sentinel. A guide with no genomic target cannot be a "
-    "BacterialCrisprInterferencePerturbation and no non-targeting leaf exists; the rows "
+    "CrisprInterferencePerturbation and no non-targeting leaf exists; the rows "
     "still set the zero of equation (3) and each screen's Z sigma, both recorded here",
     "bad_quality: the Quality cell is 'Bad', the paper's own flag for a "
     "control-condition read count below 20, which it excludes from every downstream "
@@ -2098,7 +2098,7 @@ def build_gene_genotype(cluster: GeneCluster, n_guides: int) -> Genotype:
     """
     return Genotype(
         perturbations=[
-            BacterialCrisprInterferencePerturbation(
+            CrisprInterferencePerturbation(
                 systematic_gene_name=member.bnumber,
                 perturbed_gene_name=member.symbol,
                 gene_namespace=MG1655_NAMESPACE,
@@ -2574,7 +2574,7 @@ def verify_gene_build(
                 "environment_response_z_score = 'Z score'; environment_response_p_value "
                 "= 'FPRvalue'; environment_response_p_value_adjusted = 'FDRvalue' "
                 "(storey_tibshirani_q_value). Genotype = one "
-                "BacterialCrisprInterferencePerturbation per Supplementary Data 2 "
+                "CrisprInterferencePerturbation per Supplementary Data 2 "
                 "member of the gene's cluster, n_guides = the released subset size, no "
                 "spacer. Reference = the non-targeting baseline of the screen, 0.0"
             ),
@@ -2635,7 +2635,7 @@ def verify_guide_build(
                 "replicates combined as a geometric mean of read counts before the "
                 "ratio, so no dispersion survives and the uncertainty fields are typed "
                 "ProvenanceGaps. Genotype = one "
-                "BacterialCrisprInterferencePerturbation per member of the guide's "
+                "CrisprInterferencePerturbation per member of the guide's "
                 "BLASTN cluster (Supplementary Data 2), effector dCas9, guide_sequence "
                 "= the 20-mer spacer of Supplementary Data 3 (MOESM6, sha256 "
                 f"{LIBRARY_FILE.sha256}), library_pool None (one screened pool). "

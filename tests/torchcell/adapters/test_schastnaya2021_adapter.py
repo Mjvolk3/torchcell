@@ -5,7 +5,7 @@
 of it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Schastnaya 2021 deletion metabolome: 29 (KEIO deletion strain, carbon source) records,
-BacterialMetaboliteExperiment. One BacterialDeletionPerturbation per record, served as
+BacterialMetaboliteExperiment. One DeletionStrainPerturbation per record, served as
 `bacterial perturbation` (never the yeast `perturbation` class). The carbon source is
 part of the medium, so no record carries an environment perturbation (0 in 29).
 """

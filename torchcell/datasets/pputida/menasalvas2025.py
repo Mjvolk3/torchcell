@@ -103,9 +103,9 @@ perturbation modes the bacterial ontology types, and the strain table states the
 one string per strain. The mapping, settled once:
 
 - a knockout (``ΔPP_2675``, ``ΔPP_2664``, ``ΔPP_1815/pyrF``, and the 15 validation
-  deletions of Supplementary Table 4) -> ``BacterialDeletionPerturbation``;
+  deletions of Supplementary Table 4) -> ``DeletionStrainPerturbation``;
 - a knockdown guide (a dCpf1 CRISPRi target of the pooled library) ->
-  ``BacterialCrisprInterferencePerturbation``, with ``n_guides=3`` from "three unique
+  ``CrisprInterferencePerturbation``, with ``n_guides=3`` from "three unique
   gRNAs per gene" and ``guide_sequence=None`` because the enriched spacer per gene was
   not released;
 - a promoter change (``PJ23100``-``PP_2666,PP_2665``, ``PJ23119``-``PP_1697``) ->
@@ -145,7 +145,7 @@ analysis and 30 for the second analysis". One row is one SELECTED TARGET, which 
 usually one locus tag but is an operon in one case: Table 1's "phaAZC-II /
 PP_5003-PP_5005" is the three tags ``PP_5003``, ``PP_5004`` and ``PP_5005``, expanded
 by integer enumeration of the stated endpoints and then checked against the annotation.
-That record carries three ``BacterialCrisprInterferencePerturbation`` entries, one
+That record carries three ``CrisprInterferencePerturbation`` entries, one
 guide repressing a polycistron, so the dataset holds 58 records over 60 distinct guide
 targets. The two rounds share no target ("Analysis of gRNAs by sequencing showed no
 overlap with the first set, as expected"), which the build asserts.
@@ -209,8 +209,6 @@ from torchcell.datamodels.media import M9_NREL_MOPS_MENASALVAS2025
 from torchcell.datamodels.schema import (
     AssayType,
     AssemblyReferenceGenome,
-    BacterialCrisprInterferencePerturbation,
-    BacterialDeletionPerturbation,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
     BacterialGeneNamespace,
@@ -218,13 +216,13 @@ from torchcell.datamodels.schema import (
     BacterialMetaboliteExperimentReference,
     BacterialProteinAbundanceExperiment,
     BacterialProteinAbundanceExperimentReference,
-    BacterialSequenceVariantPerturbation,
-    BacterialSiteVariantPerturbation,
     BacterialVariantCall,
     BacterialVariantType,
     Concentration,
     ConcentrationUnit,
     CrisprConstruct,
+    CrisprInterferencePerturbation,
+    DeletionStrainPerturbation,
     Environment,
     EnvironmentPhysicalPerturbation,
     EnvironmentResponsePhenotype,
@@ -232,6 +230,7 @@ from torchcell.datamodels.schema import (
     ExperimentReference,
     Genotype,
     HeterologousPathwayPerturbation,
+    LocusVariantCallPerturbation,
     MeasurementType,
     MetabolitePhenotype,
     PhysicalFactor,
@@ -239,6 +238,7 @@ from torchcell.datamodels.schema import (
     Publication,
     ResponseCategory,
     SampleUnit,
+    SiteVariantCallPerturbation,
     SmallMoleculePerturbation,
     VariantCallMode,
     VariantSiteKind,
@@ -1265,7 +1265,7 @@ FLEQ_SPAN_NOT_IN_DATA = _paper(
     note="the sentence the deposit does NOT reproduce. Measured on data S1-5 "
     "(2026-10-09): 0 of its 584 rows name fleQ or PP_4373, and the largest released "
     "deletion is 'd1,867 bp' on PP_2664. The 26.1-kb span is therefore unsourceable "
-    "from the released table and no BacterialSpanDeletionPerturbation is written; the "
+    "from the released table and no SpanDeletionCallPerturbation is written; the "
     "sentence also says '74 additional' SNPs while the table holds 584 rows over 284 "
     "distinct positions for three clones, so the prose aggregate and the table are not "
     "the same statement",
@@ -1905,9 +1905,9 @@ def reporter_perturbation() -> HeterologousPathwayPerturbation:
     )
 
 
-def pyrf_deletion() -> BacterialDeletionPerturbation:
+def pyrf_deletion() -> DeletionStrainPerturbation:
     """``ΔPP_1815``: the native ``pyrF`` lesion the selection complements."""
-    return BacterialDeletionPerturbation(
+    return DeletionStrainPerturbation(
         systematic_gene_name=str(PYRF_DELETION.value),
         perturbed_gene_name="pyrF",
         gene_namespace=KT2440_NAMESPACE,
@@ -1938,9 +1938,9 @@ def host_perturbations() -> list[Any]:
 
 def crispri_perturbation(
     locus_tag: str, gene_name: str
-) -> BacterialCrisprInterferencePerturbation:
+) -> CrisprInterferencePerturbation:
     """One dCpf1 knockdown of a KT2440 gene; the enriched spacer was never released."""
-    return BacterialCrisprInterferencePerturbation(
+    return CrisprInterferencePerturbation(
         systematic_gene_name=locus_tag,
         perturbed_gene_name=gene_name,
         gene_namespace=KT2440_NAMESPACE,
@@ -2917,9 +2917,9 @@ def called_variant_perturbations(
     name, type and perturbed name, and two calls in one locus tie on all three; Python's
     sort is stable, so the input order decides and must be deterministic.
 
-    An in-locus row becomes a :class:`BacterialSequenceVariantPerturbation` on the locus
+    An in-locus row becomes a :class:`LocusVariantCallPerturbation` on the locus
     its ``gene`` cell names; an intergenic row becomes a
-    :class:`BacterialSiteVariantPerturbation` keyed on its own site, carrying the two
+    :class:`SiteVariantCallPerturbation` keyed on its own site, carrying the two
     flanking loci as resolved tags and the released cell verbatim. The gene-containment
     exemption that follows is the site leaf's own: a site id is not a locus tag, so a
     gene-keyed consumer never reads the call as being inside a gene.
@@ -2942,7 +2942,7 @@ def called_variant_perturbations(
                     "this is a new fact about the release or the annotation"
                 )
             perturbations.append(
-                BacterialSequenceVariantPerturbation(
+                LocusVariantCallPerturbation(
                     systematic_gene_name=tag,
                     perturbed_gene_name=row.locus_statement,
                     gene_namespace=KT2440_NAMESPACE,
@@ -2952,8 +2952,8 @@ def called_variant_perturbations(
             continue
         flanking = tuple(locus_of[name] for name in row.flanking_statements)
         perturbations.append(
-            BacterialSiteVariantPerturbation(
-                systematic_gene_name=BacterialSiteVariantPerturbation.site_id(call),
+            SiteVariantCallPerturbation(
+                systematic_gene_name=SiteVariantCallPerturbation.site_id(call),
                 perturbed_gene_name=", ".join(flanking),
                 gene_namespace=KT2440_NAMESPACE,
                 call=call,
@@ -3185,7 +3185,7 @@ def designed_perturbations(strain: str, common: Mapping[str, str]) -> list[Any]:
             built.append(mvas_overexpression_perturbation(locus))
     for tag in STRAIN_DELETIONS[strain]:
         built.append(
-            BacterialDeletionPerturbation(
+            DeletionStrainPerturbation(
                 systematic_gene_name=tag,
                 perturbed_gene_name=common.get(tag, tag),
                 gene_namespace=KT2440_NAMESPACE,
@@ -3624,7 +3624,7 @@ class ProteomeMenasalvas2025Dataset(ExperimentDataset):
                     f"data S1-5 attaches {len(attached.get(CONTROL_STRAIN, []))} called "
                     f"variants to each TEAM-2595 record and NOTHING to the other four: "
                     + "; ".join(sorted(ledger.refused_clones)),
-                    "no BacterialSpanDeletionPerturbation is written: "
+                    "no SpanDeletionCallPerturbation is written: "
                     + str(FLEQ_SPAN_NOT_IN_DATA.note),
                     "chassis elements NOT asserted: "
                     + "; ".join(UNASSERTED_DESIGNED_CHASSIS),
@@ -4084,7 +4084,7 @@ def _record_strain(record: Mapping[str, Any]) -> str:
     deleted = frozenset(
         str(p["systematic_gene_name"])
         for p in record["experiment"]["genotype"]["perturbations"]
-        if str(p["perturbation_type"]) == "bacterial_deletion"
+        if str(p["perturbation_type"]) == "deletion_strain"
     )
     strain = STRAIN_OF_DELETION_SET.get(deleted)
     if strain is None:
@@ -4170,7 +4170,7 @@ def _l3_called_variants_only_on_the_control(
                 1
                 for p in record["experiment"]["genotype"]["perturbations"]
                 if str(p["perturbation_type"])
-                in ("bacterial_sequence_variant", "bacterial_site_variant")
+                in ("locus_variant_call", "site_variant_call")
             )
         )
     control = per_strain.get(CONTROL_STRAIN, set())
@@ -4213,8 +4213,8 @@ def _l3_one_coordinate_per_call(records: Sequence[dict[str, Any]]) -> LevelResul
     for record in records:
         for perturbation in record["experiment"]["genotype"]["perturbations"]:
             if str(perturbation["perturbation_type"]) not in (
-                "bacterial_sequence_variant",
-                "bacterial_site_variant",
+                "locus_variant_call",
+                "site_variant_call",
             ):
                 continue
             call = perturbation["call"]
@@ -4267,7 +4267,7 @@ def _l4_genotypes_vs_supplementary_table_4(
         stored = frozenset(
             str(p["systematic_gene_name"])
             for p in record["experiment"]["genotype"]["perturbations"]
-            if str(p["perturbation_type"]) == "bacterial_deletion"
+            if str(p["perturbation_type"]) == "deletion_strain"
         )
         if stored != expected[strain]:
             disagreements.append(
@@ -4624,7 +4624,7 @@ def stored_tags_are_loci(
             str(perturbation["systematic_gene_name"])
             for record in records
             for perturbation in record["experiment"]["genotype"]["perturbations"]
-            if str(perturbation["perturbation_type"]) == "bacterial_crispr_interference"
+            if str(perturbation["perturbation_type"]) == "crispr_interference"
         }
     )
     elsewhere = [

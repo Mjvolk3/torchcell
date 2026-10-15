@@ -6,7 +6,7 @@
 knowledge-graph nodes and edges.
 
 One record per writable strain (KT2440 and the pre-tolerized PT parent): the PT
-strain's deletion is a ``BacterialDeletionPerturbation`` served as a ``bacterial
+strain's deletion is a ``DeletionStrainPerturbation`` served as a ``bacterial
 perturbation`` node, and the abundances are a ``ProteinAbundancePhenotype``.
 """
 

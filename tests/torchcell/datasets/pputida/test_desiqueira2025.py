@@ -185,7 +185,7 @@ def test_the_writable_genotypes_are_the_deletion_plus_each_strains_own_calls(
     )
     pt = ds.strain_genotype(ds.PT_STRAIN, with_pathway=False, calls=calls)
     assert len(pt) == 1 + VARIANT_PERTURBATIONS_PER_STRAIN["PT"]
-    assert pt.perturbation_types.count("bacterial_deletion") == 1
+    assert pt.perturbation_types.count("deletion_strain") == 1
     assert ds.PT_FULL_DELETION in pt.systematic_gene_names
     with_plasmid = ds.strain_genotype(ds.PT_STRAIN, with_pathway=True, calls=calls)
     assert len(with_plasmid) == len(pt) + len(PATHWAY_GENES)
@@ -416,9 +416,7 @@ def test_an_in_locus_call_becomes_a_sequence_variant_of_that_locus(
     _write_variants(path)
     calls = ds.read_variant_calls(str(path))
     perturbations = ds.called_variant_perturbations(calls, ds.SIGMA_STRAINS[0])
-    in_locus = [
-        p for p in perturbations if p.perturbation_type == "bacterial_sequence_variant"
-    ]
+    in_locus = [p for p in perturbations if p.perturbation_type == "locus_variant_call"]
     assert len(in_locus) == 2
     first = in_locus[0]
     assert first.systematic_gene_name == "PP_1656"
@@ -451,7 +449,7 @@ def test_an_intergenic_call_is_keyed_on_its_site_and_names_no_locus(
     _write_variants(path)
     calls = ds.read_variant_calls(str(path))
     (site,) = ds.called_variant_perturbations(calls, ds.SIGMA_STRAINS[3])
-    assert site.perturbation_type == "bacterial_site_variant"
+    assert site.perturbation_type == "site_variant_call"
     assert site.site_kind is VariantSiteKind.intergenic
     expected = f"{ds.VARIANT_REPLICON}:{_variant_position(7)}"
     assert site.systematic_gene_name == expected
@@ -469,7 +467,7 @@ def test_a_refseq_only_call_keeps_its_released_tag_and_claims_no_neighbor(
     calls = ds.read_variant_calls(str(path))
     perturbations = ds.called_variant_perturbations(calls, ds.SIGMA_STRAINS[0])
     (unmapped,) = [
-        p for p in perturbations if p.perturbation_type == "bacterial_site_variant"
+        p for p in perturbations if p.perturbation_type == "site_variant_call"
     ]
     assert unmapped.site_kind is VariantSiteKind.locus_not_in_assembly
     assert unmapped.released_locus_statement == "PP_RS21780"
@@ -1342,7 +1340,7 @@ def test_a_site_keyed_call_stays_out_of_the_gene_set(built_proteome: Any) -> Non
         for perturbation in built_proteome[index]["experiment"]["genotype"][
             "perturbations"
         ]
-        if perturbation["perturbation_type"] == "bacterial_site_variant"
+        if perturbation["perturbation_type"] == "site_variant_call"
     }
     assert site_ids == {
         f"{ds.VARIANT_REPLICON}:{_variant_position(index)}"
@@ -1511,10 +1509,10 @@ def test_the_titer_loader_writes_one_record_per_loaded_table_cell(
     experiment = record["experiment"]
     kinds = {p["perturbation_type"] for p in experiment["genotype"]["perturbations"]}
     assert kinds == {
-        "bacterial_deletion",
+        "deletion_strain",
         "heterologous_pathway",
-        "bacterial_sequence_variant",
-        "bacterial_site_variant",
+        "locus_variant_call",
+        "site_variant_call",
     }
     assert len(experiment["genotype"]["perturbations"]) == (
         1 + len(PATHWAY_GENES) + VARIANT_PERTURBATIONS_PER_STRAIN["PT"]
@@ -1600,7 +1598,7 @@ def test_the_gene_containment_row_exempts_the_pathway_parts_and_the_sites(
         str(p["systematic_gene_name"])
         for record in records
         for p in record["experiment"]["genotype"]["perturbations"]
-        if p["perturbation_type"] == "bacterial_site_variant"
+        if p["perturbation_type"] == "site_variant_call"
     }
     assert site_ids
     assert not site_ids & universe
@@ -1847,7 +1845,7 @@ def test_the_released_refseq_only_calls_name_the_two_retired_tags() -> None:
     }
     for strain in {call.strain for call in unmapped}:
         for perturbation in ds.called_variant_perturbations(calls, strain):
-            if perturbation.perturbation_type != "bacterial_site_variant":
+            if perturbation.perturbation_type != "site_variant_call":
                 continue
             if perturbation.site_kind is not VariantSiteKind.locus_not_in_assembly:
                 continue

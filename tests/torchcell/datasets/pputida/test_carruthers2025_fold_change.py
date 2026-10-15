@@ -848,8 +848,8 @@ def test_a_built_ko_record_carries_the_deletion_beside_its_guide() -> None:
         (p["perturbation_type"], p["systematic_gene_name"])
         for p in record["experiment"]["genotype"]["perturbations"]
     }
-    assert ("bacterial_deletion", "PP_0812") in types
-    assert ("bacterial_crispr_interference", "PP_0812") in types
+    assert ("deletion_strain", "PP_0812") in types
+    assert ("crispr_interference", "PP_0812") in types
     assert len(record["experiment"]["phenotype"]["protein_fold_change"]) == 14
     assert record["experiment"]["phenotype"]["reference_basis"] == (
         "a non-targeting control sgRNA in a knockout background"
@@ -872,8 +872,8 @@ def test_a_built_single_guide_record_carries_only_its_guide() -> None:
         p["perturbation_type"]
         for p in record["experiment"]["genotype"]["perturbations"]
     ]
-    assert types.count("bacterial_crispr_interference") == 1
-    assert types.count("bacterial_deletion") == 0
+    assert types.count("crispr_interference") == 1
+    assert types.count("deletion_strain") == 0
     assert types.count("heterologous_pathway") == 5
     assert len(record["experiment"]["phenotype"]["protein_fold_change"]) == 176
     assert record["experiment"]["phenotype"]["reference_basis"] == (

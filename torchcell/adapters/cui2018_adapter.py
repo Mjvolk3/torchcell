@@ -6,7 +6,7 @@
 knowledge-graph nodes and edges.
 
 One record per (guide, screened strain): the record's
-``BacterialCrisprInterferencePerturbation`` leaves are served as ``bacterial
+``CrisprInterferencePerturbation`` leaves are served as ``bacterial
 perturbation`` nodes, the one ``CrisprConstruct`` they share as a ``crispr construct``
 node, and the released per-guide log2 fold change as an
 ``EnvironmentResponsePhenotype``.

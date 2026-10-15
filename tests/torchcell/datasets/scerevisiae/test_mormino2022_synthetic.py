@@ -151,6 +151,7 @@ def _experiment(common: str, rfp: str) -> EnvironmentResponseExperiment:
             perturbations=[
                 ReleasedGeneNamePerturbation(
                     systematic_gene_name=common,
+                    gene_namespace="scerevisiae_s288c_sgd_systematic",
                     perturbed_gene_name=common,
                     released_gene_name=common,
                     released_kind=ReleasedGeneKind.crispr_interference,

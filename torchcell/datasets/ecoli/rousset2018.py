@@ -103,7 +103,7 @@ RECORDS DROPPED (rule + counts in ``preprocess/dropped_records.json``):
    outside of genes were excluded from the analysis"). S2 Table makes the size of the
    difference explicit: the median ``median_template`` is the no-effect baseline while the
    median ``median_coding`` of an essential gene is -5.12. The only leaf available is
-   ``BacterialCrisprInterferencePerturbation``, whose ``expression_direction`` is
+   ``CrisprInterferencePerturbation``, whose ``expression_direction`` is
    ``"decreased"`` with no slot for the target strand, so storing a template-strand guide
    would assert a knockdown the paper's own data says did not happen.
 Rules 3 and 4, which dropped the remaining S1 rows as served by, or below the read floor
@@ -1561,7 +1561,7 @@ class CrispriScreenRousset2018Dataset(ExperimentDataset):
                     "the S1 Table row's coding column is FALSE. dCas9 on the template "
                     "strand does not block elongation, which is why the paper's gene "
                     "scores use coding-strand guides only and the phage screens exclude "
-                    "template-strand guides; BacterialCrisprInterferencePerturbation "
+                    "template-strand guides; CrisprInterferencePerturbation "
                     "fixes expression_direction to 'decreased' and has no slot for the "
                     "target strand, so storing one would assert a knockdown the paper's "
                     "own S2 Table says did not happen"

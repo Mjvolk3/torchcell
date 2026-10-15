@@ -159,6 +159,7 @@ def _experiment(
     else:
         perturbation = ReleasedGeneNamePerturbation(
             systematic_gene_name=orf,
+            gene_namespace="scerevisiae_s288c_sgd_systematic",
             perturbed_gene_name=name,
             released_gene_name=orf,
             released_kind=ReleasedGeneKind.deletion,

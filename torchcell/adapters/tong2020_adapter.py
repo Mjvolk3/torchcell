@@ -5,7 +5,7 @@
 """BioCypher adapter exposing the Tong 2020 carbon-source growth screen as
 knowledge-graph nodes and edges.
 
-One record per (deletion strain, carbon source): a single ``BacterialDeletionPerturbation``
+One record per (deletion strain, carbon source): a single ``DeletionStrainPerturbation``
 served as a ``bacterial perturbation`` node, the growth as a ``FitnessPhenotype``, and
 the varied carbon source as an environment perturbation.
 """

@@ -45,8 +45,8 @@ from torchcell.datamodels.media import M9_NREL_LIM2025
 from torchcell.datamodels.schema import (
     AlleleEdit,
     AssayType,
-    BacterialDeletionPerturbation,
     ConcentrationUnit,
+    DeletionStrainPerturbation,
     FoldChangeScale,
     MeasurementType,
     SampleUnit,
@@ -62,8 +62,15 @@ DATA_ROOT = os.environ.get("DATA_ROOT")
 # Synthetic: the genotype finding, asserted on the classes themselves
 # --------------------------------------------------------------------------- #
 def test_the_variant_leaf_refuses_a_pputida_locus_tag() -> None:
-    """Measured reason 1: the only variant leaf admits S288C ORF names only."""
-    with pytest.raises(ValidationError, match="Invalid systematic gene name format"):
+    """Measured reason 1: the only variant leaf admits S288C ORF names only.
+
+    Since P1 (ontology-unify) the refusal is the namespace agreement check: the leaf
+    defaults ``gene_namespace`` to S288C, and ``PP_3415`` is a KT2440 identifier.
+    """
+    with pytest.raises(
+        ValidationError,
+        match="'PP_3415' is a pputida_kt2440_locus_tag tag but gene_namespace is",
+    ):
         SequenceVariantPerturbation(
             systematic_gene_name="PP_3415",
             perturbed_gene_name="gnuR",
@@ -72,8 +79,13 @@ def test_the_variant_leaf_refuses_a_pputida_locus_tag() -> None:
 
 
 def test_the_variant_leaf_has_no_slot_for_what_a_breseq_row_releases() -> None:
-    """Measured reason 3: no field holds a replicon, position or base change."""
+    """Measured reason 3: no field holds a replicon, position or base change.
+
+    ``gene_namespace`` is no longer in this list: since P1 (ontology-unify) every gene
+    perturbation carries it, so the host is stated; the call itself still has no slot.
+    """
     fields = set(SequenceVariantPerturbation.model_fields)
+    assert "gene_namespace" in fields
     for absent in (
         "chromosome",
         "position",
@@ -81,7 +93,7 @@ def test_the_variant_leaf_has_no_slot_for_what_a_breseq_row_releases() -> None:
         "alternate_allele",
         "amino_acid_change",
         "variant_frequency",
-        "gene_namespace",
+        "call",
     ):
         assert absent not in fields
 
@@ -228,7 +240,7 @@ def test_ipl300_carries_the_six_designed_deletions_the_paper_lists() -> None:
         "PP_4066",
         "PP_4067",
     ]
-    assert set(genotype.perturbation_types) == {"bacterial_deletion"}
+    assert set(genotype.perturbation_types) == {"deletion_strain"}
 
 
 def test_ipl400_is_ipl300_plus_the_ttgb_deletion() -> None:
@@ -238,7 +250,7 @@ def test_ipl400_is_ipl300_plus_the_ttgb_deletion() -> None:
     extra = next(
         p for p in genotype.perturbations if p.systematic_gene_name == "PP_1385"
     )
-    assert isinstance(extra, BacterialDeletionPerturbation)
+    assert isinstance(extra, DeletionStrainPerturbation)
     assert extra.perturbed_gene_name == "ttgB"
     assert extra.gene_namespace == l25.KT2440_NAMESPACE
 
@@ -269,7 +281,7 @@ def test_the_pp3024_genotype_carries_its_jbei_accession() -> None:
     genotype = l25.pp3024_genotype({"PP_3024": "PP_3024"})
     assert len(genotype) == 1
     perturbation = genotype.perturbations[0]
-    assert isinstance(perturbation, BacterialDeletionPerturbation)
+    assert isinstance(perturbation, DeletionStrainPerturbation)
     assert perturbation.systematic_gene_name == "PP_3024"
     assert perturbation.construction is not None
     assert perturbation.construction.strain_accession == l25.PP3024_STRAIN_ACCESSION
@@ -1011,15 +1023,15 @@ MUTATIONS: tuple[tuple[Any, ...], ...] = (
 )
 #: The leaf each :data:`MUTATIONS` row's shape maps to, in the same order.
 MUTATION_REPRESENTATIONS: tuple[str, ...] = (
-    "bacterial_sequence_variant",
-    "bacterial_site_variant",
-    "bacterial_span_deletion",
-    "bacterial_sequence_variant",
-    "bacterial_span_deletion",
-    "bacterial_sequence_variant",
-    "bacterial_sequence_variant",
-    "bacterial_span_deletion",
-    "bacterial_sequence_variant",
+    "locus_variant_call",
+    "site_variant_call",
+    "span_deletion_call",
+    "locus_variant_call",
+    "span_deletion_call",
+    "locus_variant_call",
+    "locus_variant_call",
+    "span_deletion_call",
+    "locus_variant_call",
 )
 #: ``{clone column: (strain, written perturbations, restated loci)}`` the synthetic
 #: matrix implies: a call whose resolved locus is one of the strain's own designed
@@ -1241,9 +1253,9 @@ def test_every_call_is_typed_with_the_leaf_its_released_shape_maps_to(
     assert [call.representation for call in calls] == list(MUTATION_REPRESENTATIONS)
     intergenic = [call for call in calls if call.is_intergenic]
     assert len(intergenic) == 1
-    assert intergenic[0].representation == "bacterial_site_variant"
+    assert intergenic[0].representation == "site_variant_call"
     assert intergenic[0].loci == ["PP_mr07", "rpoB"]
-    spans = [call for call in calls if call.representation == "bacterial_span_deletion"]
+    spans = [call for call in calls if call.representation == "span_deletion_call"]
     assert [call.position for call in spans] == [1578244, 3063719, 4362918]
     assert all(call.mutation_type == "DEL" and not call.detail for call in spans)
     stacked = [call for call in calls if call.locus_seen_twice_in_a_clone]
@@ -1257,25 +1269,25 @@ def test_the_row_shape_decides_the_leaf_without_a_default_branch() -> None:
         l25.released_row_representation(
             is_intergenic=True, mutation_type="SNP", detail="intergenic (+1/-2)"
         )
-        == "bacterial_site_variant"
+        == "site_variant_call"
     )
     assert (
         l25.released_row_representation(
             is_intergenic=False, mutation_type="DEL", detail="  "
         )
-        == "bacterial_span_deletion"
+        == "span_deletion_call"
     )
     assert (
         l25.released_row_representation(
             is_intergenic=False, mutation_type="DEL", detail="coding (4-459/462 nt)"
         )
-        == "bacterial_sequence_variant"
+        == "locus_variant_call"
     )
     assert (
         l25.released_row_representation(
             is_intergenic=False, mutation_type="SNP", detail=""
         )
-        == "bacterial_sequence_variant"
+        == "locus_variant_call"
     )
     assert set(l25.VARIANT_TYPE_BY_STATEMENT) == {"SNP", "DEL", "INS", "SUB"}
 
@@ -1702,7 +1714,7 @@ def _designed_deletions(record: dict[str, Any]) -> frozenset[str]:
     return frozenset(
         str(perturbation["systematic_gene_name"])
         for perturbation in record["experiment"]["genotype"]["perturbations"]
-        if perturbation["perturbation_type"] == "bacterial_deletion"
+        if perturbation["perturbation_type"] == "deletion_strain"
     )
 
 
@@ -1849,31 +1861,31 @@ def test_each_evolved_isolate_carries_its_own_calls_as_perturbations(
                 if p["perturbation_type"] == kind
             )
             for kind in (
-                "bacterial_deletion",
-                "bacterial_sequence_variant",
-                "bacterial_site_variant",
-                "bacterial_span_deletion",
+                "deletion_strain",
+                "locus_variant_call",
+                "site_variant_call",
+                "span_deletion_call",
             )
         }
         for record in records
     ]
     assert kinds[0] == {
-        "bacterial_deletion": 7,
-        "bacterial_sequence_variant": 0,
-        "bacterial_site_variant": 0,
-        "bacterial_span_deletion": 0,
+        "deletion_strain": 7,
+        "locus_variant_call": 0,
+        "site_variant_call": 0,
+        "span_deletion_call": 0,
     }
     assert kinds[1] == {
-        "bacterial_deletion": 7,
-        "bacterial_sequence_variant": 4,
-        "bacterial_site_variant": 0,
-        "bacterial_span_deletion": 3,
+        "deletion_strain": 7,
+        "locus_variant_call": 4,
+        "site_variant_call": 0,
+        "span_deletion_call": 3,
     }
     assert kinds[2] == {
-        "bacterial_deletion": 7,
-        "bacterial_sequence_variant": 4,
-        "bacterial_site_variant": 1,
-        "bacterial_span_deletion": 3,
+        "deletion_strain": 7,
+        "locus_variant_call": 4,
+        "site_variant_call": 1,
+        "span_deletion_call": 3,
     }
     assert records[1]["experiment"]["genotype"] != records[2]["experiment"]["genotype"]
 
@@ -1885,7 +1897,7 @@ def test_a_span_deletion_is_one_perturbation_per_covered_locus(
     spans = [
         p
         for p in built_proteome[1]["experiment"]["genotype"]["perturbations"]
-        if p["perturbation_type"] == "bacterial_span_deletion"
+        if p["perturbation_type"] == "span_deletion_call"
     ]
     assert {p["systematic_gene_name"] for p in spans} == {
         "PP_1386",
@@ -1914,7 +1926,7 @@ def test_an_intergenic_call_keeps_its_site_out_of_the_gene_set_and_its_flanks_in
     (site,) = [
         p
         for p in built_proteome[2]["experiment"]["genotype"]["perturbations"]
-        if p["perturbation_type"] == "bacterial_site_variant"
+        if p["perturbation_type"] == "site_variant_call"
     ]
     assert site["systematic_gene_name"] == f"{l25.KT2440_REPLICON}:537604"
     assert site["site_kind"] == "intergenic"
@@ -2345,12 +2357,12 @@ def test_every_real_call_maps_to_one_of_the_three_leaves() -> None:
     calls = l25.read_variant_calls(xlsx)
     assert len(calls) == 159
     assert Counter(call.representation for call in calls) == {
-        "bacterial_sequence_variant": 117,
-        "bacterial_span_deletion": 25,
-        "bacterial_site_variant": 17,
+        "locus_variant_call": 117,
+        "span_deletion_call": 25,
+        "site_variant_call": 17,
     }
     assert sum(call.locus_seen_twice_in_a_clone for call in calls) == 8
-    spans = [call for call in calls if call.representation == "bacterial_span_deletion"]
+    spans = [call for call in calls if call.representation == "span_deletion_call"]
     assert sum(len(call.loci) > 1 for call in spans) == 19
     assert max(len(call.loci) for call in spans) == 53
     assert all(
@@ -2359,7 +2371,7 @@ def test_every_real_call_maps_to_one_of_the_three_leaves() -> None:
     assert all(
         len(call.loci) == 1
         for call in calls
-        if call.representation == "bacterial_sequence_variant"
+        if call.representation == "locus_variant_call"
     )
 
 
@@ -2703,10 +2715,10 @@ def test_each_fold_change_genotype_is_the_isolate_on_top_of_ipl400(
         deleted = {
             str(p["systematic_gene_name"])
             for p in perturbations
-            if p["perturbation_type"] == "bacterial_deletion"
+            if p["perturbation_type"] == "deletion_strain"
         }
         assert deleted == designed
-        assert kinds["bacterial_deletion"] == len(designed)
+        assert kinds["deletion_strain"] == len(designed)
         variants += sum(count for kind, count in kinds.items() if "variant" in kind)
     assert variants > 0
 

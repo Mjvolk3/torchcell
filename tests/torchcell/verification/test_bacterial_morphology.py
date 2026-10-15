@@ -29,10 +29,10 @@ from torchcell.datamodels.bacterial_morphology_features import (
 from torchcell.datamodels.media import MEDIA_LIBRARY
 from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
-    BacterialDeletionPerturbation,
     BacterialMorphologyExperiment,
     BacterialMorphologyExperimentReference,
     BacterialMorphologyPhenotype,
+    DeletionStrainPerturbation,
     Environment,
     Genotype,
     SampleUnit,
@@ -109,7 +109,7 @@ def _record(
         dataset_name="test",
         genotype=Genotype(
             perturbations=[
-                BacterialDeletionPerturbation(
+                DeletionStrainPerturbation(
                     systematic_gene_name=gene,
                     perturbed_gene_name=gene,
                     gene_namespace=NAMESPACE,

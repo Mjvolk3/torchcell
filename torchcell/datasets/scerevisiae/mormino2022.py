@@ -335,6 +335,7 @@ def biosensor_cassette() -> list[GeneAdditionPerturbation]:
     return [
         GeneAdditionPerturbation(
             systematic_gene_name="BM3R1-HAA1-mTurquoise2",
+            gene_namespace="scerevisiae_s288c_sgd_systematic",
             perturbed_gene_name="BM3R1-HAA1-mTurquoise2",
             source_organism=(
                 "synthetic fusion (BM3R1 from Bacillus megaterium, HAA1 from "
@@ -347,6 +348,7 @@ def biosensor_cassette() -> list[GeneAdditionPerturbation]:
         ),
         GeneAdditionPerturbation(
             systematic_gene_name="sfpHluorin",
+            gene_namespace="scerevisiae_s288c_sgd_systematic",
             perturbed_gene_name="sfpHluorin",
             source_organism="synthetic (superfolder pHluorin, an Aequorea victoria GFP variant)",
             is_heterologous=True,
@@ -584,6 +586,7 @@ class CrispriMormino2022Dataset(ExperimentDataset):
             )
         return ReleasedGeneNamePerturbation(
             systematic_gene_name=common,
+            gene_namespace="scerevisiae_s288c_sgd_systematic",
             perturbed_gene_name=common,
             released_gene_name=common,
             released_kind=ReleasedGeneKind.crispr_interference,

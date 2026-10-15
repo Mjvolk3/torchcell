@@ -39,8 +39,8 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
     write_assembly,
 )
 from torchcell.datamodels.schema import (
-    BacterialCrisprInterferencePerturbation,
     ConcentrationUnit,
+    CrisprInterferencePerturbation,
     MeasurementType,
     MediaComponentRole,
     SampleUnit,
@@ -237,7 +237,7 @@ def test_classify_row_refuses_an_identifier_that_is_not_a_b_number() -> None:
 def test_the_record_carries_the_mismatch_design_and_the_released_b_number() -> None:
     genotype = h.build_genotype(h.mismatch_design(MISMATCHED, PARENT), "b0001", "thrL")
     (leaf,) = genotype.perturbations
-    assert isinstance(leaf, BacterialCrisprInterferencePerturbation)
+    assert isinstance(leaf, CrisprInterferencePerturbation)
     assert leaf.systematic_gene_name == "b0001"
     assert leaf.perturbed_gene_name == "thrL"
     assert leaf.gene_namespace == "ecoli_k12_mg1655_bnumber"

@@ -50,7 +50,7 @@ and not one record carrying everything:
 Both read one release and share ``read_normalized_table`` and ``resolve_rows``, so a
 strain is writable for both or for neither and the drop ledger is identical.
 
-- GENOTYPE: one ``BacterialDeletionPerturbation`` against BW25113
+- GENOTYPE: one ``DeletionStrainPerturbation`` against BW25113
   (``ecoli_k12_bw25113_locus_tag``), the Keio background -- "240 replicates of the
   parental strain (BW25113, here referred to as WT) were also grown and imaged under the
   same conditions as the mutants." Dataset EV2 labels a row by its deleted gene's NAME
@@ -192,7 +192,7 @@ RECORDS DROPPED (rule + counts + items in ``preprocess/dropped_records.json``):
    QC statement about the strain, so neither row is a measurement of this screen. None of
    the five bare names appears on another row (measured), so nothing is lost twice.
 4. ``label_is_not_in_the_bw25113_annotation`` -- 438 rows, the retired labels above.
-   ``BacterialDeletionPerturbation`` stores a locus tag of the declared namespace and
+   ``DeletionStrainPerturbation`` stores a locus tag of the declared namespace and
    nothing else, so a label with no locus cannot be written.
 5. ``label_is_a_fragment_of_a_merged_bw25113_locus`` -- 0 rows on this release, because
    the reconciler reports no collision here. The rule exists so a future annotation that
@@ -276,7 +276,6 @@ from torchcell.datamodels.bacterial_morphology_features import MorphologyFeature
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import M9
 from torchcell.datamodels.schema import (
-    BacterialDeletionPerturbation,
     BacterialFitnessExperiment,
     BacterialFitnessExperimentReference,
     BacterialMorphologyExperiment,
@@ -286,6 +285,7 @@ from torchcell.datamodels.schema import (
     Compound,
     Concentration,
     ConcentrationUnit,
+    DeletionStrainPerturbation,
     DerivedIdentifierMapping,
     Environment,
     Experiment,
@@ -1611,7 +1611,7 @@ def genotype(record: StrainRecord) -> Genotype:
     """One precise gene deletion of the Keio collection, written against BW25113."""
     return Genotype(
         perturbations=[
-            BacterialDeletionPerturbation(
+            DeletionStrainPerturbation(
                 systematic_gene_name=record.locus_tag,
                 perturbed_gene_name=record.row.label,
                 gene_namespace=BW25113_NAMESPACE,

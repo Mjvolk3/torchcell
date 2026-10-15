@@ -82,7 +82,7 @@ WITH locus tags: "P. putida KT2440 ΔphaABC (PP_5003-5005) ΔmvaB (PP_3540) ∆h
 (PP_3073) ∆ldhA (PP_1649) ∆86kb". Everything built on PIPA is a perturbation in
 ``Genotype``: the pIY670 and pAAT plasmid genes and the two integrated cassettes as
 ``HeterologousPathwayPerturbation``, the esterase, regulator and integration-site
-disruptions as ``BacterialDeletionPerturbation``.
+disruptions as ``DeletionStrainPerturbation``.
 
 WHAT THIS PAPER'S OWN LOCUS TAGS SETTLE THAT THE ANNOTATION CANNOT. Two symbols of this
 background resolve to nothing in the pinned KT2440 annotation, and Table 1 names their
@@ -172,7 +172,6 @@ from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
     BacterialAssemblySet,
     BacterialBackgroundAllele,
-    BacterialDeletionPerturbation,
     BacterialGeneNamespace,
     BacterialReferenceStrain,
     BacterialStrainBackground,
@@ -181,6 +180,7 @@ from torchcell.datamodels.schema import (
     ConcentrationUnit,
     CultureEnvironment,
     CultureFormat,
+    DeletionStrainPerturbation,
     EndpointRule,
     EnvironmentPhysicalPerturbation,
     Experiment,
@@ -2611,11 +2611,9 @@ def _link_mirror_files(raw_dir: str, pins: Iterable[tuple[str, str, str]]) -> No
 # --------------------------------------------------------------------------- #
 # Genotype
 # --------------------------------------------------------------------------- #
-def deletion_perturbation(
-    locus_tag: str, gene_name: str
-) -> BacterialDeletionPerturbation:
+def deletion_perturbation(locus_tag: str, gene_name: str) -> DeletionStrainPerturbation:
     """One chromosomal deletion this campaign made on top of the PIPA chassis."""
-    return BacterialDeletionPerturbation(
+    return DeletionStrainPerturbation(
         systematic_gene_name=locus_tag,
         perturbed_gene_name=gene_name,
         gene_namespace=KT2440_NAMESPACE,
@@ -3133,7 +3131,7 @@ def _match_strain(record: dict[str, Any]) -> str:
     deletions = {
         pert["systematic_gene_name"]
         for pert in perturbations
-        if pert["perturbation_type"] == "bacterial_deletion"
+        if pert["perturbation_type"] == "deletion_strain"
     }
     matches = [
         name

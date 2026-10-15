@@ -742,20 +742,27 @@ def test_binding_members(source: str, members: set[str] | None) -> None:
     assert sd.binding_members(source) == expected
 
 
-def test_live_surface_bacterial_leaves_reach_the_locus_tag_vocabularies() -> None:
-    """On the real schema the #734 leaves reach the namespace Literal directly and the
-    pattern map through ``_validate_bacterial_locus_tag``; ``Genotype`` reaches the
-    ``GenePerturbationType`` union node but not its member classes.
+def test_live_surface_leaves_reach_the_namespace_vocabulary_through_the_base() -> None:
+    """On the real schema every gene-perturbation leaf reaches the namespace Literal and
+    the pattern map through ``GenePerturbation`` (P1: ``gene_namespace`` on the base,
+    ``_validate_host_identifier`` + ``_check_gene_namespace`` over
+    ``GENE_ID_NAMESPACE_PATTERNS``); ``Genotype`` reaches the ``GenePerturbationType``
+    union node but not its member classes.
     """
     surface = sd.load_default_surface()
-    for leaf in ("TransposonInsertionPerturbation", "BacterialDeletionPerturbation"):
+    for leaf in (
+        "TransposonInsertionPerturbation",
+        "DeletionStrainPerturbation",
+        "SgaKanMxDeletionPerturbation",
+    ):
         reach = sd.forward_closure({leaf}, surface.ref_graph)
         assert {
-            "BacterialGeneNamespace",
-            "_validate_bacterial_locus_tag",
-            "BACTERIAL_LOCUS_TAG_PATTERNS",
+            "GeneIdNamespace",
+            "_validate_host_identifier",
+            "_check_gene_namespace",
+            "GENE_ID_NAMESPACE_PATTERNS",
         } <= reach
     assert "GenePerturbationType" in surface.ref_graph["Genotype"]
-    assert "BacterialDeletionPerturbation" not in sd.forward_closure(
+    assert "DeletionStrainPerturbation" not in sd.forward_closure(
         {"Genotype"}, surface.ref_graph
     )

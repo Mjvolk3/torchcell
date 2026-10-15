@@ -22,9 +22,9 @@ from typing import Any
 
 from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
-    BacterialDeletionPerturbation,
     BacterialProteinFoldChangeExperiment,
     BacterialProteinFoldChangeExperimentReference,
+    DeletionStrainPerturbation,
     Environment,
     FoldChangeScale,
     Genotype,
@@ -126,7 +126,7 @@ def _record(
         dataset_name="test",
         genotype=Genotype(
             perturbations=[
-                BacterialDeletionPerturbation(
+                DeletionStrainPerturbation(
                     systematic_gene_name=strain,
                     perturbed_gene_name=strain,
                     gene_namespace="pputida_kt2440_locus_tag",

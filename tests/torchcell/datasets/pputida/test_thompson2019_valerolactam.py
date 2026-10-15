@@ -357,7 +357,7 @@ def test_a_released_zero_rate_is_stored_as_a_zero() -> None:
 def test_the_production_environment_is_lb_with_the_three_stated_additions() -> None:
     """Lysine, arabinose and kanamycin at their stated doses, in a 10 mL culture."""
     env = vl.production_environment(24.0)
-    assert env.media.name.startswith("LB, Miller")
+    assert env.media.name is not None and env.media.name.startswith("LB, Miller")
     assert env.duration_hours == 24.0
     assert env.temperature is not None and env.temperature.value == 30.0
     dosed = [p.model_dump() for p in env.perturbations]
@@ -436,7 +436,7 @@ def test_a_titer_genotype_is_its_deletions_plus_the_production_plasmid() -> None
     """Every titer record carries the three pBADT-davBA-ORF26 genes."""
     genotype = vl.strain_genotype("ΔoplBAΔdavTΔalr", LOCUS_TAGS)
     kinds = [p.perturbation_type for p in genotype.perturbations]
-    assert kinds.count("bacterial_deletion") == 4
+    assert kinds.count("deletion_strain") == 4
     assert kinds.count("heterologous_pathway") == 3
     plasmid = {
         p.perturbed_gene_name: p
@@ -463,9 +463,7 @@ def test_a_growth_genotype_carries_no_plasmid_and_the_wild_type_carries_nothing(
         "PP_3514",
         "PP_3515",
     ]
-    assert {p.perturbation_type for p in genotype.perturbations} == {
-        "bacterial_deletion"
-    }
+    assert {p.perturbation_type for p in genotype.perturbations} == {"deletion_strain"}
 
 
 def test_the_strain_table_is_the_four_titer_strains_and_the_davt_single() -> None:

@@ -14,9 +14,9 @@ growth tables as ``BacterialFitnessExperiment`` records.
 
 RECORD = one (strain, medium, inducer dose) normalized colony growth:
 
-- GENOTYPE: a ``BacterialCrisprInterferencePerturbation`` on the
+- GENOTYPE: a ``CrisprInterferencePerturbation`` on the
   ``ecoli_k12_bw25113_locus_tag`` namespace whose ``crispr`` construct carries the dCas9
-  effector and the 20 nt Table S1 spacer, and/or a ``BacterialDeletionPerturbation``.
+  effector and the 20 nt Table S1 spacer, and/or a ``DeletionStrainPerturbation``.
   The crossed rows carry BOTH: an essential gene reachable only by knockdown together
   with a non-essential gene reachable only by deletion, which is the combination no
   deletion collection can produce. 32,499 of the 48,900 records are such
@@ -184,14 +184,14 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import LB, MOPS_MINIMAL
 from torchcell.datamodels.schema import (
-    BacterialCrisprInterferencePerturbation,
-    BacterialDeletionPerturbation,
     BacterialFitnessExperiment,
     BacterialFitnessExperimentReference,
     ComponentDefinition,
     Concentration,
     ConcentrationUnit,
     CrisprConstruct,
+    CrisprInterferencePerturbation,
+    DeletionStrainPerturbation,
     DerivedIdentifierMapping,
     DoseBasis,
     Environment,
@@ -1495,13 +1495,13 @@ def resolve_labels(
 # --------------------------------------------------------------------------- #
 def knockdown(
     well: CollectionWell, locus_tag: str, symbol: str | None = None
-) -> BacterialCrisprInterferencePerturbation:
+) -> CrisprInterferencePerturbation:
     """The CRISPRi knockdown one collection well carries, on its BW25113 locus.
 
     ``symbol`` is the pinned annotation's own spelling for ``locus_tag`` and defaults to
     the released one, which is what Table S1 spells it.
     """
-    return BacterialCrisprInterferencePerturbation(
+    return CrisprInterferencePerturbation(
         systematic_gene_name=locus_tag,
         perturbed_gene_name=symbol or well.symbol,
         gene_namespace=BW25113_NAMESPACE,
@@ -1516,13 +1516,13 @@ def knockdown(
 
 def deletion(
     label: str, locus_tag: str, *, symbol: str | None = None, well: str | None = None
-) -> BacterialDeletionPerturbation:
+) -> DeletionStrainPerturbation:
     """One kanamycin-cassette deletion of the Keio collection, against BW25113.
 
     ``label`` is the released spelling and rides on ``identifier_mapping``; ``symbol`` is
     the pinned annotation's own spelling and defaults to the released one.
     """
-    return BacterialDeletionPerturbation(
+    return DeletionStrainPerturbation(
         systematic_gene_name=locus_tag,
         perturbed_gene_name=symbol or label,
         gene_namespace=BW25113_NAMESPACE,
@@ -1568,7 +1568,7 @@ def _guide_rows(
 ) -> Iterator[Row]:
     """Writable rows of a CRISPRi-collection table, one per (well, block)."""
     for block in blocks:
-        background: list[BacterialDeletionPerturbation] = []
+        background: list[DeletionStrainPerturbation] = []
         if block.background is not None:
             background = [
                 deletion(
@@ -1605,7 +1605,7 @@ def _keio_rows(
     blocks: Sequence[GrowthBlock],
     resolution: Resolution,
     repeated_labels: frozenset[str],
-    knockdowns: Mapping[str, BacterialCrisprInterferencePerturbation],
+    knockdowns: Mapping[str, CrisprInterferencePerturbation],
 ) -> Iterator[Row]:
     """Writable rows of Table S4A, one per (deletion row, CRISPRi plasmid block)."""
     for block in blocks:
@@ -2156,9 +2156,9 @@ VERIFIER_PROVENANCE = Provenance(
         "legends call the same duplicate biological, and the dispersion is a typed gap "
         "because no table releases one. screen_id names the released table, which is "
         "what keeps Table S2A's and Table S3's two independent MOPS runs of the same "
-        "strains distinguishable. Genotype = a BacterialCrisprInterferencePerturbation "
+        "strains distinguishable. Genotype = a CrisprInterferencePerturbation "
         "(dCas9, the 20 nt Table S1 spacer of the row's well, n_guides=1) and/or a "
-        "BacterialDeletionPerturbation of the Keio collection (kanamycin cassette); the "
+        "DeletionStrainPerturbation of the Keio collection (kanamycin cassette); the "
         "crossed rows carry both. Environment = solid LB (15 g/L agar) or solid "
         "MOPS-glucose minimal (1.5% w/v agar, glucose amount unset) at 37 C, aerobic, "
         "plus the column's aTc as a SmallMoleculePerturbation in ug/mL; the 0 ng/mL "
@@ -2240,12 +2240,12 @@ def crossed_genotypes_carry_both_kinds(
         for record in records
     )
     allowed = {
-        ("bacterial_crispr_interference",),
-        ("bacterial_deletion",),
-        ("bacterial_crispr_interference", "bacterial_deletion"),
+        ("crispr_interference",),
+        ("deletion_strain",),
+        ("crispr_interference", "deletion_strain"),
     }
     unexpected = {key: count for key, count in kinds.items() if key not in allowed}
-    crossed = kinds.get(("bacterial_crispr_interference", "bacterial_deletion"), 0)
+    crossed = kinds.get(("crispr_interference", "deletion_strain"), 0)
     return LevelResult(
         level=Level.L1,
         name="crossed_genotypes_carry_both_kinds",

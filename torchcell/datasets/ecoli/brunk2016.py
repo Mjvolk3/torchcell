@@ -167,7 +167,6 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     BacterialGeneNamespace,
-    BacterialStrainBackground,
     ComponentDefinition,
     Compound,
     Concentration,
@@ -195,6 +194,7 @@ from torchcell.datamodels.schema import (
     Publication,
     ReferenceGenome,
     SmallMoleculePerturbation,
+    StrainBackground,
     Temperature,
 )
 from torchcell.datasets.bacteria_common import (
@@ -1582,7 +1582,7 @@ def publication() -> Publication:
     )
 
 
-def host_background() -> BacterialStrainBackground:
+def host_background() -> StrainBackground:
     """Plain DH1, pinned to the MG1655 assembly, with no asserted lesions.
 
     ``alleles`` is empty because the paper names DH1 and its supplier and never writes
@@ -1590,7 +1590,7 @@ def host_background() -> BacterialStrainBackground:
     MG1655. The pin is MG1655 because the four native pathway genes are E. coli genes
     whose b-numbers belong to that assembly.
     """
-    return BacterialStrainBackground(
+    return StrainBackground(
         name=HOST_STRAIN_NAME,
         reference_strain=REFERENCE_STRAIN,
         assembly_set="ecoli_K12_MG1655_ASM584v2",

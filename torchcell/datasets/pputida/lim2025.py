@@ -46,7 +46,7 @@ which (:func:`released_row_representation`, measured and partitioning all 159 ro
 3. everything else (117 rows) -> ``LocusVariantCallPerturbation`` on its one
    locus. ``PP_3415`` carries TWO of these within A12_F53_I1 (P293S at 3,866,001 and
    V46I at 3,866,742), which ``Genotype.perturbations`` admits: it has no
-   one-entry-per-locus rule, unlike ``BacterialStrainBackground``.
+   one-entry-per-locus rule, unlike ``StrainBackground``.
 
 THE ``Gene`` CELL IS USUALLY A SYMBOL, AND RESOLVING IT IS NOT OPTIONAL. Measured over
 all 241 distinct ``Gene`` tokens of the sheet, 151 are already KT2440 locus tags and 90
@@ -101,11 +101,11 @@ WHAT STILL REFUSES, WITH COUNTS.
 - ``PP_2676``'s 14-codon N-terminal truncation on the PERTURBATION axis. The release
   gives no coordinate for it and no coding range, so it cannot be a
   ``LocusVariantCallPerturbation`` of deletion type either; it stays a
-  ``BacterialBackgroundAllele(partial_deletion)`` on the IPL400 background and a stated
+  ``BackgroundAllele(partial_deletion)`` on the IPL400 background and a stated
   gap in ``preprocess/genotype_gaps.json``.
-- A called variant on the strain-BACKGROUND axis. ``BacterialBackgroundAllele`` requires
+- A called variant on the strain-BACKGROUND axis. ``BackgroundAllele`` requires
   a non-optional ``functional: bool`` a call's consequence is unknown for, and
-  ``BacterialStrainBackground`` permits one allele per locus, which refuses A12_F53_I1's
+  ``StrainBackground`` permits one allele per locus, which refuses A12_F53_I1's
   two ``PP_3415`` calls. Each proteome record's ``genome_reference`` therefore carries
   IPL400's background, which for the two evolved isolates is a FLOOR on the genomic
   content of their own unstressed reference arm. The second
@@ -136,7 +136,7 @@ strain. The bacterial PERTURBATION axis has no partial-deletion leaf
 (``DeletionStrainPerturbation`` is ``state="absent"``), so:
 
 - :class:`ProteomeLim2025Dataset`, whose comparison is IPL400-stressed against
-  IPL400-unstressed, states the whole strain on a ``BacterialStrainBackground``: seven
+  IPL400-unstressed, states the whole strain on a ``StrainBackground``: seven
   ``full_deletion`` alleles plus ``PP_2676`` as a ``partial_deletion``, each with a typed
   ``deleted_span`` gap (no source gives coordinates). That is exactly how row 14 types
   its ``PT`` background, and it is where the truncation CAN be said.
@@ -260,10 +260,9 @@ from torchcell.datamodels.schema import (
     BACTERIAL_ASSEMBLY_SETS,
     AlleleEdit,
     AssayType,
+    BackgroundAllele,
     BacterialAssemblySet,
-    BacterialBackgroundAllele,
     BacterialGeneNamespace,
-    BacterialStrainBackground,
     Compound,
     Concentration,
     ConcentrationUnit,
@@ -292,6 +291,7 @@ from torchcell.datamodels.schema import (
     SiteVariantCallPerturbation,
     SmallMoleculePerturbation,
     SpanDeletionCallPerturbation,
+    StrainBackground,
     StrainConstruction,
     VariantCallMode,
     VariantFrequencyBasis,
@@ -1657,7 +1657,7 @@ class CalledVariant(BaseModel):
         "(measured: 8 rows). The perturbation axis admits both, because "
         "Genotype.perturbations has no one-entry-per-locus rule; the strain-BACKGROUND "
         "axis does not, which is why a called variant is never a "
-        "BacterialBackgroundAllele"
+        "BackgroundAllele"
     )
 
 
@@ -2320,9 +2320,7 @@ def deletion(
     )
 
 
-def ipl_background(
-    strain: str, symbols: Mapping[str, str]
-) -> BacterialStrainBackground:
+def ipl_background(strain: str, symbols: Mapping[str, str]) -> StrainBackground:
     """The whole genome content IPL300 or IPL400 carries beyond the KT2440 assembly.
 
     Typed the way the de Siqueira 2025 loader types the same physical lesion (row 14's
@@ -2353,7 +2351,7 @@ def ipl_background(
         "table gives coordinates for any of these deletions",
     )
     alleles = [
-        BacterialBackgroundAllele(
+        BackgroundAllele(
             systematic_gene_name=tag,
             gene_namespace=KT2440_NAMESPACE,
             gene_name=symbols.get(tag, tag),
@@ -2367,7 +2365,7 @@ def ipl_background(
         for tag in sorted(deleted)
     ]
     alleles.append(
-        BacterialBackgroundAllele(
+        BackgroundAllele(
             systematic_gene_name=PP2676_LOCUS,
             gene_namespace=KT2440_NAMESPACE,
             gene_name=symbols.get(PP2676_LOCUS, PP2676_LOCUS),
@@ -2379,7 +2377,7 @@ def ipl_background(
             provenance_gaps=[span_gap],
         )
     )
-    return BacterialStrainBackground(
+    return StrainBackground(
         name=strain,
         reference_strain="KT2440",
         assembly_set=KT2440_ASSEMBLY_SET,
@@ -2553,7 +2551,7 @@ def fold_change_reference_basis(
     exports carry ``log2_mean_IPL400_M9G``), so the pair is what locates a stored record
     back in the workbook. The genotype string is Supplementary Table 1's own, and the
     SAME content rides this record's ``genome_reference`` typed as a
-    ``BacterialStrainBackground``, so the denominator is a stated genotype and not only a
+    ``StrainBackground``, so the denominator is a stated genotype and not only a
     sentence.
     """
     return (
@@ -2561,7 +2559,7 @@ def fold_change_reference_basis(
         f"and the same export: the {denominator_column!r} arm of Supplementary Data 1's "
         f"{contrast.sheet} sheet. Its genotype is "
         f"'{SI1_STATEMENTS['ipl400_genotype']}' (Supplementary Table 1), carried typed "
-        "on this record's genome_reference as a BacterialStrainBackground of seven "
+        "on this record's genome_reference as a StrainBackground of seven "
         "full_deletion alleles plus PP_2676 as a partial_deletion"
     )
 
@@ -2758,7 +2756,7 @@ def genotype_gaps() -> list[GenotypeGap]:
             reason="the bacterial perturbation axis has no partial-deletion leaf "
             "(DeletionStrainPerturbation is state='absent'), so a strain-against-"
             "KT2440 record cannot state it. It IS typed as a "
-            "BacterialBackgroundAllele(partial_deletion) on the IPL400 background the "
+            "BackgroundAllele(partial_deletion) on the IPL400 background the "
             "proteome loader writes, which is the same typing the de Siqueira 2025 "
             "loader gives the same lesion",
             source_quote=SI1_STATEMENTS["pp2676_truncation"],
@@ -2769,10 +2767,10 @@ def genotype_gaps() -> list[GenotypeGap]:
             "The proteome record's genome_reference carries its parent IPL400's "
             "background (seven full_deletion alleles plus PP_2676), which is a FLOOR on "
             "the genomic content of the isolate's own unstressed reference arm",
-            reason="BacterialBackgroundAllele requires a non-optional functional: bool, "
+            reason="BackgroundAllele requires a non-optional functional: bool, "
             "which a called variant's consequence is unknown for and a ProvenanceGap "
             "cannot cover (a gap must name a field that is None), and "
-            "BacterialStrainBackground permits one allele entry per locus, which refuses "
+            "StrainBackground permits one allele entry per locus, which refuses "
             "A12_F53_I1's two PP_3415 calls. The calls ARE written, on the PERTURBATION "
             "axis, as the three #731 leaves on each record's genotype",
             source_quote=SOURCED_VALUES["evolved_isolate_parent"].quote,
@@ -3409,12 +3407,12 @@ class ProteomeLim2025Dataset(ExperimentDataset):
                 "the sheets' own evolved-vs-IPL400 ratio is not stored, because the "
                 "difference of the two stored means IS it",
                 "every record's genome_reference carries the IPL400 "
-                "BacterialStrainBackground (seven full_deletion alleles plus PP_2676 as "
+                "StrainBackground (seven full_deletion alleles plus PP_2676 as "
                 "a partial_deletion); the same deletions also ride each genotype as the "
                 "ML-facing edits, which is how the de Siqueira 2025 loader types its PT "
                 "strain. For the two evolved isolates that background is a FLOOR on the "
                 "reference arm's genomic content, because a called variant cannot be a "
-                "BacterialBackgroundAllele; preprocess/genotype_gaps.json states it",
+                "BackgroundAllele; preprocess/genotype_gaps.json states it",
                 "the called variants of each evolved isolate ARE written, on the "
                 "perturbation axis: "
                 + "; ".join(
@@ -3532,7 +3530,7 @@ class ProteomeLim2025Dataset(ExperimentDataset):
         os.makedirs(self.processed_dir, exist_ok=True)
         # Every record's reference strain is the PARENT's designed content: IPL400's
         # background is what CAN be said of an evolved isolate's background, since a
-        # called variant is no BacterialBackgroundAllele (genotype_gaps.json states it).
+        # called variant is no BackgroundAllele (genotype_gaps.json states it).
         genome_reference = assembly_reference(
             "KT2440", background=ipl_background(self.PARENT_STRAIN, symbols)
         )
@@ -3658,7 +3656,7 @@ FOLD_CHANGE_REFUSALS: dict[str, str] = {
     "(log2_Fold_change_A/B is log2_mean_IPL400_pIY670 over "
     "log2_mean_A10F63I1_pIY670, measured off this sheet's own header), so the "
     "denominator arm's genomic content would have to be stated on the "
-    "strain-BACKGROUND axis. A called variant is no BacterialBackgroundAllele "
+    "strain-BACKGROUND axis. A called variant is no BackgroundAllele "
     "(genotype_gaps.json), so a record here would either name a denominator it cannot "
     "write or invert the sign. Separately, MEDIA_LIBRARY carries no M9 at 20 g/L "
     "glucose with 50 mg/L kanamycin and 2 g/L arabinose, which the Methods DO state, so "
@@ -3683,7 +3681,7 @@ class ProteomeFoldChangeLim2025Dataset(ExperimentDataset):
     THE DENOMINATOR IS A STATED GENOTYPE, NOT A SENTENCE. ``reference_basis`` names
     IPL400 in the source's own terms and quotes Supplementary Table 1's genotype string,
     and the same content rides ``genome_reference`` as the IPL400
-    ``BacterialStrainBackground`` -- seven ``full_deletion`` alleles plus ``PP_2676`` as a
+    ``StrainBackground`` -- seven ``full_deletion`` alleles plus ``PP_2676`` as a
     ``partial_deletion``, each with a typed ``deleted_span`` gap. That background is EXACT
     here rather than a floor, which is the one way this family is better off than the
     absolute one: the denominator arm of these four contrasts literally IS IPL400, while
@@ -3796,7 +3794,7 @@ class ProteomeFoldChangeLim2025Dataset(ExperimentDataset):
                     description="the pIY670 production contrasts invert the direction: "
                     "arm A is IPL400 and arm B is the evolved isolate, so the record's "
                     "denominator would be a clone whose called variants no "
-                    "BacterialBackgroundAllele can state. The medium is NOT the reason, "
+                    "BackgroundAllele can state. The medium is NOT the reason, "
                     "which this build corrects: the Methods state it verbatim "
                     "(SOURCED_VALUES['piy670_production_medium']), although MEDIA_LIBRARY "
                     "would still need an M9 at 20 g/L glucose with kanamycin",

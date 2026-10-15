@@ -59,7 +59,6 @@ from torchcell.data import ManifestPinMismatchError
 from torchcell.datamodels.identity import media_identity
 from torchcell.datamodels.media import MEDIA_LIBRARY
 from torchcell.datamodels.schema import (
-    BacterialStrainBackground,
     ComponentDefinition,
     ConcentrationUnit,
     DoseBasis,
@@ -70,6 +69,7 @@ from torchcell.datamodels.schema import (
     ReleasedIdentifierPerturbation,
     ReleasedKind,
     SmallMoleculePerturbation,
+    StrainBackground,
     StrainReferenceGenome,
 )
 from torchcell.sequence.genome.ecoli.k12 import MG1655_ASSEMBLY
@@ -916,7 +916,7 @@ MG1655_PIN = ReferenceGenome(
 
 
 def _pinned(
-    strain: str, *, background: BacterialStrainBackground | None = None
+    strain: str, *, background: StrainBackground | None = None
 ) -> ReferenceGenome:
     """The MG1655 pin, on a released strain's background when one is given."""
     if background is None:

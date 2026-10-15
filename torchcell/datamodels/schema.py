@@ -342,9 +342,10 @@ One member per deposited strain assembly set, because a ``BW25113_`` number is N
 MG1655 b-number (measured: joining the two by gene name leaves 45 disagreements and 230
 BW25113 genes absent from MG1655, so no string surgery relates them). Since the P1
 unification (ontology-unify, 2026-10-15) every gene perturbation carries
-``gene_namespace: GeneIdNamespace``; this sub-vocabulary remains only as the type of
-``BacterialBackgroundAllele.gene_namespace`` and of the loaders' strain-to-namespace
-tables, and retires with that class (P5).
+``gene_namespace: GeneIdNamespace``, and since the P5 unification so does every
+``BackgroundAllele``; this sub-vocabulary remains as the bacterial rows of that
+vocabulary and as the type of the loaders' strain-to-namespace tables
+(``torchcell.datasets.bacteria_common.STRAIN_GENE_NAMESPACES``).
 """
 
 GeneIdNamespace = Literal[
@@ -425,44 +426,28 @@ BACTERIAL_LOCUS_TAG_PATTERNS: dict[str, str] = {
     for namespace in get_args(BacterialGeneNamespace)
 }
 """The bacterial rows of :data:`GENE_ID_NAMESPACE_PATTERNS`, keyed as
-:data:`BacterialGeneNamespace` lists them; what ``_validate_bacterial_locus_tag`` and
-the loaders' ``LOCUS_TAG_PATTERNS`` read."""
+:data:`BacterialGeneNamespace` lists them; what ``BACTERIAL_LOCUS_TAG_PATTERN`` and the
+loaders' ``LOCUS_TAG_PATTERNS`` read."""
 
 BACTERIAL_LOCUS_TAG_PATTERN = (
     "^(?:"
     + "|".join(pattern[1:-1] for pattern in BACTERIAL_LOCUS_TAG_PATTERNS.values())
     + ")$"
 )
-"""Any bacterial namespace's tag -- what ``BacterialBackgroundAllele`` accepts.
+"""Any bacterial namespace's tag, as one pattern.
 
 Before P1 every bacterial perturbation leaf overrode the name validator with this
 union; the leaves now share ``GenePerturbation``'s validator over every
-:data:`GeneIdNamespace` member, and this union serves the one bacterial-only class left.
+:data:`GeneIdNamespace` member, and since P5 so does ``BackgroundAllele``. What reads it
+is the loaders' own tag check (``torchcell.datasets.bacteria_common``), where a release's
+identifiers are tested against the bacterial spaces alone.
 """
-
-
-def _validate_bacterial_locus_tag(value: str) -> str:
-    """Return ``value`` if it is a locus tag of one of the bacterial namespaces.
-
-    Used by ``BacterialBackgroundAllele`` (retired with it in P5); every gene
-    perturbation leaf validates through ``_validate_host_identifier`` instead.
-    """
-    if not re.match(BACTERIAL_LOCUS_TAG_PATTERN, value):
-        raise ValueError(
-            f"Invalid bacterial locus tag {value!r}; expected one of "
-            + ", ".join(
-                f"{namespace} ({pattern})"
-                for namespace, pattern in BACTERIAL_LOCUS_TAG_PATTERNS.items()
-            )
-        )
-    return value
 
 
 def _namespace_of_locus_tag(value: str) -> str | None:
     """The BACTERIAL namespace whose pattern ``value`` matches, or ``None``.
 
-    What ``BacterialBackgroundAllele`` and ``DerivedIdentifierMapping`` read; ``None``
-    is not a failure. The released leaf no longer refuses a locus tag (P3: a released
+    What ``DerivedIdentifierMapping`` reads; ``None`` is not a failure. The released leaf no longer refuses a locus tag (P3: a released
     record's name is whatever the source wrote, and the base namespace check keeps a
     host-form identifier on the declared host).
     """
@@ -792,8 +777,9 @@ BacterialAssemblySet = Literal[
     "ecoli_K12_W3110_ASM1024v1",
     # --- end #910 ---------------------------------------------------------------- #
 ]
-"""A deposited bacterial assembly set id: the sub-vocabulary ``BacterialStrainBackground``
-pins, one per ``BacterialReferenceStrain`` (``BACTERIAL_ASSEMBLY_SETS``).
+"""A deposited bacterial assembly set id: the bacterial rows of :data:`AssemblySet`, one
+per ``BacterialReferenceStrain`` (``BACTERIAL_ASSEMBLY_SETS``), which the loaders'
+assembly helpers are typed by.
 """
 
 YeastAssemblySet = Literal[
@@ -801,11 +787,6 @@ YeastAssemblySet = Literal[
 ]
 """A deposited S. cerevisiae assembly set id: the SGD S288C R64-4-1 release and the
 CEN.PK113-7D GenBank assembly (ASM257140v2), each a FASTA plus GFF set in the tier."""
-
-#: The S288C set id, bound once for the yeast cross-check in ``StrainReferenceGenome``
-#: (every ``StrainBackground`` is an edit against S288C); loaders import the registry's
-#: own ``SGD_S288C_R64`` constant, which ``test_schema.py`` pins equal to this.
-SGD_S288C_ASSEMBLY_SET = "sgd_S288C_R64-4-1_20230830"
 
 AssemblySet = Literal[
     "ecoli_K12_MG1655_ASM584v2",
@@ -826,6 +807,11 @@ The vocabulary names ASSEMBLIES only; the registry's other sets are excluded by 
 ``NON_ASSEMBLY_REGISTRY_SETS``, with the reason each is not a reference a record can
 be written against.
 """
+
+#: The S288C set id, typed as the vocabulary member it is so a loader that pins it
+#: type-checks against the closed set; loaders import the registry's own
+#: ``SGD_S288C_R64`` constant, which ``test_schema.py`` pins equal to this.
+SGD_S288C_ASSEMBLY_SET: Final[AssemblySet] = "sgd_S288C_R64-4-1_20230830"
 
 #: Registry sets that are NOT an assembly a record pins, each with its reason. The
 #: vocabulary test proves ``AssemblySet`` plus these keys is exactly the registry's ids,
@@ -868,6 +854,36 @@ ASSEMBLY_SET_ACCESSIONS: dict[str, tuple[str, ...]] = {
 
 ASSEMBLY_ACCESSION_PATTERN = r"^GC[AF]_\d{9}\.\d+$"
 
+ReferenceStrain = Literal[
+    "S288C", "CENPK113-7D", "MG1655", "BW25113", "KT2440", "REL606", "W3110"
+]
+"""The sequenced strain a ``StrainBackground``'s alleles are edits against (P5).
+
+One member per deposited assembly set, which is what makes the vocabulary closed and
+total: ``REFERENCE_STRAIN_ASSEMBLY_SETS`` maps every member to its set, so a background
+that can name its reference strain can always name the bytes that strain means. The
+five bacterial members are :data:`BacterialReferenceStrain`; the two yeast members are
+the SGD S288C R64 release and the deposited CEN.PK113-7D assembly. There is no member
+for a strain whose reference is not deposited: an edit list of such a background against
+a reference it is not written for would be thousands of variants, which this object is
+not for.
+"""
+
+#: Assembly set of each :data:`ReferenceStrain`, the bacterial half being
+#: :data:`BACTERIAL_ASSEMBLY_SETS`. Total over the vocabulary by construction, which is
+#: why ``StrainBackground.assembly_set`` is required outright rather than value-or-gap:
+#: ``ReferenceGenome.strain`` is a free string and may name a strain the tier has not
+#: deposited, so that field needs a typed gap, while a background that states its
+#: reference strain has already stated a deposited set. Every value is an
+#: :data:`AssemblySet` member; the converse does not hold, because a deposited set need
+#: not be some strain's own reference (the Peter 2018 panel is not one at all). Pinned
+#: by ``test_strain_background.py``.
+REFERENCE_STRAIN_ASSEMBLY_SETS: dict[str, str] = {
+    "S288C": "sgd_S288C_R64-4-1_20230830",
+    "CENPK113-7D": "scerevisiae_CENPK113-7D_ASM257140v2",
+    **BACTERIAL_ASSEMBLY_SETS,
+}
+
 
 class GenomicSpan(ModelStrict):
     """A 1-based, end-inclusive interval on one replicon of a deposited assembly set.
@@ -897,26 +913,48 @@ class GenomicSpan(ModelStrict):
 
 
 class BackgroundAllele(ProvenanceGapMixin):
-    """One allele a strain background carries, as an edit against R64.
+    """One allele a strain background carries, as an edit against its reference genome.
+
+    ONE class for every host (P5, ontology-unify 2026-10-15). ``gene_namespace`` names
+    the identifier space ``systematic_gene_name`` is written in, exactly as it does on
+    every ``GenePerturbation`` since P1: before this field a background allele could
+    name a gene and not say which space the name was in, while the perturbation beside
+    it could, and the only way to state a bacterial locus tag was to choose the
+    retired ``BacterialBackgroundAllele`` class. It is REQUIRED with no default, since
+    class accepts the identifier of any deposited namespace and so the stored name's
+    form is not by itself the loader's statement of the host; the two must agree
+    (``_namespace_of_identifier``), so a KT2440 tag cannot be filed under the MG1655
+    namespace and a b-number cannot be filed under S288C.
 
     ``allele_name`` is the designation verbatim as the source writes it
-    (``his3Δ1``, ``can1Δ::STE2pr-Sp_his5``); ``gene_name`` is the CURRENT R64
-    standard name (``MET17`` for the ``met15Δ0`` allele); ``systematic_gene_name``
-    is the R64 ORF the edit sits in. ``functional`` says whether the allele keeps the
-    gene's function (False for every BY marker allele), which is what per-locus
-    dosage reads. ``cassette`` is required for a ``cassette_replacement`` and
-    forbidden otherwise.
+    (``his3Δ1``, ``can1Δ::STE2pr-Sp_his5``, ``lacZ4787``); ``gene_name`` is the
+    CURRENT standard name the reference's annotation carries (``MET17`` for the
+    ``met15Δ0`` allele, ``lacZ`` for ``lacZ4787``); ``systematic_gene_name`` is the
+    feature the edit sits in (an R64 ORF name, a locus tag). ``functional`` says
+    whether the allele keeps the gene's function (False for every BY marker allele),
+    which is what per-locus dosage reads. ``cassette`` is required for a
+    ``cassette_replacement`` and forbidden otherwise.
+
+    ``zygosity`` is optional HERE and constrained by the background that carries it: a
+    single-copy genome has one possible copy count and so nothing to state, which
+    ``StrainBackground`` enforces as ``None``, while ``EukaryoticStrainBackground``
+    requires every allele's zygosity to be stated or typed-gapped and to fit the ploidy.
+    The guarantee the yeast records had is therefore unchanged; what moved is where it
+    is asserted, which is the only place that can judge it.
 
     Sourcing contract: ``provenance`` (quote + sha256) or a typed ``ProvenanceGap`` on
     ``provenance``, never neither. A literature-standard allele whose source is not
     mirrored (the BY alleles before Brachmann 1998 is mirrored) is ASSERTED with a
     ``deferred_pending_source_review`` gap naming the paper that would close it, so the
-    record carries the allele and says plainly that it is unverified. ``zygosity``
-    likewise is set or gapped (Hoepfner's whi2 nonsense allele has no stated
-    zygosity). ``deleted_span`` is optional (coordinates are rarely published).
+    record carries the allele and says plainly that it is unverified. ``deleted_span``
+    is optional (coordinates are rarely published).
     """
 
     systematic_gene_name: str
+    gene_namespace: GeneIdNamespace = Field(
+        description="the identifier space 'systematic_gene_name' is written in; it must "
+        "be the space the name's own form belongs to"
+    )
     gene_name: str
     allele_name: str
     edit: AlleleEdit
@@ -924,7 +962,9 @@ class BackgroundAllele(ProvenanceGapMixin):
         description="True if the allele keeps the gene's function; False for a null"
     )
     zygosity: Zygosity | None = Field(
-        description="copies of the background carrying it; None only with a gap"
+        default=None,
+        description="copies of the background carrying it; None on a background that "
+        "states no ploidy, and on a eukaryotic one only with a gap on 'zygosity'",
     )
     cassette: str | None = Field(
         default=None,
@@ -943,14 +983,18 @@ class BackgroundAllele(ProvenanceGapMixin):
     @field_validator("systematic_gene_name", mode="after")
     @classmethod
     def _validate_systematic(cls, v: str) -> str:
-        """The allele sits in a real R64 feature (systematic-name pattern)."""
-        if not re.match(SGD_SYSTEMATIC_GENE_PATTERN, v):
-            raise ValueError(f"Invalid systematic gene name {v!r}")
-        return v
+        """The allele sits in a real feature of some deposited namespace."""
+        return _validate_host_identifier(v)
 
     @model_validator(mode="after")
     def _check_allele(self) -> "BackgroundAllele":
-        """Cassette iff cassette_replacement; provenance and zygosity set or gapped."""
+        """Name agrees with namespace; cassette iff cassette_replacement; sourced."""
+        name_namespace = _namespace_of_identifier(self.systematic_gene_name)
+        if name_namespace != self.gene_namespace:
+            raise ValueError(
+                f"{self.systematic_gene_name!r} is a {name_namespace} name but "
+                f"gene_namespace is {self.gene_namespace!r}"
+            )
         if (self.edit is AlleleEdit.cassette_replacement) != (
             self.cassette is not None
         ):
@@ -958,7 +1002,7 @@ class BackgroundAllele(ProvenanceGapMixin):
                 "cassette is required for a cassette_replacement and forbidden for "
                 f"edit={self.edit.value}"
             )
-        _require_value_or_gap(self, ("provenance", "zygosity"))
+        _require_value_or_gap(self, ("provenance",))
         return self
 
     @property
@@ -968,237 +1012,141 @@ class BackgroundAllele(ProvenanceGapMixin):
 
     @property
     def is_sourced(self) -> bool:
-        """True when neither the allele nor its zygosity is a declared gap."""
-        return not self.provenance_gaps
-
-
-#: Sequence Ontology mechanism of a cassette INTEGRATION. The pair is the one the
-#: gene-addition leaves already pin (``GeneAdditionPerturbation``,
-#: ``NaturalGenePresencePerturbation``), reused here rather than restated: an integrated
-#: cassette is an insertion of sequence absent from R64. ``ALLELE_EDIT_SO`` has no
-#: insertion member, because every ``AlleleEdit`` is a deletion or an in-place variant.
-CASSETTE_INTEGRATION_SO: tuple[str, str] = ("SO:0000667", "insertion")
-
-
-class IntegratedCassette(ProvenanceGapMixin):
-    """One cassette a strain background carries INTEGRATED at a named genomic site.
-
-    The counterpart of ``BackgroundAllele`` on the insertion axis: an allele is an edit
-    AT an R64 locus, a cassette is sequence absent from R64 placed INTO one. The
-    CRISPR-AID host bAID carries
-    ``Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]``, which no
-    ``AlleleEdit`` describes: nothing at the Ty1 delta site is deleted, four effector
-    cassettes and a marker are added.
-
-    ``name`` is the designation verbatim as the source writes it; ``locus`` is the named
-    integration site verbatim (``"Delta"`` for a Ty1 delta site, ``"X3"`` / ``"X4"`` /
-    ``"XI1"`` for a pre-selected intergenic landing pad), which is what the source states
-    and is frequently NOT an ORF. ``locus_systematic_gene_name`` is set only when the site
-    IS an R64 ORF, and is then regex-validated like every other systematic name, so a
-    landing-pad label never masquerades as a gene.
-
-    ``elements`` are the cassette's parts verbatim and IN ORDER, so the composition is
-    queryable without parsing ``name``. ``marker`` is the selection marker when the
-    integration carries one (``KanMX``), ``None`` for a marker-less integration, which
-    the MAGIC gRNA cassettes are.
-
-    Sourcing contract, the same ``_require_value_or_gap`` one ``BackgroundAllele`` has:
-    ``provenance`` (quote + sha256) and ``zygosity`` are each set or carry a typed
-    ``ProvenanceGap``, never a silent ``None``.
-    """
-
-    name: str = Field(
-        description="cassette designation verbatim, as the source writes it"
-    )
-    locus: str = Field(
-        description="the named integration site verbatim (e.g. 'Delta', 'X4'); a landing "
-        "pad label, not necessarily a gene"
-    )
-    locus_systematic_gene_name: str | None = Field(
-        default=None,
-        description="the R64 ORF the cassette sits in, when the site IS an ORF; None for "
-        "an intergenic landing pad or a repeat family",
-    )
-    elements: list[str] = Field(
-        description="the cassette's elements verbatim, in the order the source writes them"
-    )
-    marker: str | None = Field(
-        default=None,
-        description="selection marker the integration carries, verbatim (e.g. 'KanMX'); "
-        "None for a marker-less integration",
-    )
-    zygosity: Zygosity | None = Field(
-        description="copies of the background carrying it; None only with a gap"
-    )
-    provenance: list[SourcedValue] | None = Field(
-        default=None,
-        description="quotes that state this cassette; None only with a gap on "
-        "'provenance'",
-    )
-
-    @field_validator("locus_systematic_gene_name", mode="after")
-    @classmethod
-    def _validate_locus_systematic(cls, v: str | None) -> str | None:
-        """When the integration site is given as an ORF, it is a real R64 feature."""
-        if v is not None and not re.match(SGD_SYSTEMATIC_GENE_PATTERN, v):
-            raise ValueError(f"Invalid systematic gene name {v!r}")
-        return v
-
-    @model_validator(mode="after")
-    def _check_cassette(self) -> "IntegratedCassette":
-        """Name, locus and elements are stated; provenance and zygosity set or gapped."""
-        if not self.name.strip():
-            raise ValueError("IntegratedCassette.name cannot be empty")
-        if not self.locus.strip():
-            raise ValueError("IntegratedCassette.locus cannot be empty")
-        if not self.elements or any(not e.strip() for e in self.elements):
-            raise ValueError(
-                "IntegratedCassette.elements must name at least one non-empty element"
-            )
-        _require_value_or_gap(self, ("provenance", "zygosity"))
-        return self
-
-    @property
-    def mechanism_so(self) -> tuple[str, str]:
-        """(SO id, SO name) of a cassette integration: ``SO:0000667``, insertion."""
-        return CASSETTE_INTEGRATION_SO
-
-    @property
-    def is_sourced(self) -> bool:
-        """True when neither the cassette nor its zygosity is a declared gap."""
+        """True when the allele declares no gap (on its quotes or its zygosity)."""
         return not self.provenance_gaps
 
 
 class StrainBackground(ProvenanceGapMixin):
-    """The genome content a strain carries beyond R64, constant across a collection.
+    """The genome content a strain carries beyond its reference genome.
+
+    ONE class for every host (P5, ontology-unify 2026-10-15), holding what both
+    families state: the strain label, the sequenced strain the alleles are edits
+    against, the deposited bytes that strain means, the parents, the construction, the
+    source's verbatim genotype string and the typed alleles. The retired
+    ``BacterialStrainBackground`` differed from this by exactly the three eukaryote
+    facts, which ``EukaryoticStrainBackground`` carries, and the schema.py comment that
+    chose the duplication chose it on cost.
 
     ``name`` is the strain or lineage label the records join on (``BY4741``,
-    ``BY4743``, or a descriptive name for an SGA progeny pool); it must equal
-    ``StrainReferenceGenome.strain``. ``parents`` are the strains it was made from, verbatim
-    (``["BY4741", "BY4742"]`` for BY4743; the SGA query and array for a progeny
-    pool). ``construction`` is a one-line method statement (how the background was
-    made, e.g. an SGA cross and its selections). ``reference_strain`` is the sequenced
-    strain every allele is an edit against; it is pinned to S288C because the edit
-    list of a non-S288C background against R64 would be thousands of variants, which
-    this object is not for.
+    ``BW25113``, or a descriptive name for an SGA progeny pool); it must equal
+    ``StrainReferenceGenome.strain``. ``parents`` are the strains it was made from,
+    verbatim (``["BY4741", "BY4742"]`` for BY4743; the SGA query and array for a
+    progeny pool). ``construction`` is a one-line method statement (how the background
+    was made, e.g. an SGA cross and its selections). ``genotype_statement`` is the
+    genotype exactly as the source writes it, kept beside the typed alleles so nothing
+    the source said is lost: BW25113's lesions come from its own deposited GenBank
+    ``source`` feature rather than from a paper, and a yeast strain table states the
+    same kind of string.
 
-    ``mating_type`` and ``provenance`` are set or gapped (a typed absence, never a
-    silent None). A haploid background is MATa or MATalpha; every allele's zygosity
-    must fit the ploidy (``haploid`` in a haploid, ``homozygous``/``heterozygous`` in a
-    diploid), and so must every integration's. A gene carries one allele entry, or two
-    heterozygous entries for a compound heterozygote.
+    ``reference_strain`` is the sequenced strain every allele is an edit against and
+    ``assembly_set`` is the deposited set that strain means; the two must agree
+    (``REFERENCE_STRAIN_ASSEMBLY_SETS``). The pin is REQUIRED with no default and no
+    typed gap, which is the one place this field's contract differs from
+    ``ReferenceGenome.assembly_set``: that carrier's companion field is the free string
+    ``strain`` and may name a strain the tier has not deposited, so it needs the gap,
+    while ``reference_strain`` here is a closed vocabulary with one member per deposited
+    set, so a background that can name its reference has already named a deposited set
+    and a gap branch would be unreachable. A background whose reference is not deposited
+    is not representable, deliberately: its edit list against another reference would be
+    thousands of variants.
 
-    ``integrations`` carries the cassettes the strain has INTEGRATED (an engineered host
-    such as bAID, whose Cas effectors sit at a Ty1 delta site). It is separate from
-    ``alleles`` because an insertion at a landing pad is not an edit to an R64 ORF and
-    has no ``AlleleEdit``; it defaults to empty, so every background written before it
-    existed reads exactly as before.
+    ``provenance`` is set or gapped (a typed absence, never a silent None). A single-copy
+    genome carries one allele entry per locus and states no copy count, so every
+    allele's ``zygosity`` is ``None`` here; ``EukaryoticStrainBackground`` is where a
+    copy count is a fact and is required.
     """
 
     name: str
-    reference_strain: Literal["S288C"] = "S288C"
+    reference_strain: ReferenceStrain = Field(
+        description="the sequenced strain every allele is an edit against"
+    )
+    assembly_set: AssemblySet = Field(
+        description="the deposited set 'reference_strain' means (FASTA plus GFF in the "
+        "genomes tier); required with no default, since the reference-strain vocabulary "
+        "has one member per deposited set"
+    )
     parents: list[str] | None = Field(
         default=None, description="strains this background was made from, verbatim"
     )
     construction: str | None = Field(
         default=None, description="how the background was made, one line"
     )
-    mating_type: MatingType | None = Field(
-        description="MAT locus state; None only with a gap on 'mating_type'"
+    genotype_statement: str | None = Field(
+        default=None,
+        description="the background genotype exactly as the source writes it (e.g. "
+        "BW25113's 'rrnB3 lacZ4787 hsdR514 (araBAD)567 (rhaBAD)568 rph-1'), kept "
+        "verbatim beside the typed alleles so nothing the source said is lost",
     )
-    ploidy: Literal["haploid", "diploid"]
     alleles: list[BackgroundAllele] = Field(
         default_factory=list,
-        description="every non-R64 allele of the background, each sourced or gapped",
-    )
-    integrations: list[IntegratedCassette] = Field(
-        default_factory=list,
-        description="every cassette the background carries integrated at a named site, "
-        "each sourced or gapped; empty for a strain that carries none",
+        description="every allele of the background beyond the reference assembly, each "
+        "sourced or gapped; empty when the source states only a genotype string",
     )
     provenance: list[SourcedValue] | None = Field(
         default=None,
-        description="quotes stating the strain name / mating type / ploidy; None only "
-        "with a gap on 'provenance'",
+        description="quotes stating the strain name and genotype; None only with a gap "
+        "on 'provenance'",
     )
 
     @model_validator(mode="after")
     def _check_background(self) -> "StrainBackground":
-        """Sourced-or-gapped, MAT vs ploidy, zygosity vs ploidy, one entry per locus."""
+        """Named, sourced-or-gapped, consistent strain and assembly, legal alleles."""
         if not self.name.strip():
-            raise ValueError("StrainBackground.name cannot be empty")
-        _require_value_or_gap(self, ("mating_type", "provenance"))
-        if self.ploidy == "haploid" and self.mating_type is MatingType.a_alpha:
-            raise ValueError("a haploid background cannot be MATa/MATalpha")
-        allowed = (
-            {Zygosity.haploid}
-            if self.ploidy == "haploid"
-            else {Zygosity.homozygous, Zygosity.heterozygous}
-        )
-        for cassette in self.integrations:
-            if cassette.zygosity is not None and cassette.zygosity not in allowed:
-                raise ValueError(
-                    f"{cassette.name}: zygosity {cassette.zygosity.value} does not fit "
-                    f"a {self.ploidy} background"
-                )
-        by_gene: dict[str, list[BackgroundAllele]] = {}
-        for allele in self.alleles:
-            if allele.zygosity is not None and allele.zygosity not in allowed:
-                raise ValueError(
-                    f"{allele.allele_name}: zygosity {allele.zygosity.value} does not "
-                    f"fit a {self.ploidy} background"
-                )
-            by_gene.setdefault(allele.systematic_gene_name, []).append(allele)
-        for gene, entries in by_gene.items():
-            if len(entries) == 1:
-                continue
-            if len(entries) > 2 or any(
-                e.zygosity is not Zygosity.heterozygous for e in entries
-            ):
-                raise ValueError(
-                    f"{gene}: more than one allele entry is allowed only as two "
-                    "heterozygous alleles of a diploid (a compound heterozygote)"
-                )
+            raise ValueError(f"{type(self).__name__}.name cannot be empty")
+        _require_value_or_gap(self, ("provenance",))
+        expected = REFERENCE_STRAIN_ASSEMBLY_SETS[self.reference_strain]
+        if self.assembly_set != expected:
+            raise ValueError(
+                f"reference strain {self.reference_strain!r} is assembly set "
+                f"{expected!r}, not {self.assembly_set!r}"
+            )
+        self._check_alleles()
         return self
 
+    def _check_alleles(self) -> None:
+        """One entry per locus, and no copy count: this background states no ploidy.
+
+        A plain method rather than a validator so the eukaryotic subclass can state the
+        ploidy-dependent rules in its place and the base's other checks still run.
+        """
+        seen: set[str] = set()
+        for allele in self.alleles:
+            if allele.zygosity is not None:
+                raise ValueError(
+                    f"{allele.allele_name}: zygosity {allele.zygosity.value} is stated "
+                    f"but a {type(self).__name__} states no ploidy, so a copy count "
+                    "carries no information"
+                )
+            if allele.systematic_gene_name in seen:
+                raise ValueError(
+                    f"{allele.systematic_gene_name}: a single-copy background carries "
+                    "one allele entry per locus"
+                )
+            seen.add(allele.systematic_gene_name)
+
     def alleles_at(self, systematic_gene_name: str) -> list[BackgroundAllele]:
-        """The background's allele entries at one locus (empty = the R64 allele)."""
+        """The background's allele entries at one locus (empty = the reference allele)."""
         return [
             a for a in self.alleles if a.systematic_gene_name == systematic_gene_name
         ]
 
     def functional_copies(self, systematic_gene_name: str) -> int:
-        """Functional copies of a gene in the UNPERTURBED background.
+        """Functional copies of a gene in the UNPERTURBED background: 1 or 0.
 
-        Ploidy copies minus the copies carrying a non-functional background allele:
-        BY4743 ``his3Δ1/his3Δ1`` -> 0, ``LYS2/lys2Δ0`` -> 1, an untouched gene -> 2.
-        Raises when an allele at the locus has a gapped zygosity, since the count is
-        then not determined by the record.
+        One copy, so the answer is 1 unless the background carries a non-functional
+        allele at the locus. ``EukaryoticStrainBackground`` overrides this with the
+        ploidy-aware count.
         """
-        copies = 1 if self.ploidy == "haploid" else 2
-        for allele in self.alleles_at(systematic_gene_name):
-            if allele.functional:
-                continue
-            if allele.zygosity is None:
-                raise ValueError(
-                    f"{allele.allele_name}: zygosity is a ProvenanceGap, so the "
-                    "functional copy number at this locus is undetermined"
-                )
-            copies -= 2 if allele.zygosity is Zygosity.homozygous else 1
-        return copies
+        return (
+            0
+            if any(not a.functional for a in self.alleles_at(systematic_gene_name))
+            else 1
+        )
 
     @property
     def is_fully_sourced(self) -> bool:
-        """True when the background, every allele and every integration carry no gap."""
-        return (
-            not self.provenance_gaps
-            and all(a.is_sourced for a in self.alleles)
-            and all(c.is_sourced for c in self.integrations)
-        )
-
-    def integrations_at(self, locus: str) -> list[IntegratedCassette]:
-        """The cassettes integrated at one named site (empty = nothing integrated)."""
-        return [c for c in self.integrations if c.locus == locus]
+        """True when the background and every allele carry no declared gap."""
+        return not self.provenance_gaps and all(a.is_sourced for a in self.alleles)
 
 
 class ReferenceGenome(HashableProvenanceGapMixin):
@@ -1218,9 +1166,9 @@ class ReferenceGenome(HashableProvenanceGapMixin):
     strain's own assembly": a BY4741 or FY4 record pins ``sgd_S288C_R64-4-1_20230830``
     because its systematic names and its background alleles are edits against the S288C
     release, exactly as a BW25113 record pins the BW25113 set because its locus tags
-    are that assembly's. The bacterial cross-check (``BacterialStrainBackground``
-    pins the strain's set) and the yeast one (a ``StrainBackground`` is an edit of
-    S288C, so the S288C set) are the same rule read on each family.
+    are that assembly's. Since P5 that is literally one rule: a ``StrainBackground``
+    pins the set of its own ``reference_strain``, and ``StrainReferenceGenome`` requires
+    the reference and the background to pin the same one.
 
     The pin is REQUIRED: a value, or a typed ``ProvenanceGap`` on ``assembly_set`` for
     a record whose reference is not deposited in the tier (an isolate's own
@@ -1287,220 +1235,6 @@ class ReferenceGenome(HashableProvenanceGapMixin):
         return self
 
 
-class BacterialBackgroundAllele(ProvenanceGapMixin):
-    """One allele a bacterial strain background carries, as an edit against its assembly.
-
-    The bacterial sibling of ``BackgroundAllele``: same sourced-or-gapped contract and
-    the same ``AlleleEdit`` mechanism vocabulary, with two differences that follow from
-    the host. ``systematic_gene_name`` is a locus tag validated against
-    ``gene_namespace``'s pattern rather than an R64 ORF name, and there is no
-    ``zygosity`` field at all: these strains are haploid, so a copy count would have one
-    possible value and would be a field that cannot carry information.
-
-    ``allele_name`` is the designation verbatim as the source writes it (``lacZ4787``,
-    ``rph-1``); ``gene_name`` is the gene symbol the assembly's annotation carries
-    (``lacZ``). ``functional`` says whether the allele keeps the gene's function, which
-    is what a per-locus dosage read needs. ``cassette`` is required for a
-    ``cassette_replacement`` and forbidden otherwise, exactly as on the yeast class.
-    """
-
-    systematic_gene_name: str
-    gene_namespace: BacterialGeneNamespace
-    gene_name: str
-    allele_name: str
-    edit: AlleleEdit
-    functional: bool = Field(
-        description="True if the allele keeps the gene's function; False for a null"
-    )
-    cassette: str | None = Field(
-        default=None,
-        description="cassette that replaced the gene, verbatim (e.g. 'kan', 'FRT-kan-FRT'); "
-        "set iff edit == cassette_replacement",
-    )
-    deleted_span: GenomicSpan | None = Field(
-        default=None,
-        description="removed interval on the pinned assembly, when the source gives it",
-    )
-    provenance: list[SourcedValue] | None = Field(
-        default=None,
-        description="quotes that state this allele; None only with a gap on "
-        "'provenance' (an asserted-but-unsourced allele)",
-    )
-
-    @field_validator("systematic_gene_name", mode="after")
-    @classmethod
-    def _validate_systematic(cls, v: str) -> str:
-        """The allele sits at a real locus tag of one of the bacterial namespaces."""
-        return _validate_bacterial_locus_tag(v)
-
-    @model_validator(mode="after")
-    def _check_allele(self) -> "BacterialBackgroundAllele":
-        """Tag agrees with namespace; cassette iff cassette_replacement; sourced or gapped."""
-        tag_namespace = _namespace_of_locus_tag(self.systematic_gene_name)
-        if tag_namespace != self.gene_namespace:
-            raise ValueError(
-                f"{self.systematic_gene_name!r} is a {tag_namespace} tag but "
-                f"gene_namespace is {self.gene_namespace!r}"
-            )
-        if (self.edit is AlleleEdit.cassette_replacement) != (
-            self.cassette is not None
-        ):
-            raise ValueError(
-                "cassette is required for a cassette_replacement and forbidden for "
-                f"edit={self.edit.value}"
-            )
-        _require_value_or_gap(self, ("provenance",))
-        return self
-
-    @property
-    def mechanism_so(self) -> tuple[str, str]:
-        """(SO id, SO name) of this allele's edit."""
-        return ALLELE_EDIT_SO[self.edit]
-
-    @property
-    def is_sourced(self) -> bool:
-        """True when the allele carries no declared gap."""
-        return not self.provenance_gaps
-
-
-class BacterialStrainBackground(ProvenanceGapMixin):
-    """The genome content a bacterial strain carries beyond its reference assembly.
-
-    The bacterial sibling of ``StrainBackground``. ``name`` is the strain label the
-    records join on and must equal the reference's ``strain``; ``reference_strain`` is
-    the sequenced strain every allele is an edit against, and ``assembly_set`` is the
-    deposited bytes that strain means. There is no ``mating_type`` and no ``ploidy``:
-    both are eukaryote facts, and a haploid single-replicon genome has nothing to state.
-
-    The motivating case is BW25113, whose lesions are given by its own deposited GenBank
-    ``source`` feature (``registry.BW25113_BACKGROUND_GENOTYPE``, a genomes-tier data
-    constant and not a schema binding) rather than by a paper, and the
-    production-chassis rows, which carry stacked deletions plus heterologous cassettes.
-    ``construction`` is a one-line method statement; ``provenance`` is set or gapped.
-    """
-
-    name: str
-    reference_strain: BacterialReferenceStrain
-    assembly_set: BacterialAssemblySet
-    parents: list[str] | None = Field(
-        default=None, description="strains this background was made from, verbatim"
-    )
-    construction: str | None = Field(
-        default=None, description="how the background was made, one line"
-    )
-    genotype_statement: str | None = Field(
-        default=None,
-        description="the background genotype exactly as the source writes it (e.g. "
-        "BW25113's 'rrnB3 lacZ4787 hsdR514 (araBAD)567 (rhaBAD)568 rph-1'), kept "
-        "verbatim beside the typed alleles so nothing the source said is lost",
-    )
-    alleles: list[BacterialBackgroundAllele] = Field(
-        default_factory=list,
-        description="every allele of the background beyond the reference assembly, each "
-        "sourced or gapped; empty when the source states only a genotype string",
-    )
-    provenance: list[SourcedValue] | None = Field(
-        default=None,
-        description="quotes stating the strain name and genotype; None only with a gap "
-        "on 'provenance'",
-    )
-
-    @model_validator(mode="after")
-    def _check_background(self) -> "BacterialStrainBackground":
-        """Named, sourced-or-gapped, consistent strain/assembly, one entry per locus."""
-        if not self.name.strip():
-            raise ValueError("BacterialStrainBackground.name cannot be empty")
-        _require_value_or_gap(self, ("provenance",))
-        expected = BACTERIAL_ASSEMBLY_SETS[self.reference_strain]
-        if self.assembly_set != expected:
-            raise ValueError(
-                f"reference strain {self.reference_strain!r} is assembly set "
-                f"{expected!r}, not {self.assembly_set!r}"
-            )
-        seen: set[str] = set()
-        for allele in self.alleles:
-            if allele.systematic_gene_name in seen:
-                raise ValueError(
-                    f"{allele.systematic_gene_name}: a haploid background carries one "
-                    "allele entry per locus"
-                )
-            seen.add(allele.systematic_gene_name)
-        return self
-
-    def alleles_at(self, systematic_gene_name: str) -> list[BacterialBackgroundAllele]:
-        """The background's allele entry at one locus (empty = the reference allele)."""
-        return [
-            a for a in self.alleles if a.systematic_gene_name == systematic_gene_name
-        ]
-
-    def functional_copies(self, systematic_gene_name: str) -> int:
-        """Functional copies of a gene in the UNPERTURBED background: 1 or 0.
-
-        Haploid, so the answer is 1 unless the background carries a non-functional
-        allele at the locus.
-        """
-        return (
-            0
-            if any(not a.functional for a in self.alleles_at(systematic_gene_name))
-            else 1
-        )
-
-    @property
-    def is_fully_sourced(self) -> bool:
-        """True when the background and every allele carry no declared gap."""
-        return not self.provenance_gaps and all(a.is_sourced for a in self.alleles)
-
-
-class StrainReferenceGenome(ReferenceGenome):
-    """A ``ReferenceGenome`` that states its typed strain background (#507).
-
-    ``background`` is REQUIRED and holds the content the strain carries beyond the
-    pinned assembly: the eukaryotic ``StrainBackground`` (mating type, ploidy, alleles,
-    integrations) or the ``BacterialStrainBackground`` (reference strain, alleles,
-    genotype statement), each sourced or typed-gapped. Its ``name`` equals ``strain`` so
-    the free string and the typed object cannot disagree; a ``StrainBackground`` also
-    agrees on ``ploidy`` and requires the S288C set (every ``StrainBackground`` is an
-    edit of S288C), and a ``BacterialStrainBackground`` pins the same ``assembly_set``
-    as the reference. One field admits both families until the shared background base
-    lands (P5); the union is the typed home the retired ``AssemblyReferenceGenome``'s
-    optional ``background`` had, with the requiredness this class has always had.
-
-    An ``ExperimentReference`` holds its reference as ``ReferenceGenome |
-    StrainReferenceGenome``, so the background survives serialization in every
-    experiment family without a narrowed clone of the pair: measured on pydantic
-    2.12.3, a subclass in a base-or-subclass union dumps its own fields and revalidates
-    to the subclass, because the base forbids extras. The record stores it once per
-    reference (the LMDB interns the whole reference; the graph writes it on the
-    ``genome`` and ``experiment reference`` nodes).
-    """
-
-    background: StrainBackground | BacterialStrainBackground
-
-    @model_validator(mode="after")
-    def _check_background_agrees(self) -> "StrainReferenceGenome":
-        """The background names the same strain, ploidy and assembly as the reference."""
-        if self.background.name != self.strain:
-            raise ValueError(
-                f"background name {self.background.name!r} != strain {self.strain!r}"
-            )
-        if isinstance(self.background, StrainBackground):
-            if self.background.ploidy != self.ploidy:
-                raise ValueError(
-                    f"background ploidy {self.background.ploidy!r} != ploidy "
-                    f"{self.ploidy!r}"
-                )
-            if self.assembly_set != SGD_S288C_ASSEMBLY_SET:
-                raise ValueError(
-                    f"a StrainBackground is an edit of "
-                    f"{self.background.reference_strain!r}, so assembly_set must be "
-                    f"{SGD_S288C_ASSEMBLY_SET!r}, not {self.assembly_set!r}"
-                )
-        elif self.background.assembly_set != self.assembly_set:
-            raise ValueError(
-                f"background pins assembly set {self.background.assembly_set!r} != "
-                f"{self.assembly_set!r}"
-            )
-        return self
 
 
 # --------------------------------------------------------------------------- #
@@ -2932,6 +2666,305 @@ class ConstructPlacement(HashableProvenanceGapMixin):
         )
 
 
+# --------------------------------------------------------------------------- #
+# The eukaryotic strain background and the reference that carries it (P5).
+#
+# These three sit here rather than beside ``StrainBackground`` because
+# ``IntegratedCassette`` points at a ``ConstructPlacement``: an integrated cassette and
+# a chromosomally integrated ``GeneAdditionPerturbation`` are the same physical object,
+# so they share one placement type rather than one of them keeping a bare site label.
+# --------------------------------------------------------------------------- #
+#: Sequence Ontology mechanism of a cassette INTEGRATION. The pair is the one the
+#: gene-addition leaves already pin (``GeneAdditionPerturbation``,
+#: ``NaturalGenePresencePerturbation``), reused here rather than restated: an integrated
+#: cassette is an insertion of sequence absent from R64. ``ALLELE_EDIT_SO`` has no
+#: insertion member, because every ``AlleleEdit`` is a deletion or an in-place variant.
+CASSETTE_INTEGRATION_SO: tuple[str, str] = ("SO:0000667", "insertion")
+
+
+class IntegratedCassette(ProvenanceGapMixin):
+    """One cassette a strain background carries INTEGRATED at a named genomic site.
+
+    The counterpart of ``BackgroundAllele`` on the insertion axis: an allele is an edit
+    AT an R64 locus, a cassette is sequence absent from R64 placed INTO one. The
+    CRISPR-AID host bAID carries
+    ``Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]``, which no
+    ``AlleleEdit`` describes: nothing at the Ty1 delta site is deleted, four effector
+    cassettes and a marker are added.
+
+    ``name`` is the designation verbatim as the source writes it; ``locus`` is the named
+    integration site verbatim (``"Delta"`` for a Ty1 delta site, ``"X3"`` / ``"X4"`` /
+    ``"XI1"`` for a pre-selected intergenic landing pad), which is what the source states
+    and is frequently NOT an ORF. ``locus_systematic_gene_name`` is set only when the site
+    IS an R64 ORF, and is then regex-validated like every other systematic name, so a
+    landing-pad label never masquerades as a gene.
+
+    ``placement`` is the MATERIAL of the integration and the same type a chromosomally
+    integrated ``GeneAdditionPerturbation`` carries (P5, 2026-10-15): which contig the
+    DNA came from, by sha256 and an ``ArtifactRef`` pinning the same bytes, which
+    feature of that contig it is, where in the host it landed and which
+    contig-relative variants it carries. The two objects are physically the same thing,
+    so they take one pointer type; before this field bAID's effectors at the Delta site
+    were a bare label while the Btx cassette at XII-5 had a real pointer. It is
+    REQUIRED with no default and gap-able, the shape ``GeneAdditionPerturbation.placement``
+    uses, so a loader states the pointer or a typed ``ProvenanceGap`` naming why no
+    construct sequence is available and where it looked. ``locus`` stays the source's
+    own site label either way, because a coordinate does not replace what the source
+    called the site.
+
+    ``elements`` are the cassette's parts verbatim and IN ORDER, so the composition is
+    queryable without parsing ``name``. ``marker`` is the selection marker when the
+    integration carries one (``KanMX``), ``None`` for a marker-less integration, which
+    the MAGIC gRNA cassettes are.
+
+    Sourcing contract: ``provenance`` (quote + sha256), ``zygosity`` and ``placement``
+    are each set or carry a typed ``ProvenanceGap``, never a silent ``None``.
+    """
+
+    name: str = Field(
+        description="cassette designation verbatim, as the source writes it"
+    )
+    locus: str = Field(
+        description="the named integration site verbatim (e.g. 'Delta', 'X4'); a landing "
+        "pad label, not necessarily a gene"
+    )
+    locus_systematic_gene_name: str | None = Field(
+        default=None,
+        description="the R64 ORF the cassette sits in, when the site IS an ORF; None for "
+        "an intergenic landing pad or a repeat family",
+    )
+    elements: list[str] = Field(
+        description="the cassette's elements verbatim, in the order the source writes them"
+    )
+    marker: str | None = Field(
+        default=None,
+        description="selection marker the integration carries, verbatim (e.g. 'KanMX'); "
+        "None for a marker-less integration",
+    )
+    zygosity: Zygosity | None = Field(
+        description="copies of the background carrying it; None only with a gap"
+    )
+    placement: ConstructPlacement | None = Field(
+        description="the construct contig, the feature on it, the host site and the "
+        "contig-relative variants; None ONLY with a ProvenanceGap(field='placement') "
+        "naming why no construct sequence is available and where the loader looked"
+    )
+    provenance: list[SourcedValue] | None = Field(
+        default=None,
+        description="quotes that state this cassette; None only with a gap on "
+        "'provenance'",
+    )
+
+    @field_validator("locus_systematic_gene_name", mode="after")
+    @classmethod
+    def _validate_locus_systematic(cls, v: str | None) -> str | None:
+        """When the integration site is given as an ORF, it is a real R64 feature."""
+        if v is not None and not re.match(SGD_SYSTEMATIC_GENE_PATTERN, v):
+            raise ValueError(f"Invalid systematic gene name {v!r}")
+        return v
+
+    @model_validator(mode="after")
+    def _check_cassette(self) -> "IntegratedCassette":
+        """Name, locus and elements stated; provenance, zygosity, placement set or gapped."""
+        if not self.name.strip():
+            raise ValueError("IntegratedCassette.name cannot be empty")
+        if not self.locus.strip():
+            raise ValueError("IntegratedCassette.locus cannot be empty")
+        if not self.elements or any(not e.strip() for e in self.elements):
+            raise ValueError(
+                "IntegratedCassette.elements must name at least one non-empty element"
+            )
+        _require_value_or_gap(self, ("provenance", "zygosity", "placement"))
+        if (
+            self.placement is not None
+            and self.placement.localization is not Localization.chromosomal_integration
+        ):
+            raise ValueError(
+                "an integrated cassette's placement names a host site; "
+                f"{self.name!r} points at a placement with no host_placement, which is "
+                "an episomal replicon and not an integration"
+            )
+        return self
+
+    @property
+    def mechanism_so(self) -> tuple[str, str]:
+        """(SO id, SO name) of a cassette integration: ``SO:0000667``, insertion."""
+        return CASSETTE_INTEGRATION_SO
+
+    @property
+    def is_sourced(self) -> bool:
+        """True when the cassette declares no gap (quotes, zygosity or placement)."""
+        return not self.provenance_gaps
+
+
+class EukaryoticStrainBackground(StrainBackground):
+    """A ``StrainBackground`` of a host with a ploidy and a mating type (P5).
+
+    The three fields here are GENUINE material differences, not a host tag: a diploid
+    has two copies of every autosome, so an allele's copy count is a fact and a
+    per-locus dosage read needs it; the MAT locus is a sequence difference from the R64
+    reference, which is MATalpha; and a cassette integrated at a landing pad is carried
+    on some number of those copies. A single-replicon haploid genome has nothing to
+    state for any of the three, which is why they stay on this subclass instead of being
+    weakened onto the base so a thinner host could load (policy Rule 5).
+
+    ``mating_type`` and ``ploidy`` are the strain's own; a haploid background is MATa or
+    MATalpha, never MATa/MATalpha. Every allele's and every integration's ``zygosity``
+    is stated or typed-gapped (Hoepfner's whi2 nonsense allele has no stated zygosity)
+    and must fit the ploidy: ``haploid`` in a haploid, ``homozygous`` or
+    ``heterozygous`` in a diploid. A gene carries one allele entry, or two heterozygous
+    entries for a compound heterozygote.
+
+    ``integrations`` carries the cassettes the strain has INTEGRATED (an engineered host
+    such as bAID, whose Cas effectors sit at a Ty1 delta site). It is separate from
+    ``alleles`` because an insertion at a landing pad is not an edit to a reference ORF
+    and has no ``AlleleEdit``; it defaults to empty, so a background that carries none
+    reads exactly as a bare one.
+    """
+
+    mating_type: MatingType | None = Field(
+        description="MAT locus state; None only with a gap on 'mating_type'"
+    )
+    ploidy: Literal["haploid", "diploid"]
+    integrations: list[IntegratedCassette] = Field(
+        default_factory=list,
+        description="every cassette the background carries integrated at a named site, "
+        "each sourced or gapped; empty for a strain that carries none",
+    )
+
+    @model_validator(mode="after")
+    def _check_eukaryotic_background(self) -> "EukaryoticStrainBackground":
+        """Mating type sourced-or-gapped and consistent with ploidy; integrations fit."""
+        _require_value_or_gap(self, ("mating_type",))
+        if self.ploidy == "haploid" and self.mating_type is MatingType.a_alpha:
+            raise ValueError("a haploid background cannot be MATa/MATalpha")
+        for cassette in self.integrations:
+            if (
+                cassette.zygosity is not None
+                and cassette.zygosity not in self._allowed_zygosities
+            ):
+                raise ValueError(
+                    f"{cassette.name}: zygosity {cassette.zygosity.value} does not fit "
+                    f"a {self.ploidy} background"
+                )
+        return self
+
+    @property
+    def _allowed_zygosities(self) -> set[Zygosity]:
+        """The copy counts this background's ploidy admits."""
+        return (
+            {Zygosity.haploid}
+            if self.ploidy == "haploid"
+            else {Zygosity.homozygous, Zygosity.heterozygous}
+        )
+
+    def _check_alleles(self) -> None:
+        """Zygosity stated or gapped and fitting the ploidy; one entry per locus.
+
+        Replaces the base's rule, which forbids a copy count because a background with
+        no ploidy cannot judge one. A diploid may carry two entries at one locus, as the
+        two halves of a compound heterozygote.
+        """
+        allowed = self._allowed_zygosities
+        by_gene: dict[str, list[BackgroundAllele]] = {}
+        for allele in self.alleles:
+            _require_value_or_gap(allele, ("zygosity",))
+            if allele.zygosity is not None and allele.zygosity not in allowed:
+                raise ValueError(
+                    f"{allele.allele_name}: zygosity {allele.zygosity.value} does not "
+                    f"fit a {self.ploidy} background"
+                )
+            by_gene.setdefault(allele.systematic_gene_name, []).append(allele)
+        for gene, entries in by_gene.items():
+            if len(entries) == 1:
+                continue
+            if len(entries) > 2 or any(
+                e.zygosity is not Zygosity.heterozygous for e in entries
+            ):
+                raise ValueError(
+                    f"{gene}: more than one allele entry is allowed only as two "
+                    "heterozygous alleles of a diploid (a compound heterozygote)"
+                )
+
+    def functional_copies(self, systematic_gene_name: str) -> int:
+        """Functional copies of a gene in the UNPERTURBED background.
+
+        Ploidy copies minus the copies carrying a non-functional background allele:
+        BY4743 ``his3Δ1/his3Δ1`` -> 0, ``LYS2/lys2Δ0`` -> 1, an untouched gene -> 2.
+        Raises when an allele at the locus has a gapped zygosity, since the count is
+        then not determined by the record.
+        """
+        copies = 1 if self.ploidy == "haploid" else 2
+        for allele in self.alleles_at(systematic_gene_name):
+            if allele.functional:
+                continue
+            if allele.zygosity is None:
+                raise ValueError(
+                    f"{allele.allele_name}: zygosity is a ProvenanceGap, so the "
+                    "functional copy number at this locus is undetermined"
+                )
+            copies -= 2 if allele.zygosity is Zygosity.homozygous else 1
+        return copies
+
+    @property
+    def is_fully_sourced(self) -> bool:
+        """True when the background, every allele and every integration carry no gap."""
+        return super().is_fully_sourced and all(c.is_sourced for c in self.integrations)
+
+    def integrations_at(self, locus: str) -> list[IntegratedCassette]:
+        """The cassettes integrated at one named site (empty = nothing integrated)."""
+        return [c for c in self.integrations if c.locus == locus]
+
+
+class StrainReferenceGenome(ReferenceGenome):
+    """A ``ReferenceGenome`` that states its typed strain background (#507).
+
+    ``background`` is REQUIRED and holds the content the strain carries beyond the
+    pinned assembly: a ``StrainBackground`` (reference strain, assembly set, genotype
+    statement, alleles) or its ``EukaryoticStrainBackground`` subclass, which adds the
+    mating type, the ploidy and the integrated cassettes. Its ``name`` equals ``strain``
+    so the free string and the typed object cannot disagree, and it pins the SAME
+    ``assembly_set`` as this reference: since P5 that is one rule read on every family
+    rather than a yeast branch pinning S288C by name and a bacterial branch comparing the
+    two fields. A ``EukaryoticStrainBackground`` also agrees on ``ploidy``, the one fact
+    this class and the background both carry. The union is the typed home the retired
+    ``AssemblyReferenceGenome``'s optional ``background`` had, with the requiredness this
+    class has always had.
+
+    An ``ExperimentReference`` holds its reference as ``ReferenceGenome |
+    StrainReferenceGenome``, so the background survives serialization in every
+    experiment family without a narrowed clone of the pair: measured on pydantic
+    2.12.3, a subclass in a base-or-subclass union dumps its own fields and revalidates
+    to the subclass, because the base forbids extras. The record stores it once per
+    reference (the LMDB interns the whole reference; the graph writes it on the
+    ``genome`` and ``experiment reference`` nodes).
+    """
+
+    background: StrainBackground | EukaryoticStrainBackground
+
+    @model_validator(mode="after")
+    def _check_background_agrees(self) -> "StrainReferenceGenome":
+        """The background names the same strain, assembly and ploidy as the reference."""
+        if self.background.name != self.strain:
+            raise ValueError(
+                f"background name {self.background.name!r} != strain {self.strain!r}"
+            )
+        if self.background.assembly_set != self.assembly_set:
+            raise ValueError(
+                f"background pins assembly set {self.background.assembly_set!r} != "
+                f"{self.assembly_set!r}"
+            )
+        if (
+            isinstance(self.background, EukaryoticStrainBackground)
+            and self.background.ploidy != self.ploidy
+        ):
+            raise ValueError(
+                f"background ploidy {self.background.ploidy!r} != ploidy "
+                f"{self.ploidy!r}"
+            )
+        return self
+
+
 class GeneAdditionPerturbation(
     HashableProvenanceGapMixin, PresenceAbsencePerturbation, ModelStrict
 ):
@@ -4005,10 +4038,10 @@ class HeterologousPathwayPerturbation(GeneAdditionPerturbation, ModelStrict):
 #   1. ``SequenceVariantPerturbation`` admits only S288C ORF names and promises a
 #      dereferenceable allele sequence these papers never deposited -> a bacterial
 #      leaf with the locus-tag validator and the call itself on the record.
-#   2. ``BacterialBackgroundAllele.functional`` is a required bool no release states
+#   2. ``BackgroundAllele.functional`` is a required bool no release states
 #      for a called variant -> no ``functional`` field here at all (the perturbation
 #      axis has none, by design: the edit is not its consequence).
-#   3. ``BacterialStrainBackground`` permits one allele entry per locus, which refuses
+#   3. ``StrainBackground`` permits one allele entry per locus, which refuses
 #      a clone carrying two calls in one gene (Lim's ``PP_3415`` P293S + V46I in
 #      A12_F53_I1) -> ``Genotype.perturbations`` has no such rule, so two calls in one
 #      locus are two perturbations.
@@ -4627,7 +4660,7 @@ class DegronPerturbation(SequencePerturbation, ModelStrict):
         "describes none of those strains' construction, and its deferral target is not "
         "in the literature mirror. A required field with no source would have to be "
         "filled with a guess, which is the exact failure "
-        "``BacterialBackgroundAllele.functional`` was measured to have",
+        "``BackgroundAllele.functional`` was measured to have",
     )
     protease: str | None = Field(
         default=None,
@@ -5360,7 +5393,8 @@ class Genotype(ModelStrict):
 
 
 def heterozygous_deletion_functional_copies(
-    background: StrainBackground, perturbation: HeterozygousDeletionPerturbation
+    background: EukaryoticStrainBackground,
+    perturbation: HeterozygousDeletionPerturbation,
 ) -> int | None:
     """Functional copies left at the deleted locus, respecting the background.
 

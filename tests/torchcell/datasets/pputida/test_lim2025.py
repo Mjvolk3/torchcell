@@ -100,20 +100,17 @@ def test_the_variant_leaf_has_no_slot_for_what_a_breseq_row_releases() -> None:
 
 def test_the_background_allele_requires_a_functional_boolean() -> None:
     """Measured reason 4: ``functional`` is not optional, so it cannot be gapped."""
-    from torchcell.datamodels.schema import BacterialBackgroundAllele
+    from torchcell.datamodels.schema import BackgroundAllele
 
-    assert BacterialBackgroundAllele.model_fields["functional"].is_required()
+    assert BackgroundAllele.model_fields["functional"].is_required()
 
 
 def test_a_background_permits_one_allele_entry_per_locus() -> None:
     """Measured reason 5: a clone with two calls in one gene has no background form."""
-    from torchcell.datamodels.schema import (
-        BacterialBackgroundAllele,
-        BacterialStrainBackground,
-    )
+    from torchcell.datamodels.schema import BackgroundAllele, StrainBackground
 
     def allele(name: str) -> Any:
-        return BacterialBackgroundAllele(
+        return BackgroundAllele(
             systematic_gene_name="PP_3415",
             gene_namespace=l25.KT2440_NAMESPACE,
             gene_name="PP_3415",
@@ -124,7 +121,7 @@ def test_a_background_permits_one_allele_entry_per_locus() -> None:
         )
 
     with pytest.raises(ValidationError, match="one allele entry per locus"):
-        BacterialStrainBackground(
+        StrainBackground(
             name="A12_F53_I1",
             reference_strain="KT2440",
             assembly_set=l25.KT2440_ASSEMBLY_SET,
@@ -2573,7 +2570,7 @@ def test_the_three_piy670_sheets_are_refused_for_the_genotype_not_the_medium() -
     assert set(l25.FOLD_CHANGE_REFUSALS) == set(l25.SHEETS_PIY670)
     for reason in l25.FOLD_CHANGE_REFUSALS.values():
         assert "EVOLVED ISOLATE in the denominator" in reason
-        assert "BacterialBackgroundAllele" in reason
+        assert "BackgroundAllele" in reason
         assert "which the Methods DO state" in reason
     medium = l25.SOURCED_VALUES["piy670_production_medium"]
     assert medium.value == {
@@ -2655,7 +2652,7 @@ def test_the_reference_basis_names_the_sheet_the_column_and_the_genotype() -> No
     assert "'log2_mean_IPL400_M9G'" in basis
     assert l25.SHEET_PROTEOME_M9G in basis
     assert l25.SI1_STATEMENTS["ipl400_genotype"] in basis
-    assert "BacterialStrainBackground" in basis
+    assert "StrainBackground" in basis
 
 
 def test_unplaceable_protein_keys_names_a_key_with_no_current_gene(

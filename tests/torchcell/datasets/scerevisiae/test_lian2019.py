@@ -241,7 +241,11 @@ def test_the_reference_genome_is_the_one_shared_baid_background() -> None:
     assert cassette.marker == "KanMX"
     assert cassette.zygosity is Zygosity.haploid
     assert cassette.mechanism_so == ("SO:0000667", "insertion")
-    assert cassette.is_sourced
+    # P5 gave the cassette the same placement pointer a gene addition carries; Lian 2019
+    # names pAID6 and deposits no map of it, so the pointer is a typed gap.
+    assert cassette.placement is None
+    assert cassette.gapped_fields() == {"placement"}
+    assert not cassette.is_sourced
 
 
 def test_the_assay_is_a_pooled_barcode_competition() -> None:

@@ -122,7 +122,7 @@ only the narrative that "there were only two additional carbon sources where gro
 observed: dextrin and D,L-carnitine".
 
 THE CHASSIS IS D1b_gf AND ITS MEDIUM COMPOSITION IS DEFERRED. Every record is written
-against wild-type KT2440 carrying a ``BacterialStrainBackground`` named ``D1b_gf``, whose
+against wild-type KT2440 carrying a ``StrainBackground`` named ``D1b_gf``, whose
 four host-gene deletions the paper states with their locus tags (PP_1378/pcaT,
 PP_1755/fumC-II, PP_0944/fumC-I and fleQ/PP_4373) and which is itself from reference 21.
 The record's OWN edit is the perturbation: a ``PromoterReplacementPerturbation`` on
@@ -192,11 +192,10 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import M9_DEFERRED_BANERJEE2025
 from torchcell.datamodels.schema import (
     AlleleEdit,
+    BackgroundAllele,
     BacterialAssemblySet,
-    BacterialBackgroundAllele,
     BacterialGeneNamespace,
     BacterialReferenceStrain,
-    BacterialStrainBackground,
     Concentration,
     ConcentrationUnit,
     DeletionStrainPerturbation,
@@ -213,6 +212,7 @@ from torchcell.datamodels.schema import (
     ProteinAbundancePhenotype,
     Publication,
     ReferenceGenome,
+    StrainBackground,
 )
 from torchcell.datasets.bacteria_common import (
     LocusTagReconciliation,
@@ -1424,15 +1424,15 @@ def publication() -> Publication:
     return Publication(doi=DOI, doi_url=f"https://doi.org/{DOI}")
 
 
-def chassis_background() -> BacterialStrainBackground:
+def chassis_background() -> StrainBackground:
     """D1b_gf: the four host-gene deletions every record inherits from reference 21.
 
     The integrated indigoidine cassette is in ``genotype_statement`` verbatim and NOT
-    among the alleles: ``BacterialBackgroundAllele`` is an edit of a HOST locus, and
+    among the alleles: ``BackgroundAllele`` is an edit of a HOST locus, and
     this cassette sits in an intergenic site with three heterologous genes whose source
     organisms the paper never states (:data:`PATHWAY_NOT_TYPED`).
     """
-    return BacterialStrainBackground(
+    return StrainBackground(
         name=CHASSIS,
         reference_strain=WT_STRAIN,
         assembly_set=KT2440_ASSEMBLY_SET,
@@ -1445,7 +1445,7 @@ def chassis_background() -> BacterialStrainBackground:
         ),
         genotype_statement=str(CHASSIS_SI_ROW.value),
         alleles=[
-            BacterialBackgroundAllele(
+            BackgroundAllele(
                 systematic_gene_name=tag,
                 gene_namespace=KT2440_NAMESPACE,
                 gene_name=symbol,

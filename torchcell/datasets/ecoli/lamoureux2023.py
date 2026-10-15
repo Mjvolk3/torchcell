@@ -56,7 +56,7 @@ GENOTYPE SETTLING (first matching rule, counted in ``preprocess/dropped_records.
 Since #1057 (the owner rule of 2026-10-12: "the data is the data", and the genome does
 not gate a released row) a sample is STORED on the strain the release names, not dropped
 for it: an adaptive-laboratory-evolution isolate (``Evolved Sample`` Endpoint/Midpoint)
-on a ``BacterialStrainBackground`` named by its full ``Strain Description`` (its
+on a ``StrainBackground`` named by its full ``Strain Description`` (its
 ``Strain`` cell as the parent), and a strain other than MG1655 (``BW25113``, ``W3110``,
 ``DGF-298``) on a background named by its ``Strain`` cell, with the whole-gene deletions
 its description names. The release aligned every sample to MG1655, so every record's ids
@@ -68,7 +68,7 @@ activating-region deletion inside ``crp`` (``crp_delAr1``) are stored on
 names, under the ``Strain Description`` as the strain label, with no coordinates looked
 up. Since #1045 part 2 a plasmid-borne heterologous or orthologous protein (``pColi``
 study) and an added gene (``+aldA`` on DGF-298) are stored too: the sample sits on a
-``BacterialStrainBackground`` named by its ``Strain Description`` verbatim, and the
+``StrainBackground`` named by its ``Strain Description`` verbatim, and the
 construct, source organism and sequence the release does not contain are the typed gap on
 ``genotype_statement``. A whole-gene deletion is a ``ReleasedIdentifierPerturbation``
 of ``released_kind=deletion`` keyed by the gene symbol the ``del_`` token releases
@@ -141,7 +141,6 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     BacterialAssemblySet,
-    BacterialStrainBackground,
     ComponentDefinition,
     Compound,
     Concentration,
@@ -165,6 +164,7 @@ from torchcell.datamodels.schema import (
     RNASeqExpressionExperimentReference,
     RNASeqExpressionPhenotype,
     SmallMoleculePerturbation,
+    StrainBackground,
     Temperature,
 )
 from torchcell.datasets.bacteria_common import (
@@ -866,7 +866,7 @@ def strain_background(
     provenance_of: Callable[[str], Provenance] = metadata_provenance,
     *,
     untyped_edits: bool = False,
-) -> BacterialStrainBackground:
+) -> StrainBackground:
     """The released strain as a background on the MG1655 coordinates its reads used.
 
     The release aligned every sample to MG1655 (``ALIGNMENT_REFERENCE``), so the
@@ -876,7 +876,7 @@ def strain_background(
     default, the Public K-12 file for that dataset). ``untyped_edits`` says the name
     carries edits no leaf types (an undefined label, an unparsed token).
     """
-    return BacterialStrainBackground(
+    return StrainBackground(
         name=spec.name,
         reference_strain=REFERENCE_STRAIN_NAME,
         assembly_set=TypeAdapter(BacterialAssemblySet).validate_python(

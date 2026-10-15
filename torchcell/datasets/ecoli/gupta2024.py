@@ -128,7 +128,7 @@ protease and SsrA-pathway knockouts in the same strain and carry one
 THE STRAIN IS NCM3722 AND THE ASSEMBLY PIN IS MG1655, WHICH IS A DERIVED CHOICE. The
 paper names only "E. coli strain NCM3722"; no NCM3722 assembly is in the genomes tier,
 and the paper states no genotype for it relative to any sequenced K-12. NCM3722 is
-carried as a ``BacterialStrainBackground`` on MG1655 with a ``ProvenanceGap`` on
+carried as a ``StrainBackground`` on MG1655 with a ``ProvenanceGap`` on
 ``genotype_statement`` and on ``construction``, because the paper carries neither. The
 pin is MG1655 because that is the assembly the released identifiers are written in: every
 one of the 3,262 UniProt entry names ends in ``_ECOLI``, UniProt's K-12 mnemonic, and
@@ -205,7 +205,6 @@ from torchcell.datamodels.media import MOPS_MINIMAL
 from torchcell.datamodels.schema import (
     BacterialAssemblySet,
     BacterialGeneNamespace,
-    BacterialStrainBackground,
     Censoring,
     Concentration,
     ConcentrationUnit,
@@ -226,6 +225,7 @@ from torchcell.datamodels.schema import (
     ProteinTurnoverPhenotype,
     Publication,
     ReferenceGenome,
+    StrainBackground,
     Temperature,
 )
 from torchcell.datasets.bacteria_common import (
@@ -422,7 +422,7 @@ STRAIN = _paper(
     page=_PAGE_METHODS_CHEMOSTAT,
     note="the only strain designation the paper gives for the turnover measurements; "
     "no NCM3722 assembly is deposited, so the records pin MG1655 and carry NCM3722 as "
-    "a BacterialStrainBackground",
+    "a StrainBackground",
 )
 TEMPERATURE_CHEMOSTAT_C = _paper(
     37.0,
@@ -1720,9 +1720,9 @@ def identifier_names(
 # --------------------------------------------------------------------------- #
 # Genotype, environment and the phenotype
 # --------------------------------------------------------------------------- #
-def ncm3722_background() -> BacterialStrainBackground:
+def ncm3722_background() -> StrainBackground:
     """NCM3722 as an edit of the pinned MG1655 assembly, with its two typed gaps."""
-    return BacterialStrainBackground(
+    return StrainBackground(
         name=MEASURED_STRAIN,
         reference_strain=MG1655_STRAIN,
         assembly_set=MG1655_ASSEMBLY_SET,

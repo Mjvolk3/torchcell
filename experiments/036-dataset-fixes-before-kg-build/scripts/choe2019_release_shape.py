@@ -70,13 +70,13 @@ from dotenv import load_dotenv
 from torchcell.datamodels.schema import (
     AlleleEdit,
     AllelePerturbation,
-    BacterialBackgroundAllele,
-    BacterialStrainBackground,
+    BackgroundAllele,
     DeletionStrainPerturbation,
     FitnessPhenotype,
     Genotype,
     RNASeqExpressionPhenotype,
     SequenceVariantPerturbation,
+    StrainBackground,
 )
 from torchcell.datasets.bacteria_common import bacterial_genome, reconcile_locus_tags
 from torchcell.verification.report import Provenance
@@ -471,8 +471,8 @@ def probe_perturbation_leaves(root: str) -> dict[str, Any]:
         ),
     )
     attempt(
-        "BacterialBackgroundAllele(functional_unknown)",
-        lambda: BacterialBackgroundAllele(
+        "BackgroundAllele(functional_unknown)",
+        lambda: BackgroundAllele(
             systematic_gene_name=str(locus_tag),
             gene_namespace="ecoli_k12_mg1655_bnumber",
             gene_name=str(row[0]),
@@ -486,13 +486,13 @@ def probe_perturbation_leaves(root: str) -> dict[str, Any]:
     gene_counts = Counter(str(r[0]) for r in multi)
     repeated = {g: n for g, n in gene_counts.items() if n > 1}
     attempt(
-        "BacterialStrainBackground(two_alleles_one_locus)",
-        lambda: BacterialStrainBackground(
+        "StrainBackground(two_alleles_one_locus)",
+        lambda: StrainBackground(
             name="eMS57",
             reference_strain="MG1655",
             assembly_set="ecoli_K12_MG1655_ASM584v2",
             alleles=[
-                BacterialBackgroundAllele(
+                BackgroundAllele(
                     systematic_gene_name=str(locus_tag),
                     gene_namespace="ecoli_k12_mg1655_bnumber",
                     gene_name=str(row[0]),
@@ -686,7 +686,7 @@ STRAIN_TABLE: tuple[dict[str, str], ...] = (
         "strain": "MS56",
         "genotype": "E. coli MG1655 with large deletions MD1 toMD56",
         "verdict": "background only",
-        "why": "writable as a BacterialStrainBackground with a verbatim "
+        "why": "writable as a StrainBackground with a verbatim "
         "genotype_statement and NO typed alleles, because this paper enumerates none of "
         "the 55 regions and defers them to its reference 4; not writable as a "
         "perturbation set, so an MG1655-referenced MS56 record would assert that MS56 is "
@@ -724,7 +724,7 @@ STRAIN_TABLE: tuple[dict[str, str], ...] = (
         "verdict": "blocked",
         "why": "a DESIGNED single sequence variant with the base change released; the "
         "perturbation axis has no bacterial sequence-variant leaf, and "
-        "BacterialBackgroundAllele needs a functional flag the paper does not determine",
+        "BackgroundAllele needs a functional flag the paper does not determine",
     },
     {
         "strain": "ilvNWT / ilvNmut",
@@ -870,7 +870,7 @@ def probe_background_carriers() -> dict[str, Any]:
         quote=quote,
     )
     out: dict[str, Any] = {}
-    background = BacterialStrainBackground(
+    background = StrainBackground(
         name="MS56",
         reference_strain="MG1655",
         assembly_set="ecoli_K12_MG1655_ASM584v2",
@@ -886,7 +886,7 @@ def probe_background_carriers() -> dict[str, Any]:
         "is_fully_sourced": background.is_fully_sourced,
     }
     try:
-        BacterialStrainBackground(
+        StrainBackground(
             name="MS56",
             reference_strain="MG1655",
             assembly_set="ecoli_K12_MG1655_ASM584v2",

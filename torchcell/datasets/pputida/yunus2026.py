@@ -277,7 +277,6 @@ from torchcell.datamodels.schema import (
     BacterialAssemblySet,
     BacterialGeneNamespace,
     BacterialReferenceStrain,
-    BacterialStrainBackground,
     Concentration,
     ConcentrationUnit,
     CrisprConstruct,
@@ -305,6 +304,7 @@ from torchcell.datamodels.schema import (
     ReferenceGenome,
     SampleUnit,
     SmallMoleculePerturbation,
+    StrainBackground,
     Temperature,
 )
 from torchcell.datasets.bacteria_common import (
@@ -2280,7 +2280,7 @@ def _chassis_gap(field: str, note: str) -> ProvenanceGap:
     )
 
 
-def chassis_background() -> BacterialStrainBackground:
+def chassis_background() -> StrainBackground:
     """``IY1452``: the isoprenol-producing chassis, named but never described here.
 
     ``alleles`` is empty and ``genotype_statement`` / ``construction`` are typed gaps,
@@ -2289,7 +2289,7 @@ def chassis_background() -> BacterialStrainBackground:
     / ``IY1452b`` is deliberately NOT borrowed: no mirrored byte says ``IY1452`` and
     ``IY1452b`` are the same strain.
     """
-    return BacterialStrainBackground(
+    return StrainBackground(
         name=CHASSIS_STRAIN,
         reference_strain=KT2440_STRAIN,
         assembly_set=KT2440_ASSEMBLY_SET,

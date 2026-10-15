@@ -55,8 +55,8 @@ from torchcell.datamodels.schema import (
     BacterialAssemblySet,
     BacterialGeneNamespace,
     BacterialReferenceStrain,
-    BacterialStrainBackground,
     ReferenceGenome,
+    StrainBackground,
     StrainReferenceGenome,
 )
 from torchcell.literature.manifest import sha256_file
@@ -351,7 +351,7 @@ def assembly_reference(
 def assembly_reference(
     strain: BacterialReferenceStrain,
     *,
-    background: BacterialStrainBackground,
+    background: StrainBackground,
     data_root: str | None = None,
 ) -> StrainReferenceGenome: ...
 
@@ -359,7 +359,7 @@ def assembly_reference(
 def assembly_reference(
     strain: BacterialReferenceStrain,
     *,
-    background: BacterialStrainBackground | None = None,
+    background: StrainBackground | None = None,
     data_root: str | None = None,
 ) -> ReferenceGenome:
     """The assembly-pinned ``ReferenceGenome`` a record written against ``strain`` stores.

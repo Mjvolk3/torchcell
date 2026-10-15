@@ -110,6 +110,7 @@ from torchcell.datamodels.media import (
     CHEMOSTAT_P_LIMITED_HACKETT2020,
 )
 from torchcell.datamodels.schema import (
+    SGD_S288C_NAMESPACE,
     AlleleEdit,
     BackgroundAllele,
     Concentration,
@@ -117,6 +118,7 @@ from torchcell.datamodels.schema import (
     CultureEnvironment,
     CultureFormat,
     EndpointRule,
+    EukaryoticStrainBackground,
     Experiment,
     ExperimentReference,
     Genotype,
@@ -130,7 +132,6 @@ from torchcell.datamodels.schema import (
     PreCultureSource,
     Publication,
     SmallMoleculePerturbation,
-    StrainBackground,
     StrainReferenceGenome,
     Temperature,
     Zygosity,
@@ -725,6 +726,33 @@ def strain_row_sv(
 # --------------------------------------------------------------------------- #
 # Backgrounds
 # --------------------------------------------------------------------------- #
+#: What was read before concluding that no construct sequence is available for the
+#: synthetic activator cassettes. Table EV1 gives each one as a name string and the
+#: Methods name the papers the strains come from; the primary deposits no map, so the
+#: gap is ``not_released_by_primary`` and closing it takes those papers' deposits.
+_CASSETTE_PLACEMENT_NOTE = (
+    "Table EV1 gives the cassette as a name string (e.g. "
+    "'HAP1+::pACT1-Z3EV-NatMX::eno2term') and states no contig, accession or "
+    "coordinate; the Methods cite the McIsaac strain papers for the constructions, and "
+    "no construct map is deposited with this paper"
+)
+
+
+def _cassette_placement_gap() -> ProvenanceGap:
+    """The typed absence of a construct sequence for an activator cassette."""
+    return ProvenanceGap(
+        field="placement",
+        reason=ProvenanceGapReason.not_released_by_primary,
+        looked_in=Provenance(
+            source_uri=STRAINS_LIBRARY,
+            citation_key=CITATION_KEY,
+            sha256=STRAINS_SHA256,
+            page=f"sheet {STRAINS_SHEET!r}",
+        ),
+        note=_CASSETTE_PLACEMENT_NOTE,
+    )
+
+
 MCISAAC_2011 = Provenance(
     source_uri="not mirrored; McIsaac et al. 2011, Mol Biol Cell (Table EV1 source "
     "'McIsaac et al (2011, MBoC)'), the DBY12021 construction",
@@ -780,6 +808,7 @@ def _replacement(
     """A ``locus::cassette`` allele: the '::' says the cassette replaced the ORF."""
     return BackgroundAllele(
         systematic_gene_name=systematic,
+        gene_namespace=SGD_S288C_NAMESPACE,
         gene_name=gene,
         allele_name=allele_name,
         edit=AlleleEdit.cassette_replacement,
@@ -801,7 +830,9 @@ def _activator_cassette(
         elements=elements,
         marker="NatMX",
         zygosity=Zygosity.haploid,
+        placement=None,
         provenance=[strain_row_sv(row, name), SOURCED_VALUES["parent_activator"]],
+        provenance_gaps=[_cassette_placement_gap()],
     )
 
 
@@ -818,7 +849,7 @@ _GAL1_NOTE = (
 )
 
 
-def build_background(key: BackgroundKey, row: StrainRow) -> StrainBackground:
+def build_background(key: BackgroundKey, row: StrainRow) -> EukaryoticStrainBackground:
     """One of the five backgrounds, sourced to the Table EV1 row that states it.
 
     ``row`` is the control row when the background has one (DBY12021, SMY69, SMY254)
@@ -910,6 +941,7 @@ def build_background(key: BackgroundKey, row: StrainRow) -> StrainBackground:
         alleles.append(
             BackgroundAllele(
                 systematic_gene_name="YNL268W",
+                gene_namespace=SGD_S288C_NAMESPACE,
                 gene_name="LYP1",
                 allele_name="lyp1Δ0",
                 edit=AlleleEdit.full_deletion,
@@ -936,6 +968,8 @@ def build_background(key: BackgroundKey, row: StrainRow) -> StrainBackground:
                 elements=["pACT1", "Z3EV", "NatMX", "eno2term"],
                 marker="NatMX",
                 zygosity=Zygosity.haploid,
+                placement=None,
+                provenance_gaps=[_cassette_placement_gap()],
                 provenance=[
                     strain_row_sv(
                         row,
@@ -950,7 +984,9 @@ def build_background(key: BackgroundKey, row: StrainRow) -> StrainBackground:
         ]
         resolve = None
         name = "HAP1+ Z3EV background (SMY2047, SMY2605-SMY2614)"
-    return StrainBackground(
+    return EukaryoticStrainBackground(
+        reference_strain="S288C",
+        assembly_set=SGD_S288C_R64,
         name=name,
         parents=None,
         construction=None,
@@ -976,7 +1012,7 @@ BACKGROUND_SOURCE_ROW: dict[BackgroundKey, str] = {
 }
 
 
-def genome_reference(background: StrainBackground) -> StrainReferenceGenome:
+def genome_reference(background: EukaryoticStrainBackground) -> StrainReferenceGenome:
     """The record's reference genome: S288C coordinates, the typed background."""
     return StrainReferenceGenome(
         species="Saccharomyces cerevisiae",

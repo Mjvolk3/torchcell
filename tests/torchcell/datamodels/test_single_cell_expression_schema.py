@@ -30,6 +30,7 @@ from torchcell.datamodels.schema import (
     BarcodedKanMxDeletionPerturbation,
     CultureEnvironment,
     Environment,
+    EukaryoticStrainBackground,
     ExperimentReferenceType,
     ExperimentType,
     Genotype,
@@ -40,7 +41,6 @@ from torchcell.datamodels.schema import (
     SegregantExpressionExperiment,
     SegregantExpressionExperimentReference,
     SingleCellExpressionPhenotype,
-    StrainBackground,
     StrainReferenceGenome,
 )
 from torchcell.sequence.genome.registry import (
@@ -84,8 +84,10 @@ def _phenotype(**overrides: Any) -> SingleCellExpressionPhenotype:
 
 
 def _reference_genome() -> StrainReferenceGenome:
-    background = StrainBackground(
+    background = EukaryoticStrainBackground(
         name="FY4/FY5",
+        reference_strain="S288C",
+        assembly_set=SGD_S288C_R64,
         parents=["FY4", "FY5"],
         mating_type=MatingType.a_alpha,
         ploidy="diploid",

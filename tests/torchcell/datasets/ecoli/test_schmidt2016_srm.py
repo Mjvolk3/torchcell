@@ -43,8 +43,8 @@ from torchcell.data import file_sha256
 from torchcell.datamodels.schema import (
     BacterialAssemblySet,
     BacterialGeneNamespace,
-    BacterialStrainBackground,
     ReferenceGenome,
+    StrainBackground,
     StrainReferenceGenome,
 )
 
@@ -543,7 +543,7 @@ def _reference_genome() -> ReferenceGenome:
 
 
 def _pinned(
-    strain: str, *, background: BacterialStrainBackground | None = None
+    strain: str, *, background: StrainBackground | None = None
 ) -> ReferenceGenome:
     """The BW25113 pin, on a background when one is given (#1045 part 3)."""
     if background is None:

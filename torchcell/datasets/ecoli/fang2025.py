@@ -67,7 +67,7 @@ THE HOST IS BACKGROUND, NOT PERTURBATION. CF is "an MG1655 (DE3) derivative with
 deletion) carrying the pCF plasmid for expression of dCas9 and the truncated fatty
 acyl-ACP thioesterase TesA'". The dfadE lesion, the DE3 prophage and the pCF plasmid are
 identical in every record of both rounds and in the reference, so they are a
-``BacterialStrainBackground`` rather than a per-record edit. The paper prints no locus
+``StrainBackground`` rather than a per-record edit. The paper prints no locus
 tag for ``fadE`` (``grep PP_\|b0221`` finds none), so the allele is carried by GENE NAME
 with its construction quoted and the locus tag left unasserted rather than derived.
 
@@ -155,7 +155,6 @@ from torchcell.datamodels.schema import (
     AssayType,
     BacterialAssemblySet,
     BacterialGeneNamespace,
-    BacterialStrainBackground,
     Concentration,
     ConcentrationUnit,
     CrisprConstruct,
@@ -173,6 +172,7 @@ from torchcell.datamodels.schema import (
     ReferenceGenome,
     SampleUnit,
     SmallMoleculePerturbation,
+    StrainBackground,
     Temperature,
 )
 from torchcell.datasets.bacteria_common import (
@@ -899,19 +899,19 @@ def publication() -> Publication:
     return Publication(doi=DOI, doi_url=f"https://doi.org/{DOI}")
 
 
-def host_background() -> BacterialStrainBackground:
+def host_background() -> StrainBackground:
     """Strain CF: MG1655(DE3) dfadE carrying pCF, constant in every record.
 
     ``alleles`` is EMPTY and the lesion lives in ``genotype_statement`` verbatim, which
     is what the class documents for a source that "states only a genotype string".
-    ``BacterialBackgroundAllele.systematic_gene_name`` is a required locus tag validated
+    ``BackgroundAllele.systematic_gene_name`` is a required locus tag validated
     against the namespace, so typing the ``fadE`` deletion would mean storing ``b0221``,
     a tag that appears nowhere in the mirrored bytes; the gap is recorded on the
     background instead of being closed by a derivation the source never made. The DE3
     prophage and the pCF plasmid stay in the statement for the same reason: neither is
     given a locus tag, coordinates or a sequence.
     """
-    return BacterialStrainBackground(
+    return StrainBackground(
         name="CF",
         reference_strain=MG1655_STRAIN,
         assembly_set=MG1655_ASSEMBLY_SET,

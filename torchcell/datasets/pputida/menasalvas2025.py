@@ -1803,7 +1803,7 @@ def host_reference(data_root: str | None = None) -> ReferenceGenome:
     """Plain KT2440, pinned to its GenBank assembly, with no asserted background.
 
     ``background`` is ``None`` deliberately: the selection hosts are "four different
-    strains" the paper never names, so a ``BacterialStrainBackground`` here would
+    strains" the paper never names, so a ``StrainBackground`` here would
     assert a chassis the source does not state. Every edit the source DOES state is a
     perturbation in :func:`host_perturbations`.
     """

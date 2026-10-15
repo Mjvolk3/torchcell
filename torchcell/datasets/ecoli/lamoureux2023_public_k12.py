@@ -79,7 +79,7 @@ GENOTYPE SETTLING (first matching rule, counted in ``preprocess/dropped_records.
 Since #1057 (the owner rule of 2026-10-12: "the data is the data", and the genome does not
 gate a released row) a sample of another K-12 substrain (the table names 13 strain cells),
 an evolved or mutator-evolved isolate, and an undefined background label (``Z1``,
-``lacIq``, ``SR``, ``1-2-``, ``hupB+``) are STORED on a ``BacterialStrainBackground``
+``lacIq``, ``SR``, ``1-2-``, ``hupB+``) are STORED on a ``StrainBackground``
 named as the release names it, on the MG1655 coordinates every library was quantified
 on, its unstated genotype a typed gap (``settle_public_background``): a strain followed
 only by whole-gene deletions keeps its ``Strain`` cell as the name and types the

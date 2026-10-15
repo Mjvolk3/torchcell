@@ -60,7 +60,7 @@ ONE PERTURBATION PER RECORD, AND THE PRODUCTION PATHWAY IS BACKGROUND, NOT A GEN
 Table S3 names the chassis as "PS", "pJBEI-6830 + pJBEI-6833", and gives each plasmid's
 composition, "pBbA5c-MevTsa-PMK-MK" and "pTrc99A-NudB-PMD". Those two plasmids are in
 every one of the nine strains AND in the control, so they are the
-:class:`BacterialStrainBackground`, carried verbatim in its ``genotype_statement`` and
+:class:`StrainBackground`, carried verbatim in its ``genotype_statement`` and
 ``construction``. They are NOT typed as ``HeterologousPathwayPerturbation``, and the
 reason is that the leaf's two required claims are unsourceable here:
 ``source_organism`` and ``is_heterologous`` are deferred whole to reference 6 (George et
@@ -145,7 +145,6 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import MM9_FOO2014
 from torchcell.datamodels.schema import (
     BacterialGeneNamespace,
-    BacterialStrainBackground,
     Compound,
     Concentration,
     ConcentrationUnit,
@@ -164,6 +163,7 @@ from torchcell.datamodels.schema import (
     ReferenceGenome,
     SampleUnit,
     SmallMoleculePerturbation,
+    StrainBackground,
     Temperature,
 )
 from torchcell.datasets.bacteria_common import assembly_reference
@@ -961,7 +961,7 @@ def isopentenol() -> Compound:
     return compound
 
 
-def chassis_background(composition: str) -> BacterialStrainBackground:
+def chassis_background(composition: str) -> StrainBackground:
     """The PS chassis: DH1 carrying the two production plasmids.
 
     ``alleles`` is empty because the paper states DH1 only by name and ATCC number and
@@ -969,7 +969,7 @@ def chassis_background(composition: str) -> BacterialStrainBackground:
     the overexpressed genes were amplified from and the namespace the released symbols
     are written against.
     """
-    return BacterialStrainBackground(
+    return StrainBackground(
         name=CHASSIS_STRAIN,
         reference_strain=REFERENCE_STRAIN,
         assembly_set="ecoli_K12_MG1655_ASM584v2",

@@ -29,11 +29,11 @@ from torchcell.datamodels.media import LAKE_WATER
 from torchcell.datamodels.schema import (
     ASSEMBLY_SET_ACCESSIONS,
     BACTERIAL_ASSEMBLY_SETS,
-    BacterialStrainBackground,
     ComponentDefinition,
     MeasurementType,
     ReferenceGenome,
     SampleUnit,
+    StrainBackground,
     StrainReferenceGenome,
 )
 from torchcell.datasets.ecoli import teteneva2024 as te
@@ -479,7 +479,7 @@ def test_render_workbook_texts_carries_both_legends_and_the_red_row(
 # --------------------------------------------------------------------------------------
 def _reference(*_: Any, **kwargs: Any) -> ReferenceGenome:
     background = kwargs["background"]
-    assert isinstance(background, BacterialStrainBackground)
+    assert isinstance(background, StrainBackground)
     return StrainReferenceGenome(
         species="Escherichia coli",
         strain=background.name,

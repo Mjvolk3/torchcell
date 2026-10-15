@@ -5520,6 +5520,15 @@ class Media(ProvenanceGapMixin):
     only what is missing: SGD's "YPD with 2% glucose" states a name, not a physical
     state. ``media_identity`` keys a gapped medium by its gaps, so an absence never
     merges with a stated medium or with another source's absence.
+
+    ``dropout_roles`` (lane X, 2026-10-15) is the ROLE-level counterpart of ``dropouts``: a release
+    that states a nutrient CLASS is absent without naming the compound removed
+    (YeastPhenome's ``SC (-C)``, ``SD + His + Leu + Lys + Ura, -N``). A fully listed
+    composition states such an absence by having no component in that role
+    (``M9_NOCARBON_WETMORE2015``), but an unlisted one cannot: ``components=[]`` already
+    means "composition not yet entered", so a carbon-free medium and a medium whose
+    recipe was never entered are the same bytes without this field. It is the same
+    "omitted is distinguishable from not yet listed" rule one level up.
     """
 
     # --- begin #901/#902/#903: a typed gap on the medium ------------------------ #
@@ -5548,6 +5557,21 @@ class Media(ProvenanceGapMixin):
         default_factory=list,
         description="auxotrophic components deliberately OMITTED (e.g. -His/-Arg/-Lys/-Ura)",
     )
+    # --- begin lane X: a role-level omission the release states without a compound --- #
+    dropout_roles: list[MediaComponentRole] = Field(
+        default_factory=list,
+        exclude_if=lambda v: not v,
+        description="functional ROLES the source states are omitted without naming the "
+        "compound removed (YeastPhenome's 'SC (-C)' carbon-free SC, 'SD ..., -N'). "
+        "``dropouts`` holds a named compound; this holds the closed-vocabulary role when "
+        "the release names only the class. Empty = the source states no role-level "
+        "omission, which is every medium that predates the field, and then left out of "
+        "the dump, so such a medium serializes to exactly the bytes it did before the "
+        "field existed and every content-addressed id over it is unchanged (the "
+        "Environment.growth_phase precedent). Part of media identity when non-empty, so "
+        "a carbon-free medium is not the node its complete base is.",
+    )
+    # --- end lane X ----------------------------------------------------------------- #
     provenance: list[SourcedValue] = Field(
         default_factory=list,
         description="recipe-level sourced justifications for the medium as a whole",
@@ -5560,6 +5584,40 @@ class Media(ProvenanceGapMixin):
         if v is not None and v not in ["solid", "liquid", "gas"]:
             raise ValueError('state must be one of "solid", "liquid", or "gas"')
         return v
+
+    # --- begin lane X: a role-level omission the release states without a compound --- #
+    @field_validator("dropout_roles", mode="after")
+    @classmethod
+    def validate_dropout_roles_unique(
+        cls, v: list[MediaComponentRole]
+    ) -> list[MediaComponentRole]:
+        """A role is omitted once; a repeat is a parse bug, not a stronger statement."""
+        if len(set(v)) != len(v):
+            raise ValueError(f"dropout_roles repeats a role: {[r.value for r in v]}")
+        return v
+
+    @model_validator(mode="after")
+    def _a_dropped_role_is_not_also_filled(self) -> "Media":
+        """A role cannot be both filled by a component and declared omitted.
+
+        The ``ProvenanceGapMixin`` invariant one level up: you cannot store a value and
+        declare it missing. A medium that swapped one carbon source for another states
+        that as ``dropouts`` (the named compound removed) plus the new ``components``
+        line, never as a role this medium still fills.
+        """
+        filled = {component.role for component in self.components}
+        contradicted = sorted(
+            role.value for role in self.dropout_roles if role in filled
+        )
+        if contradicted:
+            raise ValueError(
+                f"dropout_roles declares {contradicted} omitted but components fill "
+                "the same role(s) (cannot both state a component and declare its role "
+                "absent)"
+            )
+        return self
+
+    # --- end lane X ----------------------------------------------------------------- #
 
     # --- begin #901/#902/#903: a typed gap on the medium ------------------------ #
     @model_validator(mode="after")

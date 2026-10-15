@@ -24,3 +24,8 @@
 # stores the KG 4.0 rebuild replaces, plus the field classification the note's table is.
 !environment_response_identity_outcomes.json
 !environment_response_identity_fields.json
+# The media-name composition scan (lane X, 2026-10-15): the before-and-after yeastphenome
+# token table, the L1 duplicate counts the `expected_duplicated_pairs` constant cites, and
+# the cross-dataset scan of the dev stores. The store half is reproducible only against the
+# PRE-fix dev stores that the KG 4.0 rebuild replaces, so the file is tracked.
+!media_name_composition_scan.json

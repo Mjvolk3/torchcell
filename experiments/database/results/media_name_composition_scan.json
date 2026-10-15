@@ -1,0 +1,1356 @@
+{
+  "dev_stores": {
+    "flagged_stores": {
+      "_verify_ozaydin_geneadd": {
+        "distinct_media_sampled": 1,
+        "flagged": {
+          "SC-URA": [
+            "dropout_marker:-ura"
+          ]
+        },
+        "records": 4474,
+        "records_read": 4474
+      },
+      "_verify_ozaydin_rename": {
+        "distinct_media_sampled": 1,
+        "flagged": {
+          "SC-URA": [
+            "dropout_marker:-ura"
+          ]
+        },
+        "records": 4474,
+        "records_read": 4474
+      },
+      "crispri_guide_ffa_enrichment_fang2025": {
+        "distinct_media_sampled": 1,
+        "flagged": {
+          "modified M9 + 2 g/L yeast extract + 30 g/L glycerol + 0.1% Triton X-100 (pH 7.2; Fang 2025)": [
+            "ph_in_name"
+          ]
+        },
+        "records": 15711,
+        "records_read": 3143
+      },
+      "gene_essentiality_sgd": {
+        "distinct_media_sampled": 5,
+        "flagged": {
+          "YPD with 2% glucose": [
+            "carbon_source:glucose (base_medium)"
+          ]
+        },
+        "records": 1329,
+        "records_read": 1329
+      },
+      "growth_yield_baba2006": {
+        "distinct_media_sampled": 2,
+        "flagged": {
+          "0.4% glucose MOPS medium with 2 mM Pi (Wanner 1994), with 30 ug/ml kanamycin (Baba 2006 growth assay)": [
+            "buffer:mops (base_medium)"
+          ]
+        },
+        "records": 11735,
+        "records_read": 3912
+      },
+      "phage_rbtnseq_mutalik2020": {
+        "distinct_media_sampled": 3,
+        "flagged": {
+          "LB with SM buffer (Teknova) plus 10 mM CaCl2 and MgSO4, formulation not stated (Mutalik 2020), liquid": [
+            "dose_in_name"
+          ]
+        },
+        "records": 287815,
+        "records_read": 3030
+      },
+      "yeastphenome": {
+        "distinct_media_sampled": 17,
+        "flagged": {
+          "SC (-C)": [
+            "dropout_marker:-c"
+          ],
+          "SC - Ade": [
+            "dropout_marker:- ade"
+          ],
+          "SC - Arg": [
+            "dropout_marker:- arg"
+          ],
+          "SC - Lys": [
+            "dropout_marker:- lys"
+          ],
+          "SC - Met": [
+            "dropout_marker:- met"
+          ],
+          "SC - Trp": [
+            "dropout_marker:- trp"
+          ],
+          "SC, Glycerol [2%]": [
+            "carbon_source:glycerol (base_medium)",
+            "dose_in_name"
+          ],
+          "SC, HEPES [25 mM]": [
+            "buffer:hepes",
+            "dose_in_name"
+          ],
+          "YPG [3%]": [
+            "dose_in_name"
+          ]
+        },
+        "records": 524682,
+        "records_read": 3016
+      }
+    },
+    "unreadable_stores": {
+      "betaxanthin_cachera2023": "AttributeError: Can't get attribute 'ReleasedGeneKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "carotenoid_ozaydin2013": "AttributeError: Can't get attribute 'ReleasedGeneKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "crispri_mormino2022": "AttributeError: Can't get attribute 'ReleasedGeneKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "ecoli_env_chemgen_nichols2011": "AttributeError: Can't get attribute 'ReleasedStrainKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "env_chemgen_auesukaree2009": "AttributeError: Can't get attribute 'ReleasedGeneKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "env_chemgen_mota2024": "AttributeError: Can't get attribute 'ReleasedGeneKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "env_chemgen_wang2015": "AttributeError: Can't get attribute 'ReleasedStrainKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "ffa_xue2025": "AttributeError: Can't get attribute 'ReleasedGeneKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "gene_essentiality_baba2006": "AttributeError: Can't get attribute 'ReleasedStrainKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "gene_interaction_babu2014": "AttributeError: Can't get attribute 'ReleasedStrainKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "gene_interaction_butland2008": "AttributeError: Can't get attribute 'ReleasedStrainKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "growth_rate_choe2019": "AttributeError: Can't get attribute 'ReleasedStrainKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "growth_rate_lamoureux2023": "AttributeError: Can't get attribute 'ReleasedStrainKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "growth_rate_schmidt2016": "AttributeError: Can't get attribute 'ReleasedStrainKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "growth_wang2015": "AttributeError: Can't get attribute 'ReleasedStrainKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "isobutanol_screen_lopez2024": "AttributeError: Can't get attribute 'ReleasedGeneKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "metabolome_fuhrer2017": "AttributeError: Can't get attribute 'ReleasedStrainKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "metabolome_schastnaya2021": "AttributeError: Can't get attribute 'ReleasedStrainKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "organic_acid_yoshida2012": "AttributeError: Can't get attribute 'ReleasedGeneKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "putida_precise321_lim2022": "AttributeError: Can't get attribute 'ReleasedStrainKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "rbtnseq_teteneva2024_ecoli": "AttributeError: Can't get attribute 'ReleasedStrainKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "rnaseq_lamoureux2023": "AttributeError: Can't get attribute 'ReleasedStrainKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "rnaseq_public_k12_lamoureux2023": "AttributeError: Can't get attribute 'ReleasedStrainKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "showcase_amino_acid_betaxanthin": "UnpicklingError: invalid load key, '['.",
+      "showcase_essentiality_smf": "UnpicklingError: invalid load key, '['.",
+      "tf_knockout_growth_choe2019": "AttributeError: Can't get attribute 'ReleasedStrainKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>"
+    }
+  },
+  "growth_phase": {
+    "stores_scanned": 181,
+    "stores_stating_a_growth_phase": {
+      "growth_rate_s23_schmidt2016": {
+        "distinct_environments": 22,
+        "distinct_environments_without_the_phase": 22,
+        "environments_that_merge_without_it": 0,
+        "phases": {
+          "None": 24,
+          "stationary": 2
+        },
+        "records": 26,
+        "records_read": 26
+      },
+      "proteome_schmidt2016": {
+        "distinct_environments": 21,
+        "distinct_environments_without_the_phase": 21,
+        "environments_that_merge_without_it": 0,
+        "phases": {
+          "None": 19,
+          "stationary": 2
+        },
+        "records": 21,
+        "records_read": 21
+      },
+      "proteome_srm_set1_schmidt2016": {
+        "distinct_environments": 18,
+        "distinct_environments_without_the_phase": 18,
+        "environments_that_merge_without_it": 0,
+        "phases": {
+          "None": 16,
+          "stationary": 2
+        },
+        "records": 18,
+        "records_read": 18
+      },
+      "proteome_srm_set2_schmidt2016": {
+        "distinct_environments": 21,
+        "distinct_environments_without_the_phase": 21,
+        "environments_that_merge_without_it": 0,
+        "phases": {
+          "None": 19,
+          "stationary": 2
+        },
+        "records": 21,
+        "records_read": 21
+      }
+    },
+    "unreadable_stores": {
+      "betaxanthin_cachera2023": "AttributeError: Can't get attribute 'ReleasedGeneKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "carotenoid_ozaydin2013": "AttributeError: Can't get attribute 'ReleasedGeneKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "crispri_mormino2022": "AttributeError: Can't get attribute 'ReleasedGeneKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "ecoli_env_chemgen_nichols2011": "AttributeError: Can't get attribute 'ReleasedStrainKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "env_chemgen_auesukaree2009": "AttributeError: Can't get attribute 'ReleasedGeneKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "env_chemgen_mota2024": "AttributeError: Can't get attribute 'ReleasedGeneKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "env_chemgen_wang2015": "AttributeError: Can't get attribute 'ReleasedStrainKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "ffa_xue2025": "AttributeError: Can't get attribute 'ReleasedGeneKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "gene_essentiality_baba2006": "AttributeError: Can't get attribute 'ReleasedStrainKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "gene_interaction_babu2014": "AttributeError: Can't get attribute 'ReleasedStrainKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "gene_interaction_butland2008": "AttributeError: Can't get attribute 'ReleasedStrainKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "growth_rate_choe2019": "AttributeError: Can't get attribute 'ReleasedStrainKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "growth_rate_lamoureux2023": "AttributeError: Can't get attribute 'ReleasedStrainKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "growth_rate_schmidt2016": "AttributeError: Can't get attribute 'ReleasedStrainKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "growth_wang2015": "AttributeError: Can't get attribute 'ReleasedStrainKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "isobutanol_screen_lopez2024": "AttributeError: Can't get attribute 'ReleasedGeneKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "metabolome_fuhrer2017": "AttributeError: Can't get attribute 'ReleasedStrainKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "metabolome_schastnaya2021": "AttributeError: Can't get attribute 'ReleasedStrainKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "organic_acid_yoshida2012": "AttributeError: Can't get attribute 'ReleasedGeneKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "putida_precise321_lim2022": "AttributeError: Can't get attribute 'ReleasedStrainKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "rbtnseq_teteneva2024_ecoli": "AttributeError: Can't get attribute 'ReleasedStrainKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "rnaseq_lamoureux2023": "AttributeError: Can't get attribute 'ReleasedStrainKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "rnaseq_public_k12_lamoureux2023": "AttributeError: Can't get attribute 'ReleasedStrainKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>",
+      "showcase_amino_acid_betaxanthin": "UnpicklingError: invalid load key, '['.",
+      "showcase_essentiality_smf": "UnpicklingError: invalid load key, '['.",
+      "tf_knockout_growth_choe2019": "AttributeError: Can't get attribute 'ReleasedStrainKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/environment-media-fidelity/torchcell/datamodels/schema.py'>"
+    }
+  },
+  "media_library": {
+    "flagged": {
+      "M9_AA_SCHMIDT2016": [
+        "carbon_source:glycerol"
+      ],
+      "M9_DEFERRED_BANERJEE2025": [
+        "dropout_marker:no carbon"
+      ],
+      "M9_MODIFIED_FANG2025": [
+        "ph_in_name"
+      ]
+    },
+    "media_in_library": 109
+  },
+  "yeastphenome_environments_fixed": {
+    "environment_identities": 125,
+    "identities_reached_from_several_tokens": 0,
+    "records_on_a_shared_environment_node": 0,
+    "shared": {}
+  },
+  "yeastphenome_environments_pre_fix": {
+    "environment_identities": 117,
+    "identities_reached_from_several_tokens": 3,
+    "records_on_a_shared_environment_node": 53951,
+    "shared": {
+      "8ca16afd90cd": {
+        "records": 30628,
+        "released_tokens": [
+          "SC - Ade [liquid]",
+          "SC - Arg [liquid]",
+          "SC - Lys [liquid]",
+          "SC - Met [liquid]",
+          "SC - Trp [liquid]",
+          "SC [liquid]"
+        ]
+      },
+      "d2a4a90f9a76": {
+        "records": 9674,
+        "released_tokens": [
+          "SD + His + Leu + Lys + Ura (2) [solid]",
+          "SD + His + Leu + Lys + Ura, -N [solid]"
+        ]
+      },
+      "f60ce2fdfe0f": {
+        "records": 13649,
+        "released_tokens": [
+          "SC + DMSO [1%] [solid]",
+          "SC + MeOH [solid]",
+          "SC, HEPES [25 mM] [solid]"
+        ]
+      }
+    }
+  },
+  "yeastphenome_l1_fixed": {
+    "duplicated": 0,
+    "records": 524682,
+    "unique_pair_keys": 524682
+  },
+  "yeastphenome_l1_pre_fix": {
+    "duplicated": 4837,
+    "records": 524682,
+    "unique_pair_keys": 519845
+  },
+  "yeastphenome_tokens_fixed": {
+    "columns_not_stored": {
+      "SC - Arg::not_growth": 1,
+      "SC - Ura + DMSO [0.5%]::condition_not_representable": 2,
+      "SC::condition_not_representable": 1,
+      "YPD + DMSO [2%]::condition_not_representable": 1,
+      "YPD::condition_not_representable": 14,
+      "YPG [3%]::condition_not_representable": 1
+    },
+    "distinct_media_identities": 28,
+    "distinct_stored_names": 27,
+    "per_media_identity": {
+      "0297faa37368": {
+        "records": 88,
+        "released_tokens": [
+          "SC + DMSO [0.2%]"
+        ]
+      },
+      "043fc10027c2": {
+        "records": 4195,
+        "released_tokens": [
+          "SC - Ade"
+        ]
+      },
+      "0840703a9d37": {
+        "records": 4195,
+        "released_tokens": [
+          "SC - Trp"
+        ]
+      },
+      "235566b388e1": {
+        "records": 38695,
+        "released_tokens": [
+          "SC + DMSO"
+        ]
+      },
+      "2488527f8249": {
+        "records": 4195,
+        "released_tokens": [
+          "SC - Arg"
+        ]
+      },
+      "28bba490d27c": {
+        "records": 160468,
+        "released_tokens": [
+          "CSM",
+          "SC"
+        ]
+      },
+      "2acb8ecf0ae0": {
+        "records": 49,
+        "released_tokens": [
+          "SD"
+        ]
+      },
+      "397cef8d918b": {
+        "records": 9094,
+        "released_tokens": [
+          "YPG [3%]"
+        ]
+      },
+      "3c836d7dda86": {
+        "records": 4835,
+        "released_tokens": [
+          "SC + DMSO [1%]"
+        ]
+      },
+      "3e77a4736279": {
+        "records": 4057,
+        "released_tokens": [
+          "YPD + G418 [200 ug/ml]"
+        ]
+      },
+      "4f5a3c0dfa62": {
+        "records": 203553,
+        "released_tokens": [
+          "YPD"
+        ]
+      },
+      "53cb82bb8f14": {
+        "records": 4195,
+        "released_tokens": [
+          "SC - Met"
+        ]
+      },
+      "5efc85aba773": {
+        "records": 4837,
+        "released_tokens": [
+          "SD + His + Leu + Lys + Ura, -N"
+        ]
+      },
+      "66f1cc2a71a5": {
+        "records": 14287,
+        "released_tokens": [
+          "SD + His + Leu + Lys + Ura (2)",
+          "SD + his + leu + lys + ura"
+        ]
+      },
+      "6b00dcd6e431": {
+        "records": 4837,
+        "released_tokens": [
+          "SC, HEPES [25 mM]"
+        ]
+      },
+      "6b3cbf763f73": {
+        "records": 9079,
+        "released_tokens": [
+          "YPD + MeOH [1%]"
+        ]
+      },
+      "6df8b535d7a7": {
+        "records": 160040,
+        "released_tokens": [
+          "SC"
+        ]
+      },
+      "72960dbe2d07": {
+        "records": 4837,
+        "released_tokens": [
+          "SC (-C)"
+        ]
+      },
+      "856fb90d717b": {
+        "records": 4195,
+        "released_tokens": [
+          "SC - Lys"
+        ]
+      },
+      "8597bb115cfd": {
+        "records": 4228,
+        "released_tokens": [
+          "YPD + EtOH"
+        ]
+      },
+      "b0721bae3c08": {
+        "records": 4181,
+        "released_tokens": [
+          "SD + His + Leu + Met + Ura"
+        ]
+      },
+      "b7c44b37cc12": {
+        "records": 4767,
+        "released_tokens": [
+          "SC + DMSO [0.5%]"
+        ]
+      },
+      "c1e67e89cacd": {
+        "records": 9094,
+        "released_tokens": [
+          "YPG [3%]"
+        ]
+      },
+      "d3a2fe76ca88": {
+        "records": 203553,
+        "released_tokens": [
+          "YPD"
+        ]
+      },
+      "e91e546224a7": {
+        "records": 9674,
+        "released_tokens": [
+          "SC, Glycerol [2%]"
+        ]
+      },
+      "ef5fdbd807fb": {
+        "records": 3977,
+        "released_tokens": [
+          "SC + MeOH"
+        ]
+      },
+      "ff361c190de2": {
+        "records": 8348,
+        "released_tokens": [
+          "YPD + DMSO [2%]"
+        ]
+      },
+      "fffc05630023": {
+        "records": 9816,
+        "released_tokens": [
+          "YPD + G418 [200 ug/ml] + DMSO [1%]"
+        ]
+      }
+    },
+    "per_stored_name": {
+      "CSM": {
+        "records": 428,
+        "released_tokens": {
+          "CSM": 428
+        }
+      },
+      "SC": {
+        "records": 160040,
+        "released_tokens": {
+          "SC": 160040
+        }
+      },
+      "SC (-C)": {
+        "records": 4837,
+        "released_tokens": {
+          "SC (-C)": 4837
+        }
+      },
+      "SC + DMSO": {
+        "records": 38695,
+        "released_tokens": {
+          "SC + DMSO": 38695
+        }
+      },
+      "SC + DMSO [0.2%]": {
+        "records": 88,
+        "released_tokens": {
+          "SC + DMSO [0.2%]": 88
+        }
+      },
+      "SC + DMSO [0.5%]": {
+        "records": 4767,
+        "released_tokens": {
+          "SC + DMSO [0.5%]": 4767
+        }
+      },
+      "SC + DMSO [1%]": {
+        "records": 4835,
+        "released_tokens": {
+          "SC + DMSO [1%]": 4835
+        }
+      },
+      "SC + MeOH": {
+        "records": 3977,
+        "released_tokens": {
+          "SC + MeOH": 3977
+        }
+      },
+      "SC - Ade": {
+        "records": 4195,
+        "released_tokens": {
+          "SC - Ade": 4195
+        }
+      },
+      "SC - Arg": {
+        "records": 4195,
+        "released_tokens": {
+          "SC - Arg": 4195
+        }
+      },
+      "SC - Lys": {
+        "records": 4195,
+        "released_tokens": {
+          "SC - Lys": 4195
+        }
+      },
+      "SC - Met": {
+        "records": 4195,
+        "released_tokens": {
+          "SC - Met": 4195
+        }
+      },
+      "SC - Trp": {
+        "records": 4195,
+        "released_tokens": {
+          "SC - Trp": 4195
+        }
+      },
+      "SC, Glycerol [2%]": {
+        "records": 9674,
+        "released_tokens": {
+          "SC, Glycerol [2%]": 9674
+        }
+      },
+      "SC, HEPES [25 mM]": {
+        "records": 4837,
+        "released_tokens": {
+          "SC, HEPES [25 mM]": 4837
+        }
+      },
+      "SD": {
+        "records": 49,
+        "released_tokens": {
+          "SD": 49
+        }
+      },
+      "SD + His + Leu + Lys + Ura (2)": {
+        "records": 4837,
+        "released_tokens": {
+          "SD + His + Leu + Lys + Ura (2)": 4837
+        }
+      },
+      "SD + His + Leu + Lys + Ura, -N": {
+        "records": 4837,
+        "released_tokens": {
+          "SD + His + Leu + Lys + Ura, -N": 4837
+        }
+      },
+      "SD + His + Leu + Met + Ura": {
+        "records": 4181,
+        "released_tokens": {
+          "SD + His + Leu + Met + Ura": 4181
+        }
+      },
+      "SD + his + leu + lys + ura": {
+        "records": 9450,
+        "released_tokens": {
+          "SD + his + leu + lys + ura": 9450
+        }
+      },
+      "YPD": {
+        "records": 203553,
+        "released_tokens": {
+          "YPD": 203553
+        }
+      },
+      "YPD + DMSO [2%]": {
+        "records": 8348,
+        "released_tokens": {
+          "YPD + DMSO [2%]": 8348
+        }
+      },
+      "YPD + EtOH": {
+        "records": 4228,
+        "released_tokens": {
+          "YPD + EtOH": 4228
+        }
+      },
+      "YPD + G418 [200 ug/ml]": {
+        "records": 4057,
+        "released_tokens": {
+          "YPD + G418 [200 ug/ml]": 4057
+        }
+      },
+      "YPD + G418 [200 ug/ml] + DMSO [1%]": {
+        "records": 9816,
+        "released_tokens": {
+          "YPD + G418 [200 ug/ml] + DMSO [1%]": 9816
+        }
+      },
+      "YPD + MeOH [1%]": {
+        "records": 9079,
+        "released_tokens": {
+          "YPD + MeOH [1%]": 9079
+        }
+      },
+      "YPG [3%]": {
+        "records": 9094,
+        "released_tokens": {
+          "YPG [3%]": 9094
+        }
+      }
+    },
+    "per_token": {
+      "CSM": {
+        "columns": 2,
+        "media_identities": [
+          "28bba490d27c"
+        ],
+        "records": 428,
+        "stored": [
+          "{\"base_medium\": \"SC\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"CSM\", \"state\": \"liquid\"}"
+        ]
+      },
+      "SC": {
+        "columns": 37,
+        "media_identities": [
+          "28bba490d27c",
+          "6df8b535d7a7"
+        ],
+        "records": 160040,
+        "stored": [
+          "{\"base_medium\": \"SC\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SC\", \"state\": \"liquid\"}",
+          "{\"base_medium\": \"SC\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SC\", \"state\": \"solid\"}"
+        ]
+      },
+      "SC (-C)": {
+        "columns": 1,
+        "media_identities": [
+          "72960dbe2d07"
+        ],
+        "records": 4837,
+        "stored": [
+          "{\"base_medium\": \"SC\", \"components\": [], \"dropout_roles\": [\"carbon_source\"], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SC (-C)\", \"state\": \"solid\"}"
+        ]
+      },
+      "SC + DMSO": {
+        "columns": 8,
+        "media_identities": [
+          "235566b388e1"
+        ],
+        "records": 38695,
+        "stored": [
+          "{\"base_medium\": \"SC\", \"components\": [[\"dimethyl sulfoxide\", \"other\"]], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SC + DMSO\", \"state\": \"solid\"}"
+        ]
+      },
+      "SC + DMSO [0.2%]": {
+        "columns": 1,
+        "media_identities": [
+          "0297faa37368"
+        ],
+        "records": 88,
+        "stored": [
+          "{\"base_medium\": \"SC\", \"components\": [[\"dimethyl sulfoxide\", \"other\"]], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SC + DMSO [0.2%]\", \"state\": \"liquid\"}"
+        ]
+      },
+      "SC + DMSO [0.5%]": {
+        "columns": 1,
+        "media_identities": [
+          "b7c44b37cc12"
+        ],
+        "records": 4767,
+        "stored": [
+          "{\"base_medium\": \"SC\", \"components\": [[\"dimethyl sulfoxide\", \"other\"]], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SC + DMSO [0.5%]\", \"state\": \"liquid\"}"
+        ]
+      },
+      "SC + DMSO [1%]": {
+        "columns": 1,
+        "media_identities": [
+          "3c836d7dda86"
+        ],
+        "records": 4835,
+        "stored": [
+          "{\"base_medium\": \"SC\", \"components\": [[\"dimethyl sulfoxide\", \"other\"]], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SC + DMSO [1%]\", \"state\": \"solid\"}"
+        ]
+      },
+      "SC + MeOH": {
+        "columns": 1,
+        "media_identities": [
+          "ef5fdbd807fb"
+        ],
+        "records": 3977,
+        "stored": [
+          "{\"base_medium\": \"SC\", \"components\": [[\"methanol\", \"other\"]], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SC + MeOH\", \"state\": \"solid\"}"
+        ]
+      },
+      "SC - Ade": {
+        "columns": 1,
+        "media_identities": [
+          "043fc10027c2"
+        ],
+        "records": 4195,
+        "stored": [
+          "{\"base_medium\": \"SC\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [\"adenine\"], \"is_synthetic\": true, \"name\": \"SC - Ade\", \"state\": \"liquid\"}"
+        ]
+      },
+      "SC - Arg": {
+        "columns": 2,
+        "media_identities": [
+          "2488527f8249"
+        ],
+        "records": 4195,
+        "stored": [
+          "{\"base_medium\": \"SC\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [\"L-arginine\"], \"is_synthetic\": true, \"name\": \"SC - Arg\", \"state\": \"liquid\"}"
+        ]
+      },
+      "SC - Lys": {
+        "columns": 1,
+        "media_identities": [
+          "856fb90d717b"
+        ],
+        "records": 4195,
+        "stored": [
+          "{\"base_medium\": \"SC\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [\"L-lysine\"], \"is_synthetic\": true, \"name\": \"SC - Lys\", \"state\": \"liquid\"}"
+        ]
+      },
+      "SC - Met": {
+        "columns": 1,
+        "media_identities": [
+          "53cb82bb8f14"
+        ],
+        "records": 4195,
+        "stored": [
+          "{\"base_medium\": \"SC\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [\"L-methionine\"], \"is_synthetic\": true, \"name\": \"SC - Met\", \"state\": \"liquid\"}"
+        ]
+      },
+      "SC - Trp": {
+        "columns": 1,
+        "media_identities": [
+          "0840703a9d37"
+        ],
+        "records": 4195,
+        "stored": [
+          "{\"base_medium\": \"SC\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [\"L-tryptophan\"], \"is_synthetic\": true, \"name\": \"SC - Trp\", \"state\": \"liquid\"}"
+        ]
+      },
+      "SC, Glycerol [2%]": {
+        "columns": 2,
+        "media_identities": [
+          "e91e546224a7"
+        ],
+        "records": 9674,
+        "stored": [
+          "{\"base_medium\": \"SC\", \"components\": [[\"glycerol\", \"carbon_source\"]], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SC, Glycerol [2%]\", \"state\": \"solid\"}"
+        ]
+      },
+      "SC, HEPES [25 mM]": {
+        "columns": 1,
+        "media_identities": [
+          "6b00dcd6e431"
+        ],
+        "records": 4837,
+        "stored": [
+          "{\"base_medium\": \"SC\", \"components\": [[\"HEPES\", \"buffer\"]], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SC, HEPES [25 mM]\", \"state\": \"solid\"}"
+        ]
+      },
+      "SD": {
+        "columns": 1,
+        "media_identities": [
+          "2acb8ecf0ae0"
+        ],
+        "records": 49,
+        "stored": [
+          "{\"base_medium\": \"SD\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SD\", \"state\": \"liquid\"}"
+        ]
+      },
+      "SD + His + Leu + Lys + Ura (2)": {
+        "columns": 1,
+        "media_identities": [
+          "66f1cc2a71a5"
+        ],
+        "records": 4837,
+        "stored": [
+          "{\"base_medium\": \"SD\", \"components\": [[\"L-histidine\", \"amino_acid\"], [\"L-leucine\", \"amino_acid\"], [\"L-lysine\", \"amino_acid\"], [\"uracil\", \"nucleobase\"]], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SD + His + Leu + Lys + Ura (2)\", \"state\": \"solid\"}"
+        ]
+      },
+      "SD + His + Leu + Lys + Ura, -N": {
+        "columns": 1,
+        "media_identities": [
+          "5efc85aba773"
+        ],
+        "records": 4837,
+        "stored": [
+          "{\"base_medium\": \"SD\", \"components\": [[\"L-histidine\", \"amino_acid\"], [\"L-leucine\", \"amino_acid\"], [\"L-lysine\", \"amino_acid\"], [\"uracil\", \"nucleobase\"]], \"dropout_roles\": [\"nitrogen_source\"], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SD + His + Leu + Lys + Ura, -N\", \"state\": \"solid\"}"
+        ]
+      },
+      "SD + His + Leu + Met + Ura": {
+        "columns": 1,
+        "media_identities": [
+          "b0721bae3c08"
+        ],
+        "records": 4181,
+        "stored": [
+          "{\"base_medium\": \"SD\", \"components\": [[\"L-histidine\", \"amino_acid\"], [\"L-leucine\", \"amino_acid\"], [\"L-methionine\", \"amino_acid\"], [\"uracil\", \"nucleobase\"]], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SD + His + Leu + Met + Ura\", \"state\": \"solid\"}"
+        ]
+      },
+      "SD + his + leu + lys + ura": {
+        "columns": 2,
+        "media_identities": [
+          "66f1cc2a71a5"
+        ],
+        "records": 9450,
+        "stored": [
+          "{\"base_medium\": \"SD\", \"components\": [[\"L-histidine\", \"amino_acid\"], [\"L-leucine\", \"amino_acid\"], [\"L-lysine\", \"amino_acid\"], [\"uracil\", \"nucleobase\"]], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SD + his + leu + lys + ura\", \"state\": \"solid\"}"
+        ]
+      },
+      "YPD": {
+        "columns": 72,
+        "media_identities": [
+          "4f5a3c0dfa62",
+          "d3a2fe76ca88"
+        ],
+        "records": 203553,
+        "stored": [
+          "{\"base_medium\": \"YPD\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": false, \"name\": \"YPD\", \"state\": \"liquid\"}",
+          "{\"base_medium\": \"YPD\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": false, \"name\": \"YPD\", \"state\": \"solid\"}"
+        ]
+      },
+      "YPD + DMSO [2%]": {
+        "columns": 3,
+        "media_identities": [
+          "ff361c190de2"
+        ],
+        "records": 8348,
+        "stored": [
+          "{\"base_medium\": \"YPD\", \"components\": [[\"dimethyl sulfoxide\", \"other\"]], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": false, \"name\": \"YPD + DMSO [2%]\", \"state\": \"liquid\"}"
+        ]
+      },
+      "YPD + EtOH": {
+        "columns": 1,
+        "media_identities": [
+          "8597bb115cfd"
+        ],
+        "records": 4228,
+        "stored": [
+          "{\"base_medium\": \"YPD\", \"components\": [[\"ethanol\", \"other\"]], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": false, \"name\": \"YPD + EtOH\", \"state\": \"liquid\"}"
+        ]
+      },
+      "YPD + G418 [200 ug/ml]": {
+        "columns": 1,
+        "media_identities": [
+          "3e77a4736279"
+        ],
+        "records": 4057,
+        "stored": [
+          "{\"base_medium\": \"YPD\", \"components\": [[\"G418 (geneticin)\", \"selection_agent\"]], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": false, \"name\": \"YPD + G418 [200 ug/ml]\", \"state\": \"solid\"}"
+        ]
+      },
+      "YPD + G418 [200 ug/ml] + DMSO [1%]": {
+        "columns": 2,
+        "media_identities": [
+          "fffc05630023"
+        ],
+        "records": 9816,
+        "stored": [
+          "{\"base_medium\": \"YPD\", \"components\": [[\"G418 (geneticin)\", \"selection_agent\"], [\"dimethyl sulfoxide\", \"other\"]], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": false, \"name\": \"YPD + G418 [200 ug/ml] + DMSO [1%]\", \"state\": \"solid\"}"
+        ]
+      },
+      "YPD + MeOH [1%]": {
+        "columns": 2,
+        "media_identities": [
+          "6b3cbf763f73"
+        ],
+        "records": 9079,
+        "stored": [
+          "{\"base_medium\": \"YPD\", \"components\": [[\"methanol\", \"other\"]], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": false, \"name\": \"YPD + MeOH [1%]\", \"state\": \"solid\"}"
+        ]
+      },
+      "YPG [3%]": {
+        "columns": 3,
+        "media_identities": [
+          "397cef8d918b",
+          "c1e67e89cacd"
+        ],
+        "records": 9094,
+        "stored": [
+          "{\"base_medium\": \"YP\", \"components\": [[\"YPG carbon source, abbreviated by the curation\", \"carbon_source\"]], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": false, \"name\": \"YPG [3%]\", \"state\": \"liquid\"}",
+          "{\"base_medium\": \"YP\", \"components\": [[\"YPG carbon source, abbreviated by the curation\", \"carbon_source\"]], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": false, \"name\": \"YPG [3%]\", \"state\": \"solid\"}"
+        ]
+      }
+    },
+    "records_total": 524682,
+    "released_tokens": 28
+  },
+  "yeastphenome_tokens_pre_fix": {
+    "columns_not_stored": {
+      "SC - Arg::not_growth": 1,
+      "SC - Ura + DMSO [0.5%]::condition_not_representable": 2,
+      "SC::condition_not_representable": 1,
+      "YPD + DMSO [2%]::condition_not_representable": 1,
+      "YPD::condition_not_representable": 14,
+      "YPG [3%]::condition_not_representable": 1
+    },
+    "distinct_media_identities": 8,
+    "distinct_stored_names": 13,
+    "per_media_identity": {
+      "054c23092553": {
+        "records": 9094,
+        "released_tokens": [
+          "YPG [3%]"
+        ]
+      },
+      "28bba490d27c": {
+        "records": 186298,
+        "released_tokens": [
+          "CSM",
+          "SC",
+          "SC + DMSO [0.2%]",
+          "SC + DMSO [0.5%]",
+          "SC - Ade",
+          "SC - Arg",
+          "SC - Lys",
+          "SC - Met",
+          "SC - Trp"
+        ]
+      },
+      "2acb8ecf0ae0": {
+        "records": 49,
+        "released_tokens": [
+          "SD"
+        ]
+      },
+      "3476038df591": {
+        "records": 9094,
+        "released_tokens": [
+          "YPG [3%]"
+        ]
+      },
+      "4f5a3c0dfa62": {
+        "records": 226505,
+        "released_tokens": [
+          "YPD",
+          "YPD + G418 [200 ug/ml]",
+          "YPD + G418 [200 ug/ml] + DMSO [1%]",
+          "YPD + MeOH [1%]"
+        ]
+      },
+      "6df8b535d7a7": {
+        "records": 226895,
+        "released_tokens": [
+          "SC",
+          "SC (-C)",
+          "SC + DMSO",
+          "SC + DMSO [1%]",
+          "SC + MeOH",
+          "SC, Glycerol [2%]",
+          "SC, HEPES [25 mM]"
+        ]
+      },
+      "ce39a7e9c84d": {
+        "records": 23305,
+        "released_tokens": [
+          "SD + His + Leu + Lys + Ura (2)",
+          "SD + His + Leu + Lys + Ura, -N",
+          "SD + His + Leu + Met + Ura",
+          "SD + his + leu + lys + ura"
+        ]
+      },
+      "d3a2fe76ca88": {
+        "records": 216129,
+        "released_tokens": [
+          "YPD",
+          "YPD + DMSO [2%]",
+          "YPD + EtOH"
+        ]
+      }
+    },
+    "per_stored_name": {
+      "CSM": {
+        "records": 428,
+        "released_tokens": {
+          "CSM": 428
+        }
+      },
+      "SC": {
+        "records": 212402,
+        "released_tokens": {
+          "SC": 160040,
+          "SC + DMSO": 38695,
+          "SC + DMSO [0.2%]": 88,
+          "SC + DMSO [0.5%]": 4767,
+          "SC + DMSO [1%]": 4835,
+          "SC + MeOH": 3977
+        }
+      },
+      "SC (-C)": {
+        "records": 4837,
+        "released_tokens": {
+          "SC (-C)": 4837
+        }
+      },
+      "SC - Ade": {
+        "records": 4195,
+        "released_tokens": {
+          "SC - Ade": 4195
+        }
+      },
+      "SC - Arg": {
+        "records": 4195,
+        "released_tokens": {
+          "SC - Arg": 4195
+        }
+      },
+      "SC - Lys": {
+        "records": 4195,
+        "released_tokens": {
+          "SC - Lys": 4195
+        }
+      },
+      "SC - Met": {
+        "records": 4195,
+        "released_tokens": {
+          "SC - Met": 4195
+        }
+      },
+      "SC - Trp": {
+        "records": 4195,
+        "released_tokens": {
+          "SC - Trp": 4195
+        }
+      },
+      "SC, Glycerol [2%]": {
+        "records": 9674,
+        "released_tokens": {
+          "SC, Glycerol [2%]": 9674
+        }
+      },
+      "SC, HEPES [25 mM]": {
+        "records": 4837,
+        "released_tokens": {
+          "SC, HEPES [25 mM]": 4837
+        }
+      },
+      "SD": {
+        "records": 23354,
+        "released_tokens": {
+          "SD": 49,
+          "SD + His + Leu + Lys + Ura (2)": 4837,
+          "SD + His + Leu + Lys + Ura, -N": 4837,
+          "SD + His + Leu + Met + Ura": 4181,
+          "SD + his + leu + lys + ura": 9450
+        }
+      },
+      "YPD": {
+        "records": 239081,
+        "released_tokens": {
+          "YPD": 203553,
+          "YPD + DMSO [2%]": 8348,
+          "YPD + EtOH": 4228,
+          "YPD + G418 [200 ug/ml]": 4057,
+          "YPD + G418 [200 ug/ml] + DMSO [1%]": 9816,
+          "YPD + MeOH [1%]": 9079
+        }
+      },
+      "YPG [3%]": {
+        "records": 9094,
+        "released_tokens": {
+          "YPG [3%]": 9094
+        }
+      }
+    },
+    "per_token": {
+      "CSM": {
+        "columns": 2,
+        "media_identities": [
+          "28bba490d27c"
+        ],
+        "records": 428,
+        "stored": [
+          "{\"base_medium\": \"SC\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"CSM\", \"state\": \"liquid\"}"
+        ]
+      },
+      "SC": {
+        "columns": 37,
+        "media_identities": [
+          "28bba490d27c",
+          "6df8b535d7a7"
+        ],
+        "records": 160040,
+        "stored": [
+          "{\"base_medium\": \"SC\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SC\", \"state\": \"liquid\"}",
+          "{\"base_medium\": \"SC\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SC\", \"state\": \"solid\"}"
+        ]
+      },
+      "SC (-C)": {
+        "columns": 1,
+        "media_identities": [
+          "6df8b535d7a7"
+        ],
+        "records": 4837,
+        "stored": [
+          "{\"base_medium\": \"SC\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SC (-C)\", \"state\": \"solid\"}"
+        ]
+      },
+      "SC + DMSO": {
+        "columns": 8,
+        "media_identities": [
+          "6df8b535d7a7"
+        ],
+        "records": 38695,
+        "stored": [
+          "{\"base_medium\": \"SC\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SC\", \"state\": \"solid\"}"
+        ]
+      },
+      "SC + DMSO [0.2%]": {
+        "columns": 1,
+        "media_identities": [
+          "28bba490d27c"
+        ],
+        "records": 88,
+        "stored": [
+          "{\"base_medium\": \"SC\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SC\", \"state\": \"liquid\"}"
+        ]
+      },
+      "SC + DMSO [0.5%]": {
+        "columns": 1,
+        "media_identities": [
+          "28bba490d27c"
+        ],
+        "records": 4767,
+        "stored": [
+          "{\"base_medium\": \"SC\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SC\", \"state\": \"liquid\"}"
+        ]
+      },
+      "SC + DMSO [1%]": {
+        "columns": 1,
+        "media_identities": [
+          "6df8b535d7a7"
+        ],
+        "records": 4835,
+        "stored": [
+          "{\"base_medium\": \"SC\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SC\", \"state\": \"solid\"}"
+        ]
+      },
+      "SC + MeOH": {
+        "columns": 1,
+        "media_identities": [
+          "6df8b535d7a7"
+        ],
+        "records": 3977,
+        "stored": [
+          "{\"base_medium\": \"SC\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SC\", \"state\": \"solid\"}"
+        ]
+      },
+      "SC - Ade": {
+        "columns": 1,
+        "media_identities": [
+          "28bba490d27c"
+        ],
+        "records": 4195,
+        "stored": [
+          "{\"base_medium\": \"SC\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SC - Ade\", \"state\": \"liquid\"}"
+        ]
+      },
+      "SC - Arg": {
+        "columns": 2,
+        "media_identities": [
+          "28bba490d27c"
+        ],
+        "records": 4195,
+        "stored": [
+          "{\"base_medium\": \"SC\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SC - Arg\", \"state\": \"liquid\"}"
+        ]
+      },
+      "SC - Lys": {
+        "columns": 1,
+        "media_identities": [
+          "28bba490d27c"
+        ],
+        "records": 4195,
+        "stored": [
+          "{\"base_medium\": \"SC\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SC - Lys\", \"state\": \"liquid\"}"
+        ]
+      },
+      "SC - Met": {
+        "columns": 1,
+        "media_identities": [
+          "28bba490d27c"
+        ],
+        "records": 4195,
+        "stored": [
+          "{\"base_medium\": \"SC\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SC - Met\", \"state\": \"liquid\"}"
+        ]
+      },
+      "SC - Trp": {
+        "columns": 1,
+        "media_identities": [
+          "28bba490d27c"
+        ],
+        "records": 4195,
+        "stored": [
+          "{\"base_medium\": \"SC\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SC - Trp\", \"state\": \"liquid\"}"
+        ]
+      },
+      "SC, Glycerol [2%]": {
+        "columns": 2,
+        "media_identities": [
+          "6df8b535d7a7"
+        ],
+        "records": 9674,
+        "stored": [
+          "{\"base_medium\": \"SC\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SC, Glycerol [2%]\", \"state\": \"solid\"}"
+        ]
+      },
+      "SC, HEPES [25 mM]": {
+        "columns": 1,
+        "media_identities": [
+          "6df8b535d7a7"
+        ],
+        "records": 4837,
+        "stored": [
+          "{\"base_medium\": \"SC\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SC, HEPES [25 mM]\", \"state\": \"solid\"}"
+        ]
+      },
+      "SD": {
+        "columns": 1,
+        "media_identities": [
+          "2acb8ecf0ae0"
+        ],
+        "records": 49,
+        "stored": [
+          "{\"base_medium\": \"SD\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SD\", \"state\": \"liquid\"}"
+        ]
+      },
+      "SD + His + Leu + Lys + Ura (2)": {
+        "columns": 1,
+        "media_identities": [
+          "ce39a7e9c84d"
+        ],
+        "records": 4837,
+        "stored": [
+          "{\"base_medium\": \"SD\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SD\", \"state\": \"solid\"}"
+        ]
+      },
+      "SD + His + Leu + Lys + Ura, -N": {
+        "columns": 1,
+        "media_identities": [
+          "ce39a7e9c84d"
+        ],
+        "records": 4837,
+        "stored": [
+          "{\"base_medium\": \"SD\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SD\", \"state\": \"solid\"}"
+        ]
+      },
+      "SD + His + Leu + Met + Ura": {
+        "columns": 1,
+        "media_identities": [
+          "ce39a7e9c84d"
+        ],
+        "records": 4181,
+        "stored": [
+          "{\"base_medium\": \"SD\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SD\", \"state\": \"solid\"}"
+        ]
+      },
+      "SD + his + leu + lys + ura": {
+        "columns": 2,
+        "media_identities": [
+          "ce39a7e9c84d"
+        ],
+        "records": 9450,
+        "stored": [
+          "{\"base_medium\": \"SD\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": true, \"name\": \"SD\", \"state\": \"solid\"}"
+        ]
+      },
+      "YPD": {
+        "columns": 72,
+        "media_identities": [
+          "4f5a3c0dfa62",
+          "d3a2fe76ca88"
+        ],
+        "records": 203553,
+        "stored": [
+          "{\"base_medium\": \"YPD\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": false, \"name\": \"YPD\", \"state\": \"liquid\"}",
+          "{\"base_medium\": \"YPD\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": false, \"name\": \"YPD\", \"state\": \"solid\"}"
+        ]
+      },
+      "YPD + DMSO [2%]": {
+        "columns": 3,
+        "media_identities": [
+          "d3a2fe76ca88"
+        ],
+        "records": 8348,
+        "stored": [
+          "{\"base_medium\": \"YPD\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": false, \"name\": \"YPD\", \"state\": \"liquid\"}"
+        ]
+      },
+      "YPD + EtOH": {
+        "columns": 1,
+        "media_identities": [
+          "d3a2fe76ca88"
+        ],
+        "records": 4228,
+        "stored": [
+          "{\"base_medium\": \"YPD\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": false, \"name\": \"YPD\", \"state\": \"liquid\"}"
+        ]
+      },
+      "YPD + G418 [200 ug/ml]": {
+        "columns": 1,
+        "media_identities": [
+          "4f5a3c0dfa62"
+        ],
+        "records": 4057,
+        "stored": [
+          "{\"base_medium\": \"YPD\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": false, \"name\": \"YPD\", \"state\": \"solid\"}"
+        ]
+      },
+      "YPD + G418 [200 ug/ml] + DMSO [1%]": {
+        "columns": 2,
+        "media_identities": [
+          "4f5a3c0dfa62"
+        ],
+        "records": 9816,
+        "stored": [
+          "{\"base_medium\": \"YPD\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": false, \"name\": \"YPD\", \"state\": \"solid\"}"
+        ]
+      },
+      "YPD + MeOH [1%]": {
+        "columns": 2,
+        "media_identities": [
+          "4f5a3c0dfa62"
+        ],
+        "records": 9079,
+        "stored": [
+          "{\"base_medium\": \"YPD\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": false, \"name\": \"YPD\", \"state\": \"solid\"}"
+        ]
+      },
+      "YPG [3%]": {
+        "columns": 3,
+        "media_identities": [
+          "054c23092553",
+          "3476038df591"
+        ],
+        "records": 9094,
+        "stored": [
+          "{\"base_medium\": \"YP\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": false, \"name\": \"YPG [3%]\", \"state\": \"liquid\"}",
+          "{\"base_medium\": \"YP\", \"components\": [], \"dropout_roles\": [], \"dropouts\": [], \"is_synthetic\": false, \"name\": \"YPG [3%]\", \"state\": \"solid\"}"
+        ]
+      }
+    },
+    "records_total": 524682,
+    "released_tokens": 28
+  }
+}

@@ -9,7 +9,7 @@ citation key ``fangGenomescaleCRISPRiScreen2025``) ran a genome-scale CRISPRi li
 through two rounds of Nile-Red fluorescence-activated cell sorting and counted the
 guides by NGS. This module serves the per-guide readout the paper releases:
 :class:`CrispriGuideFfaEnrichmentFang2025Dataset`, one
-``BacterialEnvironmentResponseExperiment`` per (guide, round) row of Supplementary
+``EnvironmentResponseExperiment`` per (guide, round) row of Supplementary
 Data 6 that the authors' own read floor admits.
 
 THE LIBRARY IS WANG 2018's, MEASURED ID FOR ID, AND THAT IS WHAT MAKES THIS LOADABLE.
@@ -57,7 +57,7 @@ strain, CF carrying the round-1 winner's ``pcnB_956`` guide on a pCF-pcnBi plasm
 repression is a real edit to the cell and it is present in every round-2 record, so it
 is a ``CrisprInterferencePerturbation`` leaf on ``b0143`` beside the library
 guide's. It is not pushed into the reference because
-``BacterialEnvironmentResponseExperimentReference`` holds a genome, an environment and a
+``EnvironmentResponseExperimentReference`` holds a genome, an environment and a
 phenotype and has no genotype field, so a reference cannot express "the pcnBi strain" at
 all. Consequence: round-1 records are single-knockdown and round-2 records are double,
 and the pcnB leaf is the only perturbation this dataset writes that is not a library
@@ -153,10 +153,7 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import M9_MODIFIED_FANG2025
 from torchcell.datamodels.schema import (
     AssayType,
-    AssemblyReferenceGenome,
     BacterialAssemblySet,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     BacterialGeneNamespace,
     BacterialStrainBackground,
     Concentration,
@@ -164,6 +161,8 @@ from torchcell.datamodels.schema import (
     CrisprConstruct,
     CrisprInterferencePerturbation,
     Environment,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
@@ -171,6 +170,7 @@ from torchcell.datamodels.schema import (
     Genotype,
     MeasurementType,
     Publication,
+    ReferenceGenome,
     SampleUnit,
     SmallMoleculePerturbation,
     Temperature,
@@ -929,7 +929,7 @@ def host_background() -> BacterialStrainBackground:
     )
 
 
-def host_reference(data_root: str | None = None) -> AssemblyReferenceGenome:
+def host_reference(data_root: str | None = None) -> ReferenceGenome:
     """MG1655 pinned to ``GCA_000005845.2``, carrying the CF background.
 
     Unlike Wang 2018, whose host cassette has no locus tag and whose reference therefore
@@ -996,10 +996,10 @@ def guide_phenotype(round_: Round, fitness: float) -> EnvironmentResponsePhenoty
 
 
 def build_reference(
-    dataset_name: str, round_: Round, genome_reference: AssemblyReferenceGenome
-) -> BacterialEnvironmentResponseExperimentReference:
+    dataset_name: str, round_: Round, genome_reference: ReferenceGenome
+) -> EnvironmentResponseExperimentReference:
     """The unsorted-library baseline of one round: enrichment 0 by the normalization."""
-    return BacterialEnvironmentResponseExperimentReference(
+    return EnvironmentResponseExperimentReference(
         dataset_name=dataset_name,
         genome_reference=genome_reference,
         environment_reference=screen_environment(),
@@ -1151,12 +1151,12 @@ class CrispriGuideFfaEnrichmentFang2025Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperiment
+        return EnvironmentResponseExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperimentReference
+        return EnvironmentResponseExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -1271,7 +1271,7 @@ class CrispriGuideFfaEnrichmentFang2025Dataset(ExperimentDataset):
                     phenotype = guide_phenotype(round_, float(fitness))
                     record = {
                         "experiment": {
-                            "experiment_type": "bacterial_environment_response",
+                            "experiment_type": "environment_response",
                             "dataset_name": self.name,
                             "genotype": genotype,
                             "environment": env_ptr,
@@ -1370,12 +1370,12 @@ class CrispriGuideFfaEnrichmentFang2025Dataset(ExperimentDataset):
         genotype: dict[str, Any],
         environment: Environment,
         phenotype: EnvironmentResponsePhenotype,
-        reference: BacterialEnvironmentResponseExperimentReference,
+        reference: EnvironmentResponseExperimentReference,
         pub: Publication,
         itxn: Any,
     ) -> None:
         """The fast-path record equals what ``_intern_record`` writes for the same objects."""
-        experiment = BacterialEnvironmentResponseExperiment(
+        experiment = EnvironmentResponseExperiment(
             dataset_name=self.name,
             genotype=Genotype.model_validate(genotype),
             environment=environment,
@@ -1495,7 +1495,7 @@ def verify_build(
             sha256=SCREEN_FILE.sha256,
             method=(
                 "Supplementary Data 6 (MOESM8), sheets 'Figure 1' and 'Figure 5': one "
-                "BacterialEnvironmentResponseExperiment per kept (sgRNA, round) row. "
+                "EnvironmentResponseExperiment per kept (sgRNA, round) row. "
                 "measurement_type=log2_ratio, assay_type=biosensor_readout (BS and AS "
                 "are the same culture; the FACSAria III gates on Nile-Red fluorescence "
                 "and sorts the top 1 percent), environment_response = the released "

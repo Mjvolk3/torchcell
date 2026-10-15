@@ -1,4 +1,4 @@
-# Wang 2015 Table S3's no-isoprenol column: 46 records, BacterialFitnessExperiment
+# Wang 2015 Table S3's no-isoprenol column: 46 records, FitnessExperiment
 # carrying the plain-2YT OD600 of each Keio deletion over BW25113's (#826). One
 # BacterialDeletionPerturbation per record, served as `bacterial perturbation`, so the
 # perturbation pair is enabled. Every record and the reference carry the medium's pH as

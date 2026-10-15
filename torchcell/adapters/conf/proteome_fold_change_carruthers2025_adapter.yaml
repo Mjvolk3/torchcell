@@ -1,5 +1,5 @@
 # Carruthers 2025 differential proteomics: 16 contrasts,
-# BacterialProteinFoldChangeExperiment. 14 Figure 5b records carry 6 perturbations
+# ProteinFoldChangeExperiment. 14 Figure 5b records carry 6 perturbations
 # (5 HeterologousPathwayPerturbation + 1 BacterialCrisprInterferencePerturbation) and the
 # 2 Figure 6b records carry 7 (the same plus a BacterialDeletionPerturbation of the same
 # locus), all served as `bacterial perturbation`: 80 pathway leaves, 16 CRISPRi leaves,

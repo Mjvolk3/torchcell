@@ -60,9 +60,9 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
     write_assembly,
 )
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
     CrisprInterferencePerturbation,
     SampleUnit,
+    StrainReferenceGenome,
     UncertaintyType,
 )
 from torchcell.datasets.ecoli.rapp2026 import MIN_RESOLVED_FRACTION, DropRule
@@ -162,7 +162,7 @@ TARGETED_FOLD: dict[tuple[str, str], float] = {
 }
 QC_PASSED = {("thrL", "ppal[M+H]+"), ("thrA", "ppal[M+H]+"), ("ctrl1", "didp[M-H]-")}
 
-REFERENCE = AssemblyReferenceGenome(
+REFERENCE = StrainReferenceGenome(
     species="Escherichia coli",
     strain=metabolome.HOST_STRAIN,
     assembly_set=metabolome.MG1655_ASSEMBLY_SET,
@@ -1189,12 +1189,12 @@ def test_growth_build_refuses_a_control_well_count_the_release_does_not_have(
 
 def test_the_three_families_declare_their_own_files_classes_and_statistics() -> None:
     growth = object.__new__(m.GrowthAucRapp2026Dataset)
-    assert growth.experiment_class.__name__ == "BacterialFitnessExperiment"
-    assert growth.reference_class.__name__ == "BacterialFitnessExperimentReference"
+    assert growth.experiment_class.__name__ == "FitnessExperiment"
+    assert growth.reference_class.__name__ == "FitnessExperimentReference"
     assert growth.raw_file_names == [metabolome.TABLE_S1, metabolome.TABLE_S2]
     targeted = object.__new__(m.TargetedMetabolomeRapp2026Dataset)
-    assert targeted.experiment_class.__name__ == "BacterialMetaboliteExperiment"
-    assert targeted.reference_class.__name__ == "BacterialMetaboliteExperimentReference"
+    assert targeted.experiment_class.__name__ == "MetaboliteExperiment"
+    assert targeted.reference_class.__name__ == "MetaboliteExperimentReference"
     assert metabolome.TABLE_S6 in targeted.raw_file_names
     intensity = object.__new__(m.MetaboliteIntensityRapp2026Dataset)
     assert metabolome.TABLE_S6 not in intensity.raw_file_names

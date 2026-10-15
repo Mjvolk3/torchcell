@@ -74,6 +74,10 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.scerevisiae import oduibhir2014 as m
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -129,7 +133,10 @@ _ENVIRONMENT = Environment(media=SC, temperature=Temperature(value=30))
 _REFERENCE = FitnessExperimentReference(
     dataset_name="SmfODuibhir2014Dataset",
     genome_reference=ReferenceGenome(
-        species="Saccharomyces cerevisiae", strain="BY4741"
+        species="Saccharomyces cerevisiae",
+        strain="BY4741",
+        assembly_set=SGD_S288C_R64,
+        assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
     ),
     environment_reference=_ENVIRONMENT,
     phenotype_reference=FitnessPhenotype(

@@ -8,7 +8,7 @@ Schmidt et al. 2016 (Nat Biotechnol 34:104, doi:10.1038/nbt.3418, PMID 26641532)
 measured absolute protein abundances for more than 2,300 proteins of *E. coli* K-12
 BW25113 across 22 growth conditions in biological triplicates, and repeated the glucose
 and LB conditions in MG1655 and NCM3722. :class:`ProteomeSchmidt2016Dataset` serves one
-``BacterialProteinAbundanceExperiment`` per loaded BW25113 growth condition.
+``ProteinAbundanceExperiment`` per loaded BW25113 growth condition.
 
 WHICH PER-PROTEIN QUANTITY IS STORED, AND ITS DEFINITION. The release carries three
 per-protein quantities per condition and they are NOT interchangeable: ``Protein
@@ -184,8 +184,6 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import LB, M9_AA_SCHMIDT2016, M9_SCHMIDT2016
 from torchcell.datamodels.schema import (
-    BacterialProteinAbundanceExperiment,
-    BacterialProteinAbundanceExperimentReference,
     Concentration,
     ConcentrationUnit,
     CultureGrowthPhase,
@@ -197,6 +195,8 @@ from torchcell.datamodels.schema import (
     Genotype,
     Media,
     PhysicalFactor,
+    ProteinAbundanceExperiment,
+    ProteinAbundanceExperimentReference,
     ProteinAbundancePhenotype,
     Publication,
     SmallMoleculePerturbation,
@@ -1580,12 +1580,12 @@ class ProteomeSchmidt2016Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialProteinAbundanceExperiment
+        return ProteinAbundanceExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialProteinAbundanceExperimentReference
+        return ProteinAbundanceExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -1665,13 +1665,13 @@ class ProteomeSchmidt2016Dataset(ExperimentDataset):
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for idx, spec in enumerate(tqdm(records, desc="schmidt2016")):
                 phenotype = phenotypes[spec.s6_column]
-                experiment = BacterialProteinAbundanceExperiment(
+                experiment = ProteinAbundanceExperiment(
                     dataset_name=self.name,
                     genotype=Genotype(perturbations=[]),
                     environment=environments[spec.s6_column],
                     phenotype=phenotype,
                 )
-                reference = BacterialProteinAbundanceExperimentReference(
+                reference = ProteinAbundanceExperimentReference(
                     dataset_name=self.name,
                     genome_reference=reference_genome,
                     environment_reference=reference_environment,
@@ -1997,7 +1997,7 @@ def verify_build(
             sha256=SI2_SHA256,
             method=(
                 "Table S6 'Protein copies/cell' block: one "
-                "BacterialProteinAbundanceExperiment per loaded BW25113 growth "
+                "ProteinAbundanceExperiment per loaded BW25113 growth "
                 "condition, with SE = (copies / medianNormInt) * stdev(three Table S8 "
                 "normInt replicates) / sqrt(3) for the dataset-2 proteins"
             ),

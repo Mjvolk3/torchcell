@@ -154,6 +154,10 @@ from torchcell.literature.manifest import (
     RetrievalRecord,
     sha256_file,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import (
     ProvenanceGap,
@@ -1010,7 +1014,10 @@ class AminoAcidCooper2010Dataset(ExperimentDataset):
         reference = MetaboliteExperimentReference(
             dataset_name=self.name,
             genome_reference=ReferenceGenome(
-                species="Saccharomyces cerevisiae", strain="BY4741"
+                species="Saccharomyces cerevisiae",
+                strain="BY4741",
+                assembly_set=SGD_S288C_R64,
+                assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
             ),
             environment_reference=environment.model_copy(),
             phenotype_reference=phenotype_reference,

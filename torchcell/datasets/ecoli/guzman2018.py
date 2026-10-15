@@ -12,7 +12,7 @@ libraries (``p1k_00219``-``p1k_00232``) and serves none of them; this loader sto
 study's OWN release, attributed to it, and the compendium is an L4 cross-check that
 never gates.
 
-WHAT IS STORED. One ``BacterialRNASeqExpressionExperiment`` per column of GEO
+WHAT IS STORED. One ``RNASeqExpressionExperiment`` per column of GEO
 ``GSE117303_deseq2-tpm.csv.gz``: two wild-type BW25113 libraries and twelve libraries of
 Keio deletion strains (``thrA``, ``serB``, ``ptsI``) that grew after extended culture on
 glucose M9, each in biological duplicate. ``expression_tpm`` is the released matrix,
@@ -74,8 +74,6 @@ from torchcell.data import (
 from torchcell.data.experiment_dataset import verify_sha256
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
-    BacterialRNASeqExpressionExperiment,
-    BacterialRNASeqExpressionExperimentReference,
     BacterialVariantCall,
     BacterialVariantType,
     Concentration,
@@ -92,6 +90,8 @@ from torchcell.datamodels.schema import (
     MediaComponent,
     MediaComponentRole,
     Publication,
+    RNASeqExpressionExperiment,
+    RNASeqExpressionExperimentReference,
     RNASeqExpressionPhenotype,
     SiteVariantCallPerturbation,
     Temperature,
@@ -714,12 +714,12 @@ class RnaseqGuzman2018Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialRNASeqExpressionExperiment
+        return RNASeqExpressionExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialRNASeqExpressionExperimentReference
+        return RNASeqExpressionExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -763,7 +763,7 @@ class RnaseqGuzman2018Dataset(ExperimentDataset):
             raise RuntimeError("a library does not carry the pinned gene count")
         loci = resolve_symbols(self._genome(), libs, calls)
         wild = [tpm[lib.column] for lib in libs if lib.gene is None]
-        reference = BacterialRNASeqExpressionExperimentReference(
+        reference = RNASeqExpressionExperimentReference(
             dataset_name=self.name,
             genome_reference=assembly_reference(REFERENCE_STRAIN),
             environment_reference=environment(kanamycin=False),
@@ -773,7 +773,7 @@ class RnaseqGuzman2018Dataset(ExperimentDataset):
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for index, lib in enumerate(libs):
-                experiment = BacterialRNASeqExpressionExperiment(
+                experiment = RNASeqExpressionExperiment(
                     dataset_name=self.name,
                     genotype=genotype(lib, calls.get(lib.dna_sample or "", []), loci),
                     environment=environment(kanamycin=lib.gene is not None),
@@ -836,7 +836,7 @@ VERIFIER_PROVENANCE: Final = Provenance(
     source_uri=f"$DATA_ROOT/{RAW_DIR_REL}/{TPM.relpath}",
     citation_key=CITATION_KEY,
     sha256=TPM.sha256,
-    method="one BacterialRNASeqExpressionExperiment per column of GEO GSE117303's "
+    method="one RNASeqExpressionExperiment per column of GEO GSE117303's "
     "deseq2-tpm matrix, TPM verbatim, counts a typed gap; genotypes from Additional "
     "file 4's calls for the matching DNA sample",
     page="GSE117303",

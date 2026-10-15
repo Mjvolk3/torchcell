@@ -12,7 +12,7 @@ W3110 RpoS+ grown in lake water. Supplementary Table S4 is the release: one row 
 days 2, 4 and 8), 11,027 rows and 66,162 values (:func:`table_s4_inventory`).
 
 THE RECORDS (:class:`RbTnseqTeteneva2024Dataset`). EVERY released value is a record,
-66,162 of them: one ``BacterialEnvironmentResponseExperiment`` per (Table S4 row,
+66,162 of them: one ``EnvironmentResponseExperiment`` per (Table S4 row,
 filtration, sampling day), the value as an ``EnvironmentResponsePhenotype``:
 
 * the value is the gene fitness, a signed log2 ratio of barcode counts after incubation in
@@ -83,12 +83,11 @@ from torchcell.data import (
 from torchcell.datamodels.media import LAKE_WATER
 from torchcell.datamodels.schema import (
     AssayType,
-    AssemblyReferenceGenome,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     BacterialReleasedStrainPerturbation,
     BacterialStrainBackground,
     Environment,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
@@ -96,6 +95,7 @@ from torchcell.datamodels.schema import (
     MeasurementType,
     Media,
     Publication,
+    ReferenceGenome,
     ReleasedStrainKind,
     SampleUnit,
 )
@@ -1414,7 +1414,7 @@ def host_background() -> BacterialStrainBackground:
     )
 
 
-def host_reference(data_root: str | None = None) -> AssemblyReferenceGenome:
+def host_reference(data_root: str | None = None) -> ReferenceGenome:
     """W3110 RpoS+ on ``ecoli_K12_W3110_ASM1024v1``, the RefSeq accession pinned."""
     return assembly_reference(
         REFERENCE_STRAIN, background=host_background(), data_root=data_root
@@ -1598,11 +1598,11 @@ def build_phenotype(value: float, condition: Condition) -> EnvironmentResponsePh
 def build_reference(
     dataset_name: str,
     environment: Environment,
-    genome_reference: AssemblyReferenceGenome,
+    genome_reference: ReferenceGenome,
     condition: Condition,
-) -> BacterialEnvironmentResponseExperimentReference:
+) -> EnvironmentResponseExperimentReference:
     """The typical gene of the same environment: fitness 0 by the normalization."""
-    return BacterialEnvironmentResponseExperimentReference(
+    return EnvironmentResponseExperimentReference(
         dataset_name=dataset_name,
         genome_reference=genome_reference,
         environment_reference=environment,
@@ -1623,14 +1623,14 @@ class ConditionContext(BaseModel):
 
     condition: Condition
     environment: Environment
-    reference: BacterialEnvironmentResponseExperimentReference
+    reference: EnvironmentResponseExperimentReference
 
 
 def condition_contexts(
     dataset_name: str,
     conds: Sequence[Condition],
     water: Mapping[int, WaterSample],
-    genome_reference: AssemblyReferenceGenome,
+    genome_reference: ReferenceGenome,
 ) -> tuple[ConditionContext, ...]:
     """Each condition's environment and reference, built once."""
     out: list[ConditionContext] = []
@@ -1652,8 +1652,8 @@ def iter_records(
     dataset_name: str, contexts: Sequence[ConditionContext], rows: Sequence[TableS4Row]
 ) -> Iterator[
     tuple[
-        BacterialEnvironmentResponseExperiment,
-        BacterialEnvironmentResponseExperimentReference,
+        EnvironmentResponseExperiment,
+        EnvironmentResponseExperimentReference,
         Publication,
     ]
 ]:
@@ -1668,7 +1668,7 @@ def iter_records(
             if row.water_sample != condition.water_sample:
                 continue
             yield (
-                BacterialEnvironmentResponseExperiment(
+                EnvironmentResponseExperiment(
                     dataset_name=dataset_name,
                     genotype=genotypes[row.symbol],
                     environment=context.environment,
@@ -1786,12 +1786,12 @@ class RbTnseqTeteneva2024Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperiment
+        return EnvironmentResponseExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperimentReference
+        return EnvironmentResponseExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:

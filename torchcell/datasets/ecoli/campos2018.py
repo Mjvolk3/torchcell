@@ -40,9 +40,9 @@ proportions the two relative timings are computed from.
 RECORDS = TWO datasets over the same 3,664 strains, split by READOUT, not 26 datasets
 and not one record carrying everything:
 
-- :class:`GrowthRateCampos2018Dataset` -- one ``BacterialFitnessExperiment`` per strain,
+- :class:`GrowthRateCampos2018Dataset` -- one ``FitnessExperiment`` per strain,
   the Gompertz maximal growth rate as a parent-relative ratio.
-- :class:`MorphologyCampos2018Dataset` -- one ``BacterialMorphologyExperiment`` per
+- :class:`MorphologyCampos2018Dataset` -- one ``MorphologyExperiment`` per
   strain, the 26 morphology symbols of Appendix Table S1 as a
   ``BacterialMorphologyPhenotype`` against the ``campos2018`` assay vocabulary
   (issue #774). Measured on the release: 93,570 determined values over 3,664 records.
@@ -276,10 +276,6 @@ from torchcell.datamodels.bacterial_morphology_features import MorphologyFeature
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import M9
 from torchcell.datamodels.schema import (
-    BacterialFitnessExperiment,
-    BacterialFitnessExperimentReference,
-    BacterialMorphologyExperiment,
-    BacterialMorphologyExperimentReference,
     BacterialMorphologyPhenotype,
     ComponentDefinition,
     Compound,
@@ -290,11 +286,15 @@ from torchcell.datamodels.schema import (
     Environment,
     Experiment,
     ExperimentReference,
+    FitnessExperiment,
+    FitnessExperimentReference,
     FitnessPhenotype,
     Genotype,
     Media,
     MediaComponent,
     MediaComponentRole,
+    MorphologyExperiment,
+    MorphologyExperimentReference,
     Publication,
     SampleUnit,
     StrainConstruction,
@@ -1661,12 +1661,12 @@ class GrowthRateCampos2018Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialFitnessExperiment
+        return FitnessExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialFitnessExperimentReference
+        return FitnessExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -1712,7 +1712,7 @@ class GrowthRateCampos2018Dataset(ExperimentDataset):
         resolution = resolve_rows(table, genome, label=self.name)
         denominator = table.wild_type_median_alpha_max
         env = environment()
-        reference = BacterialFitnessExperimentReference(
+        reference = FitnessExperimentReference(
             dataset_name=self.name,
             genome_reference=assembly_reference(self.REFERENCE_STRAIN),
             environment_reference=env.model_copy(),
@@ -1728,7 +1728,7 @@ class GrowthRateCampos2018Dataset(ExperimentDataset):
         idx = 0
         with lmdb_env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for record in tqdm(resolution.kept, desc="campos2018"):
-                experiment = BacterialFitnessExperiment(
+                experiment = FitnessExperiment(
                     dataset_name=self.name,
                     genotype=genotype(record),
                     environment=env,
@@ -1870,12 +1870,12 @@ class MorphologyCampos2018Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialMorphologyExperiment
+        return MorphologyExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialMorphologyExperimentReference
+        return MorphologyExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -1932,7 +1932,7 @@ class MorphologyCampos2018Dataset(ExperimentDataset):
         resolution = resolve_rows(table, genome, label=self.name)
         env = environment()
         parental = [morphology[(row.plate, row.well)] for row in table.wild_type]
-        reference = BacterialMorphologyExperimentReference(
+        reference = MorphologyExperimentReference(
             dataset_name=self.name,
             genome_reference=assembly_reference(self.REFERENCE_STRAIN),
             environment_reference=env.model_copy(),
@@ -1954,7 +1954,7 @@ class MorphologyCampos2018Dataset(ExperimentDataset):
                 # values as counts, which would sum the measurements themselves.
                 determined.update(row.values.keys())
                 determined.update(row.coefficients_of_variation.keys())
-                experiment = BacterialMorphologyExperiment(
+                experiment = MorphologyExperiment(
                     dataset_name=self.name,
                     genotype=genotype(record),
                     environment=env,
@@ -2149,7 +2149,7 @@ def verify_fitness_build(
             citation_key=CITATION_KEY,
             sha256=DATA_SHA256,
             method="Dataset EV2 'Normalized data' sheet, column 'alpha_max (min-1)'; "
-            "one BacterialFitnessExperiment per kept Keio deletion row, fitness = the "
+            "one FitnessExperiment per kept Keio deletion row, fitness = the "
             "strain's corrected maximal growth rate over the median of the 240 "
             "wild-type replicates",
             page=f"Dataset EV2 ({DATA_FILENAME}), sheet '{NORMALIZED_SHEET}'",
@@ -2198,7 +2198,7 @@ def verify_morphology_build(
             sha256=DATA_SHA256,
             method="Dataset EV2 'Normalized data' sheet, the 26 morphology columns of "
             "Appendix Table S1, joined on the Keio (plate, well) to Dataset EV1 'Raw "
-            "data' column 'nb Cells'; one BacterialMorphologyExperiment per kept Keio "
+            "data' column 'nb Cells'; one MorphologyExperiment per kept Keio "
             "deletion row against the campos2018 assay vocabulary, n_samples = that "
             "strain's segmented cells",
             page=f"Dataset EV2 ({DATA_FILENAME}), sheet '{NORMALIZED_SHEET}'",

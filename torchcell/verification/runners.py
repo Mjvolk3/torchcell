@@ -1338,8 +1338,6 @@ BACTERIAL_GENE_ASSEMBLIES: dict[str, BacterialAssembly] = {
         W3110_ASSEMBLY,
     )
 }
-#: The species a reference without an ``assembly_set`` must name (a yeast record).
-YEAST_SPECIES = "Saccharomyces cerevisiae"
 
 
 def _bacterial_gene_set(assembly: BacterialAssembly, data_root: str) -> set[str]:
@@ -1446,25 +1444,30 @@ def _pputida_gene_set(data_root: str) -> set[str]:
 def _reference_assembly_set(genome_reference: Mapping[str, Any]) -> str:
     """The assembly set a record's own stored ``genome_reference`` is written against.
 
-    An ``AssemblyReferenceGenome`` names its bacterial set. A reference without
-    ``assembly_set`` is a yeast record: it must name Saccharomyces cerevisiae, whose set
-    is the SGD R64 release. Anything else is refused, so a record's gene universe and
-    resolver are never borrowed from another host.
+    Every ``ReferenceGenome`` pins ``assembly_set`` (or carries a typed gap on it), so
+    the set is read off the record and never inferred from the species. A gapped pin
+    has no gene universe in the tier and is refused here with the gap stated, as is a
+    set this module has no universe for (the CEN.PK113-7D set until its gene set is
+    wired), so a record's gene universe and resolver are never borrowed from another
+    host.
     """
-    if "assembly_set" in genome_reference:
-        assembly_set = str(genome_reference["assembly_set"])
-        if assembly_set not in BACTERIAL_GENE_ASSEMBLIES:
-            raise ValueError(
-                f"genome reference names assembly set {assembly_set!r}; known: "
-                f"{sorted(BACTERIAL_GENE_ASSEMBLIES)}"
-            )
-        return assembly_set
-    if genome_reference["species"] != YEAST_SPECIES:
+    assembly_set = genome_reference.get("assembly_set")
+    if assembly_set is None:
+        gaps = [gap.get("field") for gap in genome_reference.get("provenance_gaps", [])]
         raise ValueError(
-            f"a genome reference without assembly_set must be {YEAST_SPECIES!r}, got "
-            f"{genome_reference['species']!r}"
+            f"genome reference {genome_reference.get('species')!r} "
+            f"{genome_reference.get('strain')!r} pins no assembly set (gapped fields: "
+            f"{gaps}); no gene universe can be read for it"
         )
-    return SGD_S288C_R64
+    assembly_set = str(assembly_set)
+    if assembly_set == SGD_S288C_R64:
+        return assembly_set
+    if assembly_set not in BACTERIAL_GENE_ASSEMBLIES:
+        raise ValueError(
+            f"genome reference names assembly set {assembly_set!r}; sets with a gene "
+            f"universe here: {sorted([SGD_S288C_R64, *BACTERIAL_GENE_ASSEMBLIES])}"
+        )
+    return assembly_set
 
 
 def _gene_set_for_reference(
@@ -4571,7 +4574,7 @@ PRODUCT_TITER_DATASETS: dict[str, dict[str, Any]] = {
     },
 }
 
-#: Every landed ``BacterialProteinAbundanceExperiment`` dataset. Caglar 2017 is here
+#: Every landed ``ProteinAbundanceExperiment`` dataset. Caglar 2017 is here
 #: with the three P. putida proteomes: it is the same experiment class on a different
 #: host, and the containment rule reads its REL606 pin off its own records.
 BACTERIAL_PROTEIN_ABUNDANCE_DATASETS: dict[str, dict[str, Any]] = {
@@ -4626,7 +4629,7 @@ BACTERIAL_PROTEIN_ABUNDANCE_DATASETS: dict[str, dict[str, Any]] = {
 }
 
 
-#: Every landed ``BacterialMetaboliteExperiment`` dataset whose L4 is its own assembly's
+#: Every landed ``MetaboliteExperiment`` dataset whose L4 is its own assembly's
 #: locus universe rather than the yeast deletion collection, and whose gate is the
 #: loader's own ``verify_build`` rather than :func:`verify_metabolite_dataset`. The
 #: E. coli metabolome rows stay in :data:`METABOLITE_DATASETS`, where their L4 keys on
@@ -4654,7 +4657,7 @@ BACTERIAL_METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
 }
 
 
-#: Every landed ``BacterialProteinFoldChangeExperiment`` dataset. Separate from the
+#: Every landed ``ProteinFoldChangeExperiment`` dataset. Separate from the
 #: abundance registry because the two store different measurements: a ratio against a
 #: named denominator, not an absolute level, so the family's own L0-L3 gate is
 #: ``torchcell.verification.protein_fold_change``.
@@ -4956,7 +4959,7 @@ PHOSPHOSITE_INTENSITY_DATASETS: dict[str, dict[str, Any]] = {
             sha256="f69ca61a0f0dba3987b26bcdf4bd9b0c8fcf8744495233bad678a23cf5682481",
             method=(
                 "Fe3+-IMAC LC-MS/MS, MaxQuant 1.5.5.1 summed XIC per sample; one "
-                "BacterialPhosphositeIntensityExperiment per released sample column, "
+                "PhosphositeIntensityExperiment per released sample column, "
                 "every site as released, a released 0 as not_quantified"
             ),
             page="Nat Methods 15:187; Supplementary Table 2",

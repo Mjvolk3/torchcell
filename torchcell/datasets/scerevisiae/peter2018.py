@@ -139,6 +139,8 @@ from torchcell.sequence import GeneSet
 from torchcell.sequence.genome.registry import (
     PETER2018_1011,
     ROLE_MATRIX,
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
     assembly_set_dir,
     extend_assembly_set,
     load_genome_manifest,
@@ -841,7 +843,10 @@ def shared_reference(dataset_name: str) -> EnvironmentResponseExperimentReferenc
     return EnvironmentResponseExperimentReference(
         dataset_name=dataset_name,
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae",
+            strain="S288C",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=control_environment(),
         phenotype_reference=EnvironmentResponsePhenotype(

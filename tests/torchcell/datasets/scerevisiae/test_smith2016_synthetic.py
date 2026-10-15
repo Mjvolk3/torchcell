@@ -94,6 +94,10 @@ from torchcell.literature.manifest import (
     RetrievalMethod,
     RetrievalRecord,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 _EFFECT_HEADER = [
     "#Pool", "Guide", "ORF", "Gene", "Drug", "Concentration", "A", "var(A)"
@@ -217,7 +221,10 @@ def _reference(env: Environment) -> EnvironmentResponseExperimentReference:
     return EnvironmentResponseExperimentReference(
         dataset_name="CrispriChemgenSmith2016Dataset",
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4741"
+            species="Saccharomyces cerevisiae",
+            strain="BY4741",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=env,
         phenotype_reference=EnvironmentResponsePhenotype(

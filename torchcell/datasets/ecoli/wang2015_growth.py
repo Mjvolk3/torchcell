@@ -10,7 +10,7 @@ exactly three columns -- ``Strains``, ``Cell growth (OD600) / No isoprenol`` and
 over 47 rows (BW25113 plus 46 ``BWD`` Keio deletions). ``wang2015.py`` serves the
 isoprenol arm: a log2 relative tolerance that is a ratio OF the two columns. This module
 serves the FIRST column in its own right as :class:`GrowthWang2015Dataset`, one
-``BacterialFitnessExperiment`` per deletion strain in PLAIN 2YT: **46 records and one
+``FitnessExperiment`` per deletion strain in PLAIN 2YT: **46 records and one
 reference**, the BW25113 row being the reference the ratio is taken against.
 
 Rank 12 of the E. coli SI audit called this "a recorded decision rather than a release
@@ -77,8 +77,8 @@ A SEPARATE MODULE FROM ``wang2015.py``, on purpose, and the reason is measured.
 ``build_manifest`` keys a built store's staleness on the schema closure of the loader
 MODULE's own ``torchcell.datamodels`` imports (``provenance/schema_deps.py:
 loader_closure``). ``wang2015.py``'s closure is 69 symbols and equals the 69 the served
-``env_chemgen_wang2015`` store records; adding ``BacterialFitnessExperiment``,
-``BacterialFitnessExperimentReference`` and ``FitnessPhenotype`` to its imports raises it
+``env_chemgen_wang2015`` store records; adding ``FitnessExperiment``,
+``FitnessExperimentReference`` and ``FitnessPhenotype`` to its imports raises it
 to 72, which would mark that store STALE for a change touching none of its 46 records.
 The pinned artifact, the SI parsers, the strain identities, the media object and the
 sourced values are imported FROM ``wang2015`` instead, so there is one copy of each.
@@ -118,14 +118,14 @@ from torchcell.data import (
 )
 from torchcell.datamodels.media import YT_2X
 from torchcell.datamodels.schema import (
-    BacterialFitnessExperiment,
-    BacterialFitnessExperimentReference,
     Concentration,
     ConcentrationUnit,
     Environment,
     EnvironmentPhysicalPerturbation,
     Experiment,
     ExperimentReference,
+    FitnessExperiment,
+    FitnessExperimentReference,
     FitnessPhenotype,
     PhysicalFactor,
     SampleUnit,
@@ -285,9 +285,9 @@ def build_experiment(
     identity: wg.StrainIdentity,
     parent: wg.TableS3Row,
     env: Environment,
-) -> BacterialFitnessExperiment:
+) -> FitnessExperiment:
     """The record of one Keio strain in plain 2YT."""
-    return BacterialFitnessExperiment(
+    return FitnessExperiment(
         dataset_name=dataset_name,
         genotype=wg.deletion_genotype(identity),
         environment=env,
@@ -297,9 +297,9 @@ def build_experiment(
 
 def build_reference(
     dataset_name: str, genome_reference: Any, env: Environment, parent: wg.TableS3Row
-) -> BacterialFitnessExperimentReference:
+) -> FitnessExperimentReference:
     """BW25113 in the same plain medium: the denominator of every stored ratio."""
-    return BacterialFitnessExperimentReference(
+    return FitnessExperimentReference(
         dataset_name=dataset_name,
         genome_reference=genome_reference,
         environment_reference=env.model_copy(),
@@ -390,12 +390,12 @@ class GrowthWang2015Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialFitnessExperiment
+        return FitnessExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialFitnessExperimentReference
+        return FitnessExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:

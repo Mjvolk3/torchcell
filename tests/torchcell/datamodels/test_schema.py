@@ -41,6 +41,10 @@ from torchcell.datamodels.schema import (
     SgaKanMxDeletionPerturbation,
     Temperature,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
 
@@ -1262,8 +1266,12 @@ def test_gapped_empty_list_is_refused_by_the_mixin_before_the_empty_list_check()
 
 
 def test_genomic_span_needs_a_chromosome_name() -> None:
-    with _refuses("GenomicSpan needs a chromosome and an assembly name"):
-        s.GenomicSpan(chromosome=" ", start=1, end=1, assembly="R64")
+    with _refuses("GenomicSpan needs a chromosome name"):
+        s.GenomicSpan(
+            chromosome=" ", start=1, end=1, assembly="sgd_S288C_R64-4-1_20230830"
+        )
+    with pytest.raises(ValidationError):
+        s.GenomicSpan(chromosome="chrI", start=1, end=1, assembly="R64-4-1")  # type: ignore[arg-type]  # a release name is not a set id
 
 
 def test_strain_background_name_cannot_be_blank() -> None:
@@ -1381,14 +1389,27 @@ _LEAF_IDS = [cls.__name__ for cls, _ in _BACTERIAL_LEAF_CASES]
 def _assembly_reference(
     strain: str = "MG1655",
     assembly_set: Any = "ecoli_K12_MG1655_ASM584v2",
-    accession: str = "GCA_000005845.2",
+    accession: str | None = "GCA_000005845.2",
     **kw: Any,
-) -> s.AssemblyReferenceGenome:
-    return s.AssemblyReferenceGenome(
+) -> s.ReferenceGenome:
+    """A pinned E. coli reference; a ``StrainReferenceGenome`` when a background is given."""
+    cls = s.StrainReferenceGenome if "background" in kw else s.ReferenceGenome
+    return cls(
         species="Escherichia coli",
         strain=strain,
         assembly_set=assembly_set,
         assembly_accession=accession,
+        **kw,
+    )
+
+
+def _s288c_reference(strain: str = "S288C", **kw: Any) -> s.ReferenceGenome:
+    cls = s.StrainReferenceGenome if "background" in kw else s.ReferenceGenome
+    return cls(
+        species="Saccharomyces cerevisiae",
+        strain=strain,
+        assembly_set=SGD_S288C_R64,
+        assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         **kw,
     )
 
@@ -1732,7 +1753,7 @@ def test_a_pooled_tn_gene_call_is_a_released_strain_of_the_transposon_kind() -> 
 
 def test_a_w3110_reference_names_the_refseq_accession_of_its_set() -> None:
     """The W3110 set's pair is GCA_000010245.1 / GCF_000010245.2; another is refused."""
-    reference = s.AssemblyReferenceGenome(
+    reference = s.ReferenceGenome(
         species="Escherichia coli",
         strain="W3110",
         assembly_set="ecoli_K12_W3110_ASM1024v1",
@@ -1740,7 +1761,7 @@ def test_a_w3110_reference_names_the_refseq_accession_of_its_set() -> None:
     )
     assert reference.assembly_accession == "GCF_000010245.2"
     with pytest.raises(ValidationError, match="is not an accession of"):
-        s.AssemblyReferenceGenome(
+        s.ReferenceGenome(
             species="Escherichia coli",
             strain="W3110",
             assembly_set="ecoli_K12_W3110_ASM1024v1",
@@ -1795,21 +1816,24 @@ def test_every_bacterial_leaf_round_trips_in_one_genotype() -> None:
     assert len(back) == 8
 
 
-# --- 2. the assembly pin, and where it survives ---------------------------- #
-def test_assembly_reference_genome_refuses_an_unknown_assembly_set() -> None:
+# --- 2. the assembly pin lives on the base, and survives every slot --------- #
+def test_reference_genome_refuses_an_unknown_assembly_set() -> None:
     """A set id outside the deposited vocabulary cannot be stored.
 
     The pin is only worth anything if it dereferences, so an invented set id is a
-    validation error rather than a pointer that fails later at ``resolve``.
+    validation error rather than a pointer that fails later at ``resolve``. The two
+    yeast sets are members (P2), so the S288C release is a valid pin on any host's
+    class; a registry set that is not an assembly is not.
     """
     with pytest.raises(ValidationError):
         _assembly_reference(assembly_set="ecoli_K12_MG1655_ASM584v3")
     with pytest.raises(ValidationError):
-        _assembly_reference(assembly_set="sgd_S288C_R64-4-1_20230830")
+        _assembly_reference(assembly_set="peter2018_1011_assemblies")
+    assert _s288c_reference().assembly_set == "sgd_S288C_R64-4-1_20230830"
 
 
-def test_assembly_reference_genome_refuses_a_foreign_or_malformed_accession() -> None:
-    """The accession must be one of ITS OWN set's two, so the pair cannot disagree."""
+def test_reference_genome_refuses_a_foreign_or_malformed_accession() -> None:
+    """The accession must be one of ITS OWN set's, so the pair cannot disagree."""
     with _refuses(
         "'GCA_000750555.1' is not an accession of 'ecoli_K12_MG1655_ASM584v2' "
         "(expected one of ('GCA_000005845.2', 'GCF_000005845.2'))"
@@ -1824,83 +1848,206 @@ def test_assembly_reference_genome_refuses_a_foreign_or_malformed_accession() ->
     assert _assembly_reference(accession="GCF_000005845.2").assembly_accession == (
         "GCF_000005845.2"
     )
+    # the SGD release pins NCBI R64 (sequence-identical, measured) by either accession
+    assert _s288c_reference().assembly_accession == "GCA_000146045.2"
+    assert (
+        s.ReferenceGenome(
+            species="Saccharomyces cerevisiae",
+            strain="S288C",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession="GCF_000146045.2",
+        ).assembly_accession
+        == "GCF_000146045.2"
+    )
+    # CEN.PK has one accession and no RefSeq pair
+    assert s.ASSEMBLY_SET_ACCESSIONS["scerevisiae_CENPK113-7D_ASM257140v2"] == (
+        "GCA_002571405.2",
+    )
+    with _refuses("'GCF_002571405.2' is not an accession of"):
+        s.ReferenceGenome(
+            species="Saccharomyces cerevisiae",
+            strain="CEN.PK113-7D",
+            assembly_set="scerevisiae_CENPK113-7D_ASM257140v2",
+            assembly_accession="GCF_002571405.2",
+        )
 
 
-def test_the_assembly_pin_survives_only_where_the_field_is_re_annotated() -> None:
-    """THE serialization finding, as a test rather than a comment.
+def test_the_assembly_pin_is_set_or_typed_gap_never_defaulted() -> None:
+    """``assembly_set`` has no default: a value, or a typed gap on a gap-capable base.
 
-    pydantic v2 serializes a field by its DECLARED type. An ``AssemblyReferenceGenome``
-    in a slot annotated ``ReferenceGenome`` keeps the subclass as a python attribute but
-    DUMPS only the base's three fields, and revalidating that dump yields a plain
-    ``ReferenceGenome`` -- the assembly pin is gone, silently. That is why every
-    bacterial reference class re-annotates ``genome_reference``, and why adding the pin
-    to the base class instead would have been the only alternative (at a measured cost
-    of 36 of 36 served dataset closures).
+    A host with no deposited set (BL21, an isolate's own annotation) states the gap
+    with the reason that closes it (depositing the set is recoverable work); a silent
+    S288C would be a fallback. An accession without a pinned set, or a pinned set
+    without its accession, is refused.
     """
-    reference = _assembly_reference()
-    base_slot = s.FitnessExperimentReference(
-        dataset_name="t",
-        genome_reference=reference,
-        environment_reference=Environment(media=_lb()),
-        phenotype_reference=FitnessPhenotype(fitness=1.0),
+    with pytest.raises(ValidationError, match="assembly_set"):
+        s.ReferenceGenome(species="Escherichia coli", strain="BL21")  # type: ignore[call-arg]  # the omission under test
+    with _refuses("ReferenceGenome.assembly_set is unset and carries no ProvenanceGap"):
+        s.ReferenceGenome(
+            species="Escherichia coli",
+            strain="BL21",
+            assembly_set=None,
+            assembly_accession=None,
+        )
+    gapped = s.ReferenceGenome(
+        species="Escherichia coli",
+        strain="BL21(DE3)",
+        assembly_set=None,
+        assembly_accession=None,
+        provenance_gaps=[
+            ProvenanceGap(
+                field="assembly_set",
+                reason=ProvenanceGapReason.deferred_pending_source_review,
+                note="deposit NCBI ASM956v1 (GCA_000009565.2) in torchcell-genomes",
+            )
+        ],
     )
-    # the attribute keeps the subclass ...
-    assert isinstance(base_slot.genome_reference, s.AssemblyReferenceGenome)
-    # ... and the dump silently loses the pin
-    dumped = base_slot.model_dump()["genome_reference"]
-    assert set(dumped) == {"species", "strain", "ploidy"}
-    assert "assembly_set" not in dumped
-    revalidated = s.FitnessExperimentReference.model_validate(base_slot.model_dump())
-    assert type(revalidated.genome_reference) is s.ReferenceGenome
-
-    # the narrowed slot keeps it, through dict AND json
-    narrowed = s.BacterialFitnessExperimentReference(
-        dataset_name="t",
-        genome_reference=reference,
-        environment_reference=Environment(media=_lb()),
-        phenotype_reference=FitnessPhenotype(fitness=1.0),
-    )
-    kept = narrowed.model_dump()["genome_reference"]
-    assert kept["assembly_set"] == "ecoli_K12_MG1655_ASM584v2"
-    assert kept["assembly_accession"] == "GCA_000005845.2"
-    back = s.BacterialFitnessExperimentReference.model_validate_json(
-        narrowed.model_dump_json()
-    )
-    assert back.genome_reference == reference
-    assert type(back.genome_reference) is s.AssemblyReferenceGenome
+    assert gapped.assembly_set is None and gapped.gapped_fields() == {"assembly_set"}
+    assert hash(gapped) == hash(s.ReferenceGenome.model_validate(gapped.model_dump()))
+    with _refuses(
+        "assembly_accession 'GCA_000009565.2' is stated but assembly_set is gapped"
+    ):
+        s.ReferenceGenome.model_validate(
+            gapped.model_dump() | {"assembly_accession": "GCA_000009565.2"}
+        )
+    with _refuses(
+        "assembly set 'ecoli_K12_MG1655_ASM584v2' is pinned but assembly_accession "
+        "is None"
+    ):
+        s.ReferenceGenome(
+            species="Escherichia coli",
+            strain="MG1655",
+            assembly_set="ecoli_K12_MG1655_ASM584v2",
+            assembly_accession=None,
+        )
 
 
-@pytest.mark.parametrize(
-    "kind",
-    [
-        "product_titer",
-        "protein_turnover",
-        "protein_synthesis_rate",
-        "flux",
-        "bacterial_fitness",
-        "bacterial_environment_response",
-        "bacterial_gene_interaction",
-        "bacterial_gene_essentiality",
-        "bacterial_protein_abundance",
-        "bacterial_metabolite",
-        "bacterial_rnaseq_expression",
-        "bacterial_visual_score",
-    ],
-)
-def test_every_bacterial_reference_pins_an_assembly(kind: str) -> None:
-    """Each new family's reference declares the subclass, not the base.
+def test_the_assembly_pin_survives_the_base_slot_for_every_reference_shape() -> None:
+    """THE serialization finding, inverted by P2.
 
-    This is the property the whole pair exists for; the reconstruction path reaches the
-    class through ``EXPERIMENT_REFERENCE_TYPE_MAP[tag]``, so it is checked through the
-    map the way the loaders use it.
+    pydantic v2 serializes a field by its DECLARED type. Before P2 the pin lived on a
+    subclass, so a pinned reference in a ``ReferenceGenome`` slot dumped without it,
+    and every bacterial family needed a cloned pair that re-annotated the slot. The
+    pin now lives on ``ReferenceGenome`` and the base slot is
+    ``ReferenceGenome | StrainReferenceGenome``, so the plain reference AND the
+    background-carrying one survive dict and JSON through the ONE fitness pair.
+    """
+    for reference in (
+        _assembly_reference(),
+        _s288c_reference(strain="BY4741"),
+        _assembly_reference(
+            strain="BW25113",
+            assembly_set="ecoli_K12_BW25113_ASM75055v1",
+            accession="GCA_000750555.1",
+            background=_bw25113_background(),
+        ),
+    ):
+        base_slot = s.FitnessExperimentReference(
+            dataset_name="t",
+            genome_reference=reference,
+            environment_reference=Environment(media=_lb()),
+            phenotype_reference=FitnessPhenotype(fitness=1.0),
+        )
+        dumped = base_slot.model_dump()["genome_reference"]
+        assert dumped["assembly_set"] == reference.assembly_set
+        assert dumped["assembly_accession"] == reference.assembly_accession
+        assert ("background" in dumped) is isinstance(
+            reference, s.StrainReferenceGenome
+        )
+        for back in (
+            s.FitnessExperimentReference.model_validate(base_slot.model_dump()),
+            s.FitnessExperimentReference.model_validate_json(
+                base_slot.model_dump_json()
+            ),
+        ):
+            assert back.genome_reference == reference
+            assert type(back.genome_reference) is type(reference)
+
+
+@pytest.mark.parametrize("kind", sorted(s.EXPERIMENT_REFERENCE_TYPE_MAP))
+def test_every_reference_family_inherits_the_pinned_base_slot(kind: str) -> None:
+    """No family narrows ``genome_reference`` to a host-specific class.
+
+    A family either inherits the base union or requires a background by narrowing to
+    ``StrainReferenceGenome``; the reconstruction path reaches the class through
+    ``EXPERIMENT_REFERENCE_TYPE_MAP[tag]``, so it is checked through the map the way
+    the loaders use it.
     """
     reference_cls = _reference_cls(kind)
-    assert (
-        reference_cls.model_fields["genome_reference"].annotation
-        is s.AssemblyReferenceGenome
-    )
+    base_slot = s.ExperimentReference.model_fields["genome_reference"].annotation
+    assert base_slot == s.ReferenceGenome | s.StrainReferenceGenome
+    annotation = reference_cls.model_fields["genome_reference"].annotation
+    assert annotation == base_slot or annotation is s.StrainReferenceGenome
+    assert not kind.startswith("bacterial_") and not kind.startswith("yeast_")
     assert _experiment_cls(kind).model_fields["experiment_type"].default == kind
     assert reference_cls.model_fields["experiment_reference_type"].default == kind
+
+
+def test_the_fourteen_retired_pairs_are_gone_and_their_records_have_a_home() -> None:
+    """P2: the host-prefixed pairs retire; each retired tag names its successor."""
+    assert len(s.RETIRED_EXPERIMENT_TYPES) == 14
+    for retired, successor in s.RETIRED_EXPERIMENT_TYPES.items():
+        assert retired not in s.EXPERIMENT_TYPE_MAP
+        assert retired not in s.EXPERIMENT_REFERENCE_TYPE_MAP
+        assert successor in s.EXPERIMENT_TYPE_MAP
+        assert (
+            not hasattr(
+                s,
+                "Bacterial"
+                + "".join(
+                    w.capitalize()
+                    for w in retired.removeprefix("bacterial_").split("_")
+                )
+                + "Experiment",
+            )
+            or retired == "yeast_protein_turnover"
+        )
+    assert not hasattr(s, "YeastProteinTurnoverExperiment")
+    assert not hasattr(s, "AssemblyReferenceGenome")
+    # the four pairs with no general twin kept their class under the general name
+    for stem, tag in (
+        ("GradedGeneEssentiality", "graded_gene_essentiality"),
+        ("PhosphositeIntensity", "phosphosite_intensity"),
+        ("Morphology", "morphology"),
+        ("FitnessContrast", "fitness_contrast"),
+    ):
+        assert s.EXPERIMENT_TYPE_MAP[tag] is getattr(s, f"{stem}Experiment")
+        assert s.EXPERIMENT_REFERENCE_TYPE_MAP[tag] is getattr(
+            s, f"{stem}ExperimentReference"
+        )
+
+
+def test_a_strain_background_requires_the_s288c_set_and_agrees_with_the_reference() -> (
+    None
+):
+    """The yeast cross-check: a ``StrainBackground`` is an edit of S288C."""
+    background = s.StrainBackground(
+        name="BY4741",
+        ploidy="haploid",
+        mating_type=s.MatingType.a,
+        provenance_gaps=[
+            ProvenanceGap(
+                field="provenance",
+                reason=ProvenanceGapReason.deferred_pending_source_review,
+            )
+        ],
+    )
+    reference = _s288c_reference(strain="BY4741", background=background)
+    assert isinstance(reference, s.StrainReferenceGenome)
+    assert reference.background.name == "BY4741"
+    with _refuses(
+        "a StrainBackground is an edit of 'S288C', so assembly_set must be "
+        "'sgd_S288C_R64-4-1_20230830', not 'scerevisiae_CENPK113-7D_ASM257140v2'"
+    ):
+        s.StrainReferenceGenome(
+            species="Saccharomyces cerevisiae",
+            strain="BY4741",
+            assembly_set="scerevisiae_CENPK113-7D_ASM257140v2",
+            assembly_accession="GCA_002571405.2",
+            background=background,
+        )
+    with _refuses("background name 'BY4741' != strain 'BY4742'"):
+        _s288c_reference(strain="BY4742", background=background)
 
 
 # --- 3. the vocabularies agree with the deposited tier --------------------- #
@@ -1921,6 +2068,36 @@ def test_the_assembly_set_vocabulary_equals_the_registry_ids() -> None:
         registry.ECOLI_B_REL606,
         registry.ECOLI_K12_W3110,
     }
+    assert set(typing.get_args(s.YeastAssemblySet)) == {
+        registry.SGD_S288C_R64,
+        registry.SCEREVISIAE_CENPK113_7D,
+    }
+    assert set(typing.get_args(s.AssemblySet)) == set(
+        typing.get_args(s.BacterialAssemblySet)
+    ) | set(typing.get_args(s.YeastAssemblySet))
+    assert s.SGD_S288C_ASSEMBLY_SET == registry.SGD_S288C_R64
+    # every registry set is an assembly a record can pin, or is excluded with a reason
+    registry_ids = {
+        value
+        for name, value in vars(registry).items()
+        if name.isupper()
+        and isinstance(value, str)
+        and name
+        not in {
+            "GENOMES_DIR",
+            "MANIFEST_FILENAME",
+            "CANONICAL_HOST_ROOT",
+            "SGD_S288C_R64_GENBANK_ACCESSION",
+            "SCEREVISIAE_CENPK113_7D_GENBANK_ACCESSION",
+        }
+        and not name.startswith("ROLE_")
+    }
+    assert (
+        set(typing.get_args(s.AssemblySet)) | set(s.NON_ASSEMBLY_REGISTRY_SETS)
+        == registry_ids
+    ), registry_ids
+    assert not set(typing.get_args(s.AssemblySet)) & set(s.NON_ASSEMBLY_REGISTRY_SETS)
+    assert all(reason.strip() for reason in s.NON_ASSEMBLY_REGISTRY_SETS.values())
     assert s.BACTERIAL_ASSEMBLY_SETS == {
         "MG1655": registry.ECOLI_K12_MG1655,
         "BW25113": registry.ECOLI_K12_BW25113,
@@ -1932,14 +2109,25 @@ def test_the_assembly_set_vocabulary_equals_the_registry_ids() -> None:
     assert set(typing.get_args(s.BacterialReferenceStrain)) == set(
         s.BACTERIAL_ASSEMBLY_SETS
     )
-    assert set(s.ASSEMBLY_SET_ACCESSIONS) == set(
-        typing.get_args(s.BacterialAssemblySet)
+    assert set(s.ASSEMBLY_SET_ACCESSIONS) == set(typing.get_args(s.AssemblySet))
+    # The accessions of a set share the assembly number; the versions can differ (W3110
+    # pairs GCA_000010245.1 with GCF_000010245.2, read off its GCF assembly report,
+    # #910). A set has a GenBank accession first and a RefSeq pair when NCBI has one.
+    for accessions in s.ASSEMBLY_SET_ACCESSIONS.values():
+        assert accessions[0].startswith("GCA_") and len(accessions) in (1, 2)
+        for refseq in accessions[1:]:
+            assert refseq.startswith("GCF_")
+            assert (
+                accessions[0].split("_")[1].split(".")[0]
+                == (refseq.split("_")[1].split(".")[0])
+            )
+    assert s.ASSEMBLY_SET_ACCESSIONS[registry.SGD_S288C_R64] == (
+        registry.SGD_S288C_R64_GENBANK_ACCESSION,
+        "GCF_000146045.2",
     )
-    # The two accessions share the assembly number; the versions can differ (W3110 pairs
-    # GCA_000010245.1 with GCF_000010245.2, read off its GCF assembly report, #910).
-    for genbank, refseq in s.ASSEMBLY_SET_ACCESSIONS.values():
-        assert genbank.startswith("GCA_") and refseq.startswith("GCF_")
-        assert genbank.split("_")[1].split(".")[0] == refseq.split("_")[1].split(".")[0]
+    assert s.ASSEMBLY_SET_ACCESSIONS[registry.SCEREVISIAE_CENPK113_7D] == (
+        registry.SCEREVISIAE_CENPK113_7D_GENBANK_ACCESSION,
+    )
     assert s.ASSEMBLY_SET_ACCESSIONS["ecoli_K12_W3110_ASM1024v1"] == (
         "GCA_000010245.1",
         "GCF_000010245.2",
@@ -2084,16 +2272,26 @@ def test_background_functional_copies_is_haploid() -> None:
     assert not background.is_fully_sourced  # every element here is a declared gap
 
 
-def test_the_background_rides_on_the_assembly_reference() -> None:
-    """The background reaches a record through the reference, and must agree with it."""
+def test_the_background_rides_on_the_strain_reference() -> None:
+    """The background reaches a record through ``StrainReferenceGenome`` (required
+    there), and must agree with the reference's strain and assembly set.
+    """
     reference = _assembly_reference(
         strain="BW25113",
         assembly_set="ecoli_K12_BW25113_ASM75055v1",
         accession="GCA_000750555.1",
         background=_bw25113_background(),
     )
-    assert reference.background is not None
+    assert isinstance(reference, s.StrainReferenceGenome)
+    assert isinstance(reference.background, s.BacterialStrainBackground)
     assert reference.background.genotype_statement == s.BW25113_BACKGROUND_GENOTYPE
+    with _refuses("background pins assembly set 'ecoli_K12_BW25113_ASM75055v1' != "):
+        _assembly_reference(
+            strain="BW25113",
+            assembly_set="ecoli_K12_MG1655_ASM584v2",
+            accession="GCA_000005845.2",
+            background=_bw25113_background(),
+        )
     with _refuses("background name 'BW25113' != strain 'MG1655'"):
         _assembly_reference(
             strain="MG1655",
@@ -2403,12 +2601,12 @@ def test_a_product_titer_record_round_trips_through_the_type_maps() -> None:
     assert _experiment_cls(kind).model_validate(experiment.model_dump()) == experiment
     rebuilt = _reference_cls(kind).model_validate(reference.model_dump())
     assert rebuilt == reference
-    assert isinstance(rebuilt.genome_reference, s.AssemblyReferenceGenome)
+    assert isinstance(rebuilt.genome_reference, s.ReferenceGenome)
     assert rebuilt.genome_reference.assembly_set == "pputida_KT2440_ASM756v2"
 
 
-def _bacterial_fitness_experiment() -> s.BacterialFitnessExperiment:
-    return s.BacterialFitnessExperiment(
+def _bacterial_fitness_experiment() -> s.FitnessExperiment:
+    return s.FitnessExperiment(
         dataset_name="Toy",
         genotype=Genotype(perturbations=[s.DeletionStrainPerturbation(**_MG1655)]),
         environment=Environment(media=_lb()),
@@ -2417,27 +2615,27 @@ def _bacterial_fitness_experiment() -> s.BacterialFitnessExperiment:
 
 
 def test_a_reused_phenotype_family_reconstructs_through_the_tag_not_the_union() -> None:
-    """The tag is the reconstruction key, and for these families it has to be.
+    """The tag is the reconstruction key, and the one fitness pair serves every host.
 
-    An assembly-pinned family whose phenotype is REUSED has exactly the same field set
-    on the experiment side as its yeast sibling -- only the reference differs -- and
+    A bacterial fitness record (a Keio deletion strain on LB) is a ``FitnessExperiment``
+    like a BY4741 record (P2): the pairs that once differed only by a host tag and an
+    assembly-pinned reference are gone, and the pin rides on ``ReferenceGenome``.
     ``experiment_type`` is a plain ``str`` on every experiment class rather than a
-    ``Literal``. So the undiscriminated ``ExperimentType`` union cannot tell the two
-    apart and pydantic's smart mode may return the sibling, while the tag survives
-    unchanged. Every reconstruction path in the codebase (the raw query loader, the
-    deduplicator, the aggregator, ``Neo4jCellDataset``) keys on
-    ``EXPERIMENT_TYPE_MAP[experiment_type]`` for precisely this reason, so that is the
-    path pinned here. The stored record is identical either way; what the map buys is
-    the exact class.
+    ``Literal``, so the undiscriminated ``ExperimentType`` union cannot tell two
+    families with the same field set apart and pydantic's smart mode may return a
+    sibling, while the tag survives unchanged. Every reconstruction path in the
+    codebase (the raw query loader, the deduplicator, the aggregator,
+    ``Neo4jCellDataset``) keys on ``EXPERIMENT_TYPE_MAP[experiment_type]`` for
+    precisely this reason, so that is the path pinned here.
     """
     experiment = _bacterial_fitness_experiment()
     dumped = experiment.model_dump()
-    assert dumped["experiment_type"] == "bacterial_fitness"
+    assert dumped["experiment_type"] == "fitness"
 
-    rebuilt = _experiment_cls("bacterial_fitness").model_validate(dumped)
-    assert type(rebuilt) is s.BacterialFitnessExperiment
+    rebuilt = _experiment_cls("fitness").model_validate(dumped)
+    assert type(rebuilt) is s.FitnessExperiment
     assert rebuilt == experiment
-    assert isinstance(rebuilt, s.BacterialFitnessExperiment)
+    assert isinstance(rebuilt, s.FitnessExperiment)
     assert rebuilt.phenotype.fitness == pytest.approx(0.82)
     assert isinstance(rebuilt.genotype, Genotype)
     assert rebuilt.genotype.systematic_gene_names == ["b0002"]
@@ -2446,7 +2644,7 @@ def test_a_reused_phenotype_family_reconstructs_through_the_tag_not_the_union() 
     adapter: TypeAdapter[Any] = TypeAdapter(ExperimentType)
     through_union: Any = adapter.validate_python(dumped)
     assert through_union.model_dump() == dumped
-    assert through_union.experiment_type == "bacterial_fitness"
+    assert through_union.experiment_type == "fitness"
 
 
 def test_a_new_phenotype_family_is_discriminated_by_its_own_fields() -> None:
@@ -2476,14 +2674,14 @@ def test_a_new_phenotype_family_is_discriminated_by_its_own_fields() -> None:
         "protein_turnover",
         "protein_synthesis_rate",
         "flux",
-        "bacterial_fitness",
-        "bacterial_environment_response",
-        "bacterial_gene_interaction",
-        "bacterial_gene_essentiality",
-        "bacterial_protein_abundance",
-        "bacterial_metabolite",
-        "bacterial_rnaseq_expression",
-        "bacterial_visual_score",
+        "fitness",
+        "environment_response",
+        "gene interaction",
+        "gene essentiality",
+        "protein_abundance",
+        "metabolite",
+        "rnaseq_expression",
+        "visual_score",
     ],
 )
 def test_every_new_family_is_in_both_maps_and_both_unions(kind: str) -> None:
@@ -2699,7 +2897,7 @@ def test_a_culture_environment_survives_the_product_titer_slot() -> None:
     assert back == titer
 
     # the same culture in a base-typed slot (the bacterial fitness family) loses it
-    fitness = s.BacterialFitnessExperiment(
+    fitness = s.FitnessExperiment(
         dataset_name="Toy",
         genotype=Genotype(perturbations=[s.DeletionStrainPerturbation(**_MG1655)]),
         environment=culture,
@@ -2722,7 +2920,7 @@ def test_the_product_titer_reference_narrows_its_environment_too() -> None:
     """A control culture states its vessel, or it is not the same experiment."""
     reference = s.ProductTiterExperimentReference(
         dataset_name="Toy",
-        genome_reference=s.AssemblyReferenceGenome(
+        genome_reference=s.ReferenceGenome(
             species="Pseudomonas putida",
             strain="KT2440",
             assembly_set="pputida_KT2440_ASM756v2",
@@ -3205,23 +3403,24 @@ def test_a_fold_change_p_value_is_a_probability_and_names_its_correction() -> No
 def test_the_fold_change_family_round_trips_through_the_type_maps() -> None:
     """Leaf plus experiment plus reference, reconstructed by tag as the loaders do."""
     assert _experiment_cls("protein_fold_change") is s.ProteinFoldChangeExperiment
-    assert (
-        _experiment_cls("bacterial_protein_fold_change")
-        is s.BacterialProteinFoldChangeExperiment
+    # P2: the bacterial clone of this pair retired into it
+    assert "bacterial_protein_fold_change" not in s.EXPERIMENT_TYPE_MAP
+    assert s.RETIRED_EXPERIMENT_TYPES["bacterial_protein_fold_change"] == (
+        "protein_fold_change"
     )
     assert (
-        s.EXPERIMENT_REFERENCE_TYPE_MAP["bacterial_protein_fold_change"]
-        is s.BacterialProteinFoldChangeExperimentReference
+        s.EXPERIMENT_REFERENCE_TYPE_MAP["protein_fold_change"]
+        is s.ProteinFoldChangeExperimentReference
     )
-    experiment = s.BacterialProteinFoldChangeExperiment(
+    experiment = s.ProteinFoldChangeExperiment(
         dataset_name="Toy",
         genotype=Genotype(perturbations=[s.DeletionStrainPerturbation(**_MG1655)]),
         environment=Environment(media=_lb()),
         phenotype=_fold_change(),
     )
-    assert experiment.experiment_type == "bacterial_protein_fold_change"
+    assert experiment.experiment_type == "protein_fold_change"
     dumped = experiment.model_dump()
-    assert s.BacterialProteinFoldChangeExperiment.model_validate(dumped) == experiment
+    assert s.ProteinFoldChangeExperiment.model_validate(dumped) == experiment
     assert s.ProteinFoldChangePhenotype in typing.get_args(s.PhenotypeType)
 
 
@@ -3624,9 +3823,9 @@ def test_segregant_expression_family_is_in_every_union_and_map() -> None:
     )
 
 
-# --- begin muenzner2024: the yeast protein-turnover pair -------------------------- #
-def _yeast_turnover_experiment() -> s.YeastProteinTurnoverExperiment:
-    return s.YeastProteinTurnoverExperiment(
+# --- begin muenzner2024: protein turnover is one pair for every host (P2) ---------- #
+def _yeast_turnover_experiment() -> s.ProteinTurnoverExperiment:
+    return s.ProteinTurnoverExperiment(
         dataset_name="Toy",
         genotype=Genotype(
             perturbations=[
@@ -3651,12 +3850,14 @@ def _yeast_turnover_experiment() -> s.YeastProteinTurnoverExperiment:
     )
 
 
-def test_yeast_turnover_pair_is_in_both_maps_and_both_unions() -> None:
-    """The yeast pair resolves by its own tag and measures the bacterial family's class."""
-    experiment_cls = _experiment_cls("yeast_protein_turnover")
-    reference_cls = _reference_cls("yeast_protein_turnover")
-    assert experiment_cls is s.YeastProteinTurnoverExperiment
-    assert reference_cls is s.YeastProteinTurnoverExperimentReference
+def test_turnover_pair_is_in_both_maps_and_both_unions_once() -> None:
+    """One pair, one tag: the retired ``yeast_protein_turnover`` names this successor."""
+    assert s.RETIRED_EXPERIMENT_TYPES["yeast_protein_turnover"] == "protein_turnover"
+    assert "yeast_protein_turnover" not in s.EXPERIMENT_TYPE_MAP
+    experiment_cls = _experiment_cls("protein_turnover")
+    reference_cls = _reference_cls("protein_turnover")
+    assert experiment_cls is s.ProteinTurnoverExperiment
+    assert reference_cls is s.ProteinTurnoverExperimentReference
     assert experiment_cls in typing.get_args(ExperimentType)
     assert reference_cls in typing.get_args(s.ExperimentReferenceType)
     assert (
@@ -3665,28 +3866,26 @@ def test_yeast_turnover_pair_is_in_both_maps_and_both_unions() -> None:
         is s.ProteinTurnoverPhenotype
     )
     assert experiment_cls.model_fields["experiment_type"].default == (
-        "yeast_protein_turnover"
+        "protein_turnover"
     )
     assert reference_cls.model_fields["experiment_reference_type"].default == (
-        "yeast_protein_turnover"
+        "protein_turnover"
     )
 
 
-def test_yeast_turnover_reference_takes_the_plain_s288c_genome() -> None:
-    """The bacterial pair refuses an S288C genome; the yeast pair stores it as given."""
+def test_turnover_reference_stores_the_pinned_s288c_genome() -> None:
+    """The one pair stores a yeast reference with its pin, as it stores a bacterial one."""
     phenotype = _yeast_turnover_experiment().phenotype
-    s288c = s.ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
+    s288c = s.ReferenceGenome(
+        species="Saccharomyces cerevisiae",
+        strain="S288C",
+        assembly_set=SGD_S288C_R64,
+        assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
+    )
     environment = Environment(
         media=s.Media(name="SM", state="liquid", is_synthetic=True)
     )
-    with pytest.raises(ValidationError, match="instance of AssemblyReferenceGenome"):
-        s.ProteinTurnoverExperimentReference(
-            dataset_name="Toy",
-            genome_reference=s288c,  # type: ignore[arg-type]  # the refusal under test
-            environment_reference=environment,
-            phenotype_reference=phenotype,
-        )
-    reference = s.YeastProteinTurnoverExperimentReference(
+    reference = s.ProteinTurnoverExperimentReference(
         dataset_name="Toy",
         genome_reference=s288c,
         environment_reference=environment,
@@ -3696,15 +3895,18 @@ def test_yeast_turnover_reference_takes_the_plain_s288c_genome() -> None:
         "species": "Saccharomyces cerevisiae",
         "strain": "S288C",
         "ploidy": "haploid",
+        "assembly_set": "sgd_S288C_R64-4-1_20230830",
+        "assembly_accession": "GCA_000146045.2",
+        "provenance_gaps": [],
     }
 
 
-def test_yeast_turnover_experiment_reconstructs_through_its_tag() -> None:
+def test_turnover_experiment_reconstructs_through_its_tag() -> None:
     """Same field set as ``ProteinTurnoverExperiment``, so the tag picks the class."""
     experiment = _yeast_turnover_experiment()
     dumped = experiment.model_dump()
     rebuilt = _experiment_cls(dumped["experiment_type"]).model_validate(dumped)
-    assert type(rebuilt) is s.YeastProteinTurnoverExperiment
+    assert type(rebuilt) is s.ProteinTurnoverExperiment
     assert rebuilt == experiment
     assert rebuilt.phenotype.half_life is not None
     assert rebuilt.phenotype.half_life["YAL001C"] == pytest.approx(math.log(2) / 0.25)
@@ -3997,7 +4199,12 @@ def test_expression_ratio_family_is_in_every_union_and_reconstructs_by_its_tag()
     assert s.MicroarrayExpressionRatioExperimentReference in typing.get_args(
         s.ExperimentReferenceType
     )
-    s288c = s.ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
+    s288c = s.ReferenceGenome(
+        species="Saccharomyces cerevisiae",
+        strain="S288C",
+        assembly_set=SGD_S288C_R64,
+        assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
+    )
     ypd = Environment(media=Media(name="YPD", state="liquid", is_synthetic=False))
     experiment = s.MicroarrayExpressionRatioExperiment(
         dataset_name="Toy",

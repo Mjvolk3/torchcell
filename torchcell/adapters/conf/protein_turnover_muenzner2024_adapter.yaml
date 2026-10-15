@@ -3,7 +3,7 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/conf/protein_turnover_muenzner2024_adapter.yaml
 # Test file: tests/torchcell/adapters/test_muenzner2024_adapter.py
 #
-# Muenzner 2024 dynamic-SILAC turnover: 55 YeastProteinTurnoverExperiment records (SI Table 17).
+# Muenzner 2024 dynamic-SILAC turnover: 55 ProteinTurnoverExperiment records (SI Table 17).
 # COMPACT GENOTYPE, as for Caudal 2024: each natural isolate carries ~5k perturbations
 # off S288C (sequence variants, natural presences and absences from Peter 2018), held on
 # the genotype node (serialized_data + systematic_gene_names) and off-graph in the

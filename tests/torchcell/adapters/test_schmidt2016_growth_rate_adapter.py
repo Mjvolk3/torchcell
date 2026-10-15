@@ -5,7 +5,7 @@
 gate's view of it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Schmidt 2016 Table S24: six (KEIO deletion strain, medium) records,
-BacterialFitnessExperiment. One ``DeletionStrainPerturbation`` per record, so the
+FitnessExperiment. One ``DeletionStrainPerturbation`` per record, so the
 perturbation pair is enabled -- this is the one Schmidt 2016 dataset that serves a gene
 perturbation, which is why the perturbation methods are pinned ON here and OFF in the
 three proteome confs of the same paper.

@@ -4,7 +4,7 @@
 """``torchcell/adapters/thompson2019_valerolactam_growth_adapter.py``: the conf it loads, the
 gate's view of it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
-Thompson 2019 lactam growth rates: 9 records, BacterialEnvironmentResponseExperiment.
+Thompson 2019 lactam growth rates: 9 records, EnvironmentResponseExperiment.
 0 to 2 DeletionStrainPerturbation per record (9 in all), served as `bacterial
 perturbation`; the wild-type records carry none. Each record's carbon source is one
 EnvironmentPhysicalPerturbation (9 in all), so the environment-perturbation pair is

@@ -1,5 +1,5 @@
 # Babu 2014 eSGA digenic interaction map: 38,579 (donor, recipient) records from Table
-# S2's GI score, BacterialGeneInteractionExperiment. Two gene-level
+# S2's GI score, GeneInteractionExperiment. Two gene-level
 # BacterialDeletionPerturbation leaves per record, served as `bacterial perturbation`
 # (never the yeast `perturbation` class), and the signed S score as the served
 # `gene interaction phenotype` -- no new graph class: the yeast interaction datasets

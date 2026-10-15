@@ -36,9 +36,9 @@ import pytest
 
 import torchcell.datasets.pputida.carruthers2025 as c25
 from torchcell.datamodels.schema import (
-    BacterialProteinFoldChangeExperiment,
     FoldChangeScale,
     Genotype,
+    ProteinFoldChangeExperiment,
     ProteinFoldChangePhenotype,
 )
 from torchcell.verification.protein_fold_change import (
@@ -546,7 +546,7 @@ def _record(
         n_replicates=dict.fromkeys(fold_change, 3),
         measurement_type=measurement_type,
     )
-    experiment = BacterialProteinFoldChangeExperiment(
+    experiment = ProteinFoldChangeExperiment(
         dataset_name="proteome_fold_change_carruthers2025",
         genotype=Genotype(
             perturbations=[

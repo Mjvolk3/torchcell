@@ -7,7 +7,7 @@ r"""Lamoureux 2023 PRECISE-1K: the released per-sample growth rate, as an absolu
 Lamoureux et al. 2023 (Nucleic Acids Res 51:10184, doi:10.1093/nar/gkad750) releases its
 sample metadata with a ``Growth Rate (1/hr)`` column. 354 of ``metadata_qc.csv``'s 1,035
 rows carry a value; this module serves all 354 of them as
-:class:`GrowthRateLamoureux2023Dataset`, one ``BacterialEnvironmentResponseExperiment``
+:class:`GrowthRateLamoureux2023Dataset`, one ``EnvironmentResponseExperiment``
 per released sample carrying the ABSOLUTE rate, against a declared base condition.
 
 Rank 11 of the E. coli SI audit, blocked "in its absolute form by gap 1". Gap 1's second
@@ -116,16 +116,16 @@ from torchcell.data import (
     verify_raw_files,
 )
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     Environment,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
     Genotype,
     MeasurementType,
     Publication,
+    ReferenceGenome,
 )
 from torchcell.datasets.bacteria_common import assembly_reference, bacterial_genome
 from torchcell.datasets.dataset_registry import register_dataset
@@ -565,12 +565,12 @@ class GrowthRateLamoureux2023Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperiment
+        return EnvironmentResponseExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperimentReference
+        return EnvironmentResponseExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -638,7 +638,7 @@ class GrowthRateLamoureux2023Dataset(ExperimentDataset):
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
-        reference = BacterialEnvironmentResponseExperimentReference(
+        reference = EnvironmentResponseExperimentReference(
             dataset_name=self.name,
             genome_reference=assembly_reference(self.REFERENCE_STRAIN),
             environment_reference=base,
@@ -647,20 +647,17 @@ class GrowthRateLamoureux2023Dataset(ExperimentDataset):
         # keyed by the whole spec and its untyped flag, never the name alone: a pColi
         # construct and an evolved isolate can share a Strain Description (#1045 part 2)
         backgrounds: dict[
-            tuple[lm.StrainBackgroundSpec, bool],
-            BacterialEnvironmentResponseExperimentReference,
+            tuple[lm.StrainBackgroundSpec, bool], EnvironmentResponseExperimentReference
         ] = {}
 
-        def reference_of(
-            row: RateRow,
-        ) -> BacterialEnvironmentResponseExperimentReference:
+        def reference_of(row: RateRow) -> EnvironmentResponseExperimentReference:
             """The base reference, on the sample's own released strain (#1057)."""
             if row.background is None:
                 return reference
             spec = row.background
             key = (spec, row.untyped_edits)
             if key not in backgrounds:
-                genome_reference: AssemblyReferenceGenome = assembly_reference(
+                genome_reference: ReferenceGenome = assembly_reference(
                     self.REFERENCE_STRAIN,
                     background=lm.strain_background(
                         spec, untyped_edits=row.untyped_edits
@@ -677,7 +674,7 @@ class GrowthRateLamoureux2023Dataset(ExperimentDataset):
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for index, row in enumerate(tqdm(rows, desc="lamoureux2023 growth rate")):
-                experiment = BacterialEnvironmentResponseExperiment(
+                experiment = EnvironmentResponseExperiment(
                     dataset_name=self.name,
                     genotype=genotype_of(row),
                     environment=environments[row.sample],
@@ -818,7 +815,7 @@ VERIFIER_PROVENANCE = Provenance(
     sha256=lm.METADATA.sha256,
     method=(
         "the release's 'Growth Rate (1/hr)' metadata column: one "
-        "BacterialEnvironmentResponseExperiment per released sample the expression "
+        "EnvironmentResponseExperiment per released sample the expression "
         "loader's own genotype and environment rules keep and whose rate is positive, "
         "MeasurementType.growth_rate carrying the ABSOLUTE rate; the reference is the "
         "mean of the declared base condition's released rates"

@@ -74,6 +74,10 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.scerevisiae import mulleder2016 as m
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 _AA = m.AMINO_ACIDS
 _LEVELS_YAL001C = [0.5 * (i + 1) for i in range(19)]
@@ -161,7 +165,10 @@ def _reference(means: dict[str, float], n_strains: int = 4) -> dict[str, Any]:
     return MetaboliteExperimentReference(
         dataset_name="AminoAcidMulleder2016Dataset",
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4741"
+            species="Saccharomyces cerevisiae",
+            strain="BY4741",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=_ENVIRONMENT,
         phenotype_reference=MetabolitePhenotype(

@@ -1,4 +1,4 @@
-# Mutalik 2020 phage-resistance RB-TnSeq: BacterialEnvironmentResponseExperiment.
+# Mutalik 2020 phage-resistance RB-TnSeq: EnvironmentResponseExperiment.
 # One TransposonInsertionPerturbation per record (`build_genotype`), served as `bacterial
 # perturbation`. The environment of a phage challenge carries exactly one
 # PhagePerturbation and a no-phage control carries none, so the environment-perturbation

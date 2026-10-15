@@ -14,7 +14,7 @@ three of the four because the proteome is released on THREE normalizations and t
 shared ``verify_protein_dataset`` asserts one ``measurement_type`` per dataset ("no
 silent cross-assay mixing"):
 
-- :class:`ProteomeDeSiqueira2025Dataset` -- ``BacterialProteinAbundanceExperiment``, one
+- :class:`ProteomeDeSiqueira2025Dataset` -- ``ProteinAbundanceExperiment``, one
   record per released Top3 proteome sample of a WRITABLE strain.
 - :class:`ProteomePercentDeSiqueira2025Dataset` -- the same five samples as percent of
   each sample's total abundance, the scale the paper's own analysis runs on.
@@ -209,12 +209,9 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import M9_NREL_DESIQUEIRA2025
 from torchcell.datamodels.schema import (
     AlleleEdit,
-    AssemblyReferenceGenome,
     BacterialAssemblySet,
     BacterialBackgroundAllele,
     BacterialGeneNamespace,
-    BacterialProteinAbundanceExperiment,
-    BacterialProteinAbundanceExperimentReference,
     BacterialReferenceStrain,
     BacterialStrainBackground,
     BacterialVariantCall,
@@ -236,8 +233,11 @@ from torchcell.datamodels.schema import (
     ProductTiterExperiment,
     ProductTiterExperimentReference,
     ProductTiterPhenotype,
+    ProteinAbundanceExperiment,
+    ProteinAbundanceExperimentReference,
     ProteinAbundancePhenotype,
     Publication,
+    ReferenceGenome,
     SampleUnit,
     SiteVariantCallPerturbation,
     SmallMoleculePerturbation,
@@ -1716,7 +1716,7 @@ def pt_background() -> BacterialStrainBackground:
     )
 
 
-def strain_reference(strain: str) -> AssemblyReferenceGenome:
+def strain_reference(strain: str) -> ReferenceGenome:
     """The assembly-pinned reference one strain's records are written against.
 
     A sequenced tolerized isolate takes PT's reference, not one of its own: PT is the
@@ -2251,12 +2251,12 @@ class ProteomeDeSiqueira2025Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialProteinAbundanceExperiment
+        return ProteinAbundanceExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialProteinAbundanceExperimentReference
+        return ProteinAbundanceExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -2367,7 +2367,7 @@ class ProteomeDeSiqueira2025Dataset(ExperimentDataset):
             )
         baseline = self._phenotype(samples[reference_key], n_replicates)
         references = {
-            strain: BacterialProteinAbundanceExperimentReference(
+            strain: ProteinAbundanceExperimentReference(
                 dataset_name=self.name,
                 genome_reference=strain_reference(strain),
                 environment_reference=proteome_environment(
@@ -2387,7 +2387,7 @@ class ProteomeDeSiqueira2025Dataset(ExperimentDataset):
             for (strain, condition), cells in tqdm(
                 sorted(samples.items()), desc="desiqueira2025-proteome"
             ):
-                experiment = BacterialProteinAbundanceExperiment(
+                experiment = ProteinAbundanceExperiment(
                     dataset_name=self.name,
                     genotype=strain_genotype(
                         strain, with_pathway=False, calls=ledger.calls

@@ -52,6 +52,10 @@ from torchcell.artifacts import (
 from torchcell.data import neo4j_query_raw as nqr
 from torchcell.data.neo4j_query_raw import Neo4jQueryRaw, UnresolvableArtifactError
 from torchcell.datamodels import schema as s
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 A = ref_for("objects", "set-a", "a.npy", b"alpha")
 A2 = ref_for("objects", "set-a", "a.npy", b"alpha", member="row-7")
@@ -62,7 +66,12 @@ C = ref_for("objects", "set-c", "c.npy", b"gamma")
 ENVIRONMENT = s.Environment(
     media=s.Media(name="YPD", state="solid", is_synthetic=False)
 )
-GENOME = s.ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
+GENOME = s.ReferenceGenome(
+    species="Saccharomyces cerevisiae",
+    strain="S288C",
+    assembly_set=SGD_S288C_R64,
+    assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 
 def _genotype(gene: str) -> s.Genotype:

@@ -5,7 +5,7 @@
 view of it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Choe 2019 Supplementary Fig. 6: two Keio BW25113 single deletions,
-BacterialFitnessExperiment. One ``DeletionStrainPerturbation`` per record, so the
+FitnessExperiment. One ``DeletionStrainPerturbation`` per record, so the
 perturbation pair is enabled; one medium at one temperature with no added compound, so
 the environment-perturbation pair is off.
 """

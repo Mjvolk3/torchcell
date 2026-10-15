@@ -486,13 +486,21 @@ def _pin(strain: Any, *, background: Any = None, data_root: str | None = None) -
     from torchcell.datamodels.schema import (
         ASSEMBLY_SET_ACCESSIONS,
         BACTERIAL_ASSEMBLY_SETS,
-        AssemblyReferenceGenome,
+        ReferenceGenome,
+        StrainReferenceGenome,
     )
 
     assembly_set = cast(Any, BACTERIAL_ASSEMBLY_SETS[strain])
-    return AssemblyReferenceGenome(
+    if background is None:
+        return ReferenceGenome(
+            species="Escherichia coli",
+            strain=strain,
+            assembly_set=assembly_set,
+            assembly_accession=ASSEMBLY_SET_ACCESSIONS[assembly_set][0],
+        )
+    return StrainReferenceGenome(
         species="Escherichia coli",
-        strain=strain if background is None else background.name,
+        strain=background.name,
         assembly_set=assembly_set,
         assembly_accession=ASSEMBLY_SET_ACCESSIONS[assembly_set][0],
         background=background,

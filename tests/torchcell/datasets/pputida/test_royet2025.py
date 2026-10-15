@@ -55,15 +55,15 @@ from torchcell.data import ManifestPinMismatchError
 from torchcell.datamodels.media import LB
 from torchcell.datamodels.schema import (
     AssayType,
-    AssemblyReferenceGenome,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
-    BacterialGradedGeneEssentialityExperiment,
     ConcentrationUnit,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     EssentialityEvidenceClass,
     EssentialityEvidenceType,
+    GradedGeneEssentialityExperiment,
     HmmEssentialityState,
     MeasurementType,
+    ReferenceGenome,
     SampleUnit,
     SmallMoleculePerturbation,
     Temperature,
@@ -77,7 +77,7 @@ from torchcell.sequence.genome.pputida.kt2440 import (
 )
 from torchcell.verification.sourced import ProvenanceGapReason, audit_sourced_value
 
-REFERENCE = AssemblyReferenceGenome(
+REFERENCE = ReferenceGenome(
     species="Pseudomonas putida",
     strain="KT2440",
     assembly_set="pputida_KT2440_ASM756v2",
@@ -466,7 +466,7 @@ def test_the_phenotype_is_a_signed_log2_ratio_over_two_replicates() -> None:
 def test_build_reference_pairs_the_metal_environment_with_a_zero() -> None:
     env = m.environment(m.METALS[2])
     reference = m.build_reference("royet", REFERENCE, env)
-    assert isinstance(reference, BacterialEnvironmentResponseExperimentReference)
+    assert isinstance(reference, EnvironmentResponseExperimentReference)
     assert reference.environment_reference == env
     assert reference.environment_reference is not env
     assert reference.phenotype_reference.environment_response == 0.0
@@ -788,8 +788,8 @@ def test_the_dataset_is_registered_and_declares_its_classes() -> None:
         m.EnvMetalTnseqRoyet2025Dataset
     )
     dataset = m.EnvMetalTnseqRoyet2025Dataset.__new__(m.EnvMetalTnseqRoyet2025Dataset)
-    assert dataset.experiment_class is BacterialEnvironmentResponseExperiment
-    assert dataset.reference_class is BacterialEnvironmentResponseExperimentReference
+    assert dataset.experiment_class is EnvironmentResponseExperiment
+    assert dataset.reference_class is EnvironmentResponseExperimentReference
     assert dataset.raw_file_names == [m.TABLE_S5, m.TABLE_S3]
     assert dataset.preprocess_raw("x") == "x"
     with pytest.raises(NotImplementedError):
@@ -1026,7 +1026,7 @@ def test_hmm_evidence_carries_the_rows_statistics_and_the_papers_statements(
 ) -> None:
     row = m.read_table_s4(_write_s4(tmp_path / "s4.xlsx"))["LB_agar"][0]
     experiment = m.build_graded_experiment("x", row, m.stage_environment("LB_agar"))
-    assert isinstance(experiment, BacterialGradedGeneEssentialityExperiment)
+    assert isinstance(experiment, GradedGeneEssentialityExperiment)
     (perturbation,) = experiment.genotype.perturbations  # type: ignore[union-attr]
     assert (perturbation.systematic_gene_name, perturbation.perturbed_gene_name) == (
         "PP_0001",

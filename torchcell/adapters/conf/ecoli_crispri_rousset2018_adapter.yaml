@@ -1,4 +1,4 @@
-# Rousset 2018 CRISPR-dCas9 screens: BacterialEnvironmentResponseExperiment.
+# Rousset 2018 CRISPR-dCas9 screens: EnvironmentResponseExperiment.
 # One BacterialCrisprInterferencePerturbation per record, served as `bacterial
 # perturbation` with its 20-nt spacer on a `crispr construct` node. Each of the four
 # phage-derived screens carries exactly one PhagePerturbation (`phage perturbation`);

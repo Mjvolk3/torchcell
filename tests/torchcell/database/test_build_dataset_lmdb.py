@@ -108,6 +108,10 @@ from torchcell.datamodels.schema import (
 from torchcell.datasets.dataset_registry import dataset_registry
 from torchcell.sequence.genome.ecoli.k12 import EcoliK12BW25113Genome, EcoliK12Genome
 from torchcell.sequence.genome.pputida.kt2440 import PPutidaKT2440Genome
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.verification.report import (
     Level,
@@ -144,7 +148,10 @@ def _write_records(dataset: ExperimentDataset) -> None:
             reference = FitnessExperimentReference(
                 dataset_name=dataset.name,
                 genome_reference=ReferenceGenome(
-                    species="Saccharomyces cerevisiae", strain="S288C"
+                    species="Saccharomyces cerevisiae",
+                    strain="S288C",
+                    assembly_set=SGD_S288C_R64,
+                    assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
                 ),
                 environment_reference=_ENVIRONMENT,
                 phenotype_reference=FitnessPhenotype(fitness=reference_fitness),

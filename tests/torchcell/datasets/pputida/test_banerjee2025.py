@@ -45,11 +45,11 @@ from torchcell.data.experiment_dataset import RawSha256MismatchError
 from torchcell.datamodels.media import M9_DEFERRED_BANERJEE2025
 from torchcell.datamodels.schema import (
     AlleleEdit,
-    BacterialProteinAbundanceExperiment,
-    BacterialProteinAbundanceExperimentReference,
     ConcentrationUnit,
     EnvironmentPhysicalPerturbation,
     PhysicalFactor,
+    ProteinAbundanceExperiment,
+    ProteinAbundanceExperimentReference,
 )
 from torchcell.literature.manifest import ROLE_SI_DATA, RetrievalMethod
 
@@ -1185,8 +1185,8 @@ def built(synthetic_mirror: Path, synthetic_kt2440: Any, tmp_path: Path) -> Any:
 
 def test_the_loader_writes_one_record_per_released_sample(built: Any) -> None:
     assert len(built) == ds.EXPECTED_PROTEOME_RECORDS
-    assert built.experiment_class is BacterialProteinAbundanceExperiment
-    assert built.reference_class is BacterialProteinAbundanceExperimentReference
+    assert built.experiment_class is ProteinAbundanceExperiment
+    assert built.reference_class is ProteinAbundanceExperimentReference
     assert built.raw_file_names == [osp.basename(relpath) for relpath in ds.RAW_MEMBERS]
 
 

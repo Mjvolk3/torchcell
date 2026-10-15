@@ -40,9 +40,9 @@ from torchcell.datamodels.media import (
     RCH2_DEFINED_NOCARBON_PRICE2018,
 )
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
     EnvironmentPhysicalPerturbation,
     PhysicalFactor,
+    ReferenceGenome,
     SmallMoleculePerturbation,
 )
 from torchcell.datasets.bacteria_common import LocusTagReconciliation
@@ -673,8 +673,8 @@ def test_deposit_is_idempotent_and_refuses_other_bytes(
 # --------------------------------------------------------------------------- #
 # End-to-end build on the synthetic release
 # --------------------------------------------------------------------------- #
-def _reference() -> AssemblyReferenceGenome:
-    return AssemblyReferenceGenome(
+def _reference() -> ReferenceGenome:
+    return ReferenceGenome(
         species="Pseudomonas putida",
         strain="KT2440",
         ploidy="haploid",
@@ -940,5 +940,5 @@ def test_built_lmdb_record_count() -> None:
         assert raw is not None
         first = pickle.loads(raw)
     env.close()
-    assert first["experiment"]["experiment_type"] == "bacterial_environment_response"
+    assert first["experiment"]["experiment_type"] == "environment_response"
     assert not math.isnan(first["experiment"]["phenotype"]["environment_response"])

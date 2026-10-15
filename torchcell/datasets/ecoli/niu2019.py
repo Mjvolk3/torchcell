@@ -13,7 +13,7 @@ each a ratio against the no-guide control and each from its own culture: the OD6
 12 h in LB plus 0.5% pinene, and the pinene made in a 72 h SBMSN shake-flask production
 run. This module holds a store per column.
 
-RECORD (growth) = one (target gene set x arm) ``BacterialEnvironmentResponseExperiment``:
+RECORD (growth) = one (target gene set x arm) ``EnvironmentResponseExperiment``:
 
 - GENOTYPE: one ``BacterialReleasedCrisprPerturbation`` per targeted gene, keyed by the
   label the release writes (a gene symbol or an operon label), carrying the arm's
@@ -190,8 +190,6 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     BACTERIAL_ASSEMBLY_SETS,
     AssayType,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     BacterialReleasedCrisprPerturbation,
     BacterialStrainBackground,
     Censoring,
@@ -204,6 +202,8 @@ from torchcell.datamodels.schema import (
     EndpointRule,
     Environment,
     EnvironmentPerturbationType,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
@@ -1314,12 +1314,12 @@ class CrisprPineneToleranceNiu2019Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperiment
+        return EnvironmentResponseExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperimentReference
+        return EnvironmentResponseExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -1357,7 +1357,7 @@ class CrisprPineneToleranceNiu2019Dataset(ExperimentDataset):
         culture = environment()
         arms: tuple[Arm, ...] = ("crispr_activation", "crispr_interference")
         references = {
-            arm: BacterialEnvironmentResponseExperimentReference(
+            arm: EnvironmentResponseExperimentReference(
                 dataset_name=self.name,
                 genome_reference=assembly_reference(
                     self.REFERENCE_STRAIN, background=NIU2019_BACKGROUND
@@ -1376,7 +1376,7 @@ class CrisprPineneToleranceNiu2019Dataset(ExperimentDataset):
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for arm_label, label, strain in tqdm(retention.strains, desc="niu2019"):
                 arm = cast("Arm", arm_label)
-                experiment = BacterialEnvironmentResponseExperiment(
+                experiment = EnvironmentResponseExperiment(
                     dataset_name=self.name,
                     genotype=genotype(strain, arm),
                     environment=culture,
@@ -1494,7 +1494,7 @@ def verify_build(
             sha256=SI_SHA256,
             method="Suppl. Tables 1, 3 and 4 of the article's one supplementary file: "
             "the N20 guide oligos and the per-target growth and pinene ratios. One "
-            "BacterialEnvironmentResponseExperiment per stored strain, a CRISPRa or "
+            "EnvironmentResponseExperiment per stored strain, a CRISPRa or "
             "CRISPRi genotype against BW25113, reference = the no-guide control at a "
             "log2 ratio of 0",
             page="Suppl. Tables 1, 3 and 4 (mmc1.docx)",

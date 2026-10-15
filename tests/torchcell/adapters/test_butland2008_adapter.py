@@ -6,7 +6,7 @@ it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Butland 2008 unfiltered eSGA interaction matrix: 301,803 (query strain, recipient
 strain) records from Supplementary Table 4's S-score sheet,
-BacterialGeneInteractionExperiment. TWO gene-level bacterial perturbation leaves per
+GeneInteractionExperiment. TWO gene-level bacterial perturbation leaves per
 record, served as `bacterial perturbation`, and the signed S score as the already-served
 `gene interaction phenotype`. The query leaf is a DeletionStrainPerturbation; the
 recipient is a DeletionStrainPerturbation carrying its Keio isolate as the

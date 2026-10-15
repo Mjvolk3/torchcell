@@ -1,4 +1,4 @@
-# Menasalvas 2025 isoprenol selection: 58 targets, BacterialEnvironmentResponseExperiment.
+# Menasalvas 2025 isoprenol selection: 58 targets, EnvironmentResponseExperiment.
 # 8 to 10 perturbations per record: HeterologousPathwayPerturbation (348),
 # BacterialDeletionPerturbation (58) and BacterialCrisprInterferencePerturbation (60), all
 # served as `bacterial perturbation`. Every CRISPRi leaf carries a CrisprConstruct, so the

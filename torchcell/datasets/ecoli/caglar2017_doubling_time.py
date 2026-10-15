@@ -30,7 +30,7 @@ and the source studies are imported FROM ``caglar2017`` instead, so there is one
 of each. Same reason ``schmidt2016_growth_rate.py`` is separate from ``schmidt2016.py``.
 
 WHY THIS IS AN ABSOLUTE READOUT AND NOT A RATIO. The record is
-``BacterialEnvironmentResponseExperiment`` with ``MeasurementType.growth_rate``, whose
+``EnvironmentResponseExperiment`` with ``MeasurementType.growth_rate``, whose
 enum description is "absolute or normalized growth rate / doubling time", and the stored
 number is the released doubling time in minutes. The log2-ratio alternative was MEASURED
 and rejected (``experiments/036-dataset-fixes-before-kg-build/scripts/
@@ -120,10 +120,10 @@ from torchcell.data import ExperimentDataset, Organism, post_process, verify_raw
 from torchcell.datamodels.media import DAVIS_MINIMAL, DM500
 from torchcell.datamodels.schema import (
     AssayType,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     Environment,
     EnvironmentPerturbationType,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
@@ -596,12 +596,12 @@ class DoublingTimeCaglar2017Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperiment
+        return EnvironmentResponseExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperimentReference
+        return EnvironmentResponseExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -643,7 +643,7 @@ class DoublingTimeCaglar2017Dataset(ExperimentDataset):
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
-        reference = BacterialEnvironmentResponseExperimentReference(
+        reference = EnvironmentResponseExperimentReference(
             dataset_name=self.name,
             genome_reference=assembly_reference(self.REFERENCE_STRAIN),
             environment_reference=environments[REFERENCE_CONDITION],
@@ -654,7 +654,7 @@ class DoublingTimeCaglar2017Dataset(ExperimentDataset):
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for index, row in enumerate(tqdm(rows, desc="caglar2017 doubling time")):
-                experiment = BacterialEnvironmentResponseExperiment(
+                experiment = EnvironmentResponseExperiment(
                     dataset_name=self.name,
                     genotype=genotype,
                     environment=environments[row.condition],
@@ -876,7 +876,7 @@ def verify_build(
             citation_key=CITATION_KEY,
             sha256=SI_TABLES["S5"][1],
             method=(
-                "Supplementary Table S5: one BacterialEnvironmentResponseExperiment "
+                "Supplementary Table S5: one EnvironmentResponseExperiment "
                 "per released biological-replicate growth curve, "
                 "MeasurementType.growth_rate carrying the doubling time in minutes "
                 "with both released 95% limits; the reference is the base condition's "

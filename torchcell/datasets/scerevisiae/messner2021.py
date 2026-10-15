@@ -138,6 +138,10 @@ from torchcell.literature.manifest import (
     RetrievalMethod,
     RetrievalRecord,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.report import (
     Level,
     LevelResult,
@@ -1089,7 +1093,10 @@ class ProteomeMessner2021Dataset(ExperimentDataset):
         reference = ProteinAbundanceExperimentReference(
             dataset_name=self.name,
             genome_reference=ReferenceGenome(
-                species="Saccharomyces cerevisiae", strain="BY4741"
+                species="Saccharomyces cerevisiae",
+                strain="BY4741",
+                assembly_set=SGD_S288C_R64,
+                assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
             ),
             environment_reference=self.environment(self.vehicle()),
             phenotype_reference=ProteinAbundancePhenotype(

@@ -4,7 +4,7 @@
 """``torchcell/adapters/borchert2024_adapter.py``: the conf it loads, the gate's view of it,
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
-Borchert 2024 KT2440 RB-TnSeq: BacterialEnvironmentResponseExperiment.
+Borchert 2024 KT2440 RB-TnSeq: EnvironmentResponseExperiment.
 One TransposonInsertionPerturbation per record (`build_genotype`), served as `bacterial
 perturbation`. The environment always carries condition_1 as an
 EnvironmentPhysicalPerturbation and, when present, condition_2 as a

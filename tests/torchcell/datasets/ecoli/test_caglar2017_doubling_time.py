@@ -33,10 +33,10 @@ import torchcell.datasets.ecoli.caglar2017_doubling_time as dt
 from torchcell.datamodels.media import DAVIS_MINIMAL, DM500
 from torchcell.datamodels.schema import (
     ABSOLUTE_MEASUREMENT_TYPES,
-    AssemblyReferenceGenome,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     MeasurementType,
+    ReferenceGenome,
     SampleUnit,
 )
 from torchcell.verification.report import Level
@@ -333,7 +333,7 @@ def test_read_reference_row_refuses_a_non_bracketing_reference_interval(
 # The loader end to end over a synthetic mirror
 # --------------------------------------------------------------------------- #
 #: The REL606 pair the genomes tier deposits, which ``l4_assembly_pin`` re-derives.
-REL606_PIN = AssemblyReferenceGenome(
+REL606_PIN = ReferenceGenome(
     species="Escherichia coli",
     strain="REL606",
     assembly_set="ecoli_B_REL606_ASM1798v1",
@@ -603,8 +603,8 @@ def test_the_two_base_class_hooks_this_loader_does_not_use(
 
 def test_the_loader_declares_the_two_schema_classes_it_writes() -> None:
     dataset = dt.DoublingTimeCaglar2017Dataset.__new__(dt.DoublingTimeCaglar2017Dataset)
-    assert dataset.experiment_class is BacterialEnvironmentResponseExperiment
-    assert dataset.reference_class is BacterialEnvironmentResponseExperimentReference
+    assert dataset.experiment_class is EnvironmentResponseExperiment
+    assert dataset.reference_class is EnvironmentResponseExperimentReference
     assert dt.DoublingTimeCaglar2017Dataset.has_gene_perturbations is False
 
 

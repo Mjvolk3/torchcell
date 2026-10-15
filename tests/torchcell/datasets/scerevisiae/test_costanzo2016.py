@@ -85,6 +85,10 @@ from torchcell.datamodels.schema import (
     UncertaintyType,
 )
 from torchcell.datasets.scerevisiae import costanzo2016 as c
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 # --------------------------------------------------------------------------- #
 # SMF fixture
@@ -243,7 +247,12 @@ _PUBLICATION = Publication(
     doi="10.1126/science.aaf1420",
     doi_url="https://www.science.org/doi/10.1126/science.aaf1420",
 )
-_GENOME = ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
+_GENOME = ReferenceGenome(
+    species="Saccharomyces cerevisiae",
+    strain="S288C",
+    assembly_set=SGD_S288C_R64,
+    assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 
 def _write_smf_raw(root: Path) -> None:

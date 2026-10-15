@@ -41,10 +41,11 @@ from tests.torchcell.datasets.ecoli.test_schmidt2016 import (
 )
 from torchcell.data import file_sha256
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
     BacterialAssemblySet,
     BacterialGeneNamespace,
     BacterialStrainBackground,
+    ReferenceGenome,
+    StrainReferenceGenome,
 )
 
 ASSEMBLY_SET: BacterialAssemblySet = "ecoli_K12_BW25113_ASM75055v1"
@@ -531,8 +532,8 @@ class FakeGenome:
         )
 
 
-def _reference_genome() -> AssemblyReferenceGenome:
-    return AssemblyReferenceGenome(
+def _reference_genome() -> ReferenceGenome:
+    return ReferenceGenome(
         species="Escherichia coli",
         strain=sm.SCHMIDT_REFERENCE_STRAIN,
         ploidy="haploid",
@@ -543,12 +544,13 @@ def _reference_genome() -> AssemblyReferenceGenome:
 
 def _pinned(
     strain: str, *, background: BacterialStrainBackground | None = None
-) -> AssemblyReferenceGenome:
+) -> ReferenceGenome:
     """The BW25113 pin, on a background when one is given (#1045 part 3)."""
     if background is None:
         return _reference_genome()
-    return _reference_genome().model_copy(
-        update={"strain": background.name, "background": background}
+    return StrainReferenceGenome.model_validate(
+        _reference_genome().model_dump()
+        | {"strain": background.name, "background": background}
     )
 
 

@@ -4,7 +4,7 @@
 """``torchcell/adapters/menasalvas2025_metabolite_growth_adapter.py``: the conf it loads, the gate's view of it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Menasalvas 2025 data S1-1, growth phase: 3 records (one per released strain),
-BacterialMetaboliteExperiment over the 46 stored metabolites of the Absolute block.
+MetaboliteExperiment over the 46 stored metabolites of the Absolute block.
 Every genotype carries the integrated pathway and biosensor leaves and, for the two
 improved strains, the seven deletions, served as `bacterial perturbation`; the TEAM-2595
 record additionally carries the 75 called variants of data S1-5, served as `bacterial

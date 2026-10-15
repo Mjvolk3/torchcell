@@ -64,6 +64,10 @@ from torchcell.graph.graph import GeneGraph, GeneMultiGraph
 from torchcell.losses.dcell import DCellLoss
 from torchcell.models.dcell import DCell, DCellSubsystem
 from torchcell.sequence import GeneSet
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 
 def _model(dcell_graph: HeteroData, seed: int = 0) -> DCell:
@@ -486,7 +490,10 @@ def _record(genes: list[str], fitness: float) -> dict[str, Any]:
         "experiment_reference": FitnessExperimentReference(
             dataset_name="toy",
             genome_reference=ReferenceGenome(
-                species="Saccharomyces cerevisiae", strain="S288C"
+                species="Saccharomyces cerevisiae",
+                strain="S288C",
+                assembly_set=SGD_S288C_R64,
+                assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
             ),
             environment_reference=ENVIRONMENT,
             phenotype_reference=FitnessPhenotype(fitness=1.0),

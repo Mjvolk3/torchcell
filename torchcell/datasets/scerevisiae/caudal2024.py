@@ -101,7 +101,12 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
-from torchcell.sequence.genome.registry import PETER2018_1011, load_genome_manifest
+from torchcell.sequence.genome.registry import (
+    PETER2018_1011,
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+    load_genome_manifest,
+)
 from torchcell.sequence.natural_isolate import (
     GENOTYPE_FILES,
     S288C_RE,
@@ -793,7 +798,10 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
     ]:
         """Build the RNA-seq experiment/reference/publication for one isolate."""
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae",
+            strain="S288C",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
         genotype: Genotype = row["genotype"]
         # SC liquid medium, 30 C, harvested at mid-log (OD ~0.3) -- Caudal Methods.

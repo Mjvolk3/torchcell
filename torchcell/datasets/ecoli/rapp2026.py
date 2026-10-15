@@ -106,10 +106,7 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     BACTERIAL_ASSEMBLY_SETS,
-    AssemblyReferenceGenome,
     BacterialAssemblySet,
-    BacterialMetaboliteExperiment,
-    BacterialMetaboliteExperimentReference,
     BacterialReferenceStrain,
     BacterialStrainBackground,
     Concentration,
@@ -124,8 +121,11 @@ from torchcell.datamodels.schema import (
     Media,
     MediaComponent,
     MediaComponentRole,
+    MetaboliteExperiment,
+    MetaboliteExperimentReference,
     MetabolitePhenotype,
     Publication,
+    ReferenceGenome,
     SmallMoleculePerturbation,
     Temperature,
 )
@@ -1913,9 +1913,9 @@ def build_experiment(
     replicates: Sequence[Sequence[float]],
     target_metabolite_ids: Mapping[str, str],
     env: Environment,
-) -> BacterialMetaboliteExperiment:
+) -> MetaboliteExperiment:
     """The record of one CRISPRi strain."""
-    return BacterialMetaboliteExperiment(
+    return MetaboliteExperiment(
         dataset_name=dataset_name,
         genotype=crispri_genotype(resolved),
         environment=env,
@@ -1925,14 +1925,14 @@ def build_experiment(
 
 def build_reference(
     dataset_name: str,
-    genome_reference: AssemblyReferenceGenome,
+    genome_reference: ReferenceGenome,
     keys: Sequence[str],
     replicates: Sequence[Sequence[float]],
     target_metabolite_ids: Mapping[str, str],
     env: Environment,
-) -> BacterialMetaboliteExperimentReference:
+) -> MetaboliteExperimentReference:
     """The measured control profile (empty sgRNA) on the same per-batch-median scale."""
-    return BacterialMetaboliteExperimentReference(
+    return MetaboliteExperimentReference(
         dataset_name=dataset_name,
         genome_reference=genome_reference,
         environment_reference=env.model_copy(),
@@ -1969,12 +1969,12 @@ class MetabolomeRapp2026Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialMetaboliteExperiment
+        return MetaboliteExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialMetaboliteExperimentReference
+        return MetaboliteExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:

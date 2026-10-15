@@ -46,13 +46,13 @@ from torchcell.datamodels.media import M9, MEDIA_LIBRARY
 from torchcell.datamodels.schema import (
     ASSEMBLY_SET_ACCESSIONS,
     BACTERIAL_ASSEMBLY_SETS,
-    AssemblyReferenceGenome,
-    BacterialFitnessExperiment,
-    BacterialFitnessExperimentReference,
     ComponentDefinition,
     ConcentrationUnit,
     DeletionStrainPerturbation,
+    FitnessExperiment,
+    FitnessExperimentReference,
     MediaComponentRole,
+    ReferenceGenome,
     SampleUnit,
 )
 from torchcell.datasets.bacteria_common import (
@@ -751,8 +751,8 @@ def test_the_dataset_is_registered_and_takes_the_bw25113_genome_by_name(
 
 def test_the_loader_declares_the_bacterial_fitness_classes() -> None:
     dataset = c.GrowthRateCampos2018Dataset.__new__(c.GrowthRateCampos2018Dataset)
-    assert dataset.experiment_class is BacterialFitnessExperiment
-    assert dataset.reference_class is BacterialFitnessExperimentReference
+    assert dataset.experiment_class is FitnessExperiment
+    assert dataset.reference_class is FitnessExperimentReference
     assert dataset.raw_file_names == [c.DATA_FILENAME]
     frame = object()
     assert dataset.preprocess_raw(frame) is frame
@@ -763,9 +763,9 @@ def test_the_loader_declares_the_bacterial_fitness_classes() -> None:
 # --------------------------------------------------------------------------- #
 # The whole loader, hermetic
 # --------------------------------------------------------------------------- #
-def _pin(strain: EcoliK12StrainName) -> AssemblyReferenceGenome:
+def _pin(strain: EcoliK12StrainName) -> ReferenceGenome:
     assembly_set = BACTERIAL_ASSEMBLY_SETS[strain]
-    return AssemblyReferenceGenome(
+    return ReferenceGenome(
         species="Escherichia coli",
         strain=strain,
         assembly_set=cast(Any, assembly_set),
@@ -1344,7 +1344,7 @@ def test_the_morphology_loader_builds_the_synthetic_release_end_to_end(
     assert len(references) == 1
     experiment = dataset[0]["experiment"]
     phenotype = experiment["phenotype"]
-    assert experiment["experiment_type"] == "bacterial_morphology"
+    assert experiment["experiment_type"] == "morphology"
     assert phenotype["assay"] == "campos2018"
     assert phenotype["label_name"] == "morphology"
     assert phenotype["label_statistic_name"] == "morphology_coefficient_of_variation"

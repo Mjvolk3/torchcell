@@ -81,6 +81,10 @@ from torchcell.literature.manifest import (
     RetrievalRecord,
     SourceCheck,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
 # (token, score) rows per acid; the header row the parser keys on is written first.
@@ -358,7 +362,10 @@ def _expected_record(
     reference = EnvironmentResponseExperimentReference(
         dataset_name=_DATASET_NAME,
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4741"
+            species="Saccharomyces cerevisiae",
+            strain="BY4741",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=environment,
         phenotype_reference=_ordinal(0.0, ResponseCategory.no_change, "0"),

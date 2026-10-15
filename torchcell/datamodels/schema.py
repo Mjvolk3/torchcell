@@ -743,27 +743,159 @@ ALLELE_EDIT_SO: dict[AlleleEdit, tuple[str, str]] = {
 gene-perturbation leaves use)."""
 
 
-class GenomicSpan(ModelStrict):
-    """A 1-based, end-inclusive interval on one chromosome of the R64 assembly.
+# --------------------------------------------------------------------------- #
+# The assembly vocabulary: the deposited sets a record can pin (ontology-unify, P2).
+#
+# ``AssemblySet`` is the closed vocabulary of the genomes tier's deposited ASSEMBLY sets,
+# restated here rather than imported from ``torchcell.sequence.genome.registry`` because
+# ``schema.py`` sits UNDER the sequence package in the import graph
+# (``torchcell.sequence`` imports ``torchcell.datamodels``), so importing the registry
+# here is a cycle. Equality with the registry's own constants is pinned by
+# ``test_schema.py``, which is what keeps the two from drifting. It sits above
+# ``GenomicSpan`` and ``ReferenceGenome`` because both are typed by it.
+# --------------------------------------------------------------------------- #
+BacterialReferenceStrain = Literal[
+    "MG1655",
+    "BW25113",
+    "KT2440",
+    "REL606",
+    # --- begin #910: E. coli K-12 W3110, read RefSeq-primary --------------------- #
+    "W3110",
+    # --- end #910 ---------------------------------------------------------------- #
+]
+"""The sequenced strain a bacterial background's alleles are edits against.
 
-    ``assembly`` names the R64 release the coordinates were read from (coordinates
-    shift between releases), e.g. ``"R64-4-1"``.
+One member per deposited assembly set, for the same reason ``BacterialGeneNamespace``
+has one: the two *E. coli* K-12 strains are not interchangeable, and a record that said
+only "K-12" would not say which genome its genotype is written against.
+"""
+
+#: Assembly-set id of each bacterial reference strain. Stated here rather than imported
+#: from ``torchcell.sequence.genome.registry`` because ``schema.py`` sits UNDER the
+#: sequence package in the import graph (``torchcell.sequence`` imports
+#: ``torchcell.datamodels``), so importing the registry here is a cycle. Equality with
+#: the registry's own constants is pinned by ``test_schema.py`` instead, which is what
+#: keeps the two from drifting.
+BACTERIAL_ASSEMBLY_SETS: dict[str, str] = {
+    "MG1655": "ecoli_K12_MG1655_ASM584v2",
+    "BW25113": "ecoli_K12_BW25113_ASM75055v1",
+    "KT2440": "pputida_KT2440_ASM756v2",
+    "REL606": "ecoli_B_REL606_ASM1798v1",
+    # --- begin #910: E. coli K-12 W3110, read RefSeq-primary --------------------- #
+    "W3110": "ecoli_K12_W3110_ASM1024v1",
+    # --- end #910 ---------------------------------------------------------------- #
+}
+
+BacterialAssemblySet = Literal[
+    "ecoli_K12_MG1655_ASM584v2",
+    "ecoli_K12_BW25113_ASM75055v1",
+    "pputida_KT2440_ASM756v2",
+    "ecoli_B_REL606_ASM1798v1",
+    # --- begin #910: E. coli K-12 W3110, read RefSeq-primary --------------------- #
+    "ecoli_K12_W3110_ASM1024v1",
+    # --- end #910 ---------------------------------------------------------------- #
+]
+"""A deposited bacterial assembly set id: the sub-vocabulary ``BacterialStrainBackground``
+pins, one per ``BacterialReferenceStrain`` (``BACTERIAL_ASSEMBLY_SETS``).
+"""
+
+YeastAssemblySet = Literal[
+    "sgd_S288C_R64-4-1_20230830", "scerevisiae_CENPK113-7D_ASM257140v2"
+]
+"""A deposited S. cerevisiae assembly set id: the SGD S288C R64-4-1 release and the
+CEN.PK113-7D GenBank assembly (ASM257140v2), each a FASTA plus GFF set in the tier."""
+
+#: The S288C set id, bound once for the yeast cross-check in ``StrainReferenceGenome``
+#: (every ``StrainBackground`` is an edit against S288C); loaders import the registry's
+#: own ``SGD_S288C_R64`` constant, which ``test_schema.py`` pins equal to this.
+SGD_S288C_ASSEMBLY_SET = "sgd_S288C_R64-4-1_20230830"
+
+AssemblySet = Literal[
+    "ecoli_K12_MG1655_ASM584v2",
+    "ecoli_K12_BW25113_ASM75055v1",
+    "pputida_KT2440_ASM756v2",
+    "ecoli_B_REL606_ASM1798v1",
+    "ecoli_K12_W3110_ASM1024v1",
+    "sgd_S288C_R64-4-1_20230830",
+    "scerevisiae_CENPK113-7D_ASM257140v2",
+]
+"""A deposited assembly set id, as a closed vocabulary: the union of ``BacterialAssemblySet``
+and ``YeastAssemblySet``, which ``test_schema.py`` pins.
+
+An id outside this set is rejected at construction, which is the "validated against the
+registry's known ids" requirement in declarative form: a loader cannot invent a set id,
+and ``resolve(assembly_set, member)`` is then guaranteed to name a set the tier knows.
+The vocabulary names ASSEMBLIES only; the registry's other sets are excluded by name in
+``NON_ASSEMBLY_REGISTRY_SETS``, with the reason each is not a reference a record can
+be written against.
+"""
+
+#: Registry sets that are NOT an assembly a record pins, each with its reason. The
+#: vocabulary test proves ``AssemblySet`` plus these keys is exactly the registry's ids,
+#: so a newly deposited set must be placed on one side or the other, in writing.
+NON_ASSEMBLY_REGISTRY_SETS: dict[str, str] = {
+    "peter2018_1011_assemblies": "a panel of 1,011 isolate assemblies and the pangenome "
+    "matrices, not one reference a record's identifiers are written against; a Peter "
+    "2018 record pins the S288C release its systematic names and loss-of-function "
+    "coordinates are read on",
+    "hale2024_322134S_variants": "a variant table of the 3S parent against S288C, not an "
+    "assembly; a Hale 2024 record pins the S288C release the variants are called on",
+    "go_release_2026-08-05": "an ontology release, not a genome",
+}
+
+#: The NCBI accessions of each assembly set: the GenBank / RefSeq pair read from the
+#: ``_assembly_report.txt`` member deposited in that set ("# GenBank assembly accession"
+#: and "# RefSeq assembly accession"), or the one accession a set has. A record names
+#: one of its own set's accessions, so a (set, accession) pair cannot disagree.
+ASSEMBLY_SET_ACCESSIONS: dict[str, tuple[str, ...]] = {
+    "ecoli_K12_MG1655_ASM584v2": ("GCA_000005845.2", "GCF_000005845.2"),
+    "ecoli_K12_BW25113_ASM75055v1": ("GCA_000750555.1", "GCF_000750555.1"),
+    "pputida_KT2440_ASM756v2": ("GCA_000007565.2", "GCF_000007565.2"),
+    "ecoli_B_REL606_ASM1798v1": ("GCA_000017985.1", "GCF_000017985.1"),
+    # --- begin #910: E. coli K-12 W3110, read RefSeq-primary --------------------- #
+    # Read off the GCF report: the GCA report of this set still names the 2006 RefSeq
+    # release GCF_000010245.1 (AC_000091.1), whose files are not in the set.
+    "ecoli_K12_W3110_ASM1024v1": ("GCA_000010245.1", "GCF_000010245.2"),
+    # --- end #910 ---------------------------------------------------------------- #
+    # The SGD release ships no assembly report. Its sequence is NCBI assembly "R64",
+    # GCA_000146045.2 (SGD, 2011-04-18; RefSeq pair GCF_000146045.2), MEASURED on
+    # 2026-10-15: all 16 nuclear chromosomes of the deposited
+    # S288C_reference_sequence_R64-4-1_20230830.fsa are byte-identical to the 16
+    # sequences of GCA_000146045.2_R64_genomic.fna.gz; R64-2-1 through R64-4-1 revised
+    # the annotation, not the sequence (registry.SGD_S288C_R64_GENBANK_ACCESSION).
+    "sgd_S288C_R64-4-1_20230830": ("GCA_000146045.2", "GCF_000146045.2"),
+    # Read off the deposited GCA report, which names no RefSeq accession; NCBI lists no
+    # paired RefSeq assembly for it (dataset report, 2026-10-15).
+    "scerevisiae_CENPK113-7D_ASM257140v2": ("GCA_002571405.2",),
+}
+
+ASSEMBLY_ACCESSION_PATTERN = r"^GC[AF]_\d{9}\.\d+$"
+
+
+class GenomicSpan(ModelStrict):
+    """A 1-based, end-inclusive interval on one replicon of a deposited assembly set.
+
+    ``assembly`` is the deposited set the coordinates are on (an ``AssemblySet`` id,
+    never a release name): coordinates shift between assemblies, and the set is what
+    ``torchcell.sequence.genome.registry.resolve`` dereferences. A span a release read
+    on SGD R64-1-1 is on ``sgd_S288C_R64-4-1_20230830``, whose 16 nuclear chromosomes
+    are measured sequence-identical to GCA_000146045.2.
     """
 
     chromosome: str
     start: int
     end: int
-    assembly: str
+    assembly: AssemblySet
 
     @model_validator(mode="after")
     def _check_span(self) -> "GenomicSpan":
-        """Positions are 1-based and ordered; chromosome and assembly are named."""
+        """Positions are 1-based and ordered; the chromosome is named."""
         if self.start < 1 or self.end < self.start:
             raise ValueError(
                 f"GenomicSpan needs 1 <= start <= end, got {self.start}..{self.end}"
             )
-        if not self.chromosome.strip() or not self.assembly.strip():
-            raise ValueError("GenomicSpan needs a chromosome and an assembly name")
+        if not self.chromosome.strip():
+            raise ValueError("GenomicSpan needs a chromosome name")
         return self
 
 
@@ -1072,131 +1204,91 @@ class StrainBackground(ProvenanceGapMixin):
         return [c for c in self.integrations if c.locus == locus]
 
 
-class ReferenceGenome(ModelStrict):
-    """Reference genome identified by species and strain.
+class ReferenceGenome(HashableProvenanceGapMixin):
+    """The deposited reference a record's identifiers and background edits are written
+    against.
 
-    ``ploidy`` is the genome-wide baseline copy number of the unperturbed strain
-    (``"haploid"`` = 1 autosomal copy, ``"diploid"`` = 2). It lives here -- not on a
-    perturbation -- because it applies to the WHOLE genome (WT and every unperturbed
-    gene alike); a per-locus ``EngineeredCopyNumberPerturbation.copy_number`` records
-    the deviation from this baseline (e.g. a HIP heterozygous deletion drops one
-    autosomal gene from 2 -> 1 copies in a diploid). Defaults to ``"haploid"`` so all
-    existing haploid datasets stay valid.
+    ``species`` and ``strain`` name the host as the source writes it. ``ploidy`` is the
+    genome-wide baseline copy number of the unperturbed strain (``"haploid"`` = 1
+    autosomal copy, ``"diploid"`` = 2). It lives here, not on a perturbation, because it
+    applies to the WHOLE genome (WT and every unperturbed gene alike); a per-locus
+    ``EngineeredCopyNumberPerturbation.copy_number`` records the deviation from this
+    baseline. Defaults to ``"haploid"``.
 
-    A typed strain background is carried by the subclass ``StrainReferenceGenome``
-    (#507), not by a field here: this class is in the schema closure of every served
-    dataset, and any field added to it would mark every built store stale.
+    ``assembly_set`` is the deposited set in the genomes tier (sha256-pinned FASTA plus
+    GFF) that the record's gene identifiers and coordinates, and the background's
+    edits, are written against. It has ONE meaning, and that meaning is NOT "this
+    strain's own assembly": a BY4741 or FY4 record pins ``sgd_S288C_R64-4-1_20230830``
+    because its systematic names and its background alleles are edits against the S288C
+    release, exactly as a BW25113 record pins the BW25113 set because its locus tags
+    are that assembly's. The bacterial cross-check (``BacterialStrainBackground``
+    pins the strain's set) and the yeast one (a ``StrainBackground`` is an edit of
+    S288C, so the S288C set) are the same rule read on each family.
+
+    The pin is REQUIRED: a value, or a typed ``ProvenanceGap`` on ``assembly_set`` for
+    a record whose reference is not deposited in the tier (an isolate's own
+    annotation, a BL21 ``ECBD_`` tag space). Depositing the set is what closes such a
+    gap, so its reason is ``deferred_pending_source_review`` with ``note`` naming the
+    reference to deposit. A silent default to S288C would be a fallback; the field has
+    no default, so every loader states its reference. ``assembly_accession`` is the NCBI
+    accession of the pinned set (GenBank ``GCA_`` or RefSeq ``GCF_``, one of that set's
+    own in ``ASSEMBLY_SET_ACCESSIONS``): required whenever a set is pinned and ``None``
+    exactly when the set is gapped.
+
+    This is the reference of a record whose strain IS the deposited reference. A typed
+    strain background is carried by ``StrainReferenceGenome`` (#507), whose
+    ``background`` is required. Hashable through the mixin (the canonical JSON), as it
+    was before it carried a gap list.
     """
 
     species: str
     strain: str
     ploidy: Literal["haploid", "diploid"] = "haploid"
+    assembly_set: AssemblySet | None = Field(
+        description="the deposited assembly set the record's identifiers and background "
+        "edits are written against (never 'this strain's own assembly'); None only "
+        "with a ProvenanceGap on 'assembly_set'"
+    )
+    assembly_accession: str | None = Field(
+        description="NCBI accession of the pinned set, GenBank 'GCA_...' or RefSeq "
+        "'GCF_...', one of that set's own; None exactly when assembly_set is gapped"
+    )
 
-
-class StrainReferenceGenome(ReferenceGenome):
-    """A ``ReferenceGenome`` that states its typed ``StrainBackground`` (#507).
-
-    ``background`` holds the mating type and every allele the strain carries beyond
-    R64, each sourced or a typed gap. Its ``name`` equals ``strain`` and its ``ploidy``
-    equals ``ploidy``, so the free ``strain`` string and the typed object cannot
-    disagree. Used by ``StrainEnvironmentResponseExperimentReference``; the record
-    stores it once per reference (the LMDB interns the whole reference; the graph
-    writes it on the ``genome`` and ``experiment reference`` nodes).
-    """
-
-    background: StrainBackground
+    @field_validator("assembly_accession", mode="after")
+    @classmethod
+    def _validate_accession(cls, v: str | None) -> str | None:
+        """A stated accession has the NCBI assembly-accession shape."""
+        if v is not None and not re.match(ASSEMBLY_ACCESSION_PATTERN, v):
+            raise ValueError(
+                f"invalid assembly accession {v!r}; expected 'GCA_NNNNNNNNN.N' or "
+                "'GCF_NNNNNNNNN.N'"
+            )
+        return v
 
     @model_validator(mode="after")
-    def _check_background_agrees(self) -> "StrainReferenceGenome":
-        """The background names the same strain and ploidy as the reference."""
-        if self.background.name != self.strain:
+    def _check_assembly_pin(self) -> "ReferenceGenome":
+        """The set is pinned or typed-gapped; the accession is the pinned set's own."""
+        _require_value_or_gap(self, ("assembly_set",))
+        if self.assembly_set is None:
+            if self.assembly_accession is not None:
+                raise ValueError(
+                    f"assembly_accession {self.assembly_accession!r} is stated but "
+                    "assembly_set is gapped (an accession names a pinned set)"
+                )
+            return self
+        if self.assembly_accession is None:
             raise ValueError(
-                f"background name {self.background.name!r} != strain {self.strain!r}"
+                f"assembly set {self.assembly_set!r} is pinned but assembly_accession "
+                "is None (the accession is required whenever a set is pinned)"
             )
-        if self.background.ploidy != self.ploidy:
+        allowed = ASSEMBLY_SET_ACCESSIONS[self.assembly_set]
+        if self.assembly_accession not in allowed:
             raise ValueError(
-                f"background ploidy {self.background.ploidy!r} != ploidy "
-                f"{self.ploidy!r}"
+                f"{self.assembly_accession!r} is not an accession of "
+                f"{self.assembly_set!r} (expected one of {allowed})"
             )
         return self
 
-
-# --------------------------------------------------------------------------- #
-# Bacterial strain background + the assembly pin (plan 3b, 3e; decisions D6, D7).
-#
-# These are SIBLINGS of the yeast ``StrainBackground`` / ``BackgroundAllele`` and
-# ``ReferenceGenome``, never edits to them. Widening
-# ``StrainBackground.reference_strain`` past ``Literal["S288C"]`` or touching
-# ``BackgroundAllele`` moves 4 of 36 served dataset closures (the chemogenomic
-# loaders), and adding ``assembly_set`` to ``ReferenceGenome`` moves 36 of 36; the
-# new classes below move none. The duplication is the measured price of that, and
-# unifying the two families later is a rebuild whose purpose is the unification.
-# --------------------------------------------------------------------------- #
-BacterialReferenceStrain = Literal[
-    "MG1655",
-    "BW25113",
-    "KT2440",
-    "REL606",
-    # --- begin #910: E. coli K-12 W3110, read RefSeq-primary --------------------- #
-    "W3110",
-    # --- end #910 ---------------------------------------------------------------- #
-]
-"""The sequenced strain a bacterial background's alleles are edits against.
-
-One member per deposited assembly set, for the same reason ``BacterialGeneNamespace``
-has one: the two *E. coli* K-12 strains are not interchangeable, and a record that said
-only "K-12" would not say which genome its genotype is written against.
-"""
-
-#: Assembly-set id of each bacterial reference strain. Stated here rather than imported
-#: from ``torchcell.sequence.genome.registry`` because ``schema.py`` sits UNDER the
-#: sequence package in the import graph (``torchcell.sequence`` imports
-#: ``torchcell.datamodels``), so importing the registry here is a cycle. Equality with
-#: the registry's own constants is pinned by ``test_schema.py`` instead, which is what
-#: keeps the two from drifting.
-BACTERIAL_ASSEMBLY_SETS: dict[str, str] = {
-    "MG1655": "ecoli_K12_MG1655_ASM584v2",
-    "BW25113": "ecoli_K12_BW25113_ASM75055v1",
-    "KT2440": "pputida_KT2440_ASM756v2",
-    "REL606": "ecoli_B_REL606_ASM1798v1",
-    # --- begin #910: E. coli K-12 W3110, read RefSeq-primary --------------------- #
-    "W3110": "ecoli_K12_W3110_ASM1024v1",
-    # --- end #910 ---------------------------------------------------------------- #
-}
-
-BacterialAssemblySet = Literal[
-    "ecoli_K12_MG1655_ASM584v2",
-    "ecoli_K12_BW25113_ASM75055v1",
-    "pputida_KT2440_ASM756v2",
-    "ecoli_B_REL606_ASM1798v1",
-    # --- begin #910: E. coli K-12 W3110, read RefSeq-primary --------------------- #
-    "ecoli_K12_W3110_ASM1024v1",
-    # --- end #910 ---------------------------------------------------------------- #
-]
-"""A deposited bacterial assembly set id, as a closed vocabulary.
-
-An id outside this set is rejected at construction, which is the "validated against the
-registry's known ids" requirement in declarative form: a loader cannot invent a set id,
-and ``resolve(assembly_set, member)`` is then guaranteed to name a set the tier knows.
-"""
-
-#: The GenBank / RefSeq accession PAIR of each assembly set, read from the
-#: ``_assembly_report.txt`` member deposited in that set ("# GenBank assembly accession"
-#: and "# RefSeq assembly accession"). A record names one of its own set's two
-#: accessions, so a (set, accession) pair cannot disagree.
-ASSEMBLY_SET_ACCESSIONS: dict[str, tuple[str, str]] = {
-    "ecoli_K12_MG1655_ASM584v2": ("GCA_000005845.2", "GCF_000005845.2"),
-    "ecoli_K12_BW25113_ASM75055v1": ("GCA_000750555.1", "GCF_000750555.1"),
-    "pputida_KT2440_ASM756v2": ("GCA_000007565.2", "GCF_000007565.2"),
-    "ecoli_B_REL606_ASM1798v1": ("GCA_000017985.1", "GCF_000017985.1"),
-    # --- begin #910: E. coli K-12 W3110, read RefSeq-primary --------------------- #
-    # Read off the GCF report: the GCA report of this set still names the 2006 RefSeq
-    # release GCF_000010245.1 (AC_000091.1), whose files are not in the set.
-    "ecoli_K12_W3110_ASM1024v1": ("GCA_000010245.1", "GCF_000010245.2"),
-    # --- end #910 ---------------------------------------------------------------- #
-}
-
-ASSEMBLY_ACCESSION_PATTERN = r"^GC[AF]_\d{9}\.\d+$"
 
 #: BW25113's background genotype, VERBATIM from the ``/note`` qualifier of the ``source``
 #: feature of ``GCA_000750555.1_ASM75055v1_genomic.gbff.gz`` in the
@@ -1390,72 +1482,55 @@ class BacterialStrainBackground(ProvenanceGapMixin):
         return not self.provenance_gaps and all(a.is_sourced for a in self.alleles)
 
 
-class AssemblyReferenceGenome(ReferenceGenome):
-    """A ``ReferenceGenome`` that PINS the assembly its genotypes are written against.
+class StrainReferenceGenome(ReferenceGenome):
+    """A ``ReferenceGenome`` that states its typed strain background (#507).
 
-    ``assembly_set`` is the deposited set id the genomes tier dereferences and
-    ``assembly_accession`` one of that set's two NCBI accessions (GenBank ``GCA_`` or
-    RefSeq ``GCF_``), so a record states in the record which sha256-pinned bytes its
-    locus tags mean. That is what the yeast records leave implicit today, and what
-    sequence-level genotype fidelity requires of a substrate serving three hosts whose
-    tag spaces are disjoint.
+    ``background`` is REQUIRED and holds the content the strain carries beyond the
+    pinned assembly: the eukaryotic ``StrainBackground`` (mating type, ploidy, alleles,
+    integrations) or the ``BacterialStrainBackground`` (reference strain, alleles,
+    genotype statement), each sourced or typed-gapped. Its ``name`` equals ``strain`` so
+    the free string and the typed object cannot disagree; a ``StrainBackground`` also
+    agrees on ``ploidy`` and requires the S288C set (every ``StrainBackground`` is an
+    edit of S288C), and a ``BacterialStrainBackground`` pins the same ``assembly_set``
+    as the reference. One field admits both families until the shared background base
+    lands (P5); the union is the typed home the retired ``AssemblyReferenceGenome``'s
+    optional ``background`` had, with the requiredness this class has always had.
 
-    IMPORTANT, and measured: pydantic v2 serializes a field by its DECLARED type, so an
-    instance of this class placed in a slot annotated ``ReferenceGenome`` keeps the
-    subclass as an attribute but dumps only ``{species, strain, ploidy}``, and
-    re-validating that dump yields a plain ``ReferenceGenome``. The assembly pin
-    therefore survives ONLY where a field is re-annotated to this class, which is why
-    each bacterial ``ExperimentReference`` below narrows ``genome_reference`` to it --
-    the same narrowing ``StrainEnvironmentResponseExperimentReference`` does for
-    ``StrainReferenceGenome``. A new field here (rather than on ``ReferenceGenome``)
-    moves 0 of 36 served closures instead of 36 of 36.
-
-    ``background`` optionally carries the typed ``BacterialStrainBackground``; it is the
-    bacterial counterpart of ``StrainReferenceGenome.background`` and is ``None`` for a
-    record whose background is just the reference strain.
+    An ``ExperimentReference`` holds its reference as ``ReferenceGenome |
+    StrainReferenceGenome``, so the background survives serialization in every
+    experiment family without a narrowed clone of the pair: measured on pydantic
+    2.12.3, a subclass in a base-or-subclass union dumps its own fields and revalidates
+    to the subclass, because the base forbids extras. The record stores it once per
+    reference (the LMDB interns the whole reference; the graph writes it on the
+    ``genome`` and ``experiment reference`` nodes).
     """
 
-    assembly_set: BacterialAssemblySet
-    assembly_accession: str = Field(
-        description="NCBI accession of the pinned assembly, GenBank 'GCA_...' or RefSeq "
-        "'GCF_...'; must be one of this set's two"
-    )
-    background: BacterialStrainBackground | None = Field(
-        default=None,
-        description="the strain's content beyond the reference assembly; None when the "
-        "strain IS the reference",
-    )
-
-    @field_validator("assembly_accession", mode="after")
-    @classmethod
-    def _validate_accession(cls, v: str) -> str:
-        """The accession has the NCBI assembly-accession shape."""
-        if not re.match(ASSEMBLY_ACCESSION_PATTERN, v):
-            raise ValueError(
-                f"invalid assembly accession {v!r}; expected 'GCA_NNNNNNNNN.N' or "
-                "'GCF_NNNNNNNNN.N'"
-            )
-        return v
+    background: StrainBackground | BacterialStrainBackground
 
     @model_validator(mode="after")
-    def _check_assembly(self) -> "AssemblyReferenceGenome":
-        """The accession belongs to the pinned set, and the background names that set."""
-        allowed = ASSEMBLY_SET_ACCESSIONS[self.assembly_set]
-        if self.assembly_accession not in allowed:
+    def _check_background_agrees(self) -> "StrainReferenceGenome":
+        """The background names the same strain, ploidy and assembly as the reference."""
+        if self.background.name != self.strain:
             raise ValueError(
-                f"{self.assembly_accession!r} is not an accession of "
-                f"{self.assembly_set!r} (expected one of {allowed})"
+                f"background name {self.background.name!r} != strain {self.strain!r}"
             )
-        if self.background is not None:
-            if self.background.assembly_set != self.assembly_set:
+        if isinstance(self.background, StrainBackground):
+            if self.background.ploidy != self.ploidy:
                 raise ValueError(
-                    f"background pins assembly set {self.background.assembly_set!r} != "
-                    f"{self.assembly_set!r}"
+                    f"background ploidy {self.background.ploidy!r} != ploidy "
+                    f"{self.ploidy!r}"
                 )
-            if self.background.name != self.strain:
+            if self.assembly_set != SGD_S288C_ASSEMBLY_SET:
                 raise ValueError(
-                    f"background name {self.background.name!r} != strain {self.strain!r}"
+                    f"a StrainBackground is an edit of "
+                    f"{self.background.reference_strain!r}, so assembly_set must be "
+                    f"{SGD_S288C_ASSEMBLY_SET!r}, not {self.assembly_set!r}"
                 )
+        elif self.background.assembly_set != self.assembly_set:
+            raise ValueError(
+                f"background pins assembly set {self.background.assembly_set!r} != "
+                f"{self.assembly_set!r}"
+            )
         return self
 
 
@@ -3357,7 +3432,7 @@ class BacterialVariantCall(ProvenanceGapMixin):
     aligned a BW25113 derivative to MG1655, so its calls mix evolution-acquired
     mutations with strain-background differences, and the only way a consumer can see
     that is the replicon named here disagreeing with the record's
-    ``AssemblyReferenceGenome``.
+    ``ReferenceGenome.assembly_set``.
 
     ``position_start`` / ``position_end`` are 1-based and end-inclusive; they are equal
     for a point change and differ for a multi-base one (measured: 53 of de Siqueira's
@@ -7163,7 +7238,13 @@ class ExperimentReference(ModelStrict):
 
     experiment_reference_type: str = "base"
     dataset_name: str
-    genome_reference: ReferenceGenome
+    # ``ReferenceGenome | StrainReferenceGenome``, not the base alone: pydantic serializes
+    # by the DECLARED type, so a ``StrainReferenceGenome`` in a ``ReferenceGenome`` slot
+    # dumped without its background. The union keeps the subclass's fields on the way
+    # out and revalidates to the subclass on the way in (the base forbids extras), so no
+    # experiment family needs a narrowed clone of its pair to carry a background or the
+    # assembly pin. Families that REQUIRE a background still narrow the slot.
+    genome_reference: ReferenceGenome | StrainReferenceGenome
     environment_reference: Environment
     phenotype_reference: Phenotype
 
@@ -11222,20 +11303,20 @@ class PromoterActivityPhenotype(Phenotype, ModelStrict):
 
 
 # --------------------------------------------------------------------------- #
-# Bacterial experiment families (plan 3b, 3c).
+# Experiment families first landed for bacteria (plan 3b, 3c), host-neutral since the
+# ontology unification (P2).
 #
-# Every pair below exists for ONE reason: pydantic v2 serializes a field by its
-# DECLARED type, so an ``AssemblyReferenceGenome`` in a slot annotated
-# ``ReferenceGenome`` dumps without its assembly pin. Each reference therefore
-# re-annotates ``genome_reference`` to the subclass. The existing yeast pairs CANNOT
-# be narrowed instead: their ``genome_reference`` admits a plain ``ReferenceGenome``
-# today and every served yeast record stores one, so narrowing the shared class would
-# invalidate all 51 of them.
+# Until P2 every reference below narrowed ``genome_reference`` to an
+# ``AssemblyReferenceGenome`` subclass, because pydantic v2 serializes a field by its
+# DECLARED type and the assembly pin lived on that subclass; the same defect forced a
+# cloned ``Bacterial*`` pair beside every general family whose phenotype bacteria
+# reused. The pin now lives on ``ReferenceGenome`` itself and the base slot is
+# ``ReferenceGenome | StrainReferenceGenome``, so a family is one pair for every host,
+# and a fitness measurement on BW25113 is a ``FitnessExperiment`` like one on BY4741.
 #
-# The three new phenotypes come first, then the families whose phenotype is REUSED
-# unchanged and which exist only to carry the pin. ``environment`` stays the shared
-# ``Environment`` everywhere except the product-titer pair, so the cross-dataset
-# medium-level aggregate still forms across hosts. The product-titer pair declares
+# ``environment`` stays the shared ``Environment`` everywhere except the product-titer
+# pair, so the cross-dataset medium-level aggregate still forms across hosts. The
+# product-titer pair declares
 # ``CultureEnvironment`` (the same narrowing the chemogenomic family makes) because a
 # titer cannot be read without its vessel: the fermentation format is part of what was
 # measured, and a ``CultureEnvironment`` in an ``Environment``-typed slot dumps without
@@ -11247,7 +11328,6 @@ class ProductTiterExperimentReference(ExperimentReference, ModelStrict):
     """Reference (parent-strain) context for a product-titer experiment."""
 
     experiment_reference_type: str = "product_titer"
-    genome_reference: AssemblyReferenceGenome
     # Narrowed: the control culture states its vessel, as the experiment does.
     environment_reference: CultureEnvironment
     phenotype_reference: ProductTiterPhenotype
@@ -11266,7 +11346,6 @@ class ProteinTurnoverExperimentReference(ExperimentReference, ModelStrict):
     """Reference (control) context for a protein-turnover experiment."""
 
     experiment_reference_type: str = "protein_turnover"
-    genome_reference: AssemblyReferenceGenome
     phenotype_reference: ProteinTurnoverPhenotype
 
 
@@ -11278,42 +11357,11 @@ class ProteinTurnoverExperiment(Experiment, ModelStrict):
     phenotype: ProteinTurnoverPhenotype
 
 
-# --- begin muenzner2024: the yeast protein-turnover pair ------------------------ #
-class YeastProteinTurnoverExperimentReference(ExperimentReference, ModelStrict):
-    """Reference context for a protein-turnover experiment on S. cerevisiae.
-
-    The turnover family above was introduced for bacteria (#753, Gupta 2024), so its
-    reference narrows ``genome_reference`` to the bacterial ``AssemblyReferenceGenome``,
-    whose ``assembly_set`` is a closed bacterial vocabulary; a yeast record cannot
-    construct it. This pair is the yeast counterpart with the same phenotype class and the
-    plain ``ReferenceGenome`` every yeast family uses (S288C R64, as the Caudal 2024
-    natural isolates are written against). It is a new pair rather than a widened field
-    so the served bacterial pair keeps its contract (``test_schema`` pins it as assembly
-    pinned) and no built store's closure moves. First user: Muenzner 2024 dynamic SILAC
-    on 55 natural isolates.
-    """
-
-    experiment_reference_type: str = "yeast_protein_turnover"
-    phenotype_reference: ProteinTurnoverPhenotype
-
-
-class YeastProteinTurnoverExperiment(Experiment, ModelStrict):
-    """Experiment measuring per-protein turnover rates in S. cerevisiae."""
-
-    experiment_type: str = "yeast_protein_turnover"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
-    phenotype: ProteinTurnoverPhenotype
-
-
-# --- end muenzner2024 ------------------------------------------------------------- #
-
-
 # --- begin #857: the protein synthesis-rate family ---------------------------- #
 class ProteinSynthesisRateExperimentReference(ExperimentReference, ModelStrict):
     """Reference context for a protein synthesis-rate experiment."""
 
     experiment_reference_type: str = "protein_synthesis_rate"
-    genome_reference: AssemblyReferenceGenome
     phenotype_reference: ProteinSynthesisRatePhenotype
 
 
@@ -11332,7 +11380,6 @@ class FluxExperimentReference(ExperimentReference, ModelStrict):
     """Reference (parent-strain) context for a flux experiment."""
 
     experiment_reference_type: str = "flux"
-    genome_reference: AssemblyReferenceGenome
     phenotype_reference: FluxPhenotype
 
 
@@ -11349,14 +11396,10 @@ class PromoterActivityExperimentReference(ExperimentReference, ModelStrict):
 
     The reference of a reporter reading is the SAME reporter strain in the control arm
     of the same screen -- the untreated culture, read at the same time -- so the
-    reference is a real measurement, not a derived baseline. The assembly is pinned for
-    the same reason every bacterial family pins it: pydantic serializes by the DECLARED
-    type, so an ``AssemblyReferenceGenome`` in a ``ReferenceGenome`` slot would dump
-    without its assembly.
+    reference is a real measurement, not a derived baseline.
     """
 
     experiment_reference_type: str = "promoter_activity"
-    genome_reference: AssemblyReferenceGenome
     phenotype_reference: PromoterActivityPhenotype
 
 
@@ -11559,12 +11602,7 @@ class PooledSortSeqExpressionPhenotype(Phenotype, ModelStrict):
 
 
 class PooledSortSeqExpressionExperimentReference(ExperimentReference, ModelStrict):
-    """Reference context for a pooled sort-seq expression experiment.
-
-    A yeast pair, so ``genome_reference`` stays the plain ``ReferenceGenome`` every yeast
-    family uses; the bacterial pairs narrow it to ``AssemblyReferenceGenome`` because
-    their genotypes are locus tags of a pinned assembly.
-    """
+    """Reference context for a pooled sort-seq expression experiment."""
 
     experiment_reference_type: str = "pooled_sort_seq_expression"
     phenotype_reference: PooledSortSeqExpressionPhenotype
@@ -11752,89 +11790,20 @@ class BiosensorFluorescenceExperiment(Experiment, ModelStrict):
 # --------------------------------------------------------------------------- #
 
 
-class BacterialFitnessExperimentReference(ExperimentReference, ModelStrict):
-    """Assembly-pinned reference for a bacterial fitness experiment.
-
-    Same ``FitnessPhenotype`` as the yeast family; the reference pins the assembly the
-    genotype's locus tags are written against.
-    """
-
-    experiment_reference_type: str = "bacterial_fitness"
-    genome_reference: AssemblyReferenceGenome
-    phenotype_reference: FitnessPhenotype
-
-
-class BacterialFitnessExperiment(Experiment, ModelStrict):
-    """Bacterial fitness experiment (transposon, RB-TnSeq, CRISPRi, Keio growth)."""
-
-    experiment_type: str = "bacterial_fitness"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
-    phenotype: FitnessPhenotype
-
-
-class BacterialEnvironmentResponseExperimentReference(ExperimentReference, ModelStrict):
-    """Assembly-pinned reference for a bacterial environment-response experiment."""
-
-    experiment_reference_type: str = "bacterial_environment_response"
-    genome_reference: AssemblyReferenceGenome
-    phenotype_reference: EnvironmentResponsePhenotype
-
-
-class BacterialEnvironmentResponseExperiment(Experiment, ModelStrict):
-    """A bacterial strain's response to an environmental perturbation."""
-
-    experiment_type: str = "bacterial_environment_response"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
-    phenotype: EnvironmentResponsePhenotype
-
-
-class BacterialGeneInteractionExperimentReference(ExperimentReference, ModelStrict):
-    """Assembly-pinned reference for a bacterial gene-interaction experiment."""
-
-    experiment_reference_type: str = "bacterial_gene_interaction"
-    genome_reference: AssemblyReferenceGenome
-    phenotype_reference: GeneInteractionPhenotype
-
-
-class BacterialGeneInteractionExperiment(Experiment, ModelStrict):
-    """Bacterial gene-interaction experiment (double-mutant screens)."""
-
-    experiment_type: str = "bacterial_gene_interaction"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
-    phenotype: GeneInteractionPhenotype
-
-
-class BacterialGeneEssentialityExperimentReference(ExperimentReference, ModelStrict):
-    """Assembly-pinned reference for a bacterial gene-essentiality experiment."""
-
-    experiment_reference_type: str = "bacterial_gene_essentiality"
-    genome_reference: AssemblyReferenceGenome
-    phenotype_reference: GeneEssentialityPhenotype
-
-
-class BacterialGeneEssentialityExperiment(Experiment, ModelStrict):
-    """Bacterial gene-essentiality calls (e.g. a TraDIS essentiality classification)."""
-
-    experiment_type: str = "bacterial_gene_essentiality"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
-    phenotype: GeneEssentialityPhenotype
-
-
 # --- begin #909: the graded essentiality sibling ------------------------------ #
-class BacterialGradedGeneEssentialityExperimentReference(
-    ExperimentReference, ModelStrict
-):
-    """Assembly-pinned reference for a bacterial graded gene-essentiality experiment."""
+class GradedGeneEssentialityExperimentReference(ExperimentReference, ModelStrict):
+    """Reference context for a graded gene-essentiality experiment."""
 
-    experiment_reference_type: str = "bacterial_graded_gene_essentiality"
-    genome_reference: AssemblyReferenceGenome
+    experiment_reference_type: str = "graded_gene_essentiality"
     phenotype_reference: GradedGeneEssentialityPhenotype
 
 
-class BacterialGradedGeneEssentialityExperiment(Experiment, ModelStrict):
-    """Bacterial categorical essentiality calls (an HMM state, an unclear TraDIS call)."""
+class GradedGeneEssentialityExperiment(Experiment, ModelStrict):
+    """Categorical essentiality calls (an HMM state, an unclear TraDIS call); first
+    landed for bacteria (Goodall 2018, Royet 2025), host-neutral by construction.
+    """
 
-    experiment_type: str = "bacterial_graded_gene_essentiality"
+    experiment_type: str = "graded_gene_essentiality"
     genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: GradedGeneEssentialityPhenotype
 
@@ -11842,110 +11811,29 @@ class BacterialGradedGeneEssentialityExperiment(Experiment, ModelStrict):
 # --- end #909 ---------------------------------------------------------------- #
 
 
-class BacterialProteinAbundanceExperimentReference(ExperimentReference, ModelStrict):
-    """Assembly-pinned reference for a bacterial protein-abundance experiment."""
-
-    experiment_reference_type: str = "bacterial_protein_abundance"
-    genome_reference: AssemblyReferenceGenome
-    phenotype_reference: ProteinAbundancePhenotype
-
-
-class BacterialProteinAbundanceExperiment(Experiment, ModelStrict):
-    """Bacterial proteome abundance experiment."""
-
-    experiment_type: str = "bacterial_protein_abundance"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
-    phenotype: ProteinAbundancePhenotype
-
-
 # --- begin #770: the protein fold-change family -------------------------------- #
-class BacterialProteinFoldChangeExperimentReference(ExperimentReference, ModelStrict):
-    """Assembly-pinned reference for a bacterial protein fold-change experiment."""
-
-    experiment_reference_type: str = "bacterial_protein_fold_change"
-    genome_reference: AssemblyReferenceGenome
-    phenotype_reference: ProteinFoldChangePhenotype
-
-
-class BacterialProteinFoldChangeExperiment(Experiment, ModelStrict):
-    """Bacterial differential-proteomics experiment (a fold change against a control)."""
-
-    experiment_type: str = "bacterial_protein_fold_change"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
-    phenotype: ProteinFoldChangePhenotype
-
-
 # --- end #770 ------------------------------------------------------------------- #
 
 
 # --- begin #921: the phosphosite intensity family ------------------------------ #
-class BacterialPhosphositeIntensityExperimentReference(
-    ExperimentReference, ModelStrict
-):
-    """Assembly-pinned reference for a bacterial phosphosite-intensity experiment."""
+class PhosphositeIntensityExperimentReference(ExperimentReference, ModelStrict):
+    """Reference context for a phosphosite-intensity experiment."""
 
-    experiment_reference_type: str = "bacterial_phosphosite_intensity"
-    genome_reference: AssemblyReferenceGenome
+    experiment_reference_type: str = "phosphosite_intensity"
     phenotype_reference: PhosphositeIntensityPhenotype
 
 
-class BacterialPhosphositeIntensityExperiment(Experiment, ModelStrict):
-    """Bacterial phosphoproteome experiment: per-site intensities in one sample."""
+class PhosphositeIntensityExperiment(Experiment, ModelStrict):
+    """Phosphoproteome experiment: per-site intensities in one sample (Potel 2018 first;
+    Leutert 2023 on yeast releases the same per-sample shape).
+    """
 
-    experiment_type: str = "bacterial_phosphosite_intensity"
+    experiment_type: str = "phosphosite_intensity"
     genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: PhosphositeIntensityPhenotype
 
 
 # --- end #921 ------------------------------------------------------------------- #
-
-
-class BacterialMetaboliteExperimentReference(ExperimentReference, ModelStrict):
-    """Assembly-pinned reference for a bacterial metabolite experiment."""
-
-    experiment_reference_type: str = "bacterial_metabolite"
-    genome_reference: AssemblyReferenceGenome
-    phenotype_reference: MetabolitePhenotype
-
-
-class BacterialMetaboliteExperiment(Experiment, ModelStrict):
-    """Bacterial metabolome experiment."""
-
-    experiment_type: str = "bacterial_metabolite"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
-    phenotype: MetabolitePhenotype
-
-
-class BacterialRNASeqExpressionExperimentReference(ExperimentReference, ModelStrict):
-    """Assembly-pinned reference for a bacterial RNA-seq expression experiment."""
-
-    experiment_reference_type: str = "bacterial_rnaseq_expression"
-    genome_reference: AssemblyReferenceGenome
-    phenotype_reference: RNASeqExpressionPhenotype
-
-
-class BacterialRNASeqExpressionExperiment(Experiment, ModelStrict):
-    """Bacterial transcriptome experiment (absolute TPM on the pinned assembly)."""
-
-    experiment_type: str = "bacterial_rnaseq_expression"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
-    phenotype: RNASeqExpressionPhenotype
-
-
-class BacterialVisualScoreExperimentReference(ExperimentReference, ModelStrict):
-    """Assembly-pinned reference for a bacterial visual-score experiment."""
-
-    experiment_reference_type: str = "bacterial_visual_score"
-    genome_reference: AssemblyReferenceGenome
-    phenotype_reference: VisualScorePhenotype
-
-
-class BacterialVisualScoreExperiment(Experiment, ModelStrict):
-    """Bacterial visual-score experiment (a scored plate as a product proxy)."""
-
-    experiment_type: str = "bacterial_visual_score"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
-    phenotype: VisualScorePhenotype
 
 
 # --------------------------------------------------------------------------- #
@@ -12066,18 +11954,19 @@ class BacterialMorphologyPhenotype(Phenotype, ModelStrict):
                 raise ValueError(f"{field} measurement {key} cannot be NaN")
 
 
-class BacterialMorphologyExperimentReference(ExperimentReference, ModelStrict):
-    """Assembly-pinned reference for a bacterial cell-morphology experiment."""
+class MorphologyExperimentReference(ExperimentReference, ModelStrict):
+    """Reference context for a cell-morphology experiment read through an assay
+    vocabulary (``BacterialMorphologyPhenotype``; the phenotype's own rename is P5).
+    """
 
-    experiment_reference_type: str = "bacterial_morphology"
-    genome_reference: AssemblyReferenceGenome
+    experiment_reference_type: str = "morphology"
     phenotype_reference: BacterialMorphologyPhenotype
 
 
-class BacterialMorphologyExperiment(Experiment, ModelStrict):
-    """A bacterial strain's cell-morphology profile from one microscopy screen."""
+class MorphologyExperiment(Experiment, ModelStrict):
+    """A strain's cell-morphology profile from one microscopy screen."""
 
-    experiment_type: str = "bacterial_morphology"
+    experiment_type: str = "morphology"
     genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: BacterialMorphologyPhenotype
 
@@ -12205,7 +12094,6 @@ class MrnaNumberFractionExperimentReference(ExperimentReference, ModelStrict):
     """Assembly-pinned reference for an mRNA number-fraction experiment."""
 
     experiment_reference_type: str = "mrna_number_fraction"
-    genome_reference: AssemblyReferenceGenome
     phenotype_reference: MrnaNumberFractionPhenotype
 
 
@@ -12332,18 +12220,17 @@ class FitnessContrastPhenotype(Phenotype, ModelStrict):
         return self
 
 
-class BacterialFitnessContrastExperimentReference(ExperimentReference, ModelStrict):
-    """The reference arm of a fitness contrast, assembly-pinned."""
+class FitnessContrastExperimentReference(ExperimentReference, ModelStrict):
+    """The reference arm of a fitness contrast."""
 
-    experiment_reference_type: str = "bacterial_fitness_contrast"
-    genome_reference: AssemblyReferenceGenome
+    experiment_reference_type: str = "fitness_contrast"
     phenotype_reference: FitnessContrastPhenotype
 
 
-class BacterialFitnessContrastExperiment(Experiment, ModelStrict):
+class FitnessContrastExperiment(Experiment, ModelStrict):
     """One gene's fitness tested between a condition arm and a reference arm."""
 
-    experiment_type: str = "bacterial_fitness_contrast"
+    experiment_type: str = "fitness_contrast"
     genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: FitnessContrastPhenotype
 
@@ -12885,28 +12772,16 @@ ExperimentType = (
     | SegregantPerturbationExperiment  # Hale 2024
     | ProductTiterExperiment
     | ProteinTurnoverExperiment
-    | YeastProteinTurnoverExperiment  # muenzner2024
     | ProteinSynthesisRateExperiment  # issue #857
     | FluxExperiment
     | PromoterActivityExperiment
     | PooledSortSeqExpressionExperiment  # Vaishnav 2022 (#991)
     | BiosensorFluorescenceExperiment  # Zhang 2020 (#990)
-    | BacterialFitnessExperiment
-    | BacterialEnvironmentResponseExperiment
-    | BacterialGeneInteractionExperiment
-    | BacterialGeneEssentialityExperiment
-    | BacterialGradedGeneEssentialityExperiment  # #909
-    | BacterialProteinAbundanceExperiment
-    # --- begin #770: the protein fold-change family ---
-    | BacterialProteinFoldChangeExperiment
-    # --- end #770 ---
-    | BacterialPhosphositeIntensityExperiment  # issue #921
-    | BacterialMetaboliteExperiment
-    | BacterialRNASeqExpressionExperiment
-    | BacterialVisualScoreExperiment
-    | BacterialMorphologyExperiment  # issue #774
+    | GradedGeneEssentialityExperiment  # #909
+    | PhosphositeIntensityExperiment  # issue #921
+    | MorphologyExperiment  # issue #774
     | MrnaNumberFractionExperiment  # issue #854
-    | BacterialFitnessContrastExperiment  # issue #913
+    | FitnessContrastExperiment  # issue #913
     | SegregantExpressionExperiment  # boocock2025
     | LifeCycleExperiment  # De Chiara 2022
     | PseudobulkUmiCountExperiment  # jackson2020
@@ -12940,28 +12815,16 @@ ExperimentReferenceType = (
     | SegregantPerturbationExperimentReference  # Hale 2024
     | ProductTiterExperimentReference
     | ProteinTurnoverExperimentReference
-    | YeastProteinTurnoverExperimentReference  # muenzner2024
     | ProteinSynthesisRateExperimentReference  # issue #857
     | FluxExperimentReference
     | PromoterActivityExperimentReference
     | PooledSortSeqExpressionExperimentReference  # Vaishnav 2022 (#991)
     | BiosensorFluorescenceExperimentReference  # Zhang 2020 (#990)
-    | BacterialFitnessExperimentReference
-    | BacterialEnvironmentResponseExperimentReference
-    | BacterialGeneInteractionExperimentReference
-    | BacterialGeneEssentialityExperimentReference
-    | BacterialGradedGeneEssentialityExperimentReference  # #909
-    | BacterialProteinAbundanceExperimentReference
-    # --- begin #770: the protein fold-change family ---
-    | BacterialProteinFoldChangeExperimentReference
-    # --- end #770 ---
-    | BacterialPhosphositeIntensityExperimentReference  # issue #921
-    | BacterialMetaboliteExperimentReference
-    | BacterialRNASeqExpressionExperimentReference
-    | BacterialVisualScoreExperimentReference
-    | BacterialMorphologyExperimentReference  # issue #774
+    | GradedGeneEssentialityExperimentReference  # #909
+    | PhosphositeIntensityExperimentReference  # issue #921
+    | MorphologyExperimentReference  # issue #774
     | MrnaNumberFractionExperimentReference  # issue #854
-    | BacterialFitnessContrastExperimentReference  # issue #913
+    | FitnessContrastExperimentReference  # issue #913
     | SegregantExpressionExperimentReference  # boocock2025
     | LifeCycleExperimentReference  # De Chiara 2022
     | PseudobulkUmiCountExperimentReference  # jackson2020
@@ -12995,30 +12858,20 @@ EXPERIMENT_TYPE_MAP = {
     "segregant_perturbation": SegregantPerturbationExperiment,  # Hale 2024
     "product_titer": ProductTiterExperiment,
     "protein_turnover": ProteinTurnoverExperiment,
-    "yeast_protein_turnover": YeastProteinTurnoverExperiment,  # muenzner2024
     "protein_synthesis_rate": ProteinSynthesisRateExperiment,  # issue #857
     "flux": FluxExperiment,
     "promoter_activity": PromoterActivityExperiment,
     "pooled_sort_seq_expression": PooledSortSeqExpressionExperiment,  # #991
     "biosensor_fluorescence": BiosensorFluorescenceExperiment,  # #990
-    "bacterial_fitness": BacterialFitnessExperiment,
-    "bacterial_environment_response": BacterialEnvironmentResponseExperiment,
-    "bacterial_gene_interaction": BacterialGeneInteractionExperiment,
-    "bacterial_gene_essentiality": BacterialGeneEssentialityExperiment,
-    "bacterial_graded_gene_essentiality": BacterialGradedGeneEssentialityExperiment,
-    "bacterial_protein_abundance": BacterialProteinAbundanceExperiment,
+    "graded_gene_essentiality": GradedGeneEssentialityExperiment,
     # --- begin #770: the protein fold-change family ---
-    "bacterial_protein_fold_change": BacterialProteinFoldChangeExperiment,
     # --- end #770 ---
-    "bacterial_phosphosite_intensity": (  # issue #921
-        BacterialPhosphositeIntensityExperiment
+    "phosphosite_intensity": (  # issue #921
+        PhosphositeIntensityExperiment
     ),
-    "bacterial_metabolite": BacterialMetaboliteExperiment,
-    "bacterial_rnaseq_expression": BacterialRNASeqExpressionExperiment,
-    "bacterial_visual_score": BacterialVisualScoreExperiment,
-    "bacterial_morphology": BacterialMorphologyExperiment,  # issue #774
+    "morphology": MorphologyExperiment,  # issue #774
     "mrna_number_fraction": MrnaNumberFractionExperiment,  # issue #854
-    "bacterial_fitness_contrast": BacterialFitnessContrastExperiment,  # issue #913
+    "fitness_contrast": FitnessContrastExperiment,  # issue #913
     "segregant_expression": SegregantExpressionExperiment,  # boocock2025
     "life_cycle": LifeCycleExperiment,  # De Chiara 2022
     "pseudobulk_umi_count": PseudobulkUmiCountExperiment,  # jackson2020
@@ -13057,7 +12910,6 @@ EXPERIMENT_REFERENCE_TYPE_MAP = {
     "segregant_perturbation": SegregantPerturbationExperimentReference,  # Hale 2024
     "product_titer": ProductTiterExperimentReference,
     "protein_turnover": ProteinTurnoverExperimentReference,
-    "yeast_protein_turnover": YeastProteinTurnoverExperimentReference,  # muenzner2024
     "protein_synthesis_rate": ProteinSynthesisRateExperimentReference,  # issue #857
     "flux": FluxExperimentReference,
     "promoter_activity": PromoterActivityExperimentReference,
@@ -13065,33 +12917,45 @@ EXPERIMENT_REFERENCE_TYPE_MAP = {
         PooledSortSeqExpressionExperimentReference
     ),
     "biosensor_fluorescence": BiosensorFluorescenceExperimentReference,  # #990
-    "bacterial_fitness": BacterialFitnessExperimentReference,
-    "bacterial_environment_response": BacterialEnvironmentResponseExperimentReference,
-    "bacterial_gene_interaction": BacterialGeneInteractionExperimentReference,
-    "bacterial_gene_essentiality": BacterialGeneEssentialityExperimentReference,
-    "bacterial_graded_gene_essentiality": (
-        BacterialGradedGeneEssentialityExperimentReference
-    ),
-    "bacterial_protein_abundance": BacterialProteinAbundanceExperimentReference,
+    "graded_gene_essentiality": (GradedGeneEssentialityExperimentReference),
     # --- begin #770: the protein fold-change family ---
-    "bacterial_protein_fold_change": (BacterialProteinFoldChangeExperimentReference),
     # --- end #770 ---
-    "bacterial_phosphosite_intensity": (  # issue #921
-        BacterialPhosphositeIntensityExperimentReference
+    "phosphosite_intensity": (  # issue #921
+        PhosphositeIntensityExperimentReference
     ),
-    "bacterial_metabolite": BacterialMetaboliteExperimentReference,
-    "bacterial_rnaseq_expression": BacterialRNASeqExpressionExperimentReference,
-    "bacterial_visual_score": BacterialVisualScoreExperimentReference,
-    "bacterial_morphology": BacterialMorphologyExperimentReference,  # issue #774
+    "morphology": MorphologyExperimentReference,  # issue #774
     "mrna_number_fraction": MrnaNumberFractionExperimentReference,  # issue #854
-    "bacterial_fitness_contrast": (  # issue #913
-        BacterialFitnessContrastExperimentReference
+    "fitness_contrast": (  # issue #913
+        FitnessContrastExperimentReference
     ),
     "segregant_expression": SegregantExpressionExperimentReference,  # boocock2025
     "life_cycle": LifeCycleExperimentReference,  # De Chiara 2022
     "pseudobulk_umi_count": PseudobulkUmiCountExperimentReference,  # jackson2020
     # ADDITIVE (Puddu 2019 genome architecture)
     "genome_architecture": GenomeArchitectureExperimentReference,
+}
+
+
+#: The 14 experiment-type tags retired by the ontology unification (P2), each with the
+#: tag its records now carry. A dev LMDB written under one of these keys is UNREADABLE by
+#: ``torchcell.data.aggregate`` and ``torchcell.data.deduplicate`` until it is rebuilt:
+#: the maps above no longer hold the key, and the readers name the retired tag and this
+#: table instead of guessing a successor.
+RETIRED_EXPERIMENT_TYPES: dict[str, str] = {
+    "bacterial_fitness": "fitness",
+    "bacterial_environment_response": "environment_response",
+    "bacterial_gene_interaction": "gene interaction",
+    "bacterial_gene_essentiality": "gene essentiality",
+    "bacterial_graded_gene_essentiality": "graded_gene_essentiality",
+    "bacterial_protein_abundance": "protein_abundance",
+    "bacterial_protein_fold_change": "protein_fold_change",
+    "bacterial_phosphosite_intensity": "phosphosite_intensity",
+    "bacterial_metabolite": "metabolite",
+    "bacterial_rnaseq_expression": "rnaseq_expression",
+    "bacterial_visual_score": "visual_score",
+    "bacterial_morphology": "morphology",
+    "bacterial_fitness_contrast": "fitness_contrast",
+    "yeast_protein_turnover": "protein_turnover",
 }
 
 

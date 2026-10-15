@@ -36,7 +36,9 @@ from torchcell.datamodels.schema import (
     SampleUnit,
     SmallMoleculePerturbation,
     SourceType,
+    StrainBackground,
     StrainEnvironmentResponseExperiment,
+    StrainReferenceGenome,
     UncertaintyType,
 )
 from torchcell.datamodels.strain_background import BAID_STRAIN
@@ -194,6 +196,8 @@ def test_the_reference_is_bAID_and_the_wild_type_spread(
 ) -> None:
     reference = synthetic.reference
     genome = reference.genome_reference
+    assert isinstance(genome, StrainReferenceGenome)
+    assert isinstance(genome.background, StrainBackground)
     assert genome.strain == BAID_STRAIN and genome.ploidy == "haploid"
     assert [c.name for c in genome.background.integrations] == [
         "Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]"

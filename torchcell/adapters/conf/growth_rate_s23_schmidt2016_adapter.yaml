@@ -1,5 +1,5 @@
 # Schmidt 2016 Table S23 growth rates: 15 records, one per kept (growth condition,
-# BW25113) row, BacterialEnvironmentResponseExperiment carrying the ABSOLUTE rate in
+# BW25113) row, EnvironmentResponseExperiment carrying the ABSOLUTE rate in
 # h^-1 with the released Stdev (#826). Every released row is wild type (0 perturbations
 # in 15 of 15 records), so neither `bacterial perturbation` nor `perturbation to
 # genotype` is enabled. 14 of the 15 records carry an EnvironmentPhysicalPerturbation or

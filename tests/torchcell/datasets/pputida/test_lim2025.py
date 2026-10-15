@@ -1705,7 +1705,7 @@ def test_every_tolerance_record_is_a_log2_ratio_against_a_zero_reference(
         assert item["experiment"]["phenotype"]["assay_type"] == "liquid_od_growth"
         reference = item["reference"]
         assert reference["phenotype_reference"]["environment_response"] == 0.0
-        assert reference["genome_reference"]["background"] is None
+        assert "background" not in reference["genome_reference"]
         assert reference["genome_reference"]["assembly_set"] == l25.KT2440_ASSEMBLY_SET
 
 
@@ -2127,20 +2127,16 @@ def test_both_loaders_declare_their_schema_classes_and_consumed_files(
 ) -> None:
     """The interface every registered dataset states."""
     from torchcell.datamodels.schema import (
-        BacterialEnvironmentResponseExperiment,
-        BacterialEnvironmentResponseExperimentReference,
-        BacterialProteinAbundanceExperiment,
-        BacterialProteinAbundanceExperimentReference,
+        EnvironmentResponseExperiment,
+        EnvironmentResponseExperimentReference,
+        ProteinAbundanceExperiment,
+        ProteinAbundanceExperimentReference,
     )
 
-    assert built_tolerance.experiment_class is BacterialEnvironmentResponseExperiment
-    assert built_tolerance.reference_class is (
-        BacterialEnvironmentResponseExperimentReference
-    )
-    assert built_proteome.experiment_class is BacterialProteinAbundanceExperiment
-    assert built_proteome.reference_class is (
-        BacterialProteinAbundanceExperimentReference
-    )
+    assert built_tolerance.experiment_class is EnvironmentResponseExperiment
+    assert built_tolerance.reference_class is (EnvironmentResponseExperimentReference)
+    assert built_proteome.experiment_class is ProteinAbundanceExperiment
+    assert built_proteome.reference_class is (ProteinAbundanceExperimentReference)
     assert built_tolerance.raw_file_names == [l25.SI1_DOCX, l25.SI2_XLSX]
     assert built_proteome.raw_file_names == [l25.SI1_DOCX, l25.SI2_XLSX]
     for dataset in (built_tolerance, built_proteome):

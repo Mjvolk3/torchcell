@@ -58,6 +58,10 @@ from torchcell.datamodels.schema import (
     VisualScorePhenotype,
 )
 from torchcell.datasets.scerevisiae import ozaydin2013 as m
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 _SCREEN_ROWS: list[tuple[str | None, str | None, Any, str | None]] = [
     ("YAL001C", "BY4741", 3, "slow grower"),
@@ -147,7 +151,10 @@ def _reference(strain: str) -> dict[str, Any]:
     return VisualScoreExperimentReference(
         dataset_name="CarotenoidOzaydin2013Dataset",
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain=strain
+            species="Saccharomyces cerevisiae",
+            strain=strain,
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=_ENVIRONMENT,
         phenotype_reference=VisualScorePhenotype(

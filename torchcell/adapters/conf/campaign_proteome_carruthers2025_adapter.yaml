@@ -1,5 +1,5 @@
 # Carruthers 2025 campaign proteome: 465 strain-cycles,
-# BacterialProteinAbundanceExperiment. Per record the five pIY670
+# ProteinAbundanceExperiment. Per record the five pIY670
 # HeterologousPathwayPerturbation leaves plus one to five
 # BacterialCrisprInterferencePerturbation leaves, all served as `bacterial perturbation`.
 # Every CRISPRi leaf carries a CrisprConstruct, so the crispr-construct pair is enabled.

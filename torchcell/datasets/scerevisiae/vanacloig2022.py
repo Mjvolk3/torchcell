@@ -178,6 +178,10 @@ from torchcell.literature.manifest import (
     RetrievalMethod,
     RetrievalRecord,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import (
     ProvenanceGap,
@@ -1553,6 +1557,8 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
             strain=LIBRARY_STRAIN,
             ploidy="haploid",
             background=library_background(),
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
 
     def _reference(self, compound: str) -> StrainEnvironmentResponseExperimentReference:

@@ -82,9 +82,18 @@ from torchcell.datasets.artifact import DatasetArtifact
 from torchcell.datasets.client import DatasetClient
 from torchcell.provenance.build_manifest import MANIFEST_FILENAME
 from torchcell.sequence import GeneSet
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 ENVIRONMENT = Environment(media=SGA_DM_SELECTION, temperature=Temperature(value=26))
-GENOME = ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
+GENOME = ReferenceGenome(
+    species="Saccharomyces cerevisiae",
+    strain="S288C",
+    assembly_set=SGD_S288C_R64,
+    assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
+)
 PUBLICATION = Publication(pubmed_id="1", pubmed_url="u", doi="d", doi_url="du")
 
 
@@ -445,7 +454,10 @@ def test_serialize_for_hashing_sorts_a_model_at_every_depth_like_its_dump() -> N
     (issue #753): re-derived again once ``Environment`` gained
     ``dilution_rate_per_hour`` and ``ProvenanceGap`` gained ``keys``, both of which a
     reference dump now carries. 2026.10.12 (#901, #902, #903): re-derived once more
-    when ``Media`` gained ``provenance_gaps``. A content address is supposed to move
+    when ``Media`` gained ``provenance_gaps``. 2026.10.15 (P2, ontology-unify):
+    re-derived once ``ReferenceGenome`` gained ``assembly_set``, ``assembly_accession``
+    and its gap list, which every reference dump now carries. A content address is
+    supposed to move
     when the content's shape does, which is the BREAKING verdict
     ``scripts/schema_impact_check.py`` reports.
     """
@@ -455,9 +467,9 @@ def test_serialize_for_hashing_sorts_a_model_at_every_depth_like_its_dump() -> N
     assert as_model == as_dict
     assert compute_sha256_hash(as_model) == compute_sha256_hash(as_dict)
     assert process_reference_batch([_dumped(i) for i in range(3)]) == [
-        "8dc6d49b871bc699b7d8cdb823a705e841408374989465a37e684a202440b15d",
-        "8dc6d49b871bc699b7d8cdb823a705e841408374989465a37e684a202440b15d",
-        "fd4339442134220316f3a72d5d02b3e0a9a0609cf21fa29038aa1edb5d1f3055",
+        "4c286bcd769ea0ab34c794efba61a1ec2579fd293cb10eef9c81556c347dcbe0",
+        "4c286bcd769ea0ab34c794efba61a1ec2579fd293cb10eef9c81556c347dcbe0",
+        "a72b3f64ebdded56dd4c4a5cdda527746998f390011710e12510678bc3f3725c",
     ]
 
 

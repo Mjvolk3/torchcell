@@ -49,14 +49,14 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
 )
 from torchcell.data import ManifestPinMismatchError
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
-    BacterialGeneEssentialityExperiment,
     BacterialReleasedStrainPerturbation,
     EssentialityEvidenceClass,
     EssentialityEvidenceType,
     EssentialityStatementRole,
+    GeneEssentialityExperiment,
     Genotype,
     MediaComponentRole,
+    ReferenceGenome,
 )
 from torchcell.literature.manifest import ROLE_RAW_DATA, ArtifactRecord, Manifest
 from torchcell.sequence.genome.ecoli.k12 import BW25113_ASSEMBLY, EcoliK12BW25113Genome
@@ -198,7 +198,7 @@ BW_LOCI = [
     _locus("BW25113_0005", 55, "proB", "ECK0005", "JW0006", "JW0007"),
 ]
 UNIVERSE = {locus.tag for locus in BW_LOCI}
-REFERENCE = AssemblyReferenceGenome(
+REFERENCE = ReferenceGenome(
     species="Escherichia coli",
     strain="BW25113",
     assembly_set="ecoli_K12_BW25113_ASM75055v1",
@@ -391,7 +391,7 @@ def test_build_experiment_stores_the_released_jw_id_and_the_call() -> None:
     env = m.environment()
     obtained = m.build_experiment("baba", _row("JW0001", 6, 8, gene="thrA"), env)
     missing = m.build_experiment("baba", _row("JW0001", 0, 8, gene="thrA"), env)
-    assert isinstance(obtained, BacterialGeneEssentialityExperiment)
+    assert isinstance(obtained, GeneEssentialityExperiment)
     for record, essential, collection in (
         (obtained, False, "Keio collection"),
         (missing, True, None),
@@ -540,10 +540,8 @@ def test_unused_hooks_and_classes(built: m.GeneEssentialityBaba2006Dataset) -> N
     assert built.preprocess_raw(frame) is frame
     with pytest.raises(NotImplementedError):
         built.create_experiment()
-    assert built.experiment_class.__name__ == "BacterialGeneEssentialityExperiment"
-    assert (
-        built.reference_class.__name__ == "BacterialGeneEssentialityExperimentReference"
-    )
+    assert built.experiment_class.__name__ == "GeneEssentialityExperiment"
+    assert built.reference_class.__name__ == "GeneEssentialityExperimentReference"
     assert built.raw_file_names == [m.TABLE_S2, m.TABLE_S3, m.TABLE_S6]
 
 

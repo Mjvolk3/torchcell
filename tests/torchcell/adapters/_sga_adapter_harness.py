@@ -45,8 +45,17 @@ from torchcell.datamodels.identity import (
     temperature_identity,
 )
 from torchcell.datamodels.interned_constant import constant_id
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
-GENOME = s.ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
+GENOME = s.ReferenceGenome(
+    species="Saccharomyces cerevisiae",
+    strain="S288C",
+    assembly_set=SGD_S288C_R64,
+    assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
+)
 FIXED_NOW = datetime(2026, 9, 28, 12, 0, 0)
 
 

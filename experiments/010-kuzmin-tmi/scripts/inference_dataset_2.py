@@ -14,54 +14,53 @@ Key differences from inference_dataset_1:
 - Output to 010-kuzmin-tmi/inference_2/processed/lmdb/
 """
 
+import gc
 import json
 import os
 import os.path as osp
-import pickle
+from collections.abc import Callable
 from concurrent.futures import ProcessPoolExecutor
-from typing import Callable, Optional
-import gc
 
+import hypernetx as hnx
 import lmdb
-import numpy as np
+import networkx as nx
 import pandas as pd
+from pydantic import field_validator
+from sortedcontainers import SortedDict
 from torch_geometric.data import Dataset
 from tqdm import tqdm
-from sortedcontainers import SortedDict
-import networkx as nx
-import hypernetx as hnx
 
 from torchcell.data.cell_data import to_cell_data
-from torchcell.data.neo4j_cell import (
-    create_embedding_graph,
-    create_graph_from_gene_set,
-)
+from torchcell.data.embedding import BaseEmbeddingDataset
+from torchcell.data.graph_processor import GraphProcessor
+from torchcell.data.neo4j_cell import create_embedding_graph, create_graph_from_gene_set
 from torchcell.datamodels import (
+    EXPERIMENT_REFERENCE_TYPE_MAP,
+    EXPERIMENT_TYPE_MAP,
     Environment,
     FitnessExperiment,
     FitnessExperimentReference,
     FitnessPhenotype,
     Genotype,
     Media,
-    Temperature,
-    ReferenceGenome,
-    EXPERIMENT_TYPE_MAP,
-    EXPERIMENT_REFERENCE_TYPE_MAP,
     PhenotypeType,
+    ReferenceGenome,
+    Temperature,
 )
 from torchcell.datamodels.schema import SgaKanMxDeletionPerturbation
 from torchcell.graph import GeneGraph, GeneMultiGraph
 from torchcell.sequence import GeneSet
-from pydantic import field_validator
-
-from torchcell.data.embedding import BaseEmbeddingDataset
-from torchcell.data.graph_processor import GraphProcessor
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 
 class InferencePhenotype(FitnessPhenotype):
     """Phenotype class for inference that doesn't require actual fitness values."""
-    fitness: Optional[float] = None
-    fitness_std: Optional[float] = None
+
+    fitness: float | None = None
+    fitness_std: float | None = None
 
     @field_validator("fitness")
     def validate_fitness(cls, v):
@@ -74,12 +73,14 @@ class InferencePhenotype(FitnessPhenotype):
 
 class InferenceExperiment(FitnessExperiment):
     """Experiment class for inference that uses InferencePhenotype."""
+
     experiment_type: str = "inference"
     phenotype: InferencePhenotype
 
 
 class InferenceExperimentReference(FitnessExperimentReference):
     """Experiment reference class for inference."""
+
     experiment_reference_type: str = "inference"
     phenotype_reference: InferencePhenotype
 
@@ -197,7 +198,7 @@ class InferenceDataset(Dataset):
             self._init_lmdb_read()
 
         with self.env.begin() as txn:
-            serialized_data = txn.get(f"{idx}".encode("utf-8"))
+            serialized_data = txn.get(f"{idx}".encode())
             if serialized_data is None:
                 return None
             data_list = json.loads(serialized_data.decode("utf-8"))
@@ -252,7 +253,7 @@ class InferenceDataset(Dataset):
             SgaKanMxDeletionPerturbation(
                 systematic_gene_name=gene,
                 perturbed_gene_name=gene,
-                strain_id=f"{gene}_deletion"
+                strain_id=f"{gene}_deletion",
             )
             for gene in triple
         ]
@@ -269,7 +270,10 @@ class InferenceDataset(Dataset):
 
     def _create_default_reference(self, experiment) -> FitnessExperimentReference:
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae",
+            strain="S288C",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
         environment_reference = experiment.environment.model_copy()
 
@@ -321,8 +325,11 @@ class InferenceDataset(Dataset):
         return list(phenotype_classes) if phenotype_classes else [InferencePhenotype]
 
     def load_from_parquet_parallel(
-        self, parquet_path: str, num_workers: int = 16, chunk_size: int = 5000,
-        batch_commit_size: int = 1_000_000
+        self,
+        parquet_path: str,
+        num_workers: int = 16,
+        chunk_size: int = 5000,
+        batch_commit_size: int = 1_000_000,
     ):
         """Load experiments from Parquet using parallel processing."""
         print(f"Loading triples from parquet (parallel): {parquet_path}")
@@ -343,22 +350,30 @@ class InferenceDataset(Dataset):
             end_idx = min(start_idx + mega_batch_size, total_rows)
             batch_size = end_idx - start_idx
 
-            print(f"\nProcessing mega-batch {mega_batch_idx + 1}/{num_mega_batches} "
-                  f"(rows {start_idx:,} to {end_idx:,})...")
+            print(
+                f"\nProcessing mega-batch {mega_batch_idx + 1}/{num_mega_batches} "
+                f"(rows {start_idx:,} to {end_idx:,})..."
+            )
 
             gene1_vals = df["gene1"].iloc[start_idx:end_idx].tolist()
             gene2_vals = df["gene2"].iloc[start_idx:end_idx].tolist()
             gene3_vals = df["gene3"].iloc[start_idx:end_idx].tolist()
-            args_list = list(zip(
-                range(global_idx, global_idx + batch_size),
-                gene1_vals, gene2_vals, gene3_vals
-            ))
+            args_list = list(
+                zip(
+                    range(global_idx, global_idx + batch_size),
+                    gene1_vals,
+                    gene2_vals,
+                    gene3_vals,
+                )
+            )
 
             with ProcessPoolExecutor(max_workers=num_workers) as executor:
                 with self.env.begin(write=True) as txn:
                     for idx, serialized in tqdm(
                         executor.map(
-                            _create_experiment_json_worker, args_list, chunksize=chunk_size
+                            _create_experiment_json_worker,
+                            args_list,
+                            chunksize=chunk_size,
                         ),
                         total=len(args_list),
                         desc=f"Batch {mega_batch_idx + 1}/{num_mega_batches}",
@@ -382,10 +397,7 @@ def _create_experiment_json_worker(args: tuple) -> tuple[int, bytes]:
     ref = _create_default_reference_static(exp)
 
     data_list = [
-        {
-            "experiment": exp.model_dump(),
-            "experiment_reference": ref.model_dump(),
-        }
+        {"experiment": exp.model_dump(), "experiment_reference": ref.model_dump()}
     ]
 
     return (idx, json.dumps(data_list).encode("utf-8"))
@@ -394,7 +406,10 @@ def _create_experiment_json_worker(args: tuple) -> tuple[int, bytes]:
 def _create_default_reference_static(experiment):
     """Static version of _create_default_reference for use in worker processes."""
     genome_reference = ReferenceGenome(
-        species="Saccharomyces cerevisiae", strain="S288C"
+        species="Saccharomyces cerevisiae",
+        strain="S288C",
+        assembly_set=SGD_S288C_R64,
+        assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
     )
     environment_reference = experiment.environment.model_copy()
 
@@ -419,6 +434,7 @@ def _create_default_reference_static(experiment):
 def main():
     """Main function to create inference dataset from parquet triples."""
     from dotenv import load_dotenv
+
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
     from torchcell.timestamp import timestamp
 
@@ -450,9 +466,7 @@ def main():
     genome_root = osp.join(DATA_ROOT, "data/sgd/genome")
     go_root = osp.join(DATA_ROOT, "data/go")
     genome = SCerevisiaeGenome(
-        genome_root=genome_root,
-        go_root=go_root,
-        overwrite=False
+        genome_root=genome_root, go_root=go_root, overwrite=False
     )
     genome.drop_empty_go()
     print(f"Genome gene set size: {len(genome.gene_set)}")
@@ -472,7 +486,7 @@ def main():
         parquet_path,
         num_workers=num_workers,
         chunk_size=5000,
-        batch_commit_size=5_000_000
+        batch_commit_size=5_000_000,
     )
 
     print("\n" + "=" * 80)

@@ -40,9 +40,10 @@ from torchcell.datamodels.schema import (
     ASSEMBLY_SET_ACCESSIONS,
     BACTERIAL_ASSEMBLY_SETS,
     AssayType,
-    AssemblyReferenceGenome,
     MeasurementType,
     MediaComponentRole,
+    ReferenceGenome,
+    StrainReferenceGenome,
     TransposonInsertionPerturbation,
     UncertaintyType,
 )
@@ -2002,12 +2003,19 @@ RELEASE_S13_ROWS: list[list[object]] = [
 
 def _assembly_pin(
     strain: str, *, background: Any = None, data_root: str | None = None
-) -> AssemblyReferenceGenome:
+) -> ReferenceGenome:
     """``assembly_reference`` without the deposited assembly report."""
     assembly_set = BACTERIAL_ASSEMBLY_SETS[strain]
-    return AssemblyReferenceGenome(
+    if background is None:
+        return ReferenceGenome(
+            species="Escherichia coli",
+            strain=strain,
+            assembly_set=cast(Any, assembly_set),
+            assembly_accession=ASSEMBLY_SET_ACCESSIONS[assembly_set][0],
+        )
+    return StrainReferenceGenome(
         species="Escherichia coli",
-        strain=strain if background is None else background.name,
+        strain=background.name,
         assembly_set=cast(Any, assembly_set),
         assembly_accession=ASSEMBLY_SET_ACCESSIONS[assembly_set][0],
         background=background,
@@ -2421,7 +2429,7 @@ class TestDevStore:
         assert references is not None
         assert len(references) == 78
         record = dataset[0]["experiment"]
-        assert record["experiment_type"] == "bacterial_environment_response"
+        assert record["experiment_type"] == "environment_response"
         assert record["phenotype"]["measurement_type"] == "log2_ratio"
         assert str(record["phenotype"]["screen_id"]).startswith(f"{mut.ORG_ID}:")
         (perturbation,) = record["genotype"]["perturbations"]

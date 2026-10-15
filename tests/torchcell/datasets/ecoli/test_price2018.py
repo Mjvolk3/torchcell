@@ -50,18 +50,18 @@ from torchcell.datamodels.media import (
 )
 from torchcell.datamodels.schema import (
     AssayType,
-    AssemblyReferenceGenome,
-    BacterialGeneEssentialityExperiment,
-    BacterialGeneEssentialityExperimentReference,
     ConcentrationUnit,
     EnvironmentPhysicalPerturbation,
     EssentialityEvidenceClass,
     EssentialityEvidenceType,
     EssentialityStatementRole,
+    GeneEssentialityExperiment,
+    GeneEssentialityExperimentReference,
     Genotype,
     MeasurementType,
     MediaComponentRole,
     PhysicalFactor,
+    ReferenceGenome,
     SmallMoleculePerturbation,
     TransposonInsertionPerturbation,
     UncertaintyType,
@@ -637,7 +637,7 @@ def test_records_run_sample_by_sample_with_each_samples_publication() -> None:
     )
     # set2IT026 is read from the second release column in this synthetic release.
     columns = {"set1IT003": 0, "set2IT026": 1}
-    reference_genome = AssemblyReferenceGenome(
+    reference_genome = ReferenceGenome(
         species="Escherichia coli",
         strain="BW25113",
         assembly_set="ecoli_K12_BW25113_ASM75055v1",
@@ -1047,8 +1047,8 @@ SYNTHETIC_TABLE = pd.DataFrame([ROWS[0], ROWS[4], ROWS[1], ROWS[3]])
 SYNTHETIC_SAMPLES = ["set1IT003", "set2IT026", "set1IT007", "set6IT068"]
 
 
-def _pin() -> AssemblyReferenceGenome:
-    return AssemblyReferenceGenome(
+def _pin() -> ReferenceGenome:
+    return ReferenceGenome(
         species="Escherichia coli",
         strain="BW25113",
         assembly_set="ecoli_K12_BW25113_ASM75055v1",
@@ -1403,8 +1403,8 @@ def test_the_essentiality_loader_is_registered_against_bw25113() -> None:
     assert params["root"].default == "data/torchcell/gene_essentiality_price2018_ecoli"
     shell = cls.__new__(cls)
     assert shell.raw_file_names == ["si3.xlsx", "fit_logratios_good.tab"]
-    assert shell.experiment_class is BacterialGeneEssentialityExperiment
-    assert shell.reference_class is BacterialGeneEssentialityExperimentReference
+    assert shell.experiment_class is GeneEssentialityExperiment
+    assert shell.reference_class is GeneEssentialityExperimentReference
     # #1057: the four genes BW25113 deletes are stored as released, so every row is one
     assert (p.ESSENTIAL_SOURCE_GENES, p.ESSENTIAL_EXPECTED_RECORDS) == (324, 324)
     assert p.MIN_ESSENTIAL_ECK_ROUTE_FRACTION < p.MIN_ECK_ROUTE_FRACTION
@@ -2152,7 +2152,7 @@ def test_the_dev_build_holds_every_expected_record() -> None:
     finally:
         env.close()
     experiment = first["experiment"]
-    assert experiment["experiment_type"] == "bacterial_environment_response"
+    assert experiment["experiment_type"] == "environment_response"
     perturbation = experiment["genotype"]["perturbations"][0]
     assert perturbation["perturbation_type"] == "transposon_insertion"
     # #1057: the released sysName in the MG1655 namespace
@@ -2264,7 +2264,7 @@ def test_the_essentiality_dev_build_holds_every_expected_record() -> None:
     finally:
         env.close()
     experiment = first["experiment"]
-    assert experiment["experiment_type"] == "bacterial_gene_essentiality"
+    assert experiment["experiment_type"] == "gene essentiality"
     assert experiment["phenotype"]["is_essential"] is True
 
 

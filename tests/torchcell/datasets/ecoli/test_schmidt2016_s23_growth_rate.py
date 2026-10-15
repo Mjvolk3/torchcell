@@ -37,12 +37,13 @@ from torchcell.data import file_sha256
 from torchcell.datamodels.schema import (
     ABSOLUTE_MEASUREMENT_TYPES,
     AssayType,
-    AssemblyReferenceGenome,
     BacterialAssemblySet,
     BacterialStrainBackground,
     CultureGrowthPhase,
     MeasurementType,
+    ReferenceGenome,
     SampleUnit,
+    StrainReferenceGenome,
     UncertaintyType,
 )
 from torchcell.verification.report import Level
@@ -119,8 +120,8 @@ def workbook(tmp_path: Path) -> Path:
     return write_workbook(tmp_path / sm.SI2)
 
 
-def _reference_genome() -> AssemblyReferenceGenome:
-    return AssemblyReferenceGenome(
+def _reference_genome() -> ReferenceGenome:
+    return ReferenceGenome(
         species="Escherichia coli",
         strain="BW25113",
         assembly_set=ASSEMBLY_SET,
@@ -133,13 +134,20 @@ def _pinned(
     *,
     background: BacterialStrainBackground | None = None,
     data_root: str | None = None,
-) -> AssemblyReferenceGenome:
+) -> ReferenceGenome:
     """``assembly_reference`` without the genomes tier: BW25113's or MG1655's pin."""
     if strain == "BW25113":
         return _reference_genome()
-    return AssemblyReferenceGenome(
+    if background is None:
+        return ReferenceGenome(
+            species="Escherichia coli",
+            strain=strain,
+            assembly_set=MG1655_SET,
+            assembly_accession=MG1655_ACCESSION,
+        )
+    return StrainReferenceGenome(
         species="Escherichia coli",
-        strain=strain if background is None else background.name,
+        strain=background.name,
         assembly_set=MG1655_SET,
         assembly_accession=MG1655_ACCESSION,
         background=background,
@@ -357,14 +365,16 @@ def test_strain_genome_names_the_released_strain_with_the_papers_genotype(
 ) -> None:
     monkeypatch.setattr(s23, "assembly_reference", _pinned)
     bw = s23.strain_genome("BW25113")
-    assert (bw.strain, bw.background) == ("BW25113", None)
+    assert bw.strain == "BW25113" and not isinstance(bw, StrainReferenceGenome)
     mg = s23.strain_genome("MG1665")
     assert (mg.strain, mg.assembly_set) == ("MG1665", MG1655_SET)
-    assert mg.background is not None
+    assert isinstance(mg, StrainReferenceGenome)
+    assert isinstance(mg.background, BacterialStrainBackground)
     assert mg.background.reference_strain == "MG1655"
     assert mg.background.genotype_statement == "F-, λ, rph-1"
     ncm = s23.strain_genome("NCM3722")
-    assert ncm.background is not None
+    assert isinstance(ncm, StrainReferenceGenome)
+    assert isinstance(ncm.background, BacterialStrainBackground)
     assert ncm.background.genotype_statement == "F+"
     assert ncm.background.provenance is not None
     assert [v.value for v in ncm.background.provenance] == ["NCM3722", "F+"]

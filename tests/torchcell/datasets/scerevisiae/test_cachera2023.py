@@ -82,6 +82,10 @@ from torchcell.datamodels.schema import (
     ReleasedGeneNamePerturbation,
 )
 from torchcell.datasets.scerevisiae import cachera2023 as c
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 # The released header of GA1_2_4_6.csv, verbatim (27 columns, the first one blank).
 _HEADER = (
@@ -210,7 +214,10 @@ def _reference() -> dict[str, Any]:
     return MetaboliteExperimentReference(
         dataset_name="BetaxanthinCachera2023Dataset",
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4741"
+            species="Saccharomyces cerevisiae",
+            strain="BY4741",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=_environment(),
         phenotype_reference=MetabolitePhenotype(

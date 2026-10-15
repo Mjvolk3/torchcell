@@ -81,7 +81,11 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.datasets.scerevisiae import bloom2019 as m
 from torchcell.literature.manifest import ROLE_RAW_DATA, ArtifactRecord, Manifest
-from torchcell.sequence.genome.registry import GenomeManifest
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+    GenomeManifest,
+)
 from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
@@ -518,7 +522,11 @@ def _reference(media: Any, absolute: bool) -> dict[str, Any]:
     return SegregantGrowthExperimentReference(
         dataset_name="Bloom2019Dataset",
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="S288C", ploidy="haploid"
+            species="Saccharomyces cerevisiae",
+            strain="S288C",
+            ploidy="haploid",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=_environment(media, 30.0, []),
         phenotype_reference=EnvironmentResponsePhenotype(

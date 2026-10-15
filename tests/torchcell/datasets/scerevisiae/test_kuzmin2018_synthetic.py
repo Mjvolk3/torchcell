@@ -71,6 +71,10 @@ from torchcell.datasets.scerevisiae.kuzmin2018 import (
     TmfKuzmin2018Dataset,
     TmiKuzmin2018Dataset,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 RAW_NAME = "aao1729_data_s1.tsv"
 COLUMNS = [
@@ -97,7 +101,12 @@ ROWS: list[list[Any]] = [
 ]  # fmt: skip
 
 ENVIRONMENT = Environment(media=SGA_TM_SELECTION, temperature=Temperature(value=26))
-GENOME = ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
+GENOME = ReferenceGenome(
+    species="Saccharomyces cerevisiae",
+    strain="S288C",
+    assembly_set=SGD_S288C_R64,
+    assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
+)
 PUBLICATION = Publication(
     pubmed_id="29674565",
     pubmed_url="https://pubmed.ncbi.nlm.nih.gov/29674565/",

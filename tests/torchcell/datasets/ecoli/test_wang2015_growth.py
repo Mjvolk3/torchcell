@@ -40,11 +40,11 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
 from torchcell.data import file_sha256
 from torchcell.datamodels.media import YT_2X
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
-    BacterialFitnessExperiment,
-    BacterialFitnessExperimentReference,
     EnvironmentPhysicalPerturbation,
+    FitnessExperiment,
+    FitnessExperimentReference,
     PhysicalFactor,
+    ReferenceGenome,
     SampleUnit,
     UncertaintyType,
 )
@@ -83,7 +83,7 @@ SYNTHETIC_RECORDS = 3
 SYNTHETIC_MIN = 0.5
 SYNTHETIC_MAX = 1.0
 
-REFERENCE = AssemblyReferenceGenome(
+REFERENCE = ReferenceGenome(
     species="Escherichia coli",
     strain="BW25113",
     assembly_set="ecoli_K12_BW25113_ASM75055v1",
@@ -249,13 +249,13 @@ def test_build_experiment_and_reference_round_trip() -> None:
     )
     env = gw.environment()
     experiment = gw.build_experiment("growth_wang2015", identity, parent, env)
-    assert isinstance(experiment, BacterialFitnessExperiment)
+    assert isinstance(experiment, FitnessExperiment)
     genotype = experiment.genotype
     assert not isinstance(genotype, list)
     assert [p.systematic_gene_name for p in genotype.perturbations] == ["thrA"]
     assert experiment.phenotype.fitness == 0.5
     reference = gw.build_reference("growth_wang2015", REFERENCE, env, parent)
-    assert isinstance(reference, BacterialFitnessExperimentReference)
+    assert isinstance(reference, FitnessExperimentReference)
     assert reference.phenotype_reference.fitness == 1.0
     assert reference.genome_reference.assembly_accession == REFERENCE.assembly_accession
 

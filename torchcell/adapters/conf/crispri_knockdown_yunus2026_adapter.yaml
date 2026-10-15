@@ -1,4 +1,4 @@
-# Yunus 2026 CRISPRi knockdowns: 102 IY1452 strains, BacterialProteinFoldChangeExperiment.
+# Yunus 2026 CRISPRi knockdowns: 102 IY1452 strains, ProteinFoldChangeExperiment.
 # One BacterialCrisprInterferencePerturbation per record, served as `bacterial
 # perturbation`, carrying a CrisprConstruct, so the crispr-construct pair is enabled. The
 # environment carries EnvironmentPhysicalPerturbation and SmallMoleculePerturbation edits,

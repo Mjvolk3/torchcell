@@ -1,5 +1,5 @@
 # Campos 2018 Keio cell morphology: 3,664 deletion-strain records,
-# BacterialMorphologyExperiment. One BacterialDeletionPerturbation per record, served as
+# MorphologyExperiment. One BacterialDeletionPerturbation per record, served as
 # `bacterial perturbation`. The screen is one medium (M9 + casamino acids + glucose) at
 # one temperature with no environment perturbation, so the environment-perturbation pair
 # is left off. The phenotype node carries the 26 morphology features of the

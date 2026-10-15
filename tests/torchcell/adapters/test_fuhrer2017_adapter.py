@@ -4,7 +4,7 @@
 """``torchcell/adapters/fuhrer2017_adapter.py``: the conf it loads, the gate's view of it,
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
-Fuhrer 2017 Keio metabolome: 3,735 BW25113 strains, BacterialMetaboliteExperiment.
+Fuhrer 2017 Keio metabolome: 3,735 BW25113 strains, MetaboliteExperiment.
 One DeletionStrainPerturbation per record, served as `bacterial perturbation` (never
 the yeast `perturbation` class). No record carries an environment perturbation (0 in
 3,735), so that pair is not enabled.

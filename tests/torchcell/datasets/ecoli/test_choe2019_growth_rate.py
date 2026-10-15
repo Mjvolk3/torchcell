@@ -42,15 +42,16 @@ import torchcell.datasets.ecoli.choe2019_growth_rate as ch
 from torchcell.data import file_sha256
 from torchcell.datamodels.schema import (
     AlleleEdit,
-    AssemblyReferenceGenome,
     BacterialAssemblySet,
     BacterialBackgroundAllele,
     BacterialGeneNamespace,
     BacterialReleasedStrainPerturbation,
     BacterialStrainBackground,
+    ReferenceGenome,
     ReleasedStrainKind,
     SampleUnit,
     SequenceVariantPerturbation,
+    StrainReferenceGenome,
     UncertaintyType,
 )
 from torchcell.sequence.genome.base import GeneNameResolution, GeneNameStatus
@@ -796,10 +797,18 @@ def test_build_keio_genotype_names_the_collection() -> None:
 def _reference_genome(strain: str, assembly_set: str, accession: str) -> Any:
     def build(
         reference_strain: str, *, background: Any = None, data_root: Any = None
-    ) -> AssemblyReferenceGenome:
-        return AssemblyReferenceGenome(
+    ) -> ReferenceGenome:
+        if background is None:
+            return ReferenceGenome(
+                species="Escherichia coli",
+                strain=strain,
+                ploidy="haploid",
+                assembly_set=assembly_set,  # type: ignore[arg-type]
+                assembly_accession=accession,
+            )
+        return StrainReferenceGenome(
             species="Escherichia coli",
-            strain=strain if background is None else background.name,
+            strain=background.name,
             ploidy="haploid",
             assembly_set=assembly_set,  # type: ignore[arg-type]
             assembly_accession=accession,
@@ -1045,7 +1054,10 @@ def test_process_builds_the_two_keio_records(
     assert {len(i["experiment"].genotype.perturbations) for i in items} == {1}
     assert {i["experiment"].phenotype.fitness for i in items} == {0.724, 0.698}
     assert {i["reference"].phenotype_reference.fitness for i in items} == {1.0}
-    assert [i["reference"].genome_reference.background for i in items] == [None, None]
+    assert [
+        isinstance(i["reference"].genome_reference, StrainReferenceGenome)
+        for i in items
+    ] == [False, False]
     assert {i["experiment"].environment.temperature.value for i in items} == {37.0}
     dataset.close_lmdb()
 

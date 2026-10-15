@@ -39,6 +39,10 @@ from torchcell.datamodels.schema import (
     UncertaintyType,
 )
 from torchcell.datasets.dataset_registry import register_dataset
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -434,7 +438,10 @@ class SmfKuzmin2020Dataset(ExperimentDataset):
     ) -> tuple[FitnessExperiment, FitnessExperimentReference, Publication]:
         """Build the experiment, reference, and publication objects from one row."""
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae",
+            strain="S288C",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
 
         perturbation: GenePerturbationType
@@ -682,7 +689,10 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
     ) -> tuple[FitnessExperiment, FitnessExperimentReference, Publication]:
         """Build the experiment, reference, and publication objects from one row."""
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae",
+            strain="S288C",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
 
         perturbations: list[GenePerturbationType] = []
@@ -918,7 +928,10 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
     ) -> tuple[FitnessExperiment, FitnessExperimentReference, Publication]:
         """Build the experiment, reference, and publication objects from one row."""
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae",
+            strain="S288C",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
 
         perturbations: list[GenePerturbationType] = []
@@ -1158,7 +1171,10 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
     ]:
         """Build the experiment, reference, and publication objects from one row."""
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae",
+            strain="S288C",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
 
         perturbations: list[GenePerturbationType] = []
@@ -1372,7 +1388,10 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
     ]:
         """Build the experiment, reference, and publication objects from one row."""
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae",
+            strain="S288C",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
 
         perturbations: list[GenePerturbationType] = []

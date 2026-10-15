@@ -127,6 +127,10 @@ from torchcell.literature.manifest import (
     RetrievalMethod,
     RetrievalRecord,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 from torchcell.verification.report import (
     Level,
@@ -899,7 +903,10 @@ class MicroarrayScoreHu2007Dataset(ExperimentDataset):
         for row in table:
             conditions.setdefault(row.orf, {})[row.condition] = row
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain=PARENT_STRAIN.value
+            species="Saccharomyces cerevisiae",
+            strain=PARENT_STRAIN.value,
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
         publication = Publication(
             pubmed_id=PMID,

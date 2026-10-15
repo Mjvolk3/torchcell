@@ -5,7 +5,7 @@
 it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Wang 2018 gene-level CRISPRi calls (#879): 20,158 records, one per Supplementary Data 5
-(gene, screen) row, BacterialEnvironmentResponseExperiment.
+(gene, screen) row, EnvironmentResponseExperiment.
 """
 
 from __future__ import annotations

@@ -4,7 +4,7 @@
 """``torchcell/adapters/lim2025_tolerance_adapter.py``: the conf it loads, the gate's view of it,
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
-Lim 2025 isoprenol tolerance: 3 strains, BacterialEnvironmentResponseExperiment.
+Lim 2025 isoprenol tolerance: 3 strains, EnvironmentResponseExperiment.
 1 to 7 DeletionStrainPerturbation per record (14 in all), served as `bacterial
 perturbation`. Isoprenol is a SmallMoleculePerturbation on the experiment and the
 reference, so the environment-perturbation pair is enabled. Every record gaps

@@ -1,5 +1,5 @@
 # Menasalvas 2025 deposited proteome: 6 samples (three strains x two growth phases),
-# BacterialProteinAbundanceExperiment. Every genotype carries the five integrated
+# ProteinAbundanceExperiment. Every genotype carries the five integrated
 # pathway genes, the mCherry biosensor copies and (for the two improved strains) seven
 # deletions, served as `bacterial perturbation`. The two TEAM-2595 records additionally
 # carry the 75 called variants of data S1-5, served as their own class. The environment

@@ -5,7 +5,7 @@
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Wang 2015 isoprenol tolerance: 46 Keio transporter deletions,
-BacterialEnvironmentResponseExperiment. One DeletionStrainPerturbation per record,
+EnvironmentResponseExperiment. One DeletionStrainPerturbation per record,
 served as `bacterial perturbation`. The environment carries isoprenol as a
 SmallMoleculePerturbation and the medium pH as an EnvironmentPhysicalPerturbation, on the
 experiment and the reference, so the environment-perturbation pair is enabled.

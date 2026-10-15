@@ -56,9 +56,18 @@ from torchcell.datamodels.schema import (
     SyntheticLethalityExperimentReference,
     SyntheticLethalityPhenotype,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 ENVIRONMENT = Environment(media=Media(name="YPD", state="solid", is_synthetic=False))
-GENOME = ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
+GENOME = ReferenceGenome(
+    species="Saccharomyces cerevisiae",
+    strain="S288C",
+    assembly_set=SGD_S288C_R64,
+    assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
+)
 QUERY: Any = object()  # Converter stores it and reads nothing from it
 FIXED_HASH = "3813f9409eb0095bf9c8e1225c627acf867d89bd18b8856fc38588a0c8c490f3"
 

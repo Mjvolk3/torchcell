@@ -5,7 +5,7 @@
 view of it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 The Fitness Browser's own Keio experiments keyed by publication (#931): one transposon
-insertion per record, BacterialEnvironmentResponseExperiment, the sample's carbon source an
+insertion per record, EnvironmentResponseExperiment, the sample's carbon source an
 environment perturbation, so both the bacterial-perturbation and the
 environment-perturbation pairs are enabled.
 """

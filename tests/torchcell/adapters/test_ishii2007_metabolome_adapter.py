@@ -5,7 +5,7 @@
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Ishii 2007 CE-TOFMS metabolome: 24 (BW25113 Keio disruptant) records in one
-glucose-limited chemostat environment, BacterialMetaboliteExperiment. One
+glucose-limited chemostat environment, MetaboliteExperiment. One
 DeletionStrainPerturbation per record, served as `bacterial perturbation`
 (never the yeast `perturbation` class). All 24 share one medium at one dilution
 rate, so no record carries an environment perturbation (0 in 24).

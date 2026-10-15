@@ -1,4 +1,4 @@
-# Thompson 2019 lactam growth rates: 9 records, BacterialEnvironmentResponseExperiment.
+# Thompson 2019 lactam growth rates: 9 records, EnvironmentResponseExperiment.
 # 0 to 2 BacterialDeletionPerturbation per record (9 in all), served as `bacterial
 # perturbation`; the wild-type records carry none, which is a genotype with no
 # perturbation and not a dropped edit. Each record's carbon source is one

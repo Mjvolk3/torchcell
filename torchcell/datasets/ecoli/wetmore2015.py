@@ -26,7 +26,7 @@ this release rather than its replacement.
 THE RECORDS. One record per (released gene, kept sample) of the release's all-sample gene
 fitness table (``fit_logratios.tab``; for the successful samples it is byte-identical to
 ``fit_logratios_good.tab``, which the build checks), in
-``BacterialEnvironmentResponseExperiment`` as an ``EnvironmentResponsePhenotype``:
+``EnvironmentResponseExperiment`` as an ``EnvironmentResponsePhenotype``:
 
 * the value is the normalized gene fitness, a signed log2 ratio (``GENE_FITNESS_IS_LOG2``);
 * the uncertainty is the per-gene standard error AS THE PAPER DEFINES IT in its moderated
@@ -128,15 +128,14 @@ from torchcell.datamodels.media import (
 )
 from torchcell.datamodels.schema import (
     AssayType,
-    AssemblyReferenceGenome,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     BacterialGeneNamespace,
     Concentration,
     ConcentrationUnit,
     Environment,
     EnvironmentPerturbationType,
     EnvironmentPhysicalPerturbation,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
@@ -145,6 +144,7 @@ from torchcell.datamodels.schema import (
     Media,
     PhysicalFactor,
     Publication,
+    ReferenceGenome,
     Temperature,
     TransposonInsertionPerturbation,
     UncertaintyType,
@@ -2299,11 +2299,11 @@ def build_phenotype(
 def build_reference(
     dataset_name: str,
     environment: Environment,
-    genome_reference: AssemblyReferenceGenome,
+    genome_reference: ReferenceGenome,
     screen_id: str,
-) -> BacterialEnvironmentResponseExperimentReference:
+) -> EnvironmentResponseExperimentReference:
     """The typical gene of the same sample: fitness 0 by the normalization."""
-    return BacterialEnvironmentResponseExperimentReference(
+    return EnvironmentResponseExperimentReference(
         dataset_name=dataset_name,
         genome_reference=genome_reference,
         environment_reference=environment,
@@ -2325,14 +2325,14 @@ class SampleRecords(BaseModel):
     spec: SampleSpec
     column: int
     environment: Environment
-    reference: BacterialEnvironmentResponseExperimentReference
+    reference: EnvironmentResponseExperimentReference
 
 
 def sample_records(
     dataset_name: str,
     specs: Sequence[SampleSpec],
     release: ReleaseTables,
-    genome_reference: AssemblyReferenceGenome,
+    genome_reference: ReferenceGenome,
 ) -> list[SampleRecords]:
     """The kept samples, in Data Set S1 order, each with its release column."""
     columns = {name: j for j, name in enumerate(release.samples)}
@@ -2361,8 +2361,8 @@ def iter_records(
     genes: Mapping[str, StoredGene],
 ) -> Iterator[
     tuple[
-        BacterialEnvironmentResponseExperiment,
-        BacterialEnvironmentResponseExperimentReference,
+        EnvironmentResponseExperiment,
+        EnvironmentResponseExperimentReference,
         Publication,
     ]
 ]:
@@ -2372,7 +2372,7 @@ def iter_records(
         j = sample.column
         for i, genotype in rows:
             yield (
-                BacterialEnvironmentResponseExperiment(
+                EnvironmentResponseExperiment(
                     dataset_name=dataset_name,
                     genotype=genotype,
                     environment=sample.environment,
@@ -2554,12 +2554,12 @@ class RbTnseqWetmore2015Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperiment
+        return EnvironmentResponseExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperimentReference
+        return EnvironmentResponseExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:

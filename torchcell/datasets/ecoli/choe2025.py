@@ -13,7 +13,7 @@ abundance by amplicon sequencing. Table S1 releases the per-guide normalized abu
 (reads per million mapped reads) of 39,580 guides in two library samples and in two
 replicate samples of each of the thirteen culture conditions.
 
-RECORD = one (guide x antibiotic) ``BacterialEnvironmentResponseExperiment``:
+RECORD = one (guide x antibiotic) ``EnvironmentResponseExperiment``:
 
 - GENOTYPE: one ``CrisprInterferencePerturbation`` keyed by the gene's
   released Table S2 b-number with its released symbol, on the
@@ -180,15 +180,14 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import LB
 from torchcell.datamodels.schema import (
     AssayType,
-    AssemblyReferenceGenome,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     Concentration,
     ConcentrationUnit,
     CrisprConstruct,
     CrisprInterferencePerturbation,
     DoseBasis,
     Environment,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
@@ -198,6 +197,7 @@ from torchcell.datamodels.schema import (
     MediaComponent,
     MediaComponentRole,
     Publication,
+    ReferenceGenome,
     SmallMoleculePerturbation,
     Solvent,
     Temperature,
@@ -1694,9 +1694,9 @@ def build_experiment(
     condition: ScreenCondition,
     genotype: Genotype,
     env: Environment,
-) -> BacterialEnvironmentResponseExperiment:
+) -> EnvironmentResponseExperiment:
     """The record of one guide under one antibiotic."""
-    return BacterialEnvironmentResponseExperiment(
+    return EnvironmentResponseExperiment(
         dataset_name=dataset_name,
         genotype=genotype,
         environment=env,
@@ -1705,10 +1705,10 @@ def build_experiment(
 
 
 def build_reference(
-    dataset_name: str, genome_reference: AssemblyReferenceGenome
-) -> BacterialEnvironmentResponseExperimentReference:
+    dataset_name: str, genome_reference: ReferenceGenome
+) -> EnvironmentResponseExperimentReference:
     """The same pool in untreated LB: the clone's ratio to itself, log2(1) = 0."""
-    return BacterialEnvironmentResponseExperimentReference(
+    return EnvironmentResponseExperimentReference(
         dataset_name=dataset_name,
         genome_reference=genome_reference,
         environment_reference=control_environment(),
@@ -1741,12 +1741,12 @@ class CrispriChemgenChoe2025Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperiment
+        return EnvironmentResponseExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperimentReference
+        return EnvironmentResponseExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -1921,7 +1921,7 @@ VERIFIER_PROVENANCE = Provenance(
     citation_key=CITATION_KEY,
     sha256=RAW_FILES_BY_NAME[TABLE_S1_FILE].sha256,
     method=(
-        "One BacterialEnvironmentResponseExperiment per (Table S1 guide, antibiotic). "
+        "One EnvironmentResponseExperiment per (Table S1 guide, antibiotic). "
         "measurement_type=log2_ratio, assay_type=pooled_competitive_growth_barcode, "
         "environment_response = log2(a_abx / a_LB) where a_c is the guide's mean "
         "abundance (reads per million mapped reads) over condition c's two replicate "

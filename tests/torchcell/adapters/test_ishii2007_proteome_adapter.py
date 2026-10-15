@@ -5,7 +5,7 @@
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Ishii 2007 LC-MS/MS proteome: the SAME 24 cultures the metabolome and flux arms
-serve, BacterialProteinAbundanceExperiment keyed by BW25113 locus tag. One
+serve, ProteinAbundanceExperiment keyed by BW25113 locus tag. One
 DeletionStrainPerturbation per record; no environment perturbation (0 in 24).
 """
 

@@ -140,11 +140,8 @@ from torchcell.data import (
 )
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
     BacterialAssemblySet,
     BacterialReleasedStrainPerturbation,
-    BacterialRNASeqExpressionExperiment,
-    BacterialRNASeqExpressionExperimentReference,
     BacterialStrainBackground,
     ComponentDefinition,
     Compound,
@@ -162,7 +159,10 @@ from torchcell.datamodels.schema import (
     MediaComponentRole,
     PhysicalFactor,
     Publication,
+    ReferenceGenome,
     ReleasedStrainKind,
+    RNASeqExpressionExperiment,
+    RNASeqExpressionExperimentReference,
     RNASeqExpressionPhenotype,
     SmallMoleculePerturbation,
     Temperature,
@@ -1814,12 +1814,12 @@ class RnaseqLamoureux2023Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialRNASeqExpressionExperiment
+        return RNASeqExpressionExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialRNASeqExpressionExperimentReference
+        return RNASeqExpressionExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -1961,7 +1961,7 @@ class RnaseqLamoureux2023Dataset(ExperimentDataset):
                 environments[spec] = build_environment(spec)
             return environments[spec]
 
-        reference = BacterialRNASeqExpressionExperimentReference(
+        reference = RNASeqExpressionExperimentReference(
             dataset_name=self.name,
             genome_reference=assembly_reference(self.REFERENCE_STRAIN),
             environment_reference=environment_of(controls[0]),
@@ -1970,11 +1970,10 @@ class RnaseqLamoureux2023Dataset(ExperimentDataset):
         # keyed by the whole spec and its untyped flag, never the name alone: a pColi
         # construct and an evolved isolate can share a Strain Description (#1045 part 2)
         backgrounds: dict[
-            tuple[StrainBackgroundSpec, bool],
-            BacterialRNASeqExpressionExperimentReference,
+            tuple[StrainBackgroundSpec, bool], RNASeqExpressionExperimentReference
         ] = {}
 
-        def reference_of(sample: str) -> BacterialRNASeqExpressionExperimentReference:
+        def reference_of(sample: str) -> RNASeqExpressionExperimentReference:
             """The control reference, on the sample's own released strain (#1057)."""
             verdict = genotype_verdicts[sample]
             spec = verdict.background
@@ -1982,7 +1981,7 @@ class RnaseqLamoureux2023Dataset(ExperimentDataset):
                 return reference
             key = (spec, verdict.untyped_edits)
             if key not in backgrounds:
-                genome_reference: AssemblyReferenceGenome = assembly_reference(
+                genome_reference: ReferenceGenome = assembly_reference(
                     self.REFERENCE_STRAIN,
                     background=strain_background(
                         spec, untyped_edits=verdict.untyped_edits
@@ -1999,7 +1998,7 @@ class RnaseqLamoureux2023Dataset(ExperimentDataset):
         groups: dict[str, ReplicateGroup] = {}
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for idx, sample in enumerate(kept):
-                experiment = BacterialRNASeqExpressionExperiment(
+                experiment = RNASeqExpressionExperiment(
                     dataset_name=self.name,
                     genotype=self._genotype(
                         genotype_verdicts[sample], rows[sample][COL_DESCRIPTION]

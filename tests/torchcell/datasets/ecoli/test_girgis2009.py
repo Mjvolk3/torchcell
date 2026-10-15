@@ -59,14 +59,14 @@ from torchcell.data import ManifestPinMismatchError, RawSha256MismatchError
 from torchcell.datamodels.media import M9, MEDIA_LIBRARY
 from torchcell.datamodels.schema import (
     AssayType,
-    AssemblyReferenceGenome,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     ConcentrationUnit,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     MeasurementType,
     MediaComponentRole,
     SampleUnit,
     SmallMoleculePerturbation,
+    StrainReferenceGenome,
     TransposonInsertionPerturbation,
 )
 from torchcell.datasets.dataset_registry import dataset_registry
@@ -75,7 +75,7 @@ from torchcell.sequence.genome.ecoli.k12 import MG1655_ASSEMBLY, EcoliK12MG1655G
 from torchcell.verification.environment_response import _condition_signature
 from torchcell.verification.sourced import ProvenanceGapReason, audit_sourced_value
 
-REFERENCE = AssemblyReferenceGenome(
+REFERENCE = StrainReferenceGenome(
     species="Escherichia coli",
     strain=m.LIBRARY_PARENT,
     assembly_set="ecoli_K12_MG1655_ASM584v2",
@@ -949,10 +949,8 @@ def test_build_experiment_and_reference_validate_as_the_assembly_pinned_pair() -
     env = m.environment(spec)
     experiment = m.build_experiment("girgis", "b0005", "proB", 2.5, spec, env)
     reference = m.build_reference("girgis", REFERENCE, spec, env)
-    BacterialEnvironmentResponseExperiment.model_validate(experiment.model_dump())
-    BacterialEnvironmentResponseExperimentReference.model_validate(
-        reference.model_dump()
-    )
+    EnvironmentResponseExperiment.model_validate(experiment.model_dump())
+    EnvironmentResponseExperimentReference.model_validate(reference.model_dump())
     assert experiment.phenotype.environment_response == 2.5
     assert reference.phenotype_reference.environment_response == 0.0
     assert reference.genome_reference.strain == m.LIBRARY_PARENT
@@ -1095,8 +1093,8 @@ def test_the_dataset_is_registered_under_its_class_name() -> None:
 
 def test_the_dataset_declares_its_schema_classes() -> None:
     dataset = m.EnvChemgenGirgis2009Dataset.__new__(m.EnvChemgenGirgis2009Dataset)
-    assert dataset.experiment_class is BacterialEnvironmentResponseExperiment
-    assert dataset.reference_class is (BacterialEnvironmentResponseExperimentReference)
+    assert dataset.experiment_class is EnvironmentResponseExperiment
+    assert dataset.reference_class is (EnvironmentResponseExperimentReference)
     assert dataset.raw_file_names == [
         m.DATASET_S1,
         m.DATASET_S3,

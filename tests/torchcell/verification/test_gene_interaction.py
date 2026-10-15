@@ -36,6 +36,10 @@ from torchcell.datamodels.schema import (
     SgaKanMxDeletionPerturbation,
     Temperature,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.gene_interaction import (
     GRAPH_LEVEL_OF_ORDER,
     ReleasedComparison,
@@ -110,7 +114,10 @@ def _record(
     reference = GeneInteractionExperimentReference(
         dataset_name="test",
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae",
+            strain="S288C",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=Environment(
             media=SC, temperature=Temperature(value=reference_temperature)

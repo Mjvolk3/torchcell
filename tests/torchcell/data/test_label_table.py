@@ -62,13 +62,22 @@ from torchcell.datamodels.schema import (
     SgaKanMxDeletionPerturbation,
     Temperature,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 POLICY = LabelPolicy(name="kuzmin-first")
 POLICY_ID = "b2f26bb6ef86d11a"
 MEDIA = Media(name="YPD", state="solid", is_synthetic=False)
 AT_30 = Environment(media=MEDIA, temperature=Temperature(value=30.0))
 NO_TEMP = Environment(media=MEDIA)
-GENOME = ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
+GENOME = ReferenceGenome(
+    species="Saccharomyces cerevisiae",
+    strain="S288C",
+    assembly_set=SGD_S288C_R64,
+    assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 
 def _perturbations(genes: dict[str, str | None]) -> Genotype:

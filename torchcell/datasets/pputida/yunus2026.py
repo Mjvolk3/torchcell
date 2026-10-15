@@ -274,13 +274,8 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import M9
 from torchcell.datamodels.schema import (
     BACTERIAL_ASSEMBLY_SETS,
-    AssemblyReferenceGenome,
     BacterialAssemblySet,
     BacterialGeneNamespace,
-    BacterialProteinAbundanceExperiment,
-    BacterialProteinAbundanceExperimentReference,
-    BacterialProteinFoldChangeExperiment,
-    BacterialProteinFoldChangeExperimentReference,
     BacterialReferenceStrain,
     BacterialStrainBackground,
     Concentration,
@@ -300,9 +295,14 @@ from torchcell.datamodels.schema import (
     ProductTiterExperiment,
     ProductTiterExperimentReference,
     ProductTiterPhenotype,
+    ProteinAbundanceExperiment,
+    ProteinAbundanceExperimentReference,
     ProteinAbundancePhenotype,
+    ProteinFoldChangeExperiment,
+    ProteinFoldChangeExperimentReference,
     ProteinFoldChangePhenotype,
     Publication,
+    ReferenceGenome,
     SampleUnit,
     SmallMoleculePerturbation,
     Temperature,
@@ -2314,7 +2314,7 @@ def chassis_background() -> BacterialStrainBackground:
     )
 
 
-def chassis_reference() -> AssemblyReferenceGenome:
+def chassis_reference() -> ReferenceGenome:
     """The assembly-pinned reference genome every record of this paper is written against."""
     return assembly_reference(KT2440_STRAIN, background=chassis_background())
 
@@ -2881,12 +2881,12 @@ class _Yunus2026Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialProteinFoldChangeExperiment
+        return ProteinFoldChangeExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialProteinFoldChangeExperimentReference
+        return ProteinFoldChangeExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -3162,7 +3162,7 @@ class CrispriKnockdownYunus2026Dataset(_Yunus2026Dataset):
                 assignments.append(assignment)
                 value = row.relative_expression
                 assert value is not None  # noqa: S101 - kept rows are numeric by filter
-                experiment = BacterialProteinFoldChangeExperiment(
+                experiment = ProteinFoldChangeExperiment(
                     dataset_name=self.name,
                     genotype=Genotype(
                         perturbations=[
@@ -3174,7 +3174,7 @@ class CrispriKnockdownYunus2026Dataset(_Yunus2026Dataset):
                         {tag: value}, n_replicates=1
                     ),
                 )
-                reference = BacterialProteinFoldChangeExperimentReference(
+                reference = ProteinFoldChangeExperimentReference(
                     dataset_name=self.name,
                     genome_reference=reference_genome,
                     environment_reference=environment.model_copy(),
@@ -3347,13 +3347,13 @@ class CrispriArrayYunus2026Dataset(_Yunus2026Dataset):
                     perturbations.append(
                         crispri_perturbation(tag, common[tag], assignment)
                     )
-                experiment = BacterialProteinFoldChangeExperiment(
+                experiment = ProteinFoldChangeExperiment(
                     dataset_name=self.name,
                     genotype=Genotype(perturbations=perturbations),
                     environment=environment,
                     phenotype=array_phenotype(means, standard_errors, counts),
                 )
-                reference = BacterialProteinFoldChangeExperimentReference(
+                reference = ProteinFoldChangeExperimentReference(
                     dataset_name=self.name,
                     genome_reference=reference_genome,
                     environment_reference=environment.model_copy(),
@@ -3534,7 +3534,7 @@ class CrispriDifferentialProteomeYunus2026Dataset(_Yunus2026Dataset):
         pub = publication()
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
-            experiment = BacterialProteinFoldChangeExperiment(
+            experiment = ProteinFoldChangeExperiment(
                 dataset_name=self.name,
                 genotype=Genotype(
                     perturbations=[
@@ -3544,7 +3544,7 @@ class CrispriDifferentialProteomeYunus2026Dataset(_Yunus2026Dataset):
                 environment=environment,
                 phenotype=differential_phenotype(values, p_values),
             )
-            reference = BacterialProteinFoldChangeExperimentReference(
+            reference = ProteinFoldChangeExperimentReference(
                 dataset_name=self.name,
                 genome_reference=chassis_reference(),
                 environment_reference=environment.model_copy(),
@@ -3873,12 +3873,12 @@ class CrispriPanelProteomeYunus2026Dataset(_Yunus2026BenchlingDataset):
         signal (``PANEL_PROTEOME_MEASUREMENT_TYPE``), so it overrides back to the
         abundance pair rather than inheriting a ratio's classes.
         """
-        return BacterialProteinAbundanceExperiment
+        return ProteinAbundanceExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialProteinAbundanceExperimentReference
+        return ProteinAbundanceExperimentReference
 
     def __init__(
         self,
@@ -3958,7 +3958,7 @@ class CrispriPanelProteomeYunus2026Dataset(_Yunus2026BenchlingDataset):
                     for accession, value in row.abundance.items()
                     if accession in locus_of
                 }
-                experiment = BacterialProteinAbundanceExperiment(
+                experiment = ProteinAbundanceExperiment(
                     dataset_name=self.name,
                     genotype=Genotype(
                         perturbations=[
@@ -3968,7 +3968,7 @@ class CrispriPanelProteomeYunus2026Dataset(_Yunus2026BenchlingDataset):
                     environment=environment,
                     phenotype=panel_proteome_phenotype(values),
                 )
-                reference = BacterialProteinAbundanceExperimentReference(
+                reference = ProteinAbundanceExperimentReference(
                     dataset_name=self.name,
                     genome_reference=reference_genome,
                     environment_reference=environment.model_copy(),

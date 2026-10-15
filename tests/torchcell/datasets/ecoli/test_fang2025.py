@@ -66,12 +66,12 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
 from torchcell.datamodels.media import M9_MODIFIED_FANG2025
 from torchcell.datamodels.schema import (
     AssayType,
-    AssemblyReferenceGenome,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     ConcentrationUnit,
     CrisprInterferencePerturbation,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     MeasurementType,
+    ReferenceGenome,
     SampleUnit,
     SmallMoleculePerturbation,
 )
@@ -181,7 +181,7 @@ N_SYNTHETIC_RECORDS = ROUND_1.kept_records + ROUND_2.kept_records
 N_SYNTHETIC_PERTURBATIONS = 15
 N_SYNTHETIC_GENES = 6
 
-REFERENCE = AssemblyReferenceGenome(
+REFERENCE = ReferenceGenome(
     species="Escherichia coli",
     strain="MG1655",
     assembly_set="ecoli_K12_MG1655_ASM584v2",
@@ -574,10 +574,8 @@ def test_build_validates_every_record_against_the_schema_classes(
     built: m.CrispriGuideFfaEnrichmentFang2025Dataset,
 ) -> None:
     for record in _records(built):
-        experiment = BacterialEnvironmentResponseExperiment.model_validate(
-            record["experiment"]
-        )
-        reference = BacterialEnvironmentResponseExperimentReference.model_validate(
+        experiment = EnvironmentResponseExperiment.model_validate(record["experiment"])
+        reference = EnvironmentResponseExperimentReference.model_validate(
             record["reference"]
         )
         assert experiment.phenotype.measurement_type is MeasurementType.log2_ratio
@@ -783,8 +781,8 @@ def test_dataset_exposes_its_schema_classes() -> None:
     dataset = m.CrispriGuideFfaEnrichmentFang2025Dataset.__new__(
         m.CrispriGuideFfaEnrichmentFang2025Dataset
     )
-    assert dataset.experiment_class is BacterialEnvironmentResponseExperiment
-    assert dataset.reference_class is BacterialEnvironmentResponseExperimentReference
+    assert dataset.experiment_class is EnvironmentResponseExperiment
+    assert dataset.reference_class is EnvironmentResponseExperimentReference
     with pytest.raises(NotImplementedError, match="builds records in process"):
         dataset.create_experiment()
     assert dataset.preprocess_raw("frame") == "frame"

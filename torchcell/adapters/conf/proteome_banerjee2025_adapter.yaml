@@ -1,4 +1,4 @@
-# Banerjee 2025 proteome: 6 samples, BacterialProteinAbundanceExperiment.
+# Banerjee 2025 proteome: 6 samples, ProteinAbundanceExperiment.
 # Four of the six records carry one bacterial perturbation each (two promoter
 # replacements on PP_0897 and two PP_0897 deletions); the two parental records carry
 # none, and all four strains share the D1b_gf background on the reference genome. The

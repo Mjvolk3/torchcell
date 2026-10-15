@@ -1,0 +1,167 @@
+{
+  "record_version": 1,
+  "slug": "curated-reference-pubmed-id-on-gene-essentiality-evidence",
+  "date": "2026-10-15",
+  "pr": 1125,
+  "author_kind": "agent",
+  "base_commit": "9aafb98f27cc4e243e84442f58c0a38b88cffe44",
+  "python_version": "3.13.0",
+  "symbols": [
+    {
+      "symbol": "ESSENTIALITY_EVIDENCE_FIELDS",
+      "status": "modified",
+      "kinds": [
+        "rename",
+        "enum_member_added"
+      ],
+      "fingerprint_before": "46f7aabc35bb421e049c252328841c6ce9562d15eb59f83e69d4f4535dbd3f0b",
+      "fingerprint_after": "c443e86943822ec86e0e4f601345273a980fe45c4aa0b245b1667bb7a19815d9",
+      "impact": "breaking",
+      "reasons": [
+        "lost members [\"EssentialityEvidenceType.curated_null_phenotype: ('curated_experiment_type',)\"]",
+        "gained members [\"EssentialityEvidenceType.curated_null_phenotype: ('curated_experiment_type', 'curated_reference_pubmed_id')\"]"
+      ]
+    },
+    {
+      "symbol": "GeneEssentialityEvidence",
+      "status": "modified",
+      "kinds": [
+        "additive_field"
+      ],
+      "fingerprint_before": "0f476edf728c445267144fca7a2242fcd617d692ad86e86063c3d7b59e002446",
+      "fingerprint_after": "f0d1ac5ce7b1b3c0ba8ba76d6177fe94d56638acd766f02744095f2a26d56334",
+      "impact": "stale",
+      "reasons": [
+        "added optional field 'curated_reference_pubmed_id'"
+      ]
+    }
+  ],
+  "correctness_argument": "Lane V of the ontology unification (Path U, 2026-10-15), closing the second of the four content-id collisions lane Q measured. GeneEssentialityEvidence gains curated_reference_pubmed_id: str | None (default None), the PubMed id of the reference a curated annotation was curated from, and ESSENTIALITY_EVIDENCE_FIELDS lists it under curated_null_phenotype so it is refused on every other evidence type, as every other per-record statistic of that map is.\n\nTHE DEFECT, MEASURED. gene_essentiality_sgd is served in KG 3.0. Its 1,329 records (SGD per-gene dump pinned at 1cb4ed59556b1534e28eb79ad21135cdb5a149f78dca8df4924f473e39eef409) dump to 1,311 distinct Experiment ids: 17 groups collide, 16 of two records and 1 of three, so 18 curated annotations are in the LMDB and absent from the served graph. The adapter's Experiment node id is sha256(json.dumps(experiment.model_dump())) and FastCsvSink deduplicates node ids, so the second record of a group is silently dropped and no error is raised anywhere. Every colliding group is one gene, one allele and one condition annotated from two or three DIFFERENT papers: YOR370C (MRS6, mrs6-delta) from PubMed 7750142, 8132658 and 7882424; YDL058W, YDL092W, YDR177W, YDR292C, YFR051C, YIL118W, YKL122C, YKL154W, YML025C, YOR122C, YOR281C, YPL210C and YPL243W from Giaever's 12140549 and Dowell's 20413493; YDR328C from 8670864 and 8706132; YJL011C from 10407272 and 10611227; YJR065C from 9301024 and 8840501, whose two annotations also differ in their note. Measured over the pinned dump: the number of distinct PubMed ids equals the number of annotations in all 17 groups, so none of them is one annotation stored twice.\n\nWHY THE REFERENCE IS THE RIGHT FIELD. SGD states that the reference is part of an annotation, which is what the evidence descriptor records: 'The phenotype annotations for an allele include an observable feature ..., a qualifier ..., a mutant type (e.g., null), strain background, and a reference' (Engel 2022, the pinned OCR this loader already quotes for its scoring rule and call definition). A curation database makes no measurement of its own, so what a curated_null_phenotype call RESTS ON is one annotation of one report, and the report is a constituent of the evidence rather than metadata beside it. The PubMed id was already on the record, on its Publication, which the Experiment dump does not carry: the graph kept two or three Publication nodes all pointing with a 'mentions' edge at ONE Experiment node, which is also a false assertion about the data, not only a lost record.\n\nWHY IT IS SUFFICIENT, PROVED AND NOT ASSUMED. The loader already refuses a build in which two annotations share (gene, allele, conditions, PubMed id) (refuse_duplicate_annotations, DuplicateSgdAnnotationError). With the PubMed id in the dump, that key is a SUBSET of what the experiment dumps (gene, allele, the condition's environment, the SGD experiment type, the PubMed id), so a build that passes the refusal has one content id per record by construction, not by luck. Measured on the pinned dump with the field in place: 1,329 annotations, 1,329 distinct dumps, 0 lost.\n\nIMPACT. The field is optional by construction (None on a reference phenotype, where no call was curated) and additive, but it moves the dump of every record carrying a GeneEssentialityEvidence, so the content ids of the essentiality closure change and the rebuild is full. That cost does not decide anything here (constitution principle 8): the records this restores are released measurements, and principle 2 says the data is the data. Every served dataset in the closure was already re-keyed by P1 on this branch.\n\nTHE ESSENTIALITY_EVIDENCE_FIELDS CLAIM, AND WHY IT IS LABELED 'rename'. Nothing is removed from or renamed in that map. Its key curated_null_phenotype is present before and after, and its old entry curated_experiment_type is still the first name in its tuple; the tuple GREW by one name. schema_impact renders a dict binding's members as 'key: value' strings, so a grown tuple reads as one member lost and one gained, and of the kinds admissible for 'lost members' (enum_member_removed, removal, rename) 'rename' is the only one that is not false: the same entry under a longer value. No stored record stops validating, because the map only decides which optional field each evidence type may carry and this edit admits one more name under one type.",
+  "measurement_type_decision": false,
+  "source_quotes": [
+    {
+      "value": "an annotation includes a reference",
+      "provenance": {
+        "source_uri": "paper.md",
+        "citation_key": "engelNewDataCollaborations2022",
+        "sha256": "ef55aeb36bb3d86d1dcff9f5a053ca4e6c11812b6a4bf8a465196c2d28877152",
+        "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+        "page": "New allele pages",
+        "retrieved": null
+      },
+      "quote": "The phenotype annotations for an allele include an observable feature (e.g., \u201ccell shape\u201d), a qualifier (e.g., \u201cabnormal\u201d), a mutant type (e.g., null), strain background, and a reference.",
+      "note": "SGD's own statement that the reference is one of the fields of a phenotype annotation, which is why it belongs on the evidence of a curated call and not only on the record's Publication"
+    }
+  ],
+  "alternatives_rejected": [
+    {
+      "alternative": "Carry SGD's own annotation id (the dump's phenotype_details[].id, 7625013, 7690818, ...) as the discriminator.",
+      "why_rejected": "It is released and it is unique in every colliding group, but it is a curation row identifier rather than a fact about the measurement: it changes when SGD re-curates an unchanged annotation, which would re-key the record for no change in the data, and it asserts nothing about why the two records are two. The reference says why."
+    },
+    {
+      "alternative": "Carry the annotation's note, which the dump releases per annotation.",
+      "why_rejected": "Measured: the note is identical in 16 of the 17 colliding groups (both YOR122C annotations carry None), so it does not resolve the collision at all. It differs only for YJR065C."
+    },
+    {
+      "alternative": "Hash the Publication into the Experiment node id in the adapter instead of putting the reference on the record.",
+      "why_rejected": "It would change the identity of every Experiment node of every dataset to fix one dataset's loader, and it would make a record's identity depend on a sibling object the Experiment does not contain. The defect is that the record did not state the fact; the fix belongs where the fact is stated."
+    },
+    {
+      "alternative": "Add the field to GeneEssentialityPhenotype rather than to GeneEssentialityEvidence.",
+      "why_rejected": "The phenotype carries the call (is_essential); the evidence carries what the call IS, including the two-level evidence type, the source's own statements and the per-record statistics of that type. The reference a curated call was read from is of that second kind, and ESSENTIALITY_EVIDENCE_FIELDS then refuses it on the five measured evidence types, which a phenotype field could not do."
+    },
+    {
+      "alternative": "Drop one annotation of each group, so the store matches the graph.",
+      "why_rejected": "Constitution principle 2: the only drop is a sample the authors themselves withdrew, quoted. SGD withdrew none of these; it curated each from its own paper."
+    }
+  ],
+  "served_release": "2026.10.06-4b293d34",
+  "affected_loaders": [
+    {
+      "loader": "torchcell/datasets/ecoli/baba2006.py",
+      "dataset_classes": [
+        "GeneEssentialityBaba2006Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ESSENTIALITY_EVIDENCE_FIELDS",
+        "GeneEssentialityEvidence"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/gerdes2003.py",
+      "dataset_classes": [
+        "GeneEssentialityGerdes2003Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ESSENTIALITY_EVIDENCE_FIELDS",
+        "GeneEssentialityEvidence"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/goodall2018.py",
+      "dataset_classes": [
+        "GeneEssentialityGoodall2018Dataset",
+        "GradedGeneEssentialityGoodall2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ESSENTIALITY_EVIDENCE_FIELDS",
+        "GeneEssentialityEvidence"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/price2018.py",
+      "dataset_classes": [
+        "RbTnseqPrice2018EcoliDataset",
+        "GeneEssentialityPrice2018EcoliDataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ESSENTIALITY_EVIDENCE_FIELDS",
+        "GeneEssentialityEvidence"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/royet2025.py",
+      "dataset_classes": [
+        "EnvMetalTnseqRoyet2025Dataset",
+        "GradedGeneEssentialityRoyet2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ESSENTIALITY_EVIDENCE_FIELDS",
+        "GeneEssentialityEvidence"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/sgd.py",
+      "dataset_classes": [
+        "GeneEssentialitySgdDataset"
+      ],
+      "served_classes": [
+        "GeneEssentialitySgdDataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ESSENTIALITY_EVIDENCE_FIELDS",
+        "GeneEssentialityEvidence"
+      ]
+    }
+  ],
+  "served_datasets": [
+    "GeneEssentialitySgdDataset"
+  ],
+  "rebuild_scope": "full_kg_rebuild",
+  "owner_sign_off": {
+    "signed": true,
+    "quote": "Owner, 2026-10-15, the standing ruling this program runs under, quoted in notes/database.constitution.md principle 8: 'we care most about correctness and are willing right now to do full rebuilds if we identify even small semantically prudent change in onto'; and principle 2, Owner, 2026-10-12: 'the data is the data!!!! it is what they reported ... we don't drop raw data unless they themselves pull it!'. This record carries no actual rename or removal (see the ESSENTIALITY_EVIDENCE_FIELDS paragraph of the correctness argument); the kind is the tool's coarsest admissible label for a per-type field tuple that gained one name. The draft PR flags this for explicit confirmation before the landing.",
+    "url": null
+  }
+}

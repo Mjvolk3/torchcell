@@ -45,6 +45,17 @@ One record per SGD annotation with ``mutant_type`` "null", strain "S288C" and ph
   per record the annotation's SGD experiment type verbatim (1,121 "systematic mutation
   set", 166 "classical genetics" of the 1,287 stored in the pinned dump). The mirrored
   SGD literature does not define the "inviable" term itself.
+- **The annotation's reference is on the evidence (lane V, 2026-10-15).** SGD curates
+  one gene's inviable null phenotype from more than one paper: 17 (gene, allele,
+  condition) groups of the pinned dump carry two or three annotations with different
+  ``pubmed_id`` (MRS6 from 7750142, 8132658 and 7882424; USO1, SRP14, UBC1 and 11
+  others from Giaever's 12140549 and Dowell's 20413493). The PubMed id was only on the
+  record's ``Publication``, which the ``Experiment`` dump does not include, so those 35
+  annotations dumped to 17 experiments and the graph held one ``Experiment`` node per
+  group with two or three ``Publication`` nodes pointing at it: 18 curated annotations
+  were in the LMDB and absent from the served graph. ``GeneEssentialityEvidence.
+  curated_reference_pubmed_id`` carries it, because what a curated call rests on is one
+  annotation of one report, and that is part of what the call IS.
 """
 
 import hashlib
@@ -195,15 +206,24 @@ EVIDENCE_STATEMENTS: tuple[EssentialityStatement, ...] = (
 )
 
 
-def sgd_evidence(experiment_type: str | None = None) -> GeneEssentialityEvidence:
+def sgd_evidence(
+    experiment_type: str | None = None, pubmed_id: str | None = None
+) -> GeneEssentialityEvidence:
     """The curated-annotation evidence (#924), with the annotation's SGD experiment
-    type when given; the reference (None) carries the rule and definition only.
+    type and the PubMed id of the reference it was curated from when given; the
+    reference (both ``None``) carries the rule and definition only.
+
+    The PubMed id is on the evidence because a curated call rests on one report and
+    which report it is is part of what the call IS: 17 (gene, allele, condition) groups
+    of the pinned dump are curated from two or three different papers each, and without
+    it those 35 annotations dumped to 17 experiments (lane V, 2026-10-15).
     """
     return GeneEssentialityEvidence(
         evidence_class=EssentialityEvidenceClass.curated_annotation,
         evidence_type=EssentialityEvidenceType.curated_null_phenotype,
         statements=list(EVIDENCE_STATEMENTS),
         curated_experiment_type=experiment_type,
+        curated_reference_pubmed_id=pubmed_id,
     )
 
 
@@ -528,7 +548,14 @@ def split_by_allele(
 
 
 def refuse_duplicate_annotations(annotations: Iterable[SgdAnnotation]) -> None:
-    """Raise when two annotations share gene, allele, condition and PubMed id."""
+    """Raise when two annotations share gene, allele, condition and PubMed id.
+
+    Since the evidence carries ``curated_reference_pubmed_id`` this key is a subset of
+    what the stored experiment dumps, so a build that passes here has one content id
+    per record: the dump holds the gene, the allele, the condition's environment, the
+    SGD experiment type and the PubMed id, and no two annotations agree on all five.
+    Measured on the pinned dump: 1,329 annotations, 1,329 distinct dumps (lane V).
+    """
     keys = Counter(
         (a.systematic_name, a.allele, a.conditions, a.pubmed_id) for a in annotations
     )
@@ -755,7 +782,8 @@ class GeneEssentialitySgdDataset(ExperimentDataset):
         genotype = Genotype(perturbations=[sgd_perturbation(annotation)])
 
         phenotype = GeneEssentialityPhenotype(
-            is_essential=True, evidence=sgd_evidence(annotation.experiment)
+            is_essential=True,
+            evidence=sgd_evidence(annotation.experiment, annotation.pubmed_id),
         )
         phenotype_reference = GeneEssentialityPhenotype(
             is_essential=False, evidence=sgd_evidence()

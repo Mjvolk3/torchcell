@@ -296,7 +296,7 @@ def test_len_data_csv_and_side_files(
         "YOR202W-NOT",
     ]
     manifest = json.loads((pre / "build_manifest.json").read_text())
-    assert manifest["manifest_schema_version"] == 2
+    assert manifest["manifest_schema_version"] == 3
     assert manifest["dataset_name"] == "proteome_messner2023"
     assert manifest["loader_class"] == "ProteomeMessner2023Dataset"
     assert manifest["loader_module"] == "torchcell.datasets.scerevisiae.messner2023"

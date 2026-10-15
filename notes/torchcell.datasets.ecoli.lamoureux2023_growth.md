@@ -267,3 +267,56 @@ Rebuilt because the Lamoureux environment builder it shares changed.
 This store is derived from PRECISE-1K (`lamoureuxMultiscaleExpressionRegulation2023`). Data collected from a compendium, a database aggregate or a follow-up study may embed that source's preprocessing (normalization, filtering, re-keying, merged conditions) and may lack ontological representation the primary release carries (per-sample metadata, replicate structure, the released statistic). Its records are a derived copy, and the primary release is still to be collected from source ([[torchcell.knowledge_graphs.dataset-admission-loop]], 2026.10.13).
 
 What it may hide here: the `Growth Rate (1/hr)` column is compendium metadata, curated across many studies, not a released measurement table; how each rate was fit, from how many replicates, and what the 16 zero rates mean are the source studies' to state. The source studies' own growth measurements are the source to collect.
+
+## 2026.10.15 - replicate_id is the released sample_id, and 14 records come back (lane V)
+
+Lane Q's content-id scan ([[experiments.database.scripts.content_id_collision_scan]])
+found 13 groups and 14 records of this store sharing an `Experiment` content id: 354
+records, 340 distinct dumps. The adapter's `Experiment` node id is the sha256 of the
+experiment dump and the CSV sink deduplicates node ids, so a graph built from this store
+would hold 340 nodes for 354 released measurements. The store is not in KG 3.0 (the
+bacterial datasets are not served yet), so nothing served was short; it would have been
+in 4.0.
+
+Every group is two or three DIFFERENT adaptive-laboratory-evolution isolates of one
+project whose released rates coincide: `glu:glu_ale3`, `glu:glu_ale5` and `glu:glu_ale9`
+all release 1.01 1/hr; `42c:42c_ale1` and `42c:42c_ale8` both 0.95; `fps:fps_serB_ale1`
+and `fps:fps_serB_ale4` both 0.5 at `rep_id` 1 and again at 2;
+`pdhr_ale:pdhR-13_51` and `pdhr_ale:pdhR-14_46` both 0.9. An isolate's strain rides on
+the `StrainReferenceGenome` background rather than on the experiment, and an evolved
+isolate carries no deletion and no released allele, so all the members of a group dumped
+as the same empty MG1655 genotype in the same environment with the same `screen_id` (the
+project) and the same `rep_id`.
+
+The released fact that tells them apart is PRECISE-1K's own name for the sequenced
+sample, the `sample_id` cell, and `EnvironmentResponsePhenotype.replicate_id` is defined
+as "the source's own identifier for ONE replicate measurement of a (strain, condition)
+... It joins the L1 uniqueness key, so independently released replicate curves stay
+distinct records instead of colliding as duplicates". The bare `rep_id` the loader used
+to store there does not satisfy that definition: it has 6 distinct values over the 354
+rows, so it is a counter within a condition and not an identifier of a measurement. The
+field now carries `sample_id`, which has 354 distinct values over the 354 stored rows and
+1,035 over the release's 1,035. This is a LOADER change only; no schema symbol moves.
+
+Nothing released is dropped by the change, measured: `sample_id` equals
+`<project>__<condition>__<rep_id>` for all 354 stored rows, 0 exceptions, so the field
+carries the project, the condition and the replicate where it carried the replicate
+alone, all from one released cell verbatim. `REFERENCE_REPLICATE_GAP` now looks in
+`sample_id` instead of `rep_id`, since the reference aggregates the rates of eight
+samples and no one `sample_id` names it. The build refuses a release whose `sample_id`
+repeats over the stored rows, naming the repeated id.
+
+Not fixed here, and stated rather than implied: the experiment still does not say which
+strain was measured. An evolved isolate's identity is on the reference's
+`BacterialStrainBackground`, so the `Experiment` node of a 42 C isolate asserts
+wild-type MG1655 in that environment. Carrying the background on the experiment is the
+shared-background work (P5 of the unification plan), not this lane's.
+
+Regression tests in `tests/torchcell/datasets/ecoli/test_lamoureux2023_growth.py`:
+`test_two_evolved_isolates_with_one_released_rate_are_two_records` builds the release's
+own shape (two ALE isolates of project `glu` at 1.01 1/hr, different Strain
+Descriptions) through `read_rate_rows`, `environments_of`, `genotype_of` and `phenotype`,
+and asserts the two digests differ, that the two dumps differ in `replicate_id` alone,
+and that the sample id is therefore the whole difference; it failed on
+`assert digests[0] != digests[1]` before the change.
+`test_a_release_whose_sample_id_repeats_refuses_the_build` is the guard.

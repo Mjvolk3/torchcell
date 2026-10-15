@@ -42,6 +42,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
 from typing import Any, cast
 
@@ -848,3 +849,90 @@ def test_deposit_copies_the_three_files_and_writes_the_manifest(
     assert again == expected(checked=False).model_copy(
         update={"created_at": again.created_at}
     )
+
+
+# --------------------------------------------------------------------------- #
+# 2026.10.15 (lane V): the acetic and butyric RNR4 pairs are one measurement each
+# --------------------------------------------------------------------------- #
+def test_the_two_released_rnr4_rows_are_one_measurement_printed_twice(
+    built: m.EnvChemgenMota2024Dataset,
+) -> None:
+    """Both RNR4 rows of one table dump to ONE ``Experiment`` content id, and that is
+    correct rather than a defect to repair.
+
+    Nothing in the release tells the two rows apart: measured on the pinned sheets, the
+    pair in Table S1 (sheet rows 186 and 187) and the pair in Table S2 (216 and 217) are
+    EQUAL in every released column but the gene-name cell, which differs by a trailing
+    non-breaking space that 19, 21 and 23 rows of the three sheets carry as formatting
+    noise. So the store holds both released rows -- a released row is stored as released
+    and the authors withdrew nothing -- and the graph holds one node for the pair,
+    because there is one measurement. The count is DECLARED, which is what keeps it
+    distinguishable from the silent record loss of the other three colliding datasets:
+    ``EXPECTED_CONTENT_ID_COLLISIONS`` admits exactly 2 for this dataset and the rebuild
+    preflight refuses any other number. No positional index or sheet row is invented to
+    make two nodes out of one measurement.
+    """
+    from torchcell.database.build_dataset_lmdb import EXPECTED_CONTENT_ID_COLLISIONS
+
+    dumps = [built[i]["experiment"] for i in range(len(built))]
+    rnr4 = [
+        dump
+        for dump in dumps
+        if [p["systematic_gene_name"] for p in dump["genotype"]["perturbations"]]
+        == ["RNR4"]
+    ]
+    assert len(rnr4) == 2
+    digests = [
+        hashlib.sha256(json.dumps(dump).encode("utf-8")).hexdigest() for dump in rnr4
+    ]
+    assert digests[0] == digests[1]
+    assert rnr4[0] == rnr4[1]
+    assert len({hashlib.sha256(json.dumps(d).encode()).hexdigest() for d in dumps}) == (
+        len(built) - 1
+    )
+    assert EXPECTED_CONTENT_ID_COLLISIONS["EnvChemgenMota2024Dataset"] == 2
+
+
+@pytest.mark.data
+def test_the_released_rnr4_rows_differ_only_in_a_non_breaking_space() -> None:
+    """The pinned sheets' own bytes, which is where the finding above comes from.
+
+    Table S1 and Table S2 each list RNR4 on two ADJACENT rows that are equal in the
+    protein-function cell, the grade cell and the three trailing columns, and differ
+    only in the trailing non-breaking space of the name. Table S3's two rows release
+    different grades (``+`` and ``++``), so they are two released values and two
+    records, and they never shared a content id.
+    """
+    data_root = os.environ.get("DATA_ROOT")
+    if data_root is None:
+        pytest.skip("DATA_ROOT is not set")
+    mirror = Path(data_root, m.RAW_MIRROR_REL)
+    expected_differing_columns = {"acetic": [0], "butyric": [0], "octanoic": [0, 2]}
+    for spec in m._ACID_SPECS:
+        path = mirror / m._raw_relpath(spec)
+        if not path.is_file():
+            pytest.skip(f"{path} is not mirrored")
+        sheet = openpyxl.load_workbook(path, read_only=True).worksheets[0]
+        rows = list(sheet.iter_rows(values_only=True))
+        header = next(
+            i for i, row in enumerate(rows) if row and row[0] == "Gene/ORF name"
+        )
+        pair = [
+            row
+            for row in rows[header + 1 :]
+            if row
+            and row[0] is not None
+            and row[2] is not None
+            and str(row[0]).replace("\xa0", " ").strip() == "RNR4"
+        ]
+        assert len(pair) == 2, spec["acid"]
+        first, second = pair
+        differing = [i for i in range(len(first)) if first[i] != second[i]]
+        assert differing == expected_differing_columns[spec["acid"]], spec["acid"]
+        assert {str(first[0]), str(second[0])} == {"RNR4", "RNR4\xa0"}
+        nbsp = sum(
+            1
+            for row in rows[header + 1 :]
+            if row and row[0] is not None and "\xa0" in str(row[0])
+        )
+        assert nbsp > 2, f"{spec['acid']}: {nbsp} rows carry a non-breaking space"

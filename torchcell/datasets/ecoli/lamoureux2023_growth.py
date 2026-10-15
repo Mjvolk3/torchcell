@@ -61,6 +61,24 @@ declared environment and the same wild-type genotype measured in two different p
 which repeat ``rep_id`` 1 and 2. This is Caglar 2017's use of ``screen_id``: the source's
 own run label, not a synthesized encoding of a factor the schema cannot hold.
 
+``replicate_id`` IS THE RELEASED ``sample_id``, NOT THE BARE ``rep_id`` (lane V,
+2026-10-15). At 354 records the ``rep_id`` form stopped identifying a measurement: 13
+groups of records, 14 records in all, dumped to a shared ``Experiment`` content id, so
+the graph held one node for two or three measurements. Every group is two or three
+DIFFERENT adaptive-laboratory-evolution isolates of one project whose released rates
+coincide -- ``glu:glu_ale3``, ``glu:glu_ale5`` and ``glu:glu_ale9`` all release 1.01
+h^-1 -- and an evolved isolate's strain rides on the ``StrainReferenceGenome``
+background and not on the experiment, so the three dumped as the same wild-type MG1655
+genotype in the same environment with the same ``screen_id`` (``glu``) and the same
+``rep_id`` (``1``). The released fact that tells them apart is PRECISE-1K's own name
+for the sequenced sample, the ``sample_id`` cell, and ``replicate_id`` is defined as the
+source's own identifier for one released measurement of a (strain, condition), which
+``rep_id`` is not: 6 distinct values over the 354 rows against 354 for ``sample_id``.
+Nothing is dropped by the change, measured: ``sample_id`` equals
+``<project>__<condition>__<rep_id>`` for all 354 stored rows, 0 exceptions, so the field
+now carries the project, the condition and the replicate where it carried the replicate
+alone. The build refuses a release whose ``sample_id`` repeats over the stored rows.
+
 WHAT IS A TYPED GAP, AND WHY EACH ONE IS. The release ties the rate to a library row and
 never states the design behind it, so nothing about that design is asserted:
 
@@ -253,9 +271,9 @@ REFERENCE_SCREEN_GAP = ProvenanceGap(
 REFERENCE_REPLICATE_GAP = ProvenanceGap(
     field="replicate_id",
     reason=ProvenanceGapReason.not_reported_by_primary,
-    looked_in=lm.metadata_provenance(lm.COL_REP),
-    note="the reference aggregates several released replicates, so no one rep_id "
-    "names it",
+    looked_in=lm.metadata_provenance(lm.COL_SAMPLE),
+    note="the reference aggregates the released rates of eight samples, so no one "
+    "sample_id names it",
 )
 REFERENCE_GAPS: tuple[ProvenanceGap, ...] = (
     *RECORD_GAPS,
@@ -501,13 +519,23 @@ def base_aggregate(
 # Records
 # --------------------------------------------------------------------------- #
 def phenotype(row: RateRow) -> EnvironmentResponsePhenotype:
-    """One released sample's absolute growth rate, with its five typed gaps."""
+    """One released sample's absolute growth rate, with its five typed gaps.
+
+    ``replicate_id`` is the release's own ``sample_id`` cell, verbatim, not the bare
+    ``rep_id`` counter it used to be: the field is defined as the source's own
+    identifier for ONE released measurement of a (strain, condition), and ``rep_id``
+    does not identify one (6 distinct values over 354 rows), while ``sample_id`` does
+    (1,035 distinct over the release's 1,035 rows). Nothing released is dropped by the
+    change, measured: ``sample_id`` equals ``<project>__<condition>__<rep_id>`` for all
+    354 stored rows, 0 exceptions, so it carries the project, the condition and the
+    replicate where it used to carry the replicate alone (lane V, 2026-10-15).
+    """
     return EnvironmentResponsePhenotype(
         measurement_type=MeasurementType.growth_rate,
         environment_response=row.rate,
         units=UNITS,
         screen_id=row.project,
-        replicate_id=row.rep_id,
+        replicate_id=row.sample_name,
         provenance_gaps=list(RECORD_GAPS),
     )
 
@@ -615,6 +643,14 @@ class GrowthRateLamoureux2023Dataset(ExperimentDataset):
         if len(rows) != EXPECTED_RECORDS:
             raise RuntimeError(
                 f"{len(rows)} records, the module declares {EXPECTED_RECORDS}"
+            )
+        sample_ids = [row.sample_name for row in rows]
+        if len(set(sample_ids)) != len(sample_ids):
+            repeated = sorted({s for s in sample_ids if sample_ids.count(s) > 1})
+            raise RuntimeError(
+                f"the released {lm.COL_SAMPLE} repeats over the stored rows "
+                f"({repeated}); it is what each record's replicate_id carries and what "
+                "tells two samples of one condition apart"
             )
         if min(row.rate for row in rows) != MIN_RATE or (
             max(row.rate for row in rows) != MAX_RATE

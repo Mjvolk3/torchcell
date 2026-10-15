@@ -24,3 +24,40 @@ Run read-only on the shared dev tree (`--data-root /scratch/projects/torchcell-s
 Three of the four are pre-existing on `main` (the shared tree is main-built) and three are served in KG 3.0, so the served graph is already short 18 SGD essentiality annotations, 2 Mota rows and 31 Ozaydin measurements. The class of defect is one: the record does not carry the released fact that distinguishes two measurements, and the content id makes them one node. The discriminator differs per source (a collection position, an annotation's reference, a duplicated released row, a sample id), so each is its own loader decision under "the data is the data": Ozaydin's is landed here; the other three are not changed by lane Q and are reported for the owner. Every other scanned store has 0 collision groups.
 
 Totals of the finished run: 176 stores scanned, 30,543,838 records hashed, 4 stores with a collision (63 collision groups, 65 records in a store and not in its graph), 172 stores with none, Hale 2024's 8,692,635 segregant records among them (0 groups, 1,424 s). Skipped by stated reason: the three stores over 40 GB and the two `showcase_*` query dumps.
+
+## 2026.10.15 - The three stores lane Q skipped, scanned under slurm: all three lose nothing (lane V)
+
+Lane Q's run left the three largest dev stores unscanned with the size as the stated
+reason (`--skip-larger-than-gb 40`). They are the three biggest datasets in the graph, so
+an unmeasured collision in them could have dwarfed everything found; this is that
+measurement. `experiments/database/scripts/content_id_collision_scan.slurm` runs the same
+scanner on ONE store per job (16 CPU, 64 G, 8 h, `--workers 1`), read-only on the shared
+dev tree, writing a per-store result JSON so two jobs never write one file. Hoepfner and
+Costanzo dmf ran together; dmi ran after Hoepfner with `--dependency=afterany`, which is
+the at-most-two-at-once the shared node allows.
+
+| store | records | distinct | collision groups | records lost in the graph | wall | max RSS | job |
+|---|---|---|---|---|---|---|---|
+| `dmf_costanzo2016` | 20,705,612 | 20,705,612 | 0 | **0** | 1,792 s | 67.1 GB | 4983 |
+| `dmi_costanzo2016` | 20,705,612 | 20,705,612 | 0 | **0** | 1,864 s | 67.0 GB | 4984 |
+| `env_chemgen_hoepfner2014` | 30,308,574 | 30,308,574 | 0 | **0** | 4,115 s | 67.2 GB | 4982 |
+
+**The three largest datasets lose nothing.** Every record of each store has its own
+`Experiment` content id, so the collisions are confined to the four stores lane Q named
+and the dev tree is now measured end to end: 179 stores and
+102,263,636 records hashed across the two runs
+(30,543,838 in lane Q's 176, 71,719,798 here).
+
+The scanner was left as lane Q wrote it, with no streaming rewrite, because the
+reservation was enough and that is measured rather than assumed: `/usr/bin/time -v`
+reports a maximum resident set of 67.1 GB, 67.0 GB and 67.2 GB against the 64 GiB
+(67.11 GB) reservation, with no OOM kill on any of the three. The number sits at the
+cgroup's limit because most of it is the LMDB mmap's page cache, which the kernel
+reclaims under pressure rather than OOM-killing for; the Python heap is the digest dict,
+about 4.5 GB for Hoepfner's 30.3 M records. The build-manifest walk that now measures the
+same number on every store ([[torchcell.provenance.build_manifest]]) does use a bounded
+form, because it runs inside every dataset build rather than in a job sized for it.
+
+Throughput, for sizing a later run: 11,556 records/s for Costanzo dmf (1,791.7 s),
+11,108 for dmi (1,864.1 s) and 7,365 for Hoepfner (4,114.9 s), the last two slowed by
+sharing the NVMe with the other scan for part of their run.

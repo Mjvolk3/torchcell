@@ -60,6 +60,13 @@ a silent ``True`` that reads like a pass.
 build manifest and checks every leaf against the node lanes the dataset's adapter conf
 enables (``torchcell.knowledge_graphs.perturbation_lanes``), so a store whose records
 carry a leaf no enabled lane emits is refused before generation starts.
+
+:func:`mapped_store_collisions` is the third walk (lane V, 2026-10-15): it reads
+``content_id_collisions`` off the same manifests and refuses a store whose records
+share an ``Experiment`` content id with each other beyond what the dataset declares in
+:data:`EXPECTED_CONTENT_ID_COLLISIONS`. The sink keeps one node per id, so such a record
+is in the LMDB and absent from the graph with no error anywhere; four served datasets
+and 65 records were in that state when lane Q first asked.
 """
 
 from __future__ import annotations
@@ -250,6 +257,112 @@ def mapped_store_lanes(
         statuses.append(
             StoreLaneStatus(
                 dataset_class=cls.__name__, root=root, has_leaves=True, gaps=gaps
+            )
+        )
+    return statuses
+
+
+#: The records each dataset's SOURCE released more than once, byte-identically, so that
+#: two stored records dump to one ``Experiment`` content id and the graph holds one node.
+#: The number is ``n_records_lost`` of the store's manifest, and a dataset is in this
+#: table only with the released evidence written down in its loader module: a value here
+#: says "the source printed one measurement twice", never "we accept losing a record".
+#: Everything absent declares 0, and :func:`mapped_store_collisions` refuses the rebuild
+#: of any store whose measured count is not the declared one.
+EXPECTED_CONTENT_ID_COLLISIONS: dict[str, int] = {
+    # Mota 2024 lists RNR4 twice in Table S1 and twice in Table S2. Measured cell by
+    # cell (lane V, 2026-10-15): the two rows of each pair are EQUAL in every released
+    # column but the gene-name cell, which differs by a trailing non-breaking space that
+    # 19, 21 and 23 rows of the three sheets carry as formatting noise. One measurement
+    # printed twice, so the store keeps both released rows and the graph holds one node
+    # for each pair. Table S3's two RNR4 rows release different grades (+ and ++) and
+    # are two records; they never collided.
+    "EnvChemgenMota2024Dataset": 2
+}
+
+
+class StoreCollisionStatus(BaseModel):
+    """One mapped store's measured content-id collisions against its declaration."""
+
+    model_config = ConfigDict(frozen=True)
+
+    dataset_class: str
+    root: str
+    has_count: bool  # the manifest exists and carries ``content_id_collisions``
+    measured: int = 0
+    declared: int = 0
+    example_groups: list[list[str]] = []
+
+    @property
+    def blocks(self) -> bool:
+        """A store with no measured count, or one off its declaration, blocks a build."""
+        return not self.has_count or self.measured != self.declared
+
+    def describe(self) -> str:
+        """``<class>: <what is wrong>``, the line the preflight refuses with."""
+        if not self.has_count:
+            return (
+                f"{self.dataset_class}: build manifest carries no content_id_collisions "
+                "(built before the count existed); rebuild it"
+            )
+        return (
+            f"{self.dataset_class}: {self.measured} records share an Experiment content "
+            f"id with another record of the same store and will be absent from the "
+            f"graph; {self.declared} are declared in EXPECTED_CONTENT_ID_COLLISIONS. "
+            f"Example groups (LMDB keys): {self.example_groups}"
+        )
+
+
+def mapped_store_collisions(
+    data_root: str,
+    include_private: bool,
+    organisms: frozenset[Organism] = ALL_ORGANISMS,
+) -> list[StoreCollisionStatus]:
+    """Every mapped store's content-id collision count against its declaration.
+
+    The third walk beside :func:`mapped_store_status` and :func:`mapped_store_lanes`,
+    reading each store's build manifest rather than its records: the collisions were
+    measured over every record when the manifest was written
+    (``torchcell.provenance.build_manifest.walk_store``). A nonzero count means the
+    sink will write one ``Experiment`` node for several records and the extra
+    measurements will be in the LMDB and absent from the graph, which is what happened
+    to four served datasets and 65 records before lane Q measured it.
+
+    It REFUSES rather than reports, and the reason is that reporting was the status quo:
+    the number was computable from the served store the whole time and nobody computed
+    it, so 18 SGD essentiality annotations, 31 Ozaydin measurements and 2 Mota rows went
+    into three KG releases unnoticed. A refusal has one escape and it is a written one:
+    an entry in :data:`EXPECTED_CONTENT_ID_COLLISIONS` with the source evidence in the
+    loader module, for a source that printed one measurement twice. The build manifest
+    itself still RECORDS the count whatever it is; only the rebuild is gated.
+    """
+    from torchcell.knowledge_graphs.dataset_adapter_map import build_adapter_map
+
+    statuses: list[StoreCollisionStatus] = []
+    for cls in build_adapter_map(include_private=include_private, organisms=organisms):
+        root = osp.join(data_root, dataset_default_root(cls))
+        manifest_path = osp.join(root, "preprocess", MANIFEST_FILENAME)
+        collisions = None
+        if osp.isfile(manifest_path):
+            with open(manifest_path, encoding="utf-8") as handle:
+                collisions = BuildManifest.model_validate_json(
+                    handle.read()
+                ).content_id_collisions
+        if collisions is None:
+            statuses.append(
+                StoreCollisionStatus(
+                    dataset_class=cls.__name__, root=root, has_count=False
+                )
+            )
+            continue
+        statuses.append(
+            StoreCollisionStatus(
+                dataset_class=cls.__name__,
+                root=root,
+                has_count=True,
+                measured=collisions.n_records_lost,
+                declared=EXPECTED_CONTENT_ID_COLLISIONS.get(cls.__name__, 0),
+                example_groups=collisions.example_groups,
             )
         )
     return statuses

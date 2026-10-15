@@ -36,6 +36,21 @@ without opening the store, so a leaf no enabled lane emits (the Carruthers
 instead of becoming a dangling ``perturbation member of`` row the import drops. A
 manifest without the field is from before the walk existed and reads ``stale``: the
 sweep that follows this change rewrites every manifest with the field.
+
+Since manifest schema version 3 (lane V, 2026-10-15) the same pass also records
+``content_id_collisions``: how many of the store's records share an ``Experiment``
+content id with another record of the same store. The adapter's ``Experiment`` node id
+is the sha256 of the record's experiment dump and ``FastCsvSink`` deduplicates node ids,
+so two records with byte-identical dumps become ONE node and the second measurement is
+in the LMDB and absent from the graph, with no error anywhere. It had happened to four
+served datasets and 65 records before anyone asked (lane Q's scan of 176 stores,
+``experiments/database/scripts/content_id_collision_scan.py``), which is the argument
+for the number living in the manifest rather than in a script somebody remembers to run.
+The manifest RECORDS it and never refuses to be written -- the count is a measured
+property of a store that already exists, and a build that ends with no manifest reads
+``no_manifest`` and gets rebuilt into the same state -- and the rebuild preflight
+(``torchcell.database.build_dataset_lmdb.mapped_store_collisions``) is what REFUSES a
+store whose collisions the dataset has not declared with its released evidence.
 """
 
 from __future__ import annotations
@@ -46,6 +61,7 @@ import os.path as osp
 import socket
 import subprocess
 import sys
+from array import array
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
@@ -61,13 +77,16 @@ from torchcell.provenance.schema_deps import (
 
 __all__ = [
     "BuildManifest",
+    "ContentIdCollisions",
     "PerturbationLeaves",
+    "StoreWalk",
     "SymbolDrift",
     "StaleResult",
     "DatasetCheck",
     "StoreFreshness",
     "StoreState",
     "compute_manifest",
+    "walk_store",
     "walk_perturbation_leaves",
     "leaf_class_by_perturbation_type",
     "write_build_manifest",
@@ -79,9 +98,11 @@ __all__ = [
 ]
 
 MANIFEST_FILENAME = "build_manifest.json"
-MANIFEST_SCHEMA_VERSION = 2
-"""Version 2 added ``perturbation_leaves`` (2026-10-15); a version 1 manifest reads stale."""
+MANIFEST_SCHEMA_VERSION = 3
+"""Version 2 added ``perturbation_leaves`` and version 3 ``content_id_collisions``
+(both 2026-10-15); a manifest missing either field reads stale."""
 PERTURBATION_LEAVES_FIELD = "perturbation_leaves"
+CONTENT_ID_COLLISIONS_FIELD = "content_id_collisions"
 
 StoreState = Literal["fresh", "stale", "no_lmdb", "no_manifest", "unreadable"]
 """What one built store is, against the local schema. Only ``fresh`` needs no rebuild."""
@@ -101,6 +122,36 @@ class PerturbationLeaves(BaseModel):
 
     genotype: list[str] = Field(default_factory=list)
     environment: list[str] = Field(default_factory=list)
+
+
+class ContentIdCollisions(BaseModel):
+    """How many of a store's records share one ``Experiment`` content id (lane V).
+
+    ``n_records_lost`` is the number that will be ABSENT from the graph: the sink keeps
+    one node per id, so a group of ``k`` records becomes one node and ``k - 1``
+    measurements are in the LMDB and nowhere else. ``example_groups`` holds the LMDB
+    keys of up to five groups so the rows can be read without rerunning the scan.
+    ``n_records_lost == 0`` is the only state a dataset gets for free; anything else is
+    declared with its released evidence or refuses the rebuild
+    (``torchcell.database.build_dataset_lmdb.EXPECTED_CONTENT_ID_COLLISIONS``).
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    n_records: int
+    n_distinct: int
+    n_groups: int
+    n_records_lost: int
+    example_groups: list[list[str]] = Field(default_factory=list)
+
+
+class StoreWalk(BaseModel):
+    """What one streaming pass over a built store measures (:func:`walk_store`)."""
+
+    model_config = ConfigDict(frozen=True)
+
+    perturbation_leaves: PerturbationLeaves
+    content_id_collisions: ContentIdCollisions
 
 
 class BuildManifest(BaseModel):
@@ -123,6 +174,11 @@ class BuildManifest(BaseModel):
     # The leaves the store holds (schema version 2). ``None`` only on a manifest written
     # before the field existed, which :func:`check_manifest` reports as stale.
     perturbation_leaves: PerturbationLeaves | None = None
+    # The store's own Experiment content-id collisions (schema version 3). ``None`` only
+    # on a manifest written before the count existed, which reads stale for the same
+    # reason: the preflight reads the number off this field and cannot check a store
+    # that never measured it.
+    content_id_collisions: ContentIdCollisions | None = None
 
 
 class SymbolDrift(BaseModel):
@@ -220,6 +276,7 @@ def compute_manifest(
     torchcell_commit: str | None,
     torchcell_dirty: bool | None,
     perturbation_leaves: PerturbationLeaves,
+    content_id_collisions: ContentIdCollisions,
 ) -> BuildManifest:
     """Build a :class:`BuildManifest` from a loader's transitive schema closure."""
     closure = loader_closure(loader_path, surface)
@@ -237,6 +294,7 @@ def compute_manifest(
         torchcell_commit=torchcell_commit,
         torchcell_dirty=torchcell_dirty,
         perturbation_leaves=perturbation_leaves,
+        content_id_collisions=content_id_collisions,
     )
 
 
@@ -268,17 +326,79 @@ def leaf_class_by_perturbation_type() -> dict[str, str]:
     return by_type
 
 
-def walk_perturbation_leaves(root: str | Path) -> PerturbationLeaves:
-    """The leaf classes present in EVERY record of ``<root>/processed/lmdb``.
+def _collisions_of(
+    digests: bytearray, key_blob: bytearray, key_ends: array[int], max_examples: int = 5
+) -> ContentIdCollisions:
+    """Group the walked records by their 32-byte digest and count the collisions.
 
-    One streaming pass, the same read path as the store's own
-    (``pickle.loads`` + ``resolve_interned`` on the genotype and environment dicts; a
-    loader may intern either, and ``_maybe_intern`` always interns a large environment).
-    Reads the ``perturbation_type`` literal of each perturbation dict and names its
-    class through :func:`leaf_class_by_perturbation_type`, so no record is validated and
-    the pass costs what ``compute_gene_set_sequential`` costs. Raises on an empty store
-    and on a literal no union member carries.
+    ``digests`` is one contiguous buffer of 32 bytes per record and ``key_blob`` holds
+    the LMDB keys end to end, with ``key_ends[i]`` the end offset of record ``i``'s key,
+    so nothing is kept per record as a Python object. That is what keeps the pass
+    affordable on the largest store: for Hoepfner's 30,308,574 records the buffers are
+    about 970 MB of digests, 240 MB of key bytes and 240 MB of offsets, against roughly
+    4.5 GB for a ``dict[bytes, int]`` of the same digests and 2 GB for a list of key
+    strings.
+
+    Exact, with no truncation: the digests are whole, and numpy's fixed-width ``S32``
+    comparison strips trailing NUL bytes from both sides, which cannot make two
+    different 32-byte values compare equal. The sort is stable, so a group's keys come
+    out in store-iteration order.
     """
+    import numpy as np
+
+    n = len(key_ends)
+    if n == 0:
+        return ContentIdCollisions(
+            n_records=0, n_distinct=0, n_groups=0, n_records_lost=0
+        )
+    array = np.frombuffer(memoryview(digests), dtype="S32")
+    order = np.argsort(array, kind="stable")
+    sorted_digests = array[order]
+    same_as_previous = np.empty(n, dtype=bool)
+    same_as_previous[0] = False
+    if n > 1:
+        same_as_previous[1:] = sorted_digests[1:] == sorted_digests[:-1]
+    n_distinct = int(n - same_as_previous.sum())
+    starts = np.flatnonzero(~same_as_previous)
+    ends = np.append(starts[1:], n)
+    groups = np.flatnonzero(ends - starts > 1)
+
+    def key_at(index: int) -> str:
+        start = key_ends[index - 1] if index else 0
+        return key_blob[start : key_ends[index]].decode()
+
+    examples = [
+        [key_at(int(i)) for i in order[starts[g] : ends[g]]]
+        for g in groups[:max_examples]
+    ]
+    return ContentIdCollisions(
+        n_records=n,
+        n_distinct=n_distinct,
+        n_groups=int(groups.size),
+        n_records_lost=int(n - n_distinct),
+        example_groups=examples,
+    )
+
+
+def walk_store(root: str | Path) -> StoreWalk:
+    """One streaming pass over ``<root>/processed/lmdb``: its leaves and its collisions.
+
+    The leaves are the perturbation leaf classes present in EVERY record; the
+    collisions are the records whose ``Experiment`` content id another record of the
+    same store shares. Both come from one read, the same read path as the store's own
+    (``pickle.loads`` + ``resolve_interned``; a loader may intern the genotype or the
+    environment, and ``_maybe_intern`` always interns a large environment). The leaf
+    walk reads the ``perturbation_type`` literal of each perturbation dict and names its
+    class through :func:`leaf_class_by_perturbation_type`, so no record is validated and
+    the pass costs what ``compute_gene_set_sequential`` costs. The collision digest is
+    ``sha256(json.dumps(experiment))`` over the fully resolved experiment dict, which is
+    the id ``CellAdapter._experiment_node`` computes from the revalidated model's
+    ``model_dump()``: the stored dict IS that dump (a loader pickles
+    ``experiment.model_dump()``), so the two agree without validating anything here.
+    Raises on an empty store and on a literal no union member carries.
+    """
+    import hashlib
+    import json
     import pickle
 
     import lmdb
@@ -298,26 +418,32 @@ def walk_perturbation_leaves(root: str | Path) -> PerturbationLeaves:
             ienv.close()
     genotype_types: set[str] = set()
     environment_types: set[str] = set()
-    n_records = 0
+    digests = bytearray()
+    key_blob = bytearray()
+    key_ends: array[int] = array("q")
     env = lmdb.open(str(processed / "lmdb"), readonly=True, lock=False, readahead=False)
     try:
         with env.begin() as txn:
-            for _key, value in txn.cursor():
-                n_records += 1
-                experiment = pickle.loads(value)["experiment"]  # noqa: S301
-                if "$ref" in experiment:
-                    experiment = interned[experiment["$ref"]]
-                genotype = resolve_interned(experiment["genotype"], interned)
+            for key, value in txn.cursor():
+                experiment = resolve_interned(
+                    pickle.loads(value)["experiment"],
+                    interned,  # noqa: S301
+                )
+                key_blob += key
+                key_ends.append(len(key_blob))
+                digests += hashlib.sha256(
+                    json.dumps(experiment).encode("utf-8")
+                ).digest()
+                genotype = experiment["genotype"]
                 # A SegregantGenotype carries haplotype blocks and no perturbation list.
                 if "perturbations" in genotype:
                     for perturbation in genotype["perturbations"]:
                         genotype_types.add(perturbation["perturbation_type"])
-                environment = resolve_interned(experiment["environment"], interned)
-                for perturbation in environment["perturbations"]:
+                for perturbation in experiment["environment"]["perturbations"]:
                     environment_types.add(perturbation["perturbation_type"])
     finally:
         env.close()
-    if n_records == 0:
+    if not key_ends:
         raise ValueError(f"{processed / 'lmdb'} holds no records")
     unknown = sorted((genotype_types | environment_types) - set(by_type))
     if unknown:
@@ -325,10 +451,22 @@ def walk_perturbation_leaves(root: str | Path) -> PerturbationLeaves:
             f"{processed / 'lmdb'} stores perturbation_type literals no union member "
             f"carries: {unknown}"
         )
-    return PerturbationLeaves(
-        genotype=sorted(by_type[t] for t in genotype_types),
-        environment=sorted(by_type[t] for t in environment_types),
+    return StoreWalk(
+        perturbation_leaves=PerturbationLeaves(
+            genotype=sorted(by_type[t] for t in genotype_types),
+            environment=sorted(by_type[t] for t in environment_types),
+        ),
+        content_id_collisions=_collisions_of(digests, key_blob, key_ends),
     )
+
+
+def walk_perturbation_leaves(root: str | Path) -> PerturbationLeaves:
+    """The leaf classes present in EVERY record of ``<root>/processed/lmdb``.
+
+    The leaf half of :func:`walk_store`, kept as its own name because the rebuild
+    preflight and the lane arithmetic are written in terms of leaves.
+    """
+    return walk_store(root).perturbation_leaves
 
 
 def write_build_manifest(dataset: Any) -> Path:
@@ -346,7 +484,7 @@ def write_build_manifest(dataset: Any) -> Path:
     loader_path = Path(module_file)
     surface = load_default_surface()
     commit, dirty = _git_info(loader_path.parent)
-    leaves = walk_perturbation_leaves(dataset.root)
+    walk = walk_store(dataset.root)
     manifest = compute_manifest(
         dataset_name=osp.basename(osp.normpath(dataset.root)),
         loader_module=cls.__module__,
@@ -357,7 +495,8 @@ def write_build_manifest(dataset: Any) -> Path:
         hostname=socket.gethostname(),
         torchcell_commit=commit,
         torchcell_dirty=dirty,
-        perturbation_leaves=leaves,
+        perturbation_leaves=walk.perturbation_leaves,
+        content_id_collisions=walk.content_id_collisions,
     )
     out = Path(dataset.preprocess_dir) / MANIFEST_FILENAME
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -372,7 +511,10 @@ def check_manifest(
 
     A manifest without ``perturbation_leaves`` (written under manifest schema version
     1) is stale too: the preflight reads the store's leaves off that field, and a store
-    with no measured leaves cannot be checked against its conf's lanes.
+    with no measured leaves cannot be checked against its conf's lanes. The same holds
+    for ``content_id_collisions`` (version 2 and earlier): the preflight reads the
+    store's collision count off that field, and a store that never measured it could
+    carry the silent record loss of lane Q's four datasets unseen.
     """
     drift = [
         SymbolDrift(
@@ -383,9 +525,14 @@ def check_manifest(
         for symbol, stored in manifest.closure.items()
         if surface.fingerprints.get(symbol) != stored
     ]
-    missing_fields = (
-        [PERTURBATION_LEAVES_FIELD] if manifest.perturbation_leaves is None else []
-    )
+    missing_fields = [
+        field
+        for field, value in (
+            (PERTURBATION_LEAVES_FIELD, manifest.perturbation_leaves),
+            (CONTENT_ID_COLLISIONS_FIELD, manifest.content_id_collisions),
+        )
+        if value is None
+    ]
     return StaleResult(
         dataset_name=manifest.dataset_name,
         preprocess_dir=preprocess_dir,

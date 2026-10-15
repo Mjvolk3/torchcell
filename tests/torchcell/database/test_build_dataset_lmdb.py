@@ -1466,3 +1466,88 @@ def test_mapped_store_lanes_checks_the_manifests_leaves_against_the_confs_lanes(
     manifest_path.unlink()
     (none,) = m.mapped_store_lanes(str(tmp_path), include_private=False)
     assert (none.has_leaves, none.blocks) == (False, True)
+
+
+# --------------------------------------------------------------------------- #
+# 2026.10.15 (lane V): the content-id collision gate in the rebuild preflight.
+# --------------------------------------------------------------------------- #
+def test_mapped_store_collisions_refuses_a_store_whose_collisions_are_not_declared(
+    tmp_path: Path,
+    cli: list[str],
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The toy's three records are three distinct dumps, so it passes with 0 declared;
+    a manifest reporting a collision blocks unless the dataset declares that number,
+    and a manifest without the field blocks because the check cannot run.
+
+    The declaration is the only escape and it is a written one: an entry in
+    ``EXPECTED_CONTENT_ID_COLLISIONS`` for a source that printed one measurement twice.
+    """
+    assert m.main(["--dataset", "ToyBuildDataset", "--data-root", str(tmp_path)]) == 0
+    capsys.readouterr()
+    manifest_path = tmp_path / "data/torchcell/toy_build/preprocess/build_manifest.json"
+    manifest = build_manifest.BuildManifest.model_validate_json(
+        manifest_path.read_text()
+    )
+    assert manifest.content_id_collisions == build_manifest.ContentIdCollisions(
+        n_records=3, n_distinct=3, n_groups=0, n_records_lost=0, example_groups=[]
+    )
+    _map_the_toy(monkeypatch, ["perturbation (chunked)"])
+
+    (clean,) = m.mapped_store_collisions(str(tmp_path), include_private=False)
+    assert (clean.dataset_class, clean.has_count, clean.blocks) == (
+        "ToyBuildDataset",
+        True,
+        False,
+    )
+    assert (clean.measured, clean.declared) == (0, 0)
+
+    collided = manifest.model_copy(
+        update={
+            "content_id_collisions": build_manifest.ContentIdCollisions(
+                n_records=3,
+                n_distinct=2,
+                n_groups=1,
+                n_records_lost=1,
+                example_groups=[["0", "2"]],
+            )
+        }
+    )
+    manifest_path.write_text(collided.model_dump_json())
+    (undeclared,) = m.mapped_store_collisions(str(tmp_path), include_private=False)
+    assert undeclared.blocks
+    assert undeclared.describe() == (
+        "ToyBuildDataset: 1 records share an Experiment content id with another record "
+        "of the same store and will be absent from the graph; 0 are declared in "
+        "EXPECTED_CONTENT_ID_COLLISIONS. Example groups (LMDB keys): [['0', '2']]"
+    )
+    monkeypatch.setitem(m.EXPECTED_CONTENT_ID_COLLISIONS, "ToyBuildDataset", 1)
+    (declared,) = m.mapped_store_collisions(str(tmp_path), include_private=False)
+    assert not declared.blocks
+    assert (declared.measured, declared.declared) == (1, 1)
+    # a declaration admits ONE number, not "at least this many"
+    monkeypatch.setitem(m.EXPECTED_CONTENT_ID_COLLISIONS, "ToyBuildDataset", 2)
+    (wrong,) = m.mapped_store_collisions(str(tmp_path), include_private=False)
+    assert wrong.blocks
+
+    manifest_path.write_text(
+        manifest.model_copy(update={"content_id_collisions": None}).model_dump_json()
+    )
+    (old,) = m.mapped_store_collisions(str(tmp_path), include_private=False)
+    assert (old.has_count, old.blocks) == (False, True)
+    assert old.describe() == (
+        "ToyBuildDataset: build manifest carries no content_id_collisions (built "
+        "before the count existed); rebuild it"
+    )
+    manifest_path.unlink()
+    (none,) = m.mapped_store_collisions(str(tmp_path), include_private=False)
+    assert (none.has_count, none.blocks) == (False, True)
+
+
+def test_the_only_declared_source_duplication_is_motas_two_rnr4_rows() -> None:
+    """The table is a written exception list, so what is in it is part of the gate:
+    Mota 2024 printed one measurement twice in Table S1 and once more in Table S2, and
+    nothing else is admitted.
+    """
+    assert m.EXPECTED_CONTENT_ID_COLLISIONS == {"EnvChemgenMota2024Dataset": 2}

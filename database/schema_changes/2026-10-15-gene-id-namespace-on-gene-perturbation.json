@@ -2,7 +2,7 @@
   "record_version": 1,
   "slug": "gene-id-namespace-on-gene-perturbation",
   "date": "2026-10-15",
-  "pr": null,
+  "pr": 1112,
   "author_kind": "agent",
   "base_commit": "2fd68995cacaee928e927d67f8d4088c58239fa8",
   "python_version": "3.13.0",

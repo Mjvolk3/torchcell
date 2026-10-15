@@ -22,6 +22,7 @@ from torchcell.datamodels.construct import (
 )
 from torchcell.datamodels.schema import (
     ArtifactRef,
+    AssemblySet,
     BacterialVariantType,
     GenomicSpan,
     VariantCallMode,
@@ -32,7 +33,8 @@ from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
 CONTIG = "63f89c1eaa13f888610ed781c4de12c8ac34f4e20512b4eb2c4f32d31af096da"
 OTHER = "bbaca60509e079222f7cdd1bb54b70d93445af3a699c65109d94b553fc0087f7"
-S288C = "sgd_S288C_R64-4-1_20230830"
+S288C: AssemblySet = "sgd_S288C_R64-4-1_20230830"
+CENPK: AssemblySet = "scerevisiae_CENPK113-7D_ASM257140v2"
 REF = ArtifactRef(
     tier="library",
     key="cacheraCRISPAHighthroughputMethod2023",
@@ -116,12 +118,16 @@ def test_a_host_placement_needs_the_sources_own_site_label() -> None:
 
 
 def test_a_span_on_another_assembly_is_refused() -> None:
-    """A coordinate belongs to the assembly the placement pins, not another release."""
+    """A coordinate belongs to the assembly the placement pins, not another one.
+
+    ``GenomicSpan.assembly`` is the ``AssemblySet`` vocabulary (P2), so the other
+    assembly is a real member, the CEN.PK113-7D set, not a free string.
+    """
     with pytest.raises(ValidationError, match="but the placement pins"):
         HostPlacement(
             assembly_set=S288C,
             site_label="XII-5",
-            span=GenomicSpan(chromosome="XII", start=1, end=9, assembly="R64-1-1"),
+            span=GenomicSpan(chromosome="XII", start=1, end=9, assembly=CENPK),
             insert_span=ConstructSpan(start=1, end=9, orientation="inline"),
         )
 

@@ -1,12 +1,13 @@
 # Carruthers 2025 differential proteomics: 16 contrasts,
-# ProteinFoldChangeExperiment. 14 Figure 5b records carry 6 perturbations
-# (5 HeterologousPathwayPerturbation + 1 BacterialCrisprInterferencePerturbation) and the
-# 2 Figure 6b records carry 7 (the same plus a BacterialDeletionPerturbation of the same
-# locus), all served as `bacterial perturbation`: 80 pathway leaves, 16 CRISPRi leaves,
-# 2 deletion leaves, 98 in all. Every CRISPRi leaf carries a CrisprConstruct, so the crispr-construct
-# pair is enabled. The environment carries a SmallMoleculePerturbation (the L-arabinose
-# induction), so the environment-perturbation pair is enabled. The phenotype is the
-# `protein fold change phenotype` class, never `protein abundance phenotype`.
+# ProteinFoldChangeExperiment. 14 Figure 5b records carry 6 perturbations (5
+# HeterologousPathwayPerturbation + 1 BacterialCrisprInterferencePerturbation) and the 2
+# Figure 6b records carry 7 (the same plus a BacterialDeletionPerturbation of the same
+# locus), all served as `perturbation`: 80 pathway leaves, 16 CRISPRi leaves, 2 deletion
+# leaves, 98 in all. Every CRISPRi leaf carries a CrisprConstruct, so the
+# crispr-construct pair is enabled. The environment carries a SmallMoleculePerturbation
+# (the L-arabinose induction), so the environment-perturbation pair is enabled. The
+# phenotype is the `protein fold change phenotype` class, never `protein abundance
+# phenotype`.
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"
@@ -15,7 +16,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "crispr construct (chunked)"
       memory_reduction_factor: 1.0

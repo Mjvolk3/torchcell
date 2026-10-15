@@ -6,7 +6,7 @@
 
 One record per kept (growth condition, BW25113) row of Supplementary Table 23, 15 in
 all. Every released row is wild type, so the genotype carries no perturbation and no
-``bacterial perturbation`` node is served; the carbon sources, the NaCl level and the pH
+``perturbation`` node is served; the carbon sources, the NaCl level and the pH
 are environment perturbations and are first-class nodes. The phenotype is ``environment
 response phenotype``, carrying the absolute growth rate in h^-1 with the released Stdev
 and its conservatively resolved replicate count (#826).

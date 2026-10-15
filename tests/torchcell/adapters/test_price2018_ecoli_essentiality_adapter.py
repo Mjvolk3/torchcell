@@ -6,7 +6,7 @@ gate's view of it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Price 2018 Supplementary Table 1: 320 BW25113 likely-essential gene calls,
 GeneEssentialityExperiment. One TransposonInsertionPerturbation per record
-(`build_essentiality_genotype`), served as `bacterial perturbation`. Every record shares
+(`build_essentiality_genotype`), served as `perturbation`. Every record shares
 the one library-selection environment (`essentiality_environment`), which carries no
 environment perturbation, so that pair is off.
 """

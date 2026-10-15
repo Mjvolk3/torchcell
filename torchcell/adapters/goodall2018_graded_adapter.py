@@ -6,7 +6,7 @@
 as knowledge-graph nodes and edges (#909).
 
 One record per (condition, gene) whose released call is "unclear": a single gene-level
-``TransposonInsertionPerturbation`` served as a ``bacterial perturbation`` node, and the
+``TransposonInsertionPerturbation`` served as a ``perturbation`` node, and the
 call as a ``GradedGeneEssentialityPhenotype``. The environments are the two of the
 boolean store (the selection plates and LB broth) and carry no environment
 perturbation, so that pair is off.

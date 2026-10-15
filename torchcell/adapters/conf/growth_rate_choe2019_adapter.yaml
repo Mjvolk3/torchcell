@@ -1,9 +1,8 @@
 # Choe 2019 Fig. 2c designed deletions: 2 records, FitnessExperiment. One
 # BacterialDeletionPerturbation per deleted gene (21 for the large deletion, 1 for
-# rpoS), served as `bacterial perturbation`. The panel is one medium with no added
-# compound, so the environment-perturbation pair is left off; the environment also
-# declares a ProvenanceGap on temperature, which the temperature methods emit nothing
-# for.
+# rpoS), served as `perturbation`. The panel is one medium with no added compound, so
+# the environment-perturbation pair is left off; the environment also declares a
+# ProvenanceGap on temperature, which the temperature methods emit nothing for.
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"
@@ -12,7 +11,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

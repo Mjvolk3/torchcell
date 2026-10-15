@@ -6,7 +6,7 @@ it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Royet 2025 KT2440 metal Tn-seq: 21,583 (KT2440 gene x metal) records from Table S5's
 TRANSIT RESAMPLING log2FC, EnvironmentResponseExperiment. One gene-level
-TransposonInsertionPerturbation per record, served as `bacterial perturbation`. Every
+TransposonInsertionPerturbation per record, served as `perturbation`. Every
 record's environment carries exactly one SmallMoleculePerturbation, the metal chloride at
 its Methods dose, on the experiment and on the reference, so the environment-perturbation
 pair is enabled; no phage and no CRISPRi construct appears in any record.

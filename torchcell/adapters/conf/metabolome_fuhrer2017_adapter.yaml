@@ -1,7 +1,7 @@
-# Fuhrer 2017 Keio metabolome: 3,735 BW25113 strains, MetaboliteExperiment.
-# One BacterialDeletionPerturbation per record, served as `bacterial perturbation` (never
-# the yeast `perturbation` class). No record carries an environment perturbation (0 in
-# 3,735), so that pair is not enabled.
+# Fuhrer 2017 Keio metabolome: 3,735 BW25113 strains, MetaboliteExperiment. One
+# BacterialDeletionPerturbation per record, served as `perturbation` (never the yeast
+# `perturbation` class). No record carries an environment perturbation (0 in 3,735), so
+# that pair is not enabled.
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"
@@ -10,7 +10,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

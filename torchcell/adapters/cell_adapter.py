@@ -16,7 +16,7 @@ from concurrent.futures import FIRST_COMPLETED, Future, ProcessPoolExecutor, wai
 from datetime import datetime
 from functools import wraps
 from itertools import chain
-from typing import Any, cast
+from typing import Any, Final, cast
 
 import wandb
 from biocypher._create import BioCypherEdge, BioCypherNode
@@ -34,22 +34,22 @@ from torchcell.datamodels.identity import (
 )
 from torchcell.datamodels.interned_constant import split_experiment_dump
 from torchcell.datamodels.schema import (
-    CrisprActivationPerturbation,
-    CrisprInterferencePerturbation,
-    DegronPerturbation,
-    DeletionStrainPerturbation,
-    HeterologousPathwayPerturbation,
-    LocusVariantCallPerturbation,
-    MarkedAllelePerturbation,
     PhagePerturbation,
-    PromoterReplacementPerturbation,
-    ReleasedIdentifierPerturbation,
-    SiteVariantCallPerturbation,
     SpanDeletionCallPerturbation,
-    TransposonInsertionPerturbation,
+    VariantCallPerturbation,
 )
 from torchcell.fast_csv import RenderedChunk, RowSpecs
 from torchcell.loader import CpuExperimentLoaderMultiprocessing
+from torchcell.sequence.genome.registry import (
+    ECOLI_B_REL606,
+    ECOLI_K12_BW25113,
+    ECOLI_K12_MG1655,
+    ECOLI_K12_W3110,
+    PETER2018_1011,
+    PPUTIDA_KT2440,
+    SCEREVISIAE_CENPK113_7D,
+    SGD_S288C_R64,
+)
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -75,47 +75,41 @@ r7: the budget is a per-adapter attribute (``single_pass_chunk_budget_bytes``) b
 2.7x more chunks, and the pool is rebuilt every chunks_per_worker x workers of them.
 """
 SINGLE_PASS_MIN_CHUNK = 256
-BACTERIAL_PERTURBATION_LEAVES: tuple[type, ...] = (
-    DeletionStrainPerturbation,
-    TransposonInsertionPerturbation,
-    CrisprInterferencePerturbation,
-    PromoterReplacementPerturbation,
-    HeterologousPathwayPerturbation,
-    # round-2 leaves (#749, #792, #799). Each projects the same five properties the
-    # `bacterial perturbation` graph class declares; their leaf-specific fields
-    # (cassette, tag, degron, insertion_site, collection) carry no node property, as
-    # `DeletionStrainPerturbation.collection` does not, and travel in the
-    # serialized record.
-    MarkedAllelePerturbation,
-    DegronPerturbation,
-    CrisprActivationPerturbation,
-    # P3 (ontology-unify): a gene under the identifier its source released, the one
-    # leaf that replaced the three #691 bacterial released leaves and the #1045 yeast
-    # one. The same five properties; strain_label, released_kind, identifier_kind,
-    # cassette, collection, crispr and the mapped-insertion fields travel in the
-    # serialized record. The yeast released records of 18 served datasets are this
-    # class too; lane H re-keys the lane.
-    ReleasedIdentifierPerturbation,
-)
-"""The gene-perturbation leaves written as ``bacterial perturbation`` nodes.
+HOST_GENOME_OF_NAMESPACE: dict[str, str] = {
+    "scerevisiae_s288c_sgd_systematic": SGD_S288C_R64,
+    "scerevisiae_cenpk113_7d_locus_tag": SCEREVISIAE_CENPK113_7D,
+    "scerevisiae_peter2018_pangenome_orf": PETER2018_1011,
+    "ecoli_k12_mg1655_bnumber": ECOLI_K12_MG1655,
+    "ecoli_k12_bw25113_locus_tag": ECOLI_K12_BW25113,
+    "pputida_kt2440_locus_tag": PPUTIDA_KT2440,
+    "ecoli_b_rel606_locus_tag": ECOLI_B_REL606,
+    "ecoli_k12_w3110_refseq_locus_tag": ECOLI_K12_W3110,
+}
+"""``GeneIdNamespace`` member -> the deposited assembly set its identifiers are written in.
 
-The leaves that carry ``gene_namespace`` MINUS the called-variant leaves below, which
-have their own class. A yeast leaf is never one of them, so a yeast record emits no
-``bacterial perturbation`` node, and ``_perturbation_node`` (served) is not touched to
-exclude them: a bacterial adapter conf enables ``bacterial perturbation (chunked)``
-instead of ``perturbation (chunked)``.
+The ``host_genome`` property of every ``perturbation`` node (ontology unification G,
+2026-10-15). A perturbation states its host as ``gene_namespace``, one identifier space
+per deposited assembly set (schema.py, P1); a ``genome`` node states the set it pins as
+``assembly_set`` (``torchcell.sequence.genome.registry`` ids). The two are the same fact
+in two vocabularies, so this map, a bijection pinned by
+``tests/torchcell/adapters/test_bacterial_graph_classes.py``, projects the namespace into
+the registry's vocabulary and ``perturbation.host_genome = genome.assembly_set`` is a
+value join. It is the assembly-set id and never the strain string: BY4741, BY4742 and
+S288C are three ``genome`` nodes writing their identifiers against the one S288C set, and
+a strain-keyed value would fragment the join across them (review 3 finding 9). A
+namespace outside the map is a ``KeyError`` at generation, which is the honest failure:
+a new identifier space is deposited in the registry first and named here second.
 """
-BACTERIAL_VARIANT_PERTURBATION_LEAVES: tuple[type, ...] = (
-    LocusVariantCallPerturbation,
-    SiteVariantCallPerturbation,
-    SpanDeletionCallPerturbation,
-)
-"""The leaves written as ``bacterial sequence variant perturbation`` nodes (#731).
+VARIANT_CALL_LEAVES: Final = (VariantCallPerturbation, SpanDeletionCallPerturbation)
+"""The gene-perturbation leaves written as ``sequence variant perturbation`` nodes.
 
-Exactly the leaves that compose a ``BacterialVariantCall``.
-``SpanDeletionCallPerturbation`` is also a ``DeletionStrainPerturbation``, so the
-``bacterial perturbation`` method excludes this tuple explicitly; without that a span
-deletion would be written twice, once under each label.
+The leaves that COMPOSE a ``BacterialVariantCall`` (a ``call`` field, #731): the
+``VariantCallPerturbation`` family (locus and site calls) and
+``SpanDeletionCallPerturbation``, which is a ``DeletionStrainPerturbation`` by class
+(one locus removed entirely by a called span) and carries the call beside it. The rule
+is the physical thing the leaf states, a called variant, not a host; the
+union-to-label test in ``tests/torchcell/adapters/test_bacterial_graph_classes.py``
+pins it to exactly the union members whose ``call`` field is a ``BacterialVariantCall``.
 """
 CGROUP_MEMORY_CURRENT = "/sys/fs/cgroup/memory.current"
 CGROUP_MEMORY_MAX = "/sys/fs/cgroup/memory.max"
@@ -245,11 +239,6 @@ class CellAdapter:
             ("segregant background (chunked)", self._segregant_background_node),
             # --- end Hale 2024 ---
             ("perturbation (chunked)", self._perturbation_node),
-            ("bacterial perturbation (chunked)", self._bacterial_perturbation_node),
-            (
-                "bacterial sequence variant perturbation (chunked)",
-                self._bacterial_variant_perturbation_node,
-            ),
             ("crispr construct (chunked)", self._crispr_construct_node),
             ("environment (chunked)", self._environment_node),
             ("environment reference", self._get_environment_reference_nodes),
@@ -261,11 +250,6 @@ class CellAdapter:
             (
                 "environment perturbation reference",
                 self._get_environment_perturbation_reference_nodes,
-            ),
-            ("phage perturbation (chunked)", self._phage_perturbation_node),
-            (
-                "phage perturbation reference",
-                self._get_phage_perturbation_reference_nodes,
             ),
             ("fitness phenotype (chunked)", self._fitness_phenotype_node),
             (
@@ -537,6 +521,11 @@ class CellAdapter:
                 "perturbation to genotype (chunked)",
                 self._perturbation_to_genotype_edges,
             ),
+            # The host-genome edge is OFF in every conf (ontology unification G): the
+            # `host_genome` property is the mandatory join key, and this edge adds a
+            # row per perturbation per record, the order of `perturbation member of`
+            # (47.3 M rows in the job 4901 partial). A conf opts in by listing it.
+            ("perturbation to genome (chunked)", self._perturbation_to_genome_edges),
             # --- begin Hale 2024 ---
             (
                 "segregant background to genotype (chunked)",
@@ -1018,14 +1007,21 @@ class CellAdapter:
         ``StrainReferenceGenome``'s typed ``background`` rides along in full: its
         ``alleles`` AND its ``integrations`` (the cassettes an engineered host carries at
         a named site) are in the blob with no per-field adapter change, which is how the
-        background has always reached the graph. ``species`` and ``strain`` stay the
-        queryable scalars.
+        background has always reached the graph. ``species``, ``strain`` and
+        ``assembly_set`` are the queryable scalars.
+
+        ``assembly_set`` is the deposited set the reference pins (the registry id an
+        ``AssemblyReferenceGenome`` states; P2 of the ontology unification declares it
+        on every ``ReferenceGenome``, set or typed gap), the value every ``perturbation``
+        node's ``host_genome`` joins on. A reference that states none projects ``None``:
+        the host is not invented from the strain string.
         """
         nodes = []
         seen_node_ids: set[str] = set()
         for data in tqdm(self.dataset.experiment_reference_index):
+            genome_reference = data.reference.genome_reference
             genome_id = hashlib.sha256(
-                json.dumps(data.reference.genome_reference.model_dump()).encode("utf-8")
+                json.dumps(genome_reference.model_dump()).encode("utf-8")
             ).hexdigest()
             if genome_id not in seen_node_ids:
                 seen_node_ids.add(genome_id)
@@ -1034,15 +1030,34 @@ class CellAdapter:
                     preferred_id="genome",
                     node_label="genome",
                     properties={
-                        "species": data.reference.genome_reference.species,
-                        "strain": data.reference.genome_reference.strain,
-                        "serialized_data": json.dumps(
-                            data.reference.genome_reference.model_dump()
-                        ),
+                        "species": genome_reference.species,
+                        "strain": genome_reference.strain,
+                        "assembly_set": self._assembly_set_of(genome_reference),
+                        "serialized_data": json.dumps(genome_reference.model_dump()),
                     },
                 )
                 nodes.append(node)
         return nodes
+
+    @staticmethod
+    def _assembly_set_of(genome_reference: Any) -> str | None:
+        """The registry id of the assembly set a reference genome pins, or ``None``.
+
+        Read off the ``assembly_set`` field where the reference declares one
+        (``AssemblyReferenceGenome`` today, every ``ReferenceGenome`` under P2) and
+        ``None`` where it declares none or carries a typed gap in its place. The value is
+        the registry id itself, which is what ``HOST_GENOME_OF_NAMESPACE`` projects every
+        perturbation's namespace into, so the join needs no second vocabulary.
+        """
+        assembly_set = getattr(genome_reference, "assembly_set", None)
+        return assembly_set if isinstance(assembly_set, str) else None
+
+    @staticmethod
+    def _genome_node_id(genome_reference: Any) -> str:
+        """The ``genome`` node id: sha256 of the reference genome's dump, as the node uses."""
+        return hashlib.sha256(
+            json.dumps(genome_reference.model_dump()).encode("utf-8")
+        ).hexdigest()
 
     @data_chunker
     def _experiment_node(
@@ -1210,118 +1225,87 @@ class CellAdapter:
     def _perturbation_node(
         self, data: dict[str, Any], method_name: str
     ) -> list[BioCypherNode]:
-        perturbations = data["experiment"].genotype.perturbations
+        """One node per gene perturbation of the genotype, the label chosen BY LEAF.
+
+        Every member of ``GenePerturbationType`` is served here (ontology unification G,
+        2026-10-15): a leaf that composes a ``BacterialVariantCall``
+        (``VARIANT_CALL_LEAVES``, #731) is written as ``sequence variant
+        perturbation``, ``is_a perturbation`` in the graph schema, with the call's
+        replicon, interval, kind, frequency and mode as columns; every other leaf is
+        written as ``perturbation``. The two labels are two literal ``BioCypherNode``
+        sites because ``ontology_checks.adapter_property_mismatches`` reads the label
+        and the property keys off the AST.
+
+        The lane used to be chosen by CONF (``bacterial perturbation (chunked)`` keyed
+        on a class tuple, ``perturbation (chunked)`` on everything), so a leaf a conf did
+        not list got an edge from ``_perturbation_to_genotype_edges`` and no node
+        (Carruthers 2025's ``GeneAdditionPerturbation`` under the bacterial-only confs,
+        audit C 1.3). One method that partitions the union by leaf cannot leave a member
+        unserved; ``tests/torchcell/adapters/test_bacterial_graph_classes.py`` pins the
+        union-to-label bijection.
+
+        ``host_genome`` is the record's ``gene_namespace`` projected into the registry's
+        assembly-set vocabulary (``HOST_GENOME_OF_NAMESPACE``), so it equals the
+        ``assembly_set`` of the ``genome`` node the record is written against. The node
+        id is the sha256 of the leaf's ``model_dump``, the id every edge method computes.
+        """
         nodes = []
-        for perturbation in perturbations:
+        for perturbation in data["experiment"].genotype.perturbations:
             perturbation_id = hashlib.sha256(
                 json.dumps(perturbation.model_dump()).encode("utf-8")
             ).hexdigest()
-            node = BioCypherNode(
-                node_id=perturbation_id,
-                preferred_id=perturbation.perturbation_type,
-                node_label="perturbation",
-                properties={
-                    "systematic_gene_name": perturbation.systematic_gene_name,
-                    "perturbed_gene_name": perturbation.perturbed_gene_name,
-                    "perturbation_type": perturbation.perturbation_type,
-                    "description": perturbation.description,
-                    # strain_id is declared only on the Sga*/Marker/Natural*/
-                    # SequenceVariant/CopyNumberVariant leaves -- not on the base
-                    # KanMxDeletion/GeneAddition types the metabolite/morphology
-                    # datasets use, so read it defensively.
-                    "strain_id": getattr(perturbation, "strain_id", None),
-                },
+            if isinstance(perturbation, VARIANT_CALL_LEAVES):
+                # the narrowed union's abstract base declares no perturbation_type;
+                # the leaf (a GenePerturbation) does
+                leaf: Any = perturbation
+                call = leaf.call
+                nodes.append(
+                    BioCypherNode(
+                        node_id=perturbation_id,
+                        preferred_id=leaf.perturbation_type,
+                        node_label="sequence variant perturbation",
+                        properties={
+                            "systematic_gene_name": leaf.systematic_gene_name,
+                            "perturbed_gene_name": leaf.perturbed_gene_name,
+                            "perturbation_type": leaf.perturbation_type,
+                            "description": leaf.description,
+                            "host_genome": HOST_GENOME_OF_NAMESPACE[
+                                leaf.gene_namespace
+                            ],
+                            "reference_sequence": call.reference_sequence,
+                            "position_start": call.position_start,
+                            "position_end": call.position_end,
+                            "variant_type": str(call.variant_type),
+                            # None when the release wrote a RANGE rather than one
+                            # number; the verbatim cell stays in the Experiment blob.
+                            "variant_frequency": call.frequency,
+                            "call_mode": str(call.call_mode),
+                        },
+                    )
+                )
+                continue
+            nodes.append(
+                BioCypherNode(
+                    node_id=perturbation_id,
+                    preferred_id=perturbation.perturbation_type,
+                    node_label="perturbation",
+                    properties={
+                        "systematic_gene_name": perturbation.systematic_gene_name,
+                        "perturbed_gene_name": perturbation.perturbed_gene_name,
+                        "perturbation_type": perturbation.perturbation_type,
+                        "description": perturbation.description,
+                        "host_genome": HOST_GENOME_OF_NAMESPACE[
+                            perturbation.gene_namespace
+                        ],
+                        # strain_id is declared only on the Sga*/Marker/Natural*/
+                        # SequenceVariant/CopyNumberVariant leaves, not on the base
+                        # KanMxDeletion/GeneAddition types or any bacterial leaf, so
+                        # read it defensively.
+                        "strain_id": getattr(perturbation, "strain_id", None),
+                    },
+                )
             )
-            nodes.append(node)
         return nodes
-
-    # --- Bacterial perturbations (a sibling class of `perturbation`) ---
-    # A bacterial leaf carries gene_namespace, the host locus-tag space its
-    # systematic_gene_name is written in; the served `perturbation` class has no such
-    # property and cannot gain one without a full rebuild, so these leaves are their own
-    # class. The node id is the sha256 of the leaf's model_dump, the id
-    # _perturbation_to_genotype_edges and _crispr_construct_to_perturbation_edges
-    # already address, so those edge methods connect these nodes unchanged.
-
-    @staticmethod
-    def _bacterial_perturbation_node_from(perturbation: Any) -> BioCypherNode:
-        perturbation_id = hashlib.sha256(
-            json.dumps(perturbation.model_dump()).encode("utf-8")
-        ).hexdigest()
-        return BioCypherNode(
-            node_id=perturbation_id,
-            preferred_id=perturbation.perturbation_type,
-            node_label="bacterial perturbation",
-            properties={
-                "systematic_gene_name": perturbation.systematic_gene_name,
-                "perturbed_gene_name": perturbation.perturbed_gene_name,
-                "perturbation_type": perturbation.perturbation_type,
-                "description": perturbation.description,
-                "gene_namespace": perturbation.gene_namespace,
-            },
-        )
-
-    @data_chunker
-    def _bacterial_perturbation_node(
-        self, data: dict[str, Any], method_name: str
-    ) -> list[BioCypherNode]:
-        """One node per perturbation of a bacterial leaf class; none for a yeast leaf.
-
-        A called-variant leaf is excluded even when it is a subclass of one of these
-        (``SpanDeletionCallPerturbation`` is a ``DeletionStrainPerturbation``):
-        it belongs to ``bacterial sequence variant perturbation`` and writing it here
-        too would serve one perturbation as two nodes.
-        """
-        return [
-            self._bacterial_perturbation_node_from(perturbation)
-            for perturbation in data["experiment"].genotype.perturbations
-            if isinstance(perturbation, BACTERIAL_PERTURBATION_LEAVES)
-            and not isinstance(perturbation, BACTERIAL_VARIANT_PERTURBATION_LEAVES)
-        ]
-
-    # --- Called bacterial variants (issue #731) ---
-    # A variant leaf composes a ``BacterialVariantCall``, so the replicon, the 1-based
-    # interval, the variant kind and the call frequency are read off ``.call`` rather
-    # than off the leaf. The node id is the sha256 of the leaf's model_dump, the same id
-    # _perturbation_to_genotype_edges addresses, so that edge method is unchanged.
-
-    @staticmethod
-    def _bacterial_variant_perturbation_node_from(perturbation: Any) -> BioCypherNode:
-        perturbation_id = hashlib.sha256(
-            json.dumps(perturbation.model_dump()).encode("utf-8")
-        ).hexdigest()
-        call = perturbation.call
-        return BioCypherNode(
-            node_id=perturbation_id,
-            preferred_id=perturbation.perturbation_type,
-            node_label="bacterial sequence variant perturbation",
-            properties={
-                "systematic_gene_name": perturbation.systematic_gene_name,
-                "perturbed_gene_name": perturbation.perturbed_gene_name,
-                "perturbation_type": perturbation.perturbation_type,
-                "description": perturbation.description,
-                "gene_namespace": perturbation.gene_namespace,
-                "reference_sequence": call.reference_sequence,
-                "position_start": call.position_start,
-                "position_end": call.position_end,
-                "variant_type": str(call.variant_type),
-                # None when the release wrote a RANGE rather than one number; the
-                # verbatim cell stays in the Experiment blob either way.
-                "variant_frequency": call.frequency,
-                "call_mode": str(call.call_mode),
-            },
-        )
-
-    @data_chunker
-    def _bacterial_variant_perturbation_node(
-        self, data: dict[str, Any], method_name: str
-    ) -> list[BioCypherNode]:
-        """One node per CALLED variant of the genotype; none for any other leaf."""
-        return [
-            self._bacterial_variant_perturbation_node_from(perturbation)
-            for perturbation in data["experiment"].genotype.perturbations
-            if isinstance(perturbation, BACTERIAL_VARIANT_PERTURBATION_LEAVES)
-        ]
 
     # Environment.temperature is Optional: a curation layer that never carried a
     # temperature records a typed gap instead of guessing one. Every read of it is
@@ -1449,15 +1433,14 @@ class CellAdapter:
     # like a gene perturbation, so a condition such as "YPD + 0.4 M NaCl" is queryable
     # rather than only embedded in the environment's serialized_data.
     #
-    # A `PhagePerturbation` is NOT emitted here: it has its own node class and its own
-    # method below, and both ids are the same composition projection, so a conf enabling
-    # both lanes would otherwise write one content id under two labels (issue #756). The
-    # two lanes PARTITION `environment.perturbations` -- phages to `phage perturbation`,
-    # every other leaf to `environment perturbation` -- so a dataset whose environment
-    # carries a phage AND a compound enables both and each leaf is written exactly once.
-    # The filter edits a SERVED method, which is adapter drift on every served dataset
-    # enabling it and therefore a full rebuild; it changes no served OUTPUT, since no
-    # served dataset's environment carries a phage.
+    # ONE method serves every member of ``EnvironmentPerturbationType`` and chooses the
+    # label by leaf (ontology unification G, 2026-10-15): a ``PhagePerturbation`` is
+    # written as ``phage perturbation`` (its own class, with the MOI, the taxon and the
+    # accession as columns; the dose is not a concentration) and every other leaf as
+    # ``environment perturbation``. The two used to be two conf-enabled lanes, so a conf
+    # that enabled the phage lane alone left a small molecule its loader can build with
+    # an edge and no node (Mutalik 2020, audit C 1.3 item 2). Each leaf is written
+    # exactly once, under one label, by construction.
 
     @staticmethod
     def _environment_perturbation_node_from(perturbation: Any) -> BioCypherNode:
@@ -1491,40 +1474,43 @@ class CellAdapter:
             },
         )
 
+    @staticmethod
+    def _environment_axis_node_from(perturbation: Any) -> BioCypherNode:
+        """The node of one environment perturbation, its label chosen by leaf."""
+        if isinstance(perturbation, PhagePerturbation):
+            return CellAdapter._phage_perturbation_node_from(perturbation)
+        return CellAdapter._environment_perturbation_node_from(perturbation)
+
     @data_chunker
     def _environment_perturbation_node(
         self, data: dict[str, Any], method_name: str
     ) -> list[BioCypherNode]:
-        """One node per NON-phage perturbation of the environment; phages have their own."""
+        """One node per perturbation of the environment, phages under their own label."""
         return [
-            self._environment_perturbation_node_from(perturbation)
+            self._environment_axis_node_from(perturbation)
             for perturbation in data["experiment"].environment.perturbations
-            if not isinstance(perturbation, PhagePerturbation)
         ]
 
     def _get_environment_perturbation_reference_nodes(self) -> list[BioCypherNode]:
+        """Every reference environment's perturbations, deduplicated by content id."""
         nodes = []
         seen_node_ids: set[str] = set()
         for data in tqdm(self.dataset.experiment_reference_index):
             for perturbation in data.reference.environment_reference.perturbations:
-                if isinstance(perturbation, PhagePerturbation):
-                    continue
-                node = self._environment_perturbation_node_from(perturbation)
+                node = self._environment_axis_node_from(perturbation)
                 if node.get_id() not in seen_node_ids:
                     seen_node_ids.add(node.get_id())
                     nodes.append(node)
         return nodes
 
     # --- Phage challenges (the environment axis of a phage-resistance screen) ---
-    # A phage gets its OWN node class and method for the same reason `crispr construct`
-    # and `bacterial perturbation` do: giving `environment perturbation` the MOI, the
-    # taxon and the accession as properties would change a served class, and the dose is
-    # not a concentration so it cannot ride the concentration columns.
-    # This method and `_environment_perturbation_node` PARTITION the environment's
-    # perturbations on `isinstance(..., PhagePerturbation)`, so a conf may enable both
-    # lanes and no content id is written under two labels (issue #756). The id is the
-    # same composition projection the other environment-side nodes use, so
+    # A phage gets its OWN node class for the reason `crispr construct` does: the MOI,
+    # the taxon and the accession are its columns, and the dose is not a concentration,
+    # so it cannot ride the concentration columns of `environment perturbation`. The id
+    # is the same composition projection the other environment-side nodes use, so
     # `_environment_perturbation_to_environment_edges` addresses these nodes unchanged.
+    # The projection is called from `_environment_axis_node_from` above; there is no
+    # separate phage lane to enable.
 
     @staticmethod
     def _phage_perturbation_node_from(perturbation: Any) -> BioCypherNode:
@@ -1547,31 +1533,6 @@ class CellAdapter:
                 "titer_pfu_per_ml": perturbation.titer_pfu_per_ml,
             },
         )
-
-    @data_chunker
-    def _phage_perturbation_node(
-        self, data: dict[str, Any], method_name: str
-    ) -> list[BioCypherNode]:
-        """One node per phage of the environment; none for any other perturbation."""
-        return [
-            self._phage_perturbation_node_from(perturbation)
-            for perturbation in data["experiment"].environment.perturbations
-            if isinstance(perturbation, PhagePerturbation)
-        ]
-
-    def _get_phage_perturbation_reference_nodes(self) -> list[BioCypherNode]:
-        """The phages of every reference environment, deduplicated by content id."""
-        nodes: list[BioCypherNode] = []
-        seen_node_ids: set[str] = set()
-        for data in tqdm(self.dataset.experiment_reference_index):
-            for perturbation in data.reference.environment_reference.perturbations:
-                if not isinstance(perturbation, PhagePerturbation):
-                    continue
-                node = self._phage_perturbation_node_from(perturbation)
-                if node.get_id() not in seen_node_ids:
-                    seen_node_ids.add(node.get_id())
-                    nodes.append(node)
-        return nodes
 
     def _get_environment_reference_nodes(self) -> list[BioCypherNode]:
         nodes = []
@@ -3908,6 +3869,32 @@ class CellAdapter:
                 )
             )
         return edges
+
+    @data_chunker
+    def _perturbation_to_genome_edges(
+        self, data: dict[str, Any], method_name: str
+    ) -> list[BioCypherEdge]:
+        """``perturbation of genome``: each perturbation to the genome it is written against.
+
+        The genome node id is computable per record because the chunk carries the
+        record's reference (``data["reference"]``), the same slot the verifiers read, so
+        no extra pass is needed. OFF in every conf: the ``host_genome`` property on the
+        node is the mandatory join key, and this edge costs one row per perturbation per
+        record, the order of ``perturbation member of`` (47.3 M rows in 124 of 170
+        adapters of the job 4901 partial). A conf opts in by listing
+        ``perturbation to genome (chunked)``; the first build that does measures it.
+        """
+        genome_id = self._genome_node_id(data["reference"].genome_reference)
+        return [
+            BioCypherEdge(
+                source_id=hashlib.sha256(
+                    json.dumps(perturbation.model_dump()).encode("utf-8")
+                ).hexdigest(),
+                target_id=genome_id,
+                relationship_label="perturbation of genome",
+            )
+            for perturbation in data["experiment"].genotype.perturbations
+        ]
 
     @data_chunker
     def _environment_to_experiment_edge(

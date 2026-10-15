@@ -6,7 +6,7 @@
 knowledge-graph nodes and edges.
 
 One record per strain and titer column on the PIPA chassis: pathway and deletion leaves
-served as ``bacterial perturbation`` nodes, and the titer as a ``ProductTiterPhenotype``.
+served as ``perturbation`` nodes, and the titer as a ``ProductTiterPhenotype``.
 """
 
 import os.path as osp

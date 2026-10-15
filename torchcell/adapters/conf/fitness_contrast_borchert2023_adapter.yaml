@@ -1,7 +1,7 @@
-# Borchert 2023 KT2440 two-arm fitness contrasts (#913): FitnessContrastExperiment,
-# 64,853 records, one per released (gene, comparison sheet) row. One
-# TransposonInsertionPerturbation per record (the released locus), served as `bacterial
-# perturbation`. Both arms' environments carry D-glucose as an
+# Borchert 2023 KT2440 two-arm fitness contrasts (#913):
+# FitnessContrastExperiment, 64,853 records, one per released (gene, comparison
+# sheet) row. One TransposonInsertionPerturbation per record (the released locus),
+# served as `perturbation`. Both arms' environments carry D-glucose as an
 # EnvironmentPhysicalPerturbation and the stressed arm its stressor as a
 # SmallMoleculePerturbation, so the environment-perturbation pair is enabled. The
 # phenotype is the new `fitness contrast phenotype`.
@@ -13,7 +13,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

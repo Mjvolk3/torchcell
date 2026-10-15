@@ -357,6 +357,7 @@ def _expected_nodes() -> list[BioCypherNode]:
             properties={
                 "species": "Saccharomyces cerevisiae",
                 "strain": "BY4741",
+                "assembly_set": None,
                 **_serialized(GENOME),
             },
         ),
@@ -405,6 +406,7 @@ def _expected_nodes() -> list[BioCypherNode]:
                     "perturbed_gene_name": orf,
                     "perturbation_type": "kanmx_deletion",
                     "description": "Deletion via KanMX or NatMX gene replacement",
+                    "host_genome": "sgd_S288C_R64-4-1_20230830",
                     "strain_id": None,
                 },
             )

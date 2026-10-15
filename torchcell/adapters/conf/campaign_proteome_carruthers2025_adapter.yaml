@@ -1,9 +1,9 @@
 # Carruthers 2025 campaign proteome: 465 strain-cycles,
 # ProteinAbundanceExperiment. Per record the five pIY670
 # HeterologousPathwayPerturbation leaves plus one to five
-# BacterialCrisprInterferencePerturbation leaves, all served as `bacterial perturbation`.
-# Every CRISPRi leaf carries a CrisprConstruct, so the crispr-construct pair is enabled.
-# The environment carries a SmallMoleculePerturbation (L-arabinose), so the
+# BacterialCrisprInterferencePerturbation leaves, all served as `perturbation`. Every
+# CRISPRi leaf carries a CrisprConstruct, so the crispr-construct pair is enabled. The
+# environment carries a SmallMoleculePerturbation (L-arabinose), so the
 # environment-perturbation pair is enabled. No deletion leaf: the campaign strains carry
 # no chromosomal knockout, unlike the PP_0815 off-target panel.
 cell_adapter:
@@ -14,7 +14,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "crispr construct (chunked)"
       memory_reduction_factor: 1.0

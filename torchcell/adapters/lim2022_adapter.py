@@ -6,7 +6,7 @@
 nodes and edges.
 
 One record per KT2440 sample: the wild type or a single ``DeletionStrainPerturbation``
-served as a ``bacterial perturbation`` node, and the absolute transcriptome as an
+served as a ``perturbation`` node, and the absolute transcriptome as an
 ``RNASeqExpressionPhenotype``. The compendium does not carry temperature, so every
 record gaps it and the temperature methods emit nothing.
 """

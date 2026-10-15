@@ -7,7 +7,7 @@ knowledge-graph nodes and edges.
 
 One record per stored strain: its targeted genes as
 ``CrisprActivationPerturbation`` (issue #799) or
-``CrisprInterferencePerturbation`` leaves served as ``bacterial perturbation``
+``CrisprInterferencePerturbation`` leaves served as ``perturbation``
 nodes, each carrying the shared ``dCas9*-MCPSoxS`` construct on a ``crispr construct``
 node, the released OD600 ratio as an ``EnvironmentResponsePhenotype``, and 0.5% pinene
 as an environment perturbation on both the experiment and the reference.

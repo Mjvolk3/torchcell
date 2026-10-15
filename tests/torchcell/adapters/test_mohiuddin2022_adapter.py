@@ -85,7 +85,7 @@ def test_conf_names_the_promoter_activity_pair_and_no_other_phenotype() -> None:
 def test_conf_enables_both_the_gene_and_the_environment_perturbation_pairs() -> None:
     """Every record carries the reporter; the treated arms carry their antibiotic."""
     names = _conf_method_names()
-    assert "bacterial perturbation (chunked)" in names
+    assert "perturbation (chunked)" in names
     assert "perturbation to genotype (chunked)" in names
     assert "environment perturbation (chunked)" in names
     assert "environment perturbation to environment (chunked)" in names

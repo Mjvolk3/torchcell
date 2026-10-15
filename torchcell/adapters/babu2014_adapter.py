@@ -6,11 +6,11 @@
 knowledge-graph nodes and edges.
 
 One record per released (donor, recipient) pair: a two-leaf genotype of gene-level
-``DeletionStrainPerturbation`` objects served as ``bacterial perturbation`` nodes,
+``DeletionStrainPerturbation`` objects served as ``perturbation`` nodes,
 and the signed eSGA S score as a ``GeneInteractionPhenotype``. No new graph node class
 is needed: ``gene interaction phenotype`` is already a served class (the yeast
 interaction datasets declare it), and the two leaves differ only in their ``collection``
-and ``cassette``, which the ``bacterial perturbation`` id rule already covers. The
+and ``cassette``, which the ``perturbation`` id rule already covers. The
 screen is a single condition, so the medium and the temperature are single entities the
 whole dataset joins on and the environment carries no perturbation; the two marker drugs
 are ``selection_agent`` components of that medium rather than small-molecule edits, so

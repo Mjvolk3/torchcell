@@ -1,8 +1,8 @@
-# Caglar 2017 RNA-seq: 152 REL606 libraries, RNASeqExpressionExperiment.
-# Every genotype is the wild type (0 perturbations in 152 of 152 records), so neither
-# `bacterial perturbation` nor `perturbation to genotype` is enabled. The environment
-# carries SmallMoleculePerturbation and EnvironmentPhysicalPerturbation edits (carbon
-# source, Mg/Na levels), so the environment-perturbation pair is enabled.
+# Caglar 2017 RNA-seq: 152 REL606 libraries, RNASeqExpressionExperiment. Every
+# genotype is the wild type (0 perturbations in 152 of 152 records), so neither
+# `perturbation` nor `perturbation to genotype` is enabled. The environment carries
+# SmallMoleculePerturbation and EnvironmentPhysicalPerturbation edits (carbon source,
+# Mg/Na levels), so the environment-perturbation pair is enabled.
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"

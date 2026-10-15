@@ -6,7 +6,7 @@
 knowledge-graph nodes and edges.
 
 One record per released contrast column: pathway, deletion and CRISPRi leaves served as
-``bacterial perturbation`` nodes, the CRISPRi leaf's ``CrisprConstruct`` as a ``crispr
+``perturbation`` nodes, the CRISPRi leaf's ``CrisprConstruct`` as a ``crispr
 construct`` node, and the per-protein log2 fold changes with their p-values as a
 ``ProteinFoldChangePhenotype``. The phenotype node class is ``protein fold change
 phenotype``, NOT ``protein abundance phenotype``: a ratio and an absolute level are

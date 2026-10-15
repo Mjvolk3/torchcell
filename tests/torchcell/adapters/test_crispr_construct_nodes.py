@@ -188,6 +188,6 @@ def test_graph_schema_declares_the_construct_class_and_its_edge() -> None:
     edge = schema["crispr construct member of"]
     assert edge["represented_as"] == "edge"
     assert edge["source"] == "crispr construct"
-    # A bacterial CRISPRi leaf carries the same construct, so the edge also targets the
-    # bacterial perturbation class (an added target; served edges are unchanged).
-    assert edge["target"] == ["perturbation", "bacterial perturbation"]
+    # Every CRISPR leaf of every host is a `perturbation` node since the ontology
+    # unification (the retired `bacterial perturbation` target folded into it).
+    assert edge["target"] == "perturbation"

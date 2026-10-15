@@ -1,8 +1,8 @@
-# Lim 2025 isoprenol tolerance: 3 strains, EnvironmentResponseExperiment.
-# 1 to 7 BacterialDeletionPerturbation per record (14 in all), served as `bacterial
-# perturbation`. Isoprenol is a SmallMoleculePerturbation on the experiment and the
-# reference, so the environment-perturbation pair is enabled. Every record gaps
-# temperature; the temperature methods emit nothing for a gapped record.
+# Lim 2025 isoprenol tolerance: 3 strains, EnvironmentResponseExperiment. 1 to
+# 7 BacterialDeletionPerturbation per record (14 in all), served as `perturbation`.
+# Isoprenol is a SmallMoleculePerturbation on the experiment and the reference, so the
+# environment-perturbation pair is enabled. Every record gaps temperature; the
+# temperature methods emit nothing for a gapped record.
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"
@@ -11,12 +11,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
-      memory_reduction_factor: 1.0
-    # Issue #731: these records' genotypes carry CALLED variants, served as their own
-    # class. The two bacterial methods partition the leaves, so both are enabled and
-    # neither writes a perturbation the other does.
-    - method_name: "bacterial sequence variant perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

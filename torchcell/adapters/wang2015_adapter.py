@@ -6,7 +6,7 @@
 knowledge-graph nodes and edges.
 
 One record per Keio transporter deletion: a single ``DeletionStrainPerturbation``
-served as a ``bacterial perturbation`` node, the tolerance as an
+served as a ``perturbation`` node, the tolerance as an
 ``EnvironmentResponsePhenotype``, and isoprenol at its dose as an environment
 perturbation.
 """

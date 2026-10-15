@@ -6,7 +6,7 @@
 nodes and edges.
 
 One record per strain of the four-strain engineering ladder at 24 h: the deletions and
-the three genes of ``pBADT-davBA-ORF26`` served as ``bacterial perturbation`` nodes, and
+the three genes of ``pBADT-davBA-ORF26`` served as ``perturbation`` nodes, and
 the titer as a ``ProductTiterPhenotype``.
 """
 

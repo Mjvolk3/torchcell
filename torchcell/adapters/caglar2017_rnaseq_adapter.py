@@ -7,7 +7,7 @@ knowledge-graph nodes and edges.
 
 One record per *E. coli* REL606 library across growth phase, carbon source and Mg/Na
 stress. Every strain is the wild type, so the genotype carries no perturbation and no
-``bacterial perturbation`` node is served; the carbon source and the salt stresses are
+``perturbation`` node is served; the carbon source and the salt stresses are
 environment perturbations and are first-class nodes.
 """
 

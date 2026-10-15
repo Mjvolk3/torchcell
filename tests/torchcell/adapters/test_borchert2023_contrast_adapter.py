@@ -5,7 +5,7 @@
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Borchert 2023 two-arm fitness contrasts (#913): one Tn5 insertion per record served as
-``bacterial perturbation``, both arms carrying environment perturbations, and the
+``perturbation``, both arms carrying environment perturbations, and the
 new ``fitness contrast phenotype``.
 """
 

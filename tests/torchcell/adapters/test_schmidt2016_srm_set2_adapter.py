@@ -6,7 +6,7 @@ gate's view of it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Schmidt 2016 Table S3 SRM abundances: 14 BW25113 growth conditions,
 ProteinAbundanceExperiment, 31 protein keys per record. Every genotype is the
-wild type, so neither `bacterial perturbation` nor `perturbation to genotype` is
+wild type, so neither `perturbation` nor `perturbation to genotype` is
 enabled; the environment-perturbation pair is, because every record but the LB one and
 the glucose reference carry a carbon-source or stress edit.
 

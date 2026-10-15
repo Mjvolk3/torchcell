@@ -7,10 +7,10 @@ knowledge-graph nodes and edges.
 
 One record per (strain, medium, inducer dose). A record's
 ``CrisprInterferencePerturbation`` and ``DeletionStrainPerturbation`` leaves
-are served as ``bacterial perturbation`` nodes, the ``CrisprConstruct`` each knockdown
+are served as ``perturbation`` nodes, the ``CrisprConstruct`` each knockdown
 carries as a ``crispr construct`` node, the anhydrotetracycline of an induced plate as an
 ``environment perturbation`` node, and the released normalized colony growth as a
-``FitnessPhenotype``. The crossed records put two ``bacterial perturbation`` nodes on one
+``FitnessPhenotype``. The crossed records put two ``perturbation`` nodes on one
 ``genotype``, which is the pairing this dataset exists for.
 """
 

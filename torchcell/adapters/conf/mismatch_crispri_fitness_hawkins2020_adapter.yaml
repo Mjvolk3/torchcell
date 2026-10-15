@@ -1,11 +1,11 @@
 # Hawkins 2020 mismatch-CRISPRi in E. coli BW25113: 24,149
 # EnvironmentResponseExperiment records, one per released sgRNA that carries a
 # measured relative fitness. Each genotype carries exactly one
-# BacterialCrisprInterferencePerturbation, served as `bacterial perturbation` rather than
-# the yeast `perturbation` class, and that leaf carries the record's CrisprConstruct
-# (dCas9, the released 20-nt mismatched spacer), so the crispr-construct pair is enabled.
-# The environment carries the 1 mM IPTG that induces dCas9 as a SmallMoleculePerturbation
-# on both the experiment and the reference (`screen_environment`), so the
+# BacterialCrisprInterferencePerturbation, served as `perturbation` rather than the
+# yeast `perturbation` class, and that leaf carries the record's CrisprConstruct (dCas9,
+# the released 20-nt mismatched spacer), so the crispr-construct pair is enabled. The
+# environment carries the 1 mM IPTG that induces dCas9 as a SmallMoleculePerturbation on
+# both the experiment and the reference (`screen_environment`), so the
 # environment-perturbation pair is enabled.
 cell_adapter:
   node_methods:
@@ -15,7 +15,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "crispr construct (chunked)"
       memory_reduction_factor: 1.0

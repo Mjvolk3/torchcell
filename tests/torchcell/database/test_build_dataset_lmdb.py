@@ -1440,10 +1440,8 @@ def test_mapped_store_lanes_checks_the_manifests_leaves_against_the_confs_lanes(
     )
     assert served.describe() == "ToyBuildDataset: every leaf served"
 
-    _map_the_toy(
-        monkeypatch,
-        ["bacterial perturbation (chunked)", "perturbation to genotype (chunked)"],
-    )
+    # the one genotype lane left off while the edge method walks the leaf
+    _map_the_toy(monkeypatch, ["perturbation to genotype (chunked)"])
     (gap,) = m.mapped_store_lanes(str(tmp_path), include_private=False)
     assert gap.blocks
     assert gap.gaps.genotype == ["KanMxDeletionPerturbation"]
@@ -1452,7 +1450,7 @@ def test_mapped_store_lanes_checks_the_manifests_leaves_against_the_confs_lanes(
         "'perturbation to genotype (chunked)'"
     )
 
-    _map_the_toy(monkeypatch, ["bacterial perturbation (chunked)"])
+    _map_the_toy(monkeypatch, ["genotype (chunked)"])
     (no_edge,) = m.mapped_store_lanes(str(tmp_path), include_private=False)
     assert not no_edge.blocks
 

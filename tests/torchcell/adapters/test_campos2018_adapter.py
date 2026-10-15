@@ -6,7 +6,7 @@ it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Campos 2018 Keio growth rate: 3,664 deletion-strain records,
 FitnessExperiment. One DeletionStrainPerturbation per record, served as
-`bacterial perturbation`. The screen is one medium at one temperature with no
+`perturbation`. The screen is one medium at one temperature with no
 environment perturbation, so the environment-perturbation pair is left off.
 """
 

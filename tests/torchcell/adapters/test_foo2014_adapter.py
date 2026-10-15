@@ -6,7 +6,7 @@ and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Foo 2014 isopentenol titer: 9 records, ProductTiterExperiment. Exactly one perturbation
 per record, the pBbS5k-borne gene as a HeterologousPathwayPerturbation, served as
-`bacterial perturbation`. The shared CultureEnvironment carries two
+`perturbation`. The shared CultureEnvironment carries two
 SmallMoleculePerturbation edits, so the environment-perturbation pair is enabled.
 """
 

@@ -1,12 +1,12 @@
 # Babu 2014 eSGA digenic interaction map: 38,579 (donor, recipient) records from Table
 # S2's GI score, GeneInteractionExperiment. Two gene-level
-# BacterialDeletionPerturbation leaves per record, served as `bacterial perturbation`
-# (never the yeast `perturbation` class), and the signed S score as the served
-# `gene interaction phenotype` -- no new graph class: the yeast interaction datasets
-# already declare that one. The screen is ONE condition, so the environment is a single
-# entity every record joins on: the two marker drugs are selection_agent components of
-# the medium, not SmallMoleculePerturbations, so the environment-perturbation pair stays
-# off. No phage and no CRISPRi construct appears in any record, so those pairs stay off.
+# BacterialDeletionPerturbation leaves per record, served as `perturbation`, and the
+# signed S score as the served `gene interaction phenotype` -- no new graph class: the
+# yeast interaction datasets already declare that one. The screen is ONE condition, so
+# the environment is a single entity every record joins on: the two marker drugs are
+# selection_agent components of the medium, not SmallMoleculePerturbations, so the
+# environment-perturbation pair stays off. No phage and no CRISPRi construct appears in
+# any record, so those pairs stay off.
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"
@@ -15,7 +15,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

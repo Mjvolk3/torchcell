@@ -1,13 +1,13 @@
-# Niu 2019 CRISPRa/CRISPRi pinene tolerance: EnvironmentResponseExperiment.
-# One BacterialCrisprActivationPerturbation (#799) or
+# Niu 2019 CRISPRa/CRISPRi pinene tolerance: EnvironmentResponseExperiment. One
+# BacterialCrisprActivationPerturbation (#799) or
 # BacterialCrisprInterferencePerturbation per targeted gene, six on the interference
-# combination strain, served as `bacterial perturbation` with the shared
-# `dCas9*-MCPSoxS` effector on a `crispr construct` node. 0.5% pinene is a
-# SmallMoleculePerturbation on the experiment AND on the reference, so the
-# environment-perturbation pair is enabled; the 200 nM anhydrotetracycline that induces
-# the effector is a component of the medium, where the paper's own recipe puts it, which
-# is what leaves pinene as the only environment perturbation (the Rousset 2018 rule for
-# the same inducer). No record carries a phage, so that lane is off.
+# combination strain, served as `perturbation` with the shared `dCas9*-MCPSoxS` effector
+# on a `crispr construct` node. 0.5% pinene is a SmallMoleculePerturbation on the
+# experiment AND on the reference, so the environment-perturbation pair is enabled; the
+# 200 nM anhydrotetracycline that induces the effector is a component of the medium,
+# where the paper's own recipe puts it, which is what leaves pinene as the only
+# environment perturbation (the Rousset 2018 rule for the same inducer). No record
+# carries a phage, so that lane is off.
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"
@@ -16,7 +16,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "crispr construct (chunked)"
       memory_reduction_factor: 1.0

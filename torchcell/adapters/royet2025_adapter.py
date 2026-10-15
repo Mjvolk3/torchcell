@@ -6,7 +6,7 @@
 knowledge-graph nodes and edges.
 
 One record per (gene, metal): a single gene-level ``TransposonInsertionPerturbation``
-served as a ``bacterial perturbation`` node, and the TRANSIT log2FC as an
+served as a ``perturbation`` node, and the TRANSIT log2FC as an
 ``EnvironmentResponsePhenotype``. Every record's environment carries exactly one
 ``SmallMoleculePerturbation``, the metal chloride at its Methods dose, on the experiment
 and on the reference, so the environment-perturbation pair is enabled with no

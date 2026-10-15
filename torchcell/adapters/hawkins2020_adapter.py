@@ -6,7 +6,7 @@
 knowledge-graph nodes and edges.
 
 One record per released sgRNA with a measured relative fitness: its single
-``CrisprInterferencePerturbation`` is served as a ``bacterial perturbation``
+``CrisprInterferencePerturbation`` is served as a ``perturbation``
 node whose ``description`` carries the guide's mismatch design, the ``CrisprConstruct``
 holding the 20-nt spacer as a ``crispr construct`` node, and the released replicate mean
 as an ``EnvironmentResponsePhenotype``. The environment carries the 1 mM IPTG that

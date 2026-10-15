@@ -6,7 +6,7 @@
 
 One record per released PRECISE-1K sample whose ``Growth Rate (1/hr)`` cell is positive,
 89 in all. 34 genotypes carry one ``DeletionStrainPerturbation``, served as
-``bacterial perturbation``, and the other 55 are wild type; the carbon source, the
+``perturbation``, and the other 55 are wild type; the carbon source, the
 supplements and the salts are environment perturbations and are first-class nodes. The
 phenotype is ``environment response phenotype``, carrying the absolute rate in 1/hr with
 the released project as its screen id and the released ``rep_id`` as its replicate id

@@ -5,7 +5,7 @@
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Rousset 2018 CRISPR-dCas9 screens: EnvironmentResponseExperiment. One
-CrisprInterferencePerturbation per record, served as `bacterial perturbation`
+CrisprInterferencePerturbation per record, served as `perturbation`
 with its spacer on a `crispr construct` node. The four phage-derived screens carry
 exactly one PhagePerturbation each (`phage perturbation`); the growth screen (#905)
 carries Cui 2018's 1 nM aTc (`environment perturbation`). The two lanes partition the
@@ -52,11 +52,10 @@ def test_kg_manifest_resolves_the_dataset_to_its_own_module_and_conf() -> None:
     assert_gate_resolves_own_files(CASE)
 
 
-def test_the_conf_serves_both_partitioned_environment_lanes() -> None:
-    """Phages on `phage perturbation`, the growth screen's aTc on `environment
-    perturbation` (#905); since #756 the two lanes partition the leaves.
+def test_the_conf_serves_the_one_environment_lane() -> None:
+    """Phages as `phage perturbation`, the growth screen's aTc as `environment
+    perturbation` (#905), both from the one lane that chooses the label by leaf.
     """
-    assert CASE.case.shape.phage is True
     assert CASE.case.shape.env_perturbation is True
     assert CASE.case.shape.crispr is True
 

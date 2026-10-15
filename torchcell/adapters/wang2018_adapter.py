@@ -6,7 +6,7 @@
 knowledge-graph nodes and edges.
 
 One record per (sgRNA, screen) row: every knockdown leaf served as a
-``bacterial perturbation`` node with its ``CrisprConstruct`` as a ``crispr construct``
+``perturbation`` node with its ``CrisprConstruct`` as a ``crispr construct``
 node, the released ``sgRNA fitness`` as an ``EnvironmentResponsePhenotype``, and the
 screen's medium, 37 C temperature and added compounds as the environment.
 """

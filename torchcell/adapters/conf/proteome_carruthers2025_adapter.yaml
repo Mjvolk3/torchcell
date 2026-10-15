@@ -1,7 +1,7 @@
-# Carruthers 2025 proteome: 19 samples, ProteinAbundanceExperiment.
-# 7 perturbations per record: HeterologousPathwayPerturbation (95),
-# BacterialCrisprInterferencePerturbation (19) and BacterialDeletionPerturbation (19), all
-# served as `bacterial perturbation`. Every CRISPRi leaf carries a CrisprConstruct, so the
+# Carruthers 2025 proteome: 19 samples, ProteinAbundanceExperiment. 7
+# perturbations per record: HeterologousPathwayPerturbation (95),
+# BacterialCrisprInterferencePerturbation (19) and BacterialDeletionPerturbation (19),
+# all served as `perturbation`. Every CRISPRi leaf carries a CrisprConstruct, so the
 # crispr-construct pair is enabled. The environment carries a SmallMoleculePerturbation,
 # so the environment-perturbation pair is enabled.
 cell_adapter:
@@ -12,7 +12,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "crispr construct (chunked)"
       memory_reduction_factor: 1.0

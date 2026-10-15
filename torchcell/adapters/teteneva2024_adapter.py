@@ -7,7 +7,7 @@ RpoS+, Supplementary Table S4) as knowledge-graph nodes and edges.
 
 One record per (resolved gene, lake water sample, filtration, sampling day): a single
 ``TransposonInsertionPerturbation`` on a W3110 RefSeq ``Y75_RS`` locus, served as a
-``bacterial perturbation`` node, and the gene fitness as an
+``perturbation`` node, and the gene fitness as an
 ``EnvironmentResponsePhenotype``. Each condition is its own lake water ``Media`` with no
 environment perturbation, so the environment-perturbation pair is off.
 """

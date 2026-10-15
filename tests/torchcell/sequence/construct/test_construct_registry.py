@@ -30,6 +30,7 @@ from torchcell.literature.manifest import (
     RetrievalRecord,
 )
 from torchcell.sequence.construct import (
+    TOPOLOGY_SO,
     BlockedConstruct,
     BlockedReason,
     ConstructContig,
@@ -41,6 +42,7 @@ from torchcell.sequence.construct import (
     FeatureKey,
     PlacementTargetError,
     SequenceStatus,
+    SpanComposition,
     construct_set_dir,
     deposit_construct_set,
     extend_construct_set,
@@ -49,7 +51,7 @@ from torchcell.sequence.construct import (
     resolve_contig,
     verify_construct_set,
 )
-from torchcell.sequence.plasmid import GenBankLocationError
+from torchcell.sequence.plasmid import GenBankLocationError, LocationRefusal
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import (
     ProvenanceGap,
@@ -328,19 +330,15 @@ def test_an_unknown_feature_token_raises(tmp_path: Path) -> None:
 def test_a_feature_key_must_be_a_well_formed_so_id() -> None:
     """The key's SO id goes through ``SOTerm``'s pattern: one SO map for the repo."""
     with pytest.raises(ValidationError):
-        FeatureKey(
-            label="x",
-            so_id="SO:704",
-            span=ConstructSpan(start=1, end=2, orientation="inline"),
-        )
+        FeatureKey(label="x", so_id="SO:704", span=ConstructSpan.one(1, 2, "inline"))
 
 
 def test_a_span_must_be_one_based_and_ordered() -> None:
     """``ConstructSpan`` refuses a 0 start and an inverted interval."""
     with pytest.raises(ValidationError):
-        ConstructSpan(start=0, end=4, orientation="inline")
+        ConstructSpan.one(0, 4, "inline")
     with pytest.raises(ValidationError):
-        ConstructSpan(start=9, end=4, orientation="inline")
+        ConstructSpan.one(9, 4, "inline")
 
 
 def test_a_feature_key_whose_so_id_is_not_among_its_roles_is_refused() -> None:
@@ -348,9 +346,7 @@ def test_a_feature_key_whose_so_id_is_not_among_its_roles_is_refused() -> None:
     with pytest.raises(ValidationError, match="roles are"):
         ConstructFeature(
             key=FeatureKey(
-                label="x",
-                so_id="SO:0000704",
-                span=ConstructSpan(start=1, end=4, orientation="inline"),
+                label="x", so_id="SO:0000704", span=ConstructSpan.one(1, 4, "inline")
             ),
             roles=[PRIMER],
             genbank_type="primer",
@@ -541,14 +537,108 @@ def test_an_absent_index_names_the_provisioning_script(tmp_path: Path) -> None:
         load_construct_manifest("no_such_set", str(tmp_path))
 
 
-def test_an_origin_wrapping_map_never_becomes_a_contig(tmp_path: Path) -> None:
-    """``parse_contig_features`` propagates the refusal, so a blocked map cannot index."""
+def test_an_origin_wrapping_map_now_indexes_with_its_parts(tmp_path: Path) -> None:
+    """``parse_contig_features`` projects a wrap into a two-part 1-based span.
+
+    ``19..2`` on this 20 bp circular fixture is the form 11 of the 17 Cachera maps carry
+    (``11559..128``, ``complement(4892..858)``). It used to block the map; it is now the
+    ordered parts ``19..20`` and ``1..2``, which is 4 bases, not the 20 the envelope
+    would have given, and the key's token carries the ``wrap:`` sigil so it can never
+    collide with a join over the same two intervals.
+    """
     path = tmp_path / "pWRAP.gb"
     path.write_text(
         _MAP.replace("     primer          17..20\n", "     primer          19..2\n")
     )
-    with pytest.raises(GenBankLocationError, match="origin-wrapping"):
+    _, features = parse_contig_features(path, KEY)
+    wrap = next(f for f in features if f.key.label == "HOP1")
+    assert wrap.key.span.composition is SpanComposition.origin_spanning
+    assert [(p.start, p.end) for p in wrap.key.span.parts] == [(19, 20), (1, 2)]
+    assert wrap.key.span.length == 4
+    assert wrap.key.token == "HOP1@SO:0005850:wrap:19-20,1-2+"
+    assert wrap.key.span.insdc_location(compact_wrap=True) == "19..2"
+    assert wrap.key.span.insdc_location() == "join(19..20,1..2)"
+    with pytest.raises(ValueError, match="no single start"):
+        _ = wrap.key.span.start
+
+
+def test_a_wrap_is_checked_against_the_contig_length_and_topology(
+    tmp_path: Path,
+) -> None:
+    """An ``origin_spanning`` claim is proved on the contig, which knows the bytes.
+
+    ``ConstructSpan`` can check the shape of its parts but not their relation to the
+    replicon: the first part of a wrap must end at the LAST base, and a linear contig
+    has no origin to cross. Both are refused here rather than at the span, because this
+    is where the length and the topology live.
+    """
+    path = tmp_path / "pWRAP.gb"
+    path.write_text(
+        _MAP.replace("     primer          17..20\n", "     primer          19..2\n")
+    )
+    component, features = parse_contig_features(path, KEY)
+    base = {
+        "sha256": "f" * 64,
+        "ref": ArtifactRef(
+            tier="library",
+            key=KEY,
+            path="si/plasmids/pWRAP.gb",
+            sha256="f" * 64,
+            bytes=10,
+        ).model_dump(),
+        "record_name": component.identity,
+        "length": component.length,
+        "kind": ConstructKind.plasmid,
+        "features": [f.model_dump() for f in features],
+        "source_name": SourcedValue(
+            value="pWrap1",
+            provenance=Provenance(
+                source_uri="paper.md", citation_key=KEY, sha256="a" * 64
+            ),
+            quote="the fixture plasmid pWrap1",
+        ).model_dump(),
+    }
+    assert ConstructContig.model_validate(base | {"topology": "circular"})
+    with pytest.raises(ValidationError, match="no origin to cross"):
+        ConstructContig.model_validate(base | {"topology": "linear"})
+    with pytest.raises(ValidationError, match="past the contig's"):
+        ConstructContig.model_validate(
+            base | {"topology": "circular", "length": component.length - 1}
+        )
+
+
+def test_a_blocked_map_records_the_reason_the_parser_gave(tmp_path: Path) -> None:
+    """The index's reason comes from ``GenBankLocationError.refusal``, not the call site.
+
+    All 11 Cachera refusals were recorded as ``origin_wrapping_location`` because that
+    member was hardcoded where the refusal was caught. One vocabulary, carried on the
+    exception, is what keeps the index's reason the parser's own: an INSDC ``order``
+    location is an ``ordered_location`` and says so.
+    """
+    path = tmp_path / "pORDER.gb"
+    path.write_text(
+        _MAP.replace(
+            "     primer          17..20\n",
+            "     primer          order(17..18,19..20)\n",
+        )
+    )
+    with pytest.raises(GenBankLocationError) as caught:
         parse_contig_features(path, KEY)
+    assert caught.value.refusal is BlockedReason.ordered_location
+    assert BlockedReason is LocationRefusal
+
+
+def test_a_contig_grounds_its_topology_in_the_sequence_ontology(tmp_path: Path) -> None:
+    """``topology`` reads out as an SO term; the map is derived, never a second field.
+
+    SO's ``topology_attribute`` (SO:0000986) has exactly the two children a replicon's
+    topology can be, which is why the Literal has two members and the grounding is a
+    lookup rather than a stored term.
+    """
+    contig, _ = _contig(tmp_path)
+    assert contig.topology == "circular"
+    assert contig.topology_term == SOTerm(so_id="SO:0000988", name="circular")
+    assert set(TOPOLOGY_SO) == {"circular", "linear"}
 
 
 def test_the_module_imports_first_in_a_fresh_interpreter() -> None:

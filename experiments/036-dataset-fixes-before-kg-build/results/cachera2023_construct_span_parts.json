@@ -1,0 +1,394 @@
+{
+  "compound_features": [
+    {
+      "canonical_insdc": "join(11559..12096,1..128)",
+      "composition": "origin_spanning",
+      "contig_length": 12096,
+      "envelope_length": 12096,
+      "feature_length": 666,
+      "feature_type": "rep_origin",
+      "label": "pUC\\ori",
+      "parts": [
+        [
+          11559,
+          12096
+        ],
+        [
+          1,
+          128
+        ]
+      ],
+      "path": "si/plasmids/pBTX002.gb",
+      "so_id": "SO:0000296",
+      "source_location": "11559..128",
+      "source_name": "pBTX2",
+      "token": "pUC\\ori@SO:0000296:wrap:11559-12096,1-128+"
+    },
+    {
+      "canonical_insdc": "complement(join(2997..2999,1..858))",
+      "composition": "origin_spanning",
+      "contig_length": 2999,
+      "envelope_length": 2999,
+      "feature_length": 861,
+      "feature_type": "CDS",
+      "label": "AmpR",
+      "parts": [
+        [
+          2997,
+          2999
+        ],
+        [
+          1,
+          858
+        ]
+      ],
+      "path": "si/plasmids/pCCM023.gb",
+      "so_id": "SO:0000316",
+      "source_location": "complement(2997..858)",
+      "source_name": "pCCM023",
+      "token": "AmpR@SO:0000316:wrap:2997-2999,1-858-"
+    },
+    {
+      "canonical_insdc": "complement(join(4892..4894,1..858))",
+      "composition": "origin_spanning",
+      "contig_length": 4894,
+      "envelope_length": 4894,
+      "feature_length": 861,
+      "feature_type": "CDS",
+      "label": "AmpR",
+      "parts": [
+        [
+          4892,
+          4894
+        ],
+        [
+          1,
+          858
+        ]
+      ],
+      "path": "si/plasmids/pbtx013.gb",
+      "so_id": "SO:0000316",
+      "source_location": "complement(4892..858)",
+      "source_name": "pBTX013",
+      "token": "AmpR@SO:0000316:wrap:4892-4894,1-858-"
+    },
+    {
+      "canonical_insdc": "complement(join(4889..4891,1..858))",
+      "composition": "origin_spanning",
+      "contig_length": 4891,
+      "envelope_length": 4891,
+      "feature_length": 861,
+      "feature_type": "CDS",
+      "label": "AmpR",
+      "parts": [
+        [
+          4889,
+          4891
+        ],
+        [
+          1,
+          858
+        ]
+      ],
+      "path": "si/plasmids/pbtx014.gb",
+      "so_id": "SO:0000316",
+      "source_location": "complement(4889..858)",
+      "source_name": "pBTX014",
+      "token": "AmpR@SO:0000316:wrap:4889-4891,1-858-"
+    },
+    {
+      "canonical_insdc": "complement(join(4890..4892,1..858))",
+      "composition": "origin_spanning",
+      "contig_length": 4892,
+      "envelope_length": 4892,
+      "feature_length": 861,
+      "feature_type": "CDS",
+      "label": "AmpR",
+      "parts": [
+        [
+          4890,
+          4892
+        ],
+        [
+          1,
+          858
+        ]
+      ],
+      "path": "si/plasmids/pbtx016.gb",
+      "so_id": "SO:0000316",
+      "source_location": "complement(4890..858)",
+      "source_name": "pBTX016",
+      "token": "AmpR@SO:0000316:wrap:4890-4892,1-858-"
+    },
+    {
+      "canonical_insdc": "complement(join(4893..4895,1..858))",
+      "composition": "origin_spanning",
+      "contig_length": 4895,
+      "envelope_length": 4895,
+      "feature_length": 861,
+      "feature_type": "CDS",
+      "label": "AmpR",
+      "parts": [
+        [
+          4893,
+          4895
+        ],
+        [
+          1,
+          858
+        ]
+      ],
+      "path": "si/plasmids/pbtx017.gb",
+      "so_id": "SO:0000316",
+      "source_location": "complement(4893..858)",
+      "source_name": "pBTX017",
+      "token": "AmpR@SO:0000316:wrap:4893-4895,1-858-"
+    },
+    {
+      "canonical_insdc": "complement(join(4890..4892,1..858))",
+      "composition": "origin_spanning",
+      "contig_length": 4892,
+      "envelope_length": 4892,
+      "feature_length": 861,
+      "feature_type": "CDS",
+      "label": "AmpR",
+      "parts": [
+        [
+          4890,
+          4892
+        ],
+        [
+          1,
+          858
+        ]
+      ],
+      "path": "si/plasmids/pbtx019.gb",
+      "so_id": "SO:0000316",
+      "source_location": "complement(4890..858)",
+      "source_name": "pBTX019",
+      "token": "AmpR@SO:0000316:wrap:4890-4892,1-858-"
+    },
+    {
+      "canonical_insdc": "complement(join(4892..4894,1..858))",
+      "composition": "origin_spanning",
+      "contig_length": 4894,
+      "envelope_length": 4894,
+      "feature_length": 861,
+      "feature_type": "CDS",
+      "label": "AmpR",
+      "parts": [
+        [
+          4892,
+          4894
+        ],
+        [
+          1,
+          858
+        ]
+      ],
+      "path": "si/plasmids/pbtx020.gb",
+      "so_id": "SO:0000316",
+      "source_location": "complement(4892..858)",
+      "source_name": "pBTX020",
+      "token": "AmpR@SO:0000316:wrap:4892-4894,1-858-"
+    },
+    {
+      "canonical_insdc": "complement(join(4898..4900,1..858))",
+      "composition": "origin_spanning",
+      "contig_length": 4900,
+      "envelope_length": 4900,
+      "feature_length": 861,
+      "feature_type": "CDS",
+      "label": "AmpR",
+      "parts": [
+        [
+          4898,
+          4900
+        ],
+        [
+          1,
+          858
+        ]
+      ],
+      "path": "si/plasmids/pbtx021.gb",
+      "so_id": "SO:0000316",
+      "source_location": "complement(4898..858)",
+      "source_name": "pBTX021",
+      "token": "AmpR@SO:0000316:wrap:4898-4900,1-858-"
+    },
+    {
+      "canonical_insdc": "complement(join(4890..4892,1..858))",
+      "composition": "origin_spanning",
+      "contig_length": 4892,
+      "envelope_length": 4892,
+      "feature_length": 861,
+      "feature_type": "CDS",
+      "label": "AmpR",
+      "parts": [
+        [
+          4890,
+          4892
+        ],
+        [
+          1,
+          858
+        ]
+      ],
+      "path": "si/plasmids/pbtx022.gb",
+      "so_id": "SO:0000316",
+      "source_location": "complement(4890..858)",
+      "source_name": "pBTX022",
+      "token": "AmpR@SO:0000316:wrap:4890-4892,1-858-"
+    },
+    {
+      "canonical_insdc": "complement(join(4890..4892,1..858))",
+      "composition": "origin_spanning",
+      "contig_length": 4892,
+      "envelope_length": 4892,
+      "feature_length": 861,
+      "feature_type": "CDS",
+      "label": "AmpR",
+      "parts": [
+        [
+          4890,
+          4892
+        ],
+        [
+          1,
+          858
+        ]
+      ],
+      "path": "si/plasmids/pbtx023.gb",
+      "so_id": "SO:0000316",
+      "source_location": "complement(4890..858)",
+      "source_name": "pBTX023",
+      "token": "AmpR@SO:0000316:wrap:4890-4892,1-858-"
+    }
+  ],
+  "construct_set": "cachera2023_cri_spa_plasmids",
+  "coverage": {
+    "blocked": [],
+    "n_blocked": 0,
+    "n_contigs": 17,
+    "n_features": 570,
+    "n_files": 17,
+    "n_name_gapped": 0,
+    "n_named_from_paper": 8,
+    "n_named_from_si_table": 9,
+    "provenance_complete": true,
+    "span_compositions": {
+      "origin_spanning": 11,
+      "simple": 559
+    }
+  },
+  "paper_quotes": {
+    "cassette_size": "the considerable size, $9 . 3 \\mathrm { k b }$ , of the Btx",
+    "cassette_size_is_verbatim": true,
+    "noti_insert": "The BY-Btx strain was made by transforming the NotI excised insert of pBTX2",
+    "noti_insert_is_verbatim": true,
+    "si_table_s2_present": true
+  },
+  "placement_census": {
+    "by_contig": {
+      "bbaca60509e0": 4
+    },
+    "gap_reasons": {},
+    "n_additions": 4,
+    "n_composition_only": 0,
+    "n_host_placed_without_coordinate": 4,
+    "n_sequence_backed": 0,
+    "n_untyped": 0
+  },
+  "round_trip": {
+    "canonical_reparse_failures": [],
+    "mismatches": [],
+    "n_canonical_reparse_failures": 0,
+    "n_compact_form_mismatches": 0,
+    "n_features_checked": 570
+  },
+  "vectors": {
+    "pBTX1": {
+      "arm_to_arm": {
+        "end": 9859,
+        "length": 9850,
+        "start": 10
+      },
+      "arms": {
+        "XII-5 dw A": {
+          "end": 9859,
+          "length": 262,
+          "start": 9598
+        },
+        "XII-5 up B": {
+          "end": 220,
+          "length": 211,
+          "start": 10
+        }
+      },
+      "between_arms": {
+        "end": 9597,
+        "length": 9377,
+        "start": 221
+      },
+      "handle": "bbaca60509e0",
+      "length": 15098,
+      "n_features": 64,
+      "noti": {
+        "fragment": null,
+        "site": "GCGGCCGC",
+        "site_starts": []
+      },
+      "source_name": "pBTX1",
+      "topology": "circular",
+      "topology_so": {
+        "name": "circular",
+        "so_id": "SO:0000988"
+      }
+    },
+    "pBTX2": {
+      "arm_to_arm": {
+        "end": 10782,
+        "length": 9234,
+        "start": 1549
+      },
+      "arms": {
+        "XII-5\\Down": {
+          "end": 10782,
+          "length": 676,
+          "start": 10107
+        },
+        "XII-5\\UP": {
+          "end": 2002,
+          "length": 454,
+          "start": 1549
+        }
+      },
+      "between_arms": {
+        "end": 10106,
+        "length": 8104,
+        "start": 2003
+      },
+      "handle": "63f89c1eaa13",
+      "length": 12096,
+      "n_features": 32,
+      "noti": {
+        "fragment": {
+          "end": 10798,
+          "length": 9270,
+          "start": 1529
+        },
+        "site": "GCGGCCGC",
+        "site_starts": [
+          1527,
+          10797
+        ]
+      },
+      "source_name": "pBTX2",
+      "topology": "circular",
+      "topology_so": {
+        "name": "circular",
+        "so_id": "SO:0000988"
+      }
+    }
+  }
+}

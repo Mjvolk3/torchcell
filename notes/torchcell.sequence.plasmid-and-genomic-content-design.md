@@ -98,3 +98,18 @@ coding strand (ATG start) from the rebased insert. 9 unit tests; ruff + mypy cle
 Still future: GenBank/GFF3/SBOL WRITERS; the apply-to-sequence function (materialise a
 strain's in-cell sequence from its Genotype); persisted store; combinatorial/variant
 designs; wiring `GeneAddition` -> a Component/insert reference once ws8 lands.
+
+## 2026.10.15 - Correction to the 2026.07.06 pBTX2 arm coordinates
+
+The 2026.07.06 section records the pBTX2 arms as `XII-5\UP` 1548-2002 and `XII-5\Down`
+10106-10782. Measured against the pinned bytes of `pBTX002.gb` they are **1549..2002** and
+**10107..10782**; both starts above are one too low. The 8,104 bp figure in that section
+is right for the between-the-arms reading, which is 2003..10106.
+
+The section's framing of that 8,104 bp window as "the insert" is also superseded. The
+paper says the BY-Btx strain was made with "the NotI excised insert of pBTX2", and pBTX2
+carries exactly two NotI sites (`GCGGCCGC` at 1527 and 10797) whose top-strand cuts bound
+**1529..10798 = 9,270 bp**, which is the paper's own "9.3 kb". That is the sourced
+contig-side insert of pBTX2. pBTX1, the vector the four screened-strain records point at,
+has no NotI site and no exact interval. Full measurement and the pBTX1 comparison:
+[[experiments.036-dataset-fixes-before-kg-build.scripts.cachera2023_construct_span_parts]].

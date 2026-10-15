@@ -366,3 +366,35 @@ The L0-L4 table from the `--verify` rebuild (slurm array 4604, family verifier j
 | L3 | `reference_zero` | gate | ok | reference metabolite level == 0 for all 4759 values |
 | L3 | `measurement_type_consistent` | gate | ok | single measurement_type: 'cri_spa_corrected_hsv_yellowness_24h' |
 | L4 | `gene_containment_scmd_ohya2005` | report | finding | 0.237 of scmd_ohya2005's 4759 deletion genes are in Ohya (>= 0.9) |
+
+## 2026.10.15 - The insert span re-measured with pBTX2 indexed, and still a gap
+
+Lane T. pBTX2 is now an indexed contig (handle `63f89c1eaa13`), so the question lane G
+left open could be re-asked with both vectors in the store. The answer is that pBTX2
+admits an exact contig-side insert span and pBTX1 does not, and all four records point at
+pBTX1, so the typed gap stays.
+
+| | pBTX1 (CD-Btx, the records' contig) | pBTX2 (BY-Btx) |
+|---|---|---|
+| arm to arm, inclusive | 9,850 bp | 9,234 bp |
+| between the arms | 9,377 bp | 8,104 bp |
+| NotI (`GCGGCCGC`) sites | **none** | 1527, 10797 |
+| NotI fragment, top-strand cuts | not defined | **1529..10798 = 9,270 bp** |
+| the paper's figure | "the considerable size, 9.3 kb, of the Btx-cassette" | same sentence |
+
+pBTX2's interval is exact and sourced: the paper states "The BY-Btx strain was made by
+transforming the NotI excised insert of pBTX2", `GC^GGCCGC` cuts after the second base of
+each site, and 9,270 bp is the paper's own 9.3 kb. It is NOT moved onto a pBTX1
+placement, because pBTX1 is a different replicon on different coordinates; doing so would
+be inventing a coordinate. pBTX1 annotates only a 211 bp `XII-5 up B` butted against its
+map origin at position 10, carries no NotI site, and the readings its arms admit bracket
+9.3 kb without matching it; a double crossover's transferred interval is bounded by
+crossover points inside the arms, which the source never states.
+
+`_INSERT_SPAN_GAP_NOTE` now carries the pBTX2 contrast, and the host-side `span` stays a
+gap for the same reason as before: the only XII-5 coordinate in the release
+(`target sequence XII-5` 14691..14710) is a coordinate on the vector.
+
+The placement census is unchanged and correctly so: 4 additions, 4
+`host_placed_without_coordinate`, 0 `sequence_backed`, 0 untyped. Full measurement in
+[[experiments.036-dataset-fixes-before-kg-build.scripts.cachera2023_construct_span_parts]].

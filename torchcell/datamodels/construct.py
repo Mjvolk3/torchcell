@@ -57,6 +57,8 @@ from torchcell.datamodels.schema import (
     FeatureKey,
     HostPlacement,
     Localization,
+    SpanComposition,
+    SpanPart,
 )
 
 __all__ = [
@@ -67,4 +69,6 @@ __all__ = [
     "FeatureKey",
     "HostPlacement",
     "Localization",
+    "SpanComposition",
+    "SpanPart",
 ]

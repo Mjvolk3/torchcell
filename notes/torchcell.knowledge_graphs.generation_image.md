@@ -19,3 +19,18 @@ Three rules live in the module, not in the shell scripts that call it:
 CLI: `tag`, `check` (exit 1 with the reason when absent or mismatched), `resolve --mode <image|install|auto>`, `ensure`, `build`, `remove`, each with `--build-commit <sha>`; `--dry-run` prints every docker command prefixed `DRY-RUN` and runs none. The serial live rebuild keeps its in-container install unchanged. The array task and its conductor ([[database.scripts.kg_generation_array_conductor]], [[database.slurm.scripts.gilahyper_generate_adapter_array-slurm_docker]], lane C's PR #1110) read `GEN_IMAGE_MODE` once the three hooks land on top of that PR: the conductor runs `ensure` before its sbatch lines and passes `--gen-image-mode`, the task runs `resolve` before its container and runs from `$RUN_IMAGE` with the install lines replaced by the commit check, and the live rebuild's follow-up runs `remove` after the merge.
 
 Measured: [[experiments.database.scripts.gen_image_startup_measurement]]. Tests: [[tests.torchcell.knowledge_graphs.test_generation_image]].
+
+## 2026.10.15 - The three hooks are wired, and the image is measured in a real array
+
+This module landed without a caller (check-in 08:35 CDT: "its three hooks into lane C's
+array files wait on PR #1110 landing"). They are in place now: the conductor resolves the
+mode and builds the tag (`GEN_IMAGE_MODE`), `generation_array --gen-image` carries the tag
+into the task environment, the array task re-reads the tag's commit label and refuses
+rather than installing, and the live rebuild calls `remove` after the merge succeeds,
+which is `teardown_decision`'s `remove` case made concrete.
+
+Measured in the first array to use it, job 4974, 47 tasks: **startup 11.0 s median, 11.2 s
+mean, 10 to 14 s**, against this module's own 15.8 s mean on the install-versus-image
+measurement and 255.9 s on the install path. Cold build 434 s on a contended node;
+a same-commit rebuild was free, as designed
+([[experiments.database.bacterial-generation-profile]]).

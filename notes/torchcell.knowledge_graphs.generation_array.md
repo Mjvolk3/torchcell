@@ -56,3 +56,38 @@ Lane C2 measured the prebuilt image on 2026-10-15: install path 255.9 s from con
 **Production, estimated (hypothesis until the first array build measures it).** The build hashes each row once (one copy, not two), over 170 parts per label with 16 scanning processes instead of 2, on a quiet `/db`. At the measured per-process rates the hashing of 410 GB and 813 M rows is 3 to 6 min with 16 processes if the NVMe sustains about 2 GB/s, the parent's per-label sort-merge adds about a minute per 100 M-row label (eight of them), and the peak memory is one label's rows (at most about 100 M rows x 24 bytes plus the sort's index and copies, about 10 GB; the 44 GB peak above held 192 M). So 10 to 30 min inside the 64 G merge reservation for the 4.0 volume (170 adapters, about 1 B rows); the merge logs the seconds per label (`LabelDuplicates.seconds`) so the first build replaces this estimate with a measurement.
 
 **Scope.** The proposal was to check only the labels whose ids are content hashes, on the reasoning that an `Experiment` row belongs to exactly one adapter. Against the adapter that does not hold: `CellAdapter._experiment_node` gives the node the sha256 of `json.dumps(record.model_dump())`, the fully inlined record with no dataset component, and the dataset is attached only by the `ExperimentMemberOf` edge (`_experiment_to_dataset_edge`), so two datasets that release a byte-identical experiment record write the same `Experiment` id into two directories (the sink's `dup_experiments` set exists for duplicated experiment ids inside one build; job 4919's Hoepfner directory alone had none). Every node label but `Dataset` is content-addressed the same way (`_genotype_node`, the phenotype nodes, environment, media, perturbation, experiment reference, interned constant), and every edge key but `ExperimentMemberOf`'s (experiment -> dataset) can recur with its endpoints. The labels that cannot recur across directories are therefore `Dataset` and `ExperimentMemberOf`, 2.7 % of the bytes and 669 of the 6,807 label-seconds above (10 %); excluding `Experiment` as well would save 64 % of the bytes and 29 % of the label-seconds, at the price of importing a non-identical duplicate unchecked if two loaders ever emit one. The check keeps the full scope: the production cost is the full number above, and the two exclusions are not worth a rule the adapter does not back.
+
+## 2026.10.15 - The prebuilt image is wired in, and the standard tier's peak is measured
+
+Lane C2's image ([[torchcell.knowledge_graphs.generation_image]]) landed as a module with
+no caller; its three hooks are now in place, so every task of an array can start in the
+generator instead of installing torchcell first.
+
+- The **conductor** takes `GEN_IMAGE_MODE` (`auto`, the default, or `image` or
+  `install`) and resolves it ONCE before any array is submitted: `auto` takes the image
+  when the tag already exists, `image` builds it when it is absent and refuses if it
+  cannot, `install` leaves every task to its own pip installs. The resolved tag is
+  passed to `generation_array submit --gen-image`.
+- `--gen-image` rides the task environment as `GEN_IMAGE` with `--export=ALL`, beside
+  `GEN_CPUS` and `GEN_MEM_GB`.
+- The **array task** re-reads the tag's own `org.torchcell.build_commit` label in its
+  preflight and refuses when it is not `BUILD_COMMIT`, so a removed or re-tagged image
+  never serves another commit and never falls back on the install path. With `GEN_IMAGE`
+  unset the task runs the same three installs it always did.
+- The **live rebuild** removes the tag after the merge succeeds, which is the point at
+  which every task carried its marker; a failed merge or a missing marker exits earlier
+  and leaves the tag, so a re-run of the failed tasks pays no image time
+  (`teardown_decision`).
+
+Measured on the first array to use it, job 4974 (47 tasks): **container start to the
+generator's first line is a median 11.0 s and a mean 11.2 s, range 10 to 14 s**, against
+255.9 s on the install path (lane C2) and 278 s in job 4919_64. Cold image build 434 s on
+a busy node. Over the real 170-task array that is 11.6 h of container CPU for one 7 min
+build.
+
+Job 4974 also closed the standard tier's unmeasured per-task peak, which this module's
+tier table flagged in its own comment: 47 adapters of the bacterial tail generated at
+16 CPU and 64 G, **one of them past half its tier** (`RbTnseqBorchert2024Adapter`, 33.93
+GiB, 53.0 percent, proposed for `large`) and nothing else past 22 percent. Per-adapter
+table, the Mutalik 2020 verdict, the endpoint gate's twelve dangling Carruthers rows and
+the full-array projection: [[experiments.database.bacterial-generation-profile]].

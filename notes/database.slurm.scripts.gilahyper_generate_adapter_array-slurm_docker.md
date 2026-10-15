@@ -20,3 +20,17 @@ created: 1792055272817
 Logs: `$BUILD_ROOT/database/slurm/output/<array job>_<i>_gen_adapter.out` (the task) and `<array job>_<i>_generate.log` (the container's stream, which is also the `--generate-log` of `kg_build_adapter_resources.py`).
 
 Tests: `tests/torchcell/database/test_generate_adapter_array_slurm.py` pins the container sizing, the marker contract, the fence re-check, the documented recovery and the conductor's steps.
+
+## 2026.10.15 - GEN_IMAGE: the task runs the prebuilt image, or refuses
+
+With `GEN_IMAGE` set (the conductor's resolved tag), the task's preflight checks that the
+tag is the one `generation_image tag --build-commit $BUILD_COMMIT` names AND that the
+image's own `org.torchcell.build_commit` label is that commit, then runs the container
+from it with no pip stage. A tag that is gone or re-tagged fails the task; there is no
+install fallback, because a silent fallback would tie the CSVs to a commit the image name
+no longer matches. With `GEN_IMAGE` unset the container runs the same three installs in
+the same order as before.
+
+Measured over the 47 tasks of job 4974: 11.0 s median from the `1 GENERATE` line to the
+generator's first logged line, against 278 s on the install path in job 4919_64
+([[experiments.database.bacterial-generation-profile]]).

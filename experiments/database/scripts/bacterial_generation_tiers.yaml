@@ -1,0 +1,51 @@
+# experiments/database/scripts/bacterial_generation_tiers.yaml
+# [[experiments.database.scripts.bacterial_generation_profile]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/database/scripts/bacterial_generation_tiers.yaml
+#
+# The tier table of the bacterial generation profile run (lane S, 2026-10-15), handed
+# to the conductor as TIERS= so the committed table
+# (torchcell/knowledge_graphs/conf/generation_tiers.yaml) is read, not edited, by a
+# measurement. It is that table with ONE change: the standard tier's concurrency is 3
+# instead of 4, because the node is shared with the owner's GPU training work and with
+# three other lanes' test runs, and 3 x 64 G is the 192 G aggregate this run was given.
+# The cpus, mem_gb and hours of every tier are the committed table's, so each task runs
+# under exactly the limits the real build gives it and the measured peaks are
+# comparable to the real build's.
+#
+# Regenerate the comparison with the committed table:
+#   diff <(grep -v '^#' torchcell/knowledge_graphs/conf/generation_tiers.yaml) \
+#        <(grep -v '^#' experiments/database/scripts/bacterial_generation_tiers.yaml)
+
+default_tier: standard
+
+tiers:
+  standard:
+    cpus: 16
+    mem_gb: 64
+    hours: 8
+    concurrency: 3
+  large:
+    cpus: 32
+    mem_gb: 160
+    hours: 16
+    concurrency: 2
+  hoepfner:
+    cpus: 64
+    mem_gb: 320
+    hours: 36
+    concurrency: 1
+
+adapters:
+  EnvChemgenHoepfner2014Adapter: hoepfner
+  DmfCostanzo2016Adapter: large
+  DmiCostanzo2016Adapter: large
+  HetHillenmeyer2008Adapter: large
+  HomHillenmeyer2008Adapter: large
+  PooledPromoterExpressionVaishnav2022Adapter: large
+  Hale2024Adapter: large
+  EnvChemgenPiotrowski2017Adapter: large
+  CaudalPanTranscriptome2024Adapter: large
+  IsolateGrowthPeter2018Adapter: large
+  ProteomeMuenzner2024Adapter: large
+  ProteinTurnoverMuenzner2024Adapter: large
+  NadalRibellesPerturbSeq2025Adapter: large

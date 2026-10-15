@@ -9,3 +9,10 @@
 !interned_id_collision_served.json
 # The extended CSV endpoint gate (label check) run on the job 4901 partial, 2026-10-15.
 !csv_endpoint_gate_labels_4901.json
+# The bacterial tail's generation profile (lane S, job 4974, 2026-10-15) and the CSV
+# endpoint gate over its 47 directories: the 19 GB of CSV they were read from is
+# reclaimed before the 4.0 build and the serial run's telemetry with it, so neither is
+# reproducible afterwards. The profile also carries the per-task seconds the full-array
+# projection charged, which is the only surviving record of the job 4901 fold.
+!bacterial_generation_profile_bacterial-tail.json
+!bacterial_generation_csv_endpoint_gate.json

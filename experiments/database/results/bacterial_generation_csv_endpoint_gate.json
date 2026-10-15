@@ -1,0 +1,76 @@
+{
+  "out_dir": "/scratch/projects/torchcell/database/bacterial-gen-profile/biocypher-out/bacterial-gen-2026-10-15",
+  "node_rows": {
+    "BacterialPerturbation": 135755,
+    "BacterialSequenceVariantPerturbation": 724,
+    "CrisprConstruct": 69180,
+    "Dataset": 47,
+    "Environment": 1478,
+    "EnvironmentPerturbation": 900,
+    "EnvironmentResponsePhenotype": 4054173,
+    "Experiment": 4685825,
+    "ExperimentReference": 1367,
+    "FitnessContrastPhenotype": 64866,
+    "FitnessPhenotype": 111331,
+    "Genome": 96,
+    "Genotype": 135405,
+    "GradedGeneEssentialityPhenotype": 10341,
+    "InternedConstant": 1574,
+    "Media": 189,
+    "MetabolitePhenotype": 7,
+    "PhagePerturbation": 68,
+    "ProductTiterPhenotype": 711,
+    "ProteinAbundancePhenotype": 759,
+    "ProteinFoldChangePhenotype": 280,
+    "Publication": 73,
+    "RnaseqExpressionPhenotype": 342,
+    "Schema_info": 47,
+    "Temperature": 51
+  },
+  "edge_rows": {
+    "CrisprConstructMemberOf": 84090,
+    "EnvironmentMemberOf": 4687192,
+    "EnvironmentPerturbationMemberOf": 2027,
+    "ExperimentMemberOf": 4685825,
+    "ExperimentReferenceMemberOf": 1367,
+    "ExperimentReferenceOf": 4685825,
+    "GenomeMemberOf": 1367,
+    "GenotypeMemberOf": 4685825,
+    "MediaMemberOf": 1468,
+    "Mentions": 4685825,
+    "PerturbationMemberOf": 143852,
+    "PhenotypeMemberOf": 4687192,
+    "TemperatureMemberOf": 1336
+  },
+  "n_node_ids": 9195342,
+  "gaps": [
+    {
+      "edge_label": "PerturbationMemberOf",
+      "side": ":START_ID",
+      "n_rows": 12,
+      "sample_ids": [
+        "18718a204ff19b433d5669fec27829cbc38a6102190142b2297ad3e695c3a8fb",
+        "68fb7fd21d271fea6852dbb3ce388658e253e9141160d4f521e3bc7c01cd0ec2",
+        "91371e142f456d8a0fbfff5fc068da965905f6e89650160deb5c4faf03f6b6b1",
+        "5b45d8a474b2c98a902865ce3905889000292466b1d8356505d66d28ae55505e",
+        "7ef7b973b72cd737e7b723112c51cd150afc646c6f517cf73521f8bed3cf31bf"
+      ],
+      "anchor_labels": [
+        "Genotype"
+      ],
+      "datasets": {
+        "IsoprenolTiterCarruthers2025Dataset": 2,
+        "ProteomeCarruthers2025Dataset": 2
+      },
+      "n_unresolved": 0
+    }
+  ],
+  "label_gaps": [],
+  "id_collisions": [],
+  "undeclared_edges": [
+    "Mentions"
+  ],
+  "schema_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/bacterial-gen-profile/biocypher/config/torchcell_schema_config.yaml",
+  "elapsed_s": 79.51378910150379,
+  "datasets_resolved": true
+}

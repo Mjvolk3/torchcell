@@ -18,3 +18,23 @@ created: 1792055272817
 `DRY_RUN=1` prints every command and submits nothing (the mkdir, the two writes and the sbatch lines, each prefixed `DRY-RUN`). `INDICES=<slurm array spelling>` restricts the submission to those positions of the order: the re-run of failed tasks (the live rebuild's `RESUME_FROM=array` passes the missing indices), or one adapter for a measurement run, a missing directory is created and an existing one is reused with its order and fence.
 
 Tests: the text pins in `tests/torchcell/database/test_generate_adapter_array_slurm.py`; the dry run was exercised by hand on 2026-10-15 and listed 170 adapters in three arrays (standard 157, large 12, hoepfner 1).
+
+## 2026.10.15 - GEN_IMAGE_MODE: the image decision is the conductor's, made once
+
+`GEN_IMAGE_MODE` is `auto`, `image` or `install`, default `auto`, and the conductor
+resolves it before it submits any array, so every task runs under an explicit decision
+and no task ever falls back on its own:
+
+- `auto` takes the prebuilt image when its tag already exists and the install path
+  otherwise, and prints which it chose.
+- `image` builds the tag when it is absent (`generation_image ensure`, about 7 min cold
+  on a busy node, free on the layer cache for the same commit) and refuses if the build
+  fails.
+- `install` leaves every task to run the three pip installs itself, which is 255.9 s per
+  task.
+
+The resolved tag reaches the tasks as `GEN_IMAGE` through
+`generation_array submit --gen-image`; the task verifies the tag carries `BUILD_COMMIT`
+before it runs. `DRY_RUN=1` prints the `ensure` line rather than building. Measured in
+job 4974: 11.2 s mean startup on the image path over 47 tasks
+([[experiments.database.bacterial-generation-profile]]).

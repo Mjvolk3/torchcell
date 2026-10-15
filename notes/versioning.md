@@ -290,3 +290,91 @@ The `1.7.3` cut preceded #1096, which lifts Messner 2023's released UniProt keys
 ## 2026.10.14 - 1.7.5: the pair moves to the tip after the physical exposure identity fix
 
 The `1.7.4` generation (job 4901) died at adapter 124 of 170, Shiver 2016, because `environment_perturbation_identity` had no branch for `PhysicalExposurePerturbation` (5dfd82f5 added the leaf to the union without one; Shiver 2016 and Nichols 2011 use it). #1104 adds the projection (`PHYSICAL_EXPOSURE_IDENTITY_FIELDS`) and pins `PROJECTED_PERTURBATION_CLASSES` to the union in a test. No served record changes: the leaf had never serialized. Also since `1.7.4`: #1102 (the live rebuild resumes after generation, 48 h limit, `IMPORT DONE` marker) and #1103 (the `torchcell-db-build` skill and the per-adapter resource table). KG 4.0 is rebuilt from this tag.
+
+## 2026.10.15 - 1.8.0, the pair for KG 4.0: a MINOR bump for 16 removed public classes, by owner ruling
+
+**Not cut yet.** This section is the prepared entry; the commands at the end are what the
+owner runs, and nothing in this change pushes a bumping commit or creates a tag.
+
+**The version is `1.8.0`.** `pyproject.toml` and `torchcell/__version__.py` read `1.7.5`
+and `v1.7.5` is the newest tag, so one minor step is `1.8.0`. Under the tag map above a
+minor is a `REL` subject; `DB` and `PATCH` are the patch tags and `API` is the major one.
+
+**Why a minor and not `2.0.0`.** The change removes at least 48 public symbols from
+`torchcell/datamodels/schema.py` (42 pydantic classes, 2 string enumerations and 4
+module-level bindings, counted from the first four schema-change records' own symbol lists
+and classified against the `v1.7.5` surface), introduces 15 names as renames, and P5 adds
+more (lane U, pending: the two bacterial background classes and the bacterial namespace
+vocabulary). That is what review 3 of the ontology plan read as an `API` major bump. The
+owner ruled otherwise on 2026-10-15, quoted in all four landed records: "yes rename, no
+major bump minor bump. go !",
+with the P1 record restating it as policy ("The pairing is a MINOR package bump, not
+2.0.0"). The ruling is consistent with what the matrix is for: the compatibility page is
+keyed by `major.minor`, every served closure moves in this release whatever the number,
+and the client gate pairs on the exact tag rather than on a semantic range, so the digit
+changes nothing a reader can act on while `v1.8.0` names the pair precisely. The honest
+cost of the ruling is that a consumer reading only the version number sees no signal that
+16 classes they may import are gone, which is why the migration tables in
+[[database.kg-4-release-note]] name every removed symbol and its successor.
+
+**Which commit the pairing tag points at, and why.** `v1.8.0` goes on the
+**semantic-release bump commit that the `REL(kg)` push creates on `main`**, not on the
+`REL` commit itself, and that bump commit must be the **build commit**. Three reasons,
+each from a rule already in force:
+
+- The bump commit is where the bot writes `1.8.0` into `pyproject.toml` and
+  `torchcell/__version__.py`, so it is the first commit whose tree actually is `1.8.0`;
+  `1.6.2` was tagged the same way (run on `9a3407ba8`, tag on bump commit `56dfd59e0`).
+- `gilahyper_live_rebuild-slurm_docker.slurm` refuses to start unless the build commit
+  carries a `vX.Y.Z` tag and the fingerprint checkout sits on it, so `stamp` records the
+  tag rather than `1.8.0 (untagged)`.
+- Every landing re-stales the dev stores, so the sweep must be the last step before the
+  build and no commit may land between the tag and the import. That makes the bump commit
+  the last commit on `main` before the sweep by construction.
+
+At the time of writing, `main` is `7da9bfac0` and the integration branch is
+`b5c5549d8`. The pairing commit does not exist yet: it is created by step 2 below, after
+`ontology-unify` and this release prep have landed, after lane U's P5 record is on the
+branch, and after lane Q's two fixes land or are deferred in writing. P5 moves the schema
+surface, so a tag cut before it lands would pair the release with a package whose surface
+the store was not serialized under, which is exactly the failure the pairing gates exist
+to prevent. The release id will be `<build date>-<that commit's first 8 hex>`.
+
+**The changelog entry.** `CHANGELOG.md` stops at `v0.2.8` by its own note and releases
+from `v1.0.0` on are listed on the GitHub Releases page, so the entry is this section
+plus the `v1.8.0` release body. The body text:
+
+> KG 4.0, the ontology unification. Five schema changes land together: one gene-id
+> namespace on every gene perturbation, one released-identifier leaf replacing four, the
+> assembly pin on every reference genome with the 14 host-prefixed experiment pairs
+> retired, a gene addition that points at deposited sequence or states a typed gap, and
+> one strain background and one background allele for every host.
+> The two bacterial graph classes are retired into `perturbation` and
+> `sequence variant perturbation`. **Every served node id re-keys, so content ids are not
+> comparable with KG 3.0.** A fifth change merges the two strain-background families,
+> the last pair of classes held apart by the host. 48 public symbols are removed and 15
+> renamed, plus the fifth change's; the migration table is in
+> `notes/database.kg-4-release-note.md`. **It also discloses a defect in the
+> currently served KG 3.0: 518,883 of 52,668,931 `GenotypeMemberOf` relationships start
+> at an `InternedConstant` instead of a genotype node, so `MATCH (g:Genotype)` has been
+> returning an incomplete population over Bloom 2019 segregants (320 of 13,630 genotypes
+> reachable) and Caudal 2024 isolates (943 affected). Re-run any genotype-scoped Cypher
+> against KG 4.0; results obtained through the query loader are unaffected.**
+
+**The commands, for the owner.**
+
+```bash
+# 1. land ontology-unify, lane Q and this release prep first, then from the primary checkout:
+git -C ~/Documents/projects/torchcell log --oneline -1 origin/main   # the tree to be tagged
+
+# 2. cut the pair (one commit, nothing else in it)
+git commit --allow-empty -m "REL(kg): 1.8.0, the package KG 4.0 pairs with"
+git push origin main
+
+# 3. wait for semantic-release to push the bump commit and the tag, then
+git fetch --tags && git describe --tags --exact-match origin/main
+
+# 4. build from a worktree checked out AT the tag (never the primary checkout)
+```
+
+Then follow [[database.kg-4-pre-build-checklist]] from step 2.

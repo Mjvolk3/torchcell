@@ -547,10 +547,11 @@ def test_get_nodes_emits_the_exact_ohya_node_list(
     genotypes = [e.genotype for e in EXPERIMENTS]
     assert all(isinstance(g, Genotype) for g in genotypes)
     # 395 bytes before P1 put ``gene_namespace`` and ``identifier_mapping`` on every
-    # perturbation (ontology-unify, 2026-10-15)
+    # perturbation (ontology-unify, 2026-10-15); 477 before lane Q put ``construction``
+    # on ``KanMxDeletionPerturbation`` (22 bytes of ``"construction": null``)
     assert [len(json.dumps(cast(Genotype, g).model_dump())) for g in genotypes] == [
-        477,
-        477,
+        499,
+        499,
     ]
     assert EXPERIMENT_POINTER_MIN_BYTES["genotype"] == 8192
     adapter = _adapter(_dataset(_build(tmp_path)))

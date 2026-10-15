@@ -27,6 +27,17 @@ is text (``pet``, ``tiny``, ``_``; 546 rows) carries no number the ``visual_scor
 can hold and is listed, with its text, in ``preprocess/dropped_records.json``; a row whose
 ORF cell is not ORF-shaped (``YLR287-A``, 1 row) is counted there under
 ``deferred_to_released_gene_name_leaf`` until that leaf lands.
+
+Every row is one physical strain of the deletion collection, and the sheet says which:
+``record no.``, ``Batch``, ``Plate``, ``Row`` and ``Col`` are the collection's own record
+number, construction batch and arrayed position (``(Batch, Plate, Row, Col)`` is unique
+over all 5,153 rows; ``record no.`` is not, 6853 and 7379 each head two rows). They are
+stored verbatim on the deletion's ``construction`` (``StrainConstruction``:
+``strain_accession`` = the record number, ``batch``, ``plate``, ``well`` = ``Row`` + ``Col``,
+``B3``). Lane Q, 2026-10-15: 31 pairs of rows agree in every cell the record used to carry
+(ORF, strain, color, parsed comment flags) and differ only here, so the two records were
+byte-identical, shared one content id, and the graph held 4,576 Experiment nodes for 4,607
+stored records; the position is the released fact that tells the two strains apart.
 """
 
 import json
@@ -67,6 +78,7 @@ from torchcell.datamodels.schema import (
     ReferenceGenome,
     ReleasedIdentifierPerturbation,
     ReleasedKind,
+    StrainConstruction,
     Temperature,
     VisualScoreExperiment,
     VisualScoreExperimentReference,
@@ -254,16 +266,44 @@ def _carotenogenic_cassette() -> list[GeneAdditionPerturbation]:
 _SYSTEMATIC_RE = re.compile(r"^Y[A-P][LR]\d{3}[WC](-[A-Z])?$")
 
 
+#: The released columns that place a row's strain in the deletion collection.
+POSITION_COLUMNS = ("record no.", "Batch", "Plate", "Row", "Col")
+
+
+def _cell_text(value: Any) -> str:
+    """A released cell as text: an integral number without a decimal point, else
+    the stripped string (``Plate`` and ``Col`` are integer cells, ``Batch`` and ``Row``
+    text).
+    """
+    if isinstance(value, float) and value.is_integer():
+        return str(int(value))
+    return str(value).strip()
+
+
+def _construction(row: "pd.Series[Any]") -> StrainConstruction:
+    """The row's strain in its collection, verbatim: the record number as the
+    collection accession, the construction batch, the plate and the well (``Row`` and
+    ``Col`` joined, ``B3``). ``Plate`` and ``Col`` are integer cells in the release.
+    """
+    return StrainConstruction(
+        strain_accession=_cell_text(row["record_no"]),
+        batch=_cell_text(row["batch"]),
+        plate=_cell_text(row["plate"]),
+        well=f"{_cell_text(row['row'])}{_cell_text(row['col'])}",
+    )
+
+
 def _released_deletion(
-    orf: str,
+    orf: str, construction: StrainConstruction
 ) -> KanMxDeletionPerturbation | ReleasedIdentifierPerturbation:
     """The deletion under the released identifier (#1045): an ORF-shaped one on the
     placed KanMX leaf with both names the ORF, any other on the released-identifier leaf
-    verbatim (kind deletion, marker KanMX).
+    verbatim (kind deletion, marker KanMX). Either carries the strain's collection
+    position as its ``construction``.
     """
     if _SYSTEMATIC_RE.match(orf):
         return KanMxDeletionPerturbation(
-            systematic_gene_name=orf, perturbed_gene_name=orf
+            systematic_gene_name=orf, perturbed_gene_name=orf, construction=construction
         )
     return ReleasedIdentifierPerturbation(
         systematic_gene_name=orf,
@@ -272,6 +312,7 @@ def _released_deletion(
         identifier_kind="ORF column entry, as released",
         released_kind=ReleasedKind.deletion,
         cassette="KanMX",
+        construction=construction,
     )
 
 
@@ -385,6 +426,13 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
             if pd.notna(r.get("ORF name"))
         }
 
+        missing = [c for c in POSITION_COLUMNS if c not in df.columns]
+        if missing:
+            raise KeyError(
+                f"Ozaydin sheet 'Color scores of all deletions' lacks the released "
+                f"position columns {missing}; every row's strain is placed by them"
+            )
+
         rows: list[dict[str, Any]] = []
         released_names: list[str] = []
         text_rows: list[dict[str, Any]] = []
@@ -401,14 +449,24 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
             strain = (
                 str(row["Strain"]).strip() if pd.notna(row.get("Strain")) else "BY4741"
             )
+            position = {
+                "record_no": _cell_text(row["record no."]),
+                "batch": _cell_text(row["Batch"]),
+                "plate": _cell_text(row["Plate"]),
+                "row": _cell_text(row["Row"]),
+                "col": _cell_text(row["Col"]),
+            }
             if num is None:
-                text_rows.append({"orf": orf, "strain": strain, "text": text})
+                text_rows.append(
+                    {"orf": orf, "strain": strain, "text": text, **position}
+                )
                 continue
             meta = top200_meta.get(orf, {})
             rows.append(
                 {
                     "orf": orf,
                     "strain": strain,
+                    **position,
                     "visual_score": num,
                     "visual_score_min": None,
                     "n_replicates": 1,
@@ -513,7 +571,10 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
             assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
         genotype = Genotype(
-            perturbations=[_released_deletion(row["orf"]), *_carotenogenic_cassette()]
+            perturbations=[
+                _released_deletion(row["orf"], _construction(row)),
+                *_carotenogenic_cassette(),
+            ]
         )
         # Screen scored on SC-URA agar (URA-selective plasmid), 30 C.
         environment = Environment(

@@ -42,6 +42,7 @@ import yaml
 import torchcell
 from torchcell.adapters.cell_adapter import (
     HOST_GENOME_OF_NAMESPACE,
+    REGISTRY_SET_OF_NAMESPACE,
     VARIANT_CALL_LEAVES,
     CellAdapter,
 )
@@ -440,7 +441,7 @@ def _digest(items: list[Any]) -> str:
 YEAST_PERTURBATION_NODES = [
     [
         "node",
-        "5abd40e7968f1001ace38a9419e24a82e6a00d4262a839e6f4d939fdbf49640e",
+        "a788d8802180f080732c1026d39372507bec28b9fd449a85748c4d7aed6bafd1",
         "perturbation",
         "sga_kanmx_deletion",
         {
@@ -450,13 +451,13 @@ YEAST_PERTURBATION_NODES = [
             "description": "Deletion via KanMX or NatMX gene replacement",
             "host_genome": "sgd_S288C_R64-4-1_20230830",
             "strain_id": "YAL001C_dma1",
-            "id": "5abd40e7968f1001ace38a9419e24a82e6a00d4262a839e6f4d939fdbf49640e",
+            "id": "a788d8802180f080732c1026d39372507bec28b9fd449a85748c4d7aed6bafd1",
             "preferred_id": "sga_kanmx_deletion",
         },
     ],
     [
         "node",
-        "16eef850df53a4163fd496054cd2b6369f3462eea93fed9b8283c189e5c0cb56",
+        "90c1fb02548aa4b342b9b0c71fbd2525696ab4c0b305a2d2617ae9c24e089adc",
         "perturbation",
         "kanmx_deletion",
         {
@@ -466,7 +467,7 @@ YEAST_PERTURBATION_NODES = [
             "description": "Deletion via KanMX or NatMX gene replacement",
             "host_genome": "sgd_S288C_R64-4-1_20230830",
             "strain_id": None,
-            "id": "16eef850df53a4163fd496054cd2b6369f3462eea93fed9b8283c189e5c0cb56",
+            "id": "90c1fb02548aa4b342b9b0c71fbd2525696ab4c0b305a2d2617ae9c24e089adc",
             "preferred_id": "kanmx_deletion",
         },
     ],
@@ -505,13 +506,17 @@ YEAST_PERTURBATION_NODES = [
 # changed, which is the full rebuild the P1 record names. The crispr construct and the
 # fitness phenotype digests did not move: the change did not reach them. Under G (the
 # graph stage of the same unification) only ``perturbation (chunked)`` moved again: the
-# node gained ``host_genome``, and no id changed.
+# node gained ``host_genome``, and no id changed. Under lane Q (2026-10-15)
+# ``KanMxDeletionPerturbation`` gained the optional ``construction`` (the strain's
+# collection position), so the dump of the two KanMX deletions of the record, their
+# ids, the genotype's and the experiment's moved; the CRISPR interference node, the
+# crispr construct and the fitness phenotype digests did not.
 YEAST_GOLDEN_DIGESTS = {
     "genotype (chunked)": (
-        "64f38fddb654ba1b1e3f14b536d9f1db3481488839ef9340eba60b89dcce49c7"
+        "14f3db4e3d35ee9ccf0204ddc24d38e01ddfe19b60f421b112442de187d00a26"
     ),
     "perturbation (chunked)": (
-        "a7783bfc2db824171bd176f478e39c62b6c02dab2e9fdae626958696440bafa3"
+        "bd673c3870bc9d3ae8dd61da1476778f7b91dc5a9b3efb59bf5eb294f30d972b"
     ),
     "crispr construct (chunked)": (
         "0bc236c34fd3a054f8022092236388026ec9e772b555fbfb7ab9b32173f12727"
@@ -520,16 +525,16 @@ YEAST_GOLDEN_DIGESTS = {
         "dbade8c3c8ad945e439aa6688b306b27b64044bf7415df60a19c14d1f1c00f65"
     ),
     "genotype to experiment (chunked)": (
-        "07b1efadc41c94458057b423e0f929a55bd0976d92ee1fbd8bad8f8238903a2a"
+        "9b31ae7984881f120bf787b24a4cef06d0ca85cafd537d6c9c28c009aa1a7a39"
     ),
     "perturbation to genotype (chunked)": (
-        "403e492ebae018a7351792080971f0f8c800654ee6fbecdfb7bf710c983e7feb"
+        "b4192a4f90fa2b69ffa95bb95f66d02374082eb3ec16a352cc4f315a1615e94d"
     ),
     "crispr construct to perturbation (chunked)": (
         "b058455ac3fe53b595301dcfeb37495982c239d6f7959fffa291021992aa0a21"
     ),
     "phenotype to experiment (chunked)": (
-        "eabfefd287a4f84d72db5b467bdf4f450ac7cc760b1d928e8fe4c9db7cc25aa9"
+        "10e82db360c98a3dee4cb96ddae86242ac26c38487fc96b5422a1104ac5c62a4"
     ),
 }
 
@@ -587,27 +592,38 @@ def test_a_bacterial_record_emits_one_perturbation_node_per_leaf_with_its_host()
     assert "gene_namespace" not in deletion
 
 
-def test_host_genome_is_a_bijection_from_the_namespace_onto_registry_set_ids() -> None:
-    """``HOST_GENOME_OF_NAMESPACE`` maps every ``GeneIdNamespace`` member, one to one, onto
-    an assembly-set id the genomes registry deposits, so ``perturbation.host_genome``
-    joins ``genome.assembly_set`` by value and never on a strain string.
+def test_host_genome_is_the_namespace_projected_onto_the_assembly_set_vocabulary() -> (
+    None
+):
+    """``REGISTRY_SET_OF_NAMESPACE`` maps every ``GeneIdNamespace`` member, one to one,
+    onto a registry set id; ``HOST_GENOME_OF_NAMESPACE`` is that map projected onto the
+    ``AssemblySet`` vocabulary (``None`` for the one non-assembly set, the Peter 2018
+    pangenome), so ``perturbation.host_genome`` joins ``genome.assembly_set`` by value
+    and never on a strain string. The vocabulary invariant itself is pinned in
+    ``test_host_genome_vocabulary.py``.
     """
     from torchcell.sequence.genome import registry
 
     namespaces = set(typing.get_args(s.GeneIdNamespace))
+    assert set(REGISTRY_SET_OF_NAMESPACE) == namespaces
     assert set(HOST_GENOME_OF_NAMESPACE) == namespaces
-    assert len(set(HOST_GENOME_OF_NAMESPACE.values())) == len(namespaces)
+    assert len(set(REGISTRY_SET_OF_NAMESPACE.values())) == len(namespaces)
     registry_ids = {
         value
         for name, value in vars(registry).items()
         if name.isupper() and isinstance(value, str) and "_" in value
     }
-    assert set(HOST_GENOME_OF_NAMESPACE.values()) <= registry_ids
+    assert set(REGISTRY_SET_OF_NAMESPACE.values()) <= registry_ids
+    assert set(HOST_GENOME_OF_NAMESPACE.values()) <= {
+        None,
+        *typing.get_args(s.AssemblySet),
+    }
     assert HOST_GENOME_OF_NAMESPACE["scerevisiae_s288c_sgd_systematic"] == (
         registry.SGD_S288C_R64
     )
     assert HOST_GENOME_OF_NAMESPACE[MG1655] == registry.ECOLI_K12_MG1655
     assert HOST_GENOME_OF_NAMESPACE[KT2440] == registry.PPUTIDA_KT2440
+    assert HOST_GENOME_OF_NAMESPACE["scerevisiae_peter2018_pangenome_orf"] is None
 
 
 def test_the_union_to_label_map_is_a_bijection_over_every_leaf() -> None:

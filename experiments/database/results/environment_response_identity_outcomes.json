@@ -1,0 +1,254 @@
+{
+  "data_root": "/scratch/projects/torchcell-scratch",
+  "stores": [
+    {
+      "dataset": "crispri_mormino2022",
+      "n_records": 12,
+      "declared_expected_duplicated": 0,
+      "duplicated": {
+        "head": 0,
+        "shipped": 0,
+        "genotype_base": 0,
+        "genotype_full": 0,
+        "environment_full": 0
+      },
+      "n_condition_signatures": 1,
+      "n_condition_signatures_over_several_environments": 0,
+      "blind_environment_paths": {},
+      "renamed_classes_read": {
+        "ReleasedGeneKind -> ReleasedKind": 12
+      }
+    },
+    {
+      "dataset": "env_chemgen_auesukaree2009",
+      "n_records": 525,
+      "declared_expected_duplicated": 0,
+      "duplicated": {
+        "head": 0,
+        "shipped": 0,
+        "genotype_base": 0,
+        "genotype_full": 0,
+        "environment_full": 0
+      },
+      "n_condition_signatures": 6,
+      "n_condition_signatures_over_several_environments": 0,
+      "blind_environment_paths": {},
+      "renamed_classes_read": {
+        "ReleasedGeneKind -> ReleasedKind": 525
+      }
+    },
+    {
+      "dataset": "env_chemgen_mota2024",
+      "n_records": 1289,
+      "declared_expected_duplicated": 3,
+      "duplicated": {
+        "head": 3,
+        "shipped": 3,
+        "genotype_base": 3,
+        "genotype_full": 3,
+        "environment_full": 3
+      },
+      "n_condition_signatures": 3,
+      "n_condition_signatures_over_several_environments": 0,
+      "blind_environment_paths": {},
+      "renamed_classes_read": {
+        "ReleasedGeneKind -> ReleasedKind": 1174
+      }
+    },
+    {
+      "dataset": "env_chemgen_smith2006",
+      "n_records": 14310,
+      "declared_expected_duplicated": 0,
+      "duplicated": {
+        "head": 0,
+        "shipped": 0,
+        "genotype_base": 0,
+        "genotype_full": 0,
+        "environment_full": 0
+      },
+      "n_condition_signatures": 3,
+      "n_condition_signatures_over_several_environments": 0,
+      "blind_environment_paths": {},
+      "renamed_classes_read": {}
+    },
+    {
+      "dataset": "crispri_chemgen_smith2016",
+      "n_records": 14463,
+      "declared_expected_duplicated": 0,
+      "duplicated": {
+        "head": 0,
+        "shipped": 0,
+        "genotype_base": 13943,
+        "genotype_full": 0,
+        "environment_full": 0
+      },
+      "n_condition_signatures": 26,
+      "n_condition_signatures_over_several_environments": 0,
+      "blind_environment_paths": {},
+      "renamed_classes_read": {}
+    },
+    {
+      "dataset": "env_chemgen_yoshikawa2009",
+      "n_records": 37832,
+      "declared_expected_duplicated": 0,
+      "duplicated": {
+        "head": 0,
+        "shipped": 0,
+        "genotype_base": 0,
+        "genotype_full": 0,
+        "environment_full": 0
+      },
+      "n_condition_signatures": 4,
+      "n_condition_signatures_over_several_environments": 0,
+      "blind_environment_paths": {},
+      "renamed_classes_read": {}
+    },
+    {
+      "dataset": "env_chemgen_costanzo2021",
+      "n_records": 61640,
+      "declared_expected_duplicated": 0,
+      "duplicated": {
+        "head": 0,
+        "shipped": 0,
+        "genotype_base": 0,
+        "genotype_full": 0,
+        "environment_full": 0
+      },
+      "n_condition_signatures": 14,
+      "n_condition_signatures_over_several_environments": 0,
+      "blind_environment_paths": {},
+      "renamed_classes_read": {}
+    },
+    {
+      "dataset": "env_chemgen_vanacloig2022",
+      "n_records": 164205,
+      "declared_expected_duplicated": 0,
+      "duplicated": {
+        "head": 0,
+        "shipped": 0,
+        "genotype_base": 0,
+        "genotype_full": 0,
+        "environment_full": 0
+      },
+      "n_condition_signatures": 45,
+      "n_condition_signatures_over_several_environments": 0,
+      "blind_environment_paths": {},
+      "renamed_classes_read": {}
+    },
+    {
+      "dataset": "crispr_magic_lian2019",
+      "n_records": 266304,
+      "declared_expected_duplicated": 0,
+      "duplicated": {
+        "head": 0,
+        "shipped": 0,
+        "genotype_base": 221055,
+        "genotype_full": 0,
+        "environment_full": 0
+      },
+      "n_condition_signatures": 3,
+      "n_condition_signatures_over_several_environments": 0,
+      "blind_environment_paths": {},
+      "renamed_classes_read": {}
+    },
+    {
+      "dataset": "env_chemgen_parsons2006",
+      "n_records": 329254,
+      "declared_expected_duplicated": 0,
+      "duplicated": {
+        "head": 0,
+        "shipped": 0,
+        "genotype_base": 0,
+        "genotype_full": 0,
+        "environment_full": 0
+      },
+      "n_condition_signatures": 82,
+      "n_condition_signatures_over_several_environments": 0,
+      "blind_environment_paths": {},
+      "renamed_classes_read": {}
+    },
+    {
+      "dataset": "env_chemgen_wildenhain2015",
+      "n_records": 449033,
+      "declared_expected_duplicated": 0,
+      "duplicated": {
+        "head": 0,
+        "shipped": 0,
+        "genotype_base": 0,
+        "genotype_full": 0,
+        "environment_full": 0
+      },
+      "n_condition_signatures": 5178,
+      "n_condition_signatures_over_several_environments": 0,
+      "blind_environment_paths": {},
+      "renamed_classes_read": {}
+    },
+    {
+      "dataset": "yeastphenome",
+      "n_records": 524682,
+      "declared_expected_duplicated": 4837,
+      "duplicated": {
+        "head": 14508,
+        "shipped": 4837,
+        "genotype_base": 14508,
+        "genotype_full": 14508,
+        "environment_full": 4837
+      },
+      "n_condition_signatures": 119,
+      "n_condition_signatures_over_several_environments": 3,
+      "blind_environment_paths": {
+        "media.state": 2,
+        "aerobicity": 2
+      },
+      "renamed_classes_read": {}
+    },
+    {
+      "dataset": "env_chemgen_hillenmeyer2008_hom",
+      "n_records": 1228676,
+      "declared_expected_duplicated": 0,
+      "duplicated": {
+        "head": 0,
+        "shipped": 0,
+        "genotype_base": 5039,
+        "genotype_full": 0,
+        "environment_full": 0
+      },
+      "n_condition_signatures": 286,
+      "n_condition_signatures_over_several_environments": 0,
+      "blind_environment_paths": {},
+      "renamed_classes_read": {}
+    },
+    {
+      "dataset": "env_chemgen_hillenmeyer2008_het",
+      "n_records": 3074132,
+      "declared_expected_duplicated": 0,
+      "duplicated": {
+        "head": 0,
+        "shipped": 0,
+        "genotype_base": 30478,
+        "genotype_full": 0,
+        "environment_full": 0
+      },
+      "n_condition_signatures": 530,
+      "n_condition_signatures_over_several_environments": 0,
+      "blind_environment_paths": {},
+      "renamed_classes_read": {}
+    },
+    {
+      "dataset": "env_chemgen_piotrowski2017",
+      "n_records": 3435820,
+      "declared_expected_duplicated": 0,
+      "duplicated": {
+        "head": 0,
+        "shipped": 0,
+        "genotype_base": 0,
+        "genotype_full": 0,
+        "environment_full": 0
+      },
+      "n_condition_signatures": 11954,
+      "n_condition_signatures_over_several_environments": 0,
+      "blind_environment_paths": {},
+      "renamed_classes_read": {}
+    }
+  ]
+}

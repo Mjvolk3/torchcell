@@ -2,7 +2,7 @@
   "record_version": 1,
   "slug": "construct-placement-on-gene-addition",
   "date": "2026-10-15",
-  "pr": null,
+  "pr": 1116,
   "author_kind": "agent",
   "base_commit": "1914c98355d1bbe24d645896d308de22501ec52b",
   "python_version": "3.13.0",

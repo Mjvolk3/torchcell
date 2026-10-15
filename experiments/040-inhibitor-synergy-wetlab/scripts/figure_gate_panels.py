@@ -54,6 +54,7 @@ import glob
 import json
 import os
 import os.path as osp
+import re
 import sys
 from typing import Any
 
@@ -153,8 +154,20 @@ SRC_ORDER = ["measured", "bliss", "loewe", "hsa", "mean", "ridge", "cgt", "contr
 #: the CELL readout: the host is the empty genotype read through the shared head,
 #: trained on the anchors and the ex21 titration) and its zero-shot twin (anchors
 #: only, so its ex21 curve is a prediction of singles it never saw)
-MODEL_ARM = "r9_van_e150_cell_bliss"
-ZERO_SHOT_ARM = "r9_van_e150_cell_anchors_bliss"
+#: ARM names, not sweep names: every sweep of the arm pools into the host readout
+#: (round 9 seed 0, round 10 seeds 1 and 2, the fold-seed twins and seeds 3 to 5),
+#: on both machines; ``host_arm_of`` strips the round prefix and the seed, fold-seed
+#: and pack suffixes a sweep name carries
+MODEL_ARM = "van_e150_cell_bliss"
+ZERO_SHOT_ARM = "van_e150_cell_anchors_bliss"
+
+
+def host_arm_of(sweep: str) -> str:
+    """``r10gh_van_e150_cell_bliss_s345_p1`` -> ``van_e150_cell_bliss``."""
+    name = re.sub(r"^r\d+[a-z]*_", "", sweep)
+    return re.sub(r"(_s\d+|_fs\d+|_p\d+)+$", "", name)
+
+
 #: HATCH: the software growth call, where a panel draws both calls. Plain is served.
 SOFTWARE_HATCH = "////"
 
@@ -373,13 +386,13 @@ class Reads:
         out = pd.concat(frames, ignore_index=True)
         return out[out.member.str.startswith("seed")]
 
-    def host_mean(self, sweep: str) -> pd.DataFrame:
-        """One arm's host prediction per medium, mean over its runs (every fold on
-        every machine the arm ran on; ``folds`` counts the distinct folds, ``runs``
-        the prediction files averaged).
+    def host_mean(self, arm: str) -> pd.DataFrame:
+        """One arm's host prediction per medium, mean over its runs (every sweep of
+        the arm, every fold, every machine; ``folds`` counts the distinct folds,
+        ``runs`` the prediction files averaged).
         """
-        d = self.host_pred[self.host_pred.sweep == sweep].copy()
-        assert len(d), f"no host predictions for {sweep}"
+        d = self.host_pred[self.host_pred.sweep.map(host_arm_of) == arm].copy()
+        assert len(d), f"no host predictions for {arm}"
         # the control medium has no compounds, which the CSV holds as an empty cell
         for column in ("compounds", "mM", "g_per_l", "wells"):
             d[column] = d[column].fillna("").astype(str)
@@ -1870,6 +1883,7 @@ def draw_combinations(ax: Any, R: Reads) -> None:
         ),
     )
     num("modelFolds", int(h.folds.iloc[0]))
+    num("modelRuns", int(h.runs.iloc[0]))
     for j, (col, src) in enumerate(series):
         means = [float(comb[comb.n_compounds == s][col].mean()) for s in sizes]
         ax.bar(

@@ -128,7 +128,8 @@ still nearly flat in dose. \status{todo}\,\fstat{file}
 inhibitors. Growth AUROC: Loewe \hydloeweAuroc{}, Bliss \hydblissAuroc{}. Fitness
 Spearman: Bliss \hydblissSpearman{}, Loewe \hydloeweSpearman{}. The fourth bar is the
 model (single source, cell readout, trained on the anchors and the titration, mean
-over \hydmodelFolds{} folds), which reads a medium one inhibitor at a time through the
+over \hydmodelRuns{} runs on \hydmodelFolds{} folds, seeds and machines), which reads a
+medium one inhibitor at a time through the
 shared head and composes the readings as Bliss independence: its predicted fitness
 falls with the inhibitor count, growth AUROC \hydmodelAuroc{}, fitness Spearman
 \hydmodelGrownSpearman{}. Under mean pooling of the inhibitor tokens the same model read

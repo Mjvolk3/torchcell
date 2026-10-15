@@ -1612,3 +1612,95 @@ W&B, the 040a project, fold 2 seed 0 of the Bliss arms on each machine:
 - Bliss, three sources, Delta: https://wandb.ai/zhao-group/torchcell_040a-inhibitor-synergy-cell/runs/e00fsib2
 - Bliss with FiLM, Delta: https://wandb.ai/zhao-group/torchcell_040a-inhibitor-synergy-cell/runs/k6hseoge
 - the view over every cell-readout run: https://wandb.ai/zhao-group/torchcell_040a-inhibitor-synergy-cell?nw=dpr4810ts7s
+
+## 2026.10.15 - Round 10 read: no source helps the target, public data lifts the zero-shot readout, and the dose offset reads dose at no public cost
+
+Delta ran round 10 overnight: 37 of the 38 jobs COMPLETED (22897949 to 22897982 and
+22898135 to 22898138, 3.1 to 7.1 h each; 22898137, seeds 3 to 5 on folds 0 to 2 of
+the Bliss arm, was still running at noon). Nothing failed or was cancelled; the
+queue the morning squeue showed was the round draining. Public side: the
+compound-cold centered Spearman over the six test compounds, mean and sd over the
+nine runs of an arm (three seeds on three folds; six for an `_s12` arm). Host side:
+`r3_host_predictions.py` over every run of the arm on both machines, the per-well
+predictions averaged (63 combinations, 55 titration wells), so the single-source
+Bliss arm has 13 runs behind it and the zero-shot arm 9.
+
+| arm | public, mean (sd) | held-out public compound | ex23 growth AUROC | ex23 Spearman | fitness at 1 / 2 / 3 | titration |
+|---|---|---|---|---|---|---|
+| Bliss, van | 0.253 (0.13) `_s12`; 0.325 (0.09) `_s345`; 0.29 / 0.25 fold seeds 1 / 2 | | 0.867 | 0.633 | 0.63 / 0.39 / 0.25 | 0.451 |
+| Bliss, van + Hoepfner | 0.298 (0.08) | Hoepfner 0.039 | 0.875 | 0.641 | 0.70 / 0.48 / 0.33 | 0.434 |
+| Bliss, van + Hillenmeyer | 0.283 (0.09) | Hillenmeyer 0.001 | 0.875 | 0.643 | 0.68 / 0.47 / 0.31 | 0.434 |
+| Bliss, van + Wildenhain | 0.202 (0.08) | Wildenhain 0.209 | 0.840 | 0.592 | 0.73 / 0.53 / 0.38 | 0.434 |
+| Bliss, van + Hoepfner + Hillenmeyer | 0.204 (0.07) `_s12` | 0.070 / -0.001 | 0.879 | 0.648 | 0.66 / 0.43 / 0.28 | 0.434 |
+| Bliss, all four | 0.194 (0.14) | 0.105 / 0.034 / 0.128 | 0.880 | 0.649 | 0.69 / 0.48 / 0.32 | 0.413 |
+| zero-shot, van | 0.324 (0.03) `_s12` | | 0.914 | 0.703 | 0.68 / 0.46 / 0.32 | -0.21 (not trained) |
+| zero-shot, van + Hoepfner | 0.230 (0.08) | Hoepfner 0.059 | 0.938 | 0.735 | 0.71 / 0.51 / 0.37 | -0.30 |
+| zero-shot, three sources | 0.283 (0.10) | 0.057 / 0.001 | **0.948** | **0.760** | 0.69 / 0.48 / 0.33 | 0.03 |
+| Bliss with FiLM, van | 0.288 (0.07) `_s12` | | 0.642 | 0.266 | 0.89 / 0.81 / 0.74 | 0.943 |
+| FiLM, zero-shot | 0.245 (0.11) | | 0.922 | 0.713 | 0.72 / 0.53 / 0.39 | -0.25 (not trained) |
+| FiLM, held-out public dose (van + Hoepfner) | 0.244 (0.06) | Hoepfner dose 0.219 | 0.620 | 0.237 | 0.90 / 0.80 / 0.72 | 0.928 |
+| FiLM, titration fine-tune | 0.285 (0.08) | | 0.929 | 0.695 | 0.76 / 0.57 / 0.42 | 0.788 |
+| **dose offset, van** | **0.318 (0.13)** | | 0.849 | 0.597 | 0.82 / 0.66 / 0.54 | **0.890** |
+| dose offset, zero-shot | 0.277 (0.06) | | 0.948 | 0.746 | 0.68 / 0.46 / 0.32 | -0.28 (not trained) |
+| dose offset, van + Hoepfner | 0.229 (0.07) | Hoepfner 0.027 | 0.827 | 0.559 | 0.84 / 0.70 / 0.58 | 0.885 |
+| observed | | ridge 0.189 / 0.126 / 0.288 | | | 0.81 / 0.35 / 0.05 | |
+
+Four readings, each against the three goals.
+
+1. **No source helps the target, and the public screens are not learned at a
+   held-out compound (goals 1 and 3).** The single-source Bliss arm reads 0.25 to
+   0.33 by seed set; adding Hoepfner 0.30, Hillenmeyer 0.28, Wildenhain 0.20, the
+   three 0.20, all four 0.19, every sd 0.07 to 0.14. The order is more sources,
+   lower, inside one sd. The other direction stays at zero: Hoepfner 0.03 to 0.11
+   against ridge 0.189, Hillenmeyer 0.00 to 0.04 against 0.126; Wildenhain alone is
+   learned (0.21 two-source, 0.13 four-source, ridge 0.288). Measured: no pair of
+   screens is synergistic on either score; stated plainly, this model does not
+   transfer across the screens at a held-out compound, so "synergy" has not been
+   given a chance to show at the gene level.
+2. **Public data lifts the zero-shot private readout (goal 1 in the inhibitor
+   setting).** The anchors-only arm, which never sees a titration well, orders the
+   63 combinations at AUROC 0.914 on Vanacloig alone, 0.938 with Hoepfner, 0.948
+   with Hoepfner and Hillenmeyer, Spearman 0.70 / 0.74 / 0.76, every value above
+   the Bliss rule on the measured singles (0.872) and the three-source value at
+   Loewe's (0.958). Three runs per arm; the direction is consistent across the
+   three but the step is 0.01 to 0.03 and no seed sd is below that, so this is a
+   measured ordering, not yet a cleared difference. The fitted arms do not move
+   with sources (0.867 / 0.875 / 0.879 / 0.880).
+3. **The dose offset reads dose at no public cost; FiLM's cost is on the host, not
+   the public score (goal 2).** With three seeds the FiLM arm's public score is
+   0.288, inside the dose-free arm's band, so the public cost read at one seed was
+   seed noise; its host cost is real: AUROC 0.642 over nine runs against 0.867, the
+   combinations predicted fitter than any single (0.89 at one inhibitor). The dose
+   offset fits the titration as well (0.890 against 0.943), keeps the public score
+   (0.318, the highest of the round), and composes at 0.849, within 0.02 of the
+   dose-free arm; its fitness at one inhibitor (0.82) is the observed 0.81, and the
+   fall to 0.66 / 0.54 is shallower than the observed 0.35 / 0.05. The titration
+   fine-tune with FiLM is the other dose arm that composes (0.929, titration 0.79).
+   On the public side the dose channel predicts a held-out public dose at 0.219
+   (FiLM, Hoepfner) where a held-out compound reads 0.04, so the channel is read.
+   Hypothesis (untested): the gain on the offset is a one-parameter-per-compound
+   potency curve, so it cannot sharpen the fall at two and three inhibitors that
+   the product of two mid readings produces; a learned deviation term on the
+   Hillenmeyer pairs is the next lever for the slope.
+4. **The isobole grids separate the dose arms from the dose-free ones.** Per-fold
+   ensembles, observed minus predicted on the three grids: dose-free Bliss arms
+   -0.10 to -0.26 on every grid; every dose arm -0.37 to -1.0, over-predicting the
+   interior fitness, the FiLM arms most (fa x aa grid -0.65 to -1.0). Reading dose
+   makes the single-agent curves right and the interior wrong, which is what a
+   missing interaction term looks like; the dose-free arm's agreement with the
+   interior is two flat low readings multiplied (the round-9 caveat stands).
+
+The gate now pools every sweep of an arm (`host_arm_of` in `figure_gate_panels.py`:
+round 9 seed 0, round 10 seeds 1 and 2, the fold-seed twins and seeds 3 to 5, both
+machines): 19 runs behind the fitted Bliss arm, growth AUROC 0.861, fitness Spearman
+over the grown 0.566; the build is clean (0 errors).
+
+W&B, the 040a project, one run per new arm:
+
+- dose offset, fitted: https://wandb.ai/zhao-group/torchcell_040a-inhibitor-synergy-cell/runs/b9n66y8x
+- dose offset, zero-shot: https://wandb.ai/zhao-group/torchcell_040a-inhibitor-synergy-cell/runs/3y6v41u6
+- FiLM, titration fine-tune: https://wandb.ai/zhao-group/torchcell_040a-inhibitor-synergy-cell/runs/2m9gls79
+- FiLM, held-out public dose: https://wandb.ai/zhao-group/torchcell_040a-inhibitor-synergy-cell/runs/nw2se1s0
+- zero-shot, three sources: https://wandb.ai/zhao-group/torchcell_040a-inhibitor-synergy-cell/runs/76uly8o1
+- Bliss, all four sources: https://wandb.ai/zhao-group/torchcell_040a-inhibitor-synergy-cell/runs/i4b97a21
+- Bliss, van + Hoepfner: https://wandb.ai/zhao-group/torchcell_040a-inhibitor-synergy-cell/runs/hmhyld9s

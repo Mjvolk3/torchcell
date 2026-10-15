@@ -127,9 +127,18 @@
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.StrEnum" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StrEnum</span></code></a></p>
 <p>WHERE in the provenance chain a value died – an honest, typed absence.</p>
 <p>Ordered by how actionable the gap is. Only <code class="docutils literal notranslate"><span class="pre">deferred_pending_source_review</span></code>
-is recoverable work (comb the primary paper’s SI); the other two are terminal
-(there is nothing to fetch). This split is what turns the gap-set into a
-worklist rather than a pile of nulls.</p>
+is recoverable work (comb the primary paper’s SI); the other three are terminal
+for us (there is nothing of ours left to read). This split is what turns the
+gap-set into a worklist rather than a pile of nulls.</p>
+<p><code class="docutils literal notranslate"><span class="pre">not_released_by_primary</span></code> is the construct-store case: the primary MEASURED and
+reports the value, and does not release the artifact it lives in. Kang 2026 states
+the construct sequences are supplied by the JBEI registry “upon request” and
+Carruthers 2025 states “Plasmid sequences were verified by whole plasmid
+sequencing” without depositing them, so neither is
+<code class="docutils literal notranslate"><span class="pre">not_reported_by_primary</span></code> (the primary did report it) nor
+<code class="docutils literal notranslate"><span class="pre">deferred_pending_source_review</span></code> (no SI of ours holds it): the artifact was
+withheld, and closing the gap takes a request to the authors or the registry, not
+another pass over the mirror.</p>
 </dd></dl>
 
 </section>

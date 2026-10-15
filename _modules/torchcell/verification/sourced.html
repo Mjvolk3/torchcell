@@ -260,15 +260,26 @@
 <span class="w">    </span><span class="sd">"""WHERE in the provenance chain a value died -- an honest, typed absence.</span>
 
 <span class="sd">    Ordered by how actionable the gap is. Only ``deferred_pending_source_review``</span>
-<span class="sd">    is recoverable work (comb the primary paper's SI); the other two are terminal</span>
-<span class="sd">    (there is nothing to fetch). This split is what turns the gap-set into a</span>
-<span class="sd">    worklist rather than a pile of nulls.</span>
+<span class="sd">    is recoverable work (comb the primary paper's SI); the other three are terminal</span>
+<span class="sd">    for us (there is nothing of ours left to read). This split is what turns the</span>
+<span class="sd">    gap-set into a worklist rather than a pile of nulls.</span>
+
+<span class="sd">    ``not_released_by_primary`` is the construct-store case: the primary MEASURED and</span>
+<span class="sd">    reports the value, and does not release the artifact it lives in. Kang 2026 states</span>
+<span class="sd">    the construct sequences are supplied by the JBEI registry "upon request" and</span>
+<span class="sd">    Carruthers 2025 states "Plasmid sequences were verified by whole plasmid</span>
+<span class="sd">    sequencing" without depositing them, so neither is</span>
+<span class="sd">    ``not_reported_by_primary`` (the primary did report it) nor</span>
+<span class="sd">    ``deferred_pending_source_review`` (no SI of ours holds it): the artifact was</span>
+<span class="sd">    withheld, and closing the gap takes a request to the authors or the registry, not</span>
+<span class="sd">    another pass over the mirror.</span>
 <span class="sd">    """</span>
 
     <span class="n">not_reported_by_primary</span> <span class="o">=</span> <span class="p">(</span>
         <span class="s2">"not_reported_by_primary"</span>  <span class="c1"># original screen never measured/reported it</span>
     <span class="p">)</span>
     <span class="n">not_carried_by_curation</span> <span class="o">=</span> <span class="s2">"not_carried_by_curation"</span>  <span class="c1"># primary had it; the secondary DB (YeastPhenome/SPELL) dropped it in aggregation</span>
+    <span class="n">not_released_by_primary</span> <span class="o">=</span> <span class="s2">"not_released_by_primary"</span>  <span class="c1"># primary reported the value but released no artifact carrying it (sequence "upon request", "verified" but not deposited)</span>
     <span class="n">deferred_pending_source_review</span> <span class="o">=</span> <span class="s2">"deferred_pending_source_review"</span>  <span class="c1"># recoverable -- the per-paper SI comb just isn't done yet</span></div>
 
 

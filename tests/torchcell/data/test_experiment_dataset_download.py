@@ -25,7 +25,11 @@ from torchcell.datamodels.schema import FitnessExperiment, FitnessExperimentRefe
 from torchcell.datasets.artifact import ArtifactIndex
 from torchcell.datasets.client import DatasetClient
 from torchcell.datasets.server import DataServerConfig, create_app
-from torchcell.provenance.build_manifest import MANIFEST_FILENAME, BuildManifest
+from torchcell.provenance.build_manifest import (
+    MANIFEST_FILENAME,
+    BuildManifest,
+    PerturbationLeaves,
+)
 
 SCRIPTS = Path(__file__).resolve().parents[3] / "scripts"
 sys.path.insert(0, str(SCRIPTS))
@@ -96,6 +100,10 @@ def _build_source(root: Path, loader_class: str = "FakeArtifactDataset") -> Path
         closure={},
         built_at="2026-09-14T07:25:14+00:00",
         hostname="gilahyper",
+        # Manifest schema version 2 records the leaves the store holds; the fake
+        # records carry no perturbation, so the measured leaves are empty. A manifest
+        # without the field reads stale and the packager refuses it.
+        perturbation_leaves=PerturbationLeaves(),
     )
     (dataset_dir / "preprocess" / MANIFEST_FILENAME).write_text(
         manifest.model_dump_json(indent=2)

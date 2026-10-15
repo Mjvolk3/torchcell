@@ -1,0 +1,16 @@
+{
+ "data_root": "/scratch/projects/torchcell-scratch",
+ "skipped": {},
+ "stores": [
+  {
+   "slug": "env_chemgen_hoepfner2014",
+   "n_records": 30308574,
+   "n_distinct": 30308574,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 4114.9
+  }
+ ]
+}

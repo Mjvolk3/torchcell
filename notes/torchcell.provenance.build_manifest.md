@@ -49,6 +49,18 @@ grouping is a stable `numpy` argsort rather than a dict of 30 million `bytes` ob
 either way (whole digests, no truncation). The sort is stable, so a group's keys come out
 in store-iteration order.
 
+What it costs, measured rather than guessed. On the largest store the leaf-only pass
+(unpickle plus the `perturbation_type` reads) runs at 40,187 records/s, which is 12.6 min
+for Hoepfner's 30,308,574 records; with the full `resolve_interned`, `json.dumps` and
+sha256 added it runs at 8,209 records/s, 61.5 min, so the collision count adds about 48
+min to that one store's `write_build_manifest` and about 30 min to each Costanzo store
+(both probes on the real dev store, 100,000 and 50,000 records). That is once per build
+of the three largest stores, against a defect class that put 65 released measurements
+into three KG releases with no error anywhere. A cheaper digest exists (hash the
+pointered dump and the interned objects' own digests, skipping the resolution) and is not
+used: it is equivalent only for a store whose interning is consistent across records,
+which nothing proves, and the digest would no longer be the id the adapter computes.
+
 It RECORDS and never refuses. The count is a measured property of a store that already
 exists, and a build that ended with no manifest would read `no_manifest`, be rebuilt, and
 land in the same place. The refusal lives in the rebuild preflight

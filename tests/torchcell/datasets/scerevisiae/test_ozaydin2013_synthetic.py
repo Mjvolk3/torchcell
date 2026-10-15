@@ -52,6 +52,7 @@ from torchcell.datamodels.schema import (
     Genotype,
     Publication,
     ReferenceGenome,
+    StrainConstruction,
     Temperature,
     VisualScoreExperiment,
     VisualScoreExperimentReference,
@@ -97,9 +98,21 @@ def _write_workbook(raw: Path) -> None:
     workbook = openpyxl.Workbook()
     screen = workbook.active
     screen.title = "Color scores of all deletions"
-    screen.append(["ORF name", "Strain", "Color", "Comment"])
-    for row in _SCREEN_ROWS:
-        screen.append(list(row))
+    screen.append(
+        [
+            "record no.",
+            "ORF name",
+            "Strain",
+            "Batch",
+            "Plate",
+            "Row",
+            "Col",
+            "Comment",
+            "Color",
+        ]
+    )
+    for i, (orf, strain, color, comment) in enumerate(_SCREEN_ROWS):
+        screen.append([338 + i, orf, strain, "01_1", 1, "A", i + 1, comment, color])
     top200 = workbook.create_sheet("Names and Functions of TOP200")
     top200.append(["ORF name", "Gene name", "Gene Function", "Assigned Category"])
     for top_row in _TOP200_ROWS:
@@ -136,15 +149,41 @@ def _phenotype(
     )
 
 
-def _experiment(orf: str, phenotype: VisualScorePhenotype) -> dict[str, Any]:
+def _construction(source_row: int) -> StrainConstruction:
+    """The position ``_write_workbook`` gives row ``source_row`` of ``_SCREEN_ROWS``."""
+    return StrainConstruction(
+        strain_accession=str(338 + source_row),
+        batch="01_1",
+        plate="1",
+        well=f"A{source_row + 1}",
+    )
+
+
+def _experiment(
+    orf: str, phenotype: VisualScorePhenotype, source_row: int
+) -> dict[str, Any]:
     return VisualScoreExperiment(
         dataset_name="CarotenoidOzaydin2013Dataset",
         genotype=Genotype(
-            perturbations=[m._released_deletion(orf), *m._carotenogenic_cassette()]
+            perturbations=[
+                m._released_deletion(orf, _construction(source_row)),
+                *m._carotenogenic_cassette(),
+            ]
         ),
         environment=_ENVIRONMENT,
         phenotype=phenotype,
     ).model_dump()
+
+
+def _position(source_row: int) -> dict[str, str]:
+    """The ledger's five position cells for row ``source_row``, as text."""
+    return {
+        "record_no": str(338 + source_row),
+        "batch": "01_1",
+        "plate": "1",
+        "row": "A",
+        "col": str(source_row + 1),
+    }
 
 
 def _reference(strain: str) -> dict[str, Any]:
@@ -211,19 +250,23 @@ def test_six_records_one_per_released_scored_row(
     assert dataset[0]["experiment"] == _experiment(
         "YAL001C",
         _phenotype(3.0, None, 1, None, {**_NO_FLAGS, "flag_slow_growth": True}),
+        0,
     )
     assert dataset[1]["experiment"] == _experiment(
-        "YAL001C", _phenotype(1.0, None, 1, None, _NO_FLAGS)
+        "YAL001C", _phenotype(1.0, None, 1, None, _NO_FLAGS), 1
     )
     assert dataset[2]["experiment"] == _experiment(
-        "YBR001C", _phenotype(-1.0, None, 1, None, {**_NO_FLAGS, "flag_petite": True})
+        "YBR001C",
+        _phenotype(-1.0, None, 1, None, {**_NO_FLAGS, "flag_petite": True}),
+        2,
     )
     assert dataset[3]["experiment"] == _experiment(
         "YCR001W",
         _phenotype(-2.0, None, 1, None, {**_NO_FLAGS, "flag_unusual_color": True}),
+        4,
     )
     assert dataset[4]["experiment"] == _experiment(
-        "YDR001C", _phenotype(0.0, None, 1, None, _NO_FLAGS)
+        "YDR001C", _phenotype(0.0, None, 1, None, _NO_FLAGS), 5
     )
     assert dataset[5]["experiment"] == _experiment(
         "YER001W",
@@ -239,9 +282,10 @@ def test_six_records_one_per_released_scored_row(
                 "flag_sterile": True,
             },
         ),
+        7,
     )
     assert dataset[6]["experiment"] == _experiment(
-        "YLR287-A", _phenotype(2.0, None, 1, None, _NO_FLAGS)
+        "YLR287-A", _phenotype(2.0, None, 1, None, _NO_FLAGS), 9
     )
     (released,) = [
         p
@@ -263,9 +307,9 @@ def test_six_records_one_per_released_scored_row(
     ]
     assert ledger["rules"][1]["items"] == ["YLR287-A"]
     assert ledger["rules"][2]["items"] == [
-        {"orf": "YBR001C", "strain": "BY4730", "text": "pet"},
-        {"orf": "YDR001C", "strain": "BY4741", "text": "tiny"},
-        {"orf": "YFR001W", "strain": "BY4741", "text": "_"},
+        {"orf": "YBR001C", "strain": "BY4730", "text": "pet", **_position(3)},
+        {"orf": "YDR001C", "strain": "BY4741", "text": "tiny", **_position(6)},
+        {"orf": "YFR001W", "strain": "BY4741", "text": "_", **_position(8)},
     ]
 
 
@@ -308,15 +352,15 @@ def test_data_csv_gene_set_and_build_manifest(
     assert dataset.reference_class is VisualScoreExperimentReference
     preprocess = Path(dataset.root) / "preprocess"
     assert (preprocess / "data.csv").read_text() == (
-        "orf,strain,visual_score,visual_score_min,n_replicates,score_text,in_top200,"
-        "gene_name,gene_function,assigned_category\n"
-        "YAL001C,BY4741,3.0,,1,,True,TFC3,TFIIIC subunit,transcription\n"
-        "YAL001C,BY4741,1.0,,1,,True,TFC3,TFIIIC subunit,transcription\n"
-        "YBR001C,BY4730,-1.0,,1,,False,,,\n"
-        "YCR001W,BY4741,-2.0,,1,,True,,,unknown\n"
-        "YDR001C,BY4741,0.0,,1,,False,,,\n"
-        "YER001W,W303,5.0,,1,,False,,,\n"
-        "YLR287-A,BY4741,2.0,,1,,False,,,\n"
+        "orf,strain,record_no,batch,plate,row,col,visual_score,visual_score_min,"
+        "n_replicates,score_text,in_top200,gene_name,gene_function,assigned_category\n"
+        "YAL001C,BY4741,338,01_1,1,A,1,3.0,,1,,True,TFC3,TFIIIC subunit,transcription\n"
+        "YAL001C,BY4741,339,01_1,1,A,2,1.0,,1,,True,TFC3,TFIIIC subunit,transcription\n"
+        "YBR001C,BY4730,340,01_1,1,A,3,-1.0,,1,,False,,,\n"
+        "YCR001W,BY4741,342,01_1,1,A,5,-2.0,,1,,True,,,unknown\n"
+        "YDR001C,BY4741,343,01_1,1,A,6,0.0,,1,,False,,,\n"
+        "YER001W,W303,345,01_1,1,A,8,5.0,,1,,False,,,\n"
+        "YLR287-A,BY4741,347,01_1,1,A,10,2.0,,1,,False,,,\n"
     )
     assert json.loads((preprocess / "gene_set.json").read_text()) == [
         "YAL001C",

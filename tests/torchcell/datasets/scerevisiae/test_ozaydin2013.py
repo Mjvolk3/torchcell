@@ -100,6 +100,8 @@ def test_ozaydin_build_smoke(tmp_path: Path) -> None:
 # --- hermetic tests on a synthetic SI ------------------------------------------ #
 
 Row = tuple[str | None, str | None, Any, str | None]
+#: The five released position cells of one row: record no., Batch, Plate, Row, Col.
+Position = tuple[int, str, int, str, int]
 
 _ROWS: list[Row] = [
     ("YAL001C", "BY4741", 2, None),
@@ -112,14 +114,37 @@ _ROWS: list[Row] = [
 ]
 
 
-def _write_si(raw: Path, rows: list[Row]) -> Path:
-    """The two released sheets with their released headers; TOP200 is empty."""
+def _write_si(
+    raw: Path, rows: list[Row], positions: list[Position] | None = None
+) -> Path:
+    """The two released sheets with their released headers; TOP200 is empty.
+
+    Every row carries the sheet's nine columns. ``positions`` gives the five position
+    cells per row; by default row ``i`` is record ``338 + i`` of batch ``01_1`` at plate
+    1, row A, column ``i + 1``, one distinct position per row as the release has.
+    """
     workbook = openpyxl.Workbook()
     screen = workbook.active
     screen.title = "Color scores of all deletions"
-    screen.append(["ORF name", "Strain", "Color", "Comment"])
-    for row in rows:
-        screen.append(list(row))
+    screen.append(
+        [
+            "record no.",
+            "ORF name",
+            "Strain",
+            "Batch",
+            "Plate",
+            "Row",
+            "Col",
+            "Comment",
+            "Color",
+        ]
+    )
+    if positions is None:
+        positions = [(338 + i, "01_1", 1, "A", i + 1) for i in range(len(rows))]
+    for (orf, strain, color, comment), (record, batch, plate, prow, col) in zip(
+        rows, positions, strict=True
+    ):
+        screen.append([record, orf, strain, batch, plate, prow, col, comment, color])
     top200 = workbook.create_sheet("Names and Functions of TOP200")
     top200.append(["ORF name", "Gene name", "Gene Function", "Assigned Category"])
     path = raw / m.CarotenoidOzaydin2013Dataset.si_filename
@@ -127,10 +152,12 @@ def _write_si(raw: Path, rows: list[Row]) -> Path:
     return path
 
 
-def _root(tmp_path: Path, rows: list[Row] = _ROWS) -> Path:
+def _root(
+    tmp_path: Path, rows: list[Row] = _ROWS, positions: list[Position] | None = None
+) -> Path:
     root = tmp_path / "carotenoid_ozaydin2013"
     (root / "raw").mkdir(parents=True)
-    _write_si(root / "raw", rows)
+    _write_si(root / "raw", rows, positions)
     return root
 
 
@@ -264,7 +291,16 @@ def test_build_ledger_lines(tmp_path: Path, caplog: pytest.LogCaptureFixture) ->
     ]
     assert ledger["rules"][1]["items"] == ["YLR287-A"]
     assert ledger["rules"][2]["items"] == [
-        {"orf": "YBR001C", "strain": "BY4741", "text": "_"}
+        {
+            "orf": "YBR001C",
+            "strain": "BY4741",
+            "text": "_",
+            "record_no": "339",
+            "batch": "01_1",
+            "plate": "1",
+            "row": "A",
+            "col": "2",
+        }
     ]
 
 
@@ -333,7 +369,16 @@ def test_a_text_only_row_is_ledgered_and_the_scored_row_keeps_its_strain(
         (Path(dataset.root) / "preprocess" / "dropped_records.json").read_text()
     )
     assert ledger["rules"][2]["items"] == [
-        {"orf": "YAL001C", "strain": "BY4741", "text": "pet"}
+        {
+            "orf": "YAL001C",
+            "strain": "BY4741",
+            "text": "pet",
+            "record_no": "338",
+            "batch": "01_1",
+            "plate": "1",
+            "row": "A",
+            "col": "1",
+        }
     ]
 
 
@@ -502,3 +547,78 @@ def test_a_raw_file_off_the_pin_is_refused_at_build_time(
     assert list((staged.root / "processed").iterdir()) == []
     assert not (staged.root / "preprocess").exists()
     assert hashlib.sha256(raw.read_bytes()).hexdigest() == staged.observed
+
+
+def test_identical_scores_at_two_collection_positions_are_two_distinct_records(
+    tmp_path: Path,
+) -> None:
+    """Two released rows of YAL049C that agree in strain, color and comment and differ
+    only in the collection position (record 356, batch ``01_1``, plate 1, well B3; record
+    7729, batch ``chr00_23``, plate 75, well A1; the real pair of the release) are two
+    records whose experiment dumps differ, each carrying its own row's position as the
+    deletion's ``construction``. Before lane Q (2026-10-15) the record carried none of
+    the five cells, the two dumps were byte-identical, and the graph, whose Experiment
+    id is the content hash, kept one node for the two measurements: 31 such pairs in
+    the released sheet, 4,576 nodes for 4,607 records. The regression is the
+    inequality of the two digests.
+    """
+    rows: list[Row] = [("YAL049C", "BY4741", 0, None), ("YAL049C", "BY4741", 0, None)]
+    positions: list[Position] = [
+        (356, "01_1", 1, "B", 3),
+        (7729, "chr00_23", 75, "A", 1),
+    ]
+    dataset = m.CarotenoidOzaydin2013Dataset(root=str(_root(tmp_path, rows, positions)))
+    assert len(dataset) == 2
+    dumps = [dataset[i]["experiment"] for i in range(2)]
+    digests = [hashlib.sha256(json.dumps(d).encode("utf-8")).hexdigest() for d in dumps]
+    assert digests[0] != digests[1]
+    deletions = [
+        next(
+            p
+            for p in d["genotype"]["perturbations"]
+            if p["perturbation_type"] == "kanmx_deletion"
+        )
+        for d in dumps
+    ]
+    assert [d["construction"] for d in deletions] == [
+        {
+            "strain_accession": "356",
+            "lab": None,
+            "batch": "01_1",
+            "plate": "1",
+            "well": "B3",
+        },
+        {
+            "strain_accession": "7729",
+            "lab": None,
+            "batch": "chr00_23",
+            "plate": "75",
+            "well": "A1",
+        },
+    ]
+    # Everything else the two records carry is the same: the position is the whole
+    # difference, as it is in the release.
+    for d, deletion in zip(dumps, deletions, strict=True):
+        deletion["construction"] = None
+    assert dumps[0] == dumps[1]
+
+
+def test_a_sheet_without_the_position_columns_is_refused(tmp_path: Path) -> None:
+    """The five position columns are released facts the record must carry, so a sheet
+    that lacks them stops the build naming them, never a record without a position.
+    """
+    root = tmp_path / "carotenoid_ozaydin2013"
+    (root / "raw").mkdir(parents=True)
+    workbook = openpyxl.Workbook()
+    screen = workbook.active
+    screen.title = "Color scores of all deletions"
+    screen.append(["ORF name", "Strain", "Color", "Comment"])
+    screen.append(["YAL001C", "BY4741", 1, None])
+    workbook.create_sheet("Names and Functions of TOP200").append(
+        ["ORF name", "Gene name", "Gene Function", "Assigned Category"]
+    )
+    workbook.save(root / "raw" / m.CarotenoidOzaydin2013Dataset.si_filename)
+    with pytest.raises(
+        KeyError, match=re.escape("['record no.', 'Batch', 'Plate', 'Row', 'Col']")
+    ):
+        m.CarotenoidOzaydin2013Dataset(root=str(root))

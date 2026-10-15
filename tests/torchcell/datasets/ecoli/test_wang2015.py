@@ -416,12 +416,13 @@ def _identity(token: str = "JW0001") -> m.StrainIdentity:
 
 
 def test_deletion_genotype_stores_the_released_symbol_and_label() -> None:
-    """The record holds the symbol and the Table S3 label; the released-strain leaf has
-    no accession slot, so the Keio number is a column of ``table_s3.csv``.
+    """The record holds the symbol and the Table S3 label. The released-identifier
+    leaf carries a ``construction`` slot since lane Q (2026-10-15); this loader does not
+    fill it, so the Keio number stays a column of ``table_s3.csv`` until it does.
     """
     (p,) = m.deletion_genotype(_identity("JW0001")).perturbations
     dumped = p.model_dump()
-    assert "construction" not in dumped
+    assert dumped["construction"] is None
     assert (
         dumped["perturbation_type"],
         dumped["systematic_gene_name"],

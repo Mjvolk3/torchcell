@@ -1874,11 +1874,28 @@ class DeletionPerturbation(PresenceAbsencePerturbation, ModelStrict):
 
 
 class KanMxDeletionPerturbation(DeletionPerturbation, ModelStrict):
-    """Gene deletion via KanMX gene replacement."""
+    """Gene deletion via KanMX gene replacement.
+
+    ``construction`` is where the physical deletion strain came from in its collection
+    (accession, lab, batch, plate, well), verbatim from the source, and it is a strain
+    discriminator on every leaf below this one: the yeast deletion collection holds more
+    than one strain of some ORFs, built in different batches and arrayed at different
+    positions, and a screen that scores each of them releases two measurements of two
+    strains. Ozaydin 2013 released 31 pairs of rows that differ only in ``record no.``,
+    ``Batch``, ``Plate``, ``Row`` and ``Col``; without this field the two records were
+    byte-identical and the graph kept one (lane Q, 2026-10-15). It sits on this class
+    and not only on the barcoded leaf because the collection position is a fact of the
+    strain whether or not a barcode was read; ``None`` where a source releases none.
+    """
 
     perturbation_type: Literal["kanmx_deletion"] = "kanmx_deletion"  # type: ignore[assignment]
     deletion_description: str = "Deletion via KanMX gene replacement."
     deletion_type: str = "KanMX"
+    construction: StrainConstruction | None = Field(
+        default=None,
+        description="accession / lab / batch / plate / well of this strain in its "
+        "collection, verbatim; None when the source releases none",
+    )
 
 
 class BarcodedKanMxDeletionPerturbation(
@@ -1903,10 +1920,13 @@ class BarcodedKanMxDeletionPerturbation(
     physically deleted ORF when it is not the current gene.
 
     Every new field is nullable and gappable: ``None`` with a ``ProvenanceGap`` (e.g. a
-    barcode table not yet mirrored) is a typed absence rather than a guess. A separate
-    leaf (not fields added to ``KanMxDeletionPerturbation``) is deliberate --
-    ``KanMxDeletionPerturbation`` is inside 33 served dataset closures and any field added
-    to it would force a full rebuild of every one of them.
+    barcode table not yet mirrored) is a typed absence rather than a guess. The leaf
+    exists for the barcode read-out identity of a pooled assay; ``construction`` is
+    also declared on ``KanMxDeletionPerturbation`` since 2026-10-15, because the
+    position of a strain in its collection is a fact of every collection strain,
+    barcoded or scored by eye (constitution, principle 8: the former argument that a
+    field on the parent would move 33 served closures was a cost argument, and cost
+    never decides).
     """
 
     perturbation_type: Literal["barcoded_kanmx_deletion"] = "barcoded_kanmx_deletion"  # type: ignore[assignment]
@@ -1929,6 +1949,9 @@ class BarcodedKanMxDeletionPerturbation(
         description="the exact replacement cassette, e.g. 'kanMX4' (pFA6-kanMX4, Giaever "
         "2014); None when unsourced",
     )
+    # The parent's field, redeclared: ``KanMxDeletionPerturbation`` declares
+    # ``construction`` since 2026-10-15 (lane Q); this leaf keeps its own declaration so
+    # its field order, and so the dump of every record it serves, is unchanged.
     construction: StrainConstruction | None = Field(
         default=None, description="accession / lab / batch / plate of this strain"
     )
@@ -4884,6 +4907,12 @@ class ReleasedIdentifierPerturbation(
         default=None,
         description="the background strain the source names, verbatim (e.g. 'BY4741'); "
         "None when unstated",
+    )
+    construction: StrainConstruction | None = Field(
+        default=None,
+        description="accession / lab / batch / plate / well of this strain in its "
+        "collection, verbatim, the same strain discriminator the placed deletion leaves "
+        "carry; None when the source releases none",
     )
 
     @field_validator("systematic_gene_name", mode="after")

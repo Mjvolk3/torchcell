@@ -53,8 +53,9 @@ IDENTIFIERS, STORED AS RELEASED (owner rule of 2026-10-12: the data is the data,
 the genome never gates a record). Table S3 labels a strain only by gene name
 (``BWΔacrA``); Table S2 adds a Keio number. The record stores the gene symbol as
 ``systematic_gene_name`` and ``perturbed_gene_name`` and the whole label as
-``strain_label`` on ``ReleasedIdentifierPerturbation``. That leaf has no strain
-accession slot (main's schema; adding one is a schema change of its own), so the Keio
+``strain_label`` on ``ReleasedIdentifierPerturbation``. That leaf carries a
+``construction`` slot (``StrainConstruction.strain_accession``) since lane Q of the
+ontology unification (2026-10-15); this loader does not fill it yet, so the Keio
 number is kept verbatim beside each record's index in ``preprocess/table_s3.csv``
 (``keio_token``), the malformed ``JJW0452`` included. No annotation is read in the
 build: the join of a symbol to a BW25113 locus is a downstream act over the gene set,

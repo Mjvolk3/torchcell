@@ -489,7 +489,7 @@ def test_a_tolerance_gene_is_an_extra_copy_of_a_native_gene() -> None:
     assert perturbation.source_organism == foo.HOST_SPECIES
     assert perturbation.is_heterologous is False
     assert perturbation.pathway_name == foo.PATHWAY_TOLERANCE
-    assert perturbation.localization == "episomal_plasmid"
+    assert perturbation.localization == "episomal_replicon"
     assert perturbation.construct_name == "pBbS5k-metR"
     assert perturbation.promoter_name == "lacUV5"
     assert perturbation.copy_number == 1.0
@@ -499,10 +499,12 @@ def test_the_rfp_control_carries_a_typed_organism_gap() -> None:
     """The reporter's origin is never stated, so it is a typed gap (#915)."""
     perturbation = foo.overexpression_perturbation("rfp", "pBbS5k-rfp")
     assert perturbation.source_organism is None
-    assert perturbation.gapped_fields() == {"source_organism"}
+    assert perturbation.gapped_fields() == {"source_organism", "placement"}
     assert perturbation.provenance_gaps[0].note == foo.REPORTER_ORGANISM_GAP_NOTE
     tolerance = foo.overexpression_perturbation("metR", "pBbS5k-metR")
-    assert tolerance.provenance_gaps == []
+    # a tolerance gene states its organism, so its only typed absence is the P4
+    # placement: Table S3 names the plasmid and the paper releases no sequence
+    assert tolerance.gapped_fields() == {"placement"}
     assert perturbation.is_heterologous is True
     assert perturbation.pathway_name == foo.PATHWAY_REPORTER
 

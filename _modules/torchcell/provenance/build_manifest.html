@@ -139,6 +139,17 @@
 <span class="sd">``unreadable`` with the exception when it fails. It is the ONE freshness function: the</span>
 <span class="sd">``build_manifest`` CLI (:func:`check_all`), ``build_dataset_lmdb --list-stale`` and the</span>
 <span class="sd">live rebuild's preflight all call it, so the three cannot drift apart.</span>
+
+<span class="sd">Since manifest schema version 2 (the ontology unification guards, 2026-10-15) a manifest</span>
+<span class="sd">also records ``perturbation_leaves``: the sorted leaf class names of every genotype and</span>
+<span class="sd">environment perturbation the store holds, measured by :func:`walk_perturbation_leaves`</span>
+<span class="sd">over EVERY record at build time. The rebuild preflight checks those names against the</span>
+<span class="sd">lanes the dataset's adapter conf enables (``torchcell.knowledge_graphs.perturbation_lanes``)</span>
+<span class="sd">without opening the store, so a leaf no enabled lane emits (the Carruthers</span>
+<span class="sd">``GeneAdditionPerturbation`` under a bacterial-only conf) is refused before generation</span>
+<span class="sd">instead of becoming a dangling ``perturbation member of`` row the import drops. A</span>
+<span class="sd">manifest without the field is from before the walk existed and reads ``stale``: the</span>
+<span class="sd">sweep that follows this change rewrites every manifest with the field.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -164,12 +175,15 @@
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">"BuildManifest"</span><span class="p">,</span>
+    <span class="s2">"PerturbationLeaves"</span><span class="p">,</span>
     <span class="s2">"SymbolDrift"</span><span class="p">,</span>
     <span class="s2">"StaleResult"</span><span class="p">,</span>
     <span class="s2">"DatasetCheck"</span><span class="p">,</span>
     <span class="s2">"StoreFreshness"</span><span class="p">,</span>
     <span class="s2">"StoreState"</span><span class="p">,</span>
     <span class="s2">"compute_manifest"</span><span class="p">,</span>
+    <span class="s2">"walk_perturbation_leaves"</span><span class="p">,</span>
+    <span class="s2">"leaf_class_by_perturbation_type"</span><span class="p">,</span>
     <span class="s2">"write_build_manifest"</span><span class="p">,</span>
     <span class="s2">"check_manifest"</span><span class="p">,</span>
     <span class="s2">"check_store"</span><span class="p">,</span>
@@ -179,10 +193,28 @@
 <span class="p">]</span>
 
 <span class="n">MANIFEST_FILENAME</span> <span class="o">=</span> <span class="s2">"build_manifest.json"</span>
-<span class="n">MANIFEST_SCHEMA_VERSION</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">MANIFEST_SCHEMA_VERSION</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="sd">"""Version 2 added ``perturbation_leaves`` (2026-10-15); a version 1 manifest reads stale."""</span>
+<span class="n">PERTURBATION_LEAVES_FIELD</span> <span class="o">=</span> <span class="s2">"perturbation_leaves"</span>
 
 <span class="n">StoreState</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"fresh"</span><span class="p">,</span> <span class="s2">"stale"</span><span class="p">,</span> <span class="s2">"no_lmdb"</span><span class="p">,</span> <span class="s2">"no_manifest"</span><span class="p">,</span> <span class="s2">"unreadable"</span><span class="p">]</span>
 <span class="sd">"""What one built store is, against the local schema. Only ``fresh`` needs no rebuild."""</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">PerturbationLeaves</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The perturbation leaf classes a built store holds, by the list they sit in.</span>
+
+<span class="sd">    Sorted class names (``GeneAdditionPerturbation``, ``PhagePerturbation``), one entry</span>
+<span class="sd">    per leaf present in at least one record, measured over every record of the store by</span>
+<span class="sd">    :func:`walk_perturbation_leaves`. ``genotype`` is drawn from ``genotype.perturbations``</span>
+<span class="sd">    (absent on a ``SegregantGenotype``, which carries no perturbation list) and</span>
+<span class="sd">    ``environment`` from ``environment.perturbations``.</span>
+<span class="sd">    """</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">genotype</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">environment</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="BuildManifest">
@@ -203,7 +235,10 @@
     <span class="n">built_at</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># ISO-8601 UTC</span>
     <span class="n">hostname</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">torchcell_commit</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># provenance only; NOT used for staleness</span>
-    <span class="n">torchcell_dirty</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+    <span class="n">torchcell_dirty</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># The leaves the store holds (schema version 2). ``None`` only on a manifest written</span>
+    <span class="c1"># before the field existed, which :func:`check_manifest` reports as stale.</span>
+    <span class="n">perturbation_leaves</span><span class="p">:</span> <span class="n">PerturbationLeaves</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
 
@@ -226,7 +261,10 @@
     <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">preprocess_dir</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">is_stale</span><span class="p">:</span> <span class="nb">bool</span>
-    <span class="n">drift</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SymbolDrift</span><span class="p">]</span></div>
+    <span class="n">drift</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SymbolDrift</span><span class="p">]</span>
+    <span class="c1"># Manifest fields the current schema version requires and this manifest lacks</span>
+    <span class="c1"># (``perturbation_leaves`` on a version 1 manifest). Each one stales the store.</span>
+    <span class="n">missing_fields</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span></div>
 
 
 
@@ -266,6 +304,7 @@
     <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">status</span><span class="p">:</span> <span class="n">StoreState</span>
     <span class="n">drift</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SymbolDrift</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">missing_fields</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
@@ -308,6 +347,7 @@
     <span class="n">hostname</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">torchcell_commit</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">torchcell_dirty</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">perturbation_leaves</span><span class="p">:</span> <span class="n">PerturbationLeaves</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BuildManifest</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Build a :class:`BuildManifest` from a loader's transitive schema closure."""</span>
     <span class="n">closure</span> <span class="o">=</span> <span class="n">loader_closure</span><span class="p">(</span><span class="n">loader_path</span><span class="p">,</span> <span class="n">surface</span><span class="p">)</span>
@@ -324,8 +364,100 @@
         <span class="n">hostname</span><span class="o">=</span><span class="n">hostname</span><span class="p">,</span>
         <span class="n">torchcell_commit</span><span class="o">=</span><span class="n">torchcell_commit</span><span class="p">,</span>
         <span class="n">torchcell_dirty</span><span class="o">=</span><span class="n">torchcell_dirty</span><span class="p">,</span>
+        <span class="n">perturbation_leaves</span><span class="o">=</span><span class="n">perturbation_leaves</span><span class="p">,</span>
     <span class="p">)</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">leaf_class_by_perturbation_type</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""``perturbation_type`` literal -&gt; leaf class name, over both perturbation unions.</span>
+
+<span class="sd">    The literal is unique per leaf (43 genotype and 5 environment members, measured</span>
+<span class="sd">    2026-10-15), so the stored string names the class without validating the record. A</span>
+<span class="sd">    stored literal outside this map is a record no union member explains, and the walk</span>
+<span class="sd">    raises on it rather than guessing.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_args</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="n">EnvironmentPerturbationType</span><span class="p">,</span>
+        <span class="n">GenePerturbationType</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">by_type</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">union</span> <span class="ow">in</span> <span class="p">(</span><span class="n">GenePerturbationType</span><span class="p">,</span> <span class="n">EnvironmentPerturbationType</span><span class="p">):</span>
+        <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">get_args</span><span class="p">(</span><span class="n">union</span><span class="p">):</span>
+            <span class="n">literal</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">model_fields</span><span class="p">[</span><span class="s2">"perturbation_type"</span><span class="p">]</span><span class="o">.</span><span class="n">default</span>
+            <span class="k">if</span> <span class="n">literal</span> <span class="ow">in</span> <span class="n">by_type</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"perturbation_type </span><span class="si">{</span><span class="n">literal</span><span class="si">!r}</span><span class="s2"> is shared by </span><span class="si">{</span><span class="n">by_type</span><span class="p">[</span><span class="n">literal</span><span class="p">]</span><span class="si">}</span><span class="s2"> and "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">; the manifest walk needs it unique"</span>
+                <span class="p">)</span>
+            <span class="n">by_type</span><span class="p">[</span><span class="n">literal</span><span class="p">]</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span>
+    <span class="k">return</span> <span class="n">by_type</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">walk_perturbation_leaves</span><span class="p">(</span><span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PerturbationLeaves</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The leaf classes present in EVERY record of ``&lt;root&gt;/processed/lmdb``.</span>
+
+<span class="sd">    One streaming pass, the same read path as the store's own</span>
+<span class="sd">    (``pickle.loads`` + ``resolve_interned`` on the genotype and environment dicts; a</span>
+<span class="sd">    loader may intern either, and ``_maybe_intern`` always interns a large environment).</span>
+<span class="sd">    Reads the ``perturbation_type`` literal of each perturbation dict and names its</span>
+<span class="sd">    class through :func:`leaf_class_by_perturbation_type`, so no record is validated and</span>
+<span class="sd">    the pass costs what ``compute_gene_set_sequential`` costs. Raises on an empty store</span>
+<span class="sd">    and on a literal no union member carries.</span>
+<span class="sd">    """</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+
+    <span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.experiment_dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolve_interned</span>
+
+    <span class="n">by_type</span> <span class="o">=</span> <span class="n">leaf_class_by_perturbation_type</span><span class="p">()</span>
+    <span class="n">processed</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">root</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"processed"</span>
+    <span class="n">interned</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">processed</span> <span class="o">/</span> <span class="s2">"interned"</span><span class="p">)</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+        <span class="n">ienv</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">processed</span> <span class="o">/</span> <span class="s2">"interned"</span><span class="p">),</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">lock</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">ienv</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">itxn</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">itxn</span><span class="o">.</span><span class="n">cursor</span><span class="p">():</span>
+                    <span class="n">interned</span><span class="p">[</span><span class="n">key</span><span class="o">.</span><span class="n">decode</span><span class="p">()]</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>  <span class="c1"># noqa: S301</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="n">ienv</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">genotype_types</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">environment_types</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">n_records</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">processed</span> <span class="o">/</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">lock</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">readahead</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">_key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">txn</span><span class="o">.</span><span class="n">cursor</span><span class="p">():</span>
+                <span class="n">n_records</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">experiment</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">value</span><span class="p">)[</span><span class="s2">"experiment"</span><span class="p">]</span>  <span class="c1"># noqa: S301</span>
+                <span class="k">if</span> <span class="s2">"$ref"</span> <span class="ow">in</span> <span class="n">experiment</span><span class="p">:</span>
+                    <span class="n">experiment</span> <span class="o">=</span> <span class="n">interned</span><span class="p">[</span><span class="n">experiment</span><span class="p">[</span><span class="s2">"$ref"</span><span class="p">]]</span>
+                <span class="n">genotype</span> <span class="o">=</span> <span class="n">resolve_interned</span><span class="p">(</span><span class="n">experiment</span><span class="p">[</span><span class="s2">"genotype"</span><span class="p">],</span> <span class="n">interned</span><span class="p">)</span>
+                <span class="c1"># A SegregantGenotype carries haplotype blocks and no perturbation list.</span>
+                <span class="k">if</span> <span class="s2">"perturbations"</span> <span class="ow">in</span> <span class="n">genotype</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">perturbation</span> <span class="ow">in</span> <span class="n">genotype</span><span class="p">[</span><span class="s2">"perturbations"</span><span class="p">]:</span>
+                        <span class="n">genotype_types</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">perturbation</span><span class="p">[</span><span class="s2">"perturbation_type"</span><span class="p">])</span>
+                <span class="n">environment</span> <span class="o">=</span> <span class="n">resolve_interned</span><span class="p">(</span><span class="n">experiment</span><span class="p">[</span><span class="s2">"environment"</span><span class="p">],</span> <span class="n">interned</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">perturbation</span> <span class="ow">in</span> <span class="n">environment</span><span class="p">[</span><span class="s2">"perturbations"</span><span class="p">]:</span>
+                    <span class="n">environment_types</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">perturbation</span><span class="p">[</span><span class="s2">"perturbation_type"</span><span class="p">])</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">n_records</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">processed</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="s1">'lmdb'</span><span class="si">}</span><span class="s2"> holds no records"</span><span class="p">)</span>
+    <span class="n">unknown</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">((</span><span class="n">genotype_types</span> <span class="o">|</span> <span class="n">environment_types</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">by_type</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">unknown</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">processed</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="s1">'lmdb'</span><span class="si">}</span><span class="s2"> stores perturbation_type literals no union member "</span>
+            <span class="sa">f</span><span class="s2">"carries: </span><span class="si">{</span><span class="n">unknown</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">PerturbationLeaves</span><span class="p">(</span>
+        <span class="n">genotype</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">by_type</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">genotype_types</span><span class="p">),</span>
+        <span class="n">environment</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">by_type</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">environment_types</span><span class="p">),</span>
+    <span class="p">)</span>
 
 
 <div class="viewcode-block" id="write_build_manifest">
@@ -345,6 +477,7 @@
     <span class="n">loader_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">module_file</span><span class="p">)</span>
     <span class="n">surface</span> <span class="o">=</span> <span class="n">load_default_surface</span><span class="p">()</span>
     <span class="n">commit</span><span class="p">,</span> <span class="n">dirty</span> <span class="o">=</span> <span class="n">_git_info</span><span class="p">(</span><span class="n">loader_path</span><span class="o">.</span><span class="n">parent</span><span class="p">)</span>
+    <span class="n">leaves</span> <span class="o">=</span> <span class="n">walk_perturbation_leaves</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">root</span><span class="p">)</span>
     <span class="n">manifest</span> <span class="o">=</span> <span class="n">compute_manifest</span><span class="p">(</span>
         <span class="n">dataset_name</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">normpath</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">root</span><span class="p">)),</span>
         <span class="n">loader_module</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span>
@@ -355,6 +488,7 @@
         <span class="n">hostname</span><span class="o">=</span><span class="n">socket</span><span class="o">.</span><span class="n">gethostname</span><span class="p">(),</span>
         <span class="n">torchcell_commit</span><span class="o">=</span><span class="n">commit</span><span class="p">,</span>
         <span class="n">torchcell_dirty</span><span class="o">=</span><span class="n">dirty</span><span class="p">,</span>
+        <span class="n">perturbation_leaves</span><span class="o">=</span><span class="n">leaves</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">)</span> <span class="o">/</span> <span class="n">MANIFEST_FILENAME</span>
     <span class="n">out</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -368,7 +502,12 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">check_manifest</span><span class="p">(</span>
     <span class="n">manifest</span><span class="p">:</span> <span class="n">BuildManifest</span><span class="p">,</span> <span class="n">surface</span><span class="p">:</span> <span class="n">SchemaSurface</span><span class="p">,</span> <span class="n">preprocess_dir</span><span class="p">:</span> <span class="nb">str</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StaleResult</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Compare a manifest's stored fingerprints against the current local schema surface."""</span>
+<span class="w">    </span><span class="sd">"""Compare a manifest's stored fingerprints against the current local schema surface.</span>
+
+<span class="sd">    A manifest without ``perturbation_leaves`` (written under manifest schema version</span>
+<span class="sd">    1) is stale too: the preflight reads the store's leaves off that field, and a store</span>
+<span class="sd">    with no measured leaves cannot be checked against its conf's lanes.</span>
+<span class="sd">    """</span>
     <span class="n">drift</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">SymbolDrift</span><span class="p">(</span>
             <span class="n">symbol</span><span class="o">=</span><span class="n">symbol</span><span class="p">,</span>
@@ -378,11 +517,15 @@
         <span class="k">for</span> <span class="n">symbol</span><span class="p">,</span> <span class="n">stored</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">closure</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">surface</span><span class="o">.</span><span class="n">fingerprints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">symbol</span><span class="p">)</span> <span class="o">!=</span> <span class="n">stored</span>
     <span class="p">]</span>
+    <span class="n">missing_fields</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">[</span><span class="n">PERTURBATION_LEAVES_FIELD</span><span class="p">]</span> <span class="k">if</span> <span class="n">manifest</span><span class="o">.</span><span class="n">perturbation_leaves</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
+    <span class="p">)</span>
     <span class="k">return</span> <span class="n">StaleResult</span><span class="p">(</span>
         <span class="n">dataset_name</span><span class="o">=</span><span class="n">manifest</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">,</span>
         <span class="n">preprocess_dir</span><span class="o">=</span><span class="n">preprocess_dir</span><span class="p">,</span>
-        <span class="n">is_stale</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">drift</span><span class="p">),</span>
+        <span class="n">is_stale</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">drift</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">bool</span><span class="p">(</span><span class="n">missing_fields</span><span class="p">),</span>
         <span class="n">drift</span><span class="o">=</span><span class="n">drift</span><span class="p">,</span>
+        <span class="n">missing_fields</span><span class="o">=</span><span class="n">missing_fields</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 
@@ -471,7 +614,7 @@
         <span class="k">return</span> <span class="n">StoreFreshness</span><span class="p">(</span>
             <span class="n">root</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">root</span><span class="p">),</span>
             <span class="n">state</span><span class="o">=</span><span class="s2">"stale"</span><span class="p">,</span>
-            <span class="n">drift</span><span class="o">=</span><span class="nb">sorted</span><span class="p">({</span><span class="n">d</span><span class="o">.</span><span class="n">symbol</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">drift</span><span class="p">}),</span>
+            <span class="n">drift</span><span class="o">=</span><span class="nb">sorted</span><span class="p">({</span><span class="n">d</span><span class="o">.</span><span class="n">symbol</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">drift</span><span class="p">}</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">missing_fields</span><span class="p">)),</span>
         <span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">read_first_record</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
@@ -510,19 +653,21 @@
         <span class="n">manifest_path</span> <span class="o">=</span> <span class="n">slug_dir</span> <span class="o">/</span> <span class="s2">"preprocess"</span> <span class="o">/</span> <span class="n">MANIFEST_FILENAME</span>
         <span class="n">name</span> <span class="o">=</span> <span class="n">slug_dir</span><span class="o">.</span><span class="n">name</span>
         <span class="n">drift</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SymbolDrift</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">missing_fields</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="n">manifest_path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
             <span class="n">manifest</span> <span class="o">=</span> <span class="n">BuildManifest</span><span class="o">.</span><span class="n">model_validate_json</span><span class="p">(</span>
                 <span class="n">manifest_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
             <span class="p">)</span>
             <span class="n">name</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">dataset_name</span>
-            <span class="n">drift</span> <span class="o">=</span> <span class="n">check_manifest</span><span class="p">(</span>
-                <span class="n">manifest</span><span class="p">,</span> <span class="n">surface</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">slug_dir</span> <span class="o">/</span> <span class="s2">"preprocess"</span><span class="p">)</span>
-            <span class="p">)</span><span class="o">.</span><span class="n">drift</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">check_manifest</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">surface</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">slug_dir</span> <span class="o">/</span> <span class="s2">"preprocess"</span><span class="p">))</span>
+            <span class="n">drift</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">drift</span>
+            <span class="n">missing_fields</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">missing_fields</span>
         <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="n">DatasetCheck</span><span class="p">(</span>
                 <span class="n">dataset_name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
                 <span class="n">status</span><span class="o">=</span><span class="n">freshness</span><span class="o">.</span><span class="n">state</span><span class="p">,</span>
                 <span class="n">drift</span><span class="o">=</span><span class="n">drift</span><span class="p">,</span>
+                <span class="n">missing_fields</span><span class="o">=</span><span class="n">missing_fields</span><span class="p">,</span>
                 <span class="n">reason</span><span class="o">=</span><span class="n">freshness</span><span class="o">.</span><span class="n">reason</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
@@ -542,8 +687,12 @@
         <span class="s2">""</span><span class="p">,</span>
     <span class="p">]</span>
     <span class="k">for</span> <span class="n">check</span> <span class="ow">in</span> <span class="n">stale</span><span class="p">:</span>
-        <span class="n">symbols</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">symbol</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">check</span><span class="o">.</span><span class="n">drift</span><span class="p">))</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  [STALE] </span><span class="si">{</span><span class="n">check</span><span class="o">.</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">  -&gt; rebuild; changed: </span><span class="si">{</span><span class="n">symbols</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">what</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">check</span><span class="o">.</span><span class="n">drift</span><span class="p">:</span>
+            <span class="n">what</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"changed: "</span> <span class="o">+</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">symbol</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">check</span><span class="o">.</span><span class="n">drift</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="n">check</span><span class="o">.</span><span class="n">missing_fields</span><span class="p">:</span>
+            <span class="n">what</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"manifest lacks: "</span> <span class="o">+</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">check</span><span class="o">.</span><span class="n">missing_fields</span><span class="p">))</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  [STALE] </span><span class="si">{</span><span class="n">check</span><span class="o">.</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">  -&gt; rebuild; </span><span class="si">{</span><span class="s1">'; '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">what</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">check</span> <span class="ow">in</span> <span class="n">unreadable</span><span class="p">:</span>
         <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"  [UNREADABLE] </span><span class="si">{</span><span class="n">check</span><span class="o">.</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">  -&gt; rebuild; unreadable: "</span>

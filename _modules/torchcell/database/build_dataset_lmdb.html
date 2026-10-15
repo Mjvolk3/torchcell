@@ -164,7 +164,16 @@
 <span class="sd">``fresh`` and is rebuilt before the graph is built from it. "Fails" is the report's</span>
 <span class="sd">verdict, which only ``gate`` rules decide: a genome-reference finding</span>
 <span class="sd">(``FindingClass.report``: containment, name currency, assembly pins) is printed under</span>
-<span class="sd">the verdict and never retires a manifest.</span>
+<span class="sd">the verdict and never retires a manifest. The verdict is typed (:class:`VerifyOutcome`)</span>
+<span class="sd">and the build log names it: a dataset with no per-dataset entry point is</span>
+<span class="sd">``no_per_dataset_verifier`` and keeps its manifest (its family runner covers it), never</span>
+<span class="sd">a silent ``True`` that reads like a pass.</span>
+
+<span class="sd">:func:`mapped_store_lanes` is the preflight's second walk, beside</span>
+<span class="sd">:func:`mapped_store_status`: it reads ``perturbation_leaves`` off each mapped store's</span>
+<span class="sd">build manifest and checks every leaf against the node lanes the dataset's adapter conf</span>
+<span class="sd">enables (``torchcell.knowledge_graphs.perturbation_lanes``), so a store whose records</span>
+<span class="sd">carry a leaf no enabled lane emits is refused before generation starts.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -178,6 +187,8 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">StrEnum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
@@ -189,7 +200,13 @@
     <span class="n">format_organisms</span><span class="p">,</span>
     <span class="n">parse_organisms</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.provenance.build_manifest</span><span class="w"> </span><span class="kn">import</span> <span class="n">StoreFreshness</span><span class="p">,</span> <span class="n">StoreState</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.perturbation_lanes</span><span class="w"> </span><span class="kn">import</span> <span class="n">LaneGaps</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.provenance.build_manifest</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MANIFEST_FILENAME</span><span class="p">,</span>
+    <span class="n">BuildManifest</span><span class="p">,</span>
+    <span class="n">StoreFreshness</span><span class="p">,</span>
+    <span class="n">StoreState</span><span class="p">,</span>
+<span class="p">)</span>
 
 
 <div class="viewcode-block" id="dataset_default_root">
@@ -280,6 +297,79 @@
                 <span class="n">state</span><span class="o">=</span><span class="n">freshness</span><span class="o">.</span><span class="n">state</span><span class="p">,</span>
                 <span class="n">drift</span><span class="o">=</span><span class="n">freshness</span><span class="o">.</span><span class="n">drift</span><span class="p">,</span>
                 <span class="n">reason</span><span class="o">=</span><span class="n">freshness</span><span class="o">.</span><span class="n">reason</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">statuses</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">StoreLaneStatus</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One mapped store's measured perturbation leaves against its conf's lanes."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">dataset_class</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">root</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">has_leaves</span><span class="p">:</span> <span class="nb">bool</span>  <span class="c1"># the manifest exists and carries ``perturbation_leaves``</span>
+    <span class="n">gaps</span><span class="p">:</span> <span class="n">LaneGaps</span> <span class="o">=</span> <span class="n">LaneGaps</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">blocks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""A store with no measured leaves, or with a leaf no lane serves, blocks a build."""</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_leaves</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">gaps</span><span class="o">.</span><span class="n">empty</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">describe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""``&lt;class&gt;: &lt;what is wrong&gt;``, the line the preflight refuses with."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_leaves</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_class</span><span class="si">}</span><span class="s2">: build manifest carries no perturbation_leaves "</span>
+                <span class="s2">"(built before the walk existed); rebuild it"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_class</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">gaps</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">mapped_store_lanes</span><span class="p">(</span>
+    <span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">include_private</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">organisms</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="n">Organism</span><span class="p">]</span> <span class="o">=</span> <span class="n">ALL_ORGANISMS</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">StoreLaneStatus</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Every mapped store's ``perturbation_leaves`` checked against its conf's lanes.</span>
+
+<span class="sd">    The same walk as :func:`mapped_store_status` (``build_adapter_map`` of the organism</span>
+<span class="sd">    set), reading each store's build manifest rather than its records: the leaves were</span>
+<span class="sd">    measured over every record when the manifest was written. A leaf is a gap when the</span>
+<span class="sd">    conf enables the edge method that walks it and no enabled node method emits it</span>
+<span class="sd">    (``torchcell.knowledge_graphs.perturbation_lanes.unserved_leaves``); a manifest</span>
+<span class="sd">    without the field, or no manifest at all, blocks as well, since the check cannot</span>
+<span class="sd">    run. The exhaustiveness test runs the same arithmetic on each loader's direct schema</span>
+<span class="sd">    imports; this runs it on what the store actually holds.</span>
+<span class="sd">    """</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">torchcell</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.dataset_adapter_map</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_adapter_map</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.kg_manifest</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataset_conf_methods</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.perturbation_lanes</span><span class="w"> </span><span class="kn">import</span> <span class="n">unserved_leaves</span>
+
+    <span class="n">repo_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">torchcell</span><span class="o">.</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span>
+    <span class="n">statuses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">StoreLaneStatus</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">build_adapter_map</span><span class="p">(</span><span class="n">include_private</span><span class="o">=</span><span class="n">include_private</span><span class="p">,</span> <span class="n">organisms</span><span class="o">=</span><span class="n">organisms</span><span class="p">):</span>
+        <span class="n">root</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="n">dataset_default_root</span><span class="p">(</span><span class="bp">cls</span><span class="p">))</span>
+        <span class="n">manifest_path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">"preprocess"</span><span class="p">,</span> <span class="n">MANIFEST_FILENAME</span><span class="p">)</span>
+        <span class="n">leaves</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">osp</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">manifest_path</span><span class="p">):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">manifest_path</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+                <span class="n">leaves</span> <span class="o">=</span> <span class="n">BuildManifest</span><span class="o">.</span><span class="n">model_validate_json</span><span class="p">(</span>
+                    <span class="n">handle</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">perturbation_leaves</span>
+        <span class="k">if</span> <span class="n">leaves</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">statuses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">StoreLaneStatus</span><span class="p">(</span><span class="n">dataset_class</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">,</span> <span class="n">has_leaves</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="n">gaps</span> <span class="o">=</span> <span class="n">unserved_leaves</span><span class="p">(</span>
+            <span class="n">leaves</span><span class="o">.</span><span class="n">genotype</span><span class="p">,</span> <span class="n">leaves</span><span class="o">.</span><span class="n">environment</span><span class="p">,</span> <span class="n">dataset_conf_methods</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">repo_root</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">statuses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">StoreLaneStatus</span><span class="p">(</span>
+                <span class="n">dataset_class</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">,</span> <span class="n">has_leaves</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">gaps</span><span class="o">=</span><span class="n">gaps</span>
             <span class="p">)</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">statuses</span>
@@ -422,16 +512,39 @@
     <span class="k">return</span> <span class="n">dest</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">verify_after_build</span><span class="p">(</span><span class="n">dataset_class</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Run the verification covering ``dataset_class``; True when its store stays fresh.</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">VerifyOutcome</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""What ``--verify`` found, named in the build log as ``VERIFY OUTCOME: &lt;value&gt;``.</span>
+
+<span class="sd">    ``passed``: a per-dataset verifier ran and every report passed; the manifest stays.</span>
+<span class="sd">    ``no_per_dataset_verifier``: :func:`resolve_verifier` found no entry point; the</span>
+<span class="sd">    manifest stays because the dataset's FAMILY runner covers it, but the log says so</span>
+<span class="sd">    rather than reporting a pass that never ran (review 3 finding 7, 2026-10-15).</span>
+<span class="sd">    ``failed``: the verifier raised, returned no report, or a report did not pass; the</span>
+<span class="sd">    manifest is retired and the build exits non-zero.</span>
+<span class="sd">    """</span>
+
+    <span class="n">passed</span> <span class="o">=</span> <span class="s2">"passed"</span>
+    <span class="n">no_per_dataset_verifier</span> <span class="o">=</span> <span class="s2">"no_per_dataset_verifier"</span>
+    <span class="n">failed</span> <span class="o">=</span> <span class="s2">"failed"</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">keeps_manifest</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Only ``failed`` retires the build manifest."""</span>
+        <span class="k">return</span> <span class="bp">self</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">VerifyOutcome</span><span class="o">.</span><span class="n">failed</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">verify_after_build</span><span class="p">(</span><span class="n">dataset_class</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VerifyOutcome</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Run the verification covering ``dataset_class``; the typed outcome.</span>
 
 <span class="sd">    What ``--verify`` does after a build. A dataset whose verification raises OR whose</span>
 <span class="sd">    report does not pass has its build manifest retired (:func:`retire_manifest`), so</span>
 <span class="sd">    an unverified store cannot read fresh to the knowledge-graph preflight -- the</span>
 <span class="sd">    builder wrote the records, and nothing else re-checks them before they are</span>
-<span class="sd">    serialized into the graph. A dataset with no per-dataset entry point is reported as</span>
-<span class="sd">    such and keeps its manifest: its family runner is what covers it, and that runner</span>
-<span class="sd">    reads every store in the family.</span>
+<span class="sd">    serialized into the graph. A dataset with no per-dataset entry point is</span>
+<span class="sd">    ``no_per_dataset_verifier`` and keeps its manifest: its family runner is what</span>
+<span class="sd">    covers it, and that runner reads every store in the family. Which of the three</span>
+<span class="sd">    happened is printed as ``VERIFY OUTCOME: &lt;value&gt;`` so a build log never reads a</span>
+<span class="sd">    skipped verification as a pass.</span>
 
 <span class="sd">    The verdict is :attr:`VerificationReport.passed`, which only ``gate`` rules decide;</span>
 <span class="sd">    each report's genome-reference findings are printed in its summary and counted on</span>
@@ -445,16 +558,21 @@
         <span class="n">kind</span><span class="p">,</span> <span class="n">run</span> <span class="o">=</span> <span class="n">resolve_verifier</span><span class="p">(</span><span class="n">dataset_class</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">LookupError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"NO PER-DATASET VERIFIER -- </span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="k">return</span> <span class="kc">True</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"VERIFY OUTCOME: </span><span class="si">{</span><span class="n">VerifyOutcome</span><span class="o">.</span><span class="n">no_per_dataset_verifier</span><span class="si">}</span><span class="s2"> "</span>
+            <span class="s2">"(manifest kept; the family runner covers this store)"</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">VerifyOutcome</span><span class="o">.</span><span class="n">no_per_dataset_verifier</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"verifying </span><span class="si">{</span><span class="n">dataset_class</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> with </span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">refuse</span><span class="p">(</span><span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Report ``message``, retire the manifest, and answer False."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">refuse</span><span class="p">(</span><span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VerifyOutcome</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Report ``message``, retire the manifest, and answer ``failed``."""</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"ERROR: </span><span class="si">{</span><span class="n">message</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"ERROR: build manifest retired to </span><span class="si">{</span><span class="n">retire_manifest</span><span class="p">(</span><span class="n">root</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="kc">False</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"VERIFY OUTCOME: </span><span class="si">{</span><span class="n">VerifyOutcome</span><span class="o">.</span><span class="n">failed</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">VerifyOutcome</span><span class="o">.</span><span class="n">failed</span>
 
     <span class="k">try</span><span class="p">:</span>
         <span class="n">reports</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span>
@@ -477,7 +595,8 @@
         <span class="sa">f</span><span class="s2">"verification PASSED: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">reports</span><span class="p">)</span><span class="si">}</span><span class="s2"> report(s) by </span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">; "</span>
         <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n_findings</span><span class="si">}</span><span class="s2"> genome-reference finding(s) reported, not gated"</span>
     <span class="p">)</span>
-    <span class="k">return</span> <span class="kc">True</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"VERIFY OUTCOME: </span><span class="si">{</span><span class="n">VerifyOutcome</span><span class="o">.</span><span class="n">passed</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">VerifyOutcome</span><span class="o">.</span><span class="n">passed</span>
 
 
 <div class="viewcode-block" id="build_dataset">
@@ -602,7 +721,10 @@
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"ERROR: build manifest missing at </span><span class="si">{</span><span class="n">manifest</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
         <span class="k">return</span> <span class="mi">1</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"build manifest: </span><span class="si">{</span><span class="n">manifest</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">verify</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">verify_after_build</span><span class="p">(</span><span class="n">dataset_class</span><span class="p">,</span> <span class="n">data_root</span><span class="p">):</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">verify</span>
+        <span class="ow">and</span> <span class="n">verify_after_build</span><span class="p">(</span><span class="n">dataset_class</span><span class="p">,</span> <span class="n">data_root</span><span class="p">)</span> <span class="ow">is</span> <span class="n">VerifyOutcome</span><span class="o">.</span><span class="n">failed</span>
+    <span class="p">):</span>
         <span class="k">return</span> <span class="mi">1</span>
     <span class="k">return</span> <span class="mi">0</span>
 

@@ -45,6 +45,7 @@ from torchcell.datamodels.schema import (
     BarcodedKanMxDeletionPerturbation,
     ConcentrationUnit,
     CultureEnvironment,
+    EukaryoticStrainBackground,
     Genotype,
     MatingType,
     MeasurementType,
@@ -52,7 +53,6 @@ from torchcell.datamodels.schema import (
     SampleUnit,
     SmallMoleculePerturbation,
     Solvent,
-    StrainBackground,
     StrainEnvironmentResponseExperiment,
     StrainEnvironmentResponseExperimentReference,
     Zygosity,
@@ -369,7 +369,7 @@ def test_one_reference_per_medium_on_the_by4741_background(built: Any) -> None:
     genome = reference.genome_reference
     assert (genome.strain, genome.ploidy) == ("BY4741", "haploid")
     background = genome.background
-    assert isinstance(background, StrainBackground)
+    assert isinstance(background, EukaryoticStrainBackground)
     assert background.mating_type is MatingType.a
     assert [a.allele_name for a in background.alleles] == [
         "his3Δ1",

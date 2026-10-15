@@ -55,21 +55,40 @@ KG 4.0 serves **170 mapped datasets** (169 public plus 1 private,
 *E. coli* and *P. putida*, against KG 3.0's 51 yeast datasets. It is the first store
 built after the ontology unification, which removes the split that let the same physical
 measurement exist as two classes depending on which host the data came from
-([[database.constitution]], principle 1). Five schema changes carry it, each with its own
-record under `database/schema_changes/`, each computing `full_kg_rebuild`, all signed off
-by the owner on 2026-10-15. The fifth (P5, the strain background) was folded into this
-rebuild rather than following it, so KG 4.0 carries the whole unification and no bacterial
-class survives into the next release.
+([[database.constitution]], principle 1). Ten schema changes carry it, each with its own
+record under `database/schema_changes/`, signed off by the owner on 2026-10-15. Five of
+them were not planned when this note was first written: P5 (the strain background) was
+folded into this rebuild rather than following it, the three names this note listed as
+deliberately left alone were corrected instead, and a compound construct span replaced
+the single interval. So KG 4.0 carries the whole unification and no bacterial class
+survives into the next release.
 
-### The five schema changes, and what each makes true that was not true before
+The ten records partition the change exactly: 146 schema symbols moved against
+`origin/main`, every one of them is named by exactly one record, and no record names a
+symbol that did not move (measured on the integrated head).
+
+### The ten schema changes, and what each makes true that was not true before
 
 | record | what it makes true | symbols | served datasets | loaders |
 |---|---|---:|---:|---:|
-| `2026-10-15-gene-id-namespace-on-gene-perturbation.json` (P1, PR #1112) | Every gene perturbation states which host's identifier space its gene name is written in, as a required typed field rather than by the choice of class | 45 | 51 | 121 |
-| `2026-10-15-released-identifier-leaf.json` (P3, PR #1113) | One class says "this is the identifier the source released"; four did, split by host, with different field names for the same fact | 16 | 51 | 120 |
-| `2026-10-15-assembly-pin-on-reference-genome-host-neutral-experiment-pairs.json` (P2, PR #1117) | Every record's reference genome pins the deposited assembly set its identifiers are written against, or a typed gap; and a fitness experiment is a fitness experiment on any host | 57 | 51 | 121 |
-| `2026-10-15-construct-placement-on-gene-addition.json` (P4, PR #1116) | An added gene points at real deposited sequence through a hash-carrying reference, or states in a typed gap that the source released none | 9 | 3 | 13 |
-| P5, the strain background (lane U, `unify-p5-background`) | One strain background and one background allele for every host, so a strain's own edits carry the same namespace field every perturbation does, and an integrated cassette is placed like any other added DNA | pending | pending | pending |
+| `2026-10-15-gene-id-namespace-on-gene-perturbation.json` (P1, PR #1112) | Every gene perturbation states which host's identifier space its gene name is written in, as a required typed field rather than by the choice of class | 42 | 51 | 121 |
+| `2026-10-15-released-identifier-leaf.json` (P3, PR #1113) | One class says "this is the identifier the source released"; four did, split by host, with different field names for the same fact | 15 | 18 | 34 |
+| `2026-10-15-assembly-pin-on-reference-genome-host-neutral-experiment-pairs.json` (P2, PR #1117) | Every record's reference genome pins the deposited assembly set its identifiers are written against, or a typed gap; and a fitness experiment is a fitness experiment on any host | 56 | 51 | 121 |
+| `2026-10-15-construct-placement-on-gene-addition.json` (P4, PR #1116) | An added gene points at real deposited sequence through a hash-carrying reference, or states in a typed gap that the source released none | 7 | 51 | 121 |
+| `2026-10-15-strain-background-shared-base-eukaryotic-subclass.json` (P5, PR #1124) | One strain background and one background allele for every host, so a strain's own edits carry the same namespace field every perturbation does, and an integrated cassette is placed like any other added DNA | 11 | 51 | 121 |
+| `2026-10-15-strain-construction-on-kanmx-and-released-identifier-deletions.json` (Q, PR #1120) | A deletion record states how the strain was constructed, so two strains made differently at the same locus are two records and not one | 1 | 42 | 35 |
+| `2026-10-15-the-called-variant-vocabulary-and-call-object-drop-the-host-prefix.json` (R, PR #1122) | A called variant is a called variant on any host: the vocabulary and the call object are composed by three yeast loaders, so the prefix named the author and not the biology | 6 | 51 | 121 |
+| `2026-10-15-morphology-phenotype-is-the-general-class-calmorph-is-the-specific-one.json` (R, PR #1122) | The general morphology class is `MorphologyPhenotype` and the specific one is `CalMorphPhenotype`, which was backwards | 3 | 0 | 1 |
+| `2026-10-15-bw25113-background-genotype-leaves-the-schema-surface.json` (R, PR #1122) | A strain's verbatim background genotype is data about one deposited assembly set, so it lives in the genomes tier beside that set and not on the schema surface | 2 | 0 | 0 |
+| `2026-10-15-construct-span-holds-the-parts-of-a-compound-location.json` (T, PR #1123) | A feature's location is the ordered parts it is made of plus how they compose, so an origin-wrapping or joined span is the span the source wrote and not its envelope | 3 | 51 | 121 |
+
+The served and loader columns are the record's own tool-computed scope on the integrated
+head, which is not the scope each lane measured alone, and the difference is the
+unification composing: P5 puts a `ConstructPlacement` on `IntegratedCassette`, which
+hangs off every `StrainReferenceGenome`, so P4's placement classes, T's span parts and
+R's variant vocabulary reach every served closure (51 datasets, 121 loaders) instead of
+the 3 datasets each measured on its own branch. Every one of them was already a
+`full_kg_rebuild`, so the build decision does not move; the recorded radius does.
 
 In more detail, and with what each closes:
 
@@ -113,8 +132,7 @@ In more detail, and with what each closes:
   carrying its own paper's pinned path, sha256 and section. Cachera 2023's four Btx genes
   now point at the deposited pBTX1 contig, with ARO4 K229L at contig 3368-3370 and ARO7
   G141S at 820-822, each confirmed by translating the construct's own codon.
-- **P5, one strain background.** *Pending: lane U is building this, and the numbers in the
-  table above are filled in when its record lands.* `StrainBackground` and
+- **P5, one strain background.** `StrainBackground` and
   `BacterialStrainBackground` become one base with a eukaryotic subclass, and
   `BackgroundAllele` and `BacterialBackgroundAllele` become one class carrying
   `gene_namespace` (the same required field P1 puts on every gene perturbation) with
@@ -129,21 +147,44 @@ In more detail, and with what each closes:
   identity projections both classes need: `strain_background_identity` projects
   `mating_type` and `ploidy` unconditionally today, which is wrong for a host that has
   neither, and `BACKGROUND_ALLELE_IDENTITY_FIELDS` does not include `gene_namespace`.
-  Scope as the plan measured it before the branch existed: **6 served closures** (Lian
-  2019, Hoepfner 2014, Vanacloig 2022, Wildenhain 2015, both Hillenmeyer 2008, which are
-  the datasets whose records carry a `StrainReferenceGenome.background`) and 13 dev
-  stores. The record's own tool-computed scope replaces that estimate when it lands.
-  What P5 does NOT do, so no reader expects it: three names keep a host prefix without a
-  host-specific meaning, because renaming them is its own change. `BacterialVariantCall`
-  and `BacterialVariantType` are composed by the general variant-call leaves P1 renamed,
-  so the prefix is already a misnomer; and `CalMorphPhenotype` is the yeast-specific
-  morphology leaf while `BacterialMorphologyPhenotype` is the general one, which is
-  backwards. Both morphology classes are served, so correcting them is another full
-  rebuild and therefore an owner decision about whether it happens in this one.
+  The plan estimated **6 served closures** (Lian 2019, Hoepfner 2014, Vanacloig 2022,
+  Wildenhain 2015, both Hillenmeyer 2008, the datasets whose records carry a
+  `StrainReferenceGenome.background`) and 13 dev stores; the record's own tool-computed
+  scope is 51 served datasets over 121 loaders, because `StrainReferenceGenome` is a
+  member of the `genome_reference` union on every `ExperimentReference`.
+- **R, the three audit flags.** The three names this note first listed as deliberately
+  left alone were corrected in this rebuild instead, which is what spared a second one.
+  `BacterialVariantType` becomes `VariantType` and `BacterialVariantCall` becomes
+  `GenomeVariantCall`: the vocabulary is composed onto `ConstructVariantCall`, so it sits
+  in 15 loader closures, three of them yeast, and `cachera2023.py` writes
+  `VariantType.substitution` by name. `BacterialMorphologyPhenotype` becomes
+  `MorphologyPhenotype` while `CalMorphPhenotype` KEEPS its name, because the program name
+  already states what it is specific to and a non-CalMorph yeast screen belongs on the
+  general class. The BW25113 background genotype and its six lesions move to the genomes
+  tier beside the set id whose GenBank `/note` they are read from, which is where data
+  about one deposited set belongs; that record's scope is `none`. The same lane made three
+  verification rules `report` whose own messages read "a finding, never a gate"
+  (`perturbed_locus_in_bw25113_annotation`, `released_b_numbers_on_mg1655_annotation`,
+  `released_tags_on_kt2440_annotation`), so no record is gated on an annotation any more.
+- **T, a construct span holds its parts.** `ConstructSpan` is `parts: list[SpanPart]`
+  plus a composition and an orientation, with the vocabulary taken from the INSDC location
+  grammar rather than invented, and `start` and `end` are properties that serve the simple
+  case and RAISE on a compound span, so no reader silently receives an envelope. All 17
+  Cachera maps now index (6 to 17 contigs, 208 to 570 features), and every one of the 570
+  features regenerates its own file's location string byte for byte from the stored parts.
+  The scale of the old fallback is what it closes: `pBTX002`'s `pUC ori` was read as the
+  whole 12,096 bp plasmid and is 666 bp.
+- **Q, a deletion states its construction.** `construction: StrainConstruction | None` on
+  `KanMxDeletionPerturbation` and `ReleasedIdentifierPerturbation`, so Ozaydin 2013's 31
+  pairs of byte-identical records are 31 pairs of distinct records rather than 31 nodes
+  lost to content-id dedup. A scan of 176 dev stores and 30,543,838 records found the
+  collision in that one store ([[experiments.database.scripts.content_id_collision_scan]]).
 
-The records chain into one coherent change: on the integrated head of the first four,
-`tests/torchcell/datamodels/test_schema_change_records.py` passes **without**
-`TORCHCELL_SCHEMA_RECORD_ACK`, and the same must hold with P5's record on the branch.
+The records chain into one coherent change: on the integrated head of all ten,
+`tests/torchcell/datamodels/test_schema_change_records.py` and
+`scripts/check_schema_change_records.py` both pass **without**
+`TORCHCELL_SCHEMA_RECORD_ACK`, with each of the 146 moved symbols owned by exactly one
+record.
 
 ### Two bacterial graph classes are retired, and what replaces them
 

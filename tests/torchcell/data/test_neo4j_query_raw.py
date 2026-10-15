@@ -174,6 +174,10 @@ EXPECTED_RECORD_0 = {
                     "perturbation_type": "kanmx_deletion",
                     "deletion_description": "Deletion via KanMX gene replacement.",
                     "deletion_type": "KanMX",
+                    # How the deletion strain was made, so two strains built
+                    # differently at one locus are two records; the toy store's
+                    # source states none.
+                    "construction": None,
                 }
             ]
         },

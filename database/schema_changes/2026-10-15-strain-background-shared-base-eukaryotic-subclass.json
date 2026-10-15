@@ -4,7 +4,7 @@
   "date": "2026-10-15",
   "pr": 1124,
   "author_kind": "agent",
-  "base_commit": "b5c5549d8f4752fc8ac89b6d1e5cd2c0ec5bf4a9",
+  "base_commit": "7da9bfac0ec841d84e3d1a63479acf2e07ff7e57",
   "python_version": "3.13.0",
   "symbols": [
     {
@@ -107,10 +107,10 @@
       "symbol": "StrainBackground",
       "status": "modified",
       "kinds": [
-        "contract_tightened",
         "additive_field",
-        "removal",
-        "field_required_loosened"
+        "contract_tightened",
+        "field_required_loosened",
+        "removal"
       ],
       "fingerprint_before": "97bdebae66ef595101a10f20ef211688acd493c813336e6cc186bbfcf1004ac1",
       "fingerprint_after": "4e2706e97fe13da2b3296633f39e4f62d34e1cec50abf7a5c0ae0dad7075970e",
@@ -131,13 +131,14 @@
       "status": "modified",
       "kinds": [
         "contract_tightened",
+        "field_required_loosened",
         "rename"
       ],
-      "fingerprint_before": "66eb3840c7ddf3e578c1427b64b7325edc5b1e80e3f607da553f79d7bdebae0c",
+      "fingerprint_before": "164a7056e53afb7a0583af3383e8014ee78b68dc4102e8d45654f55bb4a02301",
       "fingerprint_after": "9a3d3c949bcfe25dc0aed531940dfad3bd5864353dd20c59d08dfec97527ca65",
       "impact": "breaking",
       "reasons": [
-        "field 'background' type changed: StrainBackground | BacterialStrainBackground -> StrainBackground | EukaryoticStrainBackground",
+        "field 'background' type changed: StrainBackground -> StrainBackground | EukaryoticStrainBackground",
         "validator/serializer changed: ['_check_background_agrees']"
       ]
     },
@@ -206,15 +207,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -226,15 +224,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -246,15 +241,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -266,15 +258,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -330,15 +319,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -352,15 +338,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -372,15 +355,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -393,15 +373,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -414,15 +391,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -434,15 +408,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -454,15 +425,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -474,15 +442,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -494,8 +459,6 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
@@ -534,15 +497,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -554,8 +514,6 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
@@ -574,8 +532,6 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
@@ -595,15 +551,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -635,15 +588,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -655,15 +605,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -698,15 +645,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -718,15 +662,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -738,15 +679,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -818,15 +756,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -838,8 +773,6 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
@@ -858,15 +791,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -899,15 +829,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -920,8 +847,6 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
@@ -940,15 +865,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -960,15 +882,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -984,15 +903,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1004,15 +920,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1024,15 +937,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1044,15 +954,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1064,15 +971,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1084,15 +988,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1106,15 +1007,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1126,15 +1024,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1146,15 +1041,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1166,15 +1058,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1186,15 +1075,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1206,15 +1092,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1227,15 +1110,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1247,8 +1127,6 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
@@ -1267,8 +1145,6 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
@@ -1307,8 +1183,6 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
@@ -1327,15 +1201,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1347,8 +1218,6 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
@@ -1367,8 +1236,6 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
@@ -1433,8 +1300,6 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
@@ -1473,15 +1338,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1495,15 +1357,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1519,15 +1378,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1540,8 +1396,6 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
@@ -1608,15 +1462,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1630,15 +1481,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1652,15 +1500,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1674,15 +1519,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1694,15 +1536,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1716,15 +1555,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1738,15 +1574,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1760,15 +1593,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1786,15 +1616,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1808,15 +1635,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1830,15 +1654,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1854,15 +1675,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1874,15 +1692,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1894,15 +1709,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1918,15 +1730,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1940,15 +1749,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1960,15 +1766,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -1980,15 +1783,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2002,15 +1802,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2032,15 +1829,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2062,15 +1856,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2084,15 +1875,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2108,15 +1896,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2128,15 +1913,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2150,15 +1932,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2172,15 +1951,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2194,15 +1970,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2238,15 +2011,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2260,15 +2030,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2280,15 +2047,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2302,15 +2066,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2324,15 +2085,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2346,15 +2104,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2368,15 +2123,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2390,15 +2142,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2410,15 +2159,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2430,15 +2176,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2450,15 +2193,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2470,15 +2210,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2494,15 +2231,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2516,15 +2250,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2538,15 +2269,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2560,15 +2288,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2584,15 +2309,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2604,15 +2326,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2626,15 +2345,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2648,15 +2364,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2670,15 +2383,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2690,15 +2400,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2712,15 +2419,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2732,15 +2436,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     },
     {
@@ -2756,15 +2457,12 @@
       "impact": "breaking",
       "via": [
         "BackgroundAllele",
-        "BacterialBackgroundAllele",
-        "BacterialStrainBackground",
         "EukaryoticStrainBackground",
         "IntegratedCassette",
         "REFERENCE_STRAIN_ASSEMBLY_SETS",
         "ReferenceStrain",
         "StrainBackground",
-        "StrainReferenceGenome",
-        "_validate_bacterial_locus_tag"
+        "StrainReferenceGenome"
       ]
     }
   ],

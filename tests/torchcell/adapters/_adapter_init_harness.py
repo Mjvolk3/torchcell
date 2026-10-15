@@ -98,7 +98,7 @@ PHENOTYPE_METHOD: dict[type[Any], str] = {
     s.ProteinSynthesisRatePhenotype: "protein synthesis rate phenotype",
     s.PhosphositeIntensityPhenotype: "phosphosite intensity phenotype",
     s.FluxPhenotype: "flux phenotype",
-    s.BacterialMorphologyPhenotype: "bacterial morphology phenotype",
+    s.MorphologyPhenotype: "bacterial morphology phenotype",
     s.MrnaNumberFractionPhenotype: "mrna number fraction phenotype",
     s.FitnessContrastPhenotype: "fitness contrast phenotype",
     s.SingleCellExpressionPhenotype: "single cell expression phenotype",

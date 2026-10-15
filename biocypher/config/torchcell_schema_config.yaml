@@ -116,7 +116,7 @@ perturbation:
 
 # A CALLED sequence variant (issue #731): the three VariantCallPerturbation leaves in
 # schema.py (LocusVariantCallPerturbation, SiteVariantCallPerturbation,
-# SpanDeletionCallPerturbation), each of which composes a BacterialVariantCall. It is a
+# SpanDeletionCallPerturbation), each of which composes a GenomeVariantCall. It is a
 # CHILD of `perturbation` (is_a), not a sibling: it is a perturbation that additionally
 # carries the call, and the columns below (the replicon, the 1-based interval, the
 # variant kind, the call frequency and whether that frequency is a clone's or a
@@ -765,7 +765,7 @@ biosensor fluorescence phenotype:
 # --- end #990 ---
 
 # A bacterial strain's cell-morphology profile from one microscopy assay
-# (BacterialMorphologyPhenotype, issue #774). The dict-valued fields serialize to JSON
+# (MorphologyPhenotype, issue #774). The dict-valued fields serialize to JSON
 # strings, the CalMorph convention; `assay` names the vocabulary the keys belong to, so a
 # query can tell a Campos symbol from a later screen's symbol of the same name. A
 # property is named by its field so the phenotype <-> node class bijection

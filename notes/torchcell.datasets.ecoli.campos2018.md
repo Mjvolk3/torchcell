@@ -642,3 +642,22 @@ build manifest, which stays `no_manifest` until the store is rebuilt with `--ver
 
 The fitness store, rerun the same way, also passes its 14 rules (3,664 records,
 `reference_one` 1.0 on all 3,664) and still reads `fresh`.
+
+## 2026.10.15 - The phenotype class is `MorphologyPhenotype`
+
+The class this store's records carry was renamed `BacterialMorphologyPhenotype` ->
+`MorphologyPhenotype`, and its feature registry
+`torchcell/datamodels/bacterial_morphology_features.py` ->
+`torchcell/datamodels/morphology_features.py`. Read every mention above as the new name;
+no field, validator, assay, key or value changed, and the graph label
+(`morphology phenotype`) was never the class name.
+
+Why: the class takes its vocabulary from the assay a record names, so nothing in it is
+host specific, while `CalMorphPhenotype` hard-codes the 281 base and 220 CV parameters of
+one *S. cerevisiae* program. The host prefix was on the general class of the two, which is
+the one place a reader could not use the names to pick between them. Lane F had already
+dropped the prefix from the experiment pair (`MorphologyExperiment`,
+`MorphologyExperimentReference`). Record:
+`database/schema_changes/2026-10-15-morphology-phenotype-is-the-general-class-calmorph-is-the-specific-one.json`;
+the naming argument, including why `CalMorphPhenotype` keeps its name, in
+[[torchcell.verification.perturbation_families]].

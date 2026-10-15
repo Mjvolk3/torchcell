@@ -760,3 +760,13 @@ Every gene under its released sysName and Table S1 name.
 This store is derived from Price 2018 Fitness Browser compendium (`priceMutantPhenotypesThousands2018`). Data collected from a compendium, a database aggregate or a follow-up study may embed that source's preprocessing (normalization, filtering, re-keying, merged conditions) and may lack ontological representation the primary release carries (per-sample metadata, replicate structure, the released statistic). Its records are a derived copy, and the primary release is still to be collected from source ([[torchcell.knowledge_graphs.dataset-admission-loop]], 2026.10.13).
 
 What it may hide here: 92 of the 162 Keio samples are Wetmore 2015's experiments re-analyzed at statistics version 1.0.3 and kept only when they passed the compendium's quality filter (`fit_logratios_good`); the other 70 are attributed to Price 2018 by inference from Table S20, not by a per-sample statement. Wetmore 2015 is served from its own release (statistics 1.0.0), so those samples exist twice under two processings; the own release is the record of the measurement.
+
+## 2026.10.15 - Where the BW25113 lesion constant lives now
+
+`BW25113_BACKGROUND_LESIONS`, which this loader reads to tie each Table S1 row without a
+BW25113 `locus_tag` to the lesion that accounts for it, moved from
+`torchcell/datamodels/schema.py` to the genomes tier,
+`torchcell/sequence/genome/registry.py`. The loader imports it from there and its value is
+byte-identical, so the inventory, the finding and every stored record are unchanged. Read
+the section above's "`schema.py` already records that ..." as the registry's comment on
+the `ECOLI_K12_BW25113` set. Reasoning: [[torchcell.verification.perturbation_families]].

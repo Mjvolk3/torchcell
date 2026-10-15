@@ -199,7 +199,7 @@ EXAMPLES: dict[str, dict[str, Any]] = {
     },
     # The generic builder fills a str field with "x", which no registered morphology
     # assay is named and no assay symbol is, so the #774 phenotype needs a real one.
-    "torchcell.datamodels.schema.BacterialMorphologyPhenotype": {
+    "torchcell.datamodels.schema.MorphologyPhenotype": {
         "assay": "campos2018",
         "morphology": {"<L>": 2.81, "<W>": 1.08, "%2N": 0.19},
         "morphology_coefficient_of_variation": {"CV_L": 0.24, "CV_W": 0.07},
@@ -427,7 +427,7 @@ EXAMPLES: dict[str, dict[str, Any]] = {
     # The called-variant family (#731): the generic builder cannot invent a call whose
     # site id agrees with its own coordinates, nor a frequency with a stated basis, so
     # each one is committed. Values are rows of the Lim 2025 released matrix.
-    "torchcell.datamodels.schema.BacterialVariantCall": {
+    "torchcell.datamodels.schema.GenomeVariantCall": {
         "variant_type": "snv",
         "type_statement": "SNP",
         "reference_sequence": "AE015451",

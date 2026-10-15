@@ -54,6 +54,9 @@ from torchcell.verification.levels import (
     l2_value_fidelity,
     l3_convention,
 )
+from torchcell.verification.perturbation_families import (
+    pathway_member_perturbation_types,
+)
 from torchcell.verification.report import (
     Level,
     LevelResult,
@@ -229,11 +232,14 @@ def verify_product_titer_dataset(
             ),
         )
     )
+    # which leaves STATE pathway membership is derived from the schema (the leaves that
+    # declare ``pathway_name``), so a second pathway leaf is counted the moment it lands
+    pathway_members = pathway_member_perturbation_types()
     counts = {
         sum(
             1
             for perturbation in record["experiment"]["genotype"]["perturbations"]
-            if perturbation["perturbation_type"] == "heterologous_pathway"
+            if perturbation["perturbation_type"] in pathway_members
         )
         for record in records
     }

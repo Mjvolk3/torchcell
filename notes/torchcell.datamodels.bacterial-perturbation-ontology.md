@@ -1003,3 +1003,23 @@ L3 `fraction_sum_at_most_one`).
 - **The unit.** `ConcentrationUnit.fold_change` is dimensionless: a product released only as a ratio to the source's own reference (Niu 2019: "The ratio of pinene production with CRISPRa and without"), with the reference at 1.0 and no molar conversion.
 - **Rejected.** Loosening the placed leaves' locus-tag field (schema rule 3, and it mixes placed and unplaced records in one class); a `crispr` field on the strain leaf (the technology-per-leaf rule, and it would widen a leaf #1067 served); resolving the symbols through synonyms or positional assignment (the genome gates records again, and a retired gene or a nine-copy symbol has no locus to resolve to).
 - **Impact.** `schema_impact_check --base origin/main`: 6 symbols (2 leaves and 2 helpers added, `ConcentrationUnit` and `GenePerturbationType` widened), 112 datasets in 118 loader groups stale, 0 breaking. Record `database/schema_changes/2026-10-12-bacterial-released-construct-leaves.json`. The adapter serves both leaves as `bacterial perturbation` (no new graph class; browser style unchanged); the environment-response L1 strain key already includes `strain_label` and `crispr.guide_sequence`, so no verifier change.
+
+## 2026.10.15 - The BW25113 background constants live in the genomes tier
+
+`BW25113_BACKGROUND_GENOTYPE` and `BW25113_BACKGROUND_LESIONS` moved out of
+`torchcell/datamodels/schema.py` into `torchcell/sequence/genome/registry.py`, beside the
+`ECOLI_K12_BW25113` set id whose deposited GenBank `/note` they are read from. Everything
+the section above says about their provenance still holds, with two paths updated: the
+constants are `registry.BW25113_BACKGROUND_GENOTYPE` and
+`registry.BW25113_BACKGROUND_LESIONS`, and the data-gated test that re-reads the string
+from the real bytes is now
+`tests/torchcell/sequence/genome/test_registry.py::test_the_bw25113_genotype_is_verbatim_from_the_deposited_genbank_bytes`.
+
+Why: `schema.py` is the fingerprinted class-contract surface, so a module-level binding in
+it is a closure node that stales a loader's build manifest, and a strain's verbatim
+genotype is data about one deposited assembly set rather than a record contract. Keeping
+it there meant every future host could add its own genotype string to the most sensitive
+file in the database. The string and the six designations are byte-identical, so no stored
+record changes. Record:
+`database/schema_changes/2026-10-15-bw25113-background-genotype-leaves-the-schema-surface.json`;
+reasoning and the closure measurement in [[torchcell.verification.perturbation_families]].

@@ -1,0 +1,399 @@
+{
+  "record_version": 1,
+  "slug": "the-called-variant-vocabulary-and-call-object-drop-the-host-prefix",
+  "date": "2026-10-15",
+  "pr": null,
+  "author_kind": "agent",
+  "base_commit": "b5c5549d8f4752fc8ac89b6d1e5cd2c0ec5bf4a9",
+  "python_version": "3.13.0",
+  "symbols": [
+    {
+      "symbol": "BACTERIAL_VARIANT_TYPE_SO",
+      "status": "removed",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": "7e28d4b55393aed1041b36d9cf1a33b14677cd12c590a71fb101a2aa609b42d1",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "module-level binding removed"
+      ]
+    },
+    {
+      "symbol": "BacterialVariantCall",
+      "status": "removed",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": "98cdc730e085eafc9fe74952abec527b56de8a1d28181ff26ea510a928f30b44",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialVariantType",
+      "status": "removed",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": "3c3e1ccb4739310178837d7e17dfb5b0a3b9967efef68fa6cf19c3be8fc7eb51",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "ConstructVariantCall",
+      "status": "modified",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": "4ff4edb940266777683ffc92ddc74105d61600cc8b7742ee826ed4cb3a042ebc",
+      "fingerprint_after": "8b8d7679767334635adc52f7a577dd1396848febbe3edca4d8f4f6f5a16c78b7",
+      "impact": "breaking",
+      "reasons": [
+        "field 'variant_type' type changed: BacterialVariantType -> VariantType",
+        "validator/serializer changed: ['_check_call']"
+      ]
+    },
+    {
+      "symbol": "GenomeVariantCall",
+      "status": "added",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "1baea47d56f834cb46042f535faee188675816f5e29c6d99e183a843cefd3b12",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "SpanDeletionCallPerturbation",
+      "status": "modified",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": "140762b2f614a91697e3294e050a1af8e92b4b538e0cbd873d9ac1e08830d9df",
+      "fingerprint_after": "2d4d3a5b762527f644f0fed913c75031a3877937323a086edfb36d2b9851b83d",
+      "impact": "breaking",
+      "reasons": [
+        "field 'call' type changed: BacterialVariantCall -> GenomeVariantCall",
+        "validator/serializer changed: ['_check_span']"
+      ]
+    },
+    {
+      "symbol": "VARIANT_TYPE_SO",
+      "status": "added",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "05a7b386af70d7e5200646c08b1e6d22f1a557c66f69b14fd547b528c244fec7",
+      "impact": "stale",
+      "reasons": [
+        "new module-level binding"
+      ]
+    },
+    {
+      "symbol": "VariantCallPerturbation",
+      "status": "modified",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": "5e9a6442485cbcd6c6d90696acd939b02ac9731a518ea681251257498590b1cc",
+      "fingerprint_after": "d08d25b1c21399ff5abfaa7eed71bc31032d7fec1d03dc2078c75d90c04ccc76",
+      "impact": "breaking",
+      "reasons": [
+        "field 'call' type changed: BacterialVariantCall -> GenomeVariantCall"
+      ]
+    },
+    {
+      "symbol": "VariantType",
+      "status": "added",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "3c3e1ccb4739310178837d7e17dfb5b0a3b9967efef68fa6cf19c3be8fc7eb51",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    }
+  ],
+  "correctness_argument": "Lane R, added to its scope by the program coordinator after lane M's migration table found the two classes lane D left behind: BacterialVariantType -> VariantType, BACTERIAL_VARIANT_TYPE_SO -> VARIANT_TYPE_SO, BacterialVariantCall -> GenomeVariantCall.\n\nWHY THEY ARE NOT BACTERIA-SPECIFIC, MEASURED RATHER THAN ARGUED. VariantType's four members are snv, insertion, deletion and substitution, and its SO map is the same four terms the yeast leaves already use (SO:0001483, SO:0000667, SO:0000159, SO:1000032). It is composed onto ConstructVariantCall as well as onto the genome call, so it is in 15 loader closures and THREE OF THEM ARE YEAST STORES that call variants on a construct contig: Cachera 2023 (which writes VariantType.substitution directly, cachera2023.py), Ozaydin 2013 and Vaishnav 2022. Two of the three are in the 2026.10.06-4b293d34 served release (BetaxanthinCachera2023Dataset, CarotenoidOzaydin2013Dataset; Vaishnav 2022 is a mapped dev store, not served), and they are two of the three served stores this record's own tool-computed scope names. A vocabulary a served yeast loader already imports by name cannot be bacteria-specific; the prefix named the first release that needed it (#731, the P. putida and E. coli resequencing stores) and nothing else. The call object is the same: a replicon named verbatim, a 1-based end-inclusive interval, the released change and allele cells, an optional amino-acid change and codon, and a frequency with its mode and basis. A yeast isolate resequencing releases exactly that shape, and the class's own fields say nothing about a host; the one thing in it that touches the host is reference_sequence, which is required precisely so a call made against a genome that is NOT the record's host stays visible.\n\nWHY THESE NAMES. VariantType is the sibling of the two vocabularies declared beside it in the same block, VariantCallMode and VariantFrequencyBasis, which were written host-neutral from the start; the bare name is the one the block already uses. GenomeVariantCall names the coordinate SPACE, which is the only thing that distinguishes it from ConstructVariantCall: here the coordinates are on a replicon of a deposited genome, there on a construct contig identified by its sha256. A bare VariantCall would leave that distinction unsaid next to a sibling that states it.\n\nWHY NOW AND NOT AFTER 4.0. The symbols are in served closures (15 loaders, 3 of them served), so the rename moves those closures and the fingerprints of the validators whose text names the types; the tool computes full_kg_rebuild over BetaxanthinCachera2023Dataset, CarotenoidOzaydin2013Dataset and CrispriMormino2022Dataset. Inside this rebuild that costs nothing extra, because every mapped store is being rebuilt anyway; after 4.0 it would cost a second full rebuild for a pure naming fix, which is the one reason the coordinator pulled it into this branch.\n\nWHAT DOES NOT CHANGE. No field, no member, no SO pair, no validator rule and no stored value: the accepted set of records is identical, and a record's model_dump does not carry the class name. ConstructVariantCall, VariantCallPerturbation and SpanDeletionCallPerturbation appear here because their annotations and the text of their validators name the renamed types.",
+  "measurement_type_decision": false,
+  "source_quotes": [],
+  "alternatives_rejected": [
+    {
+      "alternative": "Leave both classes, since a composed call object is not a perturbation leaf and so was outside P1's scope.",
+      "why_rejected": "The scope is why they were missed, not a reason they are right: constitution principle 1 is about what a class NAMES, and a class in three served yeast closures that says 'Bacterial' misstates the material for every one of them. Principle 8 then decides: correctness decides the change and cost never does, and here the cost is zero inside a rebuild that is already happening."
+    },
+    {
+      "alternative": "Rename the call object to VariantCall rather than GenomeVariantCall.",
+      "why_rejected": "ConstructVariantCall exists beside it and states its coordinate space in its name. A bare VariantCall would read as the general case of which the construct one is a special case, which is false: they are siblings keyed on different coordinate spaces, one a deposited replicon and one a contig sha256, and a caller that confuses them writes a position against the wrong sequence."
+    },
+    {
+      "alternative": "Keep BacterialVariantType and add a separate yeast vocabulary when a yeast resequencing store lands.",
+      "why_rejected": "Two enums asserting the same fact is the defect this whole program is removing (constitution principle 5), and the second one would be unreachable anyway: the yeast stores that need it are already importing this one through ConstructVariantCall."
+    }
+  ],
+  "served_release": "2026.10.06-4b293d34",
+  "affected_loaders": [
+    {
+      "loader": "torchcell/datasets/ecoli/brunk2016.py",
+      "dataset_classes": [
+        "_MetaboliteBrunk2016Dataset",
+        "MetabolomeBrunk2016Dataset",
+        "ExometaboliteBrunk2016Dataset",
+        "ProteomeBrunk2016Dataset",
+        "BiofuelTiterBrunk2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BacterialVariantType",
+        "ConstructVariantCall",
+        "VariantType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/foo2014.py",
+      "dataset_classes": [
+        "IsopentenolTiterFoo2014Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BacterialVariantType",
+        "ConstructVariantCall",
+        "VariantType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/guzman2018.py",
+      "dataset_classes": [
+        "RnaseqGuzman2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_VARIANT_TYPE_SO",
+        "BacterialVariantCall",
+        "BacterialVariantType",
+        "GenomeVariantCall",
+        "VARIANT_TYPE_SO",
+        "VariantCallPerturbation",
+        "VariantType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/mohiuddin2022.py",
+      "dataset_classes": [
+        "PromoterReporterMohiuddin2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BacterialVariantType",
+        "ConstructVariantCall",
+        "VariantType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/banerjee2024.py",
+      "dataset_classes": [
+        "IsoprenolTiterBanerjee2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BacterialVariantType",
+        "ConstructVariantCall",
+        "VariantType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/carruthers2025.py",
+      "dataset_classes": [
+        "IsoprenolTiterCarruthers2025Dataset",
+        "ProteomeCarruthers2025Dataset",
+        "CampaignProteomeCarruthers2025Dataset",
+        "ProteomeFoldChangeCarruthers2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BacterialVariantType",
+        "ConstructVariantCall",
+        "VariantType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/desiqueira2025.py",
+      "dataset_classes": [
+        "ProteomeDeSiqueira2025Dataset",
+        "ProteomePercentDeSiqueira2025Dataset",
+        "ProteomeLog10PercentDeSiqueira2025Dataset",
+        "IsoprenolTiterDeSiqueira2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_VARIANT_TYPE_SO",
+        "BacterialVariantCall",
+        "BacterialVariantType",
+        "ConstructVariantCall",
+        "GenomeVariantCall",
+        "VARIANT_TYPE_SO",
+        "VariantCallPerturbation",
+        "VariantType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/kang2026.py",
+      "dataset_classes": [
+        "IsoprenylAcetateTiterKang2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BacterialVariantType",
+        "ConstructVariantCall",
+        "VariantType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/lim2025.py",
+      "dataset_classes": [
+        "IsoprenolToleranceLim2025Dataset",
+        "ProteomeLim2025Dataset",
+        "ProteomeFoldChangeLim2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_VARIANT_TYPE_SO",
+        "BacterialVariantCall",
+        "BacterialVariantType",
+        "GenomeVariantCall",
+        "SpanDeletionCallPerturbation",
+        "VARIANT_TYPE_SO",
+        "VariantCallPerturbation",
+        "VariantType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/menasalvas2025.py",
+      "dataset_classes": [
+        "IsoprenolSelectionMenasalvas2025Dataset",
+        "ProteomeMenasalvas2025Dataset",
+        "_MetabolitePhaseDataset",
+        "MetaboliteGrowthPhaseMenasalvas2025Dataset",
+        "MetaboliteProductionPhaseMenasalvas2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BACTERIAL_VARIANT_TYPE_SO",
+        "BacterialVariantCall",
+        "BacterialVariantType",
+        "ConstructVariantCall",
+        "GenomeVariantCall",
+        "VARIANT_TYPE_SO",
+        "VariantCallPerturbation",
+        "VariantType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/thompson2019_valerolactam.py",
+      "dataset_classes": [
+        "_Thompson2019Dataset",
+        "ValerolactamTiterThompson2019Dataset",
+        "LactamGrowthRateThompson2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BacterialVariantType",
+        "ConstructVariantCall",
+        "VariantType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/cachera2023.py",
+      "dataset_classes": [
+        "BetaxanthinCachera2023Dataset"
+      ],
+      "served_classes": [
+        "BetaxanthinCachera2023Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BacterialVariantType",
+        "ConstructVariantCall",
+        "VariantType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/mormino2022.py",
+      "dataset_classes": [
+        "CrispriMormino2022Dataset"
+      ],
+      "served_classes": [
+        "CrispriMormino2022Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BacterialVariantType",
+        "ConstructVariantCall",
+        "VariantType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ozaydin2013.py",
+      "dataset_classes": [
+        "CarotenoidOzaydin2013Dataset"
+      ],
+      "served_classes": [
+        "CarotenoidOzaydin2013Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BacterialVariantType",
+        "ConstructVariantCall",
+        "VariantType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/vaishnav2022.py",
+      "dataset_classes": [
+        "PooledPromoterExpressionVaishnav2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BacterialVariantType",
+        "ConstructVariantCall",
+        "VariantType"
+      ]
+    }
+  ],
+  "served_datasets": [
+    "BetaxanthinCachera2023Dataset",
+    "CarotenoidOzaydin2013Dataset",
+    "CrispriMormino2022Dataset"
+  ],
+  "rebuild_scope": "full_kg_rebuild",
+  "owner_sign_off": {
+    "signed": true,
+    "quote": "Owner, 2026-10-15, in conversation: 'yes rename, no major bump minor bump. go !'; 'like why a bacterial experiment! it seems this is unnecessary distinction. we can run many same fitness experiments on both yeast and bacteria.'; 'we care most about correctness and are willing right now to do full rebuilds if we identify even small semantically prudent change in onto'. The standing rename decision, applied by the program coordinator to the two host-prefixed call classes lane D left out of P1.",
+    "url": null
+  }
+}

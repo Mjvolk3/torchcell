@@ -44,7 +44,7 @@ and not one record carrying everything:
   the Gompertz maximal growth rate as a parent-relative ratio.
 - :class:`MorphologyCampos2018Dataset` -- one ``MorphologyExperiment`` per
   strain, the 26 morphology symbols of Appendix Table S1 as a
-  ``BacterialMorphologyPhenotype`` against the ``campos2018`` assay vocabulary
+  ``MorphologyPhenotype`` against the ``campos2018`` assay vocabulary
   (issue #774). Measured on the release: 93,570 determined values over 3,664 records.
 
 Both read one release and share ``read_normalized_table`` and ``resolve_rows``, so a
@@ -71,7 +71,7 @@ features have a faithful home; issue #774 added the class that took 25 of them:
 
 1. ``alpha_max`` (max growth rate, min^-1) IS a growth rate, and ``FitnessPhenotype``
    is documented as ``ko_growth_rate/wt_growth_rate``. It is served.
-2. The 26 morphology symbols are served as a ``BacterialMorphologyPhenotype``.
+2. The 26 morphology symbols are served as a ``MorphologyPhenotype``.
    ``CalMorphPhenotype`` had the right SHAPE (a dict of named means plus a dict of named
    CVs, which is exactly Campos's split) and the wrong VOCABULARY: its two
    ``field_validator``s reject any key outside ``CALMORPH_LABELS`` (281 Ohya 2005
@@ -79,14 +79,14 @@ features have a faithful home; issue #774 added the class that took 25 of them:
    and that label set is disjoint from every Campos symbol. CalMorph is a yeast
    image-analysis program; Campos measured with MicrobeTracker and Oufti. So the shape
    was kept and the label set became a property of the ASSAY: ``assay`` names a
-   ``MorphologyAssay`` in ``torchcell.datamodels.bacterial_morphology_features`` and
+   ``MorphologyAssay`` in ``torchcell.datamodels.morphology_features`` and
    that assay's features are the only permitted keys. Each feature declares what
    statistic its number is, which is what splits the two dicts.
 3. ``ODmax`` (saturating optical density) is a carrying capacity, not a rate: it is not a
    ``FitnessPhenotype`` ratio, and ``MeasurementType`` has no member for it
    (``growth_rate`` is "absolute or normalized growth rate / doubling time",
    ``colony_size`` is an absolute colony size). It is a plate-reader population
-   measurement rather than morphology, so it is not a ``BacterialMorphologyPhenotype``
+   measurement rather than morphology, so it is not a ``MorphologyPhenotype``
    feature either. A second ``FitnessPhenotype`` record per strain would also collide on
    the L1 key, since the environment is the same. It is not served, and no
    ``MeasurementType`` member is added.
@@ -269,14 +269,13 @@ from torchcell.data import (
     verify_raw_files,
     write_verified,
 )
-from torchcell.datamodels.bacterial_morphology_features import (
-    CAMPOS2018_MORPHOLOGY_ASSAY as MORPHOLOGY_ASSAY,
-)
-from torchcell.datamodels.bacterial_morphology_features import MorphologyFeature
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import M9
+from torchcell.datamodels.morphology_features import (
+    CAMPOS2018_MORPHOLOGY_ASSAY as MORPHOLOGY_ASSAY,
+)
+from torchcell.datamodels.morphology_features import MorphologyFeature
 from torchcell.datamodels.schema import (
-    BacterialMorphologyPhenotype,
     ComponentDefinition,
     Compound,
     Concentration,
@@ -295,6 +294,7 @@ from torchcell.datamodels.schema import (
     MediaComponentRole,
     MorphologyExperiment,
     MorphologyExperimentReference,
+    MorphologyPhenotype,
     Publication,
     SampleUnit,
     StrainConstruction,
@@ -497,12 +497,12 @@ RELEASED_COLUMNS_OUTSIDE_THE_VOCABULARY: dict[str, str] = {
 RELEASED_CLUSTER_COLUMNS: tuple[str, ...] = ("MorphoIsland", "CellCyleIsland")
 
 #: The one feature of the release with no phenotype class left (issue #774 closed the
-#: other 25 by adding ``BacterialMorphologyPhenotype``).
+#: other 25 by adding ``MorphologyPhenotype``).
 UNSERVED_FEATURES: dict[str, str] = {
     "ODmax": "a saturating optical density is a carrying capacity, not a growth-rate "
     "ratio, so it is not a FitnessPhenotype, and MeasurementType has no member for it; "
     "it is a plate-reader population measurement and not morphology, so it is not a "
-    "BacterialMorphologyPhenotype feature either"
+    "MorphologyPhenotype feature either"
 }
 
 UNITS = (
@@ -1538,14 +1538,14 @@ def reference_phenotype(n_replicates: int = WILD_TYPE_ROWS) -> FitnessPhenotype:
 MORPHOLOGY_ASSAY_NAME = MORPHOLOGY_ASSAY.name
 
 
-def morphology_phenotype(row: MorphologyRow) -> BacterialMorphologyPhenotype:
+def morphology_phenotype(row: MorphologyRow) -> MorphologyPhenotype:
     """One strain's morphology profile over the features the release determined for it.
 
     ``n_samples`` is Dataset EV1's ``nb Cells``, the strain's retained segmented cells,
     and the sample unit is the CELL: each mean and each CV is computed over those cells
     from one well, so ``biological_replicate`` would report 1 for a mean over hundreds.
     """
-    return BacterialMorphologyPhenotype(
+    return MorphologyPhenotype(
         assay=MORPHOLOGY_ASSAY_NAME,
         morphology=dict(row.values),
         morphology_coefficient_of_variation=dict(row.coefficients_of_variation),
@@ -1556,7 +1556,7 @@ def morphology_phenotype(row: MorphologyRow) -> BacterialMorphologyPhenotype:
 
 def morphology_reference_phenotype(
     rows: Sequence[MorphologyRow],
-) -> BacterialMorphologyPhenotype:
+) -> MorphologyPhenotype:
     """The parent in the same medium: the per-feature MEDIAN over its replicate wells.
 
     The reference is a different statistic from a record, and saying so is the point.
@@ -1598,7 +1598,7 @@ def morphology_reference_phenotype(
             coefficients[feature.symbol] = median
         else:
             values[feature.symbol] = median
-    return BacterialMorphologyPhenotype(
+    return MorphologyPhenotype(
         assay=MORPHOLOGY_ASSAY_NAME,
         morphology=values,
         morphology_coefficient_of_variation=coefficients,
@@ -1839,7 +1839,7 @@ class MorphologyCampos2018Dataset(ExperimentDataset):
     The same 3,664 strains, the same medium and the same row rules as
     :class:`GrowthRateCampos2018Dataset` -- deliberately, since both datasets read one
     release and a row either names a writable BW25113 locus or it does not. What differs
-    is the phenotype: a ``BacterialMorphologyPhenotype`` over the 26 morphology symbols
+    is the phenotype: a ``MorphologyPhenotype`` over the 26 morphology symbols
     of Appendix Table S1, against the ``campos2018`` assay vocabulary.
 
     Two sheets are read. Dataset EV2's "Normalized data" gives the corrected per-strain

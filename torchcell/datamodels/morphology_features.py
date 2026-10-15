@@ -1,8 +1,12 @@
-# torchcell/datamodels/bacterial_morphology_features.py
-# [[torchcell.datamodels.bacterial-morphology-features]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodels/bacterial_morphology_features.py
-# Test file: tests/torchcell/datamodels/test_bacterial_morphology_features.py
-"""Feature vocabularies for bacterial cell-morphology assays.
+# torchcell/datamodels/morphology_features.py
+# [[torchcell.datamodels.morphology-features]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodels/morphology_features.py
+# Test file: tests/torchcell/datamodels/test_morphology_features.py
+"""Feature vocabularies for cell-morphology assays, one entry per assay.
+
+The registry ``MorphologyPhenotype.assay`` names. It holds one bacterial assay today
+(Campos 2018) and nothing in it is host specific, which is why neither the module nor
+the class it serves carries a host prefix since the ontology unification of 2026-10-15.
 
 ``CalMorphPhenotype`` carries its vocabulary as two module-level frozensets of the 281
 base and 220 CV parameters a yeast imaging program emits
@@ -14,7 +18,7 @@ nobody made.
 
 This module keeps the shape and moves the vocabulary one level out: the permitted label
 set is a property of the ASSAY, declared here as a typed :class:`MorphologyAssay`, and
-``BacterialMorphologyPhenotype.assay`` names which assay a record was measured by. A
+``MorphologyPhenotype.assay`` names which assay a record was measured by. A
 later bacterial imaging screen adds an assay here; it does not widen anyone else's label
 set, and a record measured by one assay can never be read under another's vocabulary.
 
@@ -153,7 +157,7 @@ class MorphologyFeature(BaseModel):
 class MorphologyAssay(BaseModel):
     """The feature vocabulary of one bacterial cell-morphology assay.
 
-    This is the object ``BacterialMorphologyPhenotype`` validates against: the permitted
+    This is the object ``MorphologyPhenotype`` validates against: the permitted
     label set is a property of the assay, so adding an assay cannot widen another one's
     vocabulary.
     """

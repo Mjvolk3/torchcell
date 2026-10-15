@@ -16,10 +16,6 @@ from typing import Any, Final, Literal, Self, get_args
 from pydantic import BaseModel, Field, field_validator, model_validator
 from sortedcontainers import SortedDict
 
-from torchcell.datamodels.bacterial_morphology_features import (
-    MorphologyAssay,
-    morphology_assay,
-)
 from torchcell.datamodels.calmorph_labels import CALMORPH_LABELS, CALMORPH_STATISTICS
 
 # --- begin ADDITIVE (Puddu 2019 genome architecture): the WGS architecture family ---
@@ -30,6 +26,7 @@ from torchcell.datamodels.genome_architecture_features import (
 )
 
 # --- end ADDITIVE (Puddu 2019 genome architecture) ---
+from torchcell.datamodels.morphology_features import MorphologyAssay, morphology_assay
 from torchcell.datamodels.pydant import ModelStrict
 from torchcell.verification.sourced import ProvenanceGap, SourcedValue
 
@@ -1290,35 +1287,6 @@ class ReferenceGenome(HashableProvenanceGapMixin):
         return self
 
 
-#: BW25113's background genotype, VERBATIM from the ``/note`` qualifier of the ``source``
-#: feature of ``GCA_000750555.1_ASM75055v1_genomic.gbff.gz`` in the
-#: ``ecoli_K12_BW25113_ASM75055v1`` assembly set. The full qualifier reads
-#: "from B. L. Wanner laboratory; genotype: rrnB3 lacZ4787 hsdR514 (araBAD)567
-#: (rhaBAD)568 rph-1"; this constant is the genotype clause of it. The source is a
-#: sha256-pinned artifact in the genomes tier, so the string has provenance without a
-#: paper quote, and ``test_schema.py`` re-reads it from those bytes.
-BW25113_BACKGROUND_GENOTYPE = "rrnB3 lacZ4787 hsdR514 (araBAD)567 (rhaBAD)568 rph-1"
-
-#: The same genotype split into its six lesion designations, each verbatim. Deliberately
-#: NOT expanded into ``BacterialBackgroundAllele`` records here: the ``/note`` gives each
-#: lesion's DESIGNATION and nothing else, while an allele record also asserts an edit
-#: kind, a functional status and a locus. Three of the six name a gene BW25113's own
-#: annotation still carries (measured: lacZ at BW25113_0344, hsdR at BW25113_4350, rph at
-#: BW25113_3643) and the two operon deletions name genes it does NOT annotate at all
-#: (araB, araA, rhaB, rhaA are absent, which is what being deleted looks like), so
-#: mapping those to a locus would mean borrowing MG1655 b-numbers -- the cross-strain
-#: inference this plan refuses. The loader that needs the typed alleles sources the edit
-#: kinds from the BW25113 construction paper and records which lesion it mapped how.
-BW25113_BACKGROUND_LESIONS: tuple[str, ...] = (
-    "rrnB3",
-    "lacZ4787",
-    "hsdR514",
-    "(araBAD)567",
-    "(rhaBAD)568",
-    "rph-1",
-)
-
-
 class BacterialBackgroundAllele(ProvenanceGapMixin):
     """One allele a bacterial strain background carries, as an edit against its assembly.
 
@@ -1405,7 +1373,8 @@ class BacterialStrainBackground(ProvenanceGapMixin):
     both are eukaryote facts, and a haploid single-replicon genome has nothing to state.
 
     The motivating case is BW25113, whose lesions are given by its own deposited GenBank
-    ``source`` feature (``BW25113_BACKGROUND_GENOTYPE``) rather than by a paper, and the
+    ``source`` feature (``registry.BW25113_BACKGROUND_GENOTYPE``, a genomes-tier data
+    constant and not a schema binding) rather than by a paper, and the
     production-chassis rows, which carry stacked deletions plus heterologous cassettes.
     ``construction`` is a one-line method statement; ``provenance`` is set or gapped.
     """
@@ -2302,14 +2271,21 @@ class CrisprDeletionPerturbation(DeletionPerturbation, ModelStrict):
 # [[torchcell.sequence.construct.registry]].
 #
 # The three called-variant vocabularies are defined here rather than beside the
-# bacterial called-variant leaves below, because a designed allele on a construct and a
-# called variant in a clone are the same physical statement and share one vocabulary
+# called-variant leaves below, because a designed allele on a construct and a called
+# variant in a clone are the same physical statement and share one vocabulary
 # (principle 5), and this is the first class in file order that needs them.
 # --------------------------------------------------------------------------- #
 
 
-class BacterialVariantType(StrEnum):
-    """The kind of sequence change a called bacterial variant is.
+class VariantType(StrEnum):
+    """The kind of sequence change a called variant is.
+
+    Host-neutral, and measurably so: this vocabulary is composed onto
+    ``ConstructVariantCall`` as well as onto ``GenomeVariantCall``, so 15 loader closures
+    hold it and 3 of them are yeast stores that call variants on a construct contig
+    (Cachera 2023, Ozaydin 2013, Vaishnav 2022). It carried a ``Bacterial`` prefix until
+    the ontology unification of 2026-10-15 because the first release that needed it was
+    bacterial; an SNV is an SNV in any genome.
 
     The four shapes the two releases carry, read from their own type columns rather
     than chosen: Lim's ``Mutation Type`` is ``SNP`` / ``DEL`` / ``INS`` / ``SUB``
@@ -2333,11 +2309,11 @@ class BacterialVariantType(StrEnum):
     substitution = "substitution"
 
 
-BACTERIAL_VARIANT_TYPE_SO: dict[BacterialVariantType, tuple[str, str]] = {
-    BacterialVariantType.snv: ("SO:0001483", "SNV"),
-    BacterialVariantType.insertion: ("SO:0000667", "insertion"),
-    BacterialVariantType.deletion: ("SO:0000159", "deletion"),
-    BacterialVariantType.substitution: ("SO:1000032", "delins"),
+VARIANT_TYPE_SO: dict[VariantType, tuple[str, str]] = {
+    VariantType.snv: ("SO:0001483", "SNV"),
+    VariantType.insertion: ("SO:0000667", "insertion"),
+    VariantType.deletion: ("SO:0000159", "deletion"),
+    VariantType.substitution: ("SO:1000032", "delins"),
 }
 """Sequence Ontology mechanism of each variant kind.
 
@@ -2472,9 +2448,9 @@ class Localization(StrEnum):
 class ConstructVariantCall(HashableProvenanceGapMixin):
     """One variant on a construct contig, as a coordinate rather than a name.
 
-    The field shape is ``BacterialVariantCall``'s, deliberately: the same physical
+    The field shape is ``GenomeVariantCall``'s, deliberately: the same physical
     statement (this base at this position became that base) gets the same fields and
-    the same closed vocabularies, which is why ``BacterialVariantType``,
+    the same closed vocabularies, which is why ``VariantType``,
     ``VariantCallMode`` and ``VariantFrequencyBasis`` are reused here rather than
     copied. One difference, and it is the point of the class:
     ``reference_contig_sha256`` is a sha256, not a free replicon string, because a
@@ -2488,7 +2464,7 @@ class ConstructVariantCall(HashableProvenanceGapMixin):
     ``position_start - 1``, the zero-length reference interval an insertion sits in.
     """
 
-    variant_type: BacterialVariantType
+    variant_type: VariantType
     variant_statement: str = Field(
         description="the source's own statement of the variant, verbatim (e.g. 'K229L')"
     )
@@ -2543,7 +2519,7 @@ class ConstructVariantCall(HashableProvenanceGapMixin):
             raise ValueError(f"position_start is 1-based, got {self.position_start}")
         floor = (
             self.position_start - 1
-            if self.variant_type is BacterialVariantType.insertion
+            if self.variant_type is VariantType.insertion
             else self.position_start
         )
         if self.position_end < floor:
@@ -3798,7 +3774,7 @@ class HeterologousPathwayPerturbation(GeneAdditionPerturbation, ModelStrict):
 #      and ``PP_RS19075``, and ``resolve_gene_name`` on the pinned GenBank assembly
 #      returns ``retired``, "not found", for both).
 #
-# The call itself is COMPOSED (``BacterialVariantCall``) rather than repeated on each
+# The call itself is COMPOSED (``GenomeVariantCall``) rather than repeated on each
 # leaf, so what a call is is defined once and the three leaves differ only in WHERE
 # the call sits: in a locus, between two loci, or spanning a run of them.
 # --------------------------------------------------------------------------- #
@@ -3824,12 +3800,20 @@ class VariantSiteKind(StrEnum):
     locus_not_in_assembly = "locus_not_in_assembly"
 
 
-class BacterialVariantCall(ProvenanceGapMixin):
-    """One called variant, exactly as a resequencing release states it.
+class GenomeVariantCall(ProvenanceGapMixin):
+    """One called variant on a GENOME replicon, exactly as a resequencing release states it.
 
     Composed onto the three variant leaves below, so the call is defined once. Every
     field is either the released cell verbatim or a typed reading of it; nothing here
     is inferred.
+
+    The name states the coordinate space, which is the only thing that distinguishes this
+    class from ``ConstructVariantCall``: the coordinates here are on a replicon of a
+    deposited genome, named verbatim in ``reference_sequence``, and there they are on a
+    construct contig identified by its sha256. Nothing in either is host specific (a
+    yeast isolate resequencing releases this same shape), so the ``Bacterial`` prefix
+    this class carried until the ontology unification of 2026-10-15 named the first
+    release that needed it rather than the material.
 
     ``reference_sequence`` is the replicon the coordinates are on, verbatim as the
     release writes it (Lim's ``AE015451``, de Siqueira's ``NC_002947 (2)``). It is
@@ -3858,7 +3842,7 @@ class BacterialVariantCall(ProvenanceGapMixin):
     ``systematic_gene_name`` and ``position_start``, not on the node id.
     """
 
-    variant_type: BacterialVariantType
+    variant_type: VariantType
     type_statement: str = Field(
         description="the release's own type cell, verbatim (e.g. 'SNP (transition)', "
         "'DEL'), kept beside the enum so the finer distinction is not lost"
@@ -3928,13 +3912,13 @@ class BacterialVariantCall(ProvenanceGapMixin):
     )
 
     @model_validator(mode="after")
-    def _check_call(self) -> "BacterialVariantCall":
+    def _check_call(self) -> "GenomeVariantCall":
         """Ordered 1-based coordinates, a sourced-or-gapped frequency, a stated basis."""
         if self.position_start < 1:
             raise ValueError(f"position_start is 1-based, got {self.position_start}")
         floor = (
             self.position_start - 1
-            if self.variant_type is BacterialVariantType.insertion
+            if self.variant_type is VariantType.insertion
             else self.position_start
         )
         if self.position_end < floor:
@@ -3943,9 +3927,9 @@ class BacterialVariantCall(ProvenanceGapMixin):
                 f"{self.position_start}..{self.position_end}"
             )
         if not self.reference_sequence.strip():
-            raise ValueError("BacterialVariantCall needs a reference_sequence")
+            raise ValueError("GenomeVariantCall needs a reference_sequence")
         if not self.type_statement.strip():
-            raise ValueError("BacterialVariantCall needs a type_statement")
+            raise ValueError("GenomeVariantCall needs a type_statement")
         if self.sequence_change is not None and not self.sequence_change.strip():
             raise ValueError("sequence_change is the released cell or None, not blank")
         if (
@@ -3985,7 +3969,7 @@ class BacterialVariantCall(ProvenanceGapMixin):
     @property
     def mechanism_so(self) -> tuple[str, str]:
         """(SO id, SO name) of this call's variant kind."""
-        return BACTERIAL_VARIANT_TYPE_SO[self.variant_type]
+        return VARIANT_TYPE_SO[self.variant_type]
 
     @property
     def span_length(self) -> int:
@@ -4033,7 +4017,7 @@ class VariantCallPerturbation(SequencePerturbation, ModelStrict):
     ``Bacterial`` prefix; a caller's released call is host-neutral.
     """
 
-    call: BacterialVariantCall = Field(
+    call: GenomeVariantCall = Field(
         description="the called variant, exactly as the release states it"
     )
     provenance: str = "natural"
@@ -4161,7 +4145,7 @@ class SiteVariantCallPerturbation(
         return self
 
     @classmethod
-    def site_id(cls, call: BacterialVariantCall) -> str:
+    def site_id(cls, call: GenomeVariantCall) -> str:
         """The site id a call determines, so a loader never spells one by hand."""
         return _variant_site_id(call.reference_sequence, call.position_start)
 
@@ -4190,7 +4174,7 @@ class SpanDeletionCallPerturbation(
     )
     perturbation_type: Literal["span_deletion_call"] = "span_deletion_call"  # type: ignore[assignment]
     deletion_type: str = "called_span"
-    call: BacterialVariantCall = Field(
+    call: GenomeVariantCall = Field(
         description="the called deletion, exactly as the release states it"
     )
     provenance: str = "natural"
@@ -4211,7 +4195,7 @@ class SpanDeletionCallPerturbation(
     @model_validator(mode="after")
     def _check_span(self) -> "SpanDeletionCallPerturbation":
         """The event names at least this locus, and the call is a deletion."""
-        if self.call.variant_type is not BacterialVariantType.deletion:
+        if self.call.variant_type is not VariantType.deletion:
             raise ValueError(
                 f"a span deletion's call is a deletion, not "
                 f"{self.call.variant_type.value}"
@@ -4226,7 +4210,7 @@ class SpanDeletionCallPerturbation(
         return self
 
     @classmethod
-    def designation(cls, call: BacterialVariantCall) -> str:
+    def designation(cls, call: GenomeVariantCall) -> str:
         """The event designation a call determines, so a loader never spells one."""
         return f"{call.reference_sequence}:{call.position_start} {call.sequence_change}"
 
@@ -7255,7 +7239,17 @@ class GeneInteractionPhenotype(Phenotype, ModelStrict):
 
 
 class CalMorphPhenotype(Phenotype, ModelStrict):
-    """Phenotype holding CalMorph morphological measurements and CV statistics."""
+    """Phenotype holding CalMorph morphological measurements and CV statistics.
+
+    The host- and program-specific morphology phenotype, and the name says which
+    program: CalMorph is a *S. cerevisiae* image-analysis program whose output is a
+    fixed 501-parameter set (281 base measurements plus 220 coefficients of variation),
+    hard-coded here as ``CALMORPH_LABELS`` and ``CALMORPH_STATISTICS``. A screen that
+    is not CalMorph is stored on ``MorphologyPhenotype``, which reads its keys from the
+    assay it names. The program name is the whole statement of what this class is
+    specific to, so it keeps it; what was renamed in the ontology unification of
+    2026-10-15 is the general class, which carried a ``Bacterial`` prefix.
+    """
 
     graph_level: str = "global"
     label_name: str = "calmorph"
@@ -12001,18 +11995,26 @@ class PhosphositeIntensityExperiment(Experiment, ModelStrict):
 # A multi-feature bacterial cell-morphology profile: the CalMorph shape with the
 # vocabulary lifted out of the yeast imaging program and into the assay.
 # --------------------------------------------------------------------------- #
-class BacterialMorphologyPhenotype(Phenotype, ModelStrict):
-    """A bacterial strain's cell-morphology profile from one microscopy assay.
+class MorphologyPhenotype(Phenotype, ModelStrict):
+    """A strain's cell-morphology profile from one microscopy assay, read through that
+    assay's own feature vocabulary.
+
+    The GENERAL morphology phenotype, named for what it is: nothing in it is host
+    specific, because the vocabulary is a property of the ASSAY and not of the class.
+    It was written for a bacterial screen (#774) and carried a ``Bacterial`` prefix
+    until the ontology unification of 2026-10-15 renamed it; ``CalMorphPhenotype``
+    (whose 281 base and 220 CV parameter names are hard-coded) is the host- and
+    program-specific one, and the prefix was on the wrong class of the two.
 
     ``CalMorphPhenotype`` models exactly this: a dict of named per-strain values plus a
-    dict of named coefficients of variation. Its vocabulary is the wrong one, and not by
-    oversight: ``CALMORPH_LABELS`` and ``CALMORPH_STATISTICS`` are the 281 base and 220
-    CV parameters of CalMorph, a *S. cerevisiae* image-analysis program, and that set was
-    measured to be disjoint from every symbol a bacterial screen releases. Storing
+    dict of named coefficients of variation. Its vocabulary is not transferable, and not
+    by oversight: ``CALMORPH_LABELS`` and ``CALMORPH_STATISTICS`` are the 281 base and
+    220 CV parameters of CalMorph, a *S. cerevisiae* image-analysis program, and that set
+    was measured to be disjoint from every symbol a bacterial screen releases. Storing
     ``<L>`` under a CalMorph key would assert a measurement nobody made.
 
     So the shape is kept and the vocabulary becomes a property of the ASSAY.
-    ``assay`` names a :class:`~torchcell.datamodels.bacterial_morphology_features.MorphologyAssay`
+    ``assay`` names a :class:`~torchcell.datamodels.morphology_features.MorphologyAssay`
     in ``MORPHOLOGY_ASSAYS``, that assay's features are the only permitted keys, and each
     feature declares WHAT STATISTIC its number is. The split between the two dicts is
     that declaration and not a naming convention: a key whose statistic is
@@ -12045,7 +12047,7 @@ class BacterialMorphologyPhenotype(Phenotype, ModelStrict):
     label_statistic_name: str = "morphology_coefficient_of_variation"
     assay: str = Field(
         description="the registered morphology assay whose vocabulary names the keys "
-        "(a key of torchcell.datamodels.bacterial_morphology_features.MORPHOLOGY_ASSAYS)"
+        "(a key of torchcell.datamodels.morphology_features.MORPHOLOGY_ASSAYS)"
     )
     morphology: dict[str, float] = Field(
         description="per-strain feature values keyed by the assay's own symbol, for "
@@ -12070,7 +12072,7 @@ class BacterialMorphologyPhenotype(Phenotype, ModelStrict):
         return morphology_assay(self.assay)
 
     @model_validator(mode="after")
-    def validate_against_the_assay(self) -> "BacterialMorphologyPhenotype":
+    def validate_against_the_assay(self) -> "MorphologyPhenotype":
         """Every key is a feature of the named assay, filed under its own statistic.
 
         The assay lookup raises on an unregistered name, so a record can never be
@@ -12116,11 +12118,11 @@ class BacterialMorphologyPhenotype(Phenotype, ModelStrict):
 
 class MorphologyExperimentReference(ExperimentReference, ModelStrict):
     """Reference context for a cell-morphology experiment read through an assay
-    vocabulary (``BacterialMorphologyPhenotype``; the phenotype's own rename is P5).
+    vocabulary (``MorphologyPhenotype``).
     """
 
     experiment_reference_type: str = "morphology"
-    phenotype_reference: BacterialMorphologyPhenotype
+    phenotype_reference: MorphologyPhenotype
 
 
 class MorphologyExperiment(Experiment, ModelStrict):
@@ -12128,7 +12130,7 @@ class MorphologyExperiment(Experiment, ModelStrict):
 
     experiment_type: str = "morphology"
     genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
-    phenotype: BacterialMorphologyPhenotype
+    phenotype: MorphologyPhenotype
 
 
 # --------------------------------------------------------------------------- #
@@ -12683,7 +12685,7 @@ class GenomeArchitecturePhenotype(Phenotype, ModelStrict):
     carries the realized architecture.
 
     Why its own class rather than a field on an existing one. ``CalMorphPhenotype`` and
-    ``BacterialMorphologyPhenotype`` hold the right SHAPE (named per-sample values plus a
+    ``MorphologyPhenotype`` hold the right SHAPE (named per-sample values plus a
     dispersion map) and the wrong quantities: both are microscopy morphology vocabularies
     and neither can express a copy number per haploid genome. Nothing already in the
     schema carries a per-chromosome copy number at all, which is why the Hoepfner 2014
@@ -12897,7 +12899,7 @@ PhenotypeType = (
     | PromoterActivityPhenotype
     | PooledSortSeqExpressionPhenotype  # Vaishnav 2022 (#991)
     | BiosensorFluorescencePhenotype  # Zhang 2020 (#990)
-    | BacterialMorphologyPhenotype  # issue #774
+    | MorphologyPhenotype  # issue #774
     | MrnaNumberFractionPhenotype  # issue #854
     | FitnessContrastPhenotype  # issue #913
     | SingleCellExpressionPhenotype  # boocock2025

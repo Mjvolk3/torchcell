@@ -47,7 +47,7 @@ PP_5350") (#1045 part 2). ``PP_5350`` is a released locus tag, so the released-s
 refuses it by design (a tag of the pinned assembly belongs on a placed leaf), and the
 placed leaves cannot hold the edit: a whole-gene ``DeletionStrainPerturbation`` would
 misstate a 9 bp in-frame deletion, and ``LocusVariantCallPerturbation`` needs a
-``BacterialVariantCall`` with replicon coordinates the release does not give. The
+``GenomeVariantCall`` with replicon coordinates the release does not give. The
 background states the edit as released and types nothing it does not say.
 
 Every other derivative is stored too (#1045 part 3; 128 samples dropped before), each

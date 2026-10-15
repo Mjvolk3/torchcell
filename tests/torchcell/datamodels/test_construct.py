@@ -23,10 +23,10 @@ from torchcell.datamodels.construct import (
 from torchcell.datamodels.schema import (
     ArtifactRef,
     AssemblySet,
-    BacterialVariantType,
     GenomicSpan,
     VariantCallMode,
     VariantFrequencyBasis,
+    VariantType,
 )
 from torchcell.sequence.construct import ConstructSpan, FeatureKey
 from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
@@ -207,7 +207,7 @@ def test_a_placement_round_trips_through_json() -> None:
         host_placement=_host(),
         variants=[
             ConstructVariantCall(
-                variant_type=BacterialVariantType.snv,
+                variant_type=VariantType.snv,
                 variant_statement="K229L",
                 reference_contig_sha256=CONTIG,
                 position_start=3685,
@@ -232,7 +232,7 @@ def test_a_variant_on_an_added_gene_is_a_coordinate_and_a_quote() -> None:
     claim survives beside the coordinate and a disagreement stays visible.
     """
     call = ConstructVariantCall(
-        variant_type=BacterialVariantType.snv,
+        variant_type=VariantType.snv,
         variant_statement="K229L",
         reference_contig_sha256=CONTIG,
         position_start=3685,
@@ -250,7 +250,7 @@ def test_a_variant_on_an_added_gene_is_a_coordinate_and_a_quote() -> None:
 def test_a_call_against_another_contig_is_refused() -> None:
     """A coordinate against another sequence is not a variant of this construct."""
     stray = ConstructVariantCall(
-        variant_type=BacterialVariantType.snv,
+        variant_type=VariantType.snv,
         variant_statement="Y20F",
         reference_contig_sha256=OTHER,
         position_start=59,
@@ -264,10 +264,10 @@ def test_a_call_against_another_contig_is_refused() -> None:
 
 
 def test_the_contig_reference_is_a_hash_not_a_free_string() -> None:
-    """``BacterialVariantCall`` names a replicon by a released string; a construct has a hash."""
+    """``GenomeVariantCall`` names a replicon by a released string; a construct has a hash."""
     with pytest.raises(ValidationError, match="64 lowercase hex"):
         ConstructVariantCall(
-            variant_type=BacterialVariantType.snv,
+            variant_type=VariantType.snv,
             variant_statement="K229L",
             reference_contig_sha256="pBTX2",
             position_start=1,
@@ -279,7 +279,7 @@ def test_the_contig_reference_is_a_hash_not_a_free_string() -> None:
 def test_an_insertion_may_end_one_before_it_starts() -> None:
     """An insertion sits in a zero-length reference interval, as the releases write it."""
     call = ConstructVariantCall(
-        variant_type=BacterialVariantType.insertion,
+        variant_type=VariantType.insertion,
         variant_statement="a single A inserted at -10",
         reference_contig_sha256=CONTIG,
         position_start=200,
@@ -289,7 +289,7 @@ def test_an_insertion_may_end_one_before_it_starts() -> None:
     assert (call.position_start, call.position_end) == (200, 199)
     with pytest.raises(ValidationError, match="position_start <= position_end"):
         ConstructVariantCall(
-            variant_type=BacterialVariantType.snv,
+            variant_type=VariantType.snv,
             variant_statement="x",
             reference_contig_sha256=CONTIG,
             position_start=200,
@@ -301,7 +301,7 @@ def test_an_insertion_may_end_one_before_it_starts() -> None:
 def test_a_frequency_states_its_scale_and_its_mode() -> None:
     """A fraction is never read as a percent, and a clone fraction is not a population's."""
     called = ConstructVariantCall(
-        variant_type=BacterialVariantType.snv,
+        variant_type=VariantType.snv,
         variant_statement="G->A at 0.9",
         reference_contig_sha256=CONTIG,
         position_start=10,
@@ -324,7 +324,7 @@ def test_a_basis_without_a_frequency_is_refused() -> None:
     """A range or an absent cell has no scale to state."""
     with pytest.raises(ValidationError, match="frequency is None"):
         ConstructVariantCall(
-            variant_type=BacterialVariantType.snv,
+            variant_type=VariantType.snv,
             variant_statement="x",
             reference_contig_sha256=CONTIG,
             position_start=1,

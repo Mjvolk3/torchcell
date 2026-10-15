@@ -100,6 +100,11 @@ from torchcell.verification.morphology import (
 from torchcell.verification.natural_isolate_response import (
     verify_natural_isolate_response_streaming,
 )
+from torchcell.verification.perturbation_families import (
+    full_deletion_perturbation_types,
+    heterologous_identifier,
+    site_keyed_perturbation_types,
+)
 from torchcell.verification.protein import protein_gene_set, verify_protein_dataset
 from torchcell.verification.pseudobulk_umi_count import (
     verify_pseudobulk_umi_count_streaming,
@@ -3953,12 +3958,20 @@ GENE_ESSENTIALITY_DATASETS: dict[str, dict[str, Any]] = {
     }
 }
 
-#: The perturbation types of a FULL gene deletion in an SGA strain collection.
-_FULL_DELETION_TYPES = frozenset({"sga_kanmx_deletion", "sga_natmx_deletion"})
-
 
 def viable_deletion_genes(abs_root: str) -> dict[str, str]:
-    """``gene -> strain id`` of every full-deletion single mutant a fitness store grew."""
+    """``gene -> strain id`` of every full-deletion single mutant a fitness store grew.
+
+    What counts as a full deletion is DERIVED from the schema
+    (:func:`~torchcell.verification.perturbation_families.full_deletion_perturbation_types`,
+    the subclasses of ``DeletionPerturbation``) rather than listed here. The list this
+    replaced held the two SGA leaves alone, so a Keio-based cross-check could not reuse
+    the rule although ``DeletionStrainPerturbation`` asserts the same absence, and a new
+    deletion leaf would have been dropped silently. On the one store the rule reads today
+    (``smf_costanzo2016``, whose only deletion leaf is ``sga_kanmx_deletion``) the derived
+    set answers exactly as the list did.
+    """
+    full_deletions = full_deletion_perturbation_types()
     viable: dict[str, str] = {}
     for record in stream_records(abs_root):
         perturbations = record["experiment"]["genotype"]["perturbations"]
@@ -3966,7 +3979,7 @@ def viable_deletion_genes(abs_root: str) -> dict[str, str]:
         if len(perturbations) != 1 or fitness is None or not fitness > 0:
             continue
         perturbation = perturbations[0]
-        if perturbation["perturbation_type"] in _FULL_DELETION_TYPES:
+        if perturbation["perturbation_type"] in full_deletions:
             viable.setdefault(
                 str(perturbation["systematic_gene_name"]),
                 str(perturbation.get("strain_id")),
@@ -4724,19 +4737,25 @@ def host_perturbed_gene_set(records: Sequence[Mapping[str, Any]]) -> set[str]:
     because the call sits in no locus at all, so it is not a claim about a gene of the
     assembly and cannot be checked as one. Its flanking loci ARE such claims and are
     checked, which is what keeps the exclusion from hiding a bad identifier.
+
+    Both tests are derived rather than named: the site-keyed leaves are the ones that
+    declare ``flanking_systematic_gene_names`` and the heterologous test is the shared
+    :func:`~torchcell.verification.perturbation_families.heterologous_identifier`, which
+    the yeast families now use for the same question.
     """
+    site_keyed = site_keyed_perturbation_types()
     genes: set[str] = set()
     for record in records:
         species = record["reference"]["genome_reference"]["species"]
         for perturbation in record["experiment"]["genotype"]["perturbations"]:
-            if perturbation.get("perturbation_type") == "site_variant_call":
+            if perturbation.get("perturbation_type") in site_keyed:
                 genes |= {
                     str(tag)
                     for tag in perturbation.get("flanking_systematic_gene_names", ())
                 }
                 continue
             name = perturbation.get("systematic_gene_name")
-            if name is None or perturbation.get("source_organism", species) != species:
+            if name is None or heterologous_identifier(perturbation, species):
                 continue
             genes.add(str(name))
     return genes

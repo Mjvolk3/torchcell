@@ -143,9 +143,9 @@ def _placement_gap() -> ProvenanceGap:
 KT2440: s.BacterialGeneNamespace = "pputida_kt2440_locus_tag"
 
 
-def _call(**kw: Any) -> s.BacterialVariantCall:
+def _call(**kw: Any) -> s.GenomeVariantCall:
     fields: dict[str, Any] = dict(
-        variant_type=s.BacterialVariantType.snv,
+        variant_type=s.VariantType.snv,
         type_statement="SNP",
         reference_sequence="AE015451",
         position_start=3866001,
@@ -159,13 +159,13 @@ def _call(**kw: Any) -> s.BacterialVariantCall:
         caller="breseq 0.33.1",
     )
     fields.update(kw)
-    return s.BacterialVariantCall(**fields)
+    return s.GenomeVariantCall(**fields)
 
 
 def _variant_leaves() -> list[Any]:
     """One perturbation of each called-variant leaf class, all against KT2440 tags."""
     intergenic = _call(
-        variant_type=s.BacterialVariantType.insertion,
+        variant_type=s.VariantType.insertion,
         type_statement="INS",
         position_start=4586057,
         position_end=4586057,
@@ -173,7 +173,7 @@ def _variant_leaves() -> list[Any]:
         annotation="intergenic (+140/+75)",
     )
     span = _call(
-        variant_type=s.BacterialVariantType.deletion,
+        variant_type=s.VariantType.deletion,
         type_statement="DEL",
         position_start=4588139,
         position_end=4588139,
@@ -614,7 +614,7 @@ def test_the_union_to_label_map_is_a_bijection_over_every_leaf() -> None:
     """Every member of ``GenePerturbationType`` is served under exactly one label.
 
     The one ``_perturbation_node`` partitions the union by leaf: a leaf that composes a
-    ``BacterialVariantCall`` (``VARIANT_CALL_LEAVES``) is a ``sequence variant
+    ``GenomeVariantCall`` (``VARIANT_CALL_LEAVES``) is a ``sequence variant
     perturbation`` and every other leaf a ``perturbation``. The rule is a pure function
     of the class, pinned here over the whole union (audit C 3.3), so no conf and no
     class tuple can leave a leaf out: the former class-keyed lanes excluded
@@ -638,7 +638,7 @@ def test_the_union_to_label_map_is_a_bijection_over_every_leaf() -> None:
         cls
         for cls in leaves
         if cls.model_fields.get("call") is not None
-        and cls.model_fields["call"].annotation is s.BacterialVariantCall
+        and cls.model_fields["call"].annotation is s.GenomeVariantCall
     }
     assert {cls for cls, label in label_of.items() if label.startswith("sequence")} == (
         composes_a_call
@@ -1340,7 +1340,7 @@ def test_microarray_expression_ratio_projects_sourced_counts_as_json() -> None:
     assert props["n_replicates"] == '{"YAL001C": 1, "YBR001C": 2}'
 
 
-def _morphology_record(phenotype: s.BacterialMorphologyPhenotype) -> dict[str, Any]:
+def _morphology_record(phenotype: s.MorphologyPhenotype) -> dict[str, Any]:
     return {
         "experiment": s.MorphologyExperiment(
             dataset_name="BacterialToy",
@@ -1351,7 +1351,7 @@ def _morphology_record(phenotype: s.BacterialMorphologyPhenotype) -> dict[str, A
     }
 
 
-def _morphology(**kw: Any) -> s.BacterialMorphologyPhenotype:
+def _morphology(**kw: Any) -> s.MorphologyPhenotype:
     fields: dict[str, Any] = dict(
         assay="campos2018",
         morphology={"<L>": 2.81, "%2N": 0.19},
@@ -1360,7 +1360,7 @@ def _morphology(**kw: Any) -> s.BacterialMorphologyPhenotype:
         sample_unit=s.SampleUnit.cell,
     )
     fields.update(kw)
-    return s.BacterialMorphologyPhenotype(**fields)
+    return s.MorphologyPhenotype(**fields)
 
 
 def test_bacterial_morphology_phenotype_node_projects_both_dicts_as_json() -> None:
@@ -1523,7 +1523,7 @@ NEW_CLASSES: dict[str, tuple[str, type[Any] | None]] = {
     ),
     "bacterial morphology phenotype": (
         "bacterial morphology phenotype (chunked)",
-        s.BacterialMorphologyPhenotype,
+        s.MorphologyPhenotype,
     ),
     "mrna number fraction phenotype": (
         "mrna number fraction phenotype (chunked)",

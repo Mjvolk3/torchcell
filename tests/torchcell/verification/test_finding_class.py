@@ -44,10 +44,16 @@ def _report(*results: LevelResult) -> VerificationReport:
 
 
 def test_the_registry_is_exactly_the_reclassified_rules() -> None:
-    """The names and prefixes reclassified on 2026-10-12, pinned so a change is deliberate."""
+    """The names and prefixes reclassified on 2026-10-12, pinned so a change is deliberate.
+
+    ``construct_placement_states`` joined on 2026-10-15 with the construct store: it
+    counts how many of a store's gene additions point at deposited construct sequence,
+    which is the record against our sequence references rather than against its release.
+    """
     assert sorted(GENOME_REFERENCE_RULES) == [
         "canonical_gene_names",
         "cis_concordance",
+        "construct_placement_states",
         "current_genome_genes",
         "deleted_gene_containment_sgd",
         "deleted_symbols_are_one_contiguous_run_of_the_pinned_assembly",

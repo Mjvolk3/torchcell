@@ -132,15 +132,26 @@ class ProvenanceGapReason(StrEnum):
     """WHERE in the provenance chain a value died -- an honest, typed absence.
 
     Ordered by how actionable the gap is. Only ``deferred_pending_source_review``
-    is recoverable work (comb the primary paper's SI); the other two are terminal
-    (there is nothing to fetch). This split is what turns the gap-set into a
-    worklist rather than a pile of nulls.
+    is recoverable work (comb the primary paper's SI); the other three are terminal
+    for us (there is nothing of ours left to read). This split is what turns the
+    gap-set into a worklist rather than a pile of nulls.
+
+    ``not_released_by_primary`` is the construct-store case: the primary MEASURED and
+    reports the value, and does not release the artifact it lives in. Kang 2026 states
+    the construct sequences are supplied by the JBEI registry "upon request" and
+    Carruthers 2025 states "Plasmid sequences were verified by whole plasmid
+    sequencing" without depositing them, so neither is
+    ``not_reported_by_primary`` (the primary did report it) nor
+    ``deferred_pending_source_review`` (no SI of ours holds it): the artifact was
+    withheld, and closing the gap takes a request to the authors or the registry, not
+    another pass over the mirror.
     """
 
     not_reported_by_primary = (
         "not_reported_by_primary"  # original screen never measured/reported it
     )
     not_carried_by_curation = "not_carried_by_curation"  # primary had it; the secondary DB (YeastPhenome/SPELL) dropped it in aggregation
+    not_released_by_primary = "not_released_by_primary"  # primary reported the value but released no artifact carrying it (sequence "upon request", "verified" but not deposited)
     deferred_pending_source_review = "deferred_pending_source_review"  # recoverable -- the per-paper SI comb just isn't done yet
 
 

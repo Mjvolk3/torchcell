@@ -7,10 +7,13 @@ import hashlib
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
+from torchcell.datamodels.schema import SOTerm
 from torchcell.sequence.plasmid import (
     Component,
     Feature,
+    GenBankLocationError,
     Location,
     SequenceProvenance,
     SORole,
@@ -138,21 +141,36 @@ ORIGIN
 """
 
 
+# The same map WITHOUT the origin-spanning feature. Since 2026-10-15 the parser refuses
+# a wrapping or compound location instead of flattening it, so the happy path needs a
+# map whose every feature is one range; the wrap stays in ``_GENBANK`` because it is
+# what the refusal tests are about.
+_GENBANK_SINGLE_RANGE = _GENBANK.replace(
+    '     gene            join(18..20,1..2)\n                     /label="wrap"\n', ""
+)
+
+
 def _gb(tmp_path: Path) -> Path:
     path = tmp_path / "pTEST.gb"
     path.write_text(_GENBANK)
     return path
 
 
+def _gb_single_range(tmp_path: Path) -> Path:
+    path = tmp_path / "pSINGLE.gb"
+    path.write_text(_GENBANK_SINGLE_RANGE)
+    return path
+
+
 def test_parse_genbank_component_features_roles_and_provenance(tmp_path: Path) -> None:
-    path = _gb(tmp_path)
+    path = _gb_single_range(tmp_path)
     comp = parse_genbank_component(str(path), "testKey2026")
     assert (comp.identity, comp.topology, comp.length) == ("pTEST", "circular", 20)
     assert comp.sequence == "ATGCGTACGTACGTACGTAC"
     assert comp.roles == [SORole(so_id="SO:0000155", name="plasmid_vector")]
     assert comp.provenance == SequenceProvenance(
-        source_file="pTEST.gb",
-        sha256=hashlib.sha256(_GENBANK.encode()).hexdigest(),
+        source_file="pSINGLE.gb",
+        sha256=hashlib.sha256(_GENBANK_SINGLE_RANGE.encode()).hexdigest(),
         citation_key="testKey2026",
     )
     got = [
@@ -175,20 +193,63 @@ def test_parse_genbank_component_features_roles_and_provenance(tmp_path: Path) -
     assert comp.feature_sequence("KanR") == "ACGTAC"
 
 
-def test_parse_genbank_component_flattens_an_origin_spanning_feature(
+def test_parse_genbank_component_refuses_an_origin_spanning_compound_location(
     tmp_path: Path,
 ) -> None:
-    """Finding: a compound location is reduced to ``[min start, max end)``, so the
-    origin-spanning ``join(18..20,1..2)`` (5 bp: ``TAC`` + ``AT``) is stored as
-    ``[0, 20)``, the WHOLE plasmid, and its extracted sequence is all 20 bp. Plasmid
-    maps routinely carry features across the origin. Pinned until compound/wrapping
-    locations are kept (plasmid.py:200-208). Reach: nothing calls
-    ``parse_genbank_component`` yet, so latent.
+    """The origin-spanning ``join(18..20,1..2)`` is REFUSED, not flattened (2026-10-15).
+
+    Until 2026-10-15 a compound location was reduced to ``[min start, max end)``, so
+    this 5 bp feature (``TAC`` + ``AT``) was stored as ``[0, 20)`` -- the WHOLE plasmid
+    -- and ``feature_sequence("wrap")`` returned all 20 bp. That was a warn-and-fix
+    fallback on a case plasmid maps carry routinely. The refusal names the file and the
+    feature, which is how a map carrying one is reported by name instead of being
+    indexed with a false coordinate. Biopython accepts an EXPLICIT join across the
+    origin without complaint, so this case is caught by the parts check, not by the
+    warning check the next test covers.
     """
-    comp = parse_genbank_component(str(_gb(tmp_path)), "k")
-    wrap = comp.get_feature("wrap")
-    assert (wrap.location.start, wrap.location.end) == (0, 20)
-    assert comp.feature_sequence("wrap") == "ATGCGTACGTACGTACGTAC"
+    with pytest.raises(GenBankLocationError) as refusal:
+        parse_genbank_component(str(_gb(tmp_path)), "k")
+    message = str(refusal.value)
+    assert "pTEST.gb" in message
+    assert "'wrap'" in message
+    assert "compound location" in message
+
+
+def test_parse_genbank_component_refuses_a_location_biopython_rewrites(
+    tmp_path: Path,
+) -> None:
+    """A single-range wrapping location Biopython "fixes" is refused, not accepted.
+
+    ``18..2`` on a 20 bp circular replicon is the form the mirrored maps carry (11 of
+    17 Cachera maps have one, e.g. ``4892..858``): Biopython warns ``Attempting to fix
+    invalid location ... incorrect origin wrapping`` and hands back a two-part location
+    whose envelope is the whole plasmid. Taking that silently is the fallback this
+    refusal exists to prevent, so the parse runs under ``catch_warnings`` and raises
+    with the offending location in the message.
+    """
+    text = _GENBANK.replace(
+        "     gene            join(18..20,1..2)\n", "     gene            18..2\n"
+    )
+    path = tmp_path / "pWRAP.gb"
+    path.write_text(text)
+    with pytest.raises(GenBankLocationError) as refusal:
+        parse_genbank_component(str(path), "k")
+    message = str(refusal.value)
+    assert "pWRAP.gb" in message
+    assert "18..2" in message
+    assert "origin-wrapping" in message
+
+
+def test_so_role_is_the_one_so_term_class() -> None:
+    """``plasmid.SORole`` IS ``schema.SOTerm``: one Sequence Ontology map for the repo.
+
+    The module used to define a second class with the same two fields, which is two
+    classes asserting one fact. The alias also means a malformed id now raises, which
+    the local duplicate never checked.
+    """
+    assert SORole is SOTerm
+    with pytest.raises(ValidationError):
+        SORole(so_id="SO:704", name="gene")
 
 
 def test_sha256_streams_more_than_one_block(tmp_path: Path) -> None:

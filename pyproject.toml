@@ -250,6 +250,7 @@ paths = [
 "torchcell/datasets/nucleotide_transformer.py" = "tests/torchcell/datasets/test_datasets_nucleotide_transformer.py"
 "torchcell/datasets/fungal_up_down_transformer.py" = "tests/torchcell/datasets/test_datasets_fungal_up_down_transformer.py"
 "torchcell/knowledge_graphs/supported_queries/registry.py" = "tests/torchcell/knowledge_graphs/supported_queries/test_supported_queries_registry.py"
+"torchcell/sequence/construct/registry.py" = "tests/torchcell/sequence/construct/test_construct_registry.py"
 "torchcell/models/esm2.py" = "tests/torchcell/models/test_models_esm2.py"
 "torchcell/models/genslm.py" = "tests/torchcell/models/test_models_genslm.py"
 "torchcell/models/protT5.py" = "tests/torchcell/models/test_models_protT5.py"

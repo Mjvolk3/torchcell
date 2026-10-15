@@ -122,6 +122,32 @@ _ESSENTIALITY_QUOTE: dict[str, Any] = {
     },
 }
 
+# Cachera 2023's Btx cassette at the XII-5 landing pad, shared by the three
+# construct-placement examples so the contig the call names is the contig the placement
+# pins. ``pBTX002.gb``'s real sha256, so the example reads as the record it models.
+_CONSTRUCT_CONTIG_SHA256 = (
+    "63f89c1eaa13f888610ed781c4de12c8ac34f4e20512b4eb2c4f32d31af096da"
+)
+_HOST_PLACEMENT_EXAMPLE: dict[str, Any] = {
+    "assembly_set": "sgd_S288C_R64-4-1_20230830",
+    "site_label": "XII-5",
+    "span": None,
+    "insert_span": {"start": 2003, "end": 10105, "orientation": "inline"},
+    "provenance_gaps": [{"field": "span", "reason": "not_reported_by_primary"}],
+}
+_CONSTRUCT_CALL_EXAMPLE: dict[str, Any] = {
+    "variant_type": "snv",
+    "variant_statement": "K229L",
+    "reference_contig_sha256": _CONSTRUCT_CONTIG_SHA256,
+    "position_start": 3685,
+    "position_end": 3685,
+    "reference_allele": "A",
+    "alternate_allele": "T",
+    "amino_acid_change": "K -> L",
+    "codon_number": 229,
+}
+
+
 EXAMPLES: dict[str, dict[str, Any]] = {
     # #924: a SourcedValue's value is Any, which the generic builder cannot fill, and
     # the evidence needs exactly one scoring rule and one call definition.
@@ -533,6 +559,31 @@ EXAMPLES: dict[str, dict[str, Any]] = {
         "provenance_gaps": [
             {"field": "cell_cycle_stage_counts", "reason": "not_reported_by_primary"}
         ],
+    },
+    # The construct store's placement models (2026-10-15). The generic builder cannot
+    # satisfy their cross-field invariants: a placement's two contig fields must pin ONE
+    # sha256, a variant call must name the placement's own contig, and a host placement's
+    # two gap-able spans are set or carry a ProvenanceGap, never a silent None. The
+    # example is Cachera's Btx cassette at XII-5: a named landing pad with no published
+    # coordinate, which is the common case and the reason the gap exists.
+    "torchcell.datamodels.construct.HostPlacement": _HOST_PLACEMENT_EXAMPLE,
+    "torchcell.datamodels.construct.ConstructVariantCall": _CONSTRUCT_CALL_EXAMPLE,
+    "torchcell.datamodels.construct.ConstructPlacement": {
+        "contig_sha256": _CONSTRUCT_CONTIG_SHA256,
+        "contig_ref": {
+            "tier": "library",
+            "key": "cacheraCRISPAHighthroughputMethod2023",
+            "path": "si/plasmids/pBTX002.gb",
+            "sha256": _CONSTRUCT_CONTIG_SHA256,
+            "bytes": 21901,
+        },
+        "feature_key": {
+            "label": "ARO4-K229L",
+            "so_id": "SO:0000316",
+            "span": {"start": 3001, "end": 4113, "orientation": "inline"},
+        },
+        "host_placement": _HOST_PLACEMENT_EXAMPLE,
+        "variants": [_CONSTRUCT_CALL_EXAMPLE],
     },
 }
 

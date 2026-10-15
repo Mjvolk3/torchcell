@@ -39,3 +39,31 @@ Kang 2026's sequences are supplied "upon request" and Carruthers 2025's are "ver
 whole plasmid sequencing" and not deposited, so neither is `not_reported_by_primary`
 (the primary did report it) nor `deferred_pending_source_review` (no artifact of ours
 holds it).
+
+## 2026.10.15 - The addition family is derived, because the hand-written one was wrong
+
+Lane R measured it and left the fix to lane T. `ADDITION_PERTURBATION_TYPES` held
+`{"gene_addition", "heterologous_pathway"}` while the union has **four** subclasses of
+`GeneAdditionPerturbation`, so this row was silent on every
+`promoter_driven_gene_integration` and every `variable_promoter_reporter` record. On the
+one built store that holds them it reported **"no gene additions in this store" for
+71,158 addition records**
+([[experiments.036-dataset-fixes-before-kg-build.scripts.addition_family_census_correction]]).
+
+The constant is now the cached function `addition_perturbation_types()`, which derives
+the family from `GenePerturbationType` by subclass. The schema import is INSIDE the
+function because `schema.py` imports `verification.sourced`, so a module-level import
+would close an import cycle, which is the same reason `verification.common` resolves
+everything schema-derived lazily. `common.py`'s one call site moved with it.
+
+Two independent properties of the class give the same four leaves, and a test asserts
+they agree: subclassing `GeneAdditionPerturbation` ("this adds DNA") and declaring
+`placement` ("this can point at the sequence added"). A future leaf that has one without
+the other is a design question, and the test is where it surfaces rather than a silently
+changed count.
+
+Lane R's `torchcell.verification.perturbation_families` is the intended home for this
+derivation and for the two other families with the same defect shape. It is not on this
+branch's base, so the derivation is written here, in the module that owns the row; at
+integration the two collapse into one call to
+`perturbation_families.addition_perturbation_types()`.

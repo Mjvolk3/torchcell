@@ -316,10 +316,21 @@ statuses = mapped_store_status(sys.argv[1], include_private=sys.argv[2] == "1", 
 bad = [s.describe() for s in statuses if s.needs_rebuild]
 if bad:
     print("\n".join(bad), file=sys.stderr); sys.exit(1)
+# The lane check (ontology unification guards, 2026-10-15): every fresh manifest carries
+# perturbation_leaves, the leaf classes measured over every record at build time, and
+# each leaf must be emitted by a node lane the dataset's adapter conf enables wherever
+# the conf enables the edge that walks it. A leaf under no lane (Carruthers
+# GeneAdditionPerturbation under a bacterial-only conf) would be a dangling
+# `perturbation member of` row the import silently drops; refusing here costs seconds.
+from torchcell.database.build_dataset_lmdb import mapped_store_lanes
+lanes = mapped_store_lanes(sys.argv[1], include_private=sys.argv[2] == "1", organisms=parse_organisms(sys.argv[3]))
+unserved = [s.describe() for s in lanes if s.blocks]
+if unserved:
+    print("\n".join(unserved), file=sys.stderr); sys.exit(1)
 print(len(statuses))
 EOF
 )
-echo "$N_DATASETS mapped datasets ($KG_ORGANISMS), every dev store fresh"
+echo "$N_DATASETS mapped datasets ($KG_ORGANISMS), every dev store fresh and every perturbation leaf served by its conf's lanes"
 # The freshness check above is point-in-time, and generation then reads the dev tree for
 # hours. Nothing stops a HOST process from rebuilding a store underneath it: the
 # container's mounts are read-only, but `build_dataset_lmdb --retire-existing` renames
@@ -428,6 +439,22 @@ echo "CSVs: $OUT_HOST ($CALL_REL)"
 df -h /db
 
 if [ "$IMPORT" = 1 ]; then
+# The CSV endpoint gate, a hard stop before the import (ontology unification guards,
+# 2026-10-15). Every edge row's :START_ID and :END_ID must be the :ID of a node row;
+# neo4j-admin import runs with skip_bad_relationships: true (biocypher/config/*.yaml)
+# and DROPS such a row, reporting it only in an import.report the validate stage below
+# prints twenty lines of. Flipping that flag alone would move the failure into the
+# import after the whole generation (review 3 finding 8), so the flag stays as it is
+# and this check is the gate: minutes over the CSVs, and it names the edge label, the
+# side and the dataset of every dangling row. The expected-counts block after the
+# import (per-dataset ExperimentMemberOf counts) is the live-store counterpart.
+ENDPOINT_REPORT="$OUTDIR/${JOB}_csv_endpoint_gate.json"
+if python -m torchcell.knowledge_graphs.csv_endpoint_gate "$OUT_HOST" --report "$ENDPOINT_REPORT" 2>&1 | tee "$OUTDIR/${JOB}_csv_endpoint_gate.txt"; then
+    echo "CSV endpoint gate passed: every edge endpoint is a node ($ENDPOINT_REPORT)"
+else
+    echo "CSV endpoint gate FAILED: an edge endpoint names no node (see $ENDPOINT_REPORT); the fix is in the data, regenerate after it"
+    exit 1
+fi
 echo "---------------- 2 IMPORT into $NEXT_ROOT ($BUILD_CONTAINER, no host ports) $(date)"
 IMPORT_T0=$(date +%s)
 docker run \

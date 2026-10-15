@@ -25,6 +25,17 @@ with a bounded read of the store's FIRST record (:func:`read_first_record`) and 
 ``unreadable`` with the exception when it fails. It is the ONE freshness function: the
 ``build_manifest`` CLI (:func:`check_all`), ``build_dataset_lmdb --list-stale`` and the
 live rebuild's preflight all call it, so the three cannot drift apart.
+
+Since manifest schema version 2 (the ontology unification guards, 2026-10-15) a manifest
+also records ``perturbation_leaves``: the sorted leaf class names of every genotype and
+environment perturbation the store holds, measured by :func:`walk_perturbation_leaves`
+over EVERY record at build time. The rebuild preflight checks those names against the
+lanes the dataset's adapter conf enables (``torchcell.knowledge_graphs.perturbation_lanes``)
+without opening the store, so a leaf no enabled lane emits (the Carruthers
+``GeneAdditionPerturbation`` under a bacterial-only conf) is refused before generation
+instead of becoming a dangling ``perturbation member of`` row the import drops. A
+manifest without the field is from before the walk existed and reads ``stale``: the
+sweep that follows this change rewrites every manifest with the field.
 """
 
 from __future__ import annotations
@@ -50,12 +61,15 @@ from torchcell.provenance.schema_deps import (
 
 __all__ = [
     "BuildManifest",
+    "PerturbationLeaves",
     "SymbolDrift",
     "StaleResult",
     "DatasetCheck",
     "StoreFreshness",
     "StoreState",
     "compute_manifest",
+    "walk_perturbation_leaves",
+    "leaf_class_by_perturbation_type",
     "write_build_manifest",
     "check_manifest",
     "check_store",
@@ -65,10 +79,28 @@ __all__ = [
 ]
 
 MANIFEST_FILENAME = "build_manifest.json"
-MANIFEST_SCHEMA_VERSION = 1
+MANIFEST_SCHEMA_VERSION = 2
+"""Version 2 added ``perturbation_leaves`` (2026-10-15); a version 1 manifest reads stale."""
+PERTURBATION_LEAVES_FIELD = "perturbation_leaves"
 
 StoreState = Literal["fresh", "stale", "no_lmdb", "no_manifest", "unreadable"]
 """What one built store is, against the local schema. Only ``fresh`` needs no rebuild."""
+
+
+class PerturbationLeaves(BaseModel):
+    """The perturbation leaf classes a built store holds, by the list they sit in.
+
+    Sorted class names (``GeneAdditionPerturbation``, ``PhagePerturbation``), one entry
+    per leaf present in at least one record, measured over every record of the store by
+    :func:`walk_perturbation_leaves`. ``genotype`` is drawn from ``genotype.perturbations``
+    (absent on a ``SegregantGenotype``, which carries no perturbation list) and
+    ``environment`` from ``environment.perturbations``.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    genotype: list[str] = Field(default_factory=list)
+    environment: list[str] = Field(default_factory=list)
 
 
 class BuildManifest(BaseModel):
@@ -88,6 +120,9 @@ class BuildManifest(BaseModel):
     hostname: str
     torchcell_commit: str | None = None  # provenance only; NOT used for staleness
     torchcell_dirty: bool | None = None
+    # The leaves the store holds (schema version 2). ``None`` only on a manifest written
+    # before the field existed, which :func:`check_manifest` reports as stale.
+    perturbation_leaves: PerturbationLeaves | None = None
 
 
 class SymbolDrift(BaseModel):
@@ -105,6 +140,9 @@ class StaleResult(BaseModel):
     preprocess_dir: str
     is_stale: bool
     drift: list[SymbolDrift]
+    # Manifest fields the current schema version requires and this manifest lacks
+    # (``perturbation_leaves`` on a version 1 manifest). Each one stales the store.
+    missing_fields: list[str] = Field(default_factory=list)
 
 
 class StoreFreshness(BaseModel):
@@ -141,6 +179,7 @@ class DatasetCheck(BaseModel):
     dataset_name: str
     status: StoreState
     drift: list[SymbolDrift] = Field(default_factory=list)
+    missing_fields: list[str] = Field(default_factory=list)
     reason: str | None = None
 
 
@@ -180,6 +219,7 @@ def compute_manifest(
     hostname: str,
     torchcell_commit: str | None,
     torchcell_dirty: bool | None,
+    perturbation_leaves: PerturbationLeaves,
 ) -> BuildManifest:
     """Build a :class:`BuildManifest` from a loader's transitive schema closure."""
     closure = loader_closure(loader_path, surface)
@@ -196,6 +236,98 @@ def compute_manifest(
         hostname=hostname,
         torchcell_commit=torchcell_commit,
         torchcell_dirty=torchcell_dirty,
+        perturbation_leaves=perturbation_leaves,
+    )
+
+
+def leaf_class_by_perturbation_type() -> dict[str, str]:
+    """``perturbation_type`` literal -> leaf class name, over both perturbation unions.
+
+    The literal is unique per leaf (43 genotype and 5 environment members, measured
+    2026-10-15), so the stored string names the class without validating the record. A
+    stored literal outside this map is a record no union member explains, and the walk
+    raises on it rather than guessing.
+    """
+    from typing import get_args
+
+    from torchcell.datamodels.schema import (
+        EnvironmentPerturbationType,
+        GenePerturbationType,
+    )
+
+    by_type: dict[str, str] = {}
+    for union in (GenePerturbationType, EnvironmentPerturbationType):
+        for cls in get_args(union):
+            literal = cls.model_fields["perturbation_type"].default
+            if literal in by_type:
+                raise ValueError(
+                    f"perturbation_type {literal!r} is shared by {by_type[literal]} and "
+                    f"{cls.__name__}; the manifest walk needs it unique"
+                )
+            by_type[literal] = cls.__name__
+    return by_type
+
+
+def walk_perturbation_leaves(root: str | Path) -> PerturbationLeaves:
+    """The leaf classes present in EVERY record of ``<root>/processed/lmdb``.
+
+    One streaming pass, the same read path as the store's own
+    (``pickle.loads`` + ``resolve_interned`` on the genotype and environment dicts; a
+    loader may intern either, and ``_maybe_intern`` always interns a large environment).
+    Reads the ``perturbation_type`` literal of each perturbation dict and names its
+    class through :func:`leaf_class_by_perturbation_type`, so no record is validated and
+    the pass costs what ``compute_gene_set_sequential`` costs. Raises on an empty store
+    and on a literal no union member carries.
+    """
+    import pickle
+
+    import lmdb
+
+    from torchcell.data.experiment_dataset import resolve_interned
+
+    by_type = leaf_class_by_perturbation_type()
+    processed = Path(root) / "processed"
+    interned: dict[str, Any] = {}
+    if (processed / "interned").is_dir():
+        ienv = lmdb.open(str(processed / "interned"), readonly=True, lock=False)
+        try:
+            with ienv.begin() as itxn:
+                for key, value in itxn.cursor():
+                    interned[key.decode()] = pickle.loads(value)  # noqa: S301
+        finally:
+            ienv.close()
+    genotype_types: set[str] = set()
+    environment_types: set[str] = set()
+    n_records = 0
+    env = lmdb.open(str(processed / "lmdb"), readonly=True, lock=False, readahead=False)
+    try:
+        with env.begin() as txn:
+            for _key, value in txn.cursor():
+                n_records += 1
+                experiment = pickle.loads(value)["experiment"]  # noqa: S301
+                if "$ref" in experiment:
+                    experiment = interned[experiment["$ref"]]
+                genotype = resolve_interned(experiment["genotype"], interned)
+                # A SegregantGenotype carries haplotype blocks and no perturbation list.
+                if "perturbations" in genotype:
+                    for perturbation in genotype["perturbations"]:
+                        genotype_types.add(perturbation["perturbation_type"])
+                environment = resolve_interned(experiment["environment"], interned)
+                for perturbation in environment["perturbations"]:
+                    environment_types.add(perturbation["perturbation_type"])
+    finally:
+        env.close()
+    if n_records == 0:
+        raise ValueError(f"{processed / 'lmdb'} holds no records")
+    unknown = sorted((genotype_types | environment_types) - set(by_type))
+    if unknown:
+        raise KeyError(
+            f"{processed / 'lmdb'} stores perturbation_type literals no union member "
+            f"carries: {unknown}"
+        )
+    return PerturbationLeaves(
+        genotype=sorted(by_type[t] for t in genotype_types),
+        environment=sorted(by_type[t] for t in environment_types),
     )
 
 
@@ -214,6 +346,7 @@ def write_build_manifest(dataset: Any) -> Path:
     loader_path = Path(module_file)
     surface = load_default_surface()
     commit, dirty = _git_info(loader_path.parent)
+    leaves = walk_perturbation_leaves(dataset.root)
     manifest = compute_manifest(
         dataset_name=osp.basename(osp.normpath(dataset.root)),
         loader_module=cls.__module__,
@@ -224,6 +357,7 @@ def write_build_manifest(dataset: Any) -> Path:
         hostname=socket.gethostname(),
         torchcell_commit=commit,
         torchcell_dirty=dirty,
+        perturbation_leaves=leaves,
     )
     out = Path(dataset.preprocess_dir) / MANIFEST_FILENAME
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -234,7 +368,12 @@ def write_build_manifest(dataset: Any) -> Path:
 def check_manifest(
     manifest: BuildManifest, surface: SchemaSurface, preprocess_dir: str
 ) -> StaleResult:
-    """Compare a manifest's stored fingerprints against the current local schema surface."""
+    """Compare a manifest's stored fingerprints against the current local schema surface.
+
+    A manifest without ``perturbation_leaves`` (written under manifest schema version
+    1) is stale too: the preflight reads the store's leaves off that field, and a store
+    with no measured leaves cannot be checked against its conf's lanes.
+    """
     drift = [
         SymbolDrift(
             symbol=symbol,
@@ -244,11 +383,15 @@ def check_manifest(
         for symbol, stored in manifest.closure.items()
         if surface.fingerprints.get(symbol) != stored
     ]
+    missing_fields = (
+        [PERTURBATION_LEAVES_FIELD] if manifest.perturbation_leaves is None else []
+    )
     return StaleResult(
         dataset_name=manifest.dataset_name,
         preprocess_dir=preprocess_dir,
-        is_stale=bool(drift),
+        is_stale=bool(drift) or bool(missing_fields),
         drift=drift,
+        missing_fields=missing_fields,
     )
 
 
@@ -336,7 +479,7 @@ def check_store(root: str | Path, surface: SchemaSurface) -> StoreFreshness:
         return StoreFreshness(
             root=str(root),
             state="stale",
-            drift=sorted({d.symbol for d in result.drift}),
+            drift=sorted({d.symbol for d in result.drift} | set(result.missing_fields)),
         )
     try:
         read_first_record(root)
@@ -373,19 +516,21 @@ def check_all(data_root: Path, surface: SchemaSurface) -> list[DatasetCheck]:
         manifest_path = slug_dir / "preprocess" / MANIFEST_FILENAME
         name = slug_dir.name
         drift: list[SymbolDrift] = []
+        missing_fields: list[str] = []
         if manifest_path.is_file():
             manifest = BuildManifest.model_validate_json(
                 manifest_path.read_text(encoding="utf-8")
             )
             name = manifest.dataset_name
-            drift = check_manifest(
-                manifest, surface, str(slug_dir / "preprocess")
-            ).drift
+            result = check_manifest(manifest, surface, str(slug_dir / "preprocess"))
+            drift = result.drift
+            missing_fields = result.missing_fields
         results.append(
             DatasetCheck(
                 dataset_name=name,
                 status=freshness.state,
                 drift=drift,
+                missing_fields=missing_fields,
                 reason=freshness.reason,
             )
         )
@@ -404,8 +549,12 @@ def _format_report(checks: list[DatasetCheck]) -> str:
         "",
     ]
     for check in stale:
-        symbols = ", ".join(sorted(d.symbol for d in check.drift))
-        lines.append(f"  [STALE] {check.dataset_name}  -> rebuild; changed: {symbols}")
+        what: list[str] = []
+        if check.drift:
+            what.append("changed: " + ", ".join(sorted(d.symbol for d in check.drift)))
+        if check.missing_fields:
+            what.append("manifest lacks: " + ", ".join(check.missing_fields))
+        lines.append(f"  [STALE] {check.dataset_name}  -> rebuild; {'; '.join(what)}")
     for check in unreadable:
         lines.append(
             f"  [UNREADABLE] {check.dataset_name}  -> rebuild; unreadable: "

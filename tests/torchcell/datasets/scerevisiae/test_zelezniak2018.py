@@ -202,7 +202,7 @@ def _assert_side_files(root: Path, cls: type, gene_set: list[str]) -> None:
     pre = root / "preprocess"
     assert json.loads((pre / "gene_set.json").read_text()) == gene_set
     manifest = json.loads((pre / "build_manifest.json").read_text())
-    assert manifest["manifest_schema_version"] == 1
+    assert manifest["manifest_schema_version"] == 2
     assert manifest["dataset_name"] == root.name
     assert manifest["loader_class"] == cls.__name__
     assert manifest["loader_module"] == "torchcell.datasets.scerevisiae.zelezniak2018"

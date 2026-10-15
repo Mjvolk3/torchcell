@@ -1,0 +1,2013 @@
+{
+ "data_root": "/scratch/projects/torchcell-scratch",
+ "skipped": {
+  "dmf_costanzo2016": "77.8 GB, over --skip-larger-than-gb 40.0",
+  "dmi_costanzo2016": "77.8 GB, over --skip-larger-than-gb 40.0",
+  "env_chemgen_hoepfner2014": "125.7 GB, over --skip-larger-than-gb 40.0",
+  "showcase_amino_acid_betaxanthin": "records are not pickles (a query-result dump, not a store)",
+  "showcase_essentiality_smf": "records are not pickles (a query-result dump, not a store)"
+ },
+ "stores": [
+  {
+   "slug": "_verify_mulleder",
+   "n_records": 4678,
+   "n_distinct": 4678,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.2
+  },
+  {
+   "slug": "_verify_ozaydin_geneadd",
+   "n_records": 4474,
+   "n_distinct": 4474,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.2
+  },
+  {
+   "slug": "_verify_ozaydin_rename",
+   "n_records": 4474,
+   "n_distinct": 4474,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.1
+  },
+  {
+   "slug": "_verify_zelezniak",
+   "n_records": 97,
+   "n_distinct": 97,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.2
+  },
+  {
+   "slug": "amino_acid_cooper2010",
+   "n_records": 4382,
+   "n_distinct": 4382,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.5
+  },
+  {
+   "slug": "amino_acid_mulleder2016",
+   "n_records": 4678,
+   "n_distinct": 4678,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.8
+  },
+  {
+   "slug": "betaxanthin_cachera2023",
+   "n_records": 4759,
+   "n_distinct": 4759,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.8
+  },
+  {
+   "slug": "biofuel_titer_brunk2016",
+   "n_records": 72,
+   "n_distinct": 72,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "bloom2019",
+   "n_records": 530100,
+   "n_distinct": 530100,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 90.1
+  },
+  {
+   "slug": "boocock2025",
+   "n_records": 79516,
+   "n_distinct": 79516,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 143.3
+  },
+  {
+   "slug": "campaign_proteome_carruthers2025",
+   "n_records": 465,
+   "n_distinct": 465,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 1.0
+  },
+  {
+   "slug": "carotenoid_ozaydin2013",
+   "n_records": 4607,
+   "n_distinct": 4576,
+   "n_collision_groups": 31,
+   "n_records_lost_in_graph": 31,
+   "group_sizes": {
+    "2": 31
+   },
+   "examples": [
+    {
+     "indices": [
+      227,
+      3143
+     ],
+     "experiment_type": "visual_score",
+     "genes": [
+      "YML009C",
+      "YPL069C",
+      "crtI",
+      "crtYB"
+     ],
+     "n_perturbations": 4,
+     "label_name": "visual_score",
+     "value": 0.0
+    },
+    {
+     "indices": [
+      2080,
+      3179
+     ],
+     "experiment_type": "visual_score",
+     "genes": [
+      "YGR025W",
+      "YPL069C",
+      "crtI",
+      "crtYB"
+     ],
+     "n_perturbations": 4,
+     "label_name": "visual_score",
+     "value": 0.0
+    },
+    {
+     "indices": [
+      3213,
+      3420
+     ],
+     "experiment_type": "visual_score",
+     "genes": [
+      "YOR309C",
+      "YPL069C",
+      "crtI",
+      "crtYB"
+     ],
+     "n_perturbations": 4,
+     "label_name": "visual_score",
+     "value": 0.0
+    },
+    {
+     "indices": [
+      1811,
+      3691
+     ],
+     "experiment_type": "visual_score",
+     "genes": [
+      "YJL151C",
+      "YPL069C",
+      "crtI",
+      "crtYB"
+     ],
+     "n_perturbations": 4,
+     "label_name": "visual_score",
+     "value": 0.0
+    },
+    {
+     "indices": [
+      3354,
+      4145
+     ],
+     "experiment_type": "visual_score",
+     "genes": [
+      "YJR055W",
+      "YPL069C",
+      "crtI",
+      "crtYB"
+     ],
+     "n_perturbations": 4,
+     "label_name": "visual_score",
+     "value": 0.0
+    }
+   ],
+   "wall_s": 1.7
+  },
+  {
+   "slug": "caudal_pantranscriptome2024",
+   "n_records": 943,
+   "n_distinct": 943,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 50.9
+  },
+  {
+   "slug": "cell_yield_dechiara2022",
+   "n_records": 36286,
+   "n_distinct": 36286,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 533.5
+  },
+  {
+   "slug": "crispr_magic_lian2019",
+   "n_records": 266304,
+   "n_distinct": 266304,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 27.1
+  },
+  {
+   "slug": "crispr_pinene_tolerance_niu2019",
+   "n_records": 54,
+   "n_distinct": 54,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "crispri_array_yunus2026",
+   "n_records": 25,
+   "n_distinct": 25,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "crispri_chemgen_choe2025",
+   "n_records": 470502,
+   "n_distinct": 470502,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 40.2
+  },
+  {
+   "slug": "crispri_chemgen_smith2016",
+   "n_records": 14463,
+   "n_distinct": 14463,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 1.6
+  },
+  {
+   "slug": "crispri_cross_rachwalski2024",
+   "n_records": 48900,
+   "n_distinct": 48900,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 4.4
+  },
+  {
+   "slug": "crispri_differential_proteome_yunus2026",
+   "n_records": 1,
+   "n_distinct": 1,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "crispri_gene_fitness_wang2018",
+   "n_records": 20158,
+   "n_distinct": 20158,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 2.9
+  },
+  {
+   "slug": "crispri_guide_ffa_enrichment_fang2025",
+   "n_records": 15711,
+   "n_distinct": 15711,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 1.9
+  },
+  {
+   "slug": "crispri_guide_fitness_wang2018",
+   "n_records": 240481,
+   "n_distinct": 240481,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 34.6
+  },
+  {
+   "slug": "crispri_knockdown_cui2018",
+   "n_records": 143392,
+   "n_distinct": 143392,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 10.4
+  },
+  {
+   "slug": "crispri_knockdown_yunus2026",
+   "n_records": 102,
+   "n_distinct": 102,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "crispri_mormino2022",
+   "n_records": 12,
+   "n_distinct": 12,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "crispri_panel_proteome_yunus2026",
+   "n_records": 125,
+   "n_distinct": 125,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "crispri_segregant_hale2024",
+   "n_records": 8692635,
+   "n_distinct": 8692635,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 1423.7
+  },
+  {
+   "slug": "dm_microarray_sameith2015",
+   "n_records": 72,
+   "n_distinct": 72,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 1.4
+  },
+  {
+   "slug": "dmf_costanzo2016_1e5",
+   "n_records": 100000,
+   "n_distinct": 100000,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 6.8
+  },
+  {
+   "slug": "dmf_costanzo2016_5e5",
+   "n_records": 500000,
+   "n_distinct": 500000,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 35.7
+  },
+  {
+   "slug": "dmf_kuzmin2018",
+   "n_records": 410571,
+   "n_distinct": 410571,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 31.6
+  },
+  {
+   "slug": "dmf_kuzmin2020",
+   "n_records": 632998,
+   "n_distinct": 632998,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 48.2
+  },
+  {
+   "slug": "dmi_costanzo2016_1e5",
+   "n_records": 100000,
+   "n_distinct": 100000,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 6.1
+  },
+  {
+   "slug": "dmi_costanzo2016_5e5",
+   "n_records": 500000,
+   "n_distinct": 500000,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 32.4
+  },
+  {
+   "slug": "dmi_kuzmin2018",
+   "n_records": 410399,
+   "n_distinct": 410399,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 31.5
+  },
+  {
+   "slug": "dmi_kuzmin2020",
+   "n_records": 632797,
+   "n_distinct": 632797,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 47.8
+  },
+  {
+   "slug": "doubling_time_caglar2017",
+   "n_records": 55,
+   "n_distinct": 55,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "doubling_time_dechiara2022",
+   "n_records": 36295,
+   "n_distinct": 36295,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 543.9
+  },
+  {
+   "slug": "ecoli_carbon_source_tong2020",
+   "n_records": 111420,
+   "n_distinct": 111420,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 14.4
+  },
+  {
+   "slug": "ecoli_crispri_rousset2018",
+   "n_records": 92252,
+   "n_distinct": 92252,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 6.7
+  },
+  {
+   "slug": "ecoli_env_chemgen_girgis2009",
+   "n_records": 66287,
+   "n_distinct": 66287,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 6.8
+  },
+  {
+   "slug": "ecoli_env_chemgen_nichols2011",
+   "n_records": 1286962,
+   "n_distinct": 1286962,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 88.3
+  },
+  {
+   "slug": "ecoli_env_chemgen_shiver2016",
+   "n_records": 210998,
+   "n_distinct": 210998,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 19.8
+  },
+  {
+   "slug": "ecoli_env_chemgen_wang2024",
+   "n_records": 26514,
+   "n_distinct": 26514,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 1.9
+  },
+  {
+   "slug": "ecoli_growth_rate_campos2018",
+   "n_records": 3664,
+   "n_distinct": 3664,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.3
+  },
+  {
+   "slug": "ecoli_morphology_campos2018",
+   "n_records": 3664,
+   "n_distinct": 3664,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.3
+  },
+  {
+   "slug": "env_chemgen_auesukaree2009",
+   "n_records": 525,
+   "n_distinct": 525,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.1
+  },
+  {
+   "slug": "env_chemgen_costanzo2021",
+   "n_records": 61640,
+   "n_distinct": 61640,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 16.0
+  },
+  {
+   "slug": "env_chemgen_hillenmeyer2008_het",
+   "n_records": 3074132,
+   "n_distinct": 3074132,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 330.6
+  },
+  {
+   "slug": "env_chemgen_hillenmeyer2008_hom",
+   "n_records": 1228676,
+   "n_distinct": 1228676,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 131.4
+  },
+  {
+   "slug": "env_chemgen_mota2024",
+   "n_records": 1289,
+   "n_distinct": 1287,
+   "n_collision_groups": 2,
+   "n_records_lost_in_graph": 2,
+   "group_sizes": {
+    "2": 2
+   },
+   "examples": [
+    {
+     "indices": [
+      180,
+      181
+     ],
+     "experiment_type": "environment_response",
+     "genes": [
+      "RNR4"
+     ],
+     "n_perturbations": 1,
+     "label_name": "environment_response",
+     "value": 1.0
+    },
+    {
+     "indices": [
+      587,
+      588
+     ],
+     "experiment_type": "environment_response",
+     "genes": [
+      "RNR4"
+     ],
+     "n_perturbations": 1,
+     "label_name": "environment_response",
+     "value": 1.0
+    }
+   ],
+   "wall_s": 0.2
+  },
+  {
+   "slug": "env_chemgen_parsons2006",
+   "n_records": 329254,
+   "n_distinct": 329254,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 32.5
+  },
+  {
+   "slug": "env_chemgen_piotrowski2017",
+   "n_records": 3435820,
+   "n_distinct": 3435820,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 340.3
+  },
+  {
+   "slug": "env_chemgen_smith2006",
+   "n_records": 14310,
+   "n_distinct": 14310,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 1.0
+  },
+  {
+   "slug": "env_chemgen_vanacloig2022",
+   "n_records": 164205,
+   "n_distinct": 164205,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 13.2
+  },
+  {
+   "slug": "env_chemgen_wang2015",
+   "n_records": 46,
+   "n_distinct": 46,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "env_chemgen_wildenhain2015",
+   "n_records": 449033,
+   "n_distinct": 449033,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 71.6
+  },
+  {
+   "slug": "env_chemgen_yoshikawa2009",
+   "n_records": 37832,
+   "n_distinct": 37832,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 4.0
+  },
+  {
+   "slug": "exometabolite_brunk2016",
+   "n_records": 126,
+   "n_distinct": 126,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "ffa_xue2025",
+   "n_records": 176,
+   "n_distinct": 176,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "fitness_contrast_borchert2023",
+   "n_records": 64853,
+   "n_distinct": 64853,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 5.0
+  },
+  {
+   "slug": "flux_ishii2007",
+   "n_records": 28,
+   "n_distinct": 28,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "flux_li2021",
+   "n_records": 3,
+   "n_distinct": 3,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "gene_essentiality_baba2006",
+   "n_records": 4288,
+   "n_distinct": 4288,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.5
+  },
+  {
+   "slug": "gene_essentiality_gerdes2003",
+   "n_records": 3739,
+   "n_distinct": 3739,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.7
+  },
+  {
+   "slug": "gene_essentiality_goodall2018",
+   "n_records": 8309,
+   "n_distinct": 8309,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.8
+  },
+  {
+   "slug": "gene_essentiality_price2018_ecoli",
+   "n_records": 324,
+   "n_distinct": 324,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "gene_essentiality_sgd",
+   "n_records": 1329,
+   "n_distinct": 1311,
+   "n_collision_groups": 17,
+   "n_records_lost_in_graph": 18,
+   "group_sizes": {
+    "2": 16,
+    "3": 1
+   },
+   "examples": [
+    {
+     "indices": [
+      1147,
+      1148
+     ],
+     "experiment_type": "gene essentiality",
+     "genes": [
+      "YOR122C"
+     ],
+     "n_perturbations": 1,
+     "label_name": "is_essential",
+     "value": true
+    },
+    {
+     "indices": [
+      1191,
+      1192
+     ],
+     "experiment_type": "gene essentiality",
+     "genes": [
+      "YOR281C"
+     ],
+     "n_perturbations": 1,
+     "label_name": "is_essential",
+     "value": true
+    },
+    {
+     "indices": [
+      1210,
+      1211,
+      1212
+     ],
+     "experiment_type": "gene essentiality",
+     "genes": [
+      "YOR370C"
+     ],
+     "n_perturbations": 1,
+     "label_name": "is_essential",
+     "value": true
+    },
+    {
+     "indices": [
+      1256,
+      1257
+     ],
+     "experiment_type": "gene essentiality",
+     "genes": [
+      "YPL210C"
+     ],
+     "n_perturbations": 1,
+     "label_name": "is_essential",
+     "value": true
+    },
+    {
+     "indices": [
+      1271,
+      1272
+     ],
+     "experiment_type": "gene essentiality",
+     "genes": [
+      "YPL243W"
+     ],
+     "n_perturbations": 1,
+     "label_name": "is_essential",
+     "value": true
+    }
+   ],
+   "wall_s": 0.1
+  },
+  {
+   "slug": "gene_interaction_babu2014",
+   "n_records": 42705,
+   "n_distinct": 42705,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 3.4
+  },
+  {
+   "slug": "gene_interaction_butland2008",
+   "n_records": 314769,
+   "n_distinct": 314769,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 30.5
+  },
+  {
+   "slug": "genome_architecture_puddu2019",
+   "n_records": 8835,
+   "n_distinct": 8835,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.6
+  },
+  {
+   "slug": "graded_gene_essentiality_goodall2018",
+   "n_records": 317,
+   "n_distinct": 317,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "graded_gene_essentiality_royet2025",
+   "n_records": 11458,
+   "n_distinct": 11458,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.9
+  },
+  {
+   "slug": "growth_auc_rapp2026",
+   "n_records": 1515,
+   "n_distinct": 1515,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.2
+  },
+  {
+   "slug": "growth_rate_choe2019",
+   "n_records": 8,
+   "n_distinct": 8,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "growth_rate_lamoureux2023",
+   "n_records": 354,
+   "n_distinct": 340,
+   "n_collision_groups": 13,
+   "n_records_lost_in_graph": 14,
+   "group_sizes": {
+    "2": 12,
+    "3": 1
+   },
+   "examples": [
+    {
+     "indices": [
+      144,
+      146
+     ],
+     "experiment_type": "bacterial_environment_response",
+     "genes": [],
+     "n_perturbations": 0,
+     "label_name": "environment_response",
+     "value": 0.5
+    },
+    {
+     "indices": [
+      145,
+      147
+     ],
+     "experiment_type": "bacterial_environment_response",
+     "genes": [],
+     "n_perturbations": 0,
+     "label_name": "environment_response",
+     "value": 0.5
+    },
+    {
+     "indices": [
+      180,
+      184
+     ],
+     "experiment_type": "bacterial_environment_response",
+     "genes": [],
+     "n_perturbations": 0,
+     "label_name": "environment_response",
+     "value": 0.58
+    },
+    {
+     "indices": [
+      181,
+      185
+     ],
+     "experiment_type": "bacterial_environment_response",
+     "genes": [],
+     "n_perturbations": 0,
+     "label_name": "environment_response",
+     "value": 0.58
+    },
+    {
+     "indices": [
+      252,
+      254
+     ],
+     "experiment_type": "bacterial_environment_response",
+     "genes": [],
+     "n_perturbations": 0,
+     "label_name": "environment_response",
+     "value": 0.9
+    }
+   ],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "growth_rate_s23_schmidt2016",
+   "n_records": 26,
+   "n_distinct": 26,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "growth_rate_schmidt2016",
+   "n_records": 6,
+   "n_distinct": 6,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "growth_wang2015",
+   "n_records": 46,
+   "n_distinct": 46,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "growth_yield_baba2006",
+   "n_records": 11735,
+   "n_distinct": 11735,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.9
+  },
+  {
+   "slug": "induction_timecourse_hackett2020",
+   "n_records": 1752,
+   "n_distinct": 1752,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 38.1
+  },
+  {
+   "slug": "inhibitor_bioscreen_volk2021",
+   "n_records": 977,
+   "n_distinct": 977,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.1
+  },
+  {
+   "slug": "isobutanol_screen_lopez2024",
+   "n_records": 4805,
+   "n_distinct": 4805,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.2
+  },
+  {
+   "slug": "isobutanol_validated_lopez2024",
+   "n_records": 227,
+   "n_distinct": 227,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "isolate_growth_peter2018",
+   "n_records": 33985,
+   "n_distinct": 33985,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 502.4
+  },
+  {
+   "slug": "isopentenol_titer_foo2014",
+   "n_records": 9,
+   "n_distinct": 9,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "isoprenol_selection_menasalvas2025",
+   "n_records": 58,
+   "n_distinct": 58,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "isoprenol_titer_banerjee2024",
+   "n_records": 20,
+   "n_distinct": 20,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "isoprenol_titer_carruthers2025",
+   "n_records": 502,
+   "n_distinct": 502,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.1
+  },
+  {
+   "slug": "isoprenol_titer_desiqueira2025",
+   "n_records": 10,
+   "n_distinct": 10,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "isoprenol_titer_yunus2026",
+   "n_records": 125,
+   "n_distinct": 125,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "isoprenol_tolerance_lim2025",
+   "n_records": 3,
+   "n_distinct": 3,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "isoprenyl_acetate_titer_kang2026",
+   "n_records": 26,
+   "n_distinct": 26,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "lactam_growth_rate_thompson2019",
+   "n_records": 9,
+   "n_distinct": 9,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "life_cycle_dechiara2022",
+   "n_records": 4039,
+   "n_distinct": 4039,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 69.8
+  },
+  {
+   "slug": "metabolite_dasilveira2014",
+   "n_records": 127,
+   "n_distinct": 127,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "metabolite_growth_menasalvas2025",
+   "n_records": 3,
+   "n_distinct": 3,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "metabolite_intensity_rapp2026",
+   "n_records": 407,
+   "n_distinct": 407,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.3
+  },
+  {
+   "slug": "metabolite_production_menasalvas2025",
+   "n_records": 3,
+   "n_distinct": 3,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "metabolite_zelezniak2018",
+   "n_records": 129,
+   "n_distinct": 129,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "metabolome_brunk2016",
+   "n_records": 117,
+   "n_distinct": 117,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "metabolome_fuhrer2017",
+   "n_records": 3806,
+   "n_distinct": 3806,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 21.1
+  },
+  {
+   "slug": "metabolome_ishii2007",
+   "n_records": 28,
+   "n_distinct": 28,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "metabolome_rapp2026",
+   "n_records": 1497,
+   "n_distinct": 1497,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 3.6
+  },
+  {
+   "slug": "metabolome_schastnaya2021",
+   "n_records": 200,
+   "n_distinct": 200,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.1
+  },
+  {
+   "slug": "microarray_kemmeren2014",
+   "n_records": 1484,
+   "n_distinct": 1484,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 27.8
+  },
+  {
+   "slug": "microarray_score_hu2007",
+   "n_records": 263,
+   "n_distinct": 263,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 2.0
+  },
+  {
+   "slug": "mismatch_crispri_fitness_hawkins2020",
+   "n_records": 24186,
+   "n_distinct": 24186,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 1.7
+  },
+  {
+   "slug": "mrna_fraction_balakrishnan2022",
+   "n_records": 28,
+   "n_distinct": 28,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.1
+  },
+  {
+   "slug": "nadal_ribelles_perturbseq2025",
+   "n_records": 6188,
+   "n_distinct": 6188,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 30.0
+  },
+  {
+   "slug": "nguessan2025",
+   "n_records": 2951,
+   "n_distinct": 2951,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 5.8
+  },
+  {
+   "slug": "organic_acid_yoshida2012",
+   "n_records": 17,
+   "n_distinct": 17,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "phage_rbtnseq_mutalik2020",
+   "n_records": 287815,
+   "n_distinct": 287815,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 31.1
+  },
+  {
+   "slug": "phosphosite_intensity_potel2018",
+   "n_records": 12,
+   "n_distinct": 12,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.5
+  },
+  {
+   "slug": "pinene_fold_change_niu2019",
+   "n_records": 40,
+   "n_distinct": 40,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "pooled_promoter_expression_vaishnav2022",
+   "n_records": 71158,
+   "n_distinct": 71158,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 26.8
+  },
+  {
+   "slug": "pputida_env_metal_tnseq_royet2025",
+   "n_records": 21583,
+   "n_distinct": 21583,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 1.6
+  },
+  {
+   "slug": "promoter_reporter_mohiuddin2022",
+   "n_records": 69480,
+   "n_distinct": 69480,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 7.0
+  },
+  {
+   "slug": "protein_fold_change_caglar2017",
+   "n_records": 8,
+   "n_distinct": 8,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.1
+  },
+  {
+   "slug": "protein_synthesis_rate_li2014",
+   "n_records": 3,
+   "n_distinct": 3,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "protein_turnover_gupta2024",
+   "n_records": 13,
+   "n_distinct": 13,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.1
+  },
+  {
+   "slug": "protein_turnover_muenzner2024",
+   "n_records": 55,
+   "n_distinct": 55,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 2.7
+  },
+  {
+   "slug": "proteome_banerjee2025",
+   "n_records": 6,
+   "n_distinct": 6,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "proteome_brunk2016",
+   "n_records": 81,
+   "n_distinct": 81,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "proteome_caglar2017",
+   "n_records": 105,
+   "n_distinct": 105,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.3
+  },
+  {
+   "slug": "proteome_carruthers2025",
+   "n_records": 21,
+   "n_distinct": 21,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "proteome_desiqueira2025",
+   "n_records": 17,
+   "n_distinct": 17,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "proteome_fold_change_carruthers2025",
+   "n_records": 16,
+   "n_distinct": 16,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "proteome_fold_change_lim2025",
+   "n_records": 4,
+   "n_distinct": 4,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "proteome_ishii2007",
+   "n_records": 28,
+   "n_distinct": 28,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "proteome_lim2025",
+   "n_records": 3,
+   "n_distinct": 3,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "proteome_log10_percent_desiqueira2025",
+   "n_records": 17,
+   "n_distinct": 17,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "proteome_menasalvas2025",
+   "n_records": 6,
+   "n_distinct": 6,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "proteome_messner2021",
+   "n_records": 70,
+   "n_distinct": 70,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.2
+  },
+  {
+   "slug": "proteome_messner2023",
+   "n_records": 4699,
+   "n_distinct": 4699,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 12.0
+  },
+  {
+   "slug": "proteome_mori2021",
+   "n_records": 7,
+   "n_distinct": 7,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "proteome_muenzner2024",
+   "n_records": 795,
+   "n_distinct": 795,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 37.8
+  },
+  {
+   "slug": "proteome_percent_desiqueira2025",
+   "n_records": 17,
+   "n_distinct": 17,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "proteome_schmidt2016",
+   "n_records": 21,
+   "n_distinct": 21,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.1
+  },
+  {
+   "slug": "proteome_srm_set1_schmidt2016",
+   "n_records": 18,
+   "n_distinct": 18,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "proteome_srm_set2_schmidt2016",
+   "n_records": 21,
+   "n_distinct": 21,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "proteome_zelezniak2018",
+   "n_records": 97,
+   "n_distinct": 97,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.1
+  },
+  {
+   "slug": "putida_precise321_lim2022",
+   "n_records": 321,
+   "n_distinct": 321,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 2.3
+  },
+  {
+   "slug": "rbtnseq_borchert2023",
+   "n_records": 10824,
+   "n_distinct": 10824,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 1.1
+  },
+  {
+   "slug": "rbtnseq_borchert2024",
+   "n_records": 1466920,
+   "n_distinct": 1466920,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 191.5
+  },
+  {
+   "slug": "rbtnseq_fitness_browser_ecoli",
+   "n_records": 22734,
+   "n_distinct": 22734,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 2.1
+  },
+  {
+   "slug": "rbtnseq_fitness_browser_putida",
+   "n_records": 1118052,
+   "n_distinct": 1118052,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 156.2
+  },
+  {
+   "slug": "rbtnseq_price2018_ecoli",
+   "n_records": 598662,
+   "n_distinct": 598662,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 56.5
+  },
+  {
+   "slug": "rbtnseq_teteneva2024_ecoli",
+   "n_records": 66162,
+   "n_distinct": 66162,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 3.7
+  },
+  {
+   "slug": "rbtnseq_wetmore2015_ecoli",
+   "n_records": 353662,
+   "n_distinct": 353662,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 36.4
+  },
+  {
+   "slug": "rnaseq_caglar2017",
+   "n_records": 152,
+   "n_distinct": 152,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.5
+  },
+  {
+   "slug": "rnaseq_guzman2018",
+   "n_records": 14,
+   "n_distinct": 14,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "rnaseq_lamoureux2023",
+   "n_records": 1035,
+   "n_distinct": 1035,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 4.1
+  },
+  {
+   "slug": "rnaseq_public_k12_lamoureux2023",
+   "n_records": 1675,
+   "n_distinct": 1675,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 6.6
+  },
+  {
+   "slug": "scmd_ohnuki2018",
+   "n_records": 1112,
+   "n_distinct": 1112,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.6
+  },
+  {
+   "slug": "scmd_ohnuki2022",
+   "n_records": 1982,
+   "n_distinct": 1982,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.9
+  },
+  {
+   "slug": "scmd_ohya2005",
+   "n_records": 4718,
+   "n_distinct": 4718,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 1.5
+  },
+  {
+   "slug": "sm_microarray_sameith2015",
+   "n_records": 82,
+   "n_distinct": 82,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 1.5
+  },
+  {
+   "slug": "smf_baryshnikova2010",
+   "n_records": 6023,
+   "n_distinct": 6023,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.4
+  },
+  {
+   "slug": "smf_costanzo2016",
+   "n_records": 20484,
+   "n_distinct": 20484,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 1.4
+  },
+  {
+   "slug": "smf_kuzmin2018",
+   "n_records": 1539,
+   "n_distinct": 1539,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.1
+  },
+  {
+   "slug": "smf_kuzmin2020",
+   "n_records": 472,
+   "n_distinct": 472,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "smf_oduibhir2014",
+   "n_records": 1312,
+   "n_distinct": 1312,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.4
+  },
+  {
+   "slug": "syn_leth_db_yeast",
+   "n_records": 14000,
+   "n_distinct": 14000,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 1.1
+  },
+  {
+   "slug": "syn_rescue_db_yeast",
+   "n_records": 6948,
+   "n_distinct": 6948,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.5
+  },
+  {
+   "slug": "targeted_metabolome_rapp2026",
+   "n_records": 407,
+   "n_distinct": 407,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.1
+  },
+  {
+   "slug": "tf_deletion_pseudobulk_jackson2020",
+   "n_records": 784,
+   "n_distinct": 784,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 1.0
+  },
+  {
+   "slug": "tf_knockout_growth_choe2019",
+   "n_records": 2,
+   "n_distinct": 2,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "tmf_kuzmin2018",
+   "n_records": 91111,
+   "n_distinct": 91111,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 7.1
+  },
+  {
+   "slug": "tmf_kuzmin2020",
+   "n_records": 301798,
+   "n_distinct": 301798,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 24.5
+  },
+  {
+   "slug": "tmi_kuzmin2018",
+   "n_records": 91111,
+   "n_distinct": 91111,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 7.1
+  },
+  {
+   "slug": "tmi_kuzmin2020",
+   "n_records": 301798,
+   "n_distinct": 301798,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 23.9
+  },
+  {
+   "slug": "valerolactam_titer_thompson2019",
+   "n_records": 8,
+   "n_distinct": 8,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 0.0
+  },
+  {
+   "slug": "yeastphenome",
+   "n_records": 524682,
+   "n_distinct": 524682,
+   "n_collision_groups": 0,
+   "n_records_lost_in_graph": 0,
+   "group_sizes": {},
+   "examples": [],
+   "wall_s": 39.3
+  }
+ ]
+}

@@ -522,6 +522,11 @@ python -m torchcell.knowledge_graphs.generation_array merge --out-dir "$OUT_HOST
 grep -q '^MERGED_CALL=' "$MERGE_LOG" || { echo "the merge wrote no import call"; exit 1; }
 MERGE_REPORT="$OUT_HOST/merge_report.json"
 [ -f "$MERGE_REPORT" ] || { echo "no $MERGE_REPORT"; exit 1; }
+# The merge succeeded, so every task carried its DONE marker and no re-run is ahead:
+# the prebuilt generation image has done its job (teardown_decision in
+# torchcell.knowledge_graphs.generation_image). A failed merge or a missing marker
+# exits above and leaves the tag, so the re-run pays no image time.
+python -m torchcell.knowledge_graphs.generation_image remove --build-commit "$BUILD_COMMIT" || true
 # The CSV endpoint gate runs in the import branch below for every generation mode
 # (csv_endpoint_gate discovers adapters/*/ as one output), after the fence re-digest.
 GEN_LOG=""

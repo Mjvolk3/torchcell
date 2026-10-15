@@ -66,6 +66,13 @@
 #   KG_CONFIG       the hydra config (default kg_uncapped)
 #   GEN_OVERRIDES   extra hydra overrides, space-separated (a measurement knob such as
 #                   `adapters.single_pass_chunk_budget_mb=256`); default none
+#   GEN_IMAGE       the prebuilt generation image the conductor resolved
+#                   (`tc-neo4j-gen:<sha12>`, torchcell.knowledge_graphs.generation_image):
+#                   the container starts straight into the generator, no pip stage.
+#                   The task re-reads the tag's commit label and REFUSES when it is not
+#                   BUILD_COMMIT, so a removed or re-tagged image never silently serves
+#                   another commit and never falls back on the install. Unset (the
+#                   conductor's `install` mode) runs the three pip installs in the task.
 #   DEV_DATA_ROOT, BUILD_ROOT, SERVE_ROOT, IMAGE as in the live rebuild
 
 source ~/miniconda3/etc/profile.d/conda.sh
@@ -91,6 +98,7 @@ case "$INCLUDE_PRIVATE" in
 esac
 KG_ORGANISMS="${KG_ORGANISMS:-scerevisiae,ecoli,pputida}"
 GEN_OVERRIDES="${GEN_OVERRIDES:-}"
+GEN_IMAGE="${GEN_IMAGE:-}"
 BUILD_COMMIT="${BUILD_COMMIT:-$(git -C "$TORCHCELL_SRC" rev-parse origin/main)}"
 PIP_REF="git+https://github.com/Mjvolk3/torchcell.git@$BUILD_COMMIT"
 OUTDIR="$BUILD_ROOT/database/slurm/output"
@@ -102,7 +110,7 @@ cd "$TORCHCELL_SRC"
 export PYTHONPATH="$TORCHCELL_SRC"
 
 echo "Running on $(hostname) at $(date); array job ${SLURM_ARRAY_JOB_ID:-?} task $INDEX (tier $GEN_TIER: $GEN_CPUS cpus, ${GEN_MEM_GB}G)"
-echo "config $KG_CONFIG; commit $BUILD_COMMIT; dev tree $DEV_DATA_ROOT; out $OUT_HOST; include private $INCLUDE_PRIVATE; organisms $KG_ORGANISMS; overrides '$GEN_OVERRIDES'"
+echo "config $KG_CONFIG; commit $BUILD_COMMIT; dev tree $DEV_DATA_ROOT; out $OUT_HOST; include private $INCLUDE_PRIVATE; organisms $KG_ORGANISMS; overrides '$GEN_OVERRIDES'; image '${GEN_IMAGE:-none, the task installs}'"
 echo "SLURM_CPUS_PER_TASK=${SLURM_CPUS_PER_TASK:-?} SLURM_MEM_PER_NODE=${SLURM_MEM_PER_NODE:-?}"
 
 echo "---------------- 0 PREFLIGHT (task $INDEX)"
@@ -127,6 +135,21 @@ fi
 if ! git -C "$TORCHCELL_SRC" diff --quiet "$BUILD_COMMIT" HEAD -- torchcell biocypher; then
     echo "$TORCHCELL_SRC HEAD differs from $BUILD_COMMIT under torchcell/ or biocypher/"; exit 1
 fi
+# The image the conductor resolved must still exist AND still carry this commit. No
+# install fallback: a task that cannot run the image it was given refuses.
+if [ -n "$GEN_IMAGE" ]; then
+    EXPECT_TAG=$(python -m torchcell.knowledge_graphs.generation_image tag --build-commit "$BUILD_COMMIT")
+    [ "$GEN_IMAGE" = "$EXPECT_TAG" ] || { echo "GEN_IMAGE=$GEN_IMAGE is not the tag of $BUILD_COMMIT ($EXPECT_TAG)"; exit 1; }
+    python -m torchcell.knowledge_graphs.generation_image check --build-commit "$BUILD_COMMIT" \
+        || { echo "$GEN_IMAGE does not carry $BUILD_COMMIT; the conductor resolved it and it is gone or re-tagged"; exit 1; }
+    RUN_IMAGE="$GEN_IMAGE"
+    INSTALL_STAGE=""
+else
+    RUN_IMAGE="$IMAGE"
+    INSTALL_STAGE="python -m pip install --no-cache-dir --force-reinstall --no-deps '$PIP_REF' >/dev/null
+        python -m pip install --no-cache-dir biocypher==0.15.2 >/dev/null
+        python -m pip install --no-cache-dir git+https://github.com/oxpig/CaLM@main >/dev/null"
+fi
 FENCE_NOW="$OUTDIR/${JOB}_dev_fence_now.txt"
 python -m torchcell.knowledge_graphs.generation_array fence --dev-data-root "$DEV_DATA_ROOT" \
     $PRIVATE_FLAG --organisms "$KG_ORGANISMS" > "$FENCE_NOW"
@@ -145,7 +168,7 @@ if [ -d "$OUT_HOST/adapters/$DIRNAME" ]; then
     echo "previous incomplete attempt kept at $ASIDE"
 fi
 
-echo "---------------- 1 GENERATE $DIRNAME in $GEN_CONTAINER $(date)"
+echo "---------------- 1 GENERATE $DIRNAME in $GEN_CONTAINER from $RUN_IMAGE $(date)"
 GEN_LOG="$OUTDIR/${JOB}_generate.log"
 docker run --rm --entrypoint bash --name "$GEN_CONTAINER" \
     --cpus="$GEN_CPUS" -e SLURM_CPUS_PER_TASK="$GEN_CPUS" --memory="${GEN_MEM_GB}g" \
@@ -161,11 +184,9 @@ docker run --rm --entrypoint bash --name "$GEN_CONTAINER" \
     -v "$DEV_DATA_ROOT/torchcell-genomes":/var/lib/neo4j/torchcell-genomes:ro \
     -v "$BUILD_ROOT/database/.env":/.env \
     -v "$BUILD_ROOT/database/biocypher":/var/lib/neo4j/biocypher \
-    "$IMAGE" -c "set -euo pipefail
+    "$RUN_IMAGE" -c "set -euo pipefail
         cd /var/lib/neo4j
-        python -m pip install --no-cache-dir --force-reinstall --no-deps '$PIP_REF' >/dev/null
-        python -m pip install --no-cache-dir biocypher==0.15.2 >/dev/null
-        python -m pip install --no-cache-dir git+https://github.com/oxpig/CaLM@main >/dev/null
+        $INSTALL_STAGE
         python -c \"import importlib.resources as r, sys; p = r.files('torchcell').joinpath('knowledge_graphs/conf/${KG_CONFIG}.yaml'); sys.exit(0 if p.is_file() else 1)\" \
             || { echo '${KG_CONFIG}.yaml is not in the installed torchcell'; exit 1; }
         set -a; source /.env; set +a

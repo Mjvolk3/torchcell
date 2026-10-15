@@ -17,6 +17,14 @@
 # order and fence, or one adapter for a measurement run into a new one).
 # GEN_OVERRIDES carries hydra overrides to every task (a measurement knob);
 # DEPENDENCY=afterany:<job> chains the arrays after a job.
+#
+# GEN_IMAGE_MODE (auto by default, or image, or install) decides how every task's
+# container gets its torchcell, and the decision is made HERE, once, before any array
+# is submitted (torchcell.knowledge_graphs.generation_image): `image` builds the tag
+# when it is absent and refuses if it cannot; `install` leaves every task to run the
+# three pip installs itself (255.9 s per task, lane C2 2026-10-15, against 15.8 s on
+# the image path); `auto` takes the image when the tag already exists and the install
+# path otherwise, and prints which. No task ever falls back on its own.
 set -euo pipefail
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate torchcell
@@ -35,6 +43,7 @@ TIERS="${TIERS:-$TORCHCELL_SRC/torchcell/knowledge_graphs/conf/generation_tiers.
 ARRAY_SCRIPT="${ARRAY_SCRIPT:-$TORCHCELL_SRC/database/slurm/scripts/gilahyper_generate_adapter_array-slurm_docker.slurm}"
 DRY_RUN="${DRY_RUN:-0}"
 INDICES="${INDICES:-}"
+GEN_IMAGE_MODE="${GEN_IMAGE_MODE:-auto}"
 JOB_NAME_PREFIX="${JOB_NAME_PREFIX:-gen_adapter}"
 # DEPENDENCY=afterany:<job> chains every array of this submission after a job (a
 # measurement run after the previous one); SBATCH_DEPENDENCY in the environment is
@@ -50,8 +59,32 @@ OUT_HOST="$SERVE_ROOT/biocypher-out/$OUT_NAME"
 cd "$TORCHCELL_SRC"
 export PYTHONPATH="$TORCHCELL_SRC"
 GA="python -m torchcell.knowledge_graphs.generation_array"
+GI="python -m torchcell.knowledge_graphs.generation_image"
 
 echo "conductor: out $OUT_HOST; commit $BUILD_COMMIT; organisms $KG_ORGANISMS; include private $INCLUDE_PRIVATE; config $KG_CONFIG; overrides '$GEN_OVERRIDES'; dry run $DRY_RUN; indices '${INDICES:-all}'"
+
+# The image decision, before any submission. `ensure` builds the tag when it is absent
+# (about 4 min cold, free on the layer cache for the same commit, so a re-run of failed
+# tasks pays no image time) and the tasks then start straight into the generator.
+GEN_IMAGE=""
+case "$GEN_IMAGE_MODE" in
+    install) echo "image mode install: every task installs torchcell at $BUILD_COMMIT itself" ;;
+    image|auto)
+        RESOLVED=$($GI resolve --build-commit "$BUILD_COMMIT" --base-image "$IMAGE" --mode "$GEN_IMAGE_MODE" | grep -E '^RESOLVED_MODE=' | cut -d= -f2)
+        [ -n "$RESOLVED" ] || { echo "$GI resolve printed no RESOLVED_MODE"; exit 1; }
+        echo "image mode $GEN_IMAGE_MODE resolved to $RESOLVED"
+        if [ "$RESOLVED" = image ]; then
+            if [ "$DRY_RUN" = 1 ]; then
+                echo "DRY-RUN $GI ensure --build-commit $BUILD_COMMIT --base-image $IMAGE --torchcell-src $TORCHCELL_SRC"
+            else
+                $GI ensure --build-commit "$BUILD_COMMIT" --base-image "$IMAGE" --torchcell-src "$TORCHCELL_SRC"
+            fi
+            GEN_IMAGE=$($GI tag --build-commit "$BUILD_COMMIT")
+            echo "every task runs $GEN_IMAGE"
+        fi
+        ;;
+    *) echo "GEN_IMAGE_MODE must be auto, image or install, got '$GEN_IMAGE_MODE'"; exit 1 ;;
+esac
 if [ -e "$OUT_HOST" ] && [ -z "$INDICES" ]; then
     echo "$OUT_HOST exists; a fresh array takes a new OUT_NAME (INDICES=<ids> re-runs into an existing one)"; exit 1
 fi
@@ -77,5 +110,6 @@ $GA submit --out-name "$OUT_NAME" --out-dir "$OUT_HOST" --script "$ARRAY_SCRIPT"
     $PRIVATE_FLAG --organisms "$KG_ORGANISMS" ${INDICES:+--indices "$INDICES"} \
     --torchcell-src "$TORCHCELL_SRC" --build-commit "$BUILD_COMMIT" --dev-data-root "$DEV_DATA_ROOT" \
     --serve-root "$SERVE_ROOT" --build-root "$BUILD_ROOT" --kg-config "$KG_CONFIG" \
-    ${GEN_OVERRIDES:+--gen-overrides "$GEN_OVERRIDES"} ${TCDB_TAGS:+--tcdb-tags "$TCDB_TAGS"} \
+    ${GEN_OVERRIDES:+--gen-overrides "$GEN_OVERRIDES"} ${GEN_IMAGE:+--gen-image "$GEN_IMAGE"} \
+    ${TCDB_TAGS:+--tcdb-tags "$TCDB_TAGS"} \
     --job-name-prefix "$JOB_NAME_PREFIX" ${DEPENDENCY:+--dependency "$DEPENDENCY"} $([ "$DRY_RUN" = 1 ] && echo --dry-run)

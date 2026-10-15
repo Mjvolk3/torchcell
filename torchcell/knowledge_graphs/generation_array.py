@@ -914,6 +914,7 @@ def _environment_from_args(args: argparse.Namespace) -> dict[str, str]:
         "BUILD_ROOT",
         "KG_CONFIG",
         "GEN_OVERRIDES",
+        "GEN_IMAGE",
         "TCDB_TAGS",
     ):
         value = getattr(args, key.lower(), None)
@@ -950,6 +951,15 @@ def main(argv: list[str] | None = None) -> int:
         p.add_argument("--kg-config", default=None)
         p.add_argument(
             "--gen-overrides", default=None, help="hydra overrides, space-separated"
+        )
+        p.add_argument(
+            "--gen-image",
+            default=None,
+            help=(
+                "the prebuilt generation image tag every task runs "
+                "(torchcell.knowledge_graphs.generation_image); omitted, each task "
+                "installs torchcell itself"
+            ),
         )
         p.add_argument("--tcdb-tags", default=None)
         p.add_argument("--job-name-prefix", default="gen_adapter")

@@ -217,6 +217,51 @@ def test_one_sbatch_per_tier_with_the_tier_sizes_and_the_environment() -> None:
     assert "," not in line.split("--export=")[1].split()[0]
 
 
+def test_the_resolved_generation_image_reaches_every_task_in_the_environment(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """``--gen-image`` is the conductor's resolved tag; it rides the environment.
+
+    The tag is multi-member-free but still goes in the environment with ``--export=ALL``
+    rather than inside ``--export``'s list, as every other value does, and the task
+    re-reads the tag's commit label before it runs (the array script's preflight).
+    """
+    monkeypatch.setattr(
+        ga, "adapter_order", lambda include_private=False, organisms=None: _order()
+    )
+
+    def refuse(*args: Any, **kwargs: Any) -> None:
+        raise AssertionError("sbatch was called by plan")
+
+    monkeypatch.setattr(subprocess, "run", refuse)
+    assert (
+        ga.main(
+            [
+                "plan",
+                "--out-name",
+                "o",
+                "--script",
+                "s",
+                "--gen-image",
+                "tc-neo4j-gen:0123456789ab",
+            ]
+        )
+        == 0
+    )
+    lines = [
+        line
+        for line in capsys.readouterr().out.splitlines()
+        if line.startswith("DRY-RUN")
+    ]
+    assert len(lines) == 3
+    for line in lines:
+        assert "GEN_IMAGE=tc-neo4j-gen:0123456789ab " in line
+        assert "GEN_IMAGE" not in line.split("--export=")[1].split()[0]
+    # Omitted, no task is handed an image and each installs torchcell itself.
+    assert ga.main(["plan", "--out-name", "o", "--script", "s"]) == 0
+    assert "GEN_IMAGE" not in capsys.readouterr().out
+
+
 def test_a_dependency_is_an_explicit_sbatch_argument() -> None:
     """SBATCH_DEPENDENCY in the environment was not honored (jobs 4920/4921)."""
     subs = tier_submissions(

@@ -25,8 +25,9 @@ blocks, each a layout rather than a drawn result; a dashed box is proposed and n
 cell graph transformer as one token placed in front of the gene tokens, which attend to
 it; a public-screen strain is read at its deleted genes, giving a deletion profile, and
 the bAID host, which carries no deletion, is read at the mean over genes, giving growth
-and fitness. A mixture becomes a set of compound tokens, one per inhibitor, each
-modulated by its own log-molar dose, and that is the part nothing has yet run.
+and fitness. A mixture is a set of compound tokens, one per inhibitor: each is read
+alone through the shared head and the readings compose as Bliss independence (rounds
+nine and ten), which is what took the private readout from chance to the rule's level.
 \textbf{The data} \status{todo}\,\fstat{file}: the pooled chemogenomic table over
 \hydnScreens{} screens, \hydnPoolCells{} cells and \hydnPoolCompounds{} compounds across
 \hydnPoolGenes{} genes, of which \hydnPoolCellsWithMolar{} cells carry a molar dose,
@@ -123,7 +124,10 @@ anchors alone: a flat line at the anchors' assumed
 fitness for every inhibitor at every dose, Spearman \hydexTwoOneZeroShotSpearman{}
 against the \hydexTwoOneZeroShotConditions{} observed single-agent conditions. Dashed,
 the model trained on these wells: a fit, Spearman \hydexTwoOneFittedSpearman{}, and
-still nearly flat in dose. \status{todo}\,\fstat{file}
+still nearly flat in dose, because without a dose channel the host reads one value per
+compound. Dash-dot, the same model with the dose offset (round ten): the compound tokens
+stay dose-free and the dose scales the medium offset, so the curve falls with dose,
+Spearman \hydexTwoOneDoseSpearman{} on these wells. \status{todo}\,\fstat{file}
 \textbf{k}, The combinations that grew, observed against the two rules, by number of
 inhibitors. Growth AUROC: Loewe \hydloeweAuroc{}, Bliss \hydblissAuroc{}. Fitness
 Spearman: Bliss \hydblissSpearman{}, Loewe \hydloeweSpearman{}. The fourth bar is the
@@ -132,8 +136,12 @@ over \hydmodelRuns{} runs on \hydmodelFolds{} folds, seeds and machines), which 
 medium one inhibitor at a time through the
 shared head and composes the readings as Bliss independence: its predicted fitness
 falls with the inhibitor count, growth AUROC \hydmodelAuroc{}, fitness Spearman
-\hydmodelGrownSpearman{}. Under mean pooling of the inhibitor tokens the same model read
-one fitness at every count (AUROC 0.535). \status{todo}\,\fstat{file}
+\hydmodelGrownSpearman{}. The fifth bar, lighter, is the same model with the dose
+offset (\hydmodelDoseRuns{} runs): it reads the titration (j) and still composes,
+growth AUROC \hydmodelDoseAuroc{}, fitness Spearman \hydmodelDoseGrownSpearman{}, with
+the fitness at one inhibitor at the observed level and a shallower fall at two and
+three. Under mean pooling of the inhibitor tokens the same model read one fitness at
+every count (AUROC 0.535). \status{todo}\,\fstat{file}
 \textbf{l}, The \hydnIsoboles{} isobole grids as observed fitness, white at none, with
 the cells that grew marked and each rule's front drawn where its predicted fitness
 crosses the growth threshold: Bliss in red, Loewe in purple. Mean observed minus Bliss
@@ -326,11 +334,12 @@ an arm run on both machines contributes both copies.
 its standard deviation, \hydrThreeonegenen{}, \hydrThreetwogenen{} and
 \hydrThreethreegenen{} runs: \hydrThreeonegenemean{}, \hydrThreetwogenemean{} and
 \hydrThreethreegenemean{}, against nested ridge at \hydladderRidge{}. The run spread is
-\hydrThreeonegenesd{} to \hydrThreethreegenesd{}. \status{todo}\,\fstat{partial}
+\hydrThreeonegenesd{} to \hydrThreethreegenesd{}. \status{todo}\,\fstat{file}
 \textbf{b}, The same runs on the wet lab, growth AUROC over the 63 combinations under
 the served call: \hydrThreeonegrowthmean{}, \hydrThreetwogrowthmean{} and
-\hydrThreethreegrowthmean{}, against Loewe at \hydloeweAuroc{}. The seeds 3 to 5 of
-round four are still writing, hence partial. \status{todo}\,\fstat{partial}
+\hydrThreethreegrowthmean{}, against Loewe at \hydloeweAuroc{}. These are the gene
+readout's arms; the same ladder under the Bliss cell readout, at three seeds, is
+\cref{fig:sieight}. \status{todo}\,\fstat{file}
 \textbf{c}, The dose channel, paired: the same arm with the log-molar dose modulation on
 and off, same machine, same folds, one seed; \hydrThreedosepairs{} pairs, FiLM lower on
 \hydrThreedosepairsfilmLower{} of them, and the furfural-grid residual more negative on
@@ -343,14 +352,14 @@ chemistry-feature learner's compound-cold score on the same source (Hoepfner
 \hydrThreesrcwildenhaincgt{} against \hydrThreesrcwildenhainridge{}); and the held-out
 DOSE of a seen Hoepfner compound under FiLM, \hydrThreesrchoepfnerdose{}.
 \status{todo}\,\fstat{file}
-\textbf{e}, The same config at the same seed on the two machines, \hydrThreemachinesn{}
-config-fold pairs: median absolute difference \hydrThreemachinesmedianAbsDiff{}, largest
-\hydrThreemachinesmaxAbsDiff{}, Spearman between the copies
-\hydrThreemachinesspearman{}. That is the run-to-run floor at a fixed seed.
-\status{todo}\,\fstat{file}
+\textbf{e}, The same config at the same seed on the two machines, every round,
+\hydrThreemachinesn{} config-fold pairs: median absolute difference
+\hydrThreemachinesmedianAbsDiff{}, largest \hydrThreemachinesmaxAbsDiff{}, Spearman
+between the copies \hydrThreemachinesspearman{}. That is the run-to-run floor at a
+fixed seed. \status{todo}\,\fstat{file}
 \textbf{f}, The partition: each source-set arm on three fold seeds, one seed, median
 over the folds on file. The single-source arm reads \hydrThreefsoneZero{},
-\hydrThreefsoneOne{} and \hydrThreefsoneTwo{}. \status{todo}\,\fstat{partial}}{fig:sifour}
+\hydrThreefsoneOne{} and \hydrThreefsoneTwo{}. \status{todo}\,\fstat{file}}{fig:sifour}
 
 %% The float is flushed before its source table is set: a deferred float
 %% otherwise lands on the page AFTER the table that describes it.
@@ -365,7 +374,7 @@ a, b & every \file{results/mixture/r3*/*_scores.csv} and \file{r4*/*_scores.csv}
 GilaHyper and \file{results/mixture-delta/r3*/*_scores.csv} pulled from Delta, seed
 members of the arms \file{mix_van_e150}, \file{mix_vanhop_e150} and
 \file{mix_vanhophet_e150}; the ridge bar from the 038 ladder, the Loewe bar from
-\file{mixture_scores.csv}. Status: partial, round four writing. \\
+\file{mixture_scores.csv}. Status: on file. \\
 c & the same files, the \file{_film} arm against its dose-off twin on the folds both have,
 seed 0. Status: on file. \\
 d & the same files, rows whose task is the auxiliary source (\file{heldout_compound},
@@ -373,8 +382,7 @@ d & the same files, rows whose task is the auxiliary source (\file{heldout_compo
 file. \\
 e & the same files, every config and fold scored on both machines at seed 0. Status: on
 file. \\
-f & the same files, the \file{_fs1} and \file{_fs2} arms. Status: partial, the
-three-source arm on fold seeds 1 and 2 is running. \\
+f & the same files, the \file{_fs1} and \file{_fs2} arms. Status: on file. \\
 \bottomrule
 \end{tabular}}
 
@@ -490,5 +498,61 @@ count, every learner-by-encoder row. Status: on file. \\
 b & \file{038/factorized/r9_control/*_scores.csv} and
 \file{038/factorized/r10_envenc/*_scores.csv}, the three-seed ensemble per fold, merged
 on compound, fold and fold seed. Status: on file. \\
+\bottomrule
+\end{tabular}}
+
+\clearpage
+\tcfig{\figSiEight}{\textbf{Supplement eight: round ten, the Bliss cell readout at
+three seeds.} Every arm is three seeds on the three screening folds of fold seed 0,
+read on both machines where it ran on both; the bar is the mean over runs, the whisker
+the standard deviation.
+\textbf{a}, The source ladder on the public side: one source \hydrOneZeroonegenemean{},
+with Hoepfner \hydrOneZerohopgenemean{}, with Hillenmeyer \hydrOneZerohetgenemean{}, with
+Wildenhain \hydrOneZerowilgenemean{}, three \hydrOneZerothreegenemean{}, four
+\hydrOneZerofourgenemean{}, run spreads \hydrOneZeroonegenesd{} to \hydrOneZerofourgenesd{}, against
+nested ridge at \hydladderRidge{}. No public screen lifts the target, and the order is
+more sources, lower, inside one spread. \status{todo}\,\fstat{file}
+\textbf{b}, The same arms on the wet lab, growth AUROC over the 63 combinations: the
+fitted ladder reads \hydrOneZeroonegrowthmean{} to \hydrOneZerofourgrowthmean{} and does not
+move with sources; the zero-shot ladder (anchors only, never a titration well) reads
+\hydrOneZerozsOnegrowthmean{}, \hydrOneZerozsTwogrowthmean{} and \hydrOneZerozsThreegrowthmean{} on
+one, two and three sources, every value above the Bliss rule on the measured singles
+(\hydblissAuroc{}) and the last at Loewe's (\hydloeweAuroc{}). Three runs per arm; the
+steps are inside one spread, so this is a measured ordering rather than a cleared
+difference. \status{todo}\,\fstat{file}
+\textbf{c}, The dose channel: each arm's growth AUROC (dark) beside the Spearman of its
+host prediction against the 180 titration wells (light), a fit for the arms trained on
+the titration and a prediction for the zero-shot arms. FiLM on the tokens reads the
+titration at \hydrOneZerodosefilmtitration{} and composes at \hydrOneZerodosefilmauroc{}; the
+dose offset reads it at \hydrOneZerodosedofftitration{} and composes at
+\hydrOneZerodosedoffauroc{}, against \hydrOneZerodoseoffauroc{} with no channel; the titration
+fine-tune with FiLM reads \hydrOneZerodosefttitration{} and composes at
+\hydrOneZerodoseftauroc{}. Zero-shot, no channel reads the titration, and the dose offset
+composes at \hydrOneZerodosezsDoffauroc{}. \status{todo}\,\fstat{file}
+\textbf{d}, What the Bliss arms predict on the public screens they learn from, the
+held-out compound score per source over every round-ten arm that carries it: Hoepfner
+\hydrOneZerosrchoepfnercgt{} against \hydrOneZerosrchoepfnerridge{}, Hillenmeyer
+\hydrOneZerosrchillenmeyercgt{} against \hydrOneZerosrchillenmeyerridge{}, Wildenhain
+\hydrOneZerosrcwildenhaincgt{} against \hydrOneZerosrcwildenhainridge{}; the held-out Hoepfner
+dose under FiLM, \hydrOneZerosrchoepfnerdose{}. The screens are not learned at a held-out
+compound, so a screen could not have helped the target at one.
+\status{todo}\,\fstat{file}}{fig:sieight}
+
+\clearpage
+
+{\footnotesize\noindent
+\begin{tabular}{@{}p{8mm}p{168mm}@{}}
+\toprule
+\multicolumn{2}{@{}l}{\textbf{Sources for \cref{fig:sieight}}} \\
+\midrule
+a, b & \file{results/mixture-delta/r10*/*_scores.csv} pulled from Delta and
+\file{results/mixture/r9*/*_scores.csv} on GilaHyper (the seed-0 copies of the one-
+and three-source Bliss arms), seed members on fold seed 0; the ridge bar from the 038
+ladder, the Loewe bar from \file{mixture_scores.csv}. Status: on file. \\
+c & the same files, the \file{ex23} growth AUROC and the \file{ex21} all-wells fitness
+Spearman of the seven dose arms. Status: on file. \\
+d & the same files, rows whose task is the auxiliary source (\file{heldout_compound};
+\file{heldout_dose} of \file{mix_vanhop_e150_cell_bliss_film_dose}); the
+chemistry-feature bars from \file{source_basis.csv}. Status: on file. \\
 \bottomrule
 \end{tabular}}

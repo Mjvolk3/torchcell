@@ -1704,3 +1704,36 @@ W&B, the 040a project, one run per new arm:
 - zero-shot, three sources: https://wandb.ai/zhao-group/torchcell_040a-inhibitor-synergy-cell/runs/76uly8o1
 - Bliss, all four sources: https://wandb.ai/zhao-group/torchcell_040a-inhibitor-synergy-cell/runs/i4b97a21
 - Bliss, van + Hoepfner: https://wandb.ai/zhao-group/torchcell_040a-inhibitor-synergy-cell/runs/hmhyld9s
+
+## 2026.10.15 - The gate's figures, second pass: round 10 on the sheets
+
+A pass over every sheet of the gate after round 10, in `figure_gate_panels.py` and
+`sections/2-mockups.tex`.
+
+- **The main sheet carries the dose offset.** Panel j draws a third model curve,
+  dash-dot, the fitted Bliss arm with the dose offset, whose single-agent curves fall
+  with dose (titration Spearman 0.890 on the 180 wells) where the two older curves
+  are flat; panel k gets a fifth, lighter bar for the same arm (growth AUROC 0.849,
+  grown Spearman 0.466, fitness at one inhibitor at the observed level and a
+  shallower fall after); panel l draws its front dash-dot beside the dose-free
+  model's dotted one, and on the furfural grid it is the first model front that
+  runs diagonally through the grid rather than along an edge. The dose-free Bliss
+  arm stays the headline model (19 runs, AUROC 0.861).
+- **Panel i** lost the in-panel GO sentence, which sat on the bars at every corner
+  it was moved to; the shared-term count is in the caption. Panel e's title was
+  shortened so it no longer runs under panel f's axis label. Panel k's annotation
+  is four short lines above the bars.
+- **The concept sheet** no longer calls the mixture-as-a-set-of-tokens box
+  "proposed, not run": it is the Bliss composition of rounds 9 and 10, drawn solid
+  in the model color.
+- **Supplement four** reads every round into its machine panel (116 config-fold
+  pairs on both machines, median absolute difference 0.065) and its statuses are on
+  file now that round 4 and the fold-seed twins are complete; its source ladder
+  stays the gene readout's.
+- **Supplement eight is new**: round 10 at three seeds. (a) the source ladder under
+  Bliss at the gene level, one to four sources against ridge; (b) the same arms on
+  the wet lab with the zero-shot ladder below, 0.914 / 0.938 / 0.948 on one, two,
+  three sources against Loewe; (c) the seven dose arms, growth AUROC beside the
+  titration Spearman, what the channel buys and what it costs; (d) the held-out
+  public compound and dose scores of the Bliss arms against the chemistry-feature
+  learners. The gate is 32 pages, 0 errors.

@@ -160,6 +160,16 @@ SRC_ORDER = ["measured", "bliss", "loewe", "hsa", "mean", "ridge", "cgt", "contr
 #: and pack suffixes a sweep name carries
 MODEL_ARM = "van_e150_cell_bliss"
 ZERO_SHOT_ARM = "van_e150_cell_anchors_bliss"
+#: the fitted model with the dose offset (round 10): the compound tokens stay
+#: dose-free and the dose scales the medium offset, so it is the one arm of the
+#: sheet whose single-agent curve moves with dose
+DOSE_ARM = "van_e150_cell_bliss_doff"
+#: (arm, line style, legend label, number tag) of the three models on the sheet
+SHEET_MODELS = [
+    (ZERO_SHOT_ARM, ":", "model, anchors only (never saw a single)", "ZeroShot"),
+    (MODEL_ARM, "--", "model trained on these singles (a fit)", "Fitted"),
+    (DOSE_ARM, "-.", "the same, with the dose offset (a fit)", "Dose"),
+]
 
 
 def host_arm_of(sweep: str) -> str:
@@ -419,16 +429,19 @@ class Reads:
         return out.rename(columns={"fold": "folds", "machine": "runs"})
 
     def round_scores(self) -> pd.DataFrame:
-        """Every round-3 and round-4 score row, on this machine and pulled from Delta.
+        """Every score row of rounds three to ten, on this machine and pulled from
+        Delta.
 
         ``results/mixture/`` holds the GilaHyper runs, ``results/mixture-delta/`` the
         Delta runs' tables; the same config at the same seed was run on both for
-        twenty-two arms, and the ``machine`` column is what tells them apart. ``arm``
-        is the config name without its fold and seed suffixes.
+        most arms, and the ``machine`` column is what tells them apart. ``arm`` is
+        the config name without its fold and seed suffixes, so the seed twins of one
+        arm (``_s12``, ``_s345``) fold into it and the fold-seed twins (``_fs1``) do
+        not.
         """
         frames = []
         for machine, sub in (("gilahyper", "mixture"), ("delta", "mixture-delta")):
-            for d in sorted(glob.glob(osp.join(R040, sub, "r[34]*"))):
+            for d in sorted(glob.glob(osp.join(R040, sub, "r[0-9]*"))):
                 if "smoke" in d:
                     continue
                 t = self.folds(d)
@@ -919,10 +932,9 @@ def fig_concept(R: Reads) -> dict[str, str]:
         66,
         36,
         33,
-        "a mixture is a SET of\ncompound tokens, each\nmodulated by its own\nlog-molar dose\n(proposed, not run)",
-        GRAY,
+        "a mixture is a SET of\ncompound tokens: each is\nread alone through the head\nand the readings compose\nas Bliss (rounds 9 and 10)",
+        SRC_COLOR["cgt"],
         "white",
-        dashed=True,
     )
 
     ax.text(2, 60, "the data", fontsize=5.6, style="italic", ha="left", va="center")
@@ -1448,7 +1460,7 @@ def draw_cgt_vs_ridge(ax: Any, R: Reads) -> None:
         num("pairedUp", int((delta > 0).sum()))
     bars(ax, data, "median centered Spearman, compound-cold", 0.40, step=0.1)
     ax.tick_params(axis="y", labelsize=4.4)
-    title(ax, "which model predicts an unseen compound's profile")
+    title(ax, "an unseen compound's profile, by model")
 
 
 def draw_curve(ax: Any, R: Reads, both_targets: bool = False) -> None:
@@ -1735,17 +1747,8 @@ def draw_profiles(ax: Any, R: Reads) -> None:
     num("goPredictedTermsStore", int(go.n_sig_predicted.fillna(0).max()))
     bars(ax, data, "centered Spearman against the measured", 0.9, step=0.2, xmin=-0.2)
     ax.tick_params(axis="y", labelsize=4.4)
-    ax.text(
-        0.98,
-        0.5,
-        "GO terms shared by the measured\nand the predicted profile, "
-        f"either compound: {shared}",
-        transform=ax.transAxes,
-        ha="right",
-        va="center",
-        fontsize=4.2,
-        zorder=5,
-    )
+    # the shared-term count is stated in the caption (goSharedTermsStore); drawn in
+    # the panel it sat on the bars at every corner
     title(ax, "the predicted profile against the measured")
 
 
@@ -1778,7 +1781,7 @@ def draw_single_agents(ax: Any, R: Reads) -> None:
             alpha=0.85,
             zorder=2,
         )
-    for sweep, style in ((ZERO_SHOT_ARM, ":"), (MODEL_ARM, "--")):
+    for sweep, style, _label, tag in SHEET_MODELS:
         h = R.host_mean(sweep)
         h = h[(h.run == "ex21") & (h.n_compounds == 1)]
         for ab in INHIB:
@@ -1803,7 +1806,6 @@ def draw_single_agents(ax: Any, R: Reads) -> None:
                 pd.Series(singles.observed.to_numpy()), method="spearman"
             )
         )
-        tag = "ZeroShot" if sweep == ZERO_SHOT_ARM else "Fitted"
         num(f"ex21{tag}Spearman", rho)
         num(f"ex21{tag}Conditions", int(len(singles)))
     num("nEx21Fits", int((R.fits.source == "ex21").sum()))
@@ -1826,22 +1828,17 @@ def draw_single_agents(ax: Any, R: Reads) -> None:
                 linewidth=0.5,
                 label="Hill fit, one curve per inhibitor",
             ),
-            Line2D(
-                [],
-                [],
-                color=SRC_COLOR["cgt"],
-                linewidth=0.5,
-                linestyle=":",
-                label="model, anchors only (never saw a single)",
-            ),
-            Line2D(
-                [],
-                [],
-                color=SRC_COLOR["cgt"],
-                linewidth=0.5,
-                linestyle="--",
-                label="model trained on these singles (a fit)",
-            ),
+            *[
+                Line2D(
+                    [],
+                    [],
+                    color=SRC_COLOR["cgt"],
+                    linewidth=0.5,
+                    linestyle=style,
+                    label=label,
+                )
+                for _arm, style, label, _tag in SHEET_MODELS
+            ],
         ],
         ncol=1,
     )
@@ -1851,46 +1848,52 @@ def draw_single_agents(ax: Any, R: Reads) -> None:
 def draw_combinations(ax: Any, R: Reads) -> None:
     """Panel k: the combinations observed against Bliss and Loewe, by size."""
     comb = R.mix_comb[(R.mix_comb.call == "served") & (R.mix_comb.grew)].copy()
-    # the model's prediction per combination, joined on the set of compounds
-    h = R.host_mean(MODEL_ARM)
-    h = h[h.run == "ex23"]
-    by_set = {
-        frozenset(c.split("|")): float(v) for c, v in zip(h.compounds, h.predicted)
-    }
-    comb["model"] = [
-        by_set.get(frozenset(c.split("|")), float("nan")) for c in comb.combination
-    ]
+    # each model's prediction per combination, joined on the set of compounds: the
+    # fitted Bliss-composed model (dark) and the same with the dose offset (light)
+    for arm, column, tag in (
+        (MODEL_ARM, "model", ""),
+        (DOSE_ARM, "model_dose", "Dose"),
+    ):
+        h = R.host_mean(arm)
+        h = h[h.run == "ex23"]
+        by_set = {
+            frozenset(c.split("|")): float(v) for c, v in zip(h.compounds, h.predicted)
+        }
+        comb[column] = [
+            by_set.get(frozenset(c.split("|")), float("nan")) for c in comb.combination
+        ]
+        all_ex23 = h[h.n_compounds >= 1]
+        num(
+            f"model{tag}Auroc",
+            float(roc_auc_score(all_ex23.grew.astype(bool), all_ex23.predicted)),
+        )
+        num(
+            f"model{tag}GrownSpearman",
+            float(
+                pd.Series(comb[column].to_numpy()).corr(
+                    pd.Series(comb.observed_grown_mean.to_numpy()), method="spearman"
+                )
+            ),
+        )
+        num(f"model{tag}Folds", int(h.folds.iloc[0]))
+        num(f"model{tag}Runs", int(h.runs.iloc[0]))
     sizes = sorted(comb.n_compounds.unique())
-    width = 0.2
+    width = 0.16
     x = np.arange(len(sizes))
     series = [
-        ("observed_grown_mean", "measured"),
-        ("bliss_ex23", "bliss"),
-        ("loewe_ex21", "loewe"),
-        ("model", "cgt"),
+        ("observed_grown_mean", SRC_COLOR["measured"]),
+        ("bliss_ex23", SRC_COLOR["bliss"]),
+        ("loewe_ex21", SRC_COLOR["loewe"]),
+        ("model", SRC_COLOR["cgt"]),
+        ("model_dose", SRC_FILL["cgt"]),
     ]
-    all_ex23 = h[h.n_compounds >= 1]
-    num(
-        "modelAuroc",
-        float(roc_auc_score(all_ex23.grew.astype(bool), all_ex23.predicted)),
-    )
-    num(
-        "modelGrownSpearman",
-        float(
-            pd.Series(comb.model.to_numpy()).corr(
-                pd.Series(comb.observed_grown_mean.to_numpy()), method="spearman"
-            )
-        ),
-    )
-    num("modelFolds", int(h.folds.iloc[0]))
-    num("modelRuns", int(h.runs.iloc[0]))
-    for j, (col, src) in enumerate(series):
+    for j, (col, color) in enumerate(series):
         means = [float(comb[comb.n_compounds == s][col].mean()) for s in sizes]
         ax.bar(
-            x + (j - 1.5) * width,
+            x + (j - 2) * width,
             means,
             width=width,
-            color=SRC_COLOR[src],
+            color=color,
             edgecolor="black",
             linewidth=0.4,
             zorder=2,
@@ -1912,15 +1915,17 @@ def draw_combinations(ax: Any, R: Reads) -> None:
     ax.set_xticklabels([str(int(s)) for s in sizes])
     ax.set_xlabel("inhibitors in the combination")
     ax.set_ylabel("fitness over the combinations that grew")
-    ax.set_ylim(0, 1.18)
+    ax.set_ylim(0, 1.3)
     vgrid(ax, 0.2)
     ax.text(
         0.98,
-        0.95,
-        f"growth AUROC: Loewe {loewe.auroc:.3f}, Bliss {bliss.auroc:.3f}, "
-        f"model {NUM['modelAuroc']:.3f}\n"
-        f"fitness Spearman: Bliss {bliss.spearman:.3f}, Loewe {loewe.spearman:.3f}, "
-        f"model {NUM['modelGrownSpearman']:.3f}",
+        0.97,
+        f"growth AUROC: Loewe {loewe.auroc:.3f}, Bliss {bliss.auroc:.3f}\n"
+        f"model {NUM['modelAuroc']:.3f}, with the dose offset "
+        f"{NUM['modelDoseAuroc']:.3f}\n"
+        f"fitness Spearman: Bliss {bliss.spearman:.3f}, Loewe {loewe.spearman:.3f}\n"
+        f"model {NUM['modelGrownSpearman']:.3f}, with the dose offset "
+        f"{NUM['modelDoseGrownSpearman']:.3f}",
         transform=ax.transAxes,
         ha="right",
         va="top",
@@ -1998,41 +2003,48 @@ def draw_isoboles(ax: Any, R: Reads) -> None:
                     linestyle=style,
                     zorder=5,
                 )
-        # The model's front: its predicted fitness per cell against the same growth
+        # Each model's front: its predicted fitness per cell against the same growth
         # threshold, then the monotone closure (growth never returns as either dose
         # rises), so the front is read on the rules' own axis; the cells the closure
-        # drops are the predicted surface's growth islands.
-        hp = R.host_mean(MODEL_ARM)
-        hp = hp[hp.run == run]
-        grid = np.full((len(doses_y), len(doses_x)), np.nan)
+        # drops are the predicted surface's growth islands. Dotted, the fitted model;
+        # dash-dot, the same with the dose offset, whose singles move with dose.
         inhibitor = [p for p in srow["pair"].split("|") if p != "acetic acid"][0]
-        for _, r in hp.iterrows():
-            names = [n for n in r.compounds.split("|") if n]
-            gl = [float(v) for v in r.g_per_l.split("|") if v]
-            dose = dict(zip(names, gl, strict=True))
-            xi, yi = dose.get(inhibitor, 0.0), dose.get("acetic acid", 0.0)
-            if xi in doses_x and yi in doses_y:
-                grid[doses_y.index(yi), doses_x.index(xi)] = r.predicted
-        alive = np.where(np.isnan(grid), False, grid >= tau)
-        closed = monotone_alive(alive)
-        num(
-            f"isobole{macro_name(run.capitalize())}ModelIslands",
-            int(alive.sum() - closed.sum()),
-        )
-        num(
-            f"isobole{macro_name(run.capitalize())}ModelCells",
-            int(np.isfinite(grid).sum()),
-        )
-        mx = [
-            x0 + int(np.max(np.where(closed[j])[0])) + 1.0
-            for j in range(len(doses_y))
-            if closed[j].any()
-        ]
-        my = [j + 0.5 for j in range(len(doses_y)) if closed[j].any()]
-        if mx:
-            ax.plot(
-                mx, my, color=SRC_COLOR["cgt"], linewidth=0.8, linestyle=":", zorder=5
+        for arm, style, tag in ((MODEL_ARM, ":", ""), (DOSE_ARM, "-.", "Dose")):
+            hp = R.host_mean(arm)
+            hp = hp[hp.run == run]
+            grid = np.full((len(doses_y), len(doses_x)), np.nan)
+            for _, r in hp.iterrows():
+                names = [n for n in r.compounds.split("|") if n]
+                gl = [float(v) for v in r.g_per_l.split("|") if v]
+                dose = dict(zip(names, gl, strict=True))
+                xi, yi = dose.get(inhibitor, 0.0), dose.get("acetic acid", 0.0)
+                if xi in doses_x and yi in doses_y:
+                    grid[doses_y.index(yi), doses_x.index(xi)] = r.predicted
+            alive = np.where(np.isnan(grid), False, grid >= tau)
+            closed = monotone_alive(alive)
+            num(
+                f"isobole{macro_name(run.capitalize())}Model{tag}Islands",
+                int(alive.sum() - closed.sum()),
             )
+            num(
+                f"isobole{macro_name(run.capitalize())}Model{tag}Cells",
+                int(np.isfinite(grid).sum()),
+            )
+            mx = [
+                x0 + int(np.max(np.where(closed[j])[0])) + 1.0
+                for j in range(len(doses_y))
+                if closed[j].any()
+            ]
+            my = [j + 0.5 for j in range(len(doses_y)) if closed[j].any()]
+            if mx:
+                ax.plot(
+                    mx,
+                    my,
+                    color=SRC_COLOR["cgt"],
+                    linewidth=0.8,
+                    linestyle=style,
+                    zorder=5,
+                )
         parts = [LONG_TO_ABBR.get(p, p) for p in srow["pair"].split("|")]
         label = " x ".join(INHIB_NAME.get(p, p) for p in reversed(parts))
         flag = "\n(flagged)" if isinstance(srow["flag"], str) and srow["flag"] else ""
@@ -2081,6 +2093,14 @@ def draw_isoboles(ax: Any, R: Reads) -> None:
                 linewidth=0.8,
                 linestyle=":",
                 label="model front (monotone closure)",
+            ),
+            Line2D(
+                [],
+                [],
+                color=SRC_COLOR["cgt"],
+                linewidth=0.8,
+                linestyle="-.",
+                label="the same with the dose offset",
             ),
             Line2D(
                 [],
@@ -3015,24 +3035,52 @@ def draw_dose_pairs(ax: Any, R: Reads) -> None:
     title(ax, "the dose channel costs the growth call: paired, same folds", n)
 
 
-def draw_per_source(ax: Any, R: Reads) -> None:
+#: the arms of the gene readout (rounds three to five) that carry each public screen,
+#: and the arms of the Bliss cell readout (round ten) that do
+GENE_SOURCE_ARMS = {
+    "hoepfner_hop": ("mix_vanhop_e150", "mix_vanhophet_e150"),
+    "hillenmeyer_het": ("mix_vanhophet_e150",),
+    "wildenhain": ("mix_vanwil_e150", "mix_vanhophetwil_e150"),
+}
+BLISS_SOURCE_ARMS = {
+    "hoepfner_hop": (
+        "mix_vanhop_e150_cell_bliss",
+        "mix_vanhophet_e150_cell_bliss",
+        "mix_vanhophetwil_e150_cell_bliss",
+        "mix_vanhop_e150_cell_anchors_bliss",
+        "mix_vanhophet_e150_cell_anchors_bliss",
+        "mix_vanhop_e150_cell_bliss_doff",
+    ),
+    "hillenmeyer_het": (
+        "mix_vanhet_e150_cell_bliss",
+        "mix_vanhophet_e150_cell_bliss",
+        "mix_vanhophetwil_e150_cell_bliss",
+        "mix_vanhophet_e150_cell_anchors_bliss",
+    ),
+    "wildenhain": ("mix_vanwil_e150_cell_bliss", "mix_vanhophetwil_e150_cell_bliss"),
+}
+
+
+def draw_per_source(
+    ax: Any,
+    R: Reads,
+    plain: dict[str, tuple[str, ...]] = GENE_SOURCE_ARMS,
+    prefix: str = "r3",
+    dose_arms: tuple[str, ...] | None = None,
+) -> None:
     """What the transformer predicts on the public screens it learns from.
 
-    For each auxiliary source, the held-out COMPOUND score of the plain arms that carry
-    it (centered Spearman, mean over runs), beside the chemistry-feature learner's
-    compound-cold score on the same source from ``source_basis.csv``; for Hoepfner also
-    the held-out DOSE score of the FiLM dose arms.
+    For each auxiliary source, the held-out COMPOUND score of the ``plain`` arms that
+    carry it (centered Spearman, mean over runs), beside the chemistry-feature
+    learner's compound-cold score on the same source from ``source_basis.csv``; for
+    Hoepfner also the held-out DOSE score of the FiLM dose arms (every arm with the
+    readout, or ``dose_arms``). Numbers are written under ``prefix``.
     """
     d = R.rounds[
         R.rounds.member.str.startswith("seed")
         & (R.rounds.metric == "centered_spearman_median")
     ]
     basis = R.basis.set_index("source")
-    plain = {
-        "hoepfner_hop": ("mix_vanhop_e150", "mix_vanhophet_e150"),
-        "hillenmeyer_het": ("mix_vanhophet_e150",),
-        "wildenhain": ("mix_vanwil_e150", "mix_vanhophetwil_e150"),
-    }
     names = {
         "hoepfner_hop": "Hoepfner HOP",
         "hillenmeyer_het": "Hillenmeyer HET",
@@ -3050,8 +3098,8 @@ def draw_per_source(ax: Any, R: Reads) -> None:
             (d.task == source) & (d.subset == "heldout_compound") & d.arm.isin(arms)
         ].value
         tag = source.split("_")[0]
-        num(f"r3_src_{tag}_cgt", float(v.mean()))
-        num(f"r3_src_{tag}_cgt_n", int(len(v)))
+        num(f"{prefix}_src_{tag}_cgt", float(v.mean()))
+        num(f"{prefix}_src_{tag}_cgt_n", int(len(v)))
         data.append(
             (
                 f"{names[source]}, transformer (n = {len(v)})",
@@ -3062,9 +3110,14 @@ def draw_per_source(ax: Any, R: Reads) -> None:
             )
         )
         if source == "hoepfner_hop":
-            w = d[(d.task == source) & (d.subset == "heldout_dose")].value
-            num("r3_src_hoepfner_dose", float(w.mean()))
-            num("r3_src_hoepfner_dose_n", int(len(w)))
+            w = d[(d.task == source) & (d.subset == "heldout_dose")]
+            if dose_arms is not None:
+                w = w[w.arm.isin(dose_arms)]
+            else:
+                w = w[~w.arm.str.contains("bliss")]
+            w = w.value
+            num(f"{prefix}_src_hoepfner_dose", float(w.mean()))
+            num(f"{prefix}_src_hoepfner_dose_n", int(len(w)))
             data.append(
                 (
                     f"Hoepfner HOP, held-out DOSE, FiLM arms (n = {len(w)})",
@@ -3075,7 +3128,7 @@ def draw_per_source(ax: Any, R: Reads) -> None:
                 )
             )
         ridge = float(basis.loc[basis_row[source], "spearman_median"])
-        num(f"r3_src_{tag}_ridge", ridge)
+        num(f"{prefix}_src_{tag}_ridge", ridge)
         data.append(
             (
                 f"{names[source]}, {basis.loc[basis_row[source], 'best_model']} on {basis.loc[basis_row[source], 'best_features']}",
@@ -3185,11 +3238,182 @@ def fig_si4(R: Reads) -> dict[str, str]:
     draw_machines(axes[4], R)
     draw_fold_seeds(axes[5], R)
     sheet_legend(fig, ["loewe", "ridge", "cgt"], hatch=False, ncol=3)
-    letters_status(
-        fig, axes, ["partial", "partial", "ready", "ready", "ready", "partial"]
-    )
+    letters_status(fig, axes, ["ready", "ready", "ready", "ready", "ready", "ready"])
     status_key(fig)
     return save(fig, "gate_si4_rounds")
+
+
+#: round ten, the Bliss cell readout: the source ladder, the zero-shot ladder and
+#: the dose arms, (arm, label, number tag)
+BLISS_LADDER = [
+    ("mix_van_e150_cell_bliss", "one source: Vanacloig", "one"),
+    ("mix_vanhop_e150_cell_bliss", "two: with Hoepfner HOP", "hop"),
+    ("mix_vanhet_e150_cell_bliss", "two: with Hillenmeyer HET", "het"),
+    ("mix_vanwil_e150_cell_bliss", "two: with Wildenhain", "wil"),
+    ("mix_vanhophet_e150_cell_bliss", "three: Hoepfner and Hillenmeyer", "three"),
+    ("mix_vanhophetwil_e150_cell_bliss", "four: every public screen", "four"),
+]
+ZERO_SHOT_LADDER = [
+    ("mix_van_e150_cell_anchors_bliss", "zero-shot, one source", "zsOne"),
+    ("mix_vanhop_e150_cell_anchors_bliss", "zero-shot, two: Hoepfner", "zsTwo"),
+    ("mix_vanhophet_e150_cell_anchors_bliss", "zero-shot, three", "zsThree"),
+]
+DOSE_ARMS = [
+    ("mix_van_e150_cell_bliss", "no dose channel (the model)", "off"),
+    ("mix_van_e150_cell_bliss_film", "dose FiLM on the tokens", "film"),
+    ("mix_van_e150_cell_bliss_doff", "dose offset", "doff"),
+    ("mix_van_e150_cell_ft_bliss_film", "FiLM, titration fine-tune", "ft"),
+    ("mix_van_e150_cell_anchors_bliss", "zero-shot, no dose channel", "zsOff"),
+    ("mix_van_e150_cell_anchors_bliss_film", "zero-shot, FiLM", "zsFilm"),
+    ("mix_van_e150_cell_anchors_bliss_doff", "zero-shot, dose offset", "zsDoff"),
+]
+
+
+def draw_bliss_ladder(ax: Any, R: Reads, readout: str) -> None:
+    """Supplement eight, a and b: the source ladder under the Bliss cell readout.
+
+    Every run on fold seed 0 (three seeds on three folds per arm, on both machines
+    where an arm ran on both): the bar is the mean over runs, the whisker its
+    standard deviation, the count on the label. ``gene`` reads the compound-cold
+    centered Spearman against nested ridge; ``growth`` the growth AUROC over the 63
+    combinations, with the zero-shot ladder below the fitted one and Loewe as the bar.
+    """
+    if readout == "gene":
+        d = round_runs(
+            R, "vanacloig", "test_compounds", "centered_spearman_median", None
+        )
+        ladder = BLISS_LADDER
+        bar_label, bar_value, bar_src = (
+            "nested ridge on FCFP4 counts",
+            float(NUM["ladderRidge"]),
+            "ridge",
+        )
+        xlabel, xmax = "compound-cold centered Spearman (fold seed 0)", 0.6
+    else:
+        d = round_runs(R, "ex23", "combinations", "growth_auroc", "served")
+        ladder = BLISS_LADDER + ZERO_SHOT_LADDER
+        bar_label, bar_value, bar_src = (
+            "Loewe from the titration fits",
+            float(NUM["loeweAuroc"]),
+            "loewe",
+        )
+        xlabel, xmax = "growth AUROC over the 63 combinations", 1.0
+    d = d[d.fold_seed == 0]
+    data: list[tuple[str, Any, Any, str, bool]] = []
+    for arm, label, tag in ladder:
+        v = d[d.arm == arm].value
+        num(f"r10_{tag}_{readout}_mean", float(v.mean()))
+        num(f"r10_{tag}_{readout}_sd", float(v.std(ddof=1)))
+        num(f"r10_{tag}_{readout}_n", int(len(v)))
+        data.append(
+            (
+                f"{label} (n = {len(v)})",
+                float(v.mean()),
+                float(v.std(ddof=1)),
+                "cgt",
+                False,
+            )
+        )
+    data.append((bar_label, bar_value, None, bar_src, False))
+    bars(ax, data, xlabel, xmax)
+    title(
+        ax,
+        "under Bliss: "
+        + (
+            "the source ladder at the gene level"
+            if readout == "gene"
+            else "the same arms on the wet lab"
+        ),
+    )
+
+
+def draw_dose_arms(ax: Any, R: Reads) -> None:
+    """Supplement eight, c: the dose channel under Bliss, every arm at three seeds.
+
+    Two bars per arm: the growth AUROC over the 63 combinations (dark) and the
+    Spearman of the host's prediction against the 180 titration wells (light), which
+    is a fit for the arms trained on the titration and a prediction for the zero-shot
+    arms; both mean over runs on fold seed 0 with the standard deviation.
+    """
+    auroc = round_runs(R, "ex23", "combinations", "growth_auroc", "served")
+    titr = R.rounds[
+        (R.rounds.task == "ex21")
+        & (R.rounds.subset == "all_wells")
+        & R.rounds.metric.str.startswith("fitness_spearman")
+        & R.rounds.member.str.startswith("seed")
+    ]
+    y = np.arange(len(DOSE_ARMS))[::-1]
+    h = 0.36
+    for yi, (arm, _label, tag) in zip(y, DOSE_ARMS):
+        a = auroc[(auroc.arm == arm) & (auroc.fold_seed == 0)].value
+        t = titr[(titr.arm == arm) & (titr.fold_seed == 0)].value
+        num(f"r10_dose_{tag}_auroc", float(a.mean()))
+        num(f"r10_dose_{tag}_titration", float(t.mean()))
+        num(f"r10_dose_{tag}_n", int(len(a)))
+        for offset, v, color in (
+            (h / 2, a, SRC_COLOR["cgt"]),
+            (-h / 2, t, SRC_FILL["cgt"]),
+        ):
+            ax.barh(
+                yi + offset,
+                float(v.mean()),
+                xerr=float(v.std(ddof=1)),
+                height=h,
+                color=color,
+                edgecolor="black",
+                linewidth=0.4,
+                error_kw={"elinewidth": 0.5, "capsize": 1.2, "ecolor": "black"},
+                zorder=2,
+            )
+    ax.set_yticks(y)
+    ax.set_yticklabels(
+        [f"{label} (n = {NUM[f'r10_dose_{tag}_n']})" for _a, label, tag in DOSE_ARMS]
+    )
+    ax.set_ylim(-0.6, len(DOSE_ARMS) - 0.4)
+    ax.set_xlim(-0.4, 1.0)
+    ax.axvline(0.0, color="black", linewidth=0.4, zorder=3)
+    ax.axvline(
+        float(NUM["loeweAuroc"]), color=SRC_COLOR["loewe"], linewidth=0.8, zorder=1
+    )
+    ax.set_xlabel("growth AUROC (dark) and titration Spearman (light), mean over runs")
+    hgrid(ax, 0.2)
+    handles = [
+        Patch(
+            facecolor=SRC_COLOR["cgt"],
+            edgecolor="black",
+            linewidth=0.4,
+            label="growth AUROC over the 63 combinations",
+        ),
+        Patch(
+            facecolor=SRC_FILL["cgt"],
+            edgecolor="black",
+            linewidth=0.4,
+            label="Spearman against the 180 titration wells",
+        ),
+        Line2D([], [], color=SRC_COLOR["loewe"], linewidth=0.8, label="Loewe"),
+    ]
+    n = panel_legend(ax, handles, ncol=1)
+    title(ax, "the dose channel under Bliss: what it buys and what it costs", n)
+
+
+def fig_si8(R: Reads) -> dict[str, str]:
+    """Supplement eight: round ten, the Bliss cell readout at three seeds."""
+    fig = new_sheet(118)
+    fig.get_layout_engine().set(rect=(0, 0.012, 1, 0.94))
+    axes = rows(fig, 2, 2)
+    draw_bliss_ladder(axes[0], R, "gene")
+    draw_bliss_ladder(axes[1], R, "growth")
+    draw_dose_arms(axes[2], R)
+    draw_per_source(
+        axes[3],
+        R,
+        plain=BLISS_SOURCE_ARMS,
+        prefix="r10",
+        dose_arms=("mix_vanhop_e150_cell_bliss_film_dose",),
+    )
+    sheet_legend(fig, ["loewe", "ridge", "cgt"], hatch=False, ncol=3)
+    letters_status(fig, axes, ["ready", "ready", "ready", "ready"])
+    return save(fig, "gate_si8_round10")
 
 
 #: the chemistry encoders of the 038 ladder, by family: what each embeds a compound as
@@ -3524,6 +3748,7 @@ def main() -> None:
     figures["si5"] = newest_svg("r3_convergence")
     figures["si6"] = newest_svg("r3_arms_overview")
     figures["si7"] = fig_si7(R)
+    figures["si8"] = fig_si8(R)
     conv = R.convergence.set_index(["arm", "source"])
     for arm, source, tag in (
         ("mix_van_e150", "vanacloig", "Van"),

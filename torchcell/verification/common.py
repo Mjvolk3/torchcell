@@ -58,6 +58,11 @@ from typing import Any, Protocol
 
 from pydantic import BaseModel, Field
 
+from torchcell.verification.construct_placement import (
+    ADDITION_PERTURBATION_TYPES,
+    construct_placement_census,
+    construct_placement_result,
+)
 from torchcell.verification.report import Level, LevelResult
 from torchcell.verification.sourced import ProvenanceGapCensus, ProvenanceGapReason
 
@@ -314,6 +319,8 @@ class SharedRecordRules:
         self._gene_records: Counter[str] = Counter()
         self._n_records_off_genome = 0
 
+        self._additions: list[Mapping[str, Any]] = []
+
         self._env_memo = _IdentityMemo()
         self._media_memo = _IdentityMemo()
         self._media_dumps = media_library_dumps()
@@ -328,6 +335,7 @@ class SharedRecordRules:
         experiment = record["experiment"]
         self._add_gaps(experiment)
         self._add_gene_names(experiment)
+        self._add_placements(experiment)
         self._add_uncertainty(experiment["phenotype"])
         self._add_environment(experiment["environment"])
 
@@ -371,6 +379,21 @@ class SharedRecordRules:
         self._census.n_records += 1
         if self._census.n_gaps > n_gaps_before:
             self._census.n_records_with_gaps += 1
+
+    def _add_placements(self, experiment: Mapping[str, Any]) -> None:
+        """Keep the addition perturbations this record carries, for the placement row.
+
+        Only the addition leaves (``ADDITION_PERTURBATION_TYPES``) are kept, and only
+        the perturbation mappings themselves, which the census reads field by field. A
+        deletion-only store keeps nothing and emits no row.
+        """
+        genotype = experiment.get("genotype") or {}
+        for perturbation in genotype.get("perturbations") or []:
+            if (
+                str(perturbation.get("perturbation_type"))
+                in ADDITION_PERTURBATION_TYPES
+            ):
+                self._additions.append(perturbation)
 
     def _add_gene_names(self, experiment: Mapping[str, Any]) -> None:
         genotype = experiment.get("genotype") or {}
@@ -507,9 +530,21 @@ class SharedRecordRules:
             *self._compound_identity_results(),
             self._media_result(),
         ]
+        if self._additions:
+            out.append(self._construct_placement_result())
         if self.sgd_genes is not None:
             out.extend(self._gene_containment_results(self.sgd_genes))
         return out
+
+    def _construct_placement_result(self) -> LevelResult:
+        """L1 report-class: how many additions are sequence-backed, placed, or gapped.
+
+        Emitted only when the store HAS gene additions, so the 23 stores with none keep
+        the row set they had. Report-class by the standing rule: its subject is the
+        record compared with OUR construct references, so it is listed under the verdict
+        with its statistic and never fails the store.
+        """
+        return construct_placement_result(construct_placement_census(self._additions))
 
     def census(self) -> CarrierGapCensus:
         """The finished gap + silent-None census."""

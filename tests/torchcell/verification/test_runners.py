@@ -76,6 +76,7 @@ from torchcell.datamodels.schema import (
     Genotype,
     HeterologousPathwayPerturbation,
     KanMxDeletionPerturbation,
+    Localization,
     MeasurementType,
     Media,
     MetaboliteExperiment,
@@ -124,6 +125,7 @@ from torchcell.verification.report import (
     Provenance,
     VerificationReport,
 )
+from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
 Record = dict[str, Any]
 PROV = Provenance(source_uri="test://synthetic", citation_key="runnersTest2026")
@@ -2662,15 +2664,28 @@ def test_run_fitness_refuses_a_dataset_pinned_to_two_hosts(
 KT2440_NAMESPACE: Literal["pputida_kt2440_locus_tag"] = "pputida_kt2440_locus_tag"
 
 
+#: P4: ``GeneAdditionPerturbation.placement`` is required with no default and gap-able,
+#: so a fixture that points at no deposited construct states the typed absence.
+def _placement_gap() -> ProvenanceGap:
+    """The typed absence of a construct sequence, for a fixture's leaf."""
+    return ProvenanceGap(
+        field="placement",
+        reason=ProvenanceGapReason.not_released_by_primary,
+        note="the fixture's leaf points at no deposited construct",
+    )
+
+
 def _pathway_perturbation(token: str, organism: str) -> HeterologousPathwayPerturbation:
     return HeterologousPathwayPerturbation(
         systematic_gene_name=token,
         perturbed_gene_name=token,
         source_organism=organism,
         is_heterologous=True,
-        localization="plasmid",
+        localization=Localization.episomal_replicon,
         gene_namespace=KT2440_NAMESPACE,
         pathway_name="isoprenol via mevalonate",
+        placement=None,
+        provenance_gaps=[_placement_gap()],
     )
 
 

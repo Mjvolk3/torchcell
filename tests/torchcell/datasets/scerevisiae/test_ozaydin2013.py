@@ -29,8 +29,9 @@ pinned in ``test_ozaydin2013_synthetic.py`` and not repeated here. Added:
 - the medium (issue #622, 2026.10.02): the sourced ``OZAYDIN_SC_URA_AGAR`` plate (the
   library ``SC_URA`` made solid, agar amount an open gap), no longer a free-text stub;
 - the YB/I/BTS1 cassette written out field by field in stored order (the sibling file
-  compares against ``_carotenogenic_cassette()`` itself), with ``plasmid_contig_id``,
-  ``locus_tag`` and ``integration_locus`` None as a Finding (no plasmid sequence store);
+  compares against ``_carotenogenic_cassette()`` itself), with ``placement`` a typed
+  ``ProvenanceGap`` and ``integration_locus`` None (P4, 2026.10.15: the paper deposits
+  no map and names a JBEI registry handle, so the absence is stated, not silent);
 - ``main()`` under a stubbed ``load_dotenv`` and a ``tmp_path`` ``DATA_ROOT``.
 """
 
@@ -394,13 +395,16 @@ def test_cassette_is_three_episomal_additions_without_a_sequence_pointer(
 ) -> None:
     """Record 0's genotype is the YAL001C deletion plus BTS1 = YPL069C (a native extra
     copy) and crtI and crtYB (heterologous, from *Xanthophyllomyces dendrorhous*), all
-    ``episomal_2micron`` on construct ``YB/I/BTS1``, written out here field by field.
-    ``Genotype`` stores perturbations sorted by systematic name, uppercase before
-    lowercase, so the order is YAL001C, YPL069C, crtI, crtYB.
+    on construct ``YB/I/BTS1``, written out here field by field. ``Genotype`` stores
+    perturbations sorted by systematic name, uppercase before lowercase, so the order is
+    YAL001C, YPL069C, crtI, crtYB.
 
-    Finding: ``plasmid_contig_id``, ``locus_tag`` and ``integration_locus`` are None on
-    all three additions; the plasmid is physical-only (Euroscarf P30796) and the
-    plasmid sequence store has not landed. Pinned until it does.
+    P4 (2026.10.15): ``localization`` is the typed ``episomal_replicon`` and the paper's
+    own word for the backbone, ``YEplac195``, is the verbatim ``replicon_statement``;
+    the former ``episomal_2micron`` token asserted a replicon class this paper never
+    writes. ``placement`` is ``None`` beside a ``ProvenanceGap`` reading
+    ``not_released_by_primary``: the plasmid is a JBEI registry deposit with no released
+    sequence, so the absence is a counted statement rather than a silent None.
     """
     perturbations = dataset[0]["experiment"]["genotype"]["perturbations"]
     assert [
@@ -418,8 +422,9 @@ def test_cassette_is_three_episomal_additions_without_a_sequence_pointer(
             p["is_heterologous"],
             p["localization"],
             p["construct_name"],
-            p["plasmid_contig_id"],
-            p["locus_tag"],
+            p["replicon_statement"],
+            p["placement"],
+            [gap["field"] for gap in p["provenance_gaps"]],
             p["integration_locus"],
         )
         for p in perturbations[1:]
@@ -428,30 +433,33 @@ def test_cassette_is_three_episomal_additions_without_a_sequence_pointer(
             "BTS1",
             "Saccharomyces cerevisiae",
             False,
-            "episomal_2micron",
+            "episomal_replicon",
             "YB/I/BTS1",
+            "YEplac195",
             None,
-            None,
+            ["placement"],
             None,
         ),
         (
             "crtI",
             "Xanthophyllomyces dendrorhous",
             True,
-            "episomal_2micron",
+            "episomal_replicon",
             "YB/I/BTS1",
+            "YEplac195",
             None,
-            None,
+            ["placement"],
             None,
         ),
         (
             "crtYB",
             "Xanthophyllomyces dendrorhous",
             True,
-            "episomal_2micron",
+            "episomal_replicon",
             "YB/I/BTS1",
+            "YEplac195",
             None,
-            None,
+            ["placement"],
             None,
         ),
     ]

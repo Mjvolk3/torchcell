@@ -69,6 +69,15 @@ LANE_ROOTS: dict[str, tuple[str, ...]] = {
         # zygosity, whole-chromosome copy changes, manipulation.
         "NaturalIsolateDescriptor",
         "ChromosomeCopyChange",
+        # Where added DNA sits (P4, 2026-10-15): the construct contig a gene addition
+        # points at, the host site an integration landed at, and a designed allele as a
+        # coordinate on that contig. The genotype lane, because each one qualifies what
+        # the edit PUT IN the cell rather than how the record was made.
+        "ConstructPlacement",
+        "HostPlacement",
+        "ConstructVariantCall",
+        "ConstructSpan",
+        "FeatureKey",
     ),
     "environment": (
         "Environment",

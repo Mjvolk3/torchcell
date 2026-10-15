@@ -374,6 +374,8 @@ def test_an_origin_spanning_span_is_not_the_same_shape_as_a_join() -> None:
     wrap = ConstructSpan(
         parts=parts, composition=SpanComposition.origin_spanning, orientation="inline"
     )
+    # the named constructor builds the same span from the replicon's own length
+    assert wrap == ConstructSpan.across_origin(11559, 12096, 128, "inline")
     assert wrap.length == 666
     assert wrap.part_token == "wrap:11559-12096,1-128"
     assert wrap.insdc_location(compact_wrap=True) == "11559..128"

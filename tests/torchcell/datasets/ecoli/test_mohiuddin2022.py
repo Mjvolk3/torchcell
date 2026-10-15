@@ -293,7 +293,8 @@ def test_the_genotype_is_one_episomal_promoter_reporter() -> None:
     (perturbation,) = genotype.perturbations
     assert isinstance(perturbation, HeterologousPathwayPerturbation)
     assert perturbation.promoter_name == "thrA"
-    assert perturbation.localization == "episomal_plasmid"
+    assert perturbation.localization == "episomal_replicon"
+    assert perturbation.replicon_statement == "low-copy-number plasmid"
     assert perturbation.is_heterologous is True
     assert perturbation.systematic_gene_name == m.REPORTER_GENE == "gfp"
     assert perturbation.construct_name is None

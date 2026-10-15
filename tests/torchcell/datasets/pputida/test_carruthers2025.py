@@ -178,7 +178,7 @@ def test_the_five_pathway_genes_carry_the_verbatim_plasmid_tokens_and_their_orga
     }
     for pert in by_token.values():
         assert pert.is_heterologous is True
-        assert pert.localization == "episomal_plasmid"
+        assert pert.localization == "episomal_replicon"
         assert pert.construct_name == "pIY670"
         assert pert.copy_number == 1.0
         assert pert.gene_namespace == "pputida_kt2440_locus_tag"

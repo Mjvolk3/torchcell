@@ -326,7 +326,7 @@ def test_screen_writes_gene_set_and_build_manifest(
         text=True,
         check=True,
     ).stdout.strip()
-    assert manifest["manifest_schema_version"] == 2
+    assert manifest["manifest_schema_version"] == 3
     assert manifest["dataset_name"] == "isobutanol_screen_lopez2024"
     assert manifest["loader_class"] == "IsobutanolScreenLopez2024Dataset"
     assert manifest["loader_module"] == "torchcell.datasets.scerevisiae.lopez2024"

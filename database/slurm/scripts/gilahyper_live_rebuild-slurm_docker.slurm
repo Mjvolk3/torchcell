@@ -406,10 +406,22 @@ lanes = mapped_store_lanes(sys.argv[1], include_private=sys.argv[2] == "1", orga
 unserved = [s.describe() for s in lanes if s.blocks]
 if unserved:
     print("\n".join(unserved), file=sys.stderr); sys.exit(1)
+# The content-id check (lane V, 2026-10-15): every fresh manifest also carries
+# content_id_collisions, the records whose Experiment dump another record of the same
+# store shares, measured over every record at build time. The sink keeps one node per
+# id, so such a record is in the LMDB and absent from the graph with no error anywhere
+# -- four served datasets and 65 records were in that state. A nonzero count passes
+# only where the dataset declares it in EXPECTED_CONTENT_ID_COLLISIONS as a source that
+# printed one measurement twice.
+from torchcell.database.build_dataset_lmdb import mapped_store_collisions
+collisions = mapped_store_collisions(sys.argv[1], include_private=sys.argv[2] == "1", organisms=parse_organisms(sys.argv[3]))
+undeclared = [s.describe() for s in collisions if s.blocks]
+if undeclared:
+    print("\n".join(undeclared), file=sys.stderr); sys.exit(1)
 print(len(statuses))
 EOF
 )
-echo "$N_DATASETS mapped datasets ($KG_ORGANISMS), every dev store fresh and every perturbation leaf served by its conf's lanes"
+echo "$N_DATASETS mapped datasets ($KG_ORGANISMS), every dev store fresh, every perturbation leaf served by its conf's lanes and every content-id collision declared"
 # The freshness check above is point-in-time, and generation then reads the dev tree for
 # hours. Nothing stops a HOST process from rebuilding a store underneath it: the
 # container's mounts are read-only, but `build_dataset_lmdb --retire-existing` renames

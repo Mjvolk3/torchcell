@@ -301,7 +301,11 @@ _HOT_ENVIRONMENT = Environment(
 
 
 def _experiment(
-    gene: str, locus: str, environment: Environment, allele: str | None = None
+    gene: str,
+    locus: str,
+    environment: Environment,
+    allele: str | None = None,
+    pubmed_id: str = "111",
 ) -> dict[str, Any]:
     perturbation: SgaKanMxDeletionPerturbation | NamedAllelePerturbation
     if allele is None:
@@ -320,7 +324,7 @@ def _experiment(
         genotype=Genotype(perturbations=[perturbation]),
         environment=environment,
         phenotype=GeneEssentialityPhenotype(
-            is_essential=True, evidence=m.sgd_evidence("classical genetics")
+            is_essential=True, evidence=m.sgd_evidence("classical genetics", pubmed_id)
         ),
     ).model_dump()
 
@@ -347,18 +351,18 @@ def test_one_record_per_annotation_in_file_order(
     is viable in that same environment.
     """
     assert len(dataset) == 7
-    expected: list[tuple[str, str, Environment, str | None]] = [
-        ("YAL001C", "TFC3", _NO_CONDITION_ENVIRONMENT, None),
-        ("YCR001W", "YCR001W", _NO_CONDITION_ENVIRONMENT, None),
-        ("YCR001W", "YCR001W", _NO_CONDITION_ENVIRONMENT, None),
-        ("YDR001C", "ATG9", _NITROGEN_ENVIRONMENT, None),
-        ("YDR001C", "ATG9", _NITROGEN_ENVIRONMENT, "atg9-K12A"),
-        ("YDR001C", "ATG9", _NITROGEN_ENVIRONMENT, "atg9Δ10-20"),
-        ("YEL001C", "YEL001C", _HOT_ENVIRONMENT, None),
+    expected: list[tuple[str, str, Environment, str | None, str]] = [
+        ("YAL001C", "TFC3", _NO_CONDITION_ENVIRONMENT, None, "111"),
+        ("YCR001W", "YCR001W", _NO_CONDITION_ENVIRONMENT, None, "222"),
+        ("YCR001W", "YCR001W", _NO_CONDITION_ENVIRONMENT, None, "333"),
+        ("YDR001C", "ATG9", _NITROGEN_ENVIRONMENT, None, "444"),
+        ("YDR001C", "ATG9", _NITROGEN_ENVIRONMENT, "atg9-K12A", "444"),
+        ("YDR001C", "ATG9", _NITROGEN_ENVIRONMENT, "atg9Δ10-20", "444"),
+        ("YEL001C", "YEL001C", _HOT_ENVIRONMENT, None, "111"),
     ]
-    for index, (gene, locus, environment, allele) in enumerate(expected):
+    for index, (gene, locus, environment, allele, pubmed_id) in enumerate(expected):
         assert dataset[index]["experiment"] == _experiment(
-            gene, locus, environment, allele
+            gene, locus, environment, allele, pubmed_id
         )
         assert dataset[index]["reference"] == _reference(environment)
     named = dataset[4]["experiment"]["genotype"]["perturbations"][0]
@@ -746,14 +750,22 @@ def test_stored_items_retype_through_the_essentiality_classes(
         }
 
 
-def test_publication_is_outside_the_content_hash_so_repeat_annotations_collapse(
+def test_two_annotations_of_one_gene_under_different_references_are_two_nodes(
     dataset: m.GeneEssentialitySgdDataset,
 ) -> None:
-    """The KG node id of an experiment is the sha256 of its JSON dump, and the stored
-    experiment carries no publication. The two YCR001W records differ only in their
-    publication (PubMed 222 and 333), so they map to one node id; the three ATG9
-    records (the deletion and two named alleles) and the 37 C record are their own
-    nodes.
+    """The KG node id of an experiment is the sha256 of its JSON dump, so every record
+    that is its own measurement must dump to its own id. The two YCR001W records are two
+    curated annotations of one allele from two different papers (PubMed 222 and 333), so
+    they are two measurements and two nodes, and the reference each rests on is on the
+    evidence as ``curated_reference_pubmed_id``.
+
+    Until lane V (2026-10-15) the PubMed id was only on the record's ``Publication``,
+    which the experiment dump does not carry, so the two dumped identically and the
+    graph kept ONE Experiment node with two Publication nodes pointing at it. On the
+    real pinned dump that cost 18 of 1,329 curated annotations, in a dataset served by
+    KG 3.0. This test is that regression: it read ``ids[1] == ids[2]`` and
+    ``len(set(ids)) == 6`` before the fix, and the two YCR001W records now differ in
+    exactly the one field.
     """
     ids = [
         hashlib.sha256(
@@ -763,8 +775,17 @@ def test_publication_is_outside_the_content_hash_so_repeat_annotations_collapse(
         ).hexdigest()
         for i in range(len(dataset))
     ]
-    assert ids[1] == ids[2]
-    assert len(set(ids)) == 6
+    assert ids[1] != ids[2]
+    assert len(set(ids)) == len(dataset) == 7
+    dumps = [dataset[i]["experiment"] for i in (1, 2)]
+    assert [
+        d["phenotype"]["evidence"]["curated_reference_pubmed_id"] for d in dumps
+    ] == ["222", "333"]
+    assert [dataset[i]["publication"]["pubmed_id"] for i in (1, 2)] == ["222", "333"]
+    # the reference is the whole difference between the two records
+    for dump in dumps:
+        dump["phenotype"]["evidence"]["curated_reference_pubmed_id"] = None
+    assert dumps[0] == dumps[1]
 
 
 def test_unset_data_root_refuses_the_build(
@@ -867,10 +888,11 @@ def test_sgd_evidence_is_the_curated_null_phenotype_with_its_experiment_type() -
     and the annotation's experiment type on an experiment only. The loader's own allele
     rule (#901) is not SGD's, so the evidence does not carry it.
     """
-    evidence = m.sgd_evidence("systematic mutation set")
+    evidence = m.sgd_evidence("systematic mutation set", "12140549")
     assert evidence.evidence_type is EssentialityEvidenceType.curated_null_phenotype
     assert evidence.evidence_class is EssentialityEvidenceClass.curated_annotation
     assert evidence.curated_experiment_type == "systematic mutation set"
+    assert evidence.curated_reference_pubmed_id == "12140549"
     assert evidence.scoring_rule is m.SGD_SCORING_RULE
     assert evidence.scoring_rule.value == {
         "observable": "inviable",
@@ -886,19 +908,26 @@ def test_sgd_evidence_is_the_curated_null_phenotype_with_its_experiment_type() -
         "engelNewDataCollaborations2022"
     }
     assert m.sgd_evidence().curated_experiment_type is None
+    assert m.sgd_evidence().curated_reference_pubmed_id is None
 
 
 def test_a_stored_record_carries_its_annotations_experiment_type(
     dataset: m.GeneEssentialitySgdDataset,
 ) -> None:
-    """Every fixture annotation is 'classical genetics'; the reference states none."""
+    """Every fixture annotation is 'classical genetics' and carries its own reference's
+    PubMed id; the reference phenotype, on which no call was curated, states neither.
+    """
     for index in range(len(dataset)):
         item = dataset[index]
         evidence = item["experiment"]["phenotype"]["evidence"]
         assert evidence["curated_experiment_type"] == "classical genetics"
         assert evidence["evidence_type"] == "curated_null_phenotype"
+        assert (
+            evidence["curated_reference_pubmed_id"] == item["publication"]["pubmed_id"]
+        )
         reference = item["reference"]["phenotype_reference"]["evidence"]
         assert reference["curated_experiment_type"] is None
+        assert reference["curated_reference_pubmed_id"] is None
 
 
 @pytest.mark.data

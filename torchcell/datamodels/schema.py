@@ -6879,7 +6879,10 @@ ESSENTIALITY_EVIDENCE_FIELDS: dict[EssentialityEvidenceType, tuple[str, ...]] = 
         "false_discovery_rate_lower",
         "false_discovery_rate_upper",
     ),
-    EssentialityEvidenceType.curated_null_phenotype: ("curated_experiment_type",),
+    EssentialityEvidenceType.curated_null_phenotype: (
+        "curated_experiment_type",
+        "curated_reference_pubmed_id",
+    ),
     EssentialityEvidenceType.tnseq_hmm_state: (
         "hmm_state",
         "ta_sites",
@@ -6944,6 +6947,13 @@ class GeneEssentialityEvidence(ProvenanceGapMixin):
     ``call_definition`` (what a True call means), any ``caveat`` the source states about
     its own calls, and the ``statistic_definition`` of each statistic the record
     carries. Only what the source states about its own method goes here.
+
+    A curated call is the one family whose evidence names its own report. A curation
+    database makes no measurement of its own, so what a ``curated_null_phenotype``
+    record rests on is one annotation of one reference, and
+    ``curated_reference_pubmed_id`` says which. That is not the record's
+    ``Publication``, the citation of the stored record; it is a constituent of the call,
+    and it is what tells two annotations of one gene apart (lane V, 2026-10-15).
 
     The per-record statistics are OPTIONAL BY CONSTRUCTION, because each belongs to one
     evidence type (:data:`ESSENTIALITY_EVIDENCE_FIELDS`) and is refused on any other:
@@ -7064,6 +7074,18 @@ class GeneEssentialityEvidence(ProvenanceGapMixin):
         default=None,
         description="curated_null_phenotype: the annotation's SGD experiment type, "
         "verbatim ('classical genetics', 'systematic mutation set')",
+    )
+    curated_reference_pubmed_id: str | None = Field(
+        default=None,
+        description="curated_null_phenotype: the PubMed id of the reference the "
+        "annotation was curated from, verbatim. A curated call rests on one report, so "
+        "which report it is IS part of the evidence, and it is what makes two "
+        "annotations of one gene two measurements: SGD curates 17 (gene, allele, "
+        "condition) groups of the pinned dump from 2 or 3 different papers each (MRS6 "
+        "from PubMed 7750142, 8132658 and 7882424), and without this field those 35 "
+        "annotations dumped to 17 experiments and the graph held one Experiment node "
+        "per group with 2 or 3 Publication nodes pointing at it (lane V, 2026-10-15). "
+        "None on a reference phenotype, where no call was curated",
     )
     # tnseq_hmm_state (Royet 2025 Table S4, #909)
     hmm_state: HmmEssentialityState | None = Field(

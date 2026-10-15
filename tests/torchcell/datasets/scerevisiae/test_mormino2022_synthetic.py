@@ -568,8 +568,15 @@ def test_download_links_the_verified_mirror_and_refuses_drift_or_absence(
     ).resolve()
     assert (root / "raw" / mo.PAPER_MD).resolve() == (mirror / "paper.md").resolve()
     assert len(built) == 12
+    # The expectations are rebuilt HERE, not reused from the module-level ``_EXPECTED``:
+    # this test rebinds ``PAPER_MD_SHA256`` to the synthetic page's digest, and the P4
+    # placement gap pins that constant in its ``looked_in``, so a record built under the
+    # patch carries the synthetic digest while an import-time expectation carries the
+    # real one. Rebuilding keeps the comparison about the records and not about which
+    # digest was in scope when the module was imported.
+    expected = [_experiment(common, rfp) for _, rfp, _, common in mo.TABLE_1]
     assert [built[i]["experiment"] for i in range(12)] == [
-        e.model_dump() for e in _EXPECTED
+        e.model_dump() for e in expected
     ]
     built.close_lmdb()
 

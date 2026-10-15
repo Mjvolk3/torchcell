@@ -814,7 +814,7 @@ def test_the_pathway_perturbations_are_the_five_plasmid_genes() -> None:
     assert len(pathway) == len(PATHWAY_GENES)
     assert {p.construct_name for p in pathway} == {"pIY670"}
     assert all(p.is_heterologous for p in pathway)
-    assert all(p.localization == "episomal_plasmid" for p in pathway)
+    assert all(p.localization == "episomal_replicon" for p in pathway)
     assert all(p.gene_namespace == ds.KT2440_NAMESPACE for p in pathway)
     assert {p.systematic_gene_name for p in pathway} == {
         str(gene["token"]) for gene in PATHWAY_GENES

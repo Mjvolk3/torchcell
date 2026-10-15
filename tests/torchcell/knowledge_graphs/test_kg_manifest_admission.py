@@ -1181,7 +1181,11 @@ def test_cli_bootstrap_then_show(
     assert capsys.readouterr().out == (
         f"bootstrapped 1 datasets (organisms scerevisiae) -> {path}\n"
     )
-    assert km.load_manifest(path).model_dump() == _bootstrap(toy).model_dump()
+    # the CLI records how the CSVs were generated (serial without --merge-report)
+    expected = _bootstrap(toy).model_copy(
+        update={"generation": km.GenerationRecord(mode="serial")}
+    )
+    assert km.load_manifest(path).model_dump() == expected.model_dump()
     assert [d.auth for d in drivers] == [("reader", "secret")] * 2
 
     assert _cli(toy, path, "show") == 0

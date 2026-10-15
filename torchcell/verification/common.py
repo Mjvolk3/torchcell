@@ -63,6 +63,9 @@ from torchcell.verification.construct_placement import (
     construct_placement_census,
     construct_placement_result,
 )
+from torchcell.verification.perturbation_families import (
+    ALLELE_BEARING_PERTURBATION_TYPES as _ALLELE_BEARING_PERTURBATION_TYPES,
+)
 from torchcell.verification.report import Level, LevelResult
 from torchcell.verification.sourced import ProvenanceGapCensus, ProvenanceGapReason
 
@@ -256,16 +259,11 @@ def _compound_verdict(
     return "name_only"
 
 
-ALLELE_BEARING_PERTURBATION_TYPES: frozenset[str] = frozenset(
-    {
-        "allele",
-        "damp",
-        "suppressor_allele",
-        "temperature_sensitive_allele",
-        "sequence_variant",
-    }
-)
-"""Perturbation types whose perturbed_gene_name carries an allele designation."""
+#: Perturbation types whose ``perturbed_gene_name`` carries an allele designation. The
+#: set and its complement live in :mod:`torchcell.verification.perturbation_families`,
+#: where a test holds the two to the ``GenePerturbationType`` union, so a new leaf cannot
+#: be judged by the common-name rules just because nobody remembered this list.
+ALLELE_BEARING_PERTURBATION_TYPES = _ALLELE_BEARING_PERTURBATION_TYPES
 
 
 class SharedRecordRules:

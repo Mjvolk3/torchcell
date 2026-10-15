@@ -56,6 +56,39 @@ ECOLI_K12_MG1655: Final = "ecoli_K12_MG1655_ASM584v2"
 #: inline terms and NCBI's GAF; MG1655's GAF is referenced by the ``ECOLI_K12_MG1655``
 #: id, never copied, and which source a loader reads is still open.
 ECOLI_K12_BW25113: Final = "ecoli_K12_BW25113_ASM75055v1"
+#: BW25113's background genotype, VERBATIM from the ``/note`` qualifier of the ``source``
+#: feature of ``GCA_000750555.1_ASM75055v1_genomic.gbff.gz`` in the
+#: ``ecoli_K12_BW25113_ASM75055v1`` set above. The full qualifier reads "from B. L.
+#: Wanner laboratory; genotype: rrnB3 lacZ4787 hsdR514 (araBAD)567 (rhaBAD)568 rph-1";
+#: this constant is the genotype clause of it. It lives in the genomes tier and not in
+#: ``torchcell/datamodels/schema.py`` because it is DATA about one deposited assembly set
+#: and not a record contract: a strain constant in the schema surface means every future
+#: host adds a data binding to the most sensitive file in the database, and the
+#: fingerprinted closure of every loader that reaches it moves when the string does.
+#: Its provenance is the tier file, whose sha256 ``resolve`` verifies on every call, so
+#: the string has provenance without a paper quote and
+#: ``tests/torchcell/sequence/genome/test_registry.py`` re-reads it from those bytes.
+BW25113_BACKGROUND_GENOTYPE: Final = (
+    "rrnB3 lacZ4787 hsdR514 (araBAD)567 (rhaBAD)568 rph-1"
+)
+#: The same genotype split into its six lesion designations, each verbatim. Deliberately
+#: NOT expanded into ``BacterialBackgroundAllele`` records here: the ``/note`` gives each
+#: lesion's DESIGNATION and nothing else, while an allele record also asserts an edit
+#: kind, a functional status and a locus. Three of the six name a gene BW25113's own
+#: annotation still carries (measured: lacZ at BW25113_0344, hsdR at BW25113_4350, rph at
+#: BW25113_3643) and the two operon deletions name genes it does NOT annotate at all
+#: (araB, araA, rhaB, rhaA are absent, which is what being deleted looks like), so
+#: mapping those to a locus would mean borrowing MG1655 b-numbers -- the cross-strain
+#: inference this plan refuses. The loader that needs the typed alleles sources the edit
+#: kinds from the BW25113 construction paper and records which lesion it mapped how.
+BW25113_BACKGROUND_LESIONS: tuple[str, ...] = (
+    "rrnB3",
+    "lacZ4787",
+    "hsdR514",
+    "(araBAD)567",
+    "(rhaBAD)568",
+    "rph-1",
+)
 #: E. coli B REL606 (the Lenski long-term evolution ancestor), NCBI assembly ASM1798v1
 #: (GCA_000017985.1 / GCF_000017985.1, replicon CP000819.1 / NC_012967.1): ``ECB_``
 #: locus tags. A B strain, not K-12, so neither K-12 set stands in for it. No GO

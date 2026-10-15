@@ -209,8 +209,6 @@ from torchcell.datamodels.media import M9_NREL_MOPS_MENASALVAS2025
 from torchcell.datamodels.schema import (
     AssayType,
     BacterialGeneNamespace,
-    BacterialVariantCall,
-    BacterialVariantType,
     Concentration,
     ConcentrationUnit,
     CrisprConstruct,
@@ -223,6 +221,7 @@ from torchcell.datamodels.schema import (
     EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
+    GenomeVariantCall,
     Genotype,
     HeterologousPathwayPerturbation,
     Localization,
@@ -243,6 +242,7 @@ from torchcell.datamodels.schema import (
     SmallMoleculePerturbation,
     VariantCallMode,
     VariantSiteKind,
+    VariantType,
 )
 from torchcell.datasets.bacteria_common import (
     LocusTagReconciliation,
@@ -2783,7 +2783,7 @@ class CalledVariant(BaseModel):
     annotation: str
     gene: str
     product: str
-    variant_type: BacterialVariantType
+    variant_type: VariantType
     #: True where the released change spans more than one base, which is why the call's
     #: ``position_end`` is a typed absence rather than a computed coordinate.
     is_multibase: bool
@@ -2794,7 +2794,7 @@ class CalledVariant(BaseModel):
     flanking_statements: tuple[str, ...]
 
 
-def classify_mutation(cell: str) -> tuple[BacterialVariantType, bool]:
+def classify_mutation(cell: str) -> tuple[VariantType, bool]:
     """``(variant type, spans more than one base)`` of one released ``mutation`` cell.
 
     Decided by the cell's own shape, with no default branch: an unseen form stops the
@@ -2802,26 +2802,22 @@ def classify_mutation(cell: str) -> tuple[BacterialVariantType, bool]:
     rises and a deletion when it falls, which is what the two numbers state.
     """
     if MUT_SNV_RE.match(cell) is not None:
-        return BacterialVariantType.snv, False
+        return VariantType.snv, False
     if MUT_INSERTION_RE.match(cell) is not None:
-        return BacterialVariantType.insertion, len(cell) > 2
+        return VariantType.insertion, len(cell) > 2
     if (deletion := MUT_DELETION_RE.match(cell)) is not None:
         length = int(deletion.group("length").replace(",", ""))
-        return BacterialVariantType.deletion, length > 1
+        return VariantType.deletion, length > 1
     if (repeat := MUT_REPEAT_RE.match(cell)) is not None:
         before, after = int(repeat.group("before")), int(repeat.group("after"))
         if before == after:
             raise RuntimeError(
                 f"tandem-repeat cell {cell!r} states no copy-number change"
             )
-        kind = (
-            BacterialVariantType.insertion
-            if after > before
-            else BacterialVariantType.deletion
-        )
+        kind = VariantType.insertion if after > before else VariantType.deletion
         return kind, abs(after - before) > 1
     if MUT_REPLACEMENT_RE.match(cell) is not None:
-        return BacterialVariantType.substitution, True
+        return VariantType.substitution, True
     raise RuntimeError(
         f"data S1-5 mutation cell {cell!r} matches none of the five released forms "
         "(single-base substitution, insertion, delta-bp deletion, tandem-repeat "
@@ -2912,13 +2908,13 @@ _CALL_ONE_COORDINATE = (
     "verbatim in sequence_change (for example 'd1,227 bp') and in annotation (for "
     "example 'coding (1-1227/1227 nt)'). Deriving an end would assert breseq's "
     "coordinate convention for each of the five released change forms, and no mirrored "
-    "byte states it. BacterialVariantCall.position_end is a required int, so the "
+    "byte states it. GenomeVariantCall.position_end is a required int, so the "
     "absence cannot be typed as a ProvenanceGap; it is stated here, in the note, and in "
     "the L3 row one_coordinate_per_call"
 )
 
 
-def variant_call(row: CalledVariant) -> BacterialVariantCall:
+def variant_call(row: CalledVariant) -> GenomeVariantCall:
     """The typed call of one released row, with every cell it states kept verbatim."""
     gaps = [
         ProvenanceGap(
@@ -2928,7 +2924,7 @@ def variant_call(row: CalledVariant) -> BacterialVariantCall:
         )
         for field in ("frequency_statement", "frequency", "frequency_basis")
     ]
-    return BacterialVariantCall(
+    return GenomeVariantCall(
         variant_type=row.variant_type,
         type_statement=row.mutation,
         reference_sequence=str(WGS_REPLICON_SOURCED.value),

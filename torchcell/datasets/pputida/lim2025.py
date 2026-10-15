@@ -264,8 +264,6 @@ from torchcell.datamodels.schema import (
     BacterialBackgroundAllele,
     BacterialGeneNamespace,
     BacterialStrainBackground,
-    BacterialVariantCall,
-    BacterialVariantType,
     Compound,
     Concentration,
     ConcentrationUnit,
@@ -279,6 +277,7 @@ from torchcell.datamodels.schema import (
     ExperimentReference,
     FoldChangeScale,
     GenePerturbationType,
+    GenomeVariantCall,
     Genotype,
     LocusVariantCallPerturbation,
     MeasurementType,
@@ -297,6 +296,7 @@ from torchcell.datamodels.schema import (
     VariantCallMode,
     VariantFrequencyBasis,
     VariantSiteKind,
+    VariantType,
 )
 from torchcell.datasets.bacteria_common import (
     LOCUS_TAG_PATTERNS,
@@ -1581,11 +1581,11 @@ _CLONE_RE = re.compile(
 #: whole released vocabulary (measured on the pinned sheet: 100 SNP, 47 DEL, 11 INS,
 #: 1 SUB over the 159 rows); an unknown cell raises a ``KeyError`` rather than being
 #: read as anything.
-VARIANT_TYPE_BY_STATEMENT: dict[str, BacterialVariantType] = {
-    "SNP": BacterialVariantType.snv,
-    "DEL": BacterialVariantType.deletion,
-    "INS": BacterialVariantType.insertion,
-    "SUB": BacterialVariantType.substitution,
+VARIANT_TYPE_BY_STATEMENT: dict[str, VariantType] = {
+    "SNP": VariantType.snv,
+    "DEL": VariantType.deletion,
+    "INS": VariantType.insertion,
+    "SUB": VariantType.substitution,
 }
 
 #: The matrix cell is a within-clone FRACTION, not a percent: measured over its 443
@@ -1623,7 +1623,7 @@ def released_row_representation(
     if is_intergenic:
         return "site_variant_call"
     kind = VARIANT_TYPE_BY_STATEMENT[mutation_type]
-    if kind is BacterialVariantType.deletion and not detail.strip():
+    if kind is VariantType.deletion and not detail.strip():
         return "span_deletion_call"
     return "locus_variant_call"
 
@@ -1894,7 +1894,7 @@ def _derived_mapping(released: str, locus_tag: str) -> DerivedIdentifierMapping 
     return DerivedIdentifierMapping(source_identifier=released, route="gene_symbol")
 
 
-def _clone_call(row: CalledVariant, clone_column: str) -> BacterialVariantCall:
+def _clone_call(row: CalledVariant, clone_column: str) -> GenomeVariantCall:
     """One clone's call of one released row, with every cell kept verbatim.
 
     ``position_end`` equals ``position_start`` for EVERY row, including the multi-base
@@ -1911,7 +1911,7 @@ def _clone_call(row: CalledVariant, clone_column: str) -> BacterialVariantCall:
     columns, and those two cells are stored verbatim.
     """
     frequency = row.clones[clone_column]
-    return BacterialVariantCall(
+    return GenomeVariantCall(
         variant_type=VARIANT_TYPE_BY_STATEMENT[row.mutation_type],
         type_statement=row.mutation_type,
         reference_sequence=row.replicon,

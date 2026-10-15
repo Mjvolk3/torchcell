@@ -23,6 +23,10 @@ from collections.abc import Callable, Sequence
 from typing import Any
 
 from torchcell.verification.levels import l0_structural, l1_count, l2_value_fidelity
+from torchcell.verification.perturbation_families import (
+    addition_perturbation_types,
+    heterologous_identifier,
+)
 from torchcell.verification.report import (
     Level,
     LevelResult,
@@ -36,15 +40,18 @@ Record = dict[str, Any]
 def _deleted_genes(experiment: dict[str, Any]) -> list[str]:
     """Systematic names deleted in this experiment's genotype.
 
-    Excludes ``gene_addition`` perturbations: the engineered cassette background is
-    constant across every strain (and heterologous names are not real ORFs), so it is
-    not a screened deletion and must not enter the L1/L4 deleted-ORF key.
+    Excludes every leaf that ADDS DNA
+    (:func:`~torchcell.verification.perturbation_families.addition_perturbation_types`,
+    the subclasses of ``GeneAdditionPerturbation``): an added copy is not a scored
+    deletion, whatever organism it came from. The test was the literal string
+    ``gene_addition``, one of the union's four addition leaves.
     """
+    additions = addition_perturbation_types()
     return [
         p["systematic_gene_name"]
         for p in experiment["genotype"]["perturbations"]
         if p.get("systematic_gene_name") is not None
-        and p.get("perturbation_type") != "gene_addition"
+        and p.get("perturbation_type") not in additions
     ]
 
 
@@ -155,10 +162,23 @@ def verify_visual_score_dataset(
 
 
 def visual_score_gene_set(records: Sequence[Record]) -> set[str]:
-    """Union of deleted systematic gene names across records (the L4 overlap key)."""
+    """The host loci a dataset's records name: the L4 gene-universe overlap key.
+
+    Every perturbed systematic name except the HETEROLOGOUS ones, the shared test
+    (:func:`~torchcell.verification.perturbation_families.heterologous_identifier`) the
+    bioproduction families apply: a name whose ``source_organism`` is not the record's
+    own species is a gene of another genome, while an extra copy of a NATIVE gene names
+    its real locus and belongs in the universe. The scored-deletion key (:func:`_deleted_genes`)
+    answers a different question and keeps its own rule.
+    """
     genes: set[str] = set()
     for rec in records:
-        genes.update(_deleted_genes(rec["experiment"]))
+        species = rec["reference"]["genome_reference"]["species"]
+        for p in rec["experiment"]["genotype"]["perturbations"]:
+            name = p.get("systematic_gene_name")
+            if name is None or heterologous_identifier(p, species):
+                continue
+            genes.add(str(name))
     return genes
 
 

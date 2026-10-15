@@ -682,7 +682,7 @@ def lost_class(monkeypatch: pytest.MonkeyPatch) -> type:
     """A class that pickles now and cannot be unpickled once the fixture is torn down.
 
     The shape of the five bacterial stores of #833: records were written under a schema
-    that declared ``Censoring`` / ``BacterialVariantType`` / ``FoldChangeScale``, and
+    that declared ``Censoring`` / ``VariantType`` / ``FoldChangeScale``, and
     the code that reads them does not declare it. Standing in a throwaway module makes
     that hermetic: the pickle names ``tc_lost_schema_module.Censoring``, and the module
     is gone by the time anything reads it.

@@ -39,10 +39,10 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
     serve_tier,
     write_assembly,
 )
-from torchcell.datamodels.bacterial_morphology_features import (
+from torchcell.datamodels.media import M9, MEDIA_LIBRARY
+from torchcell.datamodels.morphology_features import (
     CAMPOS2018_MORPHOLOGY_ASSAY as MORPHOLOGY_ASSAY,
 )
-from torchcell.datamodels.media import M9, MEDIA_LIBRARY
 from torchcell.datamodels.schema import (
     ASSEMBLY_SET_ACCESSIONS,
     BACTERIAL_ASSEMBLY_SETS,

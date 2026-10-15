@@ -78,7 +78,7 @@ sequenced isolates are now loaded. What each reason became:
 2. ``BacterialBackgroundAllele(edit=sequence_variant)`` required a ``functional: bool``
    no release states for a missense SNP, and had no slot for the position, the reference
    and alternate base, the amino-acid change, the polymorphism type or the variant
-   frequency -> ``BacterialVariantCall`` carries all of them, verbatim, and the
+   frequency -> ``GenomeVariantCall`` carries all of them, verbatim, and the
    perturbation axis has no ``functional`` field at all.
 3. ``BacterialStrainBackground`` permits ONE allele entry per locus, which refused
    Sigma1 (``PP_1656`` twice, ``PP_3827`` three times), Sigma2 (``PP_1656`` twice) and
@@ -214,8 +214,6 @@ from torchcell.datamodels.schema import (
     BacterialGeneNamespace,
     BacterialReferenceStrain,
     BacterialStrainBackground,
-    BacterialVariantCall,
-    BacterialVariantType,
     Concentration,
     ConcentrationUnit,
     CultureEnvironment,
@@ -226,6 +224,7 @@ from torchcell.datamodels.schema import (
     EnvironmentPhysicalPerturbation,
     Experiment,
     ExperimentReference,
+    GenomeVariantCall,
     Genotype,
     HeterologousPathwayPerturbation,
     Localization,
@@ -247,6 +246,7 @@ from torchcell.datamodels.schema import (
     VariantCallMode,
     VariantFrequencyBasis,
     VariantSiteKind,
+    VariantType,
 )
 from torchcell.datasets.bacteria_common import (
     LocusTagReconciliation,
@@ -362,14 +362,14 @@ VARIANT_REPLICON = "NC_002947 (2)"
 #: the call's ``type_statement``, so the transition / transversion / tandem-repeat
 #: distinction the enum does not carry is not lost. A spelling outside this map stops
 #: the build rather than defaulting.
-VARIANT_TYPE_OF_POLYMORPHISM: dict[str, BacterialVariantType] = {
-    "SNP (transition)": BacterialVariantType.snv,
-    "SNP (transversion)": BacterialVariantType.snv,
-    "Insertion": BacterialVariantType.insertion,
-    "Insertion (tandem repeat)": BacterialVariantType.insertion,
-    "Deletion": BacterialVariantType.deletion,
-    "Deletion (tandem repeat)": BacterialVariantType.deletion,
-    "Substitution": BacterialVariantType.substitution,
+VARIANT_TYPE_OF_POLYMORPHISM: dict[str, VariantType] = {
+    "SNP (transition)": VariantType.snv,
+    "SNP (transversion)": VariantType.snv,
+    "Insertion": VariantType.insertion,
+    "Insertion (tandem repeat)": VariantType.insertion,
+    "Deletion": VariantType.deletion,
+    "Deletion (tandem repeat)": VariantType.deletion,
+    "Substitution": VariantType.substitution,
 }
 #: The separator the ``Variant Frequency`` column uses when it writes a RANGE instead of
 #: one number. Measured: 16 of the 173 cells read a percent range (``95.1% -> 97.6%`` ..
@@ -1491,10 +1491,10 @@ def released_frequency(
     return value, VariantFrequencyBasis.fraction
 
 
-def variant_call(row: CalledVariant) -> BacterialVariantCall:
+def variant_call(row: CalledVariant) -> GenomeVariantCall:
     """The typed call of one released row, with every cell it states kept verbatim."""
     frequency, basis = released_frequency(row.variant_frequency)
-    return BacterialVariantCall(
+    return GenomeVariantCall(
         variant_type=VARIANT_TYPE_OF_POLYMORPHISM[row.polymorphism_type],
         type_statement=row.polymorphism_type,
         reference_sequence=row.reference_sequence,

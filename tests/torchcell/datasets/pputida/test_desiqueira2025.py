@@ -43,7 +43,6 @@ import torchcell.datasets.pputida.desiqueira2025 as ds
 from torchcell.datamodels.media import M9_NREL_DESIQUEIRA2025
 from torchcell.datamodels.schema import (
     AlleleEdit,
-    BacterialVariantType,
     ConcentrationUnit,
     EnvironmentPhysicalPerturbation,
     PhysicalFactor,
@@ -58,6 +57,7 @@ from torchcell.datamodels.schema import (
     VariantCallMode,
     VariantFrequencyBasis,
     VariantSiteKind,
+    VariantType,
 )
 from torchcell.datasets.pputida.carruthers2025 import PATHWAY_GENES, PIY670_PARTS
 from torchcell.literature.manifest import ROLE_SI_DATA, RetrievalMethod
@@ -424,7 +424,7 @@ def test_an_in_locus_call_becomes_a_sequence_variant_of_that_locus(
     assert first.perturbed_gene_name == "relA"
     assert first.gene_namespace == ds.KT2440_NAMESPACE
     call = first.call
-    assert call.variant_type is BacterialVariantType.substitution
+    assert call.variant_type is VariantType.substitution
     assert call.type_statement == "Substitution"
     assert call.reference_sequence == ds.VARIANT_REPLICON
     assert call.position_start == _variant_position(3)

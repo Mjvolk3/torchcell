@@ -17,23 +17,23 @@ from typing import Any, Final
 
 import pytest
 
-from torchcell.datamodels.bacterial_morphology_features import (
+from torchcell.datamodels.media import MEDIA_LIBRARY
+from torchcell.datamodels.morphology_features import (
     CAMPOS2018_MORPHOLOGY_ASSAY as ASSAY,
 )
-from torchcell.datamodels.bacterial_morphology_features import (
+from torchcell.datamodels.morphology_features import (
     MorphologyAssay,
     MorphologyFeature,
     MorphologyFeatureGroup,
     MorphologyStatistic,
 )
-from torchcell.datamodels.media import MEDIA_LIBRARY
 from torchcell.datamodels.schema import (
-    BacterialMorphologyPhenotype,
     DeletionStrainPerturbation,
     Environment,
     Genotype,
     MorphologyExperiment,
     MorphologyExperimentReference,
+    MorphologyPhenotype,
     ReferenceGenome,
     SampleUnit,
     Temperature,
@@ -82,9 +82,9 @@ def _profile(
 
 def _phenotype(
     symbols: frozenset[str] | None = None, **overrides: float
-) -> BacterialMorphologyPhenotype:
+) -> MorphologyPhenotype:
     values, coefficients = _profile(symbols, **overrides)
-    return BacterialMorphologyPhenotype(
+    return MorphologyPhenotype(
         assay="campos2018",
         morphology=values,
         morphology_coefficient_of_variation=coefficients,
@@ -96,8 +96,8 @@ def _phenotype(
 def _record(
     gene: str,
     *,
-    phenotype: BacterialMorphologyPhenotype | None = None,
-    reference_phenotype: BacterialMorphologyPhenotype | None = None,
+    phenotype: MorphologyPhenotype | None = None,
+    reference_phenotype: MorphologyPhenotype | None = None,
 ) -> dict[str, Any]:
     # a MEDIA_LIBRARY medium, so the shared L3 media rule reports a library match
     # rather than free text and the whole report can pass
@@ -273,7 +273,7 @@ def test_a_dataset_mixing_two_assays_is_refused_before_any_check(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """One dataset, one vocabulary: two assays' symbols are not comparable."""
-    import torchcell.datamodels.bacterial_morphology_features as features
+    import torchcell.datamodels.morphology_features as features
 
     other = MorphologyAssay(
         name="other2030",
@@ -293,9 +293,7 @@ def test_a_dataset_mixing_two_assays_is_refused_before_any_check(
         *_records(),
         _record(
             "BW25113_0010",
-            phenotype=BacterialMorphologyPhenotype(
-                assay=other.name, morphology={"<L>": 2.5}
-            ),
+            phenotype=MorphologyPhenotype(assay=other.name, morphology={"<L>": 2.5}),
         ),
     ]
     with pytest.raises(ValueError, match="carries one assay vocabulary"):

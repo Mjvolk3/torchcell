@@ -1,0 +1,63 @@
+{
+  "record_version": 1,
+  "slug": "bw25113-background-genotype-leaves-the-schema-surface",
+  "date": "2026-10-15",
+  "pr": null,
+  "author_kind": "agent",
+  "base_commit": "b5c5549d8f4752fc8ac89b6d1e5cd2c0ec5bf4a9",
+  "python_version": "3.13.0",
+  "symbols": [
+    {
+      "symbol": "BW25113_BACKGROUND_GENOTYPE",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "4c8c405e47fa546cf9b197368b0be034b9400493d87986e14b65bd51e6036bad",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "module-level binding removed"
+      ]
+    },
+    {
+      "symbol": "BW25113_BACKGROUND_LESIONS",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "ecfbe15cee970d3b9b099ec8c8c71b6805ede098056e2c3c45a390c01d5fd713",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "module-level binding removed"
+      ]
+    }
+  ],
+  "correctness_argument": "Lane R, item 1 of the three audit flags that were never proposals (audit A section 5.1, notes/scratch.2026.10.15.ontology-audit-A_schema.md). One strain's verbatim genotype string moves out of the fingerprinted schema surface into the genomes tier that already owns the bytes it was read from.\n\nWHAT IT IS. BW25113_BACKGROUND_GENOTYPE is the genotype clause of the /note qualifier of the source feature of GCA_000750555.1_ASM75055v1_genomic.gbff.gz, the deposited GenBank flat file of the ecoli_K12_BW25113_ASM75055v1 assembly set; BW25113_BACKGROUND_LESIONS is the same string split into its six lesion designations. Neither is a record contract: no field is annotated with them, no validator reads them, and no class resolves through them. One loader (torchcell/datasets/ecoli/price2018.py) reads the lesions to tie each Table S1 row without a BW25113 locus_tag to the lesion that accounts for it.\n\nWHY THE LOCATION WAS WRONG. torchcell/datamodels/schema.py is the class-contract surface (torchcell/provenance/schema_deps.py: 'schema.py (the record classes) plus pydant.py'), and every module-level binding in it is a closure node with its own fingerprint, so a loader whose closure reaches it rebuilds when the string changes. A strain constant there means every future host adds a data binding to the most sensitive file in the database, and it is the file whose every edit is gated by this record system. The genomes tier is where the bytes the constant was read from already live: torchcell/sequence/genome/registry.py is 'the one place those pointers are dereferenced to a file on disk, and it verifies the sha256 on every resolve', and it already holds the per-assembly-set constants of the same kind (the set ids, SGD_S288C_R64_GENBANK_ACCESSION, SCEREVISIAE_CENPK113_7D_GENBANK_ACCESSION). Constitution principle 3 (every value traces to pinned bytes) is unchanged and better served: the provenance comment moves with the constant and the data-gated test that re-reads it from the real GenBank bytes moves with it too, from tests/torchcell/datamodels/test_schema.py to tests/torchcell/sequence/genome/test_registry.py.\n\nWHAT CHANGES AND WHAT DOES NOT. No stored value changes: the string and the six designations are byte-identical, and price2018's records serialize exactly as before. What changes is the closure: the two bindings leave the surface, so the loaders whose closure held them have a different closure fingerprint and their dev stores read stale until rebuilt. MEASURED on this branch with torchcell.provenance.schema_deps.symbol_dependents over torchcell/datasets/**: BW25113_BACKGROUND_LESIONS is in 1 loader closure (price2018.py) and BW25113_BACKGROUND_GENOTYPE in 0, not the 84 the audit reported before the unification; the tool computes the rebuild scope from the surface diff either way, and no served dataset class is in either closure (price2018 is not in the 2026.10.06-4b293d34 release snapshot).\n\nWHY NOW. The change rides the one full rebuild Path U is already doing rather than asking for a second one, which is the whole reason the three flagged findings were handed to a lane instead of being deferred to stage 10 of the plan.",
+  "measurement_type_decision": false,
+  "source_quotes": [],
+  "alternatives_rejected": [
+    {
+      "alternative": "Leave both constants in schema.py and accept the location, since the provenance is already good.",
+      "why_rejected": "The provenance was never the defect. The defect is that the class-contract surface holds data about one strain, so the precedent invites the next host's genotype string into the same file and ties every such edit to the schema-change gate and to a closure fingerprint that no record contract depends on. Constitution principle 8: correctness decides a change and cost never does, and the cost here is one loader's dev-store rebuild inside a rebuild that is already happening."
+    },
+    {
+      "alternative": "Move the constants into the price2018 loader, which is their only consumer.",
+      "why_rejected": "The string is a fact of the DEPOSITED ASSEMBLY SET, not of Price 2018: the /note it is read from belongs to the BW25113 GenBank file, and any other BW25113 loader (Baba, Li, Hawkins, Tong) states the same background. A loader-local copy would be re-derived per loader, which is how two spellings of one verbatim string start. The genomes tier has exactly one copy and the test that re-reads it from the pinned bytes."
+    },
+    {
+      "alternative": "Keep a re-export in schema.py so the old import path keeps working.",
+      "why_rejected": "A re-export leaves the binding in the surface, which is the thing being removed: schema_deps collects module-level bindings from the module's own source, so an alias would still be a closure node and the next host would still have a place in schema.py to put its data."
+    }
+  ],
+  "served_release": "2026.10.06-4b293d34",
+  "affected_loaders": [],
+  "served_datasets": [],
+  "rebuild_scope": "none",
+  "owner_sign_off": {
+    "signed": true,
+    "quote": "Owner, 2026-10-15, in conversation: 'we care most about correctness and are willing right now to do full rebuilds if we identify even small semantically prudent change in onto'; 'we want to unify then build, we are prepped for full rebuild path U'; 'yes rename, no major bump minor bump. go !'. The relocation is row 10 of the Path U stage table the owner approved (notes/scratch.2026.10.15.ontology-unification-decision.md: 'BW25113 constants out of schema.py'), pulled forward into this rebuild by the program coordinator so it does not need a second one.",
+    "url": null
+  }
+}

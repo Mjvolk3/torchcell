@@ -13,7 +13,7 @@ genome, 17.5 mtDNA copies per cell, 2.0 copies of chromosome IV and 756 telomeri
 per million are four different quantities.
 
 So the unit basis is a property of the FEATURE, declared here, exactly as
-``bacterial_morphology_features`` makes the statistic a property of the feature. A
+``morphology_features`` makes the statistic a property of the feature. A
 record names the assay it was measured by, that assay's symbols are the only permitted
 keys, and each symbol says what its number means and which genomic region it was read
 from. A later sequencing screen registers its own assay rather than widening this one:

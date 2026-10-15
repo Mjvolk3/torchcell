@@ -74,8 +74,6 @@ from torchcell.data import (
 from torchcell.data.experiment_dataset import verify_sha256
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
-    BacterialVariantCall,
-    BacterialVariantType,
     Concentration,
     ConcentrationUnit,
     DeletionStrainPerturbation,
@@ -84,6 +82,7 @@ from torchcell.datamodels.schema import (
     Experiment,
     ExperimentReference,
     GenePerturbationType,
+    GenomeVariantCall,
     Genotype,
     LocusVariantCallPerturbation,
     Media,
@@ -98,6 +97,7 @@ from torchcell.datamodels.schema import (
     VariantCallMode,
     VariantFrequencyBasis,
     VariantSiteKind,
+    VariantType,
 )
 from torchcell.datasets.bacteria_common import (
     STRAIN_GENE_NAMESPACES,
@@ -284,11 +284,11 @@ FREQUENCY_NOTE: Final = (
     "containing the detected mutation (0-1.0)"
 )
 #: Breseq's ``Mutation Type`` cells in the rows this loader reads, and what each is.
-VARIANT_TYPE: Final[dict[str, BacterialVariantType]] = {
-    "SNP": BacterialVariantType.snv,
-    "MOB": BacterialVariantType.insertion,
-    "INS": BacterialVariantType.insertion,
-    "DEL": BacterialVariantType.deletion,
+VARIANT_TYPE: Final[dict[str, VariantType]] = {
+    "SNP": VariantType.snv,
+    "MOB": VariantType.insertion,
+    "INS": VariantType.insertion,
+    "DEL": VariantType.deletion,
 }
 LIBRARY: Final = re.compile(
     r"^(?P<gene>[A-Za-z]+)_A(?P<ale>\d+)_F(?P<flask>\d+)_I(?P<isolate>\d+)_R(?P<rep>\d)$"
@@ -471,11 +471,11 @@ def is_intergenic(call: Call) -> bool:
     return call.details.startswith("intergenic")
 
 
-def variant_call(call: Call, mode: VariantCallMode) -> BacterialVariantCall:
+def variant_call(call: Call, mode: VariantCallMode) -> GenomeVariantCall:
     """The released row as a call, positions read off the released cells."""
     kind = VARIANT_TYPE[call.mutation_type]
-    end = call.position - 1 if kind is BacterialVariantType.insertion else call.position
-    return BacterialVariantCall(
+    end = call.position - 1 if kind is VariantType.insertion else call.position
+    return GenomeVariantCall(
         variant_type=kind,
         type_statement=call.mutation_type,
         reference_sequence=REPLICON,

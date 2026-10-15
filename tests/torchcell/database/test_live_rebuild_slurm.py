@@ -78,7 +78,9 @@ def test_the_preflight_the_fence_and_the_generator_read_one_switch() -> None:
     that enumerates the mapped datasets (a public-only preflight would not notice a
     stale private store), and the generator line carries ``$PRIVATE_FLAG``.
     """
-    assert TEXT.count('include_private=sys.argv[2] == "1"') == 2
+    # three readers of the switch since 2026-10-15: the freshness walk, the lane walk
+    # (same preflight block, same argv) and the dev fence
+    assert TEXT.count('include_private=sys.argv[2] == "1"') == 3
     assert TEXT.count('"$DEV_DATA_ROOT" "$INCLUDE_PRIVATE"') == 3
     assert "python -m $KG_MODULE --config-name $KG_CONFIG $PRIVATE_FLAG" in TEXT
 
@@ -192,9 +194,10 @@ def test_the_preflight_the_fence_the_generator_and_the_manifest_read_kg_organism
     The freshness preflight and the dev fence both parse ``sys.argv[3]`` into the map
     they walk (so a yeast-only build neither blocks on a stale bacterial store nor
     counts a bacterial dataset), the generator gets ``--organisms``, and the manifest
-    bootstrap records the set.
+    bootstrap records the set. The lane walk of 2026-10-15 is the third reader of
+    ``sys.argv[3]``, in the preflight block beside the freshness walk.
     """
-    assert TEXT.count("organisms=parse_organisms(sys.argv[3])") == 2
+    assert TEXT.count("organisms=parse_organisms(sys.argv[3])") == 3
     assert TEXT.count('"$DEV_DATA_ROOT" "$INCLUDE_PRIVATE" "$KG_ORGANISMS"') == 3
     assert (
         "python -m $KG_MODULE --config-name $KG_CONFIG $PRIVATE_FLAG "
@@ -248,3 +251,42 @@ def test_a_resume_must_name_the_organism_set_the_resumed_job_generated(
         "1:job 4242 generated organisms '(not logged)'; resubmit the resume with "
         "KG_ORGANISMS=<that set>, not scerevisiae"
     )
+
+
+# --------------------------------------------------------------------------- #
+# 2026.10.15: the ontology unification guards in the preflight and before the import.
+# --------------------------------------------------------------------------- #
+
+
+def test_the_preflight_checks_every_stores_leaves_against_its_confs_lanes() -> None:
+    """The lane walk runs in the same preflight block as the freshness walk, on the same
+    three arguments, and refuses the job on a store whose manifest lacks the field or
+    carries a leaf no enabled lane emits.
+    """
+    assert (
+        "from torchcell.database.build_dataset_lmdb import mapped_store_lanes" in TEXT
+    )
+    assert (
+        'lanes = mapped_store_lanes(sys.argv[1], include_private=sys.argv[2] == "1", '
+        "organisms=parse_organisms(sys.argv[3]))"
+    ) in TEXT
+    assert "unserved = [s.describe() for s in lanes if s.blocks]" in TEXT
+    freshness = TEXT.index("statuses = mapped_store_status(")
+    lanes = TEXT.index("lanes = mapped_store_lanes(")
+    count = TEXT.index("print(len(statuses))")
+    assert freshness < lanes < count
+
+
+def test_the_csv_endpoint_gate_is_a_hard_stop_before_the_import() -> None:
+    """The gate runs inside the import branch, after the dev fence and before the build
+    container starts, and a failure exits the job; skip_bad_relationships stays as it is.
+    """
+    gate = TEXT.index("python -m torchcell.knowledge_graphs.csv_endpoint_gate")
+    fence = TEXT.index("dev fence intact")
+    container = TEXT.index("---------------- 2 IMPORT into")
+    import_call = TEXT.index('bash "$OUT_CONT/neo4j-admin-import-call.sh"')
+    assert fence < gate < container < import_call
+    block = TEXT[gate : TEXT.index("\nfi\n", gate) + 4]
+    assert '"$OUT_HOST" --report "$ENDPOINT_REPORT"' in block
+    assert "CSV endpoint gate FAILED" in block and "exit 1" in block
+    assert "skip_bad_relationships: true" in TEXT

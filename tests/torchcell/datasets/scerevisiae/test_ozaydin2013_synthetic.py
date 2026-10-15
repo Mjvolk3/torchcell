@@ -320,7 +320,7 @@ def test_data_csv_gene_set_and_build_manifest(
         "crtYB",
     ]
     manifest = json.loads((preprocess / "build_manifest.json").read_text())
-    assert manifest["manifest_schema_version"] == 1
+    assert manifest["manifest_schema_version"] == 2
     assert manifest["dataset_name"] == "carotenoid_ozaydin2013"
     assert manifest["loader_class"] == "CarotenoidOzaydin2013Dataset"
     assert manifest["loader_module"] == "torchcell.datasets.scerevisiae.ozaydin2013"

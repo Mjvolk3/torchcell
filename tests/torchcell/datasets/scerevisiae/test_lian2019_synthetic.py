@@ -553,7 +553,7 @@ def test_one_reference_per_round_gene_set_manifest_and_interned_store(
         text=True,
         check=True,
     ).stdout.strip()
-    assert manifest["manifest_schema_version"] == 1
+    assert manifest["manifest_schema_version"] == 2
     assert manifest["dataset_name"] == "crispr_magic_lian2019"
     assert manifest["loader_class"] == "CrisprMagicLian2019Dataset"
     assert manifest["loader_module"] == "torchcell.datasets.scerevisiae.lian2019"

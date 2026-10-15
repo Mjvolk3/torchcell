@@ -333,7 +333,10 @@ def test_the_five_pathway_genes_are_integrated_with_a_typed_organism_gap() -> No
     }
     assert {p.promoter_name for p in pathway} == {"Pcv", "Ptrc"}
     assert {p.source_organism for p in pathway} == {None}
-    assert [p.gapped_fields() for p in pathway] == [{"source_organism"}] * 5
+    # P4: each pathway gene also states the typed absence of a construct sequence
+    assert [p.gapped_fields() for p in pathway] == [
+        {"source_organism", "placement"}
+    ] * 5
     gap = pathway[0].provenance_gaps[0]
     assert gap.reason.value == "not_reported_by_primary"
     assert gap.note == mv.PATHWAY_ORGANISM_GAP_NOTE
@@ -380,7 +383,7 @@ def test_the_reporter_is_the_teredinibacter_pyrf_homolog_on_a_plasmid() -> None:
     reporter = mv.reporter_perturbation()
     assert reporter.systematic_gene_name == "TERTU_1389"
     assert reporter.source_organism == "Teredinibacter turnerae T7901"
-    assert reporter.localization == "episomal_plasmid"
+    assert reporter.localization == "episomal_replicon"
     assert reporter.promoter_name == "PpedF"
 
 

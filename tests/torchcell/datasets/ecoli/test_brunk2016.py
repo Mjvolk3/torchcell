@@ -631,7 +631,7 @@ def test_a_gene_with_no_stated_organism_carries_a_typed_gap(
     )
     stored = brunk.pathway_perturbation(part, {}, "limonene")
     assert stored.source_organism is None
-    assert stored.gapped_fields() == {"source_organism"}
+    assert stored.gapped_fields() == {"source_organism", "placement"}
     assert stored.provenance_gaps[0].note == (f"GPPS: {brunk.UNSTATED_ORGANISM_NOTE}")
     assert stored.provenance_gaps[0].looked_in is not None
     assert stored.provenance_gaps[0].looked_in.sha256 == brunk.PROTEOMICS_SHA256

@@ -786,6 +786,7 @@ def test_condition_signature_reads_every_served_identity_field() -> None:
         "culture_format": None,
         "pre_culture": None,
         "auxotroph_supplements": None,
+        "growth_phase": None,
     }
     edits: dict[str, Any] = {
         "media": base["media"] | {"state": "solid"},
@@ -798,6 +799,9 @@ def test_condition_signature_reads_every_served_identity_field() -> None:
         "culture_format": {"vessel": "plate_384"},
         "pre_culture": {"source": "frozen_stock"},
         "auxotroph_supplements": ["uracil"],
+        # --- begin lane X: the phase a culture is HELD in is the condition ---
+        "growth_phase": "stationary",
+        # --- end lane X ---
     }
     fields = ENVIRONMENT_IDENTITY_FIELDS + ENVIRONMENT_OPTIONAL_IDENTITY_FIELDS
     assert set(edits) == set(fields), "every identity field needs an edit to test with"
@@ -1397,3 +1401,76 @@ def test_the_ratio_set_holds_only_the_same_run_control_ratios() -> None:
     ):
         assert member not in RATIO_MEASUREMENT_TYPES
         assert member not in ABSOLUTE_MEASUREMENT_TYPES
+
+
+# --- begin lane X: a role-level medium omission, and the phase a culture is HELD in - #
+def test_condition_signature_separates_a_nitrogen_free_medium_from_its_control() -> (
+    None
+):
+    """Galardini 2019's starvation arm and its own control were ONE condition.
+
+    Both columns are ``condition = standard`` in one screen, and the loader stored both
+    media as the bare name ``SD`` with an empty component list, because it truncated the
+    released token at '+' and the nitrogen-free statement rode in the discarded half.
+    Those 4,837 record pairs were the whole residual ``expected_duplicated_pairs``
+    allowance for ``yeastphenome``, so an instruction to "aggregate the declared
+    duplicates" would have destroyed the starvation arm -- the aerobicity failure mode
+    of lane W, one level down. ``Media.dropout_roles`` is the typed statement, and
+    ``MEDIA_OPTIONAL_IDENTITY_FIELDS`` is what makes this signature read it.
+    """
+
+    def experiment(roles: list[str]) -> dict[str, Any]:
+        return {
+            "environment": {
+                "perturbations": [],
+                "temperature": None,
+                "media": {
+                    "name": "SD + His + Leu + Lys + Ura",
+                    "state": "solid",
+                    "is_synthetic": True,
+                    "base_medium": "SD",
+                    "components": [],
+                    "dropouts": [],
+                    "dropout_roles": roles,
+                },
+                "aerobicity": "aerobic",
+            },
+            "phenotype": {},
+        }
+
+    assert _condition_signature(experiment([])) != _condition_signature(
+        experiment(["nitrogen_source"])
+    )
+    assert _condition_signature(experiment(["carbon_source"])) != _condition_signature(
+        experiment(["nitrogen_source"])
+    )
+    assert _condition_signature(experiment([])) == _condition_signature(experiment([]))
+
+
+def test_condition_signature_separates_a_held_growth_phase_from_its_control() -> None:
+    """A culture HELD in stationary phase is not the condition its control is.
+
+    ``Environment.growth_phase`` was in no identity projection at all, served or
+    verifying (lane W's finding 2), so two records differing only in the phase they were
+    held in projected to one environment identity and one condition signature.
+    """
+
+    def experiment(phase: str | None) -> dict[str, Any]:
+        environment: dict[str, Any] = {
+            "perturbations": [],
+            "temperature": {"value": 37.0, "unit": "celsius"},
+            "media": {"name": "M9", "state": "liquid", "components": []},
+            "duration_hours": 24.0,
+        }
+        if phase is not None:
+            environment["growth_phase"] = phase
+        return {"environment": environment, "phenotype": {}}
+
+    signatures = {
+        _condition_signature(experiment(phase))
+        for phase in (None, "exponential", "stationary")
+    }
+    assert len(signatures) == 3
+
+
+# --- end lane X -------------------------------------------------------------------- #

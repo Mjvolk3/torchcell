@@ -141,14 +141,20 @@ MEDIA_IDENTITY_FIELDS: tuple[str, ...] = (
     "dropouts",
 )
 # --- begin #901/#902/#903: a typed gap on the medium ---
-MEDIA_OPTIONAL_IDENTITY_FIELDS: tuple[str, ...] = ("provenance_gaps",)
+MEDIA_OPTIONAL_IDENTITY_FIELDS: tuple[str, ...] = ("dropout_roles", "provenance_gaps")
 """``Media`` fields projected only when SET. A stated medium carries no gap, so its id
 is the composition alone; a medium whose source states no name, state or class
 (SynLethDB, an SGD annotation with no condition) is keyed by its gaps as well, so
 one source's absence is not merged with a stated medium or with another source's
 absence. Only the gap's ``field``, ``reason`` and the artifact it was looked for in
 (``looked_in``: ``source_uri``, ``citation_key``, ``sha256``) are identity; its
-``note`` is the wording of who said so, dropped like a medium's ``name``."""
+``note`` is the wording of who said so, dropped like a medium's ``name``.
+
+``dropout_roles`` (lane X, 2026-10-15) joins them on the same rule: a role-level
+omission IS composition (a carbon-free SC is not SC), and projecting it only when
+the list is non-empty keeps every medium that states none byte-identical to what it
+hashed before the field existed, since an empty list and an absent field say the
+same thing. Roles are projected as their sorted values, not as gap objects."""
 MEDIA_GAP_IDENTITY_FIELDS: tuple[str, ...] = ("field", "reason", "looked_in", "keys")
 # --- end #901/#902/#903 ---
 TEMPERATURE_IDENTITY_FIELDS: tuple[str, ...] = ("value", "unit")
@@ -236,11 +242,23 @@ ENVIRONMENT_OPTIONAL_IDENTITY_FIELDS: tuple[str, ...] = (
     "culture_format",
     "pre_culture",
     "auxotroph_supplements",
+    # --- begin lane X: the phase a culture is HELD in is the condition ---
+    "growth_phase",
+    # --- end lane X ---
 )
-"""``CultureEnvironment`` fields (#507). Each is projected only when SET, so a
-``CultureEnvironment`` that states none of them has the same id as the plain
-``Environment`` with the same composition (the two classes join at the environment
-node); once set, a field is part of identity like any other."""
+"""Environment fields projected only when SET, so an environment that states none of
+them has the same id as one with the same composition that never could (the
+``CultureEnvironment`` protocol fields of #507 join the plain ``Environment`` at one
+node); once set, a field is part of identity like any other.
+
+``growth_phase`` (lane X) belongs here rather than in the required tuple for the same
+reason and by its own construction: ``Environment.growth_phase`` carries
+``exclude_if=lambda v: v is None``, so an environment that states no phase serializes
+exactly as it did before the field existed, and projecting it only when set keeps that
+true of its id. It IS identity when stated: ``CultureGrowthPhase`` distinguishes the
+harvest moment (a property of the sample, carried on the phenotype) from a culture HELD
+in a phase AS the condition, which is what this field is, so a stationary-phase
+starvation arm must not be the environment node its exponential control is."""
 CULTURE_FORMAT_IDENTITY_FIELDS: tuple[str, ...] = (
     "vessel",
     "working_volume_ul",
@@ -457,7 +475,10 @@ def media_identity(media: Media) -> dict[str, Any]:
     is. Components and dropouts are sorted, so listing order is not identity. A
     medium's ``provenance_gaps`` are projected only when it carries one
     (``MEDIA_OPTIONAL_IDENTITY_FIELDS``), so a stated medium's id is unchanged and a
-    gapped one never joins it.
+    gapped one never joins it. ``dropout_roles`` is projected on the same terms
+    (lane X): a role the source states is omitted is composition, so a carbon-free SC
+    does not join SC, and a medium that states no role-level omission hashes exactly
+    as it did before the field existed.
     """
     identity: dict[str, Any] = {
         "state": media.state,
@@ -470,6 +491,10 @@ def media_identity(media: Media) -> dict[str, Any]:
             compound_identity_key(dropout) for dropout in media.dropouts
         ),
     }
+    # --- begin lane X: a role-level omission the release states without a compound ---
+    if media.dropout_roles:
+        identity["dropout_roles"] = sorted(role.value for role in media.dropout_roles)
+    # --- end lane X ---
     # --- begin #901/#902/#903: a typed gap on the medium ---
     if media.provenance_gaps:
         identity["provenance_gaps"] = _sorted_identities(
@@ -597,7 +622,10 @@ def environment_identity(environment: Environment) -> dict[str, Any]:
     ``None``, and a ``None`` temperature projects as ``None``, so a record that never
     carried a temperature does not merge with one measured at 30 C. A
     ``CultureEnvironment``'s protocol fields (``ENVIRONMENT_OPTIONAL_IDENTITY_FIELDS``)
-    are added only when set.
+    are added only when set, and so is ``growth_phase``, which the base class carries
+    (lane X): a culture HELD in stationary phase is a different condition from the same
+    medium in exponential growth, and before this a store could serve both as one
+    environment node.
     """
     identity: dict[str, Any] = {
         "media": media_identity(environment.media),
@@ -619,6 +647,10 @@ def environment_identity(environment: Environment) -> dict[str, Any]:
         "dilution_rate_per_hour": environment.dilution_rate_per_hour,
         # --- end #753 ---
     }
+    # --- begin lane X: the phase a culture is HELD in is the condition ---
+    if environment.growth_phase is not None:
+        identity["growth_phase"] = environment.growth_phase.value
+    # --- end lane X ---
     if not isinstance(environment, CultureEnvironment):
         return identity
     if environment.culture_format is not None:

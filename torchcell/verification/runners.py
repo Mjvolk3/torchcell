@@ -1791,14 +1791,21 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
         # #1045: the curated matrices release the same (strain, condition) in more
         # than one column of one screen, and 8,975 base-condition records with no
         # environmental edit; both are stored as released and declared here.
-        # 4,837, not the 14,508 measured by job 4606: of those 14,508 pairs, 9,671
-        # were an AEROBIC and an ANAEROBIC record of one strain in one screen, which
-        # the condition signature could not tell apart until it read every field the
-        # served environment identity reads (lane W of the ontology unification,
-        # [[torchcell.verification.environment-response-identity]]). The 4,837 that
-        # remain differ only in the released response value and are two columns of
-        # one screen. Re-measured on the dev store: 519,845 unique triples.
-        "expected_duplicated_pairs": 4837,
+        # 0, and the two numbers it was are both explained. Job 4606 measured 14,508
+        # pairs; 9,671 of those were an AEROBIC and an ANAEROBIC record of one strain
+        # in one screen, which the condition signature could not tell apart until it
+        # read every field the served environment identity reads (lane W of the
+        # ontology unification, [[torchcell.verification.environment-response-identity]]).
+        # The 4,837 that remained were ONE medium-fidelity defect, not repeats: the
+        # loader truncated the released medium token at '+' and left what the retained
+        # half states inside the name, so Galardini 2019's NITROGEN-FREE arm
+        # ('SD + His + Leu + Lys + Ura, -N', condition 'standard') and its own control
+        # ('SD + His + Leu + Lys + Ura (2)', condition 'standard') were one condition.
+        # The token's composition is now typed (lane X, dropout_roles=[nitrogen_source]),
+        # so the two are two conditions and the count is 0. Re-keyed over the records the
+        # loader now builds, with this module's own _pair_key: 524,682 unique triples,
+        # 0 duplicated ([[torchcell.datasets.scerevisiae.yeastphenome]]).
+        "expected_duplicated_pairs": 0,
         "expected_unperturbed": 8975,
         # Curated YeastPhenome GROWTH screens (NPV z-score label): 47 deletion screens
         # (haploid BY4741/BY4742, homozygous-diploid BY4743 and heterozygous BY4743) minus

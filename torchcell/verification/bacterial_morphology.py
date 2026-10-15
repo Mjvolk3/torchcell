@@ -1,7 +1,7 @@
 # torchcell/verification/bacterial_morphology
 # [[torchcell.verification.bacterial_morphology]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/verification/bacterial_morphology
-"""L0-L4 record-level verifier for a ``BacterialMorphologyPhenotype`` dataset.
+"""L0-L4 record-level verifier for a ``MorphologyPhenotype`` dataset.
 
 :mod:`torchcell.verification.morphology` verifies the yeast CalMorph family and cannot
 serve this one: it imports ``CALMORPH_LABELS`` / ``CALMORPH_STATISTICS`` at module scope,
@@ -13,7 +13,7 @@ caught rather than averaged.
 What the schema already guarantees at L0, so this verifier does not re-check it: every
 key is a feature of the named assay, a key whose declared statistic is a coefficient of
 variation is in ``morphology_coefficient_of_variation`` and no other key is, and no value
-is NaN (``BacterialMorphologyPhenotype.validate_against_the_assay``). What it adds:
+is NaN (``MorphologyPhenotype.validate_against_the_assay``). What it adds:
 
 1. L1 ``assay_coverage`` -- the schema accepts any non-empty subset, so a build that
    silently dropped a column would pass it. The check is deliberately NOT full coverage:
@@ -48,7 +48,7 @@ import math
 from collections.abc import Callable, Sequence
 from typing import Any
 
-from torchcell.datamodels.bacterial_morphology_features import (
+from torchcell.datamodels.morphology_features import (
     MorphologyAssay,
     MorphologyStatistic,
     morphology_assay,
@@ -324,7 +324,7 @@ def verify_bacterial_morphology_dataset(
     resolve_gene_name: GeneNameResolver | None = None,
     min_containment: float = 0.90,
 ) -> VerificationReport:
-    """Run the L0-L4 gate for a ``BacterialMorphologyPhenotype`` dataset.
+    """Run the L0-L4 gate for a ``MorphologyPhenotype`` dataset.
 
     Args:
         records: the per-LMDB-entry dicts (experiment / reference / publication).

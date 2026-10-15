@@ -29,8 +29,6 @@ from torchcell.datamodels.schema import (
     SGD_S288C_NAMESPACE,
     AllelePerturbation,
     ArtifactRef,
-    BacterialVariantCall,
-    BacterialVariantType,
     BarcodedKanMxDeletionPerturbation,
     ConditionalAllelePerturbation,
     ConstructPlacement,
@@ -51,6 +49,7 @@ from torchcell.datamodels.schema import (
     GeneAdditionPerturbation,
     GenePerturbation,
     GenePerturbationType,
+    GenomeVariantCall,
     GenomicSpan,
     HeterologousPathwayPerturbation,
     HeterozygousDeletionPerturbation,
@@ -90,6 +89,7 @@ from torchcell.datamodels.schema import (
     VariantCallPerturbation,
     VariantFrequencyBasis,
     VariantSiteKind,
+    VariantType,
 )
 from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
@@ -190,8 +190,8 @@ _URI = dict(
     )
 )
 
-_SNV_CALL = BacterialVariantCall(
-    variant_type=BacterialVariantType.snv,
+_SNV_CALL = GenomeVariantCall(
+    variant_type=VariantType.snv,
     type_statement="SNP",
     reference_sequence="AE015451",
     position_start=3866001,
@@ -204,8 +204,8 @@ _SNV_CALL = BacterialVariantCall(
     frequency_basis=VariantFrequencyBasis.fraction,
     caller="breseq 0.33.1",
 )
-_INTERGENIC_CALL = BacterialVariantCall(
-    variant_type=BacterialVariantType.insertion,
+_INTERGENIC_CALL = GenomeVariantCall(
+    variant_type=VariantType.insertion,
     type_statement="INS",
     reference_sequence="AE015451",
     position_start=4586057,
@@ -217,8 +217,8 @@ _INTERGENIC_CALL = BacterialVariantCall(
     frequency=1.0,
     frequency_basis=VariantFrequencyBasis.fraction,
 )
-_SPAN_CALL = BacterialVariantCall(
-    variant_type=BacterialVariantType.deletion,
+_SPAN_CALL = GenomeVariantCall(
+    variant_type=VariantType.deletion,
     type_statement="DEL",
     reference_sequence="AE015451",
     position_start=4588139,
@@ -274,7 +274,7 @@ _PLACEMENT = ConstructPlacement(
     ),
     variants=[
         ConstructVariantCall(
-            variant_type=BacterialVariantType.substitution,
+            variant_type=VariantType.substitution,
             variant_statement="K229L",
             reference_contig_sha256=_PBTX1_SHA256,
             position_start=3368,

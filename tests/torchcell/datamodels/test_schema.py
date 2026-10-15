@@ -42,6 +42,7 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.sequence.genome.registry import (
+    BW25113_BACKGROUND_GENOTYPE,
     SGD_S288C_R64,
     SGD_S288C_R64_GENBANK_ACCESSION,
 )
@@ -2122,6 +2123,10 @@ def test_the_assembly_set_vocabulary_equals_the_registry_ids() -> None:
             "CANONICAL_HOST_ROOT",
             "SGD_S288C_R64_GENBANK_ACCESSION",
             "SCEREVISIAE_CENPK113_7D_GENBANK_ACCESSION",
+            # a strain's verbatim background genotype, read from the BW25113 set's own
+            # GenBank /note: data about one deposited set, not a set id (it moved into
+            # the registry from schema.py on 2026-10-15)
+            "BW25113_BACKGROUND_GENOTYPE",
         }
         and not name.startswith("ROLE_")
     }
@@ -2177,35 +2182,6 @@ def test_the_namespace_vocabulary_covers_every_assembly_set() -> None:
     )
 
 
-@pytest.mark.data
-def test_the_bw25113_genotype_is_verbatim_from_the_deposited_genbank_bytes() -> None:
-    """The background-genotype constant is a substring of the sha256-pinned file.
-
-    The constant's provenance is the tier, not a paper: it is read from the ``/note``
-    qualifier of the ``source`` feature of BW25113's deposited GenBank flat file, whose
-    bytes ``registry.resolve`` verifies against the manifest's sha256 on every call. So
-    this reads the real bytes rather than trusting the string in ``schema.py``.
-
-    Data-gated: it needs the genomes tier, so it runs under ``--data`` with the real
-    ``DATA_ROOT`` exported (``tests/conftest.py`` otherwise points ``DATA_ROOT`` at a
-    sentinel path, and ``registry`` deliberately has no fallback to a legacy location).
-    """
-    import gzip
-
-    from torchcell.sequence.genome import registry
-
-    path = registry.resolve(
-        registry.ECOLI_K12_BW25113, "GCA_000750555.1_ASM75055v1_genomic.gbff.gz"
-    )
-    with gzip.open(path, "rt") as handle:
-        header = handle.read(200_000)
-    flattened = " ".join(header.split())
-    assert s.BW25113_BACKGROUND_GENOTYPE in flattened
-    assert f"genotype: {s.BW25113_BACKGROUND_GENOTYPE}" in flattened
-    # the split-out lesions reconstruct the statement exactly, in order
-    assert " ".join(s.BW25113_BACKGROUND_LESIONS) == s.BW25113_BACKGROUND_GENOTYPE
-
-
 # --- 4. the bacterial strain background ------------------------------------ #
 def _bw25113_allele(**kw: Any) -> s.BacterialBackgroundAllele:
     fields: dict[str, Any] = dict(
@@ -2226,7 +2202,7 @@ def _bw25113_background(**kw: Any) -> s.BacterialStrainBackground:
         name="BW25113",
         reference_strain="BW25113",
         assembly_set="ecoli_K12_BW25113_ASM75055v1",
-        genotype_statement=s.BW25113_BACKGROUND_GENOTYPE,
+        genotype_statement=BW25113_BACKGROUND_GENOTYPE,
         alleles=[_bw25113_allele()],
         provenance_gaps=[_gap("provenance")],
     )
@@ -2317,7 +2293,7 @@ def test_the_background_rides_on_the_strain_reference() -> None:
     )
     assert isinstance(reference, s.StrainReferenceGenome)
     assert isinstance(reference.background, s.BacterialStrainBackground)
-    assert reference.background.genotype_statement == s.BW25113_BACKGROUND_GENOTYPE
+    assert reference.background.genotype_statement == BW25113_BACKGROUND_GENOTYPE
     with _refuses("background pins assembly set 'ecoli_K12_BW25113_ASM75055v1' != "):
         _assembly_reference(
             strain="BW25113",

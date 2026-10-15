@@ -154,13 +154,13 @@ second.
 VARIANT_CALL_LEAVES: Final = (VariantCallPerturbation, SpanDeletionCallPerturbation)
 """The gene-perturbation leaves written as ``sequence variant perturbation`` nodes.
 
-The leaves that COMPOSE a ``BacterialVariantCall`` (a ``call`` field, #731): the
+The leaves that COMPOSE a ``GenomeVariantCall`` (a ``call`` field, #731): the
 ``VariantCallPerturbation`` family (locus and site calls) and
 ``SpanDeletionCallPerturbation``, which is a ``DeletionStrainPerturbation`` by class
 (one locus removed entirely by a called span) and carries the call beside it. The rule
 is the physical thing the leaf states, a called variant, not a host; the
 union-to-label test in ``tests/torchcell/adapters/test_bacterial_graph_classes.py``
-pins it to exactly the union members whose ``call`` field is a ``BacterialVariantCall``.
+pins it to exactly the union members whose ``call`` field is a ``GenomeVariantCall``.
 """
 CGROUP_MEMORY_CURRENT = "/sys/fs/cgroup/memory.current"
 CGROUP_MEMORY_MAX = "/sys/fs/cgroup/memory.max"
@@ -1279,7 +1279,7 @@ class CellAdapter:
         """One node per gene perturbation of the genotype, the label chosen BY LEAF.
 
         Every member of ``GenePerturbationType`` is served here (ontology unification G,
-        2026-10-15): a leaf that composes a ``BacterialVariantCall``
+        2026-10-15): a leaf that composes a ``GenomeVariantCall``
         (``VARIANT_CALL_LEAVES``, #731) is written as ``sequence variant
         perturbation``, ``is_a perturbation`` in the graph schema, with the call's
         replicon, interval, kind, frequency and mode as columns; every other leaf is
@@ -3420,7 +3420,7 @@ class CellAdapter:
 
     @staticmethod
     def _bacterial_morphology_properties(phenotype: Any) -> dict[str, Any]:
-        """Node properties of a ``BacterialMorphologyPhenotype`` (experiment or reference).
+        """Node properties of a ``MorphologyPhenotype`` (experiment or reference).
 
         The two dict-valued fields serialize to JSON strings, the CalMorph convention,
         and ``assay`` rides beside them because the keys inside those strings are only

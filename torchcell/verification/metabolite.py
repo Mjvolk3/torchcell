@@ -28,6 +28,10 @@ from collections.abc import Callable, Sequence
 from typing import Any
 
 from torchcell.verification.levels import l0_structural, l1_count, l2_value_fidelity
+from torchcell.verification.perturbation_families import (
+    addition_perturbation_types,
+    heterologous_identifier,
+)
 from torchcell.verification.report import (
     Level,
     LevelResult,
@@ -41,23 +45,28 @@ Record = dict[str, Any]
 def _deleted_genes(experiment: dict[str, Any]) -> list[str]:
     """Systematic names deleted in this experiment's genotype.
 
-    Excludes ``gene_addition`` perturbations: the engineered cassette background is
-    constant across every strain (and heterologous names are not real ORFs), so it is
-    not a screened deletion and must not enter the L1/L4 deleted-ORF key.
+    Excludes every leaf that ADDS DNA
+    (:func:`~torchcell.verification.perturbation_families.addition_perturbation_types`,
+    the subclasses of ``GeneAdditionPerturbation``): an added copy is not a screened
+    deletion, whatever organism it came from, so it must not enter the deleted-ORF key.
+    The test was the literal string ``gene_addition``, which named one of the union's
+    four addition leaves and so would have counted a promoter-driven integration or a
+    heterologous pathway as a deletion.
     """
+    additions = addition_perturbation_types()
     return [
         p["systematic_gene_name"]
         for p in experiment["genotype"]["perturbations"]
         if p.get("systematic_gene_name") is not None
-        and p.get("perturbation_type") != "gene_addition"
+        and p.get("perturbation_type") not in additions
     ]
 
 
 def _genotype_signature(
     experiment: dict[str, Any],
 ) -> tuple[tuple[str | None, ...], ...]:
-    """Canonical STRAIN identity: the sorted set of deleted perturbations, each keyed by
-    (systematic_gene_name, perturbation_type, perturbed_gene_name), excluding gene additions.
+    """Canonical STRAIN identity: the sorted set of perturbations, each keyed by
+    (systematic_gene_name, perturbation_type, perturbed_gene_name).
 
     A single-deletion collection reduces to one gene per record (so this equals per-ORF
     uniqueness); a COMBINATORIAL collection (e.g. Xue FFA: a POX1-FAA1-FAA4 baseline plus a
@@ -71,6 +80,13 @@ def _genotype_signature(
     (``variant``) on a different plasmid (``construct_name``). Adding fields can only
     separate records that were colliding, so no dataset that passes this rule today can
     start failing it.
+
+    Every perturbation is keyed, including the additions: what a strain carries is part
+    of which strain it is, and a store whose addition background is constant (the case
+    the old ``gene_addition`` exclusion was written for) has that constant in every key,
+    which leaves the grouping exactly as it was. Excluding additions instead would have
+    collapsed a store whose strains differ ONLY in what they add, which is what every
+    production-chassis release is.
     """
     return tuple(
         sorted(
@@ -82,7 +98,6 @@ def _genotype_signature(
                 p.get("construct_name"),
             )
             for p in experiment["genotype"]["perturbations"]
-            if p.get("perturbation_type") != "gene_addition"
         )
     )
 
@@ -354,10 +369,25 @@ def verify_metabolite_dataset(
 
 
 def metabolite_gene_set(records: Sequence[Record]) -> set[str]:
-    """Union of deleted systematic gene names across records (the L4 overlap key)."""
+    """The host loci a dataset's records name: the L4 gene-universe overlap key.
+
+    Every perturbed systematic name except the HETEROLOGOUS ones, which is the same test
+    the bioproduction families apply
+    (:func:`~torchcell.verification.perturbation_families.heterologous_identifier`): an
+    identifier whose ``source_organism`` is not the record's own species is a gene of
+    another genome and is not a claim about a locus of the host, while an extra copy of a
+    NATIVE gene names its real locus and stays in. The set was the deleted-ORF key, which
+    answered a different question with a type string, so a heterologous pathway gene was
+    checked against the host annotation and a native added copy was not.
+    """
     genes: set[str] = set()
     for rec in records:
-        genes.update(_deleted_genes(rec["experiment"]))
+        species = rec["reference"]["genome_reference"]["species"]
+        for p in rec["experiment"]["genotype"]["perturbations"]:
+            name = p.get("systematic_gene_name")
+            if name is None or heterologous_identifier(p, species):
+                continue
+            genes.add(str(name))
     return genes
 
 

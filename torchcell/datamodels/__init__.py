@@ -21,10 +21,7 @@ from .schema import (
     AssayType,
     AssemblySet,
     BacterialBackgroundAllele,
-    BacterialMorphologyPhenotype,
     BacterialStrainBackground,
-    BacterialVariantCall,
-    BacterialVariantType,
     BiologicAgentClass,
     BiologicPerturbation,
     BiosensorFluorescenceExperiment,
@@ -68,6 +65,7 @@ from .schema import (
     GeneInteractionExperimentReference,
     GeneInteractionPhenotype,
     GenePerturbation,
+    GenomeVariantCall,
     Genotype,
     HeterologousPathwayPerturbation,
     IntegratedCassette,
@@ -92,6 +90,7 @@ from .schema import (
     MicroarrayExpressionScorePhenotype,
     MorphologyExperiment,
     MorphologyExperimentReference,
+    MorphologyPhenotype,
     MrnaNumberFractionExperiment,
     MrnaNumberFractionExperimentReference,
     MrnaNumberFractionPhenotype,
@@ -162,6 +161,7 @@ from .schema import (
     VariantCallMode,
     VariantFrequencyBasis,
     VariantSiteKind,
+    VariantType,
     YeastAssemblySet,
 )
 
@@ -250,9 +250,9 @@ __all__ = [
     "MarkedAllelePerturbation",
     "PromoterReplacementPerturbation",
     "HeterologousPathwayPerturbation",
-    # bacterial called-variant leaves + the composed call (issue #731)
-    "BacterialVariantType",
-    "BacterialVariantCall",
+    # the called-variant leaves + the composed call (issue #731)
+    "VariantType",
+    "GenomeVariantCall",
     "VariantCallMode",
     "VariantFrequencyBasis",
     "VariantSiteKind",
@@ -296,7 +296,7 @@ __all__ = [
     "PhosphositeIntensityPhenotype",
     "PhosphositeIntensityExperiment",
     "PhosphositeIntensityExperimentReference",
-    "BacterialMorphologyPhenotype",
+    "MorphologyPhenotype",
     "MorphologyExperiment",
     "MorphologyExperimentReference",
     # issue #854: the count-less transcriptome family

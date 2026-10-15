@@ -184,7 +184,6 @@ from torchcell.datamodels.media import (
     MOPS_RICH_DEFINED_NOCARBON_PRICE2018,
 )
 from torchcell.datamodels.schema import (
-    BW25113_BACKGROUND_LESIONS,
     AssayType,
     BacterialGeneNamespace,
     Concentration,
@@ -247,6 +246,7 @@ from torchcell.sequence.genome.ecoli.k12 import (
     EcoliK12MG1655Genome,
     EcoliK12StrainName,
 )
+from torchcell.sequence.genome.registry import BW25113_BACKGROUND_LESIONS
 from torchcell.verification.levels import l0_structural, l1_count
 from torchcell.verification.report import (
     Level,
@@ -2390,7 +2390,7 @@ MIN_ESSENTIAL_ECK_ROUTE_FRACTION = 0.98
 #: operons (measured; their Table S1 ``name`` values are araA, araB, rhaA and rhaB).
 #: Table S1 leaves their ``locus_tag`` empty and fills it for the other 320, which
 #: :func:`essentiality_inventory` checks against the ECK route's own misses. The reason
-#: is not asserted from the literature: ``BW25113_BACKGROUND_LESIONS`` carries
+#: is not asserted from the literature: ``registry.BW25113_BACKGROUND_LESIONS`` carries
 #: ``(araBAD)567`` and ``(rhaBAD)568`` verbatim from the ``source`` feature of the
 #: sha256-pinned ``ecoli_K12_BW25113_ASM75055v1`` GenBank file, and the inventory ties
 #: each dropped gene to the lesion that accounts for it.
@@ -2558,7 +2558,8 @@ class EssentialityInventory(BaseModel):
     )
     background_lesions_for_rows_without_a_tag: dict[str, str] = Field(
         description="FINDING, not a gate (#1057): each such row's Table S1 name -> the "
-        "BW25113 background lesion (BW25113_BACKGROUND_LESIONS, verbatim from the pinned "
+        "BW25113 background lesion (registry.BW25113_BACKGROUND_LESIONS, verbatim from the "
+        "pinned "
         "assembly's source feature) whose name contains it"
     )
     fitness_genes: int = Field(description="genes of fit_logratios_good.tab")

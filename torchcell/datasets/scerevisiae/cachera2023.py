@@ -62,7 +62,6 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import YPD
 from torchcell.datamodels.schema import (
     ArtifactRef,
-    BacterialVariantType,
     Concentration,
     ConcentrationUnit,
     ConstructPlacement,
@@ -87,6 +86,7 @@ from torchcell.datamodels.schema import (
     ReferenceGenome,
     ReleasedIdentifierPerturbation,
     ReleasedKind,
+    VariantType,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.sequence.construct.registry import CACHERA2023_CRI_SPA_PLASMIDS
@@ -346,7 +346,7 @@ def _placement(gene_key: str) -> ConstructPlacement:
         statement, position_start, position_end, codon_number = call
         variants.append(
             ConstructVariantCall(
-                variant_type=BacterialVariantType.substitution,
+                variant_type=VariantType.substitution,
                 variant_statement=statement,
                 reference_contig_sha256=PBTX1_SHA256,
                 position_start=position_start,

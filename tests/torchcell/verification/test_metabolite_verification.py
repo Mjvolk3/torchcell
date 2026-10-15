@@ -8,9 +8,13 @@ test moves. The ``reference_finite`` path (``reference_centered=False``) is pinn
 proper-subset reference (passes), an empty reference, a reference key the strain did not
 measure, and an infinite reference (each fails with ``n_bad`` 1; the infinite value is
 counted in ``n_values``, the other two are not). A NaN SE is dropped before the
-non-negativity check while a negative SE fails it. A ``gene_addition`` perturbation is
-outside the strain signature and the L4 gene set, so two strains differing only in a
-cassette are one deletion set.
+non-negativity check while a negative SE fails it.
+
+2026.10.15 (lane R): an ADDED gene is part of which strain a record measures, so two
+strains differing only in a cassette are two strains, and the L4 gene set holds the host
+loci -- every perturbed name except the heterologous ones, keyed on ``source_organism``
+rather than on the ``gene_addition`` type string (so a heterologous PATHWAY gene is out
+and a native extra copy is in).
 """
 
 from __future__ import annotations
@@ -304,20 +308,57 @@ def test_se_nan_is_dropped_and_negative_se_fails() -> None:
     assert negative.details["bad"] == [{"index": 2, "value": -0.1, "reason": "< 0.0"}]
 
 
-def test_gene_addition_is_outside_the_strain_signature_and_gene_set() -> None:
-    """Two strains that differ only by an added cassette are one deletion set."""
+def _addition(name: str, source_organism: str | None) -> dict[str, Any]:
+    """One addition perturbation as a built store serializes it (the key is present)."""
+    return {
+        "systematic_gene_name": name,
+        "perturbed_gene_name": name.lower(),
+        "perturbation_type": "gene_addition",
+        "source_organism": source_organism,
+    }
+
+
+def test_an_added_gene_is_part_of_the_strain_it_was_added_to() -> None:
+    """Two records differing only by the added cassette are two strains, not a duplicate.
+
+    The signature used to drop every ``gene_addition``, which made a store whose strains
+    differ ONLY in what they add read as one strain measured many times -- what every
+    production-chassis release is. A store whose addition background is constant has that
+    constant in every key, so its grouping is unchanged.
+    """
     records = [_record("YMR056C", 1.0), _record("YMR056C", 2.0)]
     for i, record in enumerate(records):
         record["experiment"]["genotype"]["perturbations"].append(
-            {
-                "systematic_gene_name": f"CASSETTE{i}",
-                "perturbed_gene_name": f"cassette{i}",
-                "perturbation_type": "gene_addition",
-            }
+            _addition(f"CASSETTE{i}", None)
         )
-    dup = _result(records, "genotype_uniqueness")
-    assert dup.message == "1 deletion sets appear in multiple records"
-    assert metabolite_gene_set(records) == {"YMR056C"}
+    unique = _result(records, "genotype_uniqueness")
+    assert unique.passed is True
+    assert unique.message == "2 unique strains (deletion sets), one record each"
+    constant = [_record("YMR056C", 1.0), _record("YMR056C", 2.0)]
+    for record in constant:
+        record["experiment"]["genotype"]["perturbations"].append(
+            _addition("CASSETTE", None)
+        )
+    assert _result(constant, "genotype_uniqueness").message == (
+        "1 deletion sets appear in multiple records"
+    )
+
+
+def test_the_gene_set_holds_the_host_loci_and_not_the_heterologous_names() -> None:
+    """A heterologous addition is out of the L4 universe; a native extra copy is in.
+
+    The rule is ``source_organism`` against the record's own species, the same test the
+    bioproduction families apply, and not the ``gene_addition`` type string: the string
+    dropped a native copy (a real ORF) and kept a heterologous pathway gene (which is a
+    gene of another genome).
+    """
+    records = [_record("YMR056C", 1.0)]
+    records[0]["experiment"]["genotype"]["perturbations"] += [
+        _addition("crtE", "Xanthophyllomyces dendrorhous"),
+        _addition("YBR085W", "Saccharomyces cerevisiae"),
+        _addition("CASSETTE", None),
+    ]
+    assert metabolite_gene_set(records) == {"YMR056C", "YBR085W"}
 
 
 # --- issue #595: datasets released under several protocols -------------------- #

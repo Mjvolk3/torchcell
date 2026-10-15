@@ -35,10 +35,10 @@ import pytest
 import torchcell.datasets.pputida.menasalvas2025 as mv
 from torchcell.datamodels.media import M9_NREL_MOPS_MENASALVAS2025
 from torchcell.datamodels.schema import (
-    BacterialVariantType,
     EnvironmentResponseExperiment,
     EnvironmentResponseExperimentReference,
     SmallMoleculePerturbation,
+    VariantType,
 )
 from torchcell.datasets.bacteria_common import reconcile_locus_tags
 
@@ -701,17 +701,17 @@ def _metabolite_rows() -> list[tuple[str, str]]:
 
 #: Released ``mutation`` cells, one per form :func:`mv.classify_mutation` accepts, with
 #: the variant type and multi-base verdict each one must get.
-MUTATION_FORMS: tuple[tuple[str, BacterialVariantType, bool], ...] = (
-    (f"A{mv.ARROW_RIGHT}G", BacterialVariantType.snv, False),
-    (f"C{mv.ARROW_RIGHT}T", BacterialVariantType.snv, False),
-    ("+C", BacterialVariantType.insertion, False),
-    ("+CGGG", BacterialVariantType.insertion, True),
-    ("Δ1 bp", BacterialVariantType.deletion, False),
-    (f"Δ1,227{mv.NBSP}bp", BacterialVariantType.deletion, True),
-    (f"(C)6{mv.ARROW_RIGHT}7", BacterialVariantType.insertion, False),
-    (f"(G)6{mv.ARROW_RIGHT}5", BacterialVariantType.deletion, False),
-    (f"2 bp{mv.ARROW_RIGHT}CT", BacterialVariantType.substitution, True),
-    (f"48 bp{mv.ARROW_RIGHT}33 bp", BacterialVariantType.substitution, True),
+MUTATION_FORMS: tuple[tuple[str, VariantType, bool], ...] = (
+    (f"A{mv.ARROW_RIGHT}G", VariantType.snv, False),
+    (f"C{mv.ARROW_RIGHT}T", VariantType.snv, False),
+    ("+C", VariantType.insertion, False),
+    ("+CGGG", VariantType.insertion, True),
+    ("Δ1 bp", VariantType.deletion, False),
+    (f"Δ1,227{mv.NBSP}bp", VariantType.deletion, True),
+    (f"(C)6{mv.ARROW_RIGHT}7", VariantType.insertion, False),
+    (f"(G)6{mv.ARROW_RIGHT}5", VariantType.deletion, False),
+    (f"2 bp{mv.ARROW_RIGHT}CT", VariantType.substitution, True),
+    (f"48 bp{mv.ARROW_RIGHT}33 bp", VariantType.substitution, True),
 )
 #: The released ``gene`` cell of the one row data S1-5 names by SYMBOL, carrying a
 #: non-breaking hyphen, so ``_norm`` is exercised on a name the resolver must reach.

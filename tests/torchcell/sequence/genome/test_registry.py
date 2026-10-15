@@ -29,6 +29,8 @@ import pytest
 
 from torchcell.literature.manifest import ArtifactRecord
 from torchcell.sequence.genome.registry import (
+    BW25113_BACKGROUND_GENOTYPE,
+    BW25113_BACKGROUND_LESIONS,
     ECOLI_B_REL606,
     ECOLI_K12_BW25113,
     ECOLI_K12_MG1655,
@@ -438,3 +440,30 @@ def test_extend_refusals(tmp_path: Path) -> None:
     with pytest.raises(FileNotFoundError, match="rsync -a"):
         extend_assembly_set("absent_set", [_lof_record()], data_root=data_root)
     assert load_genome_manifest(SET, data_root=data_root) == manifest
+
+
+@pytest.mark.data
+def test_the_bw25113_genotype_is_verbatim_from_the_deposited_genbank_bytes() -> None:
+    """The background-genotype constant is a substring of the sha256-pinned file.
+
+    The constant's provenance is the tier, not a paper: it is read from the ``/note``
+    qualifier of the ``source`` feature of BW25113's deposited GenBank flat file, whose
+    bytes ``resolve`` verifies against the manifest's sha256 on every call. So this
+    reads the real bytes rather than trusting the string in the registry. The test moved
+    here with the constant, which left ``schema.py`` because a strain's genotype is data
+    about one deposited assembly set and not a record contract.
+
+    Data-gated: it needs the genomes tier, so it runs under ``--data`` with the real
+    ``DATA_ROOT`` exported (``tests/conftest.py`` otherwise points ``DATA_ROOT`` at a
+    sentinel path, and the registry deliberately has no fallback to a legacy location).
+    """
+    import gzip
+
+    path = resolve(ECOLI_K12_BW25113, "GCA_000750555.1_ASM75055v1_genomic.gbff.gz")
+    with gzip.open(path, "rt") as handle:
+        header = handle.read(200_000)
+    flattened = " ".join(header.split())
+    assert BW25113_BACKGROUND_GENOTYPE in flattened
+    assert f"genotype: {BW25113_BACKGROUND_GENOTYPE}" in flattened
+    # the split-out lesions reconstruct the statement exactly, in order
+    assert " ".join(BW25113_BACKGROUND_LESIONS) == BW25113_BACKGROUND_GENOTYPE

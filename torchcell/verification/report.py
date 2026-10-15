@@ -174,6 +174,15 @@ GENOME_REFERENCE_RULES: Final[frozenset[str]] = frozenset(
         "feature_containment",
         "deleted_gene_containment_sgd",
         "promoter_gene_is_a_locus",
+        # a stored or released identifier read against OUR annotation of the host. Each
+        # of these three says in its own message that it is "a finding, never a gate"
+        # and "the genome never gates storage", and each was classified ``gate`` until
+        # 2026-10-15 because its name was off this list: the measured instance of the
+        # defect the audit predicted (lane R, item 3). The exhaustiveness test over
+        # every rule name the fleet emits is what finds the next one.
+        "perturbed_locus_in_bw25113_annotation",
+        "released_b_numbers_on_mg1655_annotation",
+        "released_tags_on_kt2440_annotation",
         # bacterial loaders' own gates: stored identifiers against the pinned assembly
         "promoter_genes_in_the_host_gene_universe",
         "stored_tags_are_loci",
@@ -209,6 +218,56 @@ GENOME_REFERENCE_RULE_PREFIXES: Final[tuple[str, ...]] = (
     "protein_and_perturbed_locus_containment_",
     "assembly_pin",
     "no_viable_deletion_in_",
+)
+
+
+#: Words that appear in the NAME of a rule whose subject is our genome reference. Not a
+#: classifier: :func:`finding_class_of` never reads this, and a name matching one of them
+#: is not thereby a ``report`` rule. It is the vocabulary
+#: ``tests/torchcell/verification/test_finding_class.py`` sweeps the fleet with, so a new
+#: rule whose name speaks of an annotation, an assembly, a locus or a containment is
+#: either classified here or listed in :data:`DATA_FIDELITY_RULES_NAMED_LIKE_GENOME_RULES`
+#: with its reason. That is what makes the registry above exhaustive by test rather than
+#: by hand: three rules had already slipped past it.
+GENOME_REFERENCE_NAME_VOCABULARY: Final[tuple[str, ...]] = (
+    "containment",
+    "annotation",
+    "assembly",
+    "pinned",
+    "_loci",
+    "canonical_gene",
+    "current_genome",
+)
+
+#: Rules whose NAME matches :data:`GENOME_REFERENCE_NAME_VOCABULARY` and that are
+#: nevertheless ``gate``, each because its subject is the RELEASE and not our reference:
+#:
+#: - ``both_screens_are_balanced_and_strain_pinned`` (Cui 2018), ``table_s1_call_histogram_is_pinned``
+#:   (Gerdes 2003), ``per_medium_key_counts_are_the_pinned_ones`` (Li 2014),
+#:   ``per_condition_censored_and_interval_key_counts_are_the_pinned_ones`` (Gupta 2024),
+#:   ``quantified_sites_per_sample_are_the_pinned_ones`` (Potel 2018): "pinned" here is a
+#:   count or a key set this repo pinned from the released file, not an assembly pin.
+#: - ``released_annotations`` (SGD essentiality): the annotations are the SOURCE's, and
+#:   the rule is that the store holds the ones the release states.
+#: - ``stored_loci_are_the_released_b_numbers_on_the_bw25113_pin`` (Hawkins 2020): its own
+#:   docstring states "No annotation is read" -- the claim is that the keys are the
+#:   released b-numbers verbatim.
+#: - ``supplementary_note_2_loci_are_measured_in_every_record`` (Menasalvas 2025): the
+#:   loci are the ones the release's own Supplementary Note names.
+#: - ``fitness_companion_containment`` (SGA interactions): the companion is the same
+#:   paper's fitness release, so the rule is cross-release fidelity, not an annotation.
+DATA_FIDELITY_RULES_NAMED_LIKE_GENOME_RULES: Final[frozenset[str]] = frozenset(
+    {
+        "both_screens_are_balanced_and_strain_pinned",
+        "fitness_companion_containment",
+        "per_condition_censored_and_interval_key_counts_are_the_pinned_ones",
+        "per_medium_key_counts_are_the_pinned_ones",
+        "quantified_sites_per_sample_are_the_pinned_ones",
+        "released_annotations",
+        "stored_loci_are_the_released_b_numbers_on_the_bw25113_pin",
+        "supplementary_note_2_loci_are_measured_in_every_record",
+        "table_s1_call_histogram_is_pinned",
+    }
 )
 
 

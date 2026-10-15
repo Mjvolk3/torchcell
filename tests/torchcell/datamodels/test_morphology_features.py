@@ -1,6 +1,6 @@
-# tests/torchcell/datamodels/test_bacterial_morphology_features.py
-# [[tests.torchcell.datamodels.test_bacterial_morphology_features]]
-# https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/datamodels/test_bacterial_morphology_features.py
+# tests/torchcell/datamodels/test_morphology_features.py
+# [[tests.torchcell.datamodels.test_morphology_features]]
+# https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/datamodels/test_morphology_features.py
 """The bacterial morphology feature vocabularies (issue #774).
 
 What is asserted here is the CONTENT of the Campos 2018 vocabulary against its source,
@@ -25,7 +25,7 @@ import pytest
 from pydantic import ValidationError
 
 import torchcell.datamodels.schema as s
-from torchcell.datamodels.bacterial_morphology_features import (
+from torchcell.datamodels.morphology_features import (
     CAMPOS2018_MORPHOLOGY_ASSAY,
     CAMPOS2018_MORPHOLOGY_FEATURES,
     MORPHOLOGY_ASSAYS,
@@ -242,14 +242,14 @@ def test_a_feature_and_an_assay_are_frozen_and_reject_unknown_fields() -> None:
 # --------------------------------------------------------------------------- #
 # The phenotype validator: what the assay vocabulary refuses
 # --------------------------------------------------------------------------- #
-def _phenotype(**kwargs: object) -> s.BacterialMorphologyPhenotype:
+def _phenotype(**kwargs: object) -> s.MorphologyPhenotype:
     fields: dict[str, object] = {
         "assay": "campos2018",
         "morphology": {"<L>": 2.81},
         "morphology_coefficient_of_variation": {"CV_L": 0.24},
     }
     fields.update(kwargs)
-    return s.BacterialMorphologyPhenotype(**fields)  # type: ignore[arg-type]
+    return s.MorphologyPhenotype(**fields)  # type: ignore[arg-type]
 
 
 def test_a_record_names_its_assay_and_reads_its_vocabulary_back() -> None:

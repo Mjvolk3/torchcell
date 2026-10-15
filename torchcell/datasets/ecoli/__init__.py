@@ -55,7 +55,7 @@ sourcing layer.
   released phenotype is 28 named features of ONE medium (Appendix Table S1's 21
   morphological, 2 growth and 5 cell cycle symbols); the Gompertz maximal growth rate is
   served as a ko/wt growth-rate ratio and the 26 morphology symbols as a
-  ``BacterialMorphologyPhenotype`` against the ``campos2018`` assay vocabulary. Only the
+  ``MorphologyPhenotype`` against the ``campos2018`` assay vocabulary. Only the
   saturating optical density has no phenotype class left.
 - ``choe2019_growth_rate`` -- ``GrowthRateChoe2019Dataset`` and
   ``TranscriptionFactorKnockoutChoe2019Dataset``: the two writable arms of the

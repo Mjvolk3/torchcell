@@ -13,12 +13,18 @@ registry, the verdict, the summary, the JSON round trip, and the shared rules' c
 
 from __future__ import annotations
 
+import ast
 import json
+import re
+from pathlib import Path
 
 import pytest
 
+import torchcell
 from torchcell.verification.common import shared_rule_results
 from torchcell.verification.report import (
+    DATA_FIDELITY_RULES_NAMED_LIKE_GENOME_RULES,
+    GENOME_REFERENCE_NAME_VOCABULARY,
     GENOME_REFERENCE_RULE_PREFIXES,
     GENOME_REFERENCE_RULES,
     FindingClass,
@@ -30,6 +36,7 @@ from torchcell.verification.report import (
 )
 
 PROVENANCE = Provenance(source_uri="test://finding-class")
+REPO_ROOT = Path(torchcell.__file__).resolve().parent.parent
 
 
 def _result(name: str, passed: bool, level: Level = Level.L4) -> LevelResult:
@@ -49,6 +56,9 @@ def test_the_registry_is_exactly_the_reclassified_rules() -> None:
     ``construct_placement_states`` joined on 2026-10-15 with the construct store: it
     counts how many of a store's gene additions point at deposited construct sequence,
     which is the record against our sequence references rather than against its release.
+    The three ``*_annotation`` rules joined the same day (lane R): each reads a stored or
+    released identifier against OUR annotation of the host and says so in its own
+    message, and each was a ``gate`` until then because its name was off this list.
     """
     assert sorted(GENOME_REFERENCE_RULES) == [
         "canonical_gene_names",
@@ -64,8 +74,11 @@ def test_the_registry_is_exactly_the_reclassified_rules() -> None:
         "mat_orientation",
         "pangenome_orf_containment",
         "parents_pinned",
+        "perturbed_locus_in_bw25113_annotation",
         "promoter_gene_is_a_locus",
         "promoter_genes_in_the_host_gene_universe",
+        "released_b_numbers_on_mg1655_annotation",
+        "released_tags_on_kt2440_annotation",
         "s288c_gene_containment",
         "spacer_matches_the_released_window_on_the_pinned_sequence",
         "stored_loci_are_bw25113_loci_derived_from_the_released_b_number",
@@ -289,3 +302,64 @@ def test_the_shared_gene_rules_report_and_the_rest_gate() -> None:
         "gene_containment_sgd",
         "current_genome_genes",
     ]
+
+
+def _static_rule_names() -> dict[str, str]:
+    """Every rule NAME a verification module or a loader writes as a literal.
+
+    ``name=`` of a ``LevelResult(...)`` or of an ``l0_``..``l4_`` helper call, over
+    ``torchcell/verification`` and ``torchcell/datasets``. Names built at runtime (an
+    f-string naming a gene universe or a store) are the prefix families
+    :data:`GENOME_REFERENCE_RULE_PREFIXES` covers and are not read here.
+    """
+    names: dict[str, str] = {}
+    for root in ("verification", "datasets"):
+        for path in sorted((REPO_ROOT / "torchcell" / root).rglob("*.py")):
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+            for node in ast.walk(tree):
+                if not isinstance(node, ast.Call):
+                    continue
+                called = getattr(node.func, "id", None) or getattr(
+                    node.func, "attr", None
+                )
+                if called != "LevelResult" and not (
+                    called is not None and re.fullmatch(r"l[0-4]_[a-z_]+", called)
+                ):
+                    continue
+                for keyword in node.keywords:
+                    if keyword.arg == "name" and isinstance(
+                        keyword.value, ast.Constant
+                    ):
+                        value = keyword.value.value
+                        if isinstance(value, str):
+                            names.setdefault(value, str(path.relative_to(REPO_ROOT)))
+    return names
+
+
+def test_the_registry_is_exhaustive_over_every_rule_name_the_fleet_emits() -> None:
+    """A rule named like a genome-reference rule is classified ``report`` or exempted.
+
+    The registry above is a list of names, so nothing in the schema derives it and the
+    only way it can be wrong is by omission -- which is what happened: three L4 rules
+    that read a stored identifier against our own annotation
+    (``perturbed_locus_in_bw25113_annotation``, ``released_b_numbers_on_mg1655_annotation``,
+    ``released_tags_on_kt2440_annotation``) said "a finding, never a gate" in their own
+    messages and classified ``gate`` because nobody added their names. This test sweeps
+    every literal rule name in the fleet for the genome-reference vocabulary and demands
+    that each match be either classified ``report`` or listed in
+    ``DATA_FIDELITY_RULES_NAMED_LIKE_GENOME_RULES`` with its reason, so the next such
+    rule fails here instead of silently gating a store on our annotation.
+    """
+    emitted = _static_rule_names()
+    assert len(emitted) > 200, "the sweep found almost no rule names; it is not reading"
+    misclassified = {
+        name: emitted[name]
+        for name in emitted
+        if any(word in name for word in GENOME_REFERENCE_NAME_VOCABULARY)
+        and finding_class_of(name) is FindingClass.gate
+        and name not in DATA_FIDELITY_RULES_NAMED_LIKE_GENOME_RULES
+    }
+    assert misclassified == {}
+    # the exemptions are real rules, not stale names
+    unknown = sorted(DATA_FIDELITY_RULES_NAMED_LIKE_GENOME_RULES - set(emitted))
+    assert unknown == []

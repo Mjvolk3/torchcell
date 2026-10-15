@@ -1,0 +1,120 @@
+{
+  "record_version": 1,
+  "slug": "morphology-phenotype-is-the-general-class-calmorph-is-the-specific-one",
+  "date": "2026-10-15",
+  "pr": null,
+  "author_kind": "agent",
+  "base_commit": "b5c5549d8f4752fc8ac89b6d1e5cd2c0ec5bf4a9",
+  "python_version": "3.13.0",
+  "symbols": [
+    {
+      "symbol": "BacterialMorphologyPhenotype",
+      "status": "removed",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": "27a1620caf553b70720a262eea18198dc58ed97c25072dba26e5553767a08d03",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "MorphologyExperiment",
+      "status": "modified",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": "0a13f8176b9a293003936077685e45fa8f5fe403fbf385c414f54a96af2bd1ec",
+      "fingerprint_after": "fadc14cc7e2c3adce05cb262a2b227decbb90b065a27436d6c2cb168f9826bf5",
+      "impact": "breaking",
+      "reasons": [
+        "field 'phenotype' type changed: BacterialMorphologyPhenotype -> MorphologyPhenotype"
+      ]
+    },
+    {
+      "symbol": "MorphologyExperimentReference",
+      "status": "modified",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": "9fa93d2f00554cb33362ce9e993bac784c2c4a6ef19407ce0d7d650777ce5a6d",
+      "fingerprint_after": "4fb5a1f92d456558d2cbcdb5519754d1200243c1cd4af4c84a10b7b9dfc0c884",
+      "impact": "breaking",
+      "reasons": [
+        "field 'phenotype_reference' type changed: BacterialMorphologyPhenotype -> MorphologyPhenotype"
+      ]
+    },
+    {
+      "symbol": "MorphologyPhenotype",
+      "status": "added",
+      "kinds": [
+        "rename"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "c7dc3580e2279d46d3729b9ca751d724518641e7f11f0d8e8df822ede34e2625",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "PhenotypeType",
+      "status": "modified",
+      "kinds": [
+        "rename",
+        "enum_member_added"
+      ],
+      "fingerprint_before": "4dd1dd5cc14efbb692045cbbfe2ab70dc2c837c7e3c7b54c3fe721189a0dddfa",
+      "fingerprint_after": "de4908a8d41ccccda2d20230d3f101c033a8f0107a5e0e5eaa5d385c681ffd74",
+      "impact": "breaking",
+      "reasons": [
+        "lost members ['BacterialMorphologyPhenotype']",
+        "gained members ['MorphologyPhenotype']"
+      ]
+    }
+  ],
+  "correctness_argument": "Lane R, item 2 of the three audit flags that were never proposals (audit A section 5.2). The host prefix was on the wrong one of the two morphology phenotypes: BacterialMorphologyPhenotype -> MorphologyPhenotype, and CalMorphPhenotype keeps its name.\n\nWHY THE NAMES WERE BACKWARDS. BacterialMorphologyPhenotype (#774) is the GENERAL design: its vocabulary is a property of the ASSAY, named per record by the assay field and resolved through MORPHOLOGY_ASSAYS, so 'a later imaging screen registers its own assay and widens nobody else's label set' and nothing in the class is host specific. CalMorphPhenotype is the host- and program-specific one: its 281 base and 220 CV keys are hard-coded as CALMORPH_LABELS and CALMORPH_STATISTICS, the fixed output of CalMorph, a S. cerevisiae image-analysis program, and it serves 3 datasets (Ohya 2005, Ohnuki 2018, Ohnuki 2022). A name that says 'bacterial' on the host-neutral class and says nothing about the host on the host-bound one is a name a reader cannot use to pick between them, and constitution principle 1 is explicit that a class never exists, and so never reads, by which host the data came from. Lane F already renamed the experiment pair above it (BacterialMorphologyExperiment -> MorphologyExperiment) and left 'the phenotype's own rename is P5' in the reference docstring; this is that rename, so the pair and the phenotype now agree.\n\nWHY CalMorphPhenotype KEEPS ITS NAME. The requirement on the specific class is that the name say what it is specific to, and 'CalMorph' is exactly that statement: the program fixes the 501 parameters, and every record on the class is one of its runs. CalMorphMorphologyPhenotype or YeastMorphologyPhenotype would add a word without adding a fact, and YeastMorphologyPhenotype would be false in the same way the old name was: the binding constraint is the program, not the host, and CalMorph is what makes the vocabulary closed.\n\nWHAT MOVES WITH THE NAME. The assay registry moved too: torchcell/datamodels/bacterial_morphology_features.py -> torchcell/datamodels/morphology_features.py (with its test file), because it is the general registry the renamed class names in its own field description, and a general class pointing at a host-prefixed module repeats the defect at the module level. MorphologyAssay, MORPHOLOGY_ASSAYS and morphology_assay keep their names; they never carried the prefix. No field, validator, value, assay or key changes: the records a store holds serialize identically except for the class NAME that model_dump does not write, and the served graph's node label ('morphology phenotype' in biocypher/config/torchcell_schema_config.yaml) was never the class name. The two verifier modules keep their names in this change (torchcell/verification/morphology.py verifies CalMorph, torchcell/verification/bacterial_morphology.py verifies the general class): swapping two module names in one commit is a readability hazard and the audit flagged the classes, so the second half is named in the lane note as the follow-up.\n\nIMPACT. MorphologyExperiment and MorphologyExperimentReference change the ANNOTATION of their phenotype field, and PhenotypeType loses one member name and gains another; the accepted set of records is unchanged in all three. Campos 2018 (MorphologyGrowthCampos2018Dataset) is the one loader that builds on the renamed class and is not in the 2026.10.06-4b293d34 release snapshot; the served cost is whatever PhenotypeType's closure reaches, which the tool computes rather than this argument asserting it.",
+  "measurement_type_decision": false,
+  "source_quotes": [],
+  "alternatives_rejected": [
+    {
+      "alternative": "Rename both: MorphologyPhenotype for the general one and CalMorphMorphologyPhenotype (or YeastMorphologyPhenotype) for the specific one.",
+      "why_rejected": "CalMorphPhenotype already names what it is specific to, so the second rename would move 3 served dataset closures to add a word and no fact. YeastMorphologyPhenotype would also be the wrong statement: a yeast screen that is not CalMorph belongs on the general class with its own assay, so the host is not what the class is bound to."
+    },
+    {
+      "alternative": "Retire CalMorphPhenotype entirely by registering CalMorph as an assay in MORPHOLOGY_ASSAYS, so one class serves both.",
+      "why_rejected": "That is the correct end state and it is a bigger change than a rename: 501 CalMorph parameters would each need a MorphologyFeature with its declared statistic and unit sourced from Ohya 2005, three served stores and their adapters would move to new field names (calmorph -> morphology), and the CalMorph verifier's completeness rule (the full 281 + 220 vocabulary in every record) has no equivalent on the assay-scoped class, which deliberately permits a subset. The owner's decision for this program was 'yes rename'; the merge is recorded as the follow-up proposal in the lane note rather than smuggled into a rename."
+    },
+    {
+      "alternative": "Leave the names alone and document the asymmetry in the docstrings.",
+      "why_rejected": "The docstrings already documented it (the general class's own docstring states the shape is CalMorphPhenotype's and the vocabulary became a property of the assay), which is how the defect survived three loaders and a graph lane. Constitution principle 8: a served class is presumed correct until a more correct shape is shown, and a name that misstates which class is general is shown wrong by the class's own docstring."
+    }
+  ],
+  "served_release": "2026.10.06-4b293d34",
+  "affected_loaders": [
+    {
+      "loader": "torchcell/datasets/ecoli/campos2018.py",
+      "dataset_classes": [
+        "GrowthRateCampos2018Dataset",
+        "MorphologyCampos2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BacterialMorphologyPhenotype",
+        "MorphologyExperiment",
+        "MorphologyExperimentReference",
+        "MorphologyPhenotype"
+      ]
+    }
+  ],
+  "served_datasets": [],
+  "rebuild_scope": "dev_stores",
+  "owner_sign_off": {
+    "signed": true,
+    "quote": "Owner, 2026-10-15, in conversation: 'yes rename, no major bump minor bump. go !'; 'we care most about correctness and are willing right now to do full rebuilds if we identify even small semantically prudent change in onto'; 'like why a bacterial experiment! it seems this is unnecessary distinction. we can run many same fitness experiments on both yeast and bacteria.'. The same 'yes rename' decision lane F applied to the four experiment pairs with no twin, of which the morphology pair was one.",
+    "url": null
+  }
+}

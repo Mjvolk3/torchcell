@@ -1,0 +1,506 @@
+{
+  "n_leaves": 38,
+  "base_fields": [
+    "gene_namespace",
+    "identifier_mapping",
+    "perturbed_gene_name",
+    "provenance",
+    "systematic_gene_name"
+  ],
+  "n_fields_beyond_base": 92,
+  "n_read_by_some_site": 18,
+  "n_read_by_no_site": 74,
+  "read_by": {
+    "allele_name": [
+      "environment_response._genotype_signature",
+      "fitness._genotype_signature"
+    ],
+    "cassette": [
+      "environment_response._genotype_signature"
+    ],
+    "collection": [
+      "environment_response._genotype_signature"
+    ],
+    "construct_name": [
+      "metabolite._genotype_signature"
+    ],
+    "constructed_orf": [
+      "environment_response._genotype_signature"
+    ],
+    "construction": [
+      "environment_response._genotype_signature"
+    ],
+    "crispr": [
+      "environment_response._genotype_signature",
+      "fitness._genotype_signature"
+    ],
+    "degron": [
+      "environment_response._genotype_signature"
+    ],
+    "donor_sequence": [
+      "environment_response._genotype_signature"
+    ],
+    "insertion_site": [
+      "environment_response._genotype_signature"
+    ],
+    "perturbation_type": [
+      "environment_response._genotype_signature",
+      "fitness._genotype_signature",
+      "metabolite._genotype_signature"
+    ],
+    "released_gene_id": [
+      "environment_response._genotype_signature",
+      "fitness._genotype_signature"
+    ],
+    "released_kind": [
+      "environment_response._genotype_signature"
+    ],
+    "strain_id": [
+      "fitness._genotype_signature"
+    ],
+    "strain_label": [
+      "environment_response._genotype_signature"
+    ],
+    "tag": [
+      "environment_response._genotype_signature"
+    ],
+    "terminus": [
+      "environment_response._genotype_signature"
+    ],
+    "variant": [
+      "metabolite._genotype_signature"
+    ]
+  },
+  "read_by_no_site": {
+    "adaptor": [
+      "DegronPerturbation"
+    ],
+    "allele_class": [
+      "ConditionalAllelePerturbation"
+    ],
+    "allele_description": [
+      "SgaAllelePerturbation"
+    ],
+    "allele_effect": [
+      "MarkedAllelePerturbation"
+    ],
+    "allele_perturbation_type": [
+      "SgaAllelePerturbation"
+    ],
+    "barcode": [
+      "BarcodedKanMxDeletionPerturbation",
+      "HeterozygousDeletionPerturbation",
+      "ReleasedIdentifierPerturbation",
+      "TransposonInsertionPerturbation"
+    ],
+    "call": [
+      "LocusVariantCallPerturbation",
+      "SiteVariantCallPerturbation",
+      "SpanDeletionCallPerturbation"
+    ],
+    "call_ref": [
+      "NaturalLossOfFunctionPerturbation"
+    ],
+    "cause": [
+      "NaturalLossOfFunctionPerturbation"
+    ],
+    "copy_number": [
+      "CopyNumberVariantPerturbation",
+      "EngineeredCopyNumberPerturbation",
+      "HeterologousPathwayPerturbation",
+      "NaturalGenePresencePerturbation"
+    ],
+    "damp_description": [
+      "SgaDampPerturbation"
+    ],
+    "damp_perturbation_type": [
+      "SgaDampPerturbation"
+    ],
+    "deleted_span": [
+      "SpanDeletionCallPerturbation"
+    ],
+    "deletion_description": [
+      "BarcodedKanMxDeletionPerturbation",
+      "KanMxDeletionPerturbation",
+      "NatMxDeletionPerturbation",
+      "SgaKanMxDeletionPerturbation",
+      "SgaNatMxDeletionPerturbation"
+    ],
+    "deletion_type": [
+      "BarcodedKanMxDeletionPerturbation",
+      "CrisprDeletionPerturbation",
+      "DeletionStrainPerturbation",
+      "KanMxDeletionPerturbation",
+      "MarkerDeletionPerturbation",
+      "MeanDeletionPerturbation",
+      "NatMxDeletionPerturbation",
+      "SgaKanMxDeletionPerturbation",
+      "SgaNatMxDeletionPerturbation",
+      "SpanDeletionCallPerturbation"
+    ],
+    "description": [
+      "BarcodedKanMxDeletionPerturbation",
+      "ConditionalAllelePerturbation",
+      "CopyNumberVariantPerturbation",
+      "CrisprActivationPerturbation",
+      "CrisprDeletionPerturbation",
+      "CrisprInterferencePerturbation",
+      "DegronPerturbation",
+      "DeletionPerturbation",
+      "DeletionStrainPerturbation",
+      "EngineeredCopyNumberPerturbation",
+      "GeneAdditionPerturbation",
+      "HeterologousPathwayPerturbation",
+      "HeterozygousDeletionPerturbation",
+      "InduciblePromoterInsertionPerturbation",
+      "KanMxDeletionPerturbation",
+      "LocusVariantCallPerturbation",
+      "MarkedAllelePerturbation",
+      "MarkerDeletionPerturbation",
+      "MeanDeletionPerturbation",
+      "NamedAllelePerturbation",
+      "NatMxDeletionPerturbation",
+      "NaturalGeneAbsencePerturbation",
+      "NaturalGenePresencePerturbation",
+      "NaturalLossOfFunctionPerturbation",
+      "PromoterDrivenGeneIntegrationPerturbation",
+      "PromoterReplacementPerturbation",
+      "ReleasedIdentifierPerturbation",
+      "SequenceVariantPerturbation",
+      "SgaAllelePerturbation",
+      "SgaDampPerturbation",
+      "SgaKanMxDeletionPerturbation",
+      "SgaNatMxDeletionPerturbation",
+      "SgaSuppressorAllelePerturbation",
+      "SgaTsAllelePerturbation",
+      "SiteVariantCallPerturbation",
+      "SpanDeletionCallPerturbation",
+      "TransposonInsertionPerturbation",
+      "VariablePromoterReporterPerturbation"
+    ],
+    "downtag_barcode": [
+      "BarcodedKanMxDeletionPerturbation",
+      "HeterozygousDeletionPerturbation"
+    ],
+    "expression_direction": [
+      "CrisprActivationPerturbation",
+      "CrisprInterferencePerturbation",
+      "InduciblePromoterInsertionPerturbation",
+      "PromoterReplacementPerturbation"
+    ],
+    "expression_range": [
+      "SgaDampPerturbation"
+    ],
+    "flanking_gene_statement": [
+      "SiteVariantCallPerturbation"
+    ],
+    "flanking_systematic_gene_names": [
+      "SiteVariantCallPerturbation"
+    ],
+    "identifier_kind": [
+      "ReleasedIdentifierPerturbation"
+    ],
+    "inducing_condition": [
+      "DegronPerturbation"
+    ],
+    "insertion_position": [
+      "ReleasedIdentifierPerturbation",
+      "TransposonInsertionPerturbation"
+    ],
+    "insertion_strand": [
+      "ReleasedIdentifierPerturbation",
+      "TransposonInsertionPerturbation"
+    ],
+    "integration_locus": [
+      "GeneAdditionPerturbation",
+      "HeterologousPathwayPerturbation",
+      "PromoterDrivenGeneIntegrationPerturbation",
+      "VariablePromoterReporterPerturbation"
+    ],
+    "is_heterologous": [
+      "GeneAdditionPerturbation",
+      "HeterologousPathwayPerturbation",
+      "PromoterDrivenGeneIntegrationPerturbation",
+      "VariablePromoterReporterPerturbation"
+    ],
+    "is_inducible": [
+      "PromoterDrivenGeneIntegrationPerturbation",
+      "PromoterReplacementPerturbation"
+    ],
+    "kan_mx_description": [
+      "SgaKanMxDeletionPerturbation"
+    ],
+    "kanmx_deletion_type": [
+      "SgaKanMxDeletionPerturbation"
+    ],
+    "library_pool": [
+      "ReleasedIdentifierPerturbation",
+      "TransposonInsertionPerturbation"
+    ],
+    "localization": [
+      "GeneAdditionPerturbation",
+      "HeterologousPathwayPerturbation",
+      "PromoterDrivenGeneIntegrationPerturbation",
+      "VariablePromoterReporterPerturbation"
+    ],
+    "marker": [
+      "ConditionalAllelePerturbation",
+      "EngineeredCopyNumberPerturbation",
+      "InduciblePromoterInsertionPerturbation",
+      "MarkerDeletionPerturbation"
+    ],
+    "mechanism_so_id": [
+      "BarcodedKanMxDeletionPerturbation",
+      "ConditionalAllelePerturbation",
+      "CopyNumberVariantPerturbation",
+      "CrisprActivationPerturbation",
+      "CrisprDeletionPerturbation",
+      "CrisprInterferencePerturbation",
+      "DegronPerturbation",
+      "DeletionPerturbation",
+      "DeletionStrainPerturbation",
+      "EngineeredCopyNumberPerturbation",
+      "GeneAdditionPerturbation",
+      "HeterologousPathwayPerturbation",
+      "HeterozygousDeletionPerturbation",
+      "InduciblePromoterInsertionPerturbation",
+      "KanMxDeletionPerturbation",
+      "LocusVariantCallPerturbation",
+      "MarkedAllelePerturbation",
+      "MarkerDeletionPerturbation",
+      "MeanDeletionPerturbation",
+      "NamedAllelePerturbation",
+      "NatMxDeletionPerturbation",
+      "NaturalGeneAbsencePerturbation",
+      "NaturalGenePresencePerturbation",
+      "NaturalLossOfFunctionPerturbation",
+      "PromoterDrivenGeneIntegrationPerturbation",
+      "PromoterReplacementPerturbation",
+      "SequenceVariantPerturbation",
+      "SgaAllelePerturbation",
+      "SgaDampPerturbation",
+      "SgaKanMxDeletionPerturbation",
+      "SgaNatMxDeletionPerturbation",
+      "SgaSuppressorAllelePerturbation",
+      "SgaTsAllelePerturbation",
+      "SiteVariantCallPerturbation",
+      "SpanDeletionCallPerturbation",
+      "TransposonInsertionPerturbation",
+      "VariablePromoterReporterPerturbation"
+    ],
+    "mechanism_so_name": [
+      "BarcodedKanMxDeletionPerturbation",
+      "ConditionalAllelePerturbation",
+      "CopyNumberVariantPerturbation",
+      "CrisprActivationPerturbation",
+      "CrisprDeletionPerturbation",
+      "CrisprInterferencePerturbation",
+      "DegronPerturbation",
+      "DeletionPerturbation",
+      "DeletionStrainPerturbation",
+      "EngineeredCopyNumberPerturbation",
+      "GeneAdditionPerturbation",
+      "HeterologousPathwayPerturbation",
+      "HeterozygousDeletionPerturbation",
+      "InduciblePromoterInsertionPerturbation",
+      "KanMxDeletionPerturbation",
+      "LocusVariantCallPerturbation",
+      "MarkedAllelePerturbation",
+      "MarkerDeletionPerturbation",
+      "MeanDeletionPerturbation",
+      "NamedAllelePerturbation",
+      "NatMxDeletionPerturbation",
+      "NaturalGeneAbsencePerturbation",
+      "NaturalGenePresencePerturbation",
+      "NaturalLossOfFunctionPerturbation",
+      "PromoterDrivenGeneIntegrationPerturbation",
+      "PromoterReplacementPerturbation",
+      "SequenceVariantPerturbation",
+      "SgaAllelePerturbation",
+      "SgaDampPerturbation",
+      "SgaKanMxDeletionPerturbation",
+      "SgaNatMxDeletionPerturbation",
+      "SgaSuppressorAllelePerturbation",
+      "SgaTsAllelePerturbation",
+      "SiteVariantCallPerturbation",
+      "SpanDeletionCallPerturbation",
+      "TransposonInsertionPerturbation",
+      "VariablePromoterReporterPerturbation"
+    ],
+    "nat_mx_description": [
+      "SgaNatMxDeletionPerturbation"
+    ],
+    "native_promoter": [
+      "PromoterReplacementPerturbation"
+    ],
+    "native_promoter_retained": [
+      "InduciblePromoterInsertionPerturbation"
+    ],
+    "natmx_deletion_type": [
+      "SgaNatMxDeletionPerturbation"
+    ],
+    "num_duplicates": [
+      "MeanDeletionPerturbation"
+    ],
+    "origin": [
+      "CopyNumberVariantPerturbation",
+      "NaturalGenePresencePerturbation"
+    ],
+    "pangenome_orf_id": [
+      "CopyNumberVariantPerturbation",
+      "NaturalGeneAbsencePerturbation",
+      "NaturalGenePresencePerturbation"
+    ],
+    "pathway_name": [
+      "HeterologousPathwayPerturbation"
+    ],
+    "placement": [
+      "GeneAdditionPerturbation",
+      "HeterologousPathwayPerturbation",
+      "PromoterDrivenGeneIntegrationPerturbation",
+      "VariablePromoterReporterPerturbation"
+    ],
+    "promoter_name": [
+      "HeterologousPathwayPerturbation",
+      "InduciblePromoterInsertionPerturbation",
+      "PromoterDrivenGeneIntegrationPerturbation",
+      "PromoterReplacementPerturbation"
+    ],
+    "promoter_sequence": [
+      "PromoterDrivenGeneIntegrationPerturbation",
+      "PromoterReplacementPerturbation",
+      "VariablePromoterReporterPerturbation"
+    ],
+    "promoter_variant_id": [
+      "VariablePromoterReporterPerturbation"
+    ],
+    "protease": [
+      "DegronPerturbation"
+    ],
+    "provenance_gaps": [
+      "BarcodedKanMxDeletionPerturbation",
+      "ConditionalAllelePerturbation",
+      "GeneAdditionPerturbation",
+      "HeterologousPathwayPerturbation",
+      "HeterozygousDeletionPerturbation",
+      "LocusVariantCallPerturbation",
+      "PromoterDrivenGeneIntegrationPerturbation",
+      "ReleasedIdentifierPerturbation",
+      "SiteVariantCallPerturbation",
+      "SpanDeletionCallPerturbation",
+      "VariablePromoterReporterPerturbation"
+    ],
+    "reference_copy_number": [
+      "CopyNumberVariantPerturbation",
+      "EngineeredCopyNumberPerturbation"
+    ],
+    "release_code": [
+      "NaturalLossOfFunctionPerturbation"
+    ],
+    "release_gene_name": [
+      "NaturalLossOfFunctionPerturbation"
+    ],
+    "release_name": [
+      "NaturalLossOfFunctionPerturbation"
+    ],
+    "release_span": [
+      "NaturalLossOfFunctionPerturbation"
+    ],
+    "released_gene_id_namespace": [
+      "ReleasedIdentifierPerturbation"
+    ],
+    "released_locus_statement": [
+      "SiteVariantCallPerturbation"
+    ],
+    "replaced_allele": [
+      "HeterozygousDeletionPerturbation"
+    ],
+    "replicon_statement": [
+      "GeneAdditionPerturbation",
+      "HeterologousPathwayPerturbation",
+      "PromoterDrivenGeneIntegrationPerturbation",
+      "VariablePromoterReporterPerturbation"
+    ],
+    "responsive_to": [
+      "InduciblePromoterInsertionPerturbation"
+    ],
+    "scaffold_name": [
+      "VariablePromoterReporterPerturbation"
+    ],
+    "sequence_ref": [
+      "CopyNumberVariantPerturbation",
+      "NaturalGeneAbsencePerturbation",
+      "NaturalGenePresencePerturbation",
+      "SequenceVariantPerturbation"
+    ],
+    "sequence_source": [
+      "CopyNumberVariantPerturbation",
+      "NaturalGeneAbsencePerturbation",
+      "NaturalGenePresencePerturbation",
+      "SequenceVariantPerturbation"
+    ],
+    "site_kind": [
+      "SiteVariantCallPerturbation"
+    ],
+    "source_organism": [
+      "GeneAdditionPerturbation",
+      "HeterologousPathwayPerturbation",
+      "PromoterDrivenGeneIntegrationPerturbation",
+      "VariablePromoterReporterPerturbation"
+    ],
+    "span_designation": [
+      "SpanDeletionCallPerturbation"
+    ],
+    "span_systematic_gene_names": [
+      "SpanDeletionCallPerturbation"
+    ],
+    "state": [
+      "BarcodedKanMxDeletionPerturbation",
+      "CrisprActivationPerturbation",
+      "CrisprDeletionPerturbation",
+      "CrisprInterferencePerturbation",
+      "DeletionPerturbation",
+      "DeletionStrainPerturbation",
+      "EngineeredCopyNumberPerturbation",
+      "GeneAdditionPerturbation",
+      "HeterologousPathwayPerturbation",
+      "HeterozygousDeletionPerturbation",
+      "InduciblePromoterInsertionPerturbation",
+      "KanMxDeletionPerturbation",
+      "MarkerDeletionPerturbation",
+      "MeanDeletionPerturbation",
+      "NatMxDeletionPerturbation",
+      "NaturalGeneAbsencePerturbation",
+      "NaturalGenePresencePerturbation",
+      "PromoterDrivenGeneIntegrationPerturbation",
+      "PromoterReplacementPerturbation",
+      "SgaKanMxDeletionPerturbation",
+      "SgaNatMxDeletionPerturbation",
+      "SpanDeletionCallPerturbation",
+      "TransposonInsertionPerturbation",
+      "VariablePromoterReporterPerturbation"
+    ],
+    "suppressor_allele_perturbation_type": [
+      "SgaSuppressorAllelePerturbation"
+    ],
+    "suppressor_description": [
+      "SgaSuppressorAllelePerturbation"
+    ],
+    "temperature_sensitive_allele_perturbation_type": [
+      "SgaTsAllelePerturbation"
+    ],
+    "transposon": [
+      "ReleasedIdentifierPerturbation",
+      "TransposonInsertionPerturbation"
+    ],
+    "ts_allele_description": [
+      "SgaTsAllelePerturbation"
+    ],
+    "variable_region_end": [
+      "VariablePromoterReporterPerturbation"
+    ],
+    "variable_region_start": [
+      "VariablePromoterReporterPerturbation"
+    ]
+  }
+}

@@ -34,6 +34,10 @@ from __future__ import annotations
 import copy
 from typing import Any
 
+from torchcell.datamodels.identity import (
+    ENVIRONMENT_IDENTITY_FIELDS,
+    ENVIRONMENT_OPTIONAL_IDENTITY_FIELDS,
+)
 from torchcell.datamodels.media import YP_GALACTOSE
 from torchcell.datamodels.schema import (
     ABSOLUTE_MEASUREMENT_TYPES,
@@ -681,7 +685,7 @@ def test_condition_signature_reads_compound_agent_dose_and_scalars() -> None:
         },
         "phenotype": {"screen_id": "s1"},
     }
-    assert _condition_signature(experiment) == (
+    assert _condition_signature(experiment)[:7] == (
         (
             ("physical", "UV", "radiation", "20", "J/m2", ""),
             ("small_molecule", "hydroquinone", "", "1.5", "mM", ""),
@@ -693,6 +697,119 @@ def test_condition_signature_reads_compound_agent_dose_and_scalars() -> None:
         None,
         "s1",
     )
+
+
+def test_condition_signature_separates_an_anaerobic_record_from_an_aerobic_one() -> (
+    None
+):
+    """One strain, one screen, one medium, two oxygen regimes: two conditions.
+
+    The measured defect this rule had (lane W of the ontology unification): 9,671 of the
+    14,508 pairs ``yeastphenome`` declared duplicate under this signature are an aerobic
+    and an anaerobic record of one strain in one screen, because the signature read seven
+    hand-picked environment fields and ``aerobicity`` was not one of them.
+    """
+
+    def experiment(aerobicity: str) -> dict[str, Any]:
+        return {
+            "environment": {
+                "perturbations": [],
+                "temperature": {"value": 30.0, "unit": "celsius"},
+                "media": {"name": "SC", "state": "liquid", "components": []},
+                "duration_hours": 24.0,
+                "duration_generations": None,
+                "aerobicity": aerobicity,
+            },
+            "phenotype": {"screen_id": "s1"},
+        }
+
+    assert _condition_signature(experiment("aerobic")) != _condition_signature(
+        experiment("anaerobic")
+    )
+
+
+def test_condition_signature_separates_a_solid_medium_from_a_liquid_one() -> None:
+    """Two media of one name and two states are two conditions.
+
+    ``yeastphenome`` stores a liquid and a solid medium both named ``SC`` and both with
+    an empty component list, so a signature keyed on the medium's NAME cannot tell them
+    apart; ``state`` is part of the served medium identity (``MEDIA_IDENTITY_FIELDS``).
+    """
+
+    def experiment(state: str) -> dict[str, Any]:
+        return {
+            "environment": {
+                "perturbations": [],
+                "temperature": {"value": 30.0, "unit": "celsius"},
+                "media": {"name": "SC", "state": state, "components": []},
+            },
+            "phenotype": {},
+        }
+
+    assert _condition_signature(experiment("liquid")) != _condition_signature(
+        experiment("solid")
+    )
+
+
+def test_condition_signature_reads_every_served_identity_field() -> None:
+    """Every field the SERVED environment identity reads separates two conditions.
+
+    ``environment_identity`` decides whether two records share ONE environment node in
+    the graph, so a field it reads and this signature does not is a field on which the
+    verifier and the graph disagree about what a condition is. The rule is stated against
+    the field tuples themselves, so a field added to ``identity.py`` fails here until the
+    signature reads it, rather than being noticed on a store years later.
+    """
+    base: dict[str, Any] = {
+        "perturbations": [
+            {
+                "perturbation_type": "small_molecule",
+                "compound": {"name": "hydroquinone", "inchikey": HYDROQUINONE},
+                "concentration": {"value": 1.5, "unit": "mM", "basis": None},
+                "solvent": None,
+            }
+        ],
+        "temperature": {"value": 30.0, "unit": "celsius"},
+        "media": {
+            "name": "SC",
+            "state": "liquid",
+            "is_synthetic": True,
+            "base_medium": "SC",
+            "components": [],
+            "dropouts": [],
+            "provenance_gaps": [],
+        },
+        "aerobicity": "aerobic",
+        "duration_hours": 24.0,
+        "duration_generations": None,
+        "dilution_rate_per_hour": None,
+        "culture_format": None,
+        "pre_culture": None,
+        "auxotroph_supplements": None,
+    }
+    edits: dict[str, Any] = {
+        "media": base["media"] | {"state": "solid"},
+        "temperature": {"value": 30.0, "unit": "kelvin"},
+        "perturbations": [base["perturbations"][0] | {"solvent": {"name": "DMSO"}}],
+        "aerobicity": "anaerobic",
+        "duration_hours": 48.0,
+        "duration_generations": 5.0,
+        "dilution_rate_per_hour": 0.12,
+        "culture_format": {"vessel": "plate_384"},
+        "pre_culture": {"source": "frozen_stock"},
+        "auxotroph_supplements": ["uracil"],
+    }
+    fields = ENVIRONMENT_IDENTITY_FIELDS + ENVIRONMENT_OPTIONAL_IDENTITY_FIELDS
+    assert set(edits) == set(fields), "every identity field needs an edit to test with"
+    unread = [
+        field
+        for field in fields
+        if _condition_signature({"environment": base, "phenotype": {}})
+        == _condition_signature(
+            {"environment": base | {field: edits[field]}, "phenotype": {}}
+        )
+    ]
+    assert unread == []
 
 
 def test_condition_signature_splits_chemostat_arms_by_dilution_rate() -> None:

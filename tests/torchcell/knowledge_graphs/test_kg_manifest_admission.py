@@ -56,7 +56,11 @@ import torchcell.knowledge_graphs.kg_manifest as km
 from torchcell.data.experiment_dataset import Organism
 from torchcell.datasets.dataset_registry import dataset_registry
 from torchcell.knowledge_graphs.dataset_adapter_map import dataset_adapter_map
-from torchcell.provenance.build_manifest import BuildManifest, PerturbationLeaves
+from torchcell.provenance.build_manifest import (
+    BuildManifest,
+    ContentIdCollisions,
+    PerturbationLeaves,
+)
 from torchcell.provenance.schema_deps import load_surface_from_sources
 
 NOW = "2026-09-27T00:00:00+00:00"
@@ -261,8 +265,15 @@ class _Toy:
             built_at=BUILT_AT,
             hostname="gilahyper",
             # schema version 2 (2026-10-15): a manifest without the measured leaves
-            # reads stale, so the toy store states its (empty) leaf set
+            # reads stale, so the toy store states its (empty) leaf set; version 3 (lane
+            # V) wants the measured content-id collisions for the same reason
             perturbation_leaves=PerturbationLeaves(),
+            content_id_collisions=ContentIdCollisions(
+                n_records=len(records),
+                n_distinct=len(records),
+                n_groups=0,
+                n_records_lost=0,
+            ),
         )
         (root / "preprocess" / "build_manifest.json").write_text(
             manifest.model_dump_json(), encoding="utf-8"

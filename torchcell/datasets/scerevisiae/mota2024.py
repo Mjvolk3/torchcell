@@ -2,7 +2,7 @@
 # [[torchcell.datasets.scerevisiae.mota2024]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/mota2024
 # Test file: tests/torchcell/datasets/scerevisiae/test_mota2024.py
-"""Mota 2024 acetic/butyric/octanoic acid chemogenomic screen (env x geno -> response).
+r"""Mota 2024 acetic/butyric/octanoic acid chemogenomic screen (env x geno -> response).
 
 Mota et al. 2024 (Microbial Cell Factories, doi:10.1186/s12934-024-02309-0; PMC10903034)
 screened the BY4741 Euroscarf HAPLOID single-deletion collection for susceptibility to
@@ -70,6 +70,24 @@ its grades. A score cell outside ``0``, ``+``, ``++`` refuses the build rather t
 vanishing uncounted, and so does a sheet with no ``Gene/ORF name`` header row. Neither
 occurs in the pinned sheets (scored rows: acetic 331 ``+`` / 46 ``++``, butyric 371 /
 51, octanoic 437 / 53; 0 other symbols).
+
+THE ACETIC AND BUTYRIC REPETITIONS ARE ONE MEASUREMENT PRINTED TWICE, and nothing in
+the release says otherwise (lane V, 2026-10-15). Measured cell by cell: Table S1's
+sheet rows 186 and 187 are EQUAL in columns 1 to 5 (``Encoded Protein Function``
+byte-identical, ``Growth inhibition`` both ``+``, the three trailing columns empty) and
+differ only in column 0, ``RNR4`` against ``RNR4\xa0``; Table S2's rows 216 and 217 are
+the same pair. The trailing non-breaking space is formatting noise across the whole
+release -- 19 of Table S1's parsed rows, 21 of Table S2's and 23 of Table S3's carry
+one, ``ADA2\xa0`` among them -- so it names no second strain and is not a
+distinguishing cell. Table S3's two rows DO differ, in the grade (row 271 ``+``, row 475
+``++``, which sits in the sheet's ``++`` block), so they are two released values and
+were never one content id. The consequence is stated rather than papered over: the
+store holds all 1,289 released rows, because a released row is stored as released and
+the authors withdrew nothing, and the graph holds 1,287 ``Experiment`` nodes, because
+the acetic and butyric pairs are one measurement each. That is a declared source
+duplication (``EXPECTED_CONTENT_ID_COLLISIONS`` in
+``torchcell.database.build_dataset_lmdb``), not a lost measurement, and no synthetic
+discriminator is invented to make two nodes out of one measurement.
 
 Final: acetic 377, butyric 422, octanoic 490 = 1289 records, one per scored row.
 

@@ -34,3 +34,40 @@ Two changes from stage 1 of Path U ([[scratch.2026.10.15.ontology-unification-de
 **`mapped_store_lanes(data_root, include_private, organisms)`.** The preflight's second walk beside `mapped_store_status`: the same `build_adapter_map` of the organism set, reading `perturbation_leaves` off each store's build manifest ([[torchcell.provenance.build_manifest]]) and checking every leaf against the node lanes the dataset's adapter conf enables through `torchcell.knowledge_graphs.perturbation_lanes.unserved_leaves` ([[torchcell.knowledge_graphs.perturbation_lanes]]). `StoreLaneStatus.blocks` is true for a manifest without the field (or no manifest) and for any leaf an enabled edge walks that no enabled node method emits; `describe()` is the refusal line. The live rebuild's preflight heredoc calls it right after the freshness walk, on the same three arguments ([[database.slurm.scripts.gilahyper_live_rebuild-slurm_docker]]).
 
 Tests: `test_verify_after_build_returns_the_typed_outcome_for_each_case` (three toys built directly, one outcome each, the `failed` manifest retired), `test_mapped_store_lanes_checks_the_manifests_leaves_against_the_confs_lanes` (the toy's KanMX deletions served under the yeast lane, a gap under the bacterial-only lane with the edge, nothing without the edge, blocked without the field and without a manifest), and the existing no-verifier test now asserts the typed line.
+
+## 2026.10.15 - The content-id collision gate in the rebuild preflight (lane V)
+
+**`mapped_store_collisions(data_root, include_private, organisms)`.** The preflight's
+third walk beside `mapped_store_status` and `mapped_store_lanes`: the same
+`build_adapter_map` of the organism set, reading `content_id_collisions` off each store's
+build manifest ([[torchcell.provenance.build_manifest]]) and comparing
+`n_records_lost` with the dataset's entry in `EXPECTED_CONTENT_ID_COLLISIONS`.
+`StoreCollisionStatus.blocks` is true for a manifest without the field (or no manifest)
+and for any measured count that is not the declared one; `describe()` is the refusal
+line and prints the example groups' LMDB keys so the rows can be read. The live
+rebuild's preflight heredoc calls it right after the lane walk, on the same three
+arguments ([[database.slurm.scripts.gilahyper_live_rebuild-slurm_docker]]).
+
+It REFUSES rather than reports, and the argument is that reporting was the status quo.
+The sink keeps one node per `Experiment` content id, so a record that shares one with
+another record of its store is absent from the graph with no error; the number was
+computable from the served store the whole time and nobody computed it, so 18 SGD
+essentiality annotations, 31 Ozaydin measurements and 2 Mota rows went into three KG
+releases unnoticed ([[experiments.database.scripts.content_id_collision_scan]]). A gate
+that prints a line into an 8-hour build log would have been read the same number of
+times. The build manifest still records the count whatever it is; only the rebuild is
+gated.
+
+The escape is one declaration, and it is written. `EXPECTED_CONTENT_ID_COLLISIONS` maps a
+dataset class to the number of records its SOURCE released more than once,
+byte-identically, with the released evidence in the loader module; it holds exactly one
+entry, `EnvChemgenMota2024Dataset: 2`, for the two RNR4 rows Mota 2024 printed twice
+([[torchcell.datasets.scerevisiae.mota2024]]). A declaration admits one number, not "at
+least this many", so a dataset that starts losing a third record blocks even though it is
+in the table.
+
+Tests: `test_mapped_store_collisions_refuses_a_store_whose_collisions_are_not_declared`
+(the toy's three distinct records pass at 0, a manifest reporting 1 blocks undeclared,
+passes when declared 1, blocks again when declared 2, and blocks without the field and
+without a manifest) and `test_the_only_declared_source_duplication_is_motas_two_rnr4_rows`,
+which pins the table itself because an exception list is part of the gate.

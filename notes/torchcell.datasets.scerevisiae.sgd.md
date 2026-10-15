@@ -268,3 +268,65 @@ The essentiality verifier keys `one_record_per_gene_and_publication` on the fitn
 This store is derived from SGD phenotype annotations (a database aggregate). Data collected from a compendium, a database aggregate or a follow-up study may embed that source's preprocessing (normalization, filtering, re-keying, merged conditions) and may lack ontological representation the primary release carries (per-sample metadata, replicate structure, the released statistic). Its records are a derived copy, and the primary release is still to be collected from source ([[torchcell.knowledge_graphs.dataset-admission-loop]], 2026.10.13).
 
 What it may hide here: each record is a curated annotation of a paper, not the paper's release; the curation decides the allele naming, the condition classes and the call "inviable", and an annotation that names no medium or temperature stores them as typed gaps (`not_carried_by_curation`). The annotated papers' own releases are the source to collect.
+
+## 2026.10.15 - The annotation's reference is on the evidence, and 18 records come back (lane V)
+
+`gene_essentiality_sgd` is served in KG 3.0 and the served graph was short 18 of its
+1,329 curated annotations. The adapter's `Experiment` node id is
+`sha256(json.dumps(experiment.model_dump()))` and `FastCsvSink` deduplicates node ids,
+so two records with byte-identical dumps become one node and the second is in the LMDB
+and nowhere else, with no error. Measured over the pinned dump
+(`1cb4ed59556b1534e28eb79ad21135cdb5a149f78dca8df4924f473e39eef409`): 1,329 records,
+1,311 distinct dumps, 17 collision groups (16 of two records, 1 of three), 18 records
+lost. Lane Q found it in its scan of 176 dev stores
+([[experiments.database.scripts.content_id_collision_scan]]) and scoped the fix out;
+this is the fix.
+
+Every colliding group is one gene, one allele and one condition curated from two or
+three DIFFERENT papers. The group of three is YOR370C (MRS6, `mrs6-Δ`) from PubMed
+7750142, 8132658 and 7882424. Thirteen pairs are Giaever's 12140549 against Dowell's
+20413493 (USO1, SRP14, UBC1, SRP101, RET2, RHO3, SRP21, SRP102, YML6, PFY1, PLP2,
+SRP72, SRP68, all `systematic mutation set`), and three are classical-genetics pairs:
+SKP1 from 8670864 and 8706132, RPC17 from 10407272 and 10611227, ARP3 from 9301024 and
+8840501. The number of distinct PubMed ids equals the number of annotations in all 17
+groups, so none of them is one annotation stored twice; they are independent reports of
+the same gene's inviable null phenotype.
+
+The PubMed id was already on the record, on its `Publication`, which the `Experiment`
+dump does not carry. The graph therefore held one `Experiment` node per group with two
+or three `Publication` nodes pointing at it through `mentions`, which is a false
+assertion about the data as well as a lost record.
+`GeneEssentialityEvidence.curated_reference_pubmed_id` now carries it, under
+`ESSENTIALITY_EVIDENCE_FIELDS[curated_null_phenotype]` beside `curated_experiment_type`
+so it is refused on every other evidence type, and `sgd_evidence` takes it as its second
+argument (`None` on a reference phenotype, where no call was curated). The reason it
+belongs on the evidence rather than beside it: a curation database makes no measurement
+of its own, so what a `curated_null_phenotype` call rests on IS one annotation of one
+report, and SGD says the reference is a field of an annotation ("The phenotype
+annotations for an allele include an observable feature (e.g., "cell shape"), a
+qualifier (e.g., "abnormal"), a mutant type (e.g., null), strain background, and a
+reference.", Engel 2022, the quote this loader already pins for its scoring rule).
+
+Sufficiency is proved, not assumed. `refuse_duplicate_annotations` already refuses a
+build in which two annotations share (gene, allele, conditions, PubMed id); with the
+PubMed id in the dump that key is a subset of what the experiment dumps, so a build that
+passes the refusal has one content id per record by construction. Measured with the
+field in place: 1,329 annotations, 1,329 distinct dumps, 0 lost.
+
+Rejected: SGD's own `phenotype_details[].id` (released and unique in every group, but a
+curation row identifier that moves when SGD re-curates an unchanged annotation, and it
+says nothing about why the two records are two); the annotation's `note` (identical in 16
+of the 17 groups); hashing the `Publication` into the Experiment id in the adapter (it
+would re-key every dataset to fix one loader); the field on
+`GeneEssentialityPhenotype` (the phenotype carries the call, the evidence carries what
+the call is, and only the map can refuse the field on the five measured types); dropping
+one annotation per group (constitution principle 2: the only drop is an author
+withdrawal).
+
+Record `database/schema_changes/2026-10-15-curated-reference-pubmed-id-on-gene-essentiality-evidence.json`
+(`full_kg_rebuild`, served dataset `GeneEssentialitySgdDataset`). Regression test
+`tests/torchcell/datasets/scerevisiae/test_sgd.py::test_two_annotations_of_one_gene_under_different_references_are_two_nodes`,
+which is the former `test_publication_is_outside_the_content_hash_so_repeat_annotations_collapse`
+turned around: it asserted `ids[1] == ids[2]` and `len(set(ids)) == 6` and now asserts
+`ids[1] != ids[2]` and `len(set(ids)) == len(dataset) == 7`, with the two YCR001W
+records differing in exactly that one field.

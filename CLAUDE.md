@@ -101,6 +101,14 @@ worktree by default -- code AND notes (roadmap/plan/weekly/dendron/`.claude/*`).
 `torchcell/datamodels/schema.py` (+ `pydant.py`) is the most sensitive file in the database.
 Full rules, reasons and history: [[torchcell.datamodels.schema-change-policy]].
 
+**Read the database constitution first, every time:** `/db-constitution` loads
+[[database.constitution]], the twelve ranked principles the ontology is built on (experiment
+not organism; the data is the data; pinned bytes; sequence-level material; strict typing;
+Biolink grounding; typed absence; correctness over cost; placement by physical measurement;
+more rigorous than the source; superset interoperability; records and gates). A change is
+judged by the principles in rank order, and a full rebuild is the accepted price of a
+semantically correct change.
+
 - **Trust the served schema.** A served class, field or enum member is presumed correct
   (compute and verification went into it); the burden is on the change.
 - **Correctness is the criterion, not reversibility.** An irreversible change is fine when it

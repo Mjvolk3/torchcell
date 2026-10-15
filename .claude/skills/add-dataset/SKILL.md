@@ -7,6 +7,8 @@ description: Add or revise a torchcell dataset loader without losing a single re
 
 Use this skill for every new loader and every change to an existing one, on yeast or bacteria. It exists because on 2026-10-11 a loader change refused 317,234 measured double-mutant records because a later genome annotation had renamed 35 genes. The owner's words: "the data is the data. It is what they reported. We don't drop raw data unless they themselves pull it. The genome is separate; it doesn't gate anything; we do that at modeling time." Everything below follows from that.
 
+Read the database constitution first (`/db-constitution`, [[database.constitution]]): the five rules below are its principles 2, 3, 7, 8 and 10 applied to a loader.
+
 ## The five rules
 
 1. **The data is the data.** Every record the authors released is stored under its released identity: released gene, ORF, locus tag, strain and compound names, released values, released uncertainty (an SD of exactly 0 is stored as 0). The ONLY drop is an author withdrawal, quoted verbatim with its sha256 (Wetmore 2015 is the precedent). Nothing else is ever refused, filtered, collapsed or deduplicated away. A value the source does not state is a typed provenance gap; a reported value that contradicts an annotation (an essential gene reported deleted) is stored as reported, with the contradiction written in the dataset note and the paper note as a follow-up, not as a record field.

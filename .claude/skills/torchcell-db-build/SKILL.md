@@ -19,6 +19,8 @@ full builds.
 Every number below is measured on a named job. The KG 4.0 generation, job 4901
 (2026-10-13 22:27 CDT, 170 datasets, three organisms, v1.7.4), is the calibration run.
 
+Before any build that follows a schema change, the change itself must have passed `/db-constitution` ([[database.constitution]]): the build is principle 12's gate, and it rebuilds whatever a correct change moves.
+
 ## 0. The one fact that shapes everything: docker is outside slurm
 
 The containers are started by the docker daemon, so **they are not in the job's cgroup**.

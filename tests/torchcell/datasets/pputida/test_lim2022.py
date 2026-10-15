@@ -39,7 +39,7 @@ from torchcell.datamodels.schema import (
     EnvironmentPhysicalPerturbation,
     Genotype,
     PhysicalFactor,
-    ReleasedStrainKind,
+    ReleasedKind,
 )
 from torchcell.datasets.pputida import lim2022 as m
 from torchcell.verification.sourced import ProvenanceGapReason, audit_sourced_value
@@ -248,7 +248,7 @@ def test_pcar1_deletions_key_the_released_symbol_on_the_pcar1_background() -> No
         "turB",
     )
     deletion = m.released_deletion("pmr", "HNS_protein:WT_pCAR1_Del_pmr_ex")
-    assert deletion.released_kind is ReleasedStrainKind.deletion
+    assert deletion.released_kind is ReleasedKind.deletion
 
 
 def test_a_background_call_refuses_cells_it_does_not_match() -> None:
@@ -289,7 +289,7 @@ def test_a_deletion_keys_the_released_symbol_and_pp5350_sits_on_its_background()
         "crcZ",
         "Crc:Del_crcZ_crcY",
     )
-    assert deletion.released_kind is ReleasedStrainKind.deletion
+    assert deletion.released_kind is ReleasedKind.deletion
     background = m.released_background(m.strain_call("ALE:IL_PP5350"), "ALE:IL_PP5350")
     assert background.name == "KT2440 PP_5350'"
     assert background.genotype_statement == "9bp deletion in its PP_5350"
@@ -299,9 +299,12 @@ def test_a_deletion_keys_the_released_symbol_and_pp5350_sits_on_its_background()
         "KT2440 PP_5350'",
         "9bp deletion in its PP_5350",
     ]
-    # the released-strain leaf refuses a locus tag of the pinned assembly by design
-    with pytest.raises(ValidationError, match="is a bacterial locus tag"):
-        m.released_deletion("PP_5350", "ALE:IL_PP5350")
+    # P3: the released leaf's one rule is the name as the source wrote it, so the host's
+    # own tag is admitted; a tag of another host is refused by the base namespace check.
+    own = m.released_deletion("PP_5350", "ALE:IL_PP5350")
+    assert own.systematic_gene_name == "PP_5350"
+    with pytest.raises(ValidationError, match="tag but gene_namespace"):
+        m.released_deletion("b0002", "ALE:IL_PP5350")
 
 
 # --------------------------------------------------------------------------- #

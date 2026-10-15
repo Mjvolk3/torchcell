@@ -44,11 +44,12 @@ from torchcell.datamodels.schema import (
     BACTERIAL_ASSEMBLY_SETS,
     AssayType,
     AssemblyReferenceGenome,
-    BacterialReleasedCrisprPerturbation,
     ConcentrationUnit,
     MeasurementType,
     ProductTiterExperiment,
     ProductTiterExperimentReference,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     SampleUnit,
     SmallMoleculePerturbation,
     UncertaintyType,
@@ -457,19 +458,20 @@ def _target(symbol: str = "thrA", label: str | None = None) -> n.StoredTarget:
 
 def test_each_arm_sets_its_released_direction_on_the_one_leaf() -> None:
     activation = n.perturbation(_target(), "crispr_activation")
-    assert isinstance(activation, BacterialReleasedCrisprPerturbation)
-    assert activation.expression_direction == "increased"
+    assert isinstance(activation, ReleasedIdentifierPerturbation)
+    assert activation.released_kind is ReleasedKind.crispr_activation
     assert activation.systematic_gene_name == "thrA"
     assert activation.perturbed_gene_name == "thrA"
     assert activation.strain_label == "thrA"
     assert activation.identifier_kind == n.IDENTIFIER_KIND
     assert activation.gene_namespace == "ecoli_k12_bw25113_locus_tag"
+    assert activation.crispr is not None
     assert activation.crispr.effector == "dCas9*-MCPSoxS"
     assert activation.crispr.guide_sequence == "A" * 20
 
     interference = n.perturbation(_target(), "crispr_interference")
-    assert isinstance(interference, BacterialReleasedCrisprPerturbation)
-    assert interference.expression_direction == "decreased"
+    assert isinstance(interference, ReleasedIdentifierPerturbation)
+    assert interference.released_kind is ReleasedKind.crispr_interference
 
 
 def test_an_operon_label_is_a_record_identity() -> None:
@@ -683,7 +685,7 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(
     assert first["phenotype"]["environment_response"] == pytest.approx(math.log2(1.24))
     assert first["phenotype"]["screen_id"] == "crispr_activation"
     assert [p["perturbation_type"] for p in first["genotype"]["perturbations"]] == [
-        "bacterial_released_crispr"
+        "released_identifier"
     ]
     assert dataset[0]["reference"]["phenotype_reference"]["environment_response"] == 0.0
     assert dataset[0]["publication"]["doi"] == n.DOI
@@ -837,14 +839,14 @@ def test_the_built_store_holds_the_measured_records() -> None:
         for r in records
         for p in r["experiment"]["genotype"]["perturbations"]
     ]
-    assert set(leaves) == {"bacterial_released_crispr"}
-    directions = [
-        p["expression_direction"]
+    assert set(leaves) == {"released_identifier"}
+    kinds = [
+        p["released_kind"]
         for r in records
         for p in r["experiment"]["genotype"]["perturbations"]
     ]
-    assert directions.count("increased") == 49
-    assert directions.count("decreased") == 15
+    assert kinds.count("crispr_activation") == 49
+    assert kinds.count("crispr_interference") == 15
     assert {r["experiment"]["phenotype"]["measurement_type"] for r in records} == {
         "log2_ratio"
     }
@@ -1024,7 +1026,7 @@ def test_the_built_pinene_store_holds_the_forty_released_cells() -> None:
         for r in records
         for p in r["experiment"]["genotype"]["perturbations"]
     }
-    assert leaves == {"bacterial_released_crispr"}
+    assert leaves == {"released_identifier"}
     ledger = json.loads(
         (Path(_PINENE_STORE) / "preprocess" / "dropped_records.json").read_text()
     )
@@ -1071,7 +1073,7 @@ def test_the_pinene_loader_builds_the_synthetic_release_end_to_end(
     assert first["phenotype"]["titer_se"] == pytest.approx(0.02 / math.sqrt(3))
     assert first["phenotype"]["product"]["name"] == "pinene"
     assert [p["perturbation_type"] for p in first["genotype"]["perturbations"]] == [
-        "bacterial_released_crispr"
+        "released_identifier"
     ]
     assert dataset[0]["reference"]["phenotype_reference"]["titer"] == 1.0
     assert dataset[0]["publication"]["doi"] == n.DOI
@@ -1176,8 +1178,8 @@ def test_a_record_mixing_two_released_labels_is_refused() -> None:
         "experiment": {
             "genotype": {
                 "perturbations": [
-                    {"strain_label": "thrA", "expression_direction": "increased"},
-                    {"strain_label": "yaaX", "expression_direction": "increased"},
+                    {"strain_label": "thrA", "released_kind": "crispr_activation"},
+                    {"strain_label": "yaaX", "released_kind": "crispr_activation"},
                 ]
             }
         }

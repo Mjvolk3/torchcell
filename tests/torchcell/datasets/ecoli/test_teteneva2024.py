@@ -565,7 +565,7 @@ def test_a_record_is_keyed_by_the_released_symbol_with_no_lookup() -> None:
     ) == {
         "systematic_gene_name": "yeiE",
         "perturbed_gene_name": "yeiE",
-        "perturbation_type": "bacterial_released_strain",
+        "perturbation_type": "released_identifier",
         "gene_namespace": "ecoli_k12_w3110_refseq_locus_tag",
         "strain_label": "yeiE",
         "identifier_kind": "Gene name",
@@ -675,7 +675,7 @@ def test_the_supplementary_rows_fail_on_a_changed_value_or_symbol(
             screen_id=c.screen_id,
             symbol=r.symbol,
             perturbed_gene_name=r.symbol,
-            perturbation_type="bacterial_released_strain",
+            perturbation_type="released_identifier",
             identifier_kind=te.IDENTIFIER_KIND,
             strain_label=r.symbol,
             gene_namespace=te.GENE_NAMESPACE,

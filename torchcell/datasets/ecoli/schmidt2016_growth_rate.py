@@ -26,7 +26,7 @@ collection19. Correctness of the deletions were checked by PCR." So ``collection
 ``"KEIO collection"`` verbatim and the background is the same BW25113 the proteome map
 uses. The replacement cassette is NOT stated by this paper -- it is a property of the
 Keio collection that Baba 2006 states and that is not in this mirror -- so ``cassette``
-is a typed gap rather than a guess. Each deletion is a ``BacterialReleasedStrainPerturbation``
+is a typed gap rather than a guess. Each deletion is a ``ReleasedIdentifierPerturbation``
 of ``released_kind=deletion`` keyed by the gene symbol its row label releases (``ΔrimI``
 -> ``rimI``), the row label as the strain label (#1045 part 2): the loader reads no
 annotation. Until #1045 part 2 each symbol was resolved to a BW25113 locus tag
@@ -122,13 +122,13 @@ from torchcell.data import (
 from torchcell.datamodels.schema import (
     BacterialFitnessExperiment,
     BacterialFitnessExperimentReference,
-    BacterialReleasedStrainPerturbation,
     Environment,
     Experiment,
     ExperimentReference,
     FitnessPhenotype,
     Genotype,
-    ReleasedStrainKind,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     SampleUnit,
     UncertaintyType,
 )
@@ -639,13 +639,13 @@ def build_genotype(strain: StrainRates) -> Genotype:
     """One KEIO single deletion, keyed by the symbol its row label releases."""
     return Genotype(
         perturbations=[
-            BacterialReleasedStrainPerturbation(
+            ReleasedIdentifierPerturbation(
                 systematic_gene_name=strain.gene_symbol,
                 perturbed_gene_name=strain.gene_symbol,
                 gene_namespace=BW25113_NAMESPACE,
                 strain_label=strain.strain,
                 identifier_kind="gene symbol",
-                released_kind=ReleasedStrainKind.deletion,
+                released_kind=ReleasedKind.deletion,
                 collection=KEIO_COLLECTION,
             )
         ]
@@ -856,7 +856,7 @@ class GrowthRateSchmidt2016Dataset(ExperimentDataset):
             json.dumps(
                 {
                     "dataset": self.name,
-                    "carrier": "BacterialReleasedStrainPerturbation",
+                    "carrier": "ReleasedIdentifierPerturbation",
                     "note": "the leaf is not a ProvenanceGapMixin, so these typed "
                     "absences are recorded here rather than on the record",
                     "gaps": [gap.model_dump(mode="json") for gap in PERTURBATION_GAPS],

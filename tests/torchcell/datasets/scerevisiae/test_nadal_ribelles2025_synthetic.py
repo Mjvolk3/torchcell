@@ -55,8 +55,8 @@ from torchcell.datamodels.schema import (
     PseudobulkExpressionPhenotype,
     Publication,
     ReferenceGenome,
-    ReleasedGeneKind,
-    ReleasedGeneNamePerturbation,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     SmallMoleculePerturbation,
     Temperature,
 )
@@ -148,7 +148,7 @@ def _experiment(
     dispersion: float | None,
     n_cells: int | None,
 ) -> dict[str, Any]:
-    perturbation: MarkerDeletionPerturbation | ReleasedGeneNamePerturbation
+    perturbation: MarkerDeletionPerturbation | ReleasedIdentifierPerturbation
     if orf.startswith("Y"):
         perturbation = MarkerDeletionPerturbation(
             systematic_gene_name=orf,
@@ -157,13 +157,13 @@ def _experiment(
             strain_id=strain,
         )
     else:
-        perturbation = ReleasedGeneNamePerturbation(
+        perturbation = ReleasedIdentifierPerturbation(
             systematic_gene_name=orf,
             gene_namespace="scerevisiae_s288c_sgd_systematic",
             perturbed_gene_name=name,
-            released_gene_name=orf,
-            released_kind=ReleasedGeneKind.deletion,
-            marker="URA3",
+            identifier_kind="gene identifier, as the release writes it",
+            released_kind=ReleasedKind.deletion,
+            cassette="URA3",
             strain_id=strain,
         )
     return PseudobulkExpressionExperiment(

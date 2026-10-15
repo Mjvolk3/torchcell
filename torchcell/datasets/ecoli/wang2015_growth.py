@@ -83,7 +83,7 @@ to 72, which would mark that store STALE for a change touching none of its 46 re
 The pinned artifact, the SI parsers, the strain identities, the media object and the
 sourced values are imported FROM ``wang2015`` instead, so there is one copy of each.
 Every record's genotype is the paper's own gene symbol on
-``BacterialReleasedStrainPerturbation`` (owner rule of 2026-10-12: the data is the data,
+``ReleasedIdentifierPerturbation`` (owner rule of 2026-10-12: the data is the data,
 no annotation is read in the build), exactly as ``wang2015``'s records.
 
 DATA. The one consumed file is ``si1.pdf``, the same pinned SI ``wang2015.py`` consumes

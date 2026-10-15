@@ -64,8 +64,8 @@ from torchcell.datamodels.schema import (
     MediaComponentRole,
     Publication,
     ReferenceGenome,
-    ReleasedGeneKind,
-    ReleasedGeneNamePerturbation,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     Temperature,
     VisualScoreExperiment,
     VisualScoreExperimentReference,
@@ -202,22 +202,22 @@ _SYSTEMATIC_RE = re.compile(r"^Y[A-P][LR]\d{3}[WC](-[A-Z])?$")
 
 def _released_deletion(
     orf: str,
-) -> KanMxDeletionPerturbation | ReleasedGeneNamePerturbation:
+) -> KanMxDeletionPerturbation | ReleasedIdentifierPerturbation:
     """The deletion under the released identifier (#1045): an ORF-shaped one on the
-    placed KanMX leaf with both names the ORF, any other on the released-gene-name leaf
+    placed KanMX leaf with both names the ORF, any other on the released-identifier leaf
     verbatim (kind deletion, marker KanMX).
     """
     if _SYSTEMATIC_RE.match(orf):
         return KanMxDeletionPerturbation(
             systematic_gene_name=orf, perturbed_gene_name=orf
         )
-    return ReleasedGeneNamePerturbation(
+    return ReleasedIdentifierPerturbation(
         systematic_gene_name=orf,
         gene_namespace="scerevisiae_s288c_sgd_systematic",
         perturbed_gene_name=orf,
-        released_gene_name=orf,
-        released_kind=ReleasedGeneKind.deletion,
-        marker="KanMX",
+        identifier_kind="ORF column entry, as released",
+        released_kind=ReleasedKind.deletion,
+        cassette="KanMX",
     )
 
 
@@ -379,7 +379,7 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
                     "description": (
                         "the released ORF cell is not ORF-shaped (YLR287-A: the release "
                         "dropped the strand letter), so its rows are stored on "
-                        "ReleasedGeneNamePerturbation under that name verbatim, never "
+                        "ReleasedIdentifierPerturbation under that name verbatim, never "
                         "resolved against the genome and never dropped (#1045); listed "
                         "here, not removed"
                     ),
@@ -408,7 +408,7 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
         usable, accounting = self._released_rows()
         log.info(
             "Ozaydin: %d released rows, %d records (one per scored row); %d text-only "
-            "rows listed in the ledger, %d names on the released-gene-name leaf",
+            "rows listed in the ledger, %d names on the released-identifier leaf",
             accounting["source_rows"],
             len(usable),
             accounting["rules"][2]["n_records"],

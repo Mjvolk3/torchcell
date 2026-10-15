@@ -48,11 +48,11 @@ from torchcell.data import ManifestPinMismatchError, RawSha256MismatchError
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
-    BacterialReleasedStrainPerturbation,
     BacterialStrainBackground,
     ConcentrationUnit,
     MediaComponentRole,
-    ReleasedStrainKind,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
 )
 from torchcell.literature.manifest import RetrievalMethod
 from torchcell.sequence.genome.ecoli.k12 import MG1655_ASSEMBLY, EcoliK12MG1655Genome
@@ -369,7 +369,7 @@ def test_phosphomutant_genotype_stores_the_released_token(tmp_path: Path) -> Non
     _write_sd3(tmp_path / m.SD3_FILE, COLUMNS)
     column = m.read_sd3(tmp_path / m.SD3_FILE).columns[2]
     (perturbation,) = m.phosphomutant_genotype(column).perturbations
-    assert isinstance(perturbation, BacterialReleasedStrainPerturbation)
+    assert isinstance(perturbation, ReleasedIdentifierPerturbation)
     assert (
         perturbation.systematic_gene_name,
         perturbation.perturbed_gene_name,
@@ -382,7 +382,7 @@ def test_phosphomutant_genotype_stores_the_released_token(tmp_path: Path) -> Non
         "ThrL",
         "ThrL-S2A",
         m.PHOSPHOMUTANT_IDENTIFIER_KIND,
-        ReleasedStrainKind.sequence_allele,
+        ReleasedKind.sequence_allele,
         None,
     )
 
@@ -546,7 +546,7 @@ def test_deletion_genotype_stores_the_released_symbol(tmp_path: Path) -> None:
     assert dumped["systematic_gene_name"] == "thrA"
     assert dumped["perturbed_gene_name"] == "thrA"
     assert dumped["strain_label"] == "thrA knockout"
-    assert dumped["perturbation_type"] == "bacterial_released_strain"
+    assert dumped["perturbation_type"] == "released_identifier"
     assert dumped["released_kind"] == "deletion"
     assert dumped["identifier_kind"] == m.DELETION_IDENTIFIER_KIND
     assert dumped["gene_namespace"] == "ecoli_k12_mg1655_bnumber"
@@ -940,7 +940,7 @@ def test_real_build_counts_and_the_gnd_record() -> None:
             perturbation.get("strain_label") or perturbation["systematic_gene_name"]
         )
     # one leaf for both arms now: 16 deletion strains + 87 phosphomutant strains
-    assert {k: len(v) for k, v in by_type.items()} == {"bacterial_released_strain": 103}
+    assert {k: len(v) for k, v in by_type.items()} == {"released_identifier": 103}
 
 
 @pytest.mark.data

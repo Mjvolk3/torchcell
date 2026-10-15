@@ -306,7 +306,7 @@ def test_ledger_counts_every_released_row(
 def test_a_name_that_is_not_orf_shaped_is_stored_on_the_released_leaf(
     tmp_path: Path,
 ) -> None:
-    """A row id with no ORF form goes on ``ReleasedGeneNamePerturbation`` verbatim with
+    """A row id with no ORF form goes on ``ReleasedIdentifierPerturbation`` verbatim with
     the released commonName as its perturbed name (#1045); never resolved, never dropped.
     """
     root = _edge_root(
@@ -321,9 +321,9 @@ def test_a_name_that_is_not_orf_shaped_is_stored_on_the_released_leaf(
         released["perturbation_type"],
         released["systematic_gene_name"],
         released["perturbed_gene_name"],
-        released["released_gene_name"],
+        released["systematic_gene_name"],
         released["released_kind"],
-    ) == ("released_gene_name", "ABC1", "X", "ABC1", "deletion")
+    ) == ("released_identifier", "ABC1", "X", "ABC1", "deletion")
 
 
 def _refused_twice(root: Path, message: str) -> None:

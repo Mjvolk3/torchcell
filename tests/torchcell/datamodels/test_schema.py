@@ -1704,15 +1704,17 @@ def test_the_w3110_namespace_owns_its_refseq_tags_and_no_other_namespace_does() 
         assert not re.match(pattern, tag), tag
 
 
-def test_a_pooled_tn_gene_call_is_a_released_strain_of_the_transposon_kind() -> None:
+def test_a_pooled_tn_gene_call_is_a_released_record_of_the_transposon_kind() -> None:
     """``transposon_insertion`` (#910) carries the SO pair the placed Tn leaf pins, and a
-    W3110 symbol stored as released round-trips through a genotype.
+    W3110 symbol stored as released round-trips through a genotype. The released leaf
+    admits a host-form identifier (P3: the name is whatever the source wrote), and the
+    base namespace check keeps it on the declared host.
     """
-    kind = s.ReleasedStrainKind.transposon_insertion
-    assert s.RELEASED_STRAIN_KIND_SO[kind] == ("SO:0001218", "transgenic_insertion")
+    kind = s.ReleasedKind.transposon_insertion
+    assert s.RELEASED_KIND_SO[kind] == ("SO:0001218", "transgenic_insertion")
     placed = s.TransposonInsertionPerturbation.model_fields["mechanism_so_id"].default
-    assert s.RELEASED_STRAIN_KIND_SO[kind][0] == placed
-    leaf = s.BacterialReleasedStrainPerturbation(
+    assert s.RELEASED_KIND_SO[kind][0] == placed
+    leaf = s.ReleasedIdentifierPerturbation(
         systematic_gene_name="rhoL",
         perturbed_gene_name="rhoL",
         gene_namespace="ecoli_k12_w3110_refseq_locus_tag",
@@ -1724,10 +1726,12 @@ def test_a_pooled_tn_gene_call_is_a_released_strain_of_the_transposon_kind() -> 
     assert leaf.mechanism_so == ("SO:0001218", "transgenic_insertion")
     genotype = s.Genotype(perturbations=[leaf])
     assert s.Genotype.model_validate(genotype.model_dump()) == genotype
-    with pytest.raises(ValidationError, match="is a bacterial locus tag"):
-        leaf.model_validate(
-            {**leaf.model_dump(), "systematic_gene_name": "Y75_RS00005"}
-        )
+    own_tag = leaf.model_validate(
+        {**leaf.model_dump(), "systematic_gene_name": "Y75_RS00005"}
+    )
+    assert own_tag.systematic_gene_name == "Y75_RS00005"
+    with pytest.raises(ValidationError, match="tag but gene_namespace"):
+        leaf.model_validate({**leaf.model_dump(), "systematic_gene_name": "b0002"})
 
 
 def test_a_w3110_reference_names_the_refseq_accession_of_its_set() -> None:
@@ -4167,7 +4171,8 @@ def test_timecourse_family_is_in_every_union_and_map() -> None:
 
 
 # --------------------------------------------------------------------------- #
-# #691: a bacterial strain under its released identifier
+# P3 (ontology-unify): one leaf for a gene under the identifier its source released,
+# replacing the three #691 bacterial released leaves and the #1045 yeast one
 # --------------------------------------------------------------------------- #
 _RELEASED: dict[str, Any] = dict(
     systematic_gene_name="ECK2331",
@@ -4175,125 +4180,202 @@ _RELEASED: dict[str, Any] = dict(
     gene_namespace="ecoli_k12_bw25113_locus_tag",
     strain_label="ECK2331",
     identifier_kind="ECK accession",
-    released_kind=s.ReleasedStrainKind.deletion,
+    released_kind=s.ReleasedKind.deletion,
 )
 
 
-def test_released_strain_leaf_stores_an_identifier_no_annotation_carries() -> None:
-    leaf = s.BacterialReleasedStrainPerturbation(**_RELEASED, cassette="kanamycin")
-    assert leaf.perturbation_type == "bacterial_released_strain"
+def test_released_identifier_leaf_stores_an_identifier_no_annotation_carries() -> None:
+    leaf = s.ReleasedIdentifierPerturbation(**_RELEASED, cassette="kanamycin")
+    assert leaf.perturbation_type == "released_identifier"
     assert leaf.mechanism_so == ("SO:0000159", "deletion")
-    assert leaf.collection is None
+    assert leaf.collection is None and leaf.strain_id is None
+    assert leaf.released_gene_id is None and leaf.crispr is None
     back = s.Genotype.model_validate(
         s.Genotype(perturbations=[leaf]).model_dump()
     ).perturbations[0]
-    assert back == leaf and type(back) is s.BacterialReleasedStrainPerturbation
+    assert back == leaf and type(back) is s.ReleasedIdentifierPerturbation
+
+
+def test_released_identifier_leaf_keeps_the_host_in_gene_namespace() -> None:
+    """Review 1 finding 2: a Nichols 2011 row is a BW25113 record with an ECK
+    identifier. The class states that the identifier is unresolved; the namespace
+    stays the host, and there is no ``released`` member to hide behind.
+    """
+    leaf = s.ReleasedIdentifierPerturbation(**_RELEASED)
+    assert leaf.gene_namespace == "ecoli_k12_bw25113_locus_tag"
+    assert "released" not in typing.get_args(s.GeneIdNamespace)
+    assert "default" not in repr(
+        s.ReleasedIdentifierPerturbation.model_fields["gene_namespace"]
+    )
+    with pytest.raises(ValidationError):
+        s.ReleasedIdentifierPerturbation(
+            **{k: v for k, v in _RELEASED.items() if k != "gene_namespace"}
+        )
 
 
 @pytest.mark.parametrize(
     ("kind", "so"),
     [
-        (s.ReleasedStrainKind.deletion, ("SO:0000159", "deletion")),
-        (s.ReleasedStrainKind.affinity_tag, ("SO:0001218", "transgenic_insertion")),
-        (s.ReleasedStrainKind.degron, ("SO:0001218", "transgenic_insertion")),
-        (s.ReleasedStrainKind.linked_marker, ("SO:0001218", "transgenic_insertion")),
-        (s.ReleasedStrainKind.sequence_allele, ("SO:0001060", "sequence_variant")),
-        (s.ReleasedStrainKind.truncation, ("SO:0000159", "deletion")),
+        (s.ReleasedKind.deletion, ("SO:0000159", "deletion")),
+        (s.ReleasedKind.heterozygous_deletion, ("SO:0000159", "deletion")),
+        (s.ReleasedKind.affinity_tag, ("SO:0001218", "transgenic_insertion")),
+        (s.ReleasedKind.degron, ("SO:0001218", "transgenic_insertion")),
+        (s.ReleasedKind.linked_marker, ("SO:0001218", "transgenic_insertion")),
+        (s.ReleasedKind.sequence_allele, ("SO:0001060", "sequence_variant")),
+        (s.ReleasedKind.truncation, ("SO:0000159", "deletion")),
+        (s.ReleasedKind.transposon_insertion, ("SO:0001218", "transgenic_insertion")),
     ],
 )
 def test_released_kind_names_its_sequence_ontology_pair(
-    kind: s.ReleasedStrainKind, so: tuple[str, str]
+    kind: s.ReleasedKind, so: tuple[str, str]
 ) -> None:
-    leaf = s.BacterialReleasedStrainPerturbation(**{**_RELEASED, "released_kind": kind})
+    leaf = s.ReleasedIdentifierPerturbation(**{**_RELEASED, "released_kind": kind})
     assert leaf.mechanism_so == so
 
 
-@pytest.mark.parametrize(
-    "identifier", ["BW25113_0001", "b0002", "PP_0001", " ECK2331", ""]
-)
-def test_released_strain_leaf_refuses_a_locus_tag_or_a_non_verbatim_identifier(
+def test_released_kind_is_the_union_of_the_four_retired_vocabularies() -> None:
+    """7 bacterial members + 3 yeast members, sharing ``deletion``, plus the activation
+    direction the bacterial CRISPR leaf carried as a field: 10 members, every one with
+    an SO pair.
+    """
+    assert {member.value for member in s.ReleasedKind} == {
+        "deletion",
+        "heterozygous_deletion",
+        "affinity_tag",
+        "degron",
+        "linked_marker",
+        "sequence_allele",
+        "truncation",
+        "transposon_insertion",
+        "crispr_interference",
+        "crispr_activation",
+    }
+    assert set(s.RELEASED_KIND_SO) == set(s.ReleasedKind)
+    assert s.RELEASED_CRISPR_KINDS == {
+        s.ReleasedKind.crispr_interference,
+        s.ReleasedKind.crispr_activation,
+    }
+
+
+@pytest.mark.parametrize("identifier", [" ECK2331", "ECK2331 ", ""])
+def test_released_identifier_leaf_refuses_a_non_verbatim_identifier(
     identifier: str,
 ) -> None:
-    with pytest.raises(ValueError):
-        s.BacterialReleasedStrainPerturbation(
+    with pytest.raises(ValidationError, match="verbatim"):
+        s.ReleasedIdentifierPerturbation(
             **{**_RELEASED, "systematic_gene_name": identifier}
         )
 
 
+def test_released_identifier_leaf_admits_the_hosts_own_tag_and_refuses_anothers() -> (
+    None
+):
+    """One rule: the name is whatever the source wrote. A BW25113 tag under the BW25113
+    host is admitted (the old leaves refused every locus tag); a tag of another host is
+    refused by the base namespace check, not by this leaf.
+    """
+    own = s.ReleasedIdentifierPerturbation(
+        **{**_RELEASED, "systematic_gene_name": "BW25113_0001"}
+    )
+    assert own.systematic_gene_name == "BW25113_0001"
+    for other in ("b0002", "PP_0001", "YAL001C"):
+        with pytest.raises(ValidationError, match="tag but gene_namespace"):
+            s.ReleasedIdentifierPerturbation(
+                **{**_RELEASED, "systematic_gene_name": other}
+            )
+
+
 @pytest.mark.parametrize("field", ["strain_label", "identifier_kind"])
-def test_released_strain_leaf_refuses_an_empty_label(field: str) -> None:
-    with pytest.raises(ValueError, match=f"{field} must be a non-empty verbatim"):
-        s.BacterialReleasedStrainPerturbation(**{**_RELEASED, field: " "})
+def test_released_identifier_leaf_refuses_an_empty_label(field: str) -> None:
+    with pytest.raises(ValidationError, match=f"{field} must be a non-empty verbatim"):
+        s.ReleasedIdentifierPerturbation(**{**_RELEASED, field: " "})
 
 
-# --------------------------------------------------------------------------- #
-# #1045: a yeast gene under the name its source released, and a named allele
-# --------------------------------------------------------------------------- #
+def test_released_identifier_leaf_strain_label_is_optional_by_construction() -> None:
+    """A yeast release that labels each row by the gene symbol alone has no strain
+    label beyond the identifier; ``identifier_kind`` is still required.
+    """
+    leaf = s.ReleasedIdentifierPerturbation(
+        **{k: v for k, v in _RELEASED.items() if k != "strain_label"}
+    )
+    assert leaf.strain_label is None
+    with pytest.raises(ValidationError):
+        s.ReleasedIdentifierPerturbation(
+            **{k: v for k, v in _RELEASED.items() if k != "identifier_kind"}
+        )
+
+
+# A yeast gene under the name its source released (#1045, now on the one leaf)
 _RELEASED_NAME: dict[str, Any] = dict(
     systematic_gene_name="ADE2",
     perturbed_gene_name="ADE2",
-    released_gene_name="ADE2",
     gene_namespace=s.SGD_S288C_NAMESPACE,
-    released_kind=s.ReleasedGeneKind.deletion,
+    identifier_kind="gene column entry",
+    released_kind=s.ReleasedKind.deletion,
 )
 
 
-def test_released_gene_name_leaf_stores_the_symbol_no_annotation_resolved() -> None:
-    leaf = s.ReleasedGeneNamePerturbation(
-        **_RELEASED_NAME, marker="KanMX", strain_id="BY4741"
+def test_released_identifier_leaf_stores_the_symbol_no_annotation_resolved() -> None:
+    leaf = s.ReleasedIdentifierPerturbation(
+        **_RELEASED_NAME, cassette="KanMX", strain_id="BY4741"
     )
-    assert leaf.perturbation_type == "released_gene_name"
+    assert leaf.perturbation_type == "released_identifier"
     assert leaf.mechanism_so == ("SO:0000159", "deletion")
-    assert leaf.released_gene_id is None and leaf.crispr is None
+    assert leaf.strain_label is None and leaf.crispr is None
+    assert leaf.gene_namespace == "scerevisiae_s288c_sgd_systematic"
     back = s.Genotype.model_validate(
         s.Genotype(perturbations=[leaf]).model_dump()
     ).perturbations[0]
-    assert back == leaf and type(back) is s.ReleasedGeneNamePerturbation
+    assert back == leaf and type(back) is s.ReleasedIdentifierPerturbation
 
 
-def test_released_gene_name_leaf_carries_a_released_id_with_its_namespace() -> None:
-    leaf = s.ReleasedGeneNamePerturbation(
+def test_released_identifier_leaf_carries_a_released_id_with_its_namespace() -> None:
+    leaf = s.ReleasedIdentifierPerturbation(
         **_RELEASED_NAME,
         released_gene_id="856882",
         released_gene_id_namespace=s.ReleasedGeneIdNamespace.ncbi_entrez_gene,
     )
     assert leaf.released_gene_id == "856882"
     with pytest.raises(ValueError, match="set together"):
-        s.ReleasedGeneNamePerturbation(**_RELEASED_NAME, released_gene_id="856882")
+        s.ReleasedIdentifierPerturbation(**_RELEASED_NAME, released_gene_id="856882")
     with pytest.raises(ValueError, match="set together"):
-        s.ReleasedGeneNamePerturbation(
+        s.ReleasedIdentifierPerturbation(
             **_RELEASED_NAME,
             released_gene_id_namespace=s.ReleasedGeneIdNamespace.ncbi_entrez_gene,
         )
     with pytest.raises(ValueError, match="non-empty verbatim"):
-        s.ReleasedGeneNamePerturbation(
+        s.ReleasedIdentifierPerturbation(
             **_RELEASED_NAME,
             released_gene_id=" 856882",
             released_gene_id_namespace=s.ReleasedGeneIdNamespace.ncbi_entrez_gene,
         )
 
 
-def test_released_gene_name_leaf_crispr_interference_carries_its_construct() -> None:
+@pytest.mark.parametrize(
+    "kind", [s.ReleasedKind.crispr_interference, s.ReleasedKind.crispr_activation]
+)
+def test_released_identifier_leaf_crispr_kinds_carry_their_construct(
+    kind: s.ReleasedKind,
+) -> None:
+    """The direction of a released guide is its kind, as it is the class on the placed
+    CRISPR leaves (review 1 finding 9: ``ReleasedKind`` gains ``crispr_activation`` and
+    the direction field retires). The construct is set exactly for these kinds.
+    """
     construct = s.CrisprConstruct(
         effector="dCas9-Mxi1", guide_sequence="ACGTACGTACGTACGTACGT"
     )
-    leaf = s.ReleasedGeneNamePerturbation(
-        **{**_RELEASED_NAME, "released_kind": s.ReleasedGeneKind.crispr_interference},
-        crispr=construct,
+    leaf = s.ReleasedIdentifierPerturbation(
+        **{**_RELEASED_NAME, "released_kind": kind}, crispr=construct
     )
     assert leaf.mechanism_so == ("SO:0001998", "sgRNA")
+    assert "expression_direction" not in s.ReleasedIdentifierPerturbation.model_fields
     with pytest.raises(ValueError, match="crispr is set exactly when"):
-        s.ReleasedGeneNamePerturbation(
-            **{
-                **_RELEASED_NAME,
-                "released_kind": s.ReleasedGeneKind.crispr_interference,
-            }
-        )
+        s.ReleasedIdentifierPerturbation(**{**_RELEASED_NAME, "released_kind": kind})
     with pytest.raises(ValueError, match="crispr is set exactly when"):
-        s.ReleasedGeneNamePerturbation(**_RELEASED_NAME, crispr=construct)
+        s.ReleasedIdentifierPerturbation(**_RELEASED_NAME, crispr=construct)
 
 
-def test_released_gene_name_leaf_carries_a_systematic_name_whose_kind_is_a_gap() -> (
+def test_released_identifier_leaf_carries_a_systematic_name_whose_kind_is_a_gap() -> (
     None
 ):
     """SynLethDB releases names like YPR108W-A with no stated kind: the released leaf
@@ -4302,11 +4384,11 @@ def test_released_gene_name_leaf_carries_a_systematic_name_whose_kind_is_a_gap()
     gap = ProvenanceGap(
         field="released_kind", reason=ProvenanceGapReason.not_reported_by_primary
     )
-    leaf = s.ReleasedGeneNamePerturbation(
+    leaf = s.ReleasedIdentifierPerturbation(
         systematic_gene_name="YPR108W-A",
         gene_namespace="scerevisiae_s288c_sgd_systematic",
         perturbed_gene_name="YPR108W-A",
-        released_gene_name="YPR108W-A",
+        identifier_kind="gene name (the n1.name / n2.name column), as released",
         released_gene_id="1466522",
         released_gene_id_namespace=s.ReleasedGeneIdNamespace.ncbi_entrez_gene,
         released_kind=None,
@@ -4315,25 +4397,11 @@ def test_released_gene_name_leaf_carries_a_systematic_name_whose_kind_is_a_gap()
     assert leaf.systematic_gene_name == "YPR108W-A"
 
 
-@pytest.mark.parametrize("identifier", ["b0002", "PP_0001", " ADE2", ""])
-def test_released_gene_name_leaf_refuses_a_locus_tag_or_a_non_verbatim_name(
-    identifier: str,
-) -> None:
-    with pytest.raises(ValueError):
-        s.ReleasedGeneNamePerturbation(
-            **{
-                **_RELEASED_NAME,
-                "systematic_gene_name": identifier,
-                "released_gene_name": identifier,
-            }
-        )
-
-
-def test_released_gene_name_leaf_kind_is_set_or_a_typed_gap() -> None:
+def test_released_identifier_leaf_kind_is_set_or_a_typed_gap() -> None:
     gap = ProvenanceGap(
         field="released_kind", reason=ProvenanceGapReason.not_reported_by_primary
     )
-    leaf = s.ReleasedGeneNamePerturbation(
+    leaf = s.ReleasedIdentifierPerturbation(
         **{**_RELEASED_NAME, "released_kind": None}, provenance_gaps=[gap]
     )
     assert leaf.mechanism_so is None and leaf.gapped_fields() == {"released_kind"}
@@ -4341,16 +4409,13 @@ def test_released_gene_name_leaf_kind_is_set_or_a_typed_gap() -> None:
     back = s.Genotype.model_validate(
         s.Genotype(perturbations=[leaf]).model_dump()
     ).perturbations[0]
-    assert back == leaf and type(back) is s.ReleasedGeneNamePerturbation
+    assert back == leaf and type(back) is s.ReleasedIdentifierPerturbation
     with pytest.raises(ValueError, match="released_kind is unset and carries no"):
-        s.ReleasedGeneNamePerturbation(**{**_RELEASED_NAME, "released_kind": None})
-
-
-def test_released_gene_name_leaf_states_the_name_once() -> None:
-    with pytest.raises(ValueError, match="must equal"):
-        s.ReleasedGeneNamePerturbation(
-            **{**_RELEASED_NAME, "released_gene_name": "ade2"}
-        )
+        s.ReleasedIdentifierPerturbation(**{**_RELEASED_NAME, "released_kind": None})
+    # A bacterial record stays hashable too, the Genotype set contract.
+    assert hash(s.ReleasedIdentifierPerturbation(**_RELEASED)) == hash(
+        s.ReleasedIdentifierPerturbation(**_RELEASED)
+    )
 
 
 def test_named_allele_leaf_keeps_two_alleles_of_one_gene_apart() -> None:
@@ -4626,7 +4691,8 @@ def test_the_pooled_leaf_takes_a_value_or_a_gap_on_its_label_never_a_silent_none
     assert phenotype(8.5).expression_level == 8.5
 
 
-# #691 round 2: a CRISPR guide and a transposon insertion against a released identifier
+# A CRISPR guide and a transposon insertion against a released identifier (#691 round 2,
+# now kinds of the one P3 leaf)
 # --------------------------------------------------------------------------- #
 _RELEASED_CRISPR: dict[str, Any] = dict(
     systematic_gene_name="sokE",
@@ -4634,7 +4700,7 @@ _RELEASED_CRISPR: dict[str, Any] = dict(
     gene_namespace="ecoli_k12_mg1655_bnumber",
     strain_label="sokEb4700_32",
     identifier_kind="gene symbol",
-    expression_direction="decreased",
+    released_kind=s.ReleasedKind.crispr_interference,
     crispr=s.CrisprConstruct(effector="dCas9", guide_sequence="CGTACTACCAGATAACCTAA"),
 )
 _RELEASED_TRANSPOSON: dict[str, Any] = dict(
@@ -4643,45 +4709,40 @@ _RELEASED_TRANSPOSON: dict[str, Any] = dict(
     gene_namespace="ecoli_k12_bw25113_locus_tag",
     strain_label="insA",
     identifier_kind="gene symbol",
+    released_kind=s.ReleasedKind.transposon_insertion,
 )
 
 
-def test_released_crispr_leaf_stores_the_construct_against_a_released_label() -> None:
-    leaf = s.BacterialReleasedCrisprPerturbation(**_RELEASED_CRISPR)
-    assert leaf.perturbation_type == "bacterial_released_crispr"
+def test_released_crispr_record_stores_the_construct_against_a_released_label() -> None:
+    leaf = s.ReleasedIdentifierPerturbation(**_RELEASED_CRISPR)
+    assert leaf.perturbation_type == "released_identifier"
     assert leaf.mechanism_so == ("SO:0001998", "sgRNA")
+    assert leaf.crispr is not None
     assert leaf.crispr.guide_sequence == "CGTACTACCAGATAACCTAA"
     back = s.Genotype.model_validate(
         s.Genotype(perturbations=[leaf]).model_dump()
     ).perturbations[0]
-    assert back == leaf and type(back) is s.BacterialReleasedCrisprPerturbation
+    assert back == leaf and type(back) is s.ReleasedIdentifierPerturbation
 
 
-@pytest.mark.parametrize("direction", ["increased", "decreased"])
-def test_released_crispr_leaf_takes_either_direction(direction: str) -> None:
-    leaf = s.BacterialReleasedCrisprPerturbation(
-        **{**_RELEASED_CRISPR, "expression_direction": direction}
+def test_released_crispr_record_takes_either_direction_as_its_kind() -> None:
+    activation = s.ReleasedIdentifierPerturbation(
+        **{**_RELEASED_CRISPR, "released_kind": s.ReleasedKind.crispr_activation}
     )
-    assert leaf.expression_direction == direction
-
-
-def test_released_crispr_leaf_requires_a_stated_direction() -> None:
-    with pytest.raises(ValueError, match="expression_direction"):
-        s.BacterialReleasedCrisprPerturbation(
-            **{**_RELEASED_CRISPR, "expression_direction": "knockdown"}
-        )
-    with pytest.raises(ValueError):
-        s.BacterialReleasedCrisprPerturbation(
-            **{k: v for k, v in _RELEASED_CRISPR.items() if k != "expression_direction"}
+    assert activation.released_kind is s.ReleasedKind.crispr_activation
+    assert activation.mechanism_so == ("SO:0001998", "sgRNA")
+    with pytest.raises(ValueError, match="crispr is set exactly when"):
+        s.ReleasedIdentifierPerturbation(
+            **{**_RELEASED_CRISPR, "released_kind": s.ReleasedKind.deletion}
         )
 
 
-def test_released_transposon_leaf_stores_gene_level_calls_and_mapped_sites() -> None:
-    gene_level = s.BacterialReleasedTransposonPerturbation(**_RELEASED_TRANSPOSON)
-    assert gene_level.perturbation_type == "bacterial_released_transposon"
+def test_released_transposon_record_stores_gene_level_calls_and_mapped_sites() -> None:
+    gene_level = s.ReleasedIdentifierPerturbation(**_RELEASED_TRANSPOSON)
+    assert gene_level.perturbation_type == "released_identifier"
     assert gene_level.mechanism_so == ("SO:0001218", "transgenic_insertion")
     assert gene_level.insertion_position is None and gene_level.barcode is None
-    mapped = s.BacterialReleasedTransposonPerturbation(
+    mapped = s.ReleasedIdentifierPerturbation(
         **_RELEASED_TRANSPOSON,
         barcode="ACGTACGTACGTACGTACGT",
         insertion_position=12345,
@@ -4694,55 +4755,66 @@ def test_released_transposon_leaf_stores_gene_level_calls_and_mapped_sites() -> 
             s.Genotype(perturbations=[leaf]).model_dump()
         ).perturbations[0]
         assert back == leaf
-        assert type(back) is s.BacterialReleasedTransposonPerturbation
+        assert type(back) is s.ReleasedIdentifierPerturbation
     with pytest.raises(ValueError, match="1-based"):
-        s.BacterialReleasedTransposonPerturbation(
-            **_RELEASED_TRANSPOSON, insertion_position=0
-        )
+        s.ReleasedIdentifierPerturbation(**_RELEASED_TRANSPOSON, insertion_position=0)
 
 
-@pytest.mark.parametrize(
-    "identifier", ["BW25113_0001", "b0002", "PP_0001", "ECB_00001", " sokE", ""]
-)
-def test_released_construct_leaves_refuse_a_locus_tag_or_a_non_verbatim_identifier(
-    identifier: str,
-) -> None:
-    with pytest.raises(ValueError):
-        s.BacterialReleasedCrisprPerturbation(
-            **{**_RELEASED_CRISPR, "systematic_gene_name": identifier}
-        )
-    with pytest.raises(ValueError):
-        s.BacterialReleasedTransposonPerturbation(
-            **{**_RELEASED_TRANSPOSON, "systematic_gene_name": identifier}
-        )
+def test_released_transposon_fields_belong_to_the_transposon_kind() -> None:
+    """A mapped-insertion field on a deletion or a guide record would assert a
+    transposon the source did not state.
+    """
+    for kind in (s.ReleasedKind.deletion, s.ReleasedKind.sequence_allele):
+        with pytest.raises(ValueError, match="belong to a transposon_insertion"):
+            s.ReleasedIdentifierPerturbation(
+                **{**_RELEASED_TRANSPOSON, "released_kind": kind}, transposon="Tn5"
+            )
+    with pytest.raises(ValueError, match="belong to a transposon_insertion"):
+        s.ReleasedIdentifierPerturbation(**_RELEASED_CRISPR, insertion_position=12)
 
 
 @pytest.mark.parametrize("field", ["strain_label", "identifier_kind"])
-def test_released_construct_leaves_refuse_an_empty_label(field: str) -> None:
+def test_released_construct_records_refuse_an_empty_label(field: str) -> None:
     with pytest.raises(ValueError, match=f"{field} must be a non-empty verbatim"):
-        s.BacterialReleasedCrisprPerturbation(**{**_RELEASED_CRISPR, field: " "})
+        s.ReleasedIdentifierPerturbation(**{**_RELEASED_CRISPR, field: " "})
     with pytest.raises(ValueError, match=f"{field} must be a non-empty verbatim"):
-        s.BacterialReleasedTransposonPerturbation(
-            **{**_RELEASED_TRANSPOSON, field: " "}
-        )
+        s.ReleasedIdentifierPerturbation(**{**_RELEASED_TRANSPOSON, field: " "})
 
 
-def test_released_construct_leaves_are_gene_perturbation_siblings_of_the_strain_leaf() -> (
+def test_released_identifier_leaf_is_a_gene_perturbation_beside_the_placed_leaves() -> (
     None
 ):
     """Parent GenePerturbation, not an axis class: the placed leaves of each technology
-    keep their locus-tag contract and the three released leaves sit beside them.
+    keep their contract and the one released leaf sits beside them; the four leaves it
+    replaced are gone from the union.
     """
     members = typing.get_args(s.GenePerturbationType)
-    for cls in (
-        s.BacterialReleasedCrisprPerturbation,
-        s.BacterialReleasedTransposonPerturbation,
+    cls = s.ReleasedIdentifierPerturbation
+    assert cls in members
+    assert (
+        s.GenePerturbation in cls.__mro__
+        and s.HashableProvenanceGapMixin in cls.__mro__
+    )
+    assert not issubclass(cls, s.ExpressionModulationPerturbation)
+    assert not issubclass(cls, s.PresenceAbsencePerturbation)
+    assert not issubclass(cls, s.SequencePerturbation)
+    for retired in (
+        "BacterialReleasedStrainPerturbation",
+        "BacterialReleasedCrisprPerturbation",
+        "BacterialReleasedTransposonPerturbation",
+        "ReleasedGeneNamePerturbation",
+        "ReleasedStrainKind",
+        "ReleasedGeneKind",
     ):
-        assert cls in members
-        assert cls.__mro__[1] is s.GenePerturbation
-        assert not issubclass(cls, s.ExpressionModulationPerturbation)
-        assert not issubclass(cls, s.PresenceAbsencePerturbation)
-    assert s.BacterialReleasedStrainPerturbation.__mro__[1] is s.GenePerturbation
+        assert not hasattr(s, retired), retired
+    tags = {m.model_fields["perturbation_type"].default for m in members}
+    assert "released_identifier" in tags
+    assert not tags & {
+        "bacterial_released_strain",
+        "bacterial_released_crispr",
+        "bacterial_released_transposon",
+        "released_gene_name",
+    }
     placed = s.CrisprInterferencePerturbation.model_fields
     assert "strain_label" not in placed and "identifier_kind" not in placed
 

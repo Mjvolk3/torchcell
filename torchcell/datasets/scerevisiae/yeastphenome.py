@@ -116,8 +116,8 @@ from torchcell.datamodels.schema import (
     Media,
     Publication,
     ReferenceGenome,
-    ReleasedGeneKind,
-    ReleasedGeneNamePerturbation,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     SmallMoleculePerturbation,
     Temperature,
 )
@@ -890,22 +890,22 @@ class YeastPhenomeDataset(ExperimentDataset):
         ``KanMxDeletionPerturbation``; a heterozygous-diploid column (``het``) is one copy
         dropped 2 -> 1, the ``EngineeredCopyNumberPerturbation``. Curation gives only the
         ORF, so ``perturbed_gene_name`` is the ORF (no common name carried). A row id
-        with no ORF form goes on ``ReleasedGeneNamePerturbation`` verbatim (#1045), kind
+        with no ORF form goes on ``ReleasedIdentifierPerturbation`` verbatim (#1045), kind
         ``heterozygous_deletion`` for a ``het`` column and ``deletion`` otherwise.
         """
         perturbation: GenePerturbationType
         if not _SYSTEMATIC_RE.match(orf):
-            perturbation = ReleasedGeneNamePerturbation(
+            perturbation = ReleasedIdentifierPerturbation(
                 systematic_gene_name=orf,
                 gene_namespace="scerevisiae_s288c_sgd_systematic",
                 perturbed_gene_name=orf,
-                released_gene_name=orf,
+                identifier_kind="row identifier of the curated matrix, as released",
                 released_kind=(
-                    ReleasedGeneKind.heterozygous_deletion
+                    ReleasedKind.heterozygous_deletion
                     if zygosity == "het"
-                    else ReleasedGeneKind.deletion
+                    else ReleasedKind.deletion
                 ),
-                marker="KanMX",
+                cassette="KanMX",
             )
         elif zygosity == "het":
             perturbation = EngineeredCopyNumberPerturbation(

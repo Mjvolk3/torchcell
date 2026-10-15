@@ -89,13 +89,13 @@ token raises. An amino-acid substitution or classical point allele (``cpxAF218Y`
 ``dnaA46``), the partial edit ``crp_ar1_ar2``, "with truncated relA", the multi-gene
 ``del_7prrn`` and a deletion whose symbol the annotation resolves to no b-number (``ihf``,
 the ``rrnC`` / ``rrnD`` / ``rrnE`` rRNA operons, ``dgk``) are stored on
-``BacterialReleasedStrainPerturbation`` under the gene identifier the release writes,
+``ReleasedIdentifierPerturbation`` under the gene identifier the release writes,
 the ``Strain Description`` as the strain label (``settle_public_alleles``). Since #1045
 part 2 the rest is stored too: a plasmid-borne construct, a phage infection or
 complementation, and "with inactive relA" (which names no edit kind) put the sample on a
 background named by its ``Strain Description`` verbatim, the edit the release does not
 contain a typed gap on ``genotype_statement`` (``settle_public_untyped``). A whole-gene
-deletion is a ``BacterialReleasedStrainPerturbation`` of ``released_kind=deletion`` keyed
+deletion is a ``ReleasedIdentifierPerturbation`` of ``released_kind=deletion`` keyed
 by the symbol its ``del_`` token releases; the loader resolves no symbol to a b-number.
 Expression keys are the release's own row ids, verbatim.
 
@@ -168,7 +168,7 @@ from torchcell.datamodels.schema import (
     Genotype,
     PhysicalFactor,
     Publication,
-    ReleasedStrainKind,
+    ReleasedKind,
     RNASeqExpressionPhenotype,
 )
 from torchcell.datasets.bacteria_common import assembly_reference, bacterial_genome
@@ -784,7 +784,7 @@ _ALLELE_GENE = re.compile(r"^(?P<gene>[a-z]{3}[A-Z])")
 _PARTIAL_EDIT_GENES = {"crp_ar1_ar2": "crp"}
 _DELETION_LABELS = {"del_7prrn": "7prrn"}
 #: The prose that states WHAT the allele is ("with truncated relA"); "inactive" does not.
-_PROSE_KIND = {"truncated": ReleasedStrainKind.truncation}
+_PROSE_KIND = {"truncated": ReleasedKind.truncation}
 
 
 def settle_public_alleles(row: Mapping[str, str]) -> PublicGenotypeVerdict:
@@ -830,15 +830,14 @@ def settle_public_alleles(row: Mapping[str, str]) -> PublicGenotypeVerdict:
         elif token in _PARTIAL_EDIT_GENES:
             alleles.append(
                 ReleasedAllele(
-                    gene=_PARTIAL_EDIT_GENES[token],
-                    kind=ReleasedStrainKind.sequence_allele,
+                    gene=_PARTIAL_EDIT_GENES[token], kind=ReleasedKind.sequence_allele
                 )
             )
         elif token in _DELETION_LABELS:
             alleles.append(
                 ReleasedAllele(
                     gene=_DELETION_LABELS[token],
-                    kind=ReleasedStrainKind.deletion,
+                    kind=ReleasedKind.deletion,
                     identifier_kind="deletion label",
                 )
             )
@@ -848,15 +847,13 @@ def settle_public_alleles(row: Mapping[str, str]) -> PublicGenotypeVerdict:
                 raise ValueError(f"point allele token {token!r} names no gene")
             alleles.append(
                 ReleasedAllele(
-                    gene=match.group("gene"), kind=ReleasedStrainKind.sequence_allele
+                    gene=match.group("gene"), kind=ReleasedKind.sequence_allele
                 )
             )
         elif (deletion := _DELETION_TOKEN.match(token)) is not None:
             gene = deletion.group("gene")
             if gene in UNRESOLVED_DELETION_SYMBOLS:
-                alleles.append(
-                    ReleasedAllele(gene=gene, kind=ReleasedStrainKind.deletion)
-                )
+                alleles.append(ReleasedAllele(gene=gene, kind=ReleasedKind.deletion))
             else:
                 genes.append(gene)
         elif PUBLIC_EDIT_TOKENS.get(token) is not (

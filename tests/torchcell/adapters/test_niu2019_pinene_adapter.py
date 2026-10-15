@@ -5,7 +5,7 @@
 of it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Niu 2019 pinene production ratios: ProductTiterExperiment. One
-``BacterialReleasedCrisprPerturbation`` per targeted label, six on each combination
+``ReleasedIdentifierPerturbation`` per targeted label, six on each combination
 strain, served as ``bacterial perturbation`` with the shared ``dCas9*-MCPSoxS`` effector
 on a ``crispr construct`` node. The 20% dodecane overlay is a
 ``SmallMoleculePerturbation`` on the experiment and on the reference, so the

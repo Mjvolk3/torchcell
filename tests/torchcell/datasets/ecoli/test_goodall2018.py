@@ -60,12 +60,12 @@ from torchcell.datamodels.schema import (
     BacterialGeneEssentialityExperiment,
     BacterialGeneEssentialityExperimentReference,
     BacterialGradedGeneEssentialityExperiment,
-    BacterialReleasedTransposonPerturbation,
     EssentialityEvidenceClass,
     EssentialityEvidenceType,
     EssentialityStatementRole,
     Genotype,
     MediaComponentRole,
+    ReleasedIdentifierPerturbation,
     TradisCall,
     TransposonInsertionPerturbation,
 )
@@ -447,7 +447,7 @@ def test_build_experiment_is_one_gene_level_insertion() -> None:
     } == {
         "systematic_gene_name": "thrA",
         "perturbed_gene_name": "thrA",
-        "perturbation_type": "bacterial_released_transposon",
+        "perturbation_type": "released_identifier",
         "gene_namespace": "ecoli_k12_bw25113_locus_tag",
         "strain_label": "TL row 1",
         "identifier_kind": m.IDENTIFIER_KIND,
@@ -1099,7 +1099,7 @@ def test_build_graded_experiment_stores_the_unclear_call_as_released() -> None:
     assert isinstance(experiment, BacterialGradedGeneEssentialityExperiment)
     assert isinstance(experiment.genotype, Genotype)
     (perturbation,) = experiment.genotype.perturbations
-    assert isinstance(perturbation, BacterialReleasedTransposonPerturbation)
+    assert isinstance(perturbation, ReleasedIdentifierPerturbation)
     assert (
         perturbation.systematic_gene_name,
         perturbation.perturbed_gene_name,

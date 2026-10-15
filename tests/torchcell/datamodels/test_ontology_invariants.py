@@ -29,9 +29,6 @@ from torchcell.datamodels.schema import (
     SGD_S288C_NAMESPACE,
     AllelePerturbation,
     ArtifactRef,
-    BacterialReleasedCrisprPerturbation,
-    BacterialReleasedStrainPerturbation,
-    BacterialReleasedTransposonPerturbation,
     BacterialVariantCall,
     BacterialVariantType,
     BarcodedKanMxDeletionPerturbation,
@@ -68,9 +65,8 @@ from torchcell.datamodels.schema import (
     PresenceAbsencePerturbation,
     PromoterDrivenGeneIntegrationPerturbation,
     PromoterReplacementPerturbation,
-    ReleasedGeneKind,
-    ReleasedGeneNamePerturbation,
-    ReleasedStrainKind,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     SequencePerturbation,
     SequenceVariantPerturbation,
     SgaAllelePerturbation,
@@ -228,15 +224,11 @@ _SPAN_CALL = BacterialVariantCall(
     frequency_basis=VariantFrequencyBasis.fraction,
 )
 
-#: The leaves that store a source's own identifier as released (#691).
+#: The leaf that stores a source's own identifier as released (P3, ontology-unify: the
+#: one leaf that replaced the three #691 bacterial released leaves and the #1045 yeast
+#: one).
 _RELEASED_LEAVES: frozenset[type[GenePerturbation]] = frozenset(
-    {
-        BacterialReleasedStrainPerturbation,
-        BacterialReleasedCrisprPerturbation,
-        BacterialReleasedTransposonPerturbation,
-        # #1045: the yeast gene under the name its source released.
-        ReleasedGeneNamePerturbation,
-    }
+    {ReleasedIdentifierPerturbation}
 )
 
 FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
@@ -252,15 +244,7 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
         "allele_class": "temperature_sensitive",
         "allele_name": "tfc3-1",
     },
-    # #1045: a gene under its released name, and an allele under its released name.
-    ReleasedGeneNamePerturbation: {
-        "systematic_gene_name": "ADE2",
-        "perturbed_gene_name": "ADE2",
-        "released_gene_name": "ADE2",
-        "gene_namespace": SGD_S288C_NAMESPACE,
-        "released_kind": ReleasedGeneKind.deletion,
-        "marker": "KanMX",
-    },
+    # #1045: an allele under the name its source released.
     NamedAllelePerturbation: {**_SYS, "allele_name": "tfc3-1"},
     NatMxDeletionPerturbation: {**_SYS},
     MeanDeletionPerturbation: {**_SYS, "num_duplicates": 2},
@@ -466,38 +450,16 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
         "protease": "ClpXP",
         "adaptor": "SspB",
     },
-    # #691: a strain under its released identifier, an ECK accession no assembly is
-    # consulted for.
-    BacterialReleasedStrainPerturbation: {
+    # P3: a gene under the identifier its source released, an ECK accession no assembly
+    # is consulted for (Nichols 2011); the host stays in gene_namespace.
+    ReleasedIdentifierPerturbation: {
         "systematic_gene_name": "ECK1963",
         "perturbed_gene_name": "HCHA",
         "gene_namespace": "ecoli_k12_bw25113_locus_tag",
         "strain_label": "ECK1963-HCHA",
         "identifier_kind": "ECK accession",
-        "released_kind": ReleasedStrainKind.deletion,
+        "released_kind": ReleasedKind.deletion,
         "cassette": "kanamycin",
-    },
-    # #691 round 2: a guide against a symbol the pinned assembly retires (Hawkins 2020's
-    # sokE) and an insertion in a multi-copy IS symbol (Goodall 2018's insA), both as
-    # released.
-    BacterialReleasedCrisprPerturbation: {
-        "systematic_gene_name": "sokE",
-        "perturbed_gene_name": "sokE",
-        "gene_namespace": "ecoli_k12_mg1655_bnumber",
-        "strain_label": "sokEb4700_32",
-        "identifier_kind": "gene symbol",
-        "expression_direction": "decreased",
-        "crispr": CrisprConstruct(
-            effector="dCas9", guide_sequence="CGTACTACCAGATAACCTAA"
-        ),
-    },
-    BacterialReleasedTransposonPerturbation: {
-        "systematic_gene_name": "insA",
-        "perturbed_gene_name": "insA",
-        "gene_namespace": "ecoli_k12_bw25113_locus_tag",
-        "strain_label": "insA",
-        "identifier_kind": "gene symbol",
-        "transposon": "Tn5",
     },
     HeterologousPathwayPerturbation: dict(
         systematic_gene_name="Efa:mvaE",

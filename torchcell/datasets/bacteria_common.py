@@ -386,7 +386,7 @@ _RELEASED_FORMS: tuple[tuple[re.Pattern[str], str], ...] = (
 def released_identifier_kind(identifier: str) -> str:
     """What a released identifier that is no locus tag is, by its form alone.
 
-    The ``identifier_kind`` of a ``BacterialReleasedStrainPerturbation``: a Keio JW
+    The ``identifier_kind`` of a ``ReleasedIdentifierPerturbation``: a Keio JW
     number, a sub-numbered b-number, a comma-joined multi-gene b-number cell, or
     otherwise a gene symbol as written.
     """

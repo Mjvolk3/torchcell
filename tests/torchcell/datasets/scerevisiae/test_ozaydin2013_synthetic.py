@@ -239,9 +239,12 @@ def test_six_records_one_per_released_scored_row(
     (released,) = [
         p
         for p in dataset[6]["experiment"]["genotype"]["perturbations"]
-        if p["perturbation_type"] == "released_gene_name"
+        if p["perturbation_type"] == "released_identifier"
     ]
-    assert (released["released_gene_name"], released["marker"]) == ("YLR287-A", "KanMX")
+    assert (released["systematic_gene_name"], released["cassette"]) == (
+        "YLR287-A",
+        "KanMX",
+    )
     assert dataset[0]["publication"] == _PUBLICATION.model_dump()
     ledger = json.loads(
         (Path(dataset.root) / "preprocess" / "dropped_records.json").read_text()

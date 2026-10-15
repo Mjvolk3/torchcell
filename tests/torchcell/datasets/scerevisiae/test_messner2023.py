@@ -21,7 +21,7 @@ Fixture (``yeast5k_noimpute_wide.csv``, blank cell = not measured):
 Metadata: ``wt_a``/``wt_b`` are ``HIS3`` (WT); the two ``ko`` samples delete YAL059W
 and ``YML009c`` (lowercase in metadata, uppercased by the loader); ``qc_1`` is ``qc``
 (ignored); ``bad_ko`` is a ``ko`` sample whose ORF ``YOR202W-not`` has no ORF form
-(stored on the released-gene-name leaf as ``YOR202W-NOT``, #1045); ``absent_ko`` is a
+(stored on the released-identifier leaf as ``YOR202W-NOT``, #1045); ``absent_ko`` is a
 ``ko`` row with
 no matrix column (ignored).
 
@@ -276,8 +276,8 @@ def test_len_data_csv_and_side_files(
         "bad_ko,YOR202W-NOT,YOR202W-NOT,3\n"
     )
     (released,) = ds[2]["experiment"]["genotype"]["perturbations"]
-    assert (released["perturbation_type"], released["released_gene_name"]) == (
-        "released_gene_name",
+    assert (released["perturbation_type"], released["systematic_gene_name"]) == (
+        "released_identifier",
         "YOR202W-NOT",
     )
     pre = root / "preprocess"
@@ -590,7 +590,7 @@ def test_a_ko_protein_no_wt_sample_measured_is_refused_by_name(
 def test_the_build_summary_is_logged_exactly(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """First fixture: 3 KO strains, 3 WT proteins, 1 ORF on the released-gene-name leaf
+    """First fixture: 3 KO strains, 3 WT proteins, 1 ORF on the released-identifier leaf
     (``bad_ko``; the ``absent_ko`` row has no matrix column and is not counted).
     """
     monkeypatch.setenv("DATA_ROOT", str(tmp_path))
@@ -601,7 +601,7 @@ def test_the_build_summary_is_logged_exactly(
     messages = [r.getMessage() for r in caplog.records if r.name == m.log.name]
     assert messages == [
         "Messner: 3 KO strains, WT reference with 3 proteins, 1 KO ORFs on the "
-        "released-gene-name leaf",
+        "released-identifier leaf",
         "Wrote 3 Messner proteome experiments to LMDB",
     ]
 

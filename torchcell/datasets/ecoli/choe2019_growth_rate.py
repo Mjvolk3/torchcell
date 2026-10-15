@@ -67,7 +67,7 @@ with its own isogenic kan-marked wild-type-allele control: ``cspCmut``
 ``ilvNmut`` (``MS56, ilvN::ilvN(C202T)-kanR``) against ``ilvNWT``, and ``yifBmut``
 (``MS56, yifB::yifB(1169C insertion)-kanR``) against ``yifBWT``. The Fig. 2f sheet
 releases each mutant-over-control growth-rate ratio for three sets. Each is stored as
-released, on ``BacterialReleasedStrainPerturbation`` (``released_kind=sequence_allele``):
+released, on ``ReleasedIdentifierPerturbation`` (``released_kind=sequence_allele``):
 the gene symbol and the allele exactly as Supplementary Table 3 writes them, the strain
 name, the marker as written, and no coordinate, because the release gives a CDS-relative
 change and no replicon position. The reference of each is its control, a
@@ -115,7 +115,7 @@ THE 21 DELETED GENES ARE THE SOURCE'S OWN LIST, AND THE RELEASED COORDINATES ARE
 USABLE. Supplementary Table 3 writes the large deletion as
 ``(hycEDCBA-hypABCDE-fhlA-ygbA-mutS-pphB-ygbIJKLMN-rpoS)::kan``, which expands to exactly
 21 gene symbols. Each is stored as released (#1045 part 2): a
-``BacterialReleasedStrainPerturbation`` of ``released_kind=deletion`` keyed by the
+``ReleasedIdentifierPerturbation`` of ``released_kind=deletion`` keyed by the
 symbol, the panel's strain label as the strain label; the loader reads no annotation.
 What the pinned MG1655 assembly makes of them is the verification's genome-reference
 row :data:`DELETED_REGION_RULE` (a finding, never a gate): measured, all 21 resolve to
@@ -197,7 +197,6 @@ from torchcell.datamodels.schema import (
     BacterialAssemblySet,
     BacterialFitnessExperiment,
     BacterialFitnessExperimentReference,
-    BacterialReleasedStrainPerturbation,
     BacterialStrainBackground,
     Concentration,
     ConcentrationUnit,
@@ -210,7 +209,8 @@ from torchcell.datamodels.schema import (
     MediaComponent,
     MediaComponentRole,
     Publication,
-    ReleasedStrainKind,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     SampleUnit,
     Temperature,
     UncertaintyType,
@@ -759,7 +759,7 @@ _GAP_KEIO_CONSTRUCTION = ProvenanceGap(
     reason=ProvenanceGapReason.not_reported_by_primary,
     note="no plate, well or strain accession of either Keio strain is released",
 )
-#: ``BacterialReleasedStrainPerturbation`` is not a ``ProvenanceGapMixin``, so a typed
+#: ``ReleasedIdentifierPerturbation`` is not a ``ProvenanceGapMixin``, so a typed
 #: absence on one of its fields is filed in ``preprocess/provenance_gaps.json`` instead.
 GROWTH_PERTURBATION_GAPS: tuple[ProvenanceGap, ...] = (_GAP_CASSETTE_SEQUENCE,)
 TF_PERTURBATION_GAPS: tuple[ProvenanceGap, ...] = (
@@ -1286,13 +1286,13 @@ def build_growth_genotype(symbols: Sequence[str], strain_label: str) -> Genotype
     """One strain's designed deletions, each keyed by the symbol the release names."""
     return Genotype(
         perturbations=[
-            BacterialReleasedStrainPerturbation(
+            ReleasedIdentifierPerturbation(
                 systematic_gene_name=symbol,
                 perturbed_gene_name=symbol,
                 gene_namespace=MG1655_NAMESPACE,
                 strain_label=strain_label,
                 identifier_kind="gene symbol",
-                released_kind=ReleasedStrainKind.deletion,
+                released_kind=ReleasedKind.deletion,
                 cassette=KAN_CASSETTE,
             )
             for symbol in symbols
@@ -1304,13 +1304,13 @@ def reconstructed_genotype(allele: ReconstructedAllele) -> Genotype:
     """One reconstructed strain's allele, stored as Supplementary Table 3 releases it."""
     return Genotype(
         perturbations=[
-            BacterialReleasedStrainPerturbation(
+            ReleasedIdentifierPerturbation(
                 systematic_gene_name=allele.gene,
                 perturbed_gene_name=allele.allele,
                 gene_namespace=MG1655_NAMESPACE,
                 strain_label=allele.strain,
                 identifier_kind=released_identifier_kind(allele.gene),
-                released_kind=ReleasedStrainKind.sequence_allele,
+                released_kind=ReleasedKind.sequence_allele,
                 cassette=allele.cassette,
             )
         ]
@@ -1356,13 +1356,13 @@ def build_keio_genotype(symbol: str) -> Genotype:
     """One Keio single deletion, keyed by the symbol the legend names."""
     return Genotype(
         perturbations=[
-            BacterialReleasedStrainPerturbation(
+            ReleasedIdentifierPerturbation(
                 systematic_gene_name=symbol,
                 perturbed_gene_name=symbol,
                 gene_namespace=BW25113_NAMESPACE,
                 strain_label=f"Δ{symbol}",
                 identifier_kind="gene symbol",
-                released_kind=ReleasedStrainKind.deletion,
+                released_kind=ReleasedKind.deletion,
                 collection=KEIO_COLLECTION,
             )
         ]
@@ -1807,7 +1807,7 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
                         f"Fig. 2f releases three reconstructed single-allele strains "
                         f"({', '.join(RATIO_ROW_ORDER[1:])}) as mutant-over-control "
                         "growth-rate ratios for three sets. Since #1057 each is a record "
-                        "on BacterialReleasedStrainPerturbation (sequence_allele), the "
+                        "on ReleasedIdentifierPerturbation (sequence_allele), the "
                         "gene and allele as Supplementary Table 3 writes them, against "
                         "its kan-marked wild-type-allele control",
                         f"the three variant tables release {total_calls} calls, every "
@@ -1861,7 +1861,7 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
                             for gap in GROWTH_PERTURBATION_GAPS
                         ],
                     },
-                    "note": "BacterialReleasedStrainPerturbation is not a "
+                    "note": "ReleasedIdentifierPerturbation is not a "
                     "ProvenanceGapMixin, "
                     "so a typed absence on one of its fields is filed here",
                 },
@@ -2063,7 +2063,7 @@ class TranscriptionFactorKnockoutChoe2019Dataset(ExperimentDataset):
             json.dumps(
                 {
                     "dataset": self.name,
-                    "carrier": "FitnessPhenotype / BacterialReleasedStrainPerturbation",
+                    "carrier": "FitnessPhenotype / ReleasedIdentifierPerturbation",
                     "note": "neither leaf is a ProvenanceGapMixin, so these typed "
                     "absences are recorded here rather than on the record",
                     "gaps": [

@@ -20,7 +20,7 @@ are absent, as the release has them (:data:`EMPTY_CELL_RULE`, ``cell_accounting.
 STRAINS, AS RELEASED. Table S2 labels rows by ECK accession and upper-case symbol
 (``ECK1963-HCHA``), with a suffix for the essential-gene arrays (``- SPA``, ``- DAS``,
 ``- Linked``, ``- Allele``, ``- Truncation``). Each row's genotype is one
-``BacterialReleasedStrainPerturbation`` per ECK accession of its label (the leaf this
+``ReleasedIdentifierPerturbation`` per ECK accession of its label (the leaf this
 dataset added): ``systematic_gene_name`` is the accession verbatim, ``perturbed_gene_name``
 the released symbol, ``strain_label`` the whole row label, ``released_kind`` the class
 its suffix states (:data:`SUFFIX_KINDS`), ``cassette="kanamycin"`` ("All mutant strains
@@ -158,7 +158,6 @@ from torchcell.datamodels.schema import (
     AssayType,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
-    BacterialReleasedStrainPerturbation,
     Compound,
     Concentration,
     ConcentrationUnit,
@@ -177,7 +176,8 @@ from torchcell.datamodels.schema import (
     PhysicalExposurePerturbation,
     PhysicalFactor,
     Publication,
-    ReleasedStrainKind,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     SampleUnit,
     SmallMoleculePerturbation,
     Temperature,
@@ -403,7 +403,7 @@ LINKED_CONTROLS = _article(
     "in which the antibiotic-resistance cassette was linked to the wild-type allele as "
     "a control)",
     page=_STRAINS,
-    note="what the nine '- Linked' rows are (ReleasedStrainKind.linked_marker)",
+    note="what the nine '- Linked' rows are (ReleasedKind.linked_marker)",
 )
 REPLICATE_DESIGN = _article(
     (4, 6),
@@ -1939,12 +1939,12 @@ def reference_phenotype(condition: Condition) -> EnvironmentResponsePhenotype:
 # --------------------------------------------------------------------------- #
 #: The label suffixes the release writes for the non-deletion arrays, and the class
 #: each states; a label with none of them is a deletion.
-SUFFIX_KINDS: Final[dict[str, ReleasedStrainKind]] = {
-    " - SPA": ReleasedStrainKind.affinity_tag,
-    " - DAS": ReleasedStrainKind.degron,
-    " - Linked": ReleasedStrainKind.linked_marker,
-    " - Allele": ReleasedStrainKind.sequence_allele,
-    " - Truncation": ReleasedStrainKind.truncation,
+SUFFIX_KINDS: Final[dict[str, ReleasedKind]] = {
+    " - SPA": ReleasedKind.affinity_tag,
+    " - DAS": ReleasedKind.degron,
+    " - Linked": ReleasedKind.linked_marker,
+    " - Allele": ReleasedKind.sequence_allele,
+    " - Truncation": ReleasedKind.truncation,
 }
 #: What the label's leading identifier is, as the release writes it.
 IDENTIFIER_KIND: Final = "ECK accession"
@@ -1952,9 +1952,9 @@ IDENTIFIER_KIND: Final = "ECK accession"
 #: Procedures name it (COLLECTION); None where the release does not say which of its
 #: collections a row belongs to (a deletion row is a Keio or an sRNA/small protein
 #: strain, and Table S2 does not mark which).
-KIND_COLLECTIONS: Final[dict[ReleasedStrainKind, str]] = {
-    ReleasedStrainKind.affinity_tag: SPA_COLLECTION,
-    ReleasedStrainKind.degron: DAS_COLLECTION,
+KIND_COLLECTIONS: Final[dict[ReleasedKind, str]] = {
+    ReleasedKind.affinity_tag: SPA_COLLECTION,
+    ReleasedKind.degron: DAS_COLLECTION,
 }
 _ECK_LABEL = re.compile(r"^ECK(?P<numbers>\d{4}(?:[/-]\d{4})*)(?:-(?P<rest>.+))?$")
 _ALLELE_REST = re.compile(
@@ -1976,14 +1976,14 @@ class StrainLabel(BaseModel):
 
     index: int
     label: str
-    kind: ReleasedStrainKind
+    kind: ReleasedKind
     ecks: tuple[str, ...]
     symbol: str | None = None
 
 
 def parse_strain_label(index: int, label: str) -> StrainLabel:
     """Split a row label into its class (by suffix), its ECK ids and its symbol."""
-    kind = ReleasedStrainKind.deletion
+    kind = ReleasedKind.deletion
     body = label
     for suffix, suffix_kind in SUFFIX_KINDS.items():
         if label.endswith(suffix):
@@ -1996,10 +1996,10 @@ def parse_strain_label(index: int, label: str) -> StrainLabel:
     ecks = tuple(f"ECK{n}" for n in re.split(r"[/-]", match["numbers"]))
     rest = match["rest"]
     if len(ecks) > 1:
-        if kind is not ReleasedStrainKind.deletion:
+        if kind is not ReleasedKind.deletion:
             raise ValueError(f"row {index}: {label!r} is a multi-gene allele")
         return StrainLabel(index=index, label=label, kind=kind, ecks=ecks)
-    if kind is ReleasedStrainKind.deletion:
+    if kind is ReleasedKind.deletion:
         symbol = None if rest is None else rest + ("'" if primed else "")
         return StrainLabel(
             index=index, label=label, kind=kind, ecks=ecks, symbol=symbol
@@ -2089,7 +2089,7 @@ def genotype(row: StrainRow) -> Genotype:
     """
     return Genotype(
         perturbations=[
-            BacterialReleasedStrainPerturbation(
+            ReleasedIdentifierPerturbation(
                 systematic_gene_name=eck,
                 perturbed_gene_name=name,
                 gene_namespace=BW25113_NAMESPACE,

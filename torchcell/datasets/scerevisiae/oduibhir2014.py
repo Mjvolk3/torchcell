@@ -103,8 +103,8 @@ from torchcell.datamodels.schema import (
     KanMxDeletionPerturbation,
     Publication,
     ReferenceGenome,
-    ReleasedGeneKind,
-    ReleasedGeneNamePerturbation,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     SampleUnit,
     Temperature,
 )
@@ -136,22 +136,22 @@ _SYSTEMATIC_RE = re.compile(r"^(Y[A-P][LR]\d{3}[WC](-[A-Z])?|Q\d{4})$")
 
 def _released_deletion(
     orf: str, common_name: str
-) -> KanMxDeletionPerturbation | ReleasedGeneNamePerturbation:
+) -> KanMxDeletionPerturbation | ReleasedIdentifierPerturbation:
     """The deletion under the released identifier (#1045): an ORF-shaped one on the
     placed KanMX leaf with the released commonName as the perturbed name, any other
-    on the released-gene-name leaf verbatim (kind deletion, marker KanMX).
+    on the released-identifier leaf verbatim (kind deletion, marker KanMX).
     """
     if _SYSTEMATIC_RE.match(orf):
         return KanMxDeletionPerturbation(
             systematic_gene_name=orf, perturbed_gene_name=common_name
         )
-    return ReleasedGeneNamePerturbation(
+    return ReleasedIdentifierPerturbation(
         systematic_gene_name=orf,
         gene_namespace="scerevisiae_s288c_sgd_systematic",
         perturbed_gene_name=common_name,
-        released_gene_name=orf,
-        released_kind=ReleasedGeneKind.deletion,
-        marker="KanMX",
+        identifier_kind="ORF column entry, as released",
+        released_kind=ReleasedKind.deletion,
+        cassette="KanMX",
     )
 
 

@@ -27,7 +27,7 @@ Maps to `MetabolitePhenotype` (WS4): `metabolite_level = {"betaxanthin": score}`
 Every row that names a gene and carries a 24 h level is one record under the name the
 ``gene`` column releases, verbatim (#1045): a systematic name goes on
 ``KanMxDeletionPerturbation`` (both names the ORF), any other name on
-``ReleasedGeneNamePerturbation`` (the released symbol, kind ``deletion``, marker KanMX).
+``ReleasedIdentifierPerturbation`` (the released symbol, kind ``deletion``, marker KanMX).
 The token is upper-cased (two systematic names are released in mixed case) and
 otherwise verbatim. No genome is consulted and nothing is renamed or merged; the pinned
 file (4,788 rows) repeats no gene token. The rows without a record are the 28 whose gene cell is ``0`` or
@@ -77,8 +77,8 @@ from torchcell.datamodels.schema import (
     MetabolitePhenotype,
     Publication,
     ReferenceGenome,
-    ReleasedGeneKind,
-    ReleasedGeneNamePerturbation,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.verification.report import Provenance
@@ -296,23 +296,23 @@ _CONTROL_TOKENS = frozenset({"WT"})
 
 def _released_deletion(
     gene: str,
-) -> KanMxDeletionPerturbation | ReleasedGeneNamePerturbation:
+) -> KanMxDeletionPerturbation | ReleasedIdentifierPerturbation:
     """The varying deletion under the name the ``gene`` column releases (#1045).
 
     A systematic name goes on the placed KanMX leaf with both names the ORF; any other
-    name goes on the released-gene-name leaf as the symbol the source wrote.
+    name goes on the released-identifier leaf as the symbol the source wrote.
     """
     if _SYSTEMATIC_RE.match(gene):
         return KanMxDeletionPerturbation(
             systematic_gene_name=gene, perturbed_gene_name=gene
         )
-    return ReleasedGeneNamePerturbation(
+    return ReleasedIdentifierPerturbation(
         systematic_gene_name=gene,
         gene_namespace="scerevisiae_s288c_sgd_systematic",
         perturbed_gene_name=gene,
-        released_gene_name=gene,
-        released_kind=ReleasedGeneKind.deletion,
-        marker="KanMX",
+        identifier_kind="gene column entry, as released",
+        released_kind=ReleasedKind.deletion,
+        cassette="KanMX",
     )
 
 

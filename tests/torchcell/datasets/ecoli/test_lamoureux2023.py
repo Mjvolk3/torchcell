@@ -60,7 +60,6 @@ from torchcell.datamodels.identity import media_identity
 from torchcell.datamodels.media import MEDIA_LIBRARY
 from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
-    BacterialReleasedStrainPerturbation,
     BacterialStrainBackground,
     ComponentDefinition,
     ConcentrationUnit,
@@ -68,7 +67,8 @@ from torchcell.datamodels.schema import (
     EnvironmentPhysicalPerturbation,
     MediaComponentRole,
     PhysicalFactor,
-    ReleasedStrainKind,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     SmallMoleculePerturbation,
 )
 from torchcell.sequence.genome.ecoli.k12 import MG1655_ASSEMBLY
@@ -987,7 +987,7 @@ def test_the_build_keeps_wild_type_and_deletions_and_counts_every_drop(
     assert [
         (p["perturbation_type"], p["systematic_gene_name"], p["released_kind"])
         for p in rpob
-    ] == [("bacterial_released_strain", "rpoB", "sequence_allele")]
+    ] == [("released_identifier", "rpoB", "sequence_allele")]
     assert rpob[0]["strain_label"] == "Escherichia coli K-12 MG1655 rpoBE546V"
     strains = {
         built[i]["reference"]["genome_reference"]["strain"] for i in range(len(built))
@@ -1019,9 +1019,9 @@ def test_a_deletion_record_keys_the_released_symbol(
         ("proB", "proB"),
         ("proC", "proC"),
     ]
-    perturbation = BacterialReleasedStrainPerturbation.model_validate(thra[0])
+    perturbation = ReleasedIdentifierPerturbation.model_validate(thra[0])
     assert perturbation.gene_namespace == "ecoli_k12_mg1655_bnumber"
-    assert perturbation.released_kind is ReleasedStrainKind.deletion
+    assert perturbation.released_kind is ReleasedKind.deletion
     assert perturbation.identifier_kind == "gene symbol"
     assert perturbation.strain_label == "Escherichia coli K-12 MG1655 del_thrA"
 

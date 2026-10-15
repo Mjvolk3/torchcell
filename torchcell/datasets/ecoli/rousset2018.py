@@ -21,10 +21,10 @@ another source inside a loader. Before #905 the S1 rows were dropped as "served 
 
 RECORD = one (sgRNA x screen) ``BacterialEnvironmentResponseExperiment``:
 
-- GENOTYPE: one ``BacterialReleasedCrisprPerturbation`` (#1077) keyed by the target
+- GENOTYPE: one ``ReleasedIdentifierPerturbation`` (#1077) keyed by the target
   gene's SYMBOL, exactly as the release names it, with the 20-nt spacer on the shared
   ``crispr`` construct (``effector="dCas9"``) and as ``strain_label``, and
-  ``expression_direction="decreased"``. The loader reads no annotation (the owner's
+  ``released_kind=crispr_interference``. The loader reads no annotation (the owner's
   rule of 2026-10-12: the data is the data, and the genome is a separate layer joined
   at modeling time). Before that rule every symbol went through
   ``reconcile_locus_tags`` to a b-number and 444 records over 111 symbols the pinned
@@ -186,7 +186,6 @@ from torchcell.datamodels.schema import (
     AssayType,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
-    BacterialReleasedCrisprPerturbation,
     BacterialStrainBackground,
     ComponentDefinition,
     Concentration,
@@ -203,6 +202,8 @@ from torchcell.datamodels.schema import (
     MediaComponentRole,
     PhagePerturbation,
     Publication,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     SampleUnit,
     Temperature,
 )
@@ -1311,13 +1312,13 @@ def genotype(stored: StoredGuide) -> Genotype:
     """One guide-bearing strain: CRISPRi of its released target gene by its spacer."""
     return Genotype(
         perturbations=[
-            BacterialReleasedCrisprPerturbation(
+            ReleasedIdentifierPerturbation(
                 systematic_gene_name=stored.reported_symbol,
                 perturbed_gene_name=stored.reported_symbol,
                 gene_namespace=MG1655_NAMESPACE,
                 strain_label=stored.spacer,
                 identifier_kind=stored.identifier_kind,
-                expression_direction="decreased",
+                released_kind=ReleasedKind.crispr_interference,
                 crispr=CrisprConstruct(
                     effector=EFFECTOR.value, guide_sequence=stored.spacer, n_guides=1
                 ),

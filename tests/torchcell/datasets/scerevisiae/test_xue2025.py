@@ -6,7 +6,7 @@
 ``Supplementary Data 1_Raw titers.xlsx`` is written synthetically with openpyxl into
 ``<root>/raw/`` so PyG never calls ``download()``; ``process()`` runs for real with no
 genome: every gene is stored under the common name the release gives, on
-``ReleasedGeneNamePerturbation`` (#1045).
+``ReleasedIdentifierPerturbation`` (#1045).
 
 Titer sheet fixture (col 0 = label, then 5 FFAs x 3 replicate columns in the module's
 order C14:0, C16:0, C18:0, C16:1, C18:1); the WT row is placed second to show the
@@ -45,8 +45,8 @@ from torchcell.datamodels.schema import (
     MetabolitePhenotype,
     Publication,
     ReferenceGenome,
-    ReleasedGeneKind,
-    ReleasedGeneNamePerturbation,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     Temperature,
 )
 from torchcell.datasets.scerevisiae import xue2025 as m
@@ -136,13 +136,13 @@ def _phenotype(levels: list[float], ses: list[float], n: int) -> MetabolitePheno
 def _genotype(genes: list[str]) -> Genotype:
     return Genotype(
         perturbations=[
-            ReleasedGeneNamePerturbation(
+            ReleasedIdentifierPerturbation(
                 systematic_gene_name=g,
                 gene_namespace="scerevisiae_s288c_sgd_systematic",
                 perturbed_gene_name=g,
-                released_gene_name=g,
-                released_kind=ReleasedGeneKind.deletion,
-                marker="KanMX",
+                identifier_kind="genotype column entry, as released",
+                released_kind=ReleasedKind.deletion,
+                cassette="KanMX",
             )
             for g in genes
         ]
@@ -193,7 +193,7 @@ def test_one_record_per_non_wt_row_in_sheet_order(
         p["perturbation_type"]
         for i in range(4)
         for p in built[i]["experiment"]["genotype"]["perturbations"]
-    } == {"released_gene_name"}
+    } == {"released_identifier"}
     root3 = math.sqrt(3)
     assert (
         built[0]["experiment"]
@@ -317,7 +317,7 @@ def test_summary_csv_gene_set_and_build_manifest(
     assert manifest["loader_class"] == "FattyAcidXue2025Dataset"
     assert manifest["loader_module"] == "torchcell.datasets.scerevisiae.xue2025"
     assert manifest["hostname"] == socket.gethostname()
-    assert {"MetaboliteExperiment", "ReleasedGeneNamePerturbation"} <= set(
+    assert {"MetaboliteExperiment", "ReleasedIdentifierPerturbation"} <= set(
         manifest["closure"]
     )
 
@@ -333,8 +333,8 @@ def test_a_systematic_name_would_go_on_the_placed_leaf_and_tfc7_is_as_released()
     assert isinstance(placed, KanMxDeletionPerturbation)
     assert placed.systematic_gene_name == "YGL205W"
     released = m._released_deletion("TFC7")
-    assert isinstance(released, ReleasedGeneNamePerturbation)
-    assert (released.released_gene_name, released.marker) == ("TFC7", "KanMX")
+    assert isinstance(released, ReleasedIdentifierPerturbation)
+    assert (released.systematic_gene_name, released.cassette) == ("TFC7", "KanMX")
     assert not hasattr(m, "AMBIGUOUS_ALIAS_PINS")
 
 
@@ -578,13 +578,13 @@ def test_essential_gene_strains_are_kept_as_the_release_states_them(
     assert len(built) == 4
     assert [_stated_deletions(built[i]) for i in range(4)] == [
         [],
-        [("RGR1", "RGR1", "released_gene_name", "deletion")],
+        [("RGR1", "RGR1", "released_identifier", "deletion")],
         [
-            ("MED4", "MED4", "released_gene_name", "deletion"),
-            ("RGR1", "RGR1", "released_gene_name", "deletion"),
-            ("TFC7", "TFC7", "released_gene_name", "deletion"),
+            ("MED4", "MED4", "released_identifier", "deletion"),
+            ("RGR1", "RGR1", "released_identifier", "deletion"),
+            ("TFC7", "TFC7", "released_identifier", "deletion"),
         ],
-        [("MED4", "MED4", "released_gene_name", "deletion")],
+        [("MED4", "MED4", "released_identifier", "deletion")],
     ]
     assert [
         len(built[i]["experiment"]["genotype"]["perturbations"]) for i in range(4)
@@ -628,5 +628,5 @@ def test_the_released_workbook_keeps_all_176_records_and_the_112(
         (name, name) for name in _ESSENTIAL_IN_SGD
     }
     assert {(leaf, kind) for _, _, leaf, kind in flat} == {
-        ("released_gene_name", "deletion")
+        ("released_identifier", "deletion")
     }

@@ -69,8 +69,8 @@ from torchcell.datamodels.schema import (
     MeasurementType,
     Publication,
     ReferenceGenome,
-    ReleasedGeneKind,
-    ReleasedGeneNamePerturbation,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     ResponseCategory,
     SampleUnit,
     SmallMoleculePerturbation,
@@ -170,7 +170,7 @@ def test_ambiguous_aliases_are_stored_as_the_symbols_the_paper_wrote(
     built: a.EnvChemgenAuesukaree2009Dataset,
 ) -> None:
     """PPA1 and FEN1 are aliases of two current genes each; no adjudication is made and
-    each is a ``ReleasedGeneNamePerturbation`` carrying the symbol verbatim (#1045).
+    each is a ``ReleasedIdentifierPerturbation`` carrying the symbol verbatim (#1045).
     """
     by_name = {
         p["systematic_gene_name"]: p
@@ -178,10 +178,10 @@ def test_ambiguous_aliases_are_stored_as_the_symbols_the_paper_wrote(
         for p in built[i]["experiment"]["genotype"]["perturbations"]
     }
     for symbol in ("PPA1", "FEN1", "VMA2", "NOSUCHGENE"):
-        assert by_name[symbol]["perturbation_type"] == "released_gene_name"
-        assert by_name[symbol]["released_gene_name"] == symbol
+        assert by_name[symbol]["perturbation_type"] == "released_identifier"
+        assert by_name[symbol]["systematic_gene_name"] == symbol
         assert by_name[symbol]["released_kind"] == "deletion"
-        assert by_name[symbol]["marker"] == "KanMX"
+        assert by_name[symbol]["cassette"] == "KanMX"
     assert by_name["YAL001C"]["perturbation_type"] == "kanmx_deletion"
     assert not hasattr(a, "_AMBIGUOUS_ADJUDICATIONS")
 
@@ -398,18 +398,18 @@ def _plate(temperature: float, perturbations: list[Any]) -> Environment:
     )
 
 
-def _deletion(token: str) -> KanMxDeletionPerturbation | ReleasedGeneNamePerturbation:
+def _deletion(token: str) -> KanMxDeletionPerturbation | ReleasedIdentifierPerturbation:
     if token.startswith("Y"):
         return KanMxDeletionPerturbation(
             systematic_gene_name=token, perturbed_gene_name=token
         )
-    return ReleasedGeneNamePerturbation(
+    return ReleasedIdentifierPerturbation(
         systematic_gene_name=token,
         gene_namespace="scerevisiae_s288c_sgd_systematic",
         perturbed_gene_name=token,
-        released_gene_name=token,
-        released_kind=ReleasedGeneKind.deletion,
-        marker="KanMX",
+        identifier_kind="gene name, as Tables 1-6 list it",
+        released_kind=ReleasedKind.deletion,
+        cassette="KanMX",
     )
 
 
@@ -447,17 +447,17 @@ def test_build_stores_one_record_per_listed_token_in_table_order(
             (perturbation["perturbation_type"], perturbation["systematic_gene_name"])
         )
     assert pairs == [
-        ("released_gene_name", "VMA2"),
+        ("released_identifier", "VMA2"),
         ("kanmx_deletion", "YAL001C"),
         ("kanmx_deletion", "YBR127C"),
         ("kanmx_deletion", "YBL001C"),
-        ("released_gene_name", "FEN1"),
-        ("released_gene_name", "NOSUCHGENE"),
-        ("released_gene_name", "PPA1"),
+        ("released_identifier", "FEN1"),
+        ("released_identifier", "NOSUCHGENE"),
+        ("released_identifier", "PPA1"),
         ("kanmx_deletion", "YAL002W"),
         ("kanmx_deletion", "YAL003W"),
         ("kanmx_deletion", "YAL004W"),
-        ("released_gene_name", "NOSUCHGENE"),
+        ("released_identifier", "NOSUCHGENE"),
     ]
 
 

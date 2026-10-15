@@ -24,7 +24,7 @@ filtration, sampling day), the value as an ``EnvironmentResponsePhenotype``:
 * ``n_samples`` is the number of technical replicates behind the mean: three, except two
   for lake water #1, filtered, day 4, whose replicate ``sample_10`` failed sequencing QC
   and was omitted (Table S3, :data:`QC_OMITTED`, :func:`read_table_s3`);
-* genotype: one ``BacterialReleasedStrainPerturbation`` per gene (the released-identifier
+* genotype: one ``ReleasedIdentifierPerturbation`` per gene (the released-identifier
   leaf of #691), keyed by the gene symbol EXACTLY as Table S4's 'Gene name' gives it
   (``identifier_kind`` 'Gene name', the symbol also the strain label), its kind
   ``transposon_insertion`` and its cassette kanamycin as the Methods state them, with the
@@ -86,7 +86,6 @@ from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
-    BacterialReleasedStrainPerturbation,
     BacterialStrainBackground,
     Environment,
     EnvironmentResponsePhenotype,
@@ -96,7 +95,8 @@ from torchcell.datamodels.schema import (
     MeasurementType,
     Media,
     Publication,
-    ReleasedStrainKind,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     SampleUnit,
 )
 from torchcell.datasets.bacteria_common import (
@@ -1567,13 +1567,13 @@ def build_genotype(symbol: str) -> Genotype:
     """
     return Genotype(
         perturbations=[
-            BacterialReleasedStrainPerturbation(
+            ReleasedIdentifierPerturbation(
                 systematic_gene_name=symbol,
                 perturbed_gene_name=symbol,
                 gene_namespace=GENE_NAMESPACE,
                 strain_label=symbol,
                 identifier_kind=IDENTIFIER_KIND,
-                released_kind=ReleasedStrainKind.transposon_insertion,
+                released_kind=ReleasedKind.transposon_insertion,
                 cassette=str(CASSETTE.value),
                 description=DESCRIPTION,
             )
@@ -1942,7 +1942,7 @@ def stored_symbols_are_released(
         {
             v.symbol
             for v in values
-            if v.perturbation_type != "bacterial_released_strain"
+            if v.perturbation_type != "released_identifier"
             or v.identifier_kind != IDENTIFIER_KIND
             or v.strain_label != v.symbol
             or v.perturbed_gene_name != v.symbol

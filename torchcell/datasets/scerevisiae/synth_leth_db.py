@@ -3,7 +3,7 @@
 Gene identity (#1045). Every row of ``Yeast_SL.csv`` and ``Yeast_SR.csv`` names both
 genes twice: a gene name (``n1.name``, ``n2.name``) and an NCBI Entrez Gene id
 (``n1.identifier``, ``n2.identifier``). Each side is stored exactly as released on
-``ReleasedGeneNamePerturbation``: the name verbatim in ``systematic_gene_name`` and
+``ReleasedIdentifierPerturbation``: the name verbatim in ``systematic_gene_name`` and
 ``released_gene_name``, the Entrez id verbatim in ``released_gene_id`` (namespace
 ``ncbi_entrez_gene``), and ``released_kind`` a typed gap, because SynLethDB states the
 pair and its source, not the perturbation that made it. No genome or GFF is consulted;
@@ -49,7 +49,7 @@ from torchcell.datamodels.schema import (
     Publication,
     ReferenceGenome,
     ReleasedGeneIdNamespace,
-    ReleasedGeneNamePerturbation,
+    ReleasedIdentifierPerturbation,
     SyntheticLethalityExperiment,
     SyntheticLethalityExperimentReference,
     SyntheticLethalityPhenotype,
@@ -246,7 +246,7 @@ _NCBI_LOCUS_TYPES = frozenset({"gene", "pseudogene"})
 
 #: Retention rule (#1045): every released row is a record.
 RETENTION_RULE = (
-    "one record per released row, each side stored on ReleasedGeneNamePerturbation "
+    "one record per released row, each side stored on ReleasedIdentifierPerturbation "
     "under its released name and Entrez id verbatim; no genome or GFF is consulted and "
     "no row is dropped, a row naming one gene on both sides included"
 )
@@ -383,13 +383,13 @@ def load_entrez_to_orf(gff_path: str) -> dict[int, str]:
     return mapping
 
 
-def released_side(name: str, entrez: int) -> ReleasedGeneNamePerturbation:
+def released_side(name: str, entrez: int) -> ReleasedIdentifierPerturbation:
     """One side of a pair, exactly as the release names it (#1045)."""
-    return ReleasedGeneNamePerturbation(
+    return ReleasedIdentifierPerturbation(
         systematic_gene_name=name,
         gene_namespace="scerevisiae_s288c_sgd_systematic",
         perturbed_gene_name=name,
-        released_gene_name=name,
+        identifier_kind="gene name (the n1.name / n2.name column), as released",
         released_gene_id=str(entrez),
         released_gene_id_namespace=ReleasedGeneIdNamespace.ncbi_entrez_gene,
         released_kind=None,

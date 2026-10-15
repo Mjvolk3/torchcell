@@ -78,8 +78,8 @@ from torchcell.datamodels.schema import (
     MetabolitePhenotype,
     Publication,
     ReferenceGenome,
-    ReleasedGeneKind,
-    ReleasedGeneNamePerturbation,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
 )
 from torchcell.datasets.scerevisiae import cachera2023 as c
 
@@ -176,18 +176,18 @@ def _environment() -> Environment:
     )
 
 
-def _deletion(gene: str) -> KanMxDeletionPerturbation | ReleasedGeneNamePerturbation:
+def _deletion(gene: str) -> KanMxDeletionPerturbation | ReleasedIdentifierPerturbation:
     if gene.startswith("Y"):
         return KanMxDeletionPerturbation(
             systematic_gene_name=gene, perturbed_gene_name=gene
         )
-    return ReleasedGeneNamePerturbation(
+    return ReleasedIdentifierPerturbation(
         systematic_gene_name=gene,
         gene_namespace="scerevisiae_s288c_sgd_systematic",
         perturbed_gene_name=gene,
-        released_gene_name=gene,
-        released_kind=ReleasedGeneKind.deletion,
-        marker="KanMX",
+        identifier_kind="gene column entry, as released",
+        released_kind=ReleasedKind.deletion,
+        cassette="KanMX",
     )
 
 
@@ -247,7 +247,7 @@ def test_build_keeps_every_named_row_in_row_order_as_released(
         (deletion,) = [
             p
             for p in experiment["genotype"]["perturbations"]
-            if p["perturbation_type"] in ("kanmx_deletion", "released_gene_name")
+            if p["perturbation_type"] in ("kanmx_deletion", "released_identifier")
         ]
         phenotype = experiment["phenotype"]
         got.append(
@@ -260,14 +260,14 @@ def test_build_keeps_every_named_row_in_row_order_as_released(
             )
         )
     assert got == [
-        ("released_gene_name", "AAC1", "AAC1", 0.13, 16),
-        ("released_gene_name", "APL2", "APL2", 0.25, 1),
-        ("released_gene_name", "ACN9", "ACN9", 0.5, 4),
-        ("released_gene_name", "FLO8", "FLO8", -0.4, 64),
-        ("released_gene_name", "SDH7", "SDH7", 0.9, 4),
-        ("released_gene_name", "AMB", "AMB", 0.7, 4),
-        ("released_gene_name", "AAD3", "AAD3", 0.0, 1),
-        ("released_gene_name", "XYZ9", "XYZ9", 0.1, 4),
+        ("released_identifier", "AAC1", "AAC1", 0.13, 16),
+        ("released_identifier", "APL2", "APL2", 0.25, 1),
+        ("released_identifier", "ACN9", "ACN9", 0.5, 4),
+        ("released_identifier", "FLO8", "FLO8", -0.4, 64),
+        ("released_identifier", "SDH7", "SDH7", 0.9, 4),
+        ("released_identifier", "AMB", "AMB", 0.7, 4),
+        ("released_identifier", "AAD3", "AAD3", 0.0, 1),
+        ("released_identifier", "XYZ9", "XYZ9", 0.1, 4),
         ("kanmx_deletion", "YBR001C", "YBR001C", 0.3, 16),
     ]
 
@@ -277,7 +277,7 @@ def test_full_row_record_equals_the_hand_built_experiment(
 ) -> None:
     """Record 0 (AAC1): SE = 1.2 / sqrt(16) = 0.3; experiment, reference, publication.
 
-    The varying deletion is ``ReleasedGeneNamePerturbation``: the symbol verbatim in
+    The varying deletion is ``ReleasedIdentifierPerturbation``: the symbol verbatim in
     ``systematic_gene_name`` and ``released_gene_name``, kind deletion, marker KanMX, no
     released id.
     """
@@ -288,12 +288,12 @@ def test_full_row_record_equals_the_hand_built_experiment(
     (deletion,) = [
         p
         for p in record["experiment"]["genotype"]["perturbations"]
-        if p["perturbation_type"] == "released_gene_name"
+        if p["perturbation_type"] == "released_identifier"
     ]
     assert (
-        deletion["released_gene_name"],
+        deletion["systematic_gene_name"],
         deletion["released_kind"],
-        deletion["marker"],
+        deletion["cassette"],
         deletion["released_gene_id"],
     ) == ("AAC1", "deletion", "KanMX", None)
 
@@ -676,7 +676,7 @@ def test_cachera_build_stores_every_named_row_as_released(tmp_path: Path) -> Non
     ptypes = Counter(p.perturbation_type for p in exp.genotype.perturbations)
     assert ptypes in (
         {"kanmx_deletion": 1, "gene_addition": 4},
-        {"released_gene_name": 1, "gene_addition": 4},
+        {"released_identifier": 1, "gene_addition": 4},
     )
     assert exp.environment.media.is_synthetic is False
     assert exp.environment.temperature is None
@@ -692,13 +692,13 @@ def test_cachera_build_stores_every_named_row_as_released(tmp_path: Path) -> Non
         names[deletion["systematic_gene_name"]] = deletion["perturbation_type"]
     assert len(names) == 4759
     assert Counter(names.values()) == {
-        "released_gene_name": 3592,
+        "released_identifier": 3592,
         "kanmx_deletion": 1167,
     }
     assert names["YAL043C-A"] == "kanmx_deletion"
-    assert names["ACN9"] == "released_gene_name"
-    assert names["AIM1"] == "released_gene_name"
-    assert names["YLR287-A"] == "released_gene_name"
+    assert names["ACN9"] == "released_identifier"
+    assert names["AIM1"] == "released_identifier"
+    assert names["YLR287-A"] == "released_identifier"
     assert "SDH7" not in names and "BOL3" not in names
 
     ledger = c.DropLog.model_validate_json(

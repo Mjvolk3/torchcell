@@ -464,10 +464,10 @@ def _validate_bacterial_locus_tag(value: str) -> str:
 def _namespace_of_locus_tag(value: str) -> str | None:
     """The BACTERIAL namespace whose pattern ``value`` matches, or ``None``.
 
-    What the released leaves and ``BacterialBackgroundAllele`` read: a released
-    identifier is refused when it is a locus tag of a pinned bacterial assembly, because
-    such a tag is stored on the placed leaf of its technology. ``None`` is not a
-    failure.
+    What ``BacterialBackgroundAllele`` and ``DerivedIdentifierMapping`` read; ``None``
+    is not a failure. The released leaf no longer refuses a locus tag (P3: a released
+    record's name is whatever the source wrote, and the base namespace check keeps a
+    host-form identifier on the declared host).
     """
     for namespace, pattern in BACTERIAL_LOCUS_TAG_PATTERNS.items():
         if re.match(pattern, value):
@@ -3965,163 +3965,6 @@ class DegronPerturbation(SequencePerturbation, ModelStrict):
 
 
 # --------------------------------------------------------------------------- #
-# ADDITIVE (#691, Nichols 2011): a bacterial strain stored under the identifier its
-# source released, with no lookup against any assembly. A new leaf and its enum;
-# nothing above this block changes.
-#
-# Every placed leaf above requires ``systematic_gene_name`` to be a host identifier of
-# a pinned assembly, so a loader must resolve the released name through the genome
-# before it can store a record, and a name the annotation lacks is refused. The owner
-# rule of 2026-10-12 is that the genome never gates a record: a strain is stored as the
-# source names it. Nichols 2011 labels its 3,979 strains by ECK accession and symbol
-# (``ECK1963-HCHA``); 41 of its ECK-only labels and the ECK5000-series sRNA labels are
-# in no BW25113 annotation, nine designed alleles are released as a protein change
-# only (``LPXC(G210S)``), and twelve labels head two rows each. This leaf stores all of
-# them as released.
-# --------------------------------------------------------------------------- #
-class ReleasedStrainKind(StrEnum):
-    """What a source's own strain label says the strain is, read off that label.
-
-    The members are the classes a released strain label states, not a reading of the
-    strain's sequence: Nichols 2011 marks its rows with a suffix (none, ``- SPA``,
-    ``- DAS``, ``- Linked``, ``- Allele``, ``- Truncation``) and the paper says what
-    each set of strains is.
-
-    - ``deletion``: the gene (or, for a multi-gene label, each listed gene) is deleted.
-    - ``affinity_tag``: an in-frame affinity tag fused to the product (``- SPA``).
-    - ``degron``: a degron fused to the product (``- DAS``).
-    - ``linked_marker``: a selectable cassette linked to the wild-type allele, the
-      control of an allele series (``- Linked``).
-    - ``sequence_allele``: a designed allele the label states as a change (a point
-      substitution, an in-frame deletion or a duplication; ``- Allele``).
-    - ``truncation``: a truncated gene (``- Truncation``).
-    - ``transposon_insertion``: a transposon inserted in the gene's coding region, one
-      gene-level call over a pooled library's insertion mutants (Teteneva 2024: "only
-      insertions in the coding gene regions, which were assumed to inactivate the
-      respective gene function, were considered"; #910). The paper's Methods state the
-      class, since a pooled release labels each row by its gene alone.
-    """
-
-    deletion = "deletion"
-    affinity_tag = "affinity_tag"
-    degron = "degron"
-    linked_marker = "linked_marker"
-    sequence_allele = "sequence_allele"
-    truncation = "truncation"
-    # --- begin #910: a pooled Tn library's gene-level call ---------------------- #
-    transposon_insertion = "transposon_insertion"
-    # --- end #910 ---------------------------------------------------------------- #
-
-
-RELEASED_STRAIN_KIND_SO: dict[ReleasedStrainKind, tuple[str, str]] = {
-    ReleasedStrainKind.deletion: ("SO:0000159", "deletion"),
-    ReleasedStrainKind.affinity_tag: ("SO:0001218", "transgenic_insertion"),
-    ReleasedStrainKind.degron: ("SO:0001218", "transgenic_insertion"),
-    ReleasedStrainKind.linked_marker: ("SO:0001218", "transgenic_insertion"),
-    ReleasedStrainKind.sequence_allele: ("SO:0001060", "sequence_variant"),
-    ReleasedStrainKind.truncation: ("SO:0000159", "deletion"),
-    # --- begin #910: the pair TransposonInsertionPerturbation pins -------------- #
-    ReleasedStrainKind.transposon_insertion: ("SO:0001218", "transgenic_insertion"),
-    # --- end #910 ---------------------------------------------------------------- #
-}
-"""Sequence Ontology mechanism of each released kind, every pair one the schema
-already pins: the deletion leaves' ``deletion``, the marked-allele and degron leaves'
-``transgenic_insertion`` and the generic ``sequence_variant`` of the AXIS-3 root. A
-truncation removes part of the gene, which is a deletion."""
-
-
-class BacterialReleasedStrainPerturbation(GenePerturbation, ModelStrict):
-    """One gene of a bacterial strain, identified only by what its source released.
-
-    ``systematic_gene_name`` is the source's own gene identifier, verbatim (Nichols
-    2011: the ECK accession of the row label), and ``perturbed_gene_name`` the source's
-    gene name, verbatim (the label's upper-case symbol, ``HCHA``). Nothing is looked up:
-    no assembly decides whether the record exists, and no derived locus tag is stored,
-    so the record says exactly what the release says and a crosswalk to an annotation is
-    a separate, later act. ``strain_label`` is the release's whole strain identifier
-    (``ECK1205/1207/1209-RDLABC``), shared by every gene of a multi-gene strain, and is
-    what keeps two strains of one gene apart (``ECK0055-C-IMP-DAS-KAN - DAS`` and
-    ``ECK0055-B-IMP-DAS+4-KAN - DAS``). ``released_kind`` is the class the label states.
-
-    It is NOT placed under the presence/absence or sequence axis classes, because the
-    axis is a property of the kind (a deletion and an affinity tag are both stored
-    here); ``mechanism_so`` gives the Sequence Ontology pair of the kind, from
-    :data:`RELEASED_STRAIN_KIND_SO`. It is a sibling of the placed bacterial leaves, and
-    it refuses a locus tag of any bacterial namespace: a released tag of the pinned
-    assembly is stored on those leaves, so one kind of record never sits in two classes.
-
-    ``gene_namespace`` names the host the study writes its strains against (Nichols
-    2011: "During the entire study, BW25113 is referred to as wild-type"), as it does for
-    a heterologous gene on an addition leaf; the identifier is not a tag of it, so the
-    namespace check has nothing to compare.
-    """
-
-    description: str = (
-        "Bacterial gene perturbation identified by the source's own strain label and "
-        "gene identifier, not placed on an assembly"
-    )
-    perturbation_type: Literal["bacterial_released_strain"] = (
-        "bacterial_released_strain"
-    )
-    strain_label: str = Field(
-        description="the source's whole strain identifier, verbatim (a row or column "
-        "label), shared by every gene of a multi-gene strain"
-    )
-    identifier_kind: str = Field(
-        description="what systematic_gene_name is, as the source writes it (e.g. 'ECK "
-        "accession')"
-    )
-    released_kind: ReleasedStrainKind = Field(
-        description="what the source's label says the strain is"
-    )
-    cassette: str | None = Field(
-        default=None,
-        description="the selectable marker the source names for the strain, verbatim "
-        "(e.g. 'kanamycin'); None when unstated",
-    )
-    collection: str | None = Field(
-        default=None,
-        description="the strain set the source names for this strain, verbatim; None "
-        "when the source does not say which of its sets a strain belongs to",
-    )
-
-    @field_validator("systematic_gene_name", mode="after")
-    @classmethod
-    def validate_sys_gene_name(cls, v: str) -> str:
-        """The released identifier verbatim, and never a locus tag of a namespace."""
-        if not v or v != v.strip():
-            raise ValueError(
-                f"systematic_gene_name must be the released identifier verbatim, got "
-                f"{v!r}"
-            )
-        if _namespace_of_locus_tag(v) is not None:
-            raise ValueError(
-                f"{v!r} is a bacterial locus tag; a released tag of a pinned assembly "
-                "is stored on the placed bacterial leaves"
-            )
-        return v
-
-    @model_validator(mode="after")
-    def _check_label(self) -> "BacterialReleasedStrainPerturbation":
-        """The strain label and identifier kind are verbatim, non-empty strings."""
-        for field in ("strain_label", "identifier_kind"):
-            value = getattr(self, field)
-            if not value or value != value.strip():
-                raise ValueError(f"{field} must be a non-empty verbatim string")
-        return self
-
-    @property
-    def mechanism_so(self) -> tuple[str, str]:
-        """(SO id, SO name) of this perturbation's released kind."""
-        return RELEASED_STRAIN_KIND_SO[self.released_kind]
-
-
-# --------------------------------------------------------------------------- #
-# End ADDITIVE (#691).
-# --------------------------------------------------------------------------- #
-
-
-# --------------------------------------------------------------------------- #
 # begin ADDITIVE (#991 Vaishnav 2022, #990 Zhang 2020): the promoter as part of the
 # genome's content.
 #
@@ -4315,175 +4158,220 @@ class VariablePromoterReporterPerturbation(GeneAdditionPerturbation, ModelStrict
 # --------------------------------------------------------------------------- #
 
 
+SgaPerturbationType = (
+    SgaKanMxDeletionPerturbation
+    | SgaNatMxDeletionPerturbation
+    | SgaDampPerturbation
+    | SgaTsAllelePerturbation
+    | SgaSuppressorAllelePerturbation
+    | SgaAllelePerturbation
+)
+
+
 # --------------------------------------------------------------------------- #
-# ADDITIVE (#691, round 2: the CRISPR and transposon screens): a construct stored under
-# the identifier its source released, with no lookup against any assembly. Two leaves;
-# nothing above this line changes.
+# P3 (ontology-unify, 2026-10-15): ONE leaf for a gene stored under the identifier its
+# source released, with no lookup against any assembly or annotation.
 #
-# BacterialReleasedStrainPerturbation carries a released strain identifier but no
-# construct, so a guide record (Cui 2018, Rousset 2018, Hawkins 2020, Fang 2025, Niu
-# 2019) or a transposon record (Goodall 2018) whose identity is the construct plus the
-# released gene label still had to resolve the label to a locus tag before it could be
-# stored, and the placed leaves refuse a label the pinned annotation retires, shares or
-# cannot place. Measured in those loaders' retention ledgers: Cui 2018 drops 925 guides
-# (1,850 measurements) under its three gene_* rules, Rousset 2018 643 records under its
-# three symbol rules, Hawkins 2020 37 (sokE, retired in ASM584v2), Fang 2025 3, Goodall
-# 2018 106 (the 9 multi-copy insertion-sequence symbols, both tables) and Niu 2019 the
-# 2 operon labels and the 1 combination strain naming them. Each leaf below stores the
-# construct as the placed leaf of its technology does and the gene as the strain leaf
-# does: the released identifier verbatim, never a locus tag of any namespace.
+# Four leaves asserted this one fact before P3: ``BacterialReleasedStrainPerturbation``
+# (#691, Nichols 2011), ``BacterialReleasedCrisprPerturbation`` and
+# ``BacterialReleasedTransposonPerturbation`` (#691 round 2) for the bacterial hosts,
+# and ``ReleasedGeneNamePerturbation`` (#1045) for yeast. They were held apart by the
+# host the loader was written for, the distinction the constitution's first principle
+# refuses (owner, 2026-10-15: "like why a bacterial experiment! it seems this is
+# unnecessary distinction"), and their field names drifted (``identifier_kind`` and
+# ``released_kind`` against ``released_gene_name``; ``cassette`` against ``marker``; a
+# required ``expression_direction`` against a ``crispr_interference`` kind member), so a
+# consumer asking what the source said it did to a gene had to know which family wrote
+# the row. The owner rule of 2026-10-12 is that the data is the data: the loader stores
+# what the source released and the genome joins at modeling time. One leaf states that
+# once, and nothing above it changes.
 # --------------------------------------------------------------------------- #
-def _validate_released_identifier(value: str) -> str:
-    """Return ``value`` if it is a released identifier verbatim and not a locus tag.
+class ReleasedGeneIdNamespace(StrEnum):
+    """The identifier space a source's released gene id is written in."""
 
-    The released leaves' counterpart of ``_validate_bacterial_locus_tag``: the identifier
-    is whatever the source wrote, so the only checks are that it is non-empty, carries
-    no surrounding whitespace, and is not a locus tag of a pinned namespace, which the
-    placed leaves own.
-    """
-    if not value or value != value.strip():
-        raise ValueError(
-            f"systematic_gene_name must be the released identifier verbatim, got "
-            f"{value!r}"
-        )
-    if _namespace_of_locus_tag(value) is not None:
-        raise ValueError(
-            f"{value!r} is a bacterial locus tag; a released tag of a pinned assembly "
-            "is stored on the placed bacterial leaves"
-        )
-    return value
+    ncbi_entrez_gene = "ncbi_entrez_gene"
 
 
-def _check_released_labels(model: "GenePerturbation") -> None:
-    """Raise unless ``strain_label`` and ``identifier_kind`` are verbatim, non-empty."""
-    for field in ("strain_label", "identifier_kind"):
-        value = getattr(model, field)
-        if not value or value != value.strip():
-            raise ValueError(f"{field} must be a non-empty verbatim string")
+class ReleasedKind(StrEnum):
+    """What a source says it did to a gene it names only as released.
 
+    The members are the classes a source's own label or Methods state, never a reading
+    of the strain's sequence. Nichols 2011 marks its rows with a suffix (none, ``- SPA``,
+    ``- DAS``, ``- Linked``, ``- Allele``, ``- Truncation``) and the paper says what each
+    set of strains is; a deletion-collection symbol (Cachera 2023), a heterozygous
+    column (YeastPhenome), a pooled Tn library's gene-level call (Teteneva 2024) or a
+    guide table (Mormino 2022, Niu 2019) states its kind in the Methods.
 
-class BacterialReleasedCrisprPerturbation(GenePerturbation, ModelStrict):
-    """A guide-directed dead-Cas construct against a gene named only as released.
-
-    The released-identifier counterpart of ``CrisprInterferencePerturbation``
-    and ``CrisprActivationPerturbation``, one leaf for both directions because
-    the construct is the same material entity and the direction is a released fact of
-    the effector, so ``expression_direction`` is REQUIRED with no default rather than
-    fixed per class. ``systematic_gene_name`` is the source's own target identifier,
-    verbatim (a symbol such as ``sokE``, an operon label such as ``sufBCDS``, an
-    accession), ``perturbed_gene_name`` the released name, and ``strain_label`` the
-    release's whole identifier of the guide or of the strain carrying it, which keeps
-    two guides against one target apart when the spacer alone does not. Nothing is
-    looked up: no assembly decides whether the record exists, no derived locus tag is
-    stored, and a crosswalk to an annotation is a separate, later act.
-
-    ``crispr`` is the shared ``CrisprConstruct`` the placed CRISPR leaves carry (the
-    effector, the spacer, the guide count and the library pool), so the guide payload is
-    described once for the placed and the released families. The mechanism is the guide
-    itself, SO:0001998 ``sgRNA``, as on the expression axis; the leaf is a sibling of the
-    placed bacterial leaves and of ``BacterialReleasedStrainPerturbation`` under
-    ``GenePerturbation``, and it refuses a locus tag of any bacterial namespace, so a
-    guide against a placed tag stays on the placed leaves and one kind of record never
-    sits in two classes.
+    - ``deletion``: the gene (or, for a multi-gene label, each listed gene) is deleted.
+    - ``heterozygous_deletion``: one allele of a diploid is deleted.
+    - ``affinity_tag``: an in-frame affinity tag fused to the product (``- SPA``).
+    - ``degron``: a degron fused to the product (``- DAS``).
+    - ``linked_marker``: a selectable cassette linked to the wild-type allele, the
+      control of an allele series (``- Linked``).
+    - ``sequence_allele``: a designed allele the label states as a change (a point
+      substitution, an in-frame deletion or a duplication; ``- Allele``).
+    - ``truncation``: a truncated gene (``- Truncation``).
+    - ``transposon_insertion``: a transposon inserted in the gene's coding region, one
+      gene-level call over a pooled library's insertion mutants (Teteneva 2024: "only
+      insertions in the coding gene regions, which were assumed to inactivate the
+      respective gene function, were considered"; #910), or a mapped insertion whose
+      site the release carries (Goodall 2018). The paper's Methods state the class,
+      since a pooled release labels each row by its gene alone.
+    - ``crispr_interference``: a dead-Cas repressor is guided to the gene; the record
+      carries its construct in ``crispr``.
+    - ``crispr_activation``: a dead-Cas activator is guided to the gene; the record
+      carries its construct in ``crispr``. The direction of a released guide is its
+      kind, as it is the class on the placed CRISPR leaves, so there is no second
+      field for it.
     """
 
-    description: str = (
-        "Guide-directed dead-Cas perturbation of a bacterial gene identified by the "
-        "source's own released label, not placed on an assembly"
-    )
-    perturbation_type: Literal["bacterial_released_crispr"] = (
-        "bacterial_released_crispr"
-    )
-    strain_label: str = Field(
-        description="the source's whole released identifier of the guide or of the "
-        "strain carrying it, verbatim (a row label, a guide id)"
-    )
-    identifier_kind: str = Field(
-        description="what systematic_gene_name is, as the source writes it (e.g. 'gene "
-        "symbol', 'operon label')"
-    )
-    expression_direction: str = Field(
-        description="'decreased' for a dead-Cas repressor (CRISPRi), 'increased' for a "
-        "dead-Cas activator (CRISPRa), as the source states the effector"
-    )
-    crispr: CrisprConstruct = Field(
-        description="the guide + dead-Cas effector introduced to modulate expression"
-    )
-
-    @field_validator("systematic_gene_name", mode="after")
-    @classmethod
-    def validate_sys_gene_name(cls, v: str) -> str:
-        """The released identifier verbatim, and never a locus tag of a namespace."""
-        return _validate_released_identifier(v)
-
-    @field_validator("expression_direction", mode="after")
-    @classmethod
-    def validate_expression_direction(cls, v: str) -> str:
-        """Direction is increased (activation) or decreased (interference)."""
-        if v not in {"increased", "decreased"}:
-            raise ValueError(
-                f"expression_direction must be 'increased' or 'decreased', got {v!r}"
-            )
-        return v
-
-    @model_validator(mode="after")
-    def _check_label(self) -> "BacterialReleasedCrisprPerturbation":
-        """The strain label and identifier kind are verbatim, non-empty strings."""
-        _check_released_labels(self)
-        return self
-
-    @property
-    def mechanism_so(self) -> tuple[str, str]:
-        """(SO id, SO name): the guide itself, as on the expression axis."""
-        return ("SO:0001998", "sgRNA")
+    deletion = "deletion"
+    heterozygous_deletion = "heterozygous_deletion"
+    affinity_tag = "affinity_tag"
+    degron = "degron"
+    linked_marker = "linked_marker"
+    sequence_allele = "sequence_allele"
+    truncation = "truncation"
+    transposon_insertion = "transposon_insertion"
+    crispr_interference = "crispr_interference"
+    crispr_activation = "crispr_activation"
 
 
-class BacterialReleasedTransposonPerturbation(GenePerturbation, ModelStrict):
-    """A transposon insertion disrupting a gene named only as released.
+RELEASED_KIND_SO: dict[ReleasedKind, tuple[str, str]] = {
+    ReleasedKind.deletion: ("SO:0000159", "deletion"),
+    ReleasedKind.heterozygous_deletion: ("SO:0000159", "deletion"),
+    ReleasedKind.affinity_tag: ("SO:0001218", "transgenic_insertion"),
+    ReleasedKind.degron: ("SO:0001218", "transgenic_insertion"),
+    ReleasedKind.linked_marker: ("SO:0001218", "transgenic_insertion"),
+    ReleasedKind.sequence_allele: ("SO:0001060", "sequence_variant"),
+    ReleasedKind.truncation: ("SO:0000159", "deletion"),
+    ReleasedKind.transposon_insertion: ("SO:0001218", "transgenic_insertion"),
+    ReleasedKind.crispr_interference: ("SO:0001998", "sgRNA"),
+    ReleasedKind.crispr_activation: ("SO:0001998", "sgRNA"),
+}
+"""Sequence Ontology mechanism of each released kind, every pair one the schema
+already pins: the deletion leaves' ``deletion``, the marked-allele, degron and
+transposon leaves' ``transgenic_insertion``, the generic ``sequence_variant`` of the
+AXIS-3 root and the expression-modulation leaves' ``sgRNA``. A truncation removes part
+of the gene, which is a deletion."""
 
-    The released-identifier counterpart of ``TransposonInsertionPerturbation``: the
-    same mapped-insertion fields (``barcode``, ``insertion_position``,
+RELEASED_CRISPR_KINDS: frozenset[ReleasedKind] = frozenset(
+    {ReleasedKind.crispr_interference, ReleasedKind.crispr_activation}
+)
+"""The kinds whose record carries a ``CrisprConstruct``."""
+
+RELEASED_TRANSPOSON_FIELDS: tuple[str, ...] = (
+    "barcode",
+    "insertion_position",
+    "insertion_strand",
+    "transposon",
+    "library_pool",
+)
+"""The mapped-insertion fields of :class:`TransposonInsertionPerturbation`, which only a
+``transposon_insertion`` record may set."""
+
+
+class ReleasedIdentifierPerturbation(
+    HashableProvenanceGapMixin, GenePerturbation, ModelStrict
+):
+    """One gene identified only by the identifier its source released.
+
+    ``systematic_gene_name`` is the source's own gene identifier, verbatim (Nichols
+    2011: the ECK accession of the row label, ``ECK1963``; Cachera 2023: the ``gene``
+    column, ``ADE2``; Goodall 2018: the ``Gene`` symbol, including the nine multi-copy
+    insertion-sequence symbols no single BW25113 locus carries), and
+    ``perturbed_gene_name`` the source's gene name, verbatim, through the base
+    normalization. Nothing is looked up: no assembly or annotation decides whether the
+    record exists and no derived identifier is stored, so the record says exactly what
+    the release says and the join to a genome is a separate, later act.
+
+    The CLASS is what states that the identifier is unresolved. ``gene_namespace``
+    keeps the meaning it has on every gene perturbation, the HOST the study writes its
+    strains against (Nichols 2011: "During the entire study, BW25113 is referred to as
+    wild-type"; a symbol-named KanMX deletion: the S288C-derived background), and the
+    loader states it, since a released identifier proves no namespace. There is
+    deliberately no ``released`` member of :class:`GeneIdNamespace`: one value that
+    carried both the host and "unresolved" would erase the host.
+
+    ``identifier_kind`` is what the identifier is, as the source writes it (``'ECK
+    accession'``, ``'gene symbol'``, ``'JW id'``, ``'gene column entry'``).
+    ``strain_label`` is the release's whole strain, row or guide identifier when it
+    releases one beyond the gene identifier (``ECK1205/1207/1209-RDLABC``, shared by
+    every gene of a multi-gene strain, is what keeps two strains of one gene apart;
+    a guide id keeps two guides against one target apart when the spacer alone does
+    not), and ``None`` when the gene identifier is the row's whole label.
+    ``released_kind`` is what the source says it did to the gene, a value or a typed gap
+    (SynLethDB names the gene pair and not the perturbation that made it). A source
+    that also releases a gene id stores it verbatim in ``released_gene_id`` with its
+    namespace (SynLethDB: the NCBI Entrez id).
+
+    A construct, when the kind has one, is stored as the placed leaf of its technology
+    stores it. A ``crispr_interference`` or ``crispr_activation`` record carries its
+    ``CrisprConstruct`` in ``crispr``, set exactly for those kinds. A
+    ``transposon_insertion`` record may carry the mapped-insertion fields of
+    :class:`TransposonInsertionPerturbation` (``barcode``, ``insertion_position``,
     ``insertion_strand``, ``transposon``, ``library_pool``), each verbatim from the
-    release and ``None`` when the source releases only gene-level calls (Goodall 2018),
-    and the gene as ``BacterialReleasedStrainPerturbation`` stores it:
-    ``systematic_gene_name`` is the source's own identifier verbatim (Goodall 2018: the
-    ``Gene`` symbol, including the nine multi-copy insertion-sequence symbols no single
-    BW25113 locus carries), ``perturbed_gene_name`` the released name and
-    ``strain_label`` the release's whole row label. ``insertion_position`` is the
-    coordinate AS RELEASED, on whatever reference the source mapped against, since no
-    assembly is consulted here; the placed leaf is where a position on the pinned
-    assembly lives.
+    release and ``None`` when the source releases only gene-level calls; here
+    ``insertion_position`` is the coordinate AS RELEASED, on whatever reference the
+    source mapped against, since no assembly is consulted. ``cassette`` is the
+    selectable marker the source names for the strain (``'kanamycin'``, ``'KanMX'``),
+    ``collection`` the strain set it names, ``strain_id`` the background strain it
+    names (``'BY4741'``), each verbatim and ``None`` when unstated.
 
-    The mechanism is SO:0001218 ``transgenic_insertion``, as on the placed leaf. A
-    sibling of the placed bacterial leaves and of the released-strain leaf under
-    ``GenePerturbation``; it refuses a locus tag of any bacterial namespace, so an
-    insertion in a placed tag stays on ``TransposonInsertionPerturbation``.
+    It is NOT placed under the presence/absence, sequence or expression axis classes,
+    because the axis is a property of the kind (a deletion, an affinity tag and a guide
+    are all stored here); ``mechanism_so`` gives the Sequence Ontology pair of the kind,
+    from :data:`RELEASED_KIND_SO`. One rule governs the name: it is whatever the source
+    wrote, non-empty and verbatim. A loader places a record by its form and by what the
+    source states: a host identifier whose kind the source states goes on the placed
+    leaf of that kind, and every other identifier (a symbol, an accession, a label, or
+    a host-form name whose kind is a gap, as SynLethDB's are) comes here. A released
+    identifier that does have the form of a host namespace must be the declared host's
+    (the base check), so a tag of another strain is never filed under this host.
     """
 
     description: str = (
-        "Transposon insertion disrupting a bacterial gene identified by the source's "
-        "own released label, not placed on an assembly"
+        "Gene perturbation identified by the identifier its source released, not "
+        "resolved against any assembly or annotation"
     )
-    perturbation_type: Literal["bacterial_released_transposon"] = (
-        "bacterial_released_transposon"
-    )
-    strain_label: str = Field(
-        description="the source's whole released identifier of the insertion mutant, "
-        "verbatim (a row label, a strain or barcode id)"
-    )
+    perturbation_type: Literal["released_identifier"] = "released_identifier"
     identifier_kind: str = Field(
-        description="what systematic_gene_name is, as the source writes it (e.g. 'gene "
-        "symbol')"
+        description="what systematic_gene_name is, as the source writes it (e.g. 'ECK "
+        "accession', 'gene symbol', 'JW id')"
+    )
+    strain_label: str | None = Field(
+        default=None,
+        description="the source's whole strain, row or guide identifier, verbatim, when "
+        "it releases one beyond the gene identifier (shared by every gene of a "
+        "multi-gene strain); None when the gene identifier is the row's whole label",
+    )
+    released_kind: ReleasedKind | None = Field(
+        description="what the source says it did to the gene; None only with a gap"
+    )
+    released_gene_id: str | None = Field(
+        default=None,
+        description="the source's gene identifier, verbatim (SynLethDB: '856882'); "
+        "None when the source releases only a name",
+    )
+    released_gene_id_namespace: ReleasedGeneIdNamespace | None = Field(
+        default=None,
+        description="the identifier space of released_gene_id; set exactly when it is",
+    )
+    crispr: CrisprConstruct | None = Field(
+        default=None,
+        description="the guide + dead-Cas effector of a crispr_interference or "
+        "crispr_activation record; None for every other kind",
     )
     barcode: str | None = Field(
         default=None,
-        description="the random barcode the strain is counted by in a pooled assay; "
-        "None when the source released no per-strain tag",
+        description="the random barcode a transposon_insertion strain is counted by "
+        "in a pooled assay; None when the source released no per-strain tag",
     )
     insertion_position: int | None = Field(
         default=None,
-        description="1-based position of the insertion as released, on the reference "
-        "the source mapped against; None when only gene-level calls were released",
+        description="1-based position of a transposon insertion as released, on the "
+        "reference the source mapped against; None when only gene-level calls were "
+        "released",
     )
     insertion_strand: Literal["+", "-"] | None = Field(
         default=None,
@@ -4501,12 +4389,32 @@ class BacterialReleasedTransposonPerturbation(GenePerturbation, ModelStrict):
         "study runs several; a pooled measurement is pool-relative, so the pool joins "
         "the strain identity",
     )
+    cassette: str | None = Field(
+        default=None,
+        description="the selectable marker the source names for the strain, verbatim "
+        "(e.g. 'kanamycin', 'KanMX'); None when unstated",
+    )
+    collection: str | None = Field(
+        default=None,
+        description="the strain set the source names for this strain, verbatim; None "
+        "when the source does not say which of its sets a strain belongs to",
+    )
+    strain_id: str | None = Field(
+        default=None,
+        description="the background strain the source names, verbatim (e.g. 'BY4741'); "
+        "None when unstated",
+    )
 
     @field_validator("systematic_gene_name", mode="after")
     @classmethod
     def validate_sys_gene_name(cls, v: str) -> str:
-        """The released identifier verbatim, and never a locus tag of a namespace."""
-        return _validate_released_identifier(v)
+        """The released identifier verbatim: whatever the source wrote, non-empty."""
+        if not v or v != v.strip():
+            raise ValueError(
+                f"systematic_gene_name must be the released identifier verbatim, got "
+                f"{v!r}"
+            )
+        return v
 
     @field_validator("insertion_position", mode="after")
     @classmethod
@@ -4517,186 +4425,35 @@ class BacterialReleasedTransposonPerturbation(GenePerturbation, ModelStrict):
         return v
 
     @model_validator(mode="after")
-    def _check_label(self) -> "BacterialReleasedTransposonPerturbation":
-        """The strain label and identifier kind are verbatim, non-empty strings."""
-        _check_released_labels(self)
-        return self
-
-    @property
-    def mechanism_so(self) -> tuple[str, str]:
-        """(SO id, SO name): a transgenic insertion, as on the placed leaf."""
-        return ("SO:0001218", "transgenic_insertion")
-
-
-# --------------------------------------------------------------------------- #
-# End ADDITIVE (#691, round 2).
-# --------------------------------------------------------------------------- #
-
-
-SgaPerturbationType = (
-    SgaKanMxDeletionPerturbation
-    | SgaNatMxDeletionPerturbation
-    | SgaDampPerturbation
-    | SgaTsAllelePerturbation
-    | SgaSuppressorAllelePerturbation
-    | SgaAllelePerturbation
-)
-
-
-# --------------------------------------------------------------------------- #
-# begin ADDITIVE (#1045): a yeast gene stored under the name its source released, and
-# an allele stored under the name its source released.
-#
-# Every yeast gene-perturbation leaf above requires ``systematic_gene_name`` to be an
-# S288C systematic name (the regex of :class:`GenePerturbation`). A source that releases
-# a gene only by its symbol (Cachera 2023, Mota 2024, Auesukaree 2009, Yoshida 2012,
-# Xue 2025, Mormino 2022; SynLethDB by symbol and Entrez id) therefore had to resolve
-# the symbol through a genome annotation before a record could be stored, and the
-# annotation decided which records exist. The owner rule of 2026-10-12 is that the data
-# is the data: the loader stores what the source released, and the genome joins at
-# modeling time. These two leaves are the yeast analogue of the bacterial released
-# leaves (#691) and change nothing above them.
-# --------------------------------------------------------------------------- #
-class ReleasedGeneIdNamespace(StrEnum):
-    """The identifier space a source's released gene id is written in."""
-
-    ncbi_entrez_gene = "ncbi_entrez_gene"
-
-
-class ReleasedGeneKind(StrEnum):
-    """What a source says it did to a gene it names only by symbol.
-
-    - ``deletion``: the gene is deleted (a deletion-collection strain).
-    - ``heterozygous_deletion``: one allele of a diploid is deleted.
-    - ``crispr_interference``: a dead-Cas repressor is guided to the gene.
-    """
-
-    deletion = "deletion"
-    heterozygous_deletion = "heterozygous_deletion"
-    crispr_interference = "crispr_interference"
-
-
-RELEASED_GENE_KIND_SO: dict[ReleasedGeneKind, tuple[str, str]] = {
-    ReleasedGeneKind.deletion: ("SO:0000159", "deletion"),
-    ReleasedGeneKind.heterozygous_deletion: ("SO:0000159", "deletion"),
-    ReleasedGeneKind.crispr_interference: ("SO:0001998", "sgRNA"),
-}
-"""Sequence Ontology mechanism of each released kind, every pair one the schema already
-pins: the deletion leaves' ``deletion`` and the expression-modulation leaves' ``sgRNA``."""
-
-
-class ReleasedGeneNamePerturbation(
-    HashableProvenanceGapMixin, GenePerturbation, ModelStrict
-):
-    """One yeast gene identified only by the name its source released.
-
-    ``systematic_gene_name`` is the released gene name verbatim (Cachera 2023: the
-    ``gene`` column, ``ADE2``), as is ``released_gene_name``, which states that the
-    identifier is the source's symbol and not a systematic name; ``perturbed_gene_name``
-    is the same name through the base normalization. Nothing is looked up: no
-    annotation decides whether the record exists, no systematic name is derived, so the
-    record says exactly what the release says and the join to a genome is a separate,
-    later act. A source that also releases a gene id stores it verbatim in
-    ``released_gene_id`` with its namespace (SynLethDB: the NCBI Entrez id).
-    ``released_kind`` is what the source says it did to the gene, set or a typed gap
-    (SynLethDB names the gene pair and not the perturbation that made it); a CRISPR
-    interference record carries its construct in ``crispr`` and every other kind leaves
-    it None.
-
-    It is NOT placed under the presence/absence or expression axis classes, because the
-    axis is a property of the kind; ``mechanism_so`` gives the Sequence Ontology pair of
-    the kind, from :data:`RELEASED_GENE_KIND_SO`. A loader places a released name by
-    its form and by what the source states: a systematic name whose kind the source
-    states goes on the placed leaf of that kind, and every other released name (a
-    symbol, or any name whose kind is a gap, as SynLethDB's are) comes here. The leaf
-    refuses a bacterial locus tag, which the placed bacterial leaves carry.
-    """
-
-    description: str = (
-        "Yeast gene perturbation identified by the gene name its source released, not "
-        "resolved to a systematic name"
-    )
-    perturbation_type: Literal["released_gene_name"] = "released_gene_name"
-    released_gene_name: str = Field(
-        description="the source's gene name, verbatim; equal to systematic_gene_name"
-    )
-    released_gene_id: str | None = Field(
-        default=None,
-        description="the source's gene identifier, verbatim (SynLethDB: '856882'); "
-        "None when the source releases only a name",
-    )
-    released_gene_id_namespace: ReleasedGeneIdNamespace | None = Field(
-        default=None,
-        description="the identifier space of released_gene_id; set exactly when it is",
-    )
-    released_kind: ReleasedGeneKind | None = Field(
-        description="what the source says it did to the gene; None only with a gap"
-    )
-    crispr: CrisprConstruct | None = Field(
-        default=None,
-        description="the construct of a crispr_interference record; None for every "
-        "other kind",
-    )
-    marker: str | None = Field(
-        default=None,
-        description="the selectable marker the source names, verbatim (e.g. 'KanMX'); "
-        "None when unstated",
-    )
-    strain_id: str | None = Field(
-        default=None,
-        description="the background strain the source names, verbatim (e.g. 'BY4741'); "
-        "None when unstated",
-    )
-    collection: str | None = Field(
-        default=None,
-        description="the strain collection the source names, verbatim; None when "
-        "unstated",
-    )
-
-    @field_validator("systematic_gene_name", mode="after")
-    @classmethod
-    def validate_sys_gene_name(cls, v: str) -> str:
-        """The released name verbatim, and never a bacterial locus tag."""
-        if not v or v != v.strip():
-            raise ValueError(
-                f"systematic_gene_name must be the released gene name verbatim, got "
-                f"{v!r}"
-            )
-        if _namespace_of_locus_tag(v) is not None:
-            raise ValueError(
-                f"{v!r} is a bacterial locus tag; a released tag of a pinned assembly "
-                "is stored on the placed bacterial leaves"
-            )
-        return v
-
-    @model_validator(mode="after")
-    def _check_released(self) -> "ReleasedGeneNamePerturbation":
-        """The name is stated once; an id travels with its namespace; the kind is set or
-        gapped; CRISPRi has a construct.
+    def _check_released(self) -> "ReleasedIdentifierPerturbation":
+        """The labels are verbatim; an id travels with its namespace; the kind is set or
+        gapped; a construct is set exactly for the kinds that have one.
         """
         _require_value_or_gap(self, ("released_kind",))
-        if self.released_gene_name != self.systematic_gene_name:
-            raise ValueError(
-                f"released_gene_name {self.released_gene_name!r} must equal "
-                f"systematic_gene_name {self.systematic_gene_name!r}"
-            )
+        for field in ("identifier_kind", "strain_label", "released_gene_id"):
+            value = getattr(self, field)
+            if value is None and field != "identifier_kind":
+                continue
+            if not value or value != value.strip():
+                raise ValueError(f"{field} must be a non-empty verbatim string")
         if (self.released_gene_id is None) != (self.released_gene_id_namespace is None):
             raise ValueError(
                 "released_gene_id and released_gene_id_namespace are set together"
             )
-        if self.released_gene_id is not None and (
-            not self.released_gene_id
-            or self.released_gene_id != self.released_gene_id.strip()
-        ):
+        if (self.released_kind in RELEASED_CRISPR_KINDS) != (self.crispr is not None):
             raise ValueError(
-                f"released_gene_id must be a non-empty verbatim string, got "
-                f"{self.released_gene_id!r}"
+                "crispr is set exactly when released_kind is crispr_interference or "
+                "crispr_activation"
             )
-        if (self.released_kind is ReleasedGeneKind.crispr_interference) != (
-            self.crispr is not None
-        ):
+        mapped = [
+            name
+            for name in RELEASED_TRANSPOSON_FIELDS
+            if getattr(self, name) is not None
+        ]
+        if mapped and self.released_kind is not ReleasedKind.transposon_insertion:
             raise ValueError(
-                "crispr is set exactly when released_kind is crispr_interference"
+                f"{mapped} are set but released_kind is {self.released_kind!r}; the "
+                "mapped-insertion fields belong to a transposon_insertion record"
             )
         return self
 
@@ -4705,7 +4462,7 @@ class ReleasedGeneNamePerturbation(
         """(SO id, SO name) of this perturbation's released kind; None when gapped."""
         if self.released_kind is None:
             return None
-        return RELEASED_GENE_KIND_SO[self.released_kind]
+        return RELEASED_KIND_SO[self.released_kind]
 
 
 class NamedAllelePerturbation(SequencePerturbation, ModelStrict):
@@ -4786,13 +4543,10 @@ GenePerturbationType = (
     # round-2 leaves (#749, #792); the CRISPRa leaf of #799 folded into the general one
     | MarkedAllelePerturbation
     | DegronPerturbation
-    # a strain stored under its released identifier (#691)
-    | BacterialReleasedStrainPerturbation
-    # a CRISPR guide and a transposon insertion against a released identifier (#691)
-    | BacterialReleasedCrisprPerturbation
-    | BacterialReleasedTransposonPerturbation
-    # a yeast gene under its released name, and an allele under its released name (#1045)
-    | ReleasedGeneNamePerturbation
+    # a gene under the identifier its source released (P3, ontology-unify: the one leaf
+    # that replaced the three bacterial released leaves of #691 and the yeast one of
+    # #1045), and an allele under the name its source released (#1045)
+    | ReleasedIdentifierPerturbation
     | NamedAllelePerturbation
 )
 

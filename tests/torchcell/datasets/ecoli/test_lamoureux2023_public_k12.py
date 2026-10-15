@@ -1176,7 +1176,7 @@ def test_the_deleted_genes_are_written_as_released(
     assert not Path(built.preprocess_dir, "locus_tag_reconciliation.json").exists()
     (thra,) = built[2]["experiment"]["genotype"]["perturbations"]
     assert (thra["perturbation_type"], thra["released_kind"]) == (
-        "bacterial_released_strain",
+        "released_identifier",
         "deletion",
     )
     assert thra["strain_label"] == "MG1655 del_thrA"

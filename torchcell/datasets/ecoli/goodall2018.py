@@ -34,7 +34,7 @@ that rule the symbols went through ``reconcile_locus_tags`` and the nine multi-c
 insertion-sequence symbols on no single BW25113 locus were dropped (106 rows over the
 two tables); they are records now, and the L4 genome-reference row reports them.
 
-GENOTYPE. One ``BacterialReleasedTransposonPerturbation`` per record, at the GENE level:
+GENOTYPE. One ``ReleasedIdentifierPerturbation`` per record, at the GENE level:
 the record stands for every insertion mutant of that gene in the pool.
 ``systematic_gene_name`` and ``perturbed_gene_name`` are the table's ``Gene`` symbol,
 ``strain_label`` is that same row label, ``identifier_kind`` says it is a BW25113
@@ -67,7 +67,7 @@ THE UNCLEAR CALLS (#909). The 317 "unclear" rows are a released call like the ot
 ``graded_gene_essentiality_goodall2018``): a ``GradedGeneEssentialityPhenotype`` whose
 ``essentiality_call`` is ``unclear``, with the same TraDIS evidence (the call, the
 insertion index and the likelihood ratio), on the same
-``BacterialReleasedTransposonPerturbation`` as the boolean records: the released ``Gene``
+``ReleasedIdentifierPerturbation`` as the boolean records: the released ``Gene``
 symbol as the identifier and the row's own coordinate as ``strain_label``, with no
 annotation read. Each released call is stored once: the essential and non-essential
 calls stay booleans in the first store, the unclear calls are graded in the second, and
@@ -116,7 +116,6 @@ from torchcell.datamodels.schema import (
     BacterialGeneEssentialityExperimentReference,
     BacterialGradedGeneEssentialityExperiment,
     BacterialGradedGeneEssentialityExperimentReference,
-    BacterialReleasedTransposonPerturbation,
     Environment,
     EssentialityEvidenceClass,
     EssentialityEvidenceType,
@@ -132,6 +131,8 @@ from torchcell.datamodels.schema import (
     MediaComponent,
     MediaComponentRole,
     Publication,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     Temperature,
     TradisCall,
 )
@@ -1072,12 +1073,13 @@ def insertion_genotype(call: GeneCall) -> Genotype:
     """The gene-level transposon disruption of one row, under its released symbol."""
     return Genotype(
         perturbations=[
-            BacterialReleasedTransposonPerturbation(
+            ReleasedIdentifierPerturbation(
                 systematic_gene_name=call.gene,
                 perturbed_gene_name=call.gene,
                 gene_namespace=STRAIN_GENE_NAMESPACES["BW25113"],
                 strain_label=strain_label(call),
                 identifier_kind=IDENTIFIER_KIND,
+                released_kind=ReleasedKind.transposon_insertion,
                 transposon=TRANSPOSON,
             )
         ]

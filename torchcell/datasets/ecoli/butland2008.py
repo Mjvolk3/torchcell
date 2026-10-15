@@ -154,7 +154,7 @@ annotation says about it: the retired and the ``/gene_synonym`` b-numbers the bu
 to drop (4,407 cells on 57 synonym b-numbers, and the retired ones) are stored as
 released, with no identifier mapping. The 75 recipient ids that are no b-number in form
 (65 ``JW`` Keio ids, ``CSCR``, eight ``bNNNN.1`` entries and ``b4404,b4405``, one cell
-naming two loci) are stored on ``BacterialReleasedStrainPerturbation`` under the id as
+naming two loci) are stored on ``ReleasedIdentifierPerturbation`` under the id as
 released, its label ``<id> (<strain version>)`` keeping the two isolates apart. Where
 the roster writes ``*`` (no Genobase name), the released id is the stored common name.
 The annotation's verdict on every id is still written to
@@ -272,7 +272,6 @@ from torchcell.datamodels.schema import (
     BacterialGeneInteractionExperiment,
     BacterialGeneInteractionExperimentReference,
     BacterialGeneNamespace,
-    BacterialReleasedStrainPerturbation,
     BacterialStrainBackground,
     DeletionStrainPerturbation,
     Environment,
@@ -285,7 +284,8 @@ from torchcell.datamodels.schema import (
     MediaComponent,
     MediaComponentRole,
     Publication,
-    ReleasedStrainKind,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     SampleUnit,
     StrainConstruction,
     Temperature,
@@ -1677,7 +1677,7 @@ HYPOMORPH_ALLELE_EFFECT: Literal["hypomorphic"] = "hypomorphic"
 #: literals spell them; the verifier reads the stored string rather than the class.
 DELETION_TYPE = "deletion_strain"
 MARKED_ALLELE_TYPE = "marked_allele"
-RELEASED_STRAIN_TYPE = "bacterial_released_strain"
+RELEASED_STRAIN_TYPE = "released_identifier"
 #: A released-strain recipient's label: the released id and its "Strain Versions" token.
 _RELEASED_LABEL = re.compile(r"^(?P<id>.+) \((?P<version>[^()]+)\)$")
 
@@ -1727,7 +1727,7 @@ def query_perturbation(locus_tag: str, symbol: str) -> DeletionStrainPerturbatio
 
 def recipient_perturbation(
     locus_tag: str, symbol: str, version: str
-) -> DeletionStrainPerturbation | BacterialReleasedStrainPerturbation:
+) -> DeletionStrainPerturbation | ReleasedIdentifierPerturbation:
     """The recipient side of a Keio row: one arrayed isolate, marked ``kan``.
 
     ``version`` is the "Strain Versions" token verbatim and is stored as the
@@ -1738,13 +1738,13 @@ def recipient_perturbation(
     its label carrying the isolate token (#1057).
     """
     if not B_NUMBER_PATTERN.match(locus_tag):
-        return BacterialReleasedStrainPerturbation(
+        return ReleasedIdentifierPerturbation(
             systematic_gene_name=locus_tag,
             perturbed_gene_name=symbol,
             gene_namespace=MG1655_NAMESPACE,
             strain_label=released_strain_label(locus_tag, version),
             identifier_kind=released_identifier_kind(locus_tag),
-            released_kind=ReleasedStrainKind.deletion,
+            released_kind=ReleasedKind.deletion,
             cassette=RECIPIENT_CASSETTE,
             collection=RECIPIENT_COLLECTION,
         )
@@ -1813,7 +1813,7 @@ def pair_genotype(
         recipient: (
             DeletionStrainPerturbation
             | MarkedAllelePerturbation
-            | BacterialReleasedStrainPerturbation
+            | ReleasedIdentifierPerturbation
         ) = recipient_hypomorph_perturbation(recipient_tag, recipient_gene)
     else:
         recipient = recipient_perturbation(recipient_tag, recipient_gene, version)

@@ -248,7 +248,7 @@ def test_genotype_of_stores_a_released_allele_under_its_strain_description(
     rows, _ = lg.read_rate_rows(str(metadata))
     row = next(r for r in rows if r.sample == "p1k_00009")
     (perturbation,) = lg.genotype_of(row).perturbations
-    assert perturbation.perturbation_type == "bacterial_released_strain"
+    assert perturbation.perturbation_type == "released_identifier"
     assert perturbation.systematic_gene_name == "rpoB"
     assert getattr(perturbation, "strain_label") == (
         "Escherichia coli K-12 MG1655 rpoBE546V"

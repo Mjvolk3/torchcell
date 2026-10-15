@@ -14,7 +14,7 @@ biological replicates. It is the only per-strain table of the tolerance screen.
 RECORD = one Keio deletion strain under 0.5% (v/v) isoprenol, a
 ``BacterialEnvironmentResponseExperiment``:
 
-- GENOTYPE: one ``BacterialReleasedStrainPerturbation`` under the gene symbol of the
+- GENOTYPE: one ``ReleasedIdentifierPerturbation`` under the gene symbol of the
   Table S3 strain label, verbatim, with the Table S2 Keio number as the strain's
   accession, collection "Keio collection" (Wang's wording), cassette from Baba 2006.
 - ENVIRONMENT: ``YT_2X`` at 30 C, shaken, 12 h, plus two edits: the medium's stated pH
@@ -53,7 +53,7 @@ IDENTIFIERS, STORED AS RELEASED (owner rule of 2026-10-12: the data is the data,
 the genome never gates a record). Table S3 labels a strain only by gene name
 (``BWΔacrA``); Table S2 adds a Keio number. The record stores the gene symbol as
 ``systematic_gene_name`` and ``perturbed_gene_name`` and the whole label as
-``strain_label`` on ``BacterialReleasedStrainPerturbation``. That leaf has no strain
+``strain_label`` on ``ReleasedIdentifierPerturbation``. That leaf has no strain
 accession slot (main's schema; adding one is a schema change of its own), so the Keio
 number is kept verbatim beside each record's index in ``preprocess/table_s3.csv``
 (``keio_token``), the malformed ``JJW0452`` included. No annotation is read in the
@@ -125,7 +125,6 @@ from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
-    BacterialReleasedStrainPerturbation,
     Compound,
     Concentration,
     ConcentrationUnit,
@@ -138,7 +137,8 @@ from torchcell.datamodels.schema import (
     MeasurementType,
     PhysicalFactor,
     Publication,
-    ReleasedStrainKind,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     SampleUnit,
     SmallMoleculePerturbation,
     Temperature,
@@ -1075,13 +1075,13 @@ def deletion_genotype(identity: StrainIdentity) -> Genotype:
     """
     return Genotype(
         perturbations=[
-            BacterialReleasedStrainPerturbation(
+            ReleasedIdentifierPerturbation(
                 systematic_gene_name=identity.gene_name,
                 perturbed_gene_name=identity.gene_name,
                 gene_namespace=STRAIN_GENE_NAMESPACES["BW25113"],
                 strain_label=identity.row.strain,
                 identifier_kind=IDENTIFIER_KIND,
-                released_kind=ReleasedStrainKind.deletion,
+                released_kind=ReleasedKind.deletion,
                 collection=COLLECTION,
                 cassette=CASSETTE,
             )

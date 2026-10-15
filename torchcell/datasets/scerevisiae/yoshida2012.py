@@ -32,7 +32,7 @@ a measured WT baseline, not a population mean.
 Background: the BY4741/BY4742 haploid deletion collection (KanMX4 deletions). The genotype
 is one deletion per strain under the name Table 3 releases, verbatim (#1045): a
 systematic name (``YDR379C-A``) goes on ``KanMxDeletionPerturbation`` with both names the
-ORF, a common name on ``ReleasedGeneNamePerturbation`` (the symbol, kind ``deletion``,
+ORF, a common name on ``ReleasedIdentifierPerturbation`` (the symbol, kind ``deletion``,
 marker KanMX). No genome is consulted; the join to R64 is a modeling-time act.
 
 Provenance / extraction: the data IS Table 3 in the paper -- there is no external SI file.
@@ -77,8 +77,8 @@ from torchcell.datamodels.schema import (
     MetabolitePhenotype,
     Publication,
     ReferenceGenome,
-    ReleasedGeneKind,
-    ReleasedGeneNamePerturbation,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
@@ -412,19 +412,19 @@ class OrganicAcidYoshida2012Dataset(ExperimentDataset):
     @staticmethod
     def _released_deletion(
         gene: str,
-    ) -> KanMxDeletionPerturbation | ReleasedGeneNamePerturbation:
+    ) -> KanMxDeletionPerturbation | ReleasedIdentifierPerturbation:
         """The deletion under the name Table 3 releases (#1045)."""
         if _SYSTEMATIC_RE.match(gene):
             return KanMxDeletionPerturbation(
                 systematic_gene_name=gene, perturbed_gene_name=gene
             )
-        return ReleasedGeneNamePerturbation(
+        return ReleasedIdentifierPerturbation(
             systematic_gene_name=gene,
             gene_namespace="scerevisiae_s288c_sgd_systematic",
             perturbed_gene_name=gene,
-            released_gene_name=gene,
-            released_kind=ReleasedGeneKind.deletion,
-            marker="KanMX",
+            identifier_kind="gene name, as Table 3 writes it",
+            released_kind=ReleasedKind.deletion,
+            cassette="KanMX",
         )
 
     @post_process

@@ -233,10 +233,10 @@ def test_screen_stores_one_record_per_released_row(
     (released,) = screen[8]["experiment"]["genotype"]["perturbations"]
     assert (
         released["perturbation_type"],
-        released["released_gene_name"],
+        released["systematic_gene_name"],
         released["released_kind"],
-        released["marker"],
-    ) == ("released_gene_name", "ABC1", "deletion", "KanMX")
+        released["cassette"],
+    ) == ("released_identifier", "ABC1", "deletion", "KanMX")
     assert screen[0]["experiment"] == _experiment(
         "IsobutanolScreenLopez2024Dataset", "YAL001C", "YAL001C", 1.5, None, 1
     )
@@ -397,7 +397,7 @@ def test_validated_stores_a_name_that_is_not_orf_shaped_as_released(
     dataset = m.IsobutanolValidatedLopez2024Dataset(root=str(root))
     assert len(dataset) == 3
     (released,) = dataset[1]["experiment"]["genotype"]["perturbations"]
-    assert released["perturbation_type"] == "released_gene_name"
+    assert released["perturbation_type"] == "released_identifier"
     assert released["systematic_gene_name"] == "YLR287-A"
     log = json.loads((root / "preprocess" / "dropped_records.json").read_text())
     assert (log["kept_records"], log["dropped_records"]) == (3, 0)

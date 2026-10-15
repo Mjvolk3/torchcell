@@ -41,6 +41,7 @@ from torchcell.datamodels.schema import (
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
     MeasurementType,
+    ReleasedKind,
     SmallMoleculePerturbation,
 )
 from torchcell.sequence.genome.ecoli.k12 import MG1655_ASSEMBLY, EcoliK12MG1655Genome
@@ -577,11 +578,12 @@ def test_a_knockdown_is_keyed_by_the_released_symbol_with_its_spacer() -> None:
     assert [p.systematic_gene_name for p in perturbations] == ["thrA", "thrW"]
     assert [p.perturbed_gene_name for p in perturbations] == ["thrA", "thrW"]
     for perturbation in perturbations:
-        assert perturbation.perturbation_type == "bacterial_released_crispr"
+        assert perturbation.perturbation_type == "released_identifier"
         assert perturbation.gene_namespace == "ecoli_k12_mg1655_bnumber"
-        assert perturbation.expression_direction == "decreased"
+        assert perturbation.released_kind is ReleasedKind.crispr_interference
         assert perturbation.strain_label == SPACERS["kept_multi"]
         assert perturbation.identifier_kind == C.IDENTIFIER_KIND
+        assert perturbation.crispr is not None
         assert perturbation.crispr.effector == "dCas9"
         assert perturbation.crispr.guide_sequence == SPACERS["kept_multi"]
         assert perturbation.crispr.n_guides == 1

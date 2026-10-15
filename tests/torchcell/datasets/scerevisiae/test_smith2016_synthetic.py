@@ -78,8 +78,8 @@ from torchcell.datamodels.schema import (
     MeasurementType,
     Publication,
     ReferenceGenome,
-    ReleasedGeneKind,
-    ReleasedGeneNamePerturbation,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     SampleUnit,
     SmallMoleculePerturbation,
     SourceType,
@@ -175,7 +175,7 @@ _RAPAMYCIN = _environment("Rapamycin", 1.0, ConcentrationUnit.nanomolar)
 
 def _target(
     orf: str, gene: str, spacer: str, pool: str
-) -> CrisprInterferencePerturbation | ReleasedGeneNamePerturbation:
+) -> CrisprInterferencePerturbation | ReleasedIdentifierPerturbation:
     construct = CrisprConstruct(
         effector="dCas9-Mxi1", guide_sequence=spacer, n_guides=1, library_pool=pool
     )
@@ -183,12 +183,12 @@ def _target(
         return CrisprInterferencePerturbation(
             systematic_gene_name=orf, perturbed_gene_name=gene, crispr=construct
         )
-    return ReleasedGeneNamePerturbation(
+    return ReleasedIdentifierPerturbation(
         systematic_gene_name=orf,
         gene_namespace="scerevisiae_s288c_sgd_systematic",
         perturbed_gene_name=gene,
-        released_gene_name=orf,
-        released_kind=ReleasedGeneKind.crispr_interference,
+        identifier_kind="gene identifier of the guide table, as released",
+        released_kind=ReleasedKind.crispr_interference,
         crispr=construct,
     )
 
@@ -308,7 +308,7 @@ def test_build_keeps_six_records_in_row_order_with_exact_records(
         released["perturbation_type"],
         released["released_kind"],
         released["crispr"]["guide_sequence"],
-    ) == ("released_gene_name", "crispr_interference", _SPACERS["ERG11_g3"])
+    ) == ("released_identifier", "crispr_interference", _SPACERS["ERG11_g3"])
     dmso = dataset[2]["experiment"]["environment"]["perturbations"]
     assert [(p["compound"]["name"], p["concentration"]) for p in dmso] == [
         (
@@ -424,7 +424,7 @@ def test_drop_log_accounts_for_every_rule_in_application_order(
                 "scope": "row",
                 "description": (
                     "the ORF cell is not ORF-shaped, so the target is stored on "
-                    "ReleasedGeneNamePerturbation verbatim with its construct (#1045), "
+                    "ReleasedIdentifierPerturbation verbatim with its construct (#1045), "
                     "never dropped; listed here (0 today; all 20 released targets are "
                     "ORF-shaped)"
                 ),

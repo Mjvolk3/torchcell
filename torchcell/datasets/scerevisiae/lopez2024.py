@@ -51,7 +51,7 @@ source are SYSTEMATIC ORF names and are stored AS RELEASED (upper-cased), as bot
 owner rule 2026-10-12). A released name the current annotation renames (e.g. YAL043C-A)
 or no longer carries (e.g. YAR037W) keeps its own name and its record. One Table S2 row,
 ``YLR287-A``, is not ORF-shaped at all (the release dropped the strand letter); it is
-stored on ``ReleasedGeneNamePerturbation`` under that name verbatim (kind ``deletion``,
+stored on ``ReleasedIdentifierPerturbation`` under that name verbatim (kind ``deletion``,
 marker KanMX), so every released row is a record and
 ``preprocess/dropped_records.json`` lists none.
 
@@ -106,8 +106,8 @@ from torchcell.datamodels.schema import (
     MetabolitePhenotype,
     Publication,
     ReferenceGenome,
-    ReleasedGeneKind,
-    ReleasedGeneNamePerturbation,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
@@ -138,7 +138,7 @@ RETENTION_DESCRIPTION = (
     "every released row is a record under its released strain name, upper-cased: an "
     "ORF-shaped name on KanMxDeletionPerturbation with both names the ORF, any other "
     "name (YLR287-A: the release dropped the strand letter) on "
-    "ReleasedGeneNamePerturbation verbatim; no genome is consulted and no row is dropped"
+    "ReleasedIdentifierPerturbation verbatim; no genome is consulted and no row is dropped"
 )
 
 
@@ -165,7 +165,7 @@ def _write_drop_log(
     preprocess_dir: str, dataset: str, source: int, kept: int, released: list[str]
 ) -> None:
     """Write ``preprocess/dropped_records.json``: nothing is dropped; the names stored
-    on the released-gene-name leaf are listed under the retention rule.
+    on the released-identifier leaf are listed under the retention rule.
     """
     drop_log = DropLog(
         dataset=dataset,
@@ -247,25 +247,25 @@ class _IsobutanolLopez2024Base(ExperimentDataset):
     @staticmethod
     def _released_deletion(
         name: str,
-    ) -> KanMxDeletionPerturbation | ReleasedGeneNamePerturbation:
+    ) -> KanMxDeletionPerturbation | ReleasedIdentifierPerturbation:
         """The deletion under the released strain name, upper-cased (#1045).
 
         No genome is consulted. An ORF-shaped name goes on the placed KanMX leaf with
         both names the ORF; the one Table S2 cell that is not (``YLR287-A``) goes on the
-        released-gene-name leaf verbatim.
+        released-identifier leaf verbatim.
         """
         upper = name.upper().strip()
         if _SYSTEMATIC_RE.match(upper):
             return KanMxDeletionPerturbation(
                 systematic_gene_name=upper, perturbed_gene_name=upper
             )
-        return ReleasedGeneNamePerturbation(
+        return ReleasedIdentifierPerturbation(
             systematic_gene_name=upper,
             gene_namespace="scerevisiae_s288c_sgd_systematic",
             perturbed_gene_name=upper,
-            released_gene_name=upper,
-            released_kind=ReleasedGeneKind.deletion,
-            marker="KanMX",
+            identifier_kind="Table S2 strain name, upper-cased",
+            released_kind=ReleasedKind.deletion,
+            cassette="KanMX",
         )
 
     def _environment(self) -> Environment:
@@ -362,7 +362,7 @@ class IsobutanolScreenLopez2024Dataset(_IsobutanolLopez2024Base):
         Every row is a record (``n_replicates = 1``, no SE): a gene the table reports on
         two plates is two records of one deletion, told apart by their values, not an
         average. The one row whose strain name is not ORF-shaped (``YLR287-A``) is
-        stored on the released-gene-name leaf (#1045).
+        stored on the released-identifier leaf (#1045).
         """
         verify_raw_files(self.raw_dir, {_XLSX_FILENAME: _XLSX_SHA256})
         xlsx = osp.join(self.raw_dir, _XLSX_FILENAME)
@@ -410,7 +410,7 @@ class IsobutanolScreenLopez2024Dataset(_IsobutanolLopez2024Base):
         _write_drop_log(self.preprocess_dir, self.name, len(df), idx, released_names)
         log.info(
             "Lopez2024 S2: wrote %d row experiments as released (%d on the "
-            "released-gene-name leaf: %s)",
+            "released-identifier leaf: %s)",
             idx,
             len(released_names),
             sorted(released_names),
@@ -460,7 +460,7 @@ class IsobutanolValidatedLopez2024Dataset(_IsobutanolLopez2024Base):
         """Parse Table S3 (both blocks) into one triplicate record per released row; write LMDB.
 
         Every row is a record under its released ORF, including both YBL071W-A rows; a
-        name that is not ORF-shaped goes on the released-gene-name leaf (0 of 227 rows).
+        name that is not ORF-shaped goes on the released-identifier leaf (0 of 227 rows).
         """
         verify_raw_files(self.raw_dir, {_XLSX_FILENAME: _XLSX_SHA256})
         records = self._read_blocks()
@@ -500,7 +500,7 @@ class IsobutanolValidatedLopez2024Dataset(_IsobutanolLopez2024Base):
         )
         log.info(
             "Lopez2024 S3: wrote %d validated experiments as released (%d on the "
-            "released-gene-name leaf: %s)",
+            "released-identifier leaf: %s)",
             idx,
             len(released_names),
             sorted(released_names),

@@ -40,7 +40,7 @@ from torchcell.datamodels.schema import (
     BacterialAssemblySet,
     BacterialGeneNamespace,
     EnvironmentPhysicalPerturbation,
-    ReleasedStrainKind,
+    ReleasedKind,
     SampleUnit,
     UncertaintyType,
 )
@@ -341,12 +341,12 @@ def test_genotype_is_one_keio_deletion_keyed_by_its_released_symbol(
     blocks = gr.read_table_s24(str(workbook))
     strain = blocks[0].deletions[0]
     (perturbation,) = gr.build_genotype(strain).perturbations
-    assert perturbation.perturbation_type == "bacterial_released_strain"
+    assert perturbation.perturbation_type == "released_identifier"
     assert perturbation.systematic_gene_name == "rimI"
     assert perturbation.perturbed_gene_name == "rimI"
     assert perturbation.gene_namespace == NAMESPACE
     assert perturbation.strain_label == "ΔrimI"
-    assert perturbation.released_kind is ReleasedStrainKind.deletion
+    assert perturbation.released_kind is ReleasedKind.deletion
     assert perturbation.collection == gr.KEIO_COLLECTION
     assert perturbation.cassette is None
 

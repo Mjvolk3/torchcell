@@ -143,8 +143,8 @@ from torchcell.datamodels.schema import (
     MeasurementType,
     Publication,
     ReferenceGenome,
-    ReleasedGeneKind,
-    ReleasedGeneNamePerturbation,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     SampleUnit,
     SmallMoleculePerturbation,
     Temperature,
@@ -521,7 +521,7 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
         The ``ORF`` cell (stripped) is the systematic name and the ``Gene`` cell the
         perturbed name, the ORF again where it is blank. No genome is consulted.
         ``placed`` is False for a cell that is not ORF-shaped, which goes on the
-        released-gene-name leaf (#1045; 0 of the 20 released targets).
+        released-identifier leaf (#1045; 0 of the 20 released targets).
         """
         orf = str(orf_cell).strip()
         gene = "" if pd.isna(gene_cell) else str(gene_cell).strip()
@@ -635,7 +635,7 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
                     n_guides=1,
                     library_pool=str(row["#Pool"]),
                 )
-                target: CrisprInterferencePerturbation | ReleasedGeneNamePerturbation
+                target: CrisprInterferencePerturbation | ReleasedIdentifierPerturbation
                 if placed:
                     target = CrisprInterferencePerturbation(
                         systematic_gene_name=orf,
@@ -643,12 +643,12 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
                         crispr=construct,
                     )
                 else:
-                    target = ReleasedGeneNamePerturbation(
+                    target = ReleasedIdentifierPerturbation(
                         systematic_gene_name=orf,
                         gene_namespace="scerevisiae_s288c_sgd_systematic",
                         perturbed_gene_name=gene,
-                        released_gene_name=orf,
-                        released_kind=ReleasedGeneKind.crispr_interference,
+                        identifier_kind="gene identifier of the guide table, as released",
+                        released_kind=ReleasedKind.crispr_interference,
                         crispr=construct,
                     )
                 experiment = EnvironmentResponseExperiment(
@@ -692,7 +692,7 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
                 scope="row",
                 description=(
                     "the ORF cell is not ORF-shaped, so the target is stored on "
-                    "ReleasedGeneNamePerturbation verbatim with its construct (#1045), "
+                    "ReleasedIdentifierPerturbation verbatim with its construct (#1045), "
                     "never dropped; listed here (0 today; all 20 released targets are "
                     "ORF-shaped)"
                 ),
@@ -746,7 +746,7 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
         log.info(
             "Smith2016: wrote %d of %d rows (%d under a typed compound-identity gap on "
             "%d vendor-code drugs); %d with no A/var(A), %d targets on the "
-            "released-gene-name leaf, %d guides with no spacer",
+            "released-identifier leaf, %d guides with no spacer",
             idx,
             source_records,
             sum(gapped_records.values()),

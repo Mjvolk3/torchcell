@@ -106,8 +106,8 @@ from torchcell.datamodels.schema import (
     PseudobulkExpressionPhenotype,
     Publication,
     ReferenceGenome,
-    ReleasedGeneKind,
-    ReleasedGeneNamePerturbation,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     SmallMoleculePerturbation,
     Temperature,
 )
@@ -347,13 +347,13 @@ class NadalRibellesPerturbSeq2025Dataset(ExperimentDataset):
             cond, raw_orf = _parse_fc_key(str(key))
             sys_name = _deletion_systematic(raw_orf)
             if sys_name is None:
-                # the label names no ORF: stored on the released-gene-name leaf verbatim
+                # the label names no ORF: stored on the released-identifier leaf verbatim
                 # (#1045), upper-cased as every label is
                 sys_name = raw_orf.upper()
                 released_labels.append(sys_name)
                 log.info(
                     "Record %s/%s: genotype label is not ORF-shaped; stored on the "
-                    "released-gene-name leaf",
+                    "released-identifier leaf",
                     cond,
                     raw_orf,
                 )
@@ -387,7 +387,7 @@ class NadalRibellesPerturbSeq2025Dataset(ExperimentDataset):
             )
         log.info(
             "Read %d records as released; %d gene values under their released names; "
-            "%d genotype labels on the released-gene-name leaf",
+            "%d genotype labels on the released-identifier leaf",
             len(records),
             n_gene_values,
             len(released_labels),
@@ -404,7 +404,7 @@ class NadalRibellesPerturbSeq2025Dataset(ExperimentDataset):
                             "rule": "stored_on_released_gene_name_leaf",
                             "description": (
                                 "the fcs genotype label is not ORF-shaped, so the deleted "
-                                "gene is stored on ReleasedGeneNamePerturbation under the "
+                                "gene is stored on ReleasedIdentifierPerturbation under the "
                                 "label verbatim with the URA3 marker and its strain id "
                                 "(#1045), never dropped; listed here (0 of 6188 released "
                                 "tables)"
@@ -530,7 +530,7 @@ class NadalRibellesPerturbSeq2025Dataset(ExperimentDataset):
         Publication,
     ]:
         """Build the pseudobulk experiment/reference/publication for one record."""
-        perturbation: MarkerDeletionPerturbation | ReleasedGeneNamePerturbation
+        perturbation: MarkerDeletionPerturbation | ReleasedIdentifierPerturbation
         if _SYSTEMATIC_RE.match(row["systematic_gene_name"]):
             perturbation = MarkerDeletionPerturbation(
                 systematic_gene_name=row["systematic_gene_name"],
@@ -539,13 +539,13 @@ class NadalRibellesPerturbSeq2025Dataset(ExperimentDataset):
                 strain_id=row["strain_id"],
             )
         else:
-            perturbation = ReleasedGeneNamePerturbation(
+            perturbation = ReleasedIdentifierPerturbation(
                 systematic_gene_name=row["systematic_gene_name"],
                 gene_namespace="scerevisiae_s288c_sgd_systematic",
                 perturbed_gene_name=row["perturbed_gene_name"],
-                released_gene_name=row["systematic_gene_name"],
-                released_kind=ReleasedGeneKind.deletion,
-                marker=DELETION_MARKER,
+                identifier_kind="gene identifier, as the release writes it",
+                released_kind=ReleasedKind.deletion,
+                cassette=DELETION_MARKER,
                 strain_id=row["strain_id"],
             )
         genotype = Genotype(perturbations=[perturbation])

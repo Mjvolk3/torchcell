@@ -46,9 +46,9 @@ from torchcell.datamodels.schema import (
     BacterialAssemblySet,
     BacterialBackgroundAllele,
     BacterialGeneNamespace,
-    BacterialReleasedStrainPerturbation,
     BacterialStrainBackground,
-    ReleasedStrainKind,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     SampleUnit,
     SequenceVariantPerturbation,
     UncertaintyType,
@@ -707,7 +707,7 @@ def test_reconstructed_alleles_are_the_fig2f_rows_and_quote_supplementary_table_
 def test_reconstructed_genotype_stores_the_allele_as_released() -> None:
     allele = ch.RECONSTRUCTED_ALLELES[1]
     (perturbation,) = ch.reconstructed_genotype(allele).perturbations
-    assert isinstance(perturbation, BacterialReleasedStrainPerturbation)
+    assert isinstance(perturbation, ReleasedIdentifierPerturbation)
     assert (
         perturbation.systematic_gene_name,
         perturbation.perturbed_gene_name,
@@ -721,7 +721,7 @@ def test_reconstructed_genotype_stores_the_allele_as_released() -> None:
         "cspC(G37A)",
         "cspCmut",
         "gene symbol",
-        ReleasedStrainKind.sequence_allele,
+        ReleasedKind.sequence_allele,
         "kanR",
         MG1655_NAMESPACE,
     )
@@ -768,8 +768,8 @@ def test_build_growth_genotype_writes_one_deletion_per_named_gene() -> None:
     assert len(genotype.perturbations) == 21
     assert set(genotype.systematic_gene_names) == set(ch.LARGE_DELETION_SYMBOLS)
     for perturbation in genotype.perturbations:
-        assert isinstance(perturbation, BacterialReleasedStrainPerturbation)
-        assert perturbation.released_kind is ReleasedStrainKind.deletion
+        assert isinstance(perturbation, ReleasedIdentifierPerturbation)
+        assert perturbation.released_kind is ReleasedKind.deletion
         assert perturbation.strain_label == ch.LARGE_DELETION_LABEL
         assert perturbation.cassette == ch.KAN_CASSETTE
         assert perturbation.gene_namespace == MG1655_NAMESPACE
@@ -782,7 +782,7 @@ def test_build_keio_genotype_names_the_collection() -> None:
     genotype = ch.build_keio_genotype("ydaS")
     assert len(genotype.perturbations) == 1
     perturbation = genotype.perturbations[0]
-    assert isinstance(perturbation, BacterialReleasedStrainPerturbation)
+    assert isinstance(perturbation, ReleasedIdentifierPerturbation)
     assert perturbation.systematic_gene_name == "ydaS"
     assert perturbation.strain_label == "ΔydaS"
     assert perturbation.collection == ch.KEIO_COLLECTION

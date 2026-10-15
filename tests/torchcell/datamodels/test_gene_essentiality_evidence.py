@@ -87,7 +87,10 @@ RECORDS: dict[EssentialityEvidenceType, dict[str, Any]] = {
         "false_discovery_rate_lower": 0.06,
         "false_discovery_rate_upper": 0.16,
     },
-    T.curated_null_phenotype: {"curated_experiment_type": "classical genetics"},
+    T.curated_null_phenotype: {
+        "curated_experiment_type": "classical genetics",
+        "curated_reference_pubmed_id": "12140549",
+    },
     T.tnseq_hmm_state: {
         "hmm_state": HmmEssentialityState.essential,
         "ta_sites": 8,
@@ -125,7 +128,9 @@ def test_every_type_has_exactly_one_parent_and_the_parents_are_the_issue_table()
 def test_the_field_map_names_every_statistic_once_and_each_defaults_to_none() -> None:
     names = [n for fields in ESSENTIALITY_EVIDENCE_FIELDS.values() for n in fields]
     assert set(ESSENTIALITY_EVIDENCE_FIELDS) == set(T)
-    assert len(names) == len(set(names)) == 18 + 8
+    # 18 statistics of the five measured types, 8 of tnseq_hmm_state, and since lane V
+    # (2026-10-15) the curated family's own reference, curated_reference_pubmed_id
+    assert len(names) == len(set(names)) == 18 + 8 + 1
     shared = {"evidence_class", "evidence_type", "statements", "provenance_gaps"}
     model_fields = GeneEssentialityEvidence.model_fields
     assert set(model_fields) == shared | set(names)

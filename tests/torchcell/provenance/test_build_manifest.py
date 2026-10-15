@@ -89,6 +89,9 @@ class Environment(ModelStrict):
 
 
 _LEAVES = bm.PerturbationLeaves(genotype=["KanMxDeletionPerturbation"], environment=[])
+_NO_COLLISIONS = bm.ContentIdCollisions(
+    n_records=1, n_distinct=1, n_groups=0, n_records_lost=0
+)
 
 
 def _surface(src: str) -> sd.SchemaSurface:
@@ -117,6 +120,7 @@ def _manifest(
         torchcell_commit=None,
         torchcell_dirty=None,
         perturbation_leaves=_LEAVES,
+        content_id_collisions=_NO_COLLISIONS,
     )
 
 
@@ -285,12 +289,16 @@ def test_write_build_manifest_end_to_end(tmp_path: Path) -> None:
         assert manifest.dataset_name == "fake_ds"
         assert manifest.loader_class == "FakeDataset"
         assert manifest.hostname
-        assert manifest.manifest_schema_version == 2
+        assert manifest.manifest_schema_version == 3
         # closure resolved against the REAL schema: Environment pulls in Media
         assert {"Environment", "Media"} <= set(manifest.closure)
         # the leaves measured over the store's records, by class name
         assert manifest.perturbation_leaves == bm.PerturbationLeaves(
             genotype=["KanMxDeletionPerturbation"], environment=[]
+        )
+        # the collisions measured over the same records, in the same pass
+        assert manifest.content_id_collisions == bm.ContentIdCollisions(
+            n_records=1, n_distinct=1, n_groups=0, n_records_lost=0
         )
     finally:
         sys.modules.pop("fake_loader_mod", None)
@@ -305,7 +313,7 @@ def test_manifest_records_every_field(tmp_path: Path) -> None:
     surface = _surface(SCHEMA)
     manifest = _manifest(tmp_path, surface)
     assert manifest.model_dump() == {
-        "manifest_schema_version": 2,
+        "manifest_schema_version": 3,
         "dataset_name": "slug",
         "loader_class": "MyDataset",
         "loader_module": "pkg.loader",
@@ -321,6 +329,13 @@ def test_manifest_records_every_field(tmp_path: Path) -> None:
         "perturbation_leaves": {
             "genotype": ["KanMxDeletionPerturbation"],
             "environment": [],
+        },
+        "content_id_collisions": {
+            "n_records": 1,
+            "n_distinct": 1,
+            "n_groups": 0,
+            "n_records_lost": 0,
+            "example_groups": [],
         },
     }
     assert list(manifest.closure) == ["Environment", "Media", "ModelStrict"]
@@ -361,6 +376,7 @@ def test_change_outside_the_closure_leaves_a_loader_fresh(tmp_path: Path) -> Non
         torchcell_commit="abc",
         torchcell_dirty=True,
         perturbation_leaves=_LEAVES,
+        content_id_collisions=_NO_COLLISIONS,
     )
     assert list(manifest.closure) == ["Media", "ModelStrict"]
     env_edit = _surface(ENV_EDIT)
@@ -599,6 +615,7 @@ def _vocab_manifest(tmp_path: Path, surface: sd.SchemaSurface) -> bm.BuildManife
         torchcell_commit=None,
         torchcell_dirty=None,
         perturbation_leaves=_LEAVES,
+        content_id_collisions=_NO_COLLISIONS,
     )
 
 
@@ -925,6 +942,13 @@ def _record_with(
     return record
 
 
+def _copy(record: dict[str, Any]) -> dict[str, Any]:
+    """A deep copy of a stored record, so a test can vary one field of it."""
+    import copy
+
+    return copy.deepcopy(record)
+
+
 def test_leaf_class_by_perturbation_type_is_a_bijection_over_both_unions() -> None:
     """Every union member's literal names exactly one class, so the walk needs no validation."""
     from typing import get_args
@@ -1032,20 +1056,30 @@ def test_a_version_one_manifest_without_the_leaves_reads_stale(tmp_path: Path) -
     surface = _surface(SCHEMA)
     fresh = _manifest(tmp_path, surface)
     old = fresh.model_copy(
-        update={"perturbation_leaves": None, "manifest_schema_version": 1}
+        update={
+            "perturbation_leaves": None,
+            "content_id_collisions": None,
+            "manifest_schema_version": 1,
+        }
     )
     assert not bm.check_manifest(fresh, surface, "p").is_stale
     result = bm.check_manifest(old, surface, "p")
     assert (result.is_stale, result.drift, result.missing_fields) == (
         True,
         [],
-        ["perturbation_leaves"],
+        ["perturbation_leaves", "content_id_collisions"],
     )
     slug_dir = _build_dataset_dir(tmp_path, "old_manifest")
     _write(slug_dir, old)
     freshness = bm.check_store(slug_dir, surface)
-    assert (freshness.state, freshness.drift) == ("stale", ["perturbation_leaves"])
-    assert freshness.describe() == "stale on ['perturbation_leaves']"
+    # check_store sorts the drift list, so the two missing fields read alphabetically
+    assert (freshness.state, freshness.drift) == (
+        "stale",
+        ["content_id_collisions", "perturbation_leaves"],
+    )
+    assert freshness.describe() == (
+        "stale on ['content_id_collisions', 'perturbation_leaves']"
+    )
 
 
 def test_the_cli_names_the_missing_field(
@@ -1056,15 +1090,18 @@ def test_the_cli_names_the_missing_field(
     _write(
         slug_dir,
         _manifest(tmp_path, surface, name="old_cli").model_copy(
-            update={"perturbation_leaves": None}
+            update={"perturbation_leaves": None, "content_id_collisions": None}
         ),
     )
     checks = bm.check_all(tmp_path, surface)
     assert [(c.dataset_name, c.status, c.missing_fields) for c in checks] == [
-        ("old_cli", "stale", ["perturbation_leaves"])
+        ("old_cli", "stale", ["perturbation_leaves", "content_id_collisions"])
     ]
     report = bm._format_report(checks)
-    assert "[STALE] old_cli  -> rebuild; manifest lacks: perturbation_leaves" in report
+    assert (
+        "[STALE] old_cli  -> rebuild; manifest lacks: perturbation_leaves, "
+        "content_id_collisions"
+    ) in report
 
 
 def test_the_manifest_round_trips_the_leaves(tmp_path: Path) -> None:
@@ -1072,4 +1109,79 @@ def test_the_manifest_round_trips_the_leaves(tmp_path: Path) -> None:
     manifest = _manifest(tmp_path, surface)
     loaded = bm.BuildManifest.model_validate_json(manifest.model_dump_json())
     assert loaded.perturbation_leaves == _LEAVES
-    assert loaded.manifest_schema_version == 2
+    assert loaded.content_id_collisions == _NO_COLLISIONS
+    assert loaded.manifest_schema_version == 3
+
+
+# --------------------------------------------------------------------------- #
+# 2026.10.15 (lane V): content_id_collisions, measured in the same pass.
+# --------------------------------------------------------------------------- #
+def test_walk_store_counts_the_records_that_share_one_experiment_content_id(
+    tmp_path: Path,
+) -> None:
+    """The collision count is the records a graph built from this store would LOSE.
+
+    Five records: 0 and 1 are byte-identical, 2, 3 and 4 share a third dump, so there
+    are 3 distinct ids, 2 groups and 3 records that the sink's node deduplication would
+    drop. The example groups carry the LMDB keys in store-iteration order, which is what
+    lets the rows be read without rerunning a scan. Nothing else about the store changes:
+    the same pass returns the same leaves it always did.
+    """
+    slug_dir = tmp_path / "data" / "torchcell" / "collided"
+    (slug_dir / "processed" / "lmdb").mkdir(parents=True)
+    one = _fitness_record()
+    two = _fitness_record()
+    three = _fitness_record(gene="YBR001C")
+    _write_store(slug_dir, [one, two, three, _copy(three), _copy(three)])
+    walk = bm.walk_store(slug_dir)
+    assert walk.content_id_collisions == bm.ContentIdCollisions(
+        n_records=5,
+        n_distinct=2,
+        n_groups=2,
+        n_records_lost=3,
+        example_groups=[["0", "1"], ["2", "3", "4"]],
+    )
+    assert walk.perturbation_leaves == bm.PerturbationLeaves(
+        genotype=["KanMxDeletionPerturbation"], environment=[]
+    )
+
+
+def test_walk_store_counts_no_collision_when_every_record_is_its_own(
+    tmp_path: Path,
+) -> None:
+    """A store whose records all differ reports zero, which is the only state a dataset
+    gets without a declaration.
+    """
+    slug_dir = tmp_path / "data" / "torchcell" / "distinct"
+    (slug_dir / "processed" / "lmdb").mkdir(parents=True)
+    records = [
+        _fitness_record(gene=gene)
+        for gene in ("YAL001C", "YBR001C", "YCR001W", "YDR001C")
+    ]
+    _write_store(slug_dir, records)
+    assert bm.walk_store(slug_dir).content_id_collisions == bm.ContentIdCollisions(
+        n_records=4, n_distinct=4, n_groups=0, n_records_lost=0, example_groups=[]
+    )
+
+
+def test_walk_store_hashes_the_interned_record_as_the_adapter_does(
+    tmp_path: Path,
+) -> None:
+    """Two records whose environments are interned under the same ref are one dump: the
+    digest is taken after the pointers are spliced back in, which is the dump
+    ``CellAdapter._experiment_node`` hashes. A walk that hashed the ``{"$ref": ...}``
+    form would be comparing pointers, not records.
+    """
+    slug_dir = tmp_path / "data" / "torchcell" / "interned"
+    (slug_dir / "processed" / "lmdb").mkdir(parents=True)
+    plain = _fitness_record()
+    environment = plain["experiment"]["environment"]
+    pointered = _copy(plain)
+    pointered["experiment"]["environment"] = {"$ref": "e1"}
+    _write_store(slug_dir, [plain, pointered], interned={"e1": environment})
+    collisions = bm.walk_store(slug_dir).content_id_collisions
+    assert (collisions.n_records, collisions.n_distinct, collisions.n_records_lost) == (
+        2,
+        1,
+        1,
+    )

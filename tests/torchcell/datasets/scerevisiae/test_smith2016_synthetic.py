@@ -492,7 +492,7 @@ def test_gene_set_build_manifest_and_interned_store(
     # Version 2 (2026-10-15) records the leaves the store holds, measured over its
     # records: the placed CRISPRi guides, the guide against the released name
     # ``erg11`` (P3's one released-identifier leaf) and the chemical exposures.
-    assert manifest["manifest_schema_version"] == 2
+    assert manifest["manifest_schema_version"] == 3
     assert manifest["perturbation_leaves"] == {
         "genotype": [
             "CrisprInterferencePerturbation",

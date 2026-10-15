@@ -190,3 +190,39 @@ Measured: acetic 377, butyric 422, octanoic 490 = 1,289 records (115 under a sys
 | L3 | `media_membership` | gate | ok | 1289 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (1 distinct media) |
 | L4 | `gene_containment_sgd` | report | finding | 0.089 of 607 measured genes are S288C reference genes (>= 0.9) |
 | L4 | `current_genome_genes` | report | finding | 553 systematic names are absent from the current genome over 1181 records: ADA2 x1, ADE8 x1, ADH1 x3, ADK1 x3, AEP2 x1, AFG3 x3, AGE1 x2, AGP2 x3, AIM10 x3, AIM22 x3 |
+
+## 2026.10.15 - The acetic and butyric RNR4 pairs are one measurement printed twice (lane V)
+
+Lane Q's content-id scan ([[experiments.database.scripts.content_id_collision_scan]])
+found 2 of this store's 1,289 records sharing an `Experiment` content id with another
+record, in a dataset served by KG 3.0. The finding is that nothing is wrong with the
+loader: the source printed one measurement twice, and this is the one of the four
+colliding datasets with no fix.
+
+Measured cell by cell against the pinned sheets. Table S1's sheet rows 186 and 187 are
+EQUAL in every released column but the gene-name cell: the `Encoded Protein Function`
+text is byte-identical, `Growth inhibition` is `+` on both, the three trailing columns
+are empty on both, and column 0 is `RNR4` against `RNR4` with a trailing non-breaking
+space. Table S2's rows 216 and 217 are the same pair. The trailing non-breaking space is
+formatting noise across the whole release (19 of Table S1's parsed rows carry one, 21 of
+Table S2's and 23 of Table S3's, `ADA2` among them), so it names no second strain and is
+not a distinguishing cell. Table S3's two RNR4 rows DO differ, in the grade: row 271 is
+`+` and row 475 is `++`, sitting in the sheet's `++` block, so they are two released
+values, two records and two nodes, and they never collided.
+
+So the store keeps all 1,289 released rows, because a released row is stored as released
+and the authors withdrew nothing (constitution principle 2), and the graph holds 1,287
+`Experiment` nodes, because the acetic and butyric pairs are one measurement each. No
+positional index or sheet row is invented to make two nodes out of one measurement. What
+changes is that the number is now DECLARED rather than unobserved:
+`EXPECTED_CONTENT_ID_COLLISIONS["EnvChemgenMota2024Dataset"] = 2` in
+[[torchcell.database.build_dataset_lmdb]], which is what the rebuild preflight checks the
+store's measured count against, so this dataset passes and any dataset that starts losing
+records does not.
+
+Tests in `tests/torchcell/datasets/scerevisiae/test_mota2024.py`:
+`test_the_two_released_rnr4_rows_are_one_measurement_printed_twice` (the synthetic
+build's two RNR4 records are byte-equal, share one digest, leave the store with
+`len(built) - 1` distinct ids, and the declaration is 2) and the `@pytest.mark.data`
+`test_the_released_rnr4_rows_differ_only_in_a_non_breaking_space`, which reads the
+mirrored sheets and pins the differing-column sets per acid ([0], [0], [0, 2]).

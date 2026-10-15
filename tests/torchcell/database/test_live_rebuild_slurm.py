@@ -78,9 +78,10 @@ def test_the_preflight_the_fence_and_the_generator_read_one_switch() -> None:
     that enumerates the mapped datasets (a public-only preflight would not notice a
     stale private store), and the generator line carries ``$PRIVATE_FLAG``.
     """
-    # three readers of the switch since 2026-10-15: the freshness walk, the lane walk
-    # (same preflight block, same argv) and the dev fence
-    assert TEXT.count('include_private=sys.argv[2] == "1"') == 3
+    # four readers of the switch since 2026-10-15: the freshness walk, the lane walk,
+    # the content-id walk (all three in the same preflight block, same argv) and the
+    # dev fence
+    assert TEXT.count('include_private=sys.argv[2] == "1"') == 4
     assert TEXT.count('"$DEV_DATA_ROOT" "$INCLUDE_PRIVATE"') == 3
     assert "python -m $KG_MODULE --config-name $KG_CONFIG $PRIVATE_FLAG" in TEXT
 
@@ -194,10 +195,11 @@ def test_the_preflight_the_fence_the_generator_and_the_manifest_read_kg_organism
     The freshness preflight and the dev fence both parse ``sys.argv[3]`` into the map
     they walk (so a yeast-only build neither blocks on a stale bacterial store nor
     counts a bacterial dataset), the generator gets ``--organisms``, and the manifest
-    bootstrap records the set. The lane walk of 2026-10-15 is the third reader of
-    ``sys.argv[3]``, in the preflight block beside the freshness walk.
+    bootstrap records the set. The lane walk and the content-id walk of 2026-10-15 are
+    the third and fourth readers of ``sys.argv[3]``, in the preflight block beside the
+    freshness walk.
     """
-    assert TEXT.count("organisms=parse_organisms(sys.argv[3])") == 3
+    assert TEXT.count("organisms=parse_organisms(sys.argv[3])") == 4
     assert TEXT.count('"$DEV_DATA_ROOT" "$INCLUDE_PRIVATE" "$KG_ORGANISMS"') == 3
     assert (
         "python -m $KG_MODULE --config-name $KG_CONFIG $PRIVATE_FLAG "
@@ -275,6 +277,29 @@ def test_the_preflight_checks_every_stores_leaves_against_its_confs_lanes() -> N
     lanes = TEXT.index("lanes = mapped_store_lanes(")
     count = TEXT.index("print(len(statuses))")
     assert freshness < lanes < count
+
+
+def test_the_preflight_refuses_a_store_whose_content_id_collisions_are_undeclared() -> (
+    None
+):
+    """The collision walk runs in the same preflight block, after the lane walk and
+    before the count, on the same three arguments. A record that shares an Experiment
+    content id with another record of its store is absent from the graph with no error,
+    so the job stops unless the dataset declares the number (lane V, 2026-10-15).
+    """
+    assert (
+        "from torchcell.database.build_dataset_lmdb import mapped_store_collisions"
+        in TEXT
+    )
+    assert (
+        "collisions = mapped_store_collisions(sys.argv[1], include_private=sys.argv[2] "
+        '== "1", organisms=parse_organisms(sys.argv[3]))'
+    ) in TEXT
+    assert "undeclared = [s.describe() for s in collisions if s.blocks]" in TEXT
+    lanes = TEXT.index("lanes = mapped_store_lanes(")
+    collisions = TEXT.index("collisions = mapped_store_collisions(")
+    count = TEXT.index("print(len(statuses))")
+    assert lanes < collisions < count
 
 
 def test_the_csv_endpoint_gate_is_a_hard_stop_before_the_import() -> None:

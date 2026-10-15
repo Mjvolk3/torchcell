@@ -42,6 +42,7 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
     write_assembly,
 )
 from torchcell.datamodels.schema import (
+    EnvironmentResponseExperiment,
     MeasurementType,
     ReferenceGenome,
     StrainReferenceGenome,
@@ -331,7 +332,7 @@ def test_the_phenotype_stores_the_released_rate_with_its_screen_and_replicate(
     assert phenotype.environment_response == 0.58
     assert phenotype.units == "Growth Rate (1/hr)"
     assert phenotype.screen_id == "ica"
-    assert phenotype.replicate_id == "1"
+    assert phenotype.replicate_id == "ica__wt_glc__1"
     assert phenotype.assay_type is None
     assert phenotype.n_samples is None
     assert phenotype.sample_unit is None
@@ -442,7 +443,10 @@ def test_process_writes_one_record_per_stored_rate_with_the_aggregate_reference(
     ]
     assert {i["experiment"].phenotype.screen_id for i in base} == {"ica", "ytf"}
     assert len({i["experiment"].environment.model_dump_json() for i in base}) == 1
-    assert {i["experiment"].phenotype.replicate_id for i in base} == {"1"}
+    assert {i["experiment"].phenotype.replicate_id for i in base} == {
+        "ica__wt_glc__1",
+        "ytf__wt_glc__1",
+    }
     built.close_lmdb()
 
 
@@ -588,3 +592,104 @@ def test_real_dev_store_holds_260_records_and_its_declared_ledger() -> None:
     base = json.loads(Path(root, "preprocess", "base_condition.json").read_text())
     assert base["aggregate"]["mean"] == lg.BASE_RATE_MEAN
     assert len(base["aggregate"]["samples"]) == lg.EXPECTED_BASE_RECORDS
+
+
+# --------------------------------------------------------------------------- #
+# 2026.10.15 (lane V): two evolved isolates with one rate are two records
+# --------------------------------------------------------------------------- #
+def test_two_evolved_isolates_with_one_released_rate_are_two_records(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Two adaptive-laboratory-evolution isolates of one project, released with the same
+    growth rate in the same condition family, are two measurements and must dump to two
+    content ids.
+
+    This is the release's own shape: ``glu:glu_ale3``, ``glu:glu_ale5`` and
+    ``glu:glu_ale9`` all release 1.01 1/hr, and an isolate's strain rides on the
+    ``StrainReferenceGenome`` background rather than on the experiment, so all three
+    dumped as the same empty MG1655 genotype in the same environment with the same
+    ``screen_id`` (``glu``) and the same ``rep_id`` (``1``). 13 groups and 14 records of
+    the real store were in that state, and the graph held one ``Experiment`` node per
+    group. ``replicate_id`` now carries the released ``sample_id``, so the two differ in
+    exactly that field: before lane V the two dumps were byte-identical and this test
+    failed on ``assert digests[0] != digests[1]``.
+    """
+    frame = _metadata_frame()
+    for sample, condition, description in (
+        ("p1k_09001", "glu_ale3", "Escherichia coli GLU.3.412.1"),
+        ("p1k_09002", "glu_ale9", "Escherichia coli GLU.9.433.1"),
+    ):
+        row = dict(frame.loc["p1k_00007"])
+        row[lm.COL_SAMPLE] = f"glu__{condition}__1"
+        row[lm.COL_CONDITION] = condition
+        row[lm.COL_FULL_NAME] = f"glu:{condition}"
+        row[lm.COL_DESCRIPTION] = description
+        row[lg.COL_GROWTH_RATE] = "1.01"
+        frame.loc[sample] = row
+    path = tmp_path / lm.METADATA.name
+    frame.to_csv(path)
+    monkeypatch.setattr(lg, "EXPECTED_RATE_CELLS", SYNTHETIC_RATE_CELLS + 2)
+    rows, _ = lg.read_rate_rows(str(path))
+    environments = lg.environments_of(str(path), rows)
+    pair = [row for row in rows if row.sample in ("p1k_09001", "p1k_09002")]
+    assert [row.rate for row in pair] == [1.01, 1.01]
+    dumps = [
+        EnvironmentResponseExperiment(
+            dataset_name="growth_rate_lamoureux2023",
+            genotype=lg.genotype_of(row),
+            environment=environments[row.sample],
+            phenotype=lg.phenotype(row),
+        ).model_dump()
+        for row in pair
+    ]
+    digests = [
+        hashlib.sha256(json.dumps(dump).encode("utf-8")).hexdigest() for dump in dumps
+    ]
+    assert digests[0] != digests[1]
+    assert [dump["phenotype"]["replicate_id"] for dump in dumps] == [
+        "glu__glu_ale3__1",
+        "glu__glu_ale9__1",
+    ]
+    assert {dump["phenotype"]["screen_id"] for dump in dumps} == {"glu"}
+    assert [len(dump["genotype"]["perturbations"]) for dump in dumps] == [0, 0]
+    # the released sample id is the whole difference between the two dumps, which is
+    # what made them one node before it was carried
+    for dump in dumps:
+        dump["phenotype"]["replicate_id"] = None
+    assert dumps[0] == dumps[1]
+
+
+def test_a_release_whose_sample_id_repeats_refuses_the_build(
+    tmp_path: Path, mg1655: EcoliK12MG1655Genome, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``sample_id`` is what each record's ``replicate_id`` carries and what tells two
+    samples of one condition apart, so a release that repeats it stops the build naming
+    the repeated id rather than storing two records that dump to one content id.
+    """
+    frame = _metadata_frame()
+    row = dict(frame.loc["p1k_00007"])
+    row[lg.COL_GROWTH_RATE] = "0.91"
+    frame.loc["p1k_09003"] = row
+    path = tmp_path / lm.METADATA.name
+    frame.to_csv(path)
+    root = tmp_path / "growth_rate_lamoureux2023"
+    (root / "raw").mkdir(parents=True)
+    (root / "raw" / lm.METADATA.name).write_bytes(path.read_bytes())
+    monkeypatch.setattr(
+        lm,
+        "METADATA",
+        lm.METADATA.model_copy(
+            update={"sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+        ),
+    )
+    monkeypatch.setattr(lg, "EXPECTED_RATE_CELLS", SYNTHETIC_RATE_CELLS + 1)
+    monkeypatch.setattr(lg, "EXPECTED_ZERO_RATES", SYNTHETIC_ZEROS)
+    monkeypatch.setattr(lg, "EXPECTED_AFTER_LOADER_RULES", len(SYNTHETIC_RECORDS) + 1)
+    monkeypatch.setattr(lg, "EXPECTED_RECORDS", len(SYNTHETIC_RECORDS) + 1)
+    monkeypatch.setattr(lg, "EXPECTED_BASE_RECORDS", len(SYNTHETIC_BASE))
+    monkeypatch.setattr(lg, "MIN_RATE", 0.0)
+    monkeypatch.setattr(lg, "MAX_RATE", 0.91)
+    monkeypatch.setattr(lg, "BASE_RATE_MEAN", SYNTHETIC_BASE_MEAN)
+    with pytest.raises(RuntimeError, match="glu__ale__1"):
+        lg.GrowthRateLamoureux2023Dataset(root=str(root))
+    assert not (root / "processed" / "lmdb").exists()

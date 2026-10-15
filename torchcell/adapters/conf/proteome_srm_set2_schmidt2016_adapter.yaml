@@ -1,6 +1,6 @@
 # Schmidt 2016 Table S3 SRM abundances (data set 2): 14 BW25113 growth conditions,
 # ProteinAbundanceExperiment, 31 protein keys per record. Every genotype is the
-# wild type (0 perturbations in 14 of 14 records), so neither `bacterial perturbation` nor
+# wild type (0 perturbations in 14 of 14 records), so neither `perturbation` nor
 # `perturbation to genotype` is enabled; the three KEIO deletion strains of this paper
 # carry no SRM abundance and are served as fitness records by
 # growth_rate_schmidt2016_adapter.yaml instead. The environment carries

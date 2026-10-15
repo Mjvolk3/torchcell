@@ -5,7 +5,7 @@
 """BioCypher adapter exposing the Menasalvas 2025 deposited growth-phase metabolite concentrations as knowledge-graph nodes and edges.
 
 One record per released strain of data S1-1's growth phase: the pathway, biosensor
-and deletion leaves served as ``bacterial perturbation`` nodes, the TEAM-2595
+and deletion leaves served as ``perturbation`` nodes, the TEAM-2595
 record's 75 called variants of data S1-5 served as ``bacterial sequence variant
 perturbation`` nodes, and the 48 Absolute micromolar concentrations as a
 ``MetabolitePhenotype``.

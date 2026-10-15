@@ -58,7 +58,7 @@ def test_kg_manifest_resolves_the_dataset_to_its_own_module_and_conf() -> None:
 def test_conf_serves_the_deletion_perturbation_and_the_carbon_source() -> None:
     """The one Schmidt 2016 dataset with a gene perturbation, and both axes are served.
 
-    The genotype leaf is a ``bacterial perturbation`` node joined to its genotype, and
+    The genotype leaf is a ``perturbation`` node joined to its genotype, and
     the medium's carbon source is an environment perturbation, so both pairs are on.
     """
     conf = yaml.safe_load(
@@ -71,12 +71,11 @@ def test_conf_serves_the_deletion_perturbation_and_the_carbon_source() -> None:
         for m in conf["cell_adapter"]["node_methods"]
         + conf["cell_adapter"]["edge_methods"]
     ]
-    assert "bacterial perturbation (chunked)" in names
+    assert "perturbation (chunked)" in names
     assert "perturbation to genotype (chunked)" in names
     assert "environment perturbation (chunked)" in names
     assert "fitness phenotype (chunked)" in names
     assert [n for n in names if "crispr" in n] == []
-    assert "perturbation (chunked)" not in names
 
 
 @pytest.mark.data

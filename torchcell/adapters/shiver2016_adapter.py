@@ -6,7 +6,7 @@
 screen as knowledge-graph nodes and edges.
 
 One record per (BW25113 deletion strain x screen condition): a single
-``DeletionStrainPerturbation`` served as a ``bacterial perturbation`` node, the
+``DeletionStrainPerturbation`` served as a ``perturbation`` node, the
 released fitness-score as an ``EnvironmentResponsePhenotype``, and the screen plate's
 dosed chemical or varied physical factor as an environment perturbation.
 """

@@ -6,7 +6,7 @@
 nodes and edges.
 
 One record per released pinene cell: the CRISPRa or CRISPRi guide of each targeted
-label served as a ``bacterial perturbation`` node, and the ratio of the strain's pinene
+label served as a ``perturbation`` node, and the ratio of the strain's pinene
 over the no-guide control's as a ``ProductTiterPhenotype`` on
 ``ConcentrationUnit.fold_change``.
 """

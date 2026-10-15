@@ -1,7 +1,7 @@
 # Baba 2006 Table 3 OD600 growth yield: 11,735 BW25113 Keio mutant readings,
-# EnvironmentResponseExperiment, MeasurementType.optical_density (absolute). One
-# BacterialDeletionPerturbation per record (released MG1655 b-number, JW id as the strain
-# accession), served as `bacterial perturbation`. No record carries an environment
+# EnvironmentResponseExperiment, MeasurementType.optical_density (absolute).
+# One BacterialDeletionPerturbation per record (released MG1655 b-number, JW id as the
+# strain accession), served as `perturbation`. No record carries an environment
 # perturbation: the three conditions differ in medium and duration. The reference's
 # reading is a typed gap (Table 3 has no wild-type row).
 cell_adapter:
@@ -12,7 +12,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

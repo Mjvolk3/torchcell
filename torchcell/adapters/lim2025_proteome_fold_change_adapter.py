@@ -7,8 +7,8 @@ as knowledge-graph nodes and edges.
 
 One record per released ``Proteome_<isolate>vsIPL400_<medium>`` sheet: the numerator
 strain's seven designed ``DeletionStrainPerturbation`` leaves served as
-``bacterial perturbation``, its called variants served as
-``bacterial sequence variant perturbation`` (issue #731), and the per-protein log2 fold
+``perturbation``, its called variants served as
+``sequence variant perturbation`` (issue #731), and the per-protein log2 fold
 changes with their unadjusted and BH-adjusted p-values as a
 ``ProteinFoldChangePhenotype``. The phenotype node class is ``protein fold change
 phenotype``, NOT ``protein abundance phenotype``: a ratio and an absolute level are

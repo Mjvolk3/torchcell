@@ -7,7 +7,7 @@ and (``--data``) the graph it emits from its dev-tree LMDB.
 Menasalvas 2025 isoprenol selection: 58 targets, EnvironmentResponseExperiment.
 8 to 10 perturbations per record: HeterologousPathwayPerturbation (348),
 DeletionStrainPerturbation (58) and CrisprInterferencePerturbation (60), all
-served as `bacterial perturbation`. Every CRISPRi leaf carries a CrisprConstruct, so the
+served as `perturbation`. Every CRISPRi leaf carries a CrisprConstruct, so the
 crispr-construct pair is enabled. The environment carries SmallMoleculePerturbation and
 EnvironmentPhysicalPerturbation edits, so the environment-perturbation pair is enabled.
 Every record gaps temperature; the temperature methods emit nothing for a gapped record.

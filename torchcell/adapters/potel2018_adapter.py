@@ -6,7 +6,7 @@
 nodes and edges.
 
 One record per released sample of *E. coli* W3110, every genotype the wild type, so
-neither ``bacterial perturbation`` nor ``perturbation to genotype`` is served; no
+neither ``perturbation`` nor ``perturbation to genotype`` is served; no
 environment carries a perturbation, so the environment-perturbation pair is off too.
 """
 

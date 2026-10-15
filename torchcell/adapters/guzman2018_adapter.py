@@ -6,7 +6,7 @@
 knowledge-graph nodes and edges.
 
 One record per released library: TPM as an ``RNASeqExpressionPhenotype`` (counts a
-typed gap), the Keio deletion as a ``bacterial perturbation`` and the strain's breseq
+typed gap), the Keio deletion as a ``perturbation`` and the strain's breseq
 calls as ``bacterial sequence variant perturbation`` nodes.
 """
 

@@ -143,8 +143,12 @@ def _lines(out: str) -> list[str]:
 def test_real_schema_compact_table(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """The committed ``torchcell_schema_config.yaml``: 50 nodes (46 under six Biolink
-    parents, 4 auto-mapped by name), 14 edges under five relations, 11 concepts in all.
+    """The committed ``torchcell_schema_config.yaml``: 49 nodes (45 under six Biolink
+    parents and one torchcell parent, 4 auto-mapped by name), 15 edges under six
+    relations, 13 concepts in all. The ontology unification (G, 2026-10-15) retired
+    ``bacterial perturbation`` and ``bacterial sequence variant perturbation``, put
+    ``sequence variant perturbation`` under ``perturbation`` and added the
+    ``perturbation of genome`` edge under ``is sequence variant of``.
     Hale 2024 added ``perturbed segregant genotype`` under genotype and the ``segregant
     background of`` edge under part of.
     ``interned constant`` (tcdb-002) is a third ``information content entity`` beside
@@ -175,11 +179,14 @@ def test_real_schema_compact_table(
         f"{'biotic exposure':25} → phage perturbation",
         f"{'environmental exposure':25} → environment, environment perturbation, "
         "media, temperature",
-        f"{'genotype':25} → bacterial perturbation, bacterial sequence variant "
-        "perturbation, perturbation, perturbed segregant genotype, segregant genotype",
+        f"{'genotype':25} → perturbation, perturbed segregant genotype, segregant "
+        "genotype",
         "information content entity → experiment, experiment reference, interned "
         "constant",
         f"{'nucleic acid entity':25} → crispr construct",
+        # the one torchcell class that is a parent: the called-variant child sits under
+        # `perturbation` (ontology unification G, 2026-10-15)
+        f"{'perturbation':25} → sequence variant perturbation",
         f"{'phenotypic feature':25} → bacterial morphology phenotype, biosensor "
         "fluorescence phenotype, calmorph "
         "phenotype, environment response "
@@ -202,6 +209,7 @@ def test_real_schema_compact_table(
         f"{'✓ auto-mapped':25} → dataset, genome, genotype, publication",
         f"{'coexists with':25} → experiment reference of",
         "genetically associated with → perturbation member of",
+        f"{'is sequence variant of':25} → perturbation of genome",
         f"{'mentions':25} → publication mentions experiment",
         f"{'part of':25} → crispr construct member of, environment perturbation "
         "member of, experiment member of, experiment reference member of, media "
@@ -209,9 +217,9 @@ def test_real_schema_compact_table(
         f"{'participates in':25} → environment member of, genome member of, "
         "genotype member of, phenotype member of",
     ]
-    assert "Nodes:    46/50 explicit + 4 auto-mapped = 50/50 total" in lines
-    assert "Edges:    14/14 mapped to 5 Biolink concepts" in lines
-    assert "Total:    11 unique Biolink concepts used" in lines
+    assert "Nodes:    45/49 explicit + 4 auto-mapped = 49/49 total" in lines
+    assert "Edges:    15/15 mapped to 6 Biolink concepts" in lines
+    assert "Total:    13 unique Biolink concepts used" in lines
     assert "✓ 4 nodes auto-mapped by name matching" in lines
     assert not any("Warning" in line for line in lines)
 
@@ -220,7 +228,7 @@ def test_compact_headers_count_the_schema(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """The compact headers print ``len(nodes)`` and ``len(edges)`` (issue #532; they were
-    the literals 16 and 11): the committed schema has 50 nodes (``interned constant``
+    the literals 16 and 11): the committed schema has 49 nodes (``interned constant``
     joined in tcdb-002, then the four bacterial-program classes, ``phage
     perturbation``, ``promoter activity phenotype``, ``bacterial sequence
     variant perturbation``, ``bacterial morphology phenotype``, for #770
@@ -234,17 +242,16 @@ def test_compact_headers_count_the_schema(
     ``pooled sort seq expression phenotype`` (#991) and ``biosensor fluorescence
     phenotype`` (#990), for #921 ``phosphosite intensity phenotype``, for #989
     ``microarray expression ratio phenotype`` and, for #909, ``graded gene
-    essentiality phenotype``) and 14 edges (the last ``segregant
-    background
-    of``), the small test schema 3 nodes and
-    2 edges (its stray string entry is neither).
+    essentiality phenotype``, then ``sequence variant perturbation`` in place of the two
+    retired bacterial classes) and 15 edges (the last ``perturbation of genome``), the
+    small test schema 3 nodes and 2 edges (its stray string entry is neither).
     """
     monkeypatch.chdir(tmp_path)
     from torchcell.ontology.tc_ontology import print_schema_mappings
 
     small = tmp_path / "schema.yaml"
     small.write_text(yaml.safe_dump(SCHEMA))
-    for path, n_nodes, n_edges in ((REAL_SCHEMA, 50, 14), (small, 3, 2)):
+    for path, n_nodes, n_edges in ((REAL_SCHEMA, 49, 15), (small, 3, 2)):
         print_schema_mappings(str(path), compact=True)
         lines = _lines(capsys.readouterr().out)
         assert f"📦 NODES ({n_nodes} total)" in lines

@@ -6,7 +6,7 @@ view of it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Balakrishnan 2022 mRNA number fractions, E. coli NCM3722 and three derivatives:
 MrnaNumberFractionExperiment. The derivatives' promoter replacements are served as
-`bacterial perturbation`; every environment carries the glucose carbon source, and some
+`perturbation`; every environment carries the glucose carbon source, and some
 a 3MBA, IPTG or chloramphenicol dose, so the environment-perturbation pair is enabled.
 """
 

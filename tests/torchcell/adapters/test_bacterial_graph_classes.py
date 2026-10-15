@@ -1,11 +1,15 @@
 # tests/torchcell/adapters/test_bacterial_graph_classes.py
 # [[tests.torchcell.adapters.test_bacterial_graph_classes]]
-"""The graph classes the bacterial schema needs, and the yeast output they leave alone.
+"""The graph classes the bacterial schema needs, and the yeast output beside them.
 
-``bacterial perturbation``, ``product titer phenotype``, ``protein turnover phenotype``,
-``flux phenotype`` and ``promoter activity phenotype`` are NEW node classes, emitted by
-NEW ``CellAdapter`` methods, so a served dataset's nodes cannot move. Three things are
-pinned here:
+``product titer phenotype``, ``protein turnover phenotype``, ``flux phenotype`` and
+``promoter activity phenotype`` are node classes emitted by their own ``CellAdapter``
+methods. The perturbation axis has ONE class for every host since the ontology
+unification (G, 2026-10-15): ``perturbation`` carries ``host_genome`` and ``sequence
+variant perturbation`` (is_a perturbation) carries the call, both emitted by the one
+``_perturbation_node`` with the label chosen by leaf; the former ``bacterial
+perturbation`` and ``bacterial sequence variant perturbation`` classes are retired.
+Three things are pinned here:
 
 - Each new method emits the class it declares, with the id rule every sub-object node
   uses (sha256 of the json-dumped ``model_dump``), the declared property set exactly, and
@@ -14,11 +18,11 @@ pinned here:
 - The served edge methods already address the new nodes: ``perturbation member of``,
   ``crispr construct member of`` and ``phenotype member of`` compute the same ids, so no
   edge method is added.
-- A yeast record's output is what ``origin/main`` (76933585) emits. The expected
-  ``perturbation`` nodes are written out in full below, and the other methods a yeast
-  dataset enables are pinned by the sha256 of their canonical output, computed by running
-  main's ``CellAdapter`` on the same record (the record and the digest rule are defined
-  in this file). The bacterial method emits nothing for it.
+- A yeast record's output is pinned: the expected ``perturbation`` nodes are written out
+  in full below, and the other methods a yeast dataset enables are pinned by the sha256
+  of their canonical output (the record and the digest rule are defined in this file).
+  The union-to-label map of the one perturbation method is a bijection over
+  ``GenePerturbationType``.
 
 Fixture records are built from the Step 4 classes in ``torchcell.datamodels.schema``.
 """
@@ -37,8 +41,8 @@ import yaml
 
 import torchcell
 from torchcell.adapters.cell_adapter import (
-    BACTERIAL_PERTURBATION_LEAVES,
-    BACTERIAL_VARIANT_PERTURBATION_LEAVES,
+    HOST_GENOME_OF_NAMESPACE,
+    VARIANT_CALL_LEAVES,
     CellAdapter,
 )
 from torchcell.datamodels import schema as s
@@ -444,6 +448,7 @@ YEAST_PERTURBATION_NODES = [
             "perturbed_gene_name": "TFC3",
             "perturbation_type": "sga_kanmx_deletion",
             "description": "Deletion via KanMX or NatMX gene replacement",
+            "host_genome": "sgd_S288C_R64-4-1_20230830",
             "strain_id": "YAL001C_dma1",
             "id": "5abd40e7968f1001ace38a9419e24a82e6a00d4262a839e6f4d939fdbf49640e",
             "preferred_id": "sga_kanmx_deletion",
@@ -459,6 +464,7 @@ YEAST_PERTURBATION_NODES = [
             "perturbed_gene_name": "VPS8",
             "perturbation_type": "kanmx_deletion",
             "description": "Deletion via KanMX or NatMX gene replacement",
+            "host_genome": "sgd_S288C_R64-4-1_20230830",
             "strain_id": None,
             "id": "16eef850df53a4163fd496054cd2b6369f3462eea93fed9b8283c189e5c0cb56",
             "preferred_id": "kanmx_deletion",
@@ -474,6 +480,7 @@ YEAST_PERTURBATION_NODES = [
             "perturbed_gene_name": "EFB1",
             "perturbation_type": "crispr_interference",
             "description": "CRISPR interference (decreased expression of a present gene)",
+            "host_genome": "sgd_S288C_R64-4-1_20230830",
             "strain_id": None,
             "id": "fc2d8c98d81112f9386edb636aee9fc6d558c1f2be10c4a24fa11eeeab73e211",
             "preferred_id": "crispr_interference",
@@ -496,13 +503,15 @@ YEAST_PERTURBATION_NODES = [
 # ``identifier_mapping`` are fields of ``GenePerturbation``, so every perturbation's
 # ``model_dump`` (and therefore its sha256 id, the genotype's and the experiment's)
 # changed, which is the full rebuild the P1 record names. The crispr construct and the
-# fitness phenotype digests did not move: the change did not reach them.
+# fitness phenotype digests did not move: the change did not reach them. Under G (the
+# graph stage of the same unification) only ``perturbation (chunked)`` moved again: the
+# node gained ``host_genome``, and no id changed.
 YEAST_GOLDEN_DIGESTS = {
     "genotype (chunked)": (
         "64f38fddb654ba1b1e3f14b536d9f1db3481488839ef9340eba60b89dcce49c7"
     ),
     "perturbation (chunked)": (
-        "76b5585ddb00dfb437c4ce45199124b84d7024cd582b101aff2ea32cc18e6304"
+        "a7783bfc2db824171bd176f478e39c62b6c02dab2e9fdae626958696440bafa3"
     ),
     "crispr construct (chunked)": (
         "0bc236c34fd3a054f8022092236388026ec9e772b555fbfb7ab9b32173f12727"
@@ -539,22 +548,16 @@ def test_the_yeast_output_of_each_enabled_method_matches_main(method_name: str) 
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="lane H re-keys the lane; the tuple retires (P1 folded the CRISPR leaves, so "
-    "the class-keyed tuple now catches a yeast CRISPRi record)",
-)
-def test_a_yeast_record_emits_no_bacterial_perturbation_node() -> None:
-    assert _run("bacterial perturbation (chunked)", _yeast_record()) == []
-
-
-# ---------------------------------------------------------- bacterial perturbation
-def test_bacterial_perturbation_nodes_carry_the_namespace_one_per_leaf() -> None:
+# --------------------------------------------- one perturbation class, every host
+def test_a_bacterial_record_emits_one_perturbation_node_per_leaf_with_its_host() -> (
+    None
+):
+    """Every bacterial leaf is a ``perturbation`` node under the registry's set id."""
     record = _product_titer_record(_titer())
     # Genotype sorts its perturbations by systematic_gene_name: 'Efa:mvaE' first.
     leaves = record["experiment"].genotype.perturbations
-    nodes = _run("bacterial perturbation (chunked)", record)
-    assert [n.get_label() for n in nodes] == ["bacterial perturbation"] * 5
+    nodes = _run("perturbation (chunked)", record)
+    assert [n.get_label() for n in nodes] == ["perturbation"] * 5
     assert [n.get_id() for n in nodes] == [_sha(p) for p in leaves]
     assert [n.get_preferred_id() for n in nodes] == [
         "heterologous_pathway",
@@ -572,49 +575,97 @@ def test_bacterial_perturbation_nodes_carry_the_namespace_one_per_leaf() -> None
             "Gene deletion strain, with its collection, cassette and construction as "
             "stated"
         ),
-        "gene_namespace": MG1655,
+        "host_genome": "ecoli_K12_MG1655_ASM584v2",
+        "strain_id": None,
         "id": _sha(leaves[1]),
         "preferred_id": "deletion_strain",
     }
-    assert {n.get_properties()["gene_namespace"] for n in nodes} == {MG1655}
+    assert {n.get_properties()["host_genome"] for n in nodes} == {
+        "ecoli_K12_MG1655_ASM584v2"
+    }
     assert "serialized_data" not in deletion
+    assert "gene_namespace" not in deletion
 
 
-@pytest.mark.xfail(strict=True, reason="lane H re-keys the lane; the tuple retires")
-def test_the_bacterial_leaf_tuple_is_exactly_the_leaves_carrying_gene_namespace() -> (
-    None
-):
-    """The two bacterial tuples PARTITION the genotype union's namespaced classes.
+def test_host_genome_is_a_bijection_from_the_namespace_onto_registry_set_ids() -> None:
+    """``HOST_GENOME_OF_NAMESPACE`` maps every ``GeneIdNamespace`` member, one to one, onto
+    an assembly-set id the genomes registry deposits, so ``perturbation.host_genome``
+    joins ``genome.assembly_set`` by value and never on a strain string.
+    """
+    from torchcell.sequence.genome import registry
 
-    A called-variant leaf carries ``gene_namespace`` too, so the set it belongs to is
-    the union of the two tuples, and the tuples must be disjoint: a leaf served under
-    both labels would be written twice (``SpanDeletionCallPerturbation`` is a
-    subclass of ``DeletionStrainPerturbation``, which is why the adapter excludes it
-    by tuple rather than by isinstance alone).
+    namespaces = set(typing.get_args(s.GeneIdNamespace))
+    assert set(HOST_GENOME_OF_NAMESPACE) == namespaces
+    assert len(set(HOST_GENOME_OF_NAMESPACE.values())) == len(namespaces)
+    registry_ids = {
+        value
+        for name, value in vars(registry).items()
+        if name.isupper() and isinstance(value, str) and "_" in value
+    }
+    assert set(HOST_GENOME_OF_NAMESPACE.values()) <= registry_ids
+    assert HOST_GENOME_OF_NAMESPACE["scerevisiae_s288c_sgd_systematic"] == (
+        registry.SGD_S288C_R64
+    )
+    assert HOST_GENOME_OF_NAMESPACE[MG1655] == registry.ECOLI_K12_MG1655
+    assert HOST_GENOME_OF_NAMESPACE[KT2440] == registry.PPUTIDA_KT2440
+
+
+def test_the_union_to_label_map_is_a_bijection_over_every_leaf() -> None:
+    """Every member of ``GenePerturbationType`` is served under exactly one label.
+
+    The one ``_perturbation_node`` partitions the union by leaf: a leaf that composes a
+    ``BacterialVariantCall`` (``VARIANT_CALL_LEAVES``) is a ``sequence variant
+    perturbation`` and every other leaf a ``perturbation``. The rule is a pure function
+    of the class, pinned here over the whole union (audit C 3.3), so no conf and no
+    class tuple can leave a leaf out: the former class-keyed lanes excluded
+    ``GeneAdditionPerturbation``, which is the Carruthers 2025 gap this stage closes.
+    ``SpanDeletionCallPerturbation`` is a ``DeletionStrainPerturbation`` by class and
+    carries the call beside it, which is why the predicate is the composed call and not
+    the ``VariantCallPerturbation`` base alone.
     """
     (union,) = typing.get_args(s.Genotype.model_fields["perturbations"].annotation)
-    namespaced = {
-        cls for cls in typing.get_args(union) if "gene_namespace" in cls.model_fields
+    leaves = set(typing.get_args(union))
+    label_of = {
+        cls: (
+            "sequence variant perturbation"
+            if issubclass(cls, VARIANT_CALL_LEAVES)
+            else "perturbation"
+        )
+        for cls in leaves
     }
-    plain = set(BACTERIAL_PERTURBATION_LEAVES)
-    variant = set(BACTERIAL_VARIANT_PERTURBATION_LEAVES)
-    assert plain | variant == namespaced
-    assert plain & variant == set()
-    # 5 from PR #707 plus the round-2 marked-allele, degron and CRISPRa leaves
-    # (#749, #792, #799) plus the three released-identifier leaves (#691)
-    assert len(BACTERIAL_PERTURBATION_LEAVES) == 5 + 3 + 3
-    assert len(BACTERIAL_VARIANT_PERTURBATION_LEAVES) == 3
+    assert set(label_of.values()) == {"perturbation", "sequence variant perturbation"}
+    composes_a_call = {
+        cls
+        for cls in leaves
+        if cls.model_fields.get("call") is not None
+        and cls.model_fields["call"].annotation is s.BacterialVariantCall
+    }
+    assert {cls for cls, label in label_of.items() if label.startswith("sequence")} == (
+        composes_a_call
+    )
+    assert composes_a_call == {
+        s.LocusVariantCallPerturbation,
+        s.SiteVariantCallPerturbation,
+        s.SpanDeletionCallPerturbation,
+    }
+    assert label_of[s.GeneAdditionPerturbation] == "perturbation"
+    assert label_of[s.SgaKanMxDeletionPerturbation] == "perturbation"
+    assert label_of[s.DeletionStrainPerturbation] == "perturbation"
+    # the schema side: every leaf carries the host the node projects
+    assert all("gene_namespace" in cls.model_fields for cls in leaves)
+    assert {label_of[p.__class__] for p in _bacterial_leaves()} == {"perturbation"}
+    assert {label_of[p.__class__] for p in _variant_leaves()} == {
+        "sequence variant perturbation"
+    }
 
 
-# ------------------------------------------- bacterial sequence variant perturbation
-def test_variant_nodes_carry_the_call_and_the_other_leaves_emit_none() -> None:
+# ------------------------------------------------------ sequence variant perturbation
+def test_variant_nodes_carry_the_call_under_the_child_label() -> None:
     """The #731 class: one node per called variant, with the call projected off .call."""
     record = _variant_record(_titer())
     leaves = record["experiment"].genotype.perturbations
-    nodes = _run("bacterial sequence variant perturbation (chunked)", record)
-    assert [n.get_label() for n in nodes] == [
-        "bacterial sequence variant perturbation"
-    ] * 3
+    nodes = _run("perturbation (chunked)", record)
+    assert [n.get_label() for n in nodes] == ["sequence variant perturbation"] * 3
     assert [n.get_id() for n in nodes] == [_sha(p) for p in leaves]
     # Genotype sorts by systematic_gene_name, so the site id sorts before the PP_ tags
     # and PP_3415 before PP_4062.
@@ -631,7 +682,7 @@ def test_variant_nodes_carry_the_call_and_the_other_leaves_emit_none() -> None:
             "Called sequence variant keyed on its genomic site, because no locus tag "
             "of the pinned assembly holds it"
         ),
-        "gene_namespace": KT2440,
+        "host_genome": "pputida_KT2440_ASM756v2",
         "reference_sequence": "AE015451",
         "position_start": 4586057,
         "position_end": 4586057,
@@ -646,30 +697,26 @@ def test_variant_nodes_carry_the_call_and_the_other_leaves_emit_none() -> None:
     assert nodes[2].get_properties()["systematic_gene_name"] == "PP_4062"
     assert nodes[2].get_properties()["variant_type"] == "deletion"
     assert "serialized_data" not in nodes[0].get_properties()
-    # the span deletion is NOT also written as a `bacterial perturbation`
-    assert _run("bacterial perturbation (chunked)", record) == []
-    assert (
-        _run("bacterial sequence variant perturbation (chunked)", _yeast_record()) == []
-    )
+    # the span deletion (a DeletionStrainPerturbation subclass) is written ONCE, under
+    # the child label, and a yeast record yields no child node
+    assert [n.get_label() for n in _run("perturbation (chunked)", _yeast_record())] == [
+        "perturbation"
+    ] * 3
 
 
 def test_variant_node_properties_are_exactly_the_declared_class_properties() -> None:
     """The emitted property set equals the schema config's, with no silent extra."""
-    declared = set(SCHEMA["bacterial sequence variant perturbation"]["properties"])
-    node = _run(
-        "bacterial sequence variant perturbation (chunked)", _variant_record(_titer())
-    )[0]
+    declared = set(SCHEMA["sequence variant perturbation"]["properties"])
+    node = _run("perturbation (chunked)", _variant_record(_titer()))[0]
     assert set(node.get_properties()) - NODE_BOOKKEEPING == declared
-    assert SCHEMA["bacterial sequence variant perturbation"]["is_a"] == "genotype"
+    assert SCHEMA["sequence variant perturbation"]["is_a"] == "perturbation"
+    assert set(SCHEMA["perturbation"]["properties"]) - {"strain_id"} < declared
 
 
 def test_a_variant_record_edges_address_the_variant_nodes() -> None:
     """``perturbation to genotype`` computes the same ids, so no edge method is added."""
     record = _variant_record(_titer())
-    node_ids = [
-        n.get_id()
-        for n in _run("bacterial sequence variant perturbation (chunked)", record)
-    ]
+    node_ids = [n.get_id() for n in _run("perturbation (chunked)", record)]
     genotype_id = _run("genotype (chunked)", record)[0].get_id()
     edges = _run("perturbation to genotype (chunked)", record)
     assert [e.get_label() for e in edges] == ["perturbation member of"] * 3
@@ -691,15 +738,24 @@ def test_a_frequency_the_release_wrote_as_a_range_is_a_null_column() -> None:
         gene_namespace=KT2440,
         call=ranged,
     )
-    node = CellAdapter._bacterial_variant_perturbation_node_from(leaf)
+    record = {
+        "experiment": s.ProductTiterExperiment(
+            dataset_name="BacterialVariantToy",
+            genotype=s.Genotype(perturbations=[leaf]),
+            environment=s.CultureEnvironment(media=_lb()),
+            phenotype=_titer(),
+        )
+    }
+    (node,) = _run("perturbation (chunked)", record)
+    assert node.get_label() == "sequence variant perturbation"
     assert node.get_properties()["variant_frequency"] is None
     assert leaf.call.frequency_statement == "61 -> 63"
 
 
-def test_the_served_edge_methods_already_connect_the_bacterial_nodes() -> None:
-    """``perturbation member of`` and ``crispr construct member of`` hit the new ids."""
+def test_the_served_edge_methods_connect_the_bacterial_nodes() -> None:
+    """``perturbation member of`` and ``crispr construct member of`` hit the same ids."""
     record = _product_titer_record(_titer())
-    node_ids = [n.get_id() for n in _run("bacterial perturbation (chunked)", record)]
+    node_ids = [n.get_id() for n in _run("perturbation (chunked)", record)]
     genotype_id = _run("genotype (chunked)", record)[0].get_id()
 
     edges = _run("perturbation to genotype (chunked)", record)
@@ -716,6 +772,75 @@ def test_the_served_edge_methods_already_connect_the_bacterial_nodes() -> None:
     construct_edges = _run("crispr construct to perturbation (chunked)", record)
     assert [e.get_target_id() for e in construct_edges] == [_sha(crispri)]
     assert [e.get_source_id() for e in construct_edges] == [_sha(_construct())]
+
+
+def test_the_host_genome_edge_joins_each_perturbation_to_its_genome_node() -> None:
+    """``perturbation of genome`` (OFF in every conf) targets the ``genome`` node id.
+
+    The chunk carries the record's reference, so the edge needs no extra pass; the
+    genome node's ``assembly_set`` is the registry id the perturbations' ``host_genome``
+    carries, which is the value join the edge is the traversal form of.
+    """
+    reference = s.AssemblyReferenceGenome(
+        species="Escherichia coli",
+        strain="MG1655",
+        assembly_set="ecoli_K12_MG1655_ASM584v2",
+        assembly_accession="GCA_000005845.2",
+    )
+    record = _product_titer_record(_titer())
+    record["reference"] = SimpleNamespace(genome_reference=reference)
+    edges = _run("perturbation to genome (chunked)", record)
+    nodes = _run("perturbation (chunked)", record)
+    assert [e.get_label() for e in edges] == ["perturbation of genome"] * 5
+    assert [e.get_source_id() for e in edges] == [n.get_id() for n in nodes]
+    assert {e.get_target_id() for e in edges} == {_sha(reference)}
+    adapter = _adapter()
+    adapter.dataset = cast(
+        Any,
+        SimpleNamespace(
+            experiment_reference_index=[
+                SimpleNamespace(reference=SimpleNamespace(genome_reference=reference))
+            ]
+        ),
+    )
+    (genome,) = adapter._get_genome_nodes()
+    assert genome.get_id() == _sha(reference)
+    assert genome.get_properties()["assembly_set"] == "ecoli_K12_MG1655_ASM584v2"
+    assert {n.get_properties()["host_genome"] for n in nodes} == {
+        genome.get_properties()["assembly_set"]
+    }
+    assert set(genome.get_properties()) - NODE_BOOKKEEPING == set(
+        SCHEMA["genome"]["properties"]
+    )
+    assert "perturbation to genome (chunked)" not in _enabled_everywhere()
+
+
+def test_a_reference_without_an_assembly_set_projects_null_not_a_strain() -> None:
+    """A yeast ``ReferenceGenome`` states no set today (P2 adds it): the node says so."""
+    reference = s.ReferenceGenome(species="Saccharomyces cerevisiae", strain="BY4741")
+    assert CellAdapter._assembly_set_of(reference) is None
+    adapter = _adapter()
+    adapter.dataset = cast(
+        Any,
+        SimpleNamespace(
+            experiment_reference_index=[
+                SimpleNamespace(reference=SimpleNamespace(genome_reference=reference))
+            ]
+        ),
+    )
+    (genome,) = adapter._get_genome_nodes()
+    assert genome.get_properties()["assembly_set"] is None
+    assert genome.get_properties()["strain"] == "BY4741"
+
+
+def _enabled_everywhere() -> set[str]:
+    """Every method name any adapter conf enables."""
+    names: set[str] = set()
+    for path in sorted((REPO_ROOT / "torchcell/adapters/conf").glob("*_adapter.yaml")):
+        conf = yaml.safe_load(path.read_text(encoding="utf-8"))
+        for key in ("node_methods", "edge_methods"):
+            names |= {m["method_name"] for m in conf["cell_adapter"][key]}
+    return names
 
 
 # ------------------------------------------------------------------- phenotypes
@@ -1362,8 +1487,7 @@ def test_reference_phenotype_nodes_are_deduplicated_and_reach_their_edge(
 
 
 # ----------------------------------------------------------- schema <-> adapter
-NEW_CLASSES = {
-    "bacterial perturbation": ("bacterial perturbation (chunked)", None),
+NEW_CLASSES: dict[str, tuple[str, type[Any] | None]] = {
     "product titer phenotype": (
         "product titer phenotype (chunked)",
         s.ProductTiterPhenotype,
@@ -1418,24 +1542,45 @@ def test_the_new_phenotype_classes_declare_every_field_but_provenance_gaps() -> 
         }, label
 
 
-def test_bacterial_perturbation_is_a_genotype_sibling_of_perturbation() -> None:
-    """Not ``is_a: perturbation``: a served ``MATCH (:Perturbation)`` must not grow."""
-    assert SCHEMA["bacterial perturbation"]["is_a"] == "genotype"
+def test_the_host_keyed_classes_are_retired_and_the_child_sits_under_perturbation() -> (
+    None
+):
+    """One perturbation class for every host; the variant child is_a perturbation."""
+    assert "bacterial perturbation" not in SCHEMA
+    assert "bacterial sequence variant perturbation" not in SCHEMA
     assert SCHEMA["perturbation"]["is_a"] == "genotype"
-    assert set(SCHEMA["bacterial perturbation"]["properties"]) == {
+    assert set(SCHEMA["perturbation"]["properties"]) == {
         "systematic_gene_name",
         "perturbed_gene_name",
         "perturbation_type",
         "description",
-        "gene_namespace",
+        "host_genome",
+        "strain_id",
     }
+    assert SCHEMA["sequence variant perturbation"]["is_a"] == "perturbation"
+    assert SCHEMA["perturbation member of"]["source"] == [
+        "perturbation",
+        "sequence variant perturbation",
+    ]
+    assert SCHEMA["crispr construct member of"]["target"] == "perturbation"
+    assert SCHEMA["perturbation of genome"] == {
+        "is_a": "is sequence variant of",
+        "represented_as": "edge",
+        "input_label": "perturbation of genome",
+        "source": ["perturbation", "sequence variant perturbation"],
+        "target": "genome",
+    }
+    assert "assembly_set" in SCHEMA["genome"]["properties"]
 
 
 def test_emitted_properties_equal_the_declared_properties_at_run_time() -> None:
     """The static coherence check, repeated on real emitted nodes."""
     record = _product_titer_record(_full_titer())
     emitted = {
-        "bacterial perturbation": _run("bacterial perturbation (chunked)", record)[0],
+        "perturbation": _run("perturbation (chunked)", record)[0],
+        "sequence variant perturbation": _run(
+            "perturbation (chunked)", _variant_record(_titer())
+        )[0],
         "product titer phenotype": _run("product titer phenotype (chunked)", record)[0],
         "protein turnover phenotype": _run(
             "protein turnover phenotype (chunked)", _phenotype_record(_turnover())
@@ -1463,11 +1608,12 @@ def test_the_new_methods_are_registered_and_the_served_edges_name_the_new_classe
     None
 ):
     table = _table()
-    assert table["bacterial perturbation (chunked)"] == "_bacterial_perturbation_node"
-    assert (
-        table["bacterial sequence variant perturbation (chunked)"]
-        == "_bacterial_variant_perturbation_node"
-    )
+    assert table["perturbation (chunked)"] == "_perturbation_node"
+    assert table["perturbation to genome (chunked)"] == "_perturbation_to_genome_edges"
+    assert "bacterial perturbation (chunked)" not in table
+    assert "bacterial sequence variant perturbation (chunked)" not in table
+    assert "phage perturbation (chunked)" not in table
+    assert "phage perturbation reference" not in table
     for name, fn in {
         "product titer phenotype (chunked)": "_product_titer_phenotype_node",
         "protein turnover phenotype (chunked)": "_protein_turnover_phenotype_node",
@@ -1527,8 +1673,7 @@ def test_the_new_methods_are_registered_and_the_served_edges_name_the_new_classe
         assert table[name] == fn
     assert SCHEMA["perturbation member of"]["source"] == [
         "perturbation",
-        "bacterial perturbation",
-        "bacterial sequence variant perturbation",
+        "sequence variant perturbation",
     ]
     assert SCHEMA["perturbation member of"]["input_label"] == "perturbation member of"
     assert SCHEMA["perturbation member of"]["target"] == "genotype"
@@ -1615,7 +1760,7 @@ def test_a_phage_node_projects_the_phage_and_its_dose() -> None:
 
     phage = _phage()
     record = _phage_challenge_record(phage)
-    nodes = _run("phage perturbation (chunked)", record)
+    nodes = _run("environment perturbation (chunked)", record)
     assert [n.get_label() for n in nodes] == ["phage perturbation"]
     node = nodes[0]
     assert node.get_preferred_id() == "phage"
@@ -1644,14 +1789,18 @@ def test_two_doses_of_one_phage_are_two_nodes_and_two_phages_are_two_nodes() -> 
     high = _phage(multiplicity_of_infection=1.875)
     other = _phage(name="T4", ncbi_taxid=10665, genome_accession="AF158101.6")
     ids = {
-        _run("phage perturbation (chunked)", _phage_challenge_record(p))[0].get_id()
+        _run("environment perturbation (chunked)", _phage_challenge_record(p))[
+            0
+        ].get_id()
         for p in (low, high, other)
     }
     assert len(ids) == 3
 
 
-def test_the_phage_method_emits_nothing_for_any_other_perturbation() -> None:
-    """A small molecule or a physical factor is the served class's, not this one's."""
+def test_the_one_environment_lane_labels_a_compound_and_a_factor_as_environment() -> (
+    None
+):
+    """A small molecule or a physical factor is `environment perturbation`, a phage not."""
     record = _phage_challenge_record(
         s.SmallMoleculePerturbation(
             compound=s.Compound(name="kanamycin"),
@@ -1660,11 +1809,14 @@ def test_the_phage_method_emits_nothing_for_any_other_perturbation() -> None:
             ),
         ),
         s.EnvironmentPhysicalPerturbation(factor=s.PhysicalFactor.ph),
+        _phage(),
     )
-    assert _run("phage perturbation (chunked)", record) == []
-    # and the served method still emits both of them, unchanged
     served = _run("environment perturbation (chunked)", record)
-    assert [n.get_label() for n in served] == ["environment perturbation"] * 2
+    assert [n.get_label() for n in served] == [
+        "environment perturbation",
+        "environment perturbation",
+        "phage perturbation",
+    ]
 
 
 def test_the_phage_reference_collector_deduplicates_by_content_id() -> None:
@@ -1700,14 +1852,16 @@ def test_the_phage_reference_collector_deduplicates_by_content_id() -> None:
             ]
         ),
     )
-    nodes = CellAdapter._get_phage_perturbation_reference_nodes(adapter)
+    nodes = CellAdapter._get_environment_perturbation_reference_nodes(adapter)
     assert [n.get_label() for n in nodes] == ["phage perturbation"]
     assert nodes[0].get_properties()["phage_name"] == "lambda cI857"
 
 
-def test_the_phage_method_is_registered_under_its_conf_name() -> None:
+def test_the_environment_lane_is_registered_under_its_conf_names() -> None:
     table = _table()
-    assert table["phage perturbation (chunked)"] == "_phage_perturbation_node"
-    assert table["phage perturbation reference"] == (
-        "_get_phage_perturbation_reference_nodes"
+    assert table["environment perturbation (chunked)"] == (
+        "_environment_perturbation_node"
+    )
+    assert table["environment perturbation reference"] == (
+        "_get_environment_perturbation_reference_nodes"
     )

@@ -73,7 +73,7 @@ def test_conf_is_the_same_shape_as_the_designed_deletion_arm() -> None:
         for m in mine["cell_adapter"]["node_methods"]
         + mine["cell_adapter"]["edge_methods"]
     ]
-    assert "bacterial perturbation (chunked)" in names
+    assert "perturbation (chunked)" in names
     assert "fitness phenotype (chunked)" in names
     assert [n for n in names if "environment perturbation" in n] == []
 

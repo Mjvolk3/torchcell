@@ -6,7 +6,7 @@
 as knowledge-graph nodes and edges.
 
 One record per (BW25113 strain x Table S2 screen): the strain's one perturbation (or a
-multi-gene deletion's several) served as ``bacterial perturbation`` nodes, the released
+multi-gene deletion's several) served as ``perturbation`` nodes, the released
 re-scaled score as an ``EnvironmentResponsePhenotype``, and the screen plate's dosed
 chemicals, buffered pH, carbon or nitrogen source and UV exposure as environment
 perturbations.

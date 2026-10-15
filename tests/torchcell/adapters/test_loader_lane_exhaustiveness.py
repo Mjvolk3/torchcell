@@ -17,10 +17,13 @@ the matching edge method is enabled, so the seven natural-isolate confs, which o
 for a multi-class module (the #743 shape): a class whose module imports a leaf for a
 SIBLING class in the same file, each entry naming that sibling and why.
 
-Three datasets fail the rule today and are ``xfail(strict=True)``: they are the known
-gaps the ontology unification's adapter stage (lane H, one ``_perturbation_node`` with
-the label chosen by leaf, the bacterial-only lane retired) closes. When that lands the
-xfails XPASS, strict turns them into failures, and the three marks come off.
+Three datasets failed the rule before the ontology unification's adapter stage (one
+``_perturbation_node`` and one ``_environment_perturbation_node`` with the label chosen
+by leaf, the host-keyed lanes retired): the two live Carruthers stores
+(``GeneAdditionPerturbation`` under the bacterial-only confs) and Mutalik 2020
+(``SmallMoleculePerturbation`` under the phage-only conf). They were ``xfail(strict=True)``
+while the lanes were keyed by conf; with one lane per axis the rule reduces to "the edge
+method is enabled only with its node method", and every mapped dataset passes.
 """
 
 from __future__ import annotations
@@ -51,8 +54,8 @@ SIBLING_IMPORT_ALLOWLIST: dict[str, dict[str, str]] = {
     # variant leaves are imported for ProteomeMenasalvas2025Dataset (3433), whose conf
     # enables the bacterial sequence variant lane (review 3 finding 6).
     "IsoprenolSelectionMenasalvas2025Dataset": {
-        "BacterialSequenceVariantPerturbation": "ProteomeMenasalvas2025Dataset",
-        "BacterialSiteVariantPerturbation": "ProteomeMenasalvas2025Dataset",
+        "LocusVariantCallPerturbation": "ProteomeMenasalvas2025Dataset",
+        "SiteVariantCallPerturbation": "ProteomeMenasalvas2025Dataset",
     },
     # carruthers2025.py: GeneAdditionPerturbation (line 200) is built by
     # ``native_copy_perturbation`` for the titer and proteome classes; the campaign
@@ -63,25 +66,6 @@ SIBLING_IMPORT_ALLOWLIST: dict[str, dict[str, str]] = {
     "ProteomeFoldChangeCarruthers2025Dataset": {
         "GeneAdditionPerturbation": "IsoprenolTiterCarruthers2025Dataset"
     },
-}
-
-#: The gaps the unification closes; ``strict`` so the marks come off when it lands.
-KNOWN_GAPS: dict[str, str] = {
-    "PhageRbTnseqMutalik2020Dataset": (
-        "#1105-style Carruthers gap, closed by the ontology unification: "
-        "released_addition appends a SmallMoleculePerturbation (mutalik2020.py 1769) "
-        "under the phage-only conf"
-    ),
-    "IsoprenolTiterCarruthers2025Dataset": (
-        "#1105-style Carruthers gap, closed by the ontology unification: "
-        "GeneAdditionPerturbation (carruthers2025.py 1825-1853) under a "
-        "bacterial-perturbation-only conf, 6 leaves in 2 records"
-    ),
-    "ProteomeCarruthers2025Dataset": (
-        "#1105-style Carruthers gap, closed by the ontology unification: "
-        "GeneAdditionPerturbation (carruthers2025.py 1825-1853) under a "
-        "bacterial-perturbation-only conf, 6 leaves in 2 records"
-    ),
 }
 
 MAPPED = {cls.__name__: cls for cls in build_adapter_map(include_private=True)}
@@ -100,18 +84,7 @@ def _gaps_of(dataset_class: type) -> LaneGaps:
     )
 
 
-@pytest.mark.parametrize(
-    "dataset_name",
-    [
-        pytest.param(
-            name,
-            marks=pytest.mark.xfail(strict=True, reason=KNOWN_GAPS[name])
-            if name in KNOWN_GAPS
-            else (),
-        )
-        for name in sorted(MAPPED)
-    ],
-)
+@pytest.mark.parametrize("dataset_name", sorted(MAPPED))
 def test_every_imported_perturbation_leaf_is_served_by_an_enabled_lane(
     dataset_name: str,
 ) -> None:
@@ -120,9 +93,9 @@ def test_every_imported_perturbation_leaf_is_served_by_an_enabled_lane(
 
 
 def test_the_known_gaps_are_exactly_the_three_the_unification_closes() -> None:
-    """The xfail set is pinned: a fourth gap must be named here, not hidden by a mark."""
+    """The three gaps of the conf-keyed lanes are closed; the failing set is empty."""
     failing = sorted(name for name, cls in MAPPED.items() if not _gaps_of(cls).empty)
-    assert failing == sorted(KNOWN_GAPS)
+    assert failing == []
 
 
 @pytest.mark.parametrize("dataset_name", sorted(SIBLING_IMPORT_ALLOWLIST))
@@ -153,3 +126,4 @@ def test_each_sibling_allowlist_entry_is_still_needed_and_names_a_serving_siblin
         assert leaf not in SIBLING_IMPORT_ALLOWLIST.get(sibling_name, {}), (
             f"{sibling_name} is allowlisted for {leaf} too; nobody builds it"
         )
+        assert _gaps_of(sibling).empty

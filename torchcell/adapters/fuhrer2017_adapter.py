@@ -6,7 +6,7 @@
 knowledge-graph nodes and edges.
 
 One record per BW25113 Keio strain: a single ``DeletionStrainPerturbation`` served as
-a ``bacterial perturbation`` node, and its FIA-TOF-MS ion z-scores as a
+a ``perturbation`` node, and its FIA-TOF-MS ion z-scores as a
 ``MetabolitePhenotype``. The environment is one fixed medium with no perturbation.
 """
 

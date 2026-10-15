@@ -1,7 +1,7 @@
-# Yunus 2026 CRISPRi arrays: 25 IY1452 strains, ProteinFoldChangeExperiment.
-# 1 to 5 BacterialCrisprInterferencePerturbation per record (72 in all), served as
-# `bacterial perturbation`, each carrying a CrisprConstruct, so the crispr-construct pair
-# is enabled. The environment carries EnvironmentPhysicalPerturbation and
+# Yunus 2026 CRISPRi arrays: 25 IY1452 strains, ProteinFoldChangeExperiment. 1
+# to 5 BacterialCrisprInterferencePerturbation per record (72 in all), served as
+# `perturbation`, each carrying a CrisprConstruct, so the crispr-construct pair is
+# enabled. The environment carries EnvironmentPhysicalPerturbation and
 # SmallMoleculePerturbation edits, so the environment-perturbation pair is enabled.
 cell_adapter:
   node_methods:
@@ -11,7 +11,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "crispr construct (chunked)"
       memory_reduction_factor: 1.0

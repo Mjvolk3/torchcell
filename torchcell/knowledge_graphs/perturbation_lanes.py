@@ -6,17 +6,19 @@
 """Which perturbation leaves an adapter conf serves, and which it leaves without a node.
 
 A conf (``torchcell/adapters/conf/*.yaml``) enables node methods and edge methods by
-name. The edge methods walk EVERY perturbation of a genotype and of an environment; the
-node methods partition the leaves by class: ``perturbation (chunked)`` emits every
-``GenePerturbationType`` member, ``bacterial perturbation (chunked)`` the leaves of
-``BACTERIAL_PERTURBATION_LEAVES``, ``bacterial sequence variant perturbation (chunked)``
-those of ``BACTERIAL_VARIANT_PERTURBATION_LEAVES``; ``environment perturbation
-(chunked)`` every ``EnvironmentPerturbationType`` member except ``PhagePerturbation``,
-which ``phage perturbation (chunked)`` emits alone. A leaf the loader builds under a
-conf that enables the edge method and no node lane holding that leaf yields a
-``perturbation member of`` row whose start node does not exist, which the full import's
-``skip_bad_relationships: true`` drops silently (the Carruthers gene-addition gap, the
-ontology unification review of 2026-10-15).
+name. The edge methods walk EVERY perturbation of a genotype and of an environment, and
+since the ontology unification (G, 2026-10-15) ONE node method per axis emits every
+leaf, choosing the label by leaf: ``perturbation (chunked)`` serves every
+``GenePerturbationType`` member (a ``VariantCallPerturbation`` as ``sequence variant
+perturbation``, every other leaf as ``perturbation``) and ``environment perturbation
+(chunked)`` every ``EnvironmentPerturbationType`` member (a ``PhagePerturbation`` as
+``phage perturbation``, every other leaf as ``environment perturbation``). The retired
+lanes (``bacterial perturbation (chunked)`` keyed on a class tuple, ``bacterial sequence
+variant perturbation (chunked)``, ``phage perturbation (chunked)``) let a conf leave a
+leaf its loader builds with a ``perturbation member of`` row and no start node, which the
+full import's ``skip_bad_relationships: true`` dropped silently (the Carruthers
+gene-addition gap, audit C 1.3). A gap is now possible only when a conf enables the edge
+method and not the one node method of that axis.
 
 This module is the ONE statement of that lane arithmetic. Three guards read it: the
 loader-to-lane exhaustiveness test (direct schema imports of each mapped loader), the
@@ -60,15 +62,11 @@ GENOTYPE_EDGE_METHOD = "perturbation to genotype (chunked)"
 ENVIRONMENT_EDGE_METHOD = "environment perturbation to environment (chunked)"
 """The edge method that walks every environment perturbation."""
 
-GENOTYPE_NODE_METHODS = (
-    "perturbation (chunked)",
-    "bacterial perturbation (chunked)",
-    "bacterial sequence variant perturbation (chunked)",
-)
-ENVIRONMENT_NODE_METHODS = (
-    "environment perturbation (chunked)",
-    "phage perturbation (chunked)",
-)
+GENOTYPE_NODE_METHODS = ("perturbation (chunked)",)
+"""The one genotype-axis node method; it emits every ``GenePerturbationType`` member."""
+ENVIRONMENT_NODE_METHODS = ("environment perturbation (chunked)",)
+"""The one environment-axis node method; it emits every ``EnvironmentPerturbationType``
+member."""
 
 
 class LaneGaps(BaseModel):
@@ -123,32 +121,13 @@ def environment_leaf_names() -> frozenset[str]:
 
 
 def genotype_lanes() -> dict[str, frozenset[str]]:
-    """Node method name -> the genotype leaf class names it emits, from the adapter."""
-    from torchcell.adapters.cell_adapter import (
-        BACTERIAL_PERTURBATION_LEAVES,
-        BACTERIAL_VARIANT_PERTURBATION_LEAVES,
-    )
-
-    return {
-        "perturbation (chunked)": genotype_leaf_names(),
-        "bacterial perturbation (chunked)": frozenset(
-            cls.__name__ for cls in BACTERIAL_PERTURBATION_LEAVES
-        ),
-        "bacterial sequence variant perturbation (chunked)": frozenset(
-            cls.__name__ for cls in BACTERIAL_VARIANT_PERTURBATION_LEAVES
-        ),
-    }
+    """Node method name -> the genotype leaf class names it emits: the whole union."""
+    return {GENOTYPE_NODE_METHODS[0]: genotype_leaf_names()}
 
 
 def environment_lanes() -> dict[str, frozenset[str]]:
-    """Node method name -> the environment leaf class names it emits."""
-    from torchcell.datamodels.schema import PhagePerturbation
-
-    phage = frozenset({PhagePerturbation.__name__})
-    return {
-        "environment perturbation (chunked)": environment_leaf_names() - phage,
-        "phage perturbation (chunked)": phage,
-    }
+    """Node method name -> the environment leaf class names it emits: the whole union."""
+    return {ENVIRONMENT_NODE_METHODS[0]: environment_leaf_names()}
 
 
 def served_genotype_leaves(methods: Iterable[str]) -> frozenset[str]:
@@ -194,7 +173,7 @@ def loader_leaf_imports(loader_path: Path, surface: SchemaSurface) -> LoaderLeaf
     """The perturbation leaves ``loader_path`` imports DIRECTLY from the schema.
 
     Direct imports (:func:`loader_schema_deps`), not the transitive closure: the closure
-    reaches every base class a leaf subclasses (``BacterialDeletionPerturbation`` is a
+    reaches every base class a leaf subclasses (``DeletionStrainPerturbation`` is a
     ``DeletionPerturbation``), which would flag 55 of 170 mapped datasets for leaves they
     never build (review 3, 2026-10-15, finding 6). A direct import is the loader saying it
     builds the leaf; an imported-but-unused leaf is a false positive whose fix is to drop

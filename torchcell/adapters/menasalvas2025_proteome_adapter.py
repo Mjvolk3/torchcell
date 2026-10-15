@@ -5,7 +5,7 @@
 """BioCypher adapter exposing the Menasalvas 2025 deposited growth-phase and production-phase proteome as knowledge-graph nodes and edges.
 
 One record per released sample of Supplementary Data 2 sheet 4: the pathway,
-biosensor and deletion leaves served as ``bacterial perturbation`` nodes, the
+biosensor and deletion leaves served as ``perturbation`` nodes, the
 TEAM-2595 records' 75 called variants of data S1-5 served as ``bacterial sequence
 variant perturbation`` nodes, and the per-sample mean Counts_sum profile as a
 ``ProteinAbundancePhenotype``.

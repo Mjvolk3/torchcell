@@ -6,7 +6,7 @@
 knowledge-graph nodes and edges.
 
 One record per designed deletion strain: a ``DeletionStrainPerturbation`` per deleted
-gene, served as ``bacterial perturbation`` (21 for the large deletion, 1 for ``rpoS``),
+gene, served as ``perturbation`` (21 for the large deletion, 1 for ``rpoS``),
 and the strain's growth rate as a ratio to its isogenic parent MS56. The panel is one M9
 glucose medium with no added compound, so the environment-perturbation pair is off; the
 environment declares a ``ProvenanceGap`` on temperature, for which the temperature

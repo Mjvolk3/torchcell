@@ -6,8 +6,8 @@
 Menasalvas 2025 deposited proteome: 6 samples (three strains over two growth phases),
 ProteinAbundanceExperiment. Every genotype carries the integrated pathway and
 biosensor leaves and, for the two improved strains, the seven deletions, served as
-`bacterial perturbation`; the two TEAM-2595 records additionally carry the 75 called
-variants of data S1-5, served as `bacterial sequence variant perturbation`, so the
+`perturbation`; the two TEAM-2595 records additionally carry the 75 called
+variants of data S1-5, served as `sequence variant perturbation`, so the
 variant pair is enabled. The Environment carries a SmallMoleculePerturbation (crystal
 violet) and an EnvironmentPhysicalPerturbation (pH), so the environment-perturbation
 pair is enabled. No CRISPRi leaf, so no crispr-construct pair.

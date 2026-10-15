@@ -1,8 +1,8 @@
-# Banerjee 2024 isoprenol titer: 20 records, ProductTiterExperiment.
-# 5 to 12 perturbations per record: HeterologousPathwayPerturbation (91) and
-# BacterialDeletionPerturbation (110), served as `bacterial perturbation`. The
-# CultureEnvironment carries EnvironmentPhysicalPerturbation and SmallMoleculePerturbation
-# edits, so the environment-perturbation pair is enabled.
+# Banerjee 2024 isoprenol titer: 20 records, ProductTiterExperiment. 5 to 12
+# perturbations per record: HeterologousPathwayPerturbation (91) and
+# BacterialDeletionPerturbation (110), served as `perturbation`. The CultureEnvironment
+# carries EnvironmentPhysicalPerturbation and SmallMoleculePerturbation edits, so the
+# environment-perturbation pair is enabled.
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"
@@ -11,7 +11,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

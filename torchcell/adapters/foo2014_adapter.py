@@ -6,7 +6,7 @@
 nodes and edges.
 
 One record per released production strain on the PS chassis: the single pBbS5k-borne
-gene served as a ``bacterial perturbation`` node, and the 48 h titer as a
+gene served as a ``perturbation`` node, and the 48 h titer as a
 ``ProductTiterPhenotype``.
 """
 

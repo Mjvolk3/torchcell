@@ -2,7 +2,7 @@
 # released score, EnvironmentResponseExperiment. A deletion row is one
 # BacterialDeletionPerturbation (a multi-gene deletion several), an SPA or linked row a
 # BacterialMarkedAllelePerturbation and a DAS row a BacterialDegronPerturbation, all
-# served as `bacterial perturbation`. The screen plate carries each dosed chemical as a
+# served as `perturbation`. The screen plate carries each dosed chemical as a
 # SmallMoleculePerturbation, the M9 carbon source, the MOPS nitrogen source and the
 # buffered pH as EnvironmentPhysicalPerturbations and the UV dose as a
 # PhysicalExposurePerturbation, on the experiment and the reference, so the
@@ -19,7 +19,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

@@ -6,7 +6,7 @@
 selection as knowledge-graph nodes and edges.
 
 One record per enriched knockdown target: the pathway, chassis deletion and CRISPRi
-leaves served as ``bacterial perturbation`` nodes, each CRISPRi leaf's
+leaves served as ``perturbation`` nodes, each CRISPRi leaf's
 ``CrisprConstruct`` as a ``crispr construct`` node, the enrichment as an
 ``EnvironmentResponsePhenotype``, and the selection compounds as environment
 perturbations.

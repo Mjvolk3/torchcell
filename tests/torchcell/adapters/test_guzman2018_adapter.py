@@ -5,7 +5,7 @@
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Guzman 2018 own GEO release (#964): a Keio deletion and breseq calls per deletion-strain
-library, served as ``bacterial perturbation`` and ``bacterial sequence variant
+library, served as ``perturbation`` and ``sequence variant
 perturbation``; no environment perturbation.
 """
 

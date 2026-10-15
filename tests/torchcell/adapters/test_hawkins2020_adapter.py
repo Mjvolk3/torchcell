@@ -7,7 +7,7 @@ it, and (``--data``) the graph it emits from its dev-tree LMDB.
 Hawkins 2020 mismatch-CRISPRi, E. coli BW25113:
 EnvironmentResponseExperiment. Exactly one
 CrisprInterferencePerturbation per record (``build_genotype``), served as
-`bacterial perturbation`, carrying the record's CrisprConstruct, so the crispr-construct
+`perturbation`, carrying the record's CrisprConstruct, so the crispr-construct
 pair is enabled. The environment carries the 1 mM IPTG inducer as a
 SmallMoleculePerturbation on both the experiment and the reference
 (``screen_environment``), so the environment-perturbation pair is enabled.

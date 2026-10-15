@@ -5,10 +5,10 @@
 #
 # Potel 2018 phosphosite intensities: 12 released samples,
 # PhosphositeIntensityExperiment. Every genotype is the wild type W3110 (0
-# perturbations in 12 of 12 records), so neither `bacterial perturbation` nor
-# `perturbation to genotype` is enabled. No environment carries a perturbation (the two
-# media differ by their carbon-source component), so the environment-perturbation pair
-# is not enabled either.
+# perturbations in 12 of 12 records), so neither `perturbation` nor `perturbation to
+# genotype` is enabled. No environment carries a perturbation (the two media differ by
+# their carbon-source component), so the environment-perturbation pair is not enabled
+# either.
 
 cell_adapter:
   node_methods:

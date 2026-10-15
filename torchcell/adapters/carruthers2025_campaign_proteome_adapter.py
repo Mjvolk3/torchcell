@@ -7,7 +7,7 @@ knowledge-graph nodes and edges.
 
 One record per CRISPRi ``(construct, DBTL cycle)`` strain of the campaign, carrying the
 same genotype identity as the titer family's 465 records: pathway and CRISPRi leaves
-served as ``bacterial perturbation`` nodes, each CRISPRi leaf's ``CrisprConstruct`` as a
+served as ``perturbation`` nodes, each CRISPRi leaf's ``CrisprConstruct`` as a
 ``crispr construct`` node, and the percent-of-proteome abundances as a
 ``ProteinAbundancePhenotype``.
 """

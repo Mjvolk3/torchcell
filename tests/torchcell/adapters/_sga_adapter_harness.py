@@ -261,6 +261,7 @@ def perturbation_node(perturbation: Any) -> BioCypherNode:
             "perturbed_gene_name": perturbation.perturbed_gene_name,
             "perturbation_type": perturbation.perturbation_type,
             "description": perturbation.description,
+            "host_genome": "sgd_S288C_R64-4-1_20230830",
             "strain_id": perturbation.strain_id,
         },
     )
@@ -332,6 +333,8 @@ def expected_nodes(
             properties={
                 "species": GENOME.species,
                 "strain": GENOME.strain,
+                # a yeast ReferenceGenome states no assembly set until P2
+                "assembly_set": None,
                 "serialized_data": json.dumps(GENOME.model_dump()),
             },
         ),

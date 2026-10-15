@@ -6,15 +6,15 @@
 knowledge-graph nodes and edges.
 
 One record per (gene, experiment): a single ``TransposonInsertionPerturbation`` served as
-a ``bacterial perturbation`` node, and the gene fitness as an
-``EnvironmentResponsePhenotype``. The only environment perturbation this row carries is
-the challenge's ``PhagePerturbation``, so the conf enables ``phage perturbation`` and NOT
-``environment perturbation``: the served ``_environment_perturbation_node`` does not
-filter phages out, so enabling both would write every phage twice, under two labels on
-one content id (``cell_adapter.py``, the comment above
-``_phage_perturbation_node_from``). Nothing is lost by the choice -- the kanamycin of the
-solid-agar assays is a plate ingredient on the medium, not a dosed perturbation, and the
-release's own metadata carries it as the ``LB_agar`` recipe's ``Condition_2``.
+a ``perturbation`` node, and the gene fitness as an ``EnvironmentResponsePhenotype``. The
+environment of a challenge carries the ``PhagePerturbation``, served as ``phage
+perturbation`` by the one ``environment perturbation (chunked)`` method (the label is
+chosen by leaf, ``cell_adapter.py``), and ``released_addition`` can append a
+``SmallMoleculePerturbation`` for a released medium outside ``MEDIA_BY_LABEL``, which the
+same method serves as ``environment perturbation``; the retired phage-only lane left that
+leaf with an edge and no node. The kanamycin of the solid-agar assays is a plate
+ingredient on the medium, not a dosed perturbation, and the release's own metadata
+carries it as the ``LB_agar`` recipe's ``Condition_2``.
 """
 
 import os.path as osp

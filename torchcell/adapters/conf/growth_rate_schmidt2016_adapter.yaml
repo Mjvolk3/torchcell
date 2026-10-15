@@ -1,9 +1,8 @@
 # Schmidt 2016 Table S24 growth rates: 6 records, FitnessExperiment. One
 # BacterialDeletionPerturbation per record (the KEIO rimI, rimJ and rimL strains),
-# served as `bacterial perturbation`, so the perturbation pair is enabled. The two
-# media differ by their carbon source, which is an EnvironmentPhysicalPerturbation on
-# every record and on both wild-type references, so the environment-perturbation pair
-# is enabled too.
+# served as `perturbation`, so the perturbation pair is enabled. The two media differ by
+# their carbon source, which is an EnvironmentPhysicalPerturbation on every record and
+# on both wild-type references, so the environment-perturbation pair is enabled too.
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"
@@ -12,7 +11,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

@@ -21,3 +21,7 @@
 # served dev stores, so these two files are tracked.
 !gene_id_namespace_vocabulary.md
 !gene_id_namespace_vocabulary.json
+# The attribution of the job 4901 partial's dangling PerturbationMemberOf rows (lane H,
+# 2026-10-15) is evidence the KG 4.0 build decision cites; reproducible only against
+# that partial's CSVs on /db, so the file is tracked.
+!dangling_perturbation_rows_4901.json

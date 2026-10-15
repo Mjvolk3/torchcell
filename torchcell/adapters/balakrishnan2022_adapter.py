@@ -7,7 +7,7 @@ knowledge-graph nodes and edges.
 
 One record per released sample column of Table S3: the column's per-gene fractions as an
 ``mrna number fraction phenotype`` node, the NCM3722 derivatives' promoter replacements
-(Pu-ptsG, Plac-gltB) as ``bacterial perturbation`` nodes, and the environment's 0.2%
+(Pu-ptsG, Plac-gltB) as ``perturbation`` nodes, and the environment's 0.2%
 glucose carbon source plus the 3MBA, IPTG or chloramphenicol dose as environment
 perturbations.
 """

@@ -1,8 +1,7 @@
 # Ishii 2007 CE-TOFMS metabolome: 24 BW25113 Keio chemostat cultures,
-# MetaboliteExperiment. One BacterialDeletionPerturbation per record,
-# served as `bacterial perturbation` (never the yeast `perturbation` class). No
-# record carries an environment perturbation: all 24 share one medium at one
-# dilution rate, and the wild-type dilution-rate arm is dropped rather than
+# MetaboliteExperiment. One BacterialDeletionPerturbation per record, served as
+# `perturbation`. No record carries an environment perturbation: all 24 share one medium
+# at one dilution rate, and the wild-type dilution-rate arm is dropped rather than
 # loaded, so that pair is not enabled.
 cell_adapter:
   node_methods:
@@ -12,7 +11,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

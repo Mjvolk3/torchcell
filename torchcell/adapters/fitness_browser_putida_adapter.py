@@ -6,7 +6,7 @@
 publication, as knowledge-graph nodes and edges.
 
 One record per (gene, stored sample): a single ``TransposonInsertionPerturbation``
-served as a ``bacterial perturbation`` node, and the gene fitness as an
+served as a ``perturbation`` node, and the gene fitness as an
 ``EnvironmentResponsePhenotype`` carrying the browser's moderated t. Each record's
 publication node is the study the browser's ``pubId`` names for its sample.
 """

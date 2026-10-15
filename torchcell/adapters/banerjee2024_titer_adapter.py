@@ -6,7 +6,7 @@
 nodes and edges.
 
 One record per released titer statement across the paper's five condition families:
-plasmid and deletion leaves served as ``bacterial perturbation`` nodes, and the titer as
+plasmid and deletion leaves served as ``perturbation`` nodes, and the titer as
 a ``ProductTiterPhenotype``.
 """
 

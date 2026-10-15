@@ -5,7 +5,7 @@
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Goodall 2018 TraDIS: 8,203 BW25113 gene calls, GeneEssentialityExperiment.
-One TransposonInsertionPerturbation per record, served as `bacterial perturbation`. No
+One TransposonInsertionPerturbation per record, served as `perturbation`. No
 record carries an environment perturbation (0 in 8,203). The 4,098 plated records gap
 their temperature; the temperature methods emit nothing for a gapped record.
 """

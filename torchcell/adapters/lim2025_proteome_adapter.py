@@ -6,7 +6,7 @@
 knowledge-graph nodes and edges.
 
 One record: IPL400's deletions as ``DeletionStrainPerturbation`` leaves served as
-``bacterial perturbation`` nodes, the abundances under 4 g/L isoprenol as a
+``perturbation`` nodes, the abundances under 4 g/L isoprenol as a
 ``ProteinAbundancePhenotype``, and isoprenol as an environment perturbation.
 """
 

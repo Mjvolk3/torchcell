@@ -10,7 +10,7 @@ experiment, genotype, environment, media, temperature, dataset and publication c
 
 Both optional pairs are on. The genotype carries one ``HeterologousPathwayPerturbation``
 (the episomal promoter-GFP reporter), which is a namespaced bacterial leaf, so
-``bacterial perturbation`` and ``perturbation to genotype`` are enabled. The three
+``perturbation`` and ``perturbation to genotype`` are enabled. The three
 treated arms carry the antibiotic as a ``SmallMoleculePerturbation`` on their reads from
 hour five on, so the environment-perturbation pair is enabled; the untreated arm and the
 pre-dose reads carry none, which the environment-perturbation method simply does not

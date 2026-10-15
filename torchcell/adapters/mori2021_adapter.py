@@ -6,7 +6,7 @@
 knowledge-graph nodes and edges.
 
 One record per loaded *E. coli* MG1655 (EQ353) calibration sample. Every record is the
-wild type with an empty genotype, so no ``bacterial perturbation`` node is served: the
+wild type with an empty genotype, so no ``perturbation`` node is served: the
 paper's engineered NCM3722 derivatives (titratable ``ptsG`` and GOGAT promoters) are all
 in samples this loader drops on their medium. The one environment the seven records share
 carries an ``EnvironmentPhysicalPerturbation`` for the released 0.2% glucose, so the

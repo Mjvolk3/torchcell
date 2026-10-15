@@ -2,7 +2,7 @@
   "record_version": 1,
   "slug": "morphology-phenotype-is-the-general-class-calmorph-is-the-specific-one",
   "date": "2026-10-15",
-  "pr": null,
+  "pr": 1122,
   "author_kind": "agent",
   "base_commit": "b5c5549d8f4752fc8ac89b6d1e5cd2c0ec5bf4a9",
   "python_version": "3.13.0",

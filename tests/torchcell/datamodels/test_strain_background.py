@@ -60,6 +60,7 @@ from torchcell.datamodels.strain_background import (
 )
 from torchcell.sequence.construct import ConstructSpan, FeatureKey
 from torchcell.sequence.genome.registry import (
+    BW25113_BACKGROUND_GENOTYPE,
     SGD_S288C_R64,
     SGD_S288C_R64_GENBANK_ACCESSION,
 )
@@ -96,16 +97,12 @@ def _gap(field: str) -> ProvenanceGap:
 #: A deposited construct contig and the one feature on it a cassette can point at, in
 #: the shape ``test_construct.py`` pins; the bytes are the Cachera pBTX002 map.
 #:
-#: The two ``ConstructSpan(start=..., end=...)`` calls below are written against the
-#: span shape of this branch's base. Lane T's ``construct-span-parts`` makes
-#: ``ConstructSpan`` a ``parts`` list with a composition, where ``start`` and ``end``
-#: are properties that raise on a compound span, so each call becomes
-#: ``ConstructSpan.one(start, end, orientation)`` once that lane is in. MEASURED, not
-#: assumed: merging ``origin/construct-span-parts`` into this branch and switching
-#: exactly these two lines runs 496 passed in datamodels (this file,
-#: ``test_identity.py`` and ``test_construct.py``) and 1,860 passed across adapters,
-#: verification and provenance, with ``IntegratedCassette.placement`` and
-#: ``GeneAdditionPerturbation.placement`` still the same annotation.
+#: The two spans below are built with ``ConstructSpan.one(start, end, orientation)``,
+#: the single-interval constructor the span-parts shape gives: ``ConstructSpan`` holds
+#: ``parts`` with a composition, and ``start`` and ``end`` are properties that raise on
+#: a compound span. The switch from the base shape's keyword form was the one measured
+#: interaction between this change and the span-parts change, and it is the only line
+#: either of them moves in the other.
 _CONTIG = "63f89c1eaa13f888610ed781c4de12c8ac34f4e20512b4eb2c4f32d31af096da"
 _CONTIG_REF = s.ArtifactRef(
     tier="library",
@@ -124,12 +121,12 @@ def _placement(**overrides: Any) -> s.ConstructPlacement:
         "feature_key": FeatureKey(
             label="KanMX",
             so_id="SO:0000316",
-            span=ConstructSpan(start=3001, end=4113, orientation="inline"),
+            span=ConstructSpan.one(3001, 4113, "inline"),
         ),
         "host_placement": s.HostPlacement(
             assembly_set=SGD_S288C_R64,
             site_label="Delta",
-            insert_span=ConstructSpan(start=2003, end=10105, orientation="inline"),
+            insert_span=ConstructSpan.one(2003, 10105, "inline"),
             provenance_gaps=[
                 ProvenanceGap(
                     field="span", reason=ProvenanceGapReason.not_reported_by_primary
@@ -175,7 +172,7 @@ def _bacterial(**kwargs: Any) -> s.StrainBackground:
         "name": "BW25113",
         "reference_strain": "BW25113",
         "assembly_set": "ecoli_K12_BW25113_ASM75055v1",
-        "genotype_statement": s.BW25113_BACKGROUND_GENOTYPE,
+        "genotype_statement": BW25113_BACKGROUND_GENOTYPE,
         "provenance": [WILDENHAIN_BY4741],
     }
     base.update(kwargs)
@@ -987,7 +984,7 @@ def test_the_base_states_what_both_families_state() -> None:
     background = _bacterial(alleles=[_rph()])
     assert background.reference_strain == "BW25113"
     assert background.assembly_set == "ecoli_K12_BW25113_ASM75055v1"
-    assert background.genotype_statement == s.BW25113_BACKGROUND_GENOTYPE
+    assert background.genotype_statement == BW25113_BACKGROUND_GENOTYPE
     assert background.functional_copies("BW25113_3643") == 0
     assert background.functional_copies("BW25113_0344") == 1
     assert [a.allele_name for a in background.alleles_at("BW25113_3643")] == ["rph-1"]

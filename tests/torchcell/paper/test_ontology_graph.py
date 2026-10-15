@@ -14,11 +14,17 @@ import re
 
 import pytest
 
+from torchcell.datamodels import compound_identity as compound_identity_module
+from torchcell.datamodels import media as media_module
+from torchcell.datamodels import pydant as pydant_module
+from torchcell.datamodels import schema as schema_module
 from torchcell.paper.ontology_graph import (
+    BEHAVIOR_MIXINS,
     LANE_HEADINGS,
     LANE_ORDER,
     LANE_ROOTS,
     LANE_SUBTITLES,
+    OntologyGraph,
     _lane_for,
     build_ontology_graph,
 )
@@ -35,6 +41,30 @@ NON_CLASS_TOKENS = frozenset({"Experiment", "ExperimentReference"})
 @pytest.fixture(scope="module")
 def graph():
     return build_ontology_graph()
+
+
+def _model_bases(name: str, graph: OntologyGraph) -> list[str]:
+    """``name``'s direct bases that the graph draws as models, from the LIVE class.
+
+    The graph's own ``parent`` is one answer to "which base is this class's kind";
+    this reads the bases again from the introspected modules so a test can check that
+    answer instead of restating it.
+    """
+    for module in (
+        schema_module,
+        media_module,
+        pydant_module,
+        compound_identity_module,
+    ):
+        obj = getattr(module, name, None)
+        if isinstance(obj, type):
+            return [
+                base.__name__
+                for base in obj.__bases__
+                if base.__name__ in graph.classes
+                and graph.classes[base.__name__].kind == "model"
+            ]
+    raise AssertionError(f"{name} is in the graph but in none of its modules")
 
 
 def test_every_lane_has_a_heading_and_gloss():
@@ -151,10 +181,28 @@ def test_behavior_mixin_listed_first_is_not_drawn_as_the_parent(graph):
         "ConstructedOrf": ("HashableProvenanceGapMixin", "genotype"),
         "HashableProvenanceGapMixin": ("ProvenanceGapMixin", "provenance"),
     }
-    assert graph.children_of("HashableProvenanceGapMixin") == [
-        "ConstructedOrf",
-        "NaturalIsolateDescriptor",
-    ]
+    # The children are DERIVED, not listed. A hand-kept list went stale the moment
+    # three lanes of the ontology unification each added a mixin-only class
+    # (ReferenceGenome took the mixin for interning, ConstructPlacement,
+    # ConstructVariantCall and HostPlacement are composed value objects), while the
+    # property worth pinning never moves: the mixin is drawn as a parent for exactly
+    # those classes whose only schema-model base IS a behavior mixin. Re-derived here
+    # from the live bases, so a leaf that gains a domain base and still lands under
+    # the mixin fails, which is the regression this test is named for.
+    mixin_only = sorted(
+        name
+        for name, entry in graph.classes.items()
+        if entry.kind == "model"
+        and (bases := _model_bases(name, graph))
+        and set(bases) <= set(BEHAVIOR_MIXINS)
+    )
+    assert graph.children_of("HashableProvenanceGapMixin") == mixin_only
+    assert "ConstructedOrf" in mixin_only and "NaturalIsolateDescriptor" in mixin_only
+    assert not {
+        "BarcodedKanMxDeletionPerturbation",
+        "HeterozygousDeletionPerturbation",
+        "ConditionalAllelePerturbation",
+    } & set(mixin_only)
     assert graph.classes["NaturalIsolateDescriptor"].lane == "genotype"
     assert {
         "BarcodedKanMxDeletionPerturbation",

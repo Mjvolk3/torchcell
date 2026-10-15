@@ -74,6 +74,7 @@ from torchcell.datamodels.schema import (
     CultureFormat,
     EndpointRule,
     EnvironmentResponsePhenotype,
+    EukaryoticStrainBackground,
     Genotype,
     MatingType,
     MeasurementType,
@@ -84,7 +85,6 @@ from torchcell.datamodels.schema import (
     SampleUnit,
     SmallMoleculePerturbation,
     Solvent,
-    StrainBackground,
     StrainEnvironmentResponseExperiment,
     StrainEnvironmentResponseExperimentReference,
     Temperature,
@@ -499,7 +499,7 @@ def test_reference_is_the_strains_own_center_without_compound(built: Any) -> Non
 def test_background_is_by4741_sourced_to_sci_data_with_pending_constructions() -> None:
     genome = w.BY4741_GENOME
     background = genome.background
-    assert isinstance(background, StrainBackground)
+    assert isinstance(background, EukaryoticStrainBackground)
     assert (genome.strain, genome.ploidy) == ("BY4741", "haploid")
     assert background.mating_type == MatingType.a
     assert [a.allele_name for a in background.alleles] == [

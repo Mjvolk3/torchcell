@@ -15,7 +15,11 @@ import pytest
 
 from torchcell import __version__
 from torchcell.datasets.artifact import ArtifactIndex, archive_name, content_sha256
-from torchcell.provenance.build_manifest import MANIFEST_FILENAME, BuildManifest
+from torchcell.provenance.build_manifest import (
+    MANIFEST_FILENAME,
+    BuildManifest,
+    PerturbationLeaves,
+)
 
 SCRIPTS = Path(__file__).resolve().parents[3] / "scripts"
 sys.path.insert(0, str(SCRIPTS))
@@ -37,6 +41,10 @@ def _manifest(slug: str, closure: dict[str, str] | None = None) -> BuildManifest
         hostname="gilahyper",
         torchcell_commit="901d5ec31",
         torchcell_dirty=False,
+        # Manifest schema version 2 records the leaves the store holds; the fake records
+        # carry no perturbation, so the measured leaves are empty. A manifest without the
+        # field reads stale and the packager refuses it.
+        perturbation_leaves=PerturbationLeaves(),
     )
 
 

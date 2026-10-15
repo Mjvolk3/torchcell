@@ -4,7 +4,7 @@
   "date": "2026-10-15",
   "pr": 1112,
   "author_kind": "agent",
-  "base_commit": "2fd68995cacaee928e927d67f8d4088c58239fa8",
+  "base_commit": "7da9bfac0ec841d84e3d1a63479acf2e07ff7e57",
   "python_version": "3.13.0",
   "symbols": [
     {
@@ -96,45 +96,6 @@
       "impact": "breaking",
       "reasons": [
         "symbol removed"
-      ]
-    },
-    {
-      "symbol": "BacterialReleasedCrisprPerturbation",
-      "status": "modified",
-      "kinds": [
-        "removal"
-      ],
-      "fingerprint_before": "c18ae629116413801a3d783f98da916f56fd73d7da22ba108d5c20f97d348036",
-      "fingerprint_after": "9dd8e27f66b6d562b967d1400158ac5345bd84b7000d077cff69067915293548",
-      "impact": "breaking",
-      "reasons": [
-        "removed field 'gene_namespace'"
-      ]
-    },
-    {
-      "symbol": "BacterialReleasedStrainPerturbation",
-      "status": "modified",
-      "kinds": [
-        "removal"
-      ],
-      "fingerprint_before": "b2c1c2ede58b7e535418d83cf716dfbca1679a0ee2f216c2382a4eff01848d41",
-      "fingerprint_after": "5956926b0198f62e7ba793ea551071fddbb49739d7f8d941dd53b0ab0e92affc",
-      "impact": "breaking",
-      "reasons": [
-        "removed field 'gene_namespace'"
-      ]
-    },
-    {
-      "symbol": "BacterialReleasedTransposonPerturbation",
-      "status": "modified",
-      "kinds": [
-        "removal"
-      ],
-      "fingerprint_before": "3d55c37a075e522b985a426b87d57b4473312508612fa31cc9cf4ea61b5d261c",
-      "fingerprint_after": "bbeb39fe2e87e283fc90eb6372281ba11264d999b3f57724236f8ecd9be00e37",
-      "impact": "breaking",
-      "reasons": [
-        "removed field 'gene_namespace'"
       ]
     },
     {
@@ -323,8 +284,8 @@
       "symbol": "GenePerturbation",
       "status": "modified",
       "kinds": [
-        "contract_tightened",
-        "additive_field"
+        "additive_field",
+        "contract_tightened"
       ],
       "fingerprint_before": "3b77998d09b10010824e88b06f00e5e5ec5212cc8f107947bb3525a61766ed67",
       "fingerprint_after": "051293d96006120da39fb08df892ea3e4a6b3483e26ad779bf2751bbd46a2b43",
@@ -339,28 +300,30 @@
       "symbol": "GenePerturbationType",
       "status": "modified",
       "kinds": [
-        "rename",
+        "enum_member_added",
         "removal",
-        "enum_member_added"
+        "rename"
       ],
       "fingerprint_before": "9fddb9b2c095de777300645cc129d00b3225584ed2c6872dc99dfb4fad2909e9",
-      "fingerprint_after": "39c1ac773fa2f4049231ac180ab370e584a0cf663fcad5fd25b37221f6c39cdc",
+      "fingerprint_after": "3db3c596eaf61dfade4f35fc590f875f311197c8644022a9fc8c2aaf152fe800",
       "impact": "breaking",
       "reasons": [
-        "lost members ['BacterialCrisprActivationPerturbation', 'BacterialCrisprInterferencePerturbation', 'BacterialDegronPerturbation', 'BacterialDeletionPerturbation', 'BacterialMarkedAllelePerturbation', 'BacterialSequenceVariantPerturbation', 'BacterialSiteVariantPerturbation', 'BacterialSpanDeletionPerturbation']",
-        "gained members ['DegronPerturbation', 'DeletionStrainPerturbation', 'LocusVariantCallPerturbation', 'MarkedAllelePerturbation', 'SiteVariantCallPerturbation', 'SpanDeletionCallPerturbation']"
+        "lost members ['BacterialCrisprActivationPerturbation', 'BacterialCrisprInterferencePerturbation', 'BacterialDegronPerturbation', 'BacterialDeletionPerturbation', 'BacterialMarkedAllelePerturbation', 'BacterialReleasedCrisprPerturbation', 'BacterialReleasedStrainPerturbation', 'BacterialReleasedTransposonPerturbation', 'BacterialSequenceVariantPerturbation', 'BacterialSiteVariantPerturbation', 'BacterialSpanDeletionPerturbation', 'ReleasedGeneNamePerturbation']",
+        "gained members ['DegronPerturbation', 'DeletionStrainPerturbation', 'LocusVariantCallPerturbation', 'MarkedAllelePerturbation', 'ReleasedIdentifierPerturbation', 'SiteVariantCallPerturbation', 'SpanDeletionCallPerturbation']"
       ]
     },
     {
       "symbol": "HeterologousPathwayPerturbation",
       "status": "modified",
       "kinds": [
+        "equivalent_refactor",
         "removal"
       ],
       "fingerprint_before": "f68e8e36af3907ebb91631ecf11cc57c0aef83996b61dd3621a2ba243aeb1fdc",
-      "fingerprint_after": "b824c9e79af4be2f36e858febd8d46b70d79e08eb4fe54a49a61103271fbe63f",
+      "fingerprint_after": "b1eaf6f48fcce1d54ddab363b24c4c1a5d153ffe6b256cd500fd69b5ebd76b7b",
       "impact": "breaking",
       "reasons": [
+        "base classes changed: ['HashableProvenanceGapMixin', 'GeneAdditionPerturbation', 'ModelStrict'] -> ['GeneAdditionPerturbation', 'ModelStrict']",
         "removed field 'gene_namespace'",
         "removed field 'identifier_mapping'",
         "validator/serializer changed: ['_check_namespace']"
@@ -435,8 +398,8 @@
       "symbol": "PromoterReplacementPerturbation",
       "status": "modified",
       "kinds": [
-        "removal",
-        "field_required_loosened"
+        "field_required_loosened",
+        "removal"
       ],
       "fingerprint_before": "8a0d7d90e737c5b1e1afb5bfa0dbc260be481e2fef69c7f565f39072af01aa75",
       "fingerprint_after": "6f24d34c484ebd2794be2474aaaccefc36f248c8d289ab6866bf0153d41154dc",
@@ -493,7 +456,7 @@
         "rename"
       ],
       "fingerprint_before": null,
-      "fingerprint_after": "140762b2f614a91697e3294e050a1af8e92b4b538e0cbd873d9ac1e08830d9df",
+      "fingerprint_after": "2d4d3a5b762527f644f0fed913c75031a3877937323a086edfb36d2b9851b83d",
       "impact": "stale",
       "reasons": [
         "new symbol"
@@ -516,8 +479,8 @@
       "symbol": "TransposonInsertionPerturbation",
       "status": "modified",
       "kinds": [
-        "removal",
-        "field_required_loosened"
+        "field_required_loosened",
+        "removal"
       ],
       "fingerprint_before": "6a60eb3de88f9a3f99be078abfa71e09369e3ba92486aa4e7b201a8f11f04019",
       "fingerprint_after": "cba3f5b27544f9edcc9199701f367f1d3e6121f1073ccee8c6ec390cb74b136f",
@@ -548,7 +511,7 @@
         "rename"
       ],
       "fingerprint_before": null,
-      "fingerprint_after": "5e9a6442485cbcd6c6d90696acd939b02ac9731a518ea681251257498590b1cc",
+      "fingerprint_after": "d08d25b1c21399ff5abfaa7eed71bc31032d7fec1d03dc2078c75d90c04ccc76",
       "impact": "stale",
       "reasons": [
         "new symbol"
@@ -645,7 +608,10 @@
       "impact": "breaking",
       "via": [
         "BACTERIAL_LOCUS_TAG_PATTERNS",
-        "GENE_ID_NAMESPACE_PATTERNS"
+        "GENE_ID_NAMESPACE_PATTERNS",
+        "GeneIdNamespace",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
       ]
     },
     {
@@ -657,12 +623,10 @@
       "impact": "breaking",
       "via": [
         "BACTERIAL_LOCUS_TAG_PATTERNS",
-        "BacterialReleasedStrainPerturbation",
         "GENE_ID_NAMESPACE_PATTERNS",
         "GeneIdNamespace",
         "GenePerturbation",
         "GenePerturbationType",
-        "_SYSTEMATIC_GENE_NAME_RE",
         "_check_gene_namespace",
         "_namespace_of_identifier",
         "_validate_host_identifier"
@@ -698,7 +662,6 @@
       "impact": "breaking",
       "via": [
         "BACTERIAL_LOCUS_TAG_PATTERNS",
-        "BacterialReleasedStrainPerturbation",
         "DeletionPerturbation",
         "DeletionStrainPerturbation",
         "GENE_ID_NAMESPACE_PATTERNS",
@@ -707,7 +670,6 @@
         "GenePerturbationType",
         "MarkedAllelePerturbation",
         "SGD_S288C_NAMESPACE",
-        "_SYSTEMATIC_GENE_NAME_RE",
         "_check_gene_namespace",
         "_namespace_of_identifier",
         "_validate_host_identifier"
@@ -769,7 +731,6 @@
       "impact": "breaking",
       "via": [
         "BACTERIAL_LOCUS_TAG_PATTERNS",
-        "BacterialReleasedStrainPerturbation",
         "DeletionPerturbation",
         "DeletionStrainPerturbation",
         "GENE_ID_NAMESPACE_PATTERNS",
@@ -778,7 +739,6 @@
         "GenePerturbationType",
         "MarkedAllelePerturbation",
         "SGD_S288C_NAMESPACE",
-        "_SYSTEMATIC_GENE_NAME_RE",
         "_check_gene_namespace",
         "_namespace_of_identifier",
         "_validate_host_identifier"
@@ -796,7 +756,10 @@
       "via": [
         "BACTERIAL_LOCUS_TAG_PATTERNS",
         "GENE_ID_NAMESPACE_PATTERNS",
-        "GenePerturbationType"
+        "GeneIdNamespace",
+        "GenePerturbationType",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
       ]
     },
     {
@@ -807,9 +770,11 @@
       "served_classes": [],
       "impact": "breaking",
       "via": [
-        "BACTERIAL_LOCUS_TAG_PATTERNS",
         "GENE_ID_NAMESPACE_PATTERNS",
-        "GenePerturbationType"
+        "GeneIdNamespace",
+        "GenePerturbationType",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
       ]
     },
     {
@@ -844,12 +809,10 @@
       "impact": "breaking",
       "via": [
         "BACTERIAL_LOCUS_TAG_PATTERNS",
-        "BacterialReleasedStrainPerturbation",
         "GENE_ID_NAMESPACE_PATTERNS",
         "GeneIdNamespace",
         "GenePerturbation",
         "GenePerturbationType",
-        "_SYSTEMATIC_GENE_NAME_RE",
         "_check_gene_namespace",
         "_namespace_of_identifier",
         "_validate_host_identifier"
@@ -885,12 +848,10 @@
       "impact": "breaking",
       "via": [
         "BACTERIAL_LOCUS_TAG_PATTERNS",
-        "BacterialReleasedCrisprPerturbation",
         "GENE_ID_NAMESPACE_PATTERNS",
         "GeneIdNamespace",
         "GenePerturbation",
         "GenePerturbationType",
-        "_SYSTEMATIC_GENE_NAME_RE",
         "_check_gene_namespace",
         "_namespace_of_identifier",
         "_validate_host_identifier"
@@ -966,12 +927,10 @@
       "impact": "breaking",
       "via": [
         "BACTERIAL_LOCUS_TAG_PATTERNS",
-        "BacterialReleasedStrainPerturbation",
         "GENE_ID_NAMESPACE_PATTERNS",
         "GeneIdNamespace",
         "GenePerturbation",
         "GenePerturbationType",
-        "_SYSTEMATIC_GENE_NAME_RE",
         "_check_gene_namespace",
         "_namespace_of_identifier",
         "_validate_host_identifier"
@@ -986,7 +945,6 @@
       "impact": "breaking",
       "via": [
         "BACTERIAL_LOCUS_TAG_PATTERNS",
-        "BacterialReleasedTransposonPerturbation",
         "GENE_ID_NAMESPACE_PATTERNS",
         "GeneIdNamespace",
         "GenePerturbation",
@@ -1028,12 +986,10 @@
       "impact": "breaking",
       "via": [
         "BACTERIAL_LOCUS_TAG_PATTERNS",
-        "BacterialReleasedTransposonPerturbation",
         "GENE_ID_NAMESPACE_PATTERNS",
         "GeneIdNamespace",
         "GenePerturbation",
         "GenePerturbationType",
-        "_SYSTEMATIC_GENE_NAME_RE",
         "_check_gene_namespace",
         "_namespace_of_identifier",
         "_validate_host_identifier"
@@ -1138,12 +1094,10 @@
       "impact": "breaking",
       "via": [
         "BACTERIAL_LOCUS_TAG_PATTERNS",
-        "BacterialReleasedStrainPerturbation",
         "GENE_ID_NAMESPACE_PATTERNS",
         "GeneIdNamespace",
         "GenePerturbation",
         "GenePerturbationType",
-        "_SYSTEMATIC_GENE_NAME_RE",
         "_check_gene_namespace",
         "_namespace_of_identifier",
         "_validate_host_identifier"
@@ -1157,9 +1111,11 @@
       "served_classes": [],
       "impact": "breaking",
       "via": [
-        "BACTERIAL_LOCUS_TAG_PATTERNS",
         "GENE_ID_NAMESPACE_PATTERNS",
-        "GenePerturbationType"
+        "GeneIdNamespace",
+        "GenePerturbationType",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
       ]
     },
     {
@@ -1170,9 +1126,11 @@
       "served_classes": [],
       "impact": "breaking",
       "via": [
-        "BACTERIAL_LOCUS_TAG_PATTERNS",
         "GENE_ID_NAMESPACE_PATTERNS",
-        "GenePerturbationType"
+        "GeneIdNamespace",
+        "GenePerturbationType",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
       ]
     },
     {
@@ -1185,7 +1143,10 @@
       "via": [
         "BACTERIAL_LOCUS_TAG_PATTERNS",
         "GENE_ID_NAMESPACE_PATTERNS",
-        "GenePerturbationType"
+        "GeneIdNamespace",
+        "GenePerturbationType",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
       ]
     },
     {
@@ -1236,9 +1197,11 @@
       "served_classes": [],
       "impact": "breaking",
       "via": [
-        "BACTERIAL_LOCUS_TAG_PATTERNS",
         "GENE_ID_NAMESPACE_PATTERNS",
-        "GenePerturbationType"
+        "GeneIdNamespace",
+        "GenePerturbationType",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
       ]
     },
     {
@@ -1270,12 +1233,10 @@
       "impact": "breaking",
       "via": [
         "BACTERIAL_LOCUS_TAG_PATTERNS",
-        "BacterialReleasedStrainPerturbation",
         "GENE_ID_NAMESPACE_PATTERNS",
         "GeneIdNamespace",
         "GenePerturbation",
         "GenePerturbationType",
-        "_SYSTEMATIC_GENE_NAME_RE",
         "_check_gene_namespace",
         "_namespace_of_identifier",
         "_validate_host_identifier"
@@ -1291,12 +1252,10 @@
       "impact": "breaking",
       "via": [
         "BACTERIAL_LOCUS_TAG_PATTERNS",
-        "BacterialReleasedCrisprPerturbation",
         "GENE_ID_NAMESPACE_PATTERNS",
         "GeneIdNamespace",
         "GenePerturbation",
         "GenePerturbationType",
-        "_SYSTEMATIC_GENE_NAME_RE",
         "_check_gene_namespace",
         "_namespace_of_identifier",
         "_validate_host_identifier"
@@ -1310,9 +1269,11 @@
       "served_classes": [],
       "impact": "breaking",
       "via": [
-        "BACTERIAL_LOCUS_TAG_PATTERNS",
         "GENE_ID_NAMESPACE_PATTERNS",
-        "GenePerturbationType"
+        "GeneIdNamespace",
+        "GenePerturbationType",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
       ]
     },
     {
@@ -1414,12 +1375,10 @@
       "impact": "breaking",
       "via": [
         "BACTERIAL_LOCUS_TAG_PATTERNS",
-        "BacterialReleasedCrisprPerturbation",
         "GENE_ID_NAMESPACE_PATTERNS",
         "GeneIdNamespace",
         "GenePerturbation",
         "GenePerturbationType",
-        "_SYSTEMATIC_GENE_NAME_RE",
         "_check_gene_namespace",
         "_namespace_of_identifier",
         "_validate_host_identifier"
@@ -1434,12 +1393,10 @@
       "impact": "breaking",
       "via": [
         "BACTERIAL_LOCUS_TAG_PATTERNS",
-        "BacterialReleasedStrainPerturbation",
         "GENE_ID_NAMESPACE_PATTERNS",
         "GeneIdNamespace",
         "GenePerturbation",
         "GenePerturbationType",
-        "_SYSTEMATIC_GENE_NAME_RE",
         "_check_gene_namespace",
         "_namespace_of_identifier",
         "_validate_host_identifier"
@@ -1453,9 +1410,11 @@
       "served_classes": [],
       "impact": "breaking",
       "via": [
-        "BACTERIAL_LOCUS_TAG_PATTERNS",
         "GENE_ID_NAMESPACE_PATTERNS",
-        "GenePerturbationType"
+        "GeneIdNamespace",
+        "GenePerturbationType",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
       ]
     },
     {
@@ -1467,12 +1426,10 @@
       "impact": "breaking",
       "via": [
         "BACTERIAL_LOCUS_TAG_PATTERNS",
-        "BacterialReleasedStrainPerturbation",
         "GENE_ID_NAMESPACE_PATTERNS",
         "GeneIdNamespace",
         "GenePerturbation",
         "GenePerturbationType",
-        "_SYSTEMATIC_GENE_NAME_RE",
         "_check_gene_namespace",
         "_namespace_of_identifier",
         "_validate_host_identifier"
@@ -1486,9 +1443,11 @@
       "served_classes": [],
       "impact": "breaking",
       "via": [
-        "BACTERIAL_LOCUS_TAG_PATTERNS",
         "GENE_ID_NAMESPACE_PATTERNS",
-        "GenePerturbationType"
+        "GeneIdNamespace",
+        "GenePerturbationType",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
       ]
     },
     {
@@ -1501,9 +1460,11 @@
       "served_classes": [],
       "impact": "breaking",
       "via": [
-        "BACTERIAL_LOCUS_TAG_PATTERNS",
         "GENE_ID_NAMESPACE_PATTERNS",
-        "GenePerturbationType"
+        "GeneIdNamespace",
+        "GenePerturbationType",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
       ]
     },
     {
@@ -1538,12 +1499,10 @@
       "impact": "breaking",
       "via": [
         "BACTERIAL_LOCUS_TAG_PATTERNS",
-        "BacterialReleasedStrainPerturbation",
         "GENE_ID_NAMESPACE_PATTERNS",
         "GeneIdNamespace",
         "GenePerturbation",
         "GenePerturbationType",
-        "_SYSTEMATIC_GENE_NAME_RE",
         "_check_gene_namespace",
         "_namespace_of_identifier",
         "_validate_host_identifier"
@@ -1579,12 +1538,10 @@
       "impact": "breaking",
       "via": [
         "BACTERIAL_LOCUS_TAG_PATTERNS",
-        "BacterialReleasedStrainPerturbation",
         "GENE_ID_NAMESPACE_PATTERNS",
         "GeneIdNamespace",
         "GenePerturbation",
         "GenePerturbationType",
-        "_SYSTEMATIC_GENE_NAME_RE",
         "_check_gene_namespace",
         "_namespace_of_identifier",
         "_validate_host_identifier"
@@ -1598,9 +1555,11 @@
       "served_classes": [],
       "impact": "breaking",
       "via": [
-        "BACTERIAL_LOCUS_TAG_PATTERNS",
         "GENE_ID_NAMESPACE_PATTERNS",
-        "GenePerturbationType"
+        "GeneIdNamespace",
+        "GenePerturbationType",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
       ]
     },
     {
@@ -1719,9 +1678,11 @@
       "served_classes": [],
       "impact": "breaking",
       "via": [
-        "BACTERIAL_LOCUS_TAG_PATTERNS",
         "GENE_ID_NAMESPACE_PATTERNS",
-        "GenePerturbationType"
+        "GeneIdNamespace",
+        "GenePerturbationType",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
       ]
     },
     {
@@ -1872,12 +1833,10 @@
       "impact": "breaking",
       "via": [
         "BACTERIAL_LOCUS_TAG_PATTERNS",
-        "BacterialReleasedStrainPerturbation",
         "GENE_ID_NAMESPACE_PATTERNS",
         "GeneIdNamespace",
         "GenePerturbation",
         "GenePerturbationType",
-        "_SYSTEMATIC_GENE_NAME_RE",
         "_check_gene_namespace",
         "_namespace_of_identifier",
         "_validate_host_identifier"
@@ -2022,9 +1981,11 @@
       "served_classes": [],
       "impact": "breaking",
       "via": [
-        "BACTERIAL_LOCUS_TAG_PATTERNS",
         "GENE_ID_NAMESPACE_PATTERNS",
-        "GenePerturbationType"
+        "GeneIdNamespace",
+        "GenePerturbationType",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
       ]
     },
     {
@@ -2085,9 +2046,11 @@
       ],
       "impact": "breaking",
       "via": [
-        "BACTERIAL_LOCUS_TAG_PATTERNS",
         "GENE_ID_NAMESPACE_PATTERNS",
-        "GenePerturbationType"
+        "GeneIdNamespace",
+        "GenePerturbationType",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
       ]
     },
     {
@@ -2098,9 +2061,11 @@
       "served_classes": [],
       "impact": "breaking",
       "via": [
-        "BACTERIAL_LOCUS_TAG_PATTERNS",
         "GENE_ID_NAMESPACE_PATTERNS",
-        "GenePerturbationType"
+        "GeneIdNamespace",
+        "GenePerturbationType",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
       ]
     },
     {
@@ -2557,9 +2522,11 @@
       "served_classes": [],
       "impact": "breaking",
       "via": [
-        "BACTERIAL_LOCUS_TAG_PATTERNS",
         "GENE_ID_NAMESPACE_PATTERNS",
-        "GenePerturbationType"
+        "GeneIdNamespace",
+        "GenePerturbationType",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
       ]
     },
     {
@@ -2709,9 +2676,11 @@
       "served_classes": [],
       "impact": "breaking",
       "via": [
-        "BACTERIAL_LOCUS_TAG_PATTERNS",
         "GENE_ID_NAMESPACE_PATTERNS",
-        "GenePerturbationType"
+        "GeneIdNamespace",
+        "GenePerturbationType",
+        "_namespace_of_identifier",
+        "_validate_host_identifier"
       ]
     },
     {
@@ -3026,7 +2995,6 @@
         "GeneIdNamespace",
         "GenePerturbation",
         "GenePerturbationType",
-        "_SYSTEMATIC_GENE_NAME_RE",
         "_check_gene_namespace",
         "_namespace_of_identifier",
         "_validate_host_identifier"

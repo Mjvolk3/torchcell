@@ -1235,8 +1235,6 @@ class ReferenceGenome(HashableProvenanceGapMixin):
         return self
 
 
-
-
 # --------------------------------------------------------------------------- #
 # Sequence Ontology (SO) mechanism annotation.
 #

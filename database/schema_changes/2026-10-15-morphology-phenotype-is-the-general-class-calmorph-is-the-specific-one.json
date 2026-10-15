@@ -4,7 +4,7 @@
   "date": "2026-10-15",
   "pr": 1122,
   "author_kind": "agent",
-  "base_commit": "b5c5549d8f4752fc8ac89b6d1e5cd2c0ec5bf4a9",
+  "base_commit": "7da9bfac0ec841d84e3d1a63479acf2e07ff7e57",
   "python_version": "3.13.0",
   "symbols": [
     {
@@ -18,32 +18,6 @@
       "impact": "breaking",
       "reasons": [
         "symbol removed"
-      ]
-    },
-    {
-      "symbol": "MorphologyExperiment",
-      "status": "modified",
-      "kinds": [
-        "rename"
-      ],
-      "fingerprint_before": "0a13f8176b9a293003936077685e45fa8f5fe403fbf385c414f54a96af2bd1ec",
-      "fingerprint_after": "fadc14cc7e2c3adce05cb262a2b227decbb90b065a27436d6c2cb168f9826bf5",
-      "impact": "breaking",
-      "reasons": [
-        "field 'phenotype' type changed: BacterialMorphologyPhenotype -> MorphologyPhenotype"
-      ]
-    },
-    {
-      "symbol": "MorphologyExperimentReference",
-      "status": "modified",
-      "kinds": [
-        "rename"
-      ],
-      "fingerprint_before": "9fa93d2f00554cb33362ce9e993bac784c2c4a6ef19407ce0d7d650777ce5a6d",
-      "fingerprint_after": "4fb5a1f92d456558d2cbcdb5519754d1200243c1cd4af4c84a10b7b9dfc0c884",
-      "impact": "breaking",
-      "reasons": [
-        "field 'phenotype_reference' type changed: BacterialMorphologyPhenotype -> MorphologyPhenotype"
       ]
     },
     {
@@ -63,8 +37,8 @@
       "symbol": "PhenotypeType",
       "status": "modified",
       "kinds": [
-        "rename",
-        "enum_member_added"
+        "enum_member_added",
+        "rename"
       ],
       "fingerprint_before": "4dd1dd5cc14efbb692045cbbfe2ab70dc2c837c7e3c7b54c3fe721189a0dddfa",
       "fingerprint_after": "de4908a8d41ccccda2d20230d3f101c033a8f0107a5e0e5eaa5d385c681ffd74",
@@ -101,11 +75,8 @@
         "MorphologyCampos2018Dataset"
       ],
       "served_classes": [],
-      "impact": "breaking",
+      "impact": "stale",
       "via": [
-        "BacterialMorphologyPhenotype",
-        "MorphologyExperiment",
-        "MorphologyExperimentReference",
         "MorphologyPhenotype"
       ]
     }

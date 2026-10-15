@@ -90,3 +90,34 @@ through the web UI with a recorded recipe, exactly as this OUP archive was. Eith
 the sequence a registry serves is the DESIGN, not Carruthers' "verified by whole plasmid
 sequencing" bytes, which is what `ConstructManifest.sequence_status` exists to say; this
 set is `design`.
+
+## 2026.10.15 - 17 of 17, and nine names from SUPPLEMENTARY TABLE S2
+
+Lane T. With a span holding parts the deposit now indexes **17 contigs and blocks 0**
+(was 6 and 11). Two things in this script had to change with it.
+
+**The blocked reason comes off the exception.** The `except GenBankLocationError` branch
+used to write `BlockedReason.origin_wrapping_location` whatever the refusal was, which is
+how all 11 Cachera refusals came to be recorded under one member. It now writes
+`refusal.refusal`, the typed member the parser raised with.
+
+**Nine names needed a second artifact.** `build_manifest` refuses to index a map the spec
+quotes no name for, and the paper body names only pBTX2 and pCCM023 of the 11. The nine
+`pBTX0xx` gene-targeting vectors are named in SUPPLEMENTARY TABLE S2 of
+`Supplementary Material.docx`, which is a member of `si/gkad656_supplemental_files.zip`
+-- already sha256-pinned in the key manifest and already re-read by step (b). So the
+spec gained `si_name_quote_by_path` + `si_member`, and `_container_member_text` extracts
+the member in memory, hashes it, and reads `word/document.xml` out as one newline per
+paragraph (a table cell is a paragraph) with every tag removed and nothing else changed.
+Each quote is checked to be a verbatim substring of that text or the run halts, so the
+claim is verified at deposit time rather than asserted, and the member's own sha256 goes
+into the quote's `Provenance` with `method="docx-document-xml-paragraph-text"` and
+`page="SUPPLEMENTARY TABLE S2: Plasmids Used in this Study"`. Non-breaking spaces are not
+normalized; the quotes are written to avoid them.
+
+A path may carry a paper quote or a table quote, never both: one artifact names a
+construct.
+
+Re-deposited 2026-10-15; the previous index was moved to
+`/scratch/projects/deprecated/2026.10.15/122139-manifest.json` with `trash`, because
+`deposit_construct_set` never rewrites an index.

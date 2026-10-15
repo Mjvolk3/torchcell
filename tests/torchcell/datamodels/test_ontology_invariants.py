@@ -256,7 +256,7 @@ _PLACEMENT = ConstructPlacement(
     feature_key=FeatureKey(
         label="ARO4-K229L",
         so_id="SO:0000704",
-        span=ConstructSpan(start=2684, end=3796, orientation="inline"),
+        span=ConstructSpan.one(2684, 3796, "inline"),
     ),
     host_placement=HostPlacement(
         assembly_set="sgd_S288C_R64-4-1_20230830",

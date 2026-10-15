@@ -1,0 +1,286 @@
+{
+  "record_version": 1,
+  "slug": "construct-span-holds-the-parts-of-a-compound-location",
+  "date": "2026-10-15",
+  "pr": null,
+  "author_kind": "agent",
+  "base_commit": "b5c5549d8f4752fc8ac89b6d1e5cd2c0ec5bf4a9",
+  "python_version": "3.13.0",
+  "symbols": [
+    {
+      "symbol": "ConstructSpan",
+      "status": "modified",
+      "kinds": [
+        "removal",
+        "field_meaning",
+        "contract_tightened"
+      ],
+      "fingerprint_before": "7fdf162fea7c7bf92fc1c7a737071712eb038d3d6e668121cab480344de89a50",
+      "fingerprint_after": "0791bd17fc11912e058964cec167a28173b245fed99b7228d4b920bce44c7a6b",
+      "impact": "breaking",
+      "reasons": [
+        "added required field 'composition'",
+        "added required field 'parts'",
+        "removed field 'end'",
+        "removed field 'start'",
+        "validator/serializer changed: ['_check_span']"
+      ]
+    },
+    {
+      "symbol": "SpanComposition",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "5630aed2ba8e83678b6ede7a44e80f634616059b21f8624b765eecc2565d98cd",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "SpanPart",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "105de022d3dec397b7ebad048146ec8d45c54d25d3ecfc16f4533ba8ecad797c",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    }
+  ],
+  "correctness_argument": "A ConstructSpan of one start..end pair cannot hold a GenBank feature whose location is several intervals, and the INSDC feature table's location grammar has three such forms this project meets in real deposited DNA. The consequence was measured, not predicted: of the 17 Cachera 2023 plasmid maps in the library tier, 6 indexed and 11 were refused by the parser, each by exactly one feature whose interval crosses the origin of its circular replicon (the pUC origin of pBTX002.gb at 11559..128, and an AmpR CDS at complement(4892..858) in the other ten). Before that refusal the envelope was stored, which made the 666 bp pUC origin the whole 12,096 bp plasmid and each 861 bp beta-lactamase the whole ~4,894 bp plasmid, and made feature_sequence return the plasmid as the feature. Refusing was more correct than lying and still left the paper's pBTX2 unindexable, so the only correct shape is a span that holds the parts. parts plus composition is that shape, and composition is load-bearing rather than derived: an interval that crossed the origin of a circular replicon and a two-part join are different claims about the same two intervals (the first is one interval whose coordinates wrapped and whose parts are adjacent in the molecule, the second is two intervals with sequence between them the feature does not cover), and the distinction cannot be derived from the parts alone because it needs the replicon's length and topology, which the span does not carry and the contig does. ConstructContig therefore proves the claim against the bytes: every part within the contig's length, an origin_spanning span only on a circular contig, and its first part ending at the contig's last base. start and end survive as properties that serve the simple case and RAISE for a compound span, so a reader written for one interval fails loudly instead of silently receiving the envelope, which is the same discipline the refusal had. The replacement is not reversible and is not meant to be: the old field pair cannot express 11 of 17 real maps. It is also provably faithful: all 570 features of all 17 maps regenerate, from the stored parts and strand alone, the exact location string their own file wrote, and every compound span's canonical INSDC spelling re-parses through Biopython into the same parts. Scope is the two served closures that reach ConstructSpan through GeneAdditionPerturbation.placement, which P4 added on this same branch and which no store has yet been built under, so no serialized record changes shape. SpanComposition is deliberately three members and not four: INSDC order is a different claim from join and 0 of 570 features use it, so it is refused loudly with its own typed reason rather than represented on speculation. Grammar and vocabulary quoted verbatim, from sources that are web documents rather than mirrored artifacts, so they are stated here and not as audit-anchored SourcedValues: INSDC on join, \"The indicated elements should be joined (placed end-to-end) to form one contiguous sequence\", and on order, \"The elements can be found in the specified order (5' to 3' direction)\" while \"nothing is implied about the reasonableness about joining them\" (https://www.insdc.org/submitting-standards/feature-table/); Biopython 1.86 on si/plasmids/pBTX002.gb, \"Attempting to fix invalid location '11559..128' as it looks like incorrect origin wrapping. Please fix input file, this could have unintended behavior.\", which is the evidence that the compact form is the invalid spelling and the join is the canonical one; and the Sequence Ontology's SO:0000988 circular, \"A quality of a nucleotide polymer that has no terminal nucleotide residues.\", a child of topology_attribute SO:0000986, which is what makes an origin-crossing interval meaningful and is now the grounding of ConstructContig.topology.",
+  "measurement_type_decision": false,
+  "source_quotes": [],
+  "alternatives_rejected": [
+    {
+      "alternative": "Keep one start..end pair and go on refusing a compound location.",
+      "why_rejected": "This is what the branch did before this change and it is honest, but it leaves 11 of 17 deposited maps unindexable, among them the paper's pBTX2, and sequence-level fidelity for the flagship dataset's own vector is not optional."
+    },
+    {
+      "alternative": "Keep start and end as the envelope and add parts beside them.",
+      "why_rejected": "Two fields holding one fact, which principle 5 forbids, and the envelope would stay readable by every existing consumer, so the exact bug this change exists to remove would survive in the model."
+    },
+    {
+      "alternative": "Collapse origin_spanning and joined into one multi-part member.",
+      "why_rejected": "Cheaper and derivable from nothing, but it makes a 666 bp origin of replication and a spliced two-exon gene the same shape, which is a loss of the claim the source made."
+    },
+    {
+      "alternative": "Record which syntax the source wrote (the compact 11559..128 or the canonical join) in a stored field, to make the round trip possible.",
+      "why_rejected": "Unnecessary: both spellings are generated from the same parts by two writers, and the syntax is not a fact about the molecule."
+    },
+    {
+      "alternative": "Add an order member for INSDC order().",
+      "why_rejected": "0 of 570 measured features use it and it asserts something weaker than join, so a representation would be built against nothing; it is refused with its own typed reason instead."
+    }
+  ],
+  "served_release": "2026.10.06-4b293d34",
+  "affected_loaders": [
+    {
+      "loader": "torchcell/datasets/ecoli/brunk2016.py",
+      "dataset_classes": [
+        "_MetaboliteBrunk2016Dataset",
+        "MetabolomeBrunk2016Dataset",
+        "ExometaboliteBrunk2016Dataset",
+        "ProteomeBrunk2016Dataset",
+        "BiofuelTiterBrunk2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ConstructSpan",
+        "SpanComposition",
+        "SpanPart"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/foo2014.py",
+      "dataset_classes": [
+        "IsopentenolTiterFoo2014Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ConstructSpan",
+        "SpanComposition",
+        "SpanPart"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/mohiuddin2022.py",
+      "dataset_classes": [
+        "PromoterReporterMohiuddin2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ConstructSpan",
+        "SpanComposition",
+        "SpanPart"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/banerjee2024.py",
+      "dataset_classes": [
+        "IsoprenolTiterBanerjee2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ConstructSpan",
+        "SpanComposition",
+        "SpanPart"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/carruthers2025.py",
+      "dataset_classes": [
+        "IsoprenolTiterCarruthers2025Dataset",
+        "ProteomeCarruthers2025Dataset",
+        "CampaignProteomeCarruthers2025Dataset",
+        "ProteomeFoldChangeCarruthers2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ConstructSpan",
+        "SpanComposition",
+        "SpanPart"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/desiqueira2025.py",
+      "dataset_classes": [
+        "ProteomeDeSiqueira2025Dataset",
+        "ProteomePercentDeSiqueira2025Dataset",
+        "ProteomeLog10PercentDeSiqueira2025Dataset",
+        "IsoprenolTiterDeSiqueira2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ConstructSpan",
+        "SpanComposition",
+        "SpanPart"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/kang2026.py",
+      "dataset_classes": [
+        "IsoprenylAcetateTiterKang2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ConstructSpan",
+        "SpanComposition",
+        "SpanPart"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/menasalvas2025.py",
+      "dataset_classes": [
+        "IsoprenolSelectionMenasalvas2025Dataset",
+        "ProteomeMenasalvas2025Dataset",
+        "_MetabolitePhaseDataset",
+        "MetaboliteGrowthPhaseMenasalvas2025Dataset",
+        "MetaboliteProductionPhaseMenasalvas2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ConstructSpan",
+        "SpanComposition",
+        "SpanPart"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/thompson2019_valerolactam.py",
+      "dataset_classes": [
+        "_Thompson2019Dataset",
+        "ValerolactamTiterThompson2019Dataset",
+        "LactamGrowthRateThompson2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ConstructSpan",
+        "SpanComposition",
+        "SpanPart"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/cachera2023.py",
+      "dataset_classes": [
+        "BetaxanthinCachera2023Dataset"
+      ],
+      "served_classes": [
+        "BetaxanthinCachera2023Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ConstructSpan",
+        "SpanComposition",
+        "SpanPart"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/mormino2022.py",
+      "dataset_classes": [
+        "CrispriMormino2022Dataset"
+      ],
+      "served_classes": [
+        "CrispriMormino2022Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ConstructSpan",
+        "SpanComposition",
+        "SpanPart"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ozaydin2013.py",
+      "dataset_classes": [
+        "CarotenoidOzaydin2013Dataset"
+      ],
+      "served_classes": [
+        "CarotenoidOzaydin2013Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ConstructSpan",
+        "SpanComposition",
+        "SpanPart"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/vaishnav2022.py",
+      "dataset_classes": [
+        "PooledPromoterExpressionVaishnav2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ConstructSpan",
+        "SpanComposition",
+        "SpanPart"
+      ]
+    }
+  ],
+  "served_datasets": [
+    "BetaxanthinCachera2023Dataset",
+    "CarotenoidOzaydin2013Dataset",
+    "CrispriMormino2022Dataset"
+  ],
+  "rebuild_scope": "full_kg_rebuild",
+  "owner_sign_off": {
+    "signed": true,
+    "quote": "Owner, 2026-10-15, the standing Path U authorization quoted in the constitution (notes/database.constitution.md, principle 8): 'we care most about correctness and are willing right now to do full rebuilds if we identify even small semantically prudent change in onto'; and 'we want to unify then build, we are prepped for full rebuild path U'. That authorizes a breaking change made for correctness on this branch, which is what the removal of ConstructSpan.start and .end is. It is NOT a sign-off on this particular span shape, which the owner has not seen: the lane's report and the PR body say so, and the shape is put forward for review with its measurements (11 of 17 maps unindexable before, 570 of 570 locations regenerated after) rather than as approved.",
+    "url": null
+  }
+}

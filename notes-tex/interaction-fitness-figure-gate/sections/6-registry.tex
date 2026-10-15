@@ -1,0 +1,64 @@
+%% notes-tex/interaction-fitness-figure-gate/sections/6-registry.tex
+%% SOURCE: hand-authored plan. Every row is a plan; no row carries a result.
+
+\clearpage
+\section{The experiment registry\secstatus{todo}}
+\label{sec:registry}
+
+Shared protocol: the 030 S3 pool (arm R) or S3Q pool (arm Q); pinned validation and test
+triples never in a loss; the checkpoint chosen on validation interaction Pearson; test
+Pearson and Spearman, pooled and within screen; three seeds unless stated; paired by triple
+against the named control over 2,000 bootstrap resamples. Every entry is \fstat{idea}
+until its result file exists.
+
+{\footnotesize
+\begin{longtable}{@{}p{7mm}p{160mm}p{5mm}@{}}
+\caption[]{The pre-registered experiments of this gate. E1 and E3 decide the figure's
+third claim; the rest fill the remaining panels.}
+\label{tab:plan}\\
+\toprule
+id & experiment & \\
+\midrule
+\endfirsthead
+\toprule
+id & experiment & \\
+\midrule
+\endhead
+E1 & \textbf{The transformer with the lower-order terms as inputs.} The 030 composite
+arm with the thirteen terms of the ladder (and their missing indicators) read by a
+zero-initialized affine on the interaction logit, and in a second form as a per-triple
+input token; control: the same arm without them. Both arms, three seeds, 60 epochs on
+IGB mmli. Decides: whether a model given the same inputs as the boosted trees beats them
+(the rule of \ref{sec:state}). & \fstat{idea} \\
+E2 & \textbf{The residual target.} The 030 composite arm trained on
+$\tau + \varepsilon_{ik} + \varepsilon_{jk}$, the part of the score the digenic-controls
+null does not explain; control: the arm on $\tau$. Arm R, three seeds. Decides: whether
+the model's signal is in the residual or in the controls it re-learns. & \fstat{idea} \\
+E3 & \textbf{Test scores of the 030 checkpoints.} CPU scoring of the best-validation
+checkpoints of both arms on their pinned test triples, as
+\texttt{score\_cgt\_checkpoint\_cpu.py} did for 025, with the per-triple predictions of
+both heads written beside the ladder's, a paired bootstrap against every rung, and the
+two derived rungs of \ref{sec:decision}: C1, the model's $f_{ijk}$ minus the measured
+null; C2, $\tau$ from the model's predicted fitness of every term. Decides: every
+validation bar becomes a test bar, and whether CGT as a fitness predictor reaches the
+trees. & \fstat{idea} \\
+E4 & \textbf{Seeds.} Seeds 1 and 2 of the 030 composite arm on both arms, the budget of
+seed 0. Decides: the across-seed spread every transformer bar must carry. & \fstat{idea} \\
+E5 & \textbf{Deployment tiers of the ladder.} The lower-order rungs refit with the terms a
+new triple would have: singles only; singles and Costanzo doubles where measured; singles
+and all doubles. CPU, both arms. Decides: the supplement's query panel, and what a strain
+designer can expect without the Kuzmin doubles. & \fstat{idea} \\
+E6 & \textbf{Within-screen and Spearman logging.} The trainer logs per-screen and
+within-screen validation Pearson and Spearman beside the headline, so the floor is visible
+in every run and the model can be read in rank. Decides: nothing by itself; required by
+the entry rule. & \fstat{idea} \\
+E7 & \textbf{Comparators on the same data.} DCell, DANGO and the Yeast9 FBA score refit or
+rescored on the 030 pinned triples of both arms under the shared protocol. Decides: the
+supplement's comparator sheet and whether any of them enters the main figure. & \fstat{idea} \\
+E8 & \textbf{The essentiality holdout arms of 030.} \texttt{fit\_000} and
+\texttt{embfit\_001}, which exclude 698 essentiality singles and serve them as a second
+validation loader: the AUROC read that links this figure to the essentiality gate.
+Decides: whether the solid-growth model carries essentiality without being trained on
+the held-out singles. & \fstat{idea} \\
+\bottomrule
+\end{longtable}}

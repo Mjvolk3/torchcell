@@ -1,0 +1,47 @@
+# experiments/030-solid-growth-multi/conf/cgt_030_s3_r_tok_fit_002.yaml
+#
+# THE 030 CLOSURE ARM, PER ENTRY, LEARNABLE TABLE, NO HOLDOUT. cgt_030_s3_r_tok_fit_000
+# with the essentiality holdout removed: the record pool is the whole S3 subset
+# (1,121,662 records, every single included) as it was in 025's cgt_s3_r_kl_fit_031
+# (1,121,645), so the ONLY differences against that 025 arm are the build (no merge, every
+# source entry kept) and the per-entry path with the dataset token. The holdout arm
+# (_000/_001) removed 698 singles from the pool and added a second validation loader,
+# which is a different training set and a different question; it stays for the
+# essentiality readout once this comparison is read.
+#
+# Reads against cgt_s3_r_kl_fit_031 (learnable table, 0.479 +- 0.001 over epochs 10-29,
+# seeds 0-2) and cgt_030_s3_r_tok_embfit_003 (same arm, composite embedding).
+#
+# THE BUDGET IS 100 EPOCHS, the 025 arms ran 50. Seed 1 of the 025 composite closure arm
+# (run anx8rrdn, job 2409708) sat in a 0.477 to 0.487 validation band over epochs 30-49
+# while train Pearson kept rising (0.531 -> 0.539), a plateau but not a convincing
+# convergence, and the per-entry path trains 4.3x the label rows per record, so the
+# first 030 cell runs long enough to read the tail (50-99) against the two scoring
+# windows (10-29, 30-49). Wall clock: 025 epochs ran 36 min clean and about 4 h under
+# the GPFS mmapLock stall, and 025 seed 1 took 2 d 20 h for 50 epochs, so 100 do NOT fit
+# the 4-day mmli limit: the job is cut past epoch 60 and continued by a second job that
+# resumes the full training state (`+resume.ckpt_path=<...>-last.ckpt`, written every
+# epoch; see cgt_030_s3_r_tok_embfit_003 for the command). A run cut before the
+# continuation still scores its windows.
+#
+#   PROJECT_ROOT=<worktree> sbatch -J 030-r1w1-tab-s0 \
+#       experiments/030-solid-growth-multi/scripts/igb_mmli_cgt_030.slurm cgt_030_s3_r_tok_fit_002 +seed=0
+defaults:
+  - cgt_030_s3_r_tok_fit_000
+  - _self_
+
+wandb:
+  tags: [s3, split_R, graph_reg_kl, fitness_joint, closure_doubles, unpinned_to_train, perturb_cls, cls_linear_readout, const_lr, const_lr_2.5e-4, epochs_100, per_entry, dataset_token, no_holdout, igb_mmli]
+
+# No holdout: the pool is the whole subset, the second validation loader and the
+# val_ess/* readout are absent, and regression_task.essentiality is not read.
+subset:
+  exclude: null
+
+# Constants fitted on THIS arm's training entry rows (pool minus pinned val/test); the
+# training script refuses the _ess file, whose training set is 698 records smaller.
+transforms:
+  fit_stats: normalization_stats_030_s3_r.json
+
+trainer:
+  max_epochs: 100

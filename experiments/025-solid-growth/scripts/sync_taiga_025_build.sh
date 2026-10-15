@@ -22,7 +22,10 @@
 set -euo pipefail
 
 GH_DATA_ROOT="${DATA_ROOT:-/scratch/projects/torchcell-scratch}"
-REL="data/torchcell/experiments/025-solid-growth/001-full-build"
+# REL=<another build or pool store under $DATA_ROOT> sends that instead (same layout:
+# processed/ + data_module_cache/, raw/lmdb stub made on the far side), for example the
+# 030 S3Q pool store the Delta scaling grid reads from the Taiga mount.
+REL="${REL:-data/torchcell/experiments/025-solid-growth/001-full-build}"
 SRC="$GH_DATA_ROOT/$REL"
 
 RADIANT="${RADIANT:-rocky@141.142.216.218}"

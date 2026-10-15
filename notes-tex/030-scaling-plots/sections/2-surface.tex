@@ -1,0 +1,60 @@
+%% notes-tex/030-scaling-plots/sections/2-surface.tex
+
+\section{The loss surface, read both ways\secstatus{todo}}
+\label{sec:surface}
+
+The grid is a five-by-four sample of $L(N, D)$ at one seed, with the two end
+sizes replicated at the two smallest subsets. That is what makes the surface
+family possible: every row of Figure~\ref{fig:surface} is a cut of the same
+surface, and the two single-axis fits of the study are its edge columns.
+
+\tcfig{figures/030-scaling-plots-surface.pdf}{%
+The surface family, sketched. \textbf{a}, S1: loss against $D$ at every size,
+one curve per size. Parallel curves on log axes are one data exponent for the
+family; a fan is a data exponent that depends on size, which the single-column
+fit of the study would not see. The replicate floor is dashed. \textbf{b}, S2:
+loss against $N$ at every subset, one curve per subset. Each curve flattens at
+the plateau its data sets, $E + B D^{-\beta}$, dashed per curve, and the size at
+which a curve meets its plateau is the size beyond which more parameters stop
+paying at that $D$. \textbf{c}, S3: the same twenty cells as a heatmap of the
+matched read, with a second heatmap for the selected read in the real figure.
+\textbf{d}, S4: the fitted forms drawn on $L - E$, where the floored form is a
+straight line, with the bootstrap band and the held-out point ringed. Every
+curve is hand-drawn to show the shape the plot would hold.
+}{fig:surface}
+\src{notes/assets/drawio/030-scaling-plots.gen.py}
+
+\notesec{S1, loss against data at every size}
+Five curves, each a row of the grid, on both reads and per screen. The study fits
+the 180x8 curve alone; the other four are the control on that fit. If the small
+sizes' curves run parallel to it, the data exponent is a property of the data
+and the single fit stands for the family. If the small curves flatten earlier,
+the small sizes are capacity-limited at large $D$, and the exponent fit at 180x8
+is the largest the family shows, not the family's. The 1/64 and 1/16 points of
+the end sizes carry three seeds each, so the spread of the replicated cells is
+drawn as the noise floor of every curve.
+
+\notesec{S2, loss against size at every subset}
+Four curves, each a column. On the matched read the curves are directly
+comparable, since every cell is read at the same records seen. On the selected
+read the full-pool curve is a ten-epoch slice and sits above where convergence
+would put it, so the plateau it appears to meet is partly the budget, which is
+the limit that keeps this plot partial. The plateau lines are the second term of
+the floored form fitted on each column, and the gap between a plateau and the
+replicate floor is what more data could still buy at that size.
+
+\notesec{S3, the heatmap}
+Twenty cells shaded by the matched read, with the selected read beside it. The
+reading is local: at any cell the steeper descent, down the column toward
+larger $N$ or along the row toward larger $D$, is the direction the next unit of
+effort should take from that cell. The two heatmaps differ most at the full-pool
+column, and the size of that difference is a picture of how far the ten-epoch
+budget sits from convergence.
+
+\notesec{S4, the fitted forms}
+Each axis of the study drawn on $L - E$ for the floored form, so the fit is a
+straight line, with the pure power law beside it and the 5 to 95 percent band
+from 300 resamples over runs. The held-out largest point is ringed with the
+prediction the in-sample fit made for it. On the $D$ axis there are four points,
+so the floored held-out test is undefined (three points fit three parameters)
+and only the power form is tested there; that is the partial status.

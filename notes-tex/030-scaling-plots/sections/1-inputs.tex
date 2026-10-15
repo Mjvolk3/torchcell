@@ -1,0 +1,48 @@
+%% notes-tex/030-scaling-plots/sections/1-inputs.tex
+
+\section{What the runs provide\secstatus{todo}}
+\label{sec:inputs}
+
+\begin{keybox}
+\textbf{Measured.} The rows each run logs and the reads the readout takes from
+them are implemented and tested (\texttt{scaling\_readout\_030.py},
+\texttt{torchcell.trainers.compute\_accounting}). The grid is queued on Delta.
+
+\textbf{Not measured.} Every curve in every sketch. No run has reported, and no
+plot here has a data point behind it.
+\end{keybox}
+
+The grid, its reads and its limits are set out in the companion study
+(\texttt{notes-tex/030-scaling-study}), whose vocabulary applies here. In short:
+the \term{loss} is the validation mean squared error on the gene-interaction
+score in \term{label units}, after the inverse of the training normalization,
+pooled over the pinned 37,705 triples and per \term{screen} (Kuzmin 2018,
+Kuzmin 2020) through the per-token keys; $N$ is non-embedding parameters; $D$
+is distinct training records, and on 030 also gene-interaction entry rows; the
+\term{selected read} is the loss at the epoch of lowest pooled validation MSE;
+the \term{matched read} is the loss interpolated at one shared records-seen
+budget $B$, the smallest total any point of the grid reached; the
+\term{replicate floor} $E = (1 - r)\,\mathrm{var}(\tau)$ is the loss no predictor
+of a single measurement can beat, per screen; the \term{held-out test} refits
+without the largest point of an axis and predicts it.
+
+\notesec{Rows}
+Each run logs, at the end of every epoch, the pooled and per-screen validation
+MSE and Pearson, the records seen, the cumulative measured FLOPs and GPU hours,
+and the epoch index that joins them. A point is one (size, subset, seed, learning
+rate); a chain of jobs is one point with its epochs stitched by the checkpoint
+each link resumed from. The readout keeps every epoch of every point
+(\texttt{<sweep>\_epochs.csv}), one row per point and read
+(\texttt{<sweep>\_points.csv}), every fit with its interval and held-out
+prediction (\texttt{<sweep>\_fits.json}), and the gap per subset
+(\texttt{<sweep>\_gap.csv}). Every plot below is drawn from one of those four
+files, so a plot is regenerated from the rows and never assembled by hand.
+
+\notesec{The catalog}
+Table~\ref{tab:catalog} is the list. The id is the panel letter family used in
+the sketches: S for the loss surface, C for compute, D for diagnostics, P for the
+pair. Status is read against the queued grid as it stands: full means every row
+the plot needs exists at the design's seed count; partial means the rows exist
+but a limit of the design narrows what the plot can claim, named in its section.
+
+\input{tables/t1-catalog}

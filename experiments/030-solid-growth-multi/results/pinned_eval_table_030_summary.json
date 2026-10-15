@@ -1,0 +1,50 @@
+{
+  "policy_name": "kuzmin-first",
+  "policy_id": "b2f26bb6ef86d11a",
+  "policy": {
+    "name": "kuzmin-first",
+    "fitness_precedence": [
+      "kuzmin2018",
+      "kuzmin2020",
+      "costanzo2016@30",
+      "costanzo2016@26",
+      "converted_zero"
+    ],
+    "interaction_precedence": [
+      "kuzmin2018",
+      "kuzmin2020",
+      "costanzo2016@30",
+      "costanzo2016@26"
+    ],
+    "same_year_kuzmin_first": true,
+    "converted_zero_only_without_measurement": true,
+    "replicate_combination": "inverse_variance",
+    "p_combination": "stouffer",
+    "source_convention": "published",
+    "prefer_strain_matched_double": true
+  },
+  "entry_source": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/030-solid-growth-multi/closure/entries.parquet",
+  "n_pinned_records": {
+    "val": 37673,
+    "test": 37673
+  },
+  "n_pairs_expected": 150692,
+  "n_rows": 150692,
+  "n_pairs_empty": 0,
+  "n_pairs_multi_same_source": 5594,
+  "n_pairs_multi_available": 5846,
+  "max_abs_diff": 0.4526114277134399,
+  "mean_abs_diff_over_multi": 0.00777558351963224,
+  "rows_by_label_and_source": {
+    "fitness/kuzmin2018": 20095,
+    "fitness/kuzmin2020": 55251,
+    "gene_interaction/kuzmin2018": 20095,
+    "gene_interaction/kuzmin2020": 55251
+  },
+  "rows_by_dataset": {
+    "TmiKuzmin2020Dataset": 55251,
+    "TmfKuzmin2020Dataset": 55251,
+    "TmiKuzmin2018Dataset": 20095,
+    "TmfKuzmin2018Dataset": 20095
+  }
+}

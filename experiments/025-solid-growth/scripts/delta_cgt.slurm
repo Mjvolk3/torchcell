@@ -138,6 +138,18 @@ if [[ "$STAGE_LMDB" == "1" && "$CONFIG_NAME" != cgt_010b_* ]]; then
   trap 'rm -rf "${SLURM_TMPDIR:-/tmp}/$SLURM_JOB_ID"' EXIT
 fi
 
+# ---- CONTINUATION (the 025 script takes +resume.ckpt_path since 2026-10-11) ----
+# RESUME_FROM_JOB=<slurm job id> resumes the full training state of that job's
+# <run>-last.ckpt under $DATA_ROOT/models/checkpoints/*-<jobid>_*/ (checkpoints stay on
+# /scratch; only the LMDB is local). Submit the link with --dependency=afterany:<jobid>.
+if [[ -n "${RESUME_FROM_JOB:-}" ]]; then
+  # After staging, DELTA_DATA_ROOT/models is a symlink back to /scratch, so this resolves either way.
+  mapfile -t CKPTS < <(ls -t "$DELTA_DATA_ROOT"/models/checkpoints/*-"${RESUME_FROM_JOB}"_*/*-last.ckpt 2>/dev/null)
+  [[ "${#CKPTS[@]}" -ge 1 ]] || { echo "ERROR: no *-last.ckpt for job $RESUME_FROM_JOB under models/checkpoints" >&2; exit 1; }
+  echo "resuming from ${CKPTS[0]}"
+  OVERRIDES+=("+resume.ckpt_path=${CKPTS[0]}")
+fi
+
 cd "$PROJECT_ROOT/experiments" || exit 1
 
 export DATA_ROOT="$DELTA_DATA_ROOT"
@@ -163,7 +175,13 @@ PY
 export MASTER_ADDR=127.0.0.1
 export MASTER_PORT=$(shuf -i 10000-65500 -n 1)
 
-"$DELTA_CONDA_BASE/envs/$DELTA_CONDA_ENV/bin/torchrun" --nnodes=1 --nproc_per_node=4 \
+# GPUs per job. The header asks for 4; a single-GPU job (the scaling ladder's small
+# sizes, which schedule faster) overrides at submit:
+#   sbatch --gpus-per-node=1 --cpus-per-task=16 --mem=60g --export=ALL,GPUS=1 ...
+# torchrun must match the allocation or the extra ranks find no device.
+GPUS="${GPUS:-4}"
+echo "gpus        : $GPUS (torchrun nproc_per_node)"
+"$DELTA_CONDA_BASE/envs/$DELTA_CONDA_ENV/bin/torchrun" --nnodes=1 --nproc_per_node=$GPUS \
   --rdzv-backend=c10d --rdzv-endpoint=127.0.0.1:$MASTER_PORT \
   --rdzv-id=$SLURM_JOB_ID --local-addr=127.0.0.1 \
   "$PROJECT_ROOT/experiments/025-solid-growth/scripts/equivariant_cell_graph_transformer.py" \

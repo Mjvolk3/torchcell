@@ -1,0 +1,68 @@
+%% notes-tex/interaction-fitness-figure-gate/interaction-fitness-figure-gate.tex
+%% [[experiments.030-solid-growth-multi.scripts.figure2_gate_numbers]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/interaction-fitness-figure-gate/interaction-fitness-figure-gate.tex
+%%
+%% Mockups of manuscript Figure 2, fitness and gene-gene interactions, held for a decision
+%% before any panel enters the paper. Gene essentiality has its own gate
+%% (notes-tex/essentiality-figure-gate on the kinetics branch).
+%%
+%% Build:  make numbers  -> macros, table rows and the fitness panel from the result files
+%%         make plots    -> convert the newest renders into figures/
+%%         make          -> interaction-fitness-figure-gate.pdf
+%%         make check    -> formatting / provenance gate
+%%
+%% EVERY number a caption or a sentence prints is a macro of tables/gate_numbers.tex,
+%% written by experiments/030-solid-growth-multi/scripts/figure2_gate_numbers.py from the
+%% result files of experiments 030, 025, 010, 006, 005 and 007. Nothing is typed into a
+%% figure or a caption. The registry (section 6) is a plan and carries no result.
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+\usepackage{longtable}
+\usepackage{amsmath}
+
+\emergencystretch=3em
+
+%% Figure and table status, the symbol set of the metabolism figure gate (tcdoc.sty on the
+%% kinetics branch defines it; this branch's tcdoc.sty does not yet). Filled circle = on
+%% file, every drawn value in a committed result file; half circle = partial, a run
+%% unfinished or unscored; open circle = idea only. None of the three means approved.
+\DeclareRobustCommand{\tcfsfile}{{\normalfont\footnotesize\textcolor{tcgray}{\ding{108}}}}
+\DeclareRobustCommand{\tcfspartial}{{\normalfont\footnotesize\textcolor{tcgray}{\ding{119}}}}
+\DeclareRobustCommand{\tcfsidea}{{\normalfont\footnotesize\textcolor{tcgray}{\ding{109}}}}
+\newcommand{\fstat}[1]{\csname tcfs#1\endcsname}
+
+\input{tables/gate_numbers}
+\input{tables/gate_figure_names}
+
+%% The regime key, stated once and carried by the data figures.
+\newcommand{\regimekey}{Regime is what a method reads when it scores a held-out triple:
+\emph{identity}, the three genes and nothing measured (the gene-identity ridge, and the
+transformer as trained, which sees the lower-order records only through its weights);
+\emph{lower-order terms}, the measured singles, doubles and digenic scores of the same
+strains, looked up at scoring time (a transductive read over the closure); \emph{screen
+only}, the training mean of the triple's screen. Light fill is a test score, the darker line
+color a validation score of a model with no test evaluation.}
+
+\title{\vspace{-1.5em}Figure 2 Gate\\
+  {\large Fitness and Gene--Gene Interactions: What the Lower-Order Terms Explain,
+   What the Transformer Recovers, and the Panels Proposed for the Main Text}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\tccontents
+
+\input{sections/1-decision}
+\input{sections/2-mockups}
+\input{sections/3-models}
+\input{sections/4-remaining}
+\input{sections/5-state}
+\input{sections/6-registry}
+\input{sections/7-performance}
+
+\end{document}

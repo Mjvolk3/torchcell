@@ -1,0 +1,69 @@
+%% notes-tex/030-scaling-study/030-scaling-study.tex
+%% [[experiments.030-solid-growth-multi.scripts.scaling_readout_030]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/030-scaling-study/030-scaling-study.tex
+%%
+%% Build:  make          -> 030-scaling-study.pdf
+%%         make check    -> formatting / provenance / citation gate
+%%         make figures  -> re-export the four draw.io figures (DRAWIO=<binary>)
+%%
+%% Tables: experiments/030-solid-growth-multi/scripts/scaling_grid_table_030.py.
+%% Figures: notes/assets/drawio/030-scaling-study.gen.py (planned figures, no data);
+%% the results figure comes from scaling_readout_030.py once the grid has run.
+%% Nothing in this document is a fitted exponent; every exponent here is a plan.
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\emergencystretch=3.5em
+
+\title{\vspace{-1.5em}The 030 Scaling Study\\
+  {\large Loss against data, size and compute on the per-entry trigenic build:
+   the grid queued on Delta, what it records, how it is read, and what each fit
+   can and cannot support}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+Forty one-GPU jobs on Delta train the per-entry cell graph transformer of
+experiment 030 across five sizes (79k to 3.6M non-embedding parameters) and four
+nested training subsets of the strict closure pool (21k to 1.05M records, drawn by
+query pair), with the merged-label 025 twin trained on the same subsets at the
+largest size. Every run logs the three scaling quantities as it trains: $N$ from
+the model's own parameter tally, $D$ as distinct records per epoch and records
+seen, and $C$ as FLOPs measured on five real training steps rather than taken
+from $6ND$. The readout scores every epoch on the pinned 37,705 validation
+triples in label units, pooled and per screen, takes two reads per point (the
+validation-selected epoch and an interpolation at one shared records-seen
+budget), and fits the pure and floored power laws of the scaling-laws explainer on
+both reads, with the largest point held out and a bootstrap over runs for every
+exponent, beside the replicate floor of each screen. Three defects that would have
+stopped every figure were found and repaired before any job started: an override
+Hydra refused, compute rows a W\&B history query could not see, and a per-screen
+loss key the trainer never logged. What the queued runs support, in order of
+confidence: the paired gap at the two smallest subsets, loss against unique data
+at a fixed training budget, and a fixed-epoch slice of loss against size. The
+unconverged full-data points and a loss range less than three times the
+replicate floor are the limits on every exponent, and the cheapest additions that
+move them are listed last.
+\end{abstract}
+
+\vspace{0.5em}
+\tccontents
+\clearpage
+
+\input{sections/1-question}
+\input{sections/2-grid}
+\input{sections/3-readout}
+\input{sections/4-support}
+\input{sections/5-figures}
+\input{sections/6-next}
+
+\end{document}

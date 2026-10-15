@@ -1,0 +1,29 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/030-solid-growth-multi/scripts/scaling_plot_catalog_030.py (the PlotSpec catalog)
+\begin{table}[htbp]
+\centering\footnotesize
+\caption{The plot catalog: 16 plots the queued grid can feed, 9 in full and 7 in part. Read names what the y value is at each point: per-epoch rows, the validation-selected epoch, the interpolation at the shared records-seen budget $B$, or the calibration jobs. Feeds names the rows of the grid the plot needs. Partial means the rows exist but a stated limit narrows the claim (ten-epoch full-pool points, one seed, four points on an axis).}
+\label{tab:catalog}
+\begin{tabular}{llp{0.30\linewidth}p{0.16\linewidth}p{0.26\linewidth}l}
+\toprule
+id & family & plot (x; y) & read & feeds & status \\
+\midrule
+S1 & surface & \textbf{Loss against D at every size}: D, training records (log); 030 also in entry rows; val MSE, label units (log) & both & the 5 x 4 seed-1 grid; seeds 2-3 at the two smallest subsets for 45x2 and 180x8 & full \\
+S2 & surface & \textbf{Loss against N at every subset}: N, non-embedding parameters (log); val MSE, label units (log) & both & the 5 x 4 seed-1 grid & partial \\
+S3 & surface & \textbf{The joint surface as a 5 x 4 heatmap}: D, four subsets; N, five sizes & both & the 5 x 4 seed-1 grid & full \\
+S4 & surface & \textbf{Fitted forms on the two axes}: D or N (log); val MSE minus the fitted E (log) & both & S1's 180x8 column and S2's full-pool column & partial \\
+C1 & compute & \textbf{Learning curves against records seen}: records seen (log); val MSE, label units (log) & per-epoch & every run; chains stitched by resumed\_from & full \\
+C2 & compute & \textbf{Loss against training FLOPs, the envelope}: cumulative FLOPs (log); val MSE, label units (log) & per-epoch & every run on the full pool and on 1/4 (the large-data columns) & partial \\
+C3 & compute & \textbf{Loss against GPU hours}: GPU hours (log); val MSE, label units (log) & per-epoch & every run & full \\
+C4 & compute & \textbf{Cost per record and pace against size}: N (log); FLOPs per record (left); records per second (right) & calibration & the two calibration jobs (180x8, 45x2) now; every grid run's first epoch after & partial \\
+D1 & diagnostic & \textbf{Bootstrap distribution of each exponent}: exponent value; count of resamples & both & 300 resamples over runs of S1's and S2's fitted columns & full \\
+D2 & diagnostic & \textbf{Held-out prediction against observation}: predicted loss at the held-out point; observed loss & both & every fit of S4 & partial \\
+D3 & diagnostic & \textbf{Fitted E against the replicate floor}: screen (2018, 2020, pooled); loss, label units & both & S4's floored fits and the noise-ceiling file & full \\
+D4 & diagnostic & \textbf{Seed spread against effect size}: (size, subset) cell; val MSE, label units & selected & the eight seed-replicate cells plus their seed-1 neighbors & full \\
+D5 & diagnostic & \textbf{The learning-rate check}: epoch; val MSE, label units (log) & per-epoch & the two lr jobs and the seed-1 cell at 45x2 on 1/4 & partial \\
+D6 & diagnostic & \textbf{Per-screen Pearson beside the loss}: D (log); val Pearson, per screen and pooled & selected & the 180x8 column & full \\
+P1 & pair & \textbf{The 030 minus 025 gap against D}: D, training records (log); 030 minus 025 pooled val MSE, label units & both & the 180x8 column of both sweeps & partial \\
+P2 & pair & \textbf{Paired learning curves}: records seen (log); val MSE, label units (log) & per-epoch & the 180x8 column of both sweeps & full \\
+\bottomrule
+\end{tabular}
+\end{table}

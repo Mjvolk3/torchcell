@@ -1,0 +1,87 @@
+%% notes-tex/030-scaling-study/sections/3-readout.tex
+
+\section{The readout\secstatus{todo}}
+\label{sec:readout}
+
+The readout (\texttt{scaling\_readout\_030.py}) finds every run of a sweep by its
+config tag, stitches chained continuations by the checkpoint each link resumed
+from, and keeps one row per epoch of every point with the validation loss in
+label units, pooled and per screen, the Pearson beside it, and the compute keys
+(Figure~\ref{fig:readout}). A point is one (size, subset, seed, learning rate).
+
+\tcfig{figures/030-scaling-readout.pdf}{%
+The readout from W\&B rows to fitted exponents. The five boxes are the stages;
+the purple box is the 025 paired sweep, which enters the same table and leaves as
+the gap; the red box is the replicate floor, computed before any fit and drawn
+beside every fitted $E$. The dashed boxes are the four joints repaired on
+2026-10-12, each of which had been reproduced on a real run or a real compose
+before it was changed (Section~\ref{sec:support}).
+}{fig:readout}
+\src{notes/assets/drawio/030-scaling-study.gen.py}
+
+\notesec{The loss that is fitted}
+The fit target is the mean squared error on the gene-interaction score after the
+inverse transform, \texttt{val/gene\_interaction/MSE}, and per screen the
+per-token keys \texttt{val/token/[screen]/gene\_interaction/MSE}. Not the
+normalized loss, whose constants differ per arm, and not Pearson, which plateaus
+and carries a floor of its own: the two screens' validation triples differ in
+mean by about one standard deviation (Kuzmin 2018 mean $-0.046$, sd 0.049,
+$n = 10{,}067$; Kuzmin 2020 mean $+0.004$, sd 0.062, $n = 28{,}935$, measured on
+the Q validation entries), so predicting only the per-screen mean scores a pooled
+Pearson of 0.34 and every pooled Pearson carries that component. Squared error
+does not, but the two screens still have different replicate floors, so the
+curves are fitted per screen and the pooled curve is read as their mixture. The
+per-token MSE is computed over validation entry rows (39,002 rows of the 37,705
+triples), the pooled MSE over the policy-reduced one value per triple; the
+populations differ by the triples measured more than once in one screen.
+
+\notesec{Two reads per point}
+The selected read is the epoch of lowest pooled validation MSE. For the subsets
+that converge inside their budget (240 epochs of 1/64, 120 of 1/16) it is the
+converged loss; for the full pool at ten epochs it is the last epoch or close to
+it. The matched read interpolates each point's epoch curve at one records-seen
+budget $B$ shared by every point. $B$ defaults to the smallest total any point
+reached, which the budgets make the 1/64 total of 5.12M records: the full pool at
+ten epochs sees 10.46M, 1/4 at 40 epochs 9.78M, 1/16 at 120 epochs 8.26M, so a
+budget set at the full-data total would leave every subset without the read,
+which is how the first version of the readout was written. At $B = 5.12$M the
+full point is read near its fifth epoch and 1/4 near its twenty-first. The
+matched read is loss against unique data at a fixed training budget, the
+data-constrained framing in which repeated epochs of a small subset are set
+against single passes over a large one.
+
+\notesec{Fits}
+On each read and for each target (pooled, 2018, 2020), two forms on each axis:
+the pure power law $L = A x^{-k}$ and the floored form $L = E + A x^{-k}$, where
+$x$ is $D$ in records, $D$ in entry rows (030 only) at the 180x8 column, and $N$
+at the full-pool column. The fit is least squares in log space from a grid of
+starting exponents, with a Huber residual at $\delta = 10^{-3}$ as Hoffmann
+et~al.\ fit, and $E$ bounded between zero and the smallest observed loss. For
+every fit the largest $x$ is held out, the form is refit on the rest, and its
+prediction at the held-out point is reported beside the observation; the floored
+form has three parameters, so this test needs four distinct $x$ in sample, and
+on three it is an exact fit that predicts nothing. Three hundred bootstrap
+resamples over runs give the 5 to 95 percent interval of every exponent. The
+interval, not the point, is what an extrapolation inherits.
+
+\notesec{The floor before any fit}
+Under a squared loss the best predictor of a single noisy measurement has
+expected error equal to the replicate variance, so the released and re-measured
+records of the screens bound $E$ from below in the loss's own units before a fit
+exists (Table~\ref{tab:floors}). The 2020 reliability is measured on this build's
+11,013 same-strain re-measured triples; 2018 has 61 such pairs, so it is bounded
+by the published Dango replicate correlation below and by the 483 cross-year
+pairs above. On 2020 the floor is 56\% of the variance of the score: no predictor
+removes more than 44\% of the loss of predicting the screen mean. A fitted $E$
+below the floor is a wrong fit; one far above it says the model family, not the
+data, is the limit.
+
+\input{tables/t3-floors}
+
+\notesec{The paired gap}
+The 025 sweep passes through the same table and the same two reads at the same
+$B$. The gap at each subset and read is the 030 pooled MSE minus the 025 pooled
+MSE, each a mean over seeds with the seed standard deviation where there are
+three. It is pooled only: the 025 trainer logs no per-screen key, and its
+validation triples are the same genotypes so a per-screen 025 loss would need
+its predictions dumped and scored offline.

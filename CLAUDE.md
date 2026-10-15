@@ -694,6 +694,21 @@ them to the best of the plot's ability (some plots legitimately deviate — say 
 - **Reference prior work:** match the look of already-approved paper figures in
   `notes/assets/images/*_palette.svg` where reasonable.
 
+## Scaling checklist for every campaign (N, D, C)
+
+Every training campaign is a point on the three scaling axes whether or not it was designed
+as one, and the Genesis questions (does more data or a bigger model pay) can only be answered
+later if the bookkeeping was done at run time. **Before launching or reviewing any campaign,
+run through the `experiment-design` skill** (`.claude/skills/experiment-design/SKILL.md`). In
+short: the trainer's callbacks include `torchcell.trainers.compute_accounting.ComputeAccounting`
+(measured FLOPs per step, per record, per epoch and cumulative; non-embedding parameters;
+distinct records per epoch and records seen; GPU hours); N is stated as non-embedding
+parameters; D is stated in the unit the loss averages over (records on 025, entry rows on
+030) and held fixed across a sweep; subsets are drawn by the unit that leaks against one
+fixed evaluation set; loss is logged beside the Pearson readout; seeds at the small sizes;
+the replicate floor E is computed before the sweep. Readouts report N, D, FLOPs and GPU
+hours beside every score. Reference: `notes-tex/modeling/scaling-laws/`.
+
 ## When Creating or Designing new Experiments
 
 These env vars will be read in in python with:

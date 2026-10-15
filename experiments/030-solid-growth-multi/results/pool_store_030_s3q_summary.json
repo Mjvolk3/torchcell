@@ -1,0 +1,31 @@
+{
+  "indices_file": "subset_S3Q_indices_030.json.gz",
+  "dest_rel": "data/torchcell/experiments/030-solid-growth-multi/001-multi-build-s3q",
+  "n_pool": 1121574,
+  "n_records_keyspace": 13525088,
+  "codec": "zlib",
+  "zlib_level": 6,
+  "source_bytes": 102866250021,
+  "store_bytes": 7460716544,
+  "compression_ratio": 13.787717227204713,
+  "seconds": 1210.27184176445,
+  "cache_files": [
+    "index_details_seed_0_pin376732-9655170c-utt_sub1121574-5c7aaec6.json",
+    "index_details_seed_1_pin376732-9655170c-utt_sub1121574-5c7aaec6.json",
+    "index_details_seed_2_pin376732-9655170c-utt_sub1121574-5c7aaec6.json",
+    "index_seed_0_pin376732-9655170c-utt_sub1121574-5c7aaec6.json",
+    "index_seed_1_pin376732-9655170c-utt_sub1121574-5c7aaec6.json",
+    "index_seed_2_pin376732-9655170c-utt_sub1121574-5c7aaec6.json"
+  ],
+  "processed_files": [
+    "dataset_name_index.json",
+    "experiment_types.json",
+    "gene_set.json",
+    "label_df.parquet",
+    "perturbation_count_index.json",
+    "phenotype_label_index.json",
+    "pre_filter.pt",
+    "pre_transform.pt",
+    "STAGE_COMPLETE"
+  ]
+}

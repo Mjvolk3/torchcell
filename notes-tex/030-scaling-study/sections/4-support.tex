@@ -1,0 +1,71 @@
+%% notes-tex/030-scaling-study/sections/4-support.tex
+
+\section{What each fit can support\secstatus{todo}}
+\label{sec:support}
+
+Three defects would have stopped every figure, and each was reproduced before it
+was fixed. The submit script passed \texttt{transforms.fit\_stats\_strict=false}
+without the \texttt{+} Hydra requires for a key no config defines; composing the
+exact launch overrides locally reproduced the refusal, and the first calibration
+job (22812512) printed \texttt{Could not override 'transforms.fit\_stats\_strict'}
+after thirty minutes of imports from Lustre. The config now defines the key, and
+since configs and code are read from the Delta checkout when a job starts, a
+pull repaired every pending job in place. The compute callback logged its keys
+without an epoch field, and a W\&B history query for \texttt{epoch} together with
+\texttt{compute/records\_seen} returned zero rows on the one instrumented run
+(53qqijnu) while the key alone returned 28; the callback now logs the epoch on
+every row and the readout falls back to the epochs-completed counter for older
+runs. The trainer logged a per-token Pearson but no per-token MSE, so the
+per-screen keys the readout fits did not exist, and the first missing key
+crashed the reads on \texttt{float(None)}; the per-token collection now carries
+MSE in label units beside Pearson. A fourth, the unreachable matched budget, is
+above. None of these touched the model or the training.
+
+With those repaired, the three fits divide by how much the queued runs support.
+
+\notesec{The paired gap: supported at 1/64 and 1/16}
+Both builds have three seeds at the two smallest subsets, both converge there,
+and the reads are at the same $B$. The gap is interpretable at those two points,
+with a seed spread on each side. At 1/4 it is one seed each. At the full pool it
+is the difference of two unconverged ten-epoch runs, a gap in learning speed at
+ten epochs rather than in attainable loss, and it is drawn hollow. Two confounds
+belong in its caption: the 025 normalizer refits on each subset while 030 pins
+the full-pool constants, and the 030 arm differs from 025 by more than the
+per-entry rows, since it also carries the dataset token and the Kuzmin
+query-strain double-fitness entries the 025 build never had. The gap is
+``per-entry rows plus token plus the added measurement types''; separating the
+token is one more 180x8 column.
+
+\notesec{$L(D)$ at 180x8: supported on the matched read, in a narrower claim}
+Four points at 180x8, with three seeds at the two smallest. On the selected read
+the small subsets are converged and the full pool is not, so the curve flattens
+at its top and $\beta$ is biased low with the slack absorbed into $E$; the
+minimum over 240 noisy epochs against a minimum over ten biases the same way. On
+the matched read every point is a loss at $B = 5.12$M records seen, and the fit is
+the claim it can be: at a fixed budget, what more distinct data buys. The deeper
+limit is identifiability. The pooled replicate floor works out near 1.7e-3 to
+1.9e-3 in label units; the best pooled validation MSE this arm has reached is
+3.3e-3 (53qqijnu, epoch 40), and predicting the per-screen mean scores about
+3.9e-3. Loss minus floor therefore spans less than a factor of 2.5 across the
+whole curve, and the floored form has one degree of freedom on four points. The
+power form's held-out test is the only one that means anything on this axis, and
+the fitted $E$ is a bound to report with its interval rather than a value.
+
+\notesec{$L(N)$ at the full pool: a fixed-epoch slice}
+Five sizes, every one at ten epochs, because the budget table is keyed by subset.
+If the GPU is the bottleneck, the small sizes finish ten epochs in a fraction of
+48 h and could have run to convergence; if the loader is, as it was on IGB's
+GPFS, every size costs 4.3 h an epoch and ten epochs is what any of them gets.
+The two calibration jobs tell which. Either way the slice measures loss after
+10.5M records seen as a function of $N$, which conflates how fast a size learns
+per epoch with how much it can learn, and the learning rate is checked at the
+smallest size only while every size runs at a batch four times smaller than the
+one the arm was tuned at. The exponent from this slice is descriptive until the
+small sizes have been trained to convergence and the learning rate has been
+checked at the top of the ladder.
+
+\notesec{The compute axis: not in this grid}
+IsoFLOP curves need several budgets with several sizes at each, with records
+seen set by the budget and the per-size cost per record from the calibration
+jobs. The grid logs everything such a sweep would read, and the fixed-epoch
+column is one budget line of it, but a frontier needs three.

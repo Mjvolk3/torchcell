@@ -1,0 +1,35 @@
+{
+  "seed": 42,
+  "n_train_pairs": 331,
+  "n_s3q": 1121560,
+  "n_s3q_train_records": 1046064,
+  "fractions": [
+    {
+      "denominator": 4,
+      "n_train_pairs_kept": 83,
+      "n_train_triples": 79677,
+      "n_doubles": 159028,
+      "n_singles": 5694,
+      "n_pool": 319895,
+      "n_train_records": 244399
+    },
+    {
+      "denominator": 16,
+      "n_train_pairs_kept": 21,
+      "n_train_triples": 21045,
+      "n_doubles": 42088,
+      "n_singles": 5694,
+      "n_pool": 144323,
+      "n_train_records": 68827
+    },
+    {
+      "denominator": 64,
+      "n_train_pairs_kept": 6,
+      "n_train_triples": 5211,
+      "n_doubles": 10428,
+      "n_singles": 5694,
+      "n_pool": 96829,
+      "n_train_records": 21333
+    }
+  ]
+}

@@ -30,6 +30,7 @@ from torchcell.data.deduplicate import Deduplicator
 from torchcell.data.embedding import BaseEmbeddingDataset
 from torchcell.data.graph_processor import GraphProcessor
 from torchcell.data.neo4j_query_raw import Neo4jQueryRaw
+from torchcell.data.pool_store import PoolStoreManifest, decode_value, load_manifest
 from torchcell.database.connection import neo4j_connection_settings
 from torchcell.datamodels import (
     EXPERIMENT_REFERENCE_TYPE_MAP,
@@ -196,6 +197,9 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
             timeout=60.0,
             indent=0,  # 60 second timeout  # Compact JSON
         )
+
+    # Set by _init_lmdb_read: the manifest of a pool store, None for a full build.
+    _pool_store: PoolStoreManifest | None = None
 
     # @profile
     def __init__(
@@ -563,11 +567,19 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
 
     @time_method
     def _read_from_lmdb(self, idx: int) -> bytes | None:
-        """Read and deserialize the record at the given index from LMDB."""
-        """Read serialized data from LMDB."""
+        """The serialized record at ``idx``, decoded with the store's codec.
+
+        A pool store (``torchcell.data.pool_store``) holds the pool's records under the
+        full build's keys, zlib-compressed; its ``STORE.json`` names the codec. A full
+        build has no manifest and its values are returned as stored.
+        """
         with self.env.begin() as txn:
             serialized_data = txn.get(f"{idx}".encode())
-            return cast("bytes | None", serialized_data)
+        if serialized_data is None:
+            return None
+        if self._pool_store is not None:
+            return decode_value(serialized_data, self._pool_store.codec)
+        return cast(bytes, serialized_data)
 
     @time_method
     def _deserialize_json(self, serialized_data: bytes) -> list[dict[str, Any]]:
@@ -626,8 +638,9 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
     def _init_lmdb_read(self) -> None:
         """Open the LMDB environment for read access."""
         """Initialize the LMDB environment."""
+        lmdb_dir = osp.join(self.processed_dir, "lmdb")
         self.env = lmdb.open(
-            osp.join(self.processed_dir, "lmdb"),
+            lmdb_dir,
             readonly=True,
             lock=False,
             readahead=False,
@@ -635,12 +648,20 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
             max_readers=256,
             max_spare_txns=16,
         )
+        self._pool_store = load_manifest(lmdb_dir)
 
     def len(self) -> int:
-        """Return the number of records in the dataset."""
+        """The number of records in the dataset's key space.
+
+        For a pool store this is the SOURCE build's record count from ``STORE.json``, not
+        the entries the store holds: the pool keeps the full build's keys, and PyG indexes
+        ``dataset[idx]`` against ``range(len(dataset))``.
+        """
         if self.env is None:
             self._init_lmdb_read()
-
+        if self._pool_store is not None:
+            self.close_lmdb()
+            return self._pool_store.n_records_keyspace
         with self.env.begin(write=False) as txn:
             length = txn.stat()["entries"]
         self.close_lmdb()
@@ -1451,7 +1472,7 @@ def main_transform_standardization() -> None:
 
     # Print statistics of original data using dataset.label_df
     for label in labels:
-        values = cast(np.ndarray, dataset.label_df[label].dropna().values)
+        values = cast("np.ndarray[Any, Any]", dataset.label_df[label].dropna().values)
         print(f"\n{label} statistics (original):")
         print(f"  Count: {len(values)}")
         print(f"  Min: {values.min():.4f}")

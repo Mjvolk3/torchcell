@@ -1,0 +1,28 @@
+%% notes-tex/030-scaling-plots/sections/6-beyond.tex
+
+\section{What this grid cannot draw\secstatus{todo}}
+\label{sec:beyond}
+
+Three plots of a full scaling section are outside what the queued rows provide,
+and each is named here so it is not improvised from them.
+
+\notesec{The IsoFLOP curves and the frontier's slope}
+A U of loss against $N$ at a fixed compute budget needs several sizes trained
+to the same FLOP count, and the frontier needs three such budgets. The grid has
+one budget line, the fixed-epoch column, whose envelope in C2 is the frontier's
+shape at one budget and nothing about its slope. Three budgets spanning two
+decades with four sizes each is the sweep, twelve jobs, after the data and size
+sweeps have shown the budget buys anything.
+
+\notesec{Converged loss against size}
+S2's full-pool curve is a ten-epoch slice. The converged curve needs the small
+sizes run to convergence on the full pool, which the per-size epoch budget after
+calibration allows if the GPU binds, and a converged 180x8 point, which is nine
+chained 48 h jobs. Until then the $N$ exponent is drawn with its caption and the
+heatmap carries both reads so the gap between them is visible.
+
+\notesec{The per-screen gap}
+P1 is pooled because the 025 trainer logs no per-screen key. A per-screen gap
+needs the 025 validation predictions dumped per epoch and scored against the
+screen each triple belongs to, which is a small addition to the 025 trainer and
+a rerun of its eight jobs, or a one-off scoring of its checkpoints.

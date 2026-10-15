@@ -1,0 +1,72 @@
+%% notes-tex/interaction-fitness-figure-gate/sections/3-models.tex
+%% SOURCE: tables/gate_comparator_rows.tex and the macros of tables/gate_numbers.tex, written
+%% by experiments/030-solid-growth-multi/scripts/figure2_gate_numbers.py from
+%% experiments/010-kuzmin-tmi/results/additive_baseline_gene_interaction.csv,
+%% experiments/025-solid-growth/results/additive_baselines_025_summary.json,
+%% experiments/006-kuzmin-tmi/results/dcell_training/checkpoints.csv,
+%% experiments/005-kuzmin2018-tmi/results/dango_string_version_summary.csv and
+%% experiments/007-kuzmin-tm/results/fba_baseline_si/stats.json.
+
+\clearpage
+\section{The models and comparators on file\secstatus{todo}}
+\label{sec:models}
+
+\pfstep{The transformer} The cell graph transformer with the perturbed class token read
+through a linear probe, graph regularization (the KL form of 010) toward nine gene graphs,
+the full-gene composite sequence embedding (fungal upstream and downstream transformers,
+CaLM, ProtT5) through a parameter-matched preprocessor, a fitness head beside the
+interaction head, and the per-entry dataset token of experiment 030, which lets one
+genotype carry every screen's entry as its own row. Seed \gcgtRSeed{} on arm R has
+synced \gcgtREpochsSynced{} epochs to the registry up to epoch \gcgtRLastEpoch{}, the
+maximum over epochs is \gcgtRValMax{} at epoch \gcgtRValMaxEpoch{} (a biased order
+statistic), and the last-ten-epoch mean is \gcgtRValWindow{}; arm Q has synced
+\gcgtQEpochsSynced{} epochs and reads \gcgtQValWindow{} over epochs \gcgtQFirstEpoch{} to
+\gcgtQLastEpoch{}. Runs: \texttt{\gcgtRRuns{}} and \texttt{\gcgtQRuns{}}. Every
+seed that carries an arm's tag is read on its own and never stitched into another seed's
+history; the headline number is seed \gcgtRSeed{}, and a seed with fewer synced epochs
+than the ten-epoch window is on file as partial and drawn nowhere. Seeds on file, arm R:
+\gcgtRSeedsLogged{}; arm Q: \gcgtQSeedsLogged{}.
+
+\pfstep{The gene-identity ladder of 025, same arms} Test Pearson on the 025 build, from
+\file{025-additive-baselines}: train mean \gbRBZerotrainmean{} and \gbQBZerotrainmean{},
+screen mean \gbRBThreehierarchicalmean{} and \gbQBThreehierarchicalmean{}, query pair
+only \gbRBFourquerypaironly{} and \gbQBFourquerypaironly{}, additive gene ridge
+\gbRBOneadditivegene{} and \gbQBOneadditivegene{}, additive plus pair
+\gbRBTwoadditivepluspair{} and \gbQBTwoadditivepluspair{}, and the gene-embedding MLP
+over three seeds \gbRBFivegeneembeddingmlp{} and \gbQBFivegeneembeddingmlp{}. The 030
+ridge of Figure~\ref{fig:sheet} reproduces the 025 ridge on the same arms
+(\gloRBOneadditivegenetest{} against \gbRBOneadditivegene{}; \gloQBOneadditivegenetest{}
+against \gbQBOneadditivegene{}), which is the end-to-end check that the two builds and
+the pinned splits agree.
+
+\pfstep{Comparators, each on another build} The earlier draft of Figure 2 placed the
+transformer beside DCell, DANGO and flux balance analysis. Their results are on file,
+but on other builds and other splits, so none is a row of the ladder: the three 010
+checkpoints read \gcgtOldTestMin{} to \gcgtOldTestMax{} on the 010 build's test split
+and the 025 replication of that configuration reached \gcgtRepValBest{} at validation
+epoch \gcgtRepBestEpoch{}; DCell's best checkpoint reads \gdcellBestVal{} (validation,
+006 build, one \gdcellDays{}-day run); DANGO reads \gdangoBestMean{} at best (STRING
+\gdangoBestRelease{}, \gdangoBestSchedule{}, mean of \gdangoBestN{}) on the 005 Kuzmin
+2018 build; Yeast9 FBA with nothing fitted reads \gfbaPearson{} against the released
+score over \gfbaN{} triples, with \gfbaFracZero{}\,\% of its predictions at zero.
+Table~\ref{tab:comparators} lists them with their build and statistic. Refitting the
+three on the 030 pinned triples is entry E7 of the registry.
+
+{\footnotesize
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{44mm}>{\raggedright\arraybackslash}p{30mm}>{\raggedright\arraybackslash}p{28mm}r>{\raggedright\arraybackslash}p{40mm}@{}}
+\caption[]{Comparators on file, none on the 030 build. Pearson against the trigenic
+score; the statistic column says what each number is. Rows written by
+\texttt{figure2\_gate\_numbers.py}.}
+\label{tab:comparators}\\
+\toprule
+model & build, split & split or scope & $r$ & statistic \\
+\midrule
+\endfirsthead
+\toprule
+model & build, split & split or scope & $r$ & statistic \\
+\midrule
+\endhead
+\bottomrule
+\endlastfoot
+\input{tables/gate_comparator_rows}
+\end{longtable}}

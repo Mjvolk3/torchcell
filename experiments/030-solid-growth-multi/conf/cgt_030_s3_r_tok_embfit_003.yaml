@@ -1,0 +1,49 @@
+# experiments/030-solid-growth-multi/conf/cgt_030_s3_r_tok_embfit_003.yaml
+#
+# THE COMPOSITE ON THE 030 CLOSURE ARM, NO HOLDOUT. cgt_030_s3_r_tok_fit_002 (whole S3
+# pool, per entry, dataset token, 60 epochs) with ONE change: the learnable table is
+# replaced by the full-gene composite of cgt_s0_q_kl_emb_017 through the parameter-matched
+# preprocessor (hidden width 339), exactly as cgt_s3_r_kl_embfit_034 did to fit_031 on 025.
+#
+# Reads against cgt_s3_r_kl_embfit_034 (025, same representation, merged build; seed 1
+# anx8rrdn 0.4586 over epochs 10-29, 0.4784 over 30-49) and cgt_030_s3_r_tok_fit_002
+# (same arm, table).
+#
+# THE BUDGET IS 100 EPOCHS, not the table arm's 60. The 025 composite seed 1 was still
+# rising at epoch 49 (validation Pearson slope +0.010 per 10 epochs over 30-49, train
+# rising underneath) where the 025 table seeds 2 and 3 were flat, so 60 would leave the
+# composite's ceiling unread. 100 epochs do NOT fit the 4-day mmli limit at the measured
+# pace (36 min per clean epoch, about 4 h under the GPFS stall; 025 seed 1 took 2 d 20 h
+# for 50): the job is cut by the limit somewhere past epoch 60 and CONTINUED by a second
+# job that resumes the full training state from its `<run>-last.ckpt` under
+# `$DATA_ROOT/models/checkpoints/<group>/`:
+#
+#   PROJECT_ROOT=<worktree> sbatch -J 030-r1w1-emb-s0 \
+#       experiments/030-solid-growth-multi/scripts/igb_mmli_cgt_030.slurm cgt_030_s3_r_tok_embfit_003 +seed=0
+#   PROJECT_ROOT=<worktree> sbatch -J 030-r1w1-emb-s0-cont \
+#       experiments/030-solid-growth-multi/scripts/igb_mmli_cgt_030.slurm cgt_030_s3_r_tok_embfit_003 +seed=0 \
+#       +resume.ckpt_path=/home/a-m/mjvolk3/scratch/torchcell/models/checkpoints/<group>/<run>-last.ckpt
+#
+# The continuation is a new W&B run with `resumed_from` in its config; the readout
+# stitches the two by that key, as 019's v16 continuation did.
+defaults:
+  - cgt_030_s3_r_tok_fit_002
+  - _self_
+
+wandb:
+  tags: [s3, split_R, graph_reg_kl, fitness_joint, closure_doubles, unpinned_to_train, seq_embedding, full_gene_composite, param_matched, perturb_cls, cls_linear_readout, const_lr, const_lr_2.5e-4, epochs_100, per_entry, dataset_token, no_holdout, igb_mmli]
+
+trainer:
+  max_epochs: 100
+
+cell_dataset:
+  node_embeddings: [fudt_upstream, calm, prot_T5_all, fudt_downstream]
+
+model:
+  learnable_embedding:
+    enabled: false
+    size: ${model.hidden_channels}
+    preprocessor:
+      num_layers: 2
+      hidden_dim: 339
+      dropout: 0.1

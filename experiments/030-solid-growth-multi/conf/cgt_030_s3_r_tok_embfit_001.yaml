@@ -1,0 +1,33 @@
+# experiments/030-solid-growth-multi/conf/cgt_030_s3_r_tok_embfit_001.yaml
+#
+# THE FIRST 030 ARM: closure composite + fitness, per entry with the dataset token, three
+# seeds on IGB mmli. cgt_030_s3_r_tok_fit_000 with ONE change, the same change 025's
+# cgt_s3_r_kl_embfit_034 made to cgt_s3_r_kl_fit_031: the learnable table is replaced by
+# the full-gene composite (fudt upstream + downstream, CaLM, ProtT5 all) through the
+# parameter-matched preprocessor (hidden width 339).
+#
+# Read against 025's cgt_s3_r_kl_embfit_034 (same records by genotype, merged labels, no
+# token; seeds 2409708-2409710) and cgt_s3_r_kl_fit_031 (table, 0.479 +- 0.001). The
+# question the arm answers: does training on every stored measurement under its own
+# source token beat training on the merged label, at the same epoch budget.
+#
+#   PROJECT_ROOT=<worktree> sbatch -J 030-r1w1-s0 \
+#       experiments/030-solid-growth-multi/scripts/igb_mmli_cgt_030.slurm cgt_030_s3_r_tok_embfit_001 +seed=0
+defaults:
+  - cgt_030_s3_r_tok_fit_000
+  - _self_
+
+wandb:
+  tags: [s3, split_R, graph_reg_kl, fitness_joint, closure_doubles, unpinned_to_train, seq_embedding, full_gene_composite, param_matched, perturb_cls, cls_linear_readout, const_lr, const_lr_2.5e-4, epochs_50, per_entry, dataset_token, essentiality_holdout, igb_mmli]
+
+cell_dataset:
+  node_embeddings: [fudt_upstream, calm, prot_T5_all, fudt_downstream]
+
+model:
+  learnable_embedding:
+    enabled: false
+    size: ${model.hidden_channels}
+    preprocessor:
+      num_layers: 2
+      hidden_dim: 339
+      dropout: 0.1

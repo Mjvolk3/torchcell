@@ -1,0 +1,41 @@
+[
+  {
+    "arm": "R",
+    "seed": 0,
+    "run_ids": [
+      "u28pgzde",
+      "xy3xnpau",
+      "xy3xnpau-cont2421912"
+    ],
+    "n_epochs_logged": 92,
+    "last_epoch": 164,
+    "val_fitness_order3_last_window_mean": 0.9488180935382843,
+    "window": 10,
+    "partial": false
+  },
+  {
+    "arm": "Q",
+    "seed": 0,
+    "run_ids": [
+      "53qqijnu",
+      "rkwyav5i"
+    ],
+    "n_epochs_logged": 45,
+    "last_epoch": 45,
+    "val_fitness_order3_last_window_mean": 0.7223953068256378,
+    "window": 10,
+    "partial": false
+  },
+  {
+    "arm": "Q",
+    "seed": 1,
+    "run_ids": [
+      "ddnpwq4z"
+    ],
+    "n_epochs_logged": 2,
+    "last_epoch": 1,
+    "val_fitness_order3_last_window_mean": 0.22321715205907822,
+    "window": 10,
+    "partial": true
+  }
+]

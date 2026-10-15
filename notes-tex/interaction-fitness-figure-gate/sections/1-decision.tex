@@ -1,0 +1,116 @@
+%% notes-tex/interaction-fitness-figure-gate/sections/1-decision.tex
+%% SOURCE: every number is a macro of tables/gate_numbers.tex, written by
+%% experiments/030-solid-growth-multi/scripts/figure2_gate_numbers.py from the result files
+%% of experiments 030 (lower_order_baselines_030.py, job 3902), 025
+%% (additive_baselines_025.py), 010, 006, 005 and 007. The earlier documents named here are
+%% notes-tex directories.
+
+\section{The decision\secstatus{todo}}
+\label{sec:decision}
+
+Figure 2 of the manuscript is to carry fitness and gene--gene interactions, with gene
+essentiality moved to its own figure. Every arm here is scored on the pinned held-out
+triples of the Kuzmin 2018 and 2020 trigenic screens on the 030 build: arm R, the 010
+random split over records (\gnRTrain{} train, \gnRVal{} validation, \gnRTest{} test
+triples), and arm Q, the query-pair-disjoint split (\gnQTrain{}, \gnQVal{}, \gnQTest{}),
+in which no held-out triple's query pair appears in any training record. Nothing here is
+approved. The sheets are mockups of what the result files support, and the symbol after
+each panel letter says only whether the values behind it are on file.
+
+\pfstep{Where the full record is} \file{025-additive-baselines} holds the gene-identity
+ladder on both arms, the arms and their missing control, the prespecified decision table
+and the first arm Q test score of a transformer checkpoint. \file{025-s3-closure} holds the
+closure: the published trigenic score reproduced from the stored lower-order records, and
+what that identity says about training on the closure pool. \file{025-mmli-campaign} and
+\file{030-scaling-study} hold the transformer campaigns on the 025 and 030 builds. The
+lower-order ladder of this document is the script
+\texttt{lower\_order\_baselines\_030.py} and its note.
+
+\pfstep{The question the figure answers, and the one it must not dodge} The joint model
+of experiment 030 trains on every single, every closure double and every training triple
+of the S3 pool, with a fitness head beside the interaction head. For a held-out triple the
+published identity
+\begin{equation}
+  \tau_{ijk} = f_{ijk} - f_{ij}\,f_k - \varepsilon_{ik} - \varepsilon_{jk}
+  \label{eq:identity}
+\end{equation}
+has every term but $f_{ijk}$ in the training pool: the query strain's double fitness
+$f_{ij}$, the array single $f_k$ and the two digenic control scores. So the model is handed
+the triple's null expectation, and the question a reviewer will ask is whether its score is
+that arithmetic. The gene-identity ladder of 010 and 025 cannot answer it, because a
+one-hot ridge over the three genes never sees a measurement. The lower-order ladder can:
+every rung reads only those terms, under the trainer's own label policy, and on arm Q the
+terms of any held-out query pair are masked (\gmaskQFijq{} rows lose $f_{ij}$ and
+\gmaskQEpsij{} lose $\varepsilon_{ij}$), exactly the doubles the strict closure rule
+removed from the model's training pool.
+
+\pfstep{Apples to apples, stated precisely} The information set is the same on both
+sides: the lower-order rungs and the transformer see the identical training records, and
+neither sees the held-out triple's own fitness or interaction, since the split is by
+record and a 030 record holds all of a genotype's entries. What differs is the access
+mode, and the sheets name it as a regime. A lower-order rung is a lookup plus a function:
+the measured terms are inputs at scoring time, which is transductive over the closure.
+The transformer as trained reads gene identity, graphs and sequence embeddings at scoring
+time and must have stored the lower-order records in its weights. So the ladder is not a
+claim that boosted trees are the better model of a cell. It is the measurement of how
+much of a held-out trigenic score is already in the lower-order records, and the model's
+distance from that number is the thing the figure has to show. A transformer that reads
+the same terms as inputs is the arm that makes the two regimes directly comparable, and
+it is the first entry of the registry (\ref{sec:registry}).
+
+\pfstep{CGT is a fitness predictor, and that is the other fair reading} The joint model
+predicts a held-out triple's fitness as well as its score, and on arm R its fitness head
+reads \gfitRCgtValWindow{} against \gloRFOneridgelowerorderfitnesstest{} for the ridge
+over the terms. Equation~\ref{eq:identity} then gives two rungs that use CGT as what it
+is. C1 takes the model's predicted $f_{ijk}$ and subtracts the measured null,
+$f_{ij} f_k + \varepsilon_{ik} + \varepsilon_{jk}$, the same terms the lower-order rungs
+read, so the model supplies only the one term the closure lacks; it is the comparison in
+which the model and the trees receive the same information in the same form. C2 derives
+$\tau$ from the model's own predicted fitness of the triple, the doubles and the singles,
+with no measured term, which tests whether its fitness predictions are consistent
+enough for the residual. Neither is on file: both need the fitness head's per-triple
+predictions, which E3 writes beside the interaction head's. If C1 reads above the trees,
+the model's fitness head is doing the work the ladder measures and the figure says so;
+if it does not, the fitness head is no more precise on $f_{ijk}$ than a ridge over the
+terms, which Figure~\ref{fig:sheet}f already suggests on arm Q.
+
+\pfstep{Three statements are on file} First, the free arithmetic is large. The
+zero-parameter null that predicts $\tau$ as minus the two digenic control scores reads
+\gloRNOnemultquerydoubletest{} on arm R and \gloQNOnemultquerydoubletest{} on arm Q (test
+Pearson), boosted trees over the thirteen terms and four products
+\gloRLTwohgblowerordertest{} and \gloQLTwohgblowerordertest{}, against the gene-identity
+ridge at \gloRBOneadditivegenetest{} and \gloQBOneadditivegenetest{}; the paired gain of
+the trees over the ridge is \gpairRBOneadditivegeneLTwohgblowerorder{}
+[\gpairRBOneadditivegeneLTwohgblowerorderLo{}, \gpairRBOneadditivegeneLTwohgblowerorderHi{}]
+on R and \gpairQBOneadditivegeneLTwohgblowerorder{}
+[\gpairQBOneadditivegeneLTwohgblowerorderLo{}, \gpairQBOneadditivegeneLTwohgblowerorderHi{}]
+on Q over 2,000 resamples of the test triples. Second, the transformer does not collect
+it. The composite-embedding model with the fitness head and the dataset token reads
+\gcgtRValWindow{} on arm R (validation, mean of epochs \gcgtRFirstEpoch{} to
+\gcgtRLastEpoch{}, seed \gcgtRSeed{}) and \gcgtQValWindow{} on arm Q (epochs
+\gcgtQFirstEpoch{} to \gcgtQLastEpoch{}), under the zero-parameter null on both arms, and
+on Q within a screen it reads close to the screen-mean floor. Third, the fitness side is
+arithmetic. A ridge over the same terms predicts a held-out triple's fitness at
+\gloRFOneridgelowerorderfitnesstest{} on R and \gloQFOneridgelowerorderfitnesstest{} on
+Q, and the model's fitness head reads \gfitRCgtValWindow{} and \gfitQCgtValWindow{}
+(validation) on the same triples, so the fitness panel of the figure is a panel about
+the closure, not about the model.
+
+\pfstep{Every pooled number carries a floor} The two screens differ in mean $\tau$, and
+predicting only the training mean of the triple's screen reads
+\gloRNZeroscreenmeantest{} on R and \gloQNZeroscreenmeantest{} on Q. The dataset token
+learns that offset in the first epoch. Every comparison on the sheets is therefore drawn
+with the floor visible, and the performance table (\ref{sec:performance}) carries the
+within-screen Pearson, both series centered by screen, beside the pooled one.
+
+\pfstep{The claims the main-text figure would make} First, that the trigenic score is a
+residual over lower-order measurements, and the ontology stores those measurements beside
+it, which is what makes the closure recomputable and the free arithmetic measurable: on
+file. Second, that a model reading gene identity and sequence recovers part of a held-out
+triple's score on a random split and less on a query-pair-disjoint split: on file for one
+seed, validation only. Third, that the model beats what the lower-order records already
+say: not on file, and on the current reading false on both arms. Fourth, that the figure
+can show the comparators of the earlier draft (DCell, DANGO, FBA) on the same data: not on
+file; their results are on other builds (\ref{sec:models}). The figure enters the paper
+only when the third claim is settled either way by the registry's first two entries, and
+with the regime named in the panel.

@@ -1,0 +1,65 @@
+%% notes-tex/030-scaling-plots/030-scaling-plots.tex
+%% [[experiments.030-solid-growth-multi.scripts.scaling_plot_catalog_030]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/030-scaling-plots/030-scaling-plots.tex
+%%
+%% Build:  make          -> 030-scaling-plots.pdf
+%%         make check    -> formatting / provenance / citation gate
+%%         make figures  -> re-export the four draw.io sketches (DRAWIO=<binary>)
+%%
+%% Table 1: experiments/030-solid-growth-multi/scripts/scaling_plot_catalog_030.py.
+%% Figures: notes/assets/drawio/030-scaling-plots.gen.py (sketches, no data).
+%% Nothing in this document is a measurement; every curve is a shape the plot would have.
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\emergencystretch=3.5em
+
+\title{\vspace{-1.5em}Plots the 030 Scaling Grid Can Feed\\
+  {\large Sixteen plots, the runs and keys each one draws on, and what each
+   would show, sketched before any run has reported}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+The forty jobs of the 030 scaling grid produce, per run and per epoch, a
+validation loss in label units pooled and per screen, the records seen, the
+measured FLOPs and the GPU hours, and per point two reads of that loss: the
+validation-selected epoch and an interpolation at one shared records-seen budget.
+Those rows feed sixteen plots in four families. The surface family reads the
+loss across the five-by-four grid both ways, against data at every size and
+against size at every subset, as a heatmap, and as the fitted forms on $L - E$.
+The compute family draws the learning curves against records seen, FLOPs and GPU
+hours, whose lower envelope is the compute-efficient frontier, and the cost per
+record and pace against size from the calibration jobs. The diagnostic family is
+what says how far an exponent can be trusted: the bootstrap distribution, the
+held-out prediction against the observation, the fitted floor against the
+replicate floor, the seed spread against the step between cells, the
+learning-rate check, and the per-screen Pearson beside the loss. The pair family
+is the 030 minus 025 gap and the paired learning curves. Nine plots the queued
+grid feeds in full and seven in part, the part being a stated limit rather than a
+missing row: ten-epoch full-pool points, one seed at most cells, four points on
+the data axis. One catalog table names every plot, its axes, its read, the rows it
+needs and its status, and four sketches show the shape each family would take.
+\end{abstract}
+
+\vspace{0.5em}
+\tccontents
+\clearpage
+
+\input{sections/1-inputs}
+\input{sections/2-surface}
+\input{sections/3-compute}
+\input{sections/4-diagnostics}
+\input{sections/5-pair}
+\input{sections/6-beyond}
+
+\end{document}

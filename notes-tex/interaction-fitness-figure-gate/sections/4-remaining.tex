@@ -1,0 +1,38 @@
+%% notes-tex/interaction-fitness-figure-gate/sections/4-remaining.tex
+%% SOURCE: hand-authored; the values named are macros of tables/gate_numbers.tex.
+
+\section{What is established and what remains\secstatus{todo}}
+\label{sec:remaining}
+
+\pfstep{Established} The published trigenic score is the identity of
+equation~\ref{eq:identity} to the rounding floor on both screens, so a held-out triple's
+null expectation is a function of training records (\file{025-s3-closure}). The free
+arithmetic is measured on both arms and is large: \gloRNOnemultquerydoubletest{} and
+\gloQNOnemultquerydoubletest{} with no parameters, \gloRLTwohgblowerordertest{} and
+\gloQLTwohgblowerordertest{} with boosted trees. The transformer as trained reads below
+the zero-parameter null on both arms (\gcgtRValWindow{}, \gcgtQValWindow{}, validation,
+one seed). The gene-identity ridge sits at \gloRBOneadditivegenetest{} and
+\gloQBOneadditivegenetest{}, so the transformer does beat the ladder the earlier draft
+compared it to, and that comparison is the wrong one. The fitness of a held-out triple is
+predictable from the lower-order terms at \gloRFOneridgelowerorderfitnesstest{} on R.
+
+\pfstep{Not established} Whether a transformer that reads the lower-order terms as inputs
+beats the boosted trees, which is the only comparison in which the two regimes match
+(E1). Whether the transformer's residual over the digenic-controls null carries
+anything, read as a target (E2). Any test score of a 030 checkpoint, and any seed
+spread; every transformer number here is one seed on validation (E3, E4). What the
+ladder reads at deployment tiers, where a new triple has its singles but not its
+doubles (E5). The comparators on the same data (E7). Why the arithmetic explains far
+less on the Kuzmin 2018 rows than on the 2020 rows
+(\gloRNOnemultquerydoubletestKzTwoZeroOneEight{} against
+\gloRNOnemultquerydoubletestKzTwoZeroTwoZero{} on arm R test); hypothesis, untested:
+the 2020 diagnostic-array screen measured its control queries on the same strains in the
+same batch as the triples, so the control scores carry the batch, and the 2018
+genome-wide screen did not.
+
+\pfstep{Corrections recorded} The 025 document's decision table compared the transformer
+to the additive ridge and found it below that ridge on arm Q test for one checkpoint; that
+reading stands, and this document adds that the ridge itself is far under the lower-order
+null. The weekly note of 2026-10-11 read the Q transformer at 0.391 over epochs 19 to 28;
+the registry has since synced to epoch \gcgtQLastEpoch{} and the window moved to
+\gcgtQValWindow{}; both are one seed, validation.

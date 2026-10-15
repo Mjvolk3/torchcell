@@ -1,0 +1,338 @@
+{
+  "policy_name": "kuzmin-first",
+  "policy_id": "b2f26bb6ef86d11a",
+  "features_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/030-per-entry-dataset-token/experiments/030-solid-growth-multi/results/lower_order_features_030.parquet",
+  "entries_path": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/030-solid-growth-multi/closure/entries.parquet",
+  "coverage": {
+    "R": {
+      "n_triples": 376732,
+      "finite_by_term": {
+        "f_i": 373448,
+        "f_j": 370090,
+        "f_k": 376509,
+        "f_ij_q": 375640,
+        "f_ij_arr": 358292,
+        "f_ik": 376730,
+        "f_jk": 376656,
+        "eps_ij": 356070,
+        "eps_ik": 376730,
+        "eps_jk": 376656,
+        "eps_ik_s": 376730,
+        "eps_jk_s": 376656,
+        "f_k_s": 376447
+      },
+      "masked_by_term": {
+        "f_i": 0,
+        "f_j": 0,
+        "f_k": 0,
+        "f_ij_q": 0,
+        "f_ij_arr": 0,
+        "f_ik": 0,
+        "f_jk": 0,
+        "eps_ij": 0,
+        "eps_ik": 0,
+        "eps_jk": 0,
+        "eps_ik_s": 0,
+        "eps_jk_s": 0,
+        "f_k_s": 0
+      }
+    },
+    "Q": {
+      "n_triples": 376732,
+      "finite_by_term": {
+        "f_i": 373448,
+        "f_j": 370090,
+        "f_k": 376509,
+        "f_ij_q": 301236,
+        "f_ij_arr": 287150,
+        "f_ik": 376730,
+        "f_jk": 376656,
+        "eps_ij": 287150,
+        "eps_ik": 376730,
+        "eps_jk": 376656,
+        "eps_ik_s": 376730,
+        "eps_jk_s": 376656,
+        "f_k_s": 376447
+      },
+      "masked_by_term": {
+        "f_i": 0,
+        "f_j": 0,
+        "f_k": 0,
+        "f_ij_q": 74404,
+        "f_ij_arr": 71142,
+        "f_ik": 0,
+        "f_jk": 0,
+        "eps_ij": 68920,
+        "eps_ik": 0,
+        "eps_jk": 0,
+        "eps_ik_s": 0,
+        "eps_jk_s": 0,
+        "f_k_s": 0
+      }
+    }
+  },
+  "screen_floor": {
+    "R": {
+      "val": 0.3682157942508906,
+      "test": 0.36790913762620964
+    },
+    "Q": {
+      "val": 0.3514277581712518,
+      "test": 0.3781482656384077
+    }
+  },
+  "test_pearson": {
+    "R": {
+      "N0_screen_mean": 0.36790913762620964,
+      "N1_mult_query_double": 0.5773090602386186,
+      "N2_mult_singles": 0.27346961869692465,
+      "N1s_mult_strain_matched": 0.5795687660685578,
+      "B1_additive_gene": 0.4006596394247948,
+      "L1_ridge_lower_order": 0.6093645145585584,
+      "L2_hgb_lower_order": 0.7425381621758782,
+      "L3_ridge_gene_plus_lower_order": 0.6531661533001716,
+      "F1_ridge_lower_order_fitness": 0.9265481390542744
+    },
+    "Q": {
+      "N0_screen_mean": 0.3781482656384077,
+      "N1_mult_query_double": 0.5656590505899424,
+      "N2_mult_singles": 0.3781482656384077,
+      "N1s_mult_strain_matched": 0.5726141699062858,
+      "B1_additive_gene": 0.18509211859514943,
+      "L1_ridge_lower_order": 0.5842253929306875,
+      "L2_hgb_lower_order": 0.700016497941729,
+      "L3_ridge_gene_plus_lower_order": 0.6114554976805632,
+      "F1_ridge_lower_order_fitness": 0.7339286561199901
+    }
+  },
+  "paired": [
+    {
+      "arm": "R",
+      "a": "B1_additive_gene",
+      "b": "L1_ridge_lower_order",
+      "n": 37673,
+      "gain": 0.20870487513376362,
+      "lo": 0.18605308487962638,
+      "hi": 0.2312185691367702
+    },
+    {
+      "arm": "R",
+      "a": "B1_additive_gene",
+      "b": "L2_hgb_lower_order",
+      "n": 37673,
+      "gain": 0.3418785227510834,
+      "lo": 0.32671004073450505,
+      "hi": 0.3587043413664648
+    },
+    {
+      "arm": "R",
+      "a": "B1_additive_gene",
+      "b": "L3_ridge_gene_plus_lower_order",
+      "n": 37673,
+      "gain": 0.25250651387537676,
+      "lo": 0.23598109393524058,
+      "hi": 0.2700614535276673
+    },
+    {
+      "arm": "R",
+      "a": "N1_mult_query_double",
+      "b": "L2_hgb_lower_order",
+      "n": 37673,
+      "gain": 0.1652291019372596,
+      "lo": 0.15185154919352287,
+      "hi": 0.17949351394052576
+    },
+    {
+      "arm": "R",
+      "a": "L1_ridge_lower_order",
+      "b": "L2_hgb_lower_order",
+      "n": 37673,
+      "gain": 0.13317364761731976,
+      "lo": 0.12099315757631449,
+      "hi": 0.14521405748392652
+    },
+    {
+      "arm": "R",
+      "a": "L2_hgb_lower_order",
+      "b": "L3_ridge_gene_plus_lower_order",
+      "n": 37673,
+      "gain": -0.08937200887570662,
+      "lo": -0.09838353396110103,
+      "hi": -0.08015228474958583
+    },
+    {
+      "arm": "Q",
+      "a": "B1_additive_gene",
+      "b": "L1_ridge_lower_order",
+      "n": 37791,
+      "gain": 0.39913327433553814,
+      "lo": 0.3751090836303533,
+      "hi": 0.42180927739026136
+    },
+    {
+      "arm": "Q",
+      "a": "B1_additive_gene",
+      "b": "L2_hgb_lower_order",
+      "n": 37791,
+      "gain": 0.5149243793465796,
+      "lo": 0.5005936408247578,
+      "hi": 0.5287445358893244
+    },
+    {
+      "arm": "Q",
+      "a": "B1_additive_gene",
+      "b": "L3_ridge_gene_plus_lower_order",
+      "n": 37791,
+      "gain": 0.4263633790854138,
+      "lo": 0.4068542958166324,
+      "hi": 0.4458189355187227
+    },
+    {
+      "arm": "Q",
+      "a": "N1_mult_query_double",
+      "b": "L2_hgb_lower_order",
+      "n": 37791,
+      "gain": 0.13435744735178667,
+      "lo": 0.11738726823754524,
+      "hi": 0.15265191427120905
+    },
+    {
+      "arm": "Q",
+      "a": "L1_ridge_lower_order",
+      "b": "L2_hgb_lower_order",
+      "n": 37791,
+      "gain": 0.1157911050110415,
+      "lo": 0.09903658978672335,
+      "hi": 0.132485369963208
+    },
+    {
+      "arm": "Q",
+      "a": "L2_hgb_lower_order",
+      "b": "L3_ridge_gene_plus_lower_order",
+      "n": 37791,
+      "gain": -0.08856100026116587,
+      "lo": -0.10168604924811707,
+      "hi": -0.07495737062696431
+    }
+  ],
+  "wandb": [
+    {
+      "arm": "R",
+      "config_tag": "cgt_030_s3_r_tok_embfit_003",
+      "run_ids": [
+        "u28pgzde",
+        "xy3xnpau",
+        "xy3xnpau-cont2421912"
+      ],
+      "seed": 0,
+      "n_epochs_logged": 92,
+      "last_epoch": 164,
+      "val_pearson_last_window_mean": 0.5623045444488526,
+      "val_pearson_max": 0.5677378177642822,
+      "val_pearson_max_epoch": 153,
+      "window": 10,
+      "partial": false
+    },
+    {
+      "arm": "Q",
+      "config_tag": "cgt_030_s3_q_tok_embfit_004",
+      "run_ids": [
+        "53qqijnu",
+        "rkwyav5i"
+      ],
+      "seed": 0,
+      "n_epochs_logged": 45,
+      "last_epoch": 45,
+      "val_pearson_last_window_mean": 0.39924067854881284,
+      "val_pearson_max": 0.4044893682003021,
+      "val_pearson_max_epoch": 45,
+      "window": 10,
+      "partial": false
+    },
+    {
+      "arm": "Q",
+      "config_tag": "cgt_030_s3_q_tok_embfit_004",
+      "run_ids": [
+        "ddnpwq4z"
+      ],
+      "seed": 1,
+      "n_epochs_logged": 2,
+      "last_epoch": 1,
+      "val_pearson_last_window_mean": 0.19687971472740173,
+      "val_pearson_max": 0.2255813032388687,
+      "val_pearson_max_epoch": 1,
+      "window": 10,
+      "partial": true
+    }
+  ],
+  "hgb_selected": {
+    "R": {
+      "params": {
+        "max_leaf_nodes": 63,
+        "learning_rate": 0.05
+      },
+      "max_iter": 600,
+      "columns": [
+        "f_i",
+        "f_j",
+        "f_k",
+        "f_ij_q",
+        "f_ij_arr",
+        "f_ik",
+        "f_jk",
+        "eps_ij",
+        "eps_ik",
+        "eps_jk",
+        "eps_ik_s",
+        "eps_jk_s",
+        "f_k_s",
+        "f_ij_q_f_k",
+        "f_i_f_j_f_k",
+        "eps_ij_f_k",
+        "eps_ik_plus_eps_jk",
+        "screen"
+      ]
+    },
+    "Q": {
+      "params": {
+        "max_leaf_nodes": 31,
+        "learning_rate": 0.1
+      },
+      "max_iter": 600,
+      "columns": [
+        "f_i",
+        "f_j",
+        "f_k",
+        "f_ij_q",
+        "f_ij_arr",
+        "f_ik",
+        "f_jk",
+        "eps_ij",
+        "eps_ik",
+        "eps_jk",
+        "eps_ik_s",
+        "eps_jk_s",
+        "f_k_s",
+        "f_ij_q_f_k",
+        "f_i_f_j_f_k",
+        "eps_ij_f_k",
+        "eps_ik_plus_eps_jk",
+        "screen"
+      ]
+    }
+  },
+  "alpha_selected": {
+    "R": {
+      "B1_additive_gene": 30.0,
+      "L1_ridge_lower_order": 100.0,
+      "L3_ridge_gene_plus_lower_order": 10.0,
+      "F1_ridge_lower_order_fitness": 3.0
+    },
+    "Q": {
+      "B1_additive_gene": 30.0,
+      "L1_ridge_lower_order": 1000.0,
+      "L3_ridge_gene_plus_lower_order": 30.0,
+      "F1_ridge_lower_order_fitness": 1000.0
+    }
+  }
+}

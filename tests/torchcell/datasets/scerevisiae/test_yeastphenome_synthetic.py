@@ -44,9 +44,12 @@ from typing import Literal
 
 import pytest
 
+from torchcell.datamodels.compound_identity import resolved_compound
+from torchcell.datamodels.identity import identity_sha256, media_identity
 from torchcell.datamodels.schema import (
     BiologicAgentClass,
     BiologicPerturbation,
+    ComponentDefinition,
     Compound,
     Concentration,
     ConcentrationUnit,
@@ -59,6 +62,8 @@ from torchcell.datamodels.schema import (
     KanMxDeletionPerturbation,
     MeasurementType,
     Media,
+    MediaComponent,
+    MediaComponentRole,
     Publication,
     ReferenceGenome,
     SmallMoleculePerturbation,
@@ -66,14 +71,18 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.datasets.scerevisiae import yeastphenome
 from torchcell.datasets.scerevisiae.yeastphenome import (
+    _COMPONENT_NOTES,
     CURATION,
     NPV_UNITS,
     ParsedCondition,
     YeastPhenomeDataset,
+    _base_medium,
     _column_meta,
+    _media_statement,
     _parse_agent,
     _parse_conditions,
     _parse_media,
+    _parse_media_token,
     _readout_method,
 )
 from torchcell.sequence.genome.registry import (
@@ -158,6 +167,48 @@ def _environment(media: Media, compound: Compound, mm: float) -> Environment:
         ],
         provenance_gaps=[TEMPERATURE_GAP],
     )
+
+
+# --- begin lane X: the released medium token's composition, in typed fields --------- #
+#: The ethanol vehicle of ``SC + EtOH``: ``other`` is the role a vehicle takes, since
+#: ``MediaComponentRole`` has no solvent member, and the curation states no fraction.
+_VEHICLE_ETHANOL = MediaComponent(
+    compound=resolved_compound("ethanol"),
+    role=MediaComponentRole.other,
+    concentration=None,
+    note=_COMPONENT_NOTES["vehicle"],
+)
+
+
+def _media(
+    token: str,
+    state: str,
+    *,
+    screen: dict[str, str] = SCREEN_A,
+    is_synthetic: bool | None = None,
+    components: list[MediaComponent] | None = None,
+    dropouts: list[Compound] | None = None,
+    dropout_roles: list[MediaComponentRole] | None = None,
+    gaps: list[ProvenanceGap] | None = None,
+) -> Media:
+    """The medium the loader stores for a released token: the token verbatim as ``name``,
+    its composition in typed fields, and one medium-level statement quoting the token
+    against the pinned bytes of the screen file it was read from.
+    """
+    return Media(
+        name=token,
+        state=state,
+        is_synthetic=is_synthetic,
+        base_medium=_base_medium(token.split("+")[0].strip()),
+        components=components or [],
+        dropouts=dropouts or [],
+        dropout_roles=dropout_roles or [],
+        provenance=[_media_statement(token, screen)],
+        provenance_gaps=gaps or [],
+    )
+
+
+# --- end lane X -------------------------------------------------------------------- #
 
 
 def _experiment(
@@ -272,30 +323,28 @@ def test_parse_media_rich_synthetic_state_prefix_and_gaps() -> None:
     header) stores a ``Media`` with name, state and synthetic flag all typed gaps.
     Every named medium joins the shared family its leading word or prefix names in
     ``MEDIA_LIBRARY`` through ``base_medium`` (#1045: the released name stays as
-    written and no library object is substituted).
+    written and no library object is substituted), and the classification reads the
+    BASE WORD, so a dropout suffix or a '+' addition does not change it (lane X, 2026-10-15).
     """
-    assert _parse_media("YPD", "growth (colony size)") == Media(
-        name="YPD", state="solid", is_synthetic=False, base_medium="YPD"
+    assert _parse_media("YPD", "growth (colony size)", SCREEN_A) == _media(
+        "YPD", "solid", is_synthetic=False
     )
-    assert _parse_media("SC + EtOH", "growth (pooled barseq)") == Media(
-        name="SC", state="liquid", is_synthetic=True, base_medium="SC"
+    assert _parse_media("SC + EtOH", "growth (pooled barseq)", SCREEN_A) == _media(
+        "SC + EtOH", "liquid", is_synthetic=True, components=[_VEHICLE_ETHANOL]
     )
-    assert _parse_media("YPD", "growth (spot assay)") == Media(
-        name="YPD", state="solid", is_synthetic=False, base_medium="YPD"
+    assert _parse_media("YPD", "growth (spot assay)", SCREEN_A) == _media(
+        "YPD", "solid", is_synthetic=False
     )
-    assert _parse_media("SD", "growth (killing zone)") == Media(
-        name="SD", state="solid", is_synthetic=True, base_medium="SD"
+    assert _parse_media("SD", "growth (killing zone)", SCREEN_A) == _media(
+        "SD", "solid", is_synthetic=True
     )
-    assert _parse_media("SC - Ura", "growth (culture turbidity)") == Media(
-        name="SC - Ura", state="liquid", is_synthetic=True, base_medium="SC"
+    assert _parse_media("SC - Ura", "growth (culture turbidity)", SCREEN_A) == _media(
+        "SC - Ura", "liquid", is_synthetic=True, dropouts=[resolved_compound("uracil")]
     )
-    assert _parse_media("YPG [3%]", "growth (colony size)") == Media(
-        name="YPG [3%]", state="solid", is_synthetic=False, base_medium="YP"
+    assert _parse_media("CSM", "growth (colony size)", SCREEN_A) == _media(
+        "CSM", "solid", is_synthetic=True
     )
-    assert _parse_media("CSM", "growth (colony size)") == Media(
-        name="CSM", state="solid", is_synthetic=True, base_medium="SC"
-    )
-    lb = _parse_media("LB", "growth (colony size)")
+    lb = _parse_media("LB", "growth (colony size)", SCREEN_A)
     assert (lb.name, lb.state, lb.is_synthetic, lb.base_medium) == (
         "LB",
         "solid",
@@ -305,13 +354,188 @@ def test_parse_media_rich_synthetic_state_prefix_and_gaps() -> None:
     assert [(g.field, g.reason) for g in lb.provenance_gaps] == [
         ("is_synthetic", ProvenanceGapReason.not_carried_by_curation)
     ]
-    absent = _parse_media(None, "growth (colony size)")
+    absent = _parse_media(None, "growth (colony size)", SCREEN_A)
     assert (absent.name, absent.state, absent.is_synthetic) == (None, None, None)
     assert [g.field for g in absent.provenance_gaps] == [
         "name",
         "state",
         "is_synthetic",
     ]
+
+
+# --- begin lane X: the released medium token's composition, in typed fields --------- #
+def test_the_whole_released_media_token_is_the_stored_name() -> None:
+    """``name`` is the token VERBATIM, never ``token.split('+')[0]``.
+
+    The pre-lane X of the ontology unification loader truncated at '+', which put six released tokens on the plain
+    name ``SC`` over 212,402 records, six on ``YPD`` over 239,081 and five on ``SD``
+    over 23,354: 474,837 of 524,682 records carried a name that is not the token, and
+    the ``+`` half of the token reached no field at all.
+    """
+    tokens = (
+        "SC + DMSO [0.5%]",
+        "YPD + G418 [200 ug/ml] + DMSO [1%]",
+        "SD + his + leu + lys + ura",
+        "YPD + EtOH",
+    )
+    names = [
+        _parse_media(token, "growth (colony size)", SCREEN_A).name for token in tokens
+    ]
+    assert names == list(tokens)
+
+
+def test_a_named_dropout_in_the_token_is_a_resolved_compound_in_dropouts() -> None:
+    """``SC - Ade`` drops adenine, and the dropout joins the same compound entity another
+    dataset's medium lists as a component (the resolver's InChIKey, not the spelling).
+    """
+    media = _parse_media("SC - Ade", "growth (pooled culture, microarray)", SCREEN_A)
+    assert [(c.name, c.inchikey) for c in media.dropouts] == [
+        ("adenine", "GFFGJBXGBJISGV-UHFFFAOYSA-N")
+    ]
+    assert media.components == []
+    assert media.dropout_roles == []
+
+
+def test_a_carbon_source_and_a_buffer_in_the_token_are_typed_components() -> None:
+    """``SC, Glycerol [2%]`` and ``SC, HEPES [25 mM]`` state a dose; the dose is stored
+    against the role it fills, not left inside the name.
+    """
+    glycerol = _parse_media(
+        "SC, Glycerol [2%]", "growth (colony size)", SCREEN_A
+    ).components
+    assert [(c.compound.name, c.role, c.concentration) for c in glycerol] == [
+        (
+            "glycerol",
+            MediaComponentRole.carbon_source,
+            Concentration(value=2.0, unit=ConcentrationUnit.percent),
+        )
+    ]
+    hepes = _parse_media(
+        "SC, HEPES [25 mM]", "growth (colony size)", SCREEN_A
+    ).components
+    assert [(c.compound.name, c.role, c.concentration) for c in hepes] == [
+        (
+            "HEPES",
+            MediaComponentRole.buffer,
+            Concentration(value=25.0, unit=ConcentrationUnit.millimolar),
+        )
+    ]
+
+
+def test_a_role_level_dropout_is_typed_and_separates_the_arm_from_its_control() -> None:
+    """Galardini 2019's nitrogen-free arm and its own control were ONE medium identity.
+
+    ``SD + His + Leu + Lys + Ura, -N`` and ``SD + His + Leu + Lys + Ura (2)`` are two
+    columns of one screen, both with condition ``standard``, and both stored the name
+    ``SD`` with no composition, so they shared one served environment node and the L1
+    rule counted 4,837 records as repeats of each other. The nitrogen class the
+    curation declares absent names no compound, so it is a ``dropout_roles`` entry.
+    """
+    starved = _parse_media(
+        "SD + His + Leu + Lys + Ura, -N", "growth (colony size)", SCREEN_A
+    )
+    control = _parse_media(
+        "SD + His + Leu + Lys + Ura (2)", "growth (colony size)", SCREEN_A
+    )
+    assert starved.dropout_roles == [MediaComponentRole.nitrogen_source]
+    assert control.dropout_roles == []
+    assert [c.compound.name for c in starved.components] == [
+        c.compound.name for c in control.components
+    ]
+    assert identity_sha256(media_identity(starved)) != identity_sha256(
+        media_identity(control)
+    )
+    carbon_free = _parse_media("SC (-C)", "growth (colony size)", SCREEN_A)
+    assert carbon_free.dropout_roles == [MediaComponentRole.carbon_source]
+    assert identity_sha256(media_identity(carbon_free)) != identity_sha256(
+        media_identity(_parse_media("SC", "growth (colony size)", SCREEN_A))
+    )
+
+
+def test_a_dose_on_the_base_word_is_an_unexpanded_component_not_a_guess() -> None:
+    """``YPG [3%]`` states a dose for an ingredient the curation abbreviates to a letter.
+
+    The dose is kept against a ``composition_deferred`` carbon-source line rather than
+    being attached to a molecule the release never names, and the line is identity, so
+    a dosed base is not the node its undosed family is.
+    """
+    ypg = _parse_media("YPG [3%]", "growth (colony size)", SCREEN_A)
+    assert ypg.name == "YPG [3%]"
+    assert ypg.base_medium == "YP"
+    assert [
+        (c.role, c.definition, c.concentration, c.compound.inchikey)
+        for c in ypg.components
+    ] == [
+        (
+            MediaComponentRole.carbon_source,
+            ComponentDefinition.composition_deferred,
+            Concentration(value=3.0, unit=ConcentrationUnit.percent),
+            None,
+        )
+    ]
+    assert ypg.open_gaps == [ypg.components[0].compound.name]
+
+
+def test_an_unknown_media_token_form_raises_rather_than_storing_it_unread() -> None:
+    """No fallback: a form the grammar does not cover is a human's job, not a silent
+    medium whose statement sits inside its name.
+    """
+    with pytest.raises(ValueError, match="is in no _MEDIUM_COMPOUNDS row"):
+        _parse_media_token("SC + sorbitol")
+    with pytest.raises(ValueError, match="_BASE_DOSED_ROLE does not name"):
+        _parse_media_token("SC [4%]")
+    with pytest.raises(ValueError, match="ConcentrationUnit does not carry"):
+        _parse_media_token("SC + DMSO [3 drops]")
+    with pytest.raises(ValueError, match="_ROLE_DROPOUTS does not name"):
+        _parse_media_token("SC (-P)")
+
+
+def test_the_medium_statement_quotes_the_token_against_the_pinned_screen_bytes() -> (
+    None
+):
+    """Every typed field on the medium traces to one quote of the released token, pinned
+    to the sha256 of the screen file whose header states it.
+    """
+    media = _parse_media("SC + DMSO [0.5%]", "growth (pooled barseq)", SCREEN_B)
+    assert len(media.provenance) == 1
+    statement = media.provenance[0]
+    assert statement.quote == "SC + DMSO [0.5%]"
+    assert statement.value == "SC + DMSO [0.5%]"
+    assert statement.provenance.sha256 == SCREEN_B["valuez_sha256"]
+    assert statement.provenance.citation_key == CURATION.citation_key
+    assert statement.provenance.source_uri == "Datasets/99999902/synthetic_b_valuez.txt"
+
+
+def test_a_vehicle_is_a_medium_component_and_a_selection_agent_is_too() -> None:
+    """Both are constant to the medium rather than the studied edit, and the curation
+    states both in the medium field, so both are components (the schema's own ruling for
+    a selection agent). A vehicle control has no perturbation to carry a ``Solvent``.
+    """
+    media = _parse_media(
+        "YPD + G418 [200 ug/ml] + DMSO [1%]", "growth (colony size)", SCREEN_A
+    )
+    assert [(c.compound.name, c.role) for c in media.components] == [
+        ("G418 (geneticin)", MediaComponentRole.selection_agent),
+        ("dimethyl sulfoxide", MediaComponentRole.other),
+    ]
+
+
+def test_auxotroph_supplements_in_the_token_are_roled_components() -> None:
+    """``SD + his + leu + lys + ura`` names four nutrients that complement the
+    collection's auxotrophies; each is stored at the role it fills, with no dose, since
+    the curation states none.
+    """
+    media = _parse_media("SD + his + leu + lys + ura", "growth (colony size)", SCREEN_A)
+    assert [(c.compound.name, c.role, c.concentration) for c in media.components] == [
+        ("L-histidine", MediaComponentRole.amino_acid, None),
+        ("L-leucine", MediaComponentRole.amino_acid, None),
+        ("L-lysine", MediaComponentRole.amino_acid, None),
+        ("uracil", MediaComponentRole.nucleobase, None),
+    ]
+    assert media.base_medium == "SD"
+
+
+# --- end lane X -------------------------------------------------------------------- #
 
 
 def test_parse_agent_small_molecule_resolved_and_unresolved() -> None:
@@ -448,11 +672,7 @@ def test_hom_colony_size_records(dataset: tuple[YeastPhenomeDataset, Path]) -> N
     three curation gaps; the reference NPV is 0.0 in the same environment.
     """
     ds, _ = dataset
-    env = _environment(
-        Media(name="YPD", state="solid", is_synthetic=False, base_medium="YPD"),
-        FURFURAL,
-        10.0,
-    )
+    env = _environment(_media("YPD", "solid", is_synthetic=False), FURFURAL, 10.0)
     for idx, orf, npv in [
         (0, "YAL001C", 1.5),
         (1, "YBR002C", 0.5),
@@ -490,9 +710,7 @@ def test_hap_a_turbidity_records_skip_blank_cell(
     """
     ds, _ = dataset
     env = _environment(
-        Media(name="SD", state="liquid", is_synthetic=True, base_medium="SD"),
-        QUININE_UNRESOLVED,
-        2.0,
+        _media("SD", "liquid", is_synthetic=True), QUININE_UNRESOLVED, 2.0
     )
     for idx, orf, npv in [(4, "YAL001C", -2.25), (6, "Q0250", 0.125)]:
         record = ds[idx]
@@ -514,11 +732,7 @@ def test_het_column_is_a_copy_number_drop_in_by4743(
     released-gene-name leaf.
     """
     ds, _ = dataset
-    env = _environment(
-        Media(name="YPD", state="solid", is_synthetic=False, base_medium="YPD"),
-        FURFURAL,
-        10.0,
-    )
+    env = _environment(_media("YPD", "solid", is_synthetic=False), FURFURAL, 10.0)
     perturbation = EngineeredCopyNumberPerturbation(
         systematic_gene_name="YAL001C",
         perturbed_gene_name="YAL001C",
@@ -590,7 +804,13 @@ def test_second_screen_hap_alpha_record_and_publication(
     """Record 17 is screen B: SC (from ``SC + EtOH``) liquid, BY4742 haploid, PMID 99999902."""
     ds, _ = dataset
     env = _environment(
-        Media(name="SC", state="liquid", is_synthetic=True, base_medium="SC"),
+        _media(
+            "SC + EtOH",
+            "liquid",
+            screen=SCREEN_B,
+            is_synthetic=True,
+            components=[_VEHICLE_ETHANOL],
+        ),
         FURFURAL,
         10.0,
     )

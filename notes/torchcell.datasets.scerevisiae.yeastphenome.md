@@ -69,3 +69,42 @@ With the signature reading every field the served environment identity reads, th
 A second finding on the same store, not yet fixed: the dropout, carbon-source and buffer media state their composition only in `Media.name`. `SC - Ade`, `- Arg`, `- Lys`, `- Met`, `- Trp` (4,195 records each), `SC (-C)`, `SC, Glycerol [2%]` and `SC, HEPES [25 mM]` all carry `components: []` and `dropouts: []`, so the served environment identity cannot tell them from plain `SC` (212,402 records) and puts six of them on one environment node. One fact, one field puts the dropout in `Media.dropouts` and the carbon source and the buffer in `Media.components`, sourced from the release; that changes stored records, so it needs its own lane with a rebuild of this store.
 
 Measured by `experiments/database/scripts/environment_response_identity_outcomes.py`; reasoning and the whole-family table in [[torchcell.verification.environment-response-identity]].
+
+## 2026.10.15 - The released medium token is stored whole, and its composition is typed
+
+The second finding of the section above is fixed, and verifying it found that the residual
+4,837 declared duplicate pairs were the SAME defect rather than repeats.
+
+`_parse_media` stored `media_field.split("+")[0]` as `Media.name`, which had two consequences.
+The `+` half of the token reached no field at all, so **474,837 of 524,682 records carried a
+name that is not the released token**: six tokens stored the plain name `SC` (212,402 records,
+which is lane W's figure exactly), six stored `YPD` (239,081) and five stored `SD` (23,354).
+And what the retained half states sat inside a name `media_identity` drops, so the 27 stored
+tokens reached **8** media identities and **3 served environment nodes were reached from more
+than one released medium, over 53,951 records**: the five SC dropout arms with their complete
+control (30,628), two vehicle controls with a buffered medium (13,649), and Galardini 2019's
+nitrogen-free arm with its own control (9,674).
+
+That last pair is the whole residual L1 allowance. `SD + His + Leu + Lys + Ura, -N` and
+`SD + His + Leu + Lys + Ura (2)` are two columns of one screen, both condition `standard`,
+and both stored the bare name `SD`, so the **4,837 pairs this store declared were a
+nitrogen-starvation arm counted as a repeat of its control**. Aggregating them, which is what
+a declared allowance invites, would have destroyed 4,837 measurements.
+
+`Media.name` is now the token VERBATIM and `_parse_media_token` reads what it states into
+typed fields: a named dropout into `dropouts` through the shared resolver (`SC - Ade` ->
+adenine); a carbon source, a buffer, a vehicle, a selection agent or an auxotroph supplement
+into `components` at its stated dose; and a nutrient CLASS the curation declares absent without
+naming the compound into the new `Media.dropout_roles` (`SC (-C)` -> `[carbon_source]`,
+`SD ..., -N` -> `[nitrogen_source]`). Every medium carries one `SourcedValue` quoting the token
+against the sha256 of the screen file whose header states it. An unknown token form RAISES.
+`YPG [3%]` keeps its 3 % against an unexpanded `composition_deferred` carbon-source line,
+because the curation abbreviates that ingredient to a letter and never writes it out. The base
+recipe stays unexpanded, as before: no library object is substituted for a token.
+
+After: **27 distinct stored names, 28 media identities, 125 environment identities, 0 records
+on an environment node reached from a second released medium, and 0 L1 duplicated records**
+(524,682 unique triples). `expected_duplicated_pairs` is **0**, from 4,837.
+`gene_essentiality_sgd`'s `YPD with 2% glucose` carried the same shape and is fixed in the
+same change. Reasoning, the per-token table, the cross-dataset scan and the growth-phase
+measurement: [[experiments.database.scripts.media_name_composition_scan]].

@@ -2,7 +2,7 @@
   "record_version": 1,
   "slug": "media-dropout-roles-and-growth-phase-identity",
   "date": "2026-10-15",
-  "pr": null,
+  "pr": 1127,
   "author_kind": "agent",
   "base_commit": "3b7a19eaf377ae52744f9dc95ee28575742eee10",
   "python_version": "3.13.0",

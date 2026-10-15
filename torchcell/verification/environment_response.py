@@ -163,8 +163,15 @@ def _media_projection(media: Mapping[str, Any]) -> dict[str, Any]:
         projected.get("dropouts"), _COMPOUND_IDENTITY_FIELDS
     )
     for field in MEDIA_OPTIONAL_IDENTITY_FIELDS:
-        if media.get(field):
-            projected[field] = _projected_list(media[field], MEDIA_GAP_IDENTITY_FIELDS)
+        if not media.get(field):
+            continue
+        # a gap list projects onto the gap's own slots; a role list (lane X) is already a
+        # list of closed-vocabulary strings, which the served identity sorts as-is
+        projected[field] = (
+            sorted(media[field])
+            if field == "dropout_roles"
+            else _projected_list(media[field], MEDIA_GAP_IDENTITY_FIELDS)
+        )
     return projected
 
 
@@ -219,6 +226,12 @@ def _stored_identity_projection(environment: Mapping[str, Any]) -> str:
         pre_culture["medium"] = _media_projection(pre_culture["medium"])
     if environment.get("auxotroph_supplements") is not None:
         projected["auxotroph_supplements"] = environment["auxotroph_supplements"]
+    # --- begin lane X: the phase a culture is HELD in is the condition ---
+    # on the base Environment, left out of the dump when None (``exclude_if``), so it
+    # is read the same way the served identity reads it: only when stated
+    if environment.get("growth_phase") is not None:
+        projected["growth_phase"] = environment["growth_phase"]
+    # --- end lane X ---
     return _canonical(projected)
 
 

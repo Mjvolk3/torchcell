@@ -41,12 +41,29 @@ basis), an agent with NO dose (``gentamicin``, ``Mospilan``; ``Concentration`` n
 value or a basis), a unit ``ConcentrationUnit`` lacks (``ng/ml``, ``U/ml``), and a
 genotype edit written as a condition (``expression of human CYP1A2``, ``loss +
 cytoduction of mtDNA``). Each such column is listed with its record count in the
-dataset note; the units are an additive enum change for the schema branch. The medium
-token is stored as released: a base the library tables name is rich or synthetic by
-that table, any other base (``SC - Ura``, ``YPG [3%]``) is classified by its prefix
-(``YP`` rich; ``SC``/``SD``/``YNB``/``CSM``/``MM``/``SynBase`` synthetic) and anything else
-stores ``is_synthetic`` as a typed gap; a header with no medium field stores a ``Media``
-whose name, state and synthetic flag are typed gaps (the SGD precedent).
+dataset note; the units are an additive enum change for the schema branch.
+
+MEDIA (2026.10.15, lane X of the ontology unification: the token's composition is typed, not spelled into a name).
+The medium token is stored as released -- the WHOLE token, verbatim, in ``Media.name``
+-- and everything it states about composition is read into typed fields by
+``_parse_media_token``: a named dropout (``SC - Ade``) into ``dropouts``, an appended
+component or a vehicle or a selection agent (``SC, HEPES [25 mM]``, ``SC + DMSO
+[0.5%]``, ``YPD + G418 [200 ug/ml]``) into ``components`` at its stated dose, and a
+nutrient CLASS the curation declares absent without naming the compound (``SC (-C)``,
+``SD + His + Leu + Lys + Ura, -N``) into ``Media.dropout_roles``. Before this the name
+was ``token.split("+")[0]``, so the ``+`` half reached no field at all (six tokens
+stored the plain name ``SC`` over 212,402 records, six stored ``YPD`` over 239,081,
+five stored ``SD`` over 23,354) and the retained half's statement sat inside a name
+``media_identity`` drops: 53,951 records shared an environment node with a record
+measured in a different medium, among them Galardini 2019's nitrogen-free arm and its
+own control. An unknown token form RAISES rather than storing a medium with its
+statement unread. The base RECIPE stays unexpanded: no library object is substituted
+for the token, ``base_medium`` carries the join to the shared family, and a base the
+library tables name is rich or synthetic by that table, any other base (``SC - Ura``,
+``YPG [3%]``) is classified by its prefix (``YP`` rich;
+``SC``/``SD``/``YNB``/``CSM``/``MM``/``SynBase`` synthetic) and anything else stores
+``is_synthetic`` as a typed gap; a header with no medium field stores a ``Media`` whose
+name, state and synthetic flag are typed gaps (the SGD precedent).
 
 LABEL = the NPV (normalized phenotypic value). YeastPhenome's canonical label
 (Turco2023) is a per-screen, mode-referenced modified z-score: the mode of each screen
@@ -99,6 +116,8 @@ from torchcell.datamodels.media import MEDIA_LIBRARY
 from torchcell.datamodels.schema import (
     BiologicAgentClass,
     BiologicPerturbation,
+    ComponentDefinition,
+    Compound,
     Concentration,
     ConcentrationUnit,
     EngineeredCopyNumberPerturbation,
@@ -114,6 +133,8 @@ from torchcell.datamodels.schema import (
     KanMxDeletionPerturbation,
     MeasurementType,
     Media,
+    MediaComponent,
+    MediaComponentRole,
     Publication,
     ReferenceGenome,
     ReleasedIdentifierPerturbation,
@@ -126,7 +147,12 @@ from torchcell.sequence.genome.registry import (
     SGD_S288C_R64,
     SGD_S288C_R64_GENBANK_ACCESSION,
 )
-from torchcell.verification import Provenance, ProvenanceGap, ProvenanceGapReason
+from torchcell.verification import (
+    Provenance,
+    ProvenanceGap,
+    ProvenanceGapReason,
+    SourcedValue,
+)
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -610,14 +636,264 @@ def _base_medium(base: str) -> str | None:
     return None
 
 
-def _parse_media(media_field: str | None, phenotype: str) -> Media:
+# --- begin lane X: the released medium token's composition, in typed fields --------- #
+# A curated media token is a base medium followed by ``+``-joined additions, any of
+# which may carry ``,``-separated suffixes. Every form the v1.0 pin releases:
+#
+#   SC                                   the base alone
+#   SC - Ade                             a NAMED dropout off the base
+#   SC (-C)                              a ROLE-level dropout (no compound named)
+#   SC, Glycerol [2%]                    an appended component at a stated dose
+#   SC, HEPES [25 mM]                    the same, a buffer
+#   YPG [3%]                             a dose on the base's own, unexpanded component
+#   SC + DMSO [0.5%]                     a vehicle in the medium at a stated fraction
+#   YPD + G418 [200 ug/ml] + DMSO [1%]   a selection agent and a vehicle
+#   SD + his + leu + lys + ura           auxotroph supplements, no dose stated
+#   SD + His + Leu + Lys + Ura, -N       the same, nitrogen-free
+#   SD + His + Leu + Lys + Ura (2)       the curation's own index, which states no
+#                                        composition and stays in the released name
+#
+# Before this the loader stored ``media_field.split("+")[0]`` as ``name`` and nothing
+# else, so the ``+`` half of the token reached no field at all: six released tokens
+# stored the plain name ``SC`` over 212,402 records, six stored ``YPD`` over 239,081 and
+# five stored ``SD`` over 23,354 (474,837 of 524,682 records carried a name that is not
+# the token). What the retained half states -- a dropout, a carbon source, a buffer --
+# sat inside ``name``, which ``media_identity`` drops, so the five SC dropout arms and
+# their complete control were ONE served environment node over 30,628 records, two
+# vehicle controls and a buffered medium were one over 13,649, and a nitrogen-starved
+# medium was the node of its own control over 9,674.
+#
+# Each compound the token names is read through the shared resolver, so a dropout joins
+# the SAME compound entity another dataset's medium lists as a component. The
+# curation's three-letter spellings are not resolver keys, so this table maps each to
+# one, with the role it fills. A vehicle has no role of its own in
+# ``MediaComponentRole`` and takes ``other``; a selection agent is a COMPONENT by the
+# schema's own ruling (constant to the medium, not the studied edit).
+_VEHICLE = "vehicle"
+_SUPPLEMENT = "supplement"
+_APPENDED = "appended"
+_SELECTION = "selection"
+
+_MEDIUM_COMPOUNDS: dict[str, tuple[str, MediaComponentRole, str]] = {
+    "dmso": ("DMSO", MediaComponentRole.other, _VEHICLE),
+    "meoh": ("methanol", MediaComponentRole.other, _VEHICLE),
+    "etoh": ("ethanol", MediaComponentRole.other, _VEHICLE),
+    "g418": ("G418 (geneticin)", MediaComponentRole.selection_agent, _SELECTION),
+    "ade": ("adenine", MediaComponentRole.nucleobase, _SUPPLEMENT),
+    "arg": ("L-arginine", MediaComponentRole.amino_acid, _SUPPLEMENT),
+    "his": ("L-histidine", MediaComponentRole.amino_acid, _SUPPLEMENT),
+    "leu": ("L-leucine", MediaComponentRole.amino_acid, _SUPPLEMENT),
+    "lys": ("L-lysine", MediaComponentRole.amino_acid, _SUPPLEMENT),
+    "met": ("L-methionine", MediaComponentRole.amino_acid, _SUPPLEMENT),
+    "trp": ("L-tryptophan", MediaComponentRole.amino_acid, _SUPPLEMENT),
+    "ura": ("uracil", MediaComponentRole.nucleobase, _SUPPLEMENT),
+    "glycerol": ("glycerol", MediaComponentRole.carbon_source, _APPENDED),
+    "hepes": ("HEPES", MediaComponentRole.buffer, _APPENDED),
+}
+
+#: What a component line means, by the position the token puts the compound in.
+_COMPONENT_NOTES: dict[str, str] = {
+    _VEHICLE: "the curation states this vehicle in the medium field of the column "
+    "header, beside the base medium and not in the condition, so it is a component of "
+    "the medium rather than the solvent slot of a dosed compound -- which is also the "
+    "only encoding that holds for the two columns whose condition is 'standard' (a "
+    "vehicle control has no perturbation to carry a Solvent)",
+    _SUPPLEMENT: "a nutrient the curation adds to the base medium to complement the "
+    "deletion collection's auxotrophies. CultureEnvironment.auxotroph_supplements is "
+    "the slot for these, and this dataset's experiment class states the base "
+    "Environment, which has none; the token states them as part of the medium, so that "
+    "is where they are stored, with base_medium still carrying the join to the base",
+    _APPENDED: "a component the curation appends to the base medium after a comma, "
+    "with its dose",
+    _SELECTION: "a selection agent is a COMPONENT, not an environment perturbation: it "
+    "is constant to the medium rather than the studied edit (schema.py, Media section)",
+}
+
+#: A dose written on the base word itself names the base's own characteristic
+#: component, which the curation abbreviates to a letter and never expands. Only the
+#: bases whose abbreviated component's ROLE is unambiguous are read; any other dosed
+#: base raises rather than guessing which ingredient the dose belongs to.
+_BASE_DOSED_ROLE: dict[str, MediaComponentRole] = {
+    "YPG": MediaComponentRole.carbon_source
+}
+
+#: The nutrient CLASS a token declares absent without naming the compound removed.
+_ROLE_DROPOUTS: dict[str, MediaComponentRole] = {
+    "C": MediaComponentRole.carbon_source,
+    "N": MediaComponentRole.nitrogen_source,
+}
+
+# "<name> [<value> <unit>]" anywhere a medium token states a dose.
+_MEDIA_DOSE_RE = re.compile(
+    r"^(?P<name>.*\S)\s*\[(?P<val>[0-9]+(?:\.[0-9]+)?)\s*(?P<unit>[^\]]+)\]$"
+)
+# "SC (-C)": the base with a nutrient CLASS removed.
+_ROLE_DROPOUT_RE = re.compile(r"^(?P<rest>.*\S)\s*\(-(?P<role>[A-Z])\)$")
+# "SD + His + Leu + Lys + Ura (2)": the curation's own index for a second medium it
+# spells identically; it states nothing about composition.
+_CURATION_INDEX_RE = re.compile(r"^(?P<rest>.*\S)\s*\((?P<index>[0-9]+)\)$")
+# "SC - Ade": the base with a NAMED nutrient dropped.
+_NAMED_DROPOUT_RE = re.compile(r"^(?P<base>\S+)\s*-\s*(?P<nutrient>[A-Za-z]+)$")
+
+
+class ParsedMediaToken(BaseModel):
+    """The typed composition a curated media token states, and its base word."""
+
+    base_word: str
+    components: list[MediaComponent] = []
+    dropouts: list[Compound] = []
+    dropout_roles: list[MediaComponentRole] = []
+
+
+def _media_dose(value: str, unit: str) -> Concentration:
+    """A dose a medium token states; an unmapped unit raises rather than being dropped."""
+    mapped = _UNIT_MAP.get(unit.strip())
+    if mapped is None:
+        raise ValueError(
+            f"the curated medium token states a dose in {unit!r}, which "
+            "ConcentrationUnit does not carry; add the unit rather than dropping the dose"
+        )
+    return Concentration(value=float(value), unit=mapped)
+
+
+def _media_component(
+    key: str, dose: Concentration | None, token: str
+) -> MediaComponent:
+    """One compound a medium token names, resolved and roled, with its stated dose."""
+    entry = _MEDIUM_COMPOUNDS.get(key.lower())
+    if entry is None:
+        raise ValueError(
+            f"the curated medium token {token!r} names {key!r}, which is in no "
+            "_MEDIUM_COMPOUNDS row; add the compound, its role and its note rather "
+            "than storing the token with the statement left inside its name"
+        )
+    resolver_key, role, kind = entry
+    return MediaComponent(
+        compound=resolved_compound(resolver_key),
+        role=role,
+        concentration=dose,
+        note=_COMPONENT_NOTES[kind],
+    )
+
+
+def _parse_media_token(token: str) -> ParsedMediaToken:
+    """Read a curated media token into typed composition, or raise on an unknown form.
+
+    No fallback: a token form this grammar does not cover raises, because the
+    alternative is a stored medium whose statement sits unparsed inside its name, which
+    is the defect this function exists to remove. The ``SCREENS`` list is pinned by
+    sha256, so the 28 released tokens are a closed set; widening it is what surfaces a
+    new form.
+    """
+    subpieces: list[tuple[bool, str]] = []
+    for piece_index, piece in enumerate(token.split("+")):
+        for sub_index, sub in enumerate(piece.split(",")):
+            text = sub.strip()
+            if text:
+                subpieces.append((piece_index == 0 and sub_index == 0, text))
+    if not subpieces or not subpieces[0][0]:
+        raise ValueError(f"the curated medium token {token!r} states no base medium")
+
+    parsed = ParsedMediaToken(base_word="")
+    for is_base, text in subpieces:
+        rest = text
+        if (m := _CURATION_INDEX_RE.match(rest)) is not None:
+            rest = m.group("rest")
+        if (m := _ROLE_DROPOUT_RE.match(rest)) is not None:
+            role = _ROLE_DROPOUTS.get(m.group("role"))
+            if role is None:
+                raise ValueError(
+                    f"the curated medium token {token!r} declares the nutrient class "
+                    f"{m.group('role')!r} absent, which _ROLE_DROPOUTS does not name"
+                )
+            parsed.dropout_roles.append(role)
+            rest = m.group("rest")
+        elif rest in {f"-{letter}" for letter in _ROLE_DROPOUTS}:
+            parsed.dropout_roles.append(_ROLE_DROPOUTS[rest[1:]])
+            continue
+        dose: Concentration | None = None
+        if (m := _MEDIA_DOSE_RE.match(rest)) is not None:
+            dose = _media_dose(m.group("val"), m.group("unit"))
+            rest = m.group("name").strip()
+        if not is_base:
+            parsed.components.append(_media_component(rest, dose, token))
+            continue
+        if (m := _NAMED_DROPOUT_RE.match(rest)) is not None:
+            entry = _MEDIUM_COMPOUNDS.get(m.group("nutrient").lower())
+            if entry is None:
+                raise ValueError(
+                    f"the curated medium token {token!r} drops "
+                    f"{m.group('nutrient')!r}, which is in no _MEDIUM_COMPOUNDS row"
+                )
+            parsed.dropouts.append(resolved_compound(entry[0]))
+            rest = m.group("base")
+        parsed.base_word = rest
+        if dose is None:
+            continue
+        role = _BASE_DOSED_ROLE.get(rest)
+        if role is None:
+            raise ValueError(
+                f"the curated medium token {token!r} doses the base {rest!r}, whose "
+                "abbreviated component _BASE_DOSED_ROLE does not name"
+            )
+        parsed.components.append(
+            MediaComponent(
+                compound=Compound(
+                    name=f"{rest} carbon source, abbreviated by the curation"
+                ),
+                role=role,
+                concentration=dose,
+                definition=ComponentDefinition.composition_deferred,
+                note=f"the token {token!r} states the dose of the base's own "
+                f"{role.value} and abbreviates that ingredient to a letter; "
+                "YeastPhenome's curation carries no expansion, so the stated dose is "
+                "kept against an unexpanded line rather than a guessed molecule",
+            )
+        )
+    if not parsed.base_word:
+        raise ValueError(f"the curated medium token {token!r} states no base medium")
+    return parsed
+
+
+def _media_statement(token: str, screen: dict[str, str]) -> SourcedValue:
+    """The released token itself, pinned to the bytes of the screen file it came from.
+
+    The token is a verbatim substring of that file's header line, and the header is the
+    only place the curation states a medium, so one medium-level quote is the audit
+    anchor for every typed field read out of it.
+    """
+    return SourcedValue(
+        value=token,
+        provenance=Provenance(
+            source_uri=f"Datasets/{screen['pmid']}/{screen['stem']}_valuez.txt",
+            citation_key=CURATION.citation_key,
+            sha256=screen["valuez_sha256"],
+        ),
+        quote=token,
+        note="the media field of the column header, verbatim; every typed component, "
+        "dropout and dropped role on this medium is read from this one statement, and "
+        "nothing else about the recipe is stated by the curation",
+    )
+
+
+def _parse_media(
+    media_field: str | None, phenotype: str, screen: dict[str, str]
+) -> Media:
     """The curated media token (``YPD + EtOH``) as a ``Media``, stored as released.
 
-    Base = the token before '+'. ``state`` is inferred from the growth readout:
-    colony-size / spot-assay / killing-zone => solid, else (turbidity / pooled / CFU)
-    => liquid. ``is_synthetic`` comes from the two library tables, else from the base's
-    prefix, else is a typed gap. A header with no medium field (4 fields) stores a
-    ``Media`` whose name, state and synthetic flag are all typed gaps.
+    ``name`` is the token VERBATIM; what the token states about composition is read
+    into ``components``, ``dropouts`` and ``dropout_roles`` by
+    :func:`_parse_media_token`, so no statement is left inside the name (lane X, 2026-10-15).
+    ``state`` is inferred from the growth readout: colony-size / spot-assay /
+    killing-zone => solid, else (turbidity / pooled / CFU) => liquid. ``is_synthetic``
+    comes from the two library tables, else from the base word's prefix, else is a typed
+    gap. A header with no medium field (4 fields) stores a ``Media`` whose name, state
+    and synthetic flag are all typed gaps.
+
+    The base recipe itself stays unexpanded: no library object is substituted for the
+    token, so ``components`` holds exactly what the token states and ``base_medium``
+    carries the join to the shared family, which is this loader's standing treatment of
+    a secondary curation layer that names a medium without printing it.
     """
     if media_field is None:
         note = "the curated column header carries no medium field (4-field header)"
@@ -629,27 +905,38 @@ def _parse_media(media_field: str | None, phenotype: str) -> Media:
                 _media_gap(field, note) for field in ("name", "state", "is_synthetic")
             ],
         )
-    base = media_field.split("+")[0].strip()
+    token = media_field.strip()
+    parsed = _parse_media_token(token)
+    base = parsed.base_word
     p = phenotype.lower()
     state = "solid" if ("colony" in p or "spot" in p or "killing" in p) else "liquid"
-    anchor = _base_medium(base)
+    shared: dict[str, Any] = {
+        "name": token,
+        "state": state,
+        "base_medium": _base_medium(base),
+        "components": parsed.components,
+        "dropouts": parsed.dropouts,
+        "dropout_roles": parsed.dropout_roles,
+        "provenance": [_media_statement(token, screen)],
+    }
     if base in _RICH_MEDIA or base.startswith(_RICH_PREFIXES):
-        return Media(name=base, state=state, is_synthetic=False, base_medium=anchor)
+        return Media(is_synthetic=False, **shared)
     if base in _SYNTHETIC_MEDIA or base.startswith(_SYNTHETIC_PREFIXES):
-        return Media(name=base, state=state, is_synthetic=True, base_medium=anchor)
+        return Media(is_synthetic=True, **shared)
     return Media(
-        name=base,
-        state=state,
         is_synthetic=None,
-        base_medium=anchor,
         provenance_gaps=[
             _media_gap(
                 "is_synthetic",
-                f"the curated medium token {media_field!r} names a base in neither "
+                f"the curated medium token {token!r} names a base in neither "
                 "the rich nor the synthetic table and with no classifying prefix",
             )
         ],
+        **shared,
     )
+
+
+# --- end lane X -------------------------------------------------------------------- #
 
 
 @register_dataset
@@ -792,7 +1079,7 @@ class YeastPhenomeDataset(ExperimentDataset):
                             n_cells,
                         )
                         continue
-                    media = _parse_media(meta["media"], meta["phenotype"] or "")
+                    media = _parse_media(meta["media"], meta["phenotype"] or "", s)
                     zygosity = meta["zygosity"] or ""
                     background = _ZYGOSITY.get(zygosity)
                     # Readout method (microarray/barseq/turbidity/...) is part of the

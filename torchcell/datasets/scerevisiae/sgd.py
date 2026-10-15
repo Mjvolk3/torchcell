@@ -93,6 +93,8 @@ from torchcell.datamodels.schema import (
     GeneEssentialityPhenotype,
     Genotype,
     Media,
+    MediaComponent,
+    MediaComponentRole,
     NamedAllelePerturbation,
     PhysicalFactor,
     Publication,
@@ -281,11 +283,39 @@ SGD_UNSTATED_MEDIUM = sgd_unstated_medium(
 #: hence ``is_synthetic`` False). SGD states no physical state, and ``Media.state`` is
 #: solid, liquid or gas, so the state alone is the gap: neither plate nor broth is
 #: guessed.
+#:
+#: The CARBON SOURCE and its dose are stated too, and before lane X of the ontology
+#: unification they reached no typed field: the component list was empty and the
+#: "2% glucose" half of the condition lived
+#: only inside ``name``, which ``media_identity`` drops. It is now a typed component at
+#: the dose SGD writes, the same reading the bare ``2% glucose`` condition below already
+#: got as a ``carbon_source`` factor; a percentage whose basis SGD does not define is
+#: ``ConcentrationUnit.percent``, which is what that unit means.
 SGD_STATELESS_YPD = Media(
     name="YPD with 2% glucose",
     state=None,
     is_synthetic=False,
     base_medium="YPD",
+    components=[
+        MediaComponent(
+            compound=resolved_compound("glucose"),
+            role=MediaComponentRole.carbon_source,
+            concentration=Concentration(value=2.0, unit=ConcentrationUnit.percent),
+            provenance=[
+                SourcedValue(
+                    value="2% glucose",
+                    provenance=SGD_DUMP,
+                    quote="YPD with 2% glucose",
+                    note="the annotation's own condition property (class_type "
+                    "'media'), verbatim; SGD states the dose as a percentage and "
+                    "never defines its basis, so the unit is a bare percent",
+                )
+            ],
+            note="the carbon source the condition property states; the rest of the "
+            "YPD recipe is not stated by the annotation, which is what base_medium "
+            "carries",
+        )
+    ],
     provenance_gaps=[
         ProvenanceGap(
             field="state",

@@ -23,6 +23,7 @@ from torchcell.datamodels.identity import (
     COMPOUND_IDENTITY_PRECEDENCE,
     CONCENTRATION_IDENTITY_FIELDS,
     ENVIRONMENT_IDENTITY_FIELDS,
+    ENVIRONMENT_OPTIONAL_IDENTITY_FIELDS,
     MEDIA_COMPONENT_IDENTITY_FIELDS,
     MEDIA_GAP_IDENTITY_FIELDS,
     MEDIA_IDENTITY_FIELDS,
@@ -402,7 +403,7 @@ def test_a_stated_medium_projects_no_gap_key_and_keeps_its_id() -> None:
     medium's id is what it was before ``Media`` could carry gaps.
     """
     assert set(media_identity(YPD_LIQUID)) == set(MEDIA_IDENTITY_FIELDS)
-    assert MEDIA_OPTIONAL_IDENTITY_FIELDS == ("provenance_gaps",)
+    assert MEDIA_OPTIONAL_IDENTITY_FIELDS == ("dropout_roles", "provenance_gaps")
     assert all(f in s.Media.model_fields for f in MEDIA_OPTIONAL_IDENTITY_FIELDS)
     assert all(f in ProvenanceGap.model_fields for f in MEDIA_GAP_IDENTITY_FIELDS)
 
@@ -704,3 +705,143 @@ def test_a_phage_environment_is_not_the_unperturbed_one() -> None:
     assert identity_sha256(environment_identity(control)) != identity_sha256(
         environment_identity(challenged)
     )
+
+
+# --- begin lane X: a role-level omission, and the phase a culture is HELD in -------- #
+def test_a_role_level_dropout_is_identity_and_an_empty_one_changes_no_id() -> None:
+    """A medium whose source states a nutrient CLASS absent is not its complete base.
+
+    A fully listed composition states that absence by having no component in the role;
+    a medium whose recipe was never entered cannot, because ``components=[]`` already
+    means "not yet listed". The field is projected only when non-empty, so every medium
+    that states no role-level omission hashes exactly as it did before it existed.
+    """
+    plain = s.Media(name="SC", state="solid", is_synthetic=True, base_medium="SC")
+    empty = plain.model_copy(update={"dropout_roles": []})
+    carbon_free = plain.model_copy(
+        update={"dropout_roles": [s.MediaComponentRole.carbon_source]}
+    )
+    nitrogen_free = plain.model_copy(
+        update={"dropout_roles": [s.MediaComponentRole.nitrogen_source]}
+    )
+    assert "dropout_roles" not in media_identity(plain)
+    assert identity_sha256(media_identity(plain)) == identity_sha256(
+        media_identity(empty)
+    )
+    assert identity_sha256(media_identity(plain)) != identity_sha256(
+        media_identity(carbon_free)
+    )
+    assert identity_sha256(media_identity(carbon_free)) != identity_sha256(
+        media_identity(nitrogen_free)
+    )
+    assert media_identity(carbon_free)["dropout_roles"] == ["carbon_source"]
+
+
+def test_a_dropped_role_is_not_the_same_statement_as_a_dropped_compound() -> None:
+    """``dropouts`` names a compound, ``dropout_roles`` a class; neither stands in for
+    the other, so a release that names the compound and one that names only the class
+    are two media rather than a false join.
+    """
+    base = s.Media(name="SC", state="liquid", is_synthetic=True, base_medium="SC")
+    by_compound = base.model_copy(update={"dropouts": [s.Compound(name="D-glucose")]})
+    by_role = base.model_copy(
+        update={"dropout_roles": [s.MediaComponentRole.carbon_source]}
+    )
+    assert media_identity(by_role)["dropout_roles"] == ["carbon_source"]
+    assert media_identity(by_compound)["dropouts"] == ["name:d-glucose"]
+    assert identity_sha256(media_identity(by_compound)) != identity_sha256(
+        media_identity(by_role)
+    )
+
+
+def test_the_order_of_dropped_roles_is_not_identity() -> None:
+    """Two listings of the same two omissions are one medium."""
+    base = s.Media(name="SD", state="solid", is_synthetic=True, base_medium="SD")
+    forward = base.model_copy(
+        update={
+            "dropout_roles": [
+                s.MediaComponentRole.carbon_source,
+                s.MediaComponentRole.nitrogen_source,
+            ]
+        }
+    )
+    reverse = base.model_copy(
+        update={
+            "dropout_roles": [
+                s.MediaComponentRole.nitrogen_source,
+                s.MediaComponentRole.carbon_source,
+            ]
+        }
+    )
+    assert media_identity(forward)["dropout_roles"] == [
+        "carbon_source",
+        "nitrogen_source",
+    ]
+    assert identity_sha256(media_identity(forward)) == identity_sha256(
+        media_identity(reverse)
+    )
+
+
+def test_a_filled_role_cannot_also_be_declared_omitted() -> None:
+    """The mixin's invariant one level up: storing a component and declaring its role
+    absent is the medium saying both things at once.
+    """
+    with pytest.raises(ValueError, match="cannot both state a component"):
+        s.Media(
+            name="SC, glycerol",
+            state="liquid",
+            is_synthetic=True,
+            base_medium="SC",
+            components=[
+                s.MediaComponent(
+                    compound=s.Compound(name="glycerol"),
+                    role=s.MediaComponentRole.carbon_source,
+                )
+            ],
+            dropout_roles=[s.MediaComponentRole.carbon_source],
+        )
+    with pytest.raises(ValueError, match="repeats a role"):
+        s.Media(
+            name="SC",
+            state="liquid",
+            is_synthetic=True,
+            dropout_roles=[
+                s.MediaComponentRole.carbon_source,
+                s.MediaComponentRole.carbon_source,
+            ],
+        )
+
+
+def test_the_growth_phase_a_culture_is_held_in_is_part_of_the_environment_id() -> None:
+    """A stationary-phase starvation arm is not the environment node of its control.
+
+    ``CultureGrowthPhase`` separates the harvest moment (a property of the sample) from
+    a culture HELD in a phase AS the condition, which is what ``Environment.growth_phase``
+    is, and before lane X of the ontology unification no identity projection read it.
+    """
+    media = _plate("M9", "schmidt2016", "4 g/L glucose", 4.0)
+    exponential = s.Environment(media=media, temperature=s.Temperature(value=37.0))
+    stationary = exponential.model_copy(
+        update={"growth_phase": s.CultureGrowthPhase.stationary}
+    )
+    logarithmic = exponential.model_copy(
+        update={"growth_phase": s.CultureGrowthPhase.exponential}
+    )
+    ids = {
+        identity_sha256(environment_identity(env))
+        for env in (exponential, stationary, logarithmic)
+    }
+    assert len(ids) == 3
+    assert "growth_phase" not in environment_identity(exponential)
+    assert environment_identity(stationary)["growth_phase"] == "stationary"
+    assert "growth_phase" in ENVIRONMENT_OPTIONAL_IDENTITY_FIELDS
+    # the #507 protocol fields live on the subclass; ``growth_phase`` is on the base,
+    # which is why it is projected before the ``CultureEnvironment`` branch
+    assert all(
+        field in s.CultureEnvironment.model_fields
+        for field in ENVIRONMENT_OPTIONAL_IDENTITY_FIELDS
+    )
+    assert "growth_phase" in s.Environment.model_fields
+
+
+# --- end lane X -------------------------------------------------------------------- #

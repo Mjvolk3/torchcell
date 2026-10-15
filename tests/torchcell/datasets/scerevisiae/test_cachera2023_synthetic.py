@@ -6,7 +6,7 @@
 ``GA1_2_4_6.csv`` is written into ``<root>/raw/`` so PyG never calls ``download()``. No
 genome is read (#1045): every row that names a gene and carries a level is a record
 under the token the ``gene`` cell releases, upper-cased; a systematic name goes on
-``KanMxDeletionPerturbation`` and any other name on ``ReleasedGeneNamePerturbation``.
+``KanMxDeletionPerturbation`` and any other name on ``ReleasedIdentifierPerturbation``.
 
 Rows (gene, 24 h mean, std, count):
 
@@ -155,12 +155,12 @@ def test_six_records_under_released_names_with_se_from_std_over_sqrt_count(
         if p["perturbation_type"] != "gene_addition"
     }
     assert kinds == {
-        "TFC3": "released_gene_name",
+        "TFC3": "released_identifier",
         "YBR001C": "kanmx_deletion",
         "YCR001W": "kanmx_deletion",
-        "OLDNAME": "released_gene_name",
-        "FLO8X": "released_gene_name",
-        "TFC3ALIAS": "released_gene_name",
+        "OLDNAME": "released_identifier",
+        "FLO8X": "released_identifier",
+        "TFC3ALIAS": "released_identifier",
     }
 
 

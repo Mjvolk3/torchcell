@@ -55,8 +55,8 @@ from torchcell.datamodels.schema import (
     PhysicalFactor,
     Publication,
     ReferenceGenome,
-    ReleasedGeneKind,
-    ReleasedGeneNamePerturbation,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     ResponseCategory,
     SampleUnit,
     SmallMoleculePerturbation,
@@ -153,12 +153,12 @@ def _experiment(common: str, rfp: str) -> EnvironmentResponseExperiment:
         dataset_name="CrispriMormino2022Dataset",
         genotype=Genotype(
             perturbations=[
-                ReleasedGeneNamePerturbation(
+                ReleasedIdentifierPerturbation(
                     systematic_gene_name=common,
                     gene_namespace="scerevisiae_s288c_sgd_systematic",
                     perturbed_gene_name=common,
-                    released_gene_name=common,
-                    released_kind=ReleasedGeneKind.crispr_interference,
+                    identifier_kind="common name, as Table 1 writes it",
+                    released_kind=ReleasedKind.crispr_interference,
                     crispr=CrisprConstruct(
                         effector="dCas9-Mxi1", guide_sequence=None, n_guides=1
                     ),
@@ -255,7 +255,7 @@ def test_build_writes_the_twelve_table_1_strains_as_categorical_records(
         for p in genotype
     ] == [
         ("BM3R1-HAA1-mTurquoise2", "BM3R1-HAA1-mTurquoise2", "gene_addition"),
-        ("QCR8", "QCR8", "released_gene_name"),
+        ("QCR8", "QCR8", "released_identifier"),
         ("sfpHluorin", "sfpHluorin", "gene_addition"),
     ]
     assert dataset[0]["publication"] == _PUBLICATION.model_dump()
@@ -303,7 +303,7 @@ def test_one_cbl_reference_and_the_gene_set_carries_the_cassette_slots(
     assert manifest["hostname"] == socket.gethostname()
     assert manifest["torchcell_commit"] == head
     assert {
-        "ReleasedGeneNamePerturbation",
+        "ReleasedIdentifierPerturbation",
         "GeneAdditionPerturbation",
         "EnvironmentPhysicalPerturbation",
     } <= set(manifest["closure"])

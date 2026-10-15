@@ -119,7 +119,7 @@ the 6 retired b-numbers (``b0370``, ``b0510``, ``b4091``, ``b4223``, ``b4274``,
 (``b0359``, ``b2654``, ...) are stored as released, with no identifier mapping and no
 resolution in the loader. The 11 recipient ids that are no b-number in form (``JW5447``,
 ``JW5661``, ``cscR`` and eight ``bNNNN.1`` sub-numbered Keio entries) are stored on
-``BacterialReleasedStrainPerturbation`` under the id as released, its strain label the
+``ReleasedIdentifierPerturbation`` under the id as released, its strain label the
 released ``<id>__<gene>`` cell and its ``identifier_kind`` the id's form.
 ``preprocess/identifier_reconciliation.json`` still records what the annotation says
 about every released id. No rule removes a row (#1057):
@@ -202,7 +202,6 @@ from torchcell.datamodels.schema import (
     BACTERIAL_ASSEMBLY_SETS,
     BacterialAssemblySet,
     BacterialGeneNamespace,
-    BacterialReleasedStrainPerturbation,
     BacterialStrainBackground,
     DeletionStrainPerturbation,
     Environment,
@@ -218,7 +217,8 @@ from torchcell.datamodels.schema import (
     MediaComponentRole,
     Publication,
     ReferenceGenome,
-    ReleasedStrainKind,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     SampleUnit,
     Temperature,
 )
@@ -1392,7 +1392,7 @@ def donor_perturbation(locus_tag: str, symbol: str) -> DeletionStrainPerturbatio
 
 def recipient_perturbation(
     locus_tag: str, symbol: str
-) -> DeletionStrainPerturbation | BacterialReleasedStrainPerturbation:
+) -> DeletionStrainPerturbation | ReleasedIdentifierPerturbation:
     """The recipient side: the arrayed Keio deletion, marked with ``kan``.
 
     A recipient Table S2 names by an id that is no b-number (a Keio JW number, a
@@ -1401,13 +1401,13 @@ def recipient_perturbation(
     cell.
     """
     if not B_NUMBER_PATTERN.match(locus_tag):
-        return BacterialReleasedStrainPerturbation(
+        return ReleasedIdentifierPerturbation(
             systematic_gene_name=locus_tag,
             perturbed_gene_name=symbol,
             gene_namespace=MG1655_NAMESPACE,
             strain_label=f"{locus_tag}__{symbol}",
             identifier_kind=released_identifier_kind(locus_tag),
-            released_kind=ReleasedStrainKind.deletion,
+            released_kind=ReleasedKind.deletion,
             cassette=RECIPIENT_CASSETTE,
             collection=RECIPIENT_COLLECTION,
         )
@@ -2080,7 +2080,7 @@ def _l1_hypomorph_sides_are_marked_alleles(
             if side is recipient and not is_hypomorph:
                 # a recipient released under no b-number is on the released-strain
                 # leaf (#1057)
-                want |= {"bacterial_released_strain"}
+                want |= {"released_identifier"}
             if str(side["perturbation_type"]) not in want:
                 bad.append(
                     f"{side['systematic_gene_name']} is {side['perturbation_type']}"

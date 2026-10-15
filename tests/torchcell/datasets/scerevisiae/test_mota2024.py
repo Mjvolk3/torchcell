@@ -66,8 +66,8 @@ from torchcell.datamodels.schema import (
     PhysicalFactor,
     Publication,
     ReferenceGenome,
-    ReleasedGeneKind,
-    ReleasedGeneNamePerturbation,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     ResponseCategory,
     SmallMoleculePerturbation,
     Temperature,
@@ -223,7 +223,7 @@ def test_a_systematic_token_is_placed_and_a_symbol_is_released(
     built: m.EnvChemgenMota2024Dataset,
 ) -> None:
     """YAL001C goes on ``KanMxDeletionPerturbation``; EFG1 on
-    ``ReleasedGeneNamePerturbation`` with the symbol verbatim, kind deletion, marker
+    ``ReleasedIdentifierPerturbation`` with the symbol verbatim, kind deletion, marker
     KanMX; the renamed-looking YGR272C stays as written on the placed leaf.
     """
     by_name = {
@@ -237,10 +237,10 @@ def test_a_systematic_token_is_placed_and_a_symbol_is_released(
     efg1 = by_name["EFG1"]
     assert (
         efg1["perturbation_type"],
-        efg1["released_gene_name"],
+        efg1["systematic_gene_name"],
         efg1["released_kind"],
-        efg1["marker"],
-    ) == ("released_gene_name", "EFG1", "deletion", "KanMX")
+        efg1["cassette"],
+    ) == ("released_identifier", "EFG1", "deletion", "KanMX")
 
 
 # ---- A richer build: title rows, skipped rows, merges, multi-acid drops ---------- #
@@ -330,18 +330,18 @@ def _ordinal(rank: float, category: ResponseCategory, label: str) -> Any:
     )
 
 
-def _deletion(token: str) -> KanMxDeletionPerturbation | ReleasedGeneNamePerturbation:
+def _deletion(token: str) -> KanMxDeletionPerturbation | ReleasedIdentifierPerturbation:
     if token.startswith("Y"):
         return KanMxDeletionPerturbation(
             systematic_gene_name=token, perturbed_gene_name=token
         )
-    return ReleasedGeneNamePerturbation(
+    return ReleasedIdentifierPerturbation(
         systematic_gene_name=token,
         gene_namespace="scerevisiae_s288c_sgd_systematic",
         perturbed_gene_name=token,
-        released_gene_name=token,
-        released_kind=ReleasedGeneKind.deletion,
-        marker="KanMX",
+        identifier_kind="gene name, as the table lists it",
+        released_kind=ReleasedKind.deletion,
+        cassette="KanMX",
     )
 
 
@@ -388,16 +388,16 @@ def test_edge_build_record_order_and_stored_names(
             )
         )
     assert rows == [
-        ("released_gene_name", "TFC3", "+"),
-        ("released_gene_name", "EFG1", "+"),
+        ("released_identifier", "TFC3", "+"),
+        ("released_identifier", "EFG1", "+"),
         ("kanmx_deletion", "YGR272C", "++"),
-        ("released_gene_name", "RLM2", "++"),
-        ("released_gene_name", "ALIASX", "+"),
+        ("released_identifier", "RLM2", "++"),
+        ("released_identifier", "ALIASX", "+"),
         ("kanmx_deletion", "YBR001C", "+"),
-        ("released_gene_name", "RLM2", "+"),
-        ("released_gene_name", "SBR2", "+"),
+        ("released_identifier", "RLM2", "+"),
+        ("released_identifier", "SBR2", "+"),
         ("kanmx_deletion", "YDL001W", "++"),
-        ("released_gene_name", "RLM2", "+"),
+        ("released_identifier", "RLM2", "+"),
     ]
 
 

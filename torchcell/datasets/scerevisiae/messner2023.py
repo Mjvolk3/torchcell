@@ -94,8 +94,8 @@ from torchcell.datamodels.schema import (
     ProteinAbundancePhenotype,
     Publication,
     ReferenceGenome,
-    ReleasedGeneKind,
-    ReleasedGeneNamePerturbation,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
@@ -130,22 +130,22 @@ _NUCLEAR_ORF_RE = re.compile(r"^Y[A-P][LR]\d{3}[WC](?:-[A-Z])?$")
 
 def _released_deletion(
     orf: str,
-) -> KanMxDeletionPerturbation | ReleasedGeneNamePerturbation:
+) -> KanMxDeletionPerturbation | ReleasedIdentifierPerturbation:
     """The deletion under the released identifier (#1045): an ORF-shaped one on the
-    placed KanMX leaf with both names the ORF, any other on the released-gene-name leaf
+    placed KanMX leaf with both names the ORF, any other on the released-identifier leaf
     verbatim (kind deletion, marker KanMX).
     """
     if _NUCLEAR_ORF_RE.match(orf):
         return KanMxDeletionPerturbation(
             systematic_gene_name=orf, perturbed_gene_name=orf
         )
-    return ReleasedGeneNamePerturbation(
+    return ReleasedIdentifierPerturbation(
         systematic_gene_name=orf,
         gene_namespace="scerevisiae_s288c_sgd_systematic",
         perturbed_gene_name=orf,
-        released_gene_name=orf,
-        released_kind=ReleasedGeneKind.deletion,
-        marker="KanMX",
+        identifier_kind="ORF column entry of the sample metadata, as released",
+        released_kind=ReleasedKind.deletion,
+        cassette="KanMX",
     )
 
 
@@ -352,7 +352,7 @@ class ProteomeMessner2023Dataset(ExperimentDataset):
             # systematic names are uppercase -- normalize, never drop on case alone.
             deletion_orf = str(by_filename.loc[filename, "ORF"]).upper()
             if not _NUCLEAR_ORF_RE.match(deletion_orf):
-                # no ORF form: the released-gene-name leaf, verbatim (0 of 4,699)
+                # no ORF form: the released-identifier leaf, verbatim (0 of 4,699)
                 released_names.append(deletion_orf)
             series = matrix[filename].dropna()  # measured proteins only (noimpute)
             abundance = {str(o): float(v) for o, v in series.items()}
@@ -373,7 +373,7 @@ class ProteomeMessner2023Dataset(ExperimentDataset):
             )
         log.info(
             "Messner: %d KO strains, WT reference with %d proteins, %d KO ORFs on the "
-            "released-gene-name leaf",
+            "released-identifier leaf",
             len(rows),
             len(self._reference["abundance"]),
             len(released_names),

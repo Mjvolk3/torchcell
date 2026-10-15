@@ -81,7 +81,7 @@ SOURCE COUNT NOTES (documented, not guessed):
 
 GENE IDENTITY (#1045) -- every listed token is one record under the token verbatim. A
 systematic name goes on ``KanMxDeletionPerturbation`` with both names the ORF; any other
-token goes on ``ReleasedGeneNamePerturbation`` (the released symbol, kind ``deletion``,
+token goes on ``ReleasedIdentifierPerturbation`` (the released symbol, kind ``deletion``,
 marker KanMX). No genome is consulted: nothing is renamed, adjudicated or dropped, and
 the join to R64 is a modeling-time act. The two tokens that are aliases of more than one
 current gene (PPA1, FEN1) are stored as the symbols the paper wrote; the earlier
@@ -131,8 +131,8 @@ from torchcell.datamodels.schema import (
     MeasurementType,
     Publication,
     ReferenceGenome,
-    ReleasedGeneKind,
-    ReleasedGeneNamePerturbation,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     ResponseCategory,
     SampleUnit,
     SmallMoleculePerturbation,
@@ -342,7 +342,7 @@ _STRESS_SPECS: list[dict[str, Any]] = [
 #: Retention rule (#1045): every listed token is a record under the token verbatim.
 RETENTION_RULE = (
     "one record per listed gene token verbatim: a systematic name on "
-    "KanMxDeletionPerturbation, any other token on ReleasedGeneNamePerturbation; no "
+    "KanMxDeletionPerturbation, any other token on ReleasedIdentifierPerturbation; no "
     "genome is consulted, nothing is renamed, adjudicated or dropped. Measured over "
     "this release: 525 listed tokens, 525 records"
 )
@@ -359,19 +359,19 @@ class RepeatedTokenError(ValueError):
 
 def _released_deletion(
     token: str,
-) -> KanMxDeletionPerturbation | ReleasedGeneNamePerturbation:
+) -> KanMxDeletionPerturbation | ReleasedIdentifierPerturbation:
     """The deletion under the token the table releases (#1045)."""
     if _SYSTEMATIC_RE.match(token):
         return KanMxDeletionPerturbation(
             systematic_gene_name=token, perturbed_gene_name=token
         )
-    return ReleasedGeneNamePerturbation(
+    return ReleasedIdentifierPerturbation(
         systematic_gene_name=token,
         gene_namespace="scerevisiae_s288c_sgd_systematic",
         perturbed_gene_name=token,
-        released_gene_name=token,
-        released_kind=ReleasedGeneKind.deletion,
-        marker="KanMX",
+        identifier_kind="gene name, as Tables 1-6 list it",
+        released_kind=ReleasedKind.deletion,
+        cassette="KanMX",
     )
 
 

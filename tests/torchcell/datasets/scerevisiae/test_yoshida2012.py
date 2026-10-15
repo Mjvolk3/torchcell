@@ -75,8 +75,8 @@ from torchcell.datamodels.schema import (
     MetabolitePhenotype,
     Publication,
     ReferenceGenome,
-    ReleasedGeneKind,
-    ReleasedGeneNamePerturbation,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     Temperature,
 )
 from torchcell.datasets.scerevisiae import yoshida2012 as m
@@ -121,18 +121,18 @@ _S_IDS = {
 }
 
 
-def _deletion(gene: str) -> KanMxDeletionPerturbation | ReleasedGeneNamePerturbation:
+def _deletion(gene: str) -> KanMxDeletionPerturbation | ReleasedIdentifierPerturbation:
     if gene.startswith("Y"):
         return KanMxDeletionPerturbation(
             systematic_gene_name=gene, perturbed_gene_name=gene
         )
-    return ReleasedGeneNamePerturbation(
+    return ReleasedIdentifierPerturbation(
         systematic_gene_name=gene,
         gene_namespace="scerevisiae_s288c_sgd_systematic",
         perturbed_gene_name=gene,
-        released_gene_name=gene,
-        released_kind=ReleasedGeneKind.deletion,
-        marker="KanMX",
+        identifier_kind="gene name, as Table 3 writes it",
+        released_kind=ReleasedKind.deletion,
+        cassette="KanMX",
     )
 
 
@@ -252,19 +252,19 @@ def test_seventeen_records_in_table_order_with_one_shared_reference(
         for i in range(17)
     ]
     assert stored == [
-        ("kanmx_deletion" if g.startswith("Y") else "released_gene_name", g, g)
+        ("kanmx_deletion" if g.startswith("Y") else "released_identifier", g, g)
         for g in genes
     ]
     assert stored[-1] == ("kanmx_deletion", "YDR379C-A", "YDR379C-A")
     assert (
-        dataset[0]["experiment"]["genotype"]["perturbations"][0]["released_gene_name"]
+        dataset[0]["experiment"]["genotype"]["perturbations"][0]["systematic_gene_name"]
         == "ASM4"
     )
     preprocess = Path(dataset.root) / "preprocess"
     index = json.loads((preprocess / "experiment_reference_index.json").read_text())
     assert [entry["member_indices"] for entry in index] == [list(range(17))]
     assert (preprocess / "data.csv").read_text() == "gene,leaf\n" + "".join(
-        f"{g},{'kanmx_deletion' if g.startswith('Y') else 'released_gene_name'}\n"
+        f"{g},{'kanmx_deletion' if g.startswith('Y') else 'released_identifier'}\n"
         for g in genes
     )
     assert json.loads((preprocess / "gene_set.json").read_text()) == sorted(genes)

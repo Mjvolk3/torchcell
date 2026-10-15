@@ -57,9 +57,9 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
 from torchcell.data import ManifestPinMismatchError, RawSha256MismatchError
 from torchcell.datamodels.media import M9_GLUCOSE_CASEIN_FUHRER2017
 from torchcell.datamodels.schema import (
-    BacterialReleasedStrainPerturbation,
     Environment,
     ReferenceGenome,
+    ReleasedIdentifierPerturbation,
     Temperature,
 )
 from torchcell.literature.manifest import RetrievalMethod, RetrievalRecord
@@ -307,14 +307,14 @@ def test_select_strains_stores_an_unlisted_name_and_a_non_ready_entry() -> None:
     assert selection.unlisted == ["nope"]
     unlisted, listed = selection.strains
     (p,) = m.deletion_genotype(unlisted).perturbations
-    assert isinstance(p, BacterialReleasedStrainPerturbation)
+    assert isinstance(p, ReleasedIdentifierPerturbation)
     assert (p.systematic_gene_name, p.identifier_kind, p.strain_label) == (
         "nope",
         m.DEPOSIT_NAME_KIND,
         "nope",
     )
     (q,) = m.deletion_genotype(listed).perturbations
-    assert isinstance(q, BacterialReleasedStrainPerturbation)
+    assert isinstance(q, ReleasedIdentifierPerturbation)
     assert (q.systematic_gene_name, q.identifier_kind) == ("JW0001", m.IDENTIFIER_KIND)
 
 
@@ -418,7 +418,7 @@ def test_build_experiment_is_one_keio_deletion_under_its_released_jw_id() -> Non
     } == {
         "systematic_gene_name": "JW0001",
         "perturbed_gene_name": "thrA",
-        "perturbation_type": "bacterial_released_strain",
+        "perturbation_type": "released_identifier",
         "gene_namespace": "ecoli_k12_bw25113_locus_tag",
         "strain_label": "thrA",
         "identifier_kind": "Keio JW id",

@@ -49,7 +49,6 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
 )
 from torchcell.data import ManifestPinMismatchError
 from torchcell.datamodels.schema import (
-    BacterialReleasedStrainPerturbation,
     EssentialityEvidenceClass,
     EssentialityEvidenceType,
     EssentialityStatementRole,
@@ -57,6 +56,7 @@ from torchcell.datamodels.schema import (
     Genotype,
     MediaComponentRole,
     ReferenceGenome,
+    ReleasedIdentifierPerturbation,
 )
 from torchcell.literature.manifest import ROLE_RAW_DATA, ArtifactRecord, Manifest
 from torchcell.sequence.genome.ecoli.k12 import BW25113_ASSEMBLY, EcoliK12BW25113Genome
@@ -398,7 +398,7 @@ def test_build_experiment_stores_the_released_jw_id_and_the_call() -> None:
     ):
         assert isinstance(record.genotype, Genotype)
         (p,) = record.genotype.perturbations
-        assert isinstance(p, BacterialReleasedStrainPerturbation)
+        assert isinstance(p, ReleasedIdentifierPerturbation)
         assert record.phenotype.is_essential is essential
         assert (p.collection, p.cassette, p.systematic_gene_name, p.strain_label) == (
             collection,

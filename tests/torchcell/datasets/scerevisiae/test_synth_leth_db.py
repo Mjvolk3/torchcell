@@ -4,7 +4,7 @@
 """SynLethDB yeast synthetic-lethality and synthetic-rescue loaders, built hermetically.
 
 2026.10.12 (#1045): each side of a row is stored exactly as released, on
-``ReleasedGeneNamePerturbation``: the name verbatim (``n1.name`` / ``n2.name``), the
+``ReleasedIdentifierPerturbation``: the name verbatim (``n1.name`` / ``n2.name``), the
 Entrez id verbatim (``n1.identifier`` / ``n2.identifier``, namespace
 ``ncbi_entrez_gene``) and a typed gap for the perturbation kind the release does not
 state. No genome or GFF is read, nothing is resolved or dropped, and a row naming one
@@ -36,7 +36,7 @@ from torchcell.datamodels.schema import (
     Publication,
     ReferenceGenome,
     ReleasedGeneIdNamespace,
-    ReleasedGeneNamePerturbation,
+    ReleasedIdentifierPerturbation,
     SyntheticLethalityExperiment,
     SyntheticLethalityExperimentReference,
     SyntheticLethalityPhenotype,
@@ -86,12 +86,12 @@ def _write_raw(root: Path, filename: str, rows: list[str]) -> None:
     (root / "raw" / filename).write_text(_HEADER + "".join(rows), encoding="utf-8")
 
 
-def _side(name: str, entrez: int) -> ReleasedGeneNamePerturbation:
-    return ReleasedGeneNamePerturbation(
+def _side(name: str, entrez: int) -> ReleasedIdentifierPerturbation:
+    return ReleasedIdentifierPerturbation(
         systematic_gene_name=name,
         gene_namespace="scerevisiae_s288c_sgd_systematic",
         perturbed_gene_name=name,
-        released_gene_name=name,
+        identifier_kind="gene name (the n1.name / n2.name column), as released",
         released_gene_id=str(entrez),
         released_gene_id_namespace=ReleasedGeneIdNamespace.ncbi_entrez_gene,
         released_kind=None,
@@ -208,7 +208,7 @@ def test_sl_record_matches_the_source_row_with_a_gapped_kind(
     assert record["reference"] == expected_reference.model_dump()
     assert record["publication"] == _publication("12345678").model_dump()
     side = record["experiment"]["genotype"]["perturbations"][0]
-    assert side["perturbation_type"] == "released_gene_name"
+    assert side["perturbation_type"] == "released_identifier"
     assert side["released_kind"] is None
     (gap,) = side["provenance_gaps"]
     assert (gap["field"], gap["reason"]) == ("released_kind", "not_reported_by_primary")

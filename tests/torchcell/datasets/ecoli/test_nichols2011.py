@@ -29,14 +29,14 @@ import pytest
 import torchcell.datasets.ecoli.nichols2011 as n
 from torchcell.datamodels.schema import (
     AssayType,
-    BacterialReleasedStrainPerturbation,
     ConcentrationUnit,
     EnvironmentPhysicalPerturbation,
     EnvironmentResponseExperiment,
     MeasurementType,
     PhysicalExposurePerturbation,
     PhysicalFactor,
-    ReleasedStrainKind,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     SampleUnit,
     SmallMoleculePerturbation,
 )
@@ -386,64 +386,44 @@ def test_phenotype_is_the_rescaled_z_score_at_four_colonies() -> None:
 @pytest.mark.parametrize(
     ("label", "kind", "ecks", "symbol"),
     [
-        ("ECK1963-HCHA", ReleasedStrainKind.deletion, ("ECK1963",), "HCHA"),
-        ("ECK2350-YFDM'", ReleasedStrainKind.deletion, ("ECK2350",), "YFDM'"),
-        ("ECK2331", ReleasedStrainKind.deletion, ("ECK2331",), None),
-        ("ECK5002-ISTR-1", ReleasedStrainKind.deletion, ("ECK5002",), "ISTR-1"),
+        ("ECK1963-HCHA", ReleasedKind.deletion, ("ECK1963",), "HCHA"),
+        ("ECK2350-YFDM'", ReleasedKind.deletion, ("ECK2350",), "YFDM'"),
+        ("ECK2331", ReleasedKind.deletion, ("ECK2331",), None),
+        ("ECK5002-ISTR-1", ReleasedKind.deletion, ("ECK5002",), "ISTR-1"),
         (
             "ECK1205/1207/1209-RDLABC",
-            ReleasedStrainKind.deletion,
+            ReleasedKind.deletion,
             ("ECK1205", "ECK1207", "ECK1209"),
             None,
         ),
-        (
-            "ECK4142-4143-ECNAB",
-            ReleasedStrainKind.deletion,
-            ("ECK4142", "ECK4143"),
-            None,
-        ),
-        (
-            "ECK0095-C-FTSA-SPA - SPA",
-            ReleasedStrainKind.affinity_tag,
-            ("ECK0095",),
-            "FTSA",
-        ),
-        ("ECK0125-CAN - SPA", ReleasedStrainKind.affinity_tag, ("ECK0125",), "CAN"),
-        ("ECK0086-C - SPA", ReleasedStrainKind.affinity_tag, ("ECK0086",), None),
-        (
-            "ECK0055-B-IMP-DAS+4-KAN - DAS",
-            ReleasedStrainKind.degron,
-            ("ECK0055",),
-            "IMP",
-        ),
+        ("ECK4142-4143-ECNAB", ReleasedKind.deletion, ("ECK4142", "ECK4143"), None),
+        ("ECK0095-C-FTSA-SPA - SPA", ReleasedKind.affinity_tag, ("ECK0095",), "FTSA"),
+        ("ECK0125-CAN - SPA", ReleasedKind.affinity_tag, ("ECK0125",), "CAN"),
+        ("ECK0086-C - SPA", ReleasedKind.affinity_tag, ("ECK0086",), None),
+        ("ECK0055-B-IMP-DAS+4-KAN - DAS", ReleasedKind.degron, ("ECK0055",), "IMP"),
         (
             "ECK0097-A-LPXC-KAN - Linked",
-            ReleasedStrainKind.linked_marker,
+            ReleasedKind.linked_marker,
             ("ECK0097",),
             "LPXC",
         ),
         (
             "ECK0097-B-LPXC(G210S)-KAN - Allele",
-            ReleasedStrainKind.sequence_allele,
+            ReleasedKind.sequence_allele,
             ("ECK0097",),
             "LPXC",
         ),
         (
             "ECK0055-D-IMP4213 - Allele",
-            ReleasedStrainKind.sequence_allele,
+            ReleasedKind.sequence_allele,
             ("ECK0055",),
             "IMP",
         ),
-        (
-            "ECK2593-A-YFIO* - Truncation",
-            ReleasedStrainKind.truncation,
-            ("ECK2593",),
-            "YFIO",
-        ),
+        ("ECK2593-A-YFIO* - Truncation", ReleasedKind.truncation, ("ECK2593",), "YFIO"),
     ],
 )
 def test_parse_strain_label(
-    label: str, kind: ReleasedStrainKind, ecks: tuple[str, ...], symbol: str | None
+    label: str, kind: ReleasedKind, ecks: tuple[str, ...], symbol: str | None
 ) -> None:
     parsed = n.parse_strain_label(7, label)
     assert parsed == n.StrainLabel(
@@ -508,24 +488,24 @@ def test_genotype_stores_each_accession_on_the_released_strain_leaf() -> None:
     multi = n.genotype(rows["ECK4142-4143-ECNAB"])
     assert multi.systematic_gene_names == ["ECK4142", "ECK4143"]
     for p in multi.perturbations:
-        assert isinstance(p, BacterialReleasedStrainPerturbation)
+        assert isinstance(p, ReleasedIdentifierPerturbation)
         assert p.strain_label == "ECK4142-4143-ECNAB"
-        assert p.released_kind is ReleasedStrainKind.deletion
+        assert p.released_kind is ReleasedKind.deletion
         assert (p.cassette, p.collection) == ("kanamycin", None)
         assert p.gene_namespace == "ecoli_k12_bw25113_locus_tag"
         assert p.identifier_kind == "ECK accession"
     (allele,) = n.genotype(rows["ECK0097-B-LPXC(G210S)-KAN - Allele"]).perturbations
-    assert isinstance(allele, BacterialReleasedStrainPerturbation)
+    assert isinstance(allele, ReleasedIdentifierPerturbation)
     assert (allele.systematic_gene_name, allele.perturbed_gene_name) == (
         "ECK0097",
         "LPXC",
     )
     assert allele.mechanism_so == ("SO:0001060", "sequence_variant")
     (spa,) = n.genotype(rows["ECK0097-C-LPXC-SPA - SPA"]).perturbations
-    assert isinstance(spa, BacterialReleasedStrainPerturbation)
+    assert isinstance(spa, ReleasedIdentifierPerturbation)
     assert spa.collection == n.SPA_COLLECTION
     (das,) = n.genotype(rows["ECK0055-B-IMP-DAS+4-KAN - DAS"]).perturbations
-    assert isinstance(das, BacterialReleasedStrainPerturbation)
+    assert isinstance(das, ReleasedIdentifierPerturbation)
     assert (das.collection, das.mechanism_so) == (
         n.DAS_COLLECTION,
         ("SO:0001218", "transgenic_insertion"),

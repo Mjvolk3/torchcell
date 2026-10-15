@@ -1,0 +1,1952 @@
+{
+  "record_version": 1,
+  "slug": "released-identifier-leaf",
+  "date": "2026-10-15",
+  "pr": null,
+  "author_kind": "agent",
+  "base_commit": "1914c98355d1bbe24d645896d308de22501ec52b",
+  "python_version": "3.13.0",
+  "symbols": [
+    {
+      "symbol": "BacterialReleasedCrisprPerturbation",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "9dd8e27f66b6d562b967d1400158ac5345bd84b7000d077cff69067915293548",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialReleasedStrainPerturbation",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "5956926b0198f62e7ba793ea551071fddbb49739d7f8d941dd53b0ab0e92affc",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialReleasedTransposonPerturbation",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "bbeb39fe2e87e283fc90eb6372281ba11264d999b3f57724236f8ecd9be00e37",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "GenePerturbationType",
+      "status": "modified",
+      "kinds": [
+        "removal",
+        "enum_member_added"
+      ],
+      "fingerprint_before": "39c1ac773fa2f4049231ac180ab370e584a0cf663fcad5fd25b37221f6c39cdc",
+      "fingerprint_after": "3db3c596eaf61dfade4f35fc590f875f311197c8644022a9fc8c2aaf152fe800",
+      "impact": "breaking",
+      "reasons": [
+        "lost members ['BacterialReleasedCrisprPerturbation', 'BacterialReleasedStrainPerturbation', 'BacterialReleasedTransposonPerturbation', 'ReleasedGeneNamePerturbation']",
+        "gained members ['ReleasedIdentifierPerturbation']"
+      ]
+    },
+    {
+      "symbol": "RELEASED_CRISPR_KINDS",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "25f09eedfdc9c70ff95a1710d86ac73b08a8ecf0472fd09d9e89c5e8193e8861",
+      "impact": "stale",
+      "reasons": [
+        "new module-level binding"
+      ]
+    },
+    {
+      "symbol": "RELEASED_GENE_KIND_SO",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "e68f6c087495ff519085d3e3213343d659ce673e62aa6ec9d50bb88a28de4285",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "module-level binding removed"
+      ]
+    },
+    {
+      "symbol": "RELEASED_KIND_SO",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "114253e722fb443e3b57abd7b3591e66cc2b084a646b849e34b93b3a53151c1b",
+      "impact": "stale",
+      "reasons": [
+        "new module-level binding"
+      ]
+    },
+    {
+      "symbol": "RELEASED_STRAIN_KIND_SO",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "ed3e4301521f6edadd88854742909e167cf71f6e1d4fbde7b47b2aeaeb9d7a8b",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "module-level binding removed"
+      ]
+    },
+    {
+      "symbol": "RELEASED_TRANSPOSON_FIELDS",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "d1558543e99f97119924e3f288203a70187c0b919d55b2f10cb87ecfaaa428c8",
+      "impact": "stale",
+      "reasons": [
+        "new module-level binding"
+      ]
+    },
+    {
+      "symbol": "ReleasedGeneKind",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "334e3657cf4b915d35d0becdc254139f26077c9e0deebb9dc1b8d03082384fe3",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "ReleasedGeneNamePerturbation",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "d72f280b69207d8ef1f1138c51099b81b29cc09d5dc6202f0999e20b64f56ffb",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "ReleasedIdentifierPerturbation",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "1c7331f9d83762ae4b41ed3d86bac81fc49a53612701e9bba57ea3e0210b1857",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "ReleasedKind",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "10a8766c40734da4e408b106d64abb3e2f24738943d44a877a1752251c6b407d",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "ReleasedStrainKind",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "b67190d3b3912717cfee27bc4d3f778d7ab65aea82baf078a903e05983c239f0",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "_check_released_labels",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "3bf57d537b982d23681183dff157c289119aaa40ff990b015c36caf946b1fa91",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "module-level binding removed"
+      ]
+    },
+    {
+      "symbol": "_validate_released_identifier",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "9e4adeea0ca142181956695435b775895099ecf328ff59daf776c4eee6941a8b",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "module-level binding removed"
+      ]
+    }
+  ],
+  "correctness_argument": "P3 of the ontology unification (Path U, stage 3): one \"stored as released\" leaf, ReleasedIdentifierPerturbation, replacing BacterialReleasedStrainPerturbation (#691), BacterialReleasedCrisprPerturbation and BacterialReleasedTransposonPerturbation (#691 round 2) and ReleasedGeneNamePerturbation (#1045), with ReleasedKind replacing ReleasedStrainKind and ReleasedGeneKind.\n\nWHY IT IS MORE CORRECT. All four classes asserted ONE fact, from one owner rule (2026-10-12, \"the data is the data\"): the record stores the identifier the source released, no assembly or annotation decides whether the record exists, and the genome joins at modeling time. They were held apart by the host the loader was written for (three bacterial, one yeast), which is the distinction the constitution's first principle refuses (owner, 2026-10-15: \"like why a bacterial experiment! it seems this is unnecessary distinction\"), and by two mutually exclusive validators rather than by any fact of the record (audit A, section 1a; review 1 finding 2). Four classes for one fact is a defect under principle 5 (one fact, one field, one closed vocabulary, never a choice of class). The field names drifted between them, so a consumer asking what the source said it did to a gene had to know which family wrote the row: the bacterial leaves carried identifier_kind + strain_label + released_kind: ReleasedStrainKind (required, 7 members) + cassette, the yeast leaf carried released_gene_name (a required copy of systematic_gene_name) + released_gene_id/released_gene_id_namespace + released_kind: ReleasedGeneKind | None (3 members, value or typed gap) + marker + strain_id + collection, and the bacterial CRISPR leaf stated the direction in a required expression_direction field while the yeast leaf stated it as the crispr_interference kind member. cassette and marker were the same fact (\"the selectable marker the source names for the strain, verbatim\") under two names and are folded into cassette. released_gene_name was a tautology (its validator required it to equal systematic_gene_name) and is retired; identifier_kind, which the bacterial leaves already carried, states what the identifier is instead, and the 16 yeast loaders now state it per column.\n\nTHE HOST STAYS IN gene_namespace (review 1 finding 2, the hard constraint). The merged leaf inherits P1's required gene_namespace: GeneIdNamespace with NO default and the meaning it has on every gene perturbation, the HOST the study writes its strains against. The CLASS states that the identifier is unresolved; there is no released member of GeneIdNamespace, because one value that carried both the host and \"unresolved\" would erase the host (constitution 5) and would be a value any leaf could declare to skip the pattern check. Nichols 2011 rows stay BW25113 records with ECK identifiers (torchcell/datasets/ecoli/nichols2011.py passes gene_namespace=BW25113_NAMESPACE unchanged); the 16 yeast loaders keep passing scerevisiae_s288c_sgd_systematic, the S288C-derived background every served yeast reference strain is (the P1 measurement, experiments/database/results/gene_id_namespace_vocabulary.md: 68,433 released and other non-host identifiers on relaxed leaves, every one in a store whose reference strain is S288C-derived). Pinned by test_released_identifier_leaf_keeps_the_host_in_gene_namespace.\n\nONE RULE FOR THE NAME. The bacterial leaves refused a bacterial locus tag of any namespace and the yeast leaf refused a bacterial locus tag too (two copies of one check, each a host-by-class leak: both admitted an S288C systematic name, which SynLethDB stores with a gapped kind). The merged leaf's validate_sys_gene_name requires only a non-empty verbatim string: a released record's name is whatever the source wrote. A host-form identifier is still kept on its declared host by GenePerturbation._identifier_agrees_with_namespace (P1's base check), so a b-number cannot be filed under BW25113 and the host's own tag is admitted, which the old leaves refused (test_released_identifier_leaf_admits_the_hosts_own_tag_and_refuses_anothers). Measured in the loaders: no bacterial loader stores a locus tag on a released leaf (every placed tag goes to DeletionStrainPerturbation or TransposonInsertionPerturbation; babu2014.py and butland2008.py branch on the tag's form), so no stored record changes class.\n\nTHE DIRECTION DECISION (review 1 finding 9). ReleasedKind gains crispr_activation and expression_direction retires, rather than a crispr kind beside a direction field. On the placed CRISPR leaves the direction IS the class (CrisprActivationPerturbation and CrisprInterferencePerturbation fix expression_direction as a class default), the yeast released leaf already stated it as the crispr_interference member, and ReleasedKind is \"what the source says it did\", which for a guide is the effector's direction (Niu 2019 releases two arms, CRISPRa and CRISPRi, as two tables). A kind member plus a direction field would be two fields for one fact (constitution 5) held consistent only by a validator. Both members map to the same SO pair the placed leaves share, (\"SO:0001998\", \"sgRNA\"). Measured: the only loader that wrote \"increased\" is Niu 2019's activation arm (KIND_OF_ARM replaces DIRECTION_OF_ARM); Cui 2018 and Rousset 2018 wrote \"decreased\" and now write crispr_interference. The record's construct is set exactly for the two CRISPR kinds (RELEASED_CRISPR_KINDS), and the five mapped-insertion fields of TransposonInsertionPerturbation (RELEASED_TRANSPOSON_FIELDS) may be set only on a transposon_insertion record, so a construct never sits on a kind that has none; the bacterial transposon loaders (Gerdes 2003, Goodall 2018) now state released_kind=transposon_insertion, the kind their class used to imply.\n\nTHE MERGED released_kind IS VALUE-OR-GAP (review 1 finding 9, the typed_gap half). The bacterial leaf required released_kind with no gap; the yeast leaf took value-or-gap through HashableProvenanceGapMixin because SynLethDB names the gene pair and not the perturbation that made it. The merged leaf takes the gap form, which admits a gap on the 20 bacterial dev stores that never needed one; every bacterial loader still passes a value, so no bacterial record gains a gap. The tool cannot witness typed_gap on a NEW symbol (its witnesses are a base change, an added optional field or an X -> X | None type change on an existing class), so the record claims additive_leaf for ReleasedIdentifierPerturbation and states the gap contract here; the same holds for enum_member_added on the new ReleasedKind, whose ten members (the union of the 7 bacterial and 3 yeast members, which share deletion, plus crispr_activation) are pinned by test_released_kind_is_the_union_of_the_four_retired_vocabularies; GenePerturbationType carries enum_member_added for the gained member and removal for the four lost ones. strain_label is optional by construction (None when the gene identifier is the row's whole label, which every yeast release here is), never \"unknown\"; identifier_kind is required.\n\nEVERY SERVED NODE ID RE-KEYS. 18 of the 51 served datasets of release 2026.10.06-4b293d34 write ReleasedGeneNamePerturbation since #1045 (Cachera, Ozaydin, Mormino, Smith 2016, both Lopez 2024, both Zelezniak, Xue, Nadal-Ribelles, Mulleder, Auesukaree, Mota, Yoshida, Messner, O'Duibhir, both SynLethDB; review 1 finding 1), so this is a full-rebuild change and never an incremental admission: a perturbation node id is sha256(model_dump()), and every released record's dump changes (perturbation_type released_gene_name -> released_identifier, released_gene_name gone, marker -> cassette, identifier_kind and strain_label added), which re-keys its perturbation, genotype and experiment nodes. The 20 bacterial released dev stores (0 served) re-key the same way. Content ids are not comparable with KG 3.0; a dev LMDB written under any of the four old tags is unreadable until rebuilt. The tool computes rebuild_scope full_kg_rebuild with all 51 served datasets, not only the 18 that write the leaf, because GenePerturbationType is in every served closure through Genotype.perturbations (lost four members, gained one); the scope and the list are the tool's computation against the release snapshot, not hand-set. Loader count: 33 constructor sites changed (16 yeast, 17 bacterial: 16 ecoli + Lim 2022 pputida) plus 4 reference-only modules, the adapter lane tuple (BACTERIAL_PERTURBATION_LEAVES now holds the merged leaf; lane H re-keys the lane), experiments/database/scripts/nichols2011_release_checks.py and the Niu 2019 adapter conf comment.",
+  "measurement_type_decision": false,
+  "source_quotes": [],
+  "alternatives_rejected": [
+    {
+      "alternative": "A released member of GeneIdNamespace on the merged leaf (audit A, P3 as drafted: gene_namespace=released).",
+      "why_rejected": "It erases the host and re-opens the escape hatch (review 1 finding 2, the hard constraint): Nichols 2011 rows would become released records with no host, and any leaf could declare the member to skip the pattern check. One enum carrying two facts is a defect (constitution 5). The host stays in gene_namespace and the class states that the identifier is unresolved."
+    },
+    {
+      "alternative": "Keep a crispr kind member and the required expression_direction field beside it.",
+      "why_rejected": "Two fields for one fact (constitution 5), held consistent only by a validator; on the placed CRISPR leaves the direction is the class, and the yeast leaf already encoded it as the crispr_interference member. ReleasedKind gains crispr_activation instead and the field retires."
+    },
+    {
+      "alternative": "Keep both cassette and marker on the merged leaf, as the spec's field list enumerated them.",
+      "why_rejected": "Their descriptions were identical ('the selectable marker the source names for the strain, verbatim'); carrying both is exactly the field-name drift this change removes and would leave a consumer asking which of two fields a given row filled. One field, cassette, with the yeast loaders' KanMX moved onto it."
+    },
+    {
+      "alternative": "Keep released_gene_name as a second required copy of systematic_gene_name.",
+      "why_rejected": "Its validator required it to equal systematic_gene_name, so it asserted nothing the record did not already say; what it was meant to state (that the identifier is the source's symbol, not a systematic name) is what identifier_kind states, per loader and per column."
+    },
+    {
+      "alternative": "Keep the bacterial-locus-tag refusal on the merged leaf.",
+      "why_rejected": "Both old validators refused a bacterial tag and admitted an S288C systematic name, a host-by-class asymmetry in a leaf that no longer knows a host. One rule (whatever the source wrote, non-empty and verbatim) plus P1's base namespace agreement check keeps a host-form identifier on its declared host without treating one host's tags differently from another's; no bacterial loader stores a locus tag on the released leaf, so no record moves."
+    },
+    {
+      "alternative": "Require strain_label on the merged leaf and have the 16 yeast loaders state the gene symbol as the label or a typed gap.",
+      "why_rejected": "A yeast release that labels each row by the gene symbol alone has no strain identifier beyond the gene; writing the symbol twice would be a tautology like released_gene_name, and a gap would declare missing what the release never had. Optional by construction (absent means the release carries no label beyond the identifier), the admitted additive form; identifier_kind stays required."
+    },
+    {
+      "alternative": "Two leaves, one with and one without a construct (a released strain and a released construct), merging only the host split.",
+      "why_rejected": "The construct is a property of the kind, not a different fact about the identifier; the yeast leaf already carried crispr beside non-CRISPR kinds, and a second class would re-create the choice-of-class the constitution's fifth principle refuses."
+    }
+  ],
+  "served_release": "2026.10.06-4b293d34",
+  "affected_loaders": [
+    {
+      "loader": "torchcell/datasets/ecoli/baba2006.py",
+      "dataset_classes": [
+        "GeneEssentialityBaba2006Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "RELEASED_CRISPR_KINDS",
+        "RELEASED_KIND_SO",
+        "RELEASED_TRANSPOSON_FIELDS",
+        "ReleasedIdentifierPerturbation",
+        "ReleasedKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/baba2006_growth.py",
+      "dataset_classes": [
+        "GrowthYieldBaba2006Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/babu2014.py",
+      "dataset_classes": [
+        "GeneInteractionBabu2014Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "RELEASED_CRISPR_KINDS",
+        "RELEASED_KIND_SO",
+        "RELEASED_TRANSPOSON_FIELDS",
+        "ReleasedIdentifierPerturbation",
+        "ReleasedKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/balakrishnan2022.py",
+      "dataset_classes": [
+        "MrnaFractionBalakrishnan2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/brunk2016.py",
+      "dataset_classes": [
+        "_MetaboliteBrunk2016Dataset",
+        "MetabolomeBrunk2016Dataset",
+        "ExometaboliteBrunk2016Dataset",
+        "ProteomeBrunk2016Dataset",
+        "BiofuelTiterBrunk2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/butland2008.py",
+      "dataset_classes": [
+        "GeneInteractionButland2008Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "RELEASED_CRISPR_KINDS",
+        "RELEASED_KIND_SO",
+        "RELEASED_TRANSPOSON_FIELDS",
+        "ReleasedIdentifierPerturbation",
+        "ReleasedKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/caglar2017.py",
+      "dataset_classes": [
+        "RnaseqCaglar2017Dataset",
+        "ProteomeCaglar2017Dataset",
+        "ProteinFoldChangeCaglar2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/caglar2017_doubling_time.py",
+      "dataset_classes": [
+        "DoublingTimeCaglar2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/campos2018.py",
+      "dataset_classes": [
+        "GrowthRateCampos2018Dataset",
+        "MorphologyCampos2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/choe2019_growth_rate.py",
+      "dataset_classes": [
+        "GrowthRateChoe2019Dataset",
+        "TranscriptionFactorKnockoutChoe2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "RELEASED_CRISPR_KINDS",
+        "RELEASED_KIND_SO",
+        "RELEASED_TRANSPOSON_FIELDS",
+        "ReleasedIdentifierPerturbation",
+        "ReleasedKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/choe2025.py",
+      "dataset_classes": [
+        "CrispriChemgenChoe2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/cui2018.py",
+      "dataset_classes": [
+        "CrispriKnockdownCui2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "RELEASED_CRISPR_KINDS",
+        "RELEASED_KIND_SO",
+        "RELEASED_TRANSPOSON_FIELDS",
+        "ReleasedIdentifierPerturbation",
+        "ReleasedKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/fang2025.py",
+      "dataset_classes": [
+        "CrispriGuideFfaEnrichmentFang2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/fitness_browser_ecoli.py",
+      "dataset_classes": [
+        "FitnessBrowserEcoliDataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/foo2014.py",
+      "dataset_classes": [
+        "IsopentenolTiterFoo2014Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/fuhrer2017.py",
+      "dataset_classes": [
+        "MetabolomeFuhrer2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "RELEASED_CRISPR_KINDS",
+        "RELEASED_KIND_SO",
+        "RELEASED_TRANSPOSON_FIELDS",
+        "ReleasedIdentifierPerturbation",
+        "ReleasedKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/gerdes2003.py",
+      "dataset_classes": [
+        "GeneEssentialityGerdes2003Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "RELEASED_CRISPR_KINDS",
+        "RELEASED_KIND_SO",
+        "RELEASED_TRANSPOSON_FIELDS",
+        "ReleasedIdentifierPerturbation",
+        "ReleasedKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/girgis2009.py",
+      "dataset_classes": [
+        "EnvChemgenGirgis2009Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/goodall2018.py",
+      "dataset_classes": [
+        "GeneEssentialityGoodall2018Dataset",
+        "GradedGeneEssentialityGoodall2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "RELEASED_CRISPR_KINDS",
+        "RELEASED_KIND_SO",
+        "RELEASED_TRANSPOSON_FIELDS",
+        "ReleasedIdentifierPerturbation",
+        "ReleasedKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/gupta2024.py",
+      "dataset_classes": [
+        "ProteinTurnoverGupta2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/guzman2018.py",
+      "dataset_classes": [
+        "RnaseqGuzman2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/hawkins2020.py",
+      "dataset_classes": [
+        "MismatchCrispriFitnessHawkins2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/ishii2007.py",
+      "dataset_classes": [
+        "_Ishii2007Dataset",
+        "MetabolomeIshii2007Dataset",
+        "ProteomeIshii2007Dataset",
+        "FluxIshii2007Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/lamoureux2023.py",
+      "dataset_classes": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "RELEASED_CRISPR_KINDS",
+        "RELEASED_KIND_SO",
+        "RELEASED_TRANSPOSON_FIELDS",
+        "ReleasedIdentifierPerturbation",
+        "ReleasedKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/lamoureux2023_growth.py",
+      "dataset_classes": [
+        "GrowthRateLamoureux2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/lamoureux2023_public_k12.py",
+      "dataset_classes": [
+        "RnaseqPublicK12Lamoureux2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "ReleasedKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/li2014.py",
+      "dataset_classes": [
+        "ProteinSynthesisRateLi2014Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/li2021.py",
+      "dataset_classes": [
+        "FluxLi2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/mohiuddin2022.py",
+      "dataset_classes": [
+        "PromoterReporterMohiuddin2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/mori2021.py",
+      "dataset_classes": [
+        "ProteomeMori2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/mutalik2020.py",
+      "dataset_classes": [
+        "PhageRbTnseqMutalik2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/nichols2011.py",
+      "dataset_classes": [
+        "EnvChemgenNichols2011Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "RELEASED_CRISPR_KINDS",
+        "RELEASED_KIND_SO",
+        "RELEASED_TRANSPOSON_FIELDS",
+        "ReleasedIdentifierPerturbation",
+        "ReleasedKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/niu2019.py",
+      "dataset_classes": [
+        "CrisprPineneToleranceNiu2019Dataset",
+        "PineneFoldChangeNiu2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "RELEASED_CRISPR_KINDS",
+        "RELEASED_KIND_SO",
+        "RELEASED_TRANSPOSON_FIELDS",
+        "ReleasedIdentifierPerturbation",
+        "ReleasedKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/potel2018.py",
+      "dataset_classes": [
+        "PhosphositeIntensityPotel2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/price2018.py",
+      "dataset_classes": [
+        "RbTnseqPrice2018EcoliDataset",
+        "GeneEssentialityPrice2018EcoliDataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rachwalski2024.py",
+      "dataset_classes": [
+        "CrispriCrossRachwalski2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rapp2026.py",
+      "dataset_classes": [
+        "MetabolomeRapp2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rapp2026_platforms.py",
+      "dataset_classes": [
+        "_Rapp2026Dataset",
+        "GrowthAucRapp2026Dataset",
+        "_AccumulationDataset",
+        "TargetedMetabolomeRapp2026Dataset",
+        "MetaboliteIntensityRapp2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rousset2018.py",
+      "dataset_classes": [
+        "CrispriScreenRousset2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "RELEASED_CRISPR_KINDS",
+        "RELEASED_KIND_SO",
+        "RELEASED_TRANSPOSON_FIELDS",
+        "ReleasedIdentifierPerturbation",
+        "ReleasedKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schastnaya2021.py",
+      "dataset_classes": [
+        "MetabolomeSchastnaya2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "RELEASED_CRISPR_KINDS",
+        "RELEASED_KIND_SO",
+        "RELEASED_TRANSPOSON_FIELDS",
+        "ReleasedIdentifierPerturbation",
+        "ReleasedKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016.py",
+      "dataset_classes": [
+        "ProteomeSchmidt2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016_growth_rate.py",
+      "dataset_classes": [
+        "GrowthRateSchmidt2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "RELEASED_CRISPR_KINDS",
+        "RELEASED_KIND_SO",
+        "RELEASED_TRANSPOSON_FIELDS",
+        "ReleasedIdentifierPerturbation",
+        "ReleasedKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016_s23_growth_rate.py",
+      "dataset_classes": [
+        "GrowthRateS23Schmidt2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016_srm.py",
+      "dataset_classes": [
+        "_SrmSchmidt2016Dataset",
+        "ProteomeSrmSet1Schmidt2016Dataset",
+        "ProteomeSrmSet2Schmidt2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/shiver2016.py",
+      "dataset_classes": [
+        "EnvChemgenShiver2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/teteneva2024.py",
+      "dataset_classes": [
+        "RbTnseqTeteneva2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "RELEASED_CRISPR_KINDS",
+        "RELEASED_KIND_SO",
+        "RELEASED_TRANSPOSON_FIELDS",
+        "ReleasedIdentifierPerturbation",
+        "ReleasedKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/tong2020.py",
+      "dataset_classes": [
+        "CarbonSourceTong2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2015.py",
+      "dataset_classes": [
+        "EnvChemgenWang2015Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "RELEASED_CRISPR_KINDS",
+        "RELEASED_KIND_SO",
+        "RELEASED_TRANSPOSON_FIELDS",
+        "ReleasedIdentifierPerturbation",
+        "ReleasedKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2015_growth.py",
+      "dataset_classes": [
+        "GrowthWang2015Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2018.py",
+      "dataset_classes": [
+        "CrispriGuideFitnessWang2018Dataset",
+        "CrispriGeneFitnessWang2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2024.py",
+      "dataset_classes": [
+        "EnvChemgenWang2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wetmore2015.py",
+      "dataset_classes": [
+        "RbTnseqWetmore2015Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/banerjee2024.py",
+      "dataset_classes": [
+        "IsoprenolTiterBanerjee2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/banerjee2025.py",
+      "dataset_classes": [
+        "ProteomeBanerjee2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/borchert2023.py",
+      "dataset_classes": [
+        "RbTnseqBorchert2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/borchert2023_contrast.py",
+      "dataset_classes": [
+        "FitnessContrastBorchert2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/borchert2024.py",
+      "dataset_classes": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/carruthers2025.py",
+      "dataset_classes": [
+        "IsoprenolTiterCarruthers2025Dataset",
+        "ProteomeCarruthers2025Dataset",
+        "CampaignProteomeCarruthers2025Dataset",
+        "ProteomeFoldChangeCarruthers2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/desiqueira2025.py",
+      "dataset_classes": [
+        "ProteomeDeSiqueira2025Dataset",
+        "ProteomePercentDeSiqueira2025Dataset",
+        "ProteomeLog10PercentDeSiqueira2025Dataset",
+        "IsoprenolTiterDeSiqueira2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/fitness_browser_putida.py",
+      "dataset_classes": [
+        "FitnessBrowserPutidaDataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/kang2026.py",
+      "dataset_classes": [
+        "IsoprenylAcetateTiterKang2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/lim2022.py",
+      "dataset_classes": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "RELEASED_CRISPR_KINDS",
+        "RELEASED_KIND_SO",
+        "RELEASED_TRANSPOSON_FIELDS",
+        "ReleasedIdentifierPerturbation",
+        "ReleasedKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/lim2025.py",
+      "dataset_classes": [
+        "IsoprenolToleranceLim2025Dataset",
+        "ProteomeLim2025Dataset",
+        "ProteomeFoldChangeLim2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/menasalvas2025.py",
+      "dataset_classes": [
+        "IsoprenolSelectionMenasalvas2025Dataset",
+        "ProteomeMenasalvas2025Dataset",
+        "_MetabolitePhaseDataset",
+        "MetaboliteGrowthPhaseMenasalvas2025Dataset",
+        "MetaboliteProductionPhaseMenasalvas2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/royet2025.py",
+      "dataset_classes": [
+        "EnvMetalTnseqRoyet2025Dataset",
+        "GradedGeneEssentialityRoyet2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/thompson2019_valerolactam.py",
+      "dataset_classes": [
+        "_Thompson2019Dataset",
+        "ValerolactamTiterThompson2019Dataset",
+        "LactamGrowthRateThompson2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/yunus2026.py",
+      "dataset_classes": [
+        "_Yunus2026Dataset",
+        "_Yunus2026BenchlingDataset",
+        "CrispriKnockdownYunus2026Dataset",
+        "CrispriArrayYunus2026Dataset",
+        "CrispriDifferentialProteomeYunus2026Dataset",
+        "IsoprenolTiterYunus2026Dataset",
+        "CrispriPanelProteomeYunus2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/private_torchcell/volk2021_inhibitor_bioscreen.py",
+      "dataset_classes": [
+        "InhibitorBioscreenVolk2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/auesukaree2009.py",
+      "dataset_classes": [
+        "EnvChemgenAuesukaree2009Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenAuesukaree2009Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "RELEASED_CRISPR_KINDS",
+        "RELEASED_KIND_SO",
+        "RELEASED_TRANSPOSON_FIELDS",
+        "ReleasedIdentifierPerturbation",
+        "ReleasedKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/baryshnikova2010.py",
+      "dataset_classes": [
+        "SmfBaryshnikova2010Dataset"
+      ],
+      "served_classes": [
+        "SmfBaryshnikova2010Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/bloom2019.py",
+      "dataset_classes": [
+        "Bloom2019Dataset"
+      ],
+      "served_classes": [
+        "Bloom2019Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/boocock2025.py",
+      "dataset_classes": [
+        "Boocock2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/cachera2023.py",
+      "dataset_classes": [
+        "BetaxanthinCachera2023Dataset"
+      ],
+      "served_classes": [
+        "BetaxanthinCachera2023Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "RELEASED_CRISPR_KINDS",
+        "RELEASED_KIND_SO",
+        "RELEASED_TRANSPOSON_FIELDS",
+        "ReleasedIdentifierPerturbation",
+        "ReleasedKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/caudal2024.py",
+      "dataset_classes": [
+        "CaudalPanTranscriptome2024Dataset"
+      ],
+      "served_classes": [
+        "CaudalPanTranscriptome2024Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/cooper2010.py",
+      "dataset_classes": [
+        "AminoAcidCooper2010Dataset"
+      ],
+      "served_classes": [
+        "AminoAcidCooper2010Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/costanzo2016.py",
+      "dataset_classes": [
+        "SmfCostanzo2016Dataset",
+        "DmfCostanzo2016Dataset",
+        "DmiCostanzo2016Dataset"
+      ],
+      "served_classes": [
+        "DmfCostanzo2016Dataset",
+        "DmiCostanzo2016Dataset",
+        "SmfCostanzo2016Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/costanzo2021.py",
+      "dataset_classes": [
+        "EnvChemgenCostanzo2021Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenCostanzo2021Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/dasilveira2014.py",
+      "dataset_classes": [
+        "MetaboliteDaSilveira2014Dataset"
+      ],
+      "served_classes": [
+        "MetaboliteDaSilveira2014Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/dechiara2022.py",
+      "dataset_classes": [
+        "_DeChiara2022Dataset",
+        "_GrowthDeChiara2022Dataset",
+        "DoublingTimeDeChiara2022Dataset",
+        "CellYieldDeChiara2022Dataset",
+        "LifeCycleDeChiara2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hackett2020.py",
+      "dataset_classes": [
+        "InductionTimecourseHackett2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hale2024.py",
+      "dataset_classes": [
+        "CrispriSegregantHale2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hillenmeyer2008.py",
+      "dataset_classes": [
+        "HetHillenmeyer2008Dataset",
+        "HomHillenmeyer2008Dataset"
+      ],
+      "served_classes": [
+        "HetHillenmeyer2008Dataset",
+        "HomHillenmeyer2008Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hoepfner2014.py",
+      "dataset_classes": [
+        "EnvChemgenHoepfner2014Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenHoepfner2014Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hu2007.py",
+      "dataset_classes": [
+        "MicroarrayScoreHu2007Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/jackson2020.py",
+      "dataset_classes": [
+        "TfDeletionPseudobulkJackson2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/kemmeren2014.py",
+      "dataset_classes": [
+        "MicroarrayKemmeren2014Dataset"
+      ],
+      "served_classes": [
+        "MicroarrayKemmeren2014Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/kuzmin2018.py",
+      "dataset_classes": [
+        "SmfKuzmin2018Dataset",
+        "DmfKuzmin2018Dataset",
+        "TmfKuzmin2018Dataset",
+        "DmiKuzmin2018Dataset",
+        "TmiKuzmin2018Dataset"
+      ],
+      "served_classes": [
+        "DmfKuzmin2018Dataset",
+        "DmiKuzmin2018Dataset",
+        "SmfKuzmin2018Dataset",
+        "TmfKuzmin2018Dataset",
+        "TmiKuzmin2018Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/kuzmin2020.py",
+      "dataset_classes": [
+        "SmfKuzmin2020Dataset",
+        "DmfKuzmin2020Dataset",
+        "TmfKuzmin2020Dataset",
+        "DmiKuzmin2020Dataset",
+        "TmiKuzmin2020Dataset"
+      ],
+      "served_classes": [
+        "DmfKuzmin2020Dataset",
+        "DmiKuzmin2020Dataset",
+        "SmfKuzmin2020Dataset",
+        "TmfKuzmin2020Dataset",
+        "TmiKuzmin2020Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/lian2019.py",
+      "dataset_classes": [
+        "CrisprMagicLian2019Dataset"
+      ],
+      "served_classes": [
+        "CrisprMagicLian2019Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/lopez2024.py",
+      "dataset_classes": [
+        "IsobutanolScreenLopez2024Dataset",
+        "IsobutanolValidatedLopez2024Dataset"
+      ],
+      "served_classes": [
+        "IsobutanolScreenLopez2024Dataset",
+        "IsobutanolValidatedLopez2024Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "RELEASED_CRISPR_KINDS",
+        "RELEASED_KIND_SO",
+        "RELEASED_TRANSPOSON_FIELDS",
+        "ReleasedIdentifierPerturbation",
+        "ReleasedKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/messner2021.py",
+      "dataset_classes": [
+        "ProteomeMessner2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/messner2023.py",
+      "dataset_classes": [
+        "ProteomeMessner2023Dataset"
+      ],
+      "served_classes": [
+        "ProteomeMessner2023Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "RELEASED_CRISPR_KINDS",
+        "RELEASED_KIND_SO",
+        "RELEASED_TRANSPOSON_FIELDS",
+        "ReleasedIdentifierPerturbation",
+        "ReleasedKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/mormino2022.py",
+      "dataset_classes": [
+        "CrispriMormino2022Dataset"
+      ],
+      "served_classes": [
+        "CrispriMormino2022Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "RELEASED_CRISPR_KINDS",
+        "RELEASED_KIND_SO",
+        "RELEASED_TRANSPOSON_FIELDS",
+        "ReleasedIdentifierPerturbation",
+        "ReleasedKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/mota2024.py",
+      "dataset_classes": [
+        "EnvChemgenMota2024Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenMota2024Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "RELEASED_CRISPR_KINDS",
+        "RELEASED_KIND_SO",
+        "RELEASED_TRANSPOSON_FIELDS",
+        "ReleasedIdentifierPerturbation",
+        "ReleasedKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/muenzner2024.py",
+      "dataset_classes": [
+        "_MuenznerIsolateDataset",
+        "ProteomeMuenzner2024Dataset",
+        "ProteinTurnoverMuenzner2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/mulleder2016.py",
+      "dataset_classes": [
+        "AminoAcidMulleder2016Dataset"
+      ],
+      "served_classes": [
+        "AminoAcidMulleder2016Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "RELEASED_CRISPR_KINDS",
+        "RELEASED_KIND_SO",
+        "RELEASED_TRANSPOSON_FIELDS",
+        "ReleasedIdentifierPerturbation",
+        "ReleasedKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/nadal_ribelles2025.py",
+      "dataset_classes": [
+        "NadalRibellesPerturbSeq2025Dataset"
+      ],
+      "served_classes": [
+        "NadalRibellesPerturbSeq2025Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "RELEASED_CRISPR_KINDS",
+        "RELEASED_KIND_SO",
+        "RELEASED_TRANSPOSON_FIELDS",
+        "ReleasedIdentifierPerturbation",
+        "ReleasedKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/nguessan2025.py",
+      "dataset_classes": [
+        "Nguessan2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/oduibhir2014.py",
+      "dataset_classes": [
+        "SmfODuibhir2014Dataset"
+      ],
+      "served_classes": [
+        "SmfODuibhir2014Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "RELEASED_CRISPR_KINDS",
+        "RELEASED_KIND_SO",
+        "RELEASED_TRANSPOSON_FIELDS",
+        "ReleasedIdentifierPerturbation",
+        "ReleasedKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ohnuki2018.py",
+      "dataset_classes": [
+        "ScmdOhnuki2018Dataset"
+      ],
+      "served_classes": [
+        "ScmdOhnuki2018Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ohnuki2022.py",
+      "dataset_classes": [
+        "ScmdOhnuki2022Dataset"
+      ],
+      "served_classes": [
+        "ScmdOhnuki2022Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ohya2005.py",
+      "dataset_classes": [
+        "ScmdOhya2005Dataset"
+      ],
+      "served_classes": [
+        "ScmdOhya2005Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ozaydin2013.py",
+      "dataset_classes": [
+        "CarotenoidOzaydin2013Dataset"
+      ],
+      "served_classes": [
+        "CarotenoidOzaydin2013Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "RELEASED_CRISPR_KINDS",
+        "RELEASED_KIND_SO",
+        "RELEASED_TRANSPOSON_FIELDS",
+        "ReleasedIdentifierPerturbation",
+        "ReleasedKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/parsons2006.py",
+      "dataset_classes": [
+        "EnvChemgenParsons2006Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/peter2018.py",
+      "dataset_classes": [
+        "IsolateGrowthPeter2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/piotrowski2017.py",
+      "dataset_classes": [
+        "EnvChemgenPiotrowski2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/puddu2019.py",
+      "dataset_classes": [
+        "GenomeArchitecturePuddu2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/sameith2015.py",
+      "dataset_classes": [
+        "SmMicroarraySameith2015Dataset",
+        "DmMicroarraySameith2015Dataset"
+      ],
+      "served_classes": [
+        "DmMicroarraySameith2015Dataset",
+        "SmMicroarraySameith2015Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/sgd.py",
+      "dataset_classes": [
+        "GeneEssentialitySgdDataset"
+      ],
+      "served_classes": [
+        "GeneEssentialitySgdDataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/smith2006.py",
+      "dataset_classes": [
+        "FattyAcidSmith2006Dataset"
+      ],
+      "served_classes": [
+        "FattyAcidSmith2006Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/smith2016.py",
+      "dataset_classes": [
+        "CrispriChemgenSmith2016Dataset"
+      ],
+      "served_classes": [
+        "CrispriChemgenSmith2016Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "RELEASED_CRISPR_KINDS",
+        "RELEASED_KIND_SO",
+        "RELEASED_TRANSPOSON_FIELDS",
+        "ReleasedIdentifierPerturbation",
+        "ReleasedKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/synth_leth_db.py",
+      "dataset_classes": [
+        "SynthLethalityYeastSynthLethDbDataset",
+        "SynthRescueYeastSynthLethDbDataset"
+      ],
+      "served_classes": [
+        "SynthLethalityYeastSynthLethDbDataset",
+        "SynthRescueYeastSynthLethDbDataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "RELEASED_CRISPR_KINDS",
+        "RELEASED_KIND_SO",
+        "RELEASED_TRANSPOSON_FIELDS",
+        "ReleasedIdentifierPerturbation",
+        "ReleasedKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/vaishnav2022.py",
+      "dataset_classes": [
+        "PooledPromoterExpressionVaishnav2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/vanacloig2022.py",
+      "dataset_classes": [
+        "EnvChemgenVanacloig2022Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenVanacloig2022Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/wildenhain2015.py",
+      "dataset_classes": [
+        "EnvChemgenWildenhain2015Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenWildenhain2015Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/xue2025.py",
+      "dataset_classes": [
+        "FattyAcidXue2025Dataset"
+      ],
+      "served_classes": [
+        "FattyAcidXue2025Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "RELEASED_CRISPR_KINDS",
+        "RELEASED_KIND_SO",
+        "RELEASED_TRANSPOSON_FIELDS",
+        "ReleasedIdentifierPerturbation",
+        "ReleasedKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/yeastphenome.py",
+      "dataset_classes": [
+        "YeastPhenomeDataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "RELEASED_CRISPR_KINDS",
+        "RELEASED_KIND_SO",
+        "RELEASED_TRANSPOSON_FIELDS",
+        "ReleasedIdentifierPerturbation",
+        "ReleasedKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/yoshida2012.py",
+      "dataset_classes": [
+        "OrganicAcidYoshida2012Dataset"
+      ],
+      "served_classes": [
+        "OrganicAcidYoshida2012Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "RELEASED_CRISPR_KINDS",
+        "RELEASED_KIND_SO",
+        "RELEASED_TRANSPOSON_FIELDS",
+        "ReleasedIdentifierPerturbation",
+        "ReleasedKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/yoshikawa2009.py",
+      "dataset_classes": [
+        "EnvChemgenYoshikawa2009Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/zelezniak2018.py",
+      "dataset_classes": [
+        "ProteomeZelezniak2018Dataset",
+        "MetaboliteZelezniak2018Dataset"
+      ],
+      "served_classes": [
+        "MetaboliteZelezniak2018Dataset",
+        "ProteomeZelezniak2018Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "GenePerturbationType",
+        "RELEASED_CRISPR_KINDS",
+        "RELEASED_KIND_SO",
+        "RELEASED_TRANSPOSON_FIELDS",
+        "ReleasedIdentifierPerturbation",
+        "ReleasedKind"
+      ]
+    }
+  ],
+  "served_datasets": [
+    "AminoAcidCooper2010Dataset",
+    "AminoAcidMulleder2016Dataset",
+    "BetaxanthinCachera2023Dataset",
+    "Bloom2019Dataset",
+    "CarotenoidOzaydin2013Dataset",
+    "CaudalPanTranscriptome2024Dataset",
+    "CrisprMagicLian2019Dataset",
+    "CrispriChemgenSmith2016Dataset",
+    "CrispriMormino2022Dataset",
+    "DmMicroarraySameith2015Dataset",
+    "DmfCostanzo2016Dataset",
+    "DmfKuzmin2018Dataset",
+    "DmfKuzmin2020Dataset",
+    "DmiCostanzo2016Dataset",
+    "DmiKuzmin2018Dataset",
+    "DmiKuzmin2020Dataset",
+    "EnvChemgenAuesukaree2009Dataset",
+    "EnvChemgenCostanzo2021Dataset",
+    "EnvChemgenHoepfner2014Dataset",
+    "EnvChemgenMota2024Dataset",
+    "EnvChemgenVanacloig2022Dataset",
+    "EnvChemgenWildenhain2015Dataset",
+    "FattyAcidSmith2006Dataset",
+    "FattyAcidXue2025Dataset",
+    "GeneEssentialitySgdDataset",
+    "HetHillenmeyer2008Dataset",
+    "HomHillenmeyer2008Dataset",
+    "IsobutanolScreenLopez2024Dataset",
+    "IsobutanolValidatedLopez2024Dataset",
+    "MetaboliteDaSilveira2014Dataset",
+    "MetaboliteZelezniak2018Dataset",
+    "MicroarrayKemmeren2014Dataset",
+    "NadalRibellesPerturbSeq2025Dataset",
+    "OrganicAcidYoshida2012Dataset",
+    "ProteomeMessner2023Dataset",
+    "ProteomeZelezniak2018Dataset",
+    "ScmdOhnuki2018Dataset",
+    "ScmdOhnuki2022Dataset",
+    "ScmdOhya2005Dataset",
+    "SmMicroarraySameith2015Dataset",
+    "SmfBaryshnikova2010Dataset",
+    "SmfCostanzo2016Dataset",
+    "SmfKuzmin2018Dataset",
+    "SmfKuzmin2020Dataset",
+    "SmfODuibhir2014Dataset",
+    "SynthLethalityYeastSynthLethDbDataset",
+    "SynthRescueYeastSynthLethDbDataset",
+    "TmfKuzmin2018Dataset",
+    "TmfKuzmin2020Dataset",
+    "TmiKuzmin2018Dataset",
+    "TmiKuzmin2020Dataset"
+  ],
+  "rebuild_scope": "full_kg_rebuild",
+  "owner_sign_off": {
+    "signed": true,
+    "quote": "Owner, 2026-10-15, in conversation: 'yes rename, no major bump minor bump. go !'; 'we care most about correctness and are willing right now to do full rebuilds if we identify even small semantically prudent change in onto'; 'like why a bacterial experiment! it seems this is unnecessary distinction.'",
+    "url": null
+  }
+}

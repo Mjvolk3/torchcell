@@ -14,9 +14,11 @@ command. Nothing here has run: this is the plan the measurements of lanes A to Q
 [[database.kg-4-pre-build-verification]]). The release note the build ships with is
 [[database.kg-4-release-note]]; the version and pairing rules are in [[versioning]].
 
-KG 4.0 carries **five** schema-change records, not four: the owner folded P5 (the strain
-background) into this rebuild, and lane U (`unify-p5-background`) is building it. Step 0
-below is what holds the build until it lands.
+KG 4.0 carries **ten** schema-change records, not the four this checklist was first
+written for: the owner folded P5 (the strain background) into this rebuild, lane Q added
+the deletion `construction` field, lane R corrected the three audit flags and lane T
+gave a construct span its parts. All ten are integrated on `ontology-unify` at
+`21456d696`. Step 0 below is what holds the build until the branch lands.
 
 Read [[database.constitution]] and the `/torchcell-db-build` skill before step 1.
 
@@ -24,13 +26,14 @@ Read [[database.constitution]] and the `/torchcell-db-build` skill before step 1
 
 | # | step | how | source |
 |---|---|---|---|
-| 0.1 | Lane Q's two fixes landed (Ozaydin's 31 byte-identical records, Caudal's out-of-vocabulary `host_genome`) or the owner has deferred them in writing | `git log origin/main` | check-in log, 2026-10-15 11:40 and 11:57 |
-| 0.2 | Lane U's P5 integrated into `ontology-unify`: the fifth record present, the shared strain-background base and the merged `BackgroundAllele` in `schema.py`, `BacterialGeneNamespace` and `BACTERIAL_LOCUS_TAG_PATTERNS` gone, `StrainReferenceGenome.background` collapsed onto the base and still required | `ls database/schema_changes/2026-10-15-*` reads five; `git log origin/ontology-unify` | coordinator, 2026-10-15: P5 is in this rebuild, not the next |
-| 0.3 | `ontology-unify` landed on `main`, with all five schema-change records and this release prep | merge queue | lane P verdict: the branch is safe to sweep and build |
-| 0.4 | `tests/torchcell/datamodels/test_schema_change_records.py` passes with NO `TORCHCELL_SCHEMA_RECORD_ACK`, with five records chained | pytest | integration check-in, 09:55, which proved it for the first four |
-| 0.5 | Full gate run on the landed head: ruff, format, strict mypy, pytest | pre-commit plus pytest | integrated head read 11,756 passed, 0 failing, with two pre-existing `synth_leth_db_adapter.py` mypy errors |
-| 0.6 | The four supported queries parse and name no retired label, RE-RUN after P5 lands | `PYTHONPATH=. python experiments/database/scripts/kg4_release_prep_checks.py queries` | measured 2026-10-15 on the first four records, all four queries clean |
-| 0.7 | The release note's `pending` P5 rows replaced with the record's tool-computed numbers, and its migration rows confirmed against the record's own symbol list | read `database/schema_changes/2026-10-15-<p5 slug>.json` | [[database.kg-4-release-note]] marks every pending row |
+| 0.1 | **DONE** Lane Q's two fixes are on the branch (Ozaydin's 31 byte-identical records, Caudal's out-of-vocabulary `host_genome`) | `git log origin/ontology-unify` reads `958a4f4be` | integration 2, 2026-10-15 |
+| 0.2 | **DONE** Lane U's P5 integrated: the shared strain-background base and the merged `BackgroundAllele` in `schema.py`, `BacterialGeneNamespace` and `BACTERIAL_LOCUS_TAG_PATTERNS` gone, `StrainReferenceGenome.background` collapsed onto the base and still required | `ls database/schema_changes/2026-10-15-*` reads ten; head `21456d696` | coordinator, 2026-10-15: P5 is in this rebuild, not the next |
+| 0.3 | `ontology-unify` landed on `main`, with all ten schema-change records and this release prep | merge queue | lane P verdict: the branch is safe to sweep and build |
+| 0.4 | **DONE** `tests/torchcell/datamodels/test_schema_change_records.py` AND `scripts/check_schema_change_records.py` pass with NO `TORCHCELL_SCHEMA_RECORD_ACK`, with the ten records owning 146 of 146 moved symbols, one owner each | pytest plus the tripwire | integration 2: 4 passed, tripwire "every schema change vs origin/main is recorded" |
+| 0.5 | **DONE on the branch head**, to be re-run on the landed head: ruff, format, strict mypy, the FULL `tests/torchcell` tree | pre-commit plus pytest | integration 2 on `21456d696`: 15,913 passed, 1,164 skipped, 10 xfailed, 1 failed in 15 min 38 s; the one failure is `test_s288c_synthetic.py::test_concurrent_processes_keep_the_original_pair_over_an_earlier_one`, a four-real-subprocess race over a hot SQLite journal that passes 5 of 5 in isolation and 262 of 262 with its whole file, did not fail in the earlier full run of this same tree, and lives in a file no lane on this branch touches; mypy clean over 549 changed files |
+| 0.6 | **DONE** The four supported queries parse and name no retired label, re-run after P5, R and T | `PYTHONPATH=. python experiments/database/scripts/kg4_release_prep_checks.py queries` | integration 2: all four clean, result byte-identical to lane M's |
+| 0.7 | **DONE** The release note's `pending` P5 rows carry the record's tool-computed numbers, and the ten records' scope is the one measured on the integrated head | read `database/schema_changes/2026-10-15-*.json` | [[database.kg-4-release-note]], the ten-record table |
+| 0.8 | Lanes V, S and W closed out or deferred in writing (V: the remaining content-id collisions; S: the generation profile; W: the environment-identity verdict) | check-in log | integration 2, 2026-10-15: all three still out when the ten records were consolidated |
 
 ### 1. Cut the pairing release, and build only from its tag
 

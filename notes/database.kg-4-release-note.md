@@ -11,14 +11,14 @@ created: 1792084483185
 **Status: nothing described here is served yet.** This is the note the KG 4.0 release
 ships with, written from the branch that will be built (`ontology-unify`, at
 `b5c5549d8` when this was written, rebased on `main` at `d9eefcbd7`) and from the
-measurements lanes A to Q recorded while that branch was made
+measurements lanes A to U recorded while that branch was made
 ([[scratch.2026.10.15.ontology-unification-decision]],
-[[database.kg-4-pre-build-verification]]). One lane is still working: lane U is building
-the fifth schema change, P5, the strain background, which the owner folded into this
-rebuild rather than the next one, so the branch head will move and the sections marked
-*pending* take their final numbers from P5's record. The release id, the node and
-relationship totals and the final per-dataset counts are filled in by the build; every
-other number below is measured and cited. The store being served today is KG 3.0
+[[database.kg-4-pre-build-verification]]). Lanes Q, M, R, T and U are integrated and the
+branch head is `21456d696`; the numbers below are that head's, not the per-lane ones.
+Lanes V (the remaining content-id collisions), S (the generation profile) and W (the
+environment-identity verdict) are still out. The release id, the node and relationship
+totals and the final per-dataset counts are filled in by the build; every other number
+below is measured and cited. The store being served today is KG 3.0
 (`2026.10.06-4b293d34`), paired with package `v1.6.2`.
 
 The one thing a current user must read is **The KG 3.0 defect a 4.0 query no longer
@@ -56,12 +56,12 @@ KG 4.0 serves **170 mapped datasets** (169 public plus 1 private,
 built after the ontology unification, which removes the split that let the same physical
 measurement exist as two classes depending on which host the data came from
 ([[database.constitution]], principle 1). Ten schema changes carry it, each with its own
-record under `database/schema_changes/`, signed off by the owner on 2026-10-15. Five of
-them were not planned when this note was first written: P5 (the strain background) was
-folded into this rebuild rather than following it, the three names this note listed as
-deliberately left alone were corrected instead, and a compound construct span replaced
-the single interval. So KG 4.0 carries the whole unification and no bacterial class
-survives into the next release.
+record under `database/schema_changes/`, nine of them signed off by the owner on
+2026-10-15 and the tenth (Q's `construction` field) adding an optional field, which needs
+no sign-off. Five were not in this note's first version: Q's deletion `construction`, the
+three names it listed as deliberately left alone and which lane R corrected instead, and
+T's compound construct span. So KG 4.0 carries the whole unification and no bacterial
+class survives into the next release.
 
 The ten records partition the change exactly: 146 schema symbols moved against
 `origin/main`, every one of them is named by exactly one record, and no record names a

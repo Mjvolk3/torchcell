@@ -95,11 +95,15 @@ genotype:
 # `perturbation member of` edge and no node. One adapter method now serves the whole
 # union and picks the label by leaf.
 # host_genome is the deposited assembly set the record's identifiers are written against,
-# in the registry's vocabulary (the record's `gene_namespace`, a closed vocabulary with
-# one member per deposited set, projected by cell_adapter.HOST_GENOME_OF_NAMESPACE), so
-# `perturbation.host_genome = genome.assembly_set` is a value join with no hop through
-# genotype -> experiment -> experiment reference <- genome. It is mandatory on every
-# node; the `perturbation of genome` edge below is the optional traversal form.
+# in the AssemblySet vocabulary (the record's `gene_namespace`, a closed vocabulary with
+# one member per deposited registry set, projected by
+# cell_adapter.HOST_GENOME_OF_NAMESPACE), so `perturbation.host_genome =
+# genome.assembly_set` is a value join with no hop through genotype -> experiment ->
+# experiment reference <- genome. It is on every node, and it is null exactly for a
+# namespace whose registry set is not an assembly (`scerevisiae_peter2018_pangenome_orf`:
+# the Peter 2018 pangenome, excluded from AssemblySet by NON_ASSEMBLY_REGISTRY_SETS; no
+# genome node pins it, and the blob's `gene_namespace` says which set the id is in). The
+# `perturbation of genome` edge below is the optional traversal form.
 # is_a: genotype, as before; Biolink's `genotype` is the closest class to an edit of a
 # genome's content, and `sequence variant perturbation` is_a this class, so a served
 # `MATCH (:Perturbation)` returns every perturbation of every host.
@@ -911,7 +915,8 @@ perturbation member of:
 # property is the mandatory join key; this edge adds one row per perturbation per
 # record, the order of `perturbation member of` (47.3 M rows in 124 of 170 adapters of
 # the job 4901 partial, review 3 finding 9), so a conf opts in by listing
-# `perturbation to genome (chunked)` and the first build that does measures the cost.
+# `perturbation to genome (chunked)` and the first build that does measures the cost. No
+# edge is written for a perturbation whose host_genome is null (the pangenome ORFs).
 # is_a: Biolink's `is sequence variant of` "holds between a sequence variant and a
 # nucleic acid entity" (3.2.1 definition; domain sequence variant, range genomic
 # entity): a perturbation is an edit to the host's genomic content stated against that

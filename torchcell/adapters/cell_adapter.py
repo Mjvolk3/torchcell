@@ -16,7 +16,7 @@ from concurrent.futures import FIRST_COMPLETED, Future, ProcessPoolExecutor, wai
 from datetime import datetime
 from functools import wraps
 from itertools import chain
-from typing import Any, Final, cast
+from typing import Any, Final, cast, get_args
 
 import wandb
 from biocypher._create import BioCypherEdge, BioCypherNode
@@ -34,6 +34,8 @@ from torchcell.datamodels.identity import (
 )
 from torchcell.datamodels.interned_constant import split_experiment_dump
 from torchcell.datamodels.schema import (
+    NON_ASSEMBLY_REGISTRY_SETS,
+    AssemblySet,
     PhagePerturbation,
     SpanDeletionCallPerturbation,
     VariantCallPerturbation,
@@ -75,7 +77,7 @@ r7: the budget is a per-adapter attribute (``single_pass_chunk_budget_bytes``) b
 2.7x more chunks, and the pool is rebuilt every chunks_per_worker x workers of them.
 """
 SINGLE_PASS_MIN_CHUNK = 256
-HOST_GENOME_OF_NAMESPACE: dict[str, str] = {
+REGISTRY_SET_OF_NAMESPACE: dict[str, str] = {
     "scerevisiae_s288c_sgd_systematic": SGD_S288C_R64,
     "scerevisiae_cenpk113_7d_locus_tag": SCEREVISIAE_CENPK113_7D,
     "scerevisiae_peter2018_pangenome_orf": PETER2018_1011,
@@ -85,20 +87,69 @@ HOST_GENOME_OF_NAMESPACE: dict[str, str] = {
     "ecoli_b_rel606_locus_tag": ECOLI_B_REL606,
     "ecoli_k12_w3110_refseq_locus_tag": ECOLI_K12_W3110,
 }
-"""``GeneIdNamespace`` member -> the deposited assembly set its identifiers are written in.
+"""``GeneIdNamespace`` member -> the registry set its identifiers are written in.
+
+Total over the namespace vocabulary and a bijection onto registry set ids, pinned by
+``tests/torchcell/adapters/test_bacterial_graph_classes.py``. A registry set is not
+always an assembly: the Peter 2018 pangenome ORF ids are written in
+``peter2018_1011_assemblies``, which ``NON_ASSEMBLY_REGISTRY_SETS`` excludes from the
+``AssemblySet`` vocabulary by name (a panel of 1,011 assemblies and the pangenome
+matrices, not one reference a record pins). ``HOST_GENOME_OF_NAMESPACE`` below is this
+map projected onto that vocabulary.
+"""
+
+
+def _host_genome_of_namespace() -> dict[str, str | None]:
+    """Project ``REGISTRY_SET_OF_NAMESPACE`` onto the ``AssemblySet`` vocabulary.
+
+    A namespace whose registry set is an assembly maps to that set id; one whose set is
+    listed in ``NON_ASSEMBLY_REGISTRY_SETS`` maps to ``None``; any other set is a defect
+    in this module and is refused at import rather than written into a node.
+    """
+    assemblies = set(get_args(AssemblySet))
+    out: dict[str, str | None] = {}
+    for namespace, registry_set in REGISTRY_SET_OF_NAMESPACE.items():
+        if registry_set in assemblies:
+            out[namespace] = registry_set
+        elif registry_set in NON_ASSEMBLY_REGISTRY_SETS:
+            out[namespace] = None
+        else:
+            raise ValueError(
+                f"namespace {namespace!r} is written in registry set "
+                f"{registry_set!r}, which is neither an AssemblySet member nor "
+                "listed in NON_ASSEMBLY_REGISTRY_SETS"
+            )
+    return out
+
+
+HOST_GENOME_OF_NAMESPACE: dict[str, str | None] = _host_genome_of_namespace()
+"""``GeneIdNamespace`` member -> the deposited assembly set its identifiers are written in,
+or ``None`` when that set is not an assembly.
 
 The ``host_genome`` property of every ``perturbation`` node (ontology unification G,
 2026-10-15). A perturbation states its host as ``gene_namespace``, one identifier space
-per deposited assembly set (schema.py, P1); a ``genome`` node states the set it pins as
-``assembly_set`` (``torchcell.sequence.genome.registry`` ids). The two are the same fact
-in two vocabularies, so this map, a bijection pinned by
-``tests/torchcell/adapters/test_bacterial_graph_classes.py``, projects the namespace into
-the registry's vocabulary and ``perturbation.host_genome = genome.assembly_set`` is a
-value join. It is the assembly-set id and never the strain string: BY4741, BY4742 and
-S288C are three ``genome`` nodes writing their identifiers against the one S288C set, and
-a strain-keyed value would fragment the join across them (review 3 finding 9). A
-namespace outside the map is a ``KeyError`` at generation, which is the honest failure:
-a new identifier space is deposited in the registry first and named here second.
+per deposited registry set (schema.py, P1); a ``genome`` node states the set it pins as
+``assembly_set``, a member of the closed ``AssemblySet`` vocabulary or ``None`` for a
+typed gap. The two are the same fact in two vocabularies, so this map projects the
+namespace into the ``AssemblySet`` vocabulary and ``perturbation.host_genome =
+genome.assembly_set`` is a value join. It is the assembly-set id and never the strain
+string: BY4741, BY4742 and S288C are three ``genome`` nodes writing their identifiers
+against the one S288C set, and a strain-keyed value would fragment the join across them
+(review 3 finding 9).
+
+``None`` is the honest value for ``scerevisiae_peter2018_pangenome_orf``: the Peter 2018
+pangenome is a registry set and not an assembly (``NON_ASSEMBLY_REGISTRY_SETS``), no
+``genome`` node pins it, and a Caudal 2024 record pins S288C for the names and
+coordinates of its other perturbations. Before lane Q (2026-10-15) the map carried the
+registry id ``peter2018_1011_assemblies`` for that namespace, a value no
+``genome.assembly_set`` can hold, so the join could never resolve for the 79,016
+pangenome-namespaced perturbations of the served Caudal store; it stayed latent only
+because Caudal's conf has no perturbation lane. The node's blob keeps
+``gene_namespace``, which is where a ``null`` ``host_genome`` is explained
+(``tests/torchcell/adapters/test_host_genome_vocabulary.py``). A namespace outside the
+map is a ``KeyError`` at generation, which is the honest failure: a new identifier
+space is deposited in the registry first and named in ``REGISTRY_SET_OF_NAMESPACE``
+second.
 """
 VARIANT_CALL_LEAVES: Final = (VariantCallPerturbation, SpanDeletionCallPerturbation)
 """The gene-perturbation leaves written as ``sequence variant perturbation`` nodes.
@@ -1244,10 +1295,12 @@ class CellAdapter:
         unserved; ``tests/torchcell/adapters/test_bacterial_graph_classes.py`` pins the
         union-to-label bijection.
 
-        ``host_genome`` is the record's ``gene_namespace`` projected into the registry's
-        assembly-set vocabulary (``HOST_GENOME_OF_NAMESPACE``), so it equals the
-        ``assembly_set`` of the ``genome`` node the record is written against. The node
-        id is the sha256 of the leaf's ``model_dump``, the id every edge method computes.
+        ``host_genome`` is the record's ``gene_namespace`` projected into the
+        ``AssemblySet`` vocabulary (``HOST_GENOME_OF_NAMESPACE``), so it equals the
+        ``assembly_set`` of the ``genome`` node the record is written against, or is
+        ``None`` for a namespace whose registry set is not an assembly (the Peter 2018
+        pangenome ORFs). The node id is the sha256 of the leaf's ``model_dump``, the id
+        every edge method computes.
         """
         nodes = []
         for perturbation in data["experiment"].genotype.perturbations:
@@ -3883,6 +3936,12 @@ class CellAdapter:
         record, the order of ``perturbation member of`` (47.3 M rows in 124 of 170
         adapters of the job 4901 partial). A conf opts in by listing
         ``perturbation to genome (chunked)``; the first build that does measures it.
+
+        A perturbation whose namespace projects to no assembly (``host_genome`` None,
+        the Peter 2018 pangenome ORFs) gets no edge: the record's genome node pins the
+        S288C set its other identifiers are written against, which is not the set a
+        pangenome ORF id is written in, and the edge is the traversal form of the
+        property, so it is absent exactly where the property is null.
         """
         genome_id = self._genome_node_id(data["reference"].genome_reference)
         return [
@@ -3894,6 +3953,7 @@ class CellAdapter:
                 relationship_label="perturbation of genome",
             )
             for perturbation in data["experiment"].genotype.perturbations
+            if HOST_GENOME_OF_NAMESPACE[perturbation.gene_namespace] is not None
         ]
 
     @data_chunker

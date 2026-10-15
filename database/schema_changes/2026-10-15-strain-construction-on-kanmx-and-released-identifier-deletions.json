@@ -1,0 +1,849 @@
+{
+  "record_version": 1,
+  "slug": "strain-construction-on-kanmx-and-released-identifier-deletions",
+  "date": "2026-10-15",
+  "pr": null,
+  "author_kind": "agent",
+  "base_commit": "b5c5549d8f4752fc8ac89b6d1e5cd2c0ec5bf4a9",
+  "python_version": "3.13.0",
+  "symbols": [
+    {
+      "symbol": "KanMxDeletionPerturbation",
+      "status": "modified",
+      "kinds": [
+        "additive_field"
+      ],
+      "fingerprint_before": "c146f224343e98954975a5cac31db7d432354eb84e15d87f46dca23cd08fae86",
+      "fingerprint_after": "4a1cc787cb1336e2ae3b28035b4dd9ec317aecdb7c3d33a3003659efa8e4ec30",
+      "impact": "stale",
+      "reasons": [
+        "added optional field 'construction'"
+      ]
+    },
+    {
+      "symbol": "ReleasedIdentifierPerturbation",
+      "status": "modified",
+      "kinds": [
+        "additive_field"
+      ],
+      "fingerprint_before": "1c7331f9d83762ae4b41ed3d86bac81fc49a53612701e9bba57ea3e0210b1857",
+      "fingerprint_after": "dfe5833e5c5db5bd8fe734eb40545ec8c700c45319054c1a197163ecd0711ab6",
+      "impact": "stale",
+      "reasons": [
+        "added optional field 'construction'"
+      ]
+    }
+  ],
+  "correctness_argument": "Lane Q of the ontology unification (Path U, 2026-10-15), defect 1 of lane P's pre-build verification: KanMxDeletionPerturbation and ReleasedIdentifierPerturbation gain construction: StrainConstruction | None (default None), the strain's position in its deletion collection (accession, lab, batch, plate, well), verbatim from the source.\n\nTHE DEFECT. Ozaydin 2013's released sheet 'Color scores of all deletions' (sha256 4818726e352ead3cb739fd9becf08a0c04d14b8a8761732184214344447507f0) has 5,153 rows, each one physical strain of the yeast deletion collection scored once, with the collection's own columns 'record no.', 'Batch', 'Plate', 'Row' and 'Col'. Measured on the branch-built store (lane P's private tree, job 4925) and again by lane Q: 4,607 records, 4,576 distinct experiment dumps, 31 pairs of byte-identical records. In every pair the two released rows differ in Batch, Plate, Row and Col (31 of 31), in 'record no.' (30 of 31; YJR055W's two rows both carry 6853, built in batches 00_13 and chr00_13) and in Comment (2 of 31, both parsing to no flag); they agree in ORF, strain, color and the parsed flags, which is everything the record carried. The Experiment node id is the sha256 of the record, FastCsvSink deduplicates ids, so the graph held 4,576 Experiment nodes for 4,607 stored records and 31 measurements the authors released were absent from it. The same scan over 175 dev stores (experiments/database/scripts/content_id_collision_scan.py) finds the collision in Ozaydin 2013 alone.\n\nWHY THIS IS THE CORRECT CARRIER. The data is the data (constitution 2): the two rows are two measurements of two strains, so the store is right to hold both and the record must say what tells them apart. What tells them apart in the release is the strain's position in the collection: (Batch, Plate, Row, Col) is unique over all 5,153 rows, and the sheet's columns are the deletion collection's manifest columns. The schema already names that fact: StrainConstruction ('where one physical deletion strain came from in its collection ... two records of one ORF whose construction differs are two strains, not two replicates'), carried today by BarcodedKanMxDeletionPerturbation, HeterozygousDeletionPerturbation, ConditionalAllelePerturbation, DeletionStrainPerturbation (the Keio leaf, which Campos 2018 fills with the released plate and well), MarkedAllelePerturbation and DegronPerturbation. A colony-scored KanMX deletion strain from the same collection has the same fact, so the field goes on KanMxDeletionPerturbation, the leaf every yeast collection deletion is stored on, and on ReleasedIdentifierPerturbation for the one Ozaydin row whose ORF cell is not ORF-shaped (YLR287-A), which is the same strain class under a released name. Both are optional-by-construction (constitution 7: a source that releases no position stores None, and the loaders that store these leaves today change nothing), and the field keeps the meaning it has on every other leaf (constitution 9: a field is never reused with a different meaning; one fact, one field, constitution 5). Ozaydin stores strain_accession = 'record no.', batch = 'Batch', plate = 'Plate', well = 'Row' + 'Col' ('B3'), each verbatim as text.\n\nWHAT MOVES. KanMxDeletionPerturbation is in the closure of every served yeast deletion dataset, so every such record's dump gains a trailing 'construction': None and its content id re-keys; the KG 4.0 build is a full rebuild in which every id already re-keys under P1 (gene_namespace on every gene perturbation), so nothing is rebuilt that was not. BarcodedKanMxDeletionPerturbation keeps its own declaration of the same field, so its field order and the dump of every record it serves are unchanged; the former docstring argument against a field on the parent ('inside 33 served dataset closures and any field added to it would force a full rebuild') was a cost argument, which constitution 8 rules out as a reason. The ozaydin2013 loader refuses a sheet without the five position columns (KeyError naming them) rather than storing a record without its position; tests/torchcell/datasets/scerevisiae/test_ozaydin2013.py pins that the real YAL049C pair (records 356 and 7729) are two records with distinct digests, an assertion that fails on the code before this change with both digests equal to 4820dec2874f832dd4243219e93a7c5918d55abac1eeaef7a8e8eaf51a607027.",
+  "measurement_type_decision": false,
+  "source_quotes": [],
+  "alternatives_rejected": [
+    {
+      "alternative": "A positional index (the LMDB record index or the source row number) on the experiment, so that any two records are distinct by construction.",
+      "why_rejected": "It asserts nothing the source states: the row order of a spreadsheet is not a fact about the strain, and a key that exists only to make ids differ is the synthetic key constitution 5 rejects ('one fact, one field, one closed vocabulary'). It would also hide the next collision of this class instead of naming the released fact that resolves it."
+    },
+    {
+      "alternative": "Carry 'record no.' alone as the discriminator.",
+      "why_rejected": "Measured: it is not unique in the release (6853 heads two YJR055W rows built in batches 00_13 and chr00_13; 7379 heads two YNL096C rows). One of the 31 pairs is told apart only by Batch, Plate, Row and Col. The position is what the collection uses, and the record number rides with it as the strain accession."
+    },
+    {
+      "alternative": "Store the Ozaydin deletions on BarcodedKanMxDeletionPerturbation, which already carries construction, with barcode None and a gap.",
+      "why_rejected": "That leaf states a barcode read-out identity ('the molecular barcode it was screened by'); Ozaydin scored colonies by eye and released no tag, so every record would assert a pooled-assay identity the measurement does not have. The leaf is chosen by what the physical thing is (constitution 9), not by which class happens to hold the field."
+    },
+    {
+      "alternative": "Store them on DeletionStrainPerturbation (collection, cassette, construction, no marker asserted).",
+      "why_rejected": "The yeast KanMX deletion already has its leaf, and the same physical strain class would then be stored on two leaves across datasets (KanMx everywhere else, DeletionStrain here), which is the two-classes-one-fact defect of constitution 5; it would also drop the KanMX marker the source states."
+    },
+    {
+      "alternative": "A new sibling leaf, 'CollectionKanMxDeletionPerturbation', with the position.",
+      "why_rejected": "A property of a record is a typed field, never a choice of class (constitution 5); a leaf that differs from its parent by one optional field is the shape the constitution names as a defect."
+    },
+    {
+      "alternative": "Carry plate and well on VisualScorePhenotype.",
+      "why_rejected": "The position is a fact of the strain (which physical deletion strain was scored), not of the score; placing it on the phenotype would reuse the phenotype as a strain key and leave every other visual-score dataset with a field that means nothing for it."
+    }
+  ],
+  "served_release": "2026.10.06-4b293d34",
+  "affected_loaders": [
+    {
+      "loader": "torchcell/datasets/ecoli/baba2006.py",
+      "dataset_classes": [
+        "GeneEssentialityBaba2006Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ReleasedIdentifierPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/babu2014.py",
+      "dataset_classes": [
+        "GeneInteractionBabu2014Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ReleasedIdentifierPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/butland2008.py",
+      "dataset_classes": [
+        "GeneInteractionButland2008Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ReleasedIdentifierPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/choe2019_growth_rate.py",
+      "dataset_classes": [
+        "GrowthRateChoe2019Dataset",
+        "TranscriptionFactorKnockoutChoe2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ReleasedIdentifierPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/cui2018.py",
+      "dataset_classes": [
+        "CrispriKnockdownCui2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ReleasedIdentifierPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/fuhrer2017.py",
+      "dataset_classes": [
+        "MetabolomeFuhrer2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ReleasedIdentifierPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/gerdes2003.py",
+      "dataset_classes": [
+        "GeneEssentialityGerdes2003Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ReleasedIdentifierPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/goodall2018.py",
+      "dataset_classes": [
+        "GeneEssentialityGoodall2018Dataset",
+        "GradedGeneEssentialityGoodall2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ReleasedIdentifierPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/lamoureux2023.py",
+      "dataset_classes": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ReleasedIdentifierPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/nichols2011.py",
+      "dataset_classes": [
+        "EnvChemgenNichols2011Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ReleasedIdentifierPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/niu2019.py",
+      "dataset_classes": [
+        "CrisprPineneToleranceNiu2019Dataset",
+        "PineneFoldChangeNiu2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ReleasedIdentifierPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rousset2018.py",
+      "dataset_classes": [
+        "CrispriScreenRousset2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ReleasedIdentifierPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schastnaya2021.py",
+      "dataset_classes": [
+        "MetabolomeSchastnaya2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ReleasedIdentifierPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016_growth_rate.py",
+      "dataset_classes": [
+        "GrowthRateSchmidt2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ReleasedIdentifierPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/teteneva2024.py",
+      "dataset_classes": [
+        "RbTnseqTeteneva2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ReleasedIdentifierPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2015.py",
+      "dataset_classes": [
+        "EnvChemgenWang2015Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ReleasedIdentifierPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/lim2022.py",
+      "dataset_classes": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ReleasedIdentifierPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/auesukaree2009.py",
+      "dataset_classes": [
+        "EnvChemgenAuesukaree2009Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenAuesukaree2009Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation",
+        "ReleasedIdentifierPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/baryshnikova2010.py",
+      "dataset_classes": [
+        "SmfBaryshnikova2010Dataset"
+      ],
+      "served_classes": [
+        "SmfBaryshnikova2010Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/cachera2023.py",
+      "dataset_classes": [
+        "BetaxanthinCachera2023Dataset"
+      ],
+      "served_classes": [
+        "BetaxanthinCachera2023Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation",
+        "ReleasedIdentifierPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/cooper2010.py",
+      "dataset_classes": [
+        "AminoAcidCooper2010Dataset"
+      ],
+      "served_classes": [
+        "AminoAcidCooper2010Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/costanzo2016.py",
+      "dataset_classes": [
+        "SmfCostanzo2016Dataset",
+        "DmfCostanzo2016Dataset",
+        "DmiCostanzo2016Dataset"
+      ],
+      "served_classes": [
+        "DmfCostanzo2016Dataset",
+        "DmiCostanzo2016Dataset",
+        "SmfCostanzo2016Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/costanzo2021.py",
+      "dataset_classes": [
+        "EnvChemgenCostanzo2021Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenCostanzo2021Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/dasilveira2014.py",
+      "dataset_classes": [
+        "MetaboliteDaSilveira2014Dataset"
+      ],
+      "served_classes": [
+        "MetaboliteDaSilveira2014Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hillenmeyer2008.py",
+      "dataset_classes": [
+        "HetHillenmeyer2008Dataset",
+        "HomHillenmeyer2008Dataset"
+      ],
+      "served_classes": [
+        "HetHillenmeyer2008Dataset",
+        "HomHillenmeyer2008Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hoepfner2014.py",
+      "dataset_classes": [
+        "EnvChemgenHoepfner2014Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenHoepfner2014Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hu2007.py",
+      "dataset_classes": [
+        "MicroarrayScoreHu2007Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/jackson2020.py",
+      "dataset_classes": [
+        "TfDeletionPseudobulkJackson2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/kemmeren2014.py",
+      "dataset_classes": [
+        "MicroarrayKemmeren2014Dataset"
+      ],
+      "served_classes": [
+        "MicroarrayKemmeren2014Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/kuzmin2018.py",
+      "dataset_classes": [
+        "SmfKuzmin2018Dataset",
+        "DmfKuzmin2018Dataset",
+        "TmfKuzmin2018Dataset",
+        "DmiKuzmin2018Dataset",
+        "TmiKuzmin2018Dataset"
+      ],
+      "served_classes": [
+        "DmfKuzmin2018Dataset",
+        "DmiKuzmin2018Dataset",
+        "SmfKuzmin2018Dataset",
+        "TmfKuzmin2018Dataset",
+        "TmiKuzmin2018Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/kuzmin2020.py",
+      "dataset_classes": [
+        "SmfKuzmin2020Dataset",
+        "DmfKuzmin2020Dataset",
+        "TmfKuzmin2020Dataset",
+        "DmiKuzmin2020Dataset",
+        "TmiKuzmin2020Dataset"
+      ],
+      "served_classes": [
+        "DmfKuzmin2020Dataset",
+        "DmiKuzmin2020Dataset",
+        "SmfKuzmin2020Dataset",
+        "TmfKuzmin2020Dataset",
+        "TmiKuzmin2020Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/lopez2024.py",
+      "dataset_classes": [
+        "IsobutanolScreenLopez2024Dataset",
+        "IsobutanolValidatedLopez2024Dataset"
+      ],
+      "served_classes": [
+        "IsobutanolScreenLopez2024Dataset",
+        "IsobutanolValidatedLopez2024Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation",
+        "ReleasedIdentifierPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/messner2023.py",
+      "dataset_classes": [
+        "ProteomeMessner2023Dataset"
+      ],
+      "served_classes": [
+        "ProteomeMessner2023Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation",
+        "ReleasedIdentifierPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/mormino2022.py",
+      "dataset_classes": [
+        "CrispriMormino2022Dataset"
+      ],
+      "served_classes": [
+        "CrispriMormino2022Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "ReleasedIdentifierPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/mota2024.py",
+      "dataset_classes": [
+        "EnvChemgenMota2024Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenMota2024Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation",
+        "ReleasedIdentifierPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/mulleder2016.py",
+      "dataset_classes": [
+        "AminoAcidMulleder2016Dataset"
+      ],
+      "served_classes": [
+        "AminoAcidMulleder2016Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation",
+        "ReleasedIdentifierPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/nadal_ribelles2025.py",
+      "dataset_classes": [
+        "NadalRibellesPerturbSeq2025Dataset"
+      ],
+      "served_classes": [
+        "NadalRibellesPerturbSeq2025Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "ReleasedIdentifierPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/oduibhir2014.py",
+      "dataset_classes": [
+        "SmfODuibhir2014Dataset"
+      ],
+      "served_classes": [
+        "SmfODuibhir2014Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation",
+        "ReleasedIdentifierPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ohnuki2022.py",
+      "dataset_classes": [
+        "ScmdOhnuki2022Dataset"
+      ],
+      "served_classes": [
+        "ScmdOhnuki2022Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ohya2005.py",
+      "dataset_classes": [
+        "ScmdOhya2005Dataset"
+      ],
+      "served_classes": [
+        "ScmdOhya2005Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ozaydin2013.py",
+      "dataset_classes": [
+        "CarotenoidOzaydin2013Dataset"
+      ],
+      "served_classes": [
+        "CarotenoidOzaydin2013Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation",
+        "ReleasedIdentifierPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/parsons2006.py",
+      "dataset_classes": [
+        "EnvChemgenParsons2006Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/piotrowski2017.py",
+      "dataset_classes": [
+        "EnvChemgenPiotrowski2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/puddu2019.py",
+      "dataset_classes": [
+        "GenomeArchitecturePuddu2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/sameith2015.py",
+      "dataset_classes": [
+        "SmMicroarraySameith2015Dataset",
+        "DmMicroarraySameith2015Dataset"
+      ],
+      "served_classes": [
+        "DmMicroarraySameith2015Dataset",
+        "SmMicroarraySameith2015Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/sgd.py",
+      "dataset_classes": [
+        "GeneEssentialitySgdDataset"
+      ],
+      "served_classes": [
+        "GeneEssentialitySgdDataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/smith2006.py",
+      "dataset_classes": [
+        "FattyAcidSmith2006Dataset"
+      ],
+      "served_classes": [
+        "FattyAcidSmith2006Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/smith2016.py",
+      "dataset_classes": [
+        "CrispriChemgenSmith2016Dataset"
+      ],
+      "served_classes": [
+        "CrispriChemgenSmith2016Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "ReleasedIdentifierPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/synth_leth_db.py",
+      "dataset_classes": [
+        "SynthLethalityYeastSynthLethDbDataset",
+        "SynthRescueYeastSynthLethDbDataset"
+      ],
+      "served_classes": [
+        "SynthLethalityYeastSynthLethDbDataset",
+        "SynthRescueYeastSynthLethDbDataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "ReleasedIdentifierPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/vanacloig2022.py",
+      "dataset_classes": [
+        "EnvChemgenVanacloig2022Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenVanacloig2022Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/wildenhain2015.py",
+      "dataset_classes": [
+        "EnvChemgenWildenhain2015Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenWildenhain2015Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/xue2025.py",
+      "dataset_classes": [
+        "FattyAcidXue2025Dataset"
+      ],
+      "served_classes": [
+        "FattyAcidXue2025Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation",
+        "ReleasedIdentifierPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/yeastphenome.py",
+      "dataset_classes": [
+        "YeastPhenomeDataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation",
+        "ReleasedIdentifierPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/yoshida2012.py",
+      "dataset_classes": [
+        "OrganicAcidYoshida2012Dataset"
+      ],
+      "served_classes": [
+        "OrganicAcidYoshida2012Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation",
+        "ReleasedIdentifierPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/yoshikawa2009.py",
+      "dataset_classes": [
+        "EnvChemgenYoshikawa2009Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/zelezniak2018.py",
+      "dataset_classes": [
+        "ProteomeZelezniak2018Dataset",
+        "MetaboliteZelezniak2018Dataset"
+      ],
+      "served_classes": [
+        "MetaboliteZelezniak2018Dataset",
+        "ProteomeZelezniak2018Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "KanMxDeletionPerturbation",
+        "ReleasedIdentifierPerturbation"
+      ]
+    }
+  ],
+  "served_datasets": [
+    "AminoAcidCooper2010Dataset",
+    "AminoAcidMulleder2016Dataset",
+    "BetaxanthinCachera2023Dataset",
+    "CarotenoidOzaydin2013Dataset",
+    "CrispriChemgenSmith2016Dataset",
+    "CrispriMormino2022Dataset",
+    "DmMicroarraySameith2015Dataset",
+    "DmfCostanzo2016Dataset",
+    "DmfKuzmin2018Dataset",
+    "DmfKuzmin2020Dataset",
+    "DmiCostanzo2016Dataset",
+    "DmiKuzmin2018Dataset",
+    "DmiKuzmin2020Dataset",
+    "EnvChemgenAuesukaree2009Dataset",
+    "EnvChemgenCostanzo2021Dataset",
+    "EnvChemgenHoepfner2014Dataset",
+    "EnvChemgenMota2024Dataset",
+    "EnvChemgenVanacloig2022Dataset",
+    "EnvChemgenWildenhain2015Dataset",
+    "FattyAcidSmith2006Dataset",
+    "FattyAcidXue2025Dataset",
+    "GeneEssentialitySgdDataset",
+    "HetHillenmeyer2008Dataset",
+    "HomHillenmeyer2008Dataset",
+    "IsobutanolScreenLopez2024Dataset",
+    "IsobutanolValidatedLopez2024Dataset",
+    "MetaboliteDaSilveira2014Dataset",
+    "MetaboliteZelezniak2018Dataset",
+    "MicroarrayKemmeren2014Dataset",
+    "NadalRibellesPerturbSeq2025Dataset",
+    "OrganicAcidYoshida2012Dataset",
+    "ProteomeMessner2023Dataset",
+    "ProteomeZelezniak2018Dataset",
+    "ScmdOhnuki2022Dataset",
+    "ScmdOhya2005Dataset",
+    "SmMicroarraySameith2015Dataset",
+    "SmfBaryshnikova2010Dataset",
+    "SmfCostanzo2016Dataset",
+    "SmfKuzmin2018Dataset",
+    "SmfKuzmin2020Dataset",
+    "SmfODuibhir2014Dataset",
+    "SynthLethalityYeastSynthLethDbDataset",
+    "SynthRescueYeastSynthLethDbDataset",
+    "TmfKuzmin2018Dataset",
+    "TmfKuzmin2020Dataset",
+    "TmiKuzmin2018Dataset",
+    "TmiKuzmin2020Dataset"
+  ],
+  "rebuild_scope": "full_kg_rebuild",
+  "owner_sign_off": {
+    "signed": false,
+    "quote": null,
+    "url": null
+  }
+}

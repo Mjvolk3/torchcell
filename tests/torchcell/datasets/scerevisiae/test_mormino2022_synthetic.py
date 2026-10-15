@@ -289,7 +289,7 @@ def test_one_cbl_reference_and_the_gene_set_carries_the_cassette_slots(
         text=True,
         check=True,
     ).stdout.strip()
-    assert manifest["manifest_schema_version"] == 1
+    assert manifest["manifest_schema_version"] == 2
     assert manifest["dataset_name"] == "crispri_mormino2022"
     assert manifest["loader_class"] == "CrispriMormino2022Dataset"
     assert manifest["loader_module"] == "torchcell.datasets.scerevisiae.mormino2022"

@@ -211,3 +211,44 @@ def test_l1_provenance_gaps_clean_when_fully_sourced():
     assert result.passed
     assert result.details["n_gaps"] == 0
     assert "fully sourced" in result.message
+
+
+def test_the_gap_vocabulary_is_exactly_four_members():
+    """Pinned so a fifth reason is a deliberate change (2026-10-15).
+
+    ``not_released_by_primary`` joined for the construct store: the primary MEASURED and
+    reports the value and releases no artifact carrying it. Kang 2026 states the
+    construct sequences come from the JBEI registry "upon request" and Carruthers 2025
+    states "Plasmid sequences were verified by whole plasmid sequencing" without
+    depositing them, so neither is ``not_reported_by_primary`` (the primary did report
+    it), ``not_carried_by_curation`` (there is no curation layer in between) nor
+    ``deferred_pending_source_review`` (no SI of ours holds it, so no comb would close
+    the gap). Closing it takes a request to the authors or the registry.
+    """
+    assert [member.value for member in ProvenanceGapReason] == [
+        "not_reported_by_primary",
+        "not_carried_by_curation",
+        "not_released_by_primary",
+        "deferred_pending_source_review",
+    ]
+
+
+def test_a_not_released_gap_is_not_on_the_deferred_worklist():
+    """Only a recoverable gap joins the worklist, which is what makes it a worklist.
+
+    A withheld artifact is terminal for us: putting it beside the fields a per-paper SI
+    comb would close would send a future campaign to re-read an SI that does not hold
+    the value.
+    """
+    census = provenance_gap_census(
+        [
+            _pheno_dict(
+                ("plasmid_sequence", ProvenanceGapReason.not_released_by_primary)
+            ),
+            _pheno_dict(
+                ("n_samples", ProvenanceGapReason.deferred_pending_source_review)
+            ),
+        ]
+    )
+    assert census.by_reason["not_released_by_primary"] == 1
+    assert census.worklist_fields == ["n_samples"]

@@ -50,7 +50,16 @@ build writes a build manifest and nothing else. Resolution order is
 ``fresh`` and is rebuilt before the graph is built from it. "Fails" is the report's
 verdict, which only ``gate`` rules decide: a genome-reference finding
 (``FindingClass.report``: containment, name currency, assembly pins) is printed under
-the verdict and never retires a manifest.
+the verdict and never retires a manifest. The verdict is typed (:class:`VerifyOutcome`)
+and the build log names it: a dataset with no per-dataset entry point is
+``no_per_dataset_verifier`` and keeps its manifest (its family runner covers it), never
+a silent ``True`` that reads like a pass.
+
+:func:`mapped_store_lanes` is the preflight's second walk, beside
+:func:`mapped_store_status`: it reads ``perturbation_leaves`` off each mapped store's
+build manifest and checks every leaf against the node lanes the dataset's adapter conf
+enables (``torchcell.knowledge_graphs.perturbation_lanes``), so a store whose records
+carry a leaf no enabled lane emits is refused before generation starts.
 """
 
 from __future__ import annotations
@@ -64,6 +73,8 @@ import sys
 import time
 from collections.abc import Callable
 from datetime import datetime
+from enum import StrEnum
+from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
@@ -75,7 +86,13 @@ from torchcell.data.experiment_dataset import (
     format_organisms,
     parse_organisms,
 )
-from torchcell.provenance.build_manifest import StoreFreshness, StoreState
+from torchcell.knowledge_graphs.perturbation_lanes import LaneGaps
+from torchcell.provenance.build_manifest import (
+    MANIFEST_FILENAME,
+    BuildManifest,
+    StoreFreshness,
+    StoreState,
+)
 
 
 def dataset_default_root(dataset_class: type) -> str:
@@ -160,6 +177,79 @@ def mapped_store_status(
                 state=freshness.state,
                 drift=freshness.drift,
                 reason=freshness.reason,
+            )
+        )
+    return statuses
+
+
+class StoreLaneStatus(BaseModel):
+    """One mapped store's measured perturbation leaves against its conf's lanes."""
+
+    model_config = ConfigDict(frozen=True)
+
+    dataset_class: str
+    root: str
+    has_leaves: bool  # the manifest exists and carries ``perturbation_leaves``
+    gaps: LaneGaps = LaneGaps()
+
+    @property
+    def blocks(self) -> bool:
+        """A store with no measured leaves, or with a leaf no lane serves, blocks a build."""
+        return not self.has_leaves or not self.gaps.empty
+
+    def describe(self) -> str:
+        """``<class>: <what is wrong>``, the line the preflight refuses with."""
+        if not self.has_leaves:
+            return (
+                f"{self.dataset_class}: build manifest carries no perturbation_leaves "
+                "(built before the walk existed); rebuild it"
+            )
+        return f"{self.dataset_class}: {self.gaps.describe()}"
+
+
+def mapped_store_lanes(
+    data_root: str,
+    include_private: bool,
+    organisms: frozenset[Organism] = ALL_ORGANISMS,
+) -> list[StoreLaneStatus]:
+    """Every mapped store's ``perturbation_leaves`` checked against its conf's lanes.
+
+    The same walk as :func:`mapped_store_status` (``build_adapter_map`` of the organism
+    set), reading each store's build manifest rather than its records: the leaves were
+    measured over every record when the manifest was written. A leaf is a gap when the
+    conf enables the edge method that walks it and no enabled node method emits it
+    (``torchcell.knowledge_graphs.perturbation_lanes.unserved_leaves``); a manifest
+    without the field, or no manifest at all, blocks as well, since the check cannot
+    run. The exhaustiveness test runs the same arithmetic on each loader's direct schema
+    imports; this runs it on what the store actually holds.
+    """
+    import torchcell
+    from torchcell.knowledge_graphs.dataset_adapter_map import build_adapter_map
+    from torchcell.knowledge_graphs.kg_manifest import dataset_conf_methods
+    from torchcell.knowledge_graphs.perturbation_lanes import unserved_leaves
+
+    repo_root = Path(torchcell.__file__).resolve().parent.parent
+    statuses: list[StoreLaneStatus] = []
+    for cls in build_adapter_map(include_private=include_private, organisms=organisms):
+        root = osp.join(data_root, dataset_default_root(cls))
+        manifest_path = osp.join(root, "preprocess", MANIFEST_FILENAME)
+        leaves = None
+        if osp.isfile(manifest_path):
+            with open(manifest_path, encoding="utf-8") as handle:
+                leaves = BuildManifest.model_validate_json(
+                    handle.read()
+                ).perturbation_leaves
+        if leaves is None:
+            statuses.append(
+                StoreLaneStatus(dataset_class=cls.__name__, root=root, has_leaves=False)
+            )
+            continue
+        gaps = unserved_leaves(
+            leaves.genotype, leaves.environment, dataset_conf_methods(cls, repo_root)
+        )
+        statuses.append(
+            StoreLaneStatus(
+                dataset_class=cls.__name__, root=root, has_leaves=True, gaps=gaps
             )
         )
     return statuses
@@ -302,16 +392,39 @@ def retire_manifest(root: str, stamp: str | None = None) -> str | None:
     return dest
 
 
-def verify_after_build(dataset_class: type, data_root: str) -> bool:
-    """Run the verification covering ``dataset_class``; True when its store stays fresh.
+class VerifyOutcome(StrEnum):
+    """What ``--verify`` found, named in the build log as ``VERIFY OUTCOME: <value>``.
+
+    ``passed``: a per-dataset verifier ran and every report passed; the manifest stays.
+    ``no_per_dataset_verifier``: :func:`resolve_verifier` found no entry point; the
+    manifest stays because the dataset's FAMILY runner covers it, but the log says so
+    rather than reporting a pass that never ran (review 3 finding 7, 2026-10-15).
+    ``failed``: the verifier raised, returned no report, or a report did not pass; the
+    manifest is retired and the build exits non-zero.
+    """
+
+    passed = "passed"
+    no_per_dataset_verifier = "no_per_dataset_verifier"
+    failed = "failed"
+
+    @property
+    def keeps_manifest(self) -> bool:
+        """Only ``failed`` retires the build manifest."""
+        return self is not VerifyOutcome.failed
+
+
+def verify_after_build(dataset_class: type, data_root: str) -> VerifyOutcome:
+    """Run the verification covering ``dataset_class``; the typed outcome.
 
     What ``--verify`` does after a build. A dataset whose verification raises OR whose
     report does not pass has its build manifest retired (:func:`retire_manifest`), so
     an unverified store cannot read fresh to the knowledge-graph preflight -- the
     builder wrote the records, and nothing else re-checks them before they are
-    serialized into the graph. A dataset with no per-dataset entry point is reported as
-    such and keeps its manifest: its family runner is what covers it, and that runner
-    reads every store in the family.
+    serialized into the graph. A dataset with no per-dataset entry point is
+    ``no_per_dataset_verifier`` and keeps its manifest: its family runner is what
+    covers it, and that runner reads every store in the family. Which of the three
+    happened is printed as ``VERIFY OUTCOME: <value>`` so a build log never reads a
+    skipped verification as a pass.
 
     The verdict is :attr:`VerificationReport.passed`, which only ``gate`` rules decide;
     each report's genome-reference findings are printed in its summary and counted on
@@ -325,16 +438,21 @@ def verify_after_build(dataset_class: type, data_root: str) -> bool:
         kind, run = resolve_verifier(dataset_class)
     except LookupError as error:
         print(f"NO PER-DATASET VERIFIER -- {error}")
-        return True
+        print(
+            f"VERIFY OUTCOME: {VerifyOutcome.no_per_dataset_verifier} "
+            "(manifest kept; the family runner covers this store)"
+        )
+        return VerifyOutcome.no_per_dataset_verifier
     print(f"verifying {dataset_class.__name__} with {kind}")
 
-    def refuse(message: str) -> bool:
-        """Report ``message``, retire the manifest, and answer False."""
+    def refuse(message: str) -> VerifyOutcome:
+        """Report ``message``, retire the manifest, and answer ``failed``."""
         print(f"ERROR: {message}", file=sys.stderr)
         print(
             f"ERROR: build manifest retired to {retire_manifest(root)}", file=sys.stderr
         )
-        return False
+        print(f"VERIFY OUTCOME: {VerifyOutcome.failed}")
+        return VerifyOutcome.failed
 
     try:
         reports = run(data_root)
@@ -357,7 +475,8 @@ def verify_after_build(dataset_class: type, data_root: str) -> bool:
         f"verification PASSED: {len(reports)} report(s) by {kind}; "
         f"{n_findings} genome-reference finding(s) reported, not gated"
     )
-    return True
+    print(f"VERIFY OUTCOME: {VerifyOutcome.passed}")
+    return VerifyOutcome.passed
 
 
 def build_dataset(dataset_class: type, data_root: str, io_workers: int) -> Any:
@@ -479,7 +598,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ERROR: build manifest missing at {manifest}", file=sys.stderr)
         return 1
     print(f"build manifest: {manifest}")
-    if args.verify and not verify_after_build(dataset_class, data_root):
+    if (
+        args.verify
+        and verify_after_build(dataset_class, data_root) is VerifyOutcome.failed
+    ):
         return 1
     return 0
 

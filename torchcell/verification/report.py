@@ -187,6 +187,12 @@ GENOME_REFERENCE_RULES: Final[frozenset[str]] = frozenset(
         # Choe 2019: where the pinned MG1655 assembly places the released deletion
         # symbols (#1045 part 2)
         "deleted_symbols_are_one_contiguous_run_of_the_pinned_assembly",
+        # the construct store: how many of a store's gene additions point at deposited
+        # construct sequence, at a named host site with no coordinate, or at nothing but
+        # a typed gap (``torchcell.verification.construct_placement``). The subject is
+        # the record against OUR sequence references, so the row reports its statistic
+        # and never gates a store whose source released no plasmid map
+        "construct_placement_states",
     }
 )
 

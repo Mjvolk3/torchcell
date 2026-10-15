@@ -83,6 +83,9 @@ class Environment(ModelStrict):
 """
 
 
+_LEAVES = bm.PerturbationLeaves(genotype=["KanMxDeletionPerturbation"], environment=[])
+
+
 def _surface(src: str) -> sd.SchemaSurface:
     return sd.load_surface_from_sources({"schema": src})
 
@@ -108,6 +111,7 @@ def _manifest(
         hostname="testhost",
         torchcell_commit=None,
         torchcell_dirty=None,
+        perturbation_leaves=_LEAVES,
     )
 
 
@@ -245,7 +249,8 @@ def test_check_all_reports_fresh_stale_unmanifested(tmp_path: Path) -> None:
 
 def test_write_build_manifest_end_to_end(tmp_path: Path) -> None:
     # a real on-disk loader module importing a REAL schema symbol, exercising the same path the
-    # post_process build hook takes (module resolution + real-schema closure + manifest write).
+    # post_process build hook takes (module resolution + real-schema closure + manifest write
+    # + the perturbation-leaf walk over the store's records).
     module_file = tmp_path / "fake_loader_mod.py"
     module_file.write_text(
         "from torchcell.datamodels.schema import Environment\n\n"
@@ -262,6 +267,8 @@ def test_write_build_manifest_end_to_end(tmp_path: Path) -> None:
         spec.loader.exec_module(module)
         root = tmp_path / "data" / "torchcell" / "fake_ds"
         (root / "preprocess").mkdir(parents=True)
+        (root / "processed" / "lmdb").mkdir(parents=True)
+        _write_store(root, [_fitness_record()])
         dataset = module.FakeDataset(str(root))
 
         out = bm.write_build_manifest(dataset)
@@ -270,8 +277,13 @@ def test_write_build_manifest_end_to_end(tmp_path: Path) -> None:
         assert manifest.dataset_name == "fake_ds"
         assert manifest.loader_class == "FakeDataset"
         assert manifest.hostname
+        assert manifest.manifest_schema_version == 2
         # closure resolved against the REAL schema: Environment pulls in Media
         assert {"Environment", "Media"} <= set(manifest.closure)
+        # the leaves measured over the store's records, by class name
+        assert manifest.perturbation_leaves == bm.PerturbationLeaves(
+            genotype=["KanMxDeletionPerturbation"], environment=[]
+        )
     finally:
         sys.modules.pop("fake_loader_mod", None)
 
@@ -285,7 +297,7 @@ def test_manifest_records_every_field(tmp_path: Path) -> None:
     surface = _surface(SCHEMA)
     manifest = _manifest(tmp_path, surface)
     assert manifest.model_dump() == {
-        "manifest_schema_version": 1,
+        "manifest_schema_version": 2,
         "dataset_name": "slug",
         "loader_class": "MyDataset",
         "loader_module": "pkg.loader",
@@ -298,6 +310,10 @@ def test_manifest_records_every_field(tmp_path: Path) -> None:
         "hostname": "testhost",
         "torchcell_commit": None,
         "torchcell_dirty": None,
+        "perturbation_leaves": {
+            "genotype": ["KanMxDeletionPerturbation"],
+            "environment": [],
+        },
     }
     assert list(manifest.closure) == ["Environment", "Media", "ModelStrict"]
 
@@ -336,6 +352,7 @@ def test_change_outside_the_closure_leaves_a_loader_fresh(tmp_path: Path) -> Non
         hostname="testhost",
         torchcell_commit="abc",
         torchcell_dirty=True,
+        perturbation_leaves=_LEAVES,
     )
     assert list(manifest.closure) == ["Media", "ModelStrict"]
     env_edit = _surface(ENV_EDIT)
@@ -573,6 +590,7 @@ def _vocab_manifest(tmp_path: Path, surface: sd.SchemaSurface) -> bm.BuildManife
         hostname="testhost",
         torchcell_commit=None,
         torchcell_dirty=None,
+        perturbation_leaves=_LEAVES,
     )
 
 
@@ -877,3 +895,162 @@ def test_describe_words_every_state_for_a_preflight_refusal(tmp_path: Path) -> N
         ).describe()
         == "unreadable: KeyError: 'x'"
     )
+
+
+# --------------------------------------------------------------------------- #
+# 2026.10.15: perturbation_leaves, the leaf walk and the version-1 manifest.
+# --------------------------------------------------------------------------- #
+
+
+def _record_with(
+    genotype_perturbations: list[Any], environment_perturbations: list[Any]
+) -> dict[str, Any]:
+    """A stored record whose genotype and environment carry the given leaves."""
+    record = _fitness_record()
+    record["experiment"]["genotype"]["perturbations"] = [
+        p.model_dump() for p in genotype_perturbations
+    ]
+    record["experiment"]["environment"] = Environment(
+        media=Media(name="YPD", state="solid", is_synthetic=False),
+        perturbations=environment_perturbations,
+    ).model_dump()
+    return record
+
+
+def test_leaf_class_by_perturbation_type_is_a_bijection_over_both_unions() -> None:
+    """Every union member's literal names exactly one class, so the walk needs no validation."""
+    from typing import get_args
+
+    from torchcell.datamodels.schema import (
+        EnvironmentPerturbationType,
+        GenePerturbationType,
+    )
+
+    by_type = bm.leaf_class_by_perturbation_type()
+    members = {
+        cls.__name__
+        for union in (GenePerturbationType, EnvironmentPerturbationType)
+        for cls in get_args(union)
+    }
+    assert set(by_type.values()) == members
+    assert len(by_type) == len(members)
+    assert by_type["gene_addition"] == "GeneAdditionPerturbation"
+    assert by_type["phage"] == "PhagePerturbation"
+
+
+def test_walk_perturbation_leaves_reads_every_record_and_resolves_interned_parts(
+    tmp_path: Path,
+) -> None:
+    """The leaf set is the union over ALL records, with interned genotype and
+    environment dicts spliced back in, sorted by class name.
+
+    Record 0 carries only the KanMX deletion; record 1 adds a gene addition through an
+    interned genotype and a small molecule through an interned environment; record 2 is
+    the segregant shape with no perturbation list. A walk of the first record alone, or
+    one that skipped the interned env, would miss the addition and the small molecule.
+    """
+    from torchcell.datamodels.schema import (
+        Compound,
+        Concentration,
+        ConcentrationUnit,
+        GeneAdditionPerturbation,
+        SmallMoleculePerturbation,
+    )
+
+    slug_dir = tmp_path / "data" / "torchcell" / "walked"
+    (slug_dir / "processed" / "lmdb").mkdir(parents=True)
+    addition = GeneAdditionPerturbation(
+        systematic_gene_name="PP_0001",
+        perturbed_gene_name="PP_0001",
+        source_organism="Pseudomonas putida",
+        is_heterologous=False,
+        localization="plasmid",
+    )
+    small_molecule = SmallMoleculePerturbation(
+        compound=Compound(name="rapamycin"),
+        concentration=Concentration(value=1.0, unit=ConcentrationUnit.molar),
+    )
+    rich = _record_with([addition], [small_molecule])
+    genotype = rich["experiment"]["genotype"]
+    environment = rich["experiment"]["environment"]
+    rich["experiment"]["genotype"] = {"$ref": "g1"}
+    rich["experiment"]["environment"] = {"$ref": "e1"}
+    segregant = _fitness_record()
+    segregant["experiment"]["genotype"] = {"cross": "BYxRM", "segregant_id": "s1"}
+    _write_store(
+        slug_dir,
+        [_fitness_record(), rich, segregant],
+        interned={"g1": genotype, "e1": environment},
+    )
+    assert bm.walk_perturbation_leaves(slug_dir) == bm.PerturbationLeaves(
+        genotype=["GeneAdditionPerturbation", "KanMxDeletionPerturbation"],
+        environment=["SmallMoleculePerturbation"],
+    )
+
+
+def test_walk_refuses_an_empty_store_and_an_unknown_literal(tmp_path: Path) -> None:
+    slug_dir = tmp_path / "data" / "torchcell" / "empty"
+    (slug_dir / "processed" / "lmdb").mkdir(parents=True)
+    _write_store(slug_dir, [])
+    with pytest.raises(ValueError, match="holds no records"):
+        bm.walk_perturbation_leaves(slug_dir)
+    odd = _fitness_record()
+    odd["experiment"]["genotype"]["perturbations"][0]["perturbation_type"] = (
+        "not_a_leaf"
+    )
+    _write_store(slug_dir, [odd])
+    with pytest.raises(KeyError, match="not_a_leaf"):
+        bm.walk_perturbation_leaves(slug_dir)
+
+
+def test_a_version_one_manifest_without_the_leaves_reads_stale(tmp_path: Path) -> None:
+    """A manifest from before the walk existed stales the store it describes.
+
+    Its fingerprints all match, so the symbol drift is empty; the missing field is what
+    stales it, named in ``missing_fields`` and in the store's drift list so the sweep's
+    ``--list-stale`` and the preflight both say why.
+    """
+    surface = _surface(SCHEMA)
+    fresh = _manifest(tmp_path, surface)
+    old = fresh.model_copy(
+        update={"perturbation_leaves": None, "manifest_schema_version": 1}
+    )
+    assert not bm.check_manifest(fresh, surface, "p").is_stale
+    result = bm.check_manifest(old, surface, "p")
+    assert (result.is_stale, result.drift, result.missing_fields) == (
+        True,
+        [],
+        ["perturbation_leaves"],
+    )
+    slug_dir = _build_dataset_dir(tmp_path, "old_manifest")
+    _write(slug_dir, old)
+    freshness = bm.check_store(slug_dir, surface)
+    assert (freshness.state, freshness.drift) == ("stale", ["perturbation_leaves"])
+    assert freshness.describe() == "stale on ['perturbation_leaves']"
+
+
+def test_the_cli_names_the_missing_field(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    surface = _surface(SCHEMA)
+    slug_dir = _build_dataset_dir(tmp_path, "old_cli")
+    _write(
+        slug_dir,
+        _manifest(tmp_path, surface, name="old_cli").model_copy(
+            update={"perturbation_leaves": None}
+        ),
+    )
+    checks = bm.check_all(tmp_path, surface)
+    assert [(c.dataset_name, c.status, c.missing_fields) for c in checks] == [
+        ("old_cli", "stale", ["perturbation_leaves"])
+    ]
+    report = bm._format_report(checks)
+    assert "[STALE] old_cli  -> rebuild; manifest lacks: perturbation_leaves" in report
+
+
+def test_the_manifest_round_trips_the_leaves(tmp_path: Path) -> None:
+    surface = _surface(SCHEMA)
+    manifest = _manifest(tmp_path, surface)
+    loaded = bm.BuildManifest.model_validate_json(manifest.model_dump_json())
+    assert loaded.perturbation_leaves == _LEAVES
+    assert loaded.manifest_schema_version == 2

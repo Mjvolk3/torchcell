@@ -1328,7 +1328,7 @@ def test_experiment_reference_genome_and_dataset_nodes(
             properties={
                 "species": "Saccharomyces cerevisiae",
                 "strain": "S288C",
-                "assembly_set": None,
+                "assembly_set": SGD_S288C_R64,
                 "serialized_data": json.dumps(GENOME.model_dump()),
             },
         )

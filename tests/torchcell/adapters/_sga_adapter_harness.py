@@ -334,7 +334,7 @@ def expected_nodes(
                 "species": GENOME.species,
                 "strain": GENOME.strain,
                 # a yeast ReferenceGenome states no assembly set until P2
-                "assembly_set": None,
+                "assembly_set": SGD_S288C_R64,
                 "serialized_data": json.dumps(GENOME.model_dump()),
             },
         ),

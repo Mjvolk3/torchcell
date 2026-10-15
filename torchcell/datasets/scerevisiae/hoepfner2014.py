@@ -214,7 +214,7 @@ BUILD / SOURCE QUIRKS handled deterministically (no fabrication):
 - Systematic ORF names are stored exactly as the matrices release them (no
   ``resolve_gene_name``, no rename onto a current gene, no SGD gene universe); a token
   the ``GenePerturbation`` pattern rejects is held out under ``NOT_ORF_SHAPED_RULE``
-  until a released-gene-name leaf exists. Empty cells are skipped.
+  until a released-identifier leaf exists. Empty cells are skipped.
 - Constant sub-objects are INTERNED into ``processed/interned``: one environment per
   sensitivity column, one reference per (assay, study), one publication. A record stores
   ``{"$ref": ...}`` pointers for them, which is what keeps a 3.1M-record LMDB small and
@@ -395,7 +395,7 @@ NOT_ORF_SHAPED_POLICY = (
     "GenePerturbation.systematic_gene_name pattern, e.g. R0010W or YBR160W_AS) cannot be "
     "stored on the existing deletion leaves, which require that pattern; the row is held "
     "out under this rule, with its token and its scored cells counted, until a yeast "
-    "released-gene-name leaf (a GenePerturbation child carrying the released identifier "
+    "released-identifier leaf (a GenePerturbation child carrying the released identifier "
     "verbatim with systematic_gene_name as a typed gap) exists. Every ORF-shaped token is "
     "stored as released, with no genome lookup"
 )

@@ -51,7 +51,7 @@ import openpyxl
 import xlrd
 from dotenv import load_dotenv
 
-from torchcell.datamodels.schema import ReleasedStrainKind
+from torchcell.datamodels.schema import ReleasedKind
 from torchcell.datasets.ecoli import nichols2011 as n
 from torchcell.datasets.ecoli import shiver2016 as s
 from torchcell.literature.manifest import sha256_file
@@ -295,7 +295,7 @@ def shiver_overlap(matrix: n.ScoreMatrix, data_root: str) -> dict[str, Any]:
     deletions = [
         r
         for r in strains
-        if r.label.kind is ReleasedStrainKind.deletion
+        if r.label.kind is ReleasedKind.deletion
         and len(r.label.ecks) == 1
         and r.label.symbol is not None
         and r.replicate_id is None

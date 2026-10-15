@@ -44,7 +44,7 @@ reference); ``+ve Ctrl`` -> the baseline only; e.g. ``P-S-Y 6d`` ->
 parsed row. All 13 genes (baseline + 10 TFs) are stored under their released names.
 
 GENE IDENTITY (#1045): the release names every gene by its common name only, and each
-is stored under that name verbatim on ``ReleasedGeneNamePerturbation`` (kind
+is stored under that name verbatim on ``ReleasedIdentifierPerturbation`` (kind
 ``deletion``, marker KanMX); a systematic name, had the release used one, would go on
 ``KanMxDeletionPerturbation``. No genome is consulted, so ``TFC7`` (the standard name of
 YOR110W and an alias of YNL039W) is stored as the symbol the release wrote, and the join
@@ -130,8 +130,8 @@ from torchcell.datamodels.schema import (
     MetabolitePhenotype,
     Publication,
     ReferenceGenome,
-    ReleasedGeneKind,
-    ReleasedGeneNamePerturbation,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
@@ -178,19 +178,19 @@ _SYSTEMATIC_RE = re.compile(
 
 def _released_deletion(
     gene: str,
-) -> KanMxDeletionPerturbation | ReleasedGeneNamePerturbation:
+) -> KanMxDeletionPerturbation | ReleasedIdentifierPerturbation:
     """The deletion under the name the release gives (#1045)."""
     if _SYSTEMATIC_RE.match(gene):
         return KanMxDeletionPerturbation(
             systematic_gene_name=gene, perturbed_gene_name=gene
         )
-    return ReleasedGeneNamePerturbation(
+    return ReleasedIdentifierPerturbation(
         systematic_gene_name=gene,
         gene_namespace="scerevisiae_s288c_sgd_systematic",
         perturbed_gene_name=gene,
-        released_gene_name=gene,
-        released_kind=ReleasedGeneKind.deletion,
-        marker="KanMX",
+        identifier_kind="genotype column entry, as released",
+        released_kind=ReleasedKind.deletion,
+        cassette="KanMX",
     )
 
 

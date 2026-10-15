@@ -15,9 +15,10 @@ run. This module holds a store per column.
 
 RECORD (growth) = one (target gene set x arm) ``EnvironmentResponseExperiment``:
 
-- GENOTYPE: one ``BacterialReleasedCrisprPerturbation`` per targeted gene, keyed by the
-  label the release writes (a gene symbol or an operon label), carrying the arm's
-  released ``expression_direction``, the shared ``dCas9*-MCPSoxS`` construct and, when
+- GENOTYPE: one ``ReleasedIdentifierPerturbation`` per targeted gene, keyed by the
+  label the release writes (a gene symbol or an operon label), carrying the arm as its
+  ``released_kind`` (``crispr_activation`` or ``crispr_interference``), the shared
+  ``dCas9*-MCPSoxS`` construct and, when
   Suppl. Table 1 releases the matching ``N20-<gene>`` oligo, its guide spacer. The
   combination strains carry SIX leaves in one genotype, which is what they are.
 - ENVIRONMENT: the one tolerance culture: LB plus 0.5% pinene at 37 C for 12 h, with the
@@ -190,7 +191,6 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     BACTERIAL_ASSEMBLY_SETS,
     AssayType,
-    BacterialReleasedCrisprPerturbation,
     BacterialStrainBackground,
     Censoring,
     ComponentDefinition,
@@ -218,6 +218,8 @@ from torchcell.datamodels.schema import (
     ProductTiterExperimentReference,
     ProductTiterPhenotype,
     Publication,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     SampleUnit,
     SmallMoleculePerturbation,
     Temperature,
@@ -693,9 +695,9 @@ def reference_phenotype(arm: Arm) -> EnvironmentResponsePhenotype:
 # Genotype
 # --------------------------------------------------------------------------- #
 #: The released expression direction of each arm's dead-Cas effector.
-DIRECTION_OF_ARM: dict[Arm, str] = {
-    "crispr_activation": "increased",
-    "crispr_interference": "decreased",
+KIND_OF_ARM: dict[Arm, ReleasedKind] = {
+    "crispr_activation": ReleasedKind.crispr_activation,
+    "crispr_interference": ReleasedKind.crispr_interference,
 }
 
 #: What ``systematic_gene_name`` is on every record, as the release writes it.
@@ -717,18 +719,18 @@ class StoredTarget(BaseModel):
 def perturbation(target: StoredTarget, arm: Arm) -> Any:
     """One CRISPRa or CRISPRi leaf, keyed by the label the release names.
 
-    Both arms take the one released-construct leaf (#1077), whose
-    ``expression_direction`` is a released fact of the effector rather than a class
-    default; the label is stored verbatim, so an operon label such as ``sufBCDS`` is a
-    record identity like a gene symbol and no annotation is read.
+    Both arms take the one released-identifier leaf (#1077, P3), whose
+    ``released_kind`` states the arm, a released fact of the effector rather than a
+    class default; the label is stored verbatim, so an operon label such as
+    ``sufBCDS`` is a record identity like a gene symbol and no annotation is read.
     """
-    return BacterialReleasedCrisprPerturbation(
+    return ReleasedIdentifierPerturbation(
         systematic_gene_name=target.reported_symbol,
         perturbed_gene_name=target.reported_symbol,
         gene_namespace=BW25113_NAMESPACE,
         strain_label=target.strain_label,
         identifier_kind=IDENTIFIER_KIND,
-        expression_direction=DIRECTION_OF_ARM[arm],
+        released_kind=KIND_OF_ARM[arm],
         crispr=CrisprConstruct(
             effector=str(EFFECTOR.value), guide_sequence=target.guide_sequence
         ),
@@ -2229,14 +2231,14 @@ def _record_strain_key(record: dict[str, Any]) -> str:
     """``<arm>/<released label>`` of one stored record, read back off its genotype."""
     perturbations = record["experiment"]["genotype"]["perturbations"]
     labels = {str(p["strain_label"]) for p in perturbations}
-    directions = {str(p["expression_direction"]) for p in perturbations}
-    if len(labels) != 1 or len(directions) != 1:
+    kinds = {str(p["released_kind"]) for p in perturbations}
+    if len(labels) != 1 or len(kinds) != 1:
         raise RuntimeError(
-            f"one record carries {sorted(labels)} and {sorted(directions)}: a stored "
+            f"one record carries {sorted(labels)} and {sorted(kinds)}: a stored "
             "strain is one released label in one arm"
         )
-    direction = directions.pop()
-    arm = next(key for key, value in DIRECTION_OF_ARM.items() if value == direction)
+    kind = kinds.pop()
+    arm = next(key for key, value in KIND_OF_ARM.items() if value == kind)
     return _strain_key(arm, labels.pop())
 
 

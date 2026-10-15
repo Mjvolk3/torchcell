@@ -52,7 +52,6 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
 )
 from torchcell.data import ManifestPinMismatchError
 from torchcell.datamodels.schema import (
-    BacterialReleasedTransposonPerturbation,
     ComponentDefinition,
     ConcentrationUnit,
     EssentialityEvidenceClass,
@@ -62,6 +61,7 @@ from torchcell.datamodels.schema import (
     Genotype,
     MediaComponentRole,
     ReferenceGenome,
+    ReleasedIdentifierPerturbation,
     TransposonInsertionPerturbation,
 )
 from torchcell.literature.manifest import ROLE_RAW_DATA, ArtifactRecord, Manifest
@@ -438,7 +438,7 @@ def test_build_experiment_and_reference(tmp_path: Path) -> None:
     h = m.build_experiment("gerdes", hokC, env)
     assert isinstance(h.genotype, Genotype)
     (ph,) = h.genotype.perturbations
-    assert isinstance(ph, BacterialReleasedTransposonPerturbation)
+    assert isinstance(ph, ReleasedIdentifierPerturbation)
     assert (
         ph.systematic_gene_name,
         ph.perturbed_gene_name,
@@ -551,9 +551,9 @@ def test_build_ten_records_and_the_ledgers(
         for r in records[5:10]
     ] == [
         "transposon_insertion",
-        "bacterial_released_transposon",
-        "bacterial_released_transposon",
-        "bacterial_released_transposon",
+        "released_identifier",
+        "released_identifier",
+        "released_identifier",
         "transposon_insertion",
     ]
     assert all(r["experiment"]["phenotype"]["provenance_gaps"] == [] for r in records)
@@ -873,7 +873,7 @@ def test_real_build_counts_and_hand_checked_rows() -> None:
             1
             for r in records
             if r["experiment"]["genotype"]["perturbations"][0]["perturbation_type"]
-            == "bacterial_released_transposon"
+            == "released_identifier"
         )
         == 58
     )

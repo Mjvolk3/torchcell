@@ -266,7 +266,7 @@ def test_proteome_len_and_gene_set_skip_non_systematic_ko(
         released["perturbation_type"],
         released["systematic_gene_name"],
         released["perturbed_gene_name"],
-    ) == ("released_gene_name", "bad_ko", "BAD")
+    ) == ("released_identifier", "bad_ko", "BAD")
     _assert_side_files(
         root, ProteomeZelezniak2018Dataset, ["YDR003W", "YER004W", "bad_ko"]
     )

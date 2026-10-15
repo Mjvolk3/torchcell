@@ -62,7 +62,7 @@ The induced gene of each strain is named by the release only by a common-name to
 its ORF, and ``InduciblePromoterInsertionPerturbation.systematic_gene_name`` must be an
 ORF. ``RELEASE_TF_TOKENS_WITHOUT_AN_ORF`` is the one remaining crosswalk: the token -> ORF
 pairs the KG build served (derived from that build's ledger, not from a genome call at
-build time), pending group 1's released-gene-name leaf, after which the token is stored
+build time), pending group 1's released-identifier leaf, after which the token is stored
 verbatim and the ORF becomes a typed gap.
 
 REFUSED. Three time courses whose strain (SMY10, SMY19, SMY22) has no Table EV1 row: 21
@@ -1186,7 +1186,7 @@ def validation_timecourse_id(tf: str, restriction: str, mechanism: str) -> str:
 #: ``YGR066c`` is Table EV1's spelling of the release's ``YGR066C``) and the insertion
 #: leaf requires an ORF. This table was derived from the 2026.10.11 build's
 #: ``gene_keys.json`` once; the loader makes no genome call. It is the one remaining
-#: crosswalk, pending group 1's released-gene-name leaf (a GenePerturbation child that
+#: crosswalk, pending group 1's released-identifier leaf (a GenePerturbation child that
 #: carries the released symbol with ``systematic_gene_name`` as a typed gap), after which
 #: the token is stored verbatim and this table goes.
 RELEASE_TF_TOKENS_WITHOUT_AN_ORF: dict[str, str] = {
@@ -2086,7 +2086,7 @@ class InductionTimecourseHackett2020Dataset(ExperimentDataset):
                     "rule": "every expression layer is keyed by the release's "
                     "GeneName token verbatim; the induced gene's ORF comes from "
                     "RELEASE_TF_TOKENS_WITHOUT_AN_ORF, pending group 1's "
-                    "released-gene-name leaf",
+                    "released-identifier leaf",
                     "n_gene_keys_as_released": len(genes),
                     "tf_tokens_pinned": dict(
                         sorted(RELEASE_TF_TOKENS_WITHOUT_AN_ORF.items())

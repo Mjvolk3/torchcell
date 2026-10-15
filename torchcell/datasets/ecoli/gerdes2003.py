@@ -45,7 +45,7 @@ no other row carries (4,208 rows) is keyed on ``TransposonInsertionPerturbation`
 that b-number verbatim, with ``identifier_mapping=None``: the tag is the release's,
 whether or not the pinned annotation carries it, and the verifier's L4 row reports how
 many of them the annotation does, as a finding. The other 83 rows are keyed on
-``BacterialReleasedTransposonPerturbation`` by their ERGO id, Table S1's own unique row
+``ReleasedIdentifierPerturbation`` by their ERGO id, Table S1's own unique row
 identifier: 64 rows with no Blattner ID, one whose Blattner ID is ``b0018.1``, and the
 18 rows of 9 b-numbers the table lists twice (insertion-sequence copies at different
 chromosome positions, each with its own call), which one b-number cannot key twice. The
@@ -116,7 +116,6 @@ from torchcell.data import (
 )
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
-    BacterialReleasedTransposonPerturbation,
     ComponentDefinition,
     Compound,
     Concentration,
@@ -139,6 +138,8 @@ from torchcell.datamodels.schema import (
     MediaComponentRole,
     Publication,
     ReferenceGenome,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     Temperature,
     TransposonInsertionPerturbation,
 )
@@ -742,7 +743,7 @@ def build_drop_log(dataset_name: str, identities: Sequence[RowIdentity]) -> Drop
             f"{n_b} records store their released b-number verbatim on "
             "TransposonInsertionPerturbation (identifier_mapping None)",
             f"{n_ergo} records store their ERGO id on "
-            "BacterialReleasedTransposonPerturbation: no Blattner ID, a malformed one, "
+            "ReleasedIdentifierPerturbation: no Blattner ID, a malformed one, "
             "or a b-number the table lists twice (the Blattner ID stays a column of "
             "calls.csv)",
             *ergo_items,
@@ -977,12 +978,13 @@ def insertion_genotype(identity: RowIdentity) -> Genotype:
         )
     return Genotype(
         perturbations=[
-            BacterialReleasedTransposonPerturbation(
+            ReleasedIdentifierPerturbation(
                 systematic_gene_name=identity.identifier,
                 perturbed_gene_name=released_gene_name(identity),
                 gene_namespace=namespace,
                 strain_label=identity.identifier,
                 identifier_kind=ERGO_KIND,
+                released_kind=ReleasedKind.transposon_insertion,
                 transposon=TRANSPOSON,
             )
         ]

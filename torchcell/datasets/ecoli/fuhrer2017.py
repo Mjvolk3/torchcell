@@ -34,7 +34,7 @@ IDENTIFIERS, STORED AS RELEASED (owner rule of 2026-10-12: the data is the data,
 the genome never gates a record). The deposit labels each strain column by GENE NAME,
 and the paper's Table EV1A ties that name to its Keio JW id, Blattner number and
 delivery status. The record stores exactly that: one
-``BacterialReleasedStrainPerturbation`` per Table EV1A entry the column name matches,
+``ReleasedIdentifierPerturbation`` per Table EV1A entry the column name matches,
 with the JW id as ``systematic_gene_name``, the entry's gene name as
 ``perturbed_gene_name``, the deposit column name as ``strain_label``,
 ``identifier_kind`` "Keio JW id" and ``released_kind`` deletion. No annotation is read
@@ -98,7 +98,6 @@ from torchcell.data import (
 )
 from torchcell.datamodels.media import M9_GLUCOSE_CASEIN_FUHRER2017
 from torchcell.datamodels.schema import (
-    BacterialReleasedStrainPerturbation,
     Environment,
     Experiment,
     ExperimentReference,
@@ -108,7 +107,8 @@ from torchcell.datamodels.schema import (
     MetabolitePhenotype,
     Publication,
     ReferenceGenome,
-    ReleasedStrainKind,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     Temperature,
 )
 from torchcell.datasets.bacteria_common import (
@@ -1026,7 +1026,7 @@ def build_drop_log(dataset_name: str, selection: StrainSelection) -> DropLog:
         rules=[],
         notes=[
             "every mutant deposit column is a record under the Keio JW id(s) Table "
-            "EV1A lists for its name (BacterialReleasedStrainPerturbation); no "
+            "EV1A lists for its name (ReleasedIdentifierPerturbation); no "
             "annotation is read and no column is dropped for a JW id the BW25113 "
             "GenBank file does not carry",
             f"{len(selection.pooled)} deposit names match more than one Table EV1A "
@@ -1078,14 +1078,14 @@ def environment() -> Environment:
 
 def _released_perturbation(
     strain: KeioStrain, identifier: str, gene_name: str, kind: str
-) -> BacterialReleasedStrainPerturbation:
-    return BacterialReleasedStrainPerturbation(
+) -> ReleasedIdentifierPerturbation:
+    return ReleasedIdentifierPerturbation(
         systematic_gene_name=identifier,
         perturbed_gene_name=gene_name,
         gene_namespace=STRAIN_GENE_NAMESPACES["BW25113"],
         strain_label=strain.deposit_name,
         identifier_kind=kind,
-        released_kind=ReleasedStrainKind.deletion,
+        released_kind=ReleasedKind.deletion,
         collection=COLLECTION,
         cassette=CASSETTE,
     )

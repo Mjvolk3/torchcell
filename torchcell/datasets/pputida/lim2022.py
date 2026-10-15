@@ -33,7 +33,7 @@ with an in-house ``SBRG_*`` column, and for 16 of those (the ionic-liquid ALE sa
 same-named SRX column exists but does NOT reproduce the published values.
 
 GENOTYPE. A wild-type sample has an empty genotype on the KT2440 reference. A sample whose
-condition names a gene deletion carries a ``BacterialReleasedStrainPerturbation`` of
+condition names a gene deletion carries a ``ReleasedIdentifierPerturbation`` of
 ``released_kind=deletion`` per deleted gene, keyed by the symbol the condition label
 releases (``Crc:Del_crcZ_crcY`` -> ``crcZ``, ``crcY``), the condition label as the strain
 label (#1045 part 2): the loader resolves no symbol, so the 11 samples whose symbols the
@@ -122,7 +122,6 @@ from torchcell.data.experiment_dataset import file_sha256
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     BacterialAssemblySet,
-    BacterialReleasedStrainPerturbation,
     BacterialStrainBackground,
     ComponentDefinition,
     Compound,
@@ -139,7 +138,8 @@ from torchcell.datamodels.schema import (
     PhysicalFactor,
     Publication,
     ReferenceGenome,
-    ReleasedStrainKind,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     RNASeqExpressionExperiment,
     RNASeqExpressionExperimentReference,
     RNASeqExpressionPhenotype,
@@ -1323,17 +1323,15 @@ class UnclassifiedConditionError(KeyError):
     """A compendium condition has no strain call."""
 
 
-def released_deletion(
-    symbol: str, strain_label: str
-) -> BacterialReleasedStrainPerturbation:
+def released_deletion(symbol: str, strain_label: str) -> ReleasedIdentifierPerturbation:
     """One deleted gene, keyed by the symbol the condition label releases (#1045 part 2)."""
-    return BacterialReleasedStrainPerturbation(
+    return ReleasedIdentifierPerturbation(
         systematic_gene_name=symbol,
         perturbed_gene_name=symbol,
         gene_namespace=GENE_NAMESPACE,
         strain_label=strain_label,
         identifier_kind="gene symbol",
-        released_kind=ReleasedStrainKind.deletion,
+        released_kind=ReleasedKind.deletion,
     )
 
 
@@ -1975,7 +1973,7 @@ class PutidaPrecise321Lim2022Dataset(ExperimentDataset):
     def create_experiment(  # type: ignore[override]
         self,
         *,
-        perturbations: Sequence[BacterialReleasedStrainPerturbation],
+        perturbations: Sequence[ReleasedIdentifierPerturbation],
         environment: Environment,
         tpm: Mapping[str, float],
         counts: Mapping[str, int],

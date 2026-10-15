@@ -64,13 +64,13 @@ are MG1655 b-numbers and the background pins the MG1655 assembly; the genotype t
 release does not state (an isolate's acquired mutations, a strain's lesions) is a typed
 gap on ``genotype_statement``. An ``rpoB`` amino-acid substitution (``rpoBE546V``) and an
 activating-region deletion inside ``crp`` (``crp_delAr1``) are stored on
-``BacterialReleasedStrainPerturbation`` as a ``sequence_allele`` of the gene their token
+``ReleasedIdentifierPerturbation`` as a ``sequence_allele`` of the gene their token
 names, under the ``Strain Description`` as the strain label, with no coordinates looked
 up. Since #1045 part 2 a plasmid-borne heterologous or orthologous protein (``pColi``
 study) and an added gene (``+aldA`` on DGF-298) are stored too: the sample sits on a
 ``BacterialStrainBackground`` named by its ``Strain Description`` verbatim, and the
 construct, source organism and sequence the release does not contain are the typed gap on
-``genotype_statement``. A whole-gene deletion is a ``BacterialReleasedStrainPerturbation``
+``genotype_statement``. A whole-gene deletion is a ``ReleasedIdentifierPerturbation``
 of ``released_kind=deletion`` keyed by the gene symbol the ``del_`` token releases
 (``del_ybaO`` -> ``ybaO``), the ``Strain Description`` as the strain label; the loader
 reads no annotation, so a symbol-to-b-number crosswalk is a modeling-time join.
@@ -141,7 +141,6 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     BacterialAssemblySet,
-    BacterialReleasedStrainPerturbation,
     BacterialStrainBackground,
     ComponentDefinition,
     Compound,
@@ -160,7 +159,8 @@ from torchcell.datamodels.schema import (
     PhysicalFactor,
     Publication,
     ReferenceGenome,
-    ReleasedStrainKind,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     RNASeqExpressionExperiment,
     RNASeqExpressionExperimentReference,
     RNASeqExpressionPhenotype,
@@ -587,22 +587,22 @@ class ReleasedAllele(BaseModel):
 
     ``gene`` is the release's own identifier verbatim (the symbol a substitution or a
     partial edit names, or a deletion label such as ``7prrn``); ``kind`` is what the
-    token says the edit is. It is stored on ``BacterialReleasedStrainPerturbation``
+    token says the edit is. It is stored on ``ReleasedIdentifierPerturbation``
     under the sample's ``Strain Description`` as the strain label, with no lookup.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     gene: str
-    kind: ReleasedStrainKind
+    kind: ReleasedKind
     identifier_kind: str = "gene symbol"
 
 
 def released_allele_perturbation(
     allele: ReleasedAllele, strain_label: str
-) -> BacterialReleasedStrainPerturbation:
+) -> ReleasedIdentifierPerturbation:
     """The released-strain leaf of one released allele, under its strain label."""
-    return BacterialReleasedStrainPerturbation(
+    return ReleasedIdentifierPerturbation(
         systematic_gene_name=allele.gene,
         perturbed_gene_name=allele.gene,
         gene_namespace=GENE_NAMESPACE,
@@ -797,7 +797,7 @@ def settle_allele(row: Mapping[str, str]) -> GenotypeVerdict:
         if edit is not None:
             alleles.append(
                 ReleasedAllele(
-                    gene=edit.group("gene"), kind=ReleasedStrainKind.sequence_allele
+                    gene=edit.group("gene"), kind=ReleasedKind.sequence_allele
                 )
             )
         elif deletion is not None:
@@ -854,10 +854,10 @@ def settle_sample_genotype(row: Mapping[str, str]) -> GenotypeVerdict:
 
 def deletion_perturbation(
     symbol: str, strain_label: str
-) -> BacterialReleasedStrainPerturbation:
+) -> ReleasedIdentifierPerturbation:
     """A whole-gene deletion keyed by the gene symbol its ``del_`` token releases."""
     return released_allele_perturbation(
-        ReleasedAllele(gene=symbol, kind=ReleasedStrainKind.deletion), strain_label
+        ReleasedAllele(gene=symbol, kind=ReleasedKind.deletion), strain_label
     )
 
 

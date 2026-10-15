@@ -1359,7 +1359,7 @@ def released_library_rows(df: pd.DataFrame, sample_cols: list[str]) -> LibraryRo
     """Split the matrix's rows into stored rows and rows that hold no record.
 
     A row whose EVERY count column is missing holds no value in any condition. A row
-    whose gene column is not ORF-shaped would need a released-gene-name leaf the schema
+    whose gene column is not ORF-shaped would need a released-identifier leaf the schema
     does not have yet, so it is counted under its own rule. Every other row is stored
     under its released ORF and ``std_name``. Two stored rows releasing the same ORF and
     the same barcode would produce identical records, so the build refuses rather than

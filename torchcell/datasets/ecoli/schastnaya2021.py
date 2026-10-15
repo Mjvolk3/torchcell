@@ -40,7 +40,7 @@ from Baba.
 
 RECORDS. All 200 released columns are records (#1045 row 22, #1057). The 29 KEIO
 deletion columns (16 strains over their carbon sources) carry a
-``BacterialReleasedStrainPerturbation`` of ``released_kind=deletion`` keyed by the gene
+``ReleasedIdentifierPerturbation`` of ``released_kind=deletion`` keyed by the gene
 SYMBOL the column token releases (``sucB knockout`` -> ``sucB``), with the KEIO
 collection and cassette from Baba: the release names no b-number for a deletion strain,
 and under the owner's rule of 2026-10-12 the loader reads no annotation to derive one,
@@ -48,7 +48,7 @@ so the resolution to a locus is a modeling-time join. Before that rule the symbo
 through ``reconcile_locus_tags`` and the record carried the resolved b-number. The 171
 phosphomutant columns (87 strains) were
 dropped under ``phosphosite_substitution_has_no_bacterial_leaf`` until #1057; each is
-now stored as released on ``BacterialReleasedStrainPerturbation``
+now stored as released on ``ReleasedIdentifierPerturbation``
 (``released_kind=sequence_allele``): ``strain_label`` is the Supplementary Data 3
 column token verbatim (``AceA-S398A``, ``TalB-T33E/T34E/S37E``), and the gene
 identifier is the protein name that token writes (``AceA``), because the leaf refuses a
@@ -108,7 +108,6 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     BACTERIAL_ASSEMBLY_SETS,
     BacterialAssemblySet,
-    BacterialReleasedStrainPerturbation,
     BacterialStrainBackground,
     Concentration,
     ConcentrationUnit,
@@ -124,7 +123,8 @@ from torchcell.datamodels.schema import (
     MetabolitePhenotype,
     Publication,
     ReferenceGenome,
-    ReleasedStrainKind,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     Temperature,
 )
 from torchcell.datasets.bacteria_common import (
@@ -1211,19 +1211,19 @@ def deletion_genotype(column: StrainColumn) -> Genotype:
     """The one KEIO deletion, stored under the symbol Supplementary Data 3 releases.
 
     The release names the deleted gene by symbol only (``sucB knockout``), so the record
-    is a ``BacterialReleasedStrainPerturbation`` of kind ``deletion`` keyed by that
+    is a ``ReleasedIdentifierPerturbation`` of kind ``deletion`` keyed by that
     symbol, with the KEIO collection and cassette from Baba 2006; no annotation
     decides a b-number for it (the owner's rule of 2026-10-12).
     """
     return Genotype(
         perturbations=[
-            BacterialReleasedStrainPerturbation(
+            ReleasedIdentifierPerturbation(
                 systematic_gene_name=column.gene_symbol,
                 perturbed_gene_name=column.gene_symbol,
                 gene_namespace=STRAIN_GENE_NAMESPACES[REFERENCE_STRAIN_NAME],
                 strain_label=column.strain,
                 identifier_kind=DELETION_IDENTIFIER_KIND,
-                released_kind=ReleasedStrainKind.deletion,
+                released_kind=ReleasedKind.deletion,
                 collection=COLLECTION,
                 cassette=CASSETTE,
             )
@@ -1235,13 +1235,13 @@ def phosphomutant_genotype(column: StrainColumn) -> Genotype:
     """One MAGE phosphomutant, stored under the token Supplementary Data 3 releases."""
     return Genotype(
         perturbations=[
-            BacterialReleasedStrainPerturbation(
+            ReleasedIdentifierPerturbation(
                 systematic_gene_name=column.enzyme,
                 perturbed_gene_name=column.enzyme,
                 gene_namespace=STRAIN_GENE_NAMESPACES[REFERENCE_STRAIN_NAME],
                 strain_label=column.strain,
                 identifier_kind=PHOSPHOMUTANT_IDENTIFIER_KIND,
-                released_kind=ReleasedStrainKind.sequence_allele,
+                released_kind=ReleasedKind.sequence_allele,
             )
         ]
     )
@@ -1697,7 +1697,7 @@ def verify_build(
             p["systematic_gene_name"]
             for r in records
             for p in r["experiment"]["genotype"]["perturbations"]
-            if p["perturbation_type"] == "bacterial_released_strain"
+            if p["perturbation_type"] == "released_identifier"
         }
     )
     missing = sorted(deleted - universe)

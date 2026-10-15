@@ -15,7 +15,7 @@ sensitive to acetic acid. Table 1 reports the 12 individually isolated strains.
 RECORD = one isolated strain as an ``EnvironmentResponseExperiment``:
 
 - GENOTYPE: one CRISPRi target under the name Table 1 releases, verbatim (#1045): a
-  common name (all 12) on ``ReleasedGeneNamePerturbation`` with kind
+  common name (all 12) on ``ReleasedIdentifierPerturbation`` with kind
   ``crispr_interference``, a systematic name on ``CrisprInterferencePerturbation``; no
   genome is consulted. The construct (effector ``dCas9-Mxi1``,
   ``n_guides=1`` -- an isolated strain carries exactly one gRNA; the "1-16 gRNAs each" in
@@ -121,8 +121,8 @@ from torchcell.datamodels.schema import (
     PhysicalFactor,
     Publication,
     ReferenceGenome,
-    ReleasedGeneKind,
-    ReleasedGeneNamePerturbation,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     ResponseCategory,
     SampleUnit,
     SmallMoleculePerturbation,
@@ -574,11 +574,11 @@ class CrispriMormino2022Dataset(ExperimentDataset):
     @staticmethod
     def _released_target(
         common: str,
-    ) -> CrisprInterferencePerturbation | ReleasedGeneNamePerturbation:
+    ) -> CrisprInterferencePerturbation | ReleasedIdentifierPerturbation:
         """The CRISPRi target under the name Table 1 releases (#1045).
 
         A systematic name goes on ``CrisprInterferencePerturbation``; a common name (all
-        12 of Table 1) on ``ReleasedGeneNamePerturbation`` with kind
+        12 of Table 1) on ``ReleasedIdentifierPerturbation`` with kind
         ``crispr_interference`` and the same construct. No genome is consulted.
         """
         construct = CrisprConstruct(effector=EFFECTOR, guide_sequence=None, n_guides=1)
@@ -588,12 +588,12 @@ class CrispriMormino2022Dataset(ExperimentDataset):
                 perturbed_gene_name=common,
                 crispr=construct,
             )
-        return ReleasedGeneNamePerturbation(
+        return ReleasedIdentifierPerturbation(
             systematic_gene_name=common,
             gene_namespace="scerevisiae_s288c_sgd_systematic",
             perturbed_gene_name=common,
-            released_gene_name=common,
-            released_kind=ReleasedGeneKind.crispr_interference,
+            identifier_kind="common name, as Table 1 writes it",
+            released_kind=ReleasedKind.crispr_interference,
             crispr=construct,
         )
 

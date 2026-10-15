@@ -41,7 +41,7 @@ not stored: ``preprocess/dropped_records.json`` names them under ``not_targeted`
 STRAIN AND IDENTIFIERS, STORED AS RELEASED (owner rule of 2026-10-12: the data is the
 data, and the genome never gates a record). BW25113
 (``SOURCED_VALUES["background_strain"]``). Each ORF's identity is its Keio JW id, which
-is what the record stores: ``BacterialReleasedStrainPerturbation`` with the JW id as
+is what the record stores: ``ReleasedIdentifierPerturbation`` with the JW id as
 ``systematic_gene_name`` and ``strain_label``, the released gene name as
 ``perturbed_gene_name`` (the JW id itself where Table 3 prints ``none``),
 ``identifier_kind`` "Keio JW id" and ``released_kind`` deletion. No annotation is read
@@ -53,7 +53,7 @@ L4 row reports how many JW ids the pinned annotation places and gates on none of
 Every targeted Table 3 row is a record: 4,288 of 4,378 (3,985 obtained, 303 not
 obtained); the 90 not targeted are the ``not_targeted`` ledger rows.
 
-GENOTYPE. One ``BacterialReleasedStrainPerturbation`` per record, cassette "kanamycin
+GENOTYPE. One ``ReleasedIdentifierPerturbation`` per record, cassette "kanamycin
 cassette". ``collection`` is "Keio collection" only for an obtained deletion: a deletion
 that was never obtained is in no collection, and a record claiming one would name a
 strain that does not exist.
@@ -108,7 +108,6 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import LB_LENNOX
 from torchcell.datamodels.schema import (
-    BacterialReleasedStrainPerturbation,
     Concentration,
     ConcentrationUnit,
     Environment,
@@ -128,7 +127,8 @@ from torchcell.datamodels.schema import (
     MediaComponentRole,
     Publication,
     ReferenceGenome,
-    ReleasedStrainKind,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     Temperature,
 )
 from torchcell.datasets.bacteria_common import (
@@ -661,7 +661,7 @@ def build_drop_log(dataset_name: str, rows: Sequence[KeioRow]) -> DropLog:
         rules=rules,
         notes=[
             "every targeted Table 3 row is a record under its Keio JW id, verbatim "
-            "(BacterialReleasedStrainPerturbation); no annotation is read and no row "
+            "(ReleasedIdentifierPerturbation); no annotation is read and no row "
             "is dropped for an identifier the BW25113 GenBank file does not carry",
             f"{len(kept) - obtained} not-obtained ORFs store is_essential True and "
             f"{obtained} obtained ORFs store False (the paper's own scoring rule)",
@@ -750,13 +750,13 @@ def deletion_genotype(row: KeioRow) -> Genotype:
     obtained = row.targeted and row.obtained
     return Genotype(
         perturbations=[
-            BacterialReleasedStrainPerturbation(
+            ReleasedIdentifierPerturbation(
                 systematic_gene_name=row.jw_id,
                 perturbed_gene_name=released_gene_name(row),
                 gene_namespace=STRAIN_GENE_NAMESPACES[BACKGROUND_STRAIN],
                 strain_label=row.jw_id,
                 identifier_kind=IDENTIFIER_KIND,
-                released_kind=ReleasedStrainKind.deletion,
+                released_kind=ReleasedKind.deletion,
                 collection=KEIO_COLLECTION if obtained else None,
                 cassette=KEIO_CASSETTE,
             )

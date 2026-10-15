@@ -47,7 +47,6 @@ from torchcell.datamodels.schema import (
     ASSEMBLY_SET_ACCESSIONS,
     BACTERIAL_ASSEMBLY_SETS,
     AssayType,
-    BacterialReleasedCrisprPerturbation,
     ComponentDefinition,
     ConcentrationUnit,
     EnvironmentResponseExperiment,
@@ -57,6 +56,8 @@ from torchcell.datamodels.schema import (
     MediaComponentRole,
     PhagePerturbation,
     ReferenceGenome,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     SampleUnit,
     SmallMoleculePerturbation,
     StrainReferenceGenome,
@@ -239,13 +240,13 @@ def test_a_growth_record_names_s1_as_its_identifier_source() -> None:
         identifier_kind=r.GROWTH_IDENTIFIER_KIND,
     )
     (perturbation,) = r.genotype(stored).perturbations
-    assert isinstance(perturbation, BacterialReleasedCrisprPerturbation)
+    assert isinstance(perturbation, ReleasedIdentifierPerturbation)
     assert perturbation.identifier_kind == r.GROWTH_IDENTIFIER_KIND
     assert "S1" in r.GROWTH_IDENTIFIER_KIND
     (default,) = r.genotype(
         r.StoredGuide(spacer="A" * 20, reported_symbol="thrL")
     ).perturbations
-    assert isinstance(default, BacterialReleasedCrisprPerturbation)
+    assert isinstance(default, ReleasedIdentifierPerturbation)
     assert default.identifier_kind == r.IDENTIFIER_KIND
 
 
@@ -422,14 +423,15 @@ def test_the_reference_response_is_zero_for_every_screen() -> None:
 def test_a_genotype_is_crispri_of_its_released_symbol_by_the_reported_spacer() -> None:
     stored = r.StoredGuide(spacer="ACCACGCACTCTGACCATCT", reported_symbol="sucA")
     (perturbation,) = r.genotype(stored).perturbations
-    assert isinstance(perturbation, BacterialReleasedCrisprPerturbation)
-    assert perturbation.perturbation_type == "bacterial_released_crispr"
+    assert isinstance(perturbation, ReleasedIdentifierPerturbation)
+    assert perturbation.perturbation_type == "released_identifier"
     assert perturbation.systematic_gene_name == "sucA"
     assert perturbation.perturbed_gene_name == "sucA"
     assert perturbation.gene_namespace == "ecoli_k12_mg1655_bnumber"
-    assert perturbation.expression_direction == "decreased"
+    assert perturbation.released_kind is ReleasedKind.crispr_interference
     assert perturbation.strain_label == "ACCACGCACTCTGACCATCT"
     assert perturbation.identifier_kind == r.IDENTIFIER_KIND
+    assert perturbation.crispr is not None
     assert perturbation.crispr.effector == "dCas9"
     assert perturbation.crispr.guide_sequence == "ACCACGCACTCTGACCATCT"
     assert perturbation.crispr.n_guides == 1
@@ -444,11 +446,12 @@ def test_two_guides_on_one_gene_are_two_strains_and_one_gene() -> None:
         ]
         for spacer in ("A" * 20, "C" * 20)
     ]
-    assert all(isinstance(g, BacterialReleasedCrisprPerturbation) for g in guides)
+    assert all(isinstance(g, ReleasedIdentifierPerturbation) for g in guides)
     first, second = guides
-    assert isinstance(first, BacterialReleasedCrisprPerturbation)
-    assert isinstance(second, BacterialReleasedCrisprPerturbation)
+    assert isinstance(first, ReleasedIdentifierPerturbation)
+    assert isinstance(second, ReleasedIdentifierPerturbation)
     assert first.systematic_gene_name == second.systematic_gene_name
+    assert first.crispr is not None and second.crispr is not None
     assert first.crispr.guide_sequence != second.crispr.guide_sequence
 
 

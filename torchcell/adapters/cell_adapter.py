@@ -34,9 +34,6 @@ from torchcell.datamodels.identity import (
 )
 from torchcell.datamodels.interned_constant import split_experiment_dump
 from torchcell.datamodels.schema import (
-    BacterialReleasedCrisprPerturbation,
-    BacterialReleasedStrainPerturbation,
-    BacterialReleasedTransposonPerturbation,
     CrisprActivationPerturbation,
     CrisprInterferencePerturbation,
     DegronPerturbation,
@@ -46,6 +43,7 @@ from torchcell.datamodels.schema import (
     MarkedAllelePerturbation,
     PhagePerturbation,
     PromoterReplacementPerturbation,
+    ReleasedIdentifierPerturbation,
     SiteVariantCallPerturbation,
     SpanDeletionCallPerturbation,
     TransposonInsertionPerturbation,
@@ -91,16 +89,13 @@ BACTERIAL_PERTURBATION_LEAVES: tuple[type, ...] = (
     MarkedAllelePerturbation,
     DegronPerturbation,
     CrisprActivationPerturbation,
-    # #691: a strain under its released identifier. The same five properties; its
-    # strain_label, released_kind, identifier_kind, cassette and collection travel in the
-    # serialized record, as the round-2 leaves' own fields do.
-    BacterialReleasedStrainPerturbation,
-    # #691 round 2: a CRISPR guide and a transposon insertion against a released
-    # identifier. The same five properties; crispr, expression_direction, barcode,
-    # insertion_position, insertion_strand, transposon and library_pool travel in the
-    # serialized record, as they do on the placed leaves of each technology.
-    BacterialReleasedCrisprPerturbation,
-    BacterialReleasedTransposonPerturbation,
+    # P3 (ontology-unify): a gene under the identifier its source released, the one
+    # leaf that replaced the three #691 bacterial released leaves and the #1045 yeast
+    # one. The same five properties; strain_label, released_kind, identifier_kind,
+    # cassette, collection, crispr and the mapped-insertion fields travel in the
+    # serialized record. The yeast released records of 18 served datasets are this
+    # class too; lane H re-keys the lane.
+    ReleasedIdentifierPerturbation,
 )
 """The gene-perturbation leaves written as ``bacterial perturbation`` nodes.
 

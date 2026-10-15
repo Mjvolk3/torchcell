@@ -224,7 +224,7 @@ sourcing layer.
 - ``teteneva2024`` -- ``RbTnseqTeteneva2024Dataset``: the lake-water RB-TnSeq screen of
   E. coli K-12 W3110 RpoS+, all 66,162 Supplementary Table S4 gene fitness values, one
   per (gene, lake water sample, filtration, sampling day). Table S4 names genes by
-  symbol only, and each is stored as released on ``BacterialReleasedStrainPerturbation``
+  symbol only, and each is stored as released on ``ReleasedIdentifierPerturbation``
   (kind ``transposon_insertion``) with no annotation lookup; the reference is the
   W3110 set ``ecoli_K12_W3110_ASM1024v1`` (#910).
 - ``cai2023`` -- the MCF2Chem record: an aggregation NOT admitted. Its 8,888 production

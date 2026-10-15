@@ -217,6 +217,25 @@ def test_one_sbatch_per_tier_with_the_tier_sizes_and_the_environment() -> None:
     assert "," not in line.split("--export=")[1].split()[0]
 
 
+def test_a_dependency_is_an_explicit_sbatch_argument() -> None:
+    """SBATCH_DEPENDENCY in the environment was not honored (jobs 4920/4921)."""
+    subs = tier_submissions(
+        _order(),
+        load_tier_table(),
+        script="s",
+        out_name="o",
+        environment={},
+        indices=[3],
+        dependency="afterany:4919",
+    )
+    assert subs[0].argv[-3:] == ["--dependency=afterany:4919", "--export=ALL", "s"]
+    assert "--dependency" not in " ".join(
+        tier_submissions(
+            _order(), load_tier_table(), script="s", out_name="o", environment={}
+        )[0].argv
+    )
+
+
 def test_a_submission_restricted_to_some_indices_covers_only_those_tiers() -> None:
     subs = tier_submissions(
         _order(),

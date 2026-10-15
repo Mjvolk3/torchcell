@@ -15,7 +15,8 @@
 # nothing; INDICES=<slurm array spelling> restricts the submission to those positions
 # of the order (a re-run of failed tasks into the existing directory, which keeps its
 # order and fence, or one adapter for a measurement run into a new one).
-# GEN_OVERRIDES carries hydra overrides to every task (a measurement knob).
+# GEN_OVERRIDES carries hydra overrides to every task (a measurement knob);
+# DEPENDENCY=afterany:<job> chains the arrays after a job.
 set -euo pipefail
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate torchcell
@@ -35,6 +36,10 @@ ARRAY_SCRIPT="${ARRAY_SCRIPT:-$TORCHCELL_SRC/database/slurm/scripts/gilahyper_ge
 DRY_RUN="${DRY_RUN:-0}"
 INDICES="${INDICES:-}"
 JOB_NAME_PREFIX="${JOB_NAME_PREFIX:-gen_adapter}"
+# DEPENDENCY=afterany:<job> chains every array of this submission after a job (a
+# measurement run after the previous one); SBATCH_DEPENDENCY in the environment is
+# NOT honored by slurm 24.05 here (jobs 4920/4921, 2026-10-15).
+DEPENDENCY="${DEPENDENCY:-}"
 BUILD_COMMIT="${BUILD_COMMIT:-$(git -C "$TORCHCELL_SRC" rev-parse origin/main)}"
 case "$INCLUDE_PRIVATE" in
     1) PRIVATE_FLAG="--include-private" ;;
@@ -73,4 +78,4 @@ $GA submit --out-name "$OUT_NAME" --out-dir "$OUT_HOST" --script "$ARRAY_SCRIPT"
     --torchcell-src "$TORCHCELL_SRC" --build-commit "$BUILD_COMMIT" --dev-data-root "$DEV_DATA_ROOT" \
     --serve-root "$SERVE_ROOT" --build-root "$BUILD_ROOT" --kg-config "$KG_CONFIG" \
     ${GEN_OVERRIDES:+--gen-overrides "$GEN_OVERRIDES"} ${TCDB_TAGS:+--tcdb-tags "$TCDB_TAGS"} \
-    --job-name-prefix "$JOB_NAME_PREFIX" $([ "$DRY_RUN" = 1 ] && echo --dry-run)
+    --job-name-prefix "$JOB_NAME_PREFIX" ${DEPENDENCY:+--dependency "$DEPENDENCY"} $([ "$DRY_RUN" = 1 ] && echo --dry-run)

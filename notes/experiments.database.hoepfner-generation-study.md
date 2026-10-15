@@ -26,8 +26,10 @@ Each run is one task of the generation array ([[database.slurm.scripts.gilahyper
 
 | run | knob | job | status |
 |---|---|---|---|
-| baseline | config defaults (128 MiB chunk budget, 64 workers, recycle at 0.8) | see the section below | |
-| variant A | `adapters.single_pass_chunk_budget_mb=256` | | |
-| variant B | 32 workers (`GEN_CPUS=32`, same 320 G) | | |
+| baseline | config defaults (128 MiB chunk budget, 64 workers, recycle at 0.8) | 4919 (task 4919_64), `hoepfner-study-2026-10-15_04-20-20` | submitted 2026-10-15 04:20 CDT |
+| variant A | `adapters.single_pass_chunk_budget_mb=256` | 4920, `hoepfner-study-2026-10-15_04-21-22-chunk256`, after 4919 | chained |
+| variant B | 32 workers (`GEN_CPUS=32`, same 320 G) | 4921, `hoepfner-study-2026-10-15_04-21-22-w32`, after 4920 | chained |
+
+All three run at commit `9a7d1c2e` from the detached worktree `~/Documents/projects/torchcell.worktrees/kg-generation-array-study` (removed after the study). The chain was set with `scontrol update JobId=<v> Dependency=afterany:<prev>` after `SBATCH_DEPENDENCY` in the environment proved not to be honored; the conductor now takes `DEPENDENCY=`. Logs: `/scratch/projects/torchcell/database/slurm/output/<job>_64_hoepfner_*.out` and `<job>_64_generate.log`.
 
 Readout per run: `kg_build_adapter_resources.py --telemetry <dir>/telemetry/resource_samples.csv --generate-log <task log> --label hoepfner-<job>` (hours, cores mean, memory mean and max, recycles), the `DONE` marker's `generation_wall_s` and `peak_memory_gb`, and the node and edge row counts, which must equal the baseline's.

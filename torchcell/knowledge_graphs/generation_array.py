@@ -330,12 +330,16 @@ def tier_submissions(
     environment: dict[str, str],
     indices: Iterable[int] | None = None,
     job_name_prefix: str = "gen_adapter",
+    dependency: str | None = None,
 ) -> list[TierSubmission]:
     """One submission per tier that has at least one of ``indices`` (all when None).
 
     Multi-member values (``KG_ORGANISMS=a,b``, hydra overrides) travel in the
     environment with ``--export=ALL``, never inside ``--export``'s own list, which
-    sbatch splits on commas (job 4899 built yeast-only that way).
+    sbatch splits on commas (job 4899 built yeast-only that way). ``dependency`` is
+    passed as ``--dependency=`` (``afterany:4919``): the ``SBATCH_DEPENDENCY``
+    environment variable was not honored by slurm 24.05 on 2026-10-15 (jobs 4920 and
+    4921 were submitted with it and carried no dependency).
     """
     known = {slot.index for slot in order}
     wanted = known if indices is None else set(indices)
@@ -368,6 +372,7 @@ def tier_submissions(
             f"--cpus-per-task={tier.cpus}",
             f"--mem={tier.mem_gb}G",
             f"--time={tier.time_limit}",
+            *([f"--dependency={dependency}"] if dependency else []),
             "--export=ALL",
             script,
         ]
@@ -948,6 +953,9 @@ def main(argv: list[str] | None = None) -> int:
         )
         p.add_argument("--tcdb-tags", default=None)
         p.add_argument("--job-name-prefix", default="gen_adapter")
+        p.add_argument(
+            "--dependency", default=None, help="sbatch --dependency, e.g. afterany:4919"
+        )
 
     p_plan = sub.add_parser("plan", help="print the sbatch lines without submitting")
     add_submission(p_plan)
@@ -1051,6 +1059,7 @@ def main(argv: list[str] | None = None) -> int:
         environment=environment,
         indices=indices,
         job_name_prefix=args.job_name_prefix,
+        dependency=args.dependency,
     )
     job_ids = submit(submissions, dry_run=args.command == "plan" or args.dry_run)
     if job_ids:

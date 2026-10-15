@@ -215,7 +215,7 @@ so a drift in either store stops the build.
 STRAIN. The same conjugant chassis as Babu 2014, for the same reason: every released
 identifier is an MG1655 b-number, so records pin
 ``assembly_reference("MG1655", background=...)``, and the physical strain is a
-``BacterialStrainBackground`` whose ``parents`` name Hfr Cavalli and the Keio collection.
+``StrainBackground`` whose ``parents`` name Hfr Cavalli and the Keio collection.
 
 MEDIUM AND CONDITION. One condition: the second double-drug selection plate, LB agar with
 kanamycin and chloramphenicol, 24 h at 32 C, which is the plate that was photographed and
@@ -269,7 +269,6 @@ from torchcell.datamodels.schema import (
     BACTERIAL_ASSEMBLY_SETS,
     BacterialAssemblySet,
     BacterialGeneNamespace,
-    BacterialStrainBackground,
     DeletionStrainPerturbation,
     Environment,
     Experiment,
@@ -287,6 +286,7 @@ from torchcell.datamodels.schema import (
     ReleasedIdentifierPerturbation,
     ReleasedKind,
     SampleUnit,
+    StrainBackground,
     StrainConstruction,
     Temperature,
 )
@@ -1855,9 +1855,9 @@ def reference_phenotype() -> GeneInteractionPhenotype:
     )
 
 
-def chassis_background() -> BacterialStrainBackground:
+def chassis_background() -> StrainBackground:
     """The conjugant chassis: an Hfr C query crossed into a Keio (BW25113) recipient."""
-    return BacterialStrainBackground(
+    return StrainBackground(
         name="Hfr Cavalli x Keio (K-12 BW25113) eSGA conjugant",
         reference_strain=REFERENCE_STRAIN_NAME,
         assembly_set=MG1655_ASSEMBLY_SET,

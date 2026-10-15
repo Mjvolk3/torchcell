@@ -269,6 +269,7 @@ from torchcell.datamodels.schema import (
     EnvironmentPerturbationType,
     EnvironmentPhysicalPerturbation,
     EnvironmentResponsePhenotype,
+    EukaryoticStrainBackground,
     Experiment,
     ExperimentReference,
     Genotype,
@@ -281,7 +282,6 @@ from torchcell.datamodels.schema import (
     SampleUnit,
     SmallMoleculePerturbation,
     Solvent,
-    StrainBackground,
     StrainConstruction,
     StrainEnvironmentResponseExperiment,
     StrainEnvironmentResponseExperimentReference,
@@ -820,7 +820,7 @@ _BACKGROUND_NOTE = (
 BACKGROUND_STRAIN = "BY4743"
 
 
-def hoepfner_background() -> StrainBackground:
+def hoepfner_background() -> EukaryoticStrainBackground:
     """The BY4743 background both pools are recorded on, every element gapped.
 
     The paper names the collections (YSC1055 / YSC1056, OpenBiosystems, line 64) but
@@ -838,7 +838,9 @@ def hoepfner_background() -> StrainBackground:
         )
         for allele_name, zygosity in genotype.alleles.items()
     ]
-    return StrainBackground(
+    return EukaryoticStrainBackground(
+        reference_strain="S288C",
+        assembly_set=SGD_S288C_R64,
         name=BACKGROUND_STRAIN,
         parents=list(genotype.parents),
         construction=None,

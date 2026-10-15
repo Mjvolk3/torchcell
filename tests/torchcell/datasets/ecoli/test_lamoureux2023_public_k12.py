@@ -53,13 +53,13 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
 )
 from torchcell.data import ManifestPinMismatchError
 from torchcell.datamodels.schema import (
-    BacterialStrainBackground,
     ConcentrationUnit,
     DoseBasis,
     EnvironmentPhysicalPerturbation,
     PhysicalFactor,
     ReferenceGenome,
     SmallMoleculePerturbation,
+    StrainBackground,
     StrainReferenceGenome,
 )
 from torchcell.sequence.genome.ecoli.k12 import MG1655_ASSEMBLY, EcoliK12MG1655Genome
@@ -920,7 +920,7 @@ MG1655_PIN = ReferenceGenome(
 
 
 def _pinned(
-    strain: str, *, background: BacterialStrainBackground | None = None
+    strain: str, *, background: StrainBackground | None = None
 ) -> ReferenceGenome:
     """The MG1655 pin, on a released strain's background when one is given."""
     if background is None:

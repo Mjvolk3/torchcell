@@ -44,7 +44,7 @@ take ``schmidt2016``'s condition table, whose starved arms carry
 arm). Their released growth rate is -0.01 h-1 and is stored as released.
 
 * The 4 rows of the two non-BW25113 strains are stored, each on a
-  ``BacterialStrainBackground`` named as Table S23 writes it (``MG1665`` verbatim, the
+  ``StrainBackground`` named as Table S23 writes it (``MG1665`` verbatim, the
   paper's text saying MG1655; ``NCM3722``) with the genotype the paper's text states
   (``F-, λ, rph-1``; ``F+``), pinned to the K-12 MG1655 reference assembly, which no
   gene of these wild-type records uses. Each strain's reference is its own Glucose row.
@@ -126,7 +126,6 @@ from torchcell.data import (
 )
 from torchcell.datamodels.schema import (
     AssayType,
-    BacterialStrainBackground,
     Environment,
     EnvironmentResponseExperiment,
     EnvironmentResponseExperimentReference,
@@ -137,6 +136,7 @@ from torchcell.datamodels.schema import (
     MeasurementType,
     ReferenceGenome,
     SampleUnit,
+    StrainBackground,
     UncertaintyType,
 )
 from torchcell.datasets.bacteria_common import assembly_reference
@@ -530,7 +530,7 @@ def strain_genome(strain: str, data_root: str | None = None) -> ReferenceGenome:
         return assembly_reference(
             GrowthRateS23Schmidt2016Dataset.REFERENCE_STRAIN, data_root=data_root
         )
-    background = BacterialStrainBackground(
+    background = StrainBackground(
         name=strain,
         reference_strain="MG1655",
         assembly_set="ecoli_K12_MG1655_ASM584v2",

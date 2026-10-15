@@ -244,6 +244,7 @@ EXAMPLES: dict[str, dict[str, Any]] = {
     },
     "torchcell.datamodels.schema.BackgroundAllele": {
         "systematic_gene_name": "YOR202W",
+        "gene_namespace": "scerevisiae_s288c_sgd_systematic",
         "gene_name": "HIS3",
         "allele_name": "his3Δ1",
         "edit": "partial_deletion",
@@ -259,12 +260,16 @@ EXAMPLES: dict[str, dict[str, Any]] = {
         "elements": ["KanMX", "dLbCpf1-VP", "Csy4", "dSpCas9-RD1152", "SaCas9"],
         "marker": "KanMX",
         "zygosity": "haploid",
+        "placement": None,
         "provenance_gaps": [
-            {"field": "provenance", "reason": "deferred_pending_source_review"}
+            {"field": "provenance", "reason": "deferred_pending_source_review"},
+            {"field": "placement", "reason": "not_released_by_primary"},
         ],
     },
-    "torchcell.datamodels.schema.StrainBackground": {
+    "torchcell.datamodels.schema.EukaryoticStrainBackground": {
         "name": "BY4741",
+        "reference_strain": "S288C",
+        "assembly_set": "sgd_S288C_R64-4-1_20230830",
         "mating_type": "a",
         "ploidy": "haploid",
         "provenance_gaps": [
@@ -279,6 +284,8 @@ EXAMPLES: dict[str, dict[str, Any]] = {
         "assembly_accession": "GCA_000146045.2",
         "background": {
             "name": "BY4741",
+            "reference_strain": "S288C",
+            "assembly_set": "sgd_S288C_R64-4-1_20230830",
             "mating_type": "a",
             "ploidy": "haploid",
             "provenance_gaps": [
@@ -391,18 +398,7 @@ EXAMPLES: dict[str, dict[str, Any]] = {
         "assembly_set": "ecoli_K12_MG1655_ASM584v2",
         "assembly_accession": "GCA_000005845.2",
     },
-    "torchcell.datamodels.schema.BacterialBackgroundAllele": {
-        "systematic_gene_name": "BW25113_3643",
-        "gene_namespace": "ecoli_k12_bw25113_locus_tag",
-        "gene_name": "rph",
-        "allele_name": "rph-1",
-        "edit": "sequence_variant",
-        "functional": False,
-        "provenance_gaps": [
-            {"field": "provenance", "reason": "deferred_pending_source_review"}
-        ],
-    },
-    "torchcell.datamodels.schema.BacterialStrainBackground": {
+    "torchcell.datamodels.schema.StrainBackground": {
         "name": "BW25113",
         "reference_strain": "BW25113",
         "assembly_set": "ecoli_K12_BW25113_ASM75055v1",

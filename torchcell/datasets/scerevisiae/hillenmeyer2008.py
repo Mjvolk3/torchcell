@@ -195,6 +195,7 @@ from torchcell.datamodels.schema import (
     DoseBasis,
     EnvironmentPhysicalPerturbation,
     EnvironmentResponsePhenotype,
+    EukaryoticStrainBackground,
     Experiment,
     ExperimentReference,
     Genotype,
@@ -208,7 +209,6 @@ from torchcell.datamodels.schema import (
     Publication,
     SampleUnit,
     SmallMoleculePerturbation,
-    StrainBackground,
     StrainConstruction,
     StrainEnvironmentResponseExperiment,
     StrainEnvironmentResponseExperimentReference,
@@ -1388,7 +1388,7 @@ def read_matrix_rows(path: str | Path, n_columns: int, arm: str) -> MatrixRows:
 # --------------------------------------------------------------------------- #
 # Record builders
 # --------------------------------------------------------------------------- #
-def hillenmeyer_background() -> StrainBackground:
+def hillenmeyer_background() -> EukaryoticStrainBackground:
     """BY4743, named by the release's key file; every allele pending Brachmann 1998.
 
     The name and ploidy are sourced (``hom.txt``; the main article), and the
@@ -1402,7 +1402,9 @@ def hillenmeyer_background() -> StrainBackground:
         note="BY4741 x BY4742 genotype is not in a mirrored source; the background "
         "name BY4743 is sourced to the release's hom.txt key file",
     ).alleles
-    return StrainBackground(
+    return EukaryoticStrainBackground(
+        reference_strain="S288C",
+        assembly_set=SGD_S288C_R64,
         name=BACKGROUND_STRAIN,
         parents=None,
         construction=None,
@@ -1437,7 +1439,7 @@ def hillenmeyer_background() -> StrainBackground:
     )
 
 
-def marker_loci(background: StrainBackground) -> frozenset[str]:
+def marker_loci(background: EukaryoticStrainBackground) -> frozenset[str]:
     """Loci where the background carries a non-R64 allele (the BY marker loci)."""
     return frozenset(a.systematic_gene_name for a in background.alleles)
 
@@ -1519,7 +1521,7 @@ def build_reference(
     spec: _MatrixSpec,
     control_set: str,
     n_control_arrays: int,
-    background: StrainBackground,
+    background: EukaryoticStrainBackground,
 ) -> StrainEnvironmentResponseExperimentReference:
     """The matched no-drug control set this control set's scores were computed against.
 
@@ -1645,7 +1647,7 @@ def iter_records(
     spec: _MatrixSpec,
     matrix: MatrixRows,
     groups: dict[str, list[ColumnSpec]],
-    background: StrainBackground,
+    background: EukaryoticStrainBackground,
 ) -> Iterator[tuple[StrainEnvironmentResponseExperiment, str]]:
     """Every record of a matrix: (experiment, control set), strain row by strain row.
 

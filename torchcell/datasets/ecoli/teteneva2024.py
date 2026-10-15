@@ -83,7 +83,6 @@ from torchcell.data import (
 from torchcell.datamodels.media import LAKE_WATER
 from torchcell.datamodels.schema import (
     AssayType,
-    BacterialStrainBackground,
     Environment,
     EnvironmentResponseExperiment,
     EnvironmentResponseExperimentReference,
@@ -98,6 +97,7 @@ from torchcell.datamodels.schema import (
     ReleasedIdentifierPerturbation,
     ReleasedKind,
     SampleUnit,
+    StrainBackground,
 )
 from torchcell.datasets.bacteria_common import (
     STRAIN_GENE_NAMESPACES,
@@ -1395,14 +1395,14 @@ HOST_STRAIN_NAME: Final = str(STRAIN.value)
 GENE_NAMESPACE: Final = STRAIN_GENE_NAMESPACES[REFERENCE_STRAIN]
 
 
-def host_background() -> BacterialStrainBackground:
+def host_background() -> StrainBackground:
     """W3110 RpoS+ pinned to the W3110 set, with the restoring allele unstated.
 
     ``alleles`` is empty because the paper writes only "RpoS+" and "the restored RpoS
     activity" (it cites ref. 14 for the strain); that is the source's silence, not a
     claim that the strain equals the sequenced W3110.
     """
-    return BacterialStrainBackground(
+    return StrainBackground(
         name=HOST_STRAIN_NAME,
         reference_strain=REFERENCE_STRAIN,
         assembly_set="ecoli_K12_W3110_ASM1024v1",

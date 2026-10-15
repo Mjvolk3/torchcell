@@ -47,11 +47,11 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
 from torchcell.data import ManifestPinMismatchError, RawSha256MismatchError
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
-    BacterialStrainBackground,
     ConcentrationUnit,
     MediaComponentRole,
     ReleasedIdentifierPerturbation,
     ReleasedKind,
+    StrainBackground,
     StrainReferenceGenome,
 )
 from torchcell.literature.manifest import RetrievalMethod
@@ -485,7 +485,7 @@ def test_environment_is_the_medium_at_37c_aerobic() -> None:
 
 def test_wild_type_background_is_the_mg1655_dmuts_strain() -> None:
     background = m.wild_type_background()
-    assert isinstance(background, BacterialStrainBackground)
+    assert isinstance(background, StrainBackground)
     assert background.name == m.WILD_TYPE_BACKGROUND_NAME
     assert background.reference_strain == "MG1655"
     assert background.parents == ["MG1655"]

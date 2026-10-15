@@ -34,7 +34,7 @@ because ``fold_change_scale`` is required and no mirrored statement names a scal
 unit for it.
 
 THE GENOTYPE, DECOMPOSED. The reference is the chassis ``IY1449b`` (KT2440 with
-markerless in-frame deletions), carried as a ``BacterialStrainBackground`` on an
+markerless in-frame deletions), carried as a ``StrainBackground`` on an
 ``ReferenceGenome`` pinned to ``pputida_KT2440_ASM756v2`` / ``GCA_000007565.2``.
 Everything added on top of it is a perturbation in ``Genotype``:
 
@@ -177,10 +177,9 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import M9_NREL_CARRUTHERS2025
 from torchcell.datamodels.schema import (
     AlleleEdit,
+    BackgroundAllele,
     BacterialAssemblySet,
-    BacterialBackgroundAllele,
     BacterialGeneNamespace,
-    BacterialStrainBackground,
     Concentration,
     ConcentrationUnit,
     CrisprConstruct,
@@ -210,6 +209,7 @@ from torchcell.datamodels.schema import (
     ReferenceGenome,
     SampleUnit,
     SmallMoleculePerturbation,
+    StrainBackground,
     Temperature,
     UncertaintyType,
 )
@@ -1681,7 +1681,7 @@ def publication() -> Publication:
     )
 
 
-def chassis_background(genome: PPutidaKT2440Genome) -> BacterialStrainBackground:
+def chassis_background(genome: PPutidaKT2440Genome) -> StrainBackground:
     """IY1449b: KT2440 with the markerless in-frame deletions the sources state.
 
     Each allele's locus comes from the genome's own resolution of the SOURCE's symbol,
@@ -1702,7 +1702,7 @@ def chassis_background(genome: PPutidaKT2440Genome) -> BacterialStrainBackground
                 f"({resolved.status}); it is documented as carrying no locus of this "
                 "assembly and must become a typed allele"
             )
-    alleles: list[BacterialBackgroundAllele] = []
+    alleles: list[BackgroundAllele] = []
     for entry in CHASSIS_ALLELES:
         symbol = str(entry["symbol"])
         resolution = genome.resolve_gene_name(symbol)
@@ -1721,7 +1721,7 @@ def chassis_background(genome: PPutidaKT2440Genome) -> BacterialStrainBackground
             )
         source = CHASSIS_GENOTYPE if entry["both_sources"] else CHASSIS_GENOTYPE_FIG2
         alleles.append(
-            BacterialBackgroundAllele(
+            BackgroundAllele(
                 systematic_gene_name=resolution.systematic_name,
                 gene_namespace=KT2440_NAMESPACE,
                 gene_name=symbol,
@@ -1732,7 +1732,7 @@ def chassis_background(genome: PPutidaKT2440Genome) -> BacterialStrainBackground
                 provenance=[source],
             )
         )
-    return BacterialStrainBackground(
+    return StrainBackground(
         name=CHASSIS_STRAIN,
         reference_strain="KT2440",
         assembly_set=KT2440_ASSEMBLY_SET,

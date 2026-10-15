@@ -75,7 +75,7 @@ single-molecule key (a terminal gap), and ampicillin, which that pass did not re
 because its row would move eight further stores.
 
 STRAIN. MG1655 (``REFERENCE_STRAIN``), pinned to GCA_000005845.2. The library's parent is
-MG1655 ``delta-lacZ``, carried as a ``BacterialStrainBackground`` whose
+MG1655 ``delta-lacZ``, carried as a ``StrainBackground`` whose
 ``genotype_statement`` is the paper's own string; ``alleles`` is empty and that is a
 statement, not an omission, because neither the paper nor Text S1 says whether the lacZ
 lesion is a full deletion, an internal one or a cassette replacement, and ``AlleleEdit``
@@ -185,7 +185,6 @@ from torchcell.datamodels.schema import (
     BACTERIAL_ASSEMBLY_SETS,
     AssayType,
     BacterialAssemblySet,
-    BacterialStrainBackground,
     ComponentDefinition,
     Concentration,
     ConcentrationUnit,
@@ -204,6 +203,7 @@ from torchcell.datamodels.schema import (
     ReferenceGenome,
     SampleUnit,
     SmallMoleculePerturbation,
+    StrainBackground,
     Temperature,
     TransposonInsertionPerturbation,
 )
@@ -1815,7 +1815,7 @@ def reference_phenotype(spec: DrugSpec) -> EnvironmentResponsePhenotype:
     )
 
 
-def library_background() -> BacterialStrainBackground:
+def library_background() -> StrainBackground:
     """MG1655 ``delta-lacZ``, the strain the transposon library was built in.
 
     ``alleles`` is empty and that is a statement: the two sources write the genotype as
@@ -1824,7 +1824,7 @@ def library_background() -> BacterialStrainBackground:
     so typing one would assert a mechanism the paper never gave; the genotype string is
     kept verbatim instead.
     """
-    return BacterialStrainBackground(
+    return StrainBackground(
         name=LIBRARY_PARENT,
         reference_strain=REFERENCE_STRAIN_NAME,
         assembly_set=MG1655_ASSEMBLY_SET,

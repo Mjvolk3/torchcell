@@ -50,7 +50,7 @@ in its place -- an edit a guide-directed activator never makes. The measurement 
 THE HOST IS THE UNEVOLVED PARENT. Every record here is ``BW25113(PT5-dxs)`` carrying the
 effector plasmid plus one guide plasmid, with the same parent carrying the empty
 ``pTargetA`` as the control. ``PT5-dxs`` is CONSTANT across the dataset and shared with
-the control, so it is a ``BacterialStrainBackground`` on the reference rather than a
+the control, so it is a ``StrainBackground`` on the reference rather than a
 perturbation in the ``Genotype`` (the #507 rule: the genotype keeps only what the screen
 varies).
 
@@ -191,7 +191,6 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     BACTERIAL_ASSEMBLY_SETS,
     AssayType,
-    BacterialStrainBackground,
     Censoring,
     ComponentDefinition,
     Concentration,
@@ -222,6 +221,7 @@ from torchcell.datamodels.schema import (
     ReleasedKind,
     SampleUnit,
     SmallMoleculePerturbation,
+    StrainBackground,
     Temperature,
     UncertaintyType,
 )
@@ -497,7 +497,7 @@ N_SAMPLES: int = int(TRIPLICATE.value)
 # --------------------------------------------------------------------------- #
 # The host background, the medium and the one environment
 # --------------------------------------------------------------------------- #
-NIU2019_BACKGROUND = BacterialStrainBackground(
+NIU2019_BACKGROUND = StrainBackground(
     name="BW25113(PT5-dxs)",
     reference_strain=REFERENCE_STRAIN_NAME,
     assembly_set=cast("Any", BACTERIAL_ASSEMBLY_SETS[REFERENCE_STRAIN_NAME]),
@@ -1844,7 +1844,7 @@ def production_environment() -> CultureEnvironment:
     )
 
 
-NIU2019_PRODUCTION_BACKGROUND = BacterialStrainBackground(
+NIU2019_PRODUCTION_BACKGROUND = StrainBackground(
     name="BW25113(PT5-dxs) (pBbB2K-dCas9*-MCPSoxS, pMEVIGPS)",
     reference_strain=REFERENCE_STRAIN_NAME,
     assembly_set=cast("Any", BACTERIAL_ASSEMBLY_SETS[REFERENCE_STRAIN_NAME]),

@@ -11,7 +11,7 @@ verifier's genome is an in-test object and the loaders read no annotation (#1045
 2), so nothing reads ``$DATA_ROOT``.
 
 One assertion here is a MEASUREMENT of the schema rather than of the paper:
-``BacterialStrainBackground.alleles`` defaults to ``[]``, so a ``ProvenanceGap`` on it is
+``StrainBackground.alleles`` defaults to ``[]``, so a ``ProvenanceGap`` on it is
 refused, which is why MS56's 55 unenumerated regions live in a ledger instead of a typed
 gap. That refusal is pinned so a future schema change that makes the gap expressible
 fails this test and sends someone back to the background.
@@ -42,15 +42,15 @@ import torchcell.datasets.ecoli.choe2019_growth_rate as ch
 from torchcell.data import file_sha256
 from torchcell.datamodels.schema import (
     AlleleEdit,
+    BackgroundAllele,
     BacterialAssemblySet,
-    BacterialBackgroundAllele,
     BacterialGeneNamespace,
-    BacterialStrainBackground,
     ReferenceGenome,
     ReleasedIdentifierPerturbation,
     ReleasedKind,
     SampleUnit,
     SequenceVariantPerturbation,
+    StrainBackground,
     StrainReferenceGenome,
     UncertaintyType,
 )
@@ -641,7 +641,7 @@ def test_a_provenance_gap_on_alleles_is_refused_by_the_schema() -> None:
     background should carry the gap instead of ``genotype_gaps.json``.
     """
     with pytest.raises(ValidationError, match="is not None"):
-        BacterialStrainBackground(
+        StrainBackground(
             name="MS56",
             reference_strain="MG1655",
             assembly_set=MG1655_ASSEMBLY,
@@ -656,7 +656,7 @@ def test_a_provenance_gap_on_alleles_is_refused_by_the_schema() -> None:
             ],
         )
     assert ch.BACKGROUND_ABSENCE["field"] == "alleles"
-    assert ch.BACKGROUND_ABSENCE["model"] == "BacterialStrainBackground"
+    assert ch.BACKGROUND_ABSENCE["model"] == "StrainBackground"
 
 
 def test_no_perturbation_leaf_holds_a_called_bacterial_variant() -> None:
@@ -676,7 +676,7 @@ def test_no_perturbation_leaf_holds_a_called_bacterial_variant() -> None:
             systematic_gene_name="b0078", perturbed_gene_name="ilvH", strain_id="eMS57"
         )
     with pytest.raises(ValidationError, match="valid boolean"):
-        BacterialBackgroundAllele(
+        BackgroundAllele(
             systematic_gene_name="b1823",
             gene_namespace=MG1655_NAMESPACE,
             gene_name="cspC",

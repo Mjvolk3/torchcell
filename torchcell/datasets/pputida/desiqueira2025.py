@@ -75,12 +75,12 @@ sequenced isolates are now loaded. What each reason became:
    allele sequence this paper never deposited (it released SRA reads, PRJNA1153078)
    -> ``LocusVariantCallPerturbation``, which validates a ``PP_`` locus tag and
    carries the CALL on the record rather than a pointer to a store that does not exist.
-2. ``BacterialBackgroundAllele(edit=sequence_variant)`` required a ``functional: bool``
+2. ``BackgroundAllele(edit=sequence_variant)`` required a ``functional: bool``
    no release states for a missense SNP, and had no slot for the position, the reference
    and alternate base, the amino-acid change, the polymorphism type or the variant
    frequency -> ``BacterialVariantCall`` carries all of them, verbatim, and the
    perturbation axis has no ``functional`` field at all.
-3. ``BacterialStrainBackground`` permits ONE allele entry per locus, which refused
+3. ``StrainBackground`` permits ONE allele entry per locus, which refused
    Sigma1 (``PP_1656`` twice, ``PP_3827`` three times), Sigma2 (``PP_1656`` twice) and
    Sigma4 (``PP_1656`` twice, ``PP_3827`` twice) -> ``Genotype.perturbations`` has no
    such rule, so two calls in one locus are two perturbations.
@@ -111,7 +111,7 @@ KT2440</td><td>Wild type strain</td><td>ATCC 47054 (JBEI-18711)</td>"), so its r
 carry the bare assembly reference and an empty genotype. ``PT`` is a DEFINED-deletion
 strain ("A mutant strain of Pseudomonas putida KT2440 (DeltaPP_2675 Delta14-PP_2676,
 referred to as "pre-tolerized" or "PT" throughout this manuscript) was used as the base
-strain"), so its records carry a typed ``BacterialStrainBackground``.
+strain"), so its records carry a typed ``StrainBackground``.
 
 PT'S TWO DESIGNATIONS ARE ONE DELETION EVENT, AND ONLY ONE OF THEM HAS A PERTURBATION
 LEAF. The nomenclature is explained in the Results: "This updated nomenclature accounts
@@ -124,12 +124,12 @@ complete internal in-frame deletion of PP_2675". So:
   edit set and the gene node a record links to.
 - ``Delta14-PP_2676`` is a PARTIAL deletion, and the bacterial perturbation axis has no
   partial-deletion leaf (``DeletionStrainPerturbation`` is ``state="absent"``). It is
-  typed where ``AlleleEdit.partial_deletion`` exists, as a ``BacterialBackgroundAllele``
+  typed where ``AlleleEdit.partial_deletion`` exists, as a ``BackgroundAllele``
   on the PT background, with a ``ProvenanceGap`` on ``deleted_span``: the source writes
   "Delta14" without saying whether 14 is base pairs or codons and without coordinates.
 
 ``PP_2675`` therefore appears twice, once as a background allele and once as a
-perturbation. That is deliberate: ``BacterialStrainBackground.alleles`` is documented as
+perturbation. That is deliberate: ``StrainBackground.alleles`` is documented as
 "every allele of the background", so listing one of the two would be an omission, while
 the perturbation is what the graph and the model read.
 
@@ -209,11 +209,10 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import M9_NREL_DESIQUEIRA2025
 from torchcell.datamodels.schema import (
     AlleleEdit,
+    BackgroundAllele,
     BacterialAssemblySet,
-    BacterialBackgroundAllele,
     BacterialGeneNamespace,
     BacterialReferenceStrain,
-    BacterialStrainBackground,
     BacterialVariantCall,
     BacterialVariantType,
     Concentration,
@@ -242,6 +241,7 @@ from torchcell.datamodels.schema import (
     SampleUnit,
     SiteVariantCallPerturbation,
     SmallMoleculePerturbation,
+    StrainBackground,
     StrainConstruction,
     Temperature,
     VariantCallMode,
@@ -1662,7 +1662,7 @@ def publication() -> Publication:
     return Publication(doi=DOI, doi_url=f"https://doi.org/{DOI}")
 
 
-def pt_background() -> BacterialStrainBackground:
+def pt_background() -> StrainBackground:
     """PT: KT2440 carrying the one deletion event its two designations name.
 
     ``PP_2675`` is typed ``full_deletion`` on the Thompson 2020 statement the paper
@@ -1679,7 +1679,7 @@ def pt_background() -> BacterialStrainBackground:
             "the deferral target (Thompson 2020) names only the PP_2675 half"
         ),
     )
-    return BacterialStrainBackground(
+    return StrainBackground(
         name=PT_STRAIN,
         reference_strain=WT_STRAIN,
         assembly_set=KT2440_ASSEMBLY_SET,
@@ -1692,7 +1692,7 @@ def pt_background() -> BacterialStrainBackground:
         ),
         genotype_statement=str(PT_GENOTYPE.value),
         alleles=[
-            BacterialBackgroundAllele(
+            BackgroundAllele(
                 systematic_gene_name=PT_FULL_DELETION,
                 gene_namespace=KT2440_NAMESPACE,
                 gene_name=PT_FULL_DELETION,
@@ -1701,7 +1701,7 @@ def pt_background() -> BacterialStrainBackground:
                 functional=False,
                 provenance=[PT_GENOTYPE, PT_FULL_DELETION_SOURCE, PT_PATHWAY_DELETED],
             ),
-            BacterialBackgroundAllele(
+            BackgroundAllele(
                 systematic_gene_name=PT_PARTIAL_DELETION,
                 gene_namespace=KT2440_NAMESPACE,
                 gene_name=PT_PARTIAL_DELETION,
@@ -1724,7 +1724,7 @@ def strain_reference(strain: str) -> ReferenceGenome:
     base strain every isolate was evolved from, so PT's deletion event is the genomic
     content they share and hold CONSTANT, while the variants Geneious called for each
     isolate are what varies and therefore belong in ``Genotype``. That is the division
-    ``BacterialStrainBackground`` is documented for.
+    ``StrainBackground`` is documented for.
     """
     if strain == PROTEOME_REFERENCE_STRAIN:
         return assembly_reference(WT_STRAIN)

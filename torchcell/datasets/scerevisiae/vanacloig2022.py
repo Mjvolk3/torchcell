@@ -147,6 +147,7 @@ from torchcell.datamodels.schema import (
     EndpointRule,
     EnvironmentPhysicalPerturbation,
     EnvironmentResponsePhenotype,
+    EukaryoticStrainBackground,
     Experiment,
     ExperimentReference,
     Genotype,
@@ -157,7 +158,6 @@ from torchcell.datamodels.schema import (
     SampleUnit,
     SmallMoleculePerturbation,
     Solvent,
-    StrainBackground,
     StrainEnvironmentResponseExperiment,
     StrainEnvironmentResponseExperimentReference,
     StrainReferenceGenome,
@@ -663,7 +663,7 @@ _BY_AUXOTROPHY_NOTE = (
 )
 
 
-def library_background() -> StrainBackground:
+def library_background() -> EukaryoticStrainBackground:
     """The constant genome content of every screened strain beyond R64.
 
     Sourced: MATa (selected), haploid, can1Δ::STE2pr-Sp_his5 and lyp1Δ (the SGA
@@ -690,7 +690,9 @@ def library_background() -> StrainBackground:
             for name in ("his3Δ1", "leu2Δ0", "ura3Δ0", "met15Δ0")
         ),
     ]
-    return StrainBackground(
+    return EukaryoticStrainBackground(
+        reference_strain="S288C",
+        assembly_set=SGD_S288C_R64,
         name=LIBRARY_STRAIN,
         parents=["Y13206", "MATa xxxΔ::kanMX deletion array"],
         construction=(

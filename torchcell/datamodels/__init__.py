@@ -20,9 +20,7 @@ from .schema import (
     AllelePerturbation,
     AssayType,
     AssemblySet,
-    BacterialBackgroundAllele,
     BacterialMorphologyPhenotype,
-    BacterialStrainBackground,
     BacterialVariantCall,
     BacterialVariantType,
     BiologicAgentClass,
@@ -262,8 +260,6 @@ __all__ = [
     "GeneIdNamespace",
     "GENE_ID_NAMESPACE_PATTERNS",
     "SGD_S288C_NAMESPACE",
-    "BacterialBackgroundAllele",
-    "BacterialStrainBackground",
     # bacterial phenotypes + their experiment pairs (plan 3c)
     "ProductTiterPhenotype",
     "ProductTiterExperiment",

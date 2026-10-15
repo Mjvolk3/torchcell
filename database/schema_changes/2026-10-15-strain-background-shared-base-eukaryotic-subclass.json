@@ -1,0 +1,2830 @@
+{
+  "record_version": 1,
+  "slug": "strain-background-shared-base-eukaryotic-subclass",
+  "date": "2026-10-15",
+  "pr": null,
+  "author_kind": "agent",
+  "base_commit": "b5c5549d8f4752fc8ac89b6d1e5cd2c0ec5bf4a9",
+  "python_version": "3.13.0",
+  "symbols": [
+    {
+      "symbol": "BackgroundAllele",
+      "status": "modified",
+      "kinds": [
+        "contract_tightened",
+        "field_required_loosened"
+      ],
+      "fingerprint_before": "4f22f4834ecc6d3b70e6eba03ab955dc16cb672829db16bf6c6c097ce55933d2",
+      "fingerprint_after": "437714fee44d3dace07bf58b1a330a3173af6e4f624e44c9522cd88b48a9f34d",
+      "impact": "breaking",
+      "reasons": [
+        "added required field 'gene_namespace'",
+        "field 'zygosity' became optional",
+        "validator/serializer changed: ['_check_allele', '_validate_systematic']"
+      ]
+    },
+    {
+      "symbol": "BacterialBackgroundAllele",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "18dc659e451e8019960ac3877bdea84c2ce769e19ba5275ce92803732b114815",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "BacterialStrainBackground",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "077d110a7018437b61ae3ee6183b118b6067fab566e1f46e28315e436c91624c",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "symbol removed"
+      ]
+    },
+    {
+      "symbol": "EukaryoticStrainBackground",
+      "status": "added",
+      "kinds": [
+        "additive_leaf",
+        "rename"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "b64d78ddf8b4ec761de135506242c2f7572219d3fc0c75e766944866666b1383",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "IntegratedCassette",
+      "status": "modified",
+      "kinds": [
+        "contract_tightened"
+      ],
+      "fingerprint_before": "8243f579dcc762840cb72dcc730914a6bea799b0370901751b652b5076716f3a",
+      "fingerprint_after": "6efa9c84d4b6f5583bd553e5faee7505d9ecedf85f7dd5af68365eaa0c2b01ad",
+      "impact": "breaking",
+      "reasons": [
+        "added required field 'placement'",
+        "validator/serializer changed: ['_check_cassette']"
+      ]
+    },
+    {
+      "symbol": "REFERENCE_STRAIN_ASSEMBLY_SETS",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "5b5ad6a38dc7b6318a0e2a84fb891ea3fd23e8dd9ac659035004f5197b3ed7cd",
+      "impact": "stale",
+      "reasons": [
+        "new module-level binding"
+      ]
+    },
+    {
+      "symbol": "ReferenceStrain",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "4f310e2363e1fcc531cb5cfdfdaaf3490aa9d4a176c824d9e0367ed5d65805ae",
+      "impact": "stale",
+      "reasons": [
+        "new module-level binding"
+      ]
+    },
+    {
+      "symbol": "StrainBackground",
+      "status": "modified",
+      "kinds": [
+        "contract_tightened",
+        "additive_field",
+        "removal",
+        "field_required_loosened"
+      ],
+      "fingerprint_before": "97bdebae66ef595101a10f20ef211688acd493c813336e6cc186bbfcf1004ac1",
+      "fingerprint_after": "4e2706e97fe13da2b3296633f39e4f62d34e1cec50abf7a5c0ae0dad7075970e",
+      "impact": "breaking",
+      "reasons": [
+        "added required field 'assembly_set'",
+        "added optional field 'genotype_statement'",
+        "removed field 'integrations'",
+        "removed field 'mating_type'",
+        "removed field 'ploidy'",
+        "field 'reference_strain' type changed: Literal['S288C'] -> ReferenceStrain",
+        "field 'reference_strain' became required",
+        "validator/serializer changed: ['_check_background']"
+      ]
+    },
+    {
+      "symbol": "StrainReferenceGenome",
+      "status": "modified",
+      "kinds": [
+        "contract_tightened",
+        "rename"
+      ],
+      "fingerprint_before": "66eb3840c7ddf3e578c1427b64b7325edc5b1e80e3f607da553f79d7bdebae0c",
+      "fingerprint_after": "9a3d3c949bcfe25dc0aed531940dfad3bd5864353dd20c59d08dfec97527ca65",
+      "impact": "breaking",
+      "reasons": [
+        "field 'background' type changed: StrainBackground | BacterialStrainBackground -> StrainBackground | EukaryoticStrainBackground",
+        "validator/serializer changed: ['_check_background_agrees']"
+      ]
+    },
+    {
+      "symbol": "_validate_bacterial_locus_tag",
+      "status": "removed",
+      "kinds": [
+        "removal"
+      ],
+      "fingerprint_before": "a996d185fbdf991e3b8d017ab574487b6dd3824d5d633c5bc2b6bc511a8f3e57",
+      "fingerprint_after": null,
+      "impact": "breaking",
+      "reasons": [
+        "module-level binding removed"
+      ]
+    },
+    {
+      "symbol": "heterozygous_deletion_functional_copies",
+      "status": "modified",
+      "kinds": [
+        "contract_tightened"
+      ],
+      "fingerprint_before": "60ffcbb87776699dcb19259e88e48e198321048e6f448902aa21e70825c61d77",
+      "fingerprint_after": "64876c95ed49ce1407c7dc0c56ec01cc6100b6662e9fe64b64f6e1a3de8f86e4",
+      "impact": "breaking",
+      "reasons": [
+        "module-level 'heterozygous_deletion_functional_copies' changed"
+      ]
+    }
+  ],
+  "correctness_argument": "P5 of the ontology unification: the strain background becomes one class for every host, with a eukaryotic subclass for the facts only a eukaryote has.\n\nTHE DEFECT IS AN INTERNAL INCONSISTENCY THIS REBUILD CREATED, not a pre-existing wart. P1 put `gene_namespace: GeneIdNamespace` on every `GenePerturbation` and P2 put `assembly_set: AssemblySet` on every `ReferenceGenome`; the background classes were in neither change. Measured on the integration branch at b5c5549d8: `StrainBackground` held alleles, construction, integrations, mating_type, name, parents, ploidy, provenance, reference_strain and NO assembly_set and NO genotype_statement, while `BacterialStrainBackground` held alleles, assembly_set, construction, genotype_statement, name, parents, provenance, reference_strain and no ploidy/mating_type/integrations; `BackgroundAllele` held allele_name, cassette, deleted_span, edit, functional, gene_name, systematic_gene_name, zygosity and NO gene_namespace, while `BacterialBackgroundAllele` held the same minus zygosity plus gene_namespace. So the same two facts were universal in one place and host-split in another: a background allele could name a gene and not say which identifier space the name was in, while every perturbation sitting beside it in the same record could, and a strain background carried no assembly while every reference genome it hangs off now does. Shipping KG 4.0 without P5 would serve that inconsistency, which is why the owner folded it into this rebuild rather than deferring it.\n\nWHAT IS INADVERTENT AND WHAT IS MATERIAL. Three of the differences between the two families are genuine material facts and stay on the subclass: ploidy, mating type and an allele's zygosity. A haploid single-replicon genome has one copy of everything, so a copy count carries no information and a MAT locus does not exist; the retired bacterial class's own docstring said so (\"both are eukaryote facts, and a haploid single-replicon genome has nothing to state\"). Policy Rule 5 forbids weakening a required field so a thinner host can load, so these are NOT moved to the base. What IS inadvertent is everything else: `reference_strain: Literal[\"S288C\"]`, a vocabulary of one whose own schema.py comment admitted the duplication was chosen on cost (\"widening StrainBackground.reference_strain past Literal['S288C'] ... moves 4 of 36 served dataset closures ... unifying the two families later is a rebuild whose purpose is the unification\"), which constitution principle 8 refuses as a reason; the absent `assembly_set`; and the absent `genotype_statement`, which the yeast strain tables state as readily as BW25113's deposited GenBank /note does.\n\nTHE SHAPE. `StrainBackground` keeps its name and becomes the host-agnostic base: name, reference_strain, assembly_set, parents, construction, genotype_statement, alleles, provenance. `EukaryoticStrainBackground(StrainBackground)` adds mating_type, ploidy, integrations and the ploidy-dependent rules. `BacterialStrainBackground` and `BacterialBackgroundAllele` retire into the base and into `BackgroundAllele`; every one of their 39 and 20 construction sites passes the same keyword arguments to the general class, so no released value changes shape.\n\nASSEMBLY_SET IS REQUIRED OUTRIGHT HERE, NOT VALUE-OR-GAP, AND THAT IS CONSISTENT WITH LANE F. P2 made `ReferenceGenome.assembly_set` required-with-no-default and gap-able because that carrier's companion field is the free string `strain`, which may name a strain the genomes tier has not deposited (an isolate's own annotation, a BL21 ECBD_ tag space); the typed gap is how such a record stays storable. The background's companion field is `reference_strain`, a CLOSED vocabulary with one member per deposited assembly set, and `REFERENCE_STRAIN_ASSEMBLY_SETS` is total over it, so a background that can name its reference strain has already named a deposited set and the gap branch would be unreachable. A required field whose gap branch cannot be reached is dead typing, and principle 7's typed gap exists for \"the source does not carry it\", which cannot happen here. The retired bacterial class also required it outright across 20 dev stores and never needed a gap. A background whose reference is not deposited is deliberately not representable: its edit list against another reference would be thousands of variants, which this object is not for, and the pinned-vocabulary refusal says so instead of admitting a half-stated record.\n\nONE CROSS-CHECK REPLACES TWO ONE-FAMILY BRANCHES. `StrainBackground` now requires `assembly_set == REFERENCE_STRAIN_ASSEMBLY_SETS[reference_strain]`, and `StrainReferenceGenome` requires the background and the reference to pin the same set. That is exactly the rule `ReferenceGenome`'s docstring already claimed was \"the same rule read on each family\" while the code had a yeast branch comparing against the hardcoded SGD_S288C_ASSEMBLY_SET and a bacterial branch comparing the two fields. It is strictly tighter in one case the old code admitted: a reference whose assembly_set is a typed gap beside a background that pins a set is now refused, because the gap says the reference is not deposited while the background says its alleles are edits against deposited bytes, and the two cannot both be true. Measured: no loader constructs such a record (`field=\"assembly_set\"` gaps appear only on plain `ReferenceGenome` in tests).\n\nZYGOSITY MOVED, NOTHING WEAKENED. `BackgroundAllele.zygosity` was required-with-gap; it is now optional on the allele and constrained by the background that carries it. `EukaryoticStrainBackground` requires every allele's and every integration's zygosity to be stated or carry a typed ProvenanceGap and to fit the ploidy, which is the identical guarantee the allele used to assert; the base refuses a copy count outright, because a background that states no ploidy cannot judge one and the retired bacterial class had no such field at all, so this is the faithful retirement rather than a loosening in effect. The loosening is in the fingerprint and is recorded as `field_required_loosened`; the rule now sits on the only class that can evaluate it.\n\nTHE IDENTITY PROJECTIONS, WHICH REVIEW 1 FOUND MISSING. `strain_background_identity` projected mating_type and ploidy unconditionally with no branch for a background that has neither, and `BACKGROUND_ALLELE_IDENTITY_FIELDS` lacked gene_namespace. A wrong projection silently merges or splits records, which is the defect class this program has already found three times (PhysicalExposurePerturbation with no branch killed KG 4.0's first generation at adapter 124 of 170). The base and the subclass now each have their own tuple; `PROJECTED_BACKGROUND_CLASSES` is pinned by test to `StrainBackground` plus its subclasses and an unknown subclass raises instead of being projected as its base, which would drop the fields it adds and merge two strains onto one key. Every field of all four classes is now in exactly one of a declared identity tuple or a declared non-identity tuple with its reason, pinned by a partition test over `model_fields`, so the next field cannot land unprojected the way gene_namespace did. `placement` is declared NOT identity: it is the sha256-pinned construct the cassette was built from, and a source that deposits the map states the same physical cassette as one that does not, so projecting it would split bAID between Lian 2019 and the in-house Bioscreen dataset, which is the join this layer exists for.\n\nTHE INTEGRATED CASSETTE GETS THE PLACEMENT P4 GAVE THE ADDITION LEAF. Review 2 finding 9: `IntegratedCassette` on the background and `GeneAdditionPerturbation(localization=\"chromosomal_integration\")` are the same physical object, and P4 gave one of them a `ConstructPlacement` while the other kept a bare site label, so Lian 2019's bAID effectors at the Delta site stayed a label while the Cachera Btx cassette at XII-5 became sequence. `IntegratedCassette.placement` is the same type with the same required-or-gapped contract, and a placement with no host site is refused because an integration is at a host site and an episomal replicon is not an integration. The three cassettes that exist (bAID's CRISPR-AID cassette, Hackett's two Z3EV activator cassettes) carry a typed `not_released_by_primary` gap naming what was read: Lian 2019's Methods name pAID6 and cite the paper it comes from without depositing a map, and Hackett's Table EV1 gives each cassette as a name string with no contig, accession or coordinate.\n\nNODE IDS. As for P1, P2 and P4: a perturbation, genotype, genome and experiment-reference node id is sha256 over `model_dump()`, so a background gaining `assembly_set` and `genotype_statement` and an allele gaining `gene_namespace` re-key every `genome` and `experiment reference` node of the datasets whose closure holds these classes. Superset admission by content id is therefore impossible for them across 3.0 to 4.0; the KG 4.0 release note states that content ids are not comparable with 3.0.\n\nONE HELPER'S SIGNATURE NARROWS WITH THE CLASS. `heterozygous_deletion_functional_copies` took a `StrainBackground` and reads `background.ploidy` on its first line, so the class its body requires is the eukaryotic one; the annotation now says so. Nothing the function accepted at runtime is refused that it did not already refuse (a background with no ploidy raised there), so the tightening is in the declared contract, which is where it belongs.",
+  "measurement_type_decision": false,
+  "source_quotes": [],
+  "alternatives_rejected": [
+    {
+      "alternative": "Audit A's P5 shape: a new `StrainBackgroundBase` with `reference_strain: str`, keeping the name `StrainBackground` for the eukaryotic class.",
+      "why_rejected": "Two defects. `reference_strain: str` is a free string where the fact is a closed vocabulary, which constitution principle 5 forbids and which would make the assembly cross-check unstateable (there would be nothing to look the expected set up by). And a class named `*Base` that 39 bacterial construction sites instantiate directly is not a base; it is the host-agnostic class under a name that says the opposite. Keeping `StrainBackground` as the host-agnostic class and naming the subclass for the material difference it carries is what principle 1 asks for: a class exists because it names a different physical thing, not because of which host the data came from."
+    },
+    {
+      "alternative": "Keep the two families as siblings and only add the three missing fields to the yeast class (assembly_set, genotype_statement, and gene_namespace on BackgroundAllele).",
+      "why_rejected": "It costs the same rebuild and leaves the split that is the defect. After it, two classes would assert exactly the same facts with the same vocabularies and differ only in three eukaryote fields, which is principle 5's \"two classes that assert the same fact are a defect\" with the duplication now complete rather than partial. The owner's ruling that opened this program is explicit: \"like why a bacterial experiment! it seems this is unnecessary distinction.\""
+    },
+    {
+      "alternative": "Merge the two families fully: put mating_type, ploidy and integrations on one class, optional, so a bacterial background simply leaves them None.",
+      "why_rejected": "That is weakening a required field for a thinner host, which Rule 5 refuses, and it would also destroy information: `ploidy` is required today and every zygosity check reads it, so an optional ploidy makes `functional_copies` undefined for a record that states none and makes the zygosity-versus-ploidy rule unenforceable. A haploid single-replicon genome genuinely has nothing to state there, so the honest shape is a subclass, not a nullable field."
+    },
+    {
+      "alternative": "Make `assembly_set` on the base required-with-a-typed-gap, mirroring `ReferenceGenome.assembly_set` field for field.",
+      "why_rejected": "Mirroring the shape would mis-state the reason the shape exists. The gap on `ReferenceGenome` is reachable because `strain` there is a free string that can name an undeposited strain; here the companion field is a closed vocabulary that `REFERENCE_STRAIN_ASSEMBLY_SETS` maps totally onto the deposited sets, so no admissible record could carry the gap. Lane F's own outcome is the precedent: it kept `assembly_accession` required rather than loosening it once R64's accession was measured to exist, because the policy prefers the tighter contract when the evidence supports it."
+    },
+    {
+      "alternative": "Give `IntegratedCassette` its own lighter pointer (a contig sha256 and a site label) instead of the full `ConstructPlacement`.",
+      "why_rejected": "A second pointer type for the same physical object is the duplication this whole program is retiring, one level down. Review 2 finding 9 asks for one placement type on both; a separate shape would also mean the construct-placement verifier and the construct store could count one of the two and not the other."
+    },
+    {
+      "alternative": "Project `placement` as part of a cassette's cross-dataset identity, since `deleted_span` is projected on the allele.",
+      "why_rejected": "A span is a coordinate of the edit itself; a placement is the pinned bytes the cassette was built from, and its absence is typed. Two datasets stating the same cassette, one with the map deposited and one without, would then land on two nodes, which is precisely the failure the projection exists to prevent (its docstring's motivating case is one strain quoted by one paper and gapped by another). bAID is screened in Lian 2019 and in the in-house Bioscreen dataset, so this is a measured join, not a hypothetical one."
+    }
+  ],
+  "served_release": "2026.10.06-4b293d34",
+  "affected_loaders": [
+    {
+      "loader": "torchcell/datasets/bacteria_common.py",
+      "dataset_classes": [],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/baba2006.py",
+      "dataset_classes": [
+        "GeneEssentialityBaba2006Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/baba2006_growth.py",
+      "dataset_classes": [
+        "GrowthYieldBaba2006Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/babu2014.py",
+      "dataset_classes": [
+        "GeneInteractionBabu2014Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/balakrishnan2022.py",
+      "dataset_classes": [
+        "MrnaFractionBalakrishnan2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/brunk2016.py",
+      "dataset_classes": [
+        "_MetaboliteBrunk2016Dataset",
+        "MetabolomeBrunk2016Dataset",
+        "ExometaboliteBrunk2016Dataset",
+        "ProteomeBrunk2016Dataset",
+        "BiofuelTiterBrunk2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/butland2008.py",
+      "dataset_classes": [
+        "GeneInteractionButland2008Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/caglar2017.py",
+      "dataset_classes": [
+        "RnaseqCaglar2017Dataset",
+        "ProteomeCaglar2017Dataset",
+        "ProteinFoldChangeCaglar2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/caglar2017_doubling_time.py",
+      "dataset_classes": [
+        "DoublingTimeCaglar2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/campos2018.py",
+      "dataset_classes": [
+        "GrowthRateCampos2018Dataset",
+        "MorphologyCampos2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/choe2019_growth_rate.py",
+      "dataset_classes": [
+        "GrowthRateChoe2019Dataset",
+        "TranscriptionFactorKnockoutChoe2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/choe2025.py",
+      "dataset_classes": [
+        "CrispriChemgenChoe2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/cui2018.py",
+      "dataset_classes": [
+        "CrispriKnockdownCui2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/fang2025.py",
+      "dataset_classes": [
+        "CrispriGuideFfaEnrichmentFang2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/fitness_browser_ecoli.py",
+      "dataset_classes": [
+        "FitnessBrowserEcoliDataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/foo2014.py",
+      "dataset_classes": [
+        "IsopentenolTiterFoo2014Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/fuhrer2017.py",
+      "dataset_classes": [
+        "MetabolomeFuhrer2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/gerdes2003.py",
+      "dataset_classes": [
+        "GeneEssentialityGerdes2003Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/girgis2009.py",
+      "dataset_classes": [
+        "EnvChemgenGirgis2009Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/goodall2018.py",
+      "dataset_classes": [
+        "GeneEssentialityGoodall2018Dataset",
+        "GradedGeneEssentialityGoodall2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/gupta2024.py",
+      "dataset_classes": [
+        "ProteinTurnoverGupta2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/guzman2018.py",
+      "dataset_classes": [
+        "RnaseqGuzman2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/hawkins2020.py",
+      "dataset_classes": [
+        "MismatchCrispriFitnessHawkins2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/ishii2007.py",
+      "dataset_classes": [
+        "_Ishii2007Dataset",
+        "MetabolomeIshii2007Dataset",
+        "ProteomeIshii2007Dataset",
+        "FluxIshii2007Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/lamoureux2023.py",
+      "dataset_classes": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/lamoureux2023_growth.py",
+      "dataset_classes": [
+        "GrowthRateLamoureux2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/lamoureux2023_public_k12.py",
+      "dataset_classes": [
+        "RnaseqPublicK12Lamoureux2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/li2014.py",
+      "dataset_classes": [
+        "ProteinSynthesisRateLi2014Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/li2021.py",
+      "dataset_classes": [
+        "FluxLi2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/mohiuddin2022.py",
+      "dataset_classes": [
+        "PromoterReporterMohiuddin2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/mori2021.py",
+      "dataset_classes": [
+        "ProteomeMori2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/mutalik2020.py",
+      "dataset_classes": [
+        "PhageRbTnseqMutalik2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/nichols2011.py",
+      "dataset_classes": [
+        "EnvChemgenNichols2011Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/niu2019.py",
+      "dataset_classes": [
+        "CrisprPineneToleranceNiu2019Dataset",
+        "PineneFoldChangeNiu2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/potel2018.py",
+      "dataset_classes": [
+        "PhosphositeIntensityPotel2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/price2018.py",
+      "dataset_classes": [
+        "RbTnseqPrice2018EcoliDataset",
+        "GeneEssentialityPrice2018EcoliDataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rachwalski2024.py",
+      "dataset_classes": [
+        "CrispriCrossRachwalski2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rapp2026.py",
+      "dataset_classes": [
+        "MetabolomeRapp2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rapp2026_platforms.py",
+      "dataset_classes": [
+        "_Rapp2026Dataset",
+        "GrowthAucRapp2026Dataset",
+        "_AccumulationDataset",
+        "TargetedMetabolomeRapp2026Dataset",
+        "MetaboliteIntensityRapp2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rousset2018.py",
+      "dataset_classes": [
+        "CrispriScreenRousset2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schastnaya2021.py",
+      "dataset_classes": [
+        "MetabolomeSchastnaya2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016.py",
+      "dataset_classes": [
+        "ProteomeSchmidt2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016_growth_rate.py",
+      "dataset_classes": [
+        "GrowthRateSchmidt2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016_s23_growth_rate.py",
+      "dataset_classes": [
+        "GrowthRateS23Schmidt2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016_srm.py",
+      "dataset_classes": [
+        "_SrmSchmidt2016Dataset",
+        "ProteomeSrmSet1Schmidt2016Dataset",
+        "ProteomeSrmSet2Schmidt2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/shiver2016.py",
+      "dataset_classes": [
+        "EnvChemgenShiver2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/teteneva2024.py",
+      "dataset_classes": [
+        "RbTnseqTeteneva2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/tong2020.py",
+      "dataset_classes": [
+        "CarbonSourceTong2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2015.py",
+      "dataset_classes": [
+        "EnvChemgenWang2015Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2015_growth.py",
+      "dataset_classes": [
+        "GrowthWang2015Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2018.py",
+      "dataset_classes": [
+        "CrispriGuideFitnessWang2018Dataset",
+        "CrispriGeneFitnessWang2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2024.py",
+      "dataset_classes": [
+        "EnvChemgenWang2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wetmore2015.py",
+      "dataset_classes": [
+        "RbTnseqWetmore2015Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/banerjee2024.py",
+      "dataset_classes": [
+        "IsoprenolTiterBanerjee2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/banerjee2025.py",
+      "dataset_classes": [
+        "ProteomeBanerjee2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/borchert2023.py",
+      "dataset_classes": [
+        "RbTnseqBorchert2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/borchert2023_contrast.py",
+      "dataset_classes": [
+        "FitnessContrastBorchert2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/borchert2024.py",
+      "dataset_classes": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/carruthers2025.py",
+      "dataset_classes": [
+        "IsoprenolTiterCarruthers2025Dataset",
+        "ProteomeCarruthers2025Dataset",
+        "CampaignProteomeCarruthers2025Dataset",
+        "ProteomeFoldChangeCarruthers2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/desiqueira2025.py",
+      "dataset_classes": [
+        "ProteomeDeSiqueira2025Dataset",
+        "ProteomePercentDeSiqueira2025Dataset",
+        "ProteomeLog10PercentDeSiqueira2025Dataset",
+        "IsoprenolTiterDeSiqueira2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/fitness_browser_putida.py",
+      "dataset_classes": [
+        "FitnessBrowserPutidaDataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/kang2026.py",
+      "dataset_classes": [
+        "IsoprenylAcetateTiterKang2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/lim2022.py",
+      "dataset_classes": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/lim2025.py",
+      "dataset_classes": [
+        "IsoprenolToleranceLim2025Dataset",
+        "ProteomeLim2025Dataset",
+        "ProteomeFoldChangeLim2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/menasalvas2025.py",
+      "dataset_classes": [
+        "IsoprenolSelectionMenasalvas2025Dataset",
+        "ProteomeMenasalvas2025Dataset",
+        "_MetabolitePhaseDataset",
+        "MetaboliteGrowthPhaseMenasalvas2025Dataset",
+        "MetaboliteProductionPhaseMenasalvas2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/royet2025.py",
+      "dataset_classes": [
+        "EnvMetalTnseqRoyet2025Dataset",
+        "GradedGeneEssentialityRoyet2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/thompson2019_valerolactam.py",
+      "dataset_classes": [
+        "_Thompson2019Dataset",
+        "ValerolactamTiterThompson2019Dataset",
+        "LactamGrowthRateThompson2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/yunus2026.py",
+      "dataset_classes": [
+        "_Yunus2026Dataset",
+        "_Yunus2026BenchlingDataset",
+        "CrispriKnockdownYunus2026Dataset",
+        "CrispriArrayYunus2026Dataset",
+        "CrispriDifferentialProteomeYunus2026Dataset",
+        "IsoprenolTiterYunus2026Dataset",
+        "CrispriPanelProteomeYunus2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/private_torchcell/volk2021_inhibitor_bioscreen.py",
+      "dataset_classes": [
+        "InhibitorBioscreenVolk2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/auesukaree2009.py",
+      "dataset_classes": [
+        "EnvChemgenAuesukaree2009Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenAuesukaree2009Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/baryshnikova2010.py",
+      "dataset_classes": [
+        "SmfBaryshnikova2010Dataset"
+      ],
+      "served_classes": [
+        "SmfBaryshnikova2010Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/bloom2019.py",
+      "dataset_classes": [
+        "Bloom2019Dataset"
+      ],
+      "served_classes": [
+        "Bloom2019Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/boocock2025.py",
+      "dataset_classes": [
+        "Boocock2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/cachera2023.py",
+      "dataset_classes": [
+        "BetaxanthinCachera2023Dataset"
+      ],
+      "served_classes": [
+        "BetaxanthinCachera2023Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/caudal2024.py",
+      "dataset_classes": [
+        "CaudalPanTranscriptome2024Dataset"
+      ],
+      "served_classes": [
+        "CaudalPanTranscriptome2024Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/cooper2010.py",
+      "dataset_classes": [
+        "AminoAcidCooper2010Dataset"
+      ],
+      "served_classes": [
+        "AminoAcidCooper2010Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/costanzo2016.py",
+      "dataset_classes": [
+        "SmfCostanzo2016Dataset",
+        "DmfCostanzo2016Dataset",
+        "DmiCostanzo2016Dataset"
+      ],
+      "served_classes": [
+        "DmfCostanzo2016Dataset",
+        "DmiCostanzo2016Dataset",
+        "SmfCostanzo2016Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/costanzo2021.py",
+      "dataset_classes": [
+        "EnvChemgenCostanzo2021Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenCostanzo2021Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/dasilveira2014.py",
+      "dataset_classes": [
+        "MetaboliteDaSilveira2014Dataset"
+      ],
+      "served_classes": [
+        "MetaboliteDaSilveira2014Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/dechiara2022.py",
+      "dataset_classes": [
+        "_DeChiara2022Dataset",
+        "_GrowthDeChiara2022Dataset",
+        "DoublingTimeDeChiara2022Dataset",
+        "CellYieldDeChiara2022Dataset",
+        "LifeCycleDeChiara2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hackett2020.py",
+      "dataset_classes": [
+        "InductionTimecourseHackett2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hale2024.py",
+      "dataset_classes": [
+        "CrispriSegregantHale2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hillenmeyer2008.py",
+      "dataset_classes": [
+        "HetHillenmeyer2008Dataset",
+        "HomHillenmeyer2008Dataset"
+      ],
+      "served_classes": [
+        "HetHillenmeyer2008Dataset",
+        "HomHillenmeyer2008Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hoepfner2014.py",
+      "dataset_classes": [
+        "EnvChemgenHoepfner2014Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenHoepfner2014Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hu2007.py",
+      "dataset_classes": [
+        "MicroarrayScoreHu2007Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/jackson2020.py",
+      "dataset_classes": [
+        "TfDeletionPseudobulkJackson2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/kemmeren2014.py",
+      "dataset_classes": [
+        "MicroarrayKemmeren2014Dataset"
+      ],
+      "served_classes": [
+        "MicroarrayKemmeren2014Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/kuzmin2018.py",
+      "dataset_classes": [
+        "SmfKuzmin2018Dataset",
+        "DmfKuzmin2018Dataset",
+        "TmfKuzmin2018Dataset",
+        "DmiKuzmin2018Dataset",
+        "TmiKuzmin2018Dataset"
+      ],
+      "served_classes": [
+        "DmfKuzmin2018Dataset",
+        "DmiKuzmin2018Dataset",
+        "SmfKuzmin2018Dataset",
+        "TmfKuzmin2018Dataset",
+        "TmiKuzmin2018Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/kuzmin2020.py",
+      "dataset_classes": [
+        "SmfKuzmin2020Dataset",
+        "DmfKuzmin2020Dataset",
+        "TmfKuzmin2020Dataset",
+        "DmiKuzmin2020Dataset",
+        "TmiKuzmin2020Dataset"
+      ],
+      "served_classes": [
+        "DmfKuzmin2020Dataset",
+        "DmiKuzmin2020Dataset",
+        "SmfKuzmin2020Dataset",
+        "TmfKuzmin2020Dataset",
+        "TmiKuzmin2020Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/lian2019.py",
+      "dataset_classes": [
+        "CrisprMagicLian2019Dataset"
+      ],
+      "served_classes": [
+        "CrisprMagicLian2019Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/lopez2024.py",
+      "dataset_classes": [
+        "IsobutanolScreenLopez2024Dataset",
+        "IsobutanolValidatedLopez2024Dataset"
+      ],
+      "served_classes": [
+        "IsobutanolScreenLopez2024Dataset",
+        "IsobutanolValidatedLopez2024Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/messner2021.py",
+      "dataset_classes": [
+        "ProteomeMessner2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/messner2023.py",
+      "dataset_classes": [
+        "ProteomeMessner2023Dataset"
+      ],
+      "served_classes": [
+        "ProteomeMessner2023Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/mormino2022.py",
+      "dataset_classes": [
+        "CrispriMormino2022Dataset"
+      ],
+      "served_classes": [
+        "CrispriMormino2022Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/mota2024.py",
+      "dataset_classes": [
+        "EnvChemgenMota2024Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenMota2024Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/muenzner2024.py",
+      "dataset_classes": [
+        "_MuenznerIsolateDataset",
+        "ProteomeMuenzner2024Dataset",
+        "ProteinTurnoverMuenzner2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/mulleder2016.py",
+      "dataset_classes": [
+        "AminoAcidMulleder2016Dataset"
+      ],
+      "served_classes": [
+        "AminoAcidMulleder2016Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/nadal_ribelles2025.py",
+      "dataset_classes": [
+        "NadalRibellesPerturbSeq2025Dataset"
+      ],
+      "served_classes": [
+        "NadalRibellesPerturbSeq2025Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/nguessan2025.py",
+      "dataset_classes": [
+        "Nguessan2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/oduibhir2014.py",
+      "dataset_classes": [
+        "SmfODuibhir2014Dataset"
+      ],
+      "served_classes": [
+        "SmfODuibhir2014Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ohnuki2018.py",
+      "dataset_classes": [
+        "ScmdOhnuki2018Dataset"
+      ],
+      "served_classes": [
+        "ScmdOhnuki2018Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ohnuki2022.py",
+      "dataset_classes": [
+        "ScmdOhnuki2022Dataset"
+      ],
+      "served_classes": [
+        "ScmdOhnuki2022Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ohya2005.py",
+      "dataset_classes": [
+        "ScmdOhya2005Dataset"
+      ],
+      "served_classes": [
+        "ScmdOhya2005Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ozaydin2013.py",
+      "dataset_classes": [
+        "CarotenoidOzaydin2013Dataset"
+      ],
+      "served_classes": [
+        "CarotenoidOzaydin2013Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/parsons2006.py",
+      "dataset_classes": [
+        "EnvChemgenParsons2006Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/peter2018.py",
+      "dataset_classes": [
+        "IsolateGrowthPeter2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/piotrowski2017.py",
+      "dataset_classes": [
+        "EnvChemgenPiotrowski2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/puddu2019.py",
+      "dataset_classes": [
+        "GenomeArchitecturePuddu2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/sameith2015.py",
+      "dataset_classes": [
+        "SmMicroarraySameith2015Dataset",
+        "DmMicroarraySameith2015Dataset"
+      ],
+      "served_classes": [
+        "DmMicroarraySameith2015Dataset",
+        "SmMicroarraySameith2015Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/sgd.py",
+      "dataset_classes": [
+        "GeneEssentialitySgdDataset"
+      ],
+      "served_classes": [
+        "GeneEssentialitySgdDataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/smith2006.py",
+      "dataset_classes": [
+        "FattyAcidSmith2006Dataset"
+      ],
+      "served_classes": [
+        "FattyAcidSmith2006Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/smith2016.py",
+      "dataset_classes": [
+        "CrispriChemgenSmith2016Dataset"
+      ],
+      "served_classes": [
+        "CrispriChemgenSmith2016Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/synth_leth_db.py",
+      "dataset_classes": [
+        "SynthLethalityYeastSynthLethDbDataset",
+        "SynthRescueYeastSynthLethDbDataset"
+      ],
+      "served_classes": [
+        "SynthLethalityYeastSynthLethDbDataset",
+        "SynthRescueYeastSynthLethDbDataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/vaishnav2022.py",
+      "dataset_classes": [
+        "PooledPromoterExpressionVaishnav2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/vanacloig2022.py",
+      "dataset_classes": [
+        "EnvChemgenVanacloig2022Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenVanacloig2022Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/wildenhain2015.py",
+      "dataset_classes": [
+        "EnvChemgenWildenhain2015Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenWildenhain2015Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/xue2025.py",
+      "dataset_classes": [
+        "FattyAcidXue2025Dataset"
+      ],
+      "served_classes": [
+        "FattyAcidXue2025Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/yeastphenome.py",
+      "dataset_classes": [
+        "YeastPhenomeDataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/yoshida2012.py",
+      "dataset_classes": [
+        "OrganicAcidYoshida2012Dataset"
+      ],
+      "served_classes": [
+        "OrganicAcidYoshida2012Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/yoshikawa2009.py",
+      "dataset_classes": [
+        "EnvChemgenYoshikawa2009Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/zelezniak2018.py",
+      "dataset_classes": [
+        "ProteomeZelezniak2018Dataset",
+        "MetaboliteZelezniak2018Dataset"
+      ],
+      "served_classes": [
+        "MetaboliteZelezniak2018Dataset",
+        "ProteomeZelezniak2018Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "BackgroundAllele",
+        "BacterialBackgroundAllele",
+        "BacterialStrainBackground",
+        "EukaryoticStrainBackground",
+        "IntegratedCassette",
+        "REFERENCE_STRAIN_ASSEMBLY_SETS",
+        "ReferenceStrain",
+        "StrainBackground",
+        "StrainReferenceGenome",
+        "_validate_bacterial_locus_tag"
+      ]
+    }
+  ],
+  "served_datasets": [
+    "AminoAcidCooper2010Dataset",
+    "AminoAcidMulleder2016Dataset",
+    "BetaxanthinCachera2023Dataset",
+    "Bloom2019Dataset",
+    "CarotenoidOzaydin2013Dataset",
+    "CaudalPanTranscriptome2024Dataset",
+    "CrisprMagicLian2019Dataset",
+    "CrispriChemgenSmith2016Dataset",
+    "CrispriMormino2022Dataset",
+    "DmMicroarraySameith2015Dataset",
+    "DmfCostanzo2016Dataset",
+    "DmfKuzmin2018Dataset",
+    "DmfKuzmin2020Dataset",
+    "DmiCostanzo2016Dataset",
+    "DmiKuzmin2018Dataset",
+    "DmiKuzmin2020Dataset",
+    "EnvChemgenAuesukaree2009Dataset",
+    "EnvChemgenCostanzo2021Dataset",
+    "EnvChemgenHoepfner2014Dataset",
+    "EnvChemgenMota2024Dataset",
+    "EnvChemgenVanacloig2022Dataset",
+    "EnvChemgenWildenhain2015Dataset",
+    "FattyAcidSmith2006Dataset",
+    "FattyAcidXue2025Dataset",
+    "GeneEssentialitySgdDataset",
+    "HetHillenmeyer2008Dataset",
+    "HomHillenmeyer2008Dataset",
+    "IsobutanolScreenLopez2024Dataset",
+    "IsobutanolValidatedLopez2024Dataset",
+    "MetaboliteDaSilveira2014Dataset",
+    "MetaboliteZelezniak2018Dataset",
+    "MicroarrayKemmeren2014Dataset",
+    "NadalRibellesPerturbSeq2025Dataset",
+    "OrganicAcidYoshida2012Dataset",
+    "ProteomeMessner2023Dataset",
+    "ProteomeZelezniak2018Dataset",
+    "ScmdOhnuki2018Dataset",
+    "ScmdOhnuki2022Dataset",
+    "ScmdOhya2005Dataset",
+    "SmMicroarraySameith2015Dataset",
+    "SmfBaryshnikova2010Dataset",
+    "SmfCostanzo2016Dataset",
+    "SmfKuzmin2018Dataset",
+    "SmfKuzmin2020Dataset",
+    "SmfODuibhir2014Dataset",
+    "SynthLethalityYeastSynthLethDbDataset",
+    "SynthRescueYeastSynthLethDbDataset",
+    "TmfKuzmin2018Dataset",
+    "TmfKuzmin2020Dataset",
+    "TmiKuzmin2018Dataset",
+    "TmiKuzmin2020Dataset"
+  ],
+  "rebuild_scope": "full_kg_rebuild",
+  "owner_sign_off": {
+    "signed": true,
+    "quote": "Owner, 2026-10-15, folding P5 into this rebuild rather than deferring it: 'fold it in !' (Path U check-in log, 12:20 CDT, recorded in [[scratch.2026.10.15.ontology-unification-decision]]). The standard it is folded in under, owner 2026-10-15: 'we care most about correctness and are willing right now to do full rebuilds if we identify even small semantically prudent change in onto' (constitution principle 8) and 'we want to unify then build, we are prepped for full rebuild path U'. The ruling that opened the program, owner 2026-10-15: 'like why a bacterial experiment! it seems this is unnecessary distinction. we can run many same fitness experiments on both yeast and bacteria.' On what may and may not be dropped from a record, owner 2026-10-12: 'the data is the data!!!! it is what they reported ... we don't drop raw data unless they themselves pull it! ... the genome is separate.. it doesn't gate anything.'",
+    "url": null
+  }
+}

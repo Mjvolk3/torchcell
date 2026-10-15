@@ -64,7 +64,7 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
 from torchcell.datamodels.schema import (
     BacterialAssemblySet,
     BacterialReferenceStrain,
-    BacterialStrainBackground,
+    StrainBackground,
     StrainReferenceGenome,
 )
 from torchcell.sequence.genome.bacterial import GenomeAnnotationMismatchError
@@ -516,10 +516,8 @@ _SETS: dict[BacterialReferenceStrain, BacterialAssemblySet] = {
 }
 
 
-def _background(
-    name: str, strain: BacterialReferenceStrain
-) -> BacterialStrainBackground:
-    return BacterialStrainBackground(
+def _background(name: str, strain: BacterialReferenceStrain) -> StrainBackground:
+    return StrainBackground(
         name=name,
         reference_strain=strain,
         assembly_set=_SETS[strain],

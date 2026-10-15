@@ -40,7 +40,7 @@ label (#1045 part 2): the loader resolves no symbol, so the 11 samples whose sym
 pinned annotation does not resolve (``crc``, ``crcZ``, ``crcY``, ``finR``, ``turA``,
 ``turB``) are stored too, and a symbol-to-``PP_`` crosswalk is a modeling-time join.
 
-``ALE:IL_PP5350`` (2 samples) is stored on a ``BacterialStrainBackground`` named as the
+``ALE:IL_PP5350`` (2 samples) is stored on a ``StrainBackground`` named as the
 sample sheet's ``biosample_strain`` writes it (``KT2440 PP_5350'``), whose
 ``genotype_statement`` is its ``biosample_genotype`` cell verbatim ("9bp deletion in its
 PP_5350") (#1045 part 2). ``PP_5350`` is a released locus tag, so the released-strain leaf
@@ -51,7 +51,7 @@ misstate a 9 bp in-frame deletion, and ``LocusVariantCallPerturbation`` needs a
 background states the edit as released and types nothing it does not say.
 
 Every other derivative is stored too (#1045 part 3; 128 samples dropped before), each
-on a ``BacterialStrainBackground`` named as the release names it, its genotype statement
+on a ``StrainBackground`` named as the release names it, its genotype statement
 verbatim where the release gives one and a typed gap (``not_carried_by_curation``, the
 compendium names the strain and its source study holds the genotype) where it does not:
 
@@ -122,7 +122,6 @@ from torchcell.data.experiment_dataset import file_sha256
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     BacterialAssemblySet,
-    BacterialStrainBackground,
     ComponentDefinition,
     Compound,
     Concentration,
@@ -143,6 +142,7 @@ from torchcell.datamodels.schema import (
     RNASeqExpressionExperiment,
     RNASeqExpressionExperimentReference,
     RNASeqExpressionPhenotype,
+    StrainBackground,
 )
 from torchcell.datasets.bacteria_common import (
     BACTERIAL_ASSEMBLY_SETS,
@@ -1335,7 +1335,7 @@ def released_deletion(symbol: str, strain_label: str) -> ReleasedIdentifierPertu
     )
 
 
-def released_background(call: StrainCall, full_name: str) -> BacterialStrainBackground:
+def released_background(call: StrainCall, full_name: str) -> StrainBackground:
     """The strain of a ``released_background`` call, named and stated as released.
 
     The name is quoted from the cell or the condition label it comes from; the genotype
@@ -1369,7 +1369,7 @@ def released_background(call: StrainCall, full_name: str) -> BacterialStrainBack
             )
         )
     provenance.extend(call.supporting)
-    return BacterialStrainBackground(
+    return StrainBackground(
         name=call.background_name,
         reference_strain="KT2440",
         assembly_set=TypeAdapter(BacterialAssemblySet).validate_python(

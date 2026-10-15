@@ -140,6 +140,7 @@ from torchcell.datamodels.schema import (
     BarcodedKanMxDeletionPerturbation,
     CultureEnvironment,
     CultureFormat,
+    EukaryoticStrainBackground,
     Experiment,
     ExperimentReference,
     GenomeArchitectureExperiment,
@@ -149,7 +150,6 @@ from torchcell.datamodels.schema import (
     Media,
     Publication,
     SampleUnit,
-    StrainBackground,
     StrainConstruction,
     StrainReferenceGenome,
     Temperature,
@@ -916,7 +916,7 @@ def puddu_environment() -> CultureEnvironment:
     )
 
 
-def puddu_background() -> StrainBackground:
+def puddu_background() -> EukaryoticStrainBackground:
     """BY4743 with its typed alleles, the collection's diploid background.
 
     The alleles are the standard BY4743 set, asserted with a pending-review gap naming
@@ -930,7 +930,9 @@ def puddu_background() -> StrainBackground:
         note="the BY4741 x BY4742 genotype is not in a mirrored source; the background "
         "name BY4743 is sourced to the paper's own hyper-mutator comparison",
     ).alleles
-    return StrainBackground(
+    return EukaryoticStrainBackground(
+        reference_strain="S288C",
+        assembly_set=SGD_S288C_R64,
         name=BACKGROUND_STRAIN,
         parents=["BY4741", "BY4742"],
         construction="homozygous diploid yeast knockout collection, acquired from "

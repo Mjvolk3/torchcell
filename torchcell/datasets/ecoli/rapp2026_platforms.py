@@ -33,7 +33,7 @@ reads Table S1 + Table S3 + Table S6 + Table S9; intensities read Table S1 + Tab
 Table S5 + Table S9.
 
 STRAIN. Identical to the metabolome loader: records pin the MG1655 GenBank assembly the
-released b-numbers mean, with ``YYdCas9`` as the ``BacterialStrainBackground``, and one
+released b-numbers mean, with ``YYdCas9`` as the ``StrainBackground``, and one
 ``CrisprInterferencePerturbation`` per record carrying the Table S1 spacer.
 Every family carries the same single retention rule as the metabolome loader
 (``b_number_remapped_by_the_annotation``), and in every family it now removes NOTHING.

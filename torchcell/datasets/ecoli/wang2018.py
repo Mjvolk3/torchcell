@@ -1301,7 +1301,7 @@ def host_reference(data_root: str | None = None) -> ReferenceGenome:
 
     The screening host MCm carries a chloramphenicol cassette in ``smf`` and two
     plasmids, but the library was designed against plain ``NC_000913.3`` and the paper
-    gives the cassette no locus tag. A ``BacterialStrainBackground`` here would assert a
+    gives the cassette no locus tag. A ``StrainBackground`` here would assert a
     strain the stored b-numbers are not written against, so ``background`` is ``None``
     and the cassette is recorded in :data:`REFERENCE_BACKGROUND` and in the note.
     """

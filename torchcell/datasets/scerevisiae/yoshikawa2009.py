@@ -105,6 +105,7 @@ from torchcell.datamodels.schema import (
     EndpointRule,
     EnvironmentPerturbationType,
     EnvironmentResponsePhenotype,
+    EukaryoticStrainBackground,
     Experiment,
     ExperimentReference,
     Genotype,
@@ -116,7 +117,6 @@ from torchcell.datamodels.schema import (
     ResponseCategory,
     SampleUnit,
     SmallMoleculePerturbation,
-    StrainBackground,
     StrainEnvironmentResponseExperiment,
     StrainEnvironmentResponseExperimentReference,
     StrainReferenceGenome,
@@ -779,7 +779,7 @@ def _background_allele(allele: BackgroundAllele) -> BackgroundAllele:
     )
 
 
-def yoshikawa_background() -> StrainBackground:
+def yoshikawa_background() -> EukaryoticStrainBackground:
     """BY4742 with its quoted alleles; that a given strain is BY4742 is a typed gap."""
     genotype = STANDARD_BY_GENOTYPES[BACKGROUND_STRAIN]
     alleles = [
@@ -788,7 +788,9 @@ def yoshikawa_background() -> StrainBackground:
         )
         for allele_name, zygosity in genotype.alleles.items()
     ]
-    return StrainBackground(
+    return EukaryoticStrainBackground(
+        reference_strain="S288C",
+        assembly_set=SGD_S288C_R64,
         name=BACKGROUND_STRAIN,
         parents=list(genotype.parents),
         construction=None,

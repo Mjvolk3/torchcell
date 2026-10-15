@@ -75,7 +75,7 @@ exactly that, with the design quote in the note. The fed-batch rows additionally
 states a replicate count.
 
 THE CHASSIS. The reference every record is written against is **PIPA**, carried as a
-``BacterialStrainBackground`` on an ``ReferenceGenome`` pinned to
+``StrainBackground`` on an ``ReferenceGenome`` pinned to
 ``pputida_KT2440_ASM756v2`` / ``GCA_000007565.2``. Its parent is wild-type KT2440,
 "Wild-type mt-2 derivative lacking the TOL plasmid pWW0". Table 1 states the genotype
 WITH locus tags: "P. putida KT2440 ΔphaABC (PP_5003-5005) ΔmvaB (PP_3540) ∆hbdH
@@ -169,11 +169,10 @@ from torchcell.datamodels.media import (
 )
 from torchcell.datamodels.schema import (
     AlleleEdit,
+    BackgroundAllele,
     BacterialAssemblySet,
-    BacterialBackgroundAllele,
     BacterialGeneNamespace,
     BacterialReferenceStrain,
-    BacterialStrainBackground,
     Compound,
     Concentration,
     ConcentrationUnit,
@@ -198,6 +197,7 @@ from torchcell.datamodels.schema import (
     ReferenceGenome,
     SampleUnit,
     SmallMoleculePerturbation,
+    StrainBackground,
     Temperature,
     UncertaintyType,
 )
@@ -1298,7 +1298,7 @@ def _annotation_symbols(genome: PPutidaKT2440Genome) -> dict[str, str]:
 
 def chassis_background(
     genome: PPutidaKT2440Genome,
-) -> tuple[BacterialStrainBackground, SpanResolution]:
+) -> tuple[StrainBackground, SpanResolution]:
     """PIPA: KT2440 with the six named deletions plus the Δ86kb span, and the span report.
 
     Every named allele's locus tag is Table 1's own, and for the five symbols the
@@ -1315,7 +1315,7 @@ def chassis_background(
     )
     symbols = _annotation_symbols(genome)
     loci = set(genome.genbank.loci)
-    alleles: list[BacterialBackgroundAllele] = []
+    alleles: list[BackgroundAllele] = []
     for entry in CHASSIS_DELETIONS_TYPED:
         if entry.locus_tag not in loci:
             raise RuntimeError(
@@ -1337,7 +1337,7 @@ def chassis_background(
                 "locus range and must become a symbol-resolved allele"
             )
         alleles.append(
-            BacterialBackgroundAllele(
+            BackgroundAllele(
                 systematic_gene_name=entry.locus_tag,
                 gene_namespace=KT2440_NAMESPACE,
                 gene_name=entry.symbol,
@@ -1356,7 +1356,7 @@ def chassis_background(
         if tag in named:
             continue
         alleles.append(
-            BacterialBackgroundAllele(
+            BackgroundAllele(
                 systematic_gene_name=tag,
                 gene_namespace=KT2440_NAMESPACE,
                 gene_name=symbols.get(tag, tag),
@@ -1367,7 +1367,7 @@ def chassis_background(
                 provenance=[CHASSIS_GENOTYPE, CHASSIS_GENOTYPE_TABLE1],
             )
         )
-    background = BacterialStrainBackground(
+    background = StrainBackground(
         name=CHASSIS_STRAIN,
         reference_strain=PARENT_STRAIN,
         assembly_set=KT2440_ASSEMBLY_SET,

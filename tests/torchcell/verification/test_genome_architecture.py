@@ -20,6 +20,7 @@ from torchcell.datamodels.genome_architecture_features import PUDDU2019_WGS_COVE
 from torchcell.datamodels.schema import (
     BarcodedKanMxDeletionPerturbation,
     CultureEnvironment,
+    EukaryoticStrainBackground,
     GenomeArchitectureExperiment,
     GenomeArchitectureExperimentReference,
     GenomeArchitecturePhenotype,
@@ -28,7 +29,6 @@ from torchcell.datamodels.schema import (
     Media,
     Publication,
     SampleUnit,
-    StrainBackground,
     StrainReferenceGenome,
     Temperature,
     UncertaintyType,
@@ -95,8 +95,10 @@ def _reference() -> GenomeArchitectureExperimentReference:
             species="Saccharomyces cerevisiae",
             strain="BY4743",
             ploidy="diploid",
-            background=StrainBackground(
+            background=EukaryoticStrainBackground(
                 name="BY4743",
+                reference_strain="S288C",
+                assembly_set=SGD_S288C_R64,
                 mating_type=MatingType.a_alpha,
                 ploidy="diploid",
                 provenance=[

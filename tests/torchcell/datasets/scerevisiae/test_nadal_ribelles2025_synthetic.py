@@ -61,6 +61,10 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.scerevisiae import nadal_ribelles2025 as m
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 _DATASET = "NadalRibellesPerturbSeq2025Dataset"
 
@@ -185,7 +189,10 @@ def _reference(
     return PseudobulkExpressionExperimentReference(
         dataset_name=_DATASET,
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae",
+            strain="S288C",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=environment,
         phenotype_reference=PseudobulkExpressionPhenotype(

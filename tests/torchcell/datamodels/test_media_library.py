@@ -54,6 +54,10 @@ from torchcell.datamodels.schema import (
     ReferenceGenome,
     Temperature,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.common import shared_rule_results
 from torchcell.verification.sourced import audit_sourced_value
 
@@ -78,7 +82,10 @@ def _records(media: Media) -> list[dict[str, Any]]:
     reference = FitnessExperimentReference(
         dataset_name="media-library",
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae",
+            strain="S288C",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=environment.model_copy(),
         phenotype_reference=FitnessPhenotype(fitness=1.0),

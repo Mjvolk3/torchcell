@@ -1,5 +1,5 @@
 # Choe 2025 genome-scale CRISPRi screen: 466,569 (guide, antibiotic) records,
-# BacterialEnvironmentResponseExperiment. One BacterialCrisprInterferencePerturbation per
+# EnvironmentResponseExperiment. One BacterialCrisprInterferencePerturbation per
 # record, served as `bacterial perturbation`, carrying a CrisprConstruct with the 20 nt
 # spacer, so the crispr-construct pair is enabled. The environment carries the
 # condition's antibiotic as a SmallMoleculePerturbation, on the experiment but NOT on the

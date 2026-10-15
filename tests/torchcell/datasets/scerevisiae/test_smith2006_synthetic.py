@@ -61,6 +61,10 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.scerevisiae import smith2006 as s
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 _DATASET = "FattyAcidSmith2006Dataset"
 _NAN = float("nan")
@@ -208,7 +212,10 @@ def _reference(condition: str) -> dict[str, object]:
     return EnvironmentResponseExperimentReference(
         dataset_name=_DATASET,
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4742"
+            species="Saccharomyces cerevisiae",
+            strain="BY4742",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=_environment(condition),
         phenotype_reference=EnvironmentResponsePhenotype(

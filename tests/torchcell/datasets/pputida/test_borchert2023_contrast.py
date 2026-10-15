@@ -20,8 +20,8 @@ import pytest
 from openpyxl import Workbook
 
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
     FitnessContrastPhenotype,
+    ReferenceGenome,
     TransposonInsertionPerturbation,
 )
 from torchcell.datasets.pputida import borchert2023 as b23
@@ -177,7 +177,7 @@ def test_leaf_admits_a_q_value_above_one_and_a_gapped_statistic() -> None:
     assert _contrast(t_statistic=None, provenance_gaps=[gap]).t_statistic is None
 
 
-REFERENCE = AssemblyReferenceGenome(
+REFERENCE = ReferenceGenome(
     species="Pseudomonas putida",
     strain="KT2440",
     assembly_set="pputida_KT2440_ASM756v2",

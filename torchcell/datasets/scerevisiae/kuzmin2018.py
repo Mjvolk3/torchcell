@@ -55,6 +55,10 @@ from torchcell.literature.manifest import (
     RetrievalMethod,
     RetrievalRecord,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
@@ -576,7 +580,10 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
         """Build the experiment, reference, and publication objects from a data row."""
         # Common attributes for both temperatures
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae",
+            strain="S288C",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
         # genotype
         if row["smf_type"] == "query_smf":
@@ -847,7 +854,10 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
         """Build the experiment, reference, and publication objects from a data row."""
         # Common attributes for both temperatures
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae",
+            strain="S288C",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
         # genotype
         perturbations: list[GenePerturbationType] = []
@@ -1081,7 +1091,10 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
         """Build the experiment, reference, and publication objects from a data row."""
         # Common attributes for both temperatures
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae",
+            strain="S288C",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
         # genotype
         perturbations: list[GenePerturbationType] = []
@@ -1318,7 +1331,10 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
     ]:
         """Build the experiment, reference, and publication objects from a data row."""
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae",
+            strain="S288C",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
 
         perturbations: list[GenePerturbationType] = []
@@ -1535,7 +1551,10 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
     ]:
         """Build the experiment, reference, and publication objects from a data row."""
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae",
+            strain="S288C",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
 
         perturbations: list[GenePerturbationType] = []

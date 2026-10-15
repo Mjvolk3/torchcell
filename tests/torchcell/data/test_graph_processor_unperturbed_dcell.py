@@ -43,6 +43,10 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.graph.graph import GeneGraph, GeneMultiGraph
 from torchcell.sequence import GeneSet
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 GENE_NAMES = ["YAL001C", "YAL002W", "YAL003W", "YAL004W", "YAL005C"]
 GENES = GeneSet(GENE_NAMES)
@@ -135,7 +139,10 @@ def _record(
         "experiment_reference": FitnessExperimentReference(
             dataset_name="toy",
             genome_reference=ReferenceGenome(
-                species="Saccharomyces cerevisiae", strain="S288C"
+                species="Saccharomyces cerevisiae",
+                strain="S288C",
+                assembly_set=SGD_S288C_R64,
+                assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
             ),
             environment_reference=ENVIRONMENT,
             phenotype_reference=FitnessPhenotype(fitness=1.0),

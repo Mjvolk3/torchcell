@@ -1,5 +1,5 @@
 # Menasalvas 2025 deposited metabolites, growth-phase (GP): 3 records (one per released
-# strain), BacterialMetaboliteExperiment over the 48 Absolute rows of data S1-1. Every genotype
+# strain), MetaboliteExperiment over the 48 Absolute rows of data S1-1. Every genotype
 # carries the five integrated pathway genes, the mCherry biosensor copies and (for the
 # two improved strains) seven deletions, served as `bacterial perturbation`. The
 # TEAM-2595 record additionally carries the 75 called variants of data S1-5, served as

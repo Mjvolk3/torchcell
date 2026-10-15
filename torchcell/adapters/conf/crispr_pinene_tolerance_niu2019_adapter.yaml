@@ -1,4 +1,4 @@
-# Niu 2019 CRISPRa/CRISPRi pinene tolerance: BacterialEnvironmentResponseExperiment.
+# Niu 2019 CRISPRa/CRISPRi pinene tolerance: EnvironmentResponseExperiment.
 # One BacterialCrisprActivationPerturbation (#799) or
 # BacterialCrisprInterferencePerturbation per targeted gene, six on the interference
 # combination strain, served as `bacterial perturbation` with the shared

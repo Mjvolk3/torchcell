@@ -1,5 +1,5 @@
 # Schastnaya 2021 deletion metabolome: 29 (KEIO deletion strain, carbon source) records,
-# BacterialMetaboliteExperiment. One BacterialDeletionPerturbation per record, served as
+# MetaboliteExperiment. One BacterialDeletionPerturbation per record, served as
 # `bacterial perturbation` (never the yeast `perturbation` class). The carbon source is
 # part of the medium, so no record carries an environment perturbation (0 in 29) and
 # that pair is not enabled.

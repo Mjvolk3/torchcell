@@ -51,12 +51,21 @@ from torchcell.datamodels.schema import (
     ReferenceGenome,
     Temperature,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 ENVIRONMENT = Environment(
     media=Media(name="YPD", state="solid", is_synthetic=False),
     temperature=Temperature(value=30.0),
 )
-GENOME = ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
+GENOME = ReferenceGenome(
+    species="Saccharomyces cerevisiae",
+    strain="S288C",
+    assembly_set=SGD_S288C_R64,
+    assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
+)
 KEY_SINGLE = "7cabd79d8be173ac803e1e8e7f855fb53b978b6e2c1eefb3c6f284671837ec59"
 KEY_DOUBLE = "45978da82cc80da11902760351f07b009538a664546c1f8af829cbf1d0f13e5b"
 

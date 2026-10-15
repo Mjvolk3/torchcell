@@ -68,6 +68,10 @@ from torchcell.data.experiment_dataset import verify_raw_files
 from torchcell.datamodels.schema import ArtifactRef, ReferenceGenome
 from torchcell.datasets.scerevisiae import caudal2024 as m
 from torchcell.sequence import natural_isolate as ni
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.sourced import audit_sourced_value
 
 _RELEASED_HEADER = (
@@ -476,7 +480,10 @@ def test_main_builds_under_data_root_and_prints_record_zero(
     monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: False)
     m.main()
     genome = ReferenceGenome(
-        species="Saccharomyces cerevisiae", strain="S288C"
+        species="Saccharomyces cerevisiae",
+        strain="S288C",
+        assembly_set=SGD_S288C_R64,
+        assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
     ).model_dump()
     counts = {
         "natural_gene_presence": 1,

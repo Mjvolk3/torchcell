@@ -56,24 +56,24 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
 from torchcell.data import ManifestPinMismatchError, check_manifest_pin
 from torchcell.datamodels.media import MEDIA_LIBRARY
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
-    BacterialGeneInteractionExperiment,
-    BacterialGeneInteractionExperimentReference,
     BacterialReleasedStrainPerturbation,
     DeletionStrainPerturbation,
+    GeneInteractionExperiment,
+    GeneInteractionExperimentReference,
     GeneInteractionPhenotype,
     Genotype,
     MarkedAllelePerturbation,
     MediaComponentRole,
     ReleasedStrainKind,
     SampleUnit,
+    StrainReferenceGenome,
 )
 from torchcell.datasets.dataset_registry import dataset_registry
 from torchcell.literature.manifest import RetrievalMethod
 from torchcell.sequence.genome.ecoli.k12 import MG1655_ASSEMBLY, EcoliK12MG1655Genome
 from torchcell.verification.sourced import ProvenanceGapReason, audit_sourced_value
 
-REFERENCE = AssemblyReferenceGenome(
+REFERENCE = StrainReferenceGenome(
     species="Escherichia coli",
     strain="Hfr Cavalli x Keio (K-12 BW25113) eSGA conjugant",
     assembly_set="ecoli_K12_MG1655_ASM584v2",
@@ -616,10 +616,8 @@ def test_the_build_keeps_every_pair_the_identifier_rules_allow(
     items = [built[i] for i in range(len(built))]
     observed: set[tuple[str, str, float, str]] = set()
     for item in items:
-        experiment = BacterialGeneInteractionExperiment.model_validate(
-            item["experiment"]
-        )
-        BacterialGeneInteractionExperimentReference.model_validate(item["reference"])
+        experiment = GeneInteractionExperiment.model_validate(item["experiment"])
+        GeneInteractionExperimentReference.model_validate(item["reference"])
         genotype = experiment.genotype
         assert isinstance(genotype, Genotype)
         marked = [
@@ -1145,8 +1143,8 @@ def test_the_dataset_declares_its_schema_classes_and_raw_files(
     synthetic: Path, mg1655: EcoliK12MG1655Genome
 ) -> None:
     dataset = m.GeneInteractionBabu2014Dataset(root=str(synthetic), ecoli_genome=mg1655)
-    assert dataset.experiment_class is BacterialGeneInteractionExperiment
-    assert dataset.reference_class is BacterialGeneInteractionExperimentReference
+    assert dataset.experiment_class is GeneInteractionExperiment
+    assert dataset.reference_class is GeneInteractionExperimentReference
     assert dataset.raw_file_names == [raw.name for raw in m.all_raw_files()]
     frame = pd.DataFrame({"a": [1]})
     assert dataset.preprocess_raw(frame) is frame

@@ -98,16 +98,16 @@ from torchcell.data import (
 )
 from torchcell.datamodels.media import M9_GLUCOSE_CASEIN_FUHRER2017
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
-    BacterialMetaboliteExperiment,
-    BacterialMetaboliteExperimentReference,
     BacterialReleasedStrainPerturbation,
     Environment,
     Experiment,
     ExperimentReference,
     Genotype,
+    MetaboliteExperiment,
+    MetaboliteExperimentReference,
     MetabolitePhenotype,
     Publication,
+    ReferenceGenome,
     ReleasedStrainKind,
     Temperature,
 )
@@ -1124,9 +1124,9 @@ def build_experiment(
     keys: Sequence[str],
     values: Sequence[float],
     env: Environment,
-) -> BacterialMetaboliteExperiment:
+) -> MetaboliteExperiment:
     """The record of one deposit column."""
-    return BacterialMetaboliteExperiment(
+    return MetaboliteExperiment(
         dataset_name=dataset_name,
         genotype=deletion_genotype(strain),
         environment=env,
@@ -1136,14 +1136,14 @@ def build_experiment(
 
 def build_reference(
     dataset_name: str,
-    genome_reference: AssemblyReferenceGenome,
+    genome_reference: ReferenceGenome,
     keys: Sequence[str],
     wt_values: Sequence[float],
     wt_n_biological: int,
     env: Environment,
-) -> BacterialMetaboliteExperimentReference:
+) -> MetaboliteExperimentReference:
     """The measured ``wt`` profile on the same z-score scale, in the same medium."""
-    return BacterialMetaboliteExperimentReference(
+    return MetaboliteExperimentReference(
         dataset_name=dataset_name,
         genome_reference=genome_reference,
         environment_reference=env.model_copy(),
@@ -1176,12 +1176,12 @@ class MetabolomeFuhrer2017Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialMetaboliteExperiment
+        return MetaboliteExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialMetaboliteExperimentReference
+        return MetaboliteExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:

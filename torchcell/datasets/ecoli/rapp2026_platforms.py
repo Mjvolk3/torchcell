@@ -10,7 +10,7 @@ its own dataset here so that no two platforms ever share one record set:
 
 1. ``GrowthAucRapp2026Dataset`` -- the paper's own growth statistic, the trapezoid area
    under each strain's released OD600 curve (Table S2), stored as
-   ``BacterialFitnessExperiment`` / ``FitnessPhenotype`` with the 16 control strains as
+   ``FitnessExperiment`` / ``FitnessPhenotype`` with the 16 control strains as
    the denominator. **1,515 records**, one per Table S2 library gene, ``phnE`` among them
    on a ``locus_tag_synonym`` mapping. 18 of those genes have no metabolome sample at
    all, so this family EXTENDS the strain coverage of the key.
@@ -106,17 +106,17 @@ from torchcell.data import (
     verify_raw_files,
 )
 from torchcell.datamodels.schema import (
-    BacterialFitnessExperiment,
-    BacterialFitnessExperimentReference,
-    BacterialMetaboliteExperiment,
-    BacterialMetaboliteExperimentReference,
     CrisprConstruct,
     CrisprInterferencePerturbation,
     DerivedIdentifierMapping,
     Experiment,
     ExperimentReference,
+    FitnessExperiment,
+    FitnessExperimentReference,
     FitnessPhenotype,
     Genotype,
+    MetaboliteExperiment,
+    MetaboliteExperimentReference,
     MetabolitePhenotype,
     SampleUnit,
     UncertaintyType,
@@ -1600,12 +1600,12 @@ class GrowthAucRapp2026Dataset(_Rapp2026Dataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialFitnessExperiment
+        return FitnessExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialFitnessExperimentReference
+        return FitnessExperimentReference
 
     @post_process
     def process(self) -> None:
@@ -1705,7 +1705,7 @@ class GrowthAucRapp2026Dataset(_Rapp2026Dataset):
         ).to_csv(out / "strains.csv", index=False)
 
         env = environment()
-        reference = BacterialFitnessExperimentReference(
+        reference = FitnessExperimentReference(
             dataset_name=self.name,
             genome_reference=assembly_reference(
                 self.REFERENCE_STRAIN, background=host_background()
@@ -1720,7 +1720,7 @@ class GrowthAucRapp2026Dataset(_Rapp2026Dataset):
         )
         with lmdb_env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for index, item in enumerate(tqdm(resolved, desc="rapp2026-growth")):
-                experiment = BacterialFitnessExperiment(
+                experiment = FitnessExperiment(
                     dataset_name=self.name,
                     genotype=crispri_genotype(item),
                     environment=env,
@@ -1749,12 +1749,12 @@ class _AccumulationDataset(_Rapp2026Dataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialMetaboliteExperiment
+        return MetaboliteExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialMetaboliteExperimentReference
+        return MetaboliteExperimentReference
 
     def _read(
         self, metabolites: Mapping[str, Metabolite], samples: Mapping[str, SampleRow]
@@ -1871,7 +1871,7 @@ class _AccumulationDataset(_Rapp2026Dataset):
         with lmdb_env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for index, strain in enumerate(tqdm(resolved, desc=self.name)):
                 values = stored[strain.gene]
-                experiment = BacterialMetaboliteExperiment(
+                experiment = MetaboliteExperiment(
                     dataset_name=self.name,
                     genotype=crispri_genotype(strain),
                     environment=env,
@@ -1879,7 +1879,7 @@ class _AccumulationDataset(_Rapp2026Dataset):
                         values, self.MEASUREMENT_TYPE, target_ids
                     ),
                 )
-                reference = BacterialMetaboliteExperimentReference(
+                reference = MetaboliteExperimentReference(
                     dataset_name=self.name,
                     genome_reference=genome_reference,
                     environment_reference=env.model_copy(),

@@ -38,8 +38,8 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
 from torchcell.data import ManifestPinMismatchError
 from torchcell.datamodels.media import LB
 from torchcell.datamodels.schema import (
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     MeasurementType,
     SmallMoleculePerturbation,
 )
@@ -696,8 +696,8 @@ def test_the_download_step_refuses_a_mirror_file_that_is_not_there(
 def test_the_build_writes_one_record_per_retained_guide_and_screen(built: Any) -> None:
     """Six of ten guides are dropped, so four survive in each of the two screens."""
     assert len(built) == SYNTHETIC_RECORDS
-    assert built.experiment_class is BacterialEnvironmentResponseExperiment
-    assert built.reference_class is BacterialEnvironmentResponseExperimentReference
+    assert built.experiment_class is EnvironmentResponseExperiment
+    assert built.reference_class is EnvironmentResponseExperimentReference
     assert built.raw_file_names == [C.SCREEN_FILENAME]
     accounting = _json(built, "build_accounting.json")
     assert {

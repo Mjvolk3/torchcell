@@ -1,5 +1,5 @@
 # Royet 2025 Table S4 (#909): 11,458 KT2440 TRANSIT HMM states, one per (gene, stage),
-# BacterialGradedGeneEssentialityExperiment. One gene-level TransposonInsertionPerturbation
+# GradedGeneEssentialityExperiment. One gene-level TransposonInsertionPerturbation
 # per record, served as `bacterial perturbation`. No record carries an environment
 # perturbation: the two stages are two media (LB agar with gentamicin, LB) at 28 C.
 cell_adapter:

@@ -19,7 +19,7 @@ own ``padj``: under the owner's rule of 2026-10-12 nothing is cross-referenced a
 another source inside a loader. Before #905 the S1 rows were dropped as "served by" Cui
 2018; that comparison is gone, and what it measured is below as a finding, not a rule.
 
-RECORD = one (sgRNA x screen) ``BacterialEnvironmentResponseExperiment``:
+RECORD = one (sgRNA x screen) ``EnvironmentResponseExperiment``:
 
 - GENOTYPE: one ``BacterialReleasedCrisprPerturbation`` (#1077) keyed by the target
   gene's SYMBOL, exactly as the release names it, with the 20-nt spacer on the shared
@@ -184,8 +184,6 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     AssayType,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     BacterialReleasedCrisprPerturbation,
     BacterialStrainBackground,
     ComponentDefinition,
@@ -193,6 +191,8 @@ from torchcell.datamodels.schema import (
     ConcentrationUnit,
     CrisprConstruct,
     Environment,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
@@ -1395,12 +1395,12 @@ class CrispriScreenRousset2018Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperiment
+        return EnvironmentResponseExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperimentReference
+        return EnvironmentResponseExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -1459,7 +1459,7 @@ class CrispriScreenRousset2018Dataset(ExperimentDataset):
 
         environments = {c.screen_id: environment(c) for c in CONDITIONS}
         references = {
-            c.screen_id: BacterialEnvironmentResponseExperimentReference(
+            c.screen_id: EnvironmentResponseExperimentReference(
                 dataset_name=self.name,
                 genome_reference=assembly_reference(
                     self.REFERENCE_STRAIN, background=BACKGROUNDS[c.strain]
@@ -1488,7 +1488,7 @@ class CrispriScreenRousset2018Dataset(ExperimentDataset):
                 reference = references[condition.screen_id]
                 for row in kept.itertuples(index=False):
                     symbol = str(row.gene)
-                    experiment = BacterialEnvironmentResponseExperiment(
+                    experiment = EnvironmentResponseExperiment(
                         dataset_name=self.name,
                         genotype=genotype(
                             StoredGuide(
@@ -1748,7 +1748,7 @@ def verify_build(
             sha256=TABLE_SHA256[PHAGE_TABLE],
             method=(
                 "S1, S4 and S6 Tables (PMC Article Datasets "
-                f"{PMCID}.1): one BacterialEnvironmentResponseExperiment per (sgRNA, "
+                f"{PMCID}.1): one EnvironmentResponseExperiment per (sgRNA, "
                 "screen), DESeq2 log2FoldChange of guide abundance normalized on a "
                 "non-targeting control guide and paired against each sample's initial "
                 "condition; coding-strand in-gene guides only, each keyed by the gene "

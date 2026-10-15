@@ -160,6 +160,7 @@ from torchcell.sequence.genome.registry import (
     HALE2024_3S_VARIANTS,
     ROLE_VARIANTS,
     SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
     GenomeManifest,
     assembly_set_dir,
     deposit_assembly_set,
@@ -1180,7 +1181,11 @@ class CrispriSegregantHale2024Dataset(ExperimentDataset):
         return SegregantPerturbationExperimentReference(
             dataset_name=self.name,
             genome_reference=ReferenceGenome(
-                species="Saccharomyces cerevisiae", strain="S288C", ploidy="haploid"
+                species="Saccharomyces cerevisiae",
+                strain="S288C",
+                ploidy="haploid",
+                assembly_set=SGD_S288C_R64,
+                assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
             ),
             environment_reference=environment,
             phenotype_reference=EnvironmentResponsePhenotype(

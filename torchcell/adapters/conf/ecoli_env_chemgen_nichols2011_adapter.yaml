@@ -1,5 +1,5 @@
 # Nichols 2011 chemical genomics: one (BW25113 strain x Table S2 screen) record per
-# released score, BacterialEnvironmentResponseExperiment. A deletion row is one
+# released score, EnvironmentResponseExperiment. A deletion row is one
 # BacterialDeletionPerturbation (a multi-gene deletion several), an SPA or linked row a
 # BacterialMarkedAllelePerturbation and a DAS row a BacterialDegronPerturbation, all
 # served as `bacterial perturbation`. The screen plate carries each dosed chemical as a

@@ -151,6 +151,7 @@ from torchcell.sequence import GeneSet
 from torchcell.sequence.genome.registry import (
     PETER2018_1011,
     SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
     load_genome_manifest,
     resolve,
 )
@@ -988,7 +989,11 @@ class Bloom2019Dataset(ExperimentDataset):
         return SegregantGrowthExperimentReference(
             dataset_name=self.name,
             genome_reference=ReferenceGenome(
-                species="Saccharomyces cerevisiae", strain="S288C", ploidy="haploid"
+                species="Saccharomyces cerevisiae",
+                strain="S288C",
+                ploidy="haploid",
+                assembly_set=SGD_S288C_R64,
+                assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
             ),
             environment_reference=control_env,
             phenotype_reference=EnvironmentResponsePhenotype(

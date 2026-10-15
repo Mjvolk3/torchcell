@@ -61,20 +61,20 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
 from torchcell.data import ManifestPinMismatchError, check_manifest_pin
 from torchcell.datamodels.media import MEDIA_LIBRARY
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
-    BacterialGeneInteractionExperiment,
-    BacterialGeneInteractionExperimentReference,
     DeletionStrainPerturbation,
+    GeneInteractionExperiment,
+    GeneInteractionExperimentReference,
     MarkedAllelePerturbation,
     MediaComponentRole,
     SampleUnit,
+    StrainReferenceGenome,
 )
 from torchcell.datasets.dataset_registry import dataset_registry
 from torchcell.literature.manifest import RetrievalMethod
 from torchcell.sequence.genome.ecoli.k12 import MG1655_ASSEMBLY, EcoliK12MG1655Genome
 from torchcell.verification.sourced import ProvenanceGapReason, audit_sourced_value
 
-REFERENCE = AssemblyReferenceGenome(
+REFERENCE = StrainReferenceGenome(
     species="Escherichia coli",
     strain="Hfr Cavalli x Keio (K-12 BW25113) eSGA conjugant",
     assembly_set="ecoli_K12_MG1655_ASM584v2",
@@ -1443,10 +1443,8 @@ def test_the_dev_store_records_validate_as_the_schema_pair() -> None:
     references: set[float] = set()
     seen = 0
     for record in stream_records(str(root)):
-        experiment = BacterialGeneInteractionExperiment.model_validate(
-            record["experiment"]
-        )
-        reference = BacterialGeneInteractionExperimentReference.model_validate(
+        experiment = GeneInteractionExperiment.model_validate(record["experiment"])
+        reference = GeneInteractionExperimentReference.model_validate(
             record["reference"]
         )
         leaves = _leaves(experiment.genotype)

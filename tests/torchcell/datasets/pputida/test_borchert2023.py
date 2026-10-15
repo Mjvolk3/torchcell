@@ -36,8 +36,8 @@ import torchcell.datasets.pputida.borchert2023 as b23
 import torchcell.datasets.pputida.borchert2024 as b24
 from torchcell.data import file_sha256
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
     EnvironmentPhysicalPerturbation,
+    ReferenceGenome,
     SmallMoleculePerturbation,
 )
 from torchcell.datasets.bacteria_common import LocusTagReconciliation
@@ -602,8 +602,8 @@ class FakeGenome:
         )
 
 
-def _reference() -> AssemblyReferenceGenome:
-    return AssemblyReferenceGenome(
+def _reference() -> ReferenceGenome:
+    return ReferenceGenome(
         species="Pseudomonas putida",
         strain="KT2440",
         ploidy="haploid",
@@ -850,7 +850,7 @@ def test_built_lmdb_record_count() -> None:
         assert payload is not None
         first = pickle.loads(payload)
     env.close()
-    assert first["experiment"]["experiment_type"] == "bacterial_environment_response"
+    assert first["experiment"]["experiment_type"] == "environment_response"
     partition = json.loads(
         Path(root, "preprocess", "served_partition.json").read_text()
     )

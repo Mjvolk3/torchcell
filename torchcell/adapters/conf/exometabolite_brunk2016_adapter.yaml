@@ -1,4 +1,4 @@
-# Brunk 2016 the six HPLC g/L columns, 126 records, BacterialMetaboliteExperiment. Every engineered strain's genotype carries one
+# Brunk 2016 the six HPLC g/L columns, 126 records, MetaboliteExperiment. Every engineered strain's genotype carries one
 # HeterologousPathwayPerturbation per pathway gene of its one or two plasmids, served as
 # `bacterial perturbation`; the wild-type records carry none. The CultureEnvironment
 # carries 500 uM IPTG on every record and a 10% dodecane overlay on the limonene and

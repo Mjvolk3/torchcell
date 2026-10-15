@@ -183,6 +183,10 @@ from torchcell.literature.manifest import (
     RetrievalMethod,
     RetrievalRecord,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.report import (
     DerivationMethod,
     Provenance,
@@ -1361,6 +1365,8 @@ class EnvChemgenPiotrowski2017Dataset(ExperimentDataset):
             strain=LIBRARY_STRAIN,
             ploidy="haploid",
             background=library_background(),
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
 
     @staticmethod

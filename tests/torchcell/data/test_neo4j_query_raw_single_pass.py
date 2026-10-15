@@ -36,6 +36,10 @@ from torchcell.datamodels.interned_constant import (
     verified_constant,
 )
 from torchcell.sequence import GeneSet
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import SourcedValue
 
@@ -103,7 +107,10 @@ def _reference(i: int) -> s.FitnessExperimentReference:
     return s.FitnessExperimentReference(
         dataset_name="TestDataset",
         genome_reference=s.ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain=["BY4741", "BY4742"][i % 2]
+            species="Saccharomyces cerevisiae",
+            strain=["BY4741", "BY4742"][i % 2],
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=ENVIRONMENTS[i % len(ENVIRONMENTS)],
         phenotype_reference=s.FitnessPhenotype(fitness=1.0),
@@ -398,6 +405,8 @@ def _strain_record() -> tuple[
             strain="BY4743",
             ploidy="diploid",
             background=standard_background("BY4743", resolve_with=BRACHMANN_1998),
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=environment,
         phenotype_reference=s.EnvironmentResponsePhenotype(

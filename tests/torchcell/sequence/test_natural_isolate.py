@@ -202,7 +202,9 @@ def _ref(data_root: Path, name: str, member: str | None = None) -> ArtifactRef:
 
 
 def _span(chrom: str, start: int, end: int) -> GenomicSpan:
-    return GenomicSpan(chromosome=chrom, start=start, end=end, assembly="R64-1-1")
+    return GenomicSpan(
+        chromosome=chrom, start=start, end=end, assembly="sgd_S288C_R64-4-1_20230830"
+    )
 
 
 # --------------------------------------------------------------------------- #

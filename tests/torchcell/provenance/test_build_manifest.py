@@ -62,6 +62,10 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.provenance import build_manifest as bm
 from torchcell.provenance import schema_deps as sd
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 SCHEMA = """
 from pydantic import BaseModel, Field
@@ -170,7 +174,10 @@ def _fitness_record(gene: str = "YAL001C") -> dict[str, Any]:
     reference = FitnessExperimentReference(
         dataset_name="ds",
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae",
+            strain="S288C",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=_ENVIRONMENT,
         phenotype_reference=FitnessPhenotype(fitness=1.0),

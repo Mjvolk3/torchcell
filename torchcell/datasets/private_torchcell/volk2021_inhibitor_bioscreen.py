@@ -116,6 +116,10 @@ from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.datasets.private_torchcell import bioscreen as b
 from torchcell.datasets.private_torchcell import volk2021_sources as s
 from torchcell.literature.manifest import Manifest
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.report import (
     Level,
     LevelResult,
@@ -311,6 +315,8 @@ def genome_reference() -> StrainReferenceGenome:
         strain=BAID_STRAIN,
         ploidy="haploid",
         background=baid_background(),
+        assembly_set=SGD_S288C_R64,
+        assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
     )
 
 

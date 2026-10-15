@@ -93,6 +93,10 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import SourcedValue
 
@@ -423,7 +427,10 @@ class AminoAcidMulleder2016Dataset(ExperimentDataset):
         # PROTOTROPHIC deletion collection (auxotrophy restored episomally, Mulleder 2012);
         # the prototrophy-restoring marker(s) are not yet modeled as a GeneAddition here.
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4741"
+            species="Saccharomyces cerevisiae",
+            strain="BY4741",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
         genotype = Genotype(perturbations=[_released_deletion(row["orf"])])
         # Synthetic minimal (SM) agar, 30 C, exponential growth (Methods "Yeast"):

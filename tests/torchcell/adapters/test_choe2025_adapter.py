@@ -5,7 +5,7 @@
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Choe 2025 genome-scale CRISPRi: 466,569 (guide, antibiotic) records,
-BacterialEnvironmentResponseExperiment. One CrisprInterferencePerturbation per
+EnvironmentResponseExperiment. One CrisprInterferencePerturbation per
 record, served as `bacterial perturbation`, carrying a CrisprConstruct with the 20 nt
 spacer. The environment carries the condition's antibiotic as a SmallMoleculePerturbation.
 """

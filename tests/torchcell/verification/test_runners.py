@@ -57,15 +57,6 @@ from tests.torchcell.datasets._genome_injection_fakes import (
 from torchcell.datamodels.calmorph_labels import CALMORPH_LABELS, CALMORPH_STATISTICS
 from torchcell.datamodels.media import M9_NREL_CARRUTHERS2025, SC, YP_GALACTOSE
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
-    BacterialMetaboliteExperiment,
-    BacterialMetaboliteExperimentReference,
-    BacterialProteinAbundanceExperiment,
-    BacterialProteinAbundanceExperimentReference,
-    BacterialRNASeqExpressionExperiment,
-    BacterialRNASeqExpressionExperimentReference,
     CalMorphExperiment,
     CalMorphExperimentReference,
     CalMorphPhenotype,
@@ -122,6 +113,7 @@ from torchcell.sequence.genome.registry import (
     PETER2018_1011,
     PPUTIDA_KT2440,
     SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
 )
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.verification import runners
@@ -213,7 +205,12 @@ def _genotype(genes: list[str]) -> Genotype:
 
 
 def _reference_genome() -> ReferenceGenome:
-    return ReferenceGenome(species="Saccharomyces cerevisiae", strain="BY4741")
+    return ReferenceGenome(
+        species="Saccharomyces cerevisiae",
+        strain="BY4741",
+        assembly_set=SGD_S288C_R64,
+        assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
+    )
 
 
 def _publication() -> dict[str, Any]:
@@ -402,7 +399,10 @@ def _rnaseq_record(strain: str, genes: list[str]) -> Record:
     reference = RNASeqExpressionExperimentReference(
         dataset_name="test",
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae",
+            strain="S288C",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=env.model_copy(),
         phenotype_reference=RNASeqExpressionPhenotype(
@@ -900,7 +900,7 @@ def test_each_host_gene_set_reads_its_own_assembly(
 
 def _assembly_reference(strain: Any, assembly_set: Any, accession: str) -> Record:
     species = "Pseudomonas putida" if strain == "KT2440" else "Escherichia coli"
-    return AssemblyReferenceGenome(
+    return ReferenceGenome(
         species=species,
         strain=strain,
         assembly_set=assembly_set,
@@ -914,19 +914,26 @@ MG1655_REFERENCE = _assembly_reference(
 KT2440_REFERENCE = _assembly_reference(
     "KT2440", "pputida_KT2440_ASM756v2", "GCA_000007565.2"
 )
-KT2440_REFERENCE_MODEL = AssemblyReferenceGenome.model_validate(KT2440_REFERENCE)
+KT2440_REFERENCE_MODEL = ReferenceGenome.model_validate(KT2440_REFERENCE)
 
 
 def test_reference_assembly_set_follows_the_record_s_own_reference() -> None:
-    """The stored dump names the set; a reference without one must be yeast."""
+    """The stored dump names the set (P2: every reference pins one or gaps it)."""
     assert runners._reference_assembly_set(_reference_genome().model_dump()) == (
         SGD_S288C_R64
     )
     assert runners._reference_assembly_set(MG1655_REFERENCE) == ECOLI_K12_MG1655
     assert runners._reference_assembly_set(KT2440_REFERENCE) == PPUTIDA_KT2440
-    with pytest.raises(ValueError, match="must be 'Saccharomyces cerevisiae', got"):
+    with pytest.raises(
+        ValueError, match="pins no assembly set .*gapped fields: \\['assembly_set'\\]"
+    ):
         runners._reference_assembly_set(
-            {"species": "Escherichia coli", "strain": "K-12"}
+            {
+                "species": "Escherichia coli",
+                "strain": "BL21(DE3)",
+                "assembly_set": None,
+                "provenance_gaps": [{"field": "assembly_set"}],
+            }
         )
     with pytest.raises(
         ValueError, match="names assembly set 'peter2018_1011_assemblies'"
@@ -1616,7 +1623,7 @@ def _bacterial_env_record(locus: str, value: float) -> Record:
         ],
     )
     return {
-        "experiment": BacterialEnvironmentResponseExperiment(
+        "experiment": EnvironmentResponseExperiment(
             dataset_name="env_bacterial",
             genotype=Genotype(
                 perturbations=[
@@ -1630,7 +1637,7 @@ def _bacterial_env_record(locus: str, value: float) -> Record:
             environment=env,
             phenotype=phenotype,
         ).model_dump(),
-        "reference": BacterialEnvironmentResponseExperimentReference(
+        "reference": EnvironmentResponseExperimentReference(
             dataset_name="env_bacterial",
             genome_reference=KT2440_REFERENCE_MODEL,
             environment_reference=env.model_copy(),
@@ -1697,7 +1704,10 @@ def test_run_environment_response_selects_the_universe_and_resolver_per_host(
     )
     assert runners.run_environment_response(str(tmp_path)) is True
     assert (sgd_calls, bacterial) == ([str(tmp_path)], [PPUTIDA_KT2440])
-    assert resolvers == [(None, str(tmp_path)), (PPUTIDA_KT2440, str(tmp_path))]
+    assert resolvers == [
+        (SGD_S288C_R64, str(tmp_path)),
+        (PPUTIDA_KT2440, str(tmp_path)),
+    ]
     yeast = _result(_read_report(_root(tmp_path, "env_yeast")), "gene_containment_sgd")
     assert yeast["message"] == (
         "1.000 of 3 measured genes are S288C reference genes (>= 0.9)"
@@ -2403,15 +2413,15 @@ def _bacterial_rnaseq_record(tpm: dict[str, float], reference: Record) -> Record
         temperature=Temperature(value=37),
     )
     count = {gene: 10 + index for index, gene in enumerate(sorted(tpm))}
-    experiment = BacterialRNASeqExpressionExperiment(
+    experiment = RNASeqExpressionExperiment(
         dataset_name="test",
         genotype=Genotype(perturbations=[]),
         environment=env,
         phenotype=RNASeqExpressionPhenotype(expression_tpm=tpm, expression_count=count),
     )
-    ref = BacterialRNASeqExpressionExperimentReference(
+    ref = RNASeqExpressionExperimentReference(
         dataset_name="test",
-        genome_reference=AssemblyReferenceGenome.model_validate(reference),
+        genome_reference=ReferenceGenome.model_validate(reference),
         environment_reference=env.model_copy(),
         phenotype_reference=RNASeqExpressionPhenotype(
             expression_tpm={gene: 1.0 for gene in tpm},
@@ -2434,7 +2444,7 @@ def _bacterial_metabolite_record(locus: str, level: float) -> Record:
             measurement_type="fia_tof_ms_ion_modified_z_score",
         )
 
-    experiment = BacterialMetaboliteExperiment(
+    experiment = MetaboliteExperiment(
         dataset_name="test",
         genotype=Genotype(
             perturbations=[
@@ -2448,9 +2458,9 @@ def _bacterial_metabolite_record(locus: str, level: float) -> Record:
         environment=env,
         phenotype=phenotype(level),
     )
-    reference = BacterialMetaboliteExperimentReference(
+    reference = MetaboliteExperimentReference(
         dataset_name="test",
-        genome_reference=AssemblyReferenceGenome.model_validate(BW25113_REFERENCE),
+        genome_reference=ReferenceGenome.model_validate(BW25113_REFERENCE),
         environment_reference=env.model_copy(),
         phenotype_reference=phenotype(0.5),
     )
@@ -2731,13 +2741,13 @@ def _bacterial_protein_record(deleted: list[str], proteins: list[str]) -> Record
         measurement_type="dia_nn_top3_peptide_signal_mean",
     )
     return {
-        "experiment": BacterialProteinAbundanceExperiment(
+        "experiment": ProteinAbundanceExperiment(
             dataset_name="proteome",
             genotype=_kt2440_genotype(deleted),
             environment=_culture_environment(),
             phenotype=phenotype,
         ).model_dump(),
-        "reference": BacterialProteinAbundanceExperimentReference(
+        "reference": ProteinAbundanceExperimentReference(
             dataset_name="proteome",
             genome_reference=KT2440_REFERENCE_MODEL,
             environment_reference=_culture_environment(),

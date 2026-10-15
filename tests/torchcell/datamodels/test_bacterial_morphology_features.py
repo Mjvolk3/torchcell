@@ -317,15 +317,13 @@ def test_the_coefficients_are_optional_and_default_to_none() -> None:
 
 def test_the_experiment_pair_names_the_same_experiment_type() -> None:
     assert (
-        s.BacterialMorphologyExperiment.model_fields["experiment_type"].default
-        == s.BacterialMorphologyExperimentReference.model_fields[
+        s.MorphologyExperiment.model_fields["experiment_type"].default
+        == s.MorphologyExperimentReference.model_fields[
             "experiment_reference_type"
         ].default
-        == "bacterial_morphology"
+        == "morphology"
     )
-    assert s.EXPERIMENT_TYPE_MAP["bacterial_morphology"] is (
-        s.BacterialMorphologyExperiment
-    )
-    assert s.EXPERIMENT_REFERENCE_TYPE_MAP["bacterial_morphology"] is (
-        s.BacterialMorphologyExperimentReference
+    assert s.EXPERIMENT_TYPE_MAP["morphology"] is (s.MorphologyExperiment)
+    assert s.EXPERIMENT_REFERENCE_TYPE_MAP["morphology"] is (
+        s.MorphologyExperimentReference
     )

@@ -19,9 +19,9 @@ from openpyxl import Workbook
 
 from torchcell.data.experiment_dataset import file_sha256
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
     FluxPhenotype,
     PromoterReplacementPerturbation,
+    StrainReferenceGenome,
 )
 from torchcell.datasets.ecoli import li2021 as m
 from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
@@ -253,7 +253,7 @@ def test_exchange_values_must_be_finite() -> None:
 # --------------------------------------------------------------------------- #
 # The hermetic build: a synthetic library copy, deposit, download, process, verify
 # --------------------------------------------------------------------------- #
-REFERENCE = AssemblyReferenceGenome(
+REFERENCE = StrainReferenceGenome(
     species="Escherichia coli",
     strain="BW-P BF",
     assembly_set="ecoli_K12_BW25113_ASM75055v1",

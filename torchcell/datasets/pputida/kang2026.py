@@ -75,7 +75,7 @@ exactly that, with the design quote in the note. The fed-batch rows additionally
 states a replicate count.
 
 THE CHASSIS. The reference every record is written against is **PIPA**, carried as a
-``BacterialStrainBackground`` on an ``AssemblyReferenceGenome`` pinned to
+``BacterialStrainBackground`` on an ``ReferenceGenome`` pinned to
 ``pputida_KT2440_ASM756v2`` / ``GCA_000007565.2``. Its parent is wild-type KT2440,
 "Wild-type mt-2 derivative lacking the TOL plasmid pWW0". Table 1 states the genotype
 WITH locus tags: "P. putida KT2440 ΔphaABC (PP_5003-5005) ΔmvaB (PP_3540) ∆hbdH
@@ -169,7 +169,6 @@ from torchcell.datamodels.media import (
 )
 from torchcell.datamodels.schema import (
     AlleleEdit,
-    AssemblyReferenceGenome,
     BacterialAssemblySet,
     BacterialBackgroundAllele,
     BacterialGeneNamespace,
@@ -195,6 +194,7 @@ from torchcell.datamodels.schema import (
     ProductTiterPhenotype,
     ProductYieldUnit,
     Publication,
+    ReferenceGenome,
     SampleUnit,
     SmallMoleculePerturbation,
     Temperature,
@@ -1391,7 +1391,7 @@ def chassis_background(
     return background, report
 
 
-def chassis_reference(genome: PPutidaKT2440Genome) -> AssemblyReferenceGenome:
+def chassis_reference(genome: PPutidaKT2440Genome) -> ReferenceGenome:
     """The assembly-pinned reference every record of this paper is written against."""
     background, _ = chassis_background(genome)
     return assembly_reference(PARENT_STRAIN, background=background)

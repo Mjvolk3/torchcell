@@ -20,7 +20,7 @@ sourcing layer.
   obtained (the paper's scoring rule), one record per ORF.
 - ``babu2014`` -- ``GeneInteractionBabu2014Dataset``: the genome-wide eSGA digenic
   interaction map, one record per released (donor, recipient) pair with its signed
-  colony-size S score. The first consumer of ``BacterialGeneInteractionExperiment``,
+  colony-size S score. The first consumer of ``GeneInteractionExperiment``,
   and the loader that re-releases 727 of Butland 2008's measurements (every record
   names its screen set in ``screen_id``); it does NOT subsume that release, which
   ``butland2008`` below serves in full. Its 3,420 hypomorph-involving pairs are dropped:

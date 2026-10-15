@@ -5,7 +5,7 @@
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Yunus 2026 CRISPRi knockdowns: 102 IY1452 strains,
-BacterialProteinFoldChangeExperiment (linear ratio to the control strain).
+ProteinFoldChangeExperiment (linear ratio to the control strain).
 One CrisprInterferencePerturbation per record, served as `bacterial
 perturbation`, carrying a CrisprConstruct, so the crispr-construct pair is enabled. The
 environment carries EnvironmentPhysicalPerturbation and SmallMoleculePerturbation edits,

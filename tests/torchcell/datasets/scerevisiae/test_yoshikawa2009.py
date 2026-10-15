@@ -45,8 +45,10 @@ from torchcell.datamodels.schema import (
     ResponseCategory,
     SampleUnit,
     SmallMoleculePerturbation,
+    StrainBackground,
     StrainEnvironmentResponseExperiment,
     StrainEnvironmentResponseExperimentReference,
+    StrainReferenceGenome,
     UncertaintyType,
 )
 from torchcell.datasets.scerevisiae import yoshikawa2009 as y
@@ -305,6 +307,8 @@ def test_one_reference_per_condition_from_table_1(built: Any) -> None:
     assert five.phenotype_reference.units == y.FIVE_PERCENT_REFERENCE_UNITS
     assert _ref(built, 0).phenotype_reference.units == y.REFERENCE_UNITS
     genome = _ref(built, 0).genome_reference
+    assert isinstance(genome, StrainReferenceGenome)
+    assert isinstance(genome.background, StrainBackground)
     assert genome.strain == "BY4742"
     assert genome.background.mating_type is MatingType.alpha
     assert sorted(a.allele_name for a in genome.background.alleles) == [

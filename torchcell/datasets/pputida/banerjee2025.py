@@ -9,7 +9,7 @@ four-gene growth-coupling cutset for p-coumarate (p-CA) to glutamine to indigoid
 the KT2440 chassis D1b_gf, found the fourth gene PP_0897 to be rate limiting, and
 titrated it down with two promoter swaps instead of deleting it. One dataset class,
 :class:`ProteomeBanerjee2025Dataset`, serves every released shotgun-proteome sample as a
-``BacterialProteinAbundanceExperiment``.
+``ProteinAbundanceExperiment``.
 
 SIX SAMPLES, READ FROM FOUR RELEASED WORKBOOKS, AND WHY SIX IS THE WHOLE RELEASE.
 Supplementary Data S2 (``41540_2024_480_MOESM3_ESM.zip``) holds four t-test workbooks,
@@ -192,12 +192,9 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import M9_DEFERRED_BANERJEE2025
 from torchcell.datamodels.schema import (
     AlleleEdit,
-    AssemblyReferenceGenome,
     BacterialAssemblySet,
     BacterialBackgroundAllele,
     BacterialGeneNamespace,
-    BacterialProteinAbundanceExperiment,
-    BacterialProteinAbundanceExperimentReference,
     BacterialReferenceStrain,
     BacterialStrainBackground,
     Concentration,
@@ -211,8 +208,11 @@ from torchcell.datamodels.schema import (
     Genotype,
     PhysicalFactor,
     PromoterReplacementPerturbation,
+    ProteinAbundanceExperiment,
+    ProteinAbundanceExperimentReference,
     ProteinAbundancePhenotype,
     Publication,
+    ReferenceGenome,
 )
 from torchcell.datasets.bacteria_common import (
     LocusTagReconciliation,
@@ -1462,7 +1462,7 @@ def chassis_background() -> BacterialStrainBackground:
     )
 
 
-def record_reference_genome() -> AssemblyReferenceGenome:
+def record_reference_genome() -> ReferenceGenome:
     """KT2440 carrying the D1b_gf background: the reference of every record.
 
     One object for all six records, because the four strains differ from each other by
@@ -1701,12 +1701,12 @@ class ProteomeBanerjee2025Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialProteinAbundanceExperiment
+        return ProteinAbundanceExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialProteinAbundanceExperimentReference
+        return ProteinAbundanceExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -1810,7 +1810,7 @@ class ProteomeBanerjee2025Dataset(ExperimentDataset):
             for arm, key in ARM_REFERENCE_KEY.items()
         }
         references = {
-            arm: BacterialProteinAbundanceExperimentReference(
+            arm: ProteinAbundanceExperimentReference(
                 dataset_name=self.name,
                 genome_reference=reference_genome,
                 environment_reference=proteome_environment(
@@ -1834,7 +1834,7 @@ class ProteomeBanerjee2025Dataset(ExperimentDataset):
             for group in tqdm(PROTEOME_GROUPS, desc="banerjee2025-proteome"):
                 cells = samples[group.key]
                 n_replicates = ARM_REPLICATES[group.arm]
-                experiment = BacterialProteinAbundanceExperiment(
+                experiment = ProteinAbundanceExperiment(
                     dataset_name=self.name,
                     genotype=strain_genotype(group.strain),
                     environment=proteome_environment(group.condition),

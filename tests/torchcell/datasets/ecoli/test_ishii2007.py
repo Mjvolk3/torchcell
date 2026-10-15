@@ -60,7 +60,7 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
     serve_tier,
     write_assembly,
 )
-from torchcell.datamodels.schema import AssemblyReferenceGenome, ComponentDefinition
+from torchcell.datamodels.schema import ComponentDefinition, ReferenceGenome
 from torchcell.sequence.genome.ecoli.k12 import BW25113_ASSEMBLY, EcoliK12BW25113Genome
 from torchcell.verification.sourced import audit_sourced_value
 
@@ -145,7 +145,7 @@ SYNTHETIC_DISRUPTANTS = ("thrA", "hokC")
 #: The release ran five dilution rates; the fixture holds the 0.2 h-1 reference, one
 #: served rate (GR01 at 0.1) and one empty column (GR04x at 0.7).
 SYNTHETIC_DILUTION_RATE_ARM = (0.1, 0.2, 0.7)
-REFERENCE = AssemblyReferenceGenome(
+REFERENCE = ReferenceGenome(
     species="Escherichia coli",
     strain="BW25113",
     assembly_set="ecoli_K12_BW25113_ASM75055v1",

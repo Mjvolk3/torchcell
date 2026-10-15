@@ -17,7 +17,8 @@ bacterial loader needs that a yeast one does not. Section 4 of
   the bacterial resolver's order (locus tag, ``old_locus_tag``, RefSeq locus tag, gene
   symbol, ``gene_synonym`` such as ECK, retired), and returns the remapped names with a
   :class:`LocusTagReconciliation` (the status and layer histograms).
-* :func:`assembly_reference` builds the ``AssemblyReferenceGenome`` a record stores,
+* :func:`assembly_reference` builds the assembly-pinned ``ReferenceGenome`` (or the
+  ``StrainReferenceGenome`` carrying a typed background) a record stores,
   with the set id and the GenBank accession read from the assembly report deposited in
   the set, so a loader cannot mistype either.
 * The namespace vocabulary and the locus-tag patterns are imported from
@@ -51,11 +52,12 @@ from torchcell.datamodels.schema import (
     BACTERIAL_ASSEMBLY_SETS,
     BACTERIAL_LOCUS_TAG_PATTERN,
     BACTERIAL_LOCUS_TAG_PATTERNS,
-    AssemblyReferenceGenome,
     BacterialAssemblySet,
     BacterialGeneNamespace,
     BacterialReferenceStrain,
     BacterialStrainBackground,
+    ReferenceGenome,
+    StrainReferenceGenome,
 )
 from torchcell.literature.manifest import sha256_file
 from torchcell.sequence.genome.bacterial import (
@@ -336,13 +338,36 @@ def read_assembly_report(
     return report
 
 
+@overload
+def assembly_reference(
+    strain: BacterialReferenceStrain,
+    *,
+    background: None = None,
+    data_root: str | None = None,
+) -> ReferenceGenome: ...
+
+
+@overload
+def assembly_reference(
+    strain: BacterialReferenceStrain,
+    *,
+    background: BacterialStrainBackground,
+    data_root: str | None = None,
+) -> StrainReferenceGenome: ...
+
+
 def assembly_reference(
     strain: BacterialReferenceStrain,
     *,
     background: BacterialStrainBackground | None = None,
     data_root: str | None = None,
-) -> AssemblyReferenceGenome:
-    """The ``AssemblyReferenceGenome`` a record written against ``strain`` stores.
+) -> ReferenceGenome:
+    """The assembly-pinned ``ReferenceGenome`` a record written against ``strain`` stores.
+
+    A ``StrainReferenceGenome`` when a ``background`` is given (its ``background`` is
+    required, so the typed background always serializes), the plain ``ReferenceGenome``
+    when the strain IS the reference. Both pin ``assembly_set`` and ``assembly_accession``
+    on the base, so the pin survives every experiment family's ``genome_reference`` slot.
 
     ``species`` is the genome class's organism, ``assembly_set`` the strain's set, and
     ``assembly_accession`` the accession read from the deposited assembly report whose
@@ -360,15 +385,23 @@ def assembly_reference(
             f"{background.reference_strain!r}, not {strain!r}"
         )
     report = read_assembly_report(strain, data_root)
-    return AssemblyReferenceGenome(
+    accession = (
+        report.refseq_accession
+        if _assembly(strain).annotation_source == "refseq"
+        else report.genbank_accession
+    )
+    if background is None:
+        return ReferenceGenome(
+            species=_assembly(strain).organism,
+            strain=strain,
+            assembly_set=report.assembly_set,
+            assembly_accession=accession,
+        )
+    return StrainReferenceGenome(
         species=_assembly(strain).organism,
-        strain=strain if background is None else background.name,
+        strain=background.name,
         assembly_set=report.assembly_set,
-        assembly_accession=(
-            report.refseq_accession
-            if _assembly(strain).annotation_source == "refseq"
-            else report.genbank_accession
-        ),
+        assembly_accession=accession,
         background=background,
     )
 

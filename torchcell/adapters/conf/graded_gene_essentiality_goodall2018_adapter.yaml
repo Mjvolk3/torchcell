@@ -1,5 +1,5 @@
 # Goodall 2018 TraDIS, the "unclear" calls (#909): 317 BW25113 gene calls,
-# BacterialGradedGeneEssentialityExperiment. One TransposonInsertionPerturbation per
+# GradedGeneEssentialityExperiment. One TransposonInsertionPerturbation per
 # record, served as `bacterial perturbation`. No record carries an environment
 # perturbation. The plated records gap their temperature; the temperature methods emit
 # nothing for a gapped record.

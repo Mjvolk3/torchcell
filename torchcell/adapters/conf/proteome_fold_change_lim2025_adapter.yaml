@@ -1,5 +1,5 @@
 # Lim 2025 proteome fold change: 4 released contrasts (two evolved isolates x two
-# conditions), BacterialProteinFoldChangeExperiment. Each record's numerator genotype
+# conditions), ProteinFoldChangeExperiment. Each record's numerator genotype
 # carries IPL400's 7 BacterialDeletionPerturbation leaves, served as
 # `bacterial perturbation`, plus that isolate's called variants, served as
 # `bacterial sequence variant perturbation` (#731). Two of the four records carry

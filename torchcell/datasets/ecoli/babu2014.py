@@ -12,7 +12,7 @@ sizes into a signed interaction score (S). Only the high-confidence tail is rele
 Table S2 holds 42,705 (donor, recipient) pairs, 25,239 aggravating and 17,466
 alleviating, which is the instance count the bacterial schedule row states.
 
-RECORD = one ``BacterialGeneInteractionExperiment`` per Table S2 row: a two-gene
+RECORD = one ``GeneInteractionExperiment`` per Table S2 row: a two-gene
 ``Genotype`` holding the donor allele and the recipient allele, distinguished by their
 ``collection`` and ``cassette``, and a ``GeneInteractionPhenotype`` holding that row's
 ``GI score`` verbatim. Each side is a ``DeletionStrainPerturbation`` or, for the
@@ -200,10 +200,7 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import LB
 from torchcell.datamodels.schema import (
     BACTERIAL_ASSEMBLY_SETS,
-    AssemblyReferenceGenome,
     BacterialAssemblySet,
-    BacterialGeneInteractionExperiment,
-    BacterialGeneInteractionExperimentReference,
     BacterialGeneNamespace,
     BacterialReleasedStrainPerturbation,
     BacterialStrainBackground,
@@ -211,6 +208,8 @@ from torchcell.datamodels.schema import (
     Environment,
     Experiment,
     ExperimentReference,
+    GeneInteractionExperiment,
+    GeneInteractionExperimentReference,
     GeneInteractionPhenotype,
     Genotype,
     MarkedAllelePerturbation,
@@ -218,6 +217,7 @@ from torchcell.datamodels.schema import (
     MediaComponent,
     MediaComponentRole,
     Publication,
+    ReferenceGenome,
     ReleasedStrainKind,
     SampleUnit,
     Temperature,
@@ -1590,7 +1590,7 @@ def chassis_background() -> BacterialStrainBackground:
     )
 
 
-def reference_genome(data_root: str | None = None) -> AssemblyReferenceGenome:
+def reference_genome(data_root: str | None = None) -> ReferenceGenome:
     """MG1655 pinned to its GenBank assembly, carrying the conjugant chassis."""
     return assembly_reference(
         REFERENCE_STRAIN_NAME, background=chassis_background(), data_root=data_root
@@ -1608,9 +1608,9 @@ def build_experiment(
     *,
     donor_is_hypomorph: bool,
     recipient_is_hypomorph: bool,
-) -> BacterialGeneInteractionExperiment:
+) -> GeneInteractionExperiment:
     """The record of one Table S2 row."""
-    return BacterialGeneInteractionExperiment(
+    return GeneInteractionExperiment(
         dataset_name=dataset_name,
         genotype=pair_genotype(
             donor_tag,
@@ -1626,10 +1626,10 @@ def build_experiment(
 
 
 def build_reference(
-    dataset_name: str, genome: AssemblyReferenceGenome, screen_id: str
-) -> BacterialGeneInteractionExperimentReference:
+    dataset_name: str, genome: ReferenceGenome, screen_id: str
+) -> GeneInteractionExperimentReference:
     """The unperturbed chassis of one screen set, scoring 0."""
-    return BacterialGeneInteractionExperimentReference(
+    return GeneInteractionExperimentReference(
         dataset_name=dataset_name,
         genome_reference=genome,
         environment_reference=SCREEN_ENVIRONMENT.model_copy(),
@@ -1810,12 +1810,12 @@ class GeneInteractionBabu2014Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialGeneInteractionExperiment
+        return GeneInteractionExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialGeneInteractionExperimentReference
+        return GeneInteractionExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -1999,7 +1999,7 @@ VERIFIER_PROVENANCE = Provenance(
     citation_key=CITATION_KEY,
     sha256=DATA_SHA256[TABLE_S2],
     method="Table S2, the GI score of every released high-confidence (donor, "
-    "recipient) pair; one BacterialGeneInteractionExperiment per row, a two-leaf "
+    "recipient) pair; one GeneInteractionExperiment per row, a two-leaf "
     "genotype against MG1655 whose donor carries cat and whose recipient carries kan "
     "(a DeletionStrainPerturbation on each side, or a "
     "MarkedAllelePerturbation where the source calls the strain a hypomorph), "
@@ -2011,8 +2011,8 @@ VERIFIER_PROVENANCE = Provenance(
 
 def _validate_record(record: Record) -> None:
     """L0: the experiment and its reference validate as the assembly-pinned pair."""
-    BacterialGeneInteractionExperiment.model_validate(record["experiment"])
-    BacterialGeneInteractionExperimentReference.model_validate(record["reference"])
+    GeneInteractionExperiment.model_validate(record["experiment"])
+    GeneInteractionExperimentReference.model_validate(record["reference"])
 
 
 def _l1_two_distinct_genes(records: Sequence[Record]) -> LevelResult:

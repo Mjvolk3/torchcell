@@ -1,5 +1,5 @@
 # Gerdes 2003 genetic footprinting: 3,618 MG1655 gene calls,
-# BacterialGeneEssentialityExperiment. One TransposonInsertionPerturbation per record,
+# GeneEssentialityExperiment. One TransposonInsertionPerturbation per record,
 # served as `bacterial perturbation`. No record carries an environment perturbation (0 in
 # 3,618). Every record and reference states its temperature (37 C).
 cell_adapter:

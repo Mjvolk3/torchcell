@@ -22,11 +22,11 @@ import torchcell.datasets.pputida.fitness_browser_putida as fp
 from tests.torchcell.datasets._fitness_browser_fixture import experiment_row, write_feba
 from torchcell.data import file_sha256
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
     ConcentrationUnit,
     DoseBasis,
     EnvironmentPhysicalPerturbation,
     PhysicalFactor,
+    ReferenceGenome,
     SmallMoleculePerturbation,
     TransposonInsertionPerturbation,
 )
@@ -212,8 +212,8 @@ PUBLICATIONS = [
 ]
 
 
-def _reference() -> AssemblyReferenceGenome:
-    return AssemblyReferenceGenome(
+def _reference() -> ReferenceGenome:
+    return ReferenceGenome(
         species="Pseudomonas putida",
         strain="KT2440",
         ploidy="haploid",

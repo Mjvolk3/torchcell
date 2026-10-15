@@ -33,6 +33,10 @@ from torchcell.datamodels.schema import (
     SgaKanMxDeletionPerturbation,
     Temperature,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.expression import (
     measured_gene_universe,
     verify_expression_dataset,
@@ -94,7 +98,10 @@ def _record(
     reference = MicroarrayExpressionExperimentReference(
         dataset_name="test",
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4742"
+            species="Saccharomyces cerevisiae",
+            strain="BY4742",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=environment.model_copy(),
         phenotype_reference=reference_phenotype,

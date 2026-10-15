@@ -54,12 +54,12 @@ from torchcell.data import ManifestPinMismatchError
 from torchcell.datamodels.media import DAVIS_MINIMAL, DM500
 from torchcell.datamodels.schema import (
     BACTERIAL_LOCUS_TAG_PATTERNS,
-    AssemblyReferenceGenome,
     Concentration,
     ConcentrationUnit,
     EnvironmentPhysicalPerturbation,
     FoldChangeScale,
     PhysicalFactor,
+    ReferenceGenome,
     SmallMoleculePerturbation,
     Temperature,
 )
@@ -1232,6 +1232,7 @@ def test_tpm_is_counts_per_base_scaled_to_a_million() -> None:
 
 def test_the_rnaseq_phenotype_and_reference_keep_counts_and_tpm() -> None:
     phenotype = c.rnaseq_phenotype(GENES, np.array([0.0, 1.0, 7.0]), LENGTHS)
+    assert phenotype.expression_count is not None
     assert dict(phenotype.expression_count) == dict(zip(GENES, [0, 1, 7], strict=True))
     assert phenotype.measurement_type == "rnaseq_tpm"
     assert [g.field for g in phenotype.provenance_gaps] == ["n_mapped_reads"]
@@ -1240,6 +1241,7 @@ def test_the_rnaseq_phenotype_and_reference_keep_counts_and_tpm() -> None:
     expected = (c.tpm(block[:, 0], LENGTHS) + c.tpm(block[:, 1], LENGTHS)) / 2
     assert list(reference.expression_tpm.values()) == pytest.approx(expected)
     # mean counts 0.5, 0.5, 9.5 round half to even
+    assert reference.expression_count is not None
     assert dict(reference.expression_count) == dict(zip(GENES, [0, 0, 10], strict=True))
 
 
@@ -1315,7 +1317,7 @@ def test_build_accounting_refuses_numbers_that_do_not_add_up() -> None:
 # --------------------------------------------------------------------------- #
 # Both loaders end to end over a synthetic mirror and a synthetic REL606 genome
 # --------------------------------------------------------------------------- #
-REL606_PIN = AssemblyReferenceGenome(
+REL606_PIN = ReferenceGenome(
     species="Escherichia coli",
     strain="REL606",
     assembly_set="ecoli_B_REL606_ASM1798v1",

@@ -99,6 +99,10 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -421,7 +425,10 @@ class ProteomeMessner2023Dataset(ExperimentDataset):
         # (Mulleder); the prototrophy-restoring marker is not yet modeled as a
         # GeneAddition here (as in the Mulleder loader).
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4741"
+            species="Saccharomyces cerevisiae",
+            strain="BY4741",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
         genotype = Genotype(perturbations=[_released_deletion(row["orf"])])
         # Grown in synthetic minimal (SM) liquid medium at 30 C: 6.7 g/L YNB without

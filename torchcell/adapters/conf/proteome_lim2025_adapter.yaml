@@ -1,4 +1,4 @@
-# Lim 2025 proteome: 1 IPL400 record, BacterialProteinAbundanceExperiment.
+# Lim 2025 proteome: 1 IPL400 record, ProteinAbundanceExperiment.
 # 7 BacterialDeletionPerturbation, served as `bacterial perturbation`. Isoprenol is a
 # SmallMoleculePerturbation on the experiment environment, so the environment-perturbation
 # pair is enabled. The record gaps temperature; the temperature methods emit nothing.

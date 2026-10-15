@@ -81,6 +81,10 @@ from torchcell.datamodels.schema import (
     ReleasedGeneNamePerturbation,
 )
 from torchcell.datasets.dataset_registry import register_dataset
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import (
     ProvenanceGap,
@@ -501,7 +505,10 @@ class BetaxanthinCachera2023Dataset(ExperimentDataset):
     ) -> tuple[MetaboliteExperiment, MetaboliteExperimentReference, Publication]:
         """Build the Metabolite experiment/reference/publication for one released row."""
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4741"
+            species="Saccharomyces cerevisiae",
+            strain="BY4741",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
         genotype = Genotype(
             perturbations=[_released_deletion(row["gene"]), *_betaxanthin_cassette()]

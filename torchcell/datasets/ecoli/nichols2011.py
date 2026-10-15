@@ -156,8 +156,6 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import LB, M9
 from torchcell.datamodels.schema import (
     AssayType,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     BacterialReleasedStrainPerturbation,
     Compound,
     Concentration,
@@ -166,6 +164,8 @@ from torchcell.datamodels.schema import (
     Environment,
     EnvironmentPerturbationType,
     EnvironmentPhysicalPerturbation,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
@@ -386,7 +386,7 @@ WILD_TYPE = _article(
     "BW25113",
     "During the entire study, BW25113 is referred to as wild-type.",
     page=_STRAINS,
-    note="the background every record's AssemblyReferenceGenome pins and the "
+    note="the background every record's ReferenceGenome pins and the "
     "gene_namespace every perturbation names",
 )
 HYPOMORPHS = _article(
@@ -2205,12 +2205,12 @@ class EnvChemgenNichols2011Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperiment
+        return EnvironmentResponseExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperimentReference
+        return EnvironmentResponseExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -2257,7 +2257,7 @@ class EnvChemgenNichols2011Dataset(ExperimentDataset):
         genome_reference = assembly_reference(self.REFERENCE_STRAIN)
         environments = [environment(c) for c in conditions]
         references = [
-            BacterialEnvironmentResponseExperimentReference(
+            EnvironmentResponseExperimentReference(
                 dataset_name=self.name,
                 genome_reference=genome_reference,
                 environment_reference=environments[j],
@@ -2279,7 +2279,7 @@ class EnvChemgenNichols2011Dataset(ExperimentDataset):
                     if value is None:
                         empty += 1
                         continue
-                    experiment = BacterialEnvironmentResponseExperiment(
+                    experiment = EnvironmentResponseExperiment(
                         dataset_name=self.name,
                         genotype=genotypes[row.index],
                         environment=environments[j],
@@ -2413,7 +2413,7 @@ def verify_build(
             citation_key=CITATION_KEY,
             sha256=MATRIX_SHA256,
             method="Table S2 complete data set, one "
-            "BacterialEnvironmentResponseExperiment per non-empty (strain row, screen) "
+            "EnvironmentResponseExperiment per non-empty (strain row, screen) "
             "cell; z_score, the per-screen re-scaled S-score; strains under their "
             "released ECK labels",
             page="Table S2 - Complete Data Set (mmc2), sheet 'TableS2-FinalData'",

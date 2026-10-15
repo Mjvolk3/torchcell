@@ -12,7 +12,7 @@ JPST000369). The first consumer of ``PhosphositeIntensityPhenotype`` (#921).
 WHAT IS STORED. Supplementary Table 2 is the release's one per-record artifact: 2,129
 phosphosites (S 1,220, T 501, Y 162, H 246) with a MaxQuant summed-XIC precursor
 intensity in each of 12 samples, glucose or glycerol x exponential or stationary x three
-replicates. One ``BacterialPhosphositeIntensityExperiment`` per sample column, 12
+replicates. One ``PhosphositeIntensityExperiment`` per sample column, 12
 records. Every record carries all 2,129 sites exactly as the table gives them: the
 accession string, the gene names, the residue and the positions, verbatim, including the
 42 sites listed on more than one gene (10 of them on more than one accession), each as
@@ -97,10 +97,7 @@ from torchcell.data import (
 )
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
     BacterialAssemblySet,
-    BacterialPhosphositeIntensityExperiment,
-    BacterialPhosphositeIntensityExperimentReference,
     Concentration,
     ConcentrationUnit,
     CultureGrowthPhase,
@@ -113,10 +110,13 @@ from torchcell.datamodels.schema import (
     MediaComponentRole,
     PhosphoResidue,
     Phosphosite,
+    PhosphositeIntensityExperiment,
+    PhosphositeIntensityExperimentReference,
     PhosphositeIntensityPhenotype,
     PhosphositeQuantification,
     ProteinIdNamespace,
     Publication,
+    ReferenceGenome,
     Temperature,
 )
 from torchcell.datasets.bacteria_common import assembly_reference
@@ -717,7 +717,7 @@ def environment(carbon: Literal["glucose", "glycerol"]) -> Environment:
     )
 
 
-def strain_reference(data_root: str | None = None) -> AssemblyReferenceGenome:
+def strain_reference(data_root: str | None = None) -> ReferenceGenome:
     """The assembly-pinned W3110 reference every record is written against."""
     return assembly_reference(W3110_STRAIN, data_root=data_root)
 
@@ -908,12 +908,12 @@ class PhosphositeIntensityPotel2018Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialPhosphositeIntensityExperiment
+        return PhosphositeIntensityExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialPhosphositeIntensityExperimentReference
+        return PhosphositeIntensityExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -943,7 +943,7 @@ class PhosphositeIntensityPotel2018Dataset(ExperimentDataset):
 
         genome_reference = strain_reference()
         references = {
-            spec.column: BacterialPhosphositeIntensityExperimentReference(
+            spec.column: PhosphositeIntensityExperimentReference(
                 dataset_name=self.name,
                 genome_reference=genome_reference,
                 environment_reference=environment(spec.carbon),
@@ -959,7 +959,7 @@ class PhosphositeIntensityPotel2018Dataset(ExperimentDataset):
         index = 0
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for spec in tqdm(SAMPLES, desc="potel2018-phosphosite"):
-                experiment = BacterialPhosphositeIntensityExperiment(
+                experiment = PhosphositeIntensityExperiment(
                     dataset_name=self.name,
                     genotype=Genotype(perturbations=[]),
                     environment=environment(spec.carbon),
@@ -1242,7 +1242,7 @@ def verify_build(
             citation_key=CITATION_KEY,
             sha256=TABLE_2_SHA256,
             method=(
-                "Supplementary Table 2, one BacterialPhosphositeIntensityExperiment "
+                "Supplementary Table 2, one PhosphositeIntensityExperiment "
                 "per sample column, every site as released, 0 -> not_quantified"
             ),
             page=f"sheet {TABLE_2_SHEET}",

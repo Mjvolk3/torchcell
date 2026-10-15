@@ -5,7 +5,7 @@
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Rapp 2026 targeted LC-MS/MS: 406 MG1655-pinned strains,
-BacterialMetaboliteExperiment on its own `measurement_type`, the EIC peak-height
+MetaboliteExperiment on its own `measurement_type`, the EIC peak-height
 fold change of a second platform. One CrisprInterferencePerturbation per
 record, served as `bacterial perturbation` with its CrisprConstruct, plus the
 inducer's environment perturbation.

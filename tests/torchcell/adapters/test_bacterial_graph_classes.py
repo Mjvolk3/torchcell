@@ -1192,7 +1192,7 @@ def test_microarray_expression_ratio_projects_sourced_counts_as_json() -> None:
 
 def _morphology_record(phenotype: s.BacterialMorphologyPhenotype) -> dict[str, Any]:
     return {
-        "experiment": s.BacterialMorphologyExperiment(
+        "experiment": s.MorphologyExperiment(
             dataset_name="BacterialToy",
             genotype=s.Genotype(perturbations=_bacterial_leaves()),
             environment=s.Environment(media=_lb()),
@@ -1565,7 +1565,7 @@ def _phage(**kw: Any) -> s.PhagePerturbation:
 def _phage_challenge_record(*perturbations: Any) -> dict[str, Any]:
     """A bacterial environment-response record whose environment carries ``perturbations``."""
     return {
-        "experiment": s.BacterialEnvironmentResponseExperiment(
+        "experiment": s.EnvironmentResponseExperiment(
             dataset_name="BacterialToy",
             genotype=s.Genotype(
                 perturbations=[
@@ -1657,9 +1657,9 @@ def test_the_phage_method_emits_nothing_for_any_other_perturbation() -> None:
 def test_the_phage_reference_collector_deduplicates_by_content_id() -> None:
     """One node per distinct phage challenge across the reference index."""
     phage = _phage()
-    reference = s.BacterialEnvironmentResponseExperimentReference(
+    reference = s.EnvironmentResponseExperimentReference(
         dataset_name="BacterialToy",
-        genome_reference=s.AssemblyReferenceGenome(
+        genome_reference=s.ReferenceGenome(
             species="Escherichia coli",
             strain="BW25113",
             assembly_set="ecoli_K12_BW25113_ASM75055v1",

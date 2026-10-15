@@ -14,18 +14,18 @@ import copy
 from typing import Any
 
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
-    BacterialPhosphositeIntensityExperiment,
-    BacterialPhosphositeIntensityExperimentReference,
     CultureGrowthPhase,
     Environment,
     Genotype,
     Media,
     PhosphoResidue,
     Phosphosite,
+    PhosphositeIntensityExperiment,
+    PhosphositeIntensityExperimentReference,
     PhosphositeIntensityPhenotype,
     PhosphositeQuantification,
     ProteinIdNamespace,
+    ReferenceGenome,
     SampleUnit,
     Temperature,
 )
@@ -84,15 +84,15 @@ def _record(label: str, gnd: float | None) -> dict[str, Any]:
         media=Media(name="M9", state="liquid", is_synthetic=True),
         temperature=Temperature(value=37),
     )
-    experiment = BacterialPhosphositeIntensityExperiment(
+    experiment = PhosphositeIntensityExperiment(
         dataset_name="test",
         genotype=Genotype(perturbations=[]),
         environment=env,
         phenotype=_phenotype(label, gnd),
     )
-    reference = BacterialPhosphositeIntensityExperimentReference(
+    reference = PhosphositeIntensityExperimentReference(
         dataset_name="test",
-        genome_reference=AssemblyReferenceGenome(
+        genome_reference=ReferenceGenome(
             species="Escherichia coli",
             strain="MG1655",
             assembly_set="ecoli_K12_MG1655_ASM584v2",

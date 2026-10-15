@@ -347,7 +347,10 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
         release_name="YAL001C",
         release_gene_name="TFC3",
         release_span=GenomicSpan(
-            chromosome="chrI", start=147594, end=151166, assembly="R64-1-1"
+            chromosome="chrI",
+            start=147594,
+            end=151166,
+            assembly="sgd_S288C_R64-4-1_20230830",
         ),
     ),
     CopyNumberVariantPerturbation: dict(
@@ -840,19 +843,43 @@ def test_engineered_cnv_marker_is_optional() -> None:
 
 def test_reference_genome_ploidy_default_and_values() -> None:
     """Ploidy defaults to haploid (backward-compatible) and accepts diploid."""
-    assert schema.ReferenceGenome(species="s", strain="w").ploidy == "haploid"
     assert (
-        schema.ReferenceGenome(species="s", strain="w", ploidy="diploid").ploidy
+        schema.ReferenceGenome(
+            species="s",
+            strain="w",
+            assembly_set="sgd_S288C_R64-4-1_20230830",
+            assembly_accession="GCA_000146045.2",
+        ).ploidy
+        == "haploid"
+    )
+    assert (
+        schema.ReferenceGenome(
+            species="s",
+            strain="w",
+            ploidy="diploid",
+            assembly_set="sgd_S288C_R64-4-1_20230830",
+            assembly_accession="GCA_000146045.2",
+        ).ploidy
         == "diploid"
     )
     with pytest.raises(ValueError):
-        schema.ReferenceGenome(species="s", strain="w", ploidy="triploid")  # type: ignore[arg-type]
+        schema.ReferenceGenome(
+            species="s",
+            strain="w",
+            ploidy="triploid",  # type: ignore[arg-type]  # the refusal under test
+            assembly_set="sgd_S288C_R64-4-1_20230830",
+            assembly_accession="GCA_000146045.2",
+        )
 
 
 def test_hip_style_record_round_trips() -> None:
     """HIP: diploid ReferenceGenome + heterozygous deletion as copy 1 of 2."""
     ref = schema.ReferenceGenome(
-        species="Saccharomyces cerevisiae", strain="BY4743", ploidy="diploid"
+        species="Saccharomyces cerevisiae",
+        strain="BY4743",
+        ploidy="diploid",
+        assembly_set="sgd_S288C_R64-4-1_20230830",
+        assembly_accession="GCA_000146045.2",
     )
     geno = schema.Genotype(
         perturbations=[
@@ -879,7 +906,11 @@ def test_hop_style_record_round_trips() -> None:
     not a union member); it remains an AXIS-1 absence, NOT an engineered CNV.
     """
     ref = schema.ReferenceGenome(
-        species="Saccharomyces cerevisiae", strain="BY4743", ploidy="diploid"
+        species="Saccharomyces cerevisiae",
+        strain="BY4743",
+        ploidy="diploid",
+        assembly_set="sgd_S288C_R64-4-1_20230830",
+        assembly_accession="GCA_000146045.2",
     )
     geno = schema.Genotype(
         perturbations=[

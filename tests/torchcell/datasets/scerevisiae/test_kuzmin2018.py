@@ -89,6 +89,10 @@ from torchcell.datamodels.schema import (
     UncertaintyType,
 )
 from torchcell.datasets.scerevisiae import kuzmin2018 as k
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 RAW_NAME = "aao1729_data_s1.tsv"
 URL = (
@@ -123,7 +127,12 @@ UNKNOWN_DIGENIC = ["YAR002W+YDL227C_tm3180", "nup60Δ+hoΔ", "YCR002C_sn77", "cd
 UNKNOWN_TRIGENIC = ["YAR002W+YML107C_tm2550", "nup60Δ+pml39Δ", "YCR002C_sn77", "cdc10-1", "trigenic", 0.5, 0.01, 0.9, 0.7, 0.0, 0.9]  # fmt: skip
 
 ENVIRONMENT = Environment(media=SGA_TM_SELECTION, temperature=Temperature(value=26))
-GENOME = ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
+GENOME = ReferenceGenome(
+    species="Saccharomyces cerevisiae",
+    strain="S288C",
+    assembly_set=SGD_S288C_R64,
+    assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
+)
 PUBLICATION = Publication(
     pubmed_id="29674565",
     pubmed_url="https://pubmed.ncbi.nlm.nih.gov/29674565/",

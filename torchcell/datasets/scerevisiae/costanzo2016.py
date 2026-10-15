@@ -44,6 +44,10 @@ from torchcell.datamodels.schema import (
     UncertaintyType,
 )
 from torchcell.datasets.dataset_registry import register_dataset
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -320,7 +324,10 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
         """Build SMF experiment, reference, and publication objects for a row."""
         # Common attributes for both temperatures
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae",
+            strain="S288C",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
 
         # Deal with different types of perturbations
@@ -674,7 +681,10 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
         """Build DMF experiment, reference, and publication objects for a row."""
         # Common attributes for both temperatures
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae",
+            strain="S288C",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
         # genotype
         perturbations: list[GenePerturbationType] = []
@@ -1031,7 +1041,10 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
     ]:
         """Build DMI interaction experiment, reference, and publication objects."""
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae",
+            strain="S288C",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
 
         perturbations: list[GenePerturbationType] = []

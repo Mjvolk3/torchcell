@@ -76,12 +76,21 @@ from torchcell.datamodels.schema import (
     VisualScoreExperimentReference,
     VisualScorePhenotype,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 ENVIRONMENT = Environment(
     media=Media(name="YPD", state="solid", is_synthetic=False),
     temperature=Temperature(value=30.0),
 )
-GENOME = ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
+GENOME = ReferenceGenome(
+    species="Saccharomyces cerevisiae",
+    strain="S288C",
+    assembly_set=SGD_S288C_R64,
+    assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 
 def _deletion(gene: str) -> KanMxDeletionPerturbation:
@@ -763,7 +772,12 @@ def test_fitness_merge_skips_missing_stds_and_keeps_the_first_records_context(
         media=Media(name="YPD", state="solid", is_synthetic=False),
         temperature=Temperature(value=26.0),
     )
-    other_genome = ReferenceGenome(species="Saccharomyces cerevisiae", strain="W303")
+    other_genome = ReferenceGenome(
+        species="Saccharomyces cerevisiae",
+        strain="W303",
+        assembly_set=SGD_S288C_R64,
+        assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
+    )
     cool = {
         "experiment": FitnessExperiment(
             dataset_name="a",

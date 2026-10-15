@@ -33,6 +33,10 @@ from torchcell.datamodels.schema import (
     Temperature,
     UncertaintyType,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.genome_architecture import (
     genome_architecture_gene_set,
     verify_genome_architecture_records,
@@ -99,6 +103,8 @@ def _reference() -> GenomeArchitectureExperimentReference:
                     SourcedValue(value="BY4743", provenance=PROVENANCE, quote="BY4743")
                 ],
             ),
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=_environment(),
         phenotype_reference=GenomeArchitecturePhenotype(

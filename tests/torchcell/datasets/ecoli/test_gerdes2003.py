@@ -52,7 +52,6 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
 )
 from torchcell.data import ManifestPinMismatchError
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
     BacterialReleasedTransposonPerturbation,
     ComponentDefinition,
     ConcentrationUnit,
@@ -62,6 +61,7 @@ from torchcell.datamodels.schema import (
     FootprintingCall,
     Genotype,
     MediaComponentRole,
+    ReferenceGenome,
     TransposonInsertionPerturbation,
 )
 from torchcell.literature.manifest import ROLE_RAW_DATA, ArtifactRecord, Manifest
@@ -200,7 +200,7 @@ MG_LOCI = [
     _locus("b0007", 72, "insZ", "ECK0007", pseudo=True),
 ]
 UNIVERSE = {locus.tag for locus in MG_LOCI}
-REFERENCE = AssemblyReferenceGenome(
+REFERENCE = ReferenceGenome(
     species="Escherichia coli",
     strain="MG1655",
     assembly_set="ecoli_K12_MG1655_ASM584v2",
@@ -613,10 +613,8 @@ def test_unused_hooks_and_classes(built: m.GeneEssentialityGerdes2003Dataset) ->
     assert built.preprocess_raw(frame) is frame
     with pytest.raises(NotImplementedError):
         built.create_experiment()
-    assert built.experiment_class.__name__ == "BacterialGeneEssentialityExperiment"
-    assert (
-        built.reference_class.__name__ == "BacterialGeneEssentialityExperimentReference"
-    )
+    assert built.experiment_class.__name__ == "GeneEssentialityExperiment"
+    assert built.reference_class.__name__ == "GeneEssentialityExperimentReference"
     assert built.raw_file_names == [m.TABLE_S1]
 
 

@@ -63,6 +63,7 @@ from torchcell.datamodels.schema import (
     PreCultureSource,
     Publication,
     SmallMoleculePerturbation,
+    StrainBackground,
     StrainConstruction,
     StrainEnvironmentResponseExperiment,
     StrainEnvironmentResponseExperimentReference,
@@ -257,6 +258,7 @@ def test_het_records_are_one_per_released_strain_and_control_set(
     assert isinstance(his3, HeterozygousDeletionPerturbation)
     assert his3.gapped_fields() == {"barcode", "downtag_barcode", "replaced_allele"}
     background = _reference(het, 8).genome_reference.background
+    assert isinstance(background, StrainBackground)
     assert heterozygous_deletion_functional_copies(background, his3) == 0
     doi = "10.1126/science.1150021"
     assert (
@@ -403,13 +405,22 @@ def test_het_side_files_gene_set_reference_index_and_manifest(
         "ARTIFACT_MEMBER_SEPARATOR",
         "ARTIFACT_TIERS",
         "ARTIFACT_URI_SCHEME",
+        "ASSEMBLY_ACCESSION_PATTERN",
+        "ASSEMBLY_SET_ACCESSIONS",
         "AlleleEdit",
         "ArtifactRef",
         "ArtifactTier",
         "AssayType",
+        "AssemblySet",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERN",
         "BACTERIAL_LOCUS_TAG_PATTERNS",
         "BackgroundAllele",
+        "BacterialAssemblySet",
+        "BacterialBackgroundAllele",
         "BacterialGeneNamespace",
+        "BacterialReferenceStrain",
+        "BacterialStrainBackground",
         "BarcodedKanMxDeletionPerturbation",
         "CASSETTE_INTEGRATION_SO",
         "CATEGORICAL_MEASUREMENT_TYPES",
@@ -468,6 +479,7 @@ def test_het_side_files_gene_set_reference_index_and_manifest(
         "Publication",
         "ReferenceGenome",
         "ResponseCategory",
+        "SGD_S288C_ASSEMBLY_SET",
         "SGD_S288C_NAMESPACE",
         "SGD_SYSTEMATIC_GENE_PATTERN",
         "SO_ID_PATTERN",
@@ -492,6 +504,7 @@ def test_het_side_files_gene_set_reference_index_and_manifest(
         "_namespace_of_identifier",
         "_namespace_of_locus_tag",
         "_require_value_or_gap",
+        "_validate_bacterial_locus_tag",
         "_validate_host_identifier",
         "_validate_so_id",
         "derive_se",

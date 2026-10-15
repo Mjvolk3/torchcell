@@ -10,7 +10,7 @@ positions of the MG1655 chromosome into two MG1655 derivatives that differ only 
 much dCas9 they express, grew each pool for 17 generations under anhydrotetracycline
 induction, and released the per-guide log2 fold change in guide abundance.
 :class:`CrispriKnockdownCui2018Dataset` serves that released readout as one
-``BacterialEnvironmentResponseExperiment`` per (guide, screened strain).
+``EnvironmentResponseExperiment`` per (guide, screened strain).
 
 WHAT THE RELEASE REPORTS, AND WHAT IT DOES NOT SEPARATE. This paper is known for the
 "bad-seed" effect: guides sharing certain five PAM-proximal bases kill E. coli
@@ -130,9 +130,6 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import LB
 from torchcell.datamodels.schema import (
     AssayType,
-    AssemblyReferenceGenome,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     BacterialGeneNamespace,
     BacterialReleasedCrisprPerturbation,
     BacterialStrainBackground,
@@ -140,12 +137,15 @@ from torchcell.datamodels.schema import (
     ConcentrationUnit,
     CrisprConstruct,
     Environment,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
     Genotype,
     MeasurementType,
     Publication,
+    ReferenceGenome,
     SampleUnit,
     SmallMoleculePerturbation,
     Temperature,
@@ -989,7 +989,7 @@ def strain_background(screen_id: str) -> BacterialStrainBackground:
 
 def screen_reference_genome(
     screen_id: str, data_root: str | None = None
-) -> AssemblyReferenceGenome:
+) -> ReferenceGenome:
     """MG1655 pinned to its GenBank assembly, carrying one screen's strain background."""
     return assembly_reference(
         MG1655_STRAIN, background=strain_background(screen_id), data_root=data_root
@@ -1120,12 +1120,12 @@ class CrispriKnockdownCui2018Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperiment
+        return EnvironmentResponseExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperimentReference
+        return EnvironmentResponseExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -1155,7 +1155,7 @@ class CrispriKnockdownCui2018Dataset(ExperimentDataset):
 
         environment = screen_environment()
         references = {
-            screen_id: BacterialEnvironmentResponseExperimentReference(
+            screen_id: EnvironmentResponseExperimentReference(
                 dataset_name=self.name,
                 genome_reference=screen_reference_genome(screen_id),
                 environment_reference=environment,
@@ -1177,7 +1177,7 @@ class CrispriKnockdownCui2018Dataset(ExperimentDataset):
                     # Annotated list[Any]: Genotype.perturbations is an invariant list
                     # over the whole perturbation union, so a narrower list is refused.
                     perturbations: list[Any] = crispri_perturbations(rule)
-                    experiment = BacterialEnvironmentResponseExperiment(
+                    experiment = EnvironmentResponseExperiment(
                         dataset_name=self.name,
                         genotype=Genotype(perturbations=perturbations),
                         environment=environment,

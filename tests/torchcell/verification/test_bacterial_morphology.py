@@ -28,13 +28,13 @@ from torchcell.datamodels.bacterial_morphology_features import (
 )
 from torchcell.datamodels.media import MEDIA_LIBRARY
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
-    BacterialMorphologyExperiment,
-    BacterialMorphologyExperimentReference,
     BacterialMorphologyPhenotype,
     DeletionStrainPerturbation,
     Environment,
     Genotype,
+    MorphologyExperiment,
+    MorphologyExperimentReference,
+    ReferenceGenome,
     SampleUnit,
     Temperature,
 )
@@ -105,7 +105,7 @@ def _record(
         media=MEDIA_LIBRARY["M9"].model_copy(deep=True),
         temperature=Temperature(value=30),
     )
-    experiment = BacterialMorphologyExperiment(
+    experiment = MorphologyExperiment(
         dataset_name="test",
         genotype=Genotype(
             perturbations=[
@@ -119,9 +119,9 @@ def _record(
         environment=environment,
         phenotype=phenotype if phenotype is not None else _phenotype(),
     )
-    reference = BacterialMorphologyExperimentReference(
+    reference = MorphologyExperimentReference(
         dataset_name="test",
-        genome_reference=AssemblyReferenceGenome(
+        genome_reference=ReferenceGenome(
             species="Escherichia coli",
             strain="BW25113",
             assembly_set="ecoli_K12_BW25113_ASM75055v1",

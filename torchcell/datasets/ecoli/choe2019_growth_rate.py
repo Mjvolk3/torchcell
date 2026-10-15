@@ -11,7 +11,7 @@ RNA-seq, Ribo-seq, ChIP-seq, a Biolog phenotype microarray and intracellular met
 Two dataset classes serve what is BOTH released as a number AND keyed to a strain whose
 genotype this schema can write:
 
-- :class:`GrowthRateChoe2019Dataset` -- ``BacterialFitnessExperiment``, eight records:
+- :class:`GrowthRateChoe2019Dataset` -- ``FitnessExperiment``, eight records:
   ``MS56 Delta21kb`` (21 gene deletions) and ``MS56 DeltarpoS`` (one), each against their
   isogenic parent MS56, from the Fig. 2c sheet of the Source Data workbook; since #1057
   the three reconstructed single-allele strains of the Fig. 2f sheet (``cspCmut``,
@@ -19,7 +19,7 @@ genotype this schema can write:
   and since #1045 part 3 MS56 over MG1655 (Fig. 2c) and the evolved clone eMS57 over
   MS56, once from each panel (Fig. 2c rates, Fig. 2f released ratios).
 - :class:`TranscriptionFactorKnockoutChoe2019Dataset` --
-  ``BacterialFitnessExperiment``, two records: the Keio BW25113 ``DeltaydaS`` and
+  ``FitnessExperiment``, two records: the Keio BW25113 ``DeltaydaS`` and
   ``DeltaabgR`` single deletions, whose growth rates the Supplementary Fig. 6 legend
   states as a percentage of wild-type BW25113 in the same medium.
 
@@ -193,10 +193,7 @@ from torchcell.data import (
 )
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
     BacterialAssemblySet,
-    BacterialFitnessExperiment,
-    BacterialFitnessExperimentReference,
     BacterialReleasedStrainPerturbation,
     BacterialStrainBackground,
     Concentration,
@@ -204,12 +201,15 @@ from torchcell.datamodels.schema import (
     Environment,
     Experiment,
     ExperimentReference,
+    FitnessExperiment,
+    FitnessExperimentReference,
     FitnessPhenotype,
     Genotype,
     Media,
     MediaComponent,
     MediaComponentRole,
     Publication,
+    ReferenceGenome,
     ReleasedStrainKind,
     SampleUnit,
     Temperature,
@@ -1509,12 +1509,12 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialFitnessExperiment
+        return FitnessExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialFitnessExperimentReference
+        return FitnessExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -1564,7 +1564,7 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
             self.REFERENCE_STRAIN, background=parent_background()
         )
         parent = panel.rates(PARENT_LABEL)
-        reference = BacterialFitnessExperimentReference(
+        reference = FitnessExperimentReference(
             dataset_name=self.name,
             genome_reference=reference_genome,
             environment_reference=environment,
@@ -1585,7 +1585,7 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
             for label, symbols in tqdm(strains, desc="choe2019 growth rate"):
                 rates = panel.rates(label)
                 phenotype = fitness_phenotype(rates, parent)
-                experiment = BacterialFitnessExperiment(
+                experiment = FitnessExperiment(
                     dataset_name=self.name,
                     genotype=build_growth_genotype(symbols, label),
                     environment=environment,
@@ -1616,7 +1616,7 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
             for allele in RECONSTRUCTED_ALLELES:
                 released = ratios[allele.ratio_label]
                 phenotype = reconstruction_phenotype(released)
-                control = BacterialFitnessExperimentReference(
+                control = FitnessExperimentReference(
                     dataset_name=self.name,
                     genome_reference=assembly_reference(
                         self.REFERENCE_STRAIN, background=control_background(allele)
@@ -1624,7 +1624,7 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
                     environment_reference=environment,
                     phenotype_reference=control_phenotype(),
                 )
-                experiment = BacterialFitnessExperiment(
+                experiment = FitnessExperiment(
                     dataset_name=self.name,
                     genotype=reconstructed_genotype(allele),
                     environment=environment,
@@ -1657,7 +1657,7 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
                 record_reference,
                 phenotype,
             ) in self._background_records(panel, ratios, environment, reference_genome):
-                experiment = BacterialFitnessExperiment(
+                experiment = FitnessExperiment(
                     dataset_name=self.name,
                     genotype=Genotype(perturbations=[]),
                     environment=environment,
@@ -1701,10 +1701,8 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
         panel: GrowthPanel,
         ratios: Mapping[str, Sequence[float]],
         environment: Environment,
-        parent_genome: AssemblyReferenceGenome,
-    ) -> list[
-        tuple[str, str, str, BacterialFitnessExperimentReference, FitnessPhenotype]
-    ]:
+        parent_genome: ReferenceGenome,
+    ) -> list[tuple[str, str, str, FitnessExperimentReference, FitnessPhenotype]]:
         """MS56 over MG1655, and eMS57 over MS56 from both panels (#1045 part 3).
 
         Each record's strain is the background its reference genome names, as for a
@@ -1719,9 +1717,9 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
         )
 
         def reference(
-            genome: AssemblyReferenceGenome, denominator: FitnessPhenotype
-        ) -> BacterialFitnessExperimentReference:
-            return BacterialFitnessExperimentReference(
+            genome: ReferenceGenome, denominator: FitnessPhenotype
+        ) -> FitnessExperimentReference:
+            return FitnessExperimentReference(
                 dataset_name=self.name,
                 genome_reference=genome,
                 environment_reference=environment,
@@ -1929,12 +1927,12 @@ class TranscriptionFactorKnockoutChoe2019Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialFitnessExperiment
+        return FitnessExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialFitnessExperimentReference
+        return FitnessExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -1961,7 +1959,7 @@ class TranscriptionFactorKnockoutChoe2019Dataset(ExperimentDataset):
         """Build the two Keio fitness records and write the LMDB."""
         verify_raw_files(self.raw_dir, self._consumed_sha256())
         environment = keio_environment()
-        reference = BacterialFitnessExperimentReference(
+        reference = FitnessExperimentReference(
             dataset_name=self.name,
             genome_reference=assembly_reference(self.REFERENCE_STRAIN),
             environment_reference=environment,
@@ -1979,7 +1977,7 @@ class TranscriptionFactorKnockoutChoe2019Dataset(ExperimentDataset):
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for symbol, fitness in tqdm(KEIO_FITNESS, desc="choe2019 TF knockouts"):
                 phenotype = keio_phenotype(fitness)
-                experiment = BacterialFitnessExperiment(
+                experiment = FitnessExperiment(
                     dataset_name=self.name,
                     genotype=build_keio_genotype(symbol),
                     environment=environment,
@@ -2163,7 +2161,7 @@ def verify_growth_build(
             sha256=SOURCE_DATA.sha256,
             method=(
                 "Source Data sheet 'Fig2c' Rep1-Rep3 growth rates: one "
-                "BacterialFitnessExperiment per designed MS56 deletion strain, "
+                "FitnessExperiment per designed MS56 deletion strain, "
                 "fitness = mean(strain replicates) / mean(MS56 replicates), "
                 "fitness_se = the delta-method SE of that ratio"
             ),

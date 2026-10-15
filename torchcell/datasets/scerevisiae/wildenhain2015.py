@@ -162,6 +162,10 @@ from torchcell.literature.manifest import (
     RetrievalMethod,
     RetrievalRecord,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import (
     ProvenanceGap,
@@ -580,6 +584,8 @@ BY4741_GENOME = StrainReferenceGenome(
     strain=BY4741_GENOTYPE.value,
     ploidy="haploid",
     background=_by4741_background(),
+    assembly_set=SGD_S288C_R64,
+    assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
 )
 
 #: The 33 released ORFs that are essential in torchcell's SGD essentiality set (#504

@@ -7,7 +7,7 @@ r"""Schmidt 2016 Table S23: the per-condition growth rates, as an absolute reado
 Schmidt et al. 2016 (Nat Biotechnol 34:104, doi:10.1038/nbt.3418) Supplementary Table
 23 releases one ``Growth rate (h-1)`` with a ``Stdev`` per (growth condition, strain),
 26 rows over three strains. This module serves 24 of them as
-:class:`GrowthRateS23Schmidt2016Dataset`, one ``BacterialEnvironmentResponseExperiment``
+:class:`GrowthRateS23Schmidt2016Dataset`, one ``EnvironmentResponseExperiment``
 per (condition, strain) carrying the ABSOLUTE rate, with each strain's Glucose row as its
 reference.
 
@@ -126,16 +126,16 @@ from torchcell.data import (
 )
 from torchcell.datamodels.schema import (
     AssayType,
-    AssemblyReferenceGenome,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     BacterialStrainBackground,
     Environment,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
     Genotype,
     MeasurementType,
+    ReferenceGenome,
     SampleUnit,
     UncertaintyType,
 )
@@ -518,7 +518,7 @@ def phenotype(row: S23Row) -> EnvironmentResponsePhenotype:
 STRAIN_GENOTYPES: dict[str, str] = {STRAIN_MG1665: "F-, λ, rph-1", STRAIN_NCM3722: "F+"}
 
 
-def strain_genome(strain: str, data_root: str | None = None) -> AssemblyReferenceGenome:
+def strain_genome(strain: str, data_root: str | None = None) -> ReferenceGenome:
     """BW25113's assembly pin, or another strain on a background named as released.
 
     A Table S23 strain that is not BW25113 is stored under the name Table S23 writes
@@ -585,12 +585,12 @@ class GrowthRateS23Schmidt2016Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperiment
+        return EnvironmentResponseExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperimentReference
+        return EnvironmentResponseExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -643,7 +643,7 @@ class GrowthRateS23Schmidt2016Dataset(ExperimentDataset):
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
         references = {
-            strain: BacterialEnvironmentResponseExperimentReference(
+            strain: EnvironmentResponseExperimentReference(
                 dataset_name=self.name,
                 genome_reference=strain_genome(strain),
                 environment_reference=environments[REFERENCE_CONDITION],
@@ -656,7 +656,7 @@ class GrowthRateS23Schmidt2016Dataset(ExperimentDataset):
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for index, row in enumerate(tqdm(kept, desc="schmidt2016 Table S23")):
-                experiment = BacterialEnvironmentResponseExperiment(
+                experiment = EnvironmentResponseExperiment(
                     dataset_name=self.name,
                     genotype=genotype,
                     environment=environments[row.condition],
@@ -864,7 +864,7 @@ def verify_build(
             sha256=sm.SI2_SHA256,
             method=(
                 "Supplementary Table 23 'Growth rate (h-1)' and 'Stdev': one "
-                "BacterialEnvironmentResponseExperiment per kept (condition, strain) "
+                "EnvironmentResponseExperiment per kept (condition, strain) "
                 "row, MeasurementType.growth_rate carrying the ABSOLUTE rate in h^-1; "
                 "each strain's reference is its released Glucose row's own rate"
             ),

@@ -60,11 +60,20 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.graph.graph import GeneGraph, GeneMultiGraph
 from torchcell.sequence import GeneSet
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 GENES = GeneSet(["YAL001C", "YAL002W", "YAL003W", "YAL004W"])
 LABELS = ["fitness", "gene_interaction"]
 ENVIRONMENT = Environment(media=Media(name="YPD", state="solid", is_synthetic=False))
-GENOME = ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
+GENOME = ReferenceGenome(
+    species="Saccharomyces cerevisiae",
+    strain="S288C",
+    assembly_set=SGD_S288C_R64,
+    assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 
 def _deletion(gene: str) -> KanMxDeletionPerturbation:

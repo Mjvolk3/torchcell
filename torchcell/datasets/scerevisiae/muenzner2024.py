@@ -14,7 +14,7 @@ for 55 of them. Two dataset classes, one per released measurement:
   the released linear DIA-NN MaxLFQ quantity after precursor-level batch-median
   correction; a protein the release leaves blank is key-absent, never imputed (the paper
   imputed by KNN for its own analyses, the release ships the matrix before that step).
-- ``ProteinTurnoverMuenzner2024Dataset``: one ``YeastProteinTurnoverExperiment`` per
+- ``ProteinTurnoverMuenzner2024Dataset``: one ``ProteinTurnoverExperiment`` per
   isolate, from Supplementary Table 17: ``kdp`` (turnover rate, 1/h) as
   ``degradation_rate`` and ``HL`` (h) as ``half_life``. The paper computed both "without
   doubling time or dilution rate correction", so the rate is total replacement
@@ -110,13 +110,13 @@ from torchcell.datamodels.schema import (
     ProteinAbundanceExperiment,
     ProteinAbundanceExperimentReference,
     ProteinAbundancePhenotype,
+    ProteinTurnoverExperiment,
+    ProteinTurnoverExperimentReference,
     ProteinTurnoverPhenotype,
     Publication,
     ReferenceGenome,
     SequenceVariantPerturbation,
     Temperature,
-    YeastProteinTurnoverExperiment,
-    YeastProteinTurnoverExperimentReference,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.literature.manifest import (
@@ -125,7 +125,12 @@ from torchcell.literature.manifest import (
     RetrievalMethod,
     RetrievalRecord,
 )
-from torchcell.sequence.genome.registry import PETER2018_1011, load_genome_manifest
+from torchcell.sequence.genome.registry import (
+    PETER2018_1011,
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+    load_genome_manifest,
+)
 from torchcell.sequence.natural_isolate import (
     GENOTYPE_FILES,
     PRESENCE_NAME,
@@ -725,6 +730,8 @@ def s288c_derived_reference(
                 species="Saccharomyces cerevisiae",
                 strain=isolate.strain,
                 ploidy="haploid",
+                assembly_set=SGD_S288C_R64,
+                assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
             )
         }
     )
@@ -900,7 +907,12 @@ def manifest_sha256(manifest: Manifest, relpath: str) -> str:
 # --------------------------------------------------------------------------- #
 # Shared dataset machinery
 # --------------------------------------------------------------------------- #
-GENOME_REFERENCE = ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
+GENOME_REFERENCE = ReferenceGenome(
+    species="Saccharomyces cerevisiae",
+    strain="S288C",
+    assembly_set=SGD_S288C_R64,
+    assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
+)
 PUBLICATION = Publication(
     pubmed_id=PUBMED_ID,
     pubmed_url=f"https://pubmed.ncbi.nlm.nih.gov/{PUBMED_ID}/",
@@ -1259,12 +1271,12 @@ class ProteinTurnoverMuenzner2024Dataset(_MuenznerIsolateDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return YeastProteinTurnoverExperiment
+        return ProteinTurnoverExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return YeastProteinTurnoverExperimentReference
+        return ProteinTurnoverExperimentReference
 
     @post_process
     def process(self) -> None:
@@ -1331,7 +1343,7 @@ class ProteinTurnoverMuenzner2024Dataset(_MuenznerIsolateDataset):
         environment = Environment(
             media=MUENZNER_SM_LYS8, temperature=Temperature(value=30)
         )
-        reference = YeastProteinTurnoverExperimentReference(
+        reference = ProteinTurnoverExperimentReference(
             dataset_name=self.name,
             genome_reference=GENOME_REFERENCE,
             environment_reference=environment.model_copy(),
@@ -1353,7 +1365,7 @@ class ProteinTurnoverMuenzner2024Dataset(_MuenznerIsolateDataset):
             for strain in strains:
                 sub = grouped[by_peter[strain]]
                 keys = sub["systematic_name"].tolist()
-                experiment = YeastProteinTurnoverExperiment(
+                experiment = ProteinTurnoverExperiment(
                     dataset_name=self.name,
                     genotype=genotypes.genotype(strain),
                     environment=environment,

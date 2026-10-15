@@ -10,54 +10,53 @@ import json
 import os
 import os.path as osp
 import pickle
-from typing import Callable
+from collections.abc import Callable
 
+import hypernetx as hnx
 import lmdb
+import networkx as nx
 import numpy as np
 import pandas as pd
+from pydantic import field_validator
+from sortedcontainers import SortedDict
 from torch_geometric.data import Dataset
 from tqdm import tqdm
-from sortedcontainers import SortedDict
-import networkx as nx
-import hypernetx as hnx
 
 from torchcell.data.cell_data import to_cell_data
-from torchcell.data.neo4j_cell import (
-    create_embedding_graph,
-    create_graph_from_gene_set,
-    min_max_normalize_embedding,
-    min_max_normalize_dataset,
-)
+
+# Import required types
+from torchcell.data.embedding import BaseEmbeddingDataset
+from torchcell.data.graph_processor import GraphProcessor
+from torchcell.data.neo4j_cell import create_embedding_graph, create_graph_from_gene_set
 from torchcell.datamodels import (
+    EXPERIMENT_REFERENCE_TYPE_MAP,
+    EXPERIMENT_TYPE_MAP,
     Environment,
     FitnessExperiment,
     FitnessExperimentReference,
     FitnessPhenotype,
     Genotype,
     Media,
-    Temperature,
-    ReferenceGenome,
-    EXPERIMENT_TYPE_MAP,
-    EXPERIMENT_REFERENCE_TYPE_MAP,
     PhenotypeType,
+    ReferenceGenome,
+    Temperature,
 )
-from torchcell.datamodels.schema import SgaKanMxDeletionPerturbation, Phenotype, ModelStrict
+from torchcell.datamodels.schema import SgaKanMxDeletionPerturbation
 from torchcell.graph import GeneGraph, GeneMultiGraph
 from torchcell.sequence import GeneSet
-from typing import Optional
-from pydantic import field_validator
-
-# Import required types
-from torchcell.data.embedding import BaseEmbeddingDataset
-from torchcell.data.graph_processor import GraphProcessor
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 
 class InferencePhenotype(FitnessPhenotype):
     """Phenotype class for inference that doesn't require actual fitness values."""
+
     # Override fitness fields to be optional
-    fitness: Optional[float] = None
-    fitness_std: Optional[float] = None
-    
+    fitness: float | None = None
+    fitness_std: float | None = None
+
     @field_validator("fitness")
     def validate_fitness(cls, v):
         # Allow None values for inference
@@ -70,12 +69,14 @@ class InferencePhenotype(FitnessPhenotype):
 
 class InferenceExperiment(FitnessExperiment):
     """Experiment class for inference that uses InferencePhenotype."""
+
     experiment_type: str = "inference"
     phenotype: InferencePhenotype
 
 
 class InferenceExperimentReference(FitnessExperimentReference):
     """Experiment reference class for inference."""
+
     experiment_reference_type: str = "inference"
     phenotype_reference: InferencePhenotype
 
@@ -230,7 +231,7 @@ class InferenceDataset(Dataset):
             self._init_lmdb_read()
 
         with self.env.begin() as txn:
-            serialized_data = txn.get(f"{idx}".encode("utf-8"))
+            serialized_data = txn.get(f"{idx}".encode())
             if serialized_data is None:
                 return None
             data_list = json.loads(serialized_data.decode("utf-8"))
@@ -241,10 +242,10 @@ class InferenceDataset(Dataset):
                 # Use local experiment type maps that include inference types
                 local_experiment_map = EXPERIMENT_TYPE_MAP.copy()
                 local_experiment_map["inference"] = InferenceExperiment
-                
+
                 local_reference_map = EXPERIMENT_REFERENCE_TYPE_MAP.copy()
                 local_reference_map["inference"] = InferenceExperimentReference
-                
+
                 experiment_class = local_experiment_map[
                     item["experiment"]["experiment_type"]
                 ]
@@ -377,7 +378,10 @@ class InferenceDataset(Dataset):
     def _create_default_reference(self, experiment) -> FitnessExperimentReference:
         """Create default experiment reference."""
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae",
+            strain="S288C",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
         environment_reference = experiment.environment.model_copy()
         # Use InferencePhenotype for reference when dealing with inference experiments
@@ -425,7 +429,7 @@ class InferenceDataset(Dataset):
             SgaKanMxDeletionPerturbation(
                 systematic_gene_name=gene,
                 perturbed_gene_name=gene,  # Use systematic name as gene name
-                strain_id=f"{gene}_deletion"
+                strain_id=f"{gene}_deletion",
             )
             for gene in triple
         ]
@@ -527,7 +531,7 @@ class InferenceDataset(Dataset):
             # Use local experiment type map that includes inference
             local_experiment_map = EXPERIMENT_TYPE_MAP.copy()
             local_experiment_map["inference"] = InferenceExperiment
-            
+
             for exp_type in experiment_types:
                 experiment_class = local_experiment_map.get(exp_type)
                 if experiment_class:
@@ -535,7 +539,9 @@ class InferenceDataset(Dataset):
                     if phenotype_class:
                         phenotype_classes.add(phenotype_class)
 
-            return list(phenotype_classes) if phenotype_classes else [InferencePhenotype]
+            return (
+                list(phenotype_classes) if phenotype_classes else [InferencePhenotype]
+            )
 
         finally:
             self.close_lmdb()

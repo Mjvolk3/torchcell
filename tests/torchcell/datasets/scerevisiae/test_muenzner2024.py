@@ -65,14 +65,18 @@ from torchcell.datamodels.schema import (
     ProteinAbundanceExperiment,
     ProteinAbundanceExperimentReference,
     ProteinAbundancePhenotype,
+    ProteinTurnoverExperiment,
+    ProteinTurnoverExperimentReference,
     ProteinTurnoverPhenotype,
     ReferenceGenome,
     Temperature,
-    YeastProteinTurnoverExperiment,
-    YeastProteinTurnoverExperimentReference,
 )
 from torchcell.datasets.scerevisiae import muenzner2024 as m
 from torchcell.sequence import natural_isolate as ni
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.natural_isolate_genotype import IsolateGenotypeAudit
 from torchcell.verification.protein import (
     verify_natural_isolate_proteome,
@@ -233,7 +237,12 @@ def _genotype(strain: str) -> Genotype:
 
 _PROTEOME_ENV = Environment(media=m.MUENZNER_SM, temperature=Temperature(value=30))
 _TURNOVER_ENV = Environment(media=m.MUENZNER_SM_LYS8, temperature=Temperature(value=30))
-_S288C = ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
+_S288C = ReferenceGenome(
+    species="Saccharomyces cerevisiae",
+    strain="S288C",
+    assembly_set=SGD_S288C_R64,
+    assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 
 def _abundance(strain: str, values: dict[str, float]) -> ProteinAbundanceExperiment:
@@ -250,8 +259,8 @@ def _abundance(strain: str, values: dict[str, float]) -> ProteinAbundanceExperim
     )
 
 
-def _turnover(strain: str, rates: dict[str, float]) -> YeastProteinTurnoverExperiment:
-    return YeastProteinTurnoverExperiment(
+def _turnover(strain: str, rates: dict[str, float]) -> ProteinTurnoverExperiment:
+    return ProteinTurnoverExperiment(
         dataset_name="ProteinTurnoverMuenzner2024Dataset",
         genotype=_genotype(strain),
         environment=_TURNOVER_ENV,
@@ -316,9 +325,12 @@ def test_fy4_is_built_on_s288c_with_no_perturbation_and_its_own_genome(
     assert proteome[3]["experiment"] == fy4.model_dump()
     reference = proteome[3]["reference"]
     assert reference["genome_reference"] == {
+        "provenance_gaps": [],
         "species": "Saccharomyces cerevisiae",
         "strain": "FY4",
         "ploidy": "haploid",
+        "assembly_set": "sgd_S288C_R64-4-1_20230830",
+        "assembly_accession": "GCA_000146045.2",
     }
     assert (
         reference["phenotype_reference"]
@@ -406,7 +418,7 @@ def test_turnover_builds_three_isolates_and_a_partial_euploid_reference(
         _turnover("SACE_YAU", {"YAL001C": 0.4, "R0040C": 0.1}),
         _turnover("ZZZ", {"YAL001C": 0.3, "Q0010": 0.2}),
     ]
-    reference = YeastProteinTurnoverExperimentReference(
+    reference = ProteinTurnoverExperimentReference(
         dataset_name="ProteinTurnoverMuenzner2024Dataset",
         genome_reference=_S288C,
         environment_reference=_TURNOVER_ENV,

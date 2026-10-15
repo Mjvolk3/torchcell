@@ -5,7 +5,7 @@
 gate's view of it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Schmidt 2016 Table S23: 15 records, one per kept (growth condition, BW25113) row,
-``BacterialEnvironmentResponseExperiment`` carrying the absolute growth rate in h^-1.
+``EnvironmentResponseExperiment`` carrying the absolute growth rate in h^-1.
 Every released row is wild type (0 perturbations in 15 of 15 records), so neither
 ``bacterial perturbation`` nor ``perturbation to genotype`` is enabled. 14 of the 15
 records carry an ``EnvironmentPhysicalPerturbation`` or a ``SmallMoleculePerturbation``

@@ -1,4 +1,4 @@
-# Carruthers 2025 proteome: 19 samples, BacterialProteinAbundanceExperiment.
+# Carruthers 2025 proteome: 19 samples, ProteinAbundanceExperiment.
 # 7 perturbations per record: HeterologousPathwayPerturbation (95),
 # BacterialCrisprInterferencePerturbation (19) and BacterialDeletionPerturbation (19), all
 # served as `bacterial perturbation`. Every CRISPRi leaf carries a CrisprConstruct, so the

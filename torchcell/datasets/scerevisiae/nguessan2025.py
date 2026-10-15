@@ -143,6 +143,10 @@ from torchcell.literature.manifest import (
     RetrievalRecord,
 )
 from torchcell.sequence import GeneSet
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import (
@@ -1325,7 +1329,11 @@ class Nguessan2025Dataset(ExperimentDataset):
         reference = SegregantExpressionExperimentReference(
             dataset_name=self.name,
             genome_reference=ReferenceGenome(
-                species="Saccharomyces cerevisiae", strain="S288C", ploidy="haploid"
+                species="Saccharomyces cerevisiae",
+                strain="S288C",
+                ploidy="haploid",
+                assembly_set=SGD_S288C_R64,
+                assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
             ),
             environment_reference=environment,
             phenotype_reference=pseudobulk(release, all_rows, universe),

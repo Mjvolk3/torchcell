@@ -34,7 +34,7 @@ NOT STORED, each with its fate in ``preprocess/samples.json`` and counted in
   ``SDM_noCarbon``, set5's sulfur sources on ``M63_no_sulfur``): an unattributed release;
   whether it counts as a study to load is an open owner decision of #931.
 
-RECORDS. One ``BacterialEnvironmentResponseExperiment`` per (released locus, stored sample):
+RECORDS. One ``EnvironmentResponseExperiment`` per (released locus, stored sample):
 
 * the value is the browser's gene fitness (``FitByExp_Keio.fit``), a signed log2 ratio
   normalized so the typical gene is 0; the browser's moderated t is stored verbatim in
@@ -79,13 +79,12 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import RCH2_DEFINED_NOCARBON_PRICE2018
 from torchcell.datamodels.schema import (
     AssayType,
-    AssemblyReferenceGenome,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     Concentration,
     ConcentrationUnit,
     Environment,
     EnvironmentPhysicalPerturbation,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
@@ -94,6 +93,7 @@ from torchcell.datamodels.schema import (
     Media,
     PhysicalFactor,
     Publication,
+    ReferenceGenome,
     Temperature,
     TransposonInsertionPerturbation,
 )
@@ -355,11 +355,11 @@ def build_phenotype(
 def build_reference(
     dataset_name: str,
     environment: Environment,
-    genome_reference: AssemblyReferenceGenome,
+    genome_reference: ReferenceGenome,
     screen_id: str,
-) -> BacterialEnvironmentResponseExperimentReference:
+) -> EnvironmentResponseExperimentReference:
     """The typical gene of the same sample: fitness 0 by the normalization."""
-    return BacterialEnvironmentResponseExperimentReference(
+    return EnvironmentResponseExperimentReference(
         dataset_name=dataset_name,
         genome_reference=genome_reference,
         environment_reference=environment,
@@ -378,11 +378,11 @@ def iter_records(
     stored: Sequence[fb.FbExperiment],
     values: fb.FbValues,
     genes: Sequence[fb.ReleasedGene],
-    genome_reference: AssemblyReferenceGenome,
+    genome_reference: ReferenceGenome,
 ) -> Iterator[
     tuple[
-        BacterialEnvironmentResponseExperiment,
-        BacterialEnvironmentResponseExperimentReference,
+        EnvironmentResponseExperiment,
+        EnvironmentResponseExperimentReference,
         Publication,
     ]
 ]:
@@ -399,7 +399,7 @@ def iter_records(
         publication = SOURCE_STUDIES[str(e.pub_id)].publication
         for i, gene in enumerate(genes):
             yield (
-                BacterialEnvironmentResponseExperiment(
+                EnvironmentResponseExperiment(
                     dataset_name=dataset_name,
                     genotype=build_genotype(gene, e.mutant_library),
                     environment=environment,
@@ -478,12 +478,12 @@ class FitnessBrowserEcoliDataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperiment
+        return EnvironmentResponseExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperimentReference
+        return EnvironmentResponseExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:

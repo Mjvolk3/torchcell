@@ -111,11 +111,6 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import LB
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
-    BacterialGeneEssentialityExperiment,
-    BacterialGeneEssentialityExperimentReference,
-    BacterialGradedGeneEssentialityExperiment,
-    BacterialGradedGeneEssentialityExperimentReference,
     BacterialReleasedTransposonPerturbation,
     Environment,
     EssentialityEvidenceClass,
@@ -125,13 +120,18 @@ from torchcell.datamodels.schema import (
     Experiment,
     ExperimentReference,
     GeneEssentialityEvidence,
+    GeneEssentialityExperiment,
+    GeneEssentialityExperimentReference,
     GeneEssentialityPhenotype,
     Genotype,
+    GradedGeneEssentialityExperiment,
+    GradedGeneEssentialityExperimentReference,
     GradedGeneEssentialityPhenotype,
     Media,
     MediaComponent,
     MediaComponentRole,
     Publication,
+    ReferenceGenome,
     Temperature,
     TradisCall,
 )
@@ -1107,11 +1107,11 @@ def evidence(call: GeneCall | None = None) -> GeneEssentialityEvidence:
 
 def build_experiment(
     dataset_name: str, outcome: RowOutcome, env: Environment
-) -> BacterialGeneEssentialityExperiment:
+) -> GeneEssentialityExperiment:
     """The record of one kept row: essential is True, non-essential is False."""
     if outcome.drop_rule is not None:
         raise ValueError(f"row {outcome.call.row} was dropped; it has no record")
-    return BacterialGeneEssentialityExperiment(
+    return GeneEssentialityExperiment(
         dataset_name=dataset_name,
         genotype=insertion_genotype(outcome.call),
         environment=env,
@@ -1123,10 +1123,10 @@ def build_experiment(
 
 
 def build_reference(
-    dataset_name: str, genome_reference: AssemblyReferenceGenome, env: Environment
-) -> BacterialGeneEssentialityExperimentReference:
+    dataset_name: str, genome_reference: ReferenceGenome, env: Environment
+) -> GeneEssentialityExperimentReference:
     """The unperturbed BW25113 parent in the same environment: viable."""
-    return BacterialGeneEssentialityExperimentReference(
+    return GeneEssentialityExperimentReference(
         dataset_name=dataset_name,
         genome_reference=genome_reference,
         environment_reference=env.model_copy(),
@@ -1172,13 +1172,13 @@ GRADED_DATASET_ROOT_REL = "data/torchcell/graded_gene_essentiality_goodall2018"
 
 def build_graded_experiment(
     dataset_name: str, outcome: RowOutcome, env: Environment
-) -> BacterialGradedGeneEssentialityExperiment:
+) -> GradedGeneEssentialityExperiment:
     """The graded record of one unclear row, under its released symbol and row
     coordinate: the call as released.
     """
     if outcome.drop_rule != GRADED_ROW_RULE:
         raise ValueError(f"row {outcome.call.row} is not an unclear call")
-    return BacterialGradedGeneEssentialityExperiment(
+    return GradedGeneEssentialityExperiment(
         dataset_name=dataset_name,
         genotype=insertion_genotype(outcome.call),
         environment=env,
@@ -1189,10 +1189,10 @@ def build_graded_experiment(
 
 
 def build_graded_reference(
-    dataset_name: str, genome_reference: AssemblyReferenceGenome, env: Environment
-) -> BacterialGradedGeneEssentialityExperimentReference:
+    dataset_name: str, genome_reference: ReferenceGenome, env: Environment
+) -> GradedGeneEssentialityExperimentReference:
     """The unperturbed BW25113 parent in the same environment: non-essential."""
-    return BacterialGradedGeneEssentialityExperimentReference(
+    return GradedGeneEssentialityExperimentReference(
         dataset_name=dataset_name,
         genome_reference=genome_reference,
         environment_reference=env.model_copy(),
@@ -1262,12 +1262,12 @@ class GeneEssentialityGoodall2018Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialGeneEssentialityExperiment
+        return GeneEssentialityExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialGeneEssentialityExperimentReference
+        return GeneEssentialityExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -1426,12 +1426,12 @@ class GradedGeneEssentialityGoodall2018Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialGradedGeneEssentialityExperiment
+        return GradedGeneEssentialityExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialGradedGeneEssentialityExperimentReference
+        return GradedGeneEssentialityExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -1544,8 +1544,8 @@ Record = Mapping[str, Any]
 
 def _validate_record(record: Record) -> None:
     """L0: the experiment and its reference validate as the assembly-pinned pair."""
-    BacterialGeneEssentialityExperiment.model_validate(record["experiment"])
-    BacterialGeneEssentialityExperimentReference.model_validate(record["reference"])
+    GeneEssentialityExperiment.model_validate(record["experiment"])
+    GeneEssentialityExperimentReference.model_validate(record["reference"])
 
 
 def record_conditions(records: Sequence[Record]) -> list[ConditionKey | None]:
@@ -1800,10 +1800,8 @@ def run_verification(data_root: str | None = None) -> VerificationReport:
 # --- begin #909: the graded store's L0-L4 ------------------------------------- #
 def _validate_graded_record(record: Record) -> None:
     """L0: the experiment and its reference validate as the graded pair."""
-    BacterialGradedGeneEssentialityExperiment.model_validate(record["experiment"])
-    BacterialGradedGeneEssentialityExperimentReference.model_validate(
-        record["reference"]
-    )
+    GradedGeneEssentialityExperiment.model_validate(record["experiment"])
+    GradedGeneEssentialityExperimentReference.model_validate(record["reference"])
 
 
 def _l2_graded_calls_match_the_tables(

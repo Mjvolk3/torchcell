@@ -29,11 +29,12 @@ from torchcell.datamodels.media import LAKE_WATER
 from torchcell.datamodels.schema import (
     ASSEMBLY_SET_ACCESSIONS,
     BACTERIAL_ASSEMBLY_SETS,
-    AssemblyReferenceGenome,
     BacterialStrainBackground,
     ComponentDefinition,
     MeasurementType,
+    ReferenceGenome,
     SampleUnit,
+    StrainReferenceGenome,
 )
 from torchcell.datasets.ecoli import teteneva2024 as te
 from torchcell.literature.manual_deposit import verify_deposit
@@ -476,10 +477,10 @@ def test_render_workbook_texts_carries_both_legends_and_the_red_row(
 # --------------------------------------------------------------------------------------
 # The records
 # --------------------------------------------------------------------------------------
-def _reference(*_: Any, **kwargs: Any) -> AssemblyReferenceGenome:
+def _reference(*_: Any, **kwargs: Any) -> ReferenceGenome:
     background = kwargs["background"]
     assert isinstance(background, BacterialStrainBackground)
-    return AssemblyReferenceGenome(
+    return StrainReferenceGenome(
         species="Escherichia coli",
         strain=background.name,
         assembly_set="ecoli_K12_W3110_ASM1024v1",
@@ -497,7 +498,7 @@ def test_the_host_is_w3110_rpos_with_no_asserted_allele(
     assert background.provenance == [te.STRAIN, te.BACKGROUND_CONSTRUCTION]
     calls: list[tuple[Any, ...]] = []
 
-    def pin(strain: str, **kwargs: Any) -> AssemblyReferenceGenome:
+    def pin(strain: str, **kwargs: Any) -> ReferenceGenome:
         calls.append((strain, kwargs["data_root"]))
         return _reference(**kwargs)
 
@@ -636,7 +637,7 @@ def test_the_loader_stores_every_released_value_end_to_end(
     with pytest.raises(NotImplementedError, match="builds its records in process"):
         dataset.create_experiment()
     assert dataset.preprocess_raw("frame") == "frame"
-    assert dataset.experiment_class.__name__ == "BacterialEnvironmentResponseExperiment"
+    assert dataset.experiment_class.__name__ == "EnvironmentResponseExperiment"
 
 
 def test_verify_build_passes_on_the_synthetic_store(

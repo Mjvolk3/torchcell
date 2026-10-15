@@ -1,5 +1,5 @@
 # Cui 2018 genome-wide dCas9 knockdown screen in E. coli MG1655: 141,542
-# BacterialEnvironmentResponseExperiment records, one per (retained guide, screened
+# EnvironmentResponseExperiment records, one per (retained guide, screened
 # strain). Each genotype carries one BacterialCrisprInterferencePerturbation per gene the
 # guide's perfect matches lie in, served as `bacterial perturbation` rather than the
 # yeast `perturbation` class, and every one of them carries the record's single

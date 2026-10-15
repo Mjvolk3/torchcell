@@ -1092,6 +1092,12 @@ def test_verify_reports_a_dataset_with_no_per_dataset_entry_point(
     out = capsys.readouterr().out
     assert "NO PER-DATASET VERIFIER -- " in out
     assert "tc_toy_none declares no run_verification()/verify_build()" in out
+    # the typed outcome: never a line that reads like a pass
+    assert (
+        "VERIFY OUTCOME: no_per_dataset_verifier (manifest kept; the family runner "
+        "covers this store)"
+    ) in out
+    assert "VERIFY OUTCOME: passed" not in out
     assert (
         tmp_path / "data/torchcell/toy_none/preprocess/build_manifest.json"
     ).is_file()
@@ -1330,3 +1336,128 @@ def test_verify_retires_the_manifest_when_the_entry_point_returns_no_report(
     )
     preprocess = tmp_path / "data" / "torchcell" / "toy_empty" / "preprocess"
     assert not (preprocess / "build_manifest.json").exists()
+
+
+# --------------------------------------------------------------------------- #
+# 2026.10.15: the typed verify outcome and the perturbation-lane walk.
+# --------------------------------------------------------------------------- #
+
+
+def test_verify_after_build_returns_the_typed_outcome_for_each_case(
+    tmp_path: Path,
+    cli: list[str],
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """``passed``, ``no_per_dataset_verifier`` and ``failed``, each printed as such."""
+    passing = _toy_in_module(
+        monkeypatch,
+        tmp_path,
+        "toy_pass",
+        "tc_toy_pass",
+        run_verification=lambda data_root=None: _report("toy_pass", passed=True),
+    )
+    failing = _toy_in_module(
+        monkeypatch,
+        tmp_path,
+        "toy_fail",
+        "tc_toy_fail",
+        run_verification=lambda data_root=None: _report("toy_fail", passed=False),
+    )
+    bare = _toy_in_module(monkeypatch, tmp_path, "toy_bare", "tc_toy_bare")
+    for toy in (passing, failing, bare):
+        m.build_dataset(toy, str(tmp_path), io_workers=0)
+    capsys.readouterr()
+    assert m.verify_after_build(passing, str(tmp_path)) is m.VerifyOutcome.passed
+    assert m.verify_after_build(bare, str(tmp_path)) is (
+        m.VerifyOutcome.no_per_dataset_verifier
+    )
+    assert m.verify_after_build(failing, str(tmp_path)) is m.VerifyOutcome.failed
+    out = capsys.readouterr().out
+    assert out.count("VERIFY OUTCOME: passed") == 1
+    assert out.count("VERIFY OUTCOME: no_per_dataset_verifier") == 1
+    assert out.count("VERIFY OUTCOME: failed") == 1
+    assert [o.keeps_manifest for o in m.VerifyOutcome] == [True, True, False]
+    assert (
+        tmp_path / "data/torchcell/toy_bare/preprocess/build_manifest.json"
+    ).is_file()
+    assert not (
+        tmp_path / "data/torchcell/toy_fail/preprocess/build_manifest.json"
+    ).is_file()
+
+
+def _map_the_toy(monkeypatch: pytest.MonkeyPatch, methods: list[str]) -> None:
+    """Map ``ToyBuildDataset`` to an adapter whose conf enables ``methods``."""
+    import torchcell.knowledge_graphs.dataset_adapter_map as adapter_map
+    import torchcell.knowledge_graphs.kg_manifest as kg_manifest
+
+    monkeypatch.setattr(
+        adapter_map,
+        "build_adapter_map",
+        lambda include_private=False, organisms=ALL_ORGANISMS: {
+            ToyBuildDataset: object
+        },
+    )
+    monkeypatch.setattr(
+        kg_manifest, "dataset_conf_methods", lambda dataset_class, repo_root: methods
+    )
+
+
+def test_mapped_store_lanes_checks_the_manifests_leaves_against_the_confs_lanes(
+    tmp_path: Path,
+    cli: list[str],
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The toy's three KanMX deletions: served under the yeast lane, a gap under the
+    bacterial-only lane, nothing without the edge, and a block without the field.
+    """
+    assert m.main(["--dataset", "ToyBuildDataset", "--data-root", str(tmp_path)]) == 0
+    capsys.readouterr()
+    manifest_path = tmp_path / "data/torchcell/toy_build/preprocess/build_manifest.json"
+    manifest = build_manifest.BuildManifest.model_validate_json(
+        manifest_path.read_text()
+    )
+    assert manifest.perturbation_leaves == build_manifest.PerturbationLeaves(
+        genotype=["KanMxDeletionPerturbation"], environment=[]
+    )
+
+    _map_the_toy(
+        monkeypatch, ["perturbation (chunked)", "perturbation to genotype (chunked)"]
+    )
+    (served,) = m.mapped_store_lanes(str(tmp_path), include_private=False)
+    assert (served.dataset_class, served.has_leaves, served.blocks) == (
+        "ToyBuildDataset",
+        True,
+        False,
+    )
+    assert served.describe() == "ToyBuildDataset: every leaf served"
+
+    _map_the_toy(
+        monkeypatch,
+        ["bacterial perturbation (chunked)", "perturbation to genotype (chunked)"],
+    )
+    (gap,) = m.mapped_store_lanes(str(tmp_path), include_private=False)
+    assert gap.blocks
+    assert gap.gaps.genotype == ["KanMxDeletionPerturbation"]
+    assert gap.describe() == (
+        "ToyBuildDataset: genotype leaves ['KanMxDeletionPerturbation'] walked by "
+        "'perturbation to genotype (chunked)'"
+    )
+
+    _map_the_toy(monkeypatch, ["bacterial perturbation (chunked)"])
+    (no_edge,) = m.mapped_store_lanes(str(tmp_path), include_private=False)
+    assert not no_edge.blocks
+
+    manifest_path.write_text(
+        manifest.model_copy(update={"perturbation_leaves": None}).model_dump_json()
+    )
+    (old,) = m.mapped_store_lanes(str(tmp_path), include_private=False)
+    assert (old.has_leaves, old.blocks) == (False, True)
+    assert old.describe() == (
+        "ToyBuildDataset: build manifest carries no perturbation_leaves (built before "
+        "the walk existed); rebuild it"
+    )
+    manifest_path.unlink()
+    (none,) = m.mapped_store_lanes(str(tmp_path), include_private=False)
+    assert (none.has_leaves, none.blocks) == (False, True)

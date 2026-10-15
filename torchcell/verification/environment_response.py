@@ -38,11 +38,28 @@ and the L4 gene rules.
 
 from __future__ import annotations
 
+import json
 import math
 from collections import Counter
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from typing import Any
 
+from torchcell.datamodels.identity import (
+    BIOLOGIC_PERTURBATION_IDENTITY_FIELDS,
+    COMPOUND_IDENTITY_PRECEDENCE,
+    CULTURE_FORMAT_IDENTITY_FIELDS,
+    ENVIRONMENT_IDENTITY_FIELDS,
+    MEDIA_COMPONENT_IDENTITY_FIELDS,
+    MEDIA_GAP_IDENTITY_FIELDS,
+    MEDIA_IDENTITY_FIELDS,
+    MEDIA_OPTIONAL_IDENTITY_FIELDS,
+    PHAGE_PERTURBATION_IDENTITY_FIELDS,
+    PHYSICAL_EXPOSURE_IDENTITY_FIELDS,
+    PHYSICAL_PERTURBATION_IDENTITY_FIELDS,
+    PRE_CULTURE_IDENTITY_FIELDS,
+    SMALL_MOLECULE_IDENTITY_FIELDS,
+    TEMPERATURE_IDENTITY_FIELDS,
+)
 from torchcell.verification.common import (
     GeneNameResolver,
     SharedRecordRules,
@@ -74,6 +91,137 @@ def _screened_genes(
     ]
 
 
+#: Every field name an environment perturbation's identity is read from, whatever leaf
+#: it is: the union of the five per-leaf tuples
+#: :func:`torchcell.datamodels.identity.environment_perturbation_identity` projects onto.
+#: Taken as a union rather than per leaf because the stored record is a dict with no
+#: class to dispatch on, and a field absent from a leaf is simply absent from its dump.
+_PERTURBATION_IDENTITY_FIELDS: tuple[str, ...] = tuple(
+    sorted(
+        set(SMALL_MOLECULE_IDENTITY_FIELDS)
+        | set(PHYSICAL_PERTURBATION_IDENTITY_FIELDS)
+        | set(BIOLOGIC_PERTURBATION_IDENTITY_FIELDS)
+        | set(PHAGE_PERTURBATION_IDENTITY_FIELDS)
+        | set(PHYSICAL_EXPOSURE_IDENTITY_FIELDS)
+    )
+)
+
+
+#: A dropout is a whole ``Compound``, and the served identity keys it by the first
+#: identifier it carries; the stored dict is read for all of them plus the name, which is
+#: finer than the precedence and needs no normalization table here.
+_COMPOUND_IDENTITY_FIELDS: tuple[str, ...] = COMPOUND_IDENTITY_PRECEDENCE + ("name",)
+
+#: The projected fields that hold a whole ``Compound``: an ingredient's substance, a
+#: dosed compound and the agent realizing a physical factor.
+_COMPOUND_VALUED_FIELDS: tuple[str, ...] = ("compound", "agent")
+
+
+def _canonical(value: Any) -> str:
+    """One total, order-stable encoding of a projected object."""
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), default=str)
+
+
+def _projected(payload: Mapping[str, Any], fields: tuple[str, ...]) -> dict[str, Any]:
+    """Every named field, read with ``.get`` so absence projects as ``None``.
+
+    Total and absence-preserving, the first two properties ``identity.py`` holds its own
+    projections to: a field a record never carried must not project differently from one
+    the record states as ``None``, since both say the same thing about the condition.
+
+    A field holding a whole ``Compound`` (an ingredient's substance, a dosed compound, a
+    physical factor's realizing agent) is projected onto its identifiers and its name, as
+    the served identity keys a compound by the first identifier it carries. Its structure
+    strings are left out for the reason ``identity.py`` leaves them out of the precedence
+    -- a SMILES is toolkit-dependent -- and because they are most of its stored bytes.
+    """
+    projected: dict[str, Any] = {field: payload.get(field) for field in fields}
+    for field in _COMPOUND_VALUED_FIELDS:
+        value = projected.get(field)
+        if isinstance(value, Mapping):
+            projected[field] = _projected(value, _COMPOUND_IDENTITY_FIELDS)
+    return projected
+
+
+def _projected_list(payload: Any, fields: tuple[str, ...]) -> Any:
+    """Each item projected onto ``fields``, ordered by its own encoding, not by input."""
+    if not isinstance(payload, list):
+        return payload
+    return sorted(
+        _canonical(_projected(item, fields) if isinstance(item, Mapping) else item)
+        for item in payload
+    )
+
+
+def _media_projection(media: Mapping[str, Any]) -> dict[str, Any]:
+    """A medium's composition: the fields ``media_identity`` reads, from the stored dict."""
+    projected = _projected(media, MEDIA_IDENTITY_FIELDS)
+    projected["components"] = _projected_list(
+        projected.get("components"), MEDIA_COMPONENT_IDENTITY_FIELDS
+    )
+    projected["dropouts"] = _projected_list(
+        projected.get("dropouts"), _COMPOUND_IDENTITY_FIELDS
+    )
+    for field in MEDIA_OPTIONAL_IDENTITY_FIELDS:
+        if media.get(field):
+            projected[field] = _projected_list(media[field], MEDIA_GAP_IDENTITY_FIELDS)
+    return projected
+
+
+def _stored_identity_projection(environment: Mapping[str, Any]) -> str:
+    """Every environment field the SERVED identity reads (lane W of the unification).
+
+    The projection that decides whether two records share ONE environment node in the
+    served graph is :func:`torchcell.datamodels.identity.environment_identity`, so a
+    field it reads and this signature does not is a field on which the verifier and the
+    graph disagree about what a condition is. Its field tuples are imported rather than
+    re-listed, so a field added there cannot be forgotten here
+    (``test_condition_signature_reads_every_served_identity_field`` fails until this
+    reads it). The records are stored dicts, not validated objects, so this cannot call
+    that function; it reads the SAME fields and keeps their stored values.
+
+    Keeping the stored values makes this strictly FINER than the served identity, which
+    normalizes a compound to its first identifier and drops a medium's ``name``. Finer is
+    the safe direction for a uniqueness rule: an added field can only SPLIT a group, never
+    merge two, so no store that passes today can start failing. Measured, keyed on the
+    WHOLE stored environment: 15 of the family's 16 stores report exactly the duplicate
+    count they report now, and ``yeastphenome`` reports 4,837 instead of 14,508, because
+    9,671 of its declared duplicate pairs are an aerobic and an anaerobic record of one
+    strain in one screen ([[torchcell.verification.environment-response-identity]]).
+
+    Only the identity fields of each sub-object are read, which is also what keeps this
+    affordable: Hoepfner's stored environment is 13.5 kB of JSON, of which 10 kB is the
+    bench provenance of its medium, its culture format and its pre-culture, and encoding
+    all of it would add 31 min to that store's 30.3M-record streaming pass.
+    """
+    projected = _projected(environment, ENVIRONMENT_IDENTITY_FIELDS)
+    media = projected.get("media")
+    if isinstance(media, Mapping):
+        projected["media"] = _media_projection(media)
+    temperature = projected.get("temperature")
+    if isinstance(temperature, Mapping):
+        projected["temperature"] = _projected(temperature, TEMPERATURE_IDENTITY_FIELDS)
+    projected["perturbations"] = _projected_list(
+        projected.get("perturbations"), _PERTURBATION_IDENTITY_FIELDS
+    )
+    # the CultureEnvironment protocol fields are projected only when SET, exactly as the
+    # served identity projects them, so a plain Environment and a CultureEnvironment that
+    # states no protocol agree
+    for field, fields in (
+        ("culture_format", CULTURE_FORMAT_IDENTITY_FIELDS),
+        ("pre_culture", PRE_CULTURE_IDENTITY_FIELDS),
+    ):
+        payload = environment.get(field)
+        if isinstance(payload, Mapping):
+            projected[field] = _projected(payload, fields)
+    pre_culture = projected.get("pre_culture")
+    if isinstance(pre_culture, dict) and isinstance(pre_culture.get("medium"), Mapping):
+        pre_culture["medium"] = _media_projection(pre_culture["medium"])
+    if environment.get("auxotroph_supplements") is not None:
+        projected["auxotroph_supplements"] = environment["auxotroph_supplements"]
+    return _canonical(projected)
+
+
 def _condition_signature(experiment: dict[str, Any]) -> tuple[Any, ...]:
     """Canonical ENVIRONMENT (condition) identity -- the join key on the environment axis.
 
@@ -98,6 +246,16 @@ def _condition_signature(experiment: dict[str, Any]) -> tuple[Any, ...]:
     A chemostat arm is its dilution rate (#1045 row 21, #1057): four Schmidt 2016 arms on
     one glucose feed differ only in ``dilution_rate_per_hour``, so it joins the
     signature; a batch environment leaves it None and keys exactly as before.
+
+    The hand-written head above cannot say what a condition IS, only what seven of its
+    fields are, and the fields it left out were load-bearing: an aerobic and an anaerobic
+    record of one strain in one screen had ONE signature, and so did a liquid and a solid
+    medium sharing a name. The signature therefore ends with
+    :func:`_stored_identity_projection`, every field the SERVED environment identity
+    reads, so the verifier and the graph agree on what makes two conditions different.
+    Measured on yeastphenome: 9,671 of the 14,508 pairs this rule declared duplicate are
+    an aerobic and an anaerobic measurement
+    ([[torchcell.verification.environment-response-identity]]).
     """
     env = experiment["environment"]
     perts: list[tuple[str, ...]] = []
@@ -125,6 +283,7 @@ def _condition_signature(experiment: dict[str, Any]) -> tuple[Any, ...]:
         env.get("duration_generations"),
         env.get("dilution_rate_per_hour"),
         experiment["phenotype"].get("screen_id"),
+        _stored_identity_projection(env),
     )
 
 

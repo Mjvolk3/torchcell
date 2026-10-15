@@ -15,6 +15,6 @@ created: 1792055272817
 3. runs `generation_array submit`, one `sbatch` per tier with the tier's sizes and `%N`, the tier's `GEN_CPUS` / `GEN_MEM_GB` and the multi-member values in the environment under `--export=ALL`;
 4. prints `JOB_IDS=<a>,<b>,<c>` as its last line, which the live rebuild chains its follow-up on with `--dependency=afterany`.
 
-`DRY_RUN=1` prints every command and submits nothing (the mkdir, the two writes and the sbatch lines, each prefixed `DRY-RUN`). `INDICES=<slurm array spelling>` restricts the submission to those positions of the order: the re-run of failed tasks (the live rebuild's `RESUME_FROM=array` passes the missing indices), or one adapter for a measurement run, in which case a missing directory is created and an existing one is reused with its order and fence.
+`DRY_RUN=1` prints every command and submits nothing (the mkdir, the two writes and the sbatch lines, each prefixed `DRY-RUN`). `INDICES=<slurm array spelling>` restricts the submission to those positions of the order: the re-run of failed tasks (the live rebuild's `RESUME_FROM=array` passes the missing indices), or one adapter for a measurement run, a missing directory is created and an existing one is reused with its order and fence.
 
 Tests: the text pins in `tests/torchcell/database/test_generate_adapter_array_slurm.py`; the dry run was exercised by hand on 2026-10-15 and listed 170 adapters in three arrays (standard 157, large 12, hoepfner 1).

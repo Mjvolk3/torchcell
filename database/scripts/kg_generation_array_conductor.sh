@@ -13,8 +13,8 @@
 #
 # DRY_RUN=1 prints every command (the mkdir, the fence, the sbatch lines) and submits
 # nothing; INDICES=<slurm array spelling> restricts the submission to those positions
-# of the order (a re-run of failed tasks, or one adapter for a measurement run), in
-# which case the output directory must already exist and keeps its order and fence.
+# of the order (a re-run of failed tasks into the existing directory, which keeps its
+# order and fence, or one adapter for a measurement run into a new one).
 # GEN_OVERRIDES carries hydra overrides to every task (a measurement knob).
 set -euo pipefail
 source ~/miniconda3/etc/profile.d/conda.sh
@@ -47,8 +47,10 @@ export PYTHONPATH="$TORCHCELL_SRC"
 GA="python -m torchcell.knowledge_graphs.generation_array"
 
 echo "conductor: out $OUT_HOST; commit $BUILD_COMMIT; organisms $KG_ORGANISMS; include private $INCLUDE_PRIVATE; config $KG_CONFIG; overrides '$GEN_OVERRIDES'; dry run $DRY_RUN; indices '${INDICES:-all}'"
-if [ -z "$INDICES" ]; then
-    if [ -e "$OUT_HOST" ]; then echo "$OUT_HOST exists; a fresh array takes a new OUT_NAME"; exit 1; fi
+if [ -e "$OUT_HOST" ] && [ -z "$INDICES" ]; then
+    echo "$OUT_HOST exists; a fresh array takes a new OUT_NAME (INDICES=<ids> re-runs into an existing one)"; exit 1
+fi
+if [ ! -e "$OUT_HOST" ]; then
     MKDIR="docker run --rm --entrypoint bash -v $SERVE_ROOT/biocypher-out:/out $IMAGE -c 'mkdir -p /out/$OUT_NAME/adapters && chown -R $(id -u):$(id -g) /out/$OUT_NAME && chmod -R 755 /out/$OUT_NAME'"
     if [ "$DRY_RUN" = 1 ]; then
         echo "DRY-RUN $MKDIR"
@@ -64,6 +66,7 @@ else
     for f in "$OUT_HOST/adapter_order.json" "$OUT_HOST/dev_fence.txt"; do
         [ -f "$f" ] || { echo "$f is absent; a re-run needs the directory the first submission created"; exit 1; }
     done
+    echo "reusing $OUT_HOST (order and fence recorded there)"
 fi
 $GA submit --out-name "$OUT_NAME" --out-dir "$OUT_HOST" --script "$ARRAY_SCRIPT" --tiers "$TIERS" \
     $PRIVATE_FLAG --organisms "$KG_ORGANISMS" ${INDICES:+--indices "$INDICES"} \

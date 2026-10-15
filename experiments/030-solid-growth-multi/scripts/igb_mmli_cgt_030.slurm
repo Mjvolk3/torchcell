@@ -150,13 +150,19 @@ nvidia-smi --query-gpu=index,name,memory.total --format=csv,noheader
 # changes is that no loader worker touches the 955 GB data.mdb through GPFS's mmap lock
 # (job 2427397: 27 of 28 workers in gpfsNode_t::mmapLock, epochs at 2x to 3x the quiet
 # pace). The copy is charged to this job's memory: add the store size to --mem. The
-# EXIT trap in stage_pool_store_shm.sh removes the copy when the job ends.
+# EXIT trap in stage_pool_store_shm.sh removes the copy when the job ends. The copy is
+# keyed by job id so concurrent jobs (four single-GPU seeds) never share, or remove, one
+# another's copy; four copies of a 7.5 GB store on the 252 GB tmpfs is fine.
+# POOL_STORE_REL selects the arm's store: ${BUILD_REL}-s3q (Q split) or ${BUILD_REL}-s3r
+# (R split, the whole S3 pool), both written by make_pool_store_030.py.
 STAGE_SHM="${STAGE_SHM:-0}"
 POOL_STORE_REL="${POOL_STORE_REL:-${BUILD_REL}-s3q}"
 if [[ "$STAGE_SHM" == "1" ]]; then
   # shellcheck disable=SC1091
   source "$PROJECT_ROOT/$EXP_REL/scripts/stage_pool_store_shm.sh"
-  SHM_ROOT="/dev/shm/$USER/$(basename "$POOL_STORE_REL")"
+  # One copy PER JOB: the EXIT trap removes $SHM_ROOT, so two jobs sharing one path
+  # would delete each other's store the moment either ended.
+  SHM_ROOT="/dev/shm/$USER/${SLURM_JOB_ID}_$(basename "$POOL_STORE_REL")"
   stage_pool_store "$IGB_DATA_ROOT/$POOL_STORE_REL" "$SHM_ROOT" || exit 1
   OVERRIDES+=("dataset.root_rel=$SHM_ROOT")
   echo "dataset root: $SHM_ROOT (pool store on RAM disk)"

@@ -489,7 +489,17 @@ def test_gene_set_build_manifest_and_interned_store(
         text=True,
         check=True,
     ).stdout.strip()
-    assert manifest["manifest_schema_version"] == 1
+    # Version 2 (2026-10-15) records the leaves the store holds, measured over its
+    # records: the placed CRISPRi guides, the guide against the released name
+    # ``erg11`` (P3's one released-identifier leaf) and the chemical exposures.
+    assert manifest["manifest_schema_version"] == 2
+    assert manifest["perturbation_leaves"] == {
+        "genotype": [
+            "CrisprInterferencePerturbation",
+            "ReleasedIdentifierPerturbation",
+        ],
+        "environment": ["SmallMoleculePerturbation"],
+    }
     assert manifest["dataset_name"] == "crispri_chemgen_smith2016"
     assert manifest["loader_class"] == "CrispriChemgenSmith2016Dataset"
     assert manifest["loader_module"] == "torchcell.datasets.scerevisiae.smith2016"

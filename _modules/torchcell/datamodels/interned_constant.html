@@ -138,6 +138,23 @@
 <span class="sd">(segregant genotypes carry haplotype blocks, tens of KB, repeated across a cross's</span>
 <span class="sd">phenotypes). A gene-perturbation genotype (about 1 KB) and every phenotype stay</span>
 <span class="sd">inline: they vary per record, and a pointer would only move bytes and add a lookup.</span>
+
+<span class="sd">The id of an interned constant is namespaced: sha256 over the label, a NUL byte, the</span>
+<span class="sd">kind, a NUL byte and the payload, never the bare sha256 of the payload. The bare hash</span>
+<span class="sd">was the id of the sub-object's OWN graph node (a ``genotype`` or ``segregant genotype``</span>
+<span class="sd">node is ``sha256(json.dumps(genotype.model_dump()))``, the same bytes a whole-genotype</span>
+<span class="sd">constant holds), and ``torchcell.fast_csv.FastCsvSink`` deduplicates node ids across</span>
+<span class="sd">every label, so the interned constant (written first, by the experiment node method)</span>
+<span class="sd">owned the id and the genotype node was never written: on the job 4901 partial 218,258</span>
+<span class="sd">whole genotypes and 135 Hale 2024 backgrounds existed only as ``InternedConstant``</span>
+<span class="sd">nodes, with 1,948,098 ``GenotypeMemberOf``, 121,180 ``PerturbationMemberOf`` and</span>
+<span class="sd">709,716 ``SegregantBackgroundOf`` rows pointing at them, and on the served KG 3.0 store</span>
+<span class="sd">14,573 Bloom 2019 and Caudal 2024 genotypes (518,883 ``GenotypeMemberOf`` rows). Every</span>
+<span class="sd">other content id in the graph hashes a JSON document (first byte ``{``), so a preimage</span>
+<span class="sd">that begins with the label cannot equal one, and the kind is in the preimage because</span>
+<span class="sd">the same bytes can be a whole ``genotype`` in one record and a ``genotype.background``</span>
+<span class="sd">in another, and the node's ``kind`` property must be true of the node, not of whichever</span>
+<span class="sd">record wrote it first (``interned_id_collision_counts.py``, 2026-10-15).</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -175,9 +192,18 @@
 
 <div class="viewcode-block" id="constant_id">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.interned_constant.constant_id.html#torchcell.datamodels.interned_constant.constant_id">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">constant_id</span><span class="p">(</span><span class="n">payload</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The node id of an interned constant: sha256 of its exact JSON payload."""</span>
-    <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">payload</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span></div>
+<span class="k">def</span><span class="w"> </span><span class="nf">constant_id</span><span class="p">(</span><span class="n">kind</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">payload</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The node id of an interned constant: sha256 over label, kind and exact payload.</span>
+
+<span class="sd">    The preimage is the label, a NUL byte, the kind, a NUL byte and the payload (UTF-8).</span>
+<span class="sd">    It starts with the label, so it is never the preimage of a sub-object's own node id</span>
+<span class="sd">    (the bare ``json.dumps`` of its dump), and it carries the kind, so the same bytes</span>
+<span class="sd">    interned under two kinds are two nodes, each with a true ``kind`` property.</span>
+<span class="sd">    """</span>
+    <span class="n">digest</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">()</span>
+    <span class="n">digest</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">INTERNED_CONSTANT_LABEL</span><span class="si">}</span><span class="se">\x00</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="se">\x00</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+    <span class="n">digest</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">payload</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">digest</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span></div>
 
 
 
@@ -207,8 +233,8 @@
         <span class="n">payload</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">value</span><span class="p">[</span><span class="n">sub</span><span class="p">])</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">min_bytes</span><span class="p">:</span>
             <span class="k">continue</span>
-        <span class="n">ref</span> <span class="o">=</span> <span class="n">constant_id</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
         <span class="n">kind</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">sub</span><span class="si">}</span><span class="s2">"</span>
+        <span class="n">ref</span> <span class="o">=</span> <span class="n">constant_id</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
         <span class="n">constants</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">ref</span><span class="p">,</span> <span class="n">kind</span><span class="p">,</span> <span class="n">payload</span><span class="p">))</span>
         <span class="n">out</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">value</span><span class="p">,</span> <span class="n">sub</span><span class="p">:</span> <span class="p">{</span><span class="n">POINTER_KEY</span><span class="p">:</span> <span class="n">ref</span><span class="p">,</span> <span class="s2">"kind"</span><span class="p">:</span> <span class="n">kind</span><span class="p">}}</span>
         <span class="n">nested</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
@@ -218,7 +244,7 @@
         <span class="n">payload</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">dump</span><span class="p">[</span><span class="n">field</span><span class="p">])</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">min_bytes</span><span class="p">:</span>
             <span class="k">continue</span>
-        <span class="n">ref</span> <span class="o">=</span> <span class="n">constant_id</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+        <span class="n">ref</span> <span class="o">=</span> <span class="n">constant_id</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
         <span class="n">constants</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">ref</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">payload</span><span class="p">))</span>
         <span class="n">out</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">POINTER_KEY</span><span class="p">:</span> <span class="n">ref</span><span class="p">,</span> <span class="s2">"kind"</span><span class="p">:</span> <span class="n">field</span><span class="p">}</span>
     <span class="k">return</span> <span class="n">out</span><span class="p">,</span> <span class="n">constants</span></div>
@@ -263,13 +289,18 @@
 
 <div class="viewcode-block" id="verified_constant">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.interned_constant.verified_constant.html#torchcell.datamodels.interned_constant.verified_constant">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">verified_constant</span><span class="p">(</span><span class="n">ref</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">payload</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Parse a fetched payload after checking it hashes to the id it was fetched by."""</span>
-    <span class="n">actual</span> <span class="o">=</span> <span class="n">constant_id</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">verified_constant</span><span class="p">(</span><span class="n">ref</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">payload</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Parse a fetched payload after checking that (kind, payload) hashes to its id.</span>
+
+<span class="sd">    ``kind`` is the node's own ``kind`` property: a node whose id is not the hash of</span>
+<span class="sd">    its own kind and payload is corrupt, and a pointer's id was computed from the kind</span>
+<span class="sd">    it sits under, so a matching id also proves the node's kind is the pointer's.</span>
+<span class="sd">    """</span>
+    <span class="n">actual</span> <span class="o">=</span> <span class="n">constant_id</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">actual</span> <span class="o">!=</span> <span class="n">ref</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"interned constant </span><span class="si">{</span><span class="n">ref</span><span class="si">}</span><span class="s2"> holds a payload hashing to </span><span class="si">{</span><span class="n">actual</span><span class="si">}</span><span class="s2">; the store "</span>
-            <span class="s2">"is corrupt or was written by a different serializer"</span>
+            <span class="sa">f</span><span class="s2">"interned constant </span><span class="si">{</span><span class="n">ref</span><span class="si">}</span><span class="s2"> of kind </span><span class="si">{</span><span class="n">kind</span><span class="si">!r}</span><span class="s2"> holds a payload hashing to "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">actual</span><span class="si">}</span><span class="s2">; the store is corrupt or was written by a different serializer"</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span></div>
 

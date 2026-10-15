@@ -409,7 +409,7 @@
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.interned_constant.constant_id.html#torchcell.datamodels.interned_constant.constant_id" title="torchcell.datamodels.interned_constant.constant_id"><code class="xref py py-obj docutils literal notranslate"><span class="pre">interned_constant.constant_id</span></code></a></p></td>
-<td><p>The node id of an interned constant: sha256 of its exact JSON payload.</p></td>
+<td><p>The node id of an interned constant: sha256 over label, kind and exact payload.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.interned_constant.split_experiment_dump.html#torchcell.datamodels.interned_constant.split_experiment_dump" title="torchcell.datamodels.interned_constant.split_experiment_dump"><code class="xref py py-obj docutils literal notranslate"><span class="pre">interned_constant.split_experiment_dump</span></code></a></p></td>
 <td><p>Return <code class="docutils literal notranslate"><span class="pre">(pointered</span> <span class="pre">dump,</span> <span class="pre">constants)</span></code> for one <code class="docutils literal notranslate"><span class="pre">experiment.model_dump()</span></code>.</p></td>
@@ -421,7 +421,7 @@
 <td><p>Splice constants back: a dict carrying <code class="docutils literal notranslate"><span class="pre">$ref</span></code> becomes <code class="docutils literal notranslate"><span class="pre">constants[ref]</span></code>.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.interned_constant.verified_constant.html#torchcell.datamodels.interned_constant.verified_constant" title="torchcell.datamodels.interned_constant.verified_constant"><code class="xref py py-obj docutils literal notranslate"><span class="pre">interned_constant.verified_constant</span></code></a></p></td>
-<td><p>Parse a fetched payload after checking it hashes to the id it was fetched by.</p></td>
+<td><p>Parse a fetched payload after checking that (kind, payload) hashes to its id.</p></td>
 </tr>
 </tbody>
 </table>

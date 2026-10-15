@@ -9,7 +9,7 @@ citation key ``hawkinsMismatchCRISPRiRevealsCovarying2020``) titrated CRISPRi kn
 by putting single mismatches into the guide's base-pairing region, so one essential gene
 is targeted by a graded series of guides rather than by one switch.
 :class:`MismatchCrispriFitnessHawkins2020Dataset` serves the E. coli arm of Table S3 as
-one ``BacterialEnvironmentResponseExperiment`` per released sgRNA that carries a measured
+one ``EnvironmentResponseExperiment`` per released sgRNA that carries a measured
 relative fitness.
 
 WHAT IS MEASURED AND WHAT IS PREDICTED, WHICH IS THE WHOLE POINT OF THIS ROW. Table S3's
@@ -60,7 +60,7 @@ erase exactly the strong-knockdown end of the dose axis this paper exists to mea
 
 THE HOST IS BW25113 AND THE RELEASE NAMES MG1655 b-NUMBERS, AND THE RECORD SAYS BOTH.
 Every library strain was built in wild-type BW25113 (``HOST_STRAIN``), which is the
-reference's ``AssemblyReferenceGenome`` (GCA_000750555.1) and strain background, while
+reference's ``ReferenceGenome`` (GCA_000750555.1) and strain background, while
 Table S3's ``locus_tag`` column is an MG1655 b-number. The record stores the b-number as
 released, ``gene_namespace="ecoli_k12_mg1655_bnumber"`` (the namespace the identifier is
 written in), and the released ``gene`` symbol as ``perturbed_gene_name``; it carries no
@@ -176,9 +176,6 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     AssayType,
-    AssemblyReferenceGenome,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     BacterialStrainBackground,
     ComponentDefinition,
     Concentration,
@@ -186,6 +183,8 @@ from torchcell.datamodels.schema import (
     CrisprConstruct,
     CrisprInterferencePerturbation,
     Environment,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
@@ -196,6 +195,7 @@ from torchcell.datamodels.schema import (
     MediaComponent,
     MediaComponentRole,
     Publication,
+    ReferenceGenome,
     SampleUnit,
     SmallMoleculePerturbation,
     Temperature,
@@ -707,7 +707,7 @@ def host_background() -> BacterialStrainBackground:
     )
 
 
-def host_reference(data_root: str | None = None) -> AssemblyReferenceGenome:
+def host_reference(data_root: str | None = None) -> ReferenceGenome:
     """BW25113 pinned to its GenBank assembly, carrying the dcas9-cassette background."""
     return assembly_reference(
         REFERENCE_STRAIN_NAME, background=host_background(), data_root=data_root
@@ -1269,12 +1269,12 @@ class MismatchCrispriFitnessHawkins2020Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperiment
+        return EnvironmentResponseExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperimentReference
+        return EnvironmentResponseExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -1308,7 +1308,7 @@ class MismatchCrispriFitnessHawkins2020Dataset(ExperimentDataset):
         }
 
         environment = screen_environment()
-        reference = BacterialEnvironmentResponseExperimentReference(
+        reference = EnvironmentResponseExperimentReference(
             dataset_name=self.name,
             genome_reference=host_reference(),
             environment_reference=environment,
@@ -1322,7 +1322,7 @@ class MismatchCrispriFitnessHawkins2020Dataset(ExperimentDataset):
         idx = 0
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for verdict in tqdm(kept, desc="hawkins2020"):
-                experiment = BacterialEnvironmentResponseExperiment(
+                experiment = EnvironmentResponseExperiment(
                     dataset_name=self.name,
                     genotype=build_genotype(
                         designs[verdict.spacer],
@@ -1673,7 +1673,7 @@ def verify_build(
             sha256=TABLE_S3_SHA256,
             method=(
                 "Table S3 (publisher mmc4.xlsx), sheet 'relative fitness (eco data)': "
-                "one BacterialEnvironmentResponseExperiment per released sgRNA that "
+                "one EnvironmentResponseExperiment per released sgRNA that "
                 "carries a measured fitness. Label = the released 'relative fitness "
                 "(mean)', the strain's doublings divided by the wild type's over about "
                 "10 doublings of pooled competition, normalized to the median of 1,000 "

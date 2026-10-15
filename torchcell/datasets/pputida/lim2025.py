@@ -11,11 +11,11 @@ strains from the convergent targets, and profiled the parent and two evolved iso
 shotgun proteomics. Two dataset classes serve what is BOTH released as a number AND keyed
 to a strain this schema can write:
 
-- :class:`IsoprenolToleranceLim2025Dataset` -- ``BacterialEnvironmentResponseExperiment``,
+- :class:`IsoprenolToleranceLim2025Dataset` -- ``EnvironmentResponseExperiment``,
   three records: IPL300 and IPL400 at the TALE starting dose of 4 g/L isoprenol
   (Supplementary Table 3's initial growth rates), and KT2440 ``dPP_3024`` at 6 g/L
   isoprenol (the one per-strain fold the Fig. 3A text states).
-- :class:`ProteomeLim2025Dataset` -- ``BacterialProteinAbundanceExperiment``, three
+- :class:`ProteomeLim2025Dataset` -- ``ProteinAbundanceExperiment``, three
   records: the parent IPL400 and the two evolved isolates the release quantifies
   (A10_F63_I1, A12_F53_I1) under 4 g/L isoprenol, each strain's Top3 log2 protein
   abundances referenced to its OWN unstressed proteome (2,361 / 2,361 / 2,332 keys).
@@ -262,13 +262,7 @@ from torchcell.datamodels.schema import (
     AssayType,
     BacterialAssemblySet,
     BacterialBackgroundAllele,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     BacterialGeneNamespace,
-    BacterialProteinAbundanceExperiment,
-    BacterialProteinAbundanceExperimentReference,
-    BacterialProteinFoldChangeExperiment,
-    BacterialProteinFoldChangeExperimentReference,
     BacterialStrainBackground,
     BacterialVariantCall,
     BacterialVariantType,
@@ -278,6 +272,8 @@ from torchcell.datamodels.schema import (
     DeletionStrainPerturbation,
     DerivedIdentifierMapping,
     Environment,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
@@ -286,7 +282,11 @@ from torchcell.datamodels.schema import (
     Genotype,
     LocusVariantCallPerturbation,
     MeasurementType,
+    ProteinAbundanceExperiment,
+    ProteinAbundanceExperimentReference,
     ProteinAbundancePhenotype,
+    ProteinFoldChangeExperiment,
+    ProteinFoldChangeExperimentReference,
     ProteinFoldChangePhenotype,
     Publication,
     SampleUnit,
@@ -2807,12 +2807,12 @@ class IsoprenolToleranceLim2025Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperiment
+        return EnvironmentResponseExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperimentReference
+        return EnvironmentResponseExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -3091,13 +3091,13 @@ class IsoprenolToleranceLim2025Dataset(ExperimentDataset):
             for index, (genotype, environment, phenotype, row) in enumerate(
                 tqdm(records, desc="lim2025-tolerance")
             ):
-                experiment = BacterialEnvironmentResponseExperiment(
+                experiment = EnvironmentResponseExperiment(
                     dataset_name=self.name,
                     genotype=genotype,
                     environment=environment,
                     phenotype=phenotype,
                 )
-                reference = BacterialEnvironmentResponseExperimentReference(
+                reference = EnvironmentResponseExperimentReference(
                     dataset_name=self.name,
                     genome_reference=genome_reference,
                     environment_reference=environment.model_copy(),
@@ -3228,12 +3228,12 @@ class ProteomeLim2025Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialProteinAbundanceExperiment
+        return ProteinAbundanceExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialProteinAbundanceExperimentReference
+        return ProteinAbundanceExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -3542,7 +3542,7 @@ class ProteomeLim2025Dataset(ExperimentDataset):
                 tqdm(list(PROTEOME_RECORD_SHEETS), desc="lim2025-proteome")
             ):
                 baseline, stressed = arms[strain]
-                experiment = BacterialProteinAbundanceExperiment(
+                experiment = ProteinAbundanceExperiment(
                     dataset_name=self.name,
                     genotype=strain_genotype(
                         self.PARENT_STRAIN if strain == self.PARENT_STRAIN else strain,
@@ -3554,7 +3554,7 @@ class ProteomeLim2025Dataset(ExperimentDataset):
                     ),
                     phenotype=abundance_phenotype(stressed),
                 )
-                reference = BacterialProteinAbundanceExperimentReference(
+                reference = ProteinAbundanceExperimentReference(
                     dataset_name=self.name,
                     genome_reference=genome_reference,
                     environment_reference=unstressed_environment(),
@@ -3739,12 +3739,12 @@ class ProteomeFoldChangeLim2025Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialProteinFoldChangeExperiment
+        return ProteinFoldChangeExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialProteinFoldChangeExperimentReference
+        return ProteinFoldChangeExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -3957,7 +3957,7 @@ class ProteomeFoldChangeLim2025Dataset(ExperimentDataset):
                         contrast.isoprenol_g_per_l, PROTEOME_DURATION_GAP
                     )
                 )
-                experiment = BacterialProteinFoldChangeExperiment(
+                experiment = ProteinFoldChangeExperiment(
                     dataset_name=self.name,
                     genotype=strain_genotype(
                         contrast.numerator_strain,
@@ -3967,7 +3967,7 @@ class ProteomeFoldChangeLim2025Dataset(ExperimentDataset):
                     environment=environment,
                     phenotype=phenotype,
                 )
-                reference = BacterialProteinFoldChangeExperimentReference(
+                reference = ProteinFoldChangeExperimentReference(
                     dataset_name=self.name,
                     genome_reference=genome_reference,
                     environment_reference=environment.model_copy(),

@@ -93,6 +93,10 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -358,7 +362,10 @@ class ScmdOhnuki2022Dataset(ExperimentDataset):
         reference = CalMorphExperimentReference(
             dataset_name=dataset_name,
             genome_reference=ReferenceGenome(
-                species="Saccharomyces cerevisiae", strain="BY4741"
+                species="Saccharomyces cerevisiae",
+                strain="BY4741",
+                assembly_set=SGD_S288C_R64,
+                assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
             ),
             environment_reference=environment.model_copy(),
             phenotype_reference=wt_reference,

@@ -22,6 +22,7 @@ from __future__ import annotations
 import os
 import os.path as osp
 from pathlib import Path
+from typing import Final
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -32,24 +33,34 @@ MANIFEST_FILENAME = "manifest.json"
 GENOME_MANIFEST_VERSION = 1
 
 #: The SGD R64-4-1 (2023-08-30) S288C reference release, as fetched from the SGD archive.
-SGD_S288C_R64 = "sgd_S288C_R64-4-1_20230830"
+SGD_S288C_R64: Final = "sgd_S288C_R64-4-1_20230830"
+#: The NCBI accession of the sequence that release is on: GenBank assembly "R64"
+#: (GCA_000146045.2, submitted by SGD, released 2011-04-18; its RefSeq pair is
+#: GCF_000146045.2). MEASURED on 2026-10-15, not assumed: all 16 nuclear chromosomes of
+#: ``S288C_reference_sequence_R64-4-1_20230830.fsa`` (the deposited set) are byte-identical
+#: to the 16 sequences of ``GCA_000146045.2_R64_genomic.fna.gz`` (sha256
+#: b764924296b034817bbde44a87b36611c0918e7d00c650be4497118e70c3c43c); only the
+#: mitochondrion (NC_001224, 85,779 bp) is outside the NCBI set. R64-2-1 through R64-4-1
+#: revised the annotation and not the sequence, so a coordinate read on any R64 release
+#: is a coordinate on this accession.
+SGD_S288C_R64_GENBANK_ACCESSION: Final = "GCA_000146045.2"
 #: Peter et al. 2018: the 1,011 isolate assemblies and the pangenome matrices.
-PETER2018_1011 = "peter2018_1011_assemblies"
+PETER2018_1011: Final = "peter2018_1011_assemblies"
 #: E. coli K-12 MG1655, NCBI assembly ASM584v2 (GCA_000005845.2 with its RefSeq
 #: annotation GCF_000005845.2): b-number locus tags, plus the GO Consortium
 #: ``ECOLI-uniprot.gaf.gz`` keyed to b-numbers.
-ECOLI_K12_MG1655 = "ecoli_K12_MG1655_ASM584v2"
+ECOLI_K12_MG1655: Final = "ecoli_K12_MG1655_ASM584v2"
 #: E. coli K-12 BW25113 (the Keio background), NCBI assembly ASM75055v1
 #: (GCA_000750555.1 / GCF_000750555.1). One set per strain, never one per host: a
 #: ``BW25113_`` number is not an MG1655 b-number. Its own GO is the RefSeq GFF's
 #: inline terms and NCBI's GAF; MG1655's GAF is referenced by the ``ECOLI_K12_MG1655``
 #: id, never copied, and which source a loader reads is still open.
-ECOLI_K12_BW25113 = "ecoli_K12_BW25113_ASM75055v1"
+ECOLI_K12_BW25113: Final = "ecoli_K12_BW25113_ASM75055v1"
 #: E. coli B REL606 (the Lenski long-term evolution ancestor), NCBI assembly ASM1798v1
 #: (GCA_000017985.1 / GCF_000017985.1, replicon CP000819.1 / NC_012967.1): ``ECB_``
 #: locus tags. A B strain, not K-12, so neither K-12 set stands in for it. No GO
 #: Consortium or EBI GOA file covers it; its GO is the RefSeq GFF's inline terms.
-ECOLI_B_REL606 = "ecoli_B_REL606_ASM1798v1"
+ECOLI_B_REL606: Final = "ecoli_B_REL606_ASM1798v1"
 #: E. coli K-12 W3110, NCBI assembly ASM1024v1 (GCA_000010245.1 / GCF_000010245.2,
 #: replicon AP009048.1 / NC_007779.1): a third K-12 strain, so neither MG1655's
 #: b-numbers nor BW25113's ``BW25113_`` numbers are its locus tags. Deposited for the
@@ -58,25 +69,28 @@ ECOLI_B_REL606 = "ecoli_B_REL606_ASM1798v1"
 #: ``ECK:JW:b`` crosswalk notes on the CDS), so the set is read RefSeq first (owner route,
 #: #910, 2026-10-12): ``Y75_RS`` locus tags, ``EcoliK12W3110Genome`` in
 #: ``torchcell/sequence/genome/ecoli/w3110.py``.
-ECOLI_K12_W3110 = "ecoli_K12_W3110_ASM1024v1"
+ECOLI_K12_W3110: Final = "ecoli_K12_W3110_ASM1024v1"
 #: P. putida KT2440, NCBI assembly ASM756v2 (GCA_000007565.2 / GCF_000007565.2):
 #: ``PP_`` locus tags, plus the EBI GOA proteome file keyed to them.
-PPUTIDA_KT2440 = "pputida_KT2440_ASM756v2"
+PPUTIDA_KT2440: Final = "pputida_KT2440_ASM756v2"
 #: The GO Consortium release of 2026-08-05: ``go-basic.obo``, one copy that every
 #: bacterial set pins by this id instead of carrying its own.
-GO_RELEASE_20260805 = "go_release_2026-08-05"
+GO_RELEASE_20260805: Final = "go_release_2026-08-05"
 #: Hale et al. 2024 Supplemental Data 13: the 3S (322134S) parent's variants against
 #: S288C (SNVs and single-base indels). A VARIANT TABLE, not an assembly: no public 3S
 #: assembly exists, so this is the sequence reference the BYx3S segregant mosaics pin
 #: their second parent to (``torchcell/datasets/scerevisiae/hale2024.py``).
-HALE2024_3S_VARIANTS = "hale2024_322134S_variants"
+HALE2024_3S_VARIANTS: Final = "hale2024_322134S_variants"
 
 #: CEN.PK113-7D, NCBI GenBank assembly ASM257140v2 (GCA_002571405.2): the reference the
 #: CEN.PK-derived engineering strains are written against (#990, Zhang 2020). Its locus
 #: tags are the ``SCEN_*`` namespace, which is a different identifier space from S288C's
 #: systematic names, and no GO release is keyed to it, so the set carries no GO file.
 #: Deposited by ``scripts/provision_yeast_genomes.py``.
-SCEREVISIAE_CENPK113_7D = "scerevisiae_CENPK113-7D_ASM257140v2"
+SCEREVISIAE_CENPK113_7D: Final = "scerevisiae_CENPK113-7D_ASM257140v2"
+#: Its one accession: the set's deposited assembly report names a GenBank accession and
+#: no RefSeq one, and NCBI (dataset report, 2026-10-15) lists no paired RefSeq assembly.
+SCEREVISIAE_CENPK113_7D_GENBANK_ACCESSION: Final = "GCA_002571405.2"
 
 #: Roles a file in an assembly set can play (explicit per file; never inferred).
 ROLE_CONTAINER = "container"  # the archive the release was fetched as

@@ -1032,9 +1032,9 @@ BW25113_PIN_ACCESSION = "GCA_000750555.1"
 
 def _pin_assembly(monkeypatch: pytest.MonkeyPatch) -> None:
     """Pin ``assembly_reference`` so no assembly report has to be served."""
-    from torchcell.datamodels.schema import AssemblyReferenceGenome
+    from torchcell.datamodels.schema import ReferenceGenome
 
-    reference = AssemblyReferenceGenome(
+    reference = ReferenceGenome(
         species="Escherichia coli",
         strain="BW25113",
         assembly_set="ecoli_K12_BW25113_ASM75055v1",
@@ -1116,7 +1116,7 @@ def test_every_built_record_is_a_fitness_experiment_with_its_screen_label(
     screens = set()
     for index in range(len(built)):
         record = built[index]
-        assert record["experiment"]["experiment_type"] == "bacterial_fitness"
+        assert record["experiment"]["experiment_type"] == "fitness"
         assert record["reference"]["phenotype_reference"]["fitness"] == 1.0
         screens.add(record["experiment"]["phenotype"]["screen_id"])
     assert screens == {r.SCREEN_S2A, r.SCREEN_S3, r.SCREEN_S4A}

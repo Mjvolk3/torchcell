@@ -4,7 +4,7 @@
 """Settle whether Caglar 2017's Table S5 doubling times are loadable, by measurement.
 
 Two of our own audit notes disagree. ``notes/plan.bacteria-si-phenotype-audit-pputida.md``
-calls the quantity loadable now as ``BacterialEnvironmentResponseExperiment`` /
+calls the quantity loadable now as ``EnvironmentResponseExperiment`` /
 ``EnvironmentResponsePhenotype`` with ``measurement_type = growth_rate``,
 ``assay_type = liquid_od_growth`` and ``environment_response_uncertainty_type = ci95``,
 counting 55 records. ``notes/plan.bacteria-si-phenotype-audit-ecoli.md`` rank 15 calls the
@@ -56,10 +56,10 @@ from pydantic import BaseModel, ConfigDict
 from torchcell.datamodels.media import DAVIS_MINIMAL, DM500
 from torchcell.datamodels.schema import (
     AssayType,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     Environment,
     EnvironmentPerturbationType,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
     Genotype,
     MeasurementType,
@@ -456,13 +456,13 @@ def record(
     reference_phenotype: EnvironmentResponsePhenotype,
 ) -> dict[str, Any]:
     """One verifier-shaped record dict around a real pydantic experiment + reference."""
-    experiment = BacterialEnvironmentResponseExperiment(
+    experiment = EnvironmentResponseExperiment(
         dataset_name="caglar2017_doubling_time_probe",
         genotype=Genotype(perturbations=[]),
         environment=environment_of(condition),
         phenotype=phenotype,
     )
-    reference = BacterialEnvironmentResponseExperimentReference(
+    reference = EnvironmentResponseExperimentReference(
         dataset_name="caglar2017_doubling_time_probe",
         genome_reference=assembly_reference("REL606"),
         environment_reference=environment_of(reference_condition),

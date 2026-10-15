@@ -15,7 +15,7 @@ each, was compared gene by gene with the TRANSIT ``Resampling`` method. Table S2
 releases the WHOLE comparison, not the hits: six sheets, one per (dose, time), each
 carrying all 4,419 genes.
 
-RECORD = one (gene x condition) ``BacterialEnvironmentResponseExperiment``.
+RECORD = one (gene x condition) ``EnvironmentResponseExperiment``.
 4,419 genes x 6 conditions = 26,514 released cells, and 26,514 stored records: every
 cell is stored under the b-number and gene name the sheet releases (RETENTION below).
 
@@ -157,20 +157,20 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import LB
 from torchcell.datamodels.schema import (
     AssayType,
-    AssemblyReferenceGenome,
     BacterialAssemblySet,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     Concentration,
     ConcentrationUnit,
     DoseBasis,
     Environment,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
     Genotype,
     MeasurementType,
     Publication,
+    ReferenceGenome,
     SampleUnit,
     SmallMoleculePerturbation,
     Temperature,
@@ -1225,16 +1225,16 @@ def reference_phenotype(spec: ConditionSpec) -> EnvironmentResponsePhenotype:
     )
 
 
-def reference_genome(data_root: str | None = None) -> AssemblyReferenceGenome:
+def reference_genome(data_root: str | None = None) -> ReferenceGenome:
     """MG1655 pinned to its GenBank assembly; the library was built in MG1655 itself."""
     return assembly_reference(REFERENCE_STRAIN_NAME, data_root=data_root)
 
 
 def build_experiment(
     dataset_name: str, cell: StoredCell, env: Environment
-) -> BacterialEnvironmentResponseExperiment:
+) -> EnvironmentResponseExperiment:
     """The record of one (gene, condition) cell of Table S2."""
-    return BacterialEnvironmentResponseExperiment(
+    return EnvironmentResponseExperiment(
         dataset_name=dataset_name,
         genotype=insertion_genotype(cell.locus_tag, cell.symbol),
         environment=env,
@@ -1243,13 +1243,10 @@ def build_experiment(
 
 
 def build_reference(
-    dataset_name: str,
-    genome: AssemblyReferenceGenome,
-    spec: ConditionSpec,
-    env: Environment,
-) -> BacterialEnvironmentResponseExperimentReference:
+    dataset_name: str, genome: ReferenceGenome, spec: ConditionSpec, env: Environment
+) -> EnvironmentResponseExperimentReference:
     """The unperturbed parent of one condition, scoring 0."""
-    return BacterialEnvironmentResponseExperimentReference(
+    return EnvironmentResponseExperimentReference(
         dataset_name=dataset_name,
         genome_reference=genome,
         environment_reference=env.model_copy(),
@@ -1282,12 +1279,12 @@ class EnvChemgenWang2024Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperiment
+        return EnvironmentResponseExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperimentReference
+        return EnvironmentResponseExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -1498,7 +1495,7 @@ def verify_build(
             sha256=DATA_SHA256[DATA_FILE],
             method="Table S2, TRANSIT resampling of every MG1655 gene in six "
             "rifampicin conditions (2, 32, 160 mg/L = 0.25x, 4x, 20x MIC, at 1 and "
-            "3 h); one BacterialEnvironmentResponseExperiment per (gene, condition), "
+            "3 h); one EnvironmentResponseExperiment per (gene, condition), "
             "gene-level Tn5 TransposonInsertionPerturbation against MG1655, reference "
             "= the unperturbed parent at log2FC 0; every released cell stored, the "
             "no-read cells included",

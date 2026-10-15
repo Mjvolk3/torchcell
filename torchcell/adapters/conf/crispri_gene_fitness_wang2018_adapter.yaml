@@ -3,7 +3,7 @@
 # Test file: tests/torchcell/adapters/test_wang2018_gene_adapter.py
 #
 # Wang 2018 pooled CRISPRi gene-level calls (#879): 20,158 records,
-# BacterialEnvironmentResponseExperiment, one per Supplementary Data 5 (gene, screen)
+# EnvironmentResponseExperiment, one per Supplementary Data 5 (gene, screen)
 # row. Every cluster member is a BacterialCrisprInterferencePerturbation served as
 # `bacterial perturbation`, each with a CrisprConstruct (dCas9, the released subset
 # size, no spacer), so the crispr-construct pair is enabled. The environments are the

@@ -11,10 +11,10 @@ source, and scanned each plate every 20 min for 24 h at 37 C. Table S1A ("Endpoi
 Biomass") releases the normalized 24 h end-point growth of 3,796 strains on 30 carbon
 sources, 113,880 cells, one value per (strain, carbon source).
 
-RECORD = one (deletion strain x carbon source) ``BacterialFitnessExperiment``:
+RECORD = one (deletion strain x carbon source) ``FitnessExperiment``:
 
 - GENOTYPE: one ``DeletionStrainPerturbation``. Two collections, two backgrounds, so
-  two ``AssemblyReferenceGenome`` pins. A Keio strain is written against BW25113
+  two ``ReferenceGenome`` pins. A Keio strain is written against BW25113
   (``ecoli_k12_bw25113_locus_tag``, collection "Keio collection", cassette "kanamycin
   cassette"); a strain of the sRNA and small protein library against MG1655
   (``ecoli_k12_mg1655_bnumber``).
@@ -160,9 +160,6 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import MOPS_MINIMAL
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
-    BacterialFitnessExperiment,
-    BacterialFitnessExperimentReference,
     BacterialGeneNamespace,
     Concentration,
     ConcentrationUnit,
@@ -171,6 +168,8 @@ from torchcell.datamodels.schema import (
     EnvironmentPhysicalPerturbation,
     Experiment,
     ExperimentReference,
+    FitnessExperiment,
+    FitnessExperimentReference,
     FitnessPhenotype,
     Genotype,
     Media,
@@ -178,6 +177,7 @@ from torchcell.datamodels.schema import (
     MediaComponentRole,
     PhysicalFactor,
     Publication,
+    ReferenceGenome,
     SampleUnit,
     Temperature,
 )
@@ -1520,12 +1520,12 @@ class CarbonSourceTong2020Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialFitnessExperiment
+        return FitnessExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialFitnessExperimentReference
+        return FitnessExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -1590,13 +1590,13 @@ class CarbonSourceTong2020Dataset(ExperimentDataset):
         strains = resolve_strains(
             table.endpoint, table.keio_ids, mg1655, bw25113, label=self.name
         )
-        references: dict[Collection, AssemblyReferenceGenome] = {
+        references: dict[Collection, ReferenceGenome] = {
             collection: assembly_reference(strain)
             for collection, strain in COLLECTION_STRAIN.items()
         }
         environments = {carbon: environment(carbon) for carbon in CARBON_SOURCE_COLUMNS}
         experiment_references = {
-            (collection, carbon): BacterialFitnessExperimentReference(
+            (collection, carbon): FitnessExperimentReference(
                 dataset_name=self.name,
                 genome_reference=references[collection],
                 environment_reference=environments[carbon],
@@ -1628,7 +1628,7 @@ class CarbonSourceTong2020Dataset(ExperimentDataset):
                     if pd.isna(value):
                         n_blank_cells += 1
                         continue
-                    experiment = BacterialFitnessExperiment(
+                    experiment = FitnessExperiment(
                         dataset_name=self.name,
                         genotype=strain_genotype,
                         environment=environments[carbon],

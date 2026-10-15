@@ -112,6 +112,10 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import SourcedValue
 
@@ -478,7 +482,10 @@ class NadalRibellesPerturbSeq2025Dataset(ExperimentDataset):
         return PseudobulkExpressionExperimentReference(
             dataset_name=self.name,
             genome_reference=ReferenceGenome(
-                species="Saccharomyces cerevisiae", strain="S288C"
+                species="Saccharomyces cerevisiae",
+                strain="S288C",
+                assembly_set=SGD_S288C_R64,
+                assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
             ),
             environment_reference=self._environment(cond),
             phenotype_reference=phenotype_reference,

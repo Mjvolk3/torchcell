@@ -47,18 +47,19 @@ from torchcell.datamodels.schema import (
     ASSEMBLY_SET_ACCESSIONS,
     BACTERIAL_ASSEMBLY_SETS,
     AssayType,
-    AssemblyReferenceGenome,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     BacterialReleasedCrisprPerturbation,
     ComponentDefinition,
     ConcentrationUnit,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
     MeasurementType,
     MediaComponentRole,
     PhagePerturbation,
+    ReferenceGenome,
     SampleUnit,
     SmallMoleculePerturbation,
+    StrainReferenceGenome,
 )
 from torchcell.datasets.bacteria_common import BacterialGenomeInjector
 from torchcell.datasets.dataset_registry import dataset_registry
@@ -675,8 +676,8 @@ def test_the_loader_is_registered_and_receives_the_mg1655_genome(
     dataset = r.CrispriScreenRousset2018Dataset.__new__(
         r.CrispriScreenRousset2018Dataset
     )
-    assert dataset.experiment_class is BacterialEnvironmentResponseExperiment
-    assert dataset.reference_class is (BacterialEnvironmentResponseExperimentReference)
+    assert dataset.experiment_class is EnvironmentResponseExperiment
+    assert dataset.reference_class is (EnvironmentResponseExperimentReference)
     assert dataset.raw_file_names == [
         r.GROWTH_TABLE,
         r.PHAGE_TABLE,
@@ -797,12 +798,19 @@ _SYNTHETIC_PHAGE_GENES = ("thrL", "thrW", "nope")
 
 def _pin(
     strain: str, *, background: Any = None, data_root: str | None = None
-) -> AssemblyReferenceGenome:
+) -> ReferenceGenome:
     """``assembly_reference`` without the deposited assembly report."""
     assembly_set = BACTERIAL_ASSEMBLY_SETS[strain]
-    return AssemblyReferenceGenome(
+    if background is None:
+        return ReferenceGenome(
+            species="Escherichia coli",
+            strain=strain,
+            assembly_set=cast(Any, assembly_set),
+            assembly_accession=ASSEMBLY_SET_ACCESSIONS[assembly_set][0],
+        )
+    return StrainReferenceGenome(
         species="Escherichia coli",
-        strain=strain if background is None else background.name,
+        strain=background.name,
         assembly_set=cast(Any, assembly_set),
         assembly_accession=ASSEMBLY_SET_ACCESSIONS[assembly_set][0],
         background=background,

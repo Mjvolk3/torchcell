@@ -24,6 +24,10 @@ from torchcell.datamodels.schema import (
     ReferenceGenome,
     Temperature,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.morphology import (
     perturbed_gene_set,
     verify_morphology_dataset,
@@ -78,7 +82,10 @@ def _record(
     reference = CalMorphExperimentReference(
         dataset_name="test",
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4741"
+            species="Saccharomyces cerevisiae",
+            strain="BY4741",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=environment.model_copy(),
         phenotype_reference=reference_phenotype,

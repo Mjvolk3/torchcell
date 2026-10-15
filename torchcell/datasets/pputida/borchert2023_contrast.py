@@ -12,7 +12,7 @@ then the ``t-statistic``, ``p-value``, ``q-value`` and ``adjusted_q-value`` of t
 two-sample t test between the arms. The sibling :mod:`borchert2023` (with the Borchert
 2024 compendium) stores the per-culture fitness; nothing stored the test until now.
 
-WHAT IS STORED. One ``BacterialFitnessContrastExperiment`` per released (gene, sheet)
+WHAT IS STORED. One ``FitnessContrastExperiment`` per released (gene, sheet)
 row, 64,853 in all: the genotype is the released ``old_locus_tag`` (and ``gene_name``,
 or the tag where the release gives no name) as a transposon insertion in
 ``Putida_ML5_JBEI``; the environment is the condition arm; the reference's environment
@@ -60,11 +60,11 @@ from torchcell.data import (
     verify_raw_files,
 )
 from torchcell.datamodels.schema import (
-    BacterialFitnessContrastExperiment,
-    BacterialFitnessContrastExperimentReference,
     Environment,
     Experiment,
     ExperimentReference,
+    FitnessContrastExperiment,
+    FitnessContrastExperimentReference,
     FitnessContrastPhenotype,
     Genotype,
     Publication,
@@ -288,12 +288,12 @@ class FitnessContrastBorchert2023Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialFitnessContrastExperiment
+        return FitnessContrastExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialFitnessContrastExperimentReference
+        return FitnessContrastExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -330,7 +330,7 @@ class FitnessContrastBorchert2023Dataset(ExperimentDataset):
             for plan in b23.COMPARISONS
         }
         references = {
-            sheet: BacterialFitnessContrastExperimentReference(
+            sheet: FitnessContrastExperimentReference(
                 dataset_name=self.name,
                 genome_reference=genome_reference,
                 environment_reference=reference_env,
@@ -342,7 +342,7 @@ class FitnessContrastBorchert2023Dataset(ExperimentDataset):
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for index, row in enumerate(tqdm(rows, desc=self.name)):
-                experiment = BacterialFitnessContrastExperiment(
+                experiment = FitnessContrastExperiment(
                     dataset_name=self.name,
                     genotype=genotype(row),
                     environment=environments[plans[row.sheet].sheet][0],
@@ -404,7 +404,7 @@ VERIFIER_PROVENANCE: Final = Provenance(
     source_uri=f"$DATA_ROOT/{b23.RAW_DIR_REL}/{b23.DATA_RELPATH}",
     citation_key=CITATION_KEY,
     sha256=b23.DATA_SHA256,
-    method="one BacterialFitnessContrastExperiment per released (gene, comparison) row "
+    method="one FitnessContrastExperiment per released (gene, comparison) row "
     "of the 13 comparison sheets: t, p, pFDR q and monotonicity-adjusted q verbatim",
     page="comparison sheets",
 )

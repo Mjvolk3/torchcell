@@ -1,4 +1,4 @@
-# Schmidt 2016 Table S24 growth rates: 6 records, BacterialFitnessExperiment. One
+# Schmidt 2016 Table S24 growth rates: 6 records, FitnessExperiment. One
 # BacterialDeletionPerturbation per record (the KEIO rimI, rimJ and rimL strains),
 # served as `bacterial perturbation`, so the perturbation pair is enabled. The two
 # media differ by their carbon source, which is an EnvironmentPhysicalPerturbation on

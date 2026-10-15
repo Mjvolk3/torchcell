@@ -1,5 +1,5 @@
 # Hawkins 2020 mismatch-CRISPRi in E. coli BW25113: 24,149
-# BacterialEnvironmentResponseExperiment records, one per released sgRNA that carries a
+# EnvironmentResponseExperiment records, one per released sgRNA that carries a
 # measured relative fitness. Each genotype carries exactly one
 # BacterialCrisprInterferencePerturbation, served as `bacterial perturbation` rather than
 # the yeast `perturbation` class, and that leaf carries the record's CrisprConstruct

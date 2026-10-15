@@ -72,9 +72,18 @@ from torchcell.datamodels.schema import (
     ReferenceGenome,
 )
 from torchcell.provenance.schema_deps import load_default_surface
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 ENVIRONMENT = Environment(media=Media(name="YPD", state="solid", is_synthetic=False))
-GENOME = ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
+GENOME = ReferenceGenome(
+    species="Saccharomyces cerevisiae",
+    strain="S288C",
+    assembly_set=SGD_S288C_R64,
+    assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
+)
 URI = "bolt://example.invalid:7687"
 QUERY = "MATCH (e:Experiment)<-[:ExperimentReferenceOf]-(ref) RETURN e, ref"
 
@@ -155,6 +164,8 @@ EXPECTED_RECORD_0 = {
                 {
                     "systematic_gene_name": "YAL001C",
                     "perturbed_gene_name": "YAL001C",
+                    "gene_namespace": "scerevisiae_s288c_sgd_systematic",
+                    "identifier_mapping": None,
                     "provenance": "engineered",
                     "state": "absent",
                     "mechanism_so_id": "SO:0000159",
@@ -173,9 +184,12 @@ EXPECTED_RECORD_0 = {
         "experiment_reference_type": "fitness",
         "dataset_name": "toy_a",
         "genome_reference": {
+            "provenance_gaps": [],
             "species": "Saccharomyces cerevisiae",
             "strain": "S288C",
             "ploidy": "haploid",
+            "assembly_set": "sgd_S288C_R64-4-1_20230830",
+            "assembly_accession": "GCA_000146045.2",
         },
         "environment_reference": _ENV_JSON,
         "phenotype_reference": _fitness_json(1.0),

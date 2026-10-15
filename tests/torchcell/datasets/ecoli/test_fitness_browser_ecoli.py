@@ -24,10 +24,10 @@ from tests.torchcell.datasets._fitness_browser_fixture import experiment_row, wr
 from torchcell.data import file_sha256
 from torchcell.datamodels.media import RCH2_DEFINED_NOCARBON_PRICE2018
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
     ConcentrationUnit,
     EnvironmentPhysicalPerturbation,
     PhysicalFactor,
+    ReferenceGenome,
     TransposonInsertionPerturbation,
 )
 from torchcell.datasets import fitness_browser as fb
@@ -192,8 +192,8 @@ def test_genotype_phenotype_and_reference() -> None:
     assert reference.phenotype_reference.environment_response == 0.0
 
 
-def _reference() -> AssemblyReferenceGenome:
-    return AssemblyReferenceGenome(
+def _reference() -> ReferenceGenome:
+    return ReferenceGenome(
         species="Escherichia coli",
         strain="BW25113",
         ploidy="haploid",

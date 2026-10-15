@@ -48,21 +48,21 @@ from torchcell.datamodels.schema import (
     ASSEMBLY_SET_ACCESSIONS,
     BACTERIAL_ASSEMBLY_SETS,
     AssayType,
-    AssemblyReferenceGenome,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     Concentration,
     ConcentrationUnit,
     DegronPerturbation,
     DeletionStrainPerturbation,
     DoseBasis,
     EnvironmentPhysicalPerturbation,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     FitnessPhenotype,
     MarkedAllelePerturbation,
     MeasurementType,
     MediaComponentRole,
     PhysicalExposurePerturbation,
     PhysicalFactor,
+    ReferenceGenome,
     SmallMoleculePerturbation,
 )
 from torchcell.datasets.bacteria_common import (
@@ -943,9 +943,9 @@ def test_the_loader_is_registered_and_receives_the_bw25113_genome(
 # thrA-SPA, hokC-kan, yaaP-DAS and yaaP-DAS+4), 57 conditions, one blank cell, so
 # 8 x 57 - 1 = 455 records and 8 x 57 = 456 dropped by the column rules.
 # --------------------------------------------------------------------------- #
-def _pin(strain: EcoliK12StrainName) -> AssemblyReferenceGenome:
+def _pin(strain: EcoliK12StrainName) -> ReferenceGenome:
     assembly_set = BACTERIAL_ASSEMBLY_SETS[strain]
-    return AssemblyReferenceGenome(
+    return ReferenceGenome(
         species="Escherichia coli",
         strain=strain,
         assembly_set=cast(Any, assembly_set),
@@ -1233,8 +1233,8 @@ def test_a_kept_tag_that_is_no_locus_of_the_assembly_stops_the_build(
 
 def test_the_loader_declares_the_bacterial_environment_response_classes() -> None:
     dataset = s.EnvChemgenShiver2016Dataset.__new__(s.EnvChemgenShiver2016Dataset)
-    assert dataset.experiment_class is BacterialEnvironmentResponseExperiment
-    assert dataset.reference_class is BacterialEnvironmentResponseExperimentReference
+    assert dataset.experiment_class is EnvironmentResponseExperiment
+    assert dataset.reference_class is EnvironmentResponseExperimentReference
     assert dataset.raw_file_names == [s.DATA_FILENAME]
     frame = object()
     assert dataset.preprocess_raw(frame) is frame

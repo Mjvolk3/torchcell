@@ -73,10 +73,19 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.graph.graph import GeneGraph, GeneMultiGraph
 from torchcell.sequence import GeneSet
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 GENES = GeneSet(["YAL001C", "YAL002W", "YAL003W", "YAL004W", "YAL005C"])
 ENVIRONMENT = Environment(media=Media(name="YPD", state="solid", is_synthetic=False))
-GENOME = ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
+GENOME = ReferenceGenome(
+    species="Saccharomyces cerevisiae",
+    strain="S288C",
+    assembly_set=SGD_S288C_R64,
+    assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
+)
 PHYS = ("gene", "physical_interaction", "gene")
 REG = ("gene", "regulatory_interaction", "gene")
 GPR = ("gene", "gpr", "reaction")
@@ -814,6 +823,7 @@ from torchcell.datamodels.schema import (
     Environment, FitnessExperiment, FitnessPhenotype, Genotype,
     KanMxDeletionPerturbation, Media,
 )
+from torchcell.sequence.genome.registry import SGD_S288C_R64, SGD_S288C_R64_GENBANK_ACCESSION
 env = Environment(media=Media(name="YPD", state="solid", is_synthetic=False))
 genes = ["YAL001C", "YAL004W"]
 exp = FitnessExperiment(

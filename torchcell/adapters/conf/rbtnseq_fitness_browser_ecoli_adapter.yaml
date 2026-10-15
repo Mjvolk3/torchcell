@@ -1,5 +1,5 @@
 # Fitness Browser E. coli BW25113 (Keio), the browser's own experiments keyed by
-# publication: BacterialEnvironmentResponseExperiment.
+# publication: EnvironmentResponseExperiment.
 # One TransposonInsertionPerturbation per record (`build_genotype`), served as `bacterial
 # perturbation`. Every stored sample carries its carbon source as an
 # EnvironmentPhysicalPerturbation (`build_environment`), so the environment-perturbation

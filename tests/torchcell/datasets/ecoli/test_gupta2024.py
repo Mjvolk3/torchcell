@@ -34,13 +34,14 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
     write_assembly,
 )
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
     BacterialStrainBackground,
     Censoring,
     DerivedIdentifierMapping,
     EnvironmentPhysicalPerturbation,
     ProteinTurnoverExperiment,
     ProteinTurnoverExperimentReference,
+    ReferenceGenome,
+    StrainReferenceGenome,
 )
 from torchcell.sequence.genome.ecoli.k12 import MG1655_ASSEMBLY, EcoliK12MG1655Genome
 
@@ -1264,11 +1265,18 @@ SYNTHETIC_INTERVALS[gp.CONDITIONS[0].key] = 1
 
 def _pin(
     strain: Any, *, background: BacterialStrainBackground | None = None, **_: Any
-) -> AssemblyReferenceGenome:
+) -> ReferenceGenome:
     """The assembly pin, without reading the genomes tier's assembly report."""
-    return AssemblyReferenceGenome(
+    if background is None:
+        return ReferenceGenome(
+            species="Escherichia coli",
+            strain=strain,
+            assembly_set=cast(Any, gp.MG1655_ASSEMBLY_SET),
+            assembly_accession="GCA_000005845.2",
+        )
+    return StrainReferenceGenome(
         species="Escherichia coli",
-        strain=strain if background is None else background.name,
+        strain=background.name,
         assembly_set=cast(Any, gp.MG1655_ASSEMBLY_SET),
         assembly_accession="GCA_000005845.2",
         background=background,

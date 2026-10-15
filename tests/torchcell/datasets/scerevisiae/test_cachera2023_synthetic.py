@@ -46,6 +46,10 @@ from torchcell.datamodels.schema import (
     ReferenceGenome,
 )
 from torchcell.datasets.scerevisiae import cachera2023 as m
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 _CSV_ROWS = [
     ["TFC3", "1.5", "0.3", "4"],
@@ -82,7 +86,10 @@ _ENVIRONMENT = Environment(
 _REFERENCE = MetaboliteExperimentReference(
     dataset_name="BetaxanthinCachera2023Dataset",
     genome_reference=ReferenceGenome(
-        species="Saccharomyces cerevisiae", strain="BY4741"
+        species="Saccharomyces cerevisiae",
+        strain="BY4741",
+        assembly_set=SGD_S288C_R64,
+        assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
     ),
     environment_reference=_ENVIRONMENT,
     phenotype_reference=MetabolitePhenotype(

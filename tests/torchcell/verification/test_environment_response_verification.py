@@ -40,6 +40,10 @@ from torchcell.datamodels.schema import (
     Temperature,
     UncertaintyType,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification import Provenance, ProvenanceGap, ProvenanceGapReason
 from torchcell.verification.environment_response import (
     _condition_signature,
@@ -117,7 +121,10 @@ def _record(
     ref = EnvironmentResponseExperimentReference(
         dataset_name="test",
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4741"
+            species="Saccharomyces cerevisiae",
+            strain="BY4741",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=env.model_copy(),
         phenotype_reference=_phenotype(0.0),
@@ -318,7 +325,11 @@ def _temp_gapped_record(gene: str, value: float) -> dict[str, Any]:
     ref = EnvironmentResponseExperimentReference(
         dataset_name="test",
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4743", ploidy="diploid"
+            species="Saccharomyces cerevisiae",
+            strain="BY4743",
+            ploidy="diploid",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=env.model_copy(),
         phenotype_reference=_phenotype(0.0),
@@ -520,7 +531,10 @@ def _uncertain_record(gene: str, uncertainty: float, n_samples: int) -> dict[str
     ref = EnvironmentResponseExperimentReference(
         dataset_name="test",
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4741"
+            species="Saccharomyces cerevisiae",
+            strain="BY4741",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=env.model_copy(),
         phenotype_reference=_phenotype(0.0),
@@ -578,7 +592,10 @@ def _categorical_record(
     ref = EnvironmentResponseExperimentReference(
         dataset_name="test",
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4741"
+            species="Saccharomyces cerevisiae",
+            strain="BY4741",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=env.model_copy(),
         phenotype_reference=phenotype(reference_category),

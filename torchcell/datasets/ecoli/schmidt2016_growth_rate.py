@@ -8,7 +8,7 @@ Schmidt et al. 2016 (Nat Biotechnol 34:104, doi:10.1038/nbt.3418) released one t
 gene-perturbation phenotype: Supplementary Table 24, "Growth rates determined for WT,
 ΔrimI, ΔrimJ and ΔrimL E. coli strains grown in glucose and acetate medium". This module
 serves it as :class:`GrowthRateSchmidt2016Dataset`, one
-``BacterialFitnessExperiment`` per (deletion strain, medium): **six records and two
+``FitnessExperiment`` per (deletion strain, medium): **six records and two
 references**, the wild-type row of each medium being that medium's reference.
 
 It is a SEPARATE MODULE from ``schmidt2016.py`` on purpose. ``build_manifest`` keys a
@@ -120,12 +120,12 @@ from torchcell.data import (
     verify_raw_files,
 )
 from torchcell.datamodels.schema import (
-    BacterialFitnessExperiment,
-    BacterialFitnessExperimentReference,
     BacterialReleasedStrainPerturbation,
     Environment,
     Experiment,
     ExperimentReference,
+    FitnessExperiment,
+    FitnessExperimentReference,
     FitnessPhenotype,
     Genotype,
     ReleasedStrainKind,
@@ -693,12 +693,12 @@ class GrowthRateSchmidt2016Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialFitnessExperiment
+        return FitnessExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialFitnessExperimentReference
+        return FitnessExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -746,7 +746,7 @@ class GrowthRateSchmidt2016Dataset(ExperimentDataset):
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for block in tqdm(blocks, desc="schmidt2016 growth rate"):
                 environment = environments[block.medium]
-                reference = BacterialFitnessExperimentReference(
+                reference = FitnessExperimentReference(
                     dataset_name=self.name,
                     genome_reference=reference_genome,
                     environment_reference=environment,
@@ -754,7 +754,7 @@ class GrowthRateSchmidt2016Dataset(ExperimentDataset):
                 )
                 for strain in block.deletions:
                     phenotype = fitness_phenotype(strain, block.wild_type)
-                    experiment = BacterialFitnessExperiment(
+                    experiment = FitnessExperiment(
                         dataset_name=self.name,
                         genotype=build_genotype(strain),
                         environment=environment,
@@ -908,7 +908,7 @@ def verify_build(
             sha256=sm.SI2_SHA256,
             method=(
                 "Table S24 'Growth rate (h-1)' replicate columns: one "
-                "BacterialFitnessExperiment per (KEIO deletion strain, medium), "
+                "FitnessExperiment per (KEIO deletion strain, medium), "
                 "fitness = mean(strain replicates) / mean(WT replicates) of the SAME "
                 "medium, fitness_se = the delta-method SE of that ratio"
             ),

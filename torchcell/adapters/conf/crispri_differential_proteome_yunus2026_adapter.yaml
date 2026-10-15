@@ -1,5 +1,5 @@
 # Yunus 2026 PP_4188 differential proteome: 1 IY1452 strain,
-# BacterialProteinFoldChangeExperiment over 305 released protein keys. One
+# ProteinFoldChangeExperiment over 305 released protein keys. One
 # BacterialCrisprInterferencePerturbation, served as `bacterial perturbation`, carrying
 # a CrisprConstruct, so the crispr-construct pair is enabled. The environment carries
 # EnvironmentPhysicalPerturbation and SmallMoleculePerturbation edits, so the

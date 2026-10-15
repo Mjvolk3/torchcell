@@ -88,6 +88,10 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.scerevisiae import ohya2005 as m
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -140,7 +144,10 @@ _WT_PHENOTYPE = CalMorphPhenotype(
 _REFERENCE = CalMorphExperimentReference(
     dataset_name="ScmdOhya2005Dataset",
     genome_reference=ReferenceGenome(
-        species="Saccharomyces cerevisiae", strain="BY4741"
+        species="Saccharomyces cerevisiae",
+        strain="BY4741",
+        assembly_set=SGD_S288C_R64,
+        assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
     ),
     environment_reference=_ENVIRONMENT,
     phenotype_reference=_WT_PHENOTYPE,
@@ -422,7 +429,10 @@ def test_clean_matrix_logs_no_drop_and_shares_the_wt_mean_reference(
     reference = CalMorphExperimentReference(
         dataset_name="ScmdOhya2005Dataset",
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4741"
+            species="Saccharomyces cerevisiae",
+            strain="BY4741",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=_ENVIRONMENT,
         phenotype_reference=CalMorphPhenotype(

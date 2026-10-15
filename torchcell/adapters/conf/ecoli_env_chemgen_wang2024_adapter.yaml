@@ -1,5 +1,5 @@
 # Wang 2024 rifampicin dose-by-time Tn-seq: 24,763 (MG1655 gene x condition) records from
-# Table S2's TRANSIT resampling log2FC, BacterialEnvironmentResponseExperiment. One
+# Table S2's TRANSIT resampling log2FC, EnvironmentResponseExperiment. One
 # gene-level Tn5 TransposonInsertionPerturbation per record, served as `bacterial
 # perturbation`. Every record's environment carries exactly one SmallMoleculePerturbation,
 # rifampicin at its absolute dose (2, 32 or 160 ug/mL, DoseBasis.MIC, the MIC multiple in

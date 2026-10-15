@@ -53,6 +53,10 @@ from torchcell.datamodels.schema import (
     SmallMoleculePerturbation,
 )
 from torchcell.datasets.scerevisiae import messner2021 as m
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification import runners
 from torchcell.verification.report import (
     Level,
@@ -429,7 +433,10 @@ def test_store_holds_one_wild_type_record_per_kept_drug_run(
     assert exp.environment.temperature.value == 30.0
     assert exp.environment.media == m.SM_UNSTATED_MESSNER2021
     assert ref.genome_reference == ReferenceGenome(
-        species="Saccharomyces cerevisiae", strain="BY4741"
+        species="Saccharomyces cerevisiae",
+        strain="BY4741",
+        assembly_set=SGD_S288C_R64,
+        assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
     )
     vehicle = ref.environment_reference.perturbations[0]
     assert isinstance(vehicle, SmallMoleculePerturbation)

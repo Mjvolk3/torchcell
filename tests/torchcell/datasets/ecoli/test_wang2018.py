@@ -60,12 +60,12 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
 from torchcell.datamodels.media import LB, MOPS_CASAMINO_WANG2018, MOPS_MINIMAL
 from torchcell.datamodels.schema import (
     AssayType,
-    AssemblyReferenceGenome,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     ConcentrationUnit,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     MeasurementType,
     PhysicalFactor,
+    ReferenceGenome,
     SampleUnit,
 )
 from torchcell.datasets.bacteria_common import (
@@ -161,7 +161,7 @@ N_SYNTHETIC_RECORDS = SCREEN_A.kept_records + SCREEN_B.kept_records
 N_SYNTHETIC_PERTURBATIONS = 13
 N_SYNTHETIC_GENES = 6
 
-REFERENCE = AssemblyReferenceGenome(
+REFERENCE = ReferenceGenome(
     species="Escherichia coli",
     strain="MG1655",
     assembly_set="ecoli_K12_MG1655_ASM584v2",
@@ -714,8 +714,8 @@ def test_a_multi_member_cluster_becomes_one_perturbation_per_gene() -> None:
     ]
     assert [p.perturbed_gene_name for p in genotype.perturbations] == ["proB", "proC"]
     for perturbation in genotype.perturbations:
-        assert perturbation.gene_namespace == "ecoli_k12_mg1655_bnumber"  # type: ignore[union-attr]  # a bacterial leaf
-        assert perturbation.identifier_mapping is None  # type: ignore[union-attr]  # released as stored
+        assert perturbation.gene_namespace == "ecoli_k12_mg1655_bnumber"
+        assert perturbation.identifier_mapping is None
         assert perturbation.crispr is not None  # type: ignore[union-attr]  # a guide-directed leaf
         assert perturbation.crispr.effector == "dCas9"  # type: ignore[union-attr]  # checked above
         assert perturbation.crispr.guide_sequence == GUIDES["proBb0005_60"]  # type: ignore[union-attr]  # checked above
@@ -862,15 +862,13 @@ def test_the_build_validates_against_the_bacterial_experiment_classes(
 ) -> None:
     """Every stored record round-trips through the schema classes it declares."""
     record = _records(built)[0]
-    experiment = BacterialEnvironmentResponseExperiment.model_validate(
-        record["experiment"]
-    )
-    reference = BacterialEnvironmentResponseExperimentReference.model_validate(
+    experiment = EnvironmentResponseExperiment.model_validate(record["experiment"])
+    reference = EnvironmentResponseExperimentReference.model_validate(
         record["reference"]
     )
-    assert experiment.experiment_type == "bacterial_environment_response"
+    assert experiment.experiment_type == "environment_response"
     assert experiment.phenotype.measurement_type is MeasurementType.log2_ratio
-    assert reference.experiment_reference_type == "bacterial_environment_response"
+    assert reference.experiment_reference_type == "environment_response"
     assert reference.phenotype_reference.environment_response == 0.0
 
 

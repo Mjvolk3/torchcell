@@ -249,7 +249,7 @@ EXAMPLES: dict[str, dict[str, Any]] = {
             "chromosome": "chrI",
             "start": 1807,
             "end": 2169,
-            "assembly": "R64-1-1",
+            "assembly": "sgd_S288C_R64-4-1_20230830",
         },
     },
     "torchcell.datamodels.schema.BackgroundAllele": {
@@ -285,6 +285,8 @@ EXAMPLES: dict[str, dict[str, Any]] = {
     "torchcell.datamodels.schema.StrainReferenceGenome": {
         "species": "Saccharomyces cerevisiae",
         "strain": "BY4741",
+        "assembly_set": "sgd_S288C_R64-4-1_20230830",
+        "assembly_accession": "GCA_000146045.2",
         "background": {
             "name": "BY4741",
             "mating_type": "a",
@@ -388,7 +390,7 @@ EXAMPLES: dict[str, dict[str, Any]] = {
     # Bacterial additions: the locus-tag validator rejects the sweep's default
     # ``YAL001C``, and the assembly pin rejects a placeholder accession, so each of
     # these commits a real tag / a real deposited (set, accession) pair.
-    "torchcell.datamodels.schema.AssemblyReferenceGenome": {
+    "torchcell.datamodels.schema.ReferenceGenome": {
         "species": "Escherichia coli",
         "strain": "MG1655",
         "assembly_set": "ecoli_K12_MG1655_ASM584v2",

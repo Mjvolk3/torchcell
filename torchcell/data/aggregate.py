@@ -9,9 +9,9 @@ from typing import Any, cast
 import lmdb
 from tqdm import tqdm
 
+from torchcell.data.experiment_types import experiment_class as experiment_class_for
+from torchcell.data.experiment_types import experiment_pair
 from torchcell.datamodels import (
-    EXPERIMENT_REFERENCE_TYPE_MAP,
-    EXPERIMENT_TYPE_MAP,
     ExperimentReferenceType,
     ExperimentType,
     ModelStrict,
@@ -88,7 +88,7 @@ class Aggregator(ABC):
                 experiments_list = json.loads(value.decode("utf-8"))
                 for exp_pair in experiments_list:
                     experiment_type = exp_pair["experiment"]["experiment_type"]
-                    experiment_class = EXPERIMENT_TYPE_MAP[experiment_type]
+                    experiment_class = experiment_class_for(experiment_type)
                     phenotype_class = experiment_class.__annotations__["phenotype"]
                     phenotype_classes.add(phenotype_class)
 
@@ -218,17 +218,7 @@ class Aggregator(ABC):
             if value is None:
                 raise IndexError(f"No item found at index {index}")
             json_data = json.loads(value.decode("utf-8"))
-            return [
-                {
-                    "experiment": EXPERIMENT_TYPE_MAP[
-                        exp["experiment"]["experiment_type"]
-                    ](**exp["experiment"]),
-                    "experiment_reference": EXPERIMENT_REFERENCE_TYPE_MAP[
-                        exp["experiment_reference"]["experiment_reference_type"]
-                    ](**exp["experiment_reference"]),
-                }
-                for exp in json_data
-            ]
+            return [experiment_pair(exp) for exp in json_data]
 
     def _get_records_by_slice(
         self, slice_obj: slice
@@ -243,17 +233,7 @@ class Aggregator(ABC):
                 value = txn.get(key)
                 if value is not None:
                     json_data = json.loads(value.decode())
-                    result = [
-                        {
-                            "experiment": EXPERIMENT_TYPE_MAP[
-                                exp["experiment"]["experiment_type"]
-                            ](**exp["experiment"]),
-                            "experiment_reference": EXPERIMENT_REFERENCE_TYPE_MAP[
-                                exp["experiment_reference"]["experiment_reference_type"]
-                            ](**exp["experiment_reference"]),
-                        }
-                        for exp in json_data
-                    ]
+                    result = [experiment_pair(exp) for exp in json_data]
                     results.append(result)
         return results
 

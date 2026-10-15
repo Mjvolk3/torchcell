@@ -12,7 +12,7 @@ releases, per strain, the mean and SD of that OD600 in each condition, over two
 biological replicates. It is the only per-strain table of the tolerance screen.
 
 RECORD = one Keio deletion strain under 0.5% (v/v) isoprenol, a
-``BacterialEnvironmentResponseExperiment``:
+``EnvironmentResponseExperiment``:
 
 - GENOTYPE: one ``BacterialReleasedStrainPerturbation`` under the gene symbol of the
   Table S3 strain label, verbatim, with the Table S2 Keio number as the strain's
@@ -122,15 +122,14 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import YT_2X
 from torchcell.datamodels.schema import (
     AssayType,
-    AssemblyReferenceGenome,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     BacterialReleasedStrainPerturbation,
     Compound,
     Concentration,
     ConcentrationUnit,
     Environment,
     EnvironmentPhysicalPerturbation,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
@@ -138,6 +137,7 @@ from torchcell.datamodels.schema import (
     MeasurementType,
     PhysicalFactor,
     Publication,
+    ReferenceGenome,
     ReleasedStrainKind,
     SampleUnit,
     SmallMoleculePerturbation,
@@ -1091,9 +1091,9 @@ def deletion_genotype(identity: StrainIdentity) -> Genotype:
 
 def build_experiment(
     dataset_name: str, identity: StrainIdentity, parent: TableS3Row, env: Environment
-) -> BacterialEnvironmentResponseExperiment:
+) -> EnvironmentResponseExperiment:
     """The record of one Keio strain under isoprenol."""
-    return BacterialEnvironmentResponseExperiment(
+    return EnvironmentResponseExperiment(
         dataset_name=dataset_name,
         genotype=deletion_genotype(identity),
         environment=env,
@@ -1102,10 +1102,10 @@ def build_experiment(
 
 
 def build_reference(
-    dataset_name: str, genome_reference: AssemblyReferenceGenome, env: Environment
-) -> BacterialEnvironmentResponseExperimentReference:
+    dataset_name: str, genome_reference: ReferenceGenome, env: Environment
+) -> EnvironmentResponseExperimentReference:
     """BW25113 in the same environment: relative tolerance to itself, log2(1) = 0."""
-    return BacterialEnvironmentResponseExperimentReference(
+    return EnvironmentResponseExperimentReference(
         dataset_name=dataset_name,
         genome_reference=genome_reference,
         environment_reference=env.model_copy(),
@@ -1138,12 +1138,12 @@ class EnvChemgenWang2015Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperiment
+        return EnvironmentResponseExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperimentReference
+        return EnvironmentResponseExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:

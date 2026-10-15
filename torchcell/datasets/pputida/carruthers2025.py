@@ -13,10 +13,10 @@ This module serves every released readout, as three dataset classes because
 - :class:`IsoprenolTiterCarruthers2025Dataset` -- ``ProductTiterExperiment``, one record
   per ``(CRISPRi construct, DBTL cycle)`` strain, titer in ``ug/mL`` with the sample SD
   over biological triplicates.
-- :class:`ProteomeCarruthers2025Dataset` -- ``BacterialProteinAbundanceExperiment``, one
+- :class:`ProteomeCarruthers2025Dataset` -- ``ProteinAbundanceExperiment``, one
   record per released off-target-study proteome sample (Top3 DIA-NN abundances).
 - :class:`ProteomeFoldChangeCarruthers2025Dataset` --
-  ``BacterialProteinFoldChangeExperiment``, one record per released differential
+  ``ProteinFoldChangeExperiment``, one record per released differential
   contrast COLUMN: 14 single-guide CRISPRi contrasts from ``Figure 5b`` plus the 2
   knockout contrasts the Fig. 6 caption names, of the 10 ``Figure 6b`` releases.
 
@@ -35,7 +35,7 @@ unit for it.
 
 THE GENOTYPE, DECOMPOSED. The reference is the chassis ``IY1449b`` (KT2440 with
 markerless in-frame deletions), carried as a ``BacterialStrainBackground`` on an
-``AssemblyReferenceGenome`` pinned to ``pputida_KT2440_ASM756v2`` / ``GCA_000007565.2``.
+``ReferenceGenome`` pinned to ``pputida_KT2440_ASM756v2`` / ``GCA_000007565.2``.
 Everything added on top of it is a perturbation in ``Genotype``:
 
 - the five heterologous pIY670 pathway genes as ``HeterologousPathwayPerturbation``
@@ -177,14 +177,9 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import M9_NREL_CARRUTHERS2025
 from torchcell.datamodels.schema import (
     AlleleEdit,
-    AssemblyReferenceGenome,
     BacterialAssemblySet,
     BacterialBackgroundAllele,
     BacterialGeneNamespace,
-    BacterialProteinAbundanceExperiment,
-    BacterialProteinAbundanceExperimentReference,
-    BacterialProteinFoldChangeExperiment,
-    BacterialProteinFoldChangeExperimentReference,
     BacterialStrainBackground,
     Concentration,
     ConcentrationUnit,
@@ -204,9 +199,14 @@ from torchcell.datamodels.schema import (
     ProductTiterExperiment,
     ProductTiterExperimentReference,
     ProductTiterPhenotype,
+    ProteinAbundanceExperiment,
+    ProteinAbundanceExperimentReference,
     ProteinAbundancePhenotype,
+    ProteinFoldChangeExperiment,
+    ProteinFoldChangeExperimentReference,
     ProteinFoldChangePhenotype,
     Publication,
+    ReferenceGenome,
     SampleUnit,
     SmallMoleculePerturbation,
     Temperature,
@@ -1753,7 +1753,7 @@ def chassis_background(genome: PPutidaKT2440Genome) -> BacterialStrainBackground
     )
 
 
-def chassis_reference(genome: PPutidaKT2440Genome) -> AssemblyReferenceGenome:
+def chassis_reference(genome: PPutidaKT2440Genome) -> ReferenceGenome:
     """The assembly-pinned reference every record of this paper is written against."""
     return assembly_reference("KT2440", background=chassis_background(genome))
 
@@ -4057,12 +4057,12 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialProteinAbundanceExperiment
+        return ProteinAbundanceExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialProteinAbundanceExperimentReference
+        return ProteinAbundanceExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -4223,7 +4223,7 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
         common = _standard_names(
             genome, [PROTEOME_BACKGROUND_DELETION, *stored_by_key.values()]
         )
-        reference = BacterialProteinAbundanceExperimentReference(
+        reference = ProteinAbundanceExperimentReference(
             dataset_name=self.name,
             genome_reference=reference_genome,
             environment_reference=environment.model_copy(),
@@ -4245,7 +4245,7 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for sample in tqdm(samples, desc="carruthers2025-proteome"):
                 abundance, se, n_reps = self._aggregate(cells[sample], sample)
-                experiment = BacterialProteinAbundanceExperiment(
+                experiment = ProteinAbundanceExperiment(
                     dataset_name=self.name,
                     genotype=self._genotype(
                         sample, pathway, background_deletion, common
@@ -4286,7 +4286,7 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
                     _overexpression_cells(overexpression_rows, control, stored_by_key),
                     control,
                 )
-                experiment = BacterialProteinAbundanceExperiment(
+                experiment = ProteinAbundanceExperiment(
                     dataset_name=self.name,
                     genotype=Genotype(
                         perturbations=[
@@ -4309,7 +4309,7 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
                     f"{idx}".encode(),
                     self._intern_record(
                         experiment,
-                        BacterialProteinAbundanceExperimentReference(
+                        ProteinAbundanceExperimentReference(
                             dataset_name=self.name,
                             genome_reference=reference_genome,
                             environment_reference=overexpression.model_copy(),
@@ -4792,12 +4792,12 @@ class CampaignProteomeCarruthers2025Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialProteinAbundanceExperiment
+        return ProteinAbundanceExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialProteinAbundanceExperimentReference
+        return ProteinAbundanceExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -4951,7 +4951,7 @@ class CampaignProteomeCarruthers2025Dataset(ExperimentDataset):
 
         def cycle_reference(
             cycle: int, keys: Collection[str]
-        ) -> BacterialProteinAbundanceExperimentReference:
+        ) -> ProteinAbundanceExperimentReference:
             """The cycle's control profile over exactly ``keys``."""
             control = controls_profile[cycle]
             absent = sorted(set(keys) - set(control.abundance))
@@ -4960,7 +4960,7 @@ class CampaignProteomeCarruthers2025Dataset(ExperimentDataset):
                     f"DBTL{cycle}'s control measures none of {absent[:10]}, which a "
                     "record of that cycle does; the control cannot reference it"
                 )
-            return BacterialProteinAbundanceExperimentReference(
+            return ProteinAbundanceExperimentReference(
                 dataset_name=self.name,
                 genome_reference=reference_genome,
                 environment_reference=environment.model_copy(),
@@ -4985,7 +4985,7 @@ class CampaignProteomeCarruthers2025Dataset(ExperimentDataset):
                     proteome, row_indices, locus_of, label=f"{construct} DBTL{cycle}"
                 )
                 tag_list, extras = parse_construct(construct)
-                experiment = BacterialProteinAbundanceExperiment(
+                experiment = ProteinAbundanceExperiment(
                     dataset_name=self.name,
                     genotype=Genotype(
                         perturbations=[
@@ -5208,12 +5208,12 @@ class ProteomeFoldChangeCarruthers2025Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialProteinFoldChangeExperiment
+        return ProteinFoldChangeExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialProteinFoldChangeExperimentReference
+        return ProteinFoldChangeExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -5399,13 +5399,13 @@ class ProteomeFoldChangeCarruthers2025Dataset(ExperimentDataset):
                     dropped_keys,
                     reference_basis=basis,
                 )
-                experiment = BacterialProteinFoldChangeExperiment(
+                experiment = ProteinFoldChangeExperiment(
                     dataset_name=self.name,
                     genotype=genotype,
                     environment=environment,
                     phenotype=phenotype,
                 )
-                reference = BacterialProteinFoldChangeExperimentReference(
+                reference = ProteinFoldChangeExperimentReference(
                     dataset_name=self.name,
                     genome_reference=reference_genome,
                     environment_reference=environment.model_copy(),

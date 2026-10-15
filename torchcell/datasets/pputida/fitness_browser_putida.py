@@ -26,7 +26,7 @@ with its fate in ``preprocess/samples.json``:
   entry; its groups include Trichoderma culture supernatants, whose agent has no compound
   identity.
 
-RECORDS. One ``BacterialEnvironmentResponseExperiment`` per (locus, stored sample):
+RECORDS. One ``EnvironmentResponseExperiment`` per (locus, stored sample):
 
 * the value is the browser's gene fitness (``FitByExp_Putida.fit``), its moderated t in
   ``environment_response_t_statistic`` and the standard error ``sqrt((f / t)^2 - 0.1^2)``
@@ -67,15 +67,14 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     AssayType,
-    AssemblyReferenceGenome,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     Concentration,
     ConcentrationUnit,
     DoseBasis,
     Environment,
     EnvironmentPerturbationType,
     EnvironmentPhysicalPerturbation,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
@@ -83,6 +82,7 @@ from torchcell.datamodels.schema import (
     MeasurementType,
     PhysicalFactor,
     Publication,
+    ReferenceGenome,
     SmallMoleculePerturbation,
     Temperature,
     TransposonInsertionPerturbation,
@@ -459,11 +459,11 @@ def build_phenotype(
 def build_reference(
     dataset_name: str,
     environment: Environment,
-    genome_reference: AssemblyReferenceGenome,
+    genome_reference: ReferenceGenome,
     screen_id: str,
-) -> BacterialEnvironmentResponseExperimentReference:
+) -> EnvironmentResponseExperimentReference:
     """The typical gene of the same sample: fitness 0 by the normalization."""
-    return BacterialEnvironmentResponseExperimentReference(
+    return EnvironmentResponseExperimentReference(
         dataset_name=dataset_name,
         genome_reference=genome_reference,
         environment_reference=environment,
@@ -563,12 +563,12 @@ class FitnessBrowserPutidaDataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperiment
+        return EnvironmentResponseExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperimentReference
+        return EnvironmentResponseExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -635,7 +635,7 @@ class FitnessBrowserPutidaDataset(ExperimentDataset):
                     )
                     record = {
                         "experiment": {
-                            "experiment_type": "bacterial_environment_response",
+                            "experiment_type": "environment_response",
                             "dataset_name": self.name,
                             "genotype": genotypes[key],
                             "environment": env_ptr,
@@ -671,12 +671,12 @@ class FitnessBrowserPutidaDataset(ExperimentDataset):
         genotype: dict[str, Any],
         environment: Environment,
         phenotype: EnvironmentResponsePhenotype,
-        reference: BacterialEnvironmentResponseExperimentReference,
+        reference: EnvironmentResponseExperimentReference,
         publication: Publication,
         itxn: Any,
     ) -> None:
         """The fast-path record equals what ``_intern_record`` writes for the same objects."""
-        experiment = BacterialEnvironmentResponseExperiment(
+        experiment = EnvironmentResponseExperiment(
             dataset_name=self.name,
             genotype=Genotype.model_validate(genotype),
             environment=environment,

@@ -59,14 +59,14 @@ from torchcell.data import ManifestPinMismatchError, RawSha256MismatchError
 from torchcell.datamodels.media import YT_2X
 from torchcell.datamodels.schema import (
     AssayType,
-    AssemblyReferenceGenome,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     Compound,
     ConcentrationUnit,
     EnvironmentPhysicalPerturbation,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     MeasurementType,
     PhysicalFactor,
+    ReferenceGenome,
     SampleUnit,
     SmallMoleculePerturbation,
 )
@@ -106,7 +106,7 @@ SECTION_S2 = m.table_section(TEXT, m.TABLE_S2_MARKER, m.TABLE_S3_MARKER)
 SECTION_S3 = m.table_section(TEXT, m.TABLE_S3_MARKER, m.TABLE_S4_MARKER)
 SYNTHETIC_DIGEST = m.table_s3_digest(m.parse_table_s3(SECTION_S3))
 SYNTHETIC_COUNTS = {"above_52.5": 1, "above_57.5": 1}
-REFERENCE = AssemblyReferenceGenome(
+REFERENCE = ReferenceGenome(
     species="Escherichia coli",
     strain="BW25113",
     assembly_set="ecoli_K12_BW25113_ASM75055v1",
@@ -472,8 +472,8 @@ def test_build_four_records_with_the_parent_reference_and_ledgers(
     dataset = m.EnvChemgenWang2015Dataset(root=str(synthetic))
     assert presence_only_pins == [m.DATA_SHA256]
     assert len(dataset) == 4
-    assert dataset.experiment_class is BacterialEnvironmentResponseExperiment
-    assert dataset.reference_class is BacterialEnvironmentResponseExperimentReference
+    assert dataset.experiment_class is EnvironmentResponseExperiment
+    assert dataset.reference_class is EnvironmentResponseExperimentReference
 
     import pandas as pd
 

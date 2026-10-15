@@ -45,6 +45,10 @@ from pydantic import BaseModel
 from torchcell.datamodels import ontology_checks as oc
 from torchcell.datamodels import schema as s
 from torchcell.datamodels.media import MEDIA_LIBRARY
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
 GRAPH_SCHEMA = oc.graph_schema()
@@ -214,17 +218,14 @@ def test_every_experiment_family_uses_the_shared_environment_class(kind: str) ->
     such subclasses is closed, so a new one fails here until it is named.
     """
     allowed_environments = {s.Environment, s.CultureEnvironment}
-    # ``AssemblyReferenceGenome`` is the third sanctioned narrowing: it only ADDS the
-    # assembly-set + accession pin (and an optional bacterial background), keeps
-    # ``species``/``strain``/``ploidy``, and exists as a subclass precisely so the 51
-    # served yeast references keep storing a plain ``ReferenceGenome``. The bacterial
-    # families must narrow to it because pydantic serializes by DECLARED type, so the
-    # pin would be dropped from a base-typed slot.
-    allowed_genomes = {
-        s.ReferenceGenome,
-        s.StrainReferenceGenome,
-        s.AssemblyReferenceGenome,
-    }
+    # The base slot is ``ReferenceGenome | StrainReferenceGenome`` (P2): the assembly
+    # pin lives on ``ReferenceGenome`` itself, and the union is what lets a typed
+    # background survive a base-typed slot (pydantic serializes by DECLARED type). A
+    # family that REQUIRES a background narrows the slot to ``StrainReferenceGenome``;
+    # no family narrows to a host-specific class any more.
+    base_slot = s.ExperimentReference.model_fields["genome_reference"].annotation
+    assert base_slot == s.ReferenceGenome | s.StrainReferenceGenome
+    allowed_genomes = (base_slot, s.StrainReferenceGenome)
     experiment = EXPERIMENT_TYPES[kind]
     reference = EXPERIMENT_REFERENCE_TYPES[kind]
     for annotation in (
@@ -453,7 +454,9 @@ def test_media_base_chain_is_acyclic() -> None:
 def test_library_media_names_are_unique() -> None:
     """No two library media share a ``name`` (the human-facing join handle)."""
     names = [media.name for media in MEDIA_LIBRARY.values()]
-    assert sorted(names) == sorted(set(names))
+    assert all(isinstance(name, str) for name in names)
+    named = [name for name in names if name is not None]
+    assert sorted(named) == sorted(set(named))
 
 
 def _ypd_environment(**overrides: Any) -> s.Environment:
@@ -537,7 +540,10 @@ def _record_pair(environment: s.Environment) -> tuple[dict[str, Any], dict[str, 
     reference = s.FitnessExperimentReference(
         dataset_name="test",
         genome_reference=s.ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4741"
+            species="Saccharomyces cerevisiae",
+            strain="BY4741",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=environment,
         phenotype_reference=s.FitnessPhenotype(fitness=1.0),

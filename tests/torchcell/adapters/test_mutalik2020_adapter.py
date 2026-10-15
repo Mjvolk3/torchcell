@@ -4,7 +4,7 @@
 """``torchcell/adapters/mutalik2020_adapter.py``: the conf it loads, the gate's view of
 it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
-Mutalik 2020 phage-resistance RB-TnSeq: BacterialEnvironmentResponseExperiment. One
+Mutalik 2020 phage-resistance RB-TnSeq: EnvironmentResponseExperiment. One
 TransposonInsertionPerturbation per record, served as `bacterial perturbation`. The only
 environment perturbation the row carries is the challenge's PhagePerturbation, so the
 conf enables `phage perturbation` and NOT `environment perturbation`; the shared cases

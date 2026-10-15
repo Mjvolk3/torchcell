@@ -60,10 +60,7 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
     write_assembly,
 )
 from torchcell.data import ManifestPinMismatchError, RawSha256MismatchError
-from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
-    SmallMoleculePerturbation,
-)
+from torchcell.datamodels.schema import SmallMoleculePerturbation, StrainReferenceGenome
 from torchcell.datasets.bacteria_common import (
     LOCUS_TAG_PATTERNS,
     LocusTagResolutionError,
@@ -289,7 +286,7 @@ def _write_raw(raw: Path) -> None:
     _write_table_s9(raw / m.TABLE_S9)
 
 
-REFERENCE = AssemblyReferenceGenome(
+REFERENCE = StrainReferenceGenome(
     species="Escherichia coli",
     strain=m.HOST_STRAIN,
     assembly_set=m.MG1655_ASSEMBLY_SET,
@@ -1546,8 +1543,8 @@ def test_canonical_symbol_keeps_the_tag_when_the_symbol_does_not_round_trip(
 
 def test_the_dataset_declares_its_schema_classes_and_raw_files() -> None:
     shell = object.__new__(m.MetabolomeRapp2026Dataset)
-    assert shell.experiment_class.__name__ == "BacterialMetaboliteExperiment"
-    assert shell.reference_class.__name__ == "BacterialMetaboliteExperimentReference"
+    assert shell.experiment_class.__name__ == "MetaboliteExperiment"
+    assert shell.reference_class.__name__ == "MetaboliteExperimentReference"
     assert shell.raw_file_names == [
         raw.name for raw in m.RAW_FILES if raw.name not in m.PLATFORM_ONLY_FILES
     ]

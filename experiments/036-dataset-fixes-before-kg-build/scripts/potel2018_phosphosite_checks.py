@@ -73,13 +73,13 @@ PROTEOME_FAMILY: tuple[str, ...] = (
     "ProteinSynthesisRatePhenotype",
     "ProteinAbundanceExperiment",
     "ProteinAbundanceExperimentReference",
-    "BacterialProteinAbundanceExperiment",
-    "BacterialProteinAbundanceExperimentReference",
-    "BacterialProteinFoldChangeExperiment",
-    "BacterialProteinFoldChangeExperimentReference",
+    "ProteinAbundanceExperiment",
+    "ProteinAbundanceExperimentReference",
+    "ProteinFoldChangeExperiment",
+    "ProteinFoldChangeExperimentReference",
     "Environment",
     "Genotype",
-    "AssemblyReferenceGenome",
+    "ReferenceGenome",
 )
 
 

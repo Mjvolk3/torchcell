@@ -5,7 +5,7 @@
 it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Shiver 2016 neglected-antibiotic chemical genomics: 204,033 (BW25113 deletion strain x
-screen condition) records, BacterialEnvironmentResponseExperiment. One
+screen condition) records, EnvironmentResponseExperiment. One
 DeletionStrainPerturbation per record, served as `bacterial perturbation`. The screen
 plate carries each dosed chemical as a SmallMoleculePerturbation and the M9 carbon source
 and the UV exposure as EnvironmentPhysicalPerturbations, on the experiment and the

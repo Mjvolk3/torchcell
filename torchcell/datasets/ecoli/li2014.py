@@ -89,7 +89,6 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import MOPS_MINIMAL
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
     BacterialAssemblySet,
     ComponentDefinition,
     Compound,
@@ -106,6 +105,7 @@ from torchcell.datamodels.schema import (
     ProteinSynthesisRateExperimentReference,
     ProteinSynthesisRatePhenotype,
     Publication,
+    ReferenceGenome,
     SynthesisRateUnit,
     Temperature,
 )
@@ -570,7 +570,7 @@ def environment(spec: MediumSpec) -> Environment:
     )
 
 
-def strain_reference(data_root: str | None = None) -> AssemblyReferenceGenome:
+def strain_reference(data_root: str | None = None) -> ReferenceGenome:
     """The assembly-pinned MG1655 reference every record is written against."""
     return assembly_reference(MG1655_STRAIN, data_root=data_root)
 

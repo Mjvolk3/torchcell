@@ -80,6 +80,10 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.scerevisiae import yoshida2012 as m
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -186,7 +190,10 @@ _WT_PHENOTYPE = _phenotype(
 _REFERENCE = MetaboliteExperimentReference(
     dataset_name="OrganicAcidYoshida2012Dataset",
     genome_reference=ReferenceGenome(
-        species="Saccharomyces cerevisiae", strain="BY4742"
+        species="Saccharomyces cerevisiae",
+        strain="BY4742",
+        assembly_set=SGD_S288C_R64,
+        assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
     ),
     environment_reference=_ENVIRONMENT,
     phenotype_reference=_WT_PHENOTYPE,

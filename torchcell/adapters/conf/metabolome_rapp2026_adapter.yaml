@@ -1,5 +1,5 @@
 # Rapp 2026 CRISPRi metabolome: 1,496 MG1655-pinned strains,
-# BacterialMetaboliteExperiment. One BacterialCrisprInterferencePerturbation per record,
+# MetaboliteExperiment. One BacterialCrisprInterferencePerturbation per record,
 # served as `bacterial perturbation` (never the yeast `perturbation` class) with its
 # CrisprConstruct, so `crispr construct` and its linking edge are enabled. Every record
 # carries one environment perturbation (the 200 nM anhydrotetracycline that induces the

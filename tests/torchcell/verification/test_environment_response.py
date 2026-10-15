@@ -58,6 +58,10 @@ from torchcell.datamodels.schema import (
     Temperature,
     UncertaintyType,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.environment_response import (
     _condition_signature,
     _genotype_signature,
@@ -154,7 +158,10 @@ def _record(
     ref = EnvironmentResponseExperimentReference(
         dataset_name="synthetic",
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4741"
+            species="Saccharomyces cerevisiae",
+            strain="BY4741",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=env.model_copy(),
         phenotype_reference=reference,

@@ -5,7 +5,7 @@
 it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Wang 2024 rifampicin Tn-seq: 24,763 (MG1655 gene x condition) records from Table S2's
-TRANSIT resampling log2FC, BacterialEnvironmentResponseExperiment. One gene-level Tn5
+TRANSIT resampling log2FC, EnvironmentResponseExperiment. One gene-level Tn5
 TransposonInsertionPerturbation per record, served as `bacterial perturbation`. Every
 record's environment carries exactly one SmallMoleculePerturbation, rifampicin at its
 absolute dose, on the experiment and on the reference, so the environment-perturbation

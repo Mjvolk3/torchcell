@@ -25,6 +25,10 @@ from torchcell.datamodels.schema import (
     VisualScoreExperimentReference,
     VisualScorePhenotype,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.report import Level, Provenance
 from torchcell.verification.visual_score import (
     verify_visual_score_dataset,
@@ -66,7 +70,10 @@ def _record(gene: str, score: float, *, ref_score: float = 0.0) -> dict[str, Any
     reference = VisualScoreExperimentReference(
         dataset_name="test",
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4741"
+            species="Saccharomyces cerevisiae",
+            strain="BY4741",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=env.model_copy(),
         phenotype_reference=_phenotype(ref_score, ref=True),

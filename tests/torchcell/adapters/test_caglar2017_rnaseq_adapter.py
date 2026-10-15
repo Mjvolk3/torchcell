@@ -4,7 +4,7 @@
 """``torchcell/adapters/caglar2017_rnaseq_adapter.py``: the conf it loads, the gate's view of it,
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
-Caglar 2017 RNA-seq: 152 REL606 libraries, BacterialRNASeqExpressionExperiment.
+Caglar 2017 RNA-seq: 152 REL606 libraries, RNASeqExpressionExperiment.
 Every genotype is the wild type (0 perturbations in 152 of 152 records), so neither
 `bacterial perturbation` nor `perturbation to genotype` is enabled. The environment
 carries SmallMoleculePerturbation and EnvironmentPhysicalPerturbation edits (carbon

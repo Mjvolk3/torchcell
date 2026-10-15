@@ -85,7 +85,7 @@ none. The released value is stored as given -- an SE of 0.0 -- because reading i
 build time so a corrected re-export is visible instead of silent, and the finding is
 recorded in the dendron note.
 
-THE RECORD GRAIN, AND THE DROPS. One ``BacterialProteinAbundanceExperiment`` per loaded
+THE RECORD GRAIN, AND THE DROPS. One ``ProteinAbundanceExperiment`` per loaded
 growth condition, keyed by the released ``Gene`` symbol (#1045 part 2), which is the
 key the stored Table S6 block uses. Each arm's glucose condition is the ``phenotype_reference`` rather than a
 record, as it is there. The same structural condition rule applies, for the same
@@ -148,14 +148,14 @@ from torchcell.data import (
 )
 from torchcell.datamodels.schema import (
     BacterialAssemblySet,
-    BacterialProteinAbundanceExperiment,
-    BacterialProteinAbundanceExperimentReference,
     BacterialStrainBackground,
     Environment,
     Experiment,
     ExperimentReference,
     Genotype,
     Media,
+    ProteinAbundanceExperiment,
+    ProteinAbundanceExperimentReference,
     ProteinAbundancePhenotype,
     Publication,
 )
@@ -945,12 +945,12 @@ class _SrmSchmidt2016Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialProteinAbundanceExperiment
+        return ProteinAbundanceExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialProteinAbundanceExperimentReference
+        return ProteinAbundanceExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -1048,7 +1048,7 @@ class _SrmSchmidt2016Dataset(ExperimentDataset):
                 f"{self.SHEET}: protein-key counts {sorted(keys)}, the module states "
                 f"{self.EXPECTED_PROTEIN_KEYS} on every record"
             )
-        reference = BacterialProteinAbundanceExperimentReference(
+        reference = ProteinAbundanceExperimentReference(
             dataset_name=self.name,
             genome_reference=assembly_reference(self.REFERENCE_STRAIN),
             environment_reference=environments[sm.REFERENCE_CONDITION],
@@ -1072,7 +1072,7 @@ class _SrmSchmidt2016Dataset(ExperimentDataset):
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for index, column in enumerate(tqdm(records, desc=self.name)):
                 phenotype = phenotypes[column]
-                experiment = BacterialProteinAbundanceExperiment(
+                experiment = ProteinAbundanceExperiment(
                     dataset_name=self.name,
                     genotype=Genotype(perturbations=[]),
                     environment=environments[column],
@@ -1344,7 +1344,7 @@ def verify_build(
             sha256=sm.SI2_SHA256,
             method=(
                 f"{arm.SHEET} 'Protein Abundance (copies/cell)': one "
-                "BacterialProteinAbundanceExperiment per loaded BW25113 growth "
+                "ProteinAbundanceExperiment per loaded BW25113 growth "
                 f"condition, SE = the released standard deviation / sqrt("
                 f"{arm.N_REPLICATES})"
             ),

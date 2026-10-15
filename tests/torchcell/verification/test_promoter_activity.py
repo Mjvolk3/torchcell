@@ -20,13 +20,13 @@ from typing import Any
 
 from torchcell.datamodels.media import LB
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
     Environment,
     Genotype,
     HeterologousPathwayPerturbation,
     PromoterActivityExperiment,
     PromoterActivityExperimentReference,
     PromoterActivityPhenotype,
+    ReferenceGenome,
     ReporterReadout,
     SampleUnit,
     Temperature,
@@ -43,7 +43,7 @@ PROVENANCE = Provenance(
     method="one record per (well, hour)",
     page="sheet 1",
 )
-REFERENCE_GENOME = AssemblyReferenceGenome(
+REFERENCE_GENOME = ReferenceGenome(
     species="Escherichia coli",
     strain="MG1655",
     assembly_set="ecoli_K12_MG1655_ASM584v2",

@@ -38,6 +38,10 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -1315,7 +1319,10 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
             )
         strain = sample_info["strain"]
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain=strain
+            species="Saccharomyces cerevisiae",
+            strain=strain,
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
 
         # Create genotype for deletion mutant

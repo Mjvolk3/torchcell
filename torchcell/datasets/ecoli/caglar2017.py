@@ -156,13 +156,7 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import DAVIS_MINIMAL, DM500
 from torchcell.datamodels.schema import (
     BACTERIAL_LOCUS_TAG_PATTERNS,
-    BacterialProteinAbundanceExperiment,
-    BacterialProteinAbundanceExperimentReference,
-    BacterialProteinFoldChangeExperiment,
-    BacterialProteinFoldChangeExperimentReference,
     BacterialReferenceStrain,
-    BacterialRNASeqExpressionExperiment,
-    BacterialRNASeqExpressionExperimentReference,
     Concentration,
     ConcentrationUnit,
     Environment,
@@ -173,9 +167,15 @@ from torchcell.datamodels.schema import (
     FoldChangeScale,
     Genotype,
     PhysicalFactor,
+    ProteinAbundanceExperiment,
+    ProteinAbundanceExperimentReference,
     ProteinAbundancePhenotype,
+    ProteinFoldChangeExperiment,
+    ProteinFoldChangeExperimentReference,
     ProteinFoldChangePhenotype,
     Publication,
+    RNASeqExpressionExperiment,
+    RNASeqExpressionExperimentReference,
     RNASeqExpressionPhenotype,
     SmallMoleculePerturbation,
     Temperature,
@@ -2549,12 +2549,12 @@ class RnaseqCaglar2017Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialRNASeqExpressionExperiment
+        return RNASeqExpressionExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialRNASeqExpressionExperimentReference
+        return RNASeqExpressionExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -2598,7 +2598,7 @@ class RnaseqCaglar2017Dataset(ExperimentDataset):
         reference_members = reference_rows(rows)
         column = {row.sample: j for j, row in enumerate(rows)}
         references = {
-            phase: BacterialRNASeqExpressionExperimentReference(
+            phase: RNASeqExpressionExperimentReference(
                 dataset_name=self.name,
                 genome_reference=pin,
                 environment_reference=reference_environment(
@@ -2618,7 +2618,7 @@ class RnaseqCaglar2017Dataset(ExperimentDataset):
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for index, row in enumerate(rows):
-                experiment = BacterialRNASeqExpressionExperiment(
+                experiment = RNASeqExpressionExperiment(
                     dataset_name=self.name,
                     genotype=genotype,
                     environment=environment_of(row),
@@ -2730,12 +2730,12 @@ class ProteomeCaglar2017Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialProteinAbundanceExperiment
+        return ProteinAbundanceExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialProteinAbundanceExperimentReference
+        return ProteinAbundanceExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -2790,7 +2790,7 @@ class ProteomeCaglar2017Dataset(ExperimentDataset):
         reference_members = reference_rows(rows)
         column = {row.sample: j for j, row in enumerate(rows)}
         references = {
-            phase: BacterialProteinAbundanceExperimentReference(
+            phase: ProteinAbundanceExperimentReference(
                 dataset_name=self.name,
                 genome_reference=pin,
                 environment_reference=reference_environment(
@@ -2809,7 +2809,7 @@ class ProteomeCaglar2017Dataset(ExperimentDataset):
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for index, row in enumerate(rows):
-                experiment = BacterialProteinAbundanceExperiment(
+                experiment = ProteinAbundanceExperiment(
                     dataset_name=self.name,
                     genotype=genotype,
                     environment=environment_of(row),
@@ -3539,12 +3539,12 @@ class ProteinFoldChangeCaglar2017Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialProteinFoldChangeExperiment
+        return ProteinFoldChangeExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialProteinFoldChangeExperimentReference
+        return ProteinFoldChangeExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -3638,7 +3638,7 @@ class ProteinFoldChangeCaglar2017Dataset(ExperimentDataset):
                         f"{group.file_name}: its base group is not the phase's "
                         "reference condition"
                     )
-                reference = BacterialProteinFoldChangeExperimentReference(
+                reference = ProteinFoldChangeExperimentReference(
                     dataset_name=self.name,
                     genome_reference=pin,
                     environment_reference=reference_environment(
@@ -3648,7 +3648,7 @@ class ProteinFoldChangeCaglar2017Dataset(ExperimentDataset):
                         phenotype, len(samples.base_samples)
                     ),
                 )
-                experiment = BacterialProteinFoldChangeExperiment(
+                experiment = ProteinFoldChangeExperiment(
                     dataset_name=self.name,
                     genotype=genotype,
                     environment=contrast_environment(group, samples),

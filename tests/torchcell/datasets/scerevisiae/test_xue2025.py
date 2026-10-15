@@ -50,6 +50,10 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.scerevisiae import xue2025 as m
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 _ABBREVIATIONS: list[tuple[str, str]] = [
     (gene, code) for code, gene in m._EXPECTED_CODE_TO_GENE.items()
@@ -258,7 +262,10 @@ def test_wt_row_is_the_shared_measured_reference(
     expected = MetaboliteExperimentReference(
         dataset_name="FattyAcidXue2025Dataset",
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4741"
+            species="Saccharomyces cerevisiae",
+            strain="BY4741",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=_ENVIRONMENT,
         phenotype_reference=_phenotype(

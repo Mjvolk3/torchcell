@@ -5,7 +5,7 @@
 it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Girgis 2009 antibiotic transposon selection: 63,766 (MG1655 gene x antibiotic) records
-from Dataset S5's combined z-scores, BacterialEnvironmentResponseExperiment. One
+from Dataset S5's combined z-scores, EnvironmentResponseExperiment. One
 gene-level TransposonInsertionPerturbation per record, served as `bacterial perturbation`.
 Every record's environment carries exactly one SmallMoleculePerturbation, the drug at its
 Table 1 dose, on the experiment and on the reference, so the environment-perturbation pair

@@ -93,6 +93,10 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.metabolism.yeast_GEM import YeastGEM
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import (
     ProvenanceGap,
@@ -484,7 +488,10 @@ class ProteomeZelezniak2018Dataset(ExperimentDataset):
         # Background = BY4741 kinase-deletion collection made prototrophic by the pHLUM
         # minichromosome (restores HIS3/LEU2/URA3/MET17); pHLUM not yet modeled here.
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4741"
+            species="Saccharomyces cerevisiae",
+            strain="BY4741",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
         genotype = Genotype(perturbations=[_released_deletion(row["orf"], row["gene"])])
         # SWATH-MS on cells in synthetic minimal (SM) liquid medium, 30 C. The
@@ -784,7 +791,10 @@ class MetaboliteZelezniak2018Dataset(ExperimentDataset):
         # Background = BY4741 kinase-deletion collection made prototrophic by the pHLUM
         # minichromosome (restores HIS3/LEU2/URA3/MET17); pHLUM not yet modeled here.
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4741"
+            species="Saccharomyces cerevisiae",
+            strain="BY4741",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
         # No gene-name column in the metabolome file (only the systematic ORF), so the
         # systematic id is used for both names (as in the Mulleder loader).

@@ -45,6 +45,10 @@ from torchcell.datamodels.schema import (
     SyntheticRescuePhenotype,
 )
 from torchcell.datasets.scerevisiae import synth_leth_db as s
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 _HEADER = (
     "n1.name,n1.identifier,n2.name,n2.identifier,r.statistic_score,r.pubmed_id,"
@@ -69,7 +73,12 @@ _SR_ROWS = [
 ]
 
 _ENVIRONMENT = s.SYNLETHDB_ENVIRONMENT
-_GENOME = ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
+_GENOME = ReferenceGenome(
+    species="Saccharomyces cerevisiae",
+    strain="S288C",
+    assembly_set=SGD_S288C_R64,
+    assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 
 def _write_raw(root: Path, filename: str, rows: list[str]) -> None:

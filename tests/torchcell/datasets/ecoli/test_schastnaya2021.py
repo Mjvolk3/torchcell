@@ -47,12 +47,12 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
 from torchcell.data import ManifestPinMismatchError, RawSha256MismatchError
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
     BacterialReleasedStrainPerturbation,
     BacterialStrainBackground,
     ConcentrationUnit,
     MediaComponentRole,
     ReleasedStrainKind,
+    StrainReferenceGenome,
 )
 from torchcell.literature.manifest import RetrievalMethod
 from torchcell.sequence.genome.ecoli.k12 import MG1655_ASSEMBLY, EcoliK12MG1655Genome
@@ -89,7 +89,7 @@ SD1_ROWS: list[tuple[str, str, str]] = [
     ("ThrL-S2E", "phospho-mimicking", "b0001"),
 ]
 KEPT_KEYS = ["C6H12O6", "C3H4O3", "C3H5O6P", "C2H5NO2"]
-REFERENCE = AssemblyReferenceGenome(
+REFERENCE = StrainReferenceGenome(
     species="Escherichia coli",
     strain=m.WILD_TYPE_BACKGROUND_NAME,
     assembly_set="ecoli_K12_MG1655_ASM584v2",

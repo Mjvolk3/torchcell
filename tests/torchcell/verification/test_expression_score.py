@@ -29,6 +29,10 @@ from torchcell.datamodels.schema import (
     MicroarrayExpressionScorePhenotype,
     ReferenceGenome,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.expression_score import (
     deleted_gene,
     l4_matched_profile_agreement,
@@ -73,7 +77,10 @@ def _record(
     reference = MicroarrayExpressionScoreExperimentReference(
         dataset_name="t",
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4741"
+            species="Saccharomyces cerevisiae",
+            strain="BY4741",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=env,
         phenotype_reference=_phenotype(dict.fromkeys(scores, reference_value), None),

@@ -5,7 +5,7 @@
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Mori 2021 proteome: 7 MG1655 (EQ353) calibration samples,
-BacterialProteinAbundanceExperiment. Every genotype is the wild type (0 perturbations in
+ProteinAbundanceExperiment. Every genotype is the wild type (0 perturbations in
 7 of 7 records), so neither `bacterial perturbation` nor `perturbation to genotype` is
 enabled; the paper's engineered NCM3722 derivatives are all in samples dropped on their
 medium. The one environment the records share carries an EnvironmentPhysicalPerturbation

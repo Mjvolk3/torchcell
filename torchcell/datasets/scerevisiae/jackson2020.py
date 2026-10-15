@@ -148,6 +148,10 @@ from torchcell.literature.manifest import (
     RetrievalRecord,
     sha256_file,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import (
@@ -467,6 +471,8 @@ def reference_genome() -> StrainReferenceGenome:
         strain=BACKGROUND_NAME,
         ploidy="diploid",
         background=fy_background(),
+        assembly_set=SGD_S288C_R64,
+        assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
     )
 
 

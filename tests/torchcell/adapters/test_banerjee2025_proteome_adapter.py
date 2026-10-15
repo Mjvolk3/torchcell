@@ -4,7 +4,7 @@
 """``torchcell/adapters/banerjee2025_proteome_adapter.py``: the conf it loads, the gate's
 view of it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
-Banerjee 2025 proteome: 6 samples, BacterialProteinAbundanceExperiment. Four records
+Banerjee 2025 proteome: 6 samples, ProteinAbundanceExperiment. Four records
 carry one bacterial perturbation each (two PromoterReplacementPerturbation on PP_0897
 and two DeletionStrainPerturbation on PP_0897); the two parental records carry none.
 The environment carries EnvironmentPhysicalPerturbation carbon-source edits, so the

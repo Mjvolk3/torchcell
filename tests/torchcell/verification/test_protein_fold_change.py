@@ -21,15 +21,15 @@ import math
 from typing import Any
 
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
-    BacterialProteinFoldChangeExperiment,
-    BacterialProteinFoldChangeExperimentReference,
     DeletionStrainPerturbation,
     Environment,
     FoldChangeScale,
     Genotype,
     Media,
+    ProteinFoldChangeExperiment,
+    ProteinFoldChangeExperimentReference,
     ProteinFoldChangePhenotype,
+    ReferenceGenome,
     Temperature,
 )
 from torchcell.verification.protein_fold_change import (
@@ -44,7 +44,7 @@ PROTEINS = ["PP_4188", "PP_0368"]
 STRAINS = ["PP_0812", "PP_0815"]
 BASIS = "control strain carrying a non-targeting sgRNA"
 MTYPE = "dia_log2_fold_change_paired_two_tailed_t_test"
-ASSEMBLY = AssemblyReferenceGenome(
+ASSEMBLY = ReferenceGenome(
     species="Pseudomonas putida",
     strain="KT2440",
     assembly_set="pputida_KT2440_ASM756v2",
@@ -122,7 +122,7 @@ def _record(
         p_values=p_values,
     )
     environment = _environment(temperature)
-    experiment = BacterialProteinFoldChangeExperiment(
+    experiment = ProteinFoldChangeExperiment(
         dataset_name="test",
         genotype=Genotype(
             perturbations=[
@@ -136,7 +136,7 @@ def _record(
         environment=environment,
         phenotype=phenotype,
     )
-    reference = BacterialProteinFoldChangeExperimentReference(
+    reference = ProteinFoldChangeExperimentReference(
         dataset_name="test",
         genome_reference=ASSEMBLY,
         environment_reference=environment.model_copy(),

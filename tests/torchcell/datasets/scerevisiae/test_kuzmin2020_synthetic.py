@@ -78,6 +78,10 @@ from torchcell.datasets.scerevisiae.kuzmin2020 import (
     TmfKuzmin2020Dataset,
     TmiKuzmin2020Dataset,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 S1_NAME = "aaz5667-Table-S1.xlsx"
 S3_NAME = "aaz5667-Table-S3.xlsx"
@@ -119,7 +123,12 @@ S5_DOUBLE_ROW: list[Any] = ["Double mutant", "delta", "YAL015C", "NTG1", "tm72",
 S5_ROWS = [*S5_SINGLE_ROWS, S5_DOUBLE_ROW]
 
 ENVIRONMENT = Environment(media=SGA_TM_SELECTION, temperature=Temperature(value=26))
-GENOME = ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
+GENOME = ReferenceGenome(
+    species="Saccharomyces cerevisiae",
+    strain="S288C",
+    assembly_set=SGD_S288C_R64,
+    assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
+)
 PUBLICATION = Publication(
     pubmed_id="32586993",
     pubmed_url="https://pubmed.ncbi.nlm.nih.gov/32586993/",

@@ -33,13 +33,13 @@ from pydantic import ValidationError
 
 from torchcell.data.experiment_dataset import file_sha256
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
-    BacterialRNASeqExpressionExperiment,
-    BacterialRNASeqExpressionExperimentReference,
     EnvironmentPhysicalPerturbation,
     Genotype,
     PhysicalFactor,
+    ReferenceGenome,
     ReleasedStrainKind,
+    RNASeqExpressionExperiment,
+    RNASeqExpressionExperimentReference,
 )
 from torchcell.datasets.pputida import lim2022 as m
 from torchcell.verification.sourced import ProvenanceGapReason, audit_sourced_value
@@ -539,7 +539,7 @@ def test_deposit_raw_mirror_is_idempotent_and_refuses_drift(
 # --------------------------------------------------------------------------- #
 # Verification gate on synthetic records
 # --------------------------------------------------------------------------- #
-_PIN = AssemblyReferenceGenome(
+_PIN = ReferenceGenome(
     species="Pseudomonas putida",
     strain="KT2440",
     assembly_set="pputida_KT2440_ASM756v2",
@@ -549,13 +549,13 @@ _PIN = AssemblyReferenceGenome(
 
 def _record(tpm: dict[str, float], counts: dict[str, int]) -> dict[str, Any]:
     env = m.aromatic_environment("Aromatic:Glucose")
-    experiment = BacterialRNASeqExpressionExperiment(
+    experiment = RNASeqExpressionExperiment(
         dataset_name="d",
         genotype=Genotype(perturbations=[]),
         environment=env,
         phenotype=m.expression_phenotype(tpm, counts),
     )
-    reference = BacterialRNASeqExpressionExperimentReference(
+    reference = RNASeqExpressionExperimentReference(
         dataset_name="d",
         genome_reference=_PIN,
         environment_reference=env,

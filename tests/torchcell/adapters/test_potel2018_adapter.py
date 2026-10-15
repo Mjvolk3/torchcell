@@ -5,7 +5,7 @@
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Potel 2018 phosphosite intensities: twelve released samples of wild-type W3110,
-BacterialPhosphositeIntensityExperiment. No genotype carries a perturbation and no
+PhosphositeIntensityExperiment. No genotype carries a perturbation and no
 environment carries one either, so neither the bacterial-perturbation nor the
 environment-perturbation pair is enabled.
 """

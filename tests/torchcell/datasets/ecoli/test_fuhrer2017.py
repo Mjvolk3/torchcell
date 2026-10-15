@@ -57,9 +57,9 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
 from torchcell.data import ManifestPinMismatchError, RawSha256MismatchError
 from torchcell.datamodels.media import M9_GLUCOSE_CASEIN_FUHRER2017
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
     BacterialReleasedStrainPerturbation,
     Environment,
+    ReferenceGenome,
     Temperature,
 )
 from torchcell.literature.manifest import RetrievalMethod, RetrievalRecord
@@ -91,7 +91,7 @@ NEG_MZ = [100.0, 200.0, 300.0]
 POS_MZ = [150.0, 250.0]
 EV1B_NEG_MZ = [100.001, 200.001, 300.001]
 EV1B_POS_MZ = [150.0005, 250.0005]
-REFERENCE = AssemblyReferenceGenome(
+REFERENCE = ReferenceGenome(
     species="Escherichia coli",
     strain="BW25113",
     assembly_set="ecoli_K12_BW25113_ASM75055v1",
@@ -399,7 +399,7 @@ def test_build_experiment_is_one_keio_deletion_under_its_released_jw_id() -> Non
         "MetabolomeFuhrer2017Dataset", strain, ["neg_0001"], [1.5], m.environment()
     )
     dumped = experiment.model_dump()
-    assert dumped["experiment_type"] == "bacterial_metabolite"
+    assert dumped["experiment_type"] == "metabolite"
     assert dumped["environment"] == _expected_environment()
     (perturbation,) = dumped["genotype"]["perturbations"]
     assert {

@@ -75,6 +75,10 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.scerevisiae import ohnuki2018 as m
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -124,7 +128,11 @@ _WT_PHENOTYPE = CalMorphPhenotype(
 _REFERENCE = CalMorphExperimentReference(
     dataset_name="ScmdOhnuki2018Dataset",
     genome_reference=ReferenceGenome(
-        species="Saccharomyces cerevisiae", strain="BY4743", ploidy="diploid"
+        species="Saccharomyces cerevisiae",
+        strain="BY4743",
+        ploidy="diploid",
+        assembly_set=SGD_S288C_R64,
+        assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
     ),
     environment_reference=_ENVIRONMENT,
     phenotype_reference=_WT_PHENOTYPE,
@@ -354,7 +362,11 @@ def test_blank_orf_rows_are_dropped_with_a_counted_warning(
     reference = CalMorphExperimentReference(
         dataset_name="ScmdOhnuki2018Dataset",
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4743", ploidy="diploid"
+            species="Saccharomyces cerevisiae",
+            strain="BY4743",
+            ploidy="diploid",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=_ENVIRONMENT,
         phenotype_reference=CalMorphPhenotype(

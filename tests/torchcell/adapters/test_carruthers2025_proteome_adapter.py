@@ -4,7 +4,7 @@
 """``torchcell/adapters/carruthers2025_proteome_adapter.py``: the conf it loads, the gate's view of it,
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
-Carruthers 2025 proteome: 19 samples, BacterialProteinAbundanceExperiment.
+Carruthers 2025 proteome: 19 samples, ProteinAbundanceExperiment.
 7 perturbations per record: HeterologousPathwayPerturbation (95),
 CrisprInterferencePerturbation (19) and DeletionStrainPerturbation (19), all
 served as `bacterial perturbation`. Every CRISPRi leaf carries a CrisprConstruct, so the

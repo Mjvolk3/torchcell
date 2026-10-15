@@ -52,12 +52,12 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
 from torchcell.datamodels.media import LB
 from torchcell.datamodels.schema import (
     AssayType,
-    AssemblyReferenceGenome,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
     ConcentrationUnit,
     DoseBasis,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     MeasurementType,
+    ReferenceGenome,
     SampleUnit,
     TransposonInsertionPerturbation,
 )
@@ -67,7 +67,7 @@ from torchcell.sequence.genome.ecoli.k12 import MG1655_ASSEMBLY, EcoliK12MG1655G
 from torchcell.verification.environment_response import _condition_signature
 from torchcell.verification.sourced import ProvenanceGapReason, audit_sourced_value
 
-REFERENCE = AssemblyReferenceGenome(
+REFERENCE = ReferenceGenome(
     species="Escherichia coli",
     strain="MG1655",
     assembly_set="ecoli_K12_MG1655_ASM584v2",
@@ -387,8 +387,8 @@ def test_build_experiment_and_reference_validate_as_a_pair() -> None:
     env = m.environment(spec)
     experiment = m.build_experiment("ds", _cell(spec), env)
     reference = m.build_reference("ds", REFERENCE, spec, env)
-    assert isinstance(experiment, BacterialEnvironmentResponseExperiment)
-    assert isinstance(reference, BacterialEnvironmentResponseExperimentReference)
+    assert isinstance(experiment, EnvironmentResponseExperiment)
+    assert isinstance(reference, EnvironmentResponseExperimentReference)
     assert experiment.phenotype.environment_response == 1.5
     assert reference.environment_reference == experiment.environment
 
@@ -675,8 +675,8 @@ def test_the_loader_takes_no_genome() -> None:
 def test_the_dataset_is_registered_and_declares_its_classes() -> None:
     assert dataset_registry["EnvChemgenWang2024Dataset"] is m.EnvChemgenWang2024Dataset
     dataset = m.EnvChemgenWang2024Dataset.__new__(m.EnvChemgenWang2024Dataset)
-    assert dataset.experiment_class is BacterialEnvironmentResponseExperiment
-    assert dataset.reference_class is BacterialEnvironmentResponseExperimentReference
+    assert dataset.experiment_class is EnvironmentResponseExperiment
+    assert dataset.reference_class is EnvironmentResponseExperimentReference
     assert dataset.raw_file_names == [m.DATA_FILE]
     frame = pd.DataFrame({"a": [1]})
     assert dataset.preprocess_raw(frame) is frame

@@ -12,7 +12,7 @@ dose of cobalt, copper, zinc or cadmium chloride, sequenced the insertion juncti
 each pool, and compared every gene's insertion reads in each metal against LB with
 TRANSIT's RESAMPLING permutation test. Rank 53 of the bacterial candidate table.
 
-RECORD = one (gene x metal) ``BacterialEnvironmentResponseExperiment`` from Table S5
+RECORD = one (gene x metal) ``EnvironmentResponseExperiment`` from Table S5
 (``EMI-27-e70095-s006.xlsx``, one sheet per metal): 5,729 genes x 4 metals = 22,916
 released cells, every cell filled, 21,583 stored (DROPPED below).
 
@@ -131,14 +131,11 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import LB
 from torchcell.datamodels.schema import (
     AssayType,
-    AssemblyReferenceGenome,
-    BacterialEnvironmentResponseExperiment,
-    BacterialEnvironmentResponseExperimentReference,
-    BacterialGradedGeneEssentialityExperiment,
-    BacterialGradedGeneEssentialityExperimentReference,
     Concentration,
     ConcentrationUnit,
     Environment,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
     EssentialityEvidenceClass,
     EssentialityEvidenceType,
@@ -148,6 +145,8 @@ from torchcell.datamodels.schema import (
     ExperimentReference,
     GeneEssentialityEvidence,
     Genotype,
+    GradedGeneEssentialityExperiment,
+    GradedGeneEssentialityExperimentReference,
     GradedGeneEssentialityPhenotype,
     HmmEssentialityState,
     MeasurementType,
@@ -155,6 +154,7 @@ from torchcell.datamodels.schema import (
     MediaComponent,
     MediaComponentRole,
     Publication,
+    ReferenceGenome,
     SampleUnit,
     SmallMoleculePerturbation,
     Temperature,
@@ -965,16 +965,16 @@ def reference_phenotype() -> EnvironmentResponsePhenotype:
     )
 
 
-def reference_genome(data_root: str | None = None) -> AssemblyReferenceGenome:
+def reference_genome(data_root: str | None = None) -> ReferenceGenome:
     """KT2440 pinned to its GenBank assembly."""
     return assembly_reference("KT2440", data_root=data_root)
 
 
 def build_reference(
-    dataset_name: str, genome: AssemblyReferenceGenome, env: Environment
-) -> BacterialEnvironmentResponseExperimentReference:
+    dataset_name: str, genome: ReferenceGenome, env: Environment
+) -> EnvironmentResponseExperimentReference:
     """The unperturbed parent of one metal condition, scoring 0."""
-    return BacterialEnvironmentResponseExperimentReference(
+    return EnvironmentResponseExperimentReference(
         dataset_name=dataset_name,
         genome_reference=genome,
         environment_reference=env.model_copy(),
@@ -1192,12 +1192,12 @@ class EnvMetalTnseqRoyet2025Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperiment
+        return EnvironmentResponseExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialEnvironmentResponseExperimentReference
+        return EnvironmentResponseExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -1283,7 +1283,7 @@ class EnvMetalTnseqRoyet2025Dataset(ExperimentDataset):
                 total=drop_log.kept_records,
                 desc="royet2025",
             ):
-                experiment = BacterialEnvironmentResponseExperiment(
+                experiment = EnvironmentResponseExperiment(
                     dataset_name=self.name,
                     genotype=insertion_genotype(locus_tag, symbol),
                     environment=environments[spec.code],
@@ -1477,7 +1477,7 @@ def verify_build(
             citation_key=CITATION_KEY,
             sha256=DATA_SHA256[TABLE_S5],
             method="Table S5, TRANSIT RESAMPLING LB vs metal; one "
-            "BacterialEnvironmentResponseExperiment per (gene, metal), gene-level "
+            "EnvironmentResponseExperiment per (gene, metal), gene-level "
             "TransposonInsertionPerturbation against KT2440, reference = the parent in "
             "the same metal at log2FC 0",
             page="Table S5 (EMI-27-e70095-s006.xlsx), sheets LB-Co, LB-Cu, LB-Zn, LB-Cd",
@@ -1708,9 +1708,9 @@ def hmm_evidence(row: S4Row | None = None) -> GeneEssentialityEvidence:
 
 def build_graded_experiment(
     dataset_name: str, row: S4Row, env: Environment
-) -> BacterialGradedGeneEssentialityExperiment:
+) -> GradedGeneEssentialityExperiment:
     """One gene in one stage, under the Gene ID and name the table gives it."""
-    return BacterialGradedGeneEssentialityExperiment(
+    return GradedGeneEssentialityExperiment(
         dataset_name=dataset_name,
         genotype=insertion_genotype(row.gene_id, row.gene_name),
         environment=env,
@@ -1721,10 +1721,10 @@ def build_graded_experiment(
 
 
 def build_graded_reference(
-    dataset_name: str, genome: AssemblyReferenceGenome, env: Environment
-) -> BacterialGradedGeneEssentialityExperimentReference:
+    dataset_name: str, genome: ReferenceGenome, env: Environment
+) -> GradedGeneEssentialityExperimentReference:
     """The unperturbed parent in the same stage: non-essential (NE)."""
-    return BacterialGradedGeneEssentialityExperimentReference(
+    return GradedGeneEssentialityExperimentReference(
         dataset_name=dataset_name,
         genome_reference=genome,
         environment_reference=env.model_copy(),
@@ -1759,12 +1759,12 @@ class GradedGeneEssentialityRoyet2025Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialGradedGeneEssentialityExperiment
+        return GradedGeneEssentialityExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialGradedGeneEssentialityExperimentReference
+        return GradedGeneEssentialityExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -1843,10 +1843,8 @@ class GradedGeneEssentialityRoyet2025Dataset(ExperimentDataset):
 
 def _validate_graded_record(record: Mapping[str, Any]) -> None:
     """L0: the experiment and its reference validate as the graded pair."""
-    BacterialGradedGeneEssentialityExperiment.model_validate(record["experiment"])
-    BacterialGradedGeneEssentialityExperimentReference.model_validate(
-        record["reference"]
-    )
+    GradedGeneEssentialityExperiment.model_validate(record["experiment"])
+    GradedGeneEssentialityExperimentReference.model_validate(record["reference"])
 
 
 def _graded_stage(record: Mapping[str, Any]) -> StageKey | None:
@@ -1967,7 +1965,7 @@ def verify_graded_build(dataset_root: str, data_root: str) -> VerificationReport
             source_uri=f"$DATA_ROOT/{RAW_DIR_REL}/data/{TABLE_S4}",
             citation_key=CITATION_KEY,
             sha256=TABLE_S4_FILE.sha256,
-            method="Table S4, TRANSIT HMM; one BacterialGradedGeneEssentialityExperiment "
+            method="Table S4, TRANSIT HMM; one GradedGeneEssentialityExperiment "
             "per (gene, stage), the call as released",
             page="Table S4 (EMI-27-e70095-s002.xlsx), both sheets",
         ),

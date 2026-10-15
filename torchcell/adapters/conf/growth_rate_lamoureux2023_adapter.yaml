@@ -1,5 +1,5 @@
 # Lamoureux 2023 PRECISE-1K growth rates: 89 records, one per released sample whose
-# 'Growth Rate (1/hr)' cell is positive, BacterialEnvironmentResponseExperiment carrying
+# 'Growth Rate (1/hr)' cell is positive, EnvironmentResponseExperiment carrying
 # the ABSOLUTE rate in 1/hr against the declared base condition (#826). 34 of the 89
 # records carry one BacterialDeletionPerturbation, served as `bacterial perturbation`, so
 # the perturbation pair is enabled; the other 55 are wild type, which is a measured

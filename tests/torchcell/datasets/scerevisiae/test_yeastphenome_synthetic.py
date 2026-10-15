@@ -76,6 +76,10 @@ from torchcell.datasets.scerevisiae.yeastphenome import (
     _parse_media,
     _readout_method,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification import ProvenanceGap, ProvenanceGapReason
 
 SCREEN_A = {"pmid": "99999901", "stem": "synthetic_a", "valuez_sha256": "0" * 64}
@@ -184,7 +188,11 @@ def _reference(
     return EnvironmentResponseExperimentReference(
         dataset_name="YeastPhenomeDataset",
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain=strain, ploidy=ploidy
+            species="Saccharomyces cerevisiae",
+            strain=strain,
+            ploidy=ploidy,
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=env,
         phenotype_reference=EnvironmentResponsePhenotype(

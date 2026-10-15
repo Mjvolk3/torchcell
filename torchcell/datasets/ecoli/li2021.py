@@ -84,7 +84,6 @@ from torchcell.data import (
 from torchcell.data.experiment_dataset import verify_sha256
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
     BacterialAssemblySet,
     BacterialStrainBackground,
     Concentration,
@@ -102,6 +101,7 @@ from torchcell.datamodels.schema import (
     MediaComponentRole,
     PromoterReplacementPerturbation,
     Publication,
+    ReferenceGenome,
 )
 from torchcell.datasets.bacteria_common import (
     STRAIN_GENE_NAMESPACES,
@@ -635,7 +635,7 @@ def genotype(spec: StrainSpec) -> Genotype:
 
 
 def build_reference(
-    dataset_name: str, genome_reference: AssemblyReferenceGenome
+    dataset_name: str, genome_reference: ReferenceGenome
 ) -> FluxExperimentReference:
     """BW-P BF on the labeling medium, its map a typed gap."""
     return FluxExperimentReference(

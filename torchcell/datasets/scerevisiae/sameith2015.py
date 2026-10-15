@@ -39,6 +39,10 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -867,7 +871,10 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
         # most double mutants carry the mating type matα and are in the genetic
         # background of BY4742."
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4742"
+            species="Saccharomyces cerevisiae",
+            strain="BY4742",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
 
         # Create genotype for single deletion mutant
@@ -1946,7 +1953,10 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         # Per-pair strain from the SI comments column: "MATa" -> BY4741, otherwise
         # BY4742 (see _load_authoritative_gstf_pairs).
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain=strain
+            species="Saccharomyces cerevisiae",
+            strain=strain,
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
 
         # Create genotype for double deletion mutant

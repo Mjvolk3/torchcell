@@ -20,7 +20,7 @@ RECORD = one (arm, plate, well, read hour) ``PromoterActivityExperiment``:
   two wells of different promoters different strains; the reporter gene, the episomal
   localization and the native MG1655 origin of the promoter are constant across the
   library. Nothing in the chromosome is edited, so
-  ``AssemblyReferenceGenome.background`` is ``None``: the host IS the reference.
+  ``ReferenceGenome.background`` is ``None``: the host IS the reference.
 - ENVIRONMENT: ``LB`` Miller at 37 C, aerobic, ``duration_hours`` = the read hour (hours
   after the 1:50 subculture into the assay plate), plus the arm's antibiotic as one
   ``SmallMoleculePerturbation`` ON THE READS FROM HOUR FIVE ONWARD ONLY. The dose went
@@ -189,7 +189,6 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import LB
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
     Concentration,
     ConcentrationUnit,
     DoseBasis,
@@ -202,6 +201,7 @@ from torchcell.datamodels.schema import (
     PromoterActivityExperimentReference,
     PromoterActivityPhenotype,
     Publication,
+    ReferenceGenome,
     ReporterReadout,
     SampleUnit,
     SmallMoleculePerturbation,
@@ -1153,7 +1153,7 @@ def build_experiment(
 
 def build_reference(
     dataset_name: str,
-    genome_reference: AssemblyReferenceGenome,
+    genome_reference: ReferenceGenome,
     hour: float,
     phenotype: PromoterActivityPhenotype,
 ) -> PromoterActivityExperimentReference:

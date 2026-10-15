@@ -180,7 +180,11 @@ HO_DELETION_DESCRIPTION = (
     "HO deletion marked 'yes' in Peter 2018 Supplementary Table 1 ('HO deletion'); the "
     "table and the paper do not name the marker that replaced HO"
 )
-#: The reference the two loss-of-function matrices were called against (Methods).
+#: The reference the two loss-of-function matrices were called against (Methods), kept
+#: verbatim in the ``release_assembly`` sourced value. The spans pin the deposited set
+#: ``SGD_S288C_R64``: R64-1-1 and R64-4-1 are annotation releases of one sequence,
+#: NCBI assembly R64 (GCA_000146045.2), measured byte-identical across all 16 nuclear
+#: chromosomes on 2026-10-15 (``registry.SGD_S288C_R64_GENBANK_ACCESSION``).
 RELEASE_ASSEMBLY = "R64-1-1"
 EUPLOID = "euploid"
 
@@ -960,7 +964,7 @@ def _span(ch: Any, start: Any, stop: Any) -> GenomicSpan:
         chromosome=f"chr{_ROMAN[n - 1]}",
         start=int(start),
         end=int(stop),
-        assembly=RELEASE_ASSEMBLY,
+        assembly=SGD_S288C_R64,
     )
 
 

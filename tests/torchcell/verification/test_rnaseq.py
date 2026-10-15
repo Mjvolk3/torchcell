@@ -44,6 +44,10 @@ from torchcell.datamodels.schema import (
     SgaKanMxDeletionPerturbation,
     Temperature,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.report import Level, LevelResult, Provenance
 from torchcell.verification.rnaseq import rnaseq_gene_set, verify_rnaseq_dataset
 
@@ -104,7 +108,10 @@ def _tpm_record(
     reference = RNASeqExpressionExperimentReference(
         dataset_name="test",
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae",
+            strain="S288C",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=env.model_copy(),
         phenotype_reference=RNASeqExpressionPhenotype(
@@ -139,7 +146,10 @@ def _log2_record(
     reference = PseudobulkExpressionExperimentReference(
         dataset_name="test",
         genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4741"
+            species="Saccharomyces cerevisiae",
+            strain="BY4741",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
         environment_reference=env.model_copy(),
         phenotype_reference=PseudobulkExpressionPhenotype(
@@ -461,7 +471,11 @@ def _library(tpm: dict[str, float], count: dict[str, int]) -> dict[str, Any]:
     reference = RNASeqExpressionExperimentReference(
         dataset_name="test",
         genome_reference=ReferenceGenome(
-            species="Escherichia coli", strain="MG1655", ploidy="haploid"
+            species="Escherichia coli",
+            strain="MG1655",
+            ploidy="haploid",
+            assembly_set="ecoli_K12_MG1655_ASM584v2",
+            assembly_accession="GCA_000005845.2",
         ),
         environment_reference=env.model_copy(),
         phenotype_reference=RNASeqExpressionPhenotype(

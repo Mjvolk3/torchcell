@@ -166,10 +166,6 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     BACTERIAL_ASSEMBLY_SETS,
-    BacterialMetaboliteExperiment,
-    BacterialMetaboliteExperimentReference,
-    BacterialProteinAbundanceExperiment,
-    BacterialProteinAbundanceExperimentReference,
     Concentration,
     ConcentrationUnit,
     DeletionStrainPerturbation,
@@ -183,7 +179,11 @@ from torchcell.datamodels.schema import (
     Media,
     MediaComponent,
     MediaComponentRole,
+    MetaboliteExperiment,
+    MetaboliteExperimentReference,
     MetabolitePhenotype,
+    ProteinAbundanceExperiment,
+    ProteinAbundanceExperimentReference,
     ProteinAbundancePhenotype,
     Publication,
     SampleUnit,
@@ -2112,12 +2112,12 @@ class MetabolomeIshii2007Dataset(_Ishii2007Dataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialMetaboliteExperiment
+        return MetaboliteExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialMetaboliteExperimentReference
+        return MetaboliteExperimentReference
 
     @post_process
     def process(self) -> None:
@@ -2157,7 +2157,7 @@ class MetabolomeIshii2007Dataset(_Ishii2007Dataset):
         with env_out.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for idx, column in enumerate(tqdm(kept, desc=self.name)):
                 levels = self._levels(sheet, rows, keys, column.column)
-                experiment = BacterialMetaboliteExperiment(
+                experiment = MetaboliteExperiment(
                     dataset_name=self.name,
                     genotype=self._genotype_of(column, genes),
                     environment=environment(
@@ -2178,7 +2178,7 @@ class MetabolomeIshii2007Dataset(_Ishii2007Dataset):
                         f"{column.label}: its series reference "
                         f"{reference_column.sample_id} shares no metabolite with it"
                     )
-                reference = BacterialMetaboliteExperimentReference(
+                reference = MetaboliteExperimentReference(
                     dataset_name=self.name,
                     genome_reference=genome_reference,
                     environment_reference=reference_env.model_copy(),
@@ -2300,12 +2300,12 @@ class ProteomeIshii2007Dataset(_Ishii2007Dataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialProteinAbundanceExperiment
+        return ProteinAbundanceExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialProteinAbundanceExperimentReference
+        return ProteinAbundanceExperimentReference
 
     @post_process
     def process(self) -> None:
@@ -2368,7 +2368,7 @@ class ProteomeIshii2007Dataset(_Ishii2007Dataset):
                 if dropped:
                     unbaselined[column.label] = dropped
                 reference_only += len(set(ref_levels) - shared)
-                experiment = BacterialProteinAbundanceExperiment(
+                experiment = ProteinAbundanceExperiment(
                     dataset_name=self.name,
                     genotype=self._genotype_of(column, genes),
                     environment=environment(
@@ -2378,7 +2378,7 @@ class ProteomeIshii2007Dataset(_Ishii2007Dataset):
                         {k: levels[k] for k in shared}, {k: errors[k] for k in shared}
                     ),
                 )
-                reference = BacterialProteinAbundanceExperimentReference(
+                reference = ProteinAbundanceExperimentReference(
                     dataset_name=self.name,
                     genome_reference=genome_reference,
                     environment_reference=reference_env.model_copy(),

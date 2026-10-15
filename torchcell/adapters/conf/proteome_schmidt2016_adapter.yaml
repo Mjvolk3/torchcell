@@ -1,4 +1,4 @@
-# Schmidt 2016 proteome: 14 BW25113 growth conditions, BacterialProteinAbundanceExperiment.
+# Schmidt 2016 proteome: 14 BW25113 growth conditions, ProteinAbundanceExperiment.
 # Every genotype is the wild type (0 perturbations in 14 of 14 records), so neither
 # `bacterial perturbation` nor `perturbation to genotype` is enabled; the paper's three
 # deletion strains carry no abundance data and are not loaded. The environment carries

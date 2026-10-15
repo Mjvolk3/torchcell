@@ -140,6 +140,10 @@ from torchcell.literature.manifest import (
     RetrievalMethod,
     RetrievalRecord,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import (
@@ -662,6 +666,8 @@ class SmfBaryshnikova2010Dataset(ExperimentDataset):
             genome_reference=ReferenceGenome(
                 species="Saccharomyces cerevisiae",
                 strain=str(_SV_BACKGROUND_STRAIN.value),
+                assembly_set=SGD_S288C_R64,
+                assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
             ),
             environment_reference=self.environment(kind),
             phenotype_reference=FitnessPhenotype(

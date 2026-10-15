@@ -1,5 +1,5 @@
 # Baba 2006 Table 3 OD600 growth yield: 11,735 BW25113 Keio mutant readings,
-# BacterialEnvironmentResponseExperiment, MeasurementType.optical_density (absolute). One
+# EnvironmentResponseExperiment, MeasurementType.optical_density (absolute). One
 # BacterialDeletionPerturbation per record (released MG1655 b-number, JW id as the strain
 # accession), served as `bacterial perturbation`. No record carries an environment
 # perturbation: the three conditions differ in medium and duration. The reference's

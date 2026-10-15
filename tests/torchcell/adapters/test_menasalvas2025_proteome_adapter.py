@@ -4,7 +4,7 @@
 """``torchcell/adapters/menasalvas2025_proteome_adapter.py``: the conf it loads, the gate's view of it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Menasalvas 2025 deposited proteome: 6 samples (three strains over two growth phases),
-BacterialProteinAbundanceExperiment. Every genotype carries the integrated pathway and
+ProteinAbundanceExperiment. Every genotype carries the integrated pathway and
 biosensor leaves and, for the two improved strains, the seven deletions, served as
 `bacterial perturbation`; the two TEAM-2595 records additionally carry the 75 called
 variants of data S1-5, served as `bacterial sequence variant perturbation`, so the

@@ -35,11 +35,11 @@ import torchcell.datasets.ecoli.schmidt2016 as sm
 from torchcell.data import file_sha256
 from torchcell.datamodels.media import M9_AA_SCHMIDT2016
 from torchcell.datamodels.schema import (
-    AssemblyReferenceGenome,
     BacterialAssemblySet,
     BacterialGeneNamespace,
     CultureGrowthPhase,
     EnvironmentPhysicalPerturbation,
+    ReferenceGenome,
     SmallMoleculePerturbation,
 )
 
@@ -426,8 +426,8 @@ class FakeGenome:
         self.genbank = _Annotation({gene: _Locus(gene) for gene in KEPT_GENES})
 
 
-def _reference_genome() -> AssemblyReferenceGenome:
-    return AssemblyReferenceGenome(
+def _reference_genome() -> ReferenceGenome:
+    return ReferenceGenome(
         species="Escherichia coli",
         strain=sm.SCHMIDT_REFERENCE_STRAIN,
         ploidy="haploid",

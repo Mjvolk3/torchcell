@@ -45,7 +45,6 @@ import torchcell.datasets.pputida.carruthers2025 as c25
 from torchcell.datamodels.media import M9_NREL_CARRUTHERS2025
 from torchcell.datamodels.schema import (
     AlleleEdit,
-    BacterialProteinAbundanceExperiment,
     ConcentrationUnit,
     CultureEnvironment,
     DeletionStrainPerturbation,
@@ -53,9 +52,11 @@ from torchcell.datamodels.schema import (
     Genotype,
     ProductTiterExperiment,
     ProductTiterExperimentReference,
+    ProteinAbundanceExperiment,
     ProteinAbundancePhenotype,
     SampleUnit,
     SmallMoleculePerturbation,
+    StrainReferenceGenome,
     UncertaintyType,
 )
 from torchcell.datasets.bacteria_common import (
@@ -265,7 +266,7 @@ def test_the_titer_slot_keeps_the_protocol_and_the_proteome_slot_still_drops_it(
 
     pydantic serializes a field by its DECLARED type.
     ``ProductTiterExperiment.environment`` is now ``CultureEnvironment``, so the vessel,
-    volume and shaking are dumped; ``BacterialProteinAbundanceExperiment.environment``
+    volume and shaking are dumped; ``ProteinAbundanceExperiment.environment``
     is still ``Environment``, so the same object there keeps them as python attributes
     and dumps without them, silently. That is why the narrowing had to be per family.
     """
@@ -282,7 +283,7 @@ def test_the_titer_slot_keeps_the_protocol_and_the_proteome_slot_still_drops_it(
     assert culture["working_volume_ul"] == pytest.approx(1500.0)
     assert ProductTiterExperiment.model_validate(titer.model_dump()) == titer
 
-    proteome = BacterialProteinAbundanceExperiment(
+    proteome = ProteinAbundanceExperiment(
         dataset_name="probe",
         genotype=Genotype(perturbations=perturbations),
         environment=env,
@@ -1928,7 +1929,7 @@ def test_the_reference_is_built_from_the_served_assembly_report(
     assert reference.strain == c25.CHASSIS_STRAIN
     assert reference.assembly_set == c25.KT2440_ASSEMBLY_SET
     assert reference.assembly_accession == "GCA_000007565.2"
-    assert reference.background is not None
+    assert isinstance(reference, StrainReferenceGenome)
 
 
 def test_standard_names_prefers_the_annotations_symbol_and_falls_back_to_the_tag(

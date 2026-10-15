@@ -4,7 +4,7 @@
 # Test file: tests/torchcell/adapters/test_potel2018_adapter.py
 #
 # Potel 2018 phosphosite intensities: 12 released samples,
-# BacterialPhosphositeIntensityExperiment. Every genotype is the wild type W3110 (0
+# PhosphositeIntensityExperiment. Every genotype is the wild type W3110 (0
 # perturbations in 12 of 12 records), so neither `bacterial perturbation` nor
 # `perturbation to genotype` is enabled. No environment carries a perturbation (the two
 # media differ by their carbon-source component), so the environment-perturbation pair

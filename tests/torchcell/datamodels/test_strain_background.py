@@ -52,6 +52,10 @@ from torchcell.datamodels.strain_background import (
     standard_allele,
     standard_background,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import (
     ProvenanceGap,
@@ -148,12 +152,20 @@ def test_allele_systematic_name_is_validated() -> None:
 
 def test_genomic_span_is_ordered_and_one_based() -> None:
     span = s.GenomicSpan(
-        chromosome="chrXV", start=721946, end=722608, assembly="R64-4-1"
+        chromosome="chrXV",
+        start=721946,
+        end=722608,
+        assembly="sgd_S288C_R64-4-1_20230830",
     )
     assert span.end - span.start == 662
     for start, end in ((0, 5), (10, 9)):
         with pytest.raises(ValueError):
-            s.GenomicSpan(chromosome="chrXV", start=start, end=end, assembly="R64-4-1")
+            s.GenomicSpan(
+                chromosome="chrXV",
+                start=start,
+                end=end,
+                assembly="sgd_S288C_R64-4-1_20230830",
+            )
 
 
 # ------------------------------------------------------------------ StrainBackground
@@ -251,7 +263,12 @@ def test_functional_copies_refuses_a_gapped_zygosity() -> None:
 
 def _strain_reference_genome() -> s.StrainReferenceGenome:
     return s.StrainReferenceGenome(
-        species=SPECIES, strain="BY4743", ploidy="diploid", background=_by4743()
+        species=SPECIES,
+        strain="BY4743",
+        ploidy="diploid",
+        background=_by4743(),
+        assembly_set=SGD_S288C_R64,
+        assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
     )
 
 
@@ -272,14 +289,25 @@ def _strain_reference() -> s.StrainEnvironmentResponseExperimentReference:
     )
 
 
-def test_plain_reference_genome_is_unchanged() -> None:
-    """The base class every served dataset uses gained no field (its dump, and so
-    every served genome node id, is byte-identical to before #507).
+def test_plain_reference_genome_carries_the_pin_and_no_background() -> None:
+    """The base class every served dataset uses now carries the assembly pin (P2).
+
+    #507 kept this dump byte-identical so no served genome node id moved; P2 moves
+    every one of them on purpose (the pin is a fact of every record, and a genome node
+    id is the sha256 of this dump), which its record states. The background still
+    lives on ``StrainReferenceGenome`` alone.
     """
-    reference = s.ReferenceGenome(species=SPECIES, strain="S288C")
+    reference = s.ReferenceGenome(
+        species=SPECIES,
+        strain="S288C",
+        assembly_set=SGD_S288C_R64,
+        assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
+    )
     assert json.dumps(reference.model_dump()) == (
-        '{"species": "Saccharomyces cerevisiae", "strain": "S288C", '
-        '"ploidy": "haploid"}'
+        '{"provenance_gaps": [], "species": "Saccharomyces cerevisiae", '
+        '"strain": "S288C", "ploidy": "haploid", '
+        '"assembly_set": "sgd_S288C_R64-4-1_20230830", '
+        '"assembly_accession": "GCA_000146045.2"}'
     )
     assert "background" not in s.ReferenceGenome.model_fields
     assert "culture_format" not in s.Environment.model_fields
@@ -287,18 +315,34 @@ def test_plain_reference_genome_is_unchanged() -> None:
 
 def test_strain_reference_genome_requires_a_background() -> None:
     with pytest.raises(ValueError):
-        s.StrainReferenceGenome(species=SPECIES, strain="BY4743", ploidy="diploid")  # type: ignore[call-arg]  # the missing field is the point
+        s.StrainReferenceGenome(
+            species=SPECIES,
+            strain="BY4743",
+            ploidy="diploid",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
+        )  # type: ignore[call-arg]  # the missing field is the point
 
 
 def test_strain_reference_genome_must_agree_on_name_and_ploidy() -> None:
     by4743 = _by4743()
     with pytest.raises(ValueError, match="name"):
         s.StrainReferenceGenome(
-            species=SPECIES, strain="BY4741", ploidy="diploid", background=by4743
+            species=SPECIES,
+            strain="BY4741",
+            ploidy="diploid",
+            background=by4743,
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
     with pytest.raises(ValueError, match="ploidy"):
         s.StrainReferenceGenome(
-            species=SPECIES, strain="BY4743", ploidy="haploid", background=by4743
+            species=SPECIES,
+            strain="BY4743",
+            ploidy="haploid",
+            background=by4743,
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
 
 

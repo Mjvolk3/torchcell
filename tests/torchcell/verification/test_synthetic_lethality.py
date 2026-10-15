@@ -32,6 +32,10 @@ from torchcell.datamodels.schema import (
     SyntheticRescuePhenotype,
     Temperature,
 )
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.report import LevelResult, Provenance
 from torchcell.verification.synthetic_lethality import (
     SYNTHETIC_LETHALITY,
@@ -83,7 +87,12 @@ def _record(
             for gene in genes
         ]
     )
-    genome = ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
+    genome = ReferenceGenome(
+        species="Saccharomyces cerevisiae",
+        strain="S288C",
+        assembly_set=SGD_S288C_R64,
+        assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
+    )
     experiment: SyntheticLethalityExperiment | SyntheticRescueExperiment
     reference: (
         SyntheticLethalityExperimentReference | SyntheticRescueExperimentReference

@@ -11,7 +11,7 @@ arrayed F- recipient collection of 8,073 strains, and released the resulting
 interaction (S) scores **in full**. Supplementary Table 4's fourth sheet is a
 39 x 8,073 matrix whose banner reads, verbatim, "without any filtering parameters".
 
-RECORD = one ``BacterialGeneInteractionExperiment`` per CELL of that matrix: a two-gene
+RECORD = one ``GeneInteractionExperiment`` per CELL of that matrix: a two-gene
 ``Genotype`` whose ``cat``-marked query is a ``DeletionStrainPerturbation`` and whose
 ``kan``-marked recipient is one of the array's two strain kinds -- a
 ``DeletionStrainPerturbation`` for a Keio isolate, a
@@ -267,10 +267,7 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import LB
 from torchcell.datamodels.schema import (
     BACTERIAL_ASSEMBLY_SETS,
-    AssemblyReferenceGenome,
     BacterialAssemblySet,
-    BacterialGeneInteractionExperiment,
-    BacterialGeneInteractionExperimentReference,
     BacterialGeneNamespace,
     BacterialReleasedStrainPerturbation,
     BacterialStrainBackground,
@@ -278,6 +275,8 @@ from torchcell.datamodels.schema import (
     Environment,
     Experiment,
     ExperimentReference,
+    GeneInteractionExperiment,
+    GeneInteractionExperimentReference,
     GeneInteractionPhenotype,
     Genotype,
     MarkedAllelePerturbation,
@@ -285,6 +284,7 @@ from torchcell.datamodels.schema import (
     MediaComponent,
     MediaComponentRole,
     Publication,
+    ReferenceGenome,
     ReleasedStrainKind,
     SampleUnit,
     StrainConstruction,
@@ -1893,7 +1893,7 @@ def chassis_background() -> BacterialStrainBackground:
     )
 
 
-def reference_genome(data_root: str | None = None) -> AssemblyReferenceGenome:
+def reference_genome(data_root: str | None = None) -> ReferenceGenome:
     """MG1655 pinned to its GenBank assembly, carrying the conjugant chassis."""
     return assembly_reference(
         REFERENCE_STRAIN_NAME, background=chassis_background(), data_root=data_root
@@ -1911,9 +1911,9 @@ def build_experiment(
     n_samples: int,
     *,
     recipient_is_hypomorph: bool = False,
-) -> BacterialGeneInteractionExperiment:
+) -> GeneInteractionExperiment:
     """The record of one matrix cell, with that cell's own measured colony count."""
-    return BacterialGeneInteractionExperiment(
+    return GeneInteractionExperiment(
         dataset_name=dataset_name,
         genotype=pair_genotype(
             query_tag,
@@ -1929,10 +1929,10 @@ def build_experiment(
 
 
 def build_reference(
-    dataset_name: str, genome: AssemblyReferenceGenome
-) -> BacterialGeneInteractionExperimentReference:
+    dataset_name: str, genome: ReferenceGenome
+) -> GeneInteractionExperimentReference:
     """The unperturbed chassis of the screen, scoring 0."""
-    return BacterialGeneInteractionExperimentReference(
+    return GeneInteractionExperimentReference(
         dataset_name=dataset_name,
         genome_reference=genome,
         environment_reference=SCREEN_ENVIRONMENT.model_copy(),
@@ -2528,12 +2528,12 @@ class GeneInteractionButland2008Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialGeneInteractionExperiment
+        return GeneInteractionExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialGeneInteractionExperimentReference
+        return GeneInteractionExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -2734,7 +2734,7 @@ VERIFIER_PROVENANCE = Provenance(
     sha256=DATA_SHA256[TABLE_S4],
     method="Supplementary Table 4, sheet 'S scores': the interaction score of every "
     "(query strain, recipient strain) cell of the unfiltered 39 x 8,073 matrix. One "
-    "BacterialGeneInteractionExperiment per cell, a two-leaf genotype against MG1655 "
+    "GeneInteractionExperiment per cell, a two-leaf genotype against MG1655 "
     "whose query is a cat-marked DeletionStrainPerturbation and whose recipient is a "
     "kan-marked DeletionStrainPerturbation carrying its isolate token (a Keio row) or "
     "a kan-marked MarkedAllelePerturbation with a C-terminal SPA tag (a "
@@ -2747,8 +2747,8 @@ VERIFIER_PROVENANCE = Provenance(
 
 def _validate_record(record: Record) -> None:
     """L0: the experiment and its reference validate as the assembly-pinned pair."""
-    BacterialGeneInteractionExperiment.model_validate(record["experiment"])
-    BacterialGeneInteractionExperimentReference.model_validate(record["reference"])
+    GeneInteractionExperiment.model_validate(record["experiment"])
+    GeneInteractionExperimentReference.model_validate(record["reference"])
 
 
 def _l1_two_distinct_genes(records: Sequence[Record]) -> LevelResult:

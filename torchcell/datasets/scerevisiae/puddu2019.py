@@ -170,6 +170,10 @@ from torchcell.literature.manifest import (
     sha256_file,
 )
 from torchcell.sequence import GeneSet
+from torchcell.sequence.genome.registry import (
+    SGD_S288C_R64,
+    SGD_S288C_R64_GENBANK_ACCESSION,
+)
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import (
     ProvenanceGap,
@@ -958,6 +962,8 @@ def reference_genome() -> StrainReferenceGenome:
         strain=BACKGROUND_STRAIN,
         ploidy="diploid",
         background=puddu_background(),
+        assembly_set=SGD_S288C_R64,
+        assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
     )
 
 

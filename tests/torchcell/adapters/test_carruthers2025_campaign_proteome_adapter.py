@@ -5,7 +5,7 @@
 loads, the gate's view of it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Carruthers 2025 campaign proteome: 465 CRISPRi strain-cycles,
-BacterialProteinAbundanceExperiment. Per record the five pIY670
+ProteinAbundanceExperiment. Per record the five pIY670
 HeterologousPathwayPerturbation leaves plus one to five
 CrisprInterferencePerturbation leaves, all served as `bacterial perturbation`.
 Every CRISPRi leaf carries a CrisprConstruct, so the crispr-construct pair is enabled.

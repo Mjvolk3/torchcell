@@ -41,7 +41,11 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
     serve_tier,
     write_assembly,
 )
-from torchcell.datamodels.schema import AssemblyReferenceGenome, MeasurementType
+from torchcell.datamodels.schema import (
+    MeasurementType,
+    ReferenceGenome,
+    StrainReferenceGenome,
+)
 from torchcell.sequence.genome.ecoli.k12 import MG1655_ASSEMBLY, EcoliK12MG1655Genome
 
 #: The shared verifier's genome-reference rules. Under the owner rule (#1057) a gene
@@ -51,7 +55,7 @@ GENOME_REFERENCE_RULES = frozenset(
     {"canonical_gene_names", "gene_containment_sgd", "current_genome_genes"}
 )
 
-MG1655_PIN = AssemblyReferenceGenome(
+MG1655_PIN = ReferenceGenome(
     species="Escherichia coli",
     strain="MG1655",
     assembly_set="ecoli_K12_MG1655_ASM584v2",
@@ -370,11 +374,12 @@ def built(
 
     def pin(
         strain: str, *, background: Any = None, data_root: Any = None
-    ) -> AssemblyReferenceGenome:
+    ) -> ReferenceGenome:
         if background is None:
             return MG1655_PIN
-        return MG1655_PIN.model_copy(
-            update={"strain": background.name, "background": background}
+        return StrainReferenceGenome.model_validate(
+            MG1655_PIN.model_dump()
+            | {"strain": background.name, "background": background}
         )
 
     monkeypatch.setattr(lg, "assembly_reference", pin)
@@ -420,7 +425,7 @@ def test_process_writes_one_record_per_stored_rate_with_the_aggregate_reference(
     backgrounds = [
         i["reference"].genome_reference.background
         for i in items
-        if i["reference"].genome_reference.background is not None
+        if isinstance(i["reference"].genome_reference, StrainReferenceGenome)
     ]
     assert sorted(b.name for b in backgrounds) == [
         "BW25113",

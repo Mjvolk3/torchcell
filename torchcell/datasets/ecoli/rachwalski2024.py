@@ -10,7 +10,7 @@ built a 384-well arrayed collection of conjugative CRISPRi plasmids (pFD152, Add
 125546) targeting the essential genes of *E. coli*, conjugated it into BW25113 and into
 BW25113 ``lpp``, and separately conjugated three single knockdowns into the whole Keio
 deletion collection. :class:`CrispriCrossRachwalski2024Dataset` serves the three released
-growth tables as ``BacterialFitnessExperiment`` records.
+growth tables as ``FitnessExperiment`` records.
 
 RECORD = one (strain, medium, inducer dose) normalized colony growth:
 
@@ -184,8 +184,6 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import LB, MOPS_MINIMAL
 from torchcell.datamodels.schema import (
-    BacterialFitnessExperiment,
-    BacterialFitnessExperimentReference,
     ComponentDefinition,
     Concentration,
     ConcentrationUnit,
@@ -197,6 +195,8 @@ from torchcell.datamodels.schema import (
     Environment,
     Experiment,
     ExperimentReference,
+    FitnessExperiment,
+    FitnessExperimentReference,
     FitnessPhenotype,
     Genotype,
     Media,
@@ -1535,9 +1535,9 @@ def deletion(
     )
 
 
-def build_reference(dataset_name: str) -> BacterialFitnessExperimentReference:
+def build_reference(dataset_name: str) -> FitnessExperimentReference:
     """The empty vector on the uninduced rich plate: the normalization baseline."""
-    return BacterialFitnessExperimentReference(
+    return FitnessExperimentReference(
         dataset_name=dataset_name,
         genome_reference=assembly_reference(BW25113_STRAIN),
         environment_reference=environment(MEDIUM_LB, 0.0, timed=True),
@@ -1784,12 +1784,12 @@ class CrispriCrossRachwalski2024Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialFitnessExperiment
+        return FitnessExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialFitnessExperimentReference
+        return FitnessExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -1946,7 +1946,7 @@ class CrispriCrossRachwalski2024Dataset(ExperimentDataset):
             for row in tqdm(rows, desc="rachwalski2024"):
                 is_crossed = len(row.genotype.perturbations) > 1
                 for dose, growth in zip(row.doses, row.values, strict=True):
-                    experiment = BacterialFitnessExperiment(
+                    experiment = FitnessExperiment(
                         dataset_name=self.name,
                         genotype=row.genotype,
                         environment=environments[(row.medium, dose, row.timed)],
@@ -2145,7 +2145,7 @@ VERIFIER_PROVENANCE = Provenance(
     citation_key=CITATION_KEY,
     sha256=RAW_FILES_BY_NAME[TABLE_S2_FILE].sha256,
     method=(
-        "One BacterialFitnessExperiment per (strain, medium, aTc dose). fitness = the "
+        "One FitnessExperiment per (strain, medium, aTc dose). fitness = the "
         "released average normalized colony growth, verbatim: for Tables S2A and S3 the "
         "strain's colony density over the mean of the 17 empty-vector wells of that "
         "plate (MEASURED to be exactly 1.0000 in each of the 24 columns), for Table S4A "

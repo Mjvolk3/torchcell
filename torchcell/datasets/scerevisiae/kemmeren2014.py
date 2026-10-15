@@ -133,7 +133,7 @@ N_EXPECTED_MAX_REPLICATES_DELETION = 4  # 2 biological × 2 dye-swap measurement
 # served it under, read from that build's preprocess/data.csv (``title``,
 # ``systematic_gene_name``), never from the genome. Every ORF is a Table S1 ``orf name``
 # (so the mating-type row joins) except YNCB0010W and YLR003C, which join through the
-# TLC1 and CMS1 rows. This table is pending group 1's released-gene-name leaf (a
+# TLC1 and CMS1 rows. This table is pending group 1's released-identifier leaf (a
 # GenePerturbation child carrying the released symbol with ``systematic_gene_name`` as
 # a typed gap); once it lands, these 38 names are stored verbatim and the table goes.
 RELEASE_TITLE_NAMES_WITHOUT_AN_ORF: dict[str, str] = {

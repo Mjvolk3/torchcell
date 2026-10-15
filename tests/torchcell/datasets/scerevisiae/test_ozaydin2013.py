@@ -21,7 +21,7 @@ pinned in ``test_ozaydin2013_synthetic.py`` and not repeated here. Added:
   when the pin matches; a present file whose digest matches the pin returns without a
   request;
 - the build ledger line (7 released rows, 5 records, 1 text-only row and 1 row
-  deferred to the released-gene-name leaf) and ``dropped_records.json``;
+  deferred to the released-identifier leaf) and ``dropped_records.json``;
 - one record per released row (2026.10.12, #1045): two plates of one ORF are two
   records with their own scores, flags and strains, never a maximum; a text-only row
   is listed in the ledger with its text, and the strain is the row's own cell;
@@ -249,7 +249,7 @@ def test_build_ledger_lines(tmp_path: Path, caplog: pytest.LogCaptureFixture) ->
     messages = [r.getMessage() for r in caplog.records if r.name == m.__name__]
     assert messages == [
         "Ozaydin: 7 released rows, 6 records (one per scored row); 1 text-only rows "
-        "listed in the ledger, 1 names on the released-gene-name leaf",
+        "listed in the ledger, 1 names on the released-identifier leaf",
         "Wrote 6 Ozaydin visual-score experiments to LMDB",
     ]
     ledger = json.loads(

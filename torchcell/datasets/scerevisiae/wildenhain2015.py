@@ -37,7 +37,7 @@ background rides on the reference's ``StrainReferenceGenome``. Each record's gen
 
 The released rows whose ``orf`` is not a systematic name are strain screens, not
 controls: ``NULL/wild type`` is the BY4741 screen; ``NA/NNK1`` is mapped to YKL171W
-(a synonym route that the released-gene-name leaf of #1067's yeast analogue replaces
+(a synonym route that the released-identifier leaf of #1067's yeast analogue replaces
 once it exists; until then the mapping keeps the 678 rows served); ``NA/TSCII``,
 ``NULL/YGL11`` and ``NULL/wtn01`` name no strain a mirrored source identifies and are
 held in the ledger under ``strain_label_unresolved`` for the same leaf. No genome is
@@ -78,7 +78,7 @@ released screen is stored as released.
 
 RECORDS DROPPED (rule + count in ``preprocess/dropped_records.json``, applied in this
 order): ``strain_label_unresolved`` (the TSCII, YGL11 and wtn01 rows, held for the
-released-gene-name leaf), then ``re_exported_duplicate_row`` (the release's own
+released-identifier leaf), then ``re_exported_duplicate_row`` (the release's own
 byte-identical re-emissions). The 5 SID-only compounds (no CID and no SMILES) are
 STORED: ``resolved_compound`` names them by their SID and attaches the typed
 ``inchikey`` gap, and the ledger lists them under
@@ -617,7 +617,7 @@ class NonOrfStrainLabel(BaseModel):
     """How one released (orf, sym) pair whose ``orf`` is not a systematic name is read.
 
     ``mapped_to_orf``: a real gene's strain released without its ORF (served on that
-    ORF by a pinned map, no genome read; the released-gene-name leaf replaces the map).
+    ORF by a pinned map, no genome read; the released-identifier leaf replaces the map).
     ``wild_type``: the BY4741 parental screen (served as the empty genotype).
     ``unresolved``: no strain the mirrored sources name; held in the ledger under
     ``strain_label_unresolved`` for the same leaf.
@@ -1275,7 +1275,7 @@ class EnvChemgenWildenhain2015Dataset(ExperimentDataset):
         }
         unresolved = set(unresolved_pairs)
         # Rule 1: unresolved strain labels are held, whatever their compound, until the
-        # released-gene-name leaf exists. Counted in released rows.
+        # released-identifier leaf exists. Counted in released rows.
         held = {key for key, cell in cells.items() if cell.orf in unresolved}
         held_by_label = {
             label: sum(1 for key in held if cells[key].orf == label)
@@ -1370,7 +1370,7 @@ class EnvChemgenWildenhain2015Dataset(ExperimentDataset):
                     description=(
                         "the released orf is not a systematic name and the sym names "
                         "no strain a mirrored source identifies (NON_ORF_STRAIN_LABELS); "
-                        "held for the released-gene-name leaf. Counted in released "
+                        "held for the released-identifier leaf. Counted in released "
                         "rows. Items: label (cells, released rows)"
                     ),
                     n_records=n_held_rows,

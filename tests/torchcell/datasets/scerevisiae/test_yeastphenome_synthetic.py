@@ -534,10 +534,10 @@ def test_het_column_is_a_copy_number_drop_in_by4743(
     (released,) = ds[9]["experiment"]["genotype"]["perturbations"]
     assert (
         released["perturbation_type"],
-        released["released_gene_name"],
+        released["systematic_gene_name"],
         released["released_kind"],
-        released["marker"],
-    ) == ("released_gene_name", "not_an_orf", "heterozygous_deletion", "KanMX")
+        released["cassette"],
+    ) == ("released_identifier", "not_an_orf", "heterozygous_deletion", "KanMX")
     assert ds[2]["experiment"]["genotype"]["perturbations"][0]["released_kind"] == (
         "deletion"
     )

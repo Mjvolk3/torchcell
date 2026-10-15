@@ -88,8 +88,8 @@ from torchcell.datamodels.schema import (
     MetabolitePhenotype,
     Publication,
     ReferenceGenome,
-    ReleasedGeneKind,
-    ReleasedGeneNamePerturbation,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
@@ -116,22 +116,22 @@ _NOT_A_STRAIN = frozenset({"nan", "WT"})
 
 def _released_deletion(
     orf: str,
-) -> KanMxDeletionPerturbation | ReleasedGeneNamePerturbation:
+) -> KanMxDeletionPerturbation | ReleasedIdentifierPerturbation:
     """The deletion under the released identifier (#1045): an ORF-shaped one on the
-    placed KanMX leaf with both names the ORF, any other on the released-gene-name leaf
+    placed KanMX leaf with both names the ORF, any other on the released-identifier leaf
     verbatim (kind deletion, marker KanMX).
     """
     if _SYSTEMATIC_RE.match(orf):
         return KanMxDeletionPerturbation(
             systematic_gene_name=orf, perturbed_gene_name=orf
         )
-    return ReleasedGeneNamePerturbation(
+    return ReleasedIdentifierPerturbation(
         systematic_gene_name=orf,
         gene_namespace="scerevisiae_s288c_sgd_systematic",
         perturbed_gene_name=orf,
-        released_gene_name=orf,
-        released_kind=ReleasedGeneKind.deletion,
-        marker="KanMX",
+        identifier_kind="strain column entry of Table S3, as released",
+        released_kind=ReleasedKind.deletion,
+        cassette="KanMX",
     )
 
 
@@ -371,7 +371,7 @@ class AminoAcidMulleder2016Dataset(ExperimentDataset):
                 }
             )
         log.info(
-            "Mulleder: %d released ORFs stored, %d on the released-gene-name leaf%s, "
+            "Mulleder: %d released ORFs stored, %d on the released-identifier leaf%s, "
             "%d blank or WT rows%s",
             len(rows),
             len(released_names),

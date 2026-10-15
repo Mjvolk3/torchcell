@@ -13,7 +13,7 @@ order):
     YAL001C     0.5, 1.0, ..., 9.5   (0.5 * (i + 1) for amino acid i)
     YBR001C     2.0 x 19
     WT          1.0 x 19             the background, not a strain -> no record
-    YLR287-A    1.0 x 19             no ORF form -> the released-gene-name leaf (#1045)
+    YLR287-A    1.0 x 19             no ORF form -> the released-identifier leaf (#1045)
     " YCR001W " 1.0 x 19             stripped
 
 ``robust_summary_statistics`` sheet (amino acid, mean (mM), sd (mM)): mean 0.25 * (i + 1)
@@ -32,7 +32,7 @@ ORF, so every default record has n = 1 per amino acid (issue #488 counts these r
 - the medium as a Finding: the record and its reference carry ``SM_AGAR`` (solid), not
   the liquid ``SM`` subculture the amino acids are extracted from (issue #143);
 - the build ledger: a blank ORF and a ``WT`` row log exactly "2 released ORFs stored, 0
-  on the released-gene-name leaf, 2 blank or WT rows (['WT', 'nan'])"; a second row for
+  on the released-identifier leaf, 2 blank or WT rows (['WT', 'nan'])"; a second row for
   one ORF is refused by name (2026.10.12, #1045: it used to keep the first row);
 - a blank concentration cell and a text cell (``n.d.``) each raise
   ``InvalidConcentrationError`` with an exact message (2026.10.01, issue #528: the blank
@@ -194,8 +194,8 @@ def test_three_records_n_one_with_the_robust_mean_reference(
     assert dataset[2]["experiment"] == _experiment("YLR287-A", [1.0] * 19)
     assert dataset[3]["experiment"] == _experiment("YCR001W", [1.0] * 19)
     (released,) = dataset[2]["experiment"]["genotype"]["perturbations"]
-    assert (released["perturbation_type"], released["released_gene_name"]) == (
-        "released_gene_name",
+    assert (released["perturbation_type"], released["systematic_gene_name"]) == (
+        "released_identifier",
         "YLR287-A",
     )
     assert dataset[0]["reference"] == _reference(_SUMMARY_MEANS)
@@ -468,7 +468,7 @@ def test_ledger_counts_deferred_rows_and_a_repeated_orf_is_refused(
     assert dataset[1]["experiment"] == _experiment("YAL001C", _LEVELS_YAL001C)
     messages = [r.getMessage() for r in caplog.records if r.name == m.__name__]
     assert messages == [
-        "Mulleder: 2 released ORFs stored, 0 on the released-gene-name leaf, 2 blank "
+        "Mulleder: 2 released ORFs stored, 0 on the released-identifier leaf, 2 blank "
         "or WT rows (['WT', 'nan'])",
         "Mulleder: data_raw rows per released ORF {1: 2}; reference n_replicates 2 "
         "(strains the robust mean summarizes)",

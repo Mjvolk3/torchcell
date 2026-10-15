@@ -217,16 +217,6 @@ EXAMPLES: dict[str, dict[str, Any]] = {
         "sample_id": "SD0863b",
         "sample_accession": "ERS838232",
     },
-    # #1045: the released-gene-name leaf refuses the systematic name the generic builder
-    # fills in, and states the released name once more in released_gene_name.
-    "torchcell.datamodels.schema.ReleasedGeneNamePerturbation": {
-        "systematic_gene_name": "ADE2",
-        "gene_namespace": "scerevisiae_s288c_sgd_systematic",
-        "perturbed_gene_name": "ADE2",
-        "released_gene_name": "ADE2",
-        "released_kind": "deletion",
-        "marker": "KanMX",
-    },
     # The generic builder fills every str field with one value, which the #987 leaf's
     # keying rule refuses; a frameshift row released without a code is keyed by its
     # Gene, verbatim.
@@ -461,17 +451,6 @@ EXAMPLES: dict[str, dict[str, Any]] = {
         "call": _SPAN_CALL_EXAMPLE,
         "span_designation": "AE015451:4588139 \u03945,553 bp",
         "span_systematic_gene_names": ["PP_4061", "PP_4063"],
-    },
-    # #691 round 2: the released CRISPR leaf serves both directions, so its direction
-    # is required with no default and the generic builder cannot invent it.
-    "torchcell.datamodels.schema.BacterialReleasedCrisprPerturbation": {
-        "systematic_gene_name": "sokE",
-        "perturbed_gene_name": "sokE",
-        "gene_namespace": "ecoli_k12_mg1655_bnumber",
-        "strain_label": "sokEb4700_32",
-        "identifier_kind": "gene symbol",
-        "expression_direction": "decreased",
-        "crispr": {"effector": "dCas9"},
     },
     "torchcell.datamodels.schema.PromoterReplacementPerturbation": {
         "systematic_gene_name": "b0002",

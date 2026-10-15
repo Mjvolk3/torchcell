@@ -56,9 +56,9 @@ tRNA pair).
 
 IDENTIFIERS ARE STORED AS RELEASED. The screen table names a guide's targets by GENE
 SYMBOL, and that symbol is what each knockdown leaf stores: a
-``BacterialReleasedCrisprPerturbation`` (#1077) keyed by the released symbol with the
+``ReleasedIdentifierPerturbation`` (#1077) keyed by the released symbol with the
 released symbol as its name, ``strain_label`` the 20-nt spacer (the guide's own released
-identity) and ``expression_direction="decreased"``. The loader reads no annotation (the
+identity) and ``released_kind=crispr_interference``. The loader reads no annotation (the
 owner's rule of 2026-10-12: the data is the data, and the genome is a separate layer
 joined at modeling time). Before that rule every symbol went through
 ``reconcile_locus_tags`` to a b-number and 925 guides (1,850 records) whose targeted
@@ -131,7 +131,6 @@ from torchcell.datamodels.media import LB
 from torchcell.datamodels.schema import (
     AssayType,
     BacterialGeneNamespace,
-    BacterialReleasedCrisprPerturbation,
     BacterialStrainBackground,
     Concentration,
     ConcentrationUnit,
@@ -146,6 +145,8 @@ from torchcell.datamodels.schema import (
     MeasurementType,
     Publication,
     ReferenceGenome,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     SampleUnit,
     SmallMoleculePerturbation,
     Temperature,
@@ -1064,9 +1065,7 @@ def screen_phenotype(
     )
 
 
-def crispri_perturbations(
-    rule: RetentionRule,
-) -> list[BacterialReleasedCrisprPerturbation]:
+def crispri_perturbations(rule: RetentionRule) -> list[ReleasedIdentifierPerturbation]:
     """One dCas9 knockdown per distinct gene the guide's perfect matches lie in.
 
     ``n_guides=1`` is a property of the construct, not of the library: one psgRNA
@@ -1079,13 +1078,13 @@ def crispri_perturbations(
         effector=str(EFFECTOR.value), guide_sequence=rule.guide, n_guides=1
     )
     return [
-        BacterialReleasedCrisprPerturbation(
+        ReleasedIdentifierPerturbation(
             systematic_gene_name=symbol,
             perturbed_gene_name=symbol,
             gene_namespace=MG1655_NAMESPACE,
             strain_label=rule.guide,
             identifier_kind=IDENTIFIER_KIND,
-            expression_direction="decreased",
+            released_kind=ReleasedKind.crispr_interference,
             crispr=construct,
         )
         for symbol in rule.stored_tags

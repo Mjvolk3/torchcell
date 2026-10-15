@@ -433,7 +433,7 @@ def test_deletion_genotype_stores_the_released_symbol_and_label() -> None:
         dumped["collection"],
         dumped["cassette"],
     ) == (
-        "bacterial_released_strain",
+        "released_identifier",
         "thrA",
         "thrA",
         f"BW{D}thrA",

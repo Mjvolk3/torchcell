@@ -56,7 +56,6 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
 from torchcell.data import ManifestPinMismatchError, check_manifest_pin
 from torchcell.datamodels.media import MEDIA_LIBRARY
 from torchcell.datamodels.schema import (
-    BacterialReleasedStrainPerturbation,
     DeletionStrainPerturbation,
     GeneInteractionExperiment,
     GeneInteractionExperimentReference,
@@ -64,7 +63,8 @@ from torchcell.datamodels.schema import (
     Genotype,
     MarkedAllelePerturbation,
     MediaComponentRole,
-    ReleasedStrainKind,
+    ReleasedIdentifierPerturbation,
+    ReleasedKind,
     SampleUnit,
     StrainReferenceGenome,
 )
@@ -627,7 +627,7 @@ def test_the_build_keeps_every_pair_the_identifier_rules_allow(
                 p,
                 DeletionStrainPerturbation
                 | MarkedAllelePerturbation
-                | BacterialReleasedStrainPerturbation,
+                | ReleasedIdentifierPerturbation,
             )
         ]
         assert len(marked) == 2
@@ -736,11 +736,11 @@ def test_a_recipient_released_under_no_b_number_is_stored_as_released(
         if p["systematic_gene_name"] == "JW0098"
     ]
     assert len(sides) == 1
-    leaf = BacterialReleasedStrainPerturbation.model_validate(sides[0])
+    leaf = ReleasedIdentifierPerturbation.model_validate(sides[0])
     assert (leaf.strain_label, leaf.identifier_kind, leaf.released_kind) == (
         "JW0098__ghostH",
         "Keio JW number",
-        ReleasedStrainKind.deletion,
+        ReleasedKind.deletion,
     )
     assert (leaf.cassette, leaf.collection) == (
         m.RECIPIENT_CASSETTE,

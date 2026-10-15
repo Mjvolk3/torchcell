@@ -174,7 +174,7 @@ def test_build_logs_the_gene_ledger_and_every_skipped_table(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
     """On the synthetic tables: 6 records, 11 gene values under their released names,
-    1 genotype label on the released-gene-name leaf (named).
+    1 genotype label on the released-identifier leaf (named).
     """
     monkeypatch.setenv("DATA_ROOT", str(tmp_path / "data_root"))
     _write_files(tmp_path / "nadal" / "raw")
@@ -184,9 +184,9 @@ def test_build_logs_the_gene_ledger_and_every_skipped_table(
     assert messages == [
         "Loading FC_genotype.Rdata (426 MB; ~6 min) ...",
         "Record Control/NOTANORF: genotype label is not ORF-shaped; stored on the "
-        "released-gene-name leaf",
+        "released-identifier leaf",
         "Read 6 records as released; 11 gene values under their released names; 1 "
-        "genotype labels on the released-gene-name leaf",
+        "genotype labels on the released-identifier leaf",
         "Wrote 6 pseudobulk records to LMDB",
     ]
 

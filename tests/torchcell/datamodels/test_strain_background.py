@@ -95,6 +95,17 @@ def _gap(field: str) -> ProvenanceGap:
 
 #: A deposited construct contig and the one feature on it a cassette can point at, in
 #: the shape ``test_construct.py`` pins; the bytes are the Cachera pBTX002 map.
+#:
+#: The two ``ConstructSpan(start=..., end=...)`` calls below are written against the
+#: span shape of this branch's base. Lane T's ``construct-span-parts`` makes
+#: ``ConstructSpan`` a ``parts`` list with a composition, where ``start`` and ``end``
+#: are properties that raise on a compound span, so each call becomes
+#: ``ConstructSpan.one(start, end, orientation)`` once that lane is in. MEASURED, not
+#: assumed: merging ``origin/construct-span-parts`` into this branch and switching
+#: exactly these two lines runs 496 passed in datamodels (this file,
+#: ``test_identity.py`` and ``test_construct.py``) and 1,860 passed across adapters,
+#: verification and provenance, with ``IntegratedCassette.placement`` and
+#: ``GeneAdditionPerturbation.placement`` still the same annotation.
 _CONTIG = "63f89c1eaa13f888610ed781c4de12c8ac34f4e20512b4eb2c4f32d31af096da"
 _CONTIG_REF = s.ArtifactRef(
     tier="library",

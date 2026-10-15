@@ -77,6 +77,7 @@ LANE_ROOTS: dict[str, tuple[str, ...]] = {
         "HostPlacement",
         "ConstructVariantCall",
         "ConstructSpan",
+        "SpanPart",
         "FeatureKey",
     ),
     "environment": (

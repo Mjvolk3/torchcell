@@ -28,7 +28,12 @@ from torchcell.datamodels.schema import (
     VariantCallMode,
     VariantFrequencyBasis,
 )
-from torchcell.sequence.construct import ConstructSpan, FeatureKey
+from torchcell.sequence.construct import (
+    ConstructSpan,
+    FeatureKey,
+    SpanComposition,
+    SpanPart,
+)
 from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
 CONTIG = "63f89c1eaa13f888610ed781c4de12c8ac34f4e20512b4eb2c4f32d31af096da"
@@ -43,14 +48,10 @@ REF = ArtifactRef(
     bytes=21901,
 )
 ARO4 = FeatureKey(
-    label="ARO4-K229L",
-    so_id="SO:0000316",
-    span=ConstructSpan(start=3001, end=4113, orientation="inline"),
+    label="ARO4-K229L", so_id="SO:0000316", span=ConstructSpan.one(3001, 4113, "inline")
 )
 PRIMER_KEY = FeatureKey(
-    label="HOP181",
-    so_id="SO:0005850",
-    span=ConstructSpan(start=10, end=30, orientation="inline"),
+    label="HOP181", so_id="SO:0005850", span=ConstructSpan.one(10, 30, "inline")
 )
 
 
@@ -64,7 +65,7 @@ def _host(**kwargs: object) -> HostPlacement:
     base: dict[str, object] = {
         "assembly_set": S288C,
         "site_label": "XII-5",
-        "insert_span": ConstructSpan(start=2003, end=10105, orientation="inline"),
+        "insert_span": ConstructSpan.one(2003, 10105, "inline"),
         "provenance_gaps": [_gap("span")],
     }
     base.update(kwargs)
@@ -95,7 +96,7 @@ def test_a_host_placement_with_neither_a_span_nor_a_gap_is_refused() -> None:
         HostPlacement(
             assembly_set=S288C,
             site_label="XII-5",
-            insert_span=ConstructSpan(start=1, end=9, orientation="inline"),
+            insert_span=ConstructSpan.one(1, 9, "inline"),
         )
 
 
@@ -113,7 +114,7 @@ def test_a_host_placement_needs_the_sources_own_site_label() -> None:
             assembly_set=S288C,
             site_label="  ",
             span=GenomicSpan(chromosome="XII", start=1, end=9, assembly=S288C),
-            insert_span=ConstructSpan(start=1, end=9, orientation="inline"),
+            insert_span=ConstructSpan.one(1, 9, "inline"),
         )
 
 
@@ -128,7 +129,7 @@ def test_a_span_on_another_assembly_is_refused() -> None:
             assembly_set=S288C,
             site_label="XII-5",
             span=GenomicSpan(chromosome="XII", start=1, end=9, assembly=CENPK),
-            insert_span=ConstructSpan(start=1, end=9, orientation="inline"),
+            insert_span=ConstructSpan.one(1, 9, "inline"),
         )
 
 
@@ -340,3 +341,135 @@ def test_localization_has_exactly_the_two_physical_situations() -> None:
         "chromosomal_integration",
         "episomal_replicon",
     ]
+
+
+# --------------------------------------------------------------------------- #
+# 2026.10.15 (lane T): a span holds the parts of a compound location, and says
+# which of the three INSDC-grounded claims the parts make.
+# --------------------------------------------------------------------------- #
+def test_a_simple_span_is_one_part_and_keeps_its_old_token() -> None:
+    """``ConstructSpan.one`` is the single-interval case, named, with the same token.
+
+    The token of a single-interval feature is unchanged by the move to parts, so every
+    ``FeatureKey`` already recorded for one still reads the same string and a stored
+    placement keeps pointing at the same feature.
+    """
+    span = ConstructSpan.one(2684, 3796, "inline")
+    assert span.composition is SpanComposition.simple
+    assert (span.start, span.end, span.length) == (2684, 3796, 1113)
+    assert span.part_token == "2684-3796"
+    assert span.insdc_location() == "2684..3796"
+    assert ARO4.token == f"{ARO4.label}@{ARO4.so_id}:3001-4113+"
+
+
+def test_an_origin_spanning_span_is_not_the_same_shape_as_a_join() -> None:
+    """One interval that wrapped and two joined intervals are different claims.
+
+    Same two parts, two compositions, two tokens, two INSDC spellings: a wrap writes the
+    compact ``11559..128`` as well as the canonical join, a join writes only the join,
+    and the ``wrap:``/``join:`` sigil keeps the two keys apart. Collapsing them would
+    make a 666 bp origin and a spliced two-exon gene indistinguishable.
+    """
+    parts = [SpanPart(start=11559, end=12096), SpanPart(start=1, end=128)]
+    wrap = ConstructSpan(
+        parts=parts, composition=SpanComposition.origin_spanning, orientation="inline"
+    )
+    assert wrap.length == 666
+    assert wrap.part_token == "wrap:11559-12096,1-128"
+    assert wrap.insdc_location(compact_wrap=True) == "11559..128"
+    assert wrap.insdc_location() == "join(11559..12096,1..128)"
+    join = ConstructSpan(
+        parts=[SpanPart(start=100, end=200), SpanPart(start=300, end=400)],
+        composition=SpanComposition.joined,
+        orientation="reverse_complement",
+    )
+    assert join.length == 202
+    assert join.part_token == "join:100-200,300-400"
+    assert join.insdc_location() == "complement(join(100..200,300..400))"
+    assert join.insdc_location(compact_wrap=True) == join.insdc_location()
+    assert wrap.part_token != join.part_token
+
+
+def test_a_compound_span_has_no_single_start_and_says_so() -> None:
+    r"""``start``/``end`` raise for a compound span rather than return the envelope.
+
+    The envelope is what the parser used to store: ``pBTX002.gb``'s ``pUC\\ori`` became
+    the whole 12,096 bp plasmid. A consumer written for one interval must fail loudly,
+    which is the same discipline that made the parser refuse what it could not hold.
+    """
+    wrap = ConstructSpan(
+        parts=[SpanPart(start=11559, end=12096), SpanPart(start=1, end=128)],
+        composition=SpanComposition.origin_spanning,
+        orientation="inline",
+    )
+    with pytest.raises(ValueError, match="no single start"):
+        _ = wrap.start
+    with pytest.raises(ValueError, match="no single start"):
+        _ = wrap.end
+    with pytest.raises(ValueError) as refusal:
+        _ = wrap.start
+    assert "wrap:11559-12096,1-128" in str(refusal.value)
+
+
+@pytest.mark.parametrize(
+    ("parts", "composition", "message"),
+    [
+        ([(1, 10)], SpanComposition.joined, "needs at least 2 parts"),
+        ([(1, 10), (20, 30)], SpanComposition.simple, "is one interval"),
+        (
+            [(1, 10), (20, 30), (40, 50)],
+            SpanComposition.origin_spanning,
+            "exactly 2 parts",
+        ),
+        (
+            [(100, 200), (5, 50)],
+            SpanComposition.origin_spanning,
+            "begins at the origin",
+        ),
+        ([(20, 30), (1, 10)], SpanComposition.joined, "ascending and non-overlapping"),
+        ([(1, 100), (1, 50)], SpanComposition.origin_spanning, "parts overlap"),
+    ],
+)
+def test_parts_that_do_not_make_the_claim_are_refused(
+    parts: list[tuple[int, int]], composition: SpanComposition, message: str
+) -> None:
+    """``composition`` is a claim about the parts, so the parts must support it."""
+    with pytest.raises(ValidationError, match=message):
+        ConstructSpan(
+            parts=[SpanPart(start=start, end=end) for start, end in parts],
+            composition=composition,
+            orientation="inline",
+        )
+
+
+def test_a_span_with_no_parts_is_refused() -> None:
+    """A feature with no interval is not a located feature."""
+    with pytest.raises(ValidationError, match="at least one part"):
+        ConstructSpan(
+            parts=[], composition=SpanComposition.simple, orientation="inline"
+        )
+
+
+def test_an_insert_span_may_cross_the_origin_of_its_vector() -> None:
+    """``HostPlacement.insert_span`` is a ``ConstructSpan``, so it holds parts too.
+
+    The transferred interval of a circular vector can cross its origin; no Cachera
+    record does, and the capacity costs nothing because both fields hold the same type.
+    """
+    placement = HostPlacement(
+        assembly_set=S288C,
+        site_label="XII-5",
+        span=None,
+        insert_span=ConstructSpan(
+            parts=[SpanPart(start=12000, end=12096), SpanPart(start=1, end=400)],
+            composition=SpanComposition.origin_spanning,
+            orientation="inline",
+        ),
+        provenance_gaps=[
+            ProvenanceGap(
+                field="span", reason=ProvenanceGapReason.not_reported_by_primary
+            )
+        ],
+    )
+    assert placement.insert_span is not None
+    assert placement.insert_span.length == 497

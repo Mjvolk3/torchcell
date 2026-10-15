@@ -9,12 +9,14 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from torchcell.datamodels.schema import SOTerm
+from torchcell.datamodels.schema import SOTerm, SpanComposition
 from torchcell.sequence.plasmid import (
+    RETIRED_LOCATION_REFUSALS,
     Component,
     Feature,
     GenBankLocationError,
     Location,
+    LocationRefusal,
     SequenceProvenance,
     SORole,
     _sha256,
@@ -41,12 +43,24 @@ def _component(topology: str) -> Component:
         length=10,
         sequence="ATGCGTACGT",
         features=[
-            Feature(name="fwd", roles=[GENE], location=_loc(0, 3)),
-            Feature(name="rev", roles=[GENE], location=_loc(3, 6, rev=True)),
-            Feature(name="edge", roles=[GENE], location=_loc(0, 2)),
-            Feature(name="promA", roles=[PROMOTER], location=_loc(6, 8)),
-            Feature(name="dup", roles=[GENE], location=_loc(0, 1)),
-            Feature(name="dup", roles=[GENE], location=_loc(1, 2)),
+            Feature(name="fwd", roles=[GENE], locations=[_loc(0, 3)]),
+            Feature(name="rev", roles=[GENE], locations=[_loc(3, 6, rev=True)]),
+            Feature(name="edge", roles=[GENE], locations=[_loc(0, 2)]),
+            Feature(name="promA", roles=[PROMOTER], locations=[_loc(6, 8)]),
+            Feature(name="dup", roles=[GENE], locations=[_loc(0, 1)]),
+            Feature(name="dup", roles=[GENE], locations=[_loc(1, 2)]),
+            Feature(
+                name="wrap",
+                roles=[GENE],
+                locations=[_loc(8, 10), _loc(0, 2)],
+                composition=SpanComposition.origin_spanning,
+            ),
+            Feature(
+                name="spliced",
+                roles=[GENE],
+                locations=[_loc(0, 2), _loc(4, 6)],
+                composition=SpanComposition.joined,
+            ),
         ],
         provenance=PROV,
     )
@@ -88,12 +102,15 @@ def test_features_by_role():
         "rev",
         "edge",
         "dup",
+        "wrap",
+        "spliced",
     }
 
 
 def test_subcomponent_carves_and_rebases():
     # carve [2,8) -> seq "GCGTAC" (len 6); features fully inside: rev [3,6)->[1,4),
-    # promA [6,8)->[4,6). fwd/edge (start 0) excluded.
+    # promA [6,8)->[4,6). fwd/edge (start 0) excluded, and so are the two multi-range
+    # features, because a feature is kept only when EVERY range is inside the window.
     sub = _component("linear").subcomponent(2, 8, "insert")
     assert sub.length == 6 and sub.sequence == "GCGTAC" and sub.topology == "linear"
     names = {f.name: (f.location.start, f.location.end) for f in sub.features}
@@ -141,10 +158,9 @@ ORIGIN
 """
 
 
-# The same map WITHOUT the origin-spanning feature. Since 2026-10-15 the parser refuses
-# a wrapping or compound location instead of flattening it, so the happy path needs a
-# map whose every feature is one range; the wrap stays in ``_GENBANK`` because it is
-# what the refusal tests are about.
+# The same map WITHOUT the origin-spanning feature. The happy-path test asserts the
+# whole feature list positionally, so it reads a map whose every feature is one range;
+# the wrap stays in ``_GENBANK`` because it is what the span-of-parts tests are about.
 _GENBANK_SINGLE_RANGE = _GENBANK.replace(
     '     gene            join(18..20,1..2)\n                     /label="wrap"\n', ""
 )
@@ -193,51 +209,190 @@ def test_parse_genbank_component_features_roles_and_provenance(tmp_path: Path) -
     assert comp.feature_sequence("KanR") == "ACGTAC"
 
 
-def test_parse_genbank_component_refuses_an_origin_spanning_compound_location(
+def test_an_explicit_origin_spanning_join_is_held_as_the_two_parts_it_wraps_into(
     tmp_path: Path,
 ) -> None:
-    """The origin-spanning ``join(18..20,1..2)`` is REFUSED, not flattened (2026-10-15).
+    """``join(18..20,1..2)`` on a 20 bp circular map is ONE interval, held as two parts.
 
     Until 2026-10-15 a compound location was reduced to ``[min start, max end)``, so
     this 5 bp feature (``TAC`` + ``AT``) was stored as ``[0, 20)`` -- the WHOLE plasmid
-    -- and ``feature_sequence("wrap")`` returned all 20 bp. That was a warn-and-fix
-    fallback on a case plasmid maps carry routinely. The refusal names the file and the
-    feature, which is how a map carrying one is reported by name instead of being
-    indexed with a false coordinate. Biopython accepts an EXPLICIT join across the
-    origin without complaint, so this case is caught by the parts check, not by the
-    warning check the next test covers.
+    -- and from 2026-10-15 it was refused instead. Now it is held: the two ranges in the
+    order the file writes them, ``origin_spanning`` because the first ends at the last
+    base of a circular replicon and the second begins at the origin, and
+    ``feature_sequence`` returns the 5 bp the feature covers rather than all 20.
     """
-    with pytest.raises(GenBankLocationError) as refusal:
-        parse_genbank_component(str(_gb(tmp_path)), "k")
-    message = str(refusal.value)
-    assert "pTEST.gb" in message
-    assert "'wrap'" in message
-    assert "compound location" in message
+    comp = parse_genbank_component(str(_gb(tmp_path)), "k")
+    wrap = comp.get_feature("wrap")
+    assert wrap.composition is SpanComposition.origin_spanning
+    assert [(r.start, r.end) for r in wrap.locations] == [(17, 20), (0, 2)]
+    assert wrap.orientation == "inline"
+    assert wrap.length == 5
+    assert comp.feature_sequence("wrap") == "TACAT"
+    with pytest.raises(ValueError, match="no single location"):
+        _ = wrap.location
 
 
-def test_parse_genbank_component_refuses_a_location_biopython_rewrites(
+def test_the_compact_origin_wrapping_form_biopython_rewrites_is_held_too(
     tmp_path: Path,
 ) -> None:
-    """A single-range wrapping location Biopython "fixes" is refused, not accepted.
+    """``18..2`` is the form the mirrored maps carry, and it means the same claim.
 
-    ``18..2`` on a 20 bp circular replicon is the form the mirrored maps carry (11 of
-    17 Cachera maps have one, e.g. ``4892..858``): Biopython warns ``Attempting to fix
-    invalid location ... incorrect origin wrapping`` and hands back a two-part location
-    whose envelope is the whole plasmid. Taking that silently is the fallback this
-    refusal exists to prevent, so the parse runs under ``catch_warnings`` and raises
-    with the offending location in the message.
+    11 of the 17 Cachera maps write a wrap this way (``11559..128``,
+    ``complement(4892..858)``); Biopython warns ``Attempting to fix invalid location
+    ... incorrect origin wrapping`` and hands back the two parts. Both spellings reach
+    the same stored parts, which is why no field records which one the source used.
     """
     text = _GENBANK.replace(
         "     gene            join(18..20,1..2)\n", "     gene            18..2\n"
     )
     path = tmp_path / "pWRAP.gb"
     path.write_text(text)
-    with pytest.raises(GenBankLocationError) as refusal:
+    comp = parse_genbank_component(str(path), "k")
+    wrap = comp.get_feature("wrap")
+    assert wrap.composition is SpanComposition.origin_spanning
+    assert [(r.start, r.end) for r in wrap.locations] == [(17, 20), (0, 2)]
+    assert comp.feature_sequence("wrap") == "TACAT"
+
+
+def test_a_reverse_strand_wrap_keeps_the_order_the_file_wrote(tmp_path: Path) -> None:
+    """``complement(18..2)`` stores ``18..20`` then ``1..2``, not Biopython's 5'->3' order.
+
+    Biopython hands a reverse-strand compound location's parts back in feature order,
+    which for this location is ``[(0, 2), (17, 20)]`` -- the reverse of what the file
+    writes. Storing that order would regenerate ``complement(1..20)``-shaped nonsense,
+    so the parser re-reverses, and the stored parts regenerate the source string. The
+    extracted sequence is the reverse complement of the forward concatenation: ``TAC`` +
+    ``AT`` is ``TACAT``, whose reverse complement is ``ATGTA``.
+    """
+    text = _GENBANK.replace(
+        "     gene            join(18..20,1..2)\n",
+        "     gene            complement(18..2)\n",
+    )
+    path = tmp_path / "pREV.gb"
+    path.write_text(text)
+    wrap = parse_genbank_component(str(path), "k").get_feature("wrap")
+    assert wrap.orientation == "reverse_complement"
+    assert [(r.start, r.end) for r in wrap.locations] == [(17, 20), (0, 2)]
+    assert parse_genbank_component(str(path), "k").feature_sequence("wrap") == "ATGTA"
+
+
+def test_a_plain_two_part_join_is_joined_and_not_origin_spanning(
+    tmp_path: Path,
+) -> None:
+    """``join(3..6,10..14)`` is two intervals with sequence between them, not a wrap.
+
+    The two claims are kept apart by the contig's own topology and length: a wrap's
+    first part ends at the last base and its second begins at base 1, which this join
+    does not do. ``feature_sequence`` concatenates only the parts, so the 5 bp of
+    sequence between them is absent from the result.
+    """
+    text = _GENBANK.replace(
+        "     gene            join(18..20,1..2)\n",
+        "     gene            join(3..6,10..14)\n",
+    )
+    path = tmp_path / "pJOIN.gb"
+    path.write_text(text)
+    comp = parse_genbank_component(str(path), "k")
+    spliced = comp.get_feature("wrap")
+    assert spliced.composition is SpanComposition.joined
+    assert [(r.start, r.end) for r in spliced.locations] == [(2, 6), (9, 14)]
+    assert spliced.length == 9
+    # [2, 6) is GCGT and [9, 14) is TACGT; the 3 bp between them are omitted.
+    assert comp.feature_sequence("wrap") == "GCGTTACGT"
+
+
+@pytest.mark.parametrize(
+    ("location", "refusal"),
+    [
+        ("order(3..6,10..14)", LocationRefusal.ordered_location),
+        ("<3..6", LocationRefusal.fuzzy_position),
+        ("3..>6", LocationRefusal.fuzzy_position),
+        ("3^4", LocationRefusal.between_bases_site),
+        ("join(complement(3..6),10..14)", LocationRefusal.mixed_strand_location),
+        ("J00194.1:3..6", LocationRefusal.remote_reference_location),
+        ("join(10..14,3..6)", LocationRefusal.unordered_join),
+        ("3.6", LocationRefusal.unparsable_location),
+    ],
+)
+def test_the_locations_still_refused_each_carry_their_typed_reason(
+    tmp_path: Path, location: str, refusal: LocationRefusal
+) -> None:
+    """Each remaining case raises with its own member, never a shared one.
+
+    Holding parts admits three of the INSDC location forms and no more. ``order`` says
+    nothing is implied about joining the elements, a fuzzy bound is not a coordinate, a
+    between-bases site is not an interval, a mixed-strand join is not one feature, a
+    remote reference is not this contig's bytes, and a backwards join would have to be
+    reordered to be stored, which is the warn-and-fix this module refuses. The typed
+    member is what the construct index records, so a blocked map says which one it is.
+    """
+    text = _GENBANK.replace(
+        "     gene            join(18..20,1..2)\n", f"     gene            {location}\n"
+    )
+    path = tmp_path / "pBAD.gb"
+    path.write_text(text)
+    with pytest.raises(GenBankLocationError) as caught:
         parse_genbank_component(str(path), "k")
-    message = str(refusal.value)
-    assert "pWRAP.gb" in message
-    assert "18..2" in message
-    assert "origin-wrapping" in message
+    assert caught.value.refusal is refusal
+    assert "pBAD.gb" in str(caught.value)
+
+
+def test_a_wrap_on_a_linear_replicon_is_refused_rather_than_reinterpreted(
+    tmp_path: Path,
+) -> None:
+    """A linear map whose feature crosses the origin contradicts its own topology line.
+
+    Two statements of the same file disagree and neither is privileged, so the file is
+    reported rather than read. The COMPACT form on a linear record never reaches that
+    check, because Biopython applies its origin-wrap rewrite only to circular records
+    and otherwise sets the location to ``None``; that case is an unparsable location,
+    which is the honest reading of "Biopython could not read it".
+    """
+    linear = _GENBANK.replace("circular SYN", "linear   SYN")
+    explicit = tmp_path / "pLINJOIN.gb"
+    explicit.write_text(linear)
+    with pytest.raises(GenBankLocationError) as caught:
+        parse_genbank_component(str(explicit), "k")
+    assert caught.value.refusal is LocationRefusal.origin_wrap_on_linear_topology
+    assert "no origin to cross" in str(caught.value)
+    compact = tmp_path / "pLINWRAP.gb"
+    compact.write_text(
+        linear.replace(
+            "     gene            join(18..20,1..2)\n", "     gene            18..2\n"
+        )
+    )
+    with pytest.raises(GenBankLocationError) as second:
+        parse_genbank_component(str(compact), "k")
+    assert second.value.refusal is LocationRefusal.unparsable_location
+
+
+def test_the_retired_refusals_are_never_produced_by_a_parse(tmp_path: Path) -> None:
+    """The two members the hardening used are kept only so an older index still loads.
+
+    ``origin_wrapping_location`` and ``compound_location`` were every one of the 11
+    Cachera refusals; both cases are now held, so no parse can emit them. They stay in
+    the vocabulary because the index deposited on 2026-10-15 recorded them, and a
+    vocabulary a stored record uses is not removed for tidiness.
+    """
+    held = {}
+    for location in ("18..2", "join(18..20,1..2)", "join(3..6,10..14)"):
+        text = _GENBANK.replace(
+            "     gene            join(18..20,1..2)\n",
+            f"     gene            {location}\n",
+        )
+        path = tmp_path / "pOK.gb"
+        path.write_text(text)
+        wrap = parse_genbank_component(str(path), "k").get_feature("wrap")
+        held[location] = (wrap.composition, len(wrap.locations))
+    assert held == {
+        "18..2": (SpanComposition.origin_spanning, 2),
+        "join(18..20,1..2)": (SpanComposition.origin_spanning, 2),
+        "join(3..6,10..14)": (SpanComposition.joined, 2),
+    }
+    assert RETIRED_LOCATION_REFUSALS == {
+        LocationRefusal.origin_wrapping_location,
+        LocationRefusal.compound_location,
+    }
 
 
 def test_so_role_is_the_one_so_term_class() -> None:

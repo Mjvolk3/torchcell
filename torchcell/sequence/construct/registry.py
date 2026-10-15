@@ -39,7 +39,9 @@ Three identity rules, each measured on the 17 mirrored Cachera maps rather than 
 2. **The source's name is a loader-stated, quoted string** (``source_name``, a
    ``SourcedValue``), or a typed ``ProvenanceGap`` on that field. The replicon's name
    lives in the paper text and the plasmid table, not in the file.
-3. **A feature's key is its label, its SO id and its 1-based end-inclusive span.** 0 of
+3. **A feature's key is its label, its SO id and its 1-based end-inclusive span** (its
+   PARTS, with the composition's own sigil, so a wrap and a join over the same two
+   intervals never collide and a single-interval key is unchanged). 0 of
    570 non-source features carry a ``/locus_tag``, so there is no primary key to read;
    label alone collides in 4 of 17 maps and label plus span still collides in 1 (pHO22
    carries a ``gene`` and a ``CDS`` both labelled ``Ampicillin`` at 1543..2403, the
@@ -57,6 +59,14 @@ Units: ``plasmid.Location`` is 0-based half-open and ``GenomicSpan`` is 1-based
 end-inclusive. A store serving native and construct genes through one extraction path
 must not carry two conventions, so the conversion happens here, at the parser boundary,
 and a ``ConstructSpan`` is 1-based end-inclusive like every other span in the schema.
+
+Since 2026-10-15 a span holds the ORDERED PARTS of a GenBank location plus the claim they
+make, so all 17 mirrored maps index and ``blocked`` is empty (it was 6 and 11). A
+contig's ``topology`` is what makes an ``origin_spanning`` span meaningful, so
+``_check_span`` proves that claim here, against the bytes: every part within the contig's
+length, a wrap only on a circular contig, and a wrap's first part ending at the contig's
+LAST base. ``TOPOLOGY_SO`` grounds the field in the Sequence Ontology's
+``topology_attribute`` (SO:0000986), whose two children are the Literal's two members.
 """
 
 from __future__ import annotations
@@ -80,8 +90,15 @@ from torchcell.datamodels.schema import (
 from torchcell.datamodels.schema import ConstructSpan as ConstructSpan
 from torchcell.datamodels.schema import FeatureKey as FeatureKey
 from torchcell.datamodels.schema import SOTerm
+from torchcell.datamodels.schema import SpanComposition as SpanComposition
+from torchcell.datamodels.schema import SpanPart as SpanPart
 from torchcell.literature.manifest import ArtifactRecord, sha256_file
-from torchcell.sequence.plasmid import Component, Feature, parse_genbank_component
+from torchcell.sequence.plasmid import (
+    Component,
+    Feature,
+    LocationRefusal,
+    parse_genbank_component,
+)
 from torchcell.verification.sourced import ProvenanceGap, SourcedValue
 
 #: The index directory under ``DATA_ROOT``. It holds manifests only, never sequence.
@@ -127,13 +144,27 @@ class SequenceStatus(StrEnum):
     verified = "verified"
 
 
-class BlockedReason(StrEnum):
-    """Why a released map is listed by the set but carries no contig."""
+#: Why a released map is listed by the set but carries no contig: the parser's own
+#: closed vocabulary (``plasmid.LocationRefusal``), re-exported under the name the index
+#: uses. ONE vocabulary, for the reason ``SORole`` is ``SOTerm``: a second enum asserting
+#: the same fact is a defect, and a hardcoded reason at the deposit site is how all 11
+#: Cachera refusals came to be recorded as ``origin_wrapping_location`` whatever they
+#: were. ``GenBankLocationError.refusal`` carries the member, so the index records the
+#: reason the parser gave.
+BlockedReason = LocationRefusal
 
-    #: Biopython rewrote an origin-wrapping location; the envelope is not the feature.
-    origin_wrapping_location = "origin_wrapping_location"
-    #: A compound ``join`` location, which a single-range span cannot hold.
-    compound_location = "compound_location"
+
+#: The Sequence Ontology grounding of ``ConstructContig.topology`` (principle 6): SO's
+#: ``topology_attribute`` (SO:0000986) has exactly the two children a replicon's
+#: topology can be. A derived map and a read-only property rather than a second field,
+#: because the topology is one fact and ``topology`` already holds it; what the map adds
+#: is the external term a served class is grounded in. The topology is load-bearing
+#: here, not decorative: an ``origin_spanning`` span is only meaningful on a circular
+#: replicon, and ``_check_contig`` refuses one on a linear contig.
+TOPOLOGY_SO: dict[str, SOTerm] = {
+    "linear": SOTerm(so_id="SO:0000987", name="linear"),
+    "circular": SOTerm(so_id="SO:0000988", name="circular"),
+}
 
 
 class ConstructFeature(ModelStrict):
@@ -227,12 +258,51 @@ class ConstructContig(ModelStrict):
                 f"contig {self.handle}: feature keys repeat {duplicates}; the key is "
                 "label plus SO id plus span and must be unique within a contig"
             )
+        for feature in self.features:
+            self._check_span(feature)
         return self
+
+    def _check_span(self, feature: ConstructFeature) -> None:
+        """One feature's span against the bytes: in range, and a wrap only on a circle.
+
+        ``ConstructSpan`` can check the shape of its own parts but not their relation to
+        the replicon, because it does not carry the length or the topology; the contig
+        does, so this is where an ``origin_spanning`` claim is proved. The first part of
+        a wrap must END at the last base and the second must START at base 1, which
+        together is what "one interval whose coordinates wrapped" means. A wrap on a
+        LINEAR contig is a contradiction between the file's own topology line and its
+        location, refused rather than reinterpreted.
+        """
+        span = feature.key.span
+        for part in span.parts:
+            if part.end > self.length:
+                raise ValueError(
+                    f"contig {self.handle}: feature {feature.key.token!r} has the part "
+                    f"{part.start}..{part.end}, past the contig's {self.length} bases"
+                )
+        if span.composition is not SpanComposition.origin_spanning:
+            return
+        if self.topology != "circular":
+            raise ValueError(
+                f"contig {self.handle}: feature {feature.key.token!r} crosses the "
+                f"origin of a {self.topology!r} contig, which has no origin to cross"
+            )
+        if span.parts[0].end != self.length:
+            raise ValueError(
+                f"contig {self.handle}: feature {feature.key.token!r} crosses the "
+                f"origin, so its first part ends at base {self.length}, not "
+                f"{span.parts[0].end}"
+            )
 
     @property
     def handle(self) -> str:
         """The first 12 hex of the sha256: the readable handle beside the full hash."""
         return self.sha256[:12]
+
+    @property
+    def topology_term(self) -> SOTerm:
+        """``topology`` as its Sequence Ontology term (``TOPOLOGY_SO``)."""
+        return TOPOLOGY_SO[self.topology]
 
     def feature(self, token: str) -> ConstructFeature:
         """The feature whose key token is ``token``; an unknown token raises ``KeyError``."""
@@ -415,16 +485,24 @@ def parse_contig_features(
 
 
 def _project(feature: Feature) -> ConstructFeature:
-    """One ``plasmid.Feature`` (0-based half-open) as a ``ConstructFeature`` (1-based)."""
+    """One ``plasmid.Feature`` (0-based half-open) as a ``ConstructFeature`` (1-based).
+
+    Range for range, in the order the source wrote them, and the composition carried
+    across unchanged: the two models hold the same claim in two conventions, and this is
+    the one place the conventions meet.
+    """
     roles = list(feature.roles)
     return ConstructFeature(
         key=FeatureKey(
             label=feature.name,
             so_id=roles[0].so_id,
             span=ConstructSpan(
-                start=feature.location.start + 1,
-                end=feature.location.end,
-                orientation=feature.location.orientation,
+                parts=[
+                    SpanPart(start=location.start + 1, end=location.end)
+                    for location in feature.locations
+                ],
+                composition=feature.composition,
+                orientation=feature.orientation,
             ),
         ),
         roles=roles,

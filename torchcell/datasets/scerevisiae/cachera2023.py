@@ -233,18 +233,30 @@ TEMPERATURE_GAP = ProvenanceGap(
 # BY-Btx strain was made by transforming the NotI excised insert of pBTX2". The screen
 # transfers the cassette FROM CD-Btx into the YKO library ("we then used CD-Btx to
 # transfer the Btx-cassette to the 4787 unique deletion strains"), so the cassette in
-# every screened strain is pBTX1's. pBTX2 is the BY-Btx vector and is one of the 11 maps
-# the parser blocks for an origin-wrapping location, which does not reach these records.
+# every screened strain is pBTX1's. pBTX2 is the BY-Btx vector; since 2026-10-15 a span
+# holds the parts of an origin-crossing location, so pBTX2 indexes too (handle
+# 63f89c1eaa13), but it is a different replicon on different coordinates and no record
+# here points at it.
 #
 # WHY the host span is a typed gap. The paper names the landing pad "XII-5" and never
 # gives its S288C coordinates, which is the common case for a named pad; the genome
 # never gates a record, so the pad is stated verbatim and the coordinate is a gap.
 #
-# WHY the insert span is a typed gap. pBTX1 annotates both homology arms ("XII-5 up B"
-# at 10..220, "XII-5 dw A" at 9598..9859), but the three readings of "the transferred
-# interval" they admit disagree: arm to arm inclusive is 9,850 bp, between the arms
-# exclusive is 9,377 bp, and the paper's own figure is "the considerable size, 9.3 kb,
-# of the Btx-cassette". The source states no interval, so neither does the record.
+# WHY the insert span is a typed gap, re-measured 2026-10-15 with pBTX2 indexed. pBTX1
+# annotates both homology arms ("XII-5 up B" at 10..220, "XII-5 dw A" at 9598..9859),
+# but the three readings of "the transferred interval" they admit disagree: arm to arm
+# inclusive is 9,850 bp, between the arms exclusive is 9,377 bp, and the paper's own
+# figure is "the considerable size, 9.3 kb, of the Btx-cassette". pBTX1 carries NO NotI
+# site, so there is no cut to resolve the arms against. The contrast is what settles it:
+# on pBTX2 the same question HAS an exact answer, because the paper says "the NotI
+# excised insert of pBTX2" and the bytes carry exactly two NotI sites (GCGGCCGC at 1527
+# and 10797), whose top-strand cuts bound 1529..10798 = 9,270 bp, which is the paper's
+# 9.3 kb. That interval is on pBTX2's coordinates and pBTX2 is not this record's contig,
+# so it is recorded in the construct index (pBTX2's own quoted name statement is that
+# NotI sentence) and in
+# ``experiments/036-dataset-fixes-before-kg-build/results/cachera2023_construct_span_parts.json``,
+# and it is NOT transferred onto a pBTX1 placement. The source states no interval of
+# pBTX1 as transferred, so neither does the record.
 #
 # Two heterologous plant genes (CYP76AD1, DOD) plus two feedback-resistant mutant
 # alleles of NATIVE yeast genes (ARO4^K229L / YBR249C, ARO7^G141S / YPR060C) integrated
@@ -308,8 +320,12 @@ _INSERT_SPAN_GAP_NOTE = (
     "pBTX1 annotates both homology arms ('XII-5 up B' 10..220, 'XII-5 dw A' "
     "9598..9859), but the readings they admit disagree with each other and with the "
     "paper's own figure: 9,850 bp arm to arm inclusive, 9,377 bp between the arms, "
-    "against 'the considerable size, 9.3 kb, of the Btx-cassette'. The source states no "
-    "interval of the vector as transferred, so the record states none"
+    "against 'the considerable size, 9.3 kb, of the Btx-cassette'. pBTX1 carries no "
+    "NotI site, so no cut resolves the arms; the sister vector pBTX2 does admit an "
+    "exact interval (the paper's 'NotI excised insert of pBTX2', two GCGGCCGC sites at "
+    "1527 and 10797, cuts bounding 1529..10798 = 9,270 bp = the paper's 9.3 kb), but "
+    "that is pBTX2's coordinate space and this record's contig is pBTX1. The source "
+    "states no interval of pBTX1 as transferred, so the record states none"
 )
 
 
@@ -361,7 +377,7 @@ def _placement(gene_key: str) -> ConstructPlacement:
         feature_key=FeatureKey(
             label=label,
             so_id="SO:0000704",
-            span=ConstructSpan(start=start, end=end, orientation=orientation),
+            span=ConstructSpan.one(start, end, orientation),
         ),
         host_placement=_host_placement(),
         variants=variants,

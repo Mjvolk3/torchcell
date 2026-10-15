@@ -2393,32 +2393,250 @@ PLACEMENT_TARGET_REFUSED_SO: dict[str, str] = {
 }
 
 
-class ConstructSpan(ModelStrict):
-    """A 1-based, end-inclusive interval on one construct contig, plus its orientation.
+class SpanComposition(StrEnum):
+    r"""How the parts of one feature's location compose into one biological claim.
 
-    The same convention as ``GenomicSpan``, deliberately: one store serves native and
-    construct genes, so it cannot carry two coordinate conventions. Single-range only,
-    which is why an origin-wrapping or compound GenBank location is refused at the
-    parser instead of being flattened into one interval.
+    The vocabulary is the INSDC feature-table location grammar's, not an invented one.
+    INSDC defines ``join``: "The indicated elements should be joined (placed end-to-end)
+    to form one contiguous sequence", and ``order``, whose elements "can be found in the
+    specified order (5' to 3' direction)" while "nothing is implied about the
+    reasonableness about joining them" (https://www.insdc.org/submitting-standards/
+    feature-table/). Those are two different claims, so only the first is representable
+    here and ``order`` is refused at the parser.
+
+    ``origin_spanning`` and ``joined`` are deliberately NOT one member, because they are
+    different claims about the same number of parts. A feature that crosses the origin
+    of a CIRCULAR replicon is ONE interval whose coordinates wrapped, and its parts are
+    adjacent in the molecule; a two-part join is two intervals with sequence between
+    them that the feature does not cover. Collapsing them would make a 666 bp ``pUC``
+    origin and a spliced two-exon gene the same shape. The distinction needs the
+    replicon's topology and length, which the contig carries
+    (``ConstructContig.topology``, grounded in the Sequence Ontology's
+    ``topology_attribute`` SO:0000986 through ``SO:0000987 linear`` /
+    ``SO:0000988 circular``), so ``ConstructContig`` is where the claim is checked
+    against the bytes.
+
+    Measured on the 17 mirrored Cachera maps: 11 carry exactly one ``origin_spanning``
+    feature each, written in the compact ``11559..128`` form Biopython rewrites; 0 carry
+    a ``join``, an ``order``, a fuzzy position or a mixed-strand location.
+    """
+
+    #: One interval. ``2684..3796``, ``complement(4388..5887)``.
+    simple = "simple"
+    #: ONE interval across the origin of a circular replicon, held as the two parts it
+    #: wrapped into: ``[first_start, replicon_length]`` then ``[1, last_end]``.
+    origin_spanning = "origin_spanning"
+    #: An INSDC ``join``: ordered, non-overlapping, ascending parts that form one
+    #: contiguous feature sequence with sequence between them the feature omits.
+    joined = "joined"
+
+
+class SpanPart(ModelStrict):
+    """One 1-based, end-inclusive interval of a span, on the forward strand.
+
+    Forward-strand, always: the orientation is a property of the whole feature and lives
+    on the span, so a part is a pair of coordinates and nothing else. Parts are stored
+    in the order the source's location string writes them, which for a reverse-strand
+    feature is the order INSIDE the ``complement(...)`` wrapper rather than the 5'->3'
+    order Biopython hands back.
     """
 
     start: int
     end: int
-    orientation: Literal["inline", "reverse_complement"]
 
     @model_validator(mode="after")
-    def _check_span(self) -> "ConstructSpan":
+    def _check_part(self) -> "SpanPart":
         """Positions are 1-based and ordered."""
         if self.start < 1 or self.end < self.start:
             raise ValueError(
-                f"ConstructSpan needs 1 <= start <= end, got {self.start}..{self.end}"
+                f"SpanPart needs 1 <= start <= end, got {self.start}..{self.end}"
             )
         return self
 
     @property
     def length(self) -> int:
-        """Bases the span covers (end-inclusive)."""
+        """Bases the part covers (end-inclusive)."""
         return self.end - self.start + 1
+
+
+class ConstructSpan(ModelStrict):
+    r"""Where one feature sits on one construct contig: its ordered parts and strand.
+
+    1-based and end-inclusive, the same convention as ``GenomicSpan``, deliberately: one
+    store serves native and construct genes, so it cannot carry two coordinate
+    conventions. The conversion from the parser's 0-based half-open ``Location`` happens
+    once, at the registry boundary.
+
+    A span holds PARTS, never an envelope. Until 2026-10-15 it was a single
+    ``start``/``end`` pair and the parser refused what it could not hold, which blocked
+    11 of the 17 mirrored Cachera maps; before that hardening the envelope was stored,
+    and ``pBTX002.gb``'s 666 bp ``pUC\ori`` at ``11559..128`` was recorded as the whole
+    12,096 bp plasmid. ``composition`` says which of the three INSDC-grounded claims the
+    parts make (:class:`SpanComposition`), so an origin-spanning feature and a two-part
+    join are never the same shape.
+
+    ``start`` and ``end`` are properties that exist only for a ``simple`` span and RAISE
+    for a compound one, by the same discipline that made the parser refuse: a consumer
+    written for one interval must fail loudly rather than silently receive an envelope.
+    """
+
+    parts: list[SpanPart]
+    composition: SpanComposition
+    orientation: Literal["inline", "reverse_complement"]
+
+    @model_validator(mode="after")
+    def _check_span(self) -> "ConstructSpan":
+        """The parts make exactly the claim ``composition`` names."""
+        if not self.parts:
+            raise ValueError("ConstructSpan needs at least one part")
+        if self.composition is SpanComposition.simple:
+            if len(self.parts) != 1:
+                raise ValueError(
+                    f"a simple ConstructSpan is one interval, got {len(self.parts)} "
+                    "parts; a multi-part location is joined or origin_spanning"
+                )
+            return self
+        if len(self.parts) < 2:
+            raise ValueError(
+                f"a {self.composition} ConstructSpan needs at least 2 parts, got "
+                f"{len(self.parts)}"
+            )
+        if self.composition is SpanComposition.origin_spanning:
+            if len(self.parts) != 2:
+                raise ValueError(
+                    "an origin_spanning ConstructSpan is one interval that wrapped, so "
+                    f"it has exactly 2 parts, got {len(self.parts)}"
+                )
+            if self.parts[1].start != 1:
+                raise ValueError(
+                    "an origin_spanning span's second part begins at the origin "
+                    f"(position 1), got {self.parts[1].start}; its first part must end "
+                    "at the replicon's last base, which ConstructContig checks against "
+                    "the bytes"
+                )
+            if self.parts[0].start <= self.parts[1].end:
+                raise ValueError(
+                    f"an origin_spanning span's parts overlap "
+                    f"({self.parts[0].start}..{self.parts[0].end} and "
+                    f"{self.parts[1].start}..{self.parts[1].end}); a feature covering "
+                    "the whole replicon is not a wrap"
+                )
+            return self
+        for earlier, later in zip(self.parts, self.parts[1:], strict=False):
+            if later.start <= earlier.end:
+                raise ValueError(
+                    f"a joined span's parts are ascending and non-overlapping, got "
+                    f"{earlier.start}..{earlier.end} then {later.start}..{later.end}; "
+                    "a join whose parts run backwards is refused rather than reordered"
+                )
+        return self
+
+    @classmethod
+    def one(
+        cls, start: int, end: int, orientation: Literal["inline", "reverse_complement"]
+    ) -> "ConstructSpan":
+        """The ``simple`` span ``start..end``: the one-interval case, named."""
+        return cls(
+            parts=[SpanPart(start=start, end=end)],
+            composition=SpanComposition.simple,
+            orientation=orientation,
+        )
+
+    @classmethod
+    def across_origin(
+        cls,
+        first_start: int,
+        replicon_length: int,
+        last_end: int,
+        orientation: Literal["inline", "reverse_complement"],
+    ) -> "ConstructSpan":
+        """The one interval ``first_start..last_end`` across a circular replicon's origin."""
+        return cls(
+            parts=[
+                SpanPart(start=first_start, end=replicon_length),
+                SpanPart(start=1, end=last_end),
+            ],
+            composition=SpanComposition.origin_spanning,
+            orientation=orientation,
+        )
+
+    @property
+    def length(self) -> int:
+        """Bases the feature covers: the sum of its parts, never the envelope."""
+        return sum(part.length for part in self.parts)
+
+    @property
+    def start(self) -> int:
+        """1-based start of a ``simple`` span; raises for a compound one."""
+        return self._single().start
+
+    @property
+    def end(self) -> int:
+        """1-based, end-inclusive end of a ``simple`` span; raises for a compound one."""
+        return self._single().end
+
+    def _single(self) -> SpanPart:
+        """The one part of a ``simple`` span, or a refusal naming ``parts``."""
+        if self.composition is not SpanComposition.simple:
+            raise ValueError(
+                f"a {self.composition} span has {len(self.parts)} parts and no single "
+                "start..end; read `parts` (the envelope is what this model exists to "
+                f"refuse to store): {self.part_token}"
+            )
+        return self.parts[0]
+
+    @property
+    def part_token(self) -> str:
+        """The parts as one readable string, with the composition's own sigil.
+
+        ``2684-3796`` for a simple span, ``wrap:11559-12096,1-128`` for an
+        origin-spanning one, ``join:18-20,30-40`` for a join. The sigil is what keeps a
+        wrap and a join with the same parts from colliding in a ``FeatureKey``, and a
+        simple span's token is unchanged from before parts existed, so every key already
+        recorded for a single-interval feature still reads the same.
+        """
+        intervals = ",".join(f"{part.start}-{part.end}" for part in self.parts)
+        if self.composition is SpanComposition.simple:
+            return intervals
+        sigil = (
+            "wrap" if self.composition is SpanComposition.origin_spanning else "join"
+        )
+        return f"{sigil}:{intervals}"
+
+    def insdc_location(self, *, compact_wrap: bool = False) -> str:
+        r"""The INSDC feature-table location string these parts and this strand mean.
+
+        The round trip the store is checked by: the parts regenerate the location the
+        source wrote, so a stored coordinate can be proved against the bytes without
+        re-deriving it. Two writers, because an origin-spanning feature has two written
+        forms and the claim is one: ``compact_wrap=False`` emits the canonical INSDC
+        ``join(11559..12096,1..128)``, and ``compact_wrap=True`` emits the
+        ``11559..128`` form the mirrored maps carry, which Biopython rewrites with
+        ``Attempting to fix invalid location ... incorrect origin wrapping``. No stored
+        field says which form the source used, because both are generated from the same
+        parts and the syntax is not a fact about the molecule.
+
+        Two spellings INSDC allows are not regenerated, because nothing in the 17
+        mirrored maps uses them and a span cannot tell them from the form it does write:
+        a single base is written ``7..7`` rather than ``7``, and a reverse-strand join
+        is written ``complement(join(a..b,c..d))`` rather than the equivalent
+        ``join(complement(c..d),complement(a..b))`` (Biopython parses the two to the
+        same parts). A set whose files use either form would fail its round-trip check,
+        which is the point of running that check per set rather than assuming it.
+        """
+        if self.composition is SpanComposition.origin_spanning and compact_wrap:
+            inner = f"{self.parts[0].start}..{self.parts[-1].end}"
+        elif self.composition is SpanComposition.simple:
+            inner = f"{self.parts[0].start}..{self.parts[0].end}"
+        else:
+            inner = "join({})".format(
+                ",".join(f"{part.start}..{part.end}" for part in self.parts)
+            )
+        return (
+            f"complement({inner})"
+            if self.orientation == "reverse_complement"
+            else inner
+        )
 
 
 class FeatureKey(ModelStrict):
@@ -2429,6 +2647,10 @@ class FeatureKey(ModelStrict):
     gene/CDS pair at one span), and the triple is unique in all 17. ``label`` is the
     ``/label`` or ``/gene`` qualifier verbatim and may be empty (12 of 570 features
     carry neither), which the span and the SO id then disambiguate.
+
+    The span is the feature's PARTS, so a feature that crosses the origin and a join
+    over the same two intervals get different keys (``ConstructSpan.part_token`` carries
+    the composition's sigil) while a single-interval feature's token is unchanged.
     """
 
     label: str
@@ -2443,9 +2665,9 @@ class FeatureKey(ModelStrict):
 
     @property
     def token(self) -> str:
-        """``<label>@<so_id>:<start>-<end><strand>``, the key as one readable string."""
+        """``<label>@<so_id>:<parts><strand>``, the key as one readable string."""
         strand = "+" if self.span.orientation == "inline" else "-"
-        return f"{self.label}@{self.so_id}:{self.span.start}-{self.span.end}{strand}"
+        return f"{self.label}@{self.so_id}:{self.span.part_token}{strand}"
 
     @property
     def is_placement_target(self) -> bool:

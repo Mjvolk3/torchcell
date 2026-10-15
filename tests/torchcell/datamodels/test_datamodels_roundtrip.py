@@ -132,7 +132,16 @@ _HOST_PLACEMENT_EXAMPLE: dict[str, Any] = {
     "assembly_set": "sgd_S288C_R64-4-1_20230830",
     "site_label": "XII-5",
     "span": None,
-    "insert_span": {"start": 2003, "end": 10105, "orientation": "inline"},
+    # The NotI fragment of pBTX2, measured 2026-10-15: the paper says "the NotI excised
+    # insert of pBTX2", the bytes carry exactly two GCGGCCGC sites (1527 and 10797) and
+    # their top-strand cuts bound 1529..10798 = 9,270 bp, which is the paper's "9.3 kb".
+    # It is the ONE exact contig-side insert span in this set; the loader's own records
+    # point at pBTX1, which has no NotI site, so there the field is a typed gap.
+    "insert_span": {
+        "parts": [{"start": 1529, "end": 10798}],
+        "composition": "simple",
+        "orientation": "inline",
+    },
     "provenance_gaps": [{"field": "span", "reason": "not_reported_by_primary"}],
 }
 _CONSTRUCT_CALL_EXAMPLE: dict[str, Any] = {
@@ -518,7 +527,11 @@ EXAMPLES: dict[str, dict[str, Any]] = {
         "feature_key": {
             "label": "ARO4-K229L",
             "so_id": "SO:0000316",
-            "span": {"start": 3001, "end": 4113, "orientation": "inline"},
+            "span": {
+                "parts": [{"start": 3001, "end": 4113}],
+                "composition": "simple",
+                "orientation": "inline",
+            },
         },
         "host_placement": _HOST_PLACEMENT_EXAMPLE,
         "variants": [_CONSTRUCT_CALL_EXAMPLE],

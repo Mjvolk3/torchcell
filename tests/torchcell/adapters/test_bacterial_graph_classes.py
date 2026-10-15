@@ -781,7 +781,7 @@ def test_the_host_genome_edge_joins_each_perturbation_to_its_genome_node() -> No
     genome node's ``assembly_set`` is the registry id the perturbations' ``host_genome``
     carries, which is the value join the edge is the traversal form of.
     """
-    reference = s.AssemblyReferenceGenome(
+    reference = s.ReferenceGenome(
         species="Escherichia coli",
         strain="MG1655",
         assembly_set="ecoli_K12_MG1655_ASM584v2",
@@ -816,8 +816,20 @@ def test_the_host_genome_edge_joins_each_perturbation_to_its_genome_node() -> No
 
 
 def test_a_reference_without_an_assembly_set_projects_null_not_a_strain() -> None:
-    """A yeast ``ReferenceGenome`` states no set today (P2 adds it): the node says so."""
-    reference = s.ReferenceGenome(species="Saccharomyces cerevisiae", strain="BY4741")
+    """A ``ReferenceGenome`` whose set is a typed gap (P2) projects ``None``, not a strain."""
+    reference = s.ReferenceGenome(
+        species="Saccharomyces cerevisiae",
+        strain="BY4741",
+        assembly_set=None,
+        assembly_accession=None,
+        provenance_gaps=[
+            ProvenanceGap(
+                field="assembly_set",
+                reason=ProvenanceGapReason.deferred_pending_source_review,
+                note="the set this strain's identifiers are written against is unstated",
+            )
+        ],
+    )
     assert CellAdapter._assembly_set_of(reference) is None
     adapter = _adapter()
     adapter.dataset = cast(

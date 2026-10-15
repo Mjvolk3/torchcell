@@ -357,7 +357,7 @@ def _expected_nodes() -> list[BioCypherNode]:
             properties={
                 "species": "Saccharomyces cerevisiae",
                 "strain": "BY4741",
-                "assembly_set": None,
+                "assembly_set": SGD_S288C_R64,
                 **_serialized(GENOME),
             },
         ),

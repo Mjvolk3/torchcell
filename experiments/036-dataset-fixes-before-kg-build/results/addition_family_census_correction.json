@@ -1,0 +1,89 @@
+{
+  "family": {
+    "derived_family": [
+      "gene_addition",
+      "heterologous_pathway",
+      "promoter_driven_gene_integration",
+      "variable_promoter_reporter"
+    ],
+    "leaves_declaring_placement": [
+      "gene_addition",
+      "heterologous_pathway",
+      "promoter_driven_gene_integration",
+      "variable_promoter_reporter"
+    ],
+    "missed_by_the_old_family": [
+      "promoter_driven_gene_integration",
+      "variable_promoter_reporter"
+    ],
+    "n_union_leaves": 38,
+    "named_by_the_old_family_only": [],
+    "old_hand_written_family": [
+      "gene_addition",
+      "heterologous_pathway"
+    ],
+    "subclasses_of_gene_addition": [
+      "gene_addition",
+      "heterologous_pathway",
+      "promoter_driven_gene_integration",
+      "variable_promoter_reporter"
+    ],
+    "two_derivations_agree": true
+  },
+  "stores": [
+    {
+      "addition_types": {
+        "variable_promoter_reporter": 71158
+      },
+      "census_corrected": {
+        "by_contig": {},
+        "gap_reasons": {},
+        "n_additions": 71158,
+        "n_composition_only": 0,
+        "n_host_placed_without_coordinate": 0,
+        "n_sequence_backed": 0,
+        "n_untyped": 71158
+      },
+      "census_old": {
+        "by_contig": {},
+        "gap_reasons": {},
+        "n_additions": 0,
+        "n_composition_only": 0,
+        "n_host_placed_without_coordinate": 0,
+        "n_sequence_backed": 0,
+        "n_untyped": 0
+      },
+      "n_additions_seen_by_the_derived_family": 71158,
+      "n_additions_seen_by_the_old_family": 0,
+      "n_additions_the_old_family_skipped": 71158,
+      "store": "pooled_promoter_expression_vaishnav2022"
+    }
+  ],
+  "stores_read": [
+    "betaxanthin_cachera2023",
+    "carotenoid_ozaydin2013",
+    "crispri_mormino2022",
+    "pooled_promoter_expression_vaishnav2022"
+  ],
+  "totals": {
+    "n_additions_seen_by_the_derived_family": 71158,
+    "n_additions_seen_by_the_old_family": 0,
+    "n_additions_the_old_family_skipped": 71158,
+    "n_stores_unreadable_under_the_current_closure": 3,
+    "n_stores_with_additions": 1
+  },
+  "unreadable": [
+    {
+      "reason": "betaxanthin_cachera2023: Can't get attribute 'ReleasedGeneKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/construct-span-parts/torchcell/datamodels/schema.py'>",
+      "store": "betaxanthin_cachera2023"
+    },
+    {
+      "reason": "carotenoid_ozaydin2013: Can't get attribute 'ReleasedGeneKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/construct-span-parts/torchcell/datamodels/schema.py'>",
+      "store": "carotenoid_ozaydin2013"
+    },
+    {
+      "reason": "crispri_mormino2022: Can't get attribute 'ReleasedGeneKind' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/construct-span-parts/torchcell/datamodels/schema.py'>",
+      "store": "crispri_mormino2022"
+    }
+  ]
+}

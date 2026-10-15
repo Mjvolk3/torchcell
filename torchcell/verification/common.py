@@ -59,7 +59,7 @@ from typing import Any, Protocol
 from pydantic import BaseModel, Field
 
 from torchcell.verification.construct_placement import (
-    ADDITION_PERTURBATION_TYPES,
+    addition_perturbation_types,
     construct_placement_census,
     construct_placement_result,
 )
@@ -381,16 +381,14 @@ class SharedRecordRules:
     def _add_placements(self, experiment: Mapping[str, Any]) -> None:
         """Keep the addition perturbations this record carries, for the placement row.
 
-        Only the addition leaves (``ADDITION_PERTURBATION_TYPES``) are kept, and only
+        Only the addition leaves (``addition_perturbation_types()``) are kept, and only
         the perturbation mappings themselves, which the census reads field by field. A
         deletion-only store keeps nothing and emits no row.
         """
         genotype = experiment.get("genotype") or {}
+        additions = addition_perturbation_types()
         for perturbation in genotype.get("perturbations") or []:
-            if (
-                str(perturbation.get("perturbation_type"))
-                in ADDITION_PERTURBATION_TYPES
-            ):
+            if str(perturbation.get("perturbation_type")) in additions:
                 self._additions.append(perturbation)
 
     def _add_gene_names(self, experiment: Mapping[str, Any]) -> None:

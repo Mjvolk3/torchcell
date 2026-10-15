@@ -128,6 +128,7 @@ from torchcell.datamodels.schema import (
     EndpointRule,
     EnvironmentPerturbationType,
     EnvironmentResponsePhenotype,
+    EukaryoticStrainBackground,
     Experiment,
     ExperimentReference,
     Genotype,
@@ -141,7 +142,6 @@ from torchcell.datamodels.schema import (
     SampleUnit,
     SmallMoleculePerturbation,
     Solvent,
-    StrainBackground,
     StrainEnvironmentResponseExperiment,
     StrainEnvironmentResponseExperimentReference,
     StrainReferenceGenome,
@@ -568,10 +568,10 @@ def _background_allele(allele: BackgroundAllele) -> BackgroundAllele:
     )
 
 
-def _by4741_background() -> StrainBackground:
+def _by4741_background() -> EukaryoticStrainBackground:
     """BY4741 as the 2016 paper states it, each allele's construction pending review."""
     background = standard_background("BY4741", provenance=[BY4741_GENOTYPE])
-    return StrainBackground.model_validate(
+    return EukaryoticStrainBackground.model_validate(
         {
             **background.model_dump(),
             "alleles": [_background_allele(a).model_dump() for a in background.alleles],

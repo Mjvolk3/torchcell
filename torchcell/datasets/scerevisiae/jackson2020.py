@@ -119,6 +119,7 @@ from torchcell.datamodels.schema import (
     CultureEnvironment,
     CultureFormat,
     EndpointRule,
+    EukaryoticStrainBackground,
     Experiment,
     ExperimentReference,
     Genotype,
@@ -132,7 +133,6 @@ from torchcell.datamodels.schema import (
     SingleCellExpressionPhenotype,
     SmallMoleculePerturbation,
     Solvent,
-    StrainBackground,
     StrainConstruction,
     StrainReferenceGenome,
 )
@@ -449,9 +449,11 @@ BACKGROUND_PROVENANCE: list[SourcedValue] = [
 ]
 
 
-def fy_background() -> StrainBackground:
+def fy_background() -> EukaryoticStrainBackground:
     """The FY4 x FY5 diploid every strain of the array was built in."""
-    return StrainBackground(
+    return EukaryoticStrainBackground(
+        reference_strain="S288C",
+        assembly_set=SGD_S288C_R64,
         name=BACKGROUND_NAME,
         parents=["FY4", "FY5"],
         construction="MATa FY4 and MATalpha FY5 deletants of the same gene pinned onto "

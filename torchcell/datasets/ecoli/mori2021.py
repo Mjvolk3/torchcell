@@ -196,7 +196,6 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import MOPS_MINIMAL
 from torchcell.datamodels.schema import (
     BacterialAssemblySet,
-    BacterialStrainBackground,
     Concentration,
     ConcentrationUnit,
     Environment,
@@ -210,6 +209,7 @@ from torchcell.datamodels.schema import (
     ProteinAbundanceExperimentReference,
     ProteinAbundancePhenotype,
     Publication,
+    StrainBackground,
     Temperature,
 )
 from torchcell.datasets.bacteria_common import (
@@ -817,7 +817,7 @@ UNIDENTIFIED_ROWS = 18
 # --------------------------------------------------------------------------- #
 # The strain
 # --------------------------------------------------------------------------- #
-EQ353_BACKGROUND = BacterialStrainBackground(
+EQ353_BACKGROUND = StrainBackground(
     name="MG1655 (EQ353)",
     reference_strain=MORI_REFERENCE_STRAIN,
     assembly_set=MORI_ASSEMBLY_SET,

@@ -36,11 +36,13 @@ from typing import Literal
 
 from torchcell.datamodels.pydant import ModelStrict
 from torchcell.datamodels.schema import (
+    SGD_S288C_ASSEMBLY_SET,
+    SGD_S288C_NAMESPACE,
     AlleleEdit,
     BackgroundAllele,
+    EukaryoticStrainBackground,
     IntegratedCassette,
     MatingType,
-    StrainBackground,
     Zygosity,
 )
 from torchcell.verification.report import Provenance
@@ -295,6 +297,7 @@ def standard_allele(
     )
     return BackgroundAllele(
         systematic_gene_name=spec.systematic_gene_name,
+        gene_namespace=SGD_S288C_NAMESPACE,
         gene_name=spec.gene_name,
         allele_name=allele_name,
         edit=spec.edit,
@@ -314,8 +317,8 @@ def standard_background(
     note: str | None = None,
     extra_alleles: list[BackgroundAllele] | None = None,
     construction: str | None = None,
-) -> StrainBackground:
-    """A ``StrainBackground`` for BY4741 / BY4742 / BY4743.
+) -> EukaryoticStrainBackground:
+    """A ``EukaryoticStrainBackground`` for BY4741 / BY4742 / BY4743.
 
     ``provenance`` (one quote list that states the whole genotype, e.g. Wildenhain
     2016's "isogenic to BY4741, which has the genotype MATa his3Δ1 leu2Δ0 met15Δ0
@@ -341,8 +344,10 @@ def standard_background(
         if resolve_with is None
         else [pending_source_review("provenance", resolve_with, note)]
     )
-    return StrainBackground(
+    return EukaryoticStrainBackground(
         name=name,
+        reference_strain="S288C",
+        assembly_set=SGD_S288C_ASSEMBLY_SET,
         parents=list(genotype.parents),
         construction=construction,
         mating_type=genotype.mating_type,
@@ -408,6 +413,30 @@ BAID_CONSTRUCTION = SourcedValue(
     "in-house Bioscreen dataset's thesis strain BY4742-iAID6 is this same construction",
 )
 
+#: What was read before concluding that no construct sequence is available for the
+#: CRISPR-AID cassette. Lian 2019's Methods name the plasmid and cite the paper it comes
+#: from ("integrating PmeI-digested pAID6^8"), and this paper deposits no map of it, so
+#: the gap is ``not_released_by_primary`` rather than a pending comb of its own SI: the
+#: cassette's sequence is reachable only through that reference's deposit or the authors.
+_BAID_PLACEMENT_GAP_NOTE = (
+    "Supplementary Table 11 gives the cassette as the strain string "
+    "'BY4742-Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]' and the "
+    "Methods give its construction as 'integrating PmeI-digested pAID6' with a citation "
+    "to the paper pAID6 is from; neither states a contig, an accession or a coordinate "
+    "for the integration, and the Delta site is a Ty1 repeat family rather than a locus"
+)
+
+
+def _baid_placement_gap() -> ProvenanceGap:
+    """The typed absence of a construct sequence for the CRISPR-AID cassette."""
+    return ProvenanceGap(
+        field="placement",
+        reason=ProvenanceGapReason.not_released_by_primary,
+        looked_in=LIAN_2019_METHODS,
+        note=_BAID_PLACEMENT_GAP_NOTE,
+    )
+
+
 _BAID_ALLELE_NOTE = (
     "Supplementary Table 11 states BY4742's genotype string ('MATα his3∆1 leu2∆0 "
     "lys2∆0 ura3∆0', BAID_PARENT_GENOTYPE), so WHICH alleles the strain carries is "
@@ -417,8 +446,8 @@ _BAID_ALLELE_NOTE = (
 )
 
 
-def baid_background() -> StrainBackground:
-    """The CRISPR-AID host bAID as a typed ``StrainBackground``.
+def baid_background() -> EukaryoticStrainBackground:
+    """The CRISPR-AID host bAID as a typed ``EukaryoticStrainBackground``.
 
     BY4742's four auxotrophies as ``BackgroundAllele``s plus the one cassette the host
     carries integrated: ``Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]``,
@@ -449,10 +478,14 @@ def baid_background() -> StrainBackground:
         elements=["KanMX", "dLbCpf1-VP", "Csy4", "dSpCas9-RD1152", "SaCas9"],
         marker="KanMX",
         zygosity=Zygosity.haploid,
+        placement=None,
         provenance=[BAID_GENOTYPE, BAID_CONSTRUCTION],
+        provenance_gaps=[_baid_placement_gap()],
     )
-    return StrainBackground(
+    return EukaryoticStrainBackground(
         name=BAID_STRAIN,
+        reference_strain="S288C",
+        assembly_set=SGD_S288C_ASSEMBLY_SET,
         parents=["BY4742"],
         construction=BAID_CONSTRUCTION.quote,
         mating_type=genotype.mating_type,

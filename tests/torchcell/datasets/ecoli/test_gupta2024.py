@@ -34,13 +34,13 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
     write_assembly,
 )
 from torchcell.datamodels.schema import (
-    BacterialStrainBackground,
     Censoring,
     DerivedIdentifierMapping,
     EnvironmentPhysicalPerturbation,
     ProteinTurnoverExperiment,
     ProteinTurnoverExperimentReference,
     ReferenceGenome,
+    StrainBackground,
     StrainReferenceGenome,
 )
 from torchcell.sequence.genome.ecoli.k12 import MG1655_ASSEMBLY, EcoliK12MG1655Genome
@@ -489,7 +489,7 @@ def test_the_three_c_limited_environments_stay_three_distinct_environments() -> 
 def test_the_ncm3722_background_declares_what_the_paper_does_not_say() -> None:
     """NCM3722's lesions and construction are typed absences, not guesses."""
     background = gp.ncm3722_background()
-    assert isinstance(background, BacterialStrainBackground)
+    assert isinstance(background, StrainBackground)
     assert background.name == "NCM3722"
     assert background.reference_strain == "MG1655"
     assert background.alleles == []
@@ -1264,7 +1264,7 @@ SYNTHETIC_INTERVALS[gp.CONDITIONS[0].key] = 1
 
 
 def _pin(
-    strain: Any, *, background: BacterialStrainBackground | None = None, **_: Any
+    strain: Any, *, background: StrainBackground | None = None, **_: Any
 ) -> ReferenceGenome:
     """The assembly pin, without reading the genomes tier's assembly report."""
     if background is None:

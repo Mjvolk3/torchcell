@@ -481,7 +481,7 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         "F-, ∆(araD-araB)567, ∆lacZ4787(:rrnB-3), λ-, rph-1, ∆(rhaD-rhaB)568, hsdR514",
         _Q_STRAIN,
         note="the lesions are already in the deposited BW25113 GenBank annotation this "
-        "record pins, so they are not a BacterialStrainBackground on top of it",
+        "record pins, so they are not a StrainBackground on top of it",
     ),
     "temperature_c": _paper(37.0, _Q_BATCH_37C),
     "temperature_stress_c": _paper(42.0, _Q_42C),

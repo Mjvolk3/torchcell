@@ -1259,6 +1259,7 @@ def _bg_allele(
     """A LYS2 allele sourced by a declared gap (no quote needed)."""
     return s.BackgroundAllele(
         systematic_gene_name="YBR115C",
+        gene_namespace="scerevisiae_s288c_sgd_systematic",
         gene_name="LYS2",
         allele_name=allele_name,
         edit=s.AlleleEdit.full_deletion,
@@ -1284,6 +1285,7 @@ def test_gapped_empty_list_is_refused_by_the_mixin_before_the_empty_list_check()
     ):
         s.BackgroundAllele(
             systematic_gene_name="YBR115C",
+            gene_namespace="scerevisiae_s288c_sgd_systematic",
             gene_name="LYS2",
             allele_name="lys2Δ0",
             edit=s.AlleleEdit.full_deletion,
@@ -1304,11 +1306,21 @@ def test_genomic_span_needs_a_chromosome_name() -> None:
 
 
 def test_strain_background_name_cannot_be_blank() -> None:
+    with _refuses("EukaryoticStrainBackground.name cannot be empty"):
+        s.EukaryoticStrainBackground(
+            name=" ",
+            reference_strain="S288C",
+            assembly_set=SGD_S288C_R64,
+            mating_type=s.MatingType.a,
+            ploidy="haploid",
+            provenance=None,
+            provenance_gaps=[_gap("provenance")],
+        )
     with _refuses("StrainBackground.name cannot be empty"):
         s.StrainBackground(
             name=" ",
-            mating_type=s.MatingType.a,
-            ploidy="haploid",
+            reference_strain="S288C",
+            assembly_set=SGD_S288C_R64,
             provenance=None,
             provenance_gaps=[_gap("provenance")],
         )
@@ -1320,8 +1332,10 @@ def test_functional_copies_skips_a_functional_allele_of_a_compound_heterozygote(
     """Diploid: 2 copies, minus 1 for the heterozygous null; the functional entry at
     the same locus subtracts nothing, so the count is 1 (it would be 0 if it counted).
     """
-    background = s.StrainBackground(
+    background = s.EukaryoticStrainBackground(
         name="toy",
+        reference_strain="S288C",
+        assembly_set=SGD_S288C_R64,
         mating_type=s.MatingType.a_alpha,
         ploidy="diploid",
         alleles=[
@@ -1631,7 +1645,7 @@ def test_the_bacterial_vocabulary_is_the_bacterial_restriction_of_the_general_on
     None
 ):
     """``BacterialGeneNamespace`` and ``BACTERIAL_LOCUS_TAG_PATTERNS`` survive P1 only as
-    the bacterial rows of the general vocabulary (for ``BacterialBackgroundAllele``, which
+    the bacterial rows of the general vocabulary (for ``BackgroundAllele``, which
     P5 retires), so they cannot drift from it.
     """
     bacterial = set(typing.get_args(s.BacterialGeneNamespace))
@@ -2054,9 +2068,14 @@ def test_the_fourteen_retired_pairs_are_gone_and_their_records_have_a_home() -> 
 def test_a_strain_background_requires_the_s288c_set_and_agrees_with_the_reference() -> (
     None
 ):
-    """The yeast cross-check: a ``StrainBackground`` is an edit of S288C."""
-    background = s.StrainBackground(
+    """The cross-check, which since P5 is one rule for every family: the background and
+    the reference pin the same deposited set, and an S288C background pins the S288C
+    set because that is its own reference strain's.
+    """
+    background = s.EukaryoticStrainBackground(
         name="BY4741",
+        reference_strain="S288C",
+        assembly_set=SGD_S288C_R64,
         ploidy="haploid",
         mating_type=s.MatingType.a,
         provenance_gaps=[
@@ -2070,8 +2089,8 @@ def test_a_strain_background_requires_the_s288c_set_and_agrees_with_the_referenc
     assert isinstance(reference, s.StrainReferenceGenome)
     assert reference.background.name == "BY4741"
     with _refuses(
-        "a StrainBackground is an edit of 'S288C', so assembly_set must be "
-        "'sgd_S288C_R64-4-1_20230830', not 'scerevisiae_CENPK113-7D_ASM257140v2'"
+        "background pins assembly set 'sgd_S288C_R64-4-1_20230830' != "
+        "'scerevisiae_CENPK113-7D_ASM257140v2'"
     ):
         s.StrainReferenceGenome(
             species="Saccharomyces cerevisiae",
@@ -2183,7 +2202,7 @@ def test_the_namespace_vocabulary_covers_every_assembly_set() -> None:
 
 
 # --- 4. the bacterial strain background ------------------------------------ #
-def _bw25113_allele(**kw: Any) -> s.BacterialBackgroundAllele:
+def _bw25113_allele(**kw: Any) -> s.BackgroundAllele:
     fields: dict[str, Any] = dict(
         systematic_gene_name="BW25113_3643",
         gene_namespace="ecoli_k12_bw25113_locus_tag",
@@ -2194,10 +2213,10 @@ def _bw25113_allele(**kw: Any) -> s.BacterialBackgroundAllele:
         provenance_gaps=[_gap("provenance")],
     )
     fields.update(kw)
-    return s.BacterialBackgroundAllele(**fields)
+    return s.BackgroundAllele(**fields)
 
 
-def _bw25113_background(**kw: Any) -> s.BacterialStrainBackground:
+def _bw25113_background(**kw: Any) -> s.StrainBackground:
     fields: dict[str, Any] = dict(
         name="BW25113",
         reference_strain="BW25113",
@@ -2207,28 +2226,36 @@ def _bw25113_background(**kw: Any) -> s.BacterialStrainBackground:
         provenance_gaps=[_gap("provenance")],
     )
     fields.update(kw)
-    return s.BacterialStrainBackground(**fields)
+    return s.StrainBackground(**fields)
 
 
-def test_the_bacterial_background_is_a_sibling_not_a_widening() -> None:
-    """The yeast classes are untouched: no bacterial strain is admissible there.
+def test_the_background_vocabulary_is_one_class_for_every_host() -> None:
+    """P5 retired the sibling: the vocabulary of one is now the deposited sets' strains.
 
-    Widening ``StrainBackground.reference_strain`` was measured to move 4 of 36 served
-    closures (the chemogenomic loaders), so the bacterial background is a separate
-    class and the yeast Literal still admits only S288C.
+    The duplication was chosen on cost ("widening ``reference_strain`` moves 4 of 36
+    served closures"), which the constitution's principle 8 refuses as a reason. The
+    eukaryote facts stay on the subclass, so a background that states a ploidy still
+    states a mating type and a copy count per allele.
     """
-    assert typing.get_args(
-        s.StrainBackground.model_fields["reference_strain"].annotation
-    ) == ("S288C",)
-    with pytest.raises(ValidationError):
-        s.StrainBackground(
-            name="BW25113",
-            reference_strain="BW25113",  # type: ignore[arg-type]
-            mating_type=None,
-            ploidy="haploid",
-            provenance_gaps=[_gap("mating_type"), _gap("provenance")],
-        )
+    assert set(
+        typing.get_args(s.StrainBackground.model_fields["reference_strain"].annotation)
+    ) == set(s.REFERENCE_STRAIN_ASSEMBLY_SETS)
     assert _bw25113_background().reference_strain == "BW25113"
+    assert not hasattr(s, "BacterialStrainBackground")
+    assert not hasattr(s, "BacterialBackgroundAllele")
+    with pytest.raises(ValidationError, match="ploidy"):
+        s.EukaryoticStrainBackground.model_validate(
+            {
+                "name": "BW25113",
+                "reference_strain": "BW25113",
+                "assembly_set": "ecoli_K12_BW25113_ASM75055v1",
+                "mating_type": None,
+                "provenance_gaps": [
+                    _gap("mating_type").model_dump(),
+                    _gap("provenance").model_dump(),
+                ],
+            }
+        )
 
 
 def test_the_background_strain_and_assembly_set_cannot_disagree() -> None:
@@ -2241,11 +2268,21 @@ def test_the_background_strain_and_assembly_set_cannot_disagree() -> None:
 
 
 def test_a_background_allele_is_validated_in_its_own_namespace() -> None:
-    """An allele's locus tag belongs to the namespace the allele declares."""
-    with pytest.raises(ValidationError, match="Invalid bacterial locus tag"):
-        _bw25113_allele(systematic_gene_name="YOR202W")
+    """An allele's name belongs to the namespace the allele declares.
+
+    Since P5 the class accepts the identifier of any deposited namespace, so the yeast
+    name is refused for DISAGREEING with the declared bacterial namespace rather than
+    for not being a locus tag. A name of no namespace at all is still refused outright.
+    """
     with _refuses(
-        "'b3643' is a ecoli_k12_mg1655_bnumber tag but gene_namespace is "
+        "'YOR202W' is a scerevisiae_s288c_sgd_systematic name but gene_namespace is "
+        "'ecoli_k12_bw25113_locus_tag'"
+    ):
+        _bw25113_allele(systematic_gene_name="YOR202W")
+    with pytest.raises(ValidationError, match="matches no gene identifier namespace"):
+        _bw25113_allele(systematic_gene_name="rph")
+    with _refuses(
+        "'b3643' is a ecoli_k12_mg1655_bnumber name but gene_namespace is "
         "'ecoli_k12_bw25113_locus_tag'"
     ):
         _bw25113_allele(systematic_gene_name="b3643")
@@ -2268,7 +2305,7 @@ def test_a_background_allele_needs_a_cassette_exactly_when_it_is_a_replacement()
 def test_a_haploid_background_carries_one_allele_entry_per_locus() -> None:
     """No zygosity means no compound heterozygote, so a second entry is a conflict."""
     with _refuses(
-        "BW25113_3643: a haploid background carries one allele entry per locus"
+        "BW25113_3643: a single-copy background carries one allele entry per locus"
     ):
         _bw25113_background(alleles=[_bw25113_allele(), _bw25113_allele()])
 
@@ -2292,7 +2329,7 @@ def test_the_background_rides_on_the_strain_reference() -> None:
         background=_bw25113_background(),
     )
     assert isinstance(reference, s.StrainReferenceGenome)
-    assert isinstance(reference.background, s.BacterialStrainBackground)
+    assert isinstance(reference.background, s.StrainBackground)
     assert reference.background.genotype_statement == BW25113_BACKGROUND_GENOTYPE
     with _refuses("background pins assembly set 'ecoli_K12_BW25113_ASM75055v1' != "):
         _assembly_reference(

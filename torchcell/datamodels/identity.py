@@ -64,6 +64,7 @@ from torchcell.datamodels.schema import (
     CultureFormat,
     Environment,
     EnvironmentPhysicalPerturbation,
+    EukaryoticStrainBackground,
     GenomicSpan,
     IntegratedCassette,
     Media,
@@ -82,11 +83,14 @@ __all__ = [
     "BIOLOGIC_PERTURBATION_IDENTITY_FIELDS",
     "COMPOUND_IDENTITY_PRECEDENCE",
     "BACKGROUND_ALLELE_IDENTITY_FIELDS",
+    "BACKGROUND_ALLELE_NON_IDENTITY_FIELDS",
     "CONCENTRATION_IDENTITY_FIELDS",
     "CULTURE_FORMAT_IDENTITY_FIELDS",
     "ENVIRONMENT_IDENTITY_FIELDS",
     "ENVIRONMENT_OPTIONAL_IDENTITY_FIELDS",
+    "EUKARYOTIC_STRAIN_BACKGROUND_IDENTITY_FIELDS",
     "INTEGRATED_CASSETTE_IDENTITY_FIELDS",
+    "INTEGRATED_CASSETTE_NON_IDENTITY_FIELDS",
     "MEDIA_COMPONENT_IDENTITY_FIELDS",
     "MEDIA_IDENTITY_FIELDS",
     "MEDIA_GAP_IDENTITY_FIELDS",
@@ -95,10 +99,12 @@ __all__ = [
     "PHYSICAL_EXPOSURE_IDENTITY_FIELDS",
     "PHYSICAL_PERTURBATION_IDENTITY_FIELDS",
     "PRE_CULTURE_IDENTITY_FIELDS",
+    "PROJECTED_BACKGROUND_CLASSES",
     "PROJECTED_PERTURBATION_CLASSES",
     "SMALL_MOLECULE_IDENTITY_FIELDS",
     "SOLVENT_IDENTITY_FIELDS",
     "STRAIN_BACKGROUND_IDENTITY_FIELDS",
+    "STRAIN_BACKGROUND_NON_IDENTITY_FIELDS",
     "TEMPERATURE_IDENTITY_FIELDS",
     "compound_identity_key",
     "environment_identity",
@@ -253,6 +259,7 @@ PRE_CULTURE_IDENTITY_FIELDS: tuple[str, ...] = (
 )
 BACKGROUND_ALLELE_IDENTITY_FIELDS: tuple[str, ...] = (
     "systematic_gene_name",
+    "gene_namespace",
     "allele_name",
     "edit",
     "functional",
@@ -260,14 +267,69 @@ BACKGROUND_ALLELE_IDENTITY_FIELDS: tuple[str, ...] = (
     "cassette",
     "deleted_span",
 )
+"""An allele is its locus, in its identifier space, as the edit the source designates.
+
+``gene_namespace`` is identity because it is half of the locus: the name alone does not
+say which genome it is a name in, which is why P1 put the field on every
+``GenePerturbation`` and P5 put it here. ``zygosity`` is projected as stated, ``None``
+included, so a background whose source gave no copy count is not the same background as
+one that did.
+"""
+BACKGROUND_ALLELE_NON_IDENTITY_FIELDS: tuple[str, ...] = (
+    "gene_name",
+    "provenance",
+    "provenance_gaps",
+)
+"""What an allele projection drops, each for a stated reason.
+
+``gene_name`` is the CURRENT standard name of the locus, which an annotation release can
+change without the allele changing (``met15Δ0`` sits in YLR303W, which R64-4-1 calls
+MET17 and older releases called MET15); the systematic name is the stable half.
+``provenance`` and ``provenance_gaps`` record who stated the allele and what they left
+unstated, which is exactly what this layer exists to drop.
+"""
 STRAIN_BACKGROUND_IDENTITY_FIELDS: tuple[str, ...] = (
     "name",
     "reference_strain",
+    "assembly_set",
+    "alleles",
+)
+"""The host-agnostic background is its label, its reference, and its sorted allele set.
+
+``assembly_set`` joins the projection with P5: a background's alleles are edits against
+deposited bytes, so two records naming one strain against two assemblies are not stating
+the same strain. It is redundant with ``reference_strain`` only while the two are pinned
+to each other by the schema's cross-check, and the projection states the fact rather
+than relying on that.
+"""
+EUKARYOTIC_STRAIN_BACKGROUND_IDENTITY_FIELDS: tuple[str, ...] = (
+    *STRAIN_BACKGROUND_IDENTITY_FIELDS,
     "mating_type",
     "ploidy",
-    "alleles",
     "integrations",
 )
+"""A eukaryotic background adds the three facts its class adds.
+
+Before P5 these three were projected UNCONDITIONALLY, with no branch for a background
+that has none, so the projection could only ever be called on a eukaryote. Each is
+identity: BY4741 and BY4742 differ in mating type, a haploid and a diploid of one name
+are different strains, and bAID and bAID-X3::SIZ1i carry the same alleles and are not
+the same strain.
+"""
+STRAIN_BACKGROUND_NON_IDENTITY_FIELDS: tuple[str, ...] = (
+    "parents",
+    "construction",
+    "genotype_statement",
+    "provenance",
+    "provenance_gaps",
+)
+"""What a background projection drops: how it was made and how it was worded.
+
+``parents`` and ``construction`` are the lineage and the method sentence, which two
+sources write differently for one strain. ``genotype_statement`` is the source's own
+genotype string, whose typed reading is ``alleles``; keeping the string would split one
+strain by its spelling (``MATα his3∆1`` against ``MATalpha his3-delta1``).
+"""
 INTEGRATED_CASSETTE_IDENTITY_FIELDS: tuple[str, ...] = (
     "name",
     "locus",
@@ -276,6 +338,30 @@ INTEGRATED_CASSETTE_IDENTITY_FIELDS: tuple[str, ...] = (
     "marker",
     "zygosity",
 )
+INTEGRATED_CASSETTE_NON_IDENTITY_FIELDS: tuple[str, ...] = (
+    "placement",
+    "provenance",
+    "provenance_gaps",
+)
+"""``placement`` is deliberately NOT part of a cassette's identity.
+
+It is the sha256-pinned construct the cassette was built from, and a source that
+deposits the map states the same physical cassette as one that does not: bAID is screened
+in Lian 2019 and in the in-house Bioscreen dataset, and the whole point of this layer is
+that those two land on one node. Projecting a pointer whose absence is typed would split
+them, which is the opposite of what ``parents`` and ``provenance`` are dropped for.
+"""
+PROJECTED_BACKGROUND_CLASSES: tuple[type, ...] = (
+    StrainBackground,
+    EukaryoticStrainBackground,
+)
+"""Every concrete strain-background class has a branch in ``strain_background_identity``.
+
+The test pins this tuple to ``StrainBackground`` plus its subclasses, so a third class
+cannot land and be projected as its base: that would drop the fields it adds and merge
+two different strains onto one key, which is the defect
+``PROJECTED_PERTURBATION_CLASSES`` exists to prevent on the environment side.
+"""
 
 
 def _canonical(obj: Any) -> str:
@@ -564,9 +650,10 @@ def _span_identity(span: GenomicSpan | None) -> dict[str, Any] | None:
 
 
 def _background_allele_identity(allele: BackgroundAllele) -> dict[str, Any]:
-    """Project an allele onto its locus, designation, edit, function and zygosity."""
+    """Project an allele onto its locus, namespace, designation, edit and zygosity."""
     return {
         "systematic_gene_name": allele.systematic_gene_name,
+        "gene_namespace": allele.gene_namespace,
         "allele_name": allele.allele_name,
         "edit": allele.edit.value,
         "functional": allele.functional,
@@ -594,30 +681,47 @@ def strain_background_identity(background: StrainBackground) -> dict[str, Any]:
     Two datasets that both state BY4741 (one quoting its paper, one carrying a
     pending-review gap) produce different ``model_dump``s and so different ``genome``
     node ids; this projection is the join key that says they state the same strain:
-    name, reference, mating type, ploidy, the sorted allele set and the sorted set of
-    integrated cassettes. ``parents``, ``construction``, provenance and gaps are
-    dropped. Integrations are IN, because a cassette at a named site is genome content
-    exactly as an allele is: bAID and bAID-X3::SIZ1i carry the same alleles and are not
-    the same strain. Not used for node ids (the ``genome`` node id is unchanged); it is
-    the cross-dataset comparison key.
+    name, reference strain, assembly set and the sorted allele set, plus mating type,
+    ploidy and the sorted set of integrated cassettes for a
+    ``EukaryoticStrainBackground``. ``parents``, ``construction``, the verbatim genotype
+    statement, provenance and gaps are dropped. Integrations are IN, because a cassette
+    at a named site is genome content exactly as an allele is: bAID and
+    bAID-X3::SIZ1i carry the same alleles and are not the same strain.
+
+    One projection per concrete class, because the three eukaryote fields exist on one
+    of them: before P5 they were read unconditionally, so a background without them
+    could not be projected at all, and projecting a subclass as its base would drop
+    them and merge two strains onto one key. An unknown subclass therefore raises
+    rather than falling through to the base's fields. Not used for node ids (the
+    ``genome`` node id is unchanged); it is the cross-dataset comparison key.
     """
-    return {
+    if type(background) not in PROJECTED_BACKGROUND_CLASSES:
+        raise TypeError(
+            "no identity projection for "
+            f"{type(background).__name__}; a strain background is one of "
+            + ", ".join(cls.__name__ for cls in PROJECTED_BACKGROUND_CLASSES)
+        )
+    identity: dict[str, Any] = {
         "name": background.name,
         "reference_strain": background.reference_strain,
-        "mating_type": (
-            None if background.mating_type is None else background.mating_type.value
-        ),
-        "ploidy": background.ploidy,
+        "assembly_set": background.assembly_set,
         "alleles": _sorted_identities(
             [_background_allele_identity(allele) for allele in background.alleles]
         ),
-        "integrations": _sorted_identities(
-            [
-                _integrated_cassette_identity(cassette)
-                for cassette in background.integrations
-            ]
-        ),
     }
+    if not isinstance(background, EukaryoticStrainBackground):
+        return identity
+    identity["mating_type"] = (
+        None if background.mating_type is None else background.mating_type.value
+    )
+    identity["ploidy"] = background.ploidy
+    identity["integrations"] = _sorted_identities(
+        [
+            _integrated_cassette_identity(cassette)
+            for cassette in background.integrations
+        ]
+    )
+    return identity
 
 
 def identity_sha256(obj: Mapping[str, Any]) -> str:

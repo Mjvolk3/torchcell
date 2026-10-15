@@ -47,11 +47,11 @@ this was MEASURED on these bytes rather than assumed
    regex and has no ``gene_namespace`` field (issue #749).
 2. No class has a slot for what a row RELEASES: position, reference base, alternate base,
    mutation type, amino-acid change, and a frequency per timepoint.
-   ``BacterialBackgroundAllele.deleted_span`` is deletion-only and would lose all of it.
-3. ``BacterialBackgroundAllele`` requires a non-optional ``functional: bool``
+   ``BackgroundAllele.deleted_span`` is deletion-only and would lose all of it.
+3. ``BackgroundAllele`` requires a non-optional ``functional: bool``
    (``Input should be a valid boolean``), so the unknown consequence of a missense SNV
    cannot be covered by a ``ProvenanceGap`` -- a gap must name a field that is ``None``.
-4. ``BacterialStrainBackground`` permits ONE allele entry per locus, which refuses the
+4. ``StrainBackground`` permits ONE allele entry per locus, which refuses the
    seven loci carrying more than one call in Supplementary Data 2 alone (``yafF`` 5,
    ``ydjN`` 4, ``iscR`` 3, ``rrsH`` / ``tufA`` / ``yeaM`` 2 each, plus 13 rows labelled
    only ``intergenic``).
@@ -71,7 +71,7 @@ released, on ``ReleasedIdentifierPerturbation`` (``released_kind=sequence_allele
 the gene symbol and the allele exactly as Supplementary Table 3 writes them, the strain
 name, the marker as written, and no coordinate, because the release gives a CDS-relative
 change and no replicon position. The reference of each is its control, a
-``BacterialStrainBackground`` named as released whose ``genotype_statement`` is its
+``StrainBackground`` named as released whose ``genotype_statement`` is its
 Supplementary Table 3 row; the fitness is the mean of the three released ratios with
 their sample SD (n = 3 biological replicates, the Fig. 2f legend).
 
@@ -82,7 +82,7 @@ not the same measurement and nothing may be derived across them. Both are stored
 part 3), each eMS57 record naming its panel in ``FitnessPhenotype.screen_id``.
 
 THE EVOLVED CLONE IS A RECORD ON ITS RELEASED BACKGROUND (#1045 part 3). eMS57 is a
-``BacterialStrainBackground`` named ``eMS57`` whose ``genotype_statement`` is its
+``StrainBackground`` named ``eMS57`` whose ``genotype_statement`` is its
 Supplementary Table 3 row verbatim ("E. coli MS56 adaptively evolved in M9
 glucosemedium"), parent MS56, and whose ``alleles`` list is empty for the reason below:
 the release gives the clone no variant list. Its genotype is empty, because nothing is
@@ -94,7 +94,7 @@ that of eMS57", and ``check_recovery_fraction`` asserts that agreement on every 
 WHY THE REFERENCE IS MS56 AND NOT MG1655. Both deletion strains are "MS56, <lesion>::kan"
 (Supplementary Table 3), so their isogenic parent is MS56 and the ratio a
 ``FitnessPhenotype`` means is to that parent. MS56 itself is carried as a
-``BacterialStrainBackground`` whose ``genotype_statement`` is Supplementary Table 3's own
+``StrainBackground`` whose ``genotype_statement`` is Supplementary Table 3's own
 words and whose ``alleles`` list is EMPTY, which is the same statement the landed Girgis
 2009 loader makes for MG1655 ``delta-lacZ``: this paper defers MS56's content to its
 reference 4 as "large deletions MD1 to MD56" and enumerates no gene, the reduced strain
@@ -194,7 +194,6 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     BacterialAssemblySet,
-    BacterialStrainBackground,
     Concentration,
     ConcentrationUnit,
     Environment,
@@ -212,6 +211,7 @@ from torchcell.datamodels.schema import (
     ReleasedIdentifierPerturbation,
     ReleasedKind,
     SampleUnit,
+    StrainBackground,
     Temperature,
     UncertaintyType,
 )
@@ -772,11 +772,11 @@ TF_PERTURBATION_GAPS: tuple[ProvenanceGap, ...] = (
     ),
     _GAP_KEIO_CONSTRUCTION,
 )
-#: The absence that has NO typed home, measured: ``BacterialStrainBackground.alleles``
+#: The absence that has NO typed home, measured: ``StrainBackground.alleles``
 #: defaults to ``[]``, and ``ProvenanceGapMixin`` refuses a gap on a field that is not
 #: ``None``, so MS56's 55 unenumerated regions are recorded here and in the ledger.
 BACKGROUND_ABSENCE = {
-    "model": "BacterialStrainBackground",
+    "model": "StrainBackground",
     "field": "alleles",
     "strain": PARENT_LABEL,
     "why_no_typed_gap": "ProvenanceGapMixin requires a gapped field to be None; "
@@ -788,7 +788,7 @@ BACKGROUND_ABSENCE = {
 }
 #: The same untyped absence for the evolved clone (#1045 part 3).
 EVOLVED_ABSENCE = {
-    "model": "BacterialStrainBackground",
+    "model": "StrainBackground",
     "field": "alleles",
     "strain": EVOLVED_LABEL,
     "why_no_typed_gap": BACKGROUND_ABSENCE["why_no_typed_gap"],
@@ -1183,7 +1183,7 @@ def deleted_region_rule(genome: EcoliK12Genome) -> LevelResult:
 # --------------------------------------------------------------------------- #
 # Records
 # --------------------------------------------------------------------------- #
-def parent_background() -> BacterialStrainBackground:
+def parent_background() -> StrainBackground:
     """MS56, the genome-reduced parent both deletion strains were built on.
 
     ``alleles`` is empty and that is a statement, not an omission: this paper writes the
@@ -1192,7 +1192,7 @@ def parent_background() -> BacterialStrainBackground:
     else listed". The verbatim genotype string is kept instead, and the untyped absence
     is filed in ``preprocess/genotype_gaps.json``.
     """
-    return BacterialStrainBackground(
+    return StrainBackground(
         name=PARENT_LABEL,
         reference_strain=MG1655,
         assembly_set=MG1655_ASSEMBLY_SET,
@@ -1209,7 +1209,7 @@ def parent_background() -> BacterialStrainBackground:
     )
 
 
-def evolved_background() -> BacterialStrainBackground:
+def evolved_background() -> StrainBackground:
     """eMS57, the clone isolated from the MS56 evolution, named and stated as released.
 
     ``alleles`` is empty for the reason MS56's is: the release gives no clone variant
@@ -1217,7 +1217,7 @@ def evolved_background() -> BacterialStrainBackground:
     3's statement is kept verbatim and the untyped absence is filed in
     ``preprocess/genotype_gaps.json`` (#1045 part 3).
     """
-    return BacterialStrainBackground(
+    return StrainBackground(
         name=EVOLVED_LABEL,
         reference_strain=MG1655,
         assembly_set=MG1655_ASSEMBLY_SET,
@@ -1317,9 +1317,9 @@ def reconstructed_genotype(allele: ReconstructedAllele) -> Genotype:
     )
 
 
-def control_background(allele: ReconstructedAllele) -> BacterialStrainBackground:
+def control_background(allele: ReconstructedAllele) -> StrainBackground:
     """The kan-marked wild-type-allele control a reconstructed strain is a ratio to."""
-    return BacterialStrainBackground(
+    return StrainBackground(
         name=allele.control_strain,
         reference_strain=MG1655,
         assembly_set=MG1655_ASSEMBLY_SET,
@@ -1785,7 +1785,7 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
                         {
                             "reason": "evolved_clone_has_no_writable_genotype",
                             "retired": "no longer applied (#1045 part 3): eMS57 is "
-                            "stored on a BacterialStrainBackground named eMS57, its "
+                            "stored on a StrainBackground named eMS57, its "
                             "Supplementary Table 3 row the genotype statement, once "
                             "per panel (screen_id Fig2c and Fig2f)",
                         },

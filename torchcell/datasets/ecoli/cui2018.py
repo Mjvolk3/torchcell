@@ -32,7 +32,7 @@ strain. ``LC-E18`` carries the original Ptet-dCas9 cassette; ``LC-E75`` carries 
 fine-tuned cassette expressing dCas9 "2.6-time lower", where the bad-seed effect is
 "largely alleviated ... but not abolished" (130 of 1024 seeds significant in LC-E18, 14
 in LC-E75) while coding-strand targets of essential genes still deplete. The two strains
-are also distinct ``BacterialStrainBackground`` objects on the reference, from
+are also distinct ``StrainBackground`` objects on the reference, from
 Supplementary Table 7, so the regime is readable from the record rather than only from
 the screen label.
 
@@ -131,7 +131,6 @@ from torchcell.datamodels.media import LB
 from torchcell.datamodels.schema import (
     AssayType,
     BacterialGeneNamespace,
-    BacterialStrainBackground,
     Concentration,
     ConcentrationUnit,
     CrisprConstruct,
@@ -149,6 +148,7 @@ from torchcell.datamodels.schema import (
     ReleasedKind,
     SampleUnit,
     SmallMoleculePerturbation,
+    StrainBackground,
     Temperature,
 )
 from torchcell.datasets.bacteria_common import assembly_reference, bacterial_genome
@@ -956,7 +956,7 @@ def publication() -> Publication:
     )
 
 
-def strain_background(screen_id: str) -> BacterialStrainBackground:
+def strain_background(screen_id: str) -> StrainBackground:
     """The MG1655 derivative one screen was run in, from Supplementary Table 7.
 
     ``alleles`` is empty and that is a statement, not an omission: both cassettes are
@@ -966,7 +966,7 @@ def strain_background(screen_id: str) -> BacterialStrainBackground:
     carried verbatim in ``genotype_statement`` and read once in ``construction``.
     """
     quote, construction = STRAIN_BACKGROUNDS[screen_id]
-    return BacterialStrainBackground(
+    return StrainBackground(
         name=screen_id,
         reference_strain=MG1655_STRAIN,
         assembly_set="ecoli_K12_MG1655_ASM584v2",

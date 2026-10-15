@@ -133,6 +133,7 @@ from torchcell.datamodels.schema import (
     CultureFormat,
     EndpointRule,
     EnvironmentResponsePhenotype,
+    EukaryoticStrainBackground,
     Experiment,
     ExperimentReference,
     Genotype,
@@ -145,7 +146,6 @@ from torchcell.datamodels.schema import (
     SampleUnit,
     SmallMoleculePerturbation,
     Solvent,
-    StrainBackground,
     StrainEnvironmentResponseExperiment,
     StrainEnvironmentResponseExperimentReference,
     StrainReferenceGenome,
@@ -798,7 +798,7 @@ def _background_allele(allele: BackgroundAllele) -> BackgroundAllele:
 BACKGROUND_STRAIN = "BY4741"
 
 
-def parsons_background() -> StrainBackground:
+def parsons_background() -> EukaryoticStrainBackground:
     """BY4741 with its SI-quoted alleles; that the pool IS BY4741 is a typed gap."""
     genotype = STANDARD_BY_GENOTYPES[BACKGROUND_STRAIN]
     alleles = [
@@ -807,7 +807,9 @@ def parsons_background() -> StrainBackground:
         )
         for allele_name, zygosity in genotype.alleles.items()
     ]
-    return StrainBackground(
+    return EukaryoticStrainBackground(
+        reference_strain="S288C",
+        assembly_set=SGD_S288C_R64,
         name=BACKGROUND_STRAIN,
         parents=list(genotype.parents),
         construction=None,

@@ -29,11 +29,17 @@ from torchcell.data.experiment_dataset import (
 from torchcell.datamodels import schema as s
 from torchcell.datamodels.identity import (
     BACKGROUND_ALLELE_IDENTITY_FIELDS,
+    BACKGROUND_ALLELE_NON_IDENTITY_FIELDS,
     CULTURE_FORMAT_IDENTITY_FIELDS,
     ENVIRONMENT_IDENTITY_FIELDS,
     ENVIRONMENT_OPTIONAL_IDENTITY_FIELDS,
+    EUKARYOTIC_STRAIN_BACKGROUND_IDENTITY_FIELDS,
+    INTEGRATED_CASSETTE_IDENTITY_FIELDS,
+    INTEGRATED_CASSETTE_NON_IDENTITY_FIELDS,
     PRE_CULTURE_IDENTITY_FIELDS,
+    PROJECTED_BACKGROUND_CLASSES,
     STRAIN_BACKGROUND_IDENTITY_FIELDS,
+    STRAIN_BACKGROUND_NON_IDENTITY_FIELDS,
     environment_identity,
     identity_sha256,
     strain_background_identity,
@@ -52,6 +58,7 @@ from torchcell.datamodels.strain_background import (
     standard_allele,
     standard_background,
 )
+from torchcell.sequence.construct import ConstructSpan, FeatureKey
 from torchcell.sequence.genome.registry import (
     SGD_S288C_R64,
     SGD_S288C_R64_GENBANK_ACCESSION,
@@ -86,9 +93,47 @@ def _gap(field: str) -> ProvenanceGap:
     )
 
 
+#: A deposited construct contig and the one feature on it a cassette can point at, in
+#: the shape ``test_construct.py`` pins; the bytes are the Cachera pBTX002 map.
+_CONTIG = "63f89c1eaa13f888610ed781c4de12c8ac34f4e20512b4eb2c4f32d31af096da"
+_CONTIG_REF = s.ArtifactRef(
+    tier="library",
+    key="cacheraCRISPAHighthroughputMethod2023",
+    path="si/plasmids/pBTX002.gb",
+    sha256=_CONTIG,
+    bytes=21901,
+)
+
+
+def _placement(**overrides: Any) -> s.ConstructPlacement:
+    """The pointer an integrated cassette carries: a contig, a feature, a host site."""
+    base: dict[str, Any] = {
+        "contig_sha256": _CONTIG,
+        "contig_ref": _CONTIG_REF,
+        "feature_key": FeatureKey(
+            label="KanMX",
+            so_id="SO:0000316",
+            span=ConstructSpan(start=3001, end=4113, orientation="inline"),
+        ),
+        "host_placement": s.HostPlacement(
+            assembly_set=SGD_S288C_R64,
+            site_label="Delta",
+            insert_span=ConstructSpan(start=2003, end=10105, orientation="inline"),
+            provenance_gaps=[
+                ProvenanceGap(
+                    field="span", reason=ProvenanceGapReason.not_reported_by_primary
+                )
+            ],
+        ),
+    }
+    base.update(overrides)
+    return s.ConstructPlacement(**base)
+
+
 def _his3(zygosity: s.Zygosity | None = s.Zygosity.haploid, **kw: Any) -> Any:
     base: dict[str, Any] = dict(
         systematic_gene_name="YOR202W",
+        gene_namespace="scerevisiae_s288c_sgd_systematic",
         gene_name="HIS3",
         allele_name="his3Δ1",
         edit=s.AlleleEdit.partial_deletion,
@@ -100,8 +145,43 @@ def _his3(zygosity: s.Zygosity | None = s.Zygosity.haploid, **kw: Any) -> Any:
     return s.BackgroundAllele(**base)
 
 
-def _by4743() -> s.StrainBackground:
+def _by4743() -> s.EukaryoticStrainBackground:
     return standard_background("BY4743", resolve_with=BRACHMANN_1998)
+
+
+def _euk(**kwargs: Any) -> s.EukaryoticStrainBackground:
+    """A eukaryotic background carrying the S288C pin every yeast record states."""
+    base: dict[str, Any] = {"reference_strain": "S288C", "assembly_set": SGD_S288C_R64}
+    base.update(kwargs)
+    return s.EukaryoticStrainBackground(**base)
+
+
+def _bacterial(**kwargs: Any) -> s.StrainBackground:
+    """A host-agnostic background: BW25113, which states no ploidy (the retired
+    ``BacterialStrainBackground``'s shape, now the base's).
+    """
+    base: dict[str, Any] = {
+        "name": "BW25113",
+        "reference_strain": "BW25113",
+        "assembly_set": "ecoli_K12_BW25113_ASM75055v1",
+        "genotype_statement": s.BW25113_BACKGROUND_GENOTYPE,
+        "provenance": [WILDENHAIN_BY4741],
+    }
+    base.update(kwargs)
+    return s.StrainBackground(**base)
+
+
+def _rph() -> s.BackgroundAllele:
+    """One BW25113 lesion as a typed allele: a locus tag in its own namespace."""
+    return s.BackgroundAllele(
+        systematic_gene_name="BW25113_3643",
+        gene_namespace="ecoli_k12_bw25113_locus_tag",
+        gene_name="rph",
+        allele_name="rph-1",
+        edit=s.AlleleEdit.sequence_variant,
+        functional=False,
+        provenance=[WILDENHAIN_BY4741],
+    )
 
 
 # ------------------------------------------------------------------ BackgroundAllele
@@ -129,11 +209,33 @@ def test_allele_asserted_with_pending_review_gap() -> None:
     assert allele.allele_name == "his3Δ1"
 
 
-def test_allele_unknown_zygosity_must_be_gapped() -> None:
-    with pytest.raises(ValueError, match="zygosity"):
-        _his3(zygosity=None)
-    allele = _his3(zygosity=None, provenance_gaps=[_gap("zygosity")])
-    assert allele.zygosity is None
+def test_allele_unknown_zygosity_must_be_gapped_by_a_eukaryotic_background() -> None:
+    """P5 moved the rule to the only class that can judge it, and nothing weakened.
+
+    An allele on its own states no ploidy, so it cannot know whether a copy count is a
+    fact; the eukaryotic background does, and refuses a silent ``None`` there exactly as
+    the allele used to. The host-agnostic base refuses a copy count outright, because a
+    single-copy genome has one possible value.
+    """
+    assert _his3(zygosity=None).zygosity is None
+    with pytest.raises(ValueError, match="zygosity is unset and carries no"):
+        _euk(
+            name="BY4741",
+            mating_type=s.MatingType.a,
+            ploidy="haploid",
+            alleles=[_his3(zygosity=None)],
+            provenance=[WILDENHAIN_BY4741],
+        )
+    gapped = _euk(
+        name="BY4741",
+        mating_type=s.MatingType.a,
+        ploidy="haploid",
+        alleles=[_his3(zygosity=None, provenance_gaps=[_gap("zygosity")])],
+        provenance=[WILDENHAIN_BY4741],
+    )
+    assert gapped.alleles[0].zygosity is None
+    with pytest.raises(ValueError, match="states no ploidy"):
+        _bacterial(alleles=[_rph().model_copy(update={"zygosity": s.Zygosity.haploid})])
 
 
 def test_cassette_iff_cassette_replacement() -> None:
@@ -176,17 +278,15 @@ def test_background_mating_type_must_be_set_or_gapped() -> None:
         name="BY4741", ploidy="haploid", provenance=[WILDENHAIN_BY4741]
     )
     with pytest.raises(ValueError, match="mating_type"):
-        s.StrainBackground(mating_type=None, **kwargs)
-    gapped = s.StrainBackground(
-        mating_type=None, provenance_gaps=[_gap("mating_type")], **kwargs
-    )
+        _euk(mating_type=None, **kwargs)
+    gapped = _euk(mating_type=None, provenance_gaps=[_gap("mating_type")], **kwargs)
     assert gapped.mating_type is None
     assert not gapped.is_fully_sourced
 
 
 def test_haploid_background_cannot_be_a_alpha() -> None:
     with pytest.raises(ValueError, match="haploid"):
-        s.StrainBackground(
+        _euk(
             name="x",
             mating_type=s.MatingType.a_alpha,
             ploidy="haploid",
@@ -196,7 +296,7 @@ def test_haploid_background_cannot_be_a_alpha() -> None:
 
 def test_zygosity_must_fit_ploidy() -> None:
     with pytest.raises(ValueError, match="does not fit"):
-        s.StrainBackground(
+        _euk(
             name="BY4743",
             mating_type=s.MatingType.a_alpha,
             ploidy="diploid",
@@ -208,7 +308,7 @@ def test_zygosity_must_fit_ploidy() -> None:
 def test_one_entry_per_locus_unless_compound_heterozygote() -> None:
     het_a = _his3(s.Zygosity.heterozygous)
     het_b = _his3(s.Zygosity.heterozygous, allele_name="his3Δ200")
-    compound = s.StrainBackground(
+    compound = _euk(
         name="x",
         mating_type=s.MatingType.a_alpha,
         ploidy="diploid",
@@ -217,7 +317,7 @@ def test_one_entry_per_locus_unless_compound_heterozygote() -> None:
     )
     assert compound.functional_copies("YOR202W") == 0
     with pytest.raises(ValueError, match="compound heterozygote"):
-        s.StrainBackground(
+        _euk(
             name="x",
             mating_type=s.MatingType.a_alpha,
             ploidy="diploid",
@@ -247,7 +347,7 @@ def test_by4741_functional_copies() -> None:
 
 
 def test_functional_copies_refuses_a_gapped_zygosity() -> None:
-    background = s.StrainBackground(
+    background = _euk(
         name="x",
         mating_type=s.MatingType.a_alpha,
         ploidy="diploid",
@@ -709,11 +809,302 @@ def test_supplements_and_vehicle_gaps() -> None:
         (s.PreCulture, PRE_CULTURE_IDENTITY_FIELDS),
         (s.BackgroundAllele, BACKGROUND_ALLELE_IDENTITY_FIELDS),
         (s.StrainBackground, STRAIN_BACKGROUND_IDENTITY_FIELDS),
+        (s.EukaryoticStrainBackground, EUKARYOTIC_STRAIN_BACKGROUND_IDENTITY_FIELDS),
+        (s.IntegratedCassette, INTEGRATED_CASSETTE_IDENTITY_FIELDS),
     ],
 )
 def test_identity_tuples_name_real_fields(model: Any, fields: tuple[str, ...]) -> None:
     for field in fields:
         assert field in model.model_fields, f"{model.__name__}.{field}"
+
+
+@pytest.mark.parametrize(
+    ("model", "identity", "non_identity"),
+    [
+        (
+            s.BackgroundAllele,
+            BACKGROUND_ALLELE_IDENTITY_FIELDS,
+            BACKGROUND_ALLELE_NON_IDENTITY_FIELDS,
+        ),
+        (
+            s.StrainBackground,
+            STRAIN_BACKGROUND_IDENTITY_FIELDS,
+            STRAIN_BACKGROUND_NON_IDENTITY_FIELDS,
+        ),
+        (
+            s.EukaryoticStrainBackground,
+            EUKARYOTIC_STRAIN_BACKGROUND_IDENTITY_FIELDS,
+            STRAIN_BACKGROUND_NON_IDENTITY_FIELDS,
+        ),
+        (
+            s.IntegratedCassette,
+            INTEGRATED_CASSETTE_IDENTITY_FIELDS,
+            INTEGRATED_CASSETTE_NON_IDENTITY_FIELDS,
+        ),
+    ],
+)
+def test_every_field_is_declared_identity_or_declared_not_identity(
+    model: Any, identity: tuple[str, ...], non_identity: tuple[str, ...]
+) -> None:
+    """The partition is what would have caught the two fields P5 found unprojected.
+
+    ``gene_namespace`` landed on every ``GenePerturbation`` in P1 and
+    ``BACKGROUND_ALLELE_IDENTITY_FIELDS`` was never updated, and a review had to find
+    it by reading. A field in neither tuple fails here, so the next one cannot land
+    silently: it is projected, or it is written down as not identity with its reason.
+    """
+    assert sorted((*identity, *non_identity)) == sorted(model.model_fields)
+    assert not set(identity) & set(non_identity)
+
+
+def test_the_base_projection_omits_the_three_fields_the_base_does_not_have() -> None:
+    """Before P5 the projection read ploidy and mating type with no branch at all.
+
+    A background that states neither could not be projected, and the honest shapes a
+    wrong fix takes are both defects: reading them off the base raises, and projecting
+    a eukaryote through the base's tuple drops them and MERGES two different strains.
+    """
+    bacterial = _bacterial(alleles=[_rph()])
+    projection = strain_background_identity(bacterial)
+    assert set(projection) == set(STRAIN_BACKGROUND_IDENTITY_FIELDS)
+    assert "ploidy" not in projection and "mating_type" not in projection
+    assert projection["assembly_set"] == "ecoli_K12_BW25113_ASM75055v1"
+    assert projection["alleles"][0]["gene_namespace"] == "ecoli_k12_bw25113_locus_tag"
+
+
+def test_a_eukaryote_and_a_base_background_of_one_name_are_different_keys() -> None:
+    """The merge the base's tuple would cause, stated as a test."""
+    haploid = _euk(
+        name="x",
+        mating_type=s.MatingType.a,
+        ploidy="haploid",
+        provenance=[WILDENHAIN_BY4741],
+    )
+    bare = s.StrainBackground(
+        name="x",
+        reference_strain="S288C",
+        assembly_set=SGD_S288C_R64,
+        provenance=[WILDENHAIN_BY4741],
+    )
+    assert strain_background_identity(haploid) != strain_background_identity(bare)
+    assert identity_sha256(strain_background_identity(haploid)) != identity_sha256(
+        strain_background_identity(bare)
+    )
+
+
+def test_mating_type_and_ploidy_each_change_the_key_on_their_own() -> None:
+    """BY4741 and BY4742 differ in mating type; a haploid and a diploid of one name are
+    not one strain. Dropping either from the projection merges records that are not the
+    same thing, which is why they are read unconditionally ON THE SUBCLASS.
+    """
+    common = dict(name="x", provenance=[WILDENHAIN_BY4741])
+    mata = _euk(mating_type=s.MatingType.a, ploidy="haploid", **common)
+    matalpha = _euk(mating_type=s.MatingType.alpha, ploidy="haploid", **common)
+    diploid = _euk(mating_type=s.MatingType.a_alpha, ploidy="diploid", **common)
+    assert strain_background_identity(mata) != strain_background_identity(matalpha)
+    assert strain_background_identity(mata) != strain_background_identity(diploid)
+
+
+def test_an_allele_namespace_change_changes_the_key() -> None:
+    """``gene_namespace`` is half of a locus: a name alone does not say whose genome it
+    is a name in, which is exactly why P1 put the field on every perturbation.
+    """
+    yeast = _euk(
+        name="x",
+        mating_type=s.MatingType.a,
+        ploidy="haploid",
+        alleles=[_his3()],
+        provenance=[WILDENHAIN_BY4741],
+    )
+    renamespaced = yeast.model_copy(
+        update={
+            "alleles": [
+                _his3().model_copy(
+                    update={
+                        "systematic_gene_name": "BW25113_3643",
+                        "gene_namespace": "ecoli_k12_bw25113_locus_tag",
+                    }
+                )
+            ]
+        }
+    )
+    first = strain_background_identity(yeast)["alleles"][0]
+    second = strain_background_identity(renamespaced)["alleles"][0]
+    assert first["gene_namespace"] != second["gene_namespace"]
+    assert identity_sha256(strain_background_identity(yeast)) != identity_sha256(
+        strain_background_identity(renamespaced)
+    )
+
+
+def test_every_concrete_background_class_has_a_projection() -> None:
+    """The ``PROJECTED_PERTURBATION_CLASSES`` guard, on the background side.
+
+    A third subclass that landed without a branch would be projected as its base, which
+    drops the fields it adds and merges two strains onto one key. It raises instead.
+    """
+
+    def subclasses(cls: type) -> set[type]:
+        found = {cls}
+        for child in cls.__subclasses__():
+            found |= subclasses(child)
+        return found
+
+    assert subclasses(s.StrainBackground) == set(PROJECTED_BACKGROUND_CLASSES)
+
+
+def test_an_unprojectable_background_raises_rather_than_falling_back() -> None:
+    class _Mosaic(s.StrainBackground):
+        aneuploid_chromosomes: list[str] = []
+
+    with pytest.raises(TypeError, match="no identity projection for"):
+        strain_background_identity(
+            _Mosaic(
+                name="x",
+                reference_strain="S288C",
+                assembly_set=SGD_S288C_R64,
+                aneuploid_chromosomes=["chrIII"],
+                provenance=[WILDENHAIN_BY4741],
+            )
+        )
+
+
+# ------------------------------------------------ the shared base (P5, 2026-10-15)
+
+
+def test_the_base_states_what_both_families_state() -> None:
+    """The host-agnostic background: reference strain, assembly, genotype, alleles."""
+    background = _bacterial(alleles=[_rph()])
+    assert background.reference_strain == "BW25113"
+    assert background.assembly_set == "ecoli_K12_BW25113_ASM75055v1"
+    assert background.genotype_statement == s.BW25113_BACKGROUND_GENOTYPE
+    assert background.functional_copies("BW25113_3643") == 0
+    assert background.functional_copies("BW25113_0344") == 1
+    assert [a.allele_name for a in background.alleles_at("BW25113_3643")] == ["rph-1"]
+    assert background.is_fully_sourced
+
+
+def test_the_assembly_pin_must_be_the_reference_strain_s_own_set() -> None:
+    """One cross-check for every family, where there were two one-family branches."""
+    with pytest.raises(ValueError, match="is assembly set"):
+        _bacterial(assembly_set="ecoli_K12_MG1655_ASM584v2")
+    with pytest.raises(ValueError, match="is assembly set"):
+        _euk(
+            name="BY4741",
+            assembly_set="ecoli_K12_MG1655_ASM584v2",
+            mating_type=s.MatingType.a,
+            ploidy="haploid",
+            provenance=[WILDENHAIN_BY4741],
+        )
+    assert s.REFERENCE_STRAIN_ASSEMBLY_SETS["S288C"] == s.SGD_S288C_ASSEMBLY_SET
+
+
+def test_the_reference_strain_vocabulary_is_one_member_per_deposited_set() -> None:
+    """Why ``assembly_set`` is required OUTRIGHT here and value-or-gap on the genome.
+
+    ``ReferenceGenome.strain`` is a free string and may name a strain the tier has not
+    deposited, so that field needs a typed gap. Here the companion field is closed and
+    the map is total over it, so a background that names its reference has named a
+    deposited set and a gap branch would be unreachable.
+    """
+    from typing import get_args
+
+    assert set(get_args(s.ReferenceStrain)) == set(s.REFERENCE_STRAIN_ASSEMBLY_SETS)
+    # Totality in the direction the argument needs: every reference strain names a set
+    # the vocabulary admits. The converse is deliberately NOT asserted, because a
+    # deposited set need not be some strain's own reference; which registry sets are
+    # assemblies at all is pinned by ``AssemblySet`` plus ``NON_ASSEMBLY_REGISTRY_SETS``.
+    assert set(s.REFERENCE_STRAIN_ASSEMBLY_SETS.values()) <= set(
+        get_args(s.AssemblySet)
+    )
+    assert s.StrainBackground.model_fields["assembly_set"].is_required()
+    assert "assembly_set" not in str(
+        s.StrainBackground.model_fields["assembly_set"].annotation
+    ).replace("AssemblySet", "")
+    with pytest.raises(ValueError, match="assembly_set"):
+        s.StrainBackground.model_validate(
+            {
+                "name": "x",
+                "reference_strain": "S288C",
+                "assembly_set": None,
+                "provenance": [WILDENHAIN_BY4741.model_dump()],
+                "provenance_gaps": [_gap("assembly_set").model_dump()],
+            }
+        )
+
+
+def test_one_allele_entry_per_locus_on_a_single_copy_background() -> None:
+    """The retired bacterial class's rule, now the base's."""
+    with pytest.raises(ValueError, match="one allele entry per locus"):
+        _bacterial(alleles=[_rph(), _rph()])
+
+
+def test_a_strain_reference_genome_admits_both_families_through_one_field() -> None:
+    """One annotation, one cross-check, and the subclass survives a JSON round trip."""
+    bacterial = s.StrainReferenceGenome(
+        species="Escherichia coli",
+        strain="BW25113",
+        assembly_set="ecoli_K12_BW25113_ASM75055v1",
+        assembly_accession="GCA_000750555.1",
+        background=_bacterial(alleles=[_rph()]),
+    )
+    assert type(bacterial.background) is s.StrainBackground
+    restored = s.StrainReferenceGenome.model_validate(bacterial.model_dump())
+    assert type(restored.background) is s.StrainBackground
+    assert restored == bacterial
+    eukaryotic = s.StrainReferenceGenome(
+        species=SPECIES,
+        strain="BY4743",
+        ploidy="diploid",
+        assembly_set=SGD_S288C_R64,
+        assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
+        background=_by4743(),
+    )
+    reloaded = s.StrainReferenceGenome.model_validate(eukaryotic.model_dump())
+    assert type(reloaded.background) is s.EukaryoticStrainBackground
+    assert reloaded == eukaryotic
+    with pytest.raises(ValueError, match="background pins assembly set"):
+        s.StrainReferenceGenome(
+            species="Escherichia coli",
+            strain="BW25113",
+            assembly_set="ecoli_K12_MG1655_ASM584v2",
+            assembly_accession="GCA_000005845.2",
+            background=_bacterial(),
+        )
+
+
+def test_an_integrated_cassette_points_at_the_same_construct_a_gene_addition_does() -> (
+    None
+):
+    """Review 2 finding 9: bAID's effectors at Delta were a bare label while the Btx
+    cassette at XII-5 had a real pointer. One placement type serves both, required or
+    typed-gapped as P4 made it on the addition leaf.
+    """
+    cassette = _cassette()
+    assert cassette.placement is not None
+    assert cassette.placement.localization is s.Localization.chromosomal_integration
+    assert cassette.placement.host_placement is not None
+    assert cassette.placement.host_placement.site_label == "Delta"
+    assert (
+        s.IntegratedCassette.model_fields["placement"].annotation
+        == s.GeneAdditionPerturbation.model_fields["placement"].annotation
+    )
+    with pytest.raises(ValueError, match="placement is unset and carries no"):
+        _cassette(placement=None)
+    gapped = _cassette(
+        placement=None,
+        provenance_gaps=[
+            ProvenanceGap(
+                field="placement", reason=ProvenanceGapReason.not_released_by_primary
+            )
+        ],
+    )
+    assert gapped.placement is None and not gapped.is_sourced
+
+
+def test_a_cassette_refuses_an_episomal_placement() -> None:
+    """An integration is at a host site; a replicon of its own is not an integration."""
+    with pytest.raises(ValueError, match="which is\s+an episomal replicon"):
+        _cassette(placement=_placement(host_placement=None))
 
 
 def test_strain_background_identity_ignores_who_stated_it() -> None:
@@ -722,7 +1113,7 @@ def test_strain_background_identity_ignores_who_stated_it() -> None:
     assert quoted.model_dump() != pending.model_dump()
     assert strain_background_identity(quoted) == strain_background_identity(pending)
     assert set(strain_background_identity(quoted)) == set(
-        STRAIN_BACKGROUND_IDENTITY_FIELDS
+        EUKARYOTIC_STRAIN_BACKGROUND_IDENTITY_FIELDS
     )
     by4742 = standard_background("BY4742", resolve_with=BRACHMANN_1998)
     assert strain_background_identity(by4742) != strain_background_identity(quoted)
@@ -739,6 +1130,7 @@ def _cassette(**overrides: Any) -> s.IntegratedCassette:
         "elements": ["KanMX", "dLbCpf1-VP", "Csy4", "dSpCas9-RD1152", "SaCas9"],
         "marker": "KanMX",
         "zygosity": s.Zygosity.haploid,
+        "placement": _placement(),
         "provenance": [WILDENHAIN_BY4741],
     }
     kwargs.update(overrides)
@@ -804,7 +1196,7 @@ def test_a_background_carries_integrations_and_checks_their_zygosity() -> None:
     plain = standard_background("BY4742", resolve_with=BRACHMANN_1998)
     assert plain.integrations == []
     assert plain.integrations_at("Delta") == []
-    with_cassette = s.StrainBackground(
+    with_cassette = _euk(
         name="bAID",
         parents=["BY4742"],
         mating_type=s.MatingType.alpha,
@@ -818,7 +1210,7 @@ def test_a_background_carries_integrations_and_checks_their_zygosity() -> None:
     ]
     assert not with_cassette.is_fully_sourced  # the BY alleles are pending review
     with pytest.raises(ValueError, match="does not fit a haploid background"):
-        s.StrainBackground(
+        _euk(
             name="bAID",
             mating_type=s.MatingType.alpha,
             ploidy="haploid",
@@ -829,7 +1221,7 @@ def test_a_background_carries_integrations_and_checks_their_zygosity() -> None:
 
 def test_is_fully_sourced_reads_the_integrations_too() -> None:
     """A gapped cassette makes the background not fully sourced, like a gapped allele."""
-    sourced = s.StrainBackground(
+    sourced = _euk(
         name="bAID",
         mating_type=s.MatingType.alpha,
         ploidy="haploid",
@@ -837,7 +1229,7 @@ def test_is_fully_sourced_reads_the_integrations_too() -> None:
         provenance=[WILDENHAIN_BY4741],
     )
     assert sourced.is_fully_sourced
-    gapped = s.StrainBackground(
+    gapped = _euk(
         name="bAID",
         mating_type=s.MatingType.alpha,
         ploidy="haploid",
@@ -849,23 +1241,17 @@ def test_is_fully_sourced_reads_the_integrations_too() -> None:
 
 def test_two_strains_differing_only_in_an_integration_are_not_the_same_strain() -> None:
     """The cross-dataset identity projection reads integrations as genome content."""
-    base = s.StrainBackground(
+    base = _euk(
         name="bAID",
         mating_type=s.MatingType.alpha,
         ploidy="haploid",
         integrations=[_cassette()],
         provenance=[WILDENHAIN_BY4741],
     )
-    extra = s.IntegratedCassette(
-        name="X3::SIZ1i",
-        locus="X3",
-        elements=["SIZ1i"],
-        zygosity=s.Zygosity.haploid,
-        provenance=[WILDENHAIN_BY4741],
-    )
+    extra = _cassette(name="X3::SIZ1i", locus="X3", elements=["SIZ1i"])
     engineered = base.model_copy(update={"integrations": [*base.integrations, extra]})
     assert set(strain_background_identity(base)) == set(
-        STRAIN_BACKGROUND_IDENTITY_FIELDS
+        EUKARYOTIC_STRAIN_BACKGROUND_IDENTITY_FIELDS
     )
     assert strain_background_identity(base) != strain_background_identity(engineered)
     # Who stated it is still dropped: a gapped cassette and a quoted one project equal.
@@ -923,14 +1309,19 @@ def test_baid_background_is_by4742_plus_the_delta_site_crispr_aid_cassette() -> 
     ]
     assert cassette.marker == "KanMX"
     assert cassette.zygosity is s.Zygosity.haploid
-    assert cassette.is_sourced
+    # Lian 2019 names pAID6 and deposits no map of it, so the pointer is a typed gap.
+    assert cassette.placement is None
+    assert cassette.gapped_fields() == {"placement"}
+    assert not cassette.is_sourced
     assert cassette.provenance == [BAID_GENOTYPE, BAID_CONSTRUCTION]
 
 
 def test_baid_background_round_trips_through_json_unchanged() -> None:
     """It is embedded in stored records, so it has to survive the JSON round trip."""
     background = baid_background()
-    restored = s.StrainBackground.model_validate_json(background.model_dump_json())
+    restored = s.EukaryoticStrainBackground.model_validate_json(
+        background.model_dump_json()
+    )
     assert restored == background
     assert restored.model_dump() == background.model_dump()
     assert json.loads(background.model_dump_json()) == json.loads(

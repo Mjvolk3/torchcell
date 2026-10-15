@@ -510,8 +510,8 @@ def probe_perturbation_classes() -> list[dict[str, Any]]:
         ),
         {
             **_probe(
-                "BacterialBackgroundAllele(b1276, Y204Y synonymous call)",
-                lambda: s.BacterialBackgroundAllele(
+                "BackgroundAllele(b1276, Y204Y synonymous call)",
+                lambda: s.BackgroundAllele(
                     systematic_gene_name="b1276",
                     gene_namespace=mg1655,
                     gene_name="acnA",
@@ -520,7 +520,7 @@ def probe_perturbation_classes() -> list[dict[str, Any]]:
                     functional=True,
                 ),
             ),
-            "fields": sorted(s.BacterialBackgroundAllele.model_fields),
+            "fields": sorted(s.BackgroundAllele.model_fields),
             "note": (
                 "takes the row ONLY by asserting `functional`, which is a required "
                 "non-optional bool whose value this release never states for any of "
@@ -670,7 +670,7 @@ def loadable_slice(targets: list[dict[str, Any]]) -> dict[str, Any]:
                 "cells": 374,
                 "reason": "no class holds a called bacterial variant; "
                 "SequenceVariantPerturbation and AllelePerturbation refuse a b-number, "
-                "and BacterialBackgroundAllele requires a non-optional `functional` the "
+                "and BackgroundAllele requires a non-optional `functional` the "
                 "release never states and has no slot for position, ref/alt base or "
                 "Frequence",
                 "issue": 731,

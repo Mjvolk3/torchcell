@@ -111,11 +111,13 @@ def test_new_leaves_pass_through_the_perturbation_node_builder() -> None:
         assert node.get_properties()["strain_id"] is None
 
 
-def _baid_background() -> s.StrainBackground:
+def _baid_background() -> s.EukaryoticStrainBackground:
     """BAID's background: BY4742's alleles plus the integrated CRISPR-AID cassette."""
     by4742 = standard_background("BY4742", resolve_with=BRACHMANN_1998)
-    return s.StrainBackground(
+    return s.EukaryoticStrainBackground(
         name="bAID",
+        reference_strain="S288C",
+        assembly_set=SGD_S288C_R64,
         parents=["BY4742"],
         mating_type=s.MatingType.alpha,
         ploidy="haploid",
@@ -127,11 +129,16 @@ def _baid_background() -> s.StrainBackground:
                 elements=["KanMX", "dLbCpf1-VP", "Csy4", "dSpCas9-RD1152", "SaCas9"],
                 marker="KanMX",
                 zygosity=s.Zygosity.haploid,
+                placement=None,
                 provenance_gaps=[
                     ProvenanceGap(
                         field="provenance",
                         reason=ProvenanceGapReason.deferred_pending_source_review,
-                    )
+                    ),
+                    ProvenanceGap(
+                        field="placement",
+                        reason=ProvenanceGapReason.not_released_by_primary,
+                    ),
                 ],
             )
         ],
@@ -176,14 +183,14 @@ def test_integrations_ride_to_the_graph_the_way_the_alleles_do() -> None:
     assert props["strain"] == "bAID"
     back = s.StrainReferenceGenome.model_validate_json(props["serialized_data"])
     assert back == reference.genome_reference
-    assert isinstance(back.background, s.StrainBackground)
+    assert isinstance(back.background, s.EukaryoticStrainBackground)
     (cassette,) = back.background.integrations
     assert cassette.locus == "Delta"
     assert cassette.elements[0] == "KanMX"
     assert cassette.elements[-1] == "SaCas9"
     assert cassette.marker == "KanMX"
     assert cassette.mechanism_so == ("SO:0000667", "insertion")
-    assert cassette.gapped_fields() == {"provenance"}
+    assert cassette.gapped_fields() == {"provenance", "placement"}
 
 
 def test_adding_an_integration_moves_the_genome_node_id() -> None:

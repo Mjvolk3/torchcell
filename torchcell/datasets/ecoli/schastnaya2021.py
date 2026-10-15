@@ -29,7 +29,7 @@ spectra, not this matrix, and is NOT mirrored.
 
 STRAIN. ``REFERENCE_STRAIN = "MG1655"``: the wild type the fold change is taken against
 is "E. coli MG1655 dmutS with kanamycin resistance (referred to as wild-type)", carried
-as a ``BacterialStrainBackground`` on the pinned MG1655 assembly, and the b-numbers
+as a ``StrainBackground`` on the pinned MG1655 assembly, and the b-numbers
 Supplementary Data 1 releases for the screened enzymes are MG1655 tags. The deletion
 strains themselves "were retrieved from the KEIO collection", which Baba 2006 (mirrored)
 builds in BW25113, so each released fold change compares a BW25113 deletion against an
@@ -108,7 +108,6 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     BACTERIAL_ASSEMBLY_SETS,
     BacterialAssemblySet,
-    BacterialStrainBackground,
     Concentration,
     ConcentrationUnit,
     Environment,
@@ -125,6 +124,7 @@ from torchcell.datamodels.schema import (
     ReferenceGenome,
     ReleasedIdentifierPerturbation,
     ReleasedKind,
+    StrainBackground,
     Temperature,
 )
 from torchcell.datasets.bacteria_common import (
@@ -1144,9 +1144,9 @@ def identity_ledger(ions: Sequence[IonRow]) -> IdentityLedger:
 # --------------------------------------------------------------------------- #
 # Record construction (pure, no files)
 # --------------------------------------------------------------------------- #
-def wild_type_background() -> BacterialStrainBackground:
+def wild_type_background() -> StrainBackground:
     """The strain every released fold change is taken against."""
-    return BacterialStrainBackground(
+    return StrainBackground(
         name=WILD_TYPE_BACKGROUND_NAME,
         reference_strain=REFERENCE_STRAIN_NAME,
         assembly_set=MG1655_ASSEMBLY_SET,

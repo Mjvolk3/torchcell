@@ -66,7 +66,7 @@ the 17 generations and the triplicate are Rousset's own sentence
 is why the adapter conf enables ``environment perturbation`` beside ``phage perturbation``.
 
 THE HOST STRAIN (phage screens). FR-E01, an MG1655 derivative written against the MG1655 assembly, so it
-is a ``BacterialStrainBackground`` on the reference rather than a namespace: it carries
+is a ``StrainBackground`` on the reference rather than a namespace: it carries
 the same optimized dcas9 cassette as LC-E75 moved to the HK022 attB site, built so that
 phage 186 could be studied without interference.
 
@@ -184,7 +184,6 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     AssayType,
-    BacterialStrainBackground,
     ComponentDefinition,
     Concentration,
     ConcentrationUnit,
@@ -205,6 +204,7 @@ from torchcell.datamodels.schema import (
     ReleasedIdentifierPerturbation,
     ReleasedKind,
     SampleUnit,
+    StrainBackground,
     Temperature,
 )
 from torchcell.datasets.bacteria_common import (
@@ -792,7 +792,7 @@ ROUSSET2018_LB_MALTOSE_CACL2 = Media(
 )
 """The phage screens' medium: LB plus the aTc, maltose and CaCl2 the paper lists."""
 
-FR_E01_BACKGROUND = BacterialStrainBackground(
+FR_E01_BACKGROUND = StrainBackground(
     name="FR-E01",
     reference_strain=REFERENCE_STRAIN_NAME,
     assembly_set="ecoli_K12_MG1655_ASM584v2",
@@ -816,7 +816,7 @@ FR_E01_BACKGROUND = BacterialStrainBackground(
 #: name one strain the same way.
 StrainLabel = Literal["FR-E01", "LC-E75"]
 
-BACKGROUNDS: dict[StrainLabel, BacterialStrainBackground] = {
+BACKGROUNDS: dict[StrainLabel, StrainBackground] = {
     "FR-E01": FR_E01_BACKGROUND,
     "LC-E75": cui2018.strain_background("LC-E75"),
 }

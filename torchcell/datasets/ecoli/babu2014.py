@@ -44,7 +44,7 @@ not derivable from a ``BW25113_`` tag by string surgery ([[plan.bacteria-ontolog
 measured 45 numeric disagreements and 230 BW25113 genes absent from MG1655), and the ECK
 crosswalk would make every record carry a derived mapping. So records pin
 ``assembly_reference("MG1655", background=...)`` and the physical chassis is carried as
-a ``BacterialStrainBackground`` whose ``parents`` name Hfr Cavalli and the Keio
+a ``StrainBackground`` whose ``parents`` name Hfr Cavalli and the Keio
 collection, the same shape Rapp 2026 uses for its BW25993-derived host.
 
 PHENOTYPE, AND THE ONE THING IT STILL CANNOT HOLD. ``GeneInteractionPhenotype`` takes
@@ -202,7 +202,6 @@ from torchcell.datamodels.schema import (
     BACTERIAL_ASSEMBLY_SETS,
     BacterialAssemblySet,
     BacterialGeneNamespace,
-    BacterialStrainBackground,
     DeletionStrainPerturbation,
     Environment,
     Experiment,
@@ -220,6 +219,7 @@ from torchcell.datamodels.schema import (
     ReleasedIdentifierPerturbation,
     ReleasedKind,
     SampleUnit,
+    StrainBackground,
     Temperature,
 )
 from torchcell.datasets.bacteria_common import (
@@ -1545,7 +1545,7 @@ def reference_phenotype(screen_id: str) -> GeneInteractionPhenotype:
     )
 
 
-def chassis_background() -> BacterialStrainBackground:
+def chassis_background() -> StrainBackground:
     """The conjugant chassis: an Hfr C donor crossed into a Keio (BW25113) recipient.
 
     ``reference_strain`` is MG1655 because that is the namespace every released
@@ -1555,7 +1555,7 @@ def chassis_background() -> BacterialStrainBackground:
     spreadsheet cells, which the provenance audit reads as bytes rather than text, so
     quoting them here would be a value with no auditable source.
     """
-    return BacterialStrainBackground(
+    return StrainBackground(
         name="Hfr Cavalli x Keio (K-12 BW25113) eSGA conjugant",
         reference_strain=REFERENCE_STRAIN_NAME,
         assembly_set=MG1655_ASSEMBLY_SET,

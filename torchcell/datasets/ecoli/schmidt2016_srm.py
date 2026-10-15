@@ -148,7 +148,6 @@ from torchcell.data import (
 )
 from torchcell.datamodels.schema import (
     BacterialAssemblySet,
-    BacterialStrainBackground,
     Environment,
     Experiment,
     ExperimentReference,
@@ -158,6 +157,7 @@ from torchcell.datamodels.schema import (
     ProteinAbundanceExperimentReference,
     ProteinAbundancePhenotype,
     Publication,
+    StrainBackground,
 )
 from torchcell.datasets.bacteria_common import (
     BACTERIAL_ASSEMBLY_SETS,
@@ -781,9 +781,9 @@ def undescribed_environment() -> Environment:
     )
 
 
-def undescribed_background() -> BacterialStrainBackground:
+def undescribed_background() -> StrainBackground:
     """The ``anaerobic`` sample's strain: BW25113 by the paper, its genotype a gap."""
-    return BacterialStrainBackground(
+    return StrainBackground(
         name=SCHMIDT_REFERENCE_STRAIN,
         reference_strain=SCHMIDT_REFERENCE_STRAIN,
         assembly_set=TypeAdapter(BacterialAssemblySet).validate_python(

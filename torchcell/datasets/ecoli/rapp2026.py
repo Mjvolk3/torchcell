@@ -36,7 +36,7 @@ literature mirror, so the background's ``construction`` is a typed gap). BW25993
 deposited assembly set, and every identifier the paper releases is an iML1515
 **b-number**, so records pin ``assembly_reference("MG1655", background=...)``: the
 MG1655 GenBank assembly is the sha256-pinned bytes those b-numbers mean, and YYdCas9 is
-carried as a ``BacterialStrainBackground`` whose ``parents`` name BW25993 and whose
+carried as a ``StrainBackground`` whose ``parents`` name BW25993 and whose
 ``genotype_statement`` is the key-resources string verbatim. Measured: all 1,497
 released b-numbers resolve on that annotation (1,495 current, 2 pseudogene loci).
 
@@ -108,7 +108,6 @@ from torchcell.datamodels.schema import (
     BACTERIAL_ASSEMBLY_SETS,
     BacterialAssemblySet,
     BacterialReferenceStrain,
-    BacterialStrainBackground,
     Concentration,
     ConcentrationUnit,
     CrisprConstruct,
@@ -127,6 +126,7 @@ from torchcell.datamodels.schema import (
     Publication,
     ReferenceGenome,
     SmallMoleculePerturbation,
+    StrainBackground,
     Temperature,
 )
 from torchcell.datasets.bacteria_common import (
@@ -1781,7 +1781,7 @@ HOST_CONSTRUCTION_GAP = ProvenanceGap(
 )
 
 
-def host_background() -> BacterialStrainBackground:
+def host_background() -> StrainBackground:
     """``YYdCas9``: the dCas9-carrying host every strain of the library derives from.
 
     ``reference_strain`` is the strain whose namespace the records' identifiers are
@@ -1789,7 +1789,7 @@ def host_background() -> BacterialStrainBackground:
     and which has no deposited assembly set, and ``alleles`` is empty because the
     source states only a genotype string.
     """
-    return BacterialStrainBackground(
+    return StrainBackground(
         name=HOST_STRAIN,
         reference_strain=REFERENCE_STRAIN_NAME,
         assembly_set=MG1655_ASSEMBLY_SET,

@@ -85,7 +85,6 @@ from torchcell.data.experiment_dataset import verify_sha256
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     BacterialAssemblySet,
-    BacterialStrainBackground,
     Concentration,
     ConcentrationUnit,
     DerivedIdentifierMapping,
@@ -102,6 +101,7 @@ from torchcell.datamodels.schema import (
     PromoterReplacementPerturbation,
     Publication,
     ReferenceGenome,
+    StrainBackground,
 )
 from torchcell.datasets.bacteria_common import (
     STRAIN_GENE_NAMESPACES,
@@ -571,9 +571,9 @@ def labeling_environment() -> Environment:
     )
 
 
-def reference_background() -> BacterialStrainBackground:
+def reference_background() -> StrainBackground:
     """BW-P BF: BW25113 ``∆pfkA:FRT`` carrying pBSA and pFF, verbatim, no typed allele."""
-    return BacterialStrainBackground(
+    return StrainBackground(
         name="BW-P BF",
         reference_strain=REFERENCE_STRAIN,
         assembly_set=ASSEMBLY_SET,

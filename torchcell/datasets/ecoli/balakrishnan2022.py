@@ -142,7 +142,6 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     BacterialAssemblySet,
     BacterialGeneNamespace,
-    BacterialStrainBackground,
     ComponentDefinition,
     Compound,
     Concentration,
@@ -165,6 +164,7 @@ from torchcell.datamodels.schema import (
     PromoterReplacementPerturbation,
     Publication,
     SmallMoleculePerturbation,
+    StrainBackground,
     Temperature,
 )
 from torchcell.datasets.bacteria_common import assembly_reference, bacterial_genome
@@ -778,7 +778,7 @@ NCM3722_GENOTYPE_GAP = ProvenanceGap(
     "reference 56) is mirrored, so NCM3722's lesions relative to the pinned MG1655 "
     "assembly are unknown rather than empty",
 )
-NCM3722_BACKGROUND = BacterialStrainBackground(
+NCM3722_BACKGROUND = StrainBackground(
     name=MEASURED_STRAIN,
     reference_strain=REFERENCE_STRAIN,
     assembly_set=ASSEMBLY_SET,

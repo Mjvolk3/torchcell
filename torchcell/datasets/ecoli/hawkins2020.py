@@ -176,7 +176,6 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     AssayType,
-    BacterialStrainBackground,
     ComponentDefinition,
     Concentration,
     ConcentrationUnit,
@@ -198,6 +197,7 @@ from torchcell.datamodels.schema import (
     ReferenceGenome,
     SampleUnit,
     SmallMoleculePerturbation,
+    StrainBackground,
     Temperature,
     UncertaintyType,
 )
@@ -685,7 +685,7 @@ HAWKINS2020_LB_AMPICILLIN = Media(
 """The E. coli fitness experiments' medium: LB with its selection, amounts unstated."""
 
 
-def host_background() -> BacterialStrainBackground:
+def host_background() -> StrainBackground:
     """BW25113 with the chromosomal IPTG-inducible dcas9 cassette at Tn7att.
 
     ``alleles`` is empty and that is a statement: the cassette is a Tn7 transposition at
@@ -693,7 +693,7 @@ def host_background() -> BacterialStrainBackground:
     of a tagged gene to type. The sgRNA plasmid is not a background either -- it is the
     perturbation, and its spacer rides on the record's ``CrisprConstruct``.
     """
-    return BacterialStrainBackground(
+    return StrainBackground(
         name=str(HOST_CASSETTE.value),
         reference_strain=REFERENCE_STRAIN_NAME,
         assembly_set="ecoli_K12_BW25113_ASM75055v1",

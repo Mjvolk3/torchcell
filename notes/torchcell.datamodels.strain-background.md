@@ -176,3 +176,13 @@ Table S5 (mirrored, `si/Table_S5.xls`) gives `Lab`, `Batch`, `Plate`, `Row_Colum
 - Hypothesis (untested): `lyp1Δ` is a marker-free full ORF deletion (`STANDARD_ALLELES`); no mirrored source describes its construction.
 - The loaders' per-record `n_perturbations` changes for Vanacloig (4 to 1) if the 3Δ alleles move to the background; this is the recommended reading of #500 but is the follow-up's call.
 - `genome` node properties are unchanged (`species`, `strain`, `serialized_data`); mating type and ploidy are queryable only through `serialized_data` until a property is added (a served graph-class change).
+
+## 2026.10.15 - P5: the base, the eukaryotic subclass, and the two identity projections
+
+The #507 decision above is unchanged in substance; what moved is where each fact is asserted. Full account with the record and the measurements: [[torchcell.datamodels.schema]], section 2026.10.15 - P5.
+
+- `StrainBackground` is now the host-agnostic class (`name`, `reference_strain`, `assembly_set`, `parents`, `construction`, `genotype_statement`, `alleles`, `provenance`) and `EukaryoticStrainBackground` adds `mating_type`, `ploidy` and `integrations`. `BacterialStrainBackground` and `BacterialBackgroundAllele` are retired into them.
+- `standard_background()` and `baid_background()` return `EukaryoticStrainBackground` and state `reference_strain="S288C"` with the S288C assembly set. `standard_allele()` states `gene_namespace=SGD_S288C_NAMESPACE`, which is sound on this helper because every `STANDARD_ALLELES` locus is read from the R64 GFF.
+- An allele's `zygosity` is optional on the allele and required-or-gapped by `EukaryoticStrainBackground`. A background that states no ploidy refuses a copy count outright, so a bacterial background cannot say `homozygous`.
+- bAID's CRISPR-AID cassette carries `placement=None` with a `not_released_by_primary` gap: Lian 2019's Methods name pAID6 and cite the paper it comes from, and this paper deposits no map, so the gap's `looked_in` is `LIAN_2019_METHODS` and its note records that neither the strain table nor the Methods states a contig, an accession or a coordinate.
+- The cross-dataset join is the point of the projections, and bAID is the measured case: Lian 2019's MAGIC screen and the in-house Bioscreen dataset (thesis strain BY4742-iAID6) must land on one background. That is why `placement` is declared NOT identity: one of the two depositing a construct map would otherwise split them.

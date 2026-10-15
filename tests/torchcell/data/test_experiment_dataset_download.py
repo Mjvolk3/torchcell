@@ -28,6 +28,7 @@ from torchcell.datasets.server import DataServerConfig, create_app
 from torchcell.provenance.build_manifest import (
     MANIFEST_FILENAME,
     BuildManifest,
+    ContentIdCollisions,
     PerturbationLeaves,
 )
 
@@ -104,6 +105,12 @@ def _build_source(root: Path, loader_class: str = "FakeArtifactDataset") -> Path
         # records carry no perturbation, so the measured leaves are empty. A manifest
         # without the field reads stale and the packager refuses it.
         perturbation_leaves=PerturbationLeaves(),
+        # Version 3 records the store's content-id collisions the same way, and is
+        # stale when absent for the same reason. The fake store's three records are
+        # distinct, so the measured count is three records, three ids and nothing lost.
+        content_id_collisions=ContentIdCollisions(
+            n_records=3, n_distinct=3, n_groups=0, n_records_lost=0
+        ),
     )
     (dataset_dir / "preprocess" / MANIFEST_FILENAME).write_text(
         manifest.model_dump_json(indent=2)

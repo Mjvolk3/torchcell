@@ -18,6 +18,7 @@ from torchcell.datasets.artifact import ArtifactIndex, archive_name, content_sha
 from torchcell.provenance.build_manifest import (
     MANIFEST_FILENAME,
     BuildManifest,
+    ContentIdCollisions,
     PerturbationLeaves,
 )
 
@@ -45,6 +46,12 @@ def _manifest(slug: str, closure: dict[str, str] | None = None) -> BuildManifest
         # carry no perturbation, so the measured leaves are empty. A manifest without the
         # field reads stale and the packager refuses it.
         perturbation_leaves=PerturbationLeaves(),
+        # Version 3 records the store's content-id collisions the same way, and the same
+        # way a manifest without it reads stale. The fake store's three records are
+        # distinct, so the measured count is three records, three ids and nothing lost.
+        content_id_collisions=ContentIdCollisions(
+            n_records=3, n_distinct=3, n_groups=0, n_records_lost=0
+        ),
     )
 
 

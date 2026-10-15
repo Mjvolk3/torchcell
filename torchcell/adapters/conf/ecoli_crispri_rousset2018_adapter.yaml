@@ -1,13 +1,14 @@
-# Rousset 2018 CRISPR-dCas9 screens: EnvironmentResponseExperiment.
-# One BacterialCrisprInterferencePerturbation per record, served as `bacterial
-# perturbation` with its 20-nt spacer on a `crispr construct` node. Each of the four
-# phage-derived screens carries exactly one PhagePerturbation (`phage perturbation`);
-# the growth screen (S1 Table, LC-E75, stored since #905) runs in Cui 2018's culture,
-# whose 1 nM aTc is a SmallMoleculePerturbation (`environment perturbation`). Since
-# issue #756 the two lanes partition the environment's perturbations, so both are
-# enabled and no content id is written twice. The phage screens' 1 uM aTc is a component
-# of their medium, where the paper's own recipes put it. Both node kinds are linked by
-# `environment perturbation to environment`, whose graph class declares both sources.
+# Rousset 2018 CRISPR-dCas9 screens: EnvironmentResponseExperiment. One
+# CrisprInterferencePerturbation per record, served as `perturbation` with its 20-nt
+# spacer on a `crispr construct` node. Each of the four phage-derived screens carries
+# exactly one PhagePerturbation (`phage perturbation`); the growth screen (S1 Table,
+# LC-E75, stored since #905) runs in Cui 2018's culture, whose 1 nM aTc is a
+# SmallMoleculePerturbation (`environment perturbation`). The one `environment
+# perturbation (chunked)` method serves both, the label chosen by leaf, so no content id
+# is written twice and no leaf is left without a node. The phage screens' 1 uM aTc is a
+# component of their medium, where the paper's own recipes put it. Both node kinds are
+# linked by `environment perturbation to environment`, whose graph class declares both
+# sources.
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"
@@ -16,7 +17,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "crispr construct (chunked)"
       memory_reduction_factor: 1.0
@@ -32,9 +33,6 @@ cell_adapter:
     - method_name: "environment perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment perturbation reference"
-    - method_name: "phage perturbation (chunked)"
-      memory_reduction_factor: 1.0
-    - method_name: "phage perturbation reference"
     - method_name: "environment response phenotype (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment response phenotype reference"

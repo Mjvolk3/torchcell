@@ -6,7 +6,7 @@ the gate's view of it, and (``--data``) the graph it emits from its dev-tree LMD
 
 Caglar 2017 protein fold changes: 8 REL606 Table S8 contrasts,
 ProteinFoldChangeExperiment. Every genotype is the wild type (0 perturbations
-in 8 of 8 records), so neither `bacterial perturbation` nor `perturbation to genotype`
+in 8 of 8 records), so neither `perturbation` nor `perturbation to genotype`
 is enabled. The contrast IS an environment edit, so every record carries a
 SmallMoleculePerturbation or an EnvironmentPhysicalPerturbation and the
 environment-perturbation pair is enabled.

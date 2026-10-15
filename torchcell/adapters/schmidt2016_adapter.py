@@ -6,7 +6,7 @@
 knowledge-graph nodes and edges.
 
 One record per loaded *E. coli* BW25113 growth condition. Every record is the wild
-type with an empty genotype, so no ``bacterial perturbation`` node is served; the
+type with an empty genotype, so no ``perturbation`` node is served; the
 paper's three deletion strains carry no abundance data and the loader does not load
 them. The varying axis is the environment, and 13 of the 14 records carry an
 environment perturbation, so the environment-perturbation pair is enabled.

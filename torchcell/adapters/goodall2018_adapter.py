@@ -6,7 +6,7 @@
 as knowledge-graph nodes and edges.
 
 One record per gene and condition: a single ``TransposonInsertionPerturbation`` served as
-a ``bacterial perturbation`` node, and the call as a ``GeneEssentialityPhenotype``. The
+a ``perturbation`` node, and the call as a ``GeneEssentialityPhenotype``. The
 plated condition records a typed temperature gap, so its temperature methods emit
 nothing for those records.
 """

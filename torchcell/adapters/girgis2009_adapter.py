@@ -6,7 +6,7 @@
 knowledge-graph nodes and edges.
 
 One record per (gene, antibiotic): a single gene-level
-``TransposonInsertionPerturbation`` served as a ``bacterial perturbation`` node, and the
+``TransposonInsertionPerturbation`` served as a ``perturbation`` node, and the
 combined z-score as an ``EnvironmentResponsePhenotype``. Every record's environment
 carries exactly one ``SmallMoleculePerturbation``, the drug at its Table 1 dose, so the
 environment-perturbation pair is enabled and needs no per-condition branch. No phage and

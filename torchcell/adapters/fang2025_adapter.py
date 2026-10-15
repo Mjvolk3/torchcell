@@ -6,7 +6,7 @@
 knowledge-graph nodes and edges.
 
 One record per kept (sgRNA, round) row: every knockdown leaf served as a
-``bacterial perturbation`` node with its ``CrisprConstruct`` as a ``crispr construct``
+``perturbation`` node with its ``CrisprConstruct`` as a ``crispr construct``
 node, the released sort enrichment as an ``EnvironmentResponsePhenotype``, and the one
 screening culture's modified-M9 medium, 30 C temperature and 1 mM IPTG as the
 environment. Round-2 records carry two knockdown leaves, the library guide's and the

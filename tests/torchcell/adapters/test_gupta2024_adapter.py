@@ -6,7 +6,7 @@ and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Gupta 2024 protein turnover: 13 NCM3722 growth conditions,
 ProteinTurnoverExperiment. Five of the 13 genotypes carry protease or SsrA-pathway
-deletions and eight are the unperturbed strain, so `bacterial perturbation` and
+deletions and eight are the unperturbed strain, so `perturbation` and
 `perturbation to genotype` are enabled. The 12 chemostat conditions carry a
 controlled-pH EnvironmentPhysicalPerturbation, so the environment-perturbation pair is
 enabled; the batch condition states no pH.

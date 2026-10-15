@@ -175,3 +175,7 @@ construct) through the chunked methods a yeast CRISPR fitness dataset enables. T
 are pinned by the sha256 of their canonical output. The expected values were computed by
 running origin/main `76933585`'s `CellAdapter` on the same record, and the branch
 reproduces all of them; `bacterial perturbation (chunked)` emits nothing for it.
+
+## 2026.10.15 - `bacterial perturbation` and `bacterial sequence variant perturbation` retired (ontology unification G)
+
+Both classes, their two adapter methods and the class tuples that keyed them are gone; the leaves they served are `perturbation` and `sequence variant perturbation` (is_a perturbation) nodes written by the one `_perturbation_node`, with `host_genome` in place of `gene_namespace`. The phenotype classes of this note are unchanged. See [[torchcell.adapters.cell_adapter]] (2026.10.15) and [[biocypher.config.torchcell_schema_config.yaml]] (2026.10.15, with the release-note text).

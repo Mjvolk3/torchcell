@@ -6,7 +6,7 @@
 knowledge-graph nodes and edges.
 
 One record per *E. coli* REL606 LC-MS/MS sample. Every strain is the wild type, so the
-genotype carries no perturbation and no ``bacterial perturbation`` node is served; the
+genotype carries no perturbation and no ``perturbation`` node is served; the
 carbon source and the salt stresses are environment perturbations.
 """
 

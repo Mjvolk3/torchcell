@@ -1,11 +1,10 @@
 # Teteneva 2024 lake-water RB-TnSeq, E. coli K-12 W3110 RpoS+:
-# EnvironmentResponseExperiment.
-# One TransposonInsertionPerturbation per record (`build_genotype`), served as `bacterial
-# perturbation`. Each condition is its own lake water Media (water sample, filtration)
-# with the sampling day as duration_hours and NO environment perturbation
-# (`build_environment`), so the environment-perturbation pair is off; the incubation
-# temperature is a typed gap, but the temperature methods stay on as in every
-# environment-response conf.
+# EnvironmentResponseExperiment. One TransposonInsertionPerturbation per record
+# (`build_genotype`), served as `perturbation`. Each condition is its own lake water
+# Media (water sample, filtration) with the sampling day as duration_hours and NO
+# environment perturbation (`build_environment`), so the environment-perturbation pair
+# is off; the incubation temperature is a typed gap, but the temperature methods stay on
+# as in every environment-response conf.
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"
@@ -14,7 +13,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

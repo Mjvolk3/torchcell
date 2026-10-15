@@ -6,7 +6,7 @@
 BW25113, KEIO_ML9) as knowledge-graph nodes and edges.
 
 One record per (gene, sample): a single ``TransposonInsertionPerturbation`` served as a
-``bacterial perturbation`` node, and the gene fitness as an
+``perturbation`` node, and the gene fitness as an
 ``EnvironmentResponsePhenotype``. A carbon or nitrogen source is an
 ``EnvironmentPhysicalPerturbation`` and a stress compound a ``SmallMoleculePerturbation``,
 both served as environment perturbations.

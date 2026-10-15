@@ -1,9 +1,9 @@
 # Yunus 2026 isoprenol titer: 125 IY1452 strains, ProductTiterExperiment, from the
-# hand-deposited Supplementary Note 1 input table.
-# One BacterialCrisprInterferencePerturbation per record, served as `bacterial
-# perturbation`, carrying a CrisprConstruct, so the crispr-construct pair is enabled. No
-# heterologous pathway leaf: this paper writes no genotype for IY1452 and defers it to
-# Banerjee 2024. The CultureEnvironment carries EnvironmentPhysicalPerturbation and
+# hand-deposited Supplementary Note 1 input table. One
+# BacterialCrisprInterferencePerturbation per record, served as `perturbation`,
+# carrying a CrisprConstruct, so the crispr-construct pair is enabled. No heterologous
+# pathway leaf: this paper writes no genotype for IY1452 and defers it to Banerjee 2024.
+# The CultureEnvironment carries EnvironmentPhysicalPerturbation and
 # SmallMoleculePerturbation edits, so the environment-perturbation pair is enabled.
 cell_adapter:
   node_methods:
@@ -13,7 +13,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "crispr construct (chunked)"
       memory_reduction_factor: 1.0

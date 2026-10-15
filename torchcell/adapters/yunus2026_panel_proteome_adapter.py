@@ -7,7 +7,7 @@ knowledge-graph nodes and edges.
 
 One record per strain row of the hand-deposited Supplementary Note 1 input table,
 carrying that table's 253 UniProt accession columns re-keyed to locus tags: a single
-``CrisprInterferencePerturbation`` served as a ``bacterial perturbation`` node,
+``CrisprInterferencePerturbation`` served as a ``perturbation`` node,
 carrying its ``CrisprConstruct``, which is served as a ``crispr construct`` node, and
 the absolute Top3 signals as a ``ProteinAbundancePhenotype``.
 """

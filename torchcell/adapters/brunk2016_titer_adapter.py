@@ -5,7 +5,7 @@
 """BioCypher adapter exposing the three fuel titers in g/L, 72 records, ProductTiterExperiment as knowledge-graph nodes and edges.
 
 One record per released strain-hour sample of the Brunk 2016 time course. Every
-engineered strain's pathway genes are served as `bacterial perturbation` nodes; the
+engineered strain's pathway genes are served as `perturbation` nodes; the
 wild type carries none.
 """
 

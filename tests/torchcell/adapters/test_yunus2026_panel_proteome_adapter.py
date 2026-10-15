@@ -7,7 +7,7 @@ and (``--data``) the graph it emits from its dev-tree LMDB.
 Yunus 2026 per-strain protein panel: 125 IY1452 strains,
 ProteinAbundanceExperiment, from the hand-deposited Supplementary Note 1 input
 table's 253 UniProt accession columns. One CrisprInterferencePerturbation per
-record, served as `bacterial perturbation`, carrying a CrisprConstruct, so the
+record, served as `perturbation`, carrying a CrisprConstruct, so the
 crispr-construct pair is enabled. The environment carries
 EnvironmentPhysicalPerturbation and SmallMoleculePerturbation edits, so the
 environment-perturbation pair is enabled.

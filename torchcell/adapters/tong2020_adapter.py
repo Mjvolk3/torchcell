@@ -6,7 +6,7 @@
 knowledge-graph nodes and edges.
 
 One record per (deletion strain, carbon source): a single ``DeletionStrainPerturbation``
-served as a ``bacterial perturbation`` node, the growth as a ``FitnessPhenotype``, and
+served as a ``perturbation`` node, the growth as a ``FitnessPhenotype``, and
 the varied carbon source as an environment perturbation.
 """
 

@@ -6,7 +6,7 @@
 nodes and edges.
 
 One record per knockdown strain with an accumulating annotated feature: a single
-``CrisprInterferencePerturbation`` served as a ``bacterial perturbation`` node
+``CrisprInterferencePerturbation`` served as a ``perturbation`` node
 with its ``CrisprConstruct``, and that strain's absolute feature intensities as a
 ``MetabolitePhenotype`` on its own ``measurement_type``, since an intensity and the
 stored fold change are different scales of the same instrument. The environment is one

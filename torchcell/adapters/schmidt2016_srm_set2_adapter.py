@@ -6,7 +6,7 @@
 knowledge-graph nodes and edges.
 
 One record per loaded *E. coli* BW25113 growth condition. Every record is the wild type
-with an empty genotype, so no ``bacterial perturbation`` node is served; the varying
+with an empty genotype, so no ``perturbation`` node is served; the varying
 axis is the environment, and the environment-perturbation pair is enabled because every
 record but the LB one carries a carbon-source or stress edit. The abundances are a
 DIFFERENT assay from the Table S6 block ``ProteomeSchmidt2016Adapter`` serves, under

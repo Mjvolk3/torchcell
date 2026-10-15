@@ -1,9 +1,8 @@
-# Niu 2019 pinene fold change: 40 records, ProductTiterExperiment.
-# One perturbation per targeted label (6 for each of the two combination strains): the
-# released CRISPRa or CRISPRi guide as a ReleasedIdentifierPerturbation, served as
-# `bacterial perturbation`. The shared CultureEnvironment carries one
-# SmallMoleculePerturbation (the 20% dodecane overlay), so the environment-perturbation
-# pair is enabled.
+# Niu 2019 pinene fold change: 40 records, ProductTiterExperiment. One perturbation per
+# targeted label (6 for each of the two combination strains): the released CRISPRa or
+# CRISPRi guide as a ReleasedIdentifierPerturbation, served as `perturbation`. The
+# shared CultureEnvironment carries one SmallMoleculePerturbation (the 20% dodecane
+# overlay), so the environment-perturbation pair is enabled.
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"
@@ -12,7 +11,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "crispr construct (chunked)"
       memory_reduction_factor: 1.0

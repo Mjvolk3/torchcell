@@ -1,8 +1,9 @@
-# Caglar 2017 proteome: 105 REL606 LC-MS/MS samples, ProteinAbundanceExperiment.
-# Every genotype is the wild type (0 perturbations in 105 of 105 records), so neither
-# `bacterial perturbation` nor `perturbation to genotype` is enabled. The environment
-# carries SmallMoleculePerturbation and EnvironmentPhysicalPerturbation edits, so the
-# environment-perturbation pair is enabled.
+# Caglar 2017 proteome: 105 REL606 LC-MS/MS samples,
+# ProteinAbundanceExperiment. Every genotype is the wild type (0 perturbations
+# in 105 of 105 records), so neither `perturbation` nor `perturbation to genotype` is
+# enabled. The environment carries SmallMoleculePerturbation and
+# EnvironmentPhysicalPerturbation edits, so the environment-perturbation pair is
+# enabled.
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"

@@ -1,9 +1,8 @@
-# Thompson 2019 valerolactam titer: 4 records, ProductTiterExperiment.
-# 3 to 7 perturbations per record: HeterologousPathwayPerturbation (12, the three genes
-# of pBADT-davBA-ORF26 on every record) and BacterialDeletionPerturbation (9), both
-# served as `bacterial perturbation`. The CultureEnvironment carries 12
-# SmallMoleculePerturbation edits (lysine, arabinose, kanamycin), so the
-# environment-perturbation pair is enabled.
+# Thompson 2019 valerolactam titer: 4 records, ProductTiterExperiment. 3 to 7
+# perturbations per record: HeterologousPathwayPerturbation (12, the three genes of
+# pBADT-davBA-ORF26 on every record) and BacterialDeletionPerturbation (9), both served
+# as `perturbation`. The CultureEnvironment carries 12 SmallMoleculePerturbation edits
+# (lysine, arabinose, kanamycin), so the environment-perturbation pair is enabled.
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"
@@ -12,7 +11,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

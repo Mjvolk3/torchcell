@@ -103,12 +103,13 @@ ANCESTOR_LABELS: tuple[str, ...] = (
 LANE_OF_LABEL: dict[str, str] = {
     "Genotype": "genotype",
     "Perturbation": "genotype",
-    "BacterialPerturbation": "genotype",
-    # A called bacterial variant (issue #731): a SIBLING of BacterialPerturbation
-    # under `genotype`, so it takes the same lane. Not in ANCESTOR_LABELS, for the
-    # reason PhagePerturbation is not: that tuple measures the labels the SERVED
-    # store carries, and no variant dataset is served yet.
-    "BacterialSequenceVariantPerturbation": "genotype",
+    # A called sequence variant (issue #731), is_a Perturbation since the ontology
+    # unification (G, 2026-10-15; the former BacterialPerturbation and
+    # BacterialSequenceVariantPerturbation labels are retired), so it takes the same
+    # lane. Not in ANCESTOR_LABELS, for the reason PhagePerturbation is not: that tuple
+    # measures the labels the SERVED store carries, and no variant dataset is served
+    # yet.
+    "SequenceVariantPerturbation": "genotype",
     "SegregantGenotype": "genotype",
     "PerturbedSegregantGenotype": "genotype",  # Hale 2024
     "CrisprConstruct": "genotype",
@@ -141,8 +142,7 @@ LANE_OF_LABEL: dict[str, str] = {
 CAPTION_OF_LABEL: dict[str, str] = {
     "Genotype": "{perturbed_gene_name}",
     "Perturbation": "{perturbed_gene_name}",
-    "BacterialPerturbation": "{perturbed_gene_name}",
-    "BacterialSequenceVariantPerturbation": "{perturbed_gene_name}",
+    "SequenceVariantPerturbation": "{perturbed_gene_name}",
     "SegregantGenotype": "{segregant_id}",
     "PerturbedSegregantGenotype": "{segregant_id}",
     "CrisprConstruct": "{effector}",

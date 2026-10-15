@@ -6,7 +6,7 @@ and (``--data``) the graph it emits from its dev-tree LMDB.
 
 PRECISE-1K (Lamoureux 2023): 241 MG1655 libraries, RNASeqExpressionExperiment.
 0 to 3 DeletionStrainPerturbation per record (120 of 241 carry at least one), served
-as `bacterial perturbation`. The environment carries SmallMoleculePerturbation and
+as `perturbation`. The environment carries SmallMoleculePerturbation and
 EnvironmentPhysicalPerturbation edits, and so does the reference environment, so the
 environment-perturbation pair is enabled.
 """

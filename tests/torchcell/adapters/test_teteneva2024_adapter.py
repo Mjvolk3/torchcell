@@ -6,7 +6,7 @@ and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Teteneva 2024 lake-water RB-TnSeq (#910): one Tn5 insertion per record keyed by the
 gene symbol Table S4 releases, EnvironmentResponseExperiment. Every genotype
-carries one ``bacterial perturbation``; each condition is its own lake water medium with
+carries one ``perturbation``; each condition is its own lake water medium with
 no environment perturbation, so the environment-perturbation pair is off.
 """
 

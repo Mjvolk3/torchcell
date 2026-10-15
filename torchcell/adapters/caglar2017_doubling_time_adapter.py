@@ -6,7 +6,7 @@
 
 One record per released biological-replicate growth curve (55) of wild-type *E. coli* B
 REL606 across carbon source, Mg2+ and Na+ stress. Every strain is the wild type, so the
-genotype carries no perturbation and no ``bacterial perturbation`` node is served; the
+genotype carries no perturbation and no ``perturbation`` node is served; the
 carbon-source swap and the salt levels are environment perturbations and are first-class
 nodes. The phenotype is ``environment response phenotype``, carrying the absolute
 doubling time with both released 95% confidence limits and the replicate id (#776).

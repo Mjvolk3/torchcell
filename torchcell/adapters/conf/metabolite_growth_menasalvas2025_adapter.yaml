@@ -1,11 +1,11 @@
 # Menasalvas 2025 deposited metabolites, growth-phase (GP): 3 records (one per released
-# strain), MetaboliteExperiment over the 48 Absolute rows of data S1-1. Every genotype
-# carries the five integrated pathway genes, the mCherry biosensor copies and (for the
-# two improved strains) seven deletions, served as `bacterial perturbation`. The
+# strain), MetaboliteExperiment over the 48 Absolute rows of data S1-1. Every
+# genotype carries the five integrated pathway genes, the mCherry biosensor copies and
+# (for the two improved strains) seven deletions, served as `perturbation`. The
 # TEAM-2595 record additionally carries the 75 called variants of data S1-5, served as
-# their own class. The environment carries a SmallMoleculePerturbation (crystal violet)
-# and an EnvironmentPhysicalPerturbation (pH), so the environment-perturbation pair is
-# enabled.
+# `sequence variant perturbation`. The environment carries a SmallMoleculePerturbation
+# (crystal violet) and an EnvironmentPhysicalPerturbation (pH), so the
+# environment-perturbation pair is enabled.
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"
@@ -14,12 +14,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
-      memory_reduction_factor: 1.0
-    # Issue #731: these records' genotypes carry CALLED variants, served as their own
-    # class. The two bacterial methods partition the leaves, so both are enabled and
-    # neither writes a perturbation the other does.
-    - method_name: "bacterial sequence variant perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

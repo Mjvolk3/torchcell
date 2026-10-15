@@ -69,12 +69,11 @@ def test_conf_serves_the_deletions_and_no_environment_perturbation() -> None:
         for m in conf["cell_adapter"]["node_methods"]
         + conf["cell_adapter"]["edge_methods"]
     ]
-    assert "bacterial perturbation (chunked)" in names
+    assert "perturbation (chunked)" in names
     assert "perturbation to genotype (chunked)" in names
     assert "fitness phenotype (chunked)" in names
     assert [n for n in names if "environment perturbation" in n] == []
     assert [n for n in names if "crispr" in n] == []
-    assert "perturbation (chunked)" not in names
 
 
 @pytest.mark.data

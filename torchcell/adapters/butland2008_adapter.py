@@ -6,17 +6,18 @@
 knowledge-graph nodes and edges.
 
 One record per cell of Supplementary Table 4's S-score sheet: a two-leaf genotype of
-gene-level bacterial perturbation objects served as ``bacterial perturbation`` nodes, and
+gene-level bacterial perturbation objects served as ``perturbation`` nodes, and
 the signed eSGA S score as a ``GeneInteractionPhenotype``. The query leaf is always a
 ``DeletionStrainPerturbation``; the recipient is one too for a Keio row and a
 ``MarkedAllelePerturbation`` for one of the 149 ``SPA-tag essential`` rows
-(issue #792), which is a leaf the base adapter already serves under the same graph class
-(``BACTERIAL_PERTURBATION_LEAVES``, PR #837) with the same five declared properties. No
+(issue #792), which is a leaf the base adapter serves under the same ``perturbation``
+class (one method for every leaf since the ontology unification) with the same declared
+properties. No
 new graph class is needed: ``gene interaction phenotype`` is already a served class
 (declared by the yeast interaction datasets and consumed by the sibling Babu 2014
 adapter), and the leaves differ in their ``collection``, their ``cassette``, the Keio
 isolate carried as the construction ``batch`` and the SPA tag, all of which the
-``bacterial perturbation`` id rule already covers. The screen is a single condition, so
+``perturbation`` id rule already covers. The screen is a single condition, so
 the medium and the temperature are single entities the whole dataset joins on and the
 environment carries no perturbation; the two marker drugs are ``selection_agent``
 components of that medium rather than small-molecule edits, so the

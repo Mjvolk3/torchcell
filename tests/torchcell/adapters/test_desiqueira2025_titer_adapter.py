@@ -6,7 +6,7 @@ and (``--data``) the graph it emits from its dev-tree LMDB.
 
 de Siqueira 2025 isoprenol titer: 2 records, ProductTiterExperiment.
 6 perturbations per record: HeterologousPathwayPerturbation (10) and
-DeletionStrainPerturbation (2), served as `bacterial perturbation`. The
+DeletionStrainPerturbation (2), served as `perturbation`. The
 CultureEnvironment carries EnvironmentPhysicalPerturbation and SmallMoleculePerturbation
 edits, so the environment-perturbation pair is enabled.
 """

@@ -1,9 +1,9 @@
 # putidaPRECISE321 (Lim 2022): 180 KT2440 samples, RNASeqExpressionExperiment.
-# 9 of 180 records carry one BacterialDeletionPerturbation, served as `bacterial
-# perturbation`. 15 environment perturbations (EnvironmentPhysicalPerturbation) across the
-# experiments and 12 on the references, so the environment-perturbation pair is enabled.
-# Every record gaps temperature; the temperature methods stay enabled (the slot is part of
-# the record type) and emit nothing for a gapped record.
+# 9 of 180 records carry one BacterialDeletionPerturbation, served as `perturbation`.
+# 15 environment perturbations (EnvironmentPhysicalPerturbation) across the experiments
+# and 12 on the references, so the environment-perturbation pair is enabled. Every
+# record gaps temperature; the temperature methods stay enabled (the slot is part of the
+# record type) and emit nothing for a gapped record.
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"
@@ -12,7 +12,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

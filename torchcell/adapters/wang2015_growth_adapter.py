@@ -6,7 +6,7 @@
 
 One record per Keio transporter deletion of Supplementary Table S3's ``No isoprenol``
 column, 46 in all. Each genotype carries one ``DeletionStrainPerturbation``, served
-as ``bacterial perturbation``; the medium's pH is an environment perturbation and is a
+as ``perturbation``; the medium's pH is an environment perturbation and is a
 first-class node, and the isoprenol edit of the sibling ``EnvChemgenWang2015Adapter`` is
 absent, because this is the plain-medium arm. The phenotype is ``fitness phenotype``,
 carrying the 12 h endpoint OD600 over BW25113's with the delta-method standard error of

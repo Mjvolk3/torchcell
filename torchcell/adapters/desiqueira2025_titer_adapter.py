@@ -7,7 +7,7 @@ knowledge-graph nodes and edges.
 
 One record per titer of PT carrying pIY670: the plasmid pathway as
 ``HeterologousPathwayPerturbation`` leaves and the PT deletion as a
-``DeletionStrainPerturbation``, all served as ``bacterial perturbation`` nodes, and
+``DeletionStrainPerturbation``, all served as ``perturbation`` nodes, and
 the titer as a ``ProductTiterPhenotype``.
 """
 

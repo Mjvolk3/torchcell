@@ -1,6 +1,6 @@
 # Wang 2015 Table S3's no-isoprenol column: 46 records, FitnessExperiment
 # carrying the plain-2YT OD600 of each Keio deletion over BW25113's (#826). One
-# BacterialDeletionPerturbation per record, served as `bacterial perturbation`, so the
+# BacterialDeletionPerturbation per record, served as `perturbation`, so the
 # perturbation pair is enabled. Every record and the reference carry the medium's pH as
 # an EnvironmentPhysicalPerturbation, so the environment-perturbation pair is enabled
 # too; the isoprenol SmallMoleculePerturbation of the sibling EnvChemgenWang2015Dataset
@@ -13,7 +13,7 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
+    - method_name: "perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0

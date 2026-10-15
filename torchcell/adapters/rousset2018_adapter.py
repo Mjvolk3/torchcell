@@ -6,7 +6,7 @@
 nodes and edges.
 
 One record per (sgRNA, screen): a single ``CrisprInterferencePerturbation``
-served as a ``bacterial perturbation`` node with its guide on a ``crispr construct``
+served as a ``perturbation`` node with its guide on a ``crispr construct``
 node, and the guide's log2 fold change as an ``EnvironmentResponsePhenotype``.
 
 The environment is where this conf differs from the other bacterial ones. All four

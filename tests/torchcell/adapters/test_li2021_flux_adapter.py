@@ -5,7 +5,7 @@
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
 Li 2021 13C-MFA (Additional file 2): three released flux maps, one zwf promoter
-replacement per record served as ``bacterial perturbation``; no environment
+replacement per record served as ``perturbation``; no environment
 perturbation, and the reference's map is a typed gap.
 """
 

@@ -6,7 +6,7 @@
 knowledge-graph nodes and edges.
 
 One record per released (gene, comparison sheet) row: a single
-``TransposonInsertionPerturbation`` served as a ``bacterial perturbation`` node, and
+``TransposonInsertionPerturbation`` served as a ``perturbation`` node, and
 the two-sample t test of the gene's fitness between the arms as a
 ``FitnessContrastPhenotype`` (``fitness contrast phenotype``). The condition arm is the
 record's environment and the reference arm the reference's.

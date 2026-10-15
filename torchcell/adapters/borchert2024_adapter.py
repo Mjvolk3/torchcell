@@ -6,7 +6,7 @@
 knowledge-graph nodes and edges.
 
 One record per (gene, kept sample): a single ``TransposonInsertionPerturbation`` served
-as a ``bacterial perturbation`` node, and the gene fitness as an
+as a ``perturbation`` node, and the gene fitness as an
 ``EnvironmentResponsePhenotype``. The sample's carbon or nitrogen source is an
 ``EnvironmentPhysicalPerturbation`` and a second added species (a stressor, the DMSO
 vehicle, the amino-acid mix or a nutrient dropout) is a further environment

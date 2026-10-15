@@ -7,7 +7,7 @@ knowledge-graph nodes and edges.
 
 One record per Table S8 protein-level contrast under the paper's primary design. Every
 strain is the wild type, so the genotype carries no perturbation and no
-``bacterial perturbation`` node is served; the contrast itself is an environment edit,
+``perturbation`` node is served; the contrast itself is an environment edit,
 so the environment-perturbation pair is enabled.
 """
 

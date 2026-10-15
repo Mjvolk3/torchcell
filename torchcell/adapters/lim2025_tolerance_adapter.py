@@ -6,7 +6,7 @@
 knowledge-graph nodes and edges.
 
 One record per strain (IPL300, IPL400, KT2440 dPP_3024): its deletions as
-``DeletionStrainPerturbation`` leaves served as ``bacterial perturbation`` nodes,
+``DeletionStrainPerturbation`` leaves served as ``perturbation`` nodes,
 the tolerance as an ``EnvironmentResponsePhenotype``, and isoprenol as an environment
 perturbation.
 """

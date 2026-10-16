@@ -127,9 +127,9 @@ SRC_COLOR = {
     "loewe": PLOT_PALETTE[2],
     "hsa": PLOT_PALETTE[3],
     "mean": PLOT_PALETTE[6],
-    "ridge": PLOT_PALETTE[4],
-    "cgt": PLOT_PALETTE[10],
-    "control": PLOT_PALETTE[5],
+    "ridge": PLOT_PALETTE[5],
+    "cgt": PLOT_PALETTE[4],
+    "control": PLOT_PALETTE[10],
 }
 SRC_FILL = {
     "measured": PLOT_PALETTE_FILL[0],
@@ -137,9 +137,9 @@ SRC_FILL = {
     "loewe": PLOT_PALETTE_FILL[2],
     "hsa": PLOT_PALETTE_FILL[3],
     "mean": PLOT_PALETTE_FILL[6],
-    "ridge": PLOT_PALETTE_FILL[4],
-    "cgt": PLOT_PALETTE_FILL[10],
-    "control": PLOT_PALETTE_FILL[5],
+    "ridge": PLOT_PALETTE_FILL[5],
+    "cgt": PLOT_PALETTE_FILL[4],
+    "control": PLOT_PALETTE_FILL[10],
 }
 SRC_LABEL = {
     "measured": "a measured value (the public screens, the Bioscreen wells)",
@@ -1139,7 +1139,7 @@ def draw_molecules(ax: Any, R: Reads) -> None:
     axes_h_pt = extent.height / fig.dpi * 72.0
     num("panelAWidthMm", round(axes_w_pt / 72.0 * 25.4, 1))
     num("panelAHeightMm", round(axes_h_pt / 72.0 * 25.4, 1))
-    name_pt, gap_x, gap_y, header_pt = 6.0, 3.5, 2.0, 6.0
+    name_pt, gap_x, gap_y, header_pt = 5.5, 3.5, 1.5, 5.5
     col_w = [max(size[row[j]][0] for row in grid) for j in range(3)]
     row_h = [max(size[key][1] for key in row) + name_pt for row in grid]
     total_w = sum(col_w) + 2 * gap_x
@@ -1149,7 +1149,7 @@ def draw_molecules(ax: Any, R: Reads) -> None:
     # the Vanacloig column's field, behind the third column and its names, with its
     # header: padded on every side, its corners round in points (the axes is not
     # square, so the box's mutation aspect undoes the axes' own aspect)
-    pad_x, pad_y, corner_pt = 5.0, 4.0, 4.0
+    pad_x, pad_y, corner_pt = 5.0, 3.0, 5.0
     x_field = left0 + col_w[0] + col_w[1] + 2 * gap_x - pad_x
     w_field = col_w[2] + 2 * pad_x
     y_field = top - total_h - pad_y
@@ -1168,6 +1168,7 @@ def draw_molecules(ax: Any, R: Reads) -> None:
         )
     )
     field.set_in_layout(False)
+    field.set_clip_on(False)  # a patch is clipped to the axes box by default
     header = ax.text(
         (x_field + w_field / 2) / axes_w_pt,
         (top - 1.0) / axes_h_pt,
@@ -1269,7 +1270,7 @@ def draw_sources(ax: Any, R: Reads) -> None:
         trained = split in ("host_anchor", "host_ex21")
         rows_.append((HOST_TITLE[split], detail, int(r.n_compounds), split, trained))
     # the four gene-level sources on top, a gap, then the host records by split
-    y = np.array([9, 8, 7, 6, 3, 2, 1, 0], dtype=float)
+    y = np.array([8, 7, 6, 5, 3, 2, 1, 0], dtype=float)
     for yi, (_label, detail, n_cmp, _src, trained) in zip(y, rows_):
         ax.barh(
             yi,
@@ -1294,7 +1295,7 @@ def draw_sources(ax: Any, R: Reads) -> None:
         )
     ax.set_yticks(y)
     ax.set_yticklabels([r[0] for r in rows_], fontsize=4.8)
-    ax.set_ylim(-0.6, 9.6)
+    ax.set_ylim(-0.6, 8.6)
     ax.set_xscale("log")
     ax.set_xlim(0.7, 1e7)
     ax.set_xlabel("compounds in the source")
@@ -1302,7 +1303,7 @@ def draw_sources(ax: Any, R: Reads) -> None:
     ax.set_axisbelow(True)
     ax.text(
         0.85,
-        4.4,
+        4.0,
         "the host readout, " + CULTURE["host"],
         fontsize=4.6,
         style="italic",
@@ -1404,7 +1405,7 @@ def draw_evaluation(ax: Any, R: Reads) -> None:
     num("nFitCompounds", n_fit)
     num("nGeneTokens", 6607)
     num("nFingerprintBits", 2048)
-    cgt, cgt_fill = SRC_COLOR["cgt"], SRC_FILL["cgt"]
+    cgt = SRC_COLOR["cgt"]
     meas, meas_fill = SRC_COLOR["measured"], SRC_FILL["measured"]
     fs = 4.2
     # the axes is about 41 by 38 mm after the layout (panelCWidthMm in the numbers
@@ -1428,7 +1429,7 @@ def draw_evaluation(ax: Any, R: Reads) -> None:
         linespacing=1.1,
     )
     arrow(ax, 53, y1, 59, y1)
-    box(ax, 60, y1 - 3.0, 10, 6, "MLP", cgt, cgt_fill, fs=fs)
+    box(ax, 60, y1 - 3.0, 10, 6, "MLP", cgt, "white", fs=fs)
     arrow(ax, 71, y1, 77, y1)
     token(ax, 78, y1 - 2.0, 4.0, cgt)
     ax.text(80, y1 + 3.6, "token", fontsize=fs, ha="center", va="bottom")
@@ -1444,11 +1445,11 @@ def draw_evaluation(ax: Any, R: Reads) -> None:
     # ---- row two: the token in front of the genome, one head
     y2 = 25.0
     token(ax, 0.5, y2 - 2.0, 4.0, cgt)
-    strip(ax, 5.5, y2 - 2.0, 26, 4.0, 13, cgt_fill, cgt, dark=(4, 9))
+    strip(ax, 5.5, y2 - 2.0, 26, 4.0, 13, SRC_FILL["ridge"], GRAY, dark=(4, 9))
     ax.text(
         18.5,
         y2 + 2.8,
-        "6,607 gene tokens\n(a learned table)",
+        "6,607 gene tokens\n(a learned table, CGT)",
         fontsize=fs,
         ha="center",
         va="bottom",
@@ -1464,7 +1465,7 @@ def draw_evaluation(ax: Any, R: Reads) -> None:
         linespacing=1.1,
     )
     arrow(ax, 32.5, y2, 38.5, y2)
-    box(ax, 39.5, y2 - 4.0, 22, 8, "transformer\nlayer + head", cgt, cgt_fill, fs=fs)
+    box(ax, 39.5, y2 - 4.0, 22, 8, "CGT layer\n+ one head", cgt, "white", fs=fs)
     arrow(ax, 62, y2 + 1.5, 67.5, y2 + 3.8)
     arrow(ax, 62, y2 - 1.5, 67.5, y2 - 3.8)
     box(ax, 68, y2 + 1.6, 32, 5.6, "deleted-gene rows:\nprofile", cgt, "white", fs=fs)
@@ -1485,13 +1486,16 @@ def draw_evaluation(ax: Any, R: Reads) -> None:
         6,
         "each read alone,\ncomposed as Bliss",
         cgt,
-        cgt_fill,
+        "white",
         fs=fs,
     )
     ax.text(
         0.5,
         y3 - 4.6,
-        r"host fitness $= f_1 \cdot f_2 \cdot f_3$, screen response $= r_1 + r_2 + r_3$",
+        # one math run, so the relation spacing is the same on both sides of each
+        # equals sign (text then "$=$" opened each with a thick space)
+        r"$\mathrm{host\ fitness} = f_1 \cdot f_2 \cdot f_3,\;\;"
+        r"\mathrm{screen\ response} = r_1 + r_2 + r_3$",
         fontsize=fs,
         ha="left",
         va="top",
@@ -1817,9 +1821,9 @@ def draw_het_rule(ax: Any, R: Reads) -> None:
     d = R.het_rule
     rules = [("r2_mean", "mean"), ("r2_sum", "bliss"), ("r2_max", "hsa")]
     names = {
-        "r2_mean": "mean of the singles",
-        "r2_sum": "sum (Bliss on log2)",
-        "r2_max": "highest single",
+        "r2_mean": "mean of\nthe singles",
+        "r2_sum": "sum\n(Bliss, log2)",
+        "r2_max": "highest\nsingle",
     }
     rng = np.random.default_rng(0)
     for i, (col, src) in enumerate(rules):
@@ -1845,9 +1849,7 @@ def draw_het_rule(ax: Any, R: Reads) -> None:
     num("hetSpearmanMean", float(R.het_sum["all"]["median"]["spearman_sum"]))
     num("hetCtlNull", float(R.het_sum["all"]["median_ctlnull_spearman_sum"]))
     ax.set_xticks(range(len(rules)))
-    ax.set_xticklabels(
-        [names[c] for c, _ in rules], rotation=20, ha="right", fontsize=4.6
-    )
+    ax.set_xticklabels([names[c] for c, _ in rules], fontsize=4.6, linespacing=1.1)
     ax.set_ylim(-1.2, 1.0)
     ax.axhline(0.0, color="black", linewidth=0.4, zorder=1)
     ax.set_ylabel("R-squared, pair from its singles")
@@ -2321,7 +2323,9 @@ def fig_main(R: Reads) -> dict[str, str]:
     combinations, the isobole grids, the growth ladder with the zero-shot arms).
     """
     fig = new_sheet(170)
-    fig.get_layout_engine().set(rect=(0, 0.012, 1, 0.962))
+    fig.get_layout_engine().set(
+        rect=(0, 0.012, 1, 0.962), h_pad=3.0 / 72.0, hspace=0.012
+    )
     # row one is wider for the structures (fixed ACS bond length) and the cartoon;
     # the ladders with long tick labels get the wider columns of their rows
     axes = rows(
@@ -2334,7 +2338,7 @@ def fig_main(R: Reads) -> dict[str, str]:
             [0.85, 1.15, 1.05, 0.95],
             [0.85, 0.8, 1.6, 0.85],
         ],
-        heights=[1.6, 1.0, 1.0, 1.0],
+        heights=[1.65, 1.0, 1.0, 1.0],
     )
     draw_sources(axes[1], R)
     draw_evaluation(axes[2], R)
@@ -3545,11 +3549,7 @@ def draw_bliss_ladder(
             "loewe",
         )
         xlabel, xmax = (
-            (
-                "growth AUROC, 63 combinations"
-                if compact
-                else "growth AUROC over the 63 combinations"
-            ),
+            ("growth AUROC" if compact else "growth AUROC over the 63 combinations"),
             1.0,
         )
     d = d[d.fold_seed == 0]

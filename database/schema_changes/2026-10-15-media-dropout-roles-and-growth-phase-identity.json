@@ -1668,8 +1668,8 @@
   ],
   "rebuild_scope": "full_kg_rebuild",
   "owner_sign_off": {
-    "signed": false,
-    "quote": null,
+    "signed": true,
+    "quote": "Owner, 2026-10-15, 23:05 CDT, after the GO/NO-GO page and the twelve records were presented and the sign-off named as the open decision: 'ok go!'. Standing rulings the record runs under: 'we care most about correctness and are willing right now to do full rebuilds if we identify even small semantically prudent change in onto'; 'yes rename, no major bump minor bump. go !'.",
     "url": null
   }
 }

@@ -9,7 +9,8 @@ screened the MATa haploid yeast deletion collection, pooled and read out by its 
 downtag barcodes on Agilent arrays, against 82 conditions: 75 compounds and 7 crude
 natural-product extracts, each at the dose Supplementary Table 1 lists. The released
 per-strain matrix is Supplementary Table 7 (``mmc8.xls``, "Raw data matrix (log2
-ratios)"), 4,111 deletion strains x 82 conditions.
+ratios)"), 4,111 deletion strains x 82 conditions. The 75 compound conditions are stored;
+the 7 crude extracts are held out (UNIDENTIFIED PERTURBING AGENTS, below).
 
 WHAT THE NUMBER IS, AND ITS SIGN. The released value is log2(CONTROL / TREATED), the
 opposite orientation of Vanacloig 2022's log2(inhibitor/control). The Methods: "ratios of
@@ -63,23 +64,46 @@ RECORD = one (deletion strain x condition) ``StrainEnvironmentResponseExperiment
   ``n_samples = 2`` (two fluor-reversed chips per tag), ``sample_unit=technical_replicate``.
 - REFERENCE: per medium, the 1% solvent-control pool on the BY4741 background, log2 ratio 0.
 
-CELLS WITH NO RECORD (counted in ``preprocess/dropped_records.json``): every released
-ratio is a record (#1045); the only rule is
+CELLS WITH NO RECORD (counted in ``preprocess/dropped_records.json``), in rule order:
 
 1. ``ratio_cell_blank_in_release``: the release's two-space blank, a cell whose tags were
    both removed as noise-dominated ("specific tags under a specific condition having an
    intensity smaller than median intensity of the background signal in the control ...
-   were ignored").
+   were ignored"). 7,848 cells.
+2. ``UNIDENTIFIED_COMPOUND_RULE`` (below): every released ratio of a crude-extract
+   condition. 28,420 cells.
 
-STORED WITH A TYPED COMPOUND-IDENTITY GAP (2026.10.12, #1045 row 19): the nine conditions
-whose compound carries no InChIKey, CID or ChEBI id after resolution (the seven crude
-extracts, agelasine E with no PubChem compound, and stichloroside with no congener named)
-are stored, not dropped. ``resolved_compound`` attaches the typed ``inchikey`` gap it
-attaches to any uncurated label (``deferred_pending_source_review``, the #726 route
-Piotrowski 2017 takes: "an uncurated label is a gap, not a drop"), and
+The ledger raises unless source cells = stored records + the cells of every rule.
+
+UNIDENTIFIED PERTURBING AGENTS (database constitution principle 2, owner ruling
+2026-10-15: "if you cannot tell me what goes into the flask so to speak, then we have
+no hope of modeling!"; applied to these extracts by the owner 2026-10-16: a collection
+code for an undefined mixture says nothing about what went into the flask). The
+criterion is mechanical: a condition is unidentified iff its Table S1 name matches
+``^Extract <collection code>$`` (``_EXTRACT_CODE``) and ``RELEASED_IDENTITIES`` (empty
+today) has no entry for it; the loader refuses unless exactly the paper's seven crude
+extracts match ("7 crude antifungal extracts, derived from different marine sponges and
+microorganisms"; "Natural product extracts, pap B, agelasine E, and basiliskamide A were
+from the collection of R. Andersen."; each Table 1 comment reads "antifungal natural
+product extract"). The paper releases no composition and no accession for any of them,
+only the code. The seven, with the released ratios held out (measured on the raw mirror
+through the loader's own ``parse_ratio_matrix``, 2026-10-16): Extract 95-57 4,009,
+Extract 6592 4,079, Extract 00-89 4,101, Extract 00-303C 4,111, Extract 00-243 4,075,
+Extract 00-192 4,091, Extract 00-132 3,954; 28,420 in all. Their columns are never
+built, and the ledger lists each under ``unidentified_compounds_held_out`` with its
+Table S1 name, dose, vehicle, medium and record count, beside the quotes
+(``unidentified_compound_sources``). Stored after the hold-out: 300,834 records over 75
+conditions. The two compounds the paper purified from extracts 00-192 and 00-132
+(stichloroside, theopalauamide) are their own conditions and stay stored.
+
+STORED WITH A TYPED COMPOUND-IDENTITY GAP (2026.10.12, #1045 row 19): the two NAMED
+natural products whose compound carries no InChIKey, CID or ChEBI id after resolution
+(agelasine E with no PubChem compound, and stichloroside with no congener named) are
+identified material and stay stored. ``resolved_compound`` attaches the typed
+``inchikey`` gap it attaches to any uncurated label (``deferred_pending_source_review``,
+the #726 route Piotrowski 2017 takes: "an uncurated label is a gap, not a drop"), and
 ``preprocess/dropped_records.json`` lists each condition under ``compound_identity_gaps``
-with its record count. The rule that refused them (``compound_without_a_structure_
-identifier``, 36,437 records) is retired.
+with its record count (agelasine E 4,032, stichloroside 4,111).
 
 NOT RELEASED AS RATIOS (counted in the same file, not drops): Table S4 lists 121 strains
 more than Table S7, exactly Table S2's 121 multidrug-sensitive strains, which the authors
@@ -160,6 +184,7 @@ from torchcell.datamodels.strain_background import (
     standard_allele,
 )
 from torchcell.datasets.dataset_registry import register_dataset
+from torchcell.datasets.scerevisiae.hoepfner2014 import ReleasedIdentity
 from torchcell.literature.manifest import (
     ROLE_RAW_DATA,
     ArtifactRecord,
@@ -503,6 +528,24 @@ STICHLOROSIDE_UNSPECIFIED = _paper(
     "(Kitagawa et al., 1981)",
     note="no congener and no CAS, so no structure can be assigned",
 )
+N_CRUDE_EXTRACTS = _paper(
+    7,
+    "Included in this group are 75 synthetic compounds and natural products, of which "
+    "23 are FDA approved, and 7 crude antifungal extracts, derived from different "
+    "marine sponges and microorganisms.",
+)
+EXTRACT_COLLECTION = _paper(
+    "collection of R. Andersen",
+    "Natural product extracts, pap B, agelasine E, and basiliskamide A were from the "
+    "collection of R. Andersen.",
+    note="the extracts are known only by the collection's codes; no composition or "
+    "accession is released",
+)
+EXTRACT_TABLE_COMMENT = _paper(
+    "antifungal natural product extract",
+    "antifungal natural product extract",
+    note="the Table 1 comment of each of the seven 'Extract <code>' rows",
+)
 
 SOURCED_VALUES: tuple[SourcedValue, ...] = (
     N_CONDITIONS,
@@ -535,6 +578,9 @@ SOURCED_VALUES: tuple[SourcedValue, ...] = (
     EXTRACT_SOLVENT,
     BASILISKAMIDE_A,
     STICHLOROSIDE_UNSPECIFIED,
+    N_CRUDE_EXTRACTS,
+    EXTRACT_COLLECTION,
+    EXTRACT_TABLE_COMMENT,
 )
 """Every module-level ``SourcedValue``; the test audits each quote against its mirror."""
 
@@ -673,6 +719,98 @@ CONDITIONS: tuple[ConditionSpec, ...] = (
     _c("Fluconazole", "Fluconazole", "water"),
     _c("Geldanamycin", "Geldanamycin"),
 )
+
+# --------------------------------------------------------------------------- #
+# Unidentified perturbing agents (database constitution principle 2)
+# --------------------------------------------------------------------------- #
+#: Condition rule for an unidentified perturbing agent: the same rule string Hoepfner
+#: 2014 and Hillenmeyer 2008 use.
+UNIDENTIFIED_COMPOUND_RULE = (
+    "compound_has_no_released_name_or_structure_not_representable"
+)
+
+UNIDENTIFIED_COMPOUND_POLICY = (
+    "a condition whose Table S1 name is 'Extract <collection code>' and which has no "
+    "RELEASED_IDENTITIES entry is a crude natural-product extract from the collection "
+    "of R. Andersen known only by its collection code: an undefined mixture with no "
+    "released composition and no accession, so what went into the flask cannot be "
+    "stated and the experiment cannot be represented (database constitution principle "
+    "2, owner rulings 2026-10-15 and 2026-10-16). Every released ratio of such a "
+    "condition is HELD OUT, never stored under the bare code with an inchikey gap; the "
+    "ledger lists each extract with its dose and record count, and the extract is "
+    "admitted the day a released composition or a deposited accession fills "
+    "RELEASED_IDENTITIES. A named natural product (agelasine E, stichloroside, "
+    "theopalauamide, papuamide B, basiliskamide) is identified material and stays "
+    "stored, with its typed inchikey gap where the table gives no key"
+)
+
+#: A Table S1 name that is a crude extract's collection code and nothing else.
+_EXTRACT_CODE = re.compile(r"^Extract [0-9][0-9A-Z-]*$")
+
+#: The ADMISSION TABLE, keyed by the Table S7 condition label: EMPTY today. An extract
+#: condition is stored iff it has an entry here. Only a released composition of the
+#: extract or a deposited accession for its material (a later paper, a repository
+#: record), mirrored and sha256-pinned like any other artifact, fills it; an identity
+#: inferred from profile similarity (00-192 resembles stichloroside, 00-132
+#: theopalauamide) is a hypothesis and never goes here. A filled entry changes the
+#: stored records, so it rebuilds the store. The ledger's
+#: ``unidentified_compounds_held_out`` (every held-out extract with its dose and records)
+#: is the request list.
+RELEASED_IDENTITIES: dict[str, ReleasedIdentity] = {}
+
+
+def compound_is_identified(spec: ConditionSpec) -> bool:
+    """Whether a condition's agent is identified material (``UNIDENTIFIED_COMPOUND_RULE``).
+
+    Unidentified iff the Table S1 name matches ``_EXTRACT_CODE`` (a crude extract known
+    only by its collection code) and ``RELEASED_IDENTITIES`` has no entry for the label.
+    Every other condition, a gapped named natural product included, is identified.
+    """
+    if spec.s7_label in RELEASED_IDENTITIES:
+        return True
+    return _EXTRACT_CODE.match(spec.lookup_label) is None
+
+
+def unidentified_conditions() -> list[ConditionSpec]:
+    """The conditions held out under ``UNIDENTIFIED_COMPOUND_RULE``, in Table S7 order.
+
+    Refuses unless, with ``RELEASED_IDENTITIES`` empty, exactly the paper's seven crude
+    extracts (``N_CRUDE_EXTRACTS``) match, so a relabelled column cannot slip through.
+    """
+    n_codes = sum(_EXTRACT_CODE.match(c.lookup_label) is not None for c in CONDITIONS)
+    if n_codes != N_CRUDE_EXTRACTS.value:
+        raise RuntimeError(
+            f"{n_codes} Table S1 names are extract collection codes; the paper screened "
+            f"{N_CRUDE_EXTRACTS.value} crude extracts"
+        )
+    return [c for c in CONDITIONS if not compound_is_identified(c)]
+
+
+def _compound(spec: ConditionSpec) -> Compound:
+    """The compound of a condition: the shared table, or an admission entry.
+
+    A ``RELEASED_IDENTITIES`` entry supplies the name and SMILES the label lacks (its
+    SMILES yields an RDKit InChIKey), and its released InChIKey fills a key the resolver
+    could not, retiring that gap. Without an entry the label resolves as released.
+    """
+    released = RELEASED_IDENTITIES.get(spec.s7_label)
+    if released is None:
+        return resolved_compound(spec.lookup_label)
+    compound = resolved_compound(
+        released.name if released.name is not None else spec.lookup_label,
+        smiles=released.smiles,
+        derive_from_smiles=released.smiles is not None,
+    )
+    if released.inchikey is not None and compound.inchikey is None:
+        compound = compound.model_copy(
+            update={
+                "inchikey": released.inchikey,
+                "provenance_gaps": [
+                    gap for gap in compound.provenance_gaps if gap.field != "inchikey"
+                ],
+            }
+        )
+    return compound
 
 
 # --------------------------------------------------------------------------- #
@@ -1190,11 +1328,25 @@ class GappedCompoundCondition(BaseModel):
     n_records: int
 
 
+class UnidentifiedCompoundHeldOut(BaseModel):
+    """One condition held out under ``UNIDENTIFIED_COMPOUND_RULE``, with what it carried."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    condition: str = Field(description="The Table S7 condition label, verbatim.")
+    s1_name: str = Field(description="The Table S1 'Chemical Compound' cell, verbatim.")
+    dose: Concentration = Field(description="The Table S1 screening concentration.")
+    vehicle: Vehicle
+    medium: MediumKey
+    n_records: int = Field(description="Released ratios of this column not written.")
+
+
 class DropLog(BaseModel):
     """Every retention rule applied to a build, in order, plus the release accounting.
 
     ``compound_identity_gaps`` are not drops: those conditions are stored, each compound
-    carrying its typed gap.
+    carrying its typed gap. ``unidentified_compounds_held_out`` is the per-condition
+    breakdown of the ``UNIDENTIFIED_COMPOUND_RULE`` rule and the admission request list.
     """
 
     dataset: str
@@ -1204,6 +1356,10 @@ class DropLog(BaseModel):
     dropped_records: int
     rules: list[DropRule]
     compound_identity_gaps: list[GappedCompoundCondition]
+    unidentified_compound_rule: str
+    unidentified_compound_policy: str
+    unidentified_compound_sources: list[SourcedValue]
+    unidentified_compounds_held_out: list[UnidentifiedCompoundHeldOut]
     release: ReleaseAccounting
 
 
@@ -1430,14 +1586,16 @@ class EnvChemgenParsons2006Dataset(ExperimentDataset):
                 f"sensitive set ({len(p_only)} vs {len(multidrug)})"
             )
 
+        held_out = {spec.s7_label: spec for spec in unidentified_conditions()}
         compounds: dict[str, Compound] = {}
         doses: dict[str, Concentration] = {}
         for spec in CONDITIONS:
             row = s1[spec.s1_name]
             doses[spec.s7_label] = parse_dose(row)
-            compounds[spec.s7_label] = resolved_compound(spec.lookup_label)
-        # A compound with no structure identifier is stored with the typed inchikey gap
-        # resolved_compound attaches (#726, #1045 row 19), never dropped.
+            if spec.s7_label not in held_out:
+                compounds[spec.s7_label] = _compound(spec)
+        # An identified compound with no structure identifier is stored with the typed
+        # inchikey gap resolved_compound attaches (#726, #1045 row 19), never dropped.
         gapped = {
             label: compound
             for label, compound in compounds.items()
@@ -1471,6 +1629,7 @@ class EnvChemgenParsons2006Dataset(ExperimentDataset):
                 spec, compounds[spec.s7_label], doses[spec.s7_label]
             )
             for spec in CONDITIONS
+            if spec.s7_label not in held_out
         }
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
@@ -1478,6 +1637,7 @@ class EnvChemgenParsons2006Dataset(ExperimentDataset):
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
         idx = 0
         n_blank = 0
+        n_held: dict[str, int] = dict.fromkeys(held_out, 0)
         n_without_p = 0
         n_p_without_ratio = 0
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
@@ -1495,9 +1655,12 @@ class EnvChemgenParsons2006Dataset(ExperimentDataset):
                         n_blank += 1
                         n_p_without_ratio += neg_log10_p is not None
                         continue
+                    n_without_p += neg_log10_p is None
+                    if spec.s7_label in held_out:
+                        n_held[spec.s7_label] += 1  # UNIDENTIFIED_COMPOUND_RULE
+                        continue
                     if spec.s7_label in n_gapped:
                         n_gapped[spec.s7_label] += 1
-                    n_without_p += neg_log10_p is None
                     experiment = StrainEnvironmentResponseExperiment(
                         dataset_name=self.name,
                         genotype=genotype,
@@ -1534,7 +1697,18 @@ class EnvChemgenParsons2006Dataset(ExperimentDataset):
                         "(NOISE_REMOVAL); there is no ratio to store"
                     ),
                     n_records=n_blank,
-                )
+                ),
+                DropRule(
+                    rule=UNIDENTIFIED_COMPOUND_RULE,
+                    scope="condition",
+                    description=(
+                        "not representable: the condition's agent is a crude extract "
+                        "known only by its collection code, with no released "
+                        "composition or accession (UNIDENTIFIED_COMPOUND_POLICY)"
+                    ),
+                    n_records=sum(n_held.values()),
+                    items=sorted(held_out),
+                ),
             ],
             compound_identity_gaps=[
                 GappedCompoundCondition(
@@ -1545,6 +1719,24 @@ class EnvChemgenParsons2006Dataset(ExperimentDataset):
                     n_records=n_gapped[label],
                 )
                 for label in sorted(gapped)
+            ],
+            unidentified_compound_rule=UNIDENTIFIED_COMPOUND_RULE,
+            unidentified_compound_policy=UNIDENTIFIED_COMPOUND_POLICY,
+            unidentified_compound_sources=[
+                N_CRUDE_EXTRACTS,
+                EXTRACT_COLLECTION,
+                EXTRACT_TABLE_COMMENT,
+            ],
+            unidentified_compounds_held_out=[
+                UnidentifiedCompoundHeldOut(
+                    condition=label,
+                    s1_name=spec.s1_name,
+                    dose=doses[label],
+                    vehicle=spec.vehicle,
+                    medium=spec.medium,
+                    n_records=n_held[label],
+                )
+                for label, spec in sorted(held_out.items())
             ],
             release=ReleaseAccounting(
                 table_s4_strains=len(p_values.orfs),
@@ -1567,12 +1759,14 @@ class EnvChemgenParsons2006Dataset(ExperimentDataset):
             )
         log.info(
             "Parsons2006: wrote %d records over %d strains x %d conditions (%d released "
-            "blank cells have no ratio; %d records on %d compounds stored with a typed "
-            "identity gap)",
+            "blank cells have no ratio; %d ratios of %d unidentified extracts held out; "
+            "%d records on %d compounds stored with a typed identity gap)",
             idx,
             len(ratios.orfs),
             len(compounds),
             n_blank,
+            sum(n_held.values()),
+            len(held_out),
             sum(n_gapped.values()),
             len(gapped),
         )

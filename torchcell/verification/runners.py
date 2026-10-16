@@ -2441,12 +2441,13 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
     "env_chemgen_parsons2006": {
         "root": "data/torchcell/env_chemgen_parsons2006",
         # Table S7's 4,111 strains x 82 conditions = 337,102 cells minus the 7,848
-        # released blanks: every released ratio (#1045). Each strain under its released
-        # ORF (no genome lookup), and the 36,437 ratios of the 9 conditions whose
-        # compound has no structure identifier (7 crude extracts, agelasine E,
-        # stichloroside) with a typed inchikey gap. Counts:
+        # released blanks (#1045), minus the 28,420 ratios of the 7 crude extracts known
+        # only by a collection code, held out under UNIDENTIFIED_COMPOUND_RULE
+        # (2026.10.16, constitution principle 2; raw-mirror census with the loader's own
+        # parser). Each strain under its released ORF (no genome lookup); agelasine E and
+        # stichloroside are named and stay stored with a typed inchikey gap. Counts:
         # preprocess/dropped_records.json.
-        "expected_count": 329254,
+        "expected_count": 300834,
         "background_genes": frozenset(),
         "stream": True,
         "provenance": Provenance(

@@ -6,6 +6,9 @@ written by build_bacteria_datasets_table.py. Reads only the JSON, never an LMDB.
 
 Views written:
   - notes/experiments.database.<view>-datasets-table.md  (generated note; frontmatter kept; view = bacteria | yeast)
+  - notes/experiments.database.<view>-datasets-table-expanded.md  (the main table plus a
+    Description column, the summary line of each dataset class's docstring), with its own
+    .tex fragment and committed PDF beside the ones below
   - <pre-build dir>/<view>_datasets_table.tex                      (both tables, \input-able)
   - <pre-build dir>/<view>_datasets_table_preview.pdf              (standalone preview, gitignored)
   - notes/assets/pdf-output/experiments.database.<view>-datasets-table.pdf  (committed copy)
@@ -32,6 +35,7 @@ from torchcell.paper.tables import (
     Row,
     read_frontmatter,
     scientific,
+    tex_escape,
 )
 
 SCRIPT = Path(__file__).resolve()
@@ -48,19 +52,19 @@ def view_name(organisms: list[str]) -> str:
     return VIEW_NAME.get(label, label)
 
 
-def md_out(name: str) -> Path:
-    """The generated note for one organism set."""
-    return REPO / "notes" / f"experiments.database.{name}-datasets-table.md"
+def md_out(name: str, suffix: str = "") -> Path:
+    """The generated note for one organism set (``suffix="-expanded"`` for that view)."""
+    return REPO / "notes" / f"experiments.database.{name}-datasets-table{suffix}.md"
 
 
-def pdf_out(name: str) -> Path:
+def pdf_out(name: str, suffix: str = "") -> Path:
     """The committed preview PDF for one organism set."""
     return (
         REPO
         / "notes"
         / "assets"
         / "pdf-output"
-        / f"experiments.database.{name}-datasets-table.pdf"
+        / f"experiments.database.{name}-datasets-table{suffix}.pdf"
     )
 
 
@@ -82,6 +86,23 @@ MAIN_COLUMNS = [
     Column(header="Shape", align="l"),
     Column(header="Graph role", align="l"),
     Column(header=SIGNAL, align="r"),
+]
+
+# Wrapping widths for the expanded view's two free-text columns. The characters per
+# wrapped line at \footnotesize only size the standalone preview canvas.
+DESCRIPTION_WIDTH = "3.0in"
+DESCRIPTION_CHARS_PER_LINE = 52
+PHENOTYPE_WIDTH = "2.3in"
+PHENOTYPE_CHARS_PER_LINE = 38
+EXPANDED_COLUMNS = [
+    MAIN_COLUMNS[0],
+    MAIN_COLUMNS[1],
+    Column(header="Description", align="l", width=DESCRIPTION_WIDTH),
+    MAIN_COLUMNS[2],
+    MAIN_COLUMNS[3],
+    MAIN_COLUMNS[4],
+    Column(header="Phenotype", align="l", width=PHENOTYPE_WIDTH),
+    *MAIN_COLUMNS[6:],
 ]
 
 CONTROL_COLUMNS = [
@@ -110,7 +131,8 @@ Pre-build inventory of the {hosts} datasets built as LMDBs in the dev tree
 (the set `build_adapter_map(organisms={{{organisms}}})` serves), a temporary counterpart of
 [[paper.supported-datasets-and-databases]] (issue #1098), with the Signal-column controls of
 issue #1099 measured in the same pass. Commentary and findings:
-[[experiments.database.scripts.build_bacteria_datasets_table]].
+[[experiments.database.scripts.build_bacteria_datasets_table]]. The same table with a
+description of each dataset: [[experiments.database.{name}-datasets-table-expanded]].
 
 **Columns.** Every column is read from the built LMDB; nothing is hand-typed. *Genotypes* =
 distinct stored genotype payloads; *Env* = distinct stored environment payloads; *Instances* =
@@ -131,6 +153,22 @@ floor on value-carried information). Ratios are dimensionless.
 than the full media payload, so their environment bytes are a 64-character digest; the yeast
 2026-07-17 snapshot predates interning. Signal is a relative proxy, comparable within this
 table, not an absolute information content.
+"""
+
+
+EXPANDED_MD_INTRO = """\
+## {title} datasets, expanded: the main table with a description of each dataset
+
+<!-- GENERATED: raw data from experiments/database/scripts/build_bacteria_datasets_table.py
+(-> results/pre-build/<date>/<organisms>_datasets.json); this note is a VIEW rendered by
+render_bacteria_datasets_table.py. Do not edit tables by hand. -->
+
+The table of [[experiments.database.{name}-datasets-table]] with one more column.
+*Description* is the summary paragraph of the dataset class's docstring in
+`torchcell/datasets/`, attached by the build script when it writes the JSON, so a better
+description is made by improving that docstring and rerunning both scripts. Every other
+column is read from the built LMDB; definitions and the Signal controls are in the
+non-expanded note. Commentary: [[experiments.database.scripts.build_bacteria_datasets_table]].
 """
 
 
@@ -182,6 +220,39 @@ def main_table(records: list[DatasetProbeRecord], sections: list[str]) -> PaperT
         },
     )
     return PaperTable(columns=MAIN_COLUMNS, rows=rows, footer=footer)
+
+
+def breakable_phenotype(r: DatasetProbeRecord) -> Cell:
+    """Phenotype text whose LaTeX may break after each underscore.
+
+    A wrapping column can then split a long snake_case measurement type; markdown is
+    unchanged.
+    """
+    text = phenotype_text(r)
+    return Cell(md=text, tex=tex_escape(text).replace(r"\_", r"\_\allowbreak{}"))
+
+
+def expanded_table(
+    records: list[DatasetProbeRecord], sections: list[str]
+) -> PaperTable:
+    """The main table with each row's Description inserted after Host."""
+    main_t = main_table(records, sections)
+    by_name = {short_name(r): r for r in records}
+    rows = [
+        row.model_copy(
+            update={
+                "cells": {
+                    **row.cells,
+                    "Description": by_name[str(row.cells["Dataset"])].description,
+                    "Phenotype": breakable_phenotype(
+                        by_name[str(row.cells["Dataset"])]
+                    ),
+                }
+            }
+        )
+        for row in main_t.rows
+    ]
+    return PaperTable(columns=EXPANDED_COLUMNS, rows=rows, footer=main_t.footer)
 
 
 def control_table(records: list[DatasetProbeRecord], sections: list[str]) -> PaperTable:
@@ -294,7 +365,10 @@ def main() -> None:
         md_out(name), default_title=f"{name.title()} Datasets Table"
     )
     intro = MD_INTRO.format(
-        title=name.title(), hosts=hosts, organisms=", ".join(payload["organisms"])
+        title=name.title(),
+        hosts=hosts,
+        organisms=", ".join(payload["organisms"]),
+        name=name,
     )
     note = "\n".join(
         [
@@ -318,18 +392,91 @@ def main() -> None:
     _preview_pdf(
         data_path.parent, tex_out, pdf_out(name), len(records) * 2 + len(sections) * 2
     )
+    _render_expanded(data_path, payload, records, sections, hosts, name)
 
 
-def _preview_pdf(out_dir: Path, tex_out: Path, pdf_path: Path, n_lines: int) -> None:
+def _render_expanded(
+    data_path: Path,
+    payload: dict,
+    records: list[DatasetProbeRecord],
+    sections: list[str],
+    hosts: str,
+    name: str,
+) -> None:
+    """The expanded view: note, .tex fragment and committed PDF."""
+    missing = [r.dataset_class for r in records if not r.description]
+    if missing:
+        raise ValueError(
+            f"rows without a description; rerun build_bacteria_datasets_table.py: {missing}"
+        )
+    table = expanded_table(records, sections)
+    tex = table.to_latex(
+        caption=(
+            f"{hosts} datasets ({payload['status']}, {payload['date']}) built as LMDBs in "
+            "the TorchCell dev tree, with a description of each. \\emph{Description} is the "
+            "summary line of the dataset class's docstring; the other columns are as in "
+            "the non-expanded table."
+        ),
+        label=f"tab:{name}-datasets-expanded",
+        header_comment=f"GENERATED off {data_path.relative_to(REPO)} by render_bacteria_datasets_table.py -- do not edit by hand.",
+    )
+    tex_out = data_path.parent / f"{name}_datasets_table_expanded.tex"
+    tex_out.write_text(tex)
+    print(f"Wrote {tex_out.relative_to(REPO)}")
+    suffix = "-expanded"
+    front = read_frontmatter(
+        md_out(name, suffix), default_title=f"{name.title()} Datasets Table Expanded"
+    )
+    note = "\n".join(
+        [
+            front.rstrip("\n"),
+            "",
+            EXPANDED_MD_INTRO.format(title=name.title(), name=name),
+            "### Datasets",
+            "",
+            table.to_markdown(sectioned=True, heading_level=4),
+            "",
+            f"Source JSON: `{data_path.relative_to(REPO)}`.",
+        ]
+    )
+    md_out(name, suffix).write_text(note.rstrip("\n") + "\n")
+    print(f"Wrote {md_out(name, suffix).relative_to(REPO)}")
+    n_lines = sum(
+        max(
+            -(-len(r.description) // DESCRIPTION_CHARS_PER_LINE),
+            -(-len(phenotype_text(r)) // PHENOTYPE_CHARS_PER_LINE),
+        )
+        for r in records
+    )
+    # Measured on the 2026-10-15 render: a wrapped \footnotesize line takes ~0.125 in.
+    _preview_pdf(
+        data_path.parent,
+        tex_out,
+        pdf_out(name, suffix),
+        n_lines + len(sections) * 2,
+        base_in=2.5,
+        line_in=0.13,
+    )
+
+
+def _preview_pdf(
+    out_dir: Path,
+    tex_out: Path,
+    pdf_path: Path,
+    n_lines: int,
+    *,
+    base_in: float = 4.0,
+    line_in: float = 0.17,
+) -> None:
     r"""Standalone pdflatex canvas sized to the row count (a ``table*`` never paginates)."""
-    height_in = 4.0 + n_lines * 0.17
+    height_in = base_in + n_lines * line_in
     wrapper = out_dir / f"_preview_{tex_out.stem}.tex"
     wrapper.write_text(
         "\\documentclass[9pt]{article}\n"
         f"\\usepackage[paperwidth=14in,paperheight={height_in:.1f}in,margin=0.4in]{{geometry}}\n"
         "\\usepackage[T1]{fontenc}\\usepackage{lmodern}\\usepackage{booktabs}\n"
-        "\\usepackage{amsmath,amssymb}\\usepackage{textcomp}\n"
-        "\\pagestyle{empty}\n"
+        "\\usepackage{amsmath,amssymb}\\usepackage{textcomp}\\usepackage{array}\n"
+        "\\pagestyle{empty}\\makeatletter\\setlength{\\@fptop}{0pt}\\makeatother\n"
         f"\\begin{{document}}\\input{{{tex_out}}}\\end{{document}}\n"
     )
     for _ in range(2):

@@ -134,6 +134,39 @@ def test_paper_table_latex_sectioned() -> None:
     assert r"\label{tab:x}" in tex
 
 
+def test_column_width_renders_a_wrapping_p_column_in_latex_only() -> None:
+    cols = [
+        Column(header="Dataset", align="l"),
+        Column(header="Description", align="l", width="3.2in"),
+        Column(header="Instances", align="r"),
+    ]
+    rows = [
+        Row(
+            cells={
+                "Dataset": "FluxIshii2007",
+                "Description": "Fitted 13C net-flux maps of 28 chemostat cultures.",
+                "Instances": "28",
+            }
+        )
+    ]
+    table = PaperTable(columns=cols, rows=rows)
+    tex = table.to_latex(caption="Cap", label="tab:x", sectioned=False)
+    assert r"\begin{tabular}{@{}l >{\raggedright\arraybackslash}p{3.2in} r@{}}" in tex
+    assert (
+        r"FluxIshii2007 & Fitted 13C net-flux maps of 28 chemostat cultures. & 28 \\"
+        in tex
+    )
+    md = table.to_markdown(sectioned=False)
+    assert md.splitlines()[1] == "| :-- | :-- | --: |"
+
+
+def test_markdown_escapes_a_literal_pipe_in_a_cell() -> None:
+    cols = [Column(header="Dataset"), Column(header="Description")]
+    rows = [Row(cells={"Dataset": "Hoepfner2014", "Description": "env x (het | hom)"})]
+    md = PaperTable(columns=cols, rows=rows).to_markdown(sectioned=False)
+    assert md.splitlines()[2] == r"| Hoepfner2014 | env x (het \| hom) |"
+
+
 def test_scientific_bytes() -> None:
     c = scientific(103_398)
     assert c.md == "1.0×10⁵"

@@ -25,6 +25,9 @@ Per dataset, over the dev-tree LMDB (``$DATA_ROOT/data/torchcell/<slug>/processe
   thresholded at 0 (sigmoid then round), serialized as ``1`` / ``0`` in place.
 - ``binary_packed_bytes``: gzip of just those bits, packed 8 per byte in record order,
   with no structure around them. The one-bit floor on value-carried information.
+- ``description``: the summary paragraph of the dataset class's docstring (RST roles and
+  literals unwrapped, whitespace collapsed). Code metadata, not read from the LMDB, so it
+  is attached fresh on every run rather than cached.
 - ``shuffled_bytes``: every numeric leaf replaced by a draw without replacement from
   the same key path's values across the dataset (marginals kept, joint structure
   destroyed). Between the real Signal and the noise ceiling.
@@ -45,6 +48,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import inspect
 import json
 import math
 import os
@@ -138,6 +142,26 @@ SECTION_BY_EXPERIMENT_TYPE = {
 }
 
 
+_RST_ROLE_RE = re.compile(r":[a-z]+:`~?([^`]+)`")
+_RST_LITERAL_RE = re.compile(r"``([^`]+)``")
+
+
+def docstring_summary(cls: type) -> str:
+    """The first paragraph of a class docstring as one plain line.
+
+    RST roles and double-backtick literals lose their markup, whitespace collapses. A class
+    without a docstring raises: every served loader documents itself, and an empty
+    description cell would hide the gap.
+    """
+    own = cls.__dict__.get("__doc__")
+    if not own:
+        raise ValueError(f"{cls.__name__} has no docstring of its own to describe it")
+    para = inspect.cleandoc(own).split("\n\n", 1)[0]
+    para = _RST_ROLE_RE.sub(r"\1", para)
+    para = _RST_LITERAL_RE.sub(r"\1", para)
+    return " ".join(para.split())
+
+
 def section_for(experiment_type: str) -> str:
     """Display section of a stored ``experiment_type``; unmapped types show raw."""
     return SECTION_BY_EXPERIMENT_TYPE.get(experiment_type, experiment_type)
@@ -195,6 +219,7 @@ class DatasetProbeRecord(BaseModel):
     numeric_paths: int = 0
     lmdb_bytes: int = 0
     seconds: float = 0.0
+    description: str = ""
 
 
 class _CacheEntry(BaseModel):
@@ -618,8 +643,14 @@ def main() -> None:
             )
             cache.save()
 
+    classes = {
+        c.__name__: c
+        for c in build_adapter_map(include_private=False, organisms=organisms.members)
+    }
     ordered = [
-        records[j.slug]
+        records[j.slug].model_copy(
+            update={"description": docstring_summary(classes[j.dataset_class])}
+        )
         for j in sorted(jobs, key=lambda j: (j.organism, j.dataset_class))
     ]
     sections = sorted({r.section for r in ordered})

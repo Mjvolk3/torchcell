@@ -16,7 +16,8 @@ Pre-build inventory of the E. coli + P. putida datasets built as LMDBs in the de
 (the set `build_adapter_map(organisms={ecoli, pputida})` serves), a temporary counterpart of
 [[paper.supported-datasets-and-databases]] (issue #1098), with the Signal-column controls of
 issue #1099 measured in the same pass. Commentary and findings:
-[[experiments.database.scripts.build_bacteria_datasets_table]].
+[[experiments.database.scripts.build_bacteria_datasets_table]]. The same table with a
+description of each dataset: [[experiments.database.bacteria-datasets-table-expanded]].
 
 **Columns.** Every column is read from the built LMDB; nothing is hand-typed. *Genotypes* =
 distinct stored genotype payloads; *Env* = distinct stored environment payloads; *Instances* =
@@ -384,4 +385,4 @@ table, not an absolute information content.
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
 | **Total (100 probed)** | **7,257,468** | **115,325,823** | **7.7×10⁹** | **2.3×10⁹** | **7.9×10⁹** | **8.2×10⁹** | **4.1×10⁹** | **7.0×10⁷** | **0.29** | **0.94** | **0.01** |
 
-Source JSON: `experiments/database/results/pre-build/2026-10-14/ecoli-pputida_datasets.json` (probe variant `probes-v1`, gzip level 6, seed 0).
+Source JSON: `experiments/database/results/pre-build/2026-10-15/ecoli-pputida_datasets.json` (probe variant `probes-v1`, gzip level 6, seed 0).

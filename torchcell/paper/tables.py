@@ -313,10 +313,22 @@ _MD_ALIGN = {"l": ":--", "c": ":-:", "r": "--:"}
 
 
 class Column(BaseModel):
-    """A table column. ``header`` is also the key used to look up a row's cell."""
+    r"""A table column. ``header`` is also the key used to look up a row's cell.
+
+    ``width`` (a LaTeX length such as ``"3.2in"``) makes the LaTeX column a wrapping
+    ragged-right paragraph, ``>{\raggedright\arraybackslash}p{width}``, for free text
+    such as a description; markdown is unaffected. Requires the ``array`` package.
+    """
 
     header: str
     align: Align = "l"
+    width: str | None = None
+
+    def tex_spec(self) -> str:
+        """The tabular column spec: the alignment letter, or a wrapping p-column."""
+        if self.width is None:
+            return self.align
+        return rf">{{\raggedright\arraybackslash}}p{{{self.width}}}"
 
 
 class Row(BaseModel):
@@ -343,7 +355,8 @@ class PaperTable(BaseModel):
 
     def _cell_md(self, row: Row, col: Column) -> str:
         v = row.cells.get(col.header, "")
-        s = v.md if isinstance(v, Cell) else v
+        # A literal pipe would end the cell and shift every later column.
+        s = (v.md if isinstance(v, Cell) else v).replace("|", r"\|")
         return f"**{s}**" if row.bold and s else s
 
     def _cell_tex(self, row: Row, col: Column) -> str:
@@ -402,7 +415,7 @@ class PaperTable(BaseModel):
         header_comment: str | None = None,
     ) -> str:
         """Render as a booktabs LaTeX table; sections become bold multicolumn rows."""
-        colspec = "@{}" + " ".join(c.align for c in self.columns) + "@{}"
+        colspec = "@{}" + " ".join(c.tex_spec() for c in self.columns) + "@{}"
         ncol = len(self.columns)
         out: list[str] = []
         if header_comment:

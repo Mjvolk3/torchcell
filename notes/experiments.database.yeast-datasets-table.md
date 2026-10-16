@@ -16,7 +16,8 @@ Pre-build inventory of the S. cerevisiae datasets built as LMDBs in the dev tree
 (the set `build_adapter_map(organisms={scerevisiae})` serves), a temporary counterpart of
 [[paper.supported-datasets-and-databases]] (issue #1098), with the Signal-column controls of
 issue #1099 measured in the same pass. Commentary and findings:
-[[experiments.database.scripts.build_bacteria_datasets_table]].
+[[experiments.database.scripts.build_bacteria_datasets_table]]. The same table with a
+description of each dataset: [[experiments.database.yeast-datasets-table-expanded]].
 
 **Columns.** Every column is read from the built LMDB; nothing is hand-typed. *Genotypes* =
 distinct stored genotype payloads; *Env* = distinct stored environment payloads; *Instances* =
@@ -312,4 +313,4 @@ table, not an absolute information content.
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
 | **Total (69 probed)** | **93,266,786** | **886,671,302** | **7.2×10¹⁰** | **1.3×10¹⁰** | **7.4×10¹⁰** | **7.9×10¹⁰** | **4.8×10¹⁰** | **5.6×10⁸** | **0.18** | **0.91** | **0.01** |
 
-Source JSON: `experiments/database/results/pre-build/2026-10-14/scerevisiae_datasets.json` (probe variant `probes-v1`, gzip level 6, seed 0).
+Source JSON: `experiments/database/results/pre-build/2026-10-15/scerevisiae_datasets.json` (probe variant `probes-v1`, gzip level 6, seed 0).

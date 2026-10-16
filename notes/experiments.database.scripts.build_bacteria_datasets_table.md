@@ -143,3 +143,32 @@ Correction the same day: the bacteria section above first gave the split as 58 E
 P. putida datasets, and the yeast totals table gave structure as 1.26e10 and packed as 5.75e8
 bits. The generated tables and the cache give 68 and 32 datasets, 1.27e10 and 5.60e8 bits;
 the text now carries those values.
+
+## 2026.10.15 - Expanded tables with a description of each dataset
+
+Owner asked for a new version of the tables carrying a short description of each dataset.
+The existing views are unchanged; each organism set gains an expanded view beside them:
+
+- [[experiments.database.bacteria-datasets-table-expanded]], PDF
+  `notes/assets/pdf-output/experiments.database.bacteria-datasets-table-expanded.pdf`
+- [[experiments.database.yeast-datasets-table-expanded]], PDF
+  `notes/assets/pdf-output/experiments.database.yeast-datasets-table-expanded.pdf`
+
+**Where a description comes from.** `docstring_summary` in the build script takes the first
+paragraph of the dataset class's own docstring (never an inherited one), unwraps RST roles
+and literals, and collapses whitespace. It is code metadata, not read from the LMDB, so the
+build script attaches it fresh to every row when it writes the JSON rather than caching it.
+All 169 served classes have a docstring; their summary paragraphs run from 50 to 149
+characters. A class without a docstring raises, and the renderer refuses a row with an empty
+description. A better description is made by improving the docstring and rerunning both
+scripts; nothing is typed into the table.
+
+**Layout.** Description sits after Host. Description and Phenotype are wrapping LaTeX
+columns (`Column.width` in `torchcell/paper/tables.py`, a ragged-right `p` column), and a
+Phenotype cell may break after each underscore so long measurement types fit. The preview
+canvas is sized from the wrapped line count of each row.
+
+**Rebuild on 2026-10-15.** Every one of the 169 dev stores still matched its cached
+fingerprint, so both JSONs were rewritten without rescanning an LMDB
+(`results/pre-build/2026-10-15/`); every number in the standard views is unchanged and only
+their source-JSON line moved.

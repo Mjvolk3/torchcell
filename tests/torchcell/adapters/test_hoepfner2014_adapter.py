@@ -247,9 +247,11 @@ def test_adapter_emits_strain_resolved_nodes_from_a_scratch_build(
     node serializes the BY4743 background (HIS3 0 functional copies, every allele a
     pending gap); the perturbation nodes are the heterozygous and barcoded kanMX4
     leaves; the 60 mM HCl column adds a pH environment-perturbation node next to the
-    compound node; the proprietary CMB 1234 column (no released structure) is stored
-    and projects a compound node under its released label with no InChIKey; the
-    phenotype nodes carry the screen id.
+    compound node; the proprietary CMB 1234 column (no released name or structure)
+    is HELD OUT under the 2026-10-15 ruling (constitution principle 2: an unidentified
+    agent is not a representable experiment), so no node carries it and the ledger
+    lists it under ``unidentified_compounds_held_out``; the phenotype nodes carry the
+    screen id.
     """
     import gc
 
@@ -260,7 +262,7 @@ def test_adapter_emits_strain_resolved_nodes_from_a_scratch_build(
 
     monkeypatch.delenv("TC_DATA_URL", raising=False)
     dataset = _small_build(tmp_path, monkeypatch)
-    assert len(dataset) == 7
+    assert len(dataset) == 6  # 7 scored cells, 1 held out under CMB 1234
     adapter = EnvChemgenHoepfner2014Adapter(
         dataset=dataset,
         process_workers=1,
@@ -312,15 +314,15 @@ def test_adapter_emits_strain_resolved_nodes_from_a_scratch_build(
     assert ("environment_physical", "pH", "hydrochloric acid") in {
         (t, f, str(c).lower()) for t, f, c in env_perts
     }
-    proprietary = [
+    assert not [
         p
         for p in (n.get_properties() for n in by_label["environment perturbation"])
         if p["compound_name"] == "CMB1234"
     ]
-    assert proprietary
-    assert {(p["perturbation_type"], p["inchikey"]) for p in proprietary} == {
-        ("small_molecule", None)
-    }
+    ledger = json.loads((Path(dataset.root) / "dropped_records.json").read_text())
+    assert [row["cmb_id"] for row in ledger["unidentified_compounds_held_out"]] == [
+        "1234"
+    ]
     assert {
         n.get_properties()["screen_id"]
         for n in by_label["environment response phenotype"]

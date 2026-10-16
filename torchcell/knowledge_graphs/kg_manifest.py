@@ -345,13 +345,20 @@ class GenerationRecord(BaseModel):
     merged by ``torchcell.knowledge_graphs.generation_array`` (2026-10-15). The
     duplicate counts are the rows whose content id recurred across adapter
     directories: nodes are skipped by ``--skip-duplicate-nodes`` after the merge proved
-    them byte-identical, edges were dropped into rewritten part files.
+    them byte-identical or variants, edges were dropped into rewritten part files. The
+    variant counts are the keys whose rows differed only in non-identity fields
+    (``generation_array.NON_IDENTITY_COLUMNS`` and ``NON_IDENTITY_JSON_KEYS``: a
+    source's provenance, gaps, notes and free-text names on a shared content node);
+    the lowest-index directory's row is the one the store holds, and the merge report
+    names every such key.
     """
 
     mode: Literal["serial", "array"]
     n_adapter_directories: int | None = None
     node_duplicates: dict[str, int] = Field(default_factory=dict)
     edge_duplicates: dict[str, int] = Field(default_factory=dict)
+    node_variants: dict[str, int] = Field(default_factory=dict)
+    edge_variants: dict[str, int] = Field(default_factory=dict)
     rewritten_part_files: int = 0
     merge_report: str | None = Field(
         default=None, description="path of the merge_report.json the counts came from"
@@ -1011,6 +1018,8 @@ def generation_record_from_merge(merge_report: Path | None) -> GenerationRecord:
         n_adapter_directories=report.n_adapters,
         node_duplicates=report.node_duplicates,
         edge_duplicates=report.edge_duplicates,
+        node_variants=report.node_variants,
+        edge_variants=report.edge_variants,
         rewritten_part_files=len(report.rewritten),
         merge_report=str(merge_report),
     )

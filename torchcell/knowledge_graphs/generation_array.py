@@ -35,8 +35,23 @@ without a marker": ``missing`` prints them and the exact ``sbatch --array=`` per
   ``(start, end)`` key that recurs across directories keeps the copy of the lowest
   index and the later directories' rows are dropped into a rewritten part file under
   ``<out>/merged/<dir>/``, which the import call references; the dropped rows must be
-  byte-identical to the kept ones. A duplicate that is not byte-identical refuses the
-  merge and names the label, the id and the directories.
+  byte-identical to the kept ones. A duplicate that is not byte-identical is read back
+  and reconciled against the identity design of ``torchcell.datamodels.identity``: a
+  content id covers composition, value and typed unit, never who stated it, so two
+  rows of one id may differ in the NON-IDENTITY fields (``NON_IDENTITY_COLUMNS``, the
+  plain ``name``, ``compound_name`` and ``preferred_id`` columns, and
+  ``NON_IDENTITY_JSON_KEYS`` inside a
+  JSON column: ``provenance``, ``provenance_gaps``, ``note``, ``defers_to``, ``name``).
+  Such a key is a *variant*: the lowest-index directory's row is the one imported (the
+  first row neo4j sees, since the call lists directories in index order), the merge
+  report names every variant key with its directories and the differing paths, and
+  the build manifest carries the per-label counts. Measured on the KG 4.0 generation
+  (2026-10-16): 116 ``Environment`` ids shared by two to six datasets differed only in
+  per-source ``provenance_gaps`` notes, ``media.provenance`` quotes or a free-text
+  ``media.name``, 5 ``EnvironmentPerturbation`` ids only in ``compound_name``, and 1
+  ``FitnessPhenotype`` id only in ``preferred_id``.
+  A difference anywhere else (a value, a unit, a composition) refuses the merge and
+  names the label, the key, the directories and the paths.
 """
 
 from __future__ import annotations
@@ -538,6 +553,40 @@ def scan_part(
     return np.frombuffer(bytes(buf), dtype=_ROW_DTYPE)
 
 
+#: Plain columns a content-addressed node may carry differently per source: a label,
+#: not identity (``media_identity`` drops ``name``; an environment perturbation is
+#: addressed by its compound's InChIKey, not by the name the paper printed).
+#: ``preferred_id`` is BioCypher's id-namespace hint, which the adapter writes as
+#: ``phenotype_<id>`` on an experiment's phenotype and as the label name on a reference
+#: phenotype, so one measured value that is also a reference (a fitness of exactly 1.0,
+#: Kuzmin 2018 beside Kuzmin 2020 and Choe 2019) carries both.
+NON_IDENTITY_COLUMNS: frozenset[str] = frozenset(
+    {"name", "compound_name", "preferred_id"}
+)
+#: Keys inside a JSON column under which two rows of one id may differ: who stated a
+#: value and how (``provenance``, ``note``, ``defers_to``), which fields a source left
+#: unreported (``provenance_gaps``), and a free-text name. Every path of a difference
+#: must pass through one of them.
+NON_IDENTITY_JSON_KEYS: frozenset[str] = frozenset(
+    {"provenance", "provenance_gaps", "note", "defers_to", "name"}
+)
+#: More non-identical duplicate keys than this in one label is not a provenance
+#: variant pattern but a broken identity, and the merge refuses without reading them.
+MAX_VARIANT_KEYS = 100_000
+
+
+class VariantSample(BaseModel):
+    """One duplicate key whose rows differ only in non-identity fields."""
+
+    key: str
+    directories: list[str] = Field(
+        description="adapter directory names carrying the key; the first is imported"
+    )
+    differences: list[str] = Field(
+        description="column, or column followed by the JSON path, of each difference"
+    )
+
+
 class LabelDuplicates(BaseModel):
     """The cross-directory duplicate outcome of one label."""
 
@@ -550,6 +599,16 @@ class LabelDuplicates(BaseModel):
     duplicate_keys: int
     conflicting_keys: int = Field(
         description="keys whose rows are not byte-identical across directories"
+    )
+    variant_keys: int = Field(
+        default=0,
+        description=(
+            "of the conflicting keys, those whose rows differ only in non-identity "
+            "fields; a merge that succeeded has variant_keys == conflicting_keys"
+        ),
+    )
+    variants: list[VariantSample] = Field(
+        default_factory=list, description="every variant key, located"
     )
     seconds: float = Field(default=0.0, description="wall time of the label's check")
     drop_rows: dict[str, list[int]] = Field(
@@ -564,6 +623,10 @@ class ConflictSample(BaseModel):
     label: str
     key: str
     paths: list[str]
+    differences: list[str] = Field(
+        default_factory=list,
+        description="the differing columns and JSON paths outside the non-identity set",
+    )
 
 
 def _scan_label(
@@ -650,8 +713,12 @@ def check_label_duplicates(
     outcome.duplicate_rows = int(later.sum())
     outcome.conflicting_keys = int(conflicting.sum())
     conflict_starts = starts[conflicting]
-    conflicts = [(k0[i], k1[i]) for i in conflict_starts[:64]]
-    if files.kind == "edge" and not conflicting.any():
+    # Every conflicting key is returned (bounded by MAX_VARIANT_KEYS plus one, so the
+    # merge can tell "too many" from "exactly the cap"), because each is read back and
+    # reconciled; the drop list of an edge label is computed whether or not keys
+    # conflict, and the merge uses it only once every conflict reconciled.
+    conflicts = [(k0[i], k1[i]) for i in conflict_starts[: MAX_VARIANT_KEYS + 1]]
+    if files.kind == "edge":
         drop_parts = parts[later]
         drop_numbers = numbers[later]
         for part in np.unique(drop_parts):
@@ -698,8 +765,172 @@ def locate_conflicts(
     return list(found.values())
 
 
+def _key_hash_pair(key: bytes) -> tuple[int, int]:
+    digest = hashlib.blake2b(key, digest_size=16).digest()
+    return (int.from_bytes(digest[:8], "little"), int.from_bytes(digest[8:], "little"))
+
+
+def _parse_row(line: bytes, n_columns: int) -> list[str] | None:
+    """One CSV row as unquoted field strings, or None when its width is not the header's."""
+    import csv
+    import io
+
+    (parsed,) = csv.reader(
+        io.StringIO(line.decode("utf-8")), delimiter="\t", quotechar="'", strict=True
+    )
+    return parsed if len(parsed) == n_columns else None
+
+
+def _json_leaves(value: Any, prefix: str, out: dict[str, str]) -> None:
+    """Flatten a parsed JSON value to ``path -> serialized leaf``."""
+    if isinstance(value, dict):
+        for key, inner in value.items():
+            _json_leaves(inner, f"{prefix}.{key}", out)
+    elif isinstance(value, list):
+        for i, inner in enumerate(value):
+            _json_leaves(inner, f"{prefix}[{i}]", out)
+    else:
+        out[prefix] = json.dumps(value, sort_keys=True)
+
+
+_PATH_KEY_RE = re.compile(r"\.([^.\[]+)")
+
+
+def _passes_non_identity_key(path: str) -> bool:
+    """Whether a JSON path (``.media.provenance[1].quote``) crosses a non-identity key."""
+    return any(key in NON_IDENTITY_JSON_KEYS for key in _PATH_KEY_RE.findall(path))
+
+
+def row_differences(
+    columns: Sequence[str], kept: Sequence[str], other: Sequence[str]
+) -> tuple[list[str], list[str]]:
+    """Compare two rows of one key: (non-identity differences, identity differences).
+
+    A difference is named by its column (the header name before any ``:type``), and
+    for a JSON column by the column and the path of the differing leaf. A plain column
+    in ``NON_IDENTITY_COLUMNS`` is a non-identity difference; a JSON column's leaf
+    difference is non-identity when its path passes through a ``NON_IDENTITY_JSON_KEYS``
+    member; everything else, including a column that is JSON in one row and not in
+    the other, is an identity difference.
+    """
+    non_identity: list[str] = []
+    identity: list[str] = []
+    for i, column in enumerate(columns):
+        a, b = kept[i], other[i]
+        if a == b:
+            continue
+        name = column.split(":")[0]
+        if name in NON_IDENTITY_COLUMNS:
+            non_identity.append(name)
+            continue
+        try:
+            parsed_a, parsed_b = json.loads(a), json.loads(b)
+        except ValueError:
+            identity.append(name)
+            continue
+        if not (
+            isinstance(parsed_a, (dict, list)) and isinstance(parsed_b, (dict, list))
+        ):
+            identity.append(name)
+            continue
+        leaves_a: dict[str, str] = {}
+        leaves_b: dict[str, str] = {}
+        _json_leaves(parsed_a, "", leaves_a)
+        _json_leaves(parsed_b, "", leaves_b)
+        for path in sorted(set(leaves_a) | set(leaves_b)):
+            if leaves_a.get(path) == leaves_b.get(path):
+                continue
+            (non_identity if _passes_non_identity_key(path) else identity).append(
+                f"{name}{path}"
+            )
+    return non_identity, identity
+
+
+def reconcile_conflicts(
+    files: LabelFiles, conflicts: Sequence[tuple[np.uint64, np.uint64]]
+) -> tuple[list[VariantSample], list[ConflictSample]]:
+    """Read back every conflicting key's rows and sort them into variants and conflicts.
+
+    The kept row is the lowest-index directory's (what ``--skip-duplicate-nodes`` keeps
+    and what the edge drop list keeps); every other row of the key is compared with it
+    by :func:`row_differences`. A key whose rows differ only in non-identity fields is
+    a :class:`VariantSample`; one with any identity difference is a
+    :class:`ConflictSample` carrying the differing columns and paths. Rows are kept per
+    (key, directory) once, so a key repeated inside one directory is compared on its
+    first row, as the adapter wrote it.
+    """
+    wanted = {(int(a), int(b)) for a, b in conflicts}
+    key_col, end_col = _key_columns(files)
+    n_columns = len(files.columns)
+    rows: dict[tuple[int, int], dict[int, tuple[str, list[str]]]] = {}
+    for index, path in files.parts:
+        directory = os.path.basename(os.path.dirname(path))
+        with open(path, "rb") as handle:
+            for line in handle:
+                fields = line.rstrip(b"\n").split(b"\t")
+                if len(fields) != n_columns:
+                    parsed = _parse_row(line, n_columns)
+                    if parsed is None:
+                        continue
+                    fields = [f.encode("utf-8") for f in parsed]
+                key = (
+                    fields[key_col]
+                    if end_col is None
+                    else fields[key_col] + b"\x00" + fields[end_col]
+                )
+                pair = _key_hash_pair(key)
+                if pair not in wanted:
+                    continue
+                by_dir = rows.setdefault(pair, {})
+                if index in by_dir:
+                    continue
+                unquoted = _parse_row(line, n_columns)
+                if unquoted is None:
+                    raise ValueError(f"{path}: a row of a conflicting key is malformed")
+                by_dir[index] = (directory, unquoted)
+    variants: list[VariantSample] = []
+    refused: list[ConflictSample] = []
+    for pair in sorted(rows, key=lambda p: min(rows[p])):
+        by_dir = rows[pair]
+        kept_index = min(by_dir)
+        kept_dir, kept_row = by_dir[kept_index]
+        key_text = (
+            kept_row[key_col]
+            if end_col is None
+            else f"{kept_row[key_col]} -> {kept_row[end_col]}"
+        )
+        non_identity: list[str] = []
+        identity: list[str] = []
+        for index in sorted(by_dir):
+            if index == kept_index:
+                continue
+            soft, hard = row_differences(files.columns, kept_row, by_dir[index][1])
+            non_identity.extend(d for d in soft if d not in non_identity)
+            identity.extend(d for d in hard if d not in identity)
+        directories = [by_dir[i][0] for i in sorted(by_dir)]
+        if identity:
+            refused.append(
+                ConflictSample(
+                    label=files.label,
+                    key=key_text,
+                    paths=[
+                        os.path.join(ADAPTERS_DIRNAME, d, f"{files.label}-part*.csv")
+                        for d in directories
+                    ],
+                    differences=identity,
+                )
+            )
+        else:
+            variants.append(
+                VariantSample(
+                    key=key_text, directories=directories, differences=non_identity
+                )
+            )
+    return variants, refused
+
+
 class DuplicateConflict(RuntimeError):
-    """A duplicate key whose rows are not byte-identical across directories."""
+    """A duplicate key whose rows differ in an identity field across directories."""
 
 
 def rewrite_without_rows(src: Path, dst: Path, drop: Sequence[int]) -> int:
@@ -747,6 +978,24 @@ class MergeReport(BaseModel):
             name: d.duplicate_rows
             for name, d in self.labels.items()
             if d.kind == "edge"
+        }
+
+    @property
+    def node_variants(self) -> dict[str, int]:
+        """Per node label, the duplicate ids whose rows differed only in non-identity fields."""
+        return {
+            name: d.variant_keys
+            for name, d in self.labels.items()
+            if d.kind == "node" and d.variant_keys
+        }
+
+    @property
+    def edge_variants(self) -> dict[str, int]:
+        """Per edge label, the duplicate keys whose rows differed only in non-identity fields."""
+        return {
+            name: d.variant_keys
+            for name, d in self.labels.items()
+            if d.kind == "edge" and d.variant_keys
         }
 
 
@@ -822,12 +1071,37 @@ def merge_outputs(
             outcome.duplicate_rows,
         )
         if conflicts:
-            located = locate_conflicts(files, conflicts)
-            raise DuplicateConflict(
-                f"{name}: {outcome.conflicting_keys} duplicate "
-                f"{'ids' if files.kind == 'node' else 'edge keys'} map to rows that "
-                "are not byte-identical across directories; first: "
-                + "; ".join(f"{s.key} in {s.paths}" for s in located)
+            what = "ids" if files.kind == "node" else "edge keys"
+            if len(conflicts) > MAX_VARIANT_KEYS:
+                raise DuplicateConflict(
+                    f"{name}: {outcome.conflicting_keys} duplicate {what} map to rows "
+                    f"that are not byte-identical across directories, over the "
+                    f"{MAX_VARIANT_KEYS} the merge reconciles; first: "
+                    + "; ".join(
+                        f"{s.key} in {s.paths}"
+                        for s in locate_conflicts(files, conflicts)
+                    )
+                )
+            variants, refused = reconcile_conflicts(files, conflicts)
+            if refused:
+                raise DuplicateConflict(
+                    f"{name}: {len(refused)} of {outcome.conflicting_keys} duplicate "
+                    f"{what} map to rows that differ outside the non-identity fields "
+                    f"(columns {sorted(NON_IDENTITY_COLUMNS)}, JSON keys "
+                    f"{sorted(NON_IDENTITY_JSON_KEYS)}); first: "
+                    + "; ".join(
+                        f"{s.key} in {s.paths} at {s.differences}" for s in refused[:5]
+                    )
+                )
+            outcome.variant_keys = len(variants)
+            outcome.variants = variants
+            log.info(
+                "%s: %d duplicate %s differ only in non-identity fields "
+                "(the lowest-index directory's row is imported): %s",
+                name,
+                len(variants),
+                what,
+                ", ".join(sorted({d for v in variants for d in v.differences})[:12]),
             )
         outcomes[name] = outcome
         if rewrite:
@@ -1033,6 +1307,12 @@ def main(argv: list[str] | None = None) -> int:
                 print(
                     f"{name}: {outcome.rows} rows, {outcome.duplicate_rows} duplicate rows "
                     f"over {outcome.duplicate_keys} keys ({outcome.kind})"
+                    + (
+                        f", {outcome.variant_keys} keys differ only in non-identity "
+                        "fields (lowest-index row imported)"
+                        if outcome.variant_keys
+                        else ""
+                    )
                 )
         print(f"rewritten part files: {len(report.rewritten)}")
         print(f"MERGED_CALL={report.import_call}")

@@ -996,7 +996,8 @@ def test_the_generation_record_is_serial_without_a_merge_report_and_array_with_o
                 rows=200,
                 duplicate_rows=150,
                 duplicate_keys=3,
-                conflicting_keys=0,
+                conflicting_keys=2,
+                variant_keys=2,
             ),
             "MediaMemberOf": LabelDuplicates(
                 label="MediaMemberOf",
@@ -1021,6 +1022,7 @@ def test_the_generation_record_is_serial_without_a_merge_report_and_array_with_o
         n_adapter_directories=170,
         node_duplicates={"Genome": 150},
         edge_duplicates={"MediaMemberOf": 700},
+        node_variants={"Genome": 2},
         rewritten_part_files=1,
         merge_report=str(path),
     )

@@ -28,6 +28,7 @@ from torchcell.knowledge_graphs.generation_array import (
     DuplicateConflict,
     GenerationTier,
     TierTable,
+    VariantSample,
     adapter_order,
     call_prefix_and_suffix,
     check_label_duplicates,
@@ -40,6 +41,7 @@ from torchcell.knowledge_graphs.generation_array import (
     read_done,
     read_order,
     recovery_commands,
+    row_differences,
     scan_part,
     slot_by_index,
     tier_submissions,
@@ -470,6 +472,7 @@ def _write_dir(
     *,
     done: bool = True,
     node_columns: dict[str, str] | None = None,
+    edge_columns: dict[str, str] | None = None,
     skip_duplicate_nodes: bool = True,
 ) -> Path:
     """One adapter directory as the sink + BioCypher leave it; rows are given whole."""
@@ -483,7 +486,9 @@ def _write_dir(
         (d / f"{label}-part000.csv").write_text("".join(r + "\n" for r in rows))
         args += f'--nodes="{cdir}/{label}-header.csv,{cdir}/{label}-part.*" '
     for label, rows in edges.items():
-        (d / f"{label}-header.csv").write_text(":START_ID\tid\t:END_ID\t:TYPE")
+        (d / f"{label}-header.csv").write_text(
+            (edge_columns or {}).get(label, ":START_ID\tid\t:END_ID\t:TYPE")
+        )
         (d / f"{label}-part000.csv").write_text("".join(r + "\n" for r in rows))
         args += f'--relationships="{cdir}/{label}-header.csv,{cdir}/{label}-part.*" '
     prefix = (
@@ -619,23 +624,180 @@ def test_a_duplicate_node_id_with_a_different_row_refuses_and_names_it(
         AdapterSlot(index=0, dataset_class="DA", adapter_class="AAdapter"),
         AdapterSlot(index=1, dataset_class="DB", adapter_class="BAdapter"),
     ]
+    columns = {"Genome": ":ID\tassembly\t:LABEL"}
     _write_dir(
-        tmp_path, order[0], nodes={"Genome": ["g1\t'S288C'\t'Genome'"]}, edges={}
+        tmp_path,
+        order[0],
+        nodes={"Genome": ["g1\t'R64-1-1'\t'Genome'"]},
+        edges={},
+        node_columns=columns,
     )
     _write_dir(
-        tmp_path, order[1], nodes={"Genome": ["g1\t'S288C v2'\t'Genome'"]}, edges={}
+        tmp_path,
+        order[1],
+        nodes={"Genome": ["g1\t'R64-2-1'\t'Genome'"]},
+        edges={},
+        node_columns=columns,
     )
     with pytest.raises(DuplicateConflict) as info:
         merge_outputs(tmp_path, order)
     message = str(info.value)
     assert message.startswith(
-        "Genome: 1 duplicate ids map to rows that are not byte-identical"
+        "Genome: 1 of 1 duplicate ids map to rows that differ outside the "
+        "non-identity fields"
     )
     assert (
         "g1 in [" in message
-        and "000_AAdapter/Genome-part000.csv" in message
-        and "001_BAdapter/Genome-part000.csv" in message
+        and "000_AAdapter/Genome-part*.csv" in message
+        and "001_BAdapter/Genome-part*.csv" in message
+        and "at ['assembly']" in message
     )
+
+
+def test_a_duplicate_node_id_differing_only_in_a_name_is_a_variant(
+    tmp_path: Path,
+) -> None:
+    """``media_identity`` drops ``name``: the first directory's row is the imported one."""
+    order = [
+        AdapterSlot(index=0, dataset_class="DA", adapter_class="AAdapter"),
+        AdapterSlot(index=1, dataset_class="DB", adapter_class="BAdapter"),
+    ]
+    _write_dir(tmp_path, order[0], nodes={"Media": ["m1\t'SC'\t'Media'"]}, edges={})
+    _write_dir(
+        tmp_path,
+        order[1],
+        nodes={"Media": ["m1\t'SC (FFA production)'\t'Media'"]},
+        edges={},
+    )
+    report = merge_outputs(tmp_path, order)
+    outcome = report.labels["Media"]
+    assert (
+        outcome.duplicate_keys,
+        outcome.duplicate_rows,
+        outcome.conflicting_keys,
+        outcome.variant_keys,
+    ) == (1, 1, 1, 1)
+    assert outcome.variants == [
+        VariantSample(
+            key="m1", directories=["000_AAdapter", "001_BAdapter"], differences=["name"]
+        )
+    ]
+    assert report.node_variants == {"Media": 1} and report.edge_variants == {}
+    call = (tmp_path / IMPORT_CALL_FILENAME).read_text()
+    assert call.index("000_AAdapter/Media-part000.csv") < call.index(
+        "001_BAdapter/Media-part000.csv"
+    )
+    assert load_merge_report(tmp_path / "merge_report.json").node_variants == {
+        "Media": 1
+    }
+
+
+def test_serialized_data_differing_only_under_provenance_is_a_variant(
+    tmp_path: Path,
+) -> None:
+    """Per-source gap notes and quotes on a shared environment node reconcile."""
+    order = [
+        AdapterSlot(index=0, dataset_class="DA", adapter_class="AAdapter"),
+        AdapterSlot(index=1, dataset_class="DB", adapter_class="BAdapter"),
+    ]
+    columns = {"Environment": ":ID\tserialized_data\t:LABEL"}
+    a = json.dumps(
+        {
+            "media": {
+                "name": "M9",
+                "components": [{"amount": 1, "provenance": {"quote": "6.78 g/L"}}],
+            },
+            "provenance_gaps": [{"field": "duration_hours", "note": "Table S4"}],
+        }
+    )
+    b = json.dumps(
+        {
+            "media": {
+                "name": "modified M9",
+                "components": [{"amount": 1, "provenance": {"quote": "see Methods"}}],
+            },
+            "provenance_gaps": [
+                {"field": "duration_hours", "note": "no growth-time column"},
+                {"field": "duration_generations", "note": "not reported"},
+            ],
+        }
+    )
+    _write_dir(
+        tmp_path,
+        order[0],
+        nodes={"Environment": [f"e1\t'{a}'\t'Environment'"]},
+        edges={},
+        node_columns=columns,
+    )
+    _write_dir(
+        tmp_path,
+        order[1],
+        nodes={"Environment": [f"e1\t'{b}'\t'Environment'"]},
+        edges={},
+        node_columns=columns,
+    )
+    report = merge_outputs(tmp_path, order)
+    outcome = report.labels["Environment"]
+    assert (outcome.conflicting_keys, outcome.variant_keys) == (1, 1)
+    assert outcome.variants[0].differences == [
+        "serialized_data.media.components[0].provenance.quote",
+        "serialized_data.media.name",
+        "serialized_data.provenance_gaps[0].note",
+        "serialized_data.provenance_gaps[1].field",
+        "serialized_data.provenance_gaps[1].note",
+    ]
+
+
+def test_serialized_data_differing_in_a_value_refuses_and_names_the_path(
+    tmp_path: Path,
+) -> None:
+    order = [
+        AdapterSlot(index=0, dataset_class="DA", adapter_class="AAdapter"),
+        AdapterSlot(index=1, dataset_class="DB", adapter_class="BAdapter"),
+    ]
+    columns = {"Environment": ":ID\tserialized_data\t:LABEL"}
+    a = json.dumps({"media": {"name": "M9", "components": [{"amount": 1}]}})
+    b = json.dumps({"media": {"name": "M9", "components": [{"amount": 2}]}})
+    _write_dir(
+        tmp_path,
+        order[0],
+        nodes={"Environment": [f"e1\t'{a}'\t'Environment'"]},
+        edges={},
+        node_columns=columns,
+    )
+    _write_dir(
+        tmp_path,
+        order[1],
+        nodes={"Environment": [f"e1\t'{b}'\t'Environment'"]},
+        edges={},
+        node_columns=columns,
+    )
+    with pytest.raises(DuplicateConflict) as info:
+        merge_outputs(tmp_path, order)
+    message = str(info.value)
+    assert "e1 in [" in message
+    assert "at ['serialized_data.media.components[0].amount']" in message
+    assert not (tmp_path / IMPORT_CALL_FILENAME).exists()
+
+
+def test_row_differences_sorts_columns_and_json_paths() -> None:
+    columns = [
+        ":ID",
+        "name",
+        "concentration_value:double",
+        "serialized_data",
+        "preferred_id",
+        ":LABEL",
+    ]
+    kept = ["x", "a", "1.0", '{"note": "n1", "value": 1}', "phenotype_x", "L"]
+    other = ["x", "b", "2.0", '{"note": "n2", "value": 2}', "fitness phenotype", "L"]
+    assert row_differences(columns, kept, other) == (
+        ["name", "serialized_data.note", "preferred_id"],
+        ["concentration_value", "serialized_data.value"],
+    )
+    # a column that is JSON in one row and plain text in the other is identity
+    assert row_differences(["a"], ['{"name": 1}'], ["plain"]) == ([], ["a"])
+    assert row_differences(["a"], ["1"], ["2"]) == ([], ["a"])
 
 
 def test_a_duplicate_edge_key_with_a_different_row_refuses(tmp_path: Path) -> None:
@@ -657,9 +819,48 @@ def test_a_duplicate_edge_key_with_a_different_row_refuses(tmp_path: Path) -> No
     )
     with pytest.raises(
         DuplicateConflict,
-        match="MemberOf: 1 duplicate edge keys map to rows that are not byte-identical across directories; first: g1 -> e1 in",
+        match=r"MemberOf: 1 of 1 duplicate edge keys map to rows that differ outside the non-identity fields .*; first: g1 -> e1 in .* at \['id'\]",
     ):
         merge_outputs(tmp_path, order)
+
+
+def test_a_duplicate_edge_key_differing_only_in_a_name_is_a_variant_and_dropped(
+    tmp_path: Path,
+) -> None:
+    """The later directory's row is dropped into the rewritten part, the variant recorded."""
+    order = [
+        AdapterSlot(index=0, dataset_class="DA", adapter_class="AAdapter"),
+        AdapterSlot(index=1, dataset_class="DB", adapter_class="BAdapter"),
+    ]
+    columns = {"MemberOf": ":START_ID\tname\t:END_ID\t:TYPE"}
+    _write_dir(
+        tmp_path,
+        order[0],
+        nodes={"N": ["n1\t'a'\t'N'"]},
+        edges={"MemberOf": ["g1\t'SC'\te1\t'MemberOf'"]},
+        edge_columns=columns,
+    )
+    _write_dir(
+        tmp_path,
+        order[1],
+        nodes={"N": ["n2\t'b'\t'N'"]},
+        edges={"MemberOf": ["g1\t'SC (FFA)'\te1\t'MemberOf'"]},
+        edge_columns=columns,
+    )
+    report = merge_outputs(tmp_path, order)
+    outcome = report.labels["MemberOf"]
+    assert (outcome.conflicting_keys, outcome.variant_keys) == (1, 1)
+    assert outcome.variants[0] == VariantSample(
+        key="g1 -> e1",
+        directories=["000_AAdapter", "001_BAdapter"],
+        differences=["name"],
+    )
+    assert report.edge_variants == {"MemberOf": 1}
+    rewritten = tmp_path / MERGED_DIRNAME / "001_BAdapter" / "MemberOf-part000.csv"
+    assert rewritten.read_text() == ""
+    assert str(rewritten) in (tmp_path / IMPORT_CALL_FILENAME).read_text().replace(
+        CONTAINER_ROOT, str(tmp_path)
+    )
 
 
 def test_a_key_repeated_inside_one_directory_is_what_the_adapter_wrote(

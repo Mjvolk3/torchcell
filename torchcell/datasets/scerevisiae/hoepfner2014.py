@@ -9,15 +9,34 @@ genome-wide chemogenomic resource: 2956 HIP + 2923 HOP experiments for 1776 disc
 compounds (>40M data points), each compound profiled in duplicate at (or near) its
 S. cerevisiae IC30.
 
-EVERY RELEASED COMPOUND IS STORED (2026.10.12, the data is the data). About 92% of the
-profiled compounds are PROPRIETARY Novartis ``CMBxxx`` entries with no released structure
-(paper.md line 110: "In addition to 1641 proprietary compounds (named CMBxxx), we included
-135 reference compounds ... Table S1"). They are released measurements of an unidentified
-compound, so every sensitivity column of both deposited matrices is stored except the
-CMB4019 condition below: 1,851 CMB ids, 2,953 HIP + 2,920 HOP columns. Until 2026.10.12 an
-``encodable_filter`` built a column only for a CMB id with a released SMILES, which held
-out 1,702 CMB ids, 2,650 HIP + 2,619 HOP columns and 26,992,230 records; that filter is
-removed, and whether a compound is featurizable is a modeling-time question.
+AN UNIDENTIFIED COMPOUND IS HELD OUT (2026.10.15, database constitution principle 2).
+Owner, 2026-10-15: "the data is the data - but we only capture experiments that could be
+meaningfully represented. basically if you cannot tell me what goes into the flask so to
+speak, then we have no hope of modeling!" Most profiled compounds are PROPRIETARY Novartis
+``CMBxxx`` entries with no released name or structure (paper.md line 110: "In addition to
+1641 proprietary compounds (named CMBxxx), we included 135 reference compounds with a
+previously reported molecular mechanism of action (Table S1)."; line 58: "The Novartis
+Institutes of Biomedical Research encourage future academic collaborations around
+individual compounds used in this study."). A CMB id with no Table S1 common name, no
+Table S1 SMILES, no curated compound-identity row and no ``RELEASED_IDENTITIES`` entry is
+HELD OUT under ``UNIDENTIFIED_COMPOUND_RULE``: its columns are never built, and the ledger
+lists it under ``unidentified_compounds_held_out`` with every column's header, study, uM
+dose and scored cells, plus both quotes as ``SourcedValue``s on the sha256-pinned
+paper.md. Measured on the raw mirror with the module's ``_column_census`` and a cell
+census over both matrices (2026.10.15): 1,701 CMB ids held out, HIP 2,649 + HOP 2,618
+columns, HIP 15,344,088 + HOP 11,836,672 = 27,180,760 scored cells; 150 CMB ids stored,
+HIP 304 + HOP 302 columns. From 2026.10.12 to 2026.10.15 these columns were stored under
+the bare ``CMB<id>`` label with an ``inchikey`` gap; a gap is for a missing attribute of
+an identified compound, never for its identity, so that route is retired.
+
+ADMISSION TABLE. ``RELEASED_IDENTITIES`` (keyed by CMB id, ``ReleasedIdentity`` entries
+carrying a name, SMILES and/or InChIKey with the ``SourcedValue`` that releases it) is
+EMPTY today. Only a public CMB-to-structure mapping released by Novartis fills it; an
+entry admits that CMB id on the next build (a store rebuild), and the ledger's held-out
+list is the request list. An identity inferred from HIP-HOP profile similarity is a
+hypothesis and is never an entry. The Dryad record is not re-fetched: the raw mirror is
+canonical and sha256-pinned, and a mismatch on the recorded retrieval is drift to report,
+not to follow.
 
 COMPOUND IDENTITY -- the compound is keyed by structure where one exists, never by a
 tagged label. The resolver is called with the CLEAN released label (the Table S1 common
@@ -26,33 +45,34 @@ name, else ``CMB<id>``) and the released Table S1 SMILES when there is one, so t
 PubChem CID. Where no curated row exists the InChIKey is DERIVED from the Table S1 SMILES
 with ``inchikey_from_smiles`` (RDKit); a curated row always wins, because the two routes
 measurably disagree (concanamycin A's curated PubChem key and its SMILES-derived key
-differ in the stereo block). A compound with neither (a proprietary CMB id with no
-released SMILES, and CMB409 Boromycin, whose released SMILES RDKit 2026.03.6 cannot parse)
-is STORED under its released label with the typed ``inchikey`` gap ``resolved_compound``
-attaches, its released SMILES carried verbatim on ``Compound.smiles`` when there is one,
-and its released dose and vehicle exactly as every other column. The ledger's
-``compound_identity_gaps`` lists each such CMB id with its columns and records per arm.
-Measured on the deposited headers: 1,703 gapped CMB ids, 148 with an InChIKey (147
-distinct keys: CMB 244 and CMB 1818 are two fermentation batches of concanamycin A and
-correctly merge onto one key), 1,849 distinct stored compound names.
+differ in the stereo block). An IDENTIFIED compound with no derivable InChIKey is STORED
+under its released name with the typed ``inchikey`` gap ``resolved_compound`` attaches,
+its released SMILES carried verbatim on ``Compound.smiles`` when there is one: CMB409
+Boromycin, whose released SMILES RDKit 2026.03.6 cannot parse (name and structure are
+released, only the derived key is missing), and CMB222 "Enniatin derivative
+(Fermentation batch 1)", a released name with no SMILES. The ledger's
+``compound_identity_gaps`` lists each with its columns and records per arm. Measured on
+the deposited headers (2026.10.15): of the 150 stored CMB ids, 2 are gapped and 148 carry
+an InChIKey (CMB 244 and CMB 1818 are two fermentation batches of concanamycin A and
+correctly merge onto one key).
 
 RECORDS STORED AND HELD OUT. Every scored cell of a stored column is a record; a blank
-cell is not a value. Measured in-process on the raw matrices with this module's column
-census and row reader (2026.10.12): 30,308,574 records, HIP 17,104,778 over 2,953 columns
-and 5,869 rows, HOP 13,203,796 over 2,920 columns and 4,970 rows, against 3,083,827
-before. Two rules still hold cells out, and both are counted in
-``<root>/dropped_records.json`` (whose ``accounting`` proves scored cells = stored + held
-out per arm): ``NOT_ORF_SHAPED_RULE`` (a released token the ``GenePerturbation`` pattern
-rejects; measured 0 scored cells, the four ``R00x0`` tokens and ``YBR160W_AS`` carry no
-score) and the CMB4019 exclusion (6 columns, HIP 17,397 + HOP 13,623 scored cells over
-every row).
+cell is not a value. Measured on the raw matrices with this module's column census and a
+cell census (2026.10.15): 3,127,814 records, HIP 1,760,690 over 304 columns, HOP
+1,367,124 over 302 columns, against 30,308,574 stored from 2026.10.12 to 2026.10.15.
+Three rules hold cells out, each counted in ``<root>/dropped_records.json`` (whose
+``accounting`` proves scored cells = stored + held out per arm, HIP 17,122,175 and HOP
+13,217,419 scored cells): ``UNIDENTIFIED_COMPOUND_RULE`` (above, 27,180,760 cells),
+``NOT_ORF_SHAPED_RULE`` (a released token the ``GenePerturbation`` pattern rejects;
+measured 0 scored cells, the four ``R00x0`` tokens and ``YBR160W_AS`` carry no score) and
+the CMB4019 exclusion (6 columns, HIP 17,397 + HOP 13,623 scored cells over every row).
 
 SCREEN (study) IDENTITY -- ``EnvironmentResponsePhenotype.screen_id`` carries the
 deposited study number. It is a real batch covariate, *"<Study number>: an internal id
 for the study in which the compound was profiled. All compound profiles of one study use
 the same set of control samples and are normalized together."* (paper.md line 50), and it
 is what keeps one (strain, condition) L1-unique once the compound name is cleaned:
-measured over all 5,873 stored columns (2026.10.12), 531 collide on (released label, dose)
+measured over the 5,873 columns stored on 2026.10.12, 531 collide on (released label, dose)
 alone (HIP 257, HOP 274) and 0 collide on (resolved compound, dose, study). The reference is per (assay, study) for the same reason: each
 study normalizes against its OWN control samples.
 
@@ -198,7 +218,8 @@ DATA SOURCE (scriptable + sha256-pinned): Dryad doi:10.5061/dryad.v5m8v files
 ``HIP_scores.txt`` (644 MB) and ``HOP_scores.txt`` (505 MB) -- the deposited processed
 score matrices (rows = systematic ORF names, columns = per-experiment scores) -- and
 ``Table_S1.xls`` (compound IC30 + common name + SMILES for the reference/novel MoA
-compounds; the ~1641 proprietary CMB compounds have no released name). The canonical copy
+compounds; the ~1641 proprietary CMB compounds have no released name and are held out).
+The canonical copy
 is the RAW MIRROR
 ``$DATA_ROOT/torchcell-raw/hoepfnerHighresolutionChemicalDissection2014/`` and its
 ``manifest.json`` of ``ArtifactRecord``s; ``download()`` symlinks and sha256-verifies from
@@ -218,7 +239,7 @@ BUILD / SOURCE QUIRKS handled deterministically (no fabrication):
 - Constant sub-objects are INTERNED into ``processed/interned``: one environment per
   sensitivity column, one reference per (assay, study), one publication. A record stores
   ``{"$ref": ...}`` pointers for them, which is what keeps a 3.1M-record LMDB small and
-  lets a streaming reader memoize per-condition work across the 30.3M records.
+  lets a streaming reader memoize per-condition work across its records.
 """
 
 import csv
@@ -238,7 +259,7 @@ from pathlib import Path
 from typing import Any
 
 import requests
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from tqdm import tqdm
 
 from torchcell.data import (
@@ -420,6 +441,56 @@ EXCLUSION_RULE = (
     "medium change cannot be expressed with a sourced value. Storing it as YPD plus "
     "added glucose would state the opposite of starvation"
 )
+
+UNIDENTIFIED_COMPOUND_RULE = (
+    "compound_has_no_released_name_or_structure_not_representable"
+)
+
+UNIDENTIFIED_COMPOUND_POLICY = (
+    "a CMB id with no Table S1 common name, no Table S1 SMILES and no curated "
+    "compound-identity row is a proprietary Novartis compound known only by its registry "
+    "number: what went into the flask cannot be stated, so the experiment cannot be "
+    "represented (database constitution principle 2, owner ruling 2026-10-15). Its "
+    "sensitivity columns are HELD OUT, never stored under the bare CMB label with an "
+    "inchikey gap; every held-out column is listed with its study, dose and scored "
+    "cells, and the compound is admitted the day its identity is released. A CMB id "
+    "with a released name or a released SMILES is identified and stays stored, even "
+    "when no InChIKey can be derived (CMB409 Boromycin)"
+)
+
+
+class ReleasedIdentity(BaseModel):
+    """A publicly released identity for a compound the source left unidentified.
+
+    One entry of an admission table (``RELEASED_IDENTITIES``): the name, SMILES and/or
+    InChIKey a public release gives for a registry or vendor label, with the
+    ``SourcedValue`` (citation key, verbatim quote, sha256 of the mirrored artifact) that
+    releases it. At least one of the three identity fields is required. An identity
+    inferred from profile similarity is a hypothesis, never an entry.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str | None = None
+    smiles: str | None = None
+    inchikey: str | None = None
+    source: SourcedValue
+
+    @model_validator(mode="after")
+    def _requires_an_identity(self) -> "ReleasedIdentity":
+        if self.name is None and self.smiles is None and self.inchikey is None:
+            raise ValueError("a ReleasedIdentity needs a name, a SMILES or an InChIKey")
+        return self
+
+
+#: The ADMISSION TABLE, keyed by CMB id: EMPTY today. A CMB id is stored iff it has a
+#: curated compound-identity row, a Table S1 name or SMILES, or an entry here. The only
+#: thing that fills it is a public CMB-to-structure mapping released by Novartis, mirrored
+#: and sha256-pinned like any other artifact; an identity inferred by comparing HIP-HOP
+#: profiles is a hypothesis and never goes here. A filled entry changes the stored records,
+#: so it rebuilds the store. The ledger's ``unidentified_compounds_held_out`` (every CMB id
+#: with its columns and doses) is the request list for that release.
+RELEASED_IDENTITIES: dict[int, ReleasedIdentity] = {}
 
 #: Highest dose the paper's 2% DMSO normalization covers (SOURCED_VALUES["dmso_ceiling_um"]).
 DMSO_CEILING_UM = 200.0
@@ -707,8 +778,16 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         "In addition to 1641 proprietary compounds (named CMBxxx), we included 135 "
         "reference compounds with a previously reported molecular mechanism of action "
         "(Table S1).",
-        note="a CMB id with no released SMILES is stored under its released label with "
-        "the typed inchikey gap; the ledger's compound_identity_gaps counts them",
+        note="a CMB id with no released name, no released SMILES and no curated row is "
+        "held out under UNIDENTIFIED_COMPOUND_RULE; the ledger's "
+        "unidentified_compounds_held_out lists each with its columns and doses",
+    ),
+    "proprietary_compound_identity": _sv(
+        "proprietary CMB structures are not released; access is by collaboration",
+        "The Novartis Institutes of Biomedical Research encourage future academic "
+        "collaborations around individual compounds used in this study.",
+        note="the paper releases no name or structure for the proprietary CMB ids, only "
+        "an offer of collaboration, so their identity is not in any mirrored artifact",
     ),
     "cassette": SourcedValue(
         value="kanMX4",
@@ -1014,7 +1093,12 @@ def load_manifest(data_root: str | None = None) -> Manifest:
 # Typed build-side records (written beside the LMDB, not into it)
 # --------------------------------------------------------------------------- #
 class CompoundIdentityGap(BaseModel):
-    """One stored compound with no InChIKey: kept under its released label, gapped."""
+    """One stored, IDENTIFIED compound with no InChIKey: kept under its released name.
+
+    The compound has a released name or a released SMILES, so it is identified; only the
+    derived InChIKey is a typed gap (CMB409 Boromycin, whose SMILES RDKit cannot parse,
+    and a named compound with no released structure).
+    """
 
     model_config = ConfigDict(extra="forbid")
 
@@ -1027,6 +1111,30 @@ class CompoundIdentityGap(BaseModel):
     )
     resolution_status: str
     unresolved_reason: str | None
+    n_columns_by_assay: dict[str, int]
+    n_records_by_assay: dict[str, int]
+
+
+class HeldOutColumn(BaseModel):
+    """One sensitivity column of an unidentified compound, held out with its dose."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    assay: str
+    header: str = Field(description="the deposited column header, verbatim")
+    study: str
+    concentration_um: float
+    n_scored_cells: int = Field(description="scored cells of this column, held out")
+
+
+class UnidentifiedCompound(BaseModel):
+    """One CMB id held out under ``UNIDENTIFIED_COMPOUND_RULE`` (no name, no structure)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    cmb_id: str
+    source_name: str = Field(description="the released label, CMB<id>")
+    columns: list[HeldOutColumn]
     n_columns_by_assay: dict[str, int]
     n_records_by_assay: dict[str, int]
 
@@ -1070,6 +1178,9 @@ class CellAccounting(BaseModel):
     n_stored: int
     n_not_orf_shaped: int
     n_excluded_condition: int
+    n_unidentified_compound: int = Field(
+        description="scored cells of columns held out under UNIDENTIFIED_COMPOUND_RULE"
+    )
 
 
 class DoseOutsideIc30(BaseModel):
@@ -1089,8 +1200,8 @@ class DoseOutsideIc30(BaseModel):
 class DroppedRecordReport(BaseModel):
     """The build's ledger: what was stored, what is held out, and under which rule.
 
-    Every scored sensitivity cell is accounted for per arm:
-    ``n_source_cells = n_stored + n_not_orf_shaped + n_excluded_condition``.
+    Every scored sensitivity cell is accounted for per arm: ``n_source_cells =
+    n_stored + n_not_orf_shaped + n_excluded_condition + n_unidentified_compound``.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -1099,9 +1210,16 @@ class DroppedRecordReport(BaseModel):
     not_orf_shaped_rule: str
     not_orf_shaped_policy: str
     exclusion_rule: str
+    unidentified_compound_rule: str
+    unidentified_compound_policy: str
+    unidentified_compound_sources: list[SourcedValue] = Field(
+        description="the paper's own statements that the CMB compounds are proprietary "
+        "and unreleased, each a verbatim quote on the sha256-pinned paper.md"
+    )
     n_kept: int
     n_dropped: int = Field(
-        description="cells held out under NOT_ORF_SHAPED_RULE plus EXCLUSION_RULE"
+        description="cells held out under NOT_ORF_SHAPED_RULE, EXCLUSION_RULE and "
+        "UNIDENTIFIED_COMPOUND_RULE"
     )
     kept_by_assay: dict[str, int]
     dropped_by_assay: dict[str, int]
@@ -1110,10 +1228,14 @@ class DroppedRecordReport(BaseModel):
         description="per assay, rows whose released token fails the ORF pattern"
     )
     excluded_conditions: list[ExcludedCondition]
+    unidentified_compounds_held_out: list[UnidentifiedCompound] = Field(
+        description="CMB ids with no released name, no released SMILES and no curated "
+        "row, held out under UNIDENTIFIED_COMPOUND_RULE with every column and dose"
+    )
     compound_identity_gaps: list[CompoundIdentityGap] = Field(
-        description="stored compounds with no InChIKey (proprietary CMB ids with no "
-        "released SMILES, and CMB409 Boromycin whose SMILES RDKit cannot parse), each "
-        "stored under its released label with the typed inchikey gap"
+        description="STORED identified compounds with no InChIKey (a released name or "
+        "SMILES but no derivable key, e.g. CMB409 Boromycin whose SMILES RDKit cannot "
+        "parse), each stored under its released name with the typed inchikey gap"
     )
     n_cmb_ids_stored: int = Field(
         description="distinct CMB ids over both arms' columns"
@@ -1323,6 +1445,25 @@ def _load_compound_meta(table_s1_path: str) -> dict[str, dict[str, str | None]]:
     return meta
 
 
+def _compound_is_identified(cmb: str, meta: dict[str, dict[str, str | None]]) -> bool:
+    """Whether a CMB id names identified material (``UNIDENTIFIED_COMPOUND_RULE``).
+
+    Identified: Table S1 releases a common name or a SMILES for it, the admission table
+    ``RELEASED_IDENTITIES`` carries an entry for it, or the curated compound-identity
+    table carries a row for its label. A CMB id with none of these
+    is a proprietary registry number whose flask content cannot be stated. A released
+    SMILES identifies the compound even when RDKit cannot parse it (CMB409 Boromycin):
+    the structure is released, only the derived InChIKey is missing.
+    """
+    entry = meta.get(cmb) or {}
+    name = entry.get("common_name")
+    if name is not None or entry.get("smiles") is not None:
+        return True
+    if int(cmb) in RELEASED_IDENTITIES:
+        return True
+    return resolve_compound_identity(name=f"CMB{cmb}").curated
+
+
 def _load_ic30(table_s1_path: str) -> dict[str, float]:
     """CMB id -> Table S1 ``IC30 (uM)`` for the reference and novel-MoA compounds."""
     import pandas as pd
@@ -1445,17 +1586,19 @@ class _ColumnCensus:
     """Every deposited sensitivity column of one arm, by what the build does with it.
 
     ``sensitivity`` is every sensitivity column of the arm (z-score companions are not);
-    ``excluded`` the columns of an ``EXCLUDED_CONDITIONS`` compound; ``positive_control``
-    the Benomyl (CMB991) columns; ``cmbs`` every CMB id seen. Stored columns come from
-    ``_column_meta``.
+    ``excluded`` the columns of an ``EXCLUDED_CONDITIONS`` compound; ``unidentified``
+    the columns held out under ``UNIDENTIFIED_COMPOUND_RULE`` (index, CMB id, header,
+    study, uM dose); ``positive_control`` the Benomyl (CMB991) columns; ``cmbs`` every
+    CMB id seen. Stored columns come from ``_column_meta``.
     """
 
-    __slots__ = ("sensitivity", "cmbs", "excluded", "positive_control")
+    __slots__ = ("sensitivity", "cmbs", "excluded", "unidentified", "positive_control")
 
     def __init__(self) -> None:
         self.sensitivity: list[int] = []
         self.cmbs: set[str] = set()
         self.excluded: list[tuple[int, str]] = []
+        self.unidentified: list[tuple[int, str, str, str, float]] = []
         self.positive_control: list[int] = []
 
 
@@ -1475,6 +1618,7 @@ class _BuildCounts:
         "empty_rows",
         "source_cells",
         "excluded",
+        "unidentified",
         "construction",
     )
 
@@ -1488,6 +1632,7 @@ class _BuildCounts:
         self.empty_rows: Counter[str] = Counter()  # assay -> rows scored nowhere stored
         self.source_cells: Counter[str] = Counter()  # assay -> scored sensitivity cells
         self.excluded: Counter[tuple[str, str]] = Counter()  # (assay, CMB) -> cells
+        self.unidentified: Counter[tuple[str, int]] = Counter()  # (assay, col) -> cells
         self.construction: Counter[str] = Counter()  # HIP rows by Table S5 match
 
 
@@ -1577,7 +1722,47 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
         NOT part of the chemical identity: the dose is the ``Concentration``, the assay is
         the genotype leaf, and the study is the phenotype's ``screen_id``.
         """
+        released = RELEASED_IDENTITIES.get(int(cmb))
+        if released is not None and released.name is not None:
+            return released.name
         return (meta.get(cmb) or {}).get("common_name") or f"CMB{cmb}"
+
+    @classmethod
+    def _compound(cls, cmb: str, meta: dict[str, dict[str, str | None]]) -> Compound:
+        """The column's compound: Table S1 first, then an admission-table entry.
+
+        ``resolved_compound`` of the clean name with the released SMILES (a curated row
+        wins, else an RDKit-derived key). A ``RELEASED_IDENTITIES`` entry supplies the
+        name and SMILES Table S1 lacks, and its released InChIKey fills a key the
+        resolver could not, retiring that one gap.
+        """
+        released = RELEASED_IDENTITIES.get(int(cmb))
+        smiles = (meta.get(cmb) or {}).get("smiles")
+        if smiles is None and released is not None:
+            smiles = released.smiles
+        compound = resolved_compound(
+            cls._compound_name(cmb, meta),
+            smiles=smiles,
+            known_proprietary=(meta.get(cmb) or {}).get("common_name") is None
+            and released is None,
+            derive_from_smiles=True,
+        )
+        if (
+            released is not None
+            and released.inchikey is not None
+            and compound.inchikey is None
+        ):
+            compound = compound.model_copy(
+                update={
+                    "inchikey": released.inchikey,
+                    "provenance_gaps": [
+                        gap
+                        for gap in compound.provenance_gaps
+                        if gap.field != "inchikey"
+                    ],
+                }
+            )
+        return compound
 
     @staticmethod
     def _vehicle() -> Compound:
@@ -1812,12 +1997,13 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
         """Parse the arm's sensitivity columns into stored record templates.
 
         Every sensitivity column is stored except an ``EXCLUDED_CONDITIONS`` compound's
-        (``_column_census`` counts those). The compound is ``resolved_compound`` of its
-        released label with the released Table S1 SMILES when there is one: a curated row
-        or an RDKit-parseable SMILES gives it an InChIKey, and otherwise (a proprietary
-        CMB id with no released structure, or CMB409 Boromycin whose SMILES RDKit cannot
-        parse) it is stored under the released label with the typed ``inchikey`` gap the
-        resolver attaches, its released SMILES carried verbatim when there is one.
+        and an unidentified compound's (``_column_census`` counts both). The compound is
+        ``resolved_compound`` of its released label with the released Table S1 SMILES
+        when there is one: a curated row or an RDKit-parseable SMILES gives it an
+        InChIKey, and otherwise (an identified compound with no derivable key, CMB409
+        Boromycin whose SMILES RDKit cannot parse) it is stored under its released name
+        with the typed ``inchikey`` gap the resolver attaches, its released SMILES
+        carried verbatim when there is one.
         """
         kept: list[_ColumnMeta] = []
         for index, raw in enumerate(header):
@@ -1830,12 +2016,9 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
             cmb = match.group("cmb")
             if cmb in EXCLUDED_CONDITIONS:
                 continue  # EXCLUSION_RULE, counted by _column_census
-            compound = resolved_compound(
-                self._compound_name(cmb, meta),
-                smiles=(meta.get(cmb) or {}).get("smiles"),
-                known_proprietary=(meta.get(cmb) or {}).get("common_name") is None,
-                derive_from_smiles=True,
-            )
+            if not _compound_is_identified(cmb, meta):
+                continue  # UNIDENTIFIED_COMPOUND_RULE, counted by _column_census
+            compound = self._compound(cmb, meta)
             conc = float(match.group("conc"))
             study = match.group("study")
             environment = self._environment(assay, self._treatment(cmb, compound, conc))
@@ -1885,10 +2068,13 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
 
         An ``EXCLUDED_CONDITIONS`` column must carry its expected Table S1 name, so a
         renumbered or renamed compound fails the build instead of being excluded blind.
+        A column of a compound ``_compound_is_identified`` rejects is held out under
+        ``UNIDENTIFIED_COMPOUND_RULE`` with its header, study and dose.
         """
         census = _ColumnCensus()
         for index, raw in enumerate(header):
-            match = _COL_RE.match(raw.strip().strip('"'))
+            column = raw.strip().strip('"')
+            match = _COL_RE.match(column)
             if match is None or match.group("z") is not None:
                 continue
             if match.group("assay") != assay:
@@ -1906,6 +2092,16 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
                         f"S1 names it {name!r}"
                     )
                 census.excluded.append((index, cmb))
+            elif not _compound_is_identified(cmb, meta):
+                census.unidentified.append(
+                    (
+                        index,
+                        cmb,
+                        column,
+                        match.group("study"),
+                        float(match.group("conc")),
+                    )
+                )
         return census
 
     # ---- build ---------------------------------------------------------------- #
@@ -1932,8 +2128,9 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
         rename, no detection threshold. A row scored in no stored column carries no
         record and is counted as not-a-value; a row whose token fails the
         ``GenePerturbation`` ORF pattern is held out under ``NOT_ORF_SHAPED_RULE`` with
-        its cells counted. Every scored sensitivity cell and every excluded-condition
-        cell is counted in the SAME pass, so the ledger's accounting is measured. The
+        its cells counted. Every scored sensitivity cell, every excluded-condition cell
+        and every unidentified-compound cell is counted in the SAME pass, so the ledger's
+        accounting is measured. The
         first record of each column is validated against the experiment schema, which is
         what makes the per-column template safe. ``strains`` (Table S5, keyed by
         upper-cased ORF) gives a HIP strain its construction record and its flag.
@@ -1957,6 +2154,9 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
                 for index, cmb in census.excluded:
                     if filled(parts, index):
                         counts.excluded[(assay, cmb)] += 1
+                for index, *_ in census.unidentified:
+                    if filled(parts, index):
+                        counts.unidentified[(assay, index)] += 1
                 n_scored = sum(1 for col in columns if filled(parts, col.index))
                 if n_scored == 0:
                     counts.empty_rows[assay] += 1
@@ -2069,11 +2269,13 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
                 censuses[assay] = self._column_census(header, assay, meta)
                 log.info(
                     "Hoepfner2014 %s: %d stored sensitivity experiments (%d with no "
-                    "InChIKey, stored with the typed gap), %d excluded by rule",
+                    "InChIKey, stored with the typed gap), %d excluded by rule, %d held "
+                    "out as unidentified compounds",
                     assay,
                     len(kept),
                     sum(1 for col in kept if col.inchikey is None),
                     len(censuses[assay].excluded),
+                    len(censuses[assay].unidentified),
                 )
                 for study in sorted({col.study for col in kept}):
                     reference_refs[(assay, study)] = self._intern_ref(
@@ -2171,6 +2373,42 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
             )
             for cmb, name in sorted(EXCLUDED_CONDITIONS.items())
         ]
+        unidentified: list[UnidentifiedCompound] = []
+        for cmb in sorted(
+            {c for census in censuses.values() for _, c, *_ in census.unidentified},
+            key=int,
+        ):
+            held_columns = [
+                HeldOutColumn(
+                    assay=assay,
+                    header=header,
+                    study=study,
+                    concentration_um=conc,
+                    n_scored_cells=counts.unidentified[(assay, index)],
+                )
+                for assay, census in censuses.items()
+                for index, c, header, study, conc in census.unidentified
+                if c == cmb
+            ]
+            unidentified.append(
+                UnidentifiedCompound(
+                    cmb_id=cmb,
+                    source_name=f"CMB{cmb}",
+                    columns=held_columns,
+                    n_columns_by_assay={
+                        assay: sum(1 for col in held_columns if col.assay == assay)
+                        for assay in censuses
+                    },
+                    n_records_by_assay={
+                        assay: sum(
+                            col.n_scored_cells
+                            for col in held_columns
+                            if col.assay == assay
+                        )
+                        for assay in censuses
+                    },
+                )
+            )
         accounting: dict[str, CellAccounting] = {}
         held_out: dict[str, int] = {}
         for assay, census in censuses.items():
@@ -2178,6 +2416,9 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
                 row.n_records for row in counts.not_orf_shaped.get(assay, [])
             )
             n_excluded = sum(n for (a, _), n in counts.excluded.items() if a == assay)
+            n_unidentified = sum(
+                n for (a, _), n in counts.unidentified.items() if a == assay
+            )
             accounting[assay] = CellAccounting(
                 n_sensitivity_columns=len(census.sensitivity),
                 n_rows=counts.rows[assay],
@@ -2186,17 +2427,18 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
                 n_stored=counts.kept[assay],
                 n_not_orf_shaped=n_not_orf,
                 n_excluded_condition=n_excluded,
+                n_unidentified_compound=n_unidentified,
             )
             if (
                 counts.source_cells[assay]
-                != counts.kept[assay] + n_not_orf + n_excluded
+                != counts.kept[assay] + n_not_orf + n_excluded + n_unidentified
             ):
                 raise RuntimeError(
                     f"Hoepfner2014 {assay}: {counts.source_cells[assay]} scored cells != "
                     f"{counts.kept[assay]} stored + {n_not_orf} not ORF-shaped + "
-                    f"{n_excluded} excluded"
+                    f"{n_excluded} excluded + {n_unidentified} unidentified compound"
                 )
-            held_out[assay] = n_not_orf + n_excluded
+            held_out[assay] = n_not_orf + n_excluded + n_unidentified
         low, high = IC30_RATIO_RANGE
         outside: list[DoseOutsideIc30] = []
         with_ic30: dict[str, int] = {}
@@ -2225,6 +2467,12 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
             not_orf_shaped_rule=NOT_ORF_SHAPED_RULE,
             not_orf_shaped_policy=NOT_ORF_SHAPED_POLICY,
             exclusion_rule=EXCLUSION_RULE,
+            unidentified_compound_rule=UNIDENTIFIED_COMPOUND_RULE,
+            unidentified_compound_policy=UNIDENTIFIED_COMPOUND_POLICY,
+            unidentified_compound_sources=[
+                SOURCED_VALUES["proprietary_compounds"],
+                SOURCED_VALUES["proprietary_compound_identity"],
+            ],
             n_kept=sum(counts.kept.values()),
             n_dropped=sum(held_out.values()),
             kept_by_assay=dict(counts.kept),
@@ -2232,6 +2480,7 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
             accounting=accounting,
             not_orf_shaped=counts.not_orf_shaped,
             excluded_conditions=excluded,
+            unidentified_compounds_held_out=unidentified,
             compound_identity_gaps=identity_gaps,
             n_cmb_ids_stored=len(
                 {col.cmb for cols in columns.values() for col in cols}

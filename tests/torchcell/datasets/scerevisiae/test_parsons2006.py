@@ -10,19 +10,21 @@ The parsers themselves run on hand-built frames shaped like the release (title r
 header row 2, body from row 3). No genome is consulted (#1045): every strain is stored
 under its released ORF.
 
-Synthetic build (Table S7 rows x the four filled columns; every other cell blank):
+Synthetic build (Table S7 rows x the five filled columns; every other cell blank):
 
-    YAL001C  Sulfometuron (SC), MMS (YPD) blank, Thialysine, Extract
-    YDL039C  all four
-    YDL038C  all four (an ORF SGD merged into YDL039C; stored as released)
-    YGR272C  all four (an ORF SGD merged into YGR271C-A; stored as released)
-    YIL170W  all four (a locus R64 does not call a gene; stored as released)
+    YAL001C  Sulfometuron (SC), MMS (YPD) blank, Thialysine, Extract 95-57, Agelasine E
+    YDL039C  all five
+    YDL038C  all five (an ORF SGD merged into YDL039C; stored as released)
+    YGR272C  all five (an ORF SGD merged into YGR271C-A; stored as released)
+    YIL170W  all five (a locus R64 does not call a gene; stored as released)
 
-Records: 3 + 4 + 4 + 4 + 4 = 19, every released ratio; 82 x 5 - 19 = 391 released blanks
-have none; 410 source cells. The 5 extract ratios are stored, the extract carrying its
-typed inchikey gap (#1045 row 19). Records in build order: idx 0-2 YAL001C (sulfometuron,
-thialysine, extract), 3-6 YDL039C, 7-10 YDL038C, 11-14 YGR272C, 15-18 YIL170W, each in
-column order sulfometuron, MMS, thialysine, extract.
+Released ratios: 4 + 5 + 5 + 5 + 5 = 24; 82 x 5 - 24 = 386 released blanks have none;
+410 source cells. The 5 Extract 95-57 ratios are HELD OUT under
+``UNIDENTIFIED_COMPOUND_RULE`` (a crude extract known only by its collection code); the
+5 agelasine E ratios are stored, the named compound carrying its typed inchikey gap
+(#1045 row 19). Records: 3 + 4 + 4 + 4 + 4 = 19, in build order: idx 0-2 YAL001C
+(sulfometuron, thialysine, agelasine E), 3-6 YDL039C, 7-10 YDL038C, 11-14 YGR272C, 15-18
+YIL170W, each in column order sulfometuron, MMS, thialysine, agelasine E.
 """
 
 from __future__ import annotations
@@ -59,10 +61,11 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.datamodels.strain_background import GIAEVER_2002
 from torchcell.datasets.scerevisiae import parsons2006 as p
+from torchcell.datasets.scerevisiae.hoepfner2014 import ReleasedIdentity
 
 S7_LABELS = [c.s7_label for c in p.CONDITIONS]
 COL = {label: i for i, label in enumerate(S7_LABELS)}
-FILLED = ["Sulfometuron methyl", "MMS", "Thialysine", "Extract 95-57"]
+FILLED = ["Sulfometuron methyl", "MMS", "Thialysine", "Extract 95-57", "Agelasine E"]
 
 
 # --------------------------------------------------------------------------- #
@@ -187,14 +190,20 @@ def _ref(dataset: Any, idx: int) -> StrainEnvironmentResponseExperimentReference
 # The build
 # --------------------------------------------------------------------------- #
 def test_drop_log_counts_every_cell_once(built: Any) -> None:
-    """Every released ratio is a record (#1045); only the released blanks have none."""
+    """Every released ratio of an identified agent is a record (#1045); the released
+    blanks and the held-out extract ratios have none, and the rules sum to the gap.
+    """
     assert len(built) == 19
     log = json.loads((Path(built.preprocess_dir) / "dropped_records.json").read_text())
-    assert (log["source_records"], log["released_ratios"]) == (410, 19)
+    assert (log["source_records"], log["released_ratios"]) == (410, 24)
     assert (log["kept_records"], log["dropped_records"]) == (19, 391)
     assert [(r["rule"], r["n_records"]) for r in log["rules"]] == [
-        ("ratio_cell_blank_in_release", 391)
+        ("ratio_cell_blank_in_release", 386),
+        (p.UNIDENTIFIED_COMPOUND_RULE, 5),
     ]
+    assert log["source_records"] == log["kept_records"] + sum(
+        r["n_records"] for r in log["rules"]
+    )
     gapped = {
         g["condition"]: (g["compound_name"], g["gap_field"], g["gap_reason"])
         for g in log["compound_identity_gaps"]
@@ -202,26 +211,16 @@ def test_drop_log_counts_every_cell_once(built: Any) -> None:
     names = {"192A4-Stichloroside": "Stichloroside"}
     assert gapped == {
         label: (names.get(label, label), "inchikey", "deferred_pending_source_review")
-        for label in [
-            "192A4-Stichloroside",
-            "Agelasine E",
-            "Extract 00-132",
-            "Extract 00-192",
-            "Extract 00-243",
-            "Extract 00-303C",
-            "Extract 00-89",
-            "Extract 6592",
-            "Extract 95-57",
-        ]
+        for label in ["192A4-Stichloroside", "Agelasine E"]
     }
     assert {
         g["condition"]: g["n_records"]
         for g in log["compound_identity_gaps"]
         if g["n_records"]
-    } == {"Extract 95-57": 5}
+    } == {"Agelasine E": 5}
     assert log["release"] == {
         "table_s4_strains": 7,
-        "table_s4_p_values": 19 + 2 * 82,
+        "table_s4_p_values": 24 + 2 * 82,
         "multidrug_sensitive_strains_without_ratios": ["YKL212W", "YML008C"],
         "multidrug_sensitive_p_values": 164,
         "p_value_cells_without_a_ratio": 1,
@@ -230,21 +229,99 @@ def test_drop_log_counts_every_cell_once(built: Any) -> None:
 
 
 def test_a_name_only_compound_is_stored_with_its_typed_inchikey_gap(built: Any) -> None:
-    """YAL001C x Extract 95-57 (record 2) is stored (#1045 row 19): the compound keeps
-    its released label, carries no identifier, and declares the inchikey gap; the
-    extract's Methods vehicle is methanol.
+    """YAL001C x Agelasine E (record 2) is stored (#1045 row 19): the named compound
+    keeps its released label, carries no identifier, and declares the inchikey gap.
     """
     edit = _edit(_exp(built, 2).environment)
     assert (edit.compound.name, edit.compound.inchikey, edit.compound.pubchem_cid) == (
-        "Extract 95-57",
+        "Agelasine E",
         None,
         None,
     )
     assert [(g.field, g.reason.value) for g in edit.compound.provenance_gaps] == [
         ("inchikey", "deferred_pending_source_review")
     ]
-    assert _solvent(edit).name == "methanol"
-    assert _exp(built, 2).phenotype.environment_response == -0.25
+    assert _solvent(edit).name == "DMSO"
+    assert _exp(built, 2).phenotype.environment_response == 0.25
+
+
+def test_an_unidentified_extract_is_held_out_and_listed_in_the_ledger(
+    built: Any,
+) -> None:
+    """Extract 95-57 (a collection code, no composition) has no stored record; the
+    ledger lists it with its dose and its 5 ratios, quotes the source, and balances.
+    """
+    names = {_edit(_exp(built, i).environment).compound.name for i in range(len(built))}
+    assert not any(name.startswith("Extract") for name in names)
+    assert "Agelasine E" in names
+    log = json.loads((Path(built.preprocess_dir) / "dropped_records.json").read_text())
+    (rule,) = [r for r in log["rules"] if r["rule"] == p.UNIDENTIFIED_COMPOUND_RULE]
+    held = log["unidentified_compounds_held_out"]
+    assert (
+        rule["items"]
+        == [h["condition"] for h in held]
+        == sorted(c.s7_label for c in p.CONDITIONS if c.s7_label.startswith("Extract"))
+    )
+    assert {h["condition"]: h["n_records"] for h in held if h["n_records"]} == {
+        "Extract 95-57": 5
+    }
+    assert rule["n_records"] == sum(h["n_records"] for h in held) == 5
+    (extract,) = [h for h in held if h["condition"] == "Extract 95-57"]
+    assert extract == {
+        "condition": "Extract 95-57",
+        "s1_name": "Extract 95-57",
+        "dose": {"value": 30.0, "unit": "ug/mL", "basis": None},
+        "vehicle": "methanol",
+        "medium": "ypd",
+        "n_records": 5,
+    }
+    assert log["unidentified_compound_rule"] == (
+        "compound_has_no_released_name_or_structure_not_representable"
+    )
+    assert log["unidentified_compound_policy"] == p.UNIDENTIFIED_COMPOUND_POLICY
+    sources = log["unidentified_compound_sources"]
+    assert [s["quote"] for s in sources] == [
+        p.N_CRUDE_EXTRACTS.quote,
+        p.EXTRACT_COLLECTION.quote,
+        p.EXTRACT_TABLE_COMMENT.quote,
+    ]
+    assert {s["provenance"]["sha256"] for s in sources} == {p.PAPER_MD_SHA256}
+    assert log["source_records"] == log["kept_records"] + sum(
+        r["n_records"] for r in log["rules"]
+    )
+
+
+def test_a_released_identity_admits_an_extract(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A filled ``RELEASED_IDENTITIES`` entry stores the extract under the released
+    name; the admission table ships empty.
+    """
+    assert p.RELEASED_IDENTITIES == {}
+    monkeypatch.setitem(
+        p.RELEASED_IDENTITIES,
+        "Extract 95-57",
+        ReleasedIdentity(name="released extract 95-57", source=p.EXTRACT_COLLECTION),
+    )
+    dataset = _build(tmp_path, monkeypatch)
+    try:
+        assert len(dataset) == 24
+        log = json.loads(
+            (Path(dataset.preprocess_dir) / "dropped_records.json").read_text()
+        )
+        assert [h["condition"] for h in log["unidentified_compounds_held_out"]] == [
+            "Extract 00-132",
+            "Extract 00-192",
+            "Extract 00-243",
+            "Extract 00-303C",
+            "Extract 00-89",
+            "Extract 6592",
+        ]
+        assert _edit(_exp(dataset, 2).environment).compound.name == (
+            "released extract 95-57"
+        )
+    finally:
+        dataset.close_lmdb()
 
 
 def test_record_stores_the_released_ratio_and_the_s4_p_value(built: Any) -> None:
@@ -508,6 +585,37 @@ def test_conditions_are_82_unique_columns_with_their_footnotes_stripped() -> Non
     assert vehicles["methanol"] == ["Wortmannin"] + [
         label for label in S7_LABELS if label.startswith("Extract")
     ]
+
+
+def test_the_seven_crude_extracts_are_the_unidentified_conditions() -> None:
+    held = [c.s7_label for c in p.unidentified_conditions()]
+    assert held == [
+        "Extract 95-57",
+        "Extract 6592",
+        "Extract 00-89",
+        "Extract 00-303C",
+        "Extract 00-243",
+        "Extract 00-192",
+        "Extract 00-132",
+    ]
+    assert len(held) == p.N_CRUDE_EXTRACTS.value
+    for label in ["Agelasine E", "192A4-Stichloroside", "CG4-Theopalauamide"]:
+        (spec,) = [c for c in p.CONDITIONS if c.s7_label == label]
+        assert p.compound_is_identified(spec)
+
+
+def test_an_extract_code_count_other_than_the_papers_refuses(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    extra = p.ConditionSpec(
+        s7_label="Extract 99-1",
+        s1_name="Extract 99-1",
+        vehicle="methanol",
+        medium="ypd",
+    )
+    monkeypatch.setattr(p, "CONDITIONS", (*p.CONDITIONS, extra))
+    with pytest.raises(RuntimeError, match="8 Table S1 names are extract collection"):
+        p.unidentified_conditions()
 
 
 def test_every_condition_resolves_except_the_nine_stored_with_a_gap() -> None:

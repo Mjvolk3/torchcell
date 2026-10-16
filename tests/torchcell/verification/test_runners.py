@@ -2253,7 +2253,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "env_chemgen_hillenmeyer2008_hom": 1182916,
         # #1045: every released ratio (Table S7's non-blank cells), the nine name-only
         # compounds and the 14 ORFs the annotation does not call genes included
-        "env_chemgen_parsons2006": 329254,
+        "env_chemgen_parsons2006": 300834,
         # #1045: every released cell, the 5% ethanol columns included (4,729 x 4 x 2)
         "env_chemgen_yoshikawa2009": 37832,
         "crispri_chemgen_smith2016": 7053,

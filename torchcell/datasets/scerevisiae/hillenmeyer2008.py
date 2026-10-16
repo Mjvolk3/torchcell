@@ -1946,6 +1946,15 @@ class UnidentifiedCompoundHeldOut(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     label: str = Field(description="the released compound label, verbatim")
+    vendor: str | None = Field(
+        description="the vendor the label names ('Biomol' from a trailing '(Biomol)', "
+        "'chemical diversity labs' from that prefix), verbatim; None when it names none"
+    )
+    vendor_product_name: str | None = Field(
+        description="the vendor's product name or catalog code with the vendor removed "
+        "(e.g. 'telomerase inhibitor ix'), the key for a catalog lookup that could admit "
+        "the label through RELEASED_IDENTITIES; None when the label names no vendor"
+    )
     n_environments: int
     n_arrays: int
     n_records_not_written: int
@@ -1954,6 +1963,24 @@ class UnidentifiedCompoundHeldOut(BaseModel):
     key_file_conditions: list[str] = Field(
         description="the key file's condition string for each array, verbatim"
     )
+
+
+_VENDOR_SUFFIX = re.compile(r"^(?P<product>.+) \((?P<vendor>Biomol)\)$")
+_VENDOR_PREFIX = re.compile(r"^(?P<vendor>chemical diversity labs) (?P<product>\S+)$")
+
+
+def vendor_catalog_entry(label: str) -> tuple[str | None, str | None]:
+    """``(vendor, product name)`` a held-out label names, verbatim, or ``(None, None)``.
+
+    The two vendor spellings the release uses: a trailing ``(Biomol)`` and the
+    ``chemical diversity labs`` prefix. Nothing is normalized: the product name is the
+    released text with the vendor removed, so a catalog lookup sees what the source wrote.
+    """
+    for pattern in (_VENDOR_SUFFIX, _VENDOR_PREFIX):
+        match = pattern.match(label)
+        if match is not None:
+            return match.group("vendor"), match.group("product")
+    return None, None
 
 
 def unidentified_compounds_held_out(
@@ -1975,9 +2002,12 @@ def unidentified_compounds_held_out(
     held: list[UnidentifiedCompoundHeldOut] = []
     for label, groups in sorted(by_label.items()):
         columns = [column for members in groups for column in members]
+        vendor, product = vendor_catalog_entry(label)
         held.append(
             UnidentifiedCompoundHeldOut(
                 label=label,
+                vendor=vendor,
+                vendor_product_name=product,
                 n_environments=len(groups),
                 n_arrays=len(columns),
                 n_records_not_written=sum(

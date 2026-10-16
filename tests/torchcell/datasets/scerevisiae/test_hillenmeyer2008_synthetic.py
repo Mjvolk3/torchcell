@@ -619,6 +619,8 @@ def test_an_unidentified_compound_is_held_out_of_the_store_and_listed_in_the_led
     assert report["unidentified_compounds_held_out"] == [
         {
             "label": "chemical diversity labs 14a",
+            "vendor": "chemical diversity labs",
+            "vendor_product_name": "14a",
             "n_environments": 1,
             "n_arrays": 1,
             "n_records_not_written": 2,

@@ -39,9 +39,23 @@ stamp() { date '+%Y-%m-%d %H:%M:%S'; }
 deadline=$(( $(date +%s) + MAX_HOURS * 3600 ))
 
 # ---- 1. wait for an interpreter that imports ----------------------------------- #
+# THE PROBE NEVER HOLDS A SESSION. The first version ran the import inside the ssh
+# session; a process blocked in a Lustre read ignores the timeout's signal, so every
+# hung probe kept its channel open, and after about twelve probes (2026-10-16, 11:29 to
+# 13:17) the shared connection hit its session limit and refused every new session,
+# the owner's included. Now the import runs DETACHED on the login node (setsid, stdio
+# closed) and writes a marker on success; a separate short session reads the marker,
+# and a new probe starts only when no earlier one is still in flight.
+MARKER='$HOME/.r11probe_ok'
+PROBE="cd $PROJECT && PYTHONPATH=$PROJECT timeout 90 $PY -c 'import torch, torchcell' && date > $MARKER"
+timeout 60 $SSH delta "rm -f $MARKER" >/dev/null 2>&1
 while true; do
-  if timeout 150 $SSH delta "cd $PROJECT && PYTHONPATH=$PROJECT timeout 90 $PY -c 'import torch, torchcell'" \
-      >/dev/null 2>&1; then
+  status=$(timeout 60 $SSH delta "
+    if [ -f $MARKER ]; then echo ok
+    elif pgrep -u \$USER -f r11probe_ok >/dev/null; then echo inflight
+    else setsid nohup sh -c \"$PROBE\" >/dev/null 2>&1 < /dev/null & echo launched
+    fi" 2>/dev/null | tail -1)
+  if [ "$status" = "ok" ]; then
     echo "$(stamp) probe: import torch, torchcell returned on Delta"
     break
   fi
@@ -49,7 +63,11 @@ while true; do
     echo "$(stamp) GAVE UP: Delta could not import torch within $MAX_HOURS h; nothing submitted"
     exit 2
   fi
-  echo "$(stamp) probe: import still hangs; next probe in $PROBE_EVERY s"
+  case "$status" in
+    launched) echo "$(stamp) probe: launched a detached import" ;;
+    inflight) echo "$(stamp) probe: the last import is still blocked" ;;
+    *) echo "$(stamp) probe: Delta refused the session (no free session, or the login needs Duo)" ;;
+  esac
   sleep "$PROBE_EVERY"
 done
 

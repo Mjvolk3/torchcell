@@ -16,7 +16,7 @@ Every change to `torchcell/datamodels/schema.py` or `pydant.py`, every new or re
 Answer each in the PR body or the schema-change record's `correctness_argument`. A "no" on a higher-ranked line outweighs any number of "yes" lines below it.
 
 1. **Experiment, not organism.** Does the change add or keep a class whose only difference from an existing one is the host, the author, or a tag string? If so, it is wrong: the host is a field (principle 4), and the pair retires.
-2. **The data is the data.** Does the change drop, refuse, remap or collapse any released record for a reason other than an author withdrawal quoted with its sha256? Does any new rule consult the genome to decide whether a record loads? If so, stop.
+2. **The data is the data, once the experiment can be stated.** Can every stored record say what went into the flask: a perturbation as a named edit to a stated reference, and every environment agent as identified material (structure, recipe or released name)? A record that cannot is held out with its count and quote in the ledger, never stored under a bare label with a gap. Given representability, does the change drop, refuse, remap or collapse any released record for a reason other than an author withdrawal quoted with its sha256? Does any new rule consult the genome to decide whether a record loads? If so, stop.
 3. **Pinned bytes.** Does every new value point at a sha256-pinned artifact with a verbatim quote, and does every new file carry `source_url`, `retrieval_method`, `retrieval_command`, `sha256`, `retrieved_at`? A pointer to a store is an `ArtifactRef`, never a string pair.
 4. **Sequence-level material.** Does the record state the deposited reference its identifiers are written against (`gene_namespace`) and the assembly it resolves to (`assembly_set`)? Does added DNA point at a contig with coordinates, or carry a typed gap saying why not?
 5. **Strict typing.** Is every new property a typed field with a closed vocabulary measured from the stored records? Is there any free `str` where an enum belongs, any `Any`, any enum that carries two facts, any fact expressed by class choice?
@@ -34,6 +34,7 @@ Answer each in the PR body or the schema-change record's `correctness_argument`.
 - A `released`, `unknown`, `other` or `mixed` member added to a host or assembly vocabulary: refuse; the leaf class or a typed gap carries that statement.
 - A default that asserts a host or an assembly on a leaf whose validator does not already prove it from the stored name's form.
 - `rebuild_scope` chosen to avoid a rebuild rather than computed by the record tool.
+- A perturbation or environment agent with no identity (a vendor or registry number with no released name or structure) stored under its label with an `inchikey` or similar gap: hold it out in the ledger instead; a gap is for an attribute of an identified thing, never for its identity.
 
 ## Related
 

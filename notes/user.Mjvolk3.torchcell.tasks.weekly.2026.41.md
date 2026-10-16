@@ -75,3 +75,9 @@ created: 1791256185172
 - [x] Gate figure 2, sixth pass: the Vanacloig field was clipped by the axes (unclipped, round, padded), ridge to the primary gray and the transformer to the primary blue so the learners read apart, the cartoon's box named CGT with neutral fills, b and the rows tightened, i's labels upright, o's x label fits [[experiments.040-inhibitor-synergy-wetlab]]
 - [x] Gate figure 2, seventh pass: b's x axis drawn inside its axes so its bottom is flush with a and c (out-of-layout and nested-gridspec routes both failed under constrained layout) [[experiments.040-inhibitor-synergy-wetlab]]
 - [x] Gate figure 2, eighth pass: the top row placed by hand so b's x label ends level with a and c; l draws only the dose-offset model, one solid curve per inhibitor [[experiments.040-inhibitor-synergy-wetlab]]
+
+## 2026.10.16
+
+- [x] 040 round 11 written: five switchable model pieces (gene-embedding displacement, cell-only readout, Hill host form, Bliss / Loewe / highest-single composition, pair deviation term), 19 of 19 CPU checks, nine grids of 105 one-GPU jobs on bfjt-delta-gpu [[experiments.040-inhibitor-synergy-wetlab]]
+- [ ] 040 round 11 submitted on Delta: blocked on a Lustre stall (the torchcell env's files hang on read); `r11_delta_gate.sh` submits after the smoke passes
+- [ ] Read round 11 when it lands: rerun `r3_readout.py` and `r3_host_predictions.py` over `results/mixture-delta`, refresh the gate sheet

@@ -69,19 +69,26 @@ screening. These concentrations were selected to inhibit growth of a wild-type s
 member and adding one changes a class in all 36 served dataset closures, so the rule is
 recorded here and in the dendron note instead of in ``Concentration.basis``.
 
-RECORDS (``preprocess/dropped_records.json`` is the accounting): every released row is a
-record. The 7,410 rows (51.2%) whose drug is a vendor catalog code -- 1181-0519, 4130-1276
-and 0KPI-0099 (ChemDiv), 9121982, 9125678, 7312221, CBF-666774, 6630449 and 9150499
-(ChemBridge), ST016598 (TimTec) -- are stored under the released label with a typed
-``inchikey`` gap on the ``Compound`` (``resolved_compound`` attaches
-``not_reported_by_primary`` to a label the pinned identity table marks PROPRIETARY: the
-primary released no structure, SMILES or CAS). They are listed under
-``compound_identity_gaps`` with their record counts (2026.10.12, #1045; the previous
-build dropped them). The tenth public compound, ``NSC-180973``, resolves through the
-pinned identity table's synonym for tamoxifen, the alias the paper's own Additional file
-8 releases. The two rules that can still leave a row without a record are a row with no
-``A`` or ``var(A)`` and a guide with no spacer in Additional file 4; both are 0 on the
-pinned files. An ``ORF`` cell that is not ORF-shaped is counted under
+RECORDS (``preprocess/dropped_records.json`` is the accounting): every released row of an
+identified compound is a record. AN UNIDENTIFIED COMPOUND IS HELD OUT (2026.10.15,
+database constitution principle 2; owner: "if you cannot tell me what goes into the flask
+so to speak, then we have no hope of modeling!"). The rows whose drug is a vendor catalog
+code -- 1181-0519, 4130-1276 and 0KPI-0099 (ChemDiv), 9121982, 9125678, 7312221,
+CBF-666774, 6630449 and 9150499 (ChemBridge), ST016598 (TimTec) -- are held out under
+``UNIDENTIFIED_COMPOUND_RULE``: the pinned identity table marks each PROPRIETARY, and
+Additional file 8 ("All chemical compounds used in this study are listed in Additional
+file 8.", the ``COMPOUND_LIST`` quote) gives only the code and the vendor, no structure,
+SMILES or CAS. Measured on the pinned Additional file 10 by the build (2026.10.15): 7,410
+of 14,463 rows held out over 10 codes, 7,053 stored. From 2026.10.12 to 2026.10.15 these
+rows were stored under the bare code with a typed ``inchikey`` gap (#1045); a gap is for a
+missing attribute of an identified compound, never its identity. The ledger lists each
+code with its doses and rows under ``unidentified_compounds_held_out``; the EMPTY
+admission table ``RELEASED_IDENTITIES`` admits a code the day a public structure for it
+is mirrored (a store rebuild). The tenth public compound, ``NSC-180973``, resolves
+through the pinned identity table's synonym for tamoxifen, the alias the paper's own
+Additional file 8 releases. The two other rules that can leave a row without a record are
+a row with no ``A`` or ``var(A)`` and a guide with no spacer in Additional file 4; both
+are 0 on the pinned files. An ``ORF`` cell that is not ORF-shaped is counted under
 ``stored_on_released_gene_name_leaf`` (0 of 14,463 rows) as released (#1045).
 
 DUPLICATE-BY-POOL: 272 (guide, drug, concentration) triples appear twice, always the pool
@@ -125,10 +132,15 @@ from torchcell.data import (
     verify_raw_files,
     verify_sha256,
 )
-from torchcell.datamodels.compound_identity import resolved_compound
+from torchcell.datamodels.compound_identity import (
+    CompoundResolutionStatus,
+    resolve_compound_identity,
+    resolved_compound,
+)
 from torchcell.datamodels.media import SC_URA
 from torchcell.datamodels.schema import (
     AssayType,
+    Compound,
     Concentration,
     ConcentrationUnit,
     CrisprConstruct,
@@ -151,6 +163,7 @@ from torchcell.datamodels.schema import (
     UncertaintyType,
 )
 from torchcell.datasets.dataset_registry import register_dataset
+from torchcell.datasets.scerevisiae.hoepfner2014 import ReleasedIdentity
 from torchcell.literature.manifest import (
     ROLE_SI_DATA,
     ArtifactRecord,
@@ -217,6 +230,28 @@ def _paper(value: Any, quote: str, *, note: str | None = None) -> SourcedValue:
     )
 
 
+UNIDENTIFIED_COMPOUND_RULE = (
+    "compound_has_no_released_name_or_structure_not_representable"
+)
+
+UNIDENTIFIED_COMPOUND_POLICY = (
+    "the Drug label is a ChemDiv / ChemBridge / TimTec catalog code the pinned compound "
+    "identity table marks PROPRIETARY: Additional file 8 releases only the code and its "
+    "vendor, no name, structure, SMILES or CAS, so what went into the flask cannot be "
+    "stated and the experiment cannot be represented (database constitution principle 2, "
+    "owner ruling 2026-10-15). Its rows are HELD OUT, never stored under the bare code "
+    "with an inchikey gap; each code is listed with its doses and rows, and is admitted "
+    "the day a public identity enters RELEASED_IDENTITIES"
+)
+
+#: The ADMISSION TABLE, keyed by the released Drug label: EMPTY today. A drug the
+#: identity table marks PROPRIETARY is stored iff it has an entry here. Only a public
+#: code-to-structure release (the vendor's or a primary's), mirrored and sha256-pinned,
+#: fills it; an identity inferred from chemical-genetic profile similarity is a hypothesis
+#: and never goes here. A filled entry changes the stored records, so it rebuilds the
+#: store. The ledger's ``unidentified_compounds_held_out`` is the request list.
+RELEASED_IDENTITIES: dict[str, ReleasedIdentity] = {}
+
 _POOLED_QUOTE = (
     "Briefly, $7 0 0 ~ \\mu \\mathrm { L }$ yeast cultures were grown $+ / -$ a drug "
     "listed in Additional file 8, and $+ / -$ ATc) in 48 well plates at $3 0 ~ ^ { \\circ "
@@ -272,6 +307,14 @@ REPLICATE_STRUCTURE = _paper(
     "Recording 8 or 3 here would shrink the stored SE by sqrt(8) or sqrt(3) against a "
     "variance that is already the combined estimate's",
 )
+COMPOUND_LIST = _paper(
+    "Additional file 8",
+    "All chemical compounds used in this study are listed in Additional file 8.",
+    note="Additional file 8 (13059_2016_900_MOESM8_ESM.xlsx, sha256 a22ef00ace51...) "
+    "gives each compound as 'Name of compound (alias in parentheses)' with its 'Vendor'; "
+    "for the ten catalog codes the name IS the code (ChemDiv, Chembridge, TimTec) and no "
+    "structure column exists, so the paper releases no identity for them",
+)
 UPSTREAM_FILTER = _paper(
     "30 reads in the -ATc control",
     "gRNAs with fewer than 30 reads following growth in the minus ATc control condition "
@@ -301,6 +344,39 @@ _UNIT_MAP = {
     "uM": ConcentrationUnit.micromolar,
     "nM": ConcentrationUnit.nanomolar,
 }
+
+
+def drug_is_identified(drug: str) -> bool:
+    """Whether a Drug label names identified material (``UNIDENTIFIED_COMPOUND_RULE``).
+
+    Identified unless the pinned identity table marks the label PROPRIETARY (a vendor
+    catalog code with no released structure) and ``RELEASED_IDENTITIES`` has no entry
+    for it. A public name the table has not resolved yet is identified.
+    """
+    if drug in RELEASED_IDENTITIES:
+        return True
+    status = resolve_compound_identity(name=drug).status
+    return status is not CompoundResolutionStatus.PROPRIETARY
+
+
+def released_compound(drug: str) -> Compound:
+    """The drug's ``Compound``: the resolver, or an admission-table entry's identity."""
+    released = RELEASED_IDENTITIES.get(drug)
+    if released is None:
+        return resolved_compound(drug)
+    compound = resolved_compound(
+        released.name or drug, smiles=released.smiles, derive_from_smiles=True
+    )
+    if released.inchikey is not None and compound.inchikey is None:
+        compound = compound.model_copy(
+            update={
+                "inchikey": released.inchikey,
+                "provenance_gaps": [
+                    gap for gap in compound.provenance_gaps if gap.field != "inchikey"
+                ],
+            }
+        )
+    return compound
 
 
 def parse_concentration(drug: str, raw: Any) -> Concentration:
@@ -448,11 +524,20 @@ class GappedCompound(BaseModel):
     n_records: int
 
 
+class HeldOutDrug(BaseModel):
+    """One drug held out under ``UNIDENTIFIED_COMPOUND_RULE``, with its doses and rows."""
+
+    drug: str
+    concentrations: list[str]
+    n_records: int
+
+
 class DropLog(BaseModel):
     """Every retention rule applied to a build, in order, plus the gapped compounds.
 
-    ``compound_identity_gaps`` are not drops: those rows are stored, each compound
-    carrying its typed gap.
+    ``compound_identity_gaps`` are not drops: those rows are stored, each identified
+    compound carrying its typed gap. ``unidentified_compounds_held_out`` are the rows of
+    the ``UNIDENTIFIED_COMPOUND_RULE`` rule, per drug, with the quote that grounds it.
     """
 
     dataset: str
@@ -461,6 +546,8 @@ class DropLog(BaseModel):
     dropped_records: int
     rules: list[DropRule]
     compound_identity_gaps: list[GappedCompound] = []
+    unidentified_compounds_held_out: list[HeldOutDrug] = []
+    unidentified_compound_sources: list[SourcedValue] = []
 
 
 @register_dataset
@@ -550,7 +637,7 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
             temperature=Temperature(value=TEMPERATURE_C.value),
             perturbations=[
                 SmallMoleculePerturbation(
-                    compound=resolved_compound(drug),
+                    compound=released_compound(drug),
                     concentration=parse_concentration(drug, conc_raw),
                 )
             ],
@@ -614,15 +701,23 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
         idx = 0
         n_nan = n_no_spacer = 0
+        held_out: dict[str, int] = {}
+        held_out_doses: dict[str, set[str]] = {}
         released_targets: set[str] = set()
         no_spacer_guides: set[str] = set()
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for _, row in tqdm(df.iterrows(), total=len(df), desc="smith2016"):
+                drug = str(row["Drug"])
+                if not drug_is_identified(drug):
+                    held_out[drug] = held_out.get(drug, 0) + 1
+                    held_out_doses.setdefault(drug, set()).add(
+                        str(row["Concentration"])
+                    )
+                    continue
                 effect, variance = row["A"], row["var(A)"]
                 if pd.isna(effect) or pd.isna(variance):
                     n_nan += 1
                     continue
-                drug = str(row["Drug"])
                 orf, gene, placed = self._released_target(row["ORF"], row["Gene"])
                 if not placed:
                     released_targets.add(orf)
@@ -685,6 +780,13 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
 
         rules = [
             DropRule(
+                rule=UNIDENTIFIED_COMPOUND_RULE,
+                scope="compound",
+                description=UNIDENTIFIED_COMPOUND_POLICY,
+                n_records=sum(held_out.values()),
+                items=sorted(held_out),
+            ),
+            DropRule(
                 rule="row_has_no_A_or_var_A",
                 scope="row",
                 description=(
@@ -741,6 +843,15 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
             dropped_records=source_records - idx,
             rules=rules,
             compound_identity_gaps=compound_identity_gaps,
+            unidentified_compounds_held_out=[
+                HeldOutDrug(
+                    drug=drug,
+                    concentrations=sorted(held_out_doses[drug]),
+                    n_records=count,
+                )
+                for drug, count in sorted(held_out.items())
+            ],
+            unidentified_compound_sources=[COMPOUND_LIST],
         )
         with open(osp.join(self.preprocess_dir, "dropped_records.json"), "w") as handle:
             handle.write(drop_log.model_dump_json(indent=2))
@@ -752,12 +863,15 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
             )
         log.info(
             "Smith2016: wrote %d of %d rows (%d under a typed compound-identity gap on "
-            "%d vendor-code drugs); %d with no A/var(A), %d targets on the "
-            "released-identifier leaf, %d guides with no spacer",
+            "%d drugs); held out %d rows of %d unidentified vendor-code drugs; %d with "
+            "no A/var(A), %d targets on the released-identifier leaf, %d guides with no "
+            "spacer",
             idx,
             source_records,
             sum(gapped_records.values()),
             len(gapped_records),
+            sum(held_out.values()),
+            len(held_out),
             n_nan,
             len(released_targets),
             n_no_spacer,

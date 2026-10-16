@@ -73,9 +73,15 @@ Each panel is described in the paragraph after the figure, with its status.}{fig
 standard (a fixed bond of 0.381 cm, a 0.6 pt line, double bonds spaced at 18 percent
 of the bond, Arial labels at the figure-text size, implicit hydrogens on the
 heteroatoms only; RDKit's ACS mode through \texttt{torchcell.utils.acs\_structure}),
-in the two families a dilute-acid hydrolysate carries: the furan aldehydes from sugar
-dehydration (pentoses to furfural, hexoses to 5-HMF) and the weak acids (5-HMF opens to
-levulinic and formic acid, acetyl groups release acetic acid). Under each, the host's
+in a three-by-three: each row an acid, the aldehyde or keto inhibitor, and on the
+measured-value field the Vanacloig 2022 compound nearest that inhibitor by FCFP4
+count Tanimoto over the pool's curated SMILES, so the reader sees which drawn
+molecules the task holds a profile for: 4-hydroxybenzaldehyde beside furfural
+(\hydneighborFfSimilarity{}), vanillin beside 5-HMF (\hydneighborHmfSimilarity{}),
+methylglyoxal beside levulinic acid (\hydneighborLvaSimilarity{}). The hydrolysate's
+two families are the furan aldehydes from sugar dehydration (pentoses to furfural,
+hexoses to 5-HMF) and the weak acids (5-HMF opens to levulinic and formic acid,
+acetyl groups release acetic acid). After each inhibitor's name, the host's
 half-maximal dose from its titration fit. The host meets all six together.
 \status{todo}\,\fstat{file}
 \textbf{b}, What the mixture trainer reads, from the counts a four-source run writes:
@@ -204,7 +210,8 @@ than a cleared difference. \status{todo}\,\fstat{file}
 \toprule
 \multicolumn{2}{@{}l}{\textbf{Sources for \cref{fig:main}}} \\
 \midrule
-a & \file{profile_fingerprint_check.csv} (the curated SMILES) and
+a & \file{profile_fingerprint_check.csv} (the curated SMILES, and the FCFP4 count
+Tanimoto that picks each inhibitor's nearest Vanacloig compound) and
 \file{scripts/mixture_data.py} \texttt{IDENTITY\_GAP\_SMILES} for formic and lactic
 acid; \file{single_agent_fits.csv} for the half-maximal doses. The structures are
 RDKit's ACS 1996 drawings as vector paths (\texttt{torchcell.utils.acs\_structure}).

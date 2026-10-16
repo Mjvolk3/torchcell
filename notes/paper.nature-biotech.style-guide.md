@@ -60,6 +60,16 @@ Related: [[paper.proof-writing-standard]], [[paper.nature-biotech.figures]],
   (full 179 / wide 118.9 / half 88 / third 57.8 / sixth 28.3 mm) + `mm_to_in`; height
   `<= MAX_HEIGHT_MM` (170). Box all four spines (~0.5 pt). Arial 6 pt, `svg.fonttype: none`.
 - Tenth gridlines on 0--1 axes (`MultipleLocator(0.2)` major + `0.1` minor, minor ticks hidden).
+- **Chemical structures: the ACS 1996 drawing standard, via
+  `torchcell.utils.acs_structure`** (2026.10.15). ChemDraw's "ACS Document 1996"
+  template is what Nature and the ACS journals accept: bond 0.381 cm (10.8 pt), line
+  0.021 cm (0.6 pt), double-bond spacing 18 percent of the bond, Arial labels at the
+  figure-text size (6 pt), implicit hydrogens on heteroatoms only, no terminal-carbon
+  labels. The helper runs RDKit's `SetACS1996Mode`, rescales the bond to 10.8 pt, sets
+  Arial, and places the drawing as vector paths in points, so a structure never scales
+  with its axes and every bond on a sheet is the same length. Lay the slot out from the
+  structure's width (`acs_structure_svg`), anchor in axes fraction, name it with an
+  offset-points annotation. First use: panel a of the environment case-study gate.
 - Export true-size via `torchcell.utils.savefig_true_size_svg` (rescales 72 -> 100 dpi for
   draw.io); do NOT pass `bbox_inches="tight"` on a fixed-width panel.
 - Compose in draw.io at Nature print size (180 mm full / 88 mm column, `<= 170` mm tall);

@@ -64,15 +64,20 @@ block is marked idea even though its counts are on file. \\
 %% its height cap, 179 by 170 mm, so it sits here exactly as it would print. The
 %% panel-by-panel text is too long to share a page with the sheet as a caption, so
 %% the caption is the headline and the panels are described in the paragraph after.
-\tcfig{\figMain}{\textbf{The sheet proposed for the main text, the four-by-three of
-the experiment note.} Columns: the task and the data (left), the public screens
-(middle), the private wet-lab readout (right). Each panel is described in the
-paragraph after the figure, with its status.}{fig:main}
+\tcfig{\figMain}{\textbf{The sheet proposed for the main text: the task on the top
+row, then the public benchmark, composition, and the wet lab, four panels to a row.}
+Each panel is described in the paragraph after the figure, with its status.}{fig:main}
 
 \textbf{Panels of \cref{fig:main}.}
-\textbf{a}, The six inhibitors as skeletal structures from their curated SMILES, in the
-two families a dilute-acid hydrolysate carries, with the host's half-maximal dose from
-its titration fit under each. \status{todo}\,\fstat{file}
+\textbf{a}, The six inhibitors from their curated SMILES at the ACS 1996 drawing
+standard (a fixed bond of 0.381 cm, a 0.6 pt line, double bonds spaced at 18 percent
+of the bond, Arial labels at the figure-text size, implicit hydrogens on the
+heteroatoms only; RDKit's ACS mode through \texttt{torchcell.utils.acs\_structure}),
+in the two families a dilute-acid hydrolysate carries: the furan aldehydes from sugar
+dehydration (pentoses to furfural, hexoses to 5-HMF) and the weak acids (5-HMF opens to
+levulinic and formic acid, acetyl groups release acetic acid). Under each, the host's
+half-maximal dose from its titration fit. The host meets all six together.
+\status{todo}\,\fstat{file}
 \textbf{b}, What the mixture trainer reads, from the counts a four-source run writes:
 compounds per source, each bar annotated with its cells, genes and conditions and the
 culture it was screened in. The task's profiles are \hydnVanacloigCells{} anaerobic,
@@ -81,9 +86,18 @@ static cells over \hydnVanacloigCompounds{} compounds; the auxiliary screens add
 \hydnFourSourceCells{} in all. The host readout is aerobic, shaken YPD, a different
 oxygen regime from the profiles. The anchors and the titration are trained on; the
 combinations and the isobole grids never. \status{todo}\,\fstat{file}
-\textbf{c}, The model in one strip, a compound token with its dose in front of the gene
-tokens, read at the deleted genes or at the gene mean, and how each side is scored and
-against what. A layout whose numbers are on file. \status{todo}\,\fstat{idea}
+\textbf{c}, The model as a cartoon, in three rows. One inhibitor (furfural, drawn as in
+a) is featurized as its \hydnFingerprintBits{} FCFP4 counts and passed through the
+compound MLP to one token; under the dose offset of round ten the token stays dose-free
+and its dose scales the medium offset. The token sits in front of the
+\hydnGeneTokens{} gene tokens of the frozen cell graph transformer (a strain's deleted
+genes dark; the host is the empty set); one further transformer layer reads them
+together and one head reads either the rows at the deleted genes, the strain's response
+profile, or the mean over the genes, the host's growth. A mixture is a set of tokens,
+each read alone through that head, and the readings compose as Bliss independence: a
+product on the host's fitness scale, a sum on a screen's log response. The model is
+then scored on the \hydnCombinations{} combinations it never saw. A layout; the
+counts are the trainer's. \status{todo}\,\fstat{idea}
 \textbf{d}, The ladder, ten best arms of \hydladderNArms{}: nested ridge on fingerprint
 counts reads \hydladderRidge{}, the next arm \hydladderSecond{}, the tenth
 \hydladderTenth{}. \status{todo}\,\fstat{file}
@@ -102,22 +116,35 @@ encoder (038 round 17, \hydcurveEncEvaluations{} compound-evaluations per point)
 \hydcurveEncEight{}, \hydcurveEncOneSix{} and \hydcurveEncTwoFour{} at eight, sixteen
 and twenty-four, below ridge at every count and closing on it.
 \status{todo}\,\fstat{file}
-\textbf{g}, Dose, the host's potency against the screen's: furfural
+\textbf{g}, The public screens added to the task under the Bliss cell readout, the
+compound-cold centered Spearman as the mean over every run on fold seed 0 with the run
+spread as the whisker: one source \hydrOneZeroonegenemean{} (\hydrOneZeroonegenen{}
+runs), with Hoepfner HOP \hydrOneZerohopgenemean{}, with Hillenmeyer HET
+\hydrOneZerohetgenemean{}, with Wildenhain \hydrOneZerowilgenemean{}, three
+\hydrOneZerothreegenemean{}, four \hydrOneZerofourgenemean{}, every one inside one
+spread and below nested ridge at \hydladderRidge{}. No screen lifts the task.
+\status{todo}\,\fstat{file}
+\textbf{h}, Dose, the host's potency against the screen's: furfural
 \hydicThirtyFf{} millimolar against \hydvanacloigFf{}, ratio \hydratioFf{}; 5-HMF
 \hydicThirtyHmf{} against \hydvanacloigHmf{}, ratio \hydratioHmf{}; the other four are in
 no screen. \status{todo}\,\fstat{file}
-\textbf{h}, How a pair's profile composes from its singles over \hydhetPairs{} public
+\textbf{i}, How a pair's profile composes from its singles over \hydhetPairs{} public
 pairs: the mean is best in \hydhetMeanWins{}, median R-squared \hydhetrTwomean{} against
 \hydhetrTwosum{} for the sum and \hydhetrTwomax{} for the highest single.
 \status{todo}\,\fstat{file}
-\textbf{i}, The predicted profile against the measured one. Furfural: the screen repeats
+\textbf{j}, The predicted profile against the measured one. Furfural: the screen repeats
 itself at \hydprofFfReliability{}, ridge reads \hydprofFfRidge{}; 5-HMF:
 \hydprofHmfReliability{}, which is noise, against \hydprofHmfRidge{}. The two profiles
 share \hydgoSharedTermsStore{} significant terms. The cell graph transformer, every
 round-3 and round-4 run on both machines in which the compound was held out: furfural
 \hydprofFfCgt{} over \hydprofFfCgtRuns{} runs, 5-HMF \hydprofHmfCgt{} over
 \hydprofHmfCgtRuns{}, with the run spread as the whisker. \status{todo}\,\fstat{file}
-\textbf{j}, The six titrations with their Hill fits, dose in units of each compound's own
+\textbf{k}, The pre-registered test, which FAILS: does the similarity of two
+inhibitors' profiles anticipate how far their pair departs from Bliss. With measured
+profiles where one exists the association is \hydsvdBestSpearman{} at a permutation p
+of \hydsvdBestP{} over \hydsvdBestPairs{} pairs; with every profile predicted by ridge
+it is \hydsvdPredSpearman{} at p \hydsvdPredP{}. \status{todo}\,\fstat{file}
+\textbf{l}, The six titrations with their Hill fits, dose in units of each compound's own
 half-maximal dose; slopes run \hydhillMin{} to \hydhillMax{}. Dotted, the model whose
 host, the empty genotype read through the shared cell head, trained on the public
 anchors alone: a flat line at the anchors' assumed
@@ -128,7 +155,7 @@ still nearly flat in dose, because without a dose channel the host reads one val
 compound. Dash-dot, the same model with the dose offset (round ten): the compound tokens
 stay dose-free and the dose scales the medium offset, so the curve falls with dose,
 Spearman \hydexTwoOneDoseSpearman{} on these wells. \status{todo}\,\fstat{file}
-\textbf{k}, The combinations that grew, observed against the two rules, by number of
+\textbf{m}, The combinations that grew, observed against the two rules, by number of
 inhibitors. Growth AUROC: Loewe \hydloeweAuroc{}, Bliss \hydblissAuroc{}. Fitness
 Spearman: Bliss \hydblissSpearman{}, Loewe \hydloeweSpearman{}. The fourth bar is the
 model (single source, cell readout, trained on the anchors and the titration, mean
@@ -137,25 +164,36 @@ medium one inhibitor at a time through the
 shared head and composes the readings as Bliss independence: its predicted fitness
 falls with the inhibitor count, growth AUROC \hydmodelAuroc{}, fitness Spearman
 \hydmodelGrownSpearman{}. The fifth bar, lighter, is the same model with the dose
-offset (\hydmodelDoseRuns{} runs): it reads the titration (j) and still composes,
+offset (\hydmodelDoseRuns{} runs): it reads the titration (l) and still composes,
 growth AUROC \hydmodelDoseAuroc{}, fitness Spearman \hydmodelDoseGrownSpearman{}, with
 the fitness at one inhibitor at the observed level and a shallower fall at two and
 three. Under mean pooling of the inhibitor tokens the same model read one fitness at
 every count (AUROC 0.535). \status{todo}\,\fstat{file}
-\textbf{l}, The \hydnIsoboles{} isobole grids as observed fitness, white at none, with
-the cells that grew marked and each rule's front drawn where its predicted fitness
-crosses the growth threshold: Bliss in red, Loewe in purple. Mean observed minus Bliss
-over the \hydisoboleExTwoSixCells{} interior cells: \hydisoboleExTwoSixExcess{},
-\hydisoboleExTwoSevenExcess{} and \hydisoboleExTwoEightExcess{}, the last a single run
-with growth islands and flagged. Dotted, the Bliss-composed model's front after the
-monotone closure, inside the grid for the first time: the model's mean observed minus
-predicted over the interior cells is -0.084, +0.016 and -0.102, against the rule's
--0.082, -0.446 and -0.017, so on the formic acid grid, where the rule on measured
-singles overpredicts by 0.45, the model is within 0.02. A caveat the sheet carries:
-the model's single-agent curves are nearly flat in dose (j), so a product of two low
-readings matching a low interior is not yet evidence that it reads the interaction;
-the closure drops \hydisoboleExTwoSixModelIslands{} cells on the furfural grid.
-\status{todo}\,\fstat{file}
+\textbf{n}, The \hydnIsoboles{} isobole grids as observed fitness, white at none, each
+grid's inhibitor named on its lower edge and acetic acid on every grid's left edge,
+with the cells that grew marked and each rule's front drawn where its predicted fitness
+crosses the growth threshold: Bliss in red, Loewe in purple, every front a solid line
+over a white halo. Mean observed minus Bliss over the \hydisoboleExTwoSixCells{}
+interior cells: \hydisoboleExTwoSixExcess{}, \hydisoboleExTwoSevenExcess{} and
+\hydisoboleExTwoEightExcess{}, the last a single run with growth islands and flagged.
+In blue, the Bliss-composed model's front after the monotone closure, inside the grid
+for the first time: the model's mean observed minus predicted over the interior cells
+is -0.084, +0.016 and -0.102, against the rule's -0.082, -0.446 and -0.017, so on the
+formic acid grid, where the rule on measured singles overpredicts by 0.45, the model is
+within 0.02. The dose-offset arm is scored on the same grids (supplement eight) and not
+drawn. A caveat the sheet carries: the model's single-agent curves are nearly flat in
+dose (l), so a product of two low readings matching a low interior is not yet evidence
+that it reads the interaction; the closure drops \hydisoboleExTwoSixModelIslands{}
+cells on the furfural grid. \status{todo}\,\fstat{file}
+\textbf{o}, The arms of g on the wet lab: growth AUROC over the \hydnCombinations{}
+combinations, mean over runs on fold seed 0 with the run spread. The fitted arms, which
+train on the titration, read \hydrOneZeroonegrowthmean{} with one source to
+\hydrOneZerofourgrowthmean{} with four. The zero-shot arms, which never see a titration
+well, read \hydrOneZerozsOnegrowthmean{}, \hydrOneZerozsTwogrowthmean{} and
+\hydrOneZerozsThreegrowthmean{} on one, two and three sources
+(\hydrOneZerozsOnegrowthn{} runs each), against Loewe at \hydloeweAuroc{}: a rise with
+every screen added, with the steps inside the spread, so a measured ordering rather
+than a cleared difference. \status{todo}\,\fstat{file}
 
 %% The float is flushed before its source table is set: a deferred float
 %% otherwise lands on the page AFTER the table that describes it.
@@ -169,15 +207,17 @@ the closure drops \hydisoboleExTwoSixModelIslands{} cells on the furfural grid.
 a & \file{profile_fingerprint_check.csv} (the curated SMILES) and
 \file{scripts/mixture_data.py} \texttt{IDENTITY\_GAP\_SMILES} for formic and lactic
 acid; \file{single_agent_fits.csv} for the half-maximal doses. The structures are
-RDKit 2D coordinates drawn as lines. Status: on file. \\
+RDKit's ACS 1996 drawings as vector paths (\texttt{torchcell.utils.acs\_structure}).
+Status: on file. \\
 b & \file{results/mixture-delta/r3_vanhophetwil_e150_p0/*_f0_counts.csv}, the
 per-source counts \file{scripts/train_mixture.py} writes beside every run; the culture
 conditions are the loaders' sourced values (\file{vanacloig2022.py},
 \file{hoepfner2014.py}, \file{hillenmeyer2008.py}, \file{wildenhain2015.py},
 \file{private_torchcell/bioscreen.py}; the Bioscreen archive states no shaking, so
 ``shaken'' is the operator's statement). Status: on file. \\
-c & \file{038/ladder/ladder_r2_scores.csv}, \file{mixture_scores.csv}; the boxes are a
-layout. Status: idea. \\
+c & \file{scripts/train_mixture.py} (the architecture, \texttt{MixtureModel}) and
+\file{scripts/mixture_data.py} (the fingerprint); the drawing is a layout. Status:
+idea. \\
 d & \file{038/ladder/ladder_r2_summary.csv}, centered target, full compound count.
 Status: on file. \\
 e & \file{038/ladder/ladder_r2_summary.csv}; \file{038/factorized/r9_control/*_scores.csv};
@@ -185,22 +225,30 @@ e & \file{038/ladder/ladder_r2_summary.csv}; \file{038/factorized/r9_control/*_s
 for the mixture-trainer bar. Status: on file. \\
 f & \file{035/learning_curve/ridge_curve.csv}, centered target;
 \file{038/factorized/r17_curve/*_scores.csv} for the encoder. Status: on file. \\
-g & \file{single_agent_fits.csv} (the host, with bootstrap intervals from
+g & every \file{results/mixture*/r10_*_cell_bliss*/*_scores.csv} on both machines
+(fold seed 0), the \texttt{centered\_spearman\_median} rows on the held-out compounds.
+Status: on file. \\
+h & \file{single_agent_fits.csv} (the host, with bootstrap intervals from
 \file{single_agent_bootstrap.csv}); \file{vanacloig_ic30.csv} (the screen). Status: on
 file. \\
-h & \file{het_rule_fit.csv}, \file{het_summary.json}. Status: on file. \\
-i & \file{profile_predicted_vs_measured.csv} (\texttt{loco\_32}, centered);
+i & \file{het_rule_fit.csv}, \file{het_summary.json}. Status: on file. \\
+j & \file{profile_predicted_vs_measured.csv} (\texttt{loco\_32}, centered);
 \file{go_overlap_measured_vs_predicted.csv}; every
 \file{results/mixture*/r[34]*/*_vanacloig_compounds.csv} on both machines for the
 transformer. Status: on file. \\
-j & \file{wetlab_wells.csv}, \file{single_agent_fits.csv},
+k & \file{similarity_vs_deviation_pairs.csv}, \file{similarity_vs_deviation.csv}
+(both profile versions, the served growth call). Status: on file. \\
+l & \file{wetlab_wells.csv}, \file{single_agent_fits.csv},
 \file{single_agent_bootstrap.csv}; \file{results/host_predictions.csv}
-(\file{scripts/r3_host_predictions.py}) for the two model curves. Status: on file. \\
-k & \file{mixture_combinations.csv}, \file{mixture_scores.csv}, served call;
-\file{results/host_predictions.csv} for the model bar. Status: on file. \\
-l & \file{isobole_cells.csv}, \file{isobole_summary.csv};
+(\file{scripts/r3_host_predictions.py}) for the model curves. Status: on file. \\
+m & \file{mixture_combinations.csv}, \file{mixture_scores.csv}, served call;
+\file{results/host_predictions.csv} for the model bars. Status: on file. \\
+n & \file{isobole_cells.csv}, \file{isobole_summary.csv};
 \file{results/host_predictions.csv} and \file{mixture_rules.monotone_alive} for the
 model front. Status: on file. \\
+o & the same runs as g, their \texttt{growth\_auroc} rows on the served call of the
+ex23 combinations, with the anchors-only arms beside the fitted ones. Status: on
+file. \\
 \bottomrule
 \end{tabular}}
 

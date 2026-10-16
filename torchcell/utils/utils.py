@@ -323,6 +323,179 @@ def savefig_true_size_svg(
         f.write(svg)
 
 
+# --- Chemical structures at the ACS 1996 standard --------------------------------
+#
+# The publication standard for a drawn structure is ChemDraw's "ACS Document 1996"
+# template, which Nature and the ACS journals accept as submitted: a fixed bond length
+# of 0.381 cm, double-bond spacing at 18 percent of the bond length, a 0.021 cm line,
+# Arial labels with implicit hydrogens shown on heteroatoms (HO, OH, NH) and none on
+# the carbon skeleton. RDKit implements the same template (``SetACS1996Mode``: bond
+# 14.4 pt, line 0.6 pt, offset 0.18, monochrome, 10 pt labels); here the bond is
+# rescaled to the ACS length in points and the label to Nature's figure-text size, so
+# a structure drawn into a panel at ``fontsize=6`` matches the panel's own type.
+ACS_BOND_PT = 10.8  # 0.381 cm, the ACS 1996 fixed bond length
+ACS_LINE_PT = 0.6  # 0.021 cm, the ACS 1996 line width
+ACS_FONT_PT = 6.0  # atom labels, Nature's figure-text default (band 5 to 7 pt)
+
+_SVG_NUMBER = re.compile(r"[-+]?(?:\d+\.\d*|\.\d+|\d+)(?:[eE][-+]?\d+)?")
+_SVG_COMMAND = re.compile(r"([MLQCZ])([^MLQCZ]*)")
+
+
+def _svg_path(d: str) -> Any:
+    """An absolute SVG path (M, L, Q, C, Z) as a matplotlib :class:`Path`.
+
+    RDKit writes nothing else: bonds are ``M x,y L x,y`` lines and FreeType glyph
+    outlines are ``M``, ``L``, ``Q`` and ``Z`` runs. A relative command is a
+    malformed input here and raises.
+    """
+    from matplotlib.path import Path
+
+    verts: list[tuple[float, float]] = []
+    codes: list[Any] = []
+    for cmd, body in _SVG_COMMAND.findall(d):
+        nums = [float(x) for x in _SVG_NUMBER.findall(body)]
+        if cmd == "M":
+            verts.append((nums[0], nums[1]))
+            codes.append(Path.MOVETO)
+            for p in zip(nums[2::2], nums[3::2], strict=True):
+                verts.append(p)
+                codes.append(Path.LINETO)
+        elif cmd == "L":
+            for p in zip(nums[0::2], nums[1::2], strict=True):
+                verts.append(p)
+                codes.append(Path.LINETO)
+        elif cmd == "Q":
+            for i in range(0, len(nums), 4):
+                verts.extend([(nums[i], nums[i + 1]), (nums[i + 2], nums[i + 3])])
+                codes.extend([Path.CURVE3, Path.CURVE3])
+        elif cmd == "C":
+            for i in range(0, len(nums), 6):
+                verts.extend(
+                    [
+                        (nums[i], nums[i + 1]),
+                        (nums[i + 2], nums[i + 3]),
+                        (nums[i + 4], nums[i + 5]),
+                    ]
+                )
+                codes.extend([Path.CURVE4] * 3)
+        else:
+            verts.append(verts[-1])
+            codes.append(Path.CLOSEPOLY)
+    return Path(verts, codes)
+
+
+def acs_structure_svg(
+    smiles: str,
+    bond_pt: float = ACS_BOND_PT,
+    font_pt: float = ACS_FONT_PT,
+    line_pt: float = ACS_LINE_PT,
+) -> tuple[str, float, float]:
+    """RDKit's ACS 1996 drawing of ``smiles`` as SVG text, with its width and height.
+
+    The canvas is flexible (RDKit sizes it to the molecule), one SVG pixel is one
+    point, the bond is ``bond_pt`` long, the labels are set in Arial at ``font_pt``
+    as glyph outlines (so the drawing needs no font at render time), and the line is
+    ``line_pt`` wide. Returns ``(svg, width_pt, height_pt)``.
+    """
+    from matplotlib import font_manager
+    from rdkit import Chem
+    from rdkit.Chem import rdDepictor
+    from rdkit.Chem.Draw import rdMolDraw2D
+
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        raise ValueError(f"acs_structure_svg: RDKit cannot parse {smiles!r}")
+    rdDepictor.Compute2DCoords(mol)
+    drawer = rdMolDraw2D.MolDraw2DSVG(-1, -1)
+    # RDKit's stub types every attribute of the options object as the object itself,
+    # so the assignments below are typed through Any
+    opts: Any = drawer.drawOptions()
+    mean_bond = rdMolDraw2D.MeanBondLength(mol)
+    rdMolDraw2D.SetACS1996Mode(opts, mean_bond)
+    opts.scalingFactor = bond_pt / mean_bond
+    opts.fixedFontSize = int(round(font_pt))
+    opts.bondLineWidth = line_pt
+    opts.fontFile = font_manager.findfont("Arial")
+    opts.padding = 0.02
+    drawer.DrawMolecule(mol)
+    drawer.FinishDrawing()
+    svg = drawer.GetDrawingText()
+    m = re.search(r"width='([\d.]+)px' height='([\d.]+)px'", svg)
+    if m is None:
+        raise ValueError("acs_structure_svg: RDKit wrote no pixel size")
+    return svg, float(m.group(1)), float(m.group(2))
+
+
+def acs_structure_box(smiles: str, **kwargs: Any) -> Any:
+    """The ACS 1996 structure as a :class:`DrawingArea` in points, black on nothing.
+
+    Every RDKit path becomes a matplotlib patch: a stroked path for a bond (its
+    ``stroke-width`` kept, butt caps, miter joins, as RDKit draws it) and a filled
+    path for a glyph outline. The area has no background, so it sits on a panel's
+    own fill. ``kwargs`` go to :func:`acs_structure_svg`.
+    """
+    from matplotlib.offsetbox import DrawingArea
+    from matplotlib.patches import PathPatch
+    from matplotlib.transforms import Affine2D
+
+    svg, w, h = acs_structure_svg(smiles, **kwargs)
+    area = DrawingArea(w, h, 0, 0)
+    flip = Affine2D().scale(1, -1).translate(0, h)  # SVG y runs down
+    for m in re.finditer(r"<path([^>]*)/>", svg):
+        attrs = m.group(1)
+        m_d = re.search(r"d='([^']*)'", attrs)
+        if m_d is None:
+            continue
+        path = _svg_path(m_d.group(1)).transformed(flip)
+        m_style = re.search(r"style='([^']*)'", attrs)
+        style = m_style.group(1) if m_style else ""
+        if "fill:none" in style:
+            m_lw = re.search(r"stroke-width:([\d.]+)px", style)
+            lw = float(m_lw.group(1)) if m_lw else ACS_LINE_PT
+            area.add_artist(
+                PathPatch(
+                    path,
+                    facecolor="none",
+                    edgecolor="black",
+                    linewidth=lw,
+                    capstyle="butt",
+                    joinstyle="miter",
+                )
+            )
+        else:
+            area.add_artist(
+                PathPatch(path, facecolor="black", edgecolor="none", linewidth=0)
+            )
+    return area
+
+
+def acs_structure(
+    ax: "Axes",
+    smiles: str,
+    xy: tuple[float, float],
+    xycoords: str = "data",
+    box_alignment: tuple[float, float] = (0.5, 0.5),
+    **kwargs: Any,
+) -> tuple[Any, float, float]:
+    """Draw ``smiles`` at the ACS 1996 standard, anchored at ``xy`` on ``ax``.
+
+    The structure keeps its physical size whatever the axes' data scale, because the
+    drawing area is in points, so two structures on one sheet have the same bond
+    length, which is what the standard fixes. ``box_alignment`` is the point of the
+    structure's box that sits on ``xy`` (``(0.5, 0.5)`` its center). Returns the
+    :class:`AnnotationBbox` and the structure's width and height in points, so the
+    caller can place a name under it. ``kwargs`` go to :func:`acs_structure_svg`.
+    """
+    from matplotlib.offsetbox import AnnotationBbox
+
+    area = acs_structure_box(smiles, **kwargs)
+    box = AnnotationBbox(
+        area, xy, xycoords=xycoords, frameon=False, pad=0.0, box_alignment=box_alignment
+    )
+    ax.add_artist(box)
+    return box, float(area.width), float(area.height)
+
+
 def format_scientific_notation(num: float) -> str:
     """Format a number into scientific notation, preserving all significant digits.
 

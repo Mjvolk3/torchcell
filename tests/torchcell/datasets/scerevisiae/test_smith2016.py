@@ -29,6 +29,7 @@ from torchcell.datamodels.schema import (
     UncertaintyType,
 )
 from torchcell.datasets.scerevisiae import smith2016 as s
+from torchcell.datasets.scerevisiae.hoepfner2014 import ReleasedIdentity
 from torchcell.verification.sourced import SourcedValue, audit_sourced_value
 
 #: Every non-DMSO public compound the screen dosed, and every vendor catalog code.
@@ -71,21 +72,36 @@ def test_the_released_tamoxifen_alias_is_what_keeps_nsc_180973() -> None:
 
 
 @pytest.mark.parametrize("code", VENDOR_CODES)
-def test_vendor_catalog_codes_are_stored_under_a_terminal_identity_gap(
-    code: str,
-) -> None:
-    """A vendor code is PROPRIETARY in the pinned table; its records are stored with the
-    compound named by the released label and a ``not_reported_by_primary`` gap on
-    ``inchikey`` (#1045), never dropped.
+def test_vendor_catalog_codes_are_unidentified_and_held_out(code: str) -> None:
+    """A vendor code is PROPRIETARY in the pinned table and the admission table is
+    empty, so ``drug_is_identified`` is False and its rows are held out under
+    ``UNIDENTIFIED_COMPOUND_RULE`` (2026.10.15), never stored with an inchikey gap.
     """
     resolution = resolve_compound_identity(name=code)
     assert not resolution.identified
     assert resolution.status.value == "PROPRIETARY"
-    compound = resolved_compound(code)
-    assert compound.name == code and compound.inchikey is None
-    assert [(g.field, g.reason.value) for g in compound.provenance_gaps] == [
-        ("inchikey", "not_reported_by_primary")
-    ]
+    assert s.RELEASED_IDENTITIES == {}
+    assert s.drug_is_identified(code) is False
+
+
+@pytest.mark.parametrize("drug", PUBLIC_DRUGS)
+def test_public_drugs_are_identified(drug: str) -> None:
+    assert s.drug_is_identified(drug) is True
+
+
+def test_an_admission_table_entry_admits_a_vendor_code(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A ``RELEASED_IDENTITIES`` entry is the only route in for a held-out code: with
+    one, the code is identified and its compound is built from the entry's identity.
+    """
+    release = ReleasedIdentity(name="Fluconazole", source=s.COMPOUND_LIST)
+    monkeypatch.setitem(s.RELEASED_IDENTITIES, "1181-0519", release)
+    assert s.drug_is_identified("1181-0519") is True
+    compound = s.released_compound("1181-0519")
+    assert compound.name == resolved_compound("Fluconazole").name
+    assert compound.inchikey == resolved_compound("Fluconazole").inchikey
+    assert compound.inchikey is not None
 
 
 def test_the_medium_is_the_shared_sc_ura_object() -> None:

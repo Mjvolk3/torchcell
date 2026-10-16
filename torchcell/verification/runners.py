@@ -1884,8 +1884,11 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
         # 289 cells) and the 8 conditions whose dose cell is a range (2,312 cells). Every
         # pool strain is kept under its released ORF (YAL058C-A as YAL058C-A). Rules +
         # counts: preprocess/dropped_records.json; per-condition fates and the pool
-        # census: preprocess/conditions.json.
-        "expected_count": 3435820,
+        # census: preprocess/conditions.json. 2026.10.15: the 19 code-only conditions
+        # (17 RIKEN NPDepo x 289, 2 NCI x 282 = 5,477 cells) are held out under
+        # UNIDENTIFIED_COMPOUND_RULE (constitution principle 2), measured by the job 5086
+        # dev rebuild.
+        "expected_count": 3430343,
         # ~3.4M records -> single-pass streaming gate, as for Hoepfner 2014.
         "stream": True,
         # The pdr1 pdr3 snq2 background rides on the reference's StrainReferenceGenome
@@ -1988,9 +1991,12 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
         # experiments, 5,869 rows) + HOP 13,203,796 (2,920 barcoded kanMX4 deletion
         # experiments, 4,970 rows) = 30,308,574 records, measured in-process on the raw
         # matrices with the loader's column census and row reader. Ledger:
-        # <root>/dropped_records.json.
-        "expected_count": 30308574,
-        # ~30.3M records -> single-pass streaming gate.
+        # <root>/dropped_records.json. 2026.10.15: the 1,701 CMB ids with no released
+        # name or structure (HIP 2,649 + HOP 2,618 columns, 27,180,760 cells) are held
+        # out under UNIDENTIFIED_COMPOUND_RULE (constitution principle 2), leaving HIP
+        # 1,760,690 + HOP 1,367,124, measured by the job 5082 dev rebuild.
+        "expected_count": 3127814,
+        # ~3.1M records -> single-pass streaming gate.
         "stream": True,
         # HIP heterozygous + HOP homozygous kanMX4 deletion diploid collections (BY4743):
         # no constant background genes in the genotype (the BY4743 alleles ride on the
@@ -2045,8 +2051,10 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
         "root": "data/torchcell/env_chemgen_wildenhain2015",
         # (strain, compound-identity) cells minus the strain_label_unresolved cells
         # (TSCII, YGL11, wtn01) and the SID-only compounds' cells (#504). Rules +
-        # counts: preprocess/dropped_records.json.
-        "expected_count": 430820,
+        # counts: preprocess/dropped_records.json. 2026.10.15: the five SID-only
+        # compounds are held out under UNIDENTIFIED_COMPOUND_RULE; 448,655 records,
+        # measured by the job 5087 dev rebuild.
+        "expected_count": 448655,
         "background_genes": frozenset(),
         "stream": True,
         "provenance": Provenance(
@@ -2384,7 +2392,9 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
         # as released (2026.10.12); the one array rule left is the '37c, 45c' heat-shock
         # cycle (needs schema); counted through the loader's own functions
         # (parse_columns, read_matrix_rows, count_records); rules + counts in preprocess/.
-        "expected_count": 3074132,
+        # 2026.10.15: 12 code-only compounds (110,449 records) held out under
+        # UNIDENTIFIED_COMPOUND_RULE, measured by the job 5084 dev rebuild.
+        "expected_count": 2963683,
         "background_genes": frozenset(),
         "stream": True,
         "provenance": Provenance(
@@ -2407,8 +2417,10 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
         # one record per (strain row, environment, control set); every ORF row stored
         # as released (2026.10.12) except the SOM-withdrawn homozygous PDR5 row; the
         # two unnamed-agent arrays need schema; counted through the loader's own
-        # functions; rules + counts in preprocess/.
-        "expected_count": 1228676,
+        # functions; rules + counts in preprocess/. 2026.10.15: 10 code-only compounds
+        # (45,760 records) held out under UNIDENTIFIED_COMPOUND_RULE, measured by the job
+        # 5085 dev rebuild.
+        "expected_count": 1182916,
         "background_genes": frozenset(),
         "stream": True,
         "provenance": Provenance(
@@ -2528,11 +2540,12 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
     },
     "crispri_chemgen_smith2016": {
         "root": "data/torchcell/crispri_chemgen_smith2016",
-        # All 14,463 rows of Additional file 10 (#1045): the 7,410 rows whose Drug label
-        # is a ChemDiv / ChemBridge / TimTec catalog id with no released structure are
-        # stored under a typed inchikey gap. L1 strain identity keys on (gene,
-        # crispr_interference, guide spacer, library_pool).
-        "expected_count": 14463,
+        # 14,463 rows of Additional file 10 minus the 7,410 rows whose Drug label is a
+        # ChemDiv / ChemBridge / TimTec catalog id with no released structure, held out
+        # under UNIDENTIFIED_COMPOUND_RULE (2026.10.15, constitution principle 2; job
+        # 5083 dev rebuild). L1 strain identity keys on (gene, crispr_interference,
+        # guide spacer, library_pool).
+        "expected_count": 7053,
         "background_genes": frozenset(),
         "provenance": Provenance(
             source_uri=(

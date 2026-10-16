@@ -1805,3 +1805,40 @@ The owner: the x label inside b's axes was not what was asked; the bottom edges 
 **The top row is placed by hand.** `rows()` takes `placed`, a row's axes as explicit boxes in the row's fraction (`subfigure.add_axes`), which the constrained-layout engine leaves alone; so a and c run to the row's bottom (y from 0.02) and b stops short (y from 0.175) by the depth of its tick labels and x label, and the three bottom edges line up with b's label under its axes where it belongs. Rows two to four stay on gridspecs. The measured axes: a 64 by 46 mm, b 31 mm wide, c 48 mm.
 
 **Panel l draws one model.** The three sheet models are still scored on the titration wells (their Spearman values stay in the caption), but only the dose-offset model is drawn, one solid blue curve per inhibitor against the amber Hill fits; the zero-shot and fitted-flat models read one value per compound and their eighteen lines in three dash patterns could not be told apart.
+
+## 2026.10.16 - Round 11, the direction campaign: the operator, the functional form, the deviation term
+
+The owner (2026-10-16): keep experimenting over the direction; on how a perturbation is read, "the pert should be applied to gene (cell <cls>) embedding space then decoded, that the sort of general ideal"; yes on dose, run another campaign on it; "bliss and lowes per se so the cgt decoder can take their functional forms"; propose directions and launch about a hundred individual jobs on Delta as a few grids over component parts, on an account used for 040 before. The account is bfjt-delta-gpu (14,147 h at submission; every 040 Delta round ran on it).
+
+**Five new switchable pieces in `train_mixture.py`**, each defaulting to the round-10 model, so every cell of the round is an ablation:
+
+| field | values | what it is |
+|---|---|---|
+| `env_mode` | `attend` (default), `displace` | `displace` drops the medium transformer: a compound token displaces every gene embedding, `H^c = H + sigmoid(W H) * u(e)`, a per-gene gate on a learned direction of the token, zero at the start; under `dose: offset` the dose gain scales the displacement as well as the offset. The environment's twin of the encoder's deletion operator. |
+| `cell_only` | `false`, `true` | the head reads the perturbed cell state alone (compound-token block and medium offset zeroed), so a compound's whole effect travels through `H^c`. With `displace` this is the owner's general form. Refused with `attend` under `dose: offset`, where the offset is the only dose path. |
+| `host_form` | `head`, `hill` | `hill`: a second linear readout of the same normalized state gives each single-compound medium a log IC50 and a slope (softplus, started at a Hill coefficient of one in molar units through `set_dose_scale`), and the host's fitness is that curve at the medium's dose. A dose axis that needs no FiLM. The compound-free medium reads one. |
+| `compose` | `bliss`, `loewe`, `hsa` | how the host's k single readings compose: product, the Loewe isobole solved on the k Hill curves (`loewe_fitness`: bisection without gradient, then one Newton step with gradient, which is the implicit-function derivative), or the minimum. |
+| `deviation` | `off`, `pair` | an MLP of the product of every pair of a medium's compound tokens, zero at the start, added after composition on every scale; trained where a multi-compound record is fitted (Hillenmeyer HET's 26 pairs) and reaching the private combinations zero-shot. The environment's analog of a genetic interaction. |
+
+**CPU check of the pieces** (`scripts/check_round11_pieces.py`, 19 of 19 pass): the Loewe solver satisfies its own equation (sum of dose ratios 1 to 1e-3); two identical curves read as one curve at twice the dose (0.2399 against 0.2400); Loewe never reads fitter than the highest single agent; the Hill curve falls with dose (0.975 to 0.025) and reads 0.5 at the mean dose; on one shared set of curves the three rules order as the pharmacology says (Bliss 0.034, Loewe 0.138, highest single 0.324, mean over four media) and agree at one compound; the deviation term is exactly zero at the start at k = 1, 2, 3 and moves a pair once trained; the displacement starts at the wildtype gene mean and builds no medium transformer; `cell_only` ignores the token block; the defaults equal round 10. A CPU smoke of the whole trainer stays impossible (SDPA materializes the gene-by-gene matrix), so the end-to-end check is the Delta smoke below.
+
+**The grids** (`r3_sweep.py --wave 11`, `round11_arms`, plan in `results/r11_plan.csv`): every arm under `readout: cell`, `compound_pool: bliss`, three seeds on the screening folds 0 to 2 unless named.
+
+| grid | question | arms | jobs | est. A40 h |
+|---|---|---|---|---|
+| 1 the operator | `env_mode` x `cell_only` x `dose` (7 cells) + attend with two medium layers as the capacity control | 8 | 9 | 83 |
+| 2 the functional form | `host_form` x `compose` (head+hsa, hill, hill+loewe, hill+hsa) x fitted / zero-shot, the Hill arms with the dose gain, and displace + cell-only + hill + loewe | 12 | 12 | 119 |
+| 3 the deviation term | `deviation: pair` on van (control: no pair to fit), vanhet, vanhophet x fitted / zero-shot; and on top of hill + loewe for van, vanhet | 10 | 22 | 167 |
+| 4 dose | `dose` off / offset / film x head / hill on vanhop with a held-out public DOSE; the titration fine-tune under hill | 6 + 1 | 18 | 113 |
+| 5 the public bar | graph prior 0.1 and 1.0 (zero in every 040 arm), two CGT layers, width 128, dropout 0.4, weight decay 1e-3, lr 5e-4, a per-source head | 8 | 12 | 95 |
+| 6 source ladder | vanhop, vanhet, vanwil, vanhophet, vanhophetwil under hill + loewe | 5 | 15 | 115 |
+| 7 zero-shot x sources | seeds 3 to 5 of the zero-shot Bliss arm on one, two, three sources (round 10's 0.914 / 0.938 / 0.948 steps were inside seed sd) | 3 | 7 | 55 |
+| 8 gene-cold | attend / displace x deviation off / pair on the gene split | 4 | 4 | 40 |
+| 9 partition ensemble | fold seeds 1 and 2 for displace + cell-only, hill + loewe, and the deviation term | 6 | 6 | 59 |
+| total | | 62 | 105 | 847 |
+
+Estimates are the round-1 runtimes scaled by epochs, sources and seeds, not measurements; `displace` removes the medium transformer over the genes and should run faster than its estimate (hypothesis, unmeasured). Every job asks for the 12 h limit.
+
+What each grid would show, labeled. Hypothesis (untested): grid 2's Hill form gives the zero-shot host a real dose axis from the IC30 anchors alone, which round 10's dose-free arms could not have (titration Spearman fixed at 0.43 by the compound ordering). Hypothesis (untested): grid 3's pair term moves the isobole interiors toward observed only on the sources that carry HET pairs, and stays at zero on van, which is the control that makes it readable. Hypothesis (untested): grid 1's `displace` + `cell_only` ties `attend` on the public side, since 038 found the encoder ties ridge whatever the head; if it ties, the general form costs nothing and is the one to ship.
+
+**Submission.** The tree was rsynced to `/scratch/bbub/mjvolk3/torchcell-040` (anchored excludes for `results/mixture`, `results/mixture-delta`, `results/query`, `slurm`, `__pycache__`; no delete flags). Smoke `r11_smoke.yaml` (six configs, four steps each: displace + cell-only + dose gain; hill + loewe zero-shot; hill + dose gain; the deviation term on vanhet; head + hsa; displace + deviation on the gene split) went to gpuA40x4-interactive as 22937918; a batch-partition twin 22937934 was cancelled when the first started. YAML note: a bare `dose: off` parses as boolean false, so hand-written sweep files quote it (`r3_sweep.py` writes it quoted).

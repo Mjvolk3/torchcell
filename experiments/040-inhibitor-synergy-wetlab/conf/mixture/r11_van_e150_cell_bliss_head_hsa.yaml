@@ -1,0 +1,93 @@
+# experiments/040-inhibitor-synergy-wetlab/conf/mixture/r11_van_e150_cell_bliss_head_hsa.yaml
+#
+# ROUND 11, ARM van_e150_cell_bliss_head_hsa, folds [0, 1, 2] of fold seed 0, seeds [0, 1, 2], written by scripts/r3_sweep.py.
+# Sources: vanacloig. Split: compound. Auxiliary hold-out: none. Epochs: 150.
+# ESTIMATE, not a measurement: 9.9 A40 hours for this file (round-1 runtimes scaled by epochs and sources); the job asks for 12.0 h.
+#
+#   sbatch --job-name=040-r11_van_e150_cell_bliss_head_hsa --time=12:00:00 --export=ALL,SWEEP=conf/mixture/r11_van_e150_cell_bliss_head_hsa.yaml,PARALLEL=1 \
+#     experiments/040-inhibitor-synergy-wetlab/scripts/delta_train_mixture.slurm
+- cgt_layers: 1
+  cgt_lambda: 0.0
+  eval_epochs: 5
+  select: val
+  fit_on: train
+  gene_batch: 128
+  env_chunk: 16
+  host_batch: 16
+  cond_batch: 24
+  seeds: &id001
+  - 0
+  - 1
+  - 2
+  host_train: anchors+ex21
+  dose: 'off'
+  env_layers: 1
+  lambda_host: 1.0
+  checkpoint: true
+  name: mix_van_e150_cell_bliss_head_hsa_f0
+  sources: &id002
+  - vanacloig
+  epochs: 150
+  fold_seed: 0
+  split: compound
+  aux_holdout: none
+  folds:
+  - 0
+  host_form: head
+  compose: hsa
+  readout: cell
+  compound_pool: bliss
+- cgt_layers: 1
+  cgt_lambda: 0.0
+  eval_epochs: 5
+  select: val
+  fit_on: train
+  gene_batch: 128
+  env_chunk: 16
+  host_batch: 16
+  cond_batch: 24
+  seeds: *id001
+  host_train: anchors+ex21
+  dose: 'off'
+  env_layers: 1
+  lambda_host: 1.0
+  checkpoint: true
+  name: mix_van_e150_cell_bliss_head_hsa_f1
+  sources: *id002
+  epochs: 150
+  fold_seed: 0
+  split: compound
+  aux_holdout: none
+  folds:
+  - 1
+  host_form: head
+  compose: hsa
+  readout: cell
+  compound_pool: bliss
+- cgt_layers: 1
+  cgt_lambda: 0.0
+  eval_epochs: 5
+  select: val
+  fit_on: train
+  gene_batch: 128
+  env_chunk: 16
+  host_batch: 16
+  cond_batch: 24
+  seeds: *id001
+  host_train: anchors+ex21
+  dose: 'off'
+  env_layers: 1
+  lambda_host: 1.0
+  checkpoint: true
+  name: mix_van_e150_cell_bliss_head_hsa_f2
+  sources: *id002
+  epochs: 150
+  fold_seed: 0
+  split: compound
+  aux_holdout: none
+  folds:
+  - 2
+  host_form: head
+  compose: hsa
+  readout: cell
+  compound_pool: bliss

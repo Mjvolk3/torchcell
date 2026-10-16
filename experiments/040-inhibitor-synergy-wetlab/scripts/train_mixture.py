@@ -251,6 +251,33 @@ class MixtureConfig(BaseModel):
     #: ``1 + g(dose)`` (round 10: FiLM read dose but cost the public score under every
     #: readout, and under Bliss the host too); ``off`` reads no dose
     dose: Literal["film", "offset", "off"] = "film"
+    #: HOW THE MEDIUM PERTURBS THE CELL (round 11). ``attend``: the compound tokens sit
+    #: in front of the gene tokens through ``env_layers`` transformer layers (038).
+    #: ``displace``: no medium transformer; a compound token displaces every gene
+    #: embedding, ``H^c = H + sigmoid(W H) * u(e)``, a per-gene gate on a learned
+    #: direction of the token, the environment's twin of the encoder's deletion
+    #: operator; under ``dose: offset`` the dose gain scales the displacement as well
+    #: as the offset. With one compound per medium (Bliss) a cross-attention from the
+    #: genes to the medium has one key, so the gated displacement is that attention.
+    env_mode: Literal["attend", "displace"] = "attend"
+    #: the head reads the perturbed cell state only: the compound-token block and the
+    #: medium offset are zero, so a compound's effect has to travel through ``H^c``
+    cell_only: bool = False
+    #: the host's functional form. ``head``: the shared head's scalar (rounds 7 to 10).
+    #: ``hill``: a second linear readout of the same state gives each single-compound
+    #: medium a Hill curve, a log IC50 and a slope in standardized log-dose units, and
+    #: the host's fitness is that curve at the medium's dose; the k curves of a
+    #: k-compound medium compose by ``compose``. Needs ``compound_pool: bliss``.
+    host_form: Literal["head", "hill"] = "head"
+    #: how the host's k single-compound readings compose under ``compound_pool: bliss``:
+    #: ``bliss`` the product, ``loewe`` the dose-additive isobole solved on the k Hill
+    #: curves (needs ``host_form: hill``), ``hsa`` the highest single agent (minimum)
+    compose: Literal["bliss", "loewe", "hsa"] = "bliss"
+    #: a learned deviation from the composition rule, an MLP of the product of every
+    #: pair of a medium's compound tokens, zero at the start; it trains only where a
+    #: multi-compound record is fitted (Hillenmeyer HET's pairs) and reaches the host
+    #: zero-shot, the environment's analog of a genetic interaction term
+    deviation: Literal["off", "pair"] = "off"
     host_train: Literal["anchors", "anchors+ex21", "finetune_ex21"] = "anchors"
     lambda_host: float = 1.0
     host_batch: int = 16
@@ -527,6 +554,51 @@ def group_media(
     return out
 
 
+def loewe_fitness(
+    z: torch.Tensor,
+    z50: torch.Tensor,
+    slope: torch.Tensor,
+    log_dose_scale: torch.Tensor,
+    iterations: int = 40,
+) -> torch.Tensor:
+    """Loewe additivity on k Hill curves: the fitness ``E`` with ``sum_i d_i / D_i(E) = 1``.
+
+    ``z`` [M, k] are the standardized log10 molar doses of each medium's compounds,
+    ``z50`` and ``slope`` [B, M, k] the curves' parameters (fitness ``sigmoid(-slope (z -
+    z50))``), and ``log_dose_scale`` is ``ln10 x`` the standardization scale, so a z
+    difference times it is a natural-log dose ratio. ``D_i(E)`` is the dose at which
+    curve ``i`` alone reads ``E``, ``z50_i + ln((1 - E) / E) / slope_i``, and the dose
+    ratio ``d_i / D_i(E)`` is ``exp(log_dose_scale (z_i - D_i(E)))``, which rises with
+    ``E``; the root is bracketed by bisection without gradient and then taken one Newton
+    step with gradient, which is the implicit-function derivative of ``E`` in the
+    curves' parameters. A medium whose doses are all below every curve reads ``E`` at
+    the upper clamp, one whose doses are all above it at the lower clamp.
+    """
+    z = z.unsqueeze(0).expand_as(z50).float()
+    z50, slope = z50.float(), slope.float()
+    scale = log_dose_scale.float()
+
+    def residual(fitness: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        logit = torch.log((1.0 - fitness) / fitness)
+        ratio = torch.exp(scale * (z - z50 - logit.unsqueeze(-1) / slope))
+        value = ratio.sum(-1) - 1.0
+        derivative = (ratio * scale / slope).sum(-1) / (fitness * (1.0 - fitness))
+        return value, derivative
+
+    low, high = 1e-3, 1.0 - 1e-3
+    with torch.no_grad():
+        lo = torch.full(z50.shape[:-1], low, device=z50.device)
+        hi = torch.full(z50.shape[:-1], high, device=z50.device)
+        for _ in range(iterations):
+            mid = 0.5 * (lo + hi)
+            value, _ = residual(mid)
+            lo = torch.where(value < 0, mid, lo)
+            hi = torch.where(value < 0, hi, mid)
+        fitness = 0.5 * (lo + hi)
+    value, derivative = residual(fitness)
+    return (fitness - value / derivative).clamp(low, high)
+
+
 class MixtureModel(nn.Module):
     """The 038 environment encoder with a compound set, a dose, and a host readout."""
 
@@ -580,6 +652,47 @@ class MixtureModel(nn.Module):
                 "compound_pool: bliss composes single-compound readings of the shared "
                 "head; it needs readout: cell and compound_set: tokens"
             )
+        if cfg.host_form == "hill":
+            assert cfg.compound_pool == "bliss", (
+                "host_form: hill gives one Hill curve per single-compound medium; it "
+                "needs compound_pool: bliss"
+            )
+        if cfg.compose == "loewe":
+            assert cfg.host_form == "hill", "compose: loewe solves the Hill curves"
+        if cfg.compose != "bliss" or cfg.deviation != "off":
+            assert cfg.compound_pool == "bliss", (
+                "compose and deviation act on the split readings of compound_pool: bliss"
+            )
+        if cfg.cell_only:
+            assert cfg.dose != "offset" or cfg.env_mode == "displace", (
+                "cell_only zeroes the medium offset, the only dose path of dose: offset "
+                "under env_mode: attend; use env_mode: displace or dose: film"
+            )
+        if cfg.env_mode == "displace":
+            # the gate on the wildtype gene embeddings and the direction each compound
+            # token displaces them in; the direction starts at zero, so the model starts
+            # as the compound-free cell
+            self.displace_gate = nn.Linear(d, d)
+            self.displace = nn.Sequential(
+                nn.Linear(d, cfg.hidden), nn.GELU(), nn.Linear(cfg.hidden, d)
+            )
+            nn.init.zeros_(self.displace[-1].weight)
+            nn.init.zeros_(self.displace[-1].bias)
+        if cfg.host_form == "hill":
+            # log IC50 and slope of the host's Hill curve, read from the same normalized
+            # state as the head; the IC50 starts at the mean fitted dose and the slope at
+            # a Hill coefficient of one once ``set_dose_scale`` has been called
+            self.hill = nn.Linear(5 * d, 2)
+            nn.init.zeros_(self.hill.weight)
+            nn.init.zeros_(self.hill.bias)
+            self.register_buffer("hill_slope_init", torch.zeros(()), persistent=True)
+            self.register_buffer("log_dose_scale", torch.zeros(()), persistent=True)
+        if cfg.deviation == "pair":
+            self.deviation = nn.Sequential(
+                nn.Linear(d, cfg.hidden), nn.GELU(), nn.Linear(cfg.hidden, 1)
+            )
+            nn.init.zeros_(self.deviation[-1].weight)
+            nn.init.zeros_(self.deviation[-1].bias)
         # one decoder, one linear head per source: scale 1 and shift 0 at the start, so
         # the arm starts as the shared head
         self.source_scale = nn.Embedding(n_tokens, 1)
@@ -609,7 +722,8 @@ class MixtureModel(nn.Module):
         nn.init.zeros_(self.dose_gain[-1].bias)
         self.offset = nn.Linear(d, 1)
         self.layers = nn.ModuleList(
-            TokenLayer(d, cfg.cgt_heads, cfg.dropout) for _ in range(cfg.env_layers)
+            TokenLayer(d, cfg.cgt_heads, cfg.dropout)
+            for _ in range(cfg.env_layers if cfg.env_mode == "attend" else 0)
         )
         self.gene_norm = nn.LayerNorm(5 * d)
         self.gene_head = nn.Sequential(
@@ -629,7 +743,28 @@ class MixtureModel(nn.Module):
     def env_parameters(self) -> list[nn.Parameter]:
         """The compound representation and the medium transformer, for the fine-tune."""
         modules = [self.compound, self.film, self.dose_gain, self.layers, self.offset]
+        if self.cfg.env_mode == "displace":
+            modules += [self.displace_gate, self.displace]
+        if self.cfg.host_form == "hill":
+            modules.append(self.hill)
+        if self.cfg.deviation == "pair":
+            modules.append(self.deviation)
         return [p for module in modules for p in module.parameters()]
+
+    def set_dose_scale(self, dose_scale: float) -> None:
+        """Under ``host_form: hill``, start every curve at a Hill coefficient of one.
+
+        Doses reach the model standardized, ``z = (log10 molar - center) / scale``, so a
+        Hill curve of coefficient ``n`` in molar units is ``sigmoid(-n ln10 scale (z -
+        z50))``; the slope the head learns is ``softplus(s + hill_slope_init)`` with
+        ``hill_slope_init`` the inverse softplus of ``ln10 scale``, and ``log_dose_scale``
+        is what the Loewe solver needs to turn a z difference into a dose ratio.
+        """
+        if self.cfg.host_form != "hill":
+            return
+        slope = float(np.log(10.0) * dose_scale)
+        self.hill_slope_init.fill_(float(np.log(np.expm1(slope))))
+        self.log_dose_scale.fill_(slope)
 
     def cell(self, strain: torch.Tensor, cell_graph):
         """(wildtype tokens [N, d], the strains' deleted rows [B, d], graph penalty)."""
@@ -669,32 +804,60 @@ class MixtureModel(nn.Module):
             return e.reshape(c * k, 1, d)
         return e
 
+    def split_gain(self, gain: torch.Tensor | None) -> torch.Tensor | None:
+        """[C, k] -> [C'] the dose gain per (split) medium, averaged over its compounds."""
+        if gain is None:
+            return None
+        return self.split_media(gain.unsqueeze(-1)).squeeze(-1).mean(dim=1)
+
     def medium_state(
-        self, h: torch.Tensor, e: torch.Tensor, strain: torch.Tensor | None
+        self,
+        h: torch.Tensor,
+        e: torch.Tensor,
+        strain: torch.Tensor | None,
+        gain: torch.Tensor | None = None,
     ) -> tuple[torch.Tensor | None, torch.Tensor, torch.Tensor]:
         """Run the medium's tokens with the gene tokens; reduce inside the chunk loop.
 
         Returns (rows of ``H^c`` at each strain's deleted genes [B, C, d] or None when no
         strain is read, the mean of ``H^c`` over genes [C, d], the mean of the compound
         tokens after they read the genome [C, d]). Under ``compound_pool: bliss`` C is
-        the number of single-compound media the k-compound media split into.
+        the number of single-compound media the k-compound media split into. ``gain``
+        [C, k] is the dose gain under ``dose: offset``; under ``env_mode: displace`` it
+        scales the displacement of the gene embeddings.
         """
         e = self.split_media(e)
+        g = self.split_gain(gain)
         n, d = h.shape
         c, k = e.shape[0], e.shape[1]
+        gate = (
+            torch.sigmoid(self.displace_gate(h))
+            if self.cfg.env_mode == "displace" and k
+            else None
+        )
         env, pooled, token = [], [], []
         for start in range(0, c, self.cfg.env_chunk or c):
             part = e[start : start + (self.cfg.env_chunk or c)]
             genes = h.unsqueeze(0).expand(len(part), n, d)
-            seq = torch.cat([part, genes], dim=1) if k else genes
-            for layer in self.layers:
-                seq = layer(seq)
-            cell = seq[:, k:]
+            if gate is not None:
+                # the medium's token displaces every gene embedding along a learned
+                # direction, gated per gene; no token reads the genome
+                u = self.displace(self.pool_compounds(part))
+                if g is not None:
+                    u = u * g[start : start + len(part), None]
+                cell = genes + gate.unsqueeze(0) * u.unsqueeze(1)
+                read = part
+            else:
+                seq = torch.cat([part, genes], dim=1) if k else genes
+                for layer in self.layers:
+                    seq = layer(seq)
+                cell = seq[:, k:]
+                read = seq[:, :k]
             if strain is not None:
                 env.append(cell[:, strain].sum(2))
             pooled.append(cell.mean(1))
             token.append(
-                self.pool_compounds(seq[:, :k])
+                self.pool_compounds(read)
                 if k
                 else torch.zeros(len(part), d, device=h.device, dtype=h.dtype)
             )
@@ -714,6 +877,7 @@ class MixtureModel(nn.Module):
         source_index: int,
         e: torch.Tensor,
         gain: torch.Tensor | None = None,
+        dose: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """[B, C] predictions on the standardized target for the source's conditions.
 
@@ -723,7 +887,9 @@ class MixtureModel(nn.Module):
         and there is no gene bias, so the cell is read at its gene mean and its medium
         alone, through the same head and with its own source scale and shift. ``gain``
         is ``[C, k]`` under ``dose: offset`` and multiplies the medium offset (split
-        like ``e`` under Bliss, averaged over a medium's compounds otherwise).
+        like ``e`` under Bliss, averaged over a medium's compounds otherwise). ``dose``
+        is ``[C, k]`` standardized log10 molar, read by the host under ``host_form:
+        hill``.
         """
         k_set = e.shape[1]
         e = self.split_media(e)
@@ -733,7 +899,10 @@ class MixtureModel(nn.Module):
             env = torch.zeros(1, c, d, device=pooled.device, dtype=pooled.dtype)
             h_del = torch.zeros(1, d, device=pooled.device, dtype=pooled.dtype)
         b = env.shape[0]
+        host = source_index == self.host_source
         source = self.source_vector(source_index, env.device)
+        if self.cfg.cell_only:
+            token = torch.zeros_like(token)
         state = torch.cat(
             [
                 env,
@@ -750,18 +919,31 @@ class MixtureModel(nn.Module):
             gene = self.gene_bias(source_index * self.n_nodes + strain).sum(dim=1)
         # the compound-free medium (the host's uninhibited anchor) has no compound
         # token, and the mean over an empty set is NaN; its offset is zero
-        if e.shape[1]:
+        if e.shape[1] and not self.cfg.cell_only:
             offset = self.offset(self.pool_compounds(e)).T.expand(b, c)
-            if gain is not None:
-                g = self.split_media(gain.unsqueeze(-1)).squeeze(-1).mean(dim=1)
+            g = self.split_gain(gain)
+            if g is not None:
                 offset = offset * g[None, :].expand(b, c)
         else:
             offset = torch.zeros(b, c, device=env.device, dtype=torch.float32)
-        head = self.gene_head(self.gene_norm(state.float())).squeeze(-1)
-        if self.cfg.source_head or source_index == self.host_source:
+        normed = self.gene_norm(state.float())
+        head = self.gene_head(normed).squeeze(-1)
+        if self.cfg.source_head or host:
             index = torch.full((1,), source_index, dtype=torch.long, device=env.device)
             head = head * self.source_scale(index) + self.source_shift(index)
         out = offset + head
+        if host and self.cfg.host_form == "hill":
+            if e.shape[1]:
+                # one Hill curve per single-compound medium, read at its dose
+                assert dose is not None, "host_form: hill needs the medium's doses"
+                z = self.split_media(dose.unsqueeze(-1)).squeeze(-1)[:, 0]
+                params = self.hill(normed).float()  # [b, c, 2]
+                z50 = params[..., 0]
+                slope = nn.functional.softplus(params[..., 1] + self.hill_slope_init)
+                out = torch.sigmoid(-slope * (z[None, :] - z50))
+            else:
+                # the compound-free medium: no curve, fitness one
+                out = torch.ones(b, c, device=env.device, dtype=torch.float32)
         if self.cfg.compound_pool == "bliss" and k_set > 1:
             # the k single-compound readings of one medium, composed as Bliss
             # independence: on the host's fitness scale the medium's fitness is the
@@ -772,10 +954,28 @@ class MixtureModel(nn.Module):
             # outside anything the head was trained on; here every reading is a
             # single-compound medium of the kind the head is trained on.
             out = out.view(b, c // k_set, k_set)
-            if source_index == self.host_source:
+            if host and self.cfg.compose == "loewe":
+                assert dose is not None
+                z = self.split_media(dose.unsqueeze(-1)).squeeze(-1)[:, 0]
+                out = loewe_fitness(
+                    z.view(c // k_set, k_set),
+                    z50.view(b, c // k_set, k_set),
+                    slope.view(b, c // k_set, k_set),
+                    self.log_dose_scale,
+                )
+            elif host and self.cfg.compose == "hsa":
+                out = out.min(dim=-1).values
+            elif host:
                 out = out.clamp(min=1e-3).prod(dim=-1)
             else:
                 out = out.sum(dim=-1)
+            if self.cfg.deviation == "pair":
+                # every pair of the medium's compound tokens, before they read the
+                # genome, through one zero-started MLP; the same term on every scale
+                t = e[:, 0].view(c // k_set, k_set, d)
+                i, j = torch.triu_indices(k_set, k_set, offset=1, device=e.device)
+                pair = self.deviation((t[:, i] * t[:, j]).float()).squeeze(-1).sum(-1)
+                out = out + pair[None, :]
         return gene + out
 
     def host_logits(
@@ -784,12 +984,13 @@ class MixtureModel(nn.Module):
         token: torch.Tensor,
         e: torch.Tensor,
         gain: torch.Tensor | None = None,
+        dose: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """[C] host fitness per medium: the sigmoid head, or the shared head at the empty set."""
         if self.cfg.readout == "gene":
             return self.host_fitness(pooled, token)
         return self.gene_logits(
-            None, None, pooled, token, None, self.host_source, e, gain
+            None, None, pooled, token, None, self.host_source, e, gain, dose
         )[0]
 
     def host_parameters(self) -> list[nn.Parameter]:
@@ -1052,7 +1253,8 @@ def predict_gene_matrix(
             h, h_del, _ = model.cell(strain, ctx.cell_graph)
             for medium in media:
                 e = model.tokens(medium)
-                env, pooled, token = model.medium_state(h, e, strain)
+                gain = model.gain(medium)
+                env, pooled, token = model.medium_state(h, e, strain, gain)
                 assert env is not None
                 pred = model.gene_logits(
                     env,
@@ -1062,7 +1264,8 @@ def predict_gene_matrix(
                     strain,
                     source.index,
                     e,
-                    model.gain(medium),
+                    gain,
+                    medium.dose,
                 )
                 columns = np.array(medium.rows)
                 out[np.ix_(index.numpy(), columns)] = pred.float().cpu().numpy()
@@ -1085,9 +1288,10 @@ def predict_host(
         h, _, _ = model.cell(strain, ctx.cell_graph)
         for medium in host_media(records, std):
             e = model.tokens(medium)
-            _, pooled, token = model.medium_state(h, e, None)
+            gain = model.gain(medium)
+            _, pooled, token = model.medium_state(h, e, None, gain)
             out[np.array(medium.rows)] = (
-                model.host_logits(pooled, token, e, model.gain(medium))
+                model.host_logits(pooled, token, e, gain, medium.dose)
                 .float()
                 .cpu()
                 .numpy()
@@ -1275,6 +1479,7 @@ def train_seed(
         source_attributes=ctx.source_attributes,
         n_attribute_values=[len(ctx.attribute_values[a]) for a in SOURCE_ATTRIBUTES],
     ).to(device)
+    model.set_dose_scale(std.dose_scale)
     groups = [
         {
             "params": [
@@ -1335,7 +1540,8 @@ def train_seed(
                 )
                 for medium in source_media(source, columns, std):
                     e = model.tokens(medium)
-                    env, pooled, token = model.medium_state(h, e, strain)
+                    gain = model.gain(medium)
+                    env, pooled, token = model.medium_state(h, e, strain, gain)
                     assert env is not None
                     predictions = predictions.index_copy(
                         1,
@@ -1348,7 +1554,8 @@ def train_seed(
                             strain,
                             source.index,
                             e,
-                            model.gain(medium),
+                            gain,
+                            medium.dose,
                         ).float(),
                     )
             penalties.append(penalty)
@@ -1368,11 +1575,12 @@ def train_seed(
             predicted = torch.zeros(len(records), device=device, dtype=torch.float32)
             for medium in host_media(records, std):
                 e = model.tokens(medium)
-                _, pooled, token = model.medium_state(h_wildtype, e, None)
+                gain = model.gain(medium)
+                _, pooled, token = model.medium_state(h_wildtype, e, None, gain)
                 predicted = predicted.index_copy(
                     0,
                     torch.tensor(medium.rows, device=device),
-                    model.host_logits(pooled, token, e, model.gain(medium)).float(),
+                    model.host_logits(pooled, token, e, gain, medium.dose).float(),
                 )
         host_loss = ((predicted - host_fitness[picked]) ** 2).mean()
 
@@ -1578,11 +1786,12 @@ def finetune_host(
                 predicted = torch.zeros(len(batch), device=device, dtype=torch.float32)
                 for medium in host_media(batch, std):
                     e = model.tokens(medium)
-                    _, pooled, token = model.medium_state(h, e, None)
+                    gain = model.gain(medium)
+                    _, pooled, token = model.medium_state(h, e, None, gain)
                     predicted = predicted.index_copy(
                         0,
                         torch.tensor(medium.rows, device=device),
-                        model.host_logits(pooled, token, e, model.gain(medium)).float(),
+                        model.host_logits(pooled, token, e, gain, medium.dose).float(),
                     )
             loss = ((predicted - observed[picked]) ** 2).mean()
             optimizer.zero_grad(set_to_none=True)

@@ -733,6 +733,312 @@ def round10_arms() -> list[dict[str, object]]:
     return out
 
 
+def round11_arms() -> list[dict[str, object]]:
+    """Round 11: the direction campaign. Five component parts, crossed as grids.
+
+    Round 10 left three readings. The composition is what buys the private readout
+    (Bliss 0.887 fitted, 0.924 zero-shot against the Bliss rule's 0.872); no public
+    screen lifts the target and none is learned at a held-out compound, so the public
+    bar is still nested ridge's 0.303; and every dose arm over-predicts the isobole
+    interiors by 0.4 to 1.0 against 0.1 to 0.26 for the dose-free arms, which is what a
+    missing interaction term looks like. The pieces this round adds are each a
+    switchable part of the model, so every cell below is an ablation rather than a
+    new model:
+
+    ``env_mode: displace``  the medium perturbs the GENE EMBEDDING SPACE and the
+        readout decodes from it, which is the general form the operator should take:
+        ``H^c = H + sigmoid(W H) * u(e)``, a per-gene gate on a learned direction of
+        the compound token, the environment's twin of the encoder's deletion operator.
+        Against ``attend``, the medium tokens in front of the gene tokens (038).
+    ``cell_only``  the head reads the perturbed cell state alone, with the compound
+        token block and the medium offset zeroed, so a compound's whole effect has to
+        travel through ``H^c``. With ``displace`` this is the pure form of the idea.
+    ``host_form: hill``  the decoder takes the functional form the rules use: a second
+        linear readout of the same state gives each single-compound medium a log IC50
+        and a slope, and the host's fitness is that Hill curve at the medium's dose. It
+        is a dose axis that costs no FiLM, since the curve reads the dose itself.
+    ``compose``  how the k single-compound readings compose: ``bliss`` the product,
+        ``loewe`` the dose-additive isobole solved on the k curves, ``hsa`` the highest
+        single agent. These are the three model-free bars of the figure, now as the
+        decoder's own arithmetic.
+    ``deviation: pair``  a learned term on every pair of a medium's compound tokens,
+        zero at the start, trained where a multi-compound record is fitted
+        (Hillenmeyer HET's 26 pairs) and reaching the private combinations zero-shot:
+        the environment's analog of a genetic interaction, and the open piece.
+
+    The grids, in the order they answer the section's questions:
+
+    1. the operator: ``env_mode`` x ``cell_only`` x ``dose``, seven cells;
+    2. the functional form: ``host_form`` x ``compose`` x ``host_train``, with and
+       without the dose gain;
+    3. the deviation term, on the three source sets that carry public pairs;
+    4. dose as its own campaign, every channel against a held-out public dose;
+    5. the public bar: the graph prior, capacity and regularization under this readout;
+    6. the source ladder re-asked once the form is right;
+    7. zero-shot x sources at three more seeds, to clear round 10's 0.914 / 0.938 /
+       0.948 steps;
+    8. the gene-cold split, where a held-out deletion strain in a medium is the
+       claim the chemogenomic side has never been tested on;
+    9. the partition ensemble for the three cells most likely to move, since the
+       noise floor at fixed seed is as large as any single-seed arm difference.
+    """
+    three = [0, 1, 2]
+    cell: dict[str, object] = {"readout": "cell", "compound_pool": "bliss"}
+    out: list[dict[str, object]] = []
+
+    # ---- 1. the operator ---------------------------------------------------- #
+    for env_mode in ("attend", "displace"):
+        for cell_only in (False, True):
+            for dose in ("off", "offset"):
+                # cell_only zeroes the medium offset, which is the only dose path of
+                # dose: offset under attend; the trainer refuses that cell
+                if env_mode == "attend" and cell_only and dose == "offset":
+                    continue
+                name = f"van_e150_cell_bliss_{env_mode}"
+                name += "_co" if cell_only else ""
+                name += "_doff" if dose == "offset" else ""
+                out.append(
+                    arm(
+                        name,
+                        "van",
+                        150,
+                        seeds=three,
+                        env_mode=env_mode,
+                        cell_only=cell_only,
+                        dose=dose,
+                        **cell,
+                    )
+                )
+    # the capacity control for the comparison: attend with a second medium layer, so a
+    # displacement that wins is not winning on parameter count alone
+    out.append(
+        arm(
+            "van_e150_cell_bliss_attend_L2",
+            "van",
+            150,
+            seeds=three,
+            env_layers=2,
+            **cell,
+        )
+    )
+
+    # ---- 2. the functional form --------------------------------------------- #
+    forms: list[tuple[str, dict[str, object]]] = [
+        ("head_hsa", {"host_form": "head", "compose": "hsa"}),
+        ("hill", {"host_form": "hill", "compose": "bliss"}),
+        ("hill_loewe", {"host_form": "hill", "compose": "loewe"}),
+        ("hill_hsa", {"host_form": "hill", "compose": "hsa"}),
+    ]
+    for tag, form in forms:
+        for host_train, host_tag in (("anchors+ex21", ""), ("anchors", "_anchors")):
+            out.append(
+                arm(
+                    f"van_e150_cell_bliss_{tag}{host_tag}",
+                    "van",
+                    150,
+                    seeds=three,
+                    host_train=host_train,
+                    **form,
+                    **cell,
+                )
+            )
+    # the Hill curve reads the dose itself, so the dose gain on top of it is a second
+    # dose path: whether it adds anything is the question these two answer
+    for tag, form in forms[1:3]:
+        out.append(
+            arm(
+                f"van_e150_cell_bliss_{tag}_doff",
+                "van",
+                150,
+                seeds=three,
+                dose="offset",
+                **form,
+                **cell,
+            )
+        )
+    # the form and the operator together, which is the round's candidate recipe
+    out.append(
+        arm(
+            "van_e150_cell_bliss_displace_co_hill_loewe",
+            "van",
+            150,
+            seeds=three,
+            env_mode="displace",
+            cell_only=True,
+            host_form="hill",
+            compose="loewe",
+            **cell,
+        )
+    )
+
+    # ---- 3. the deviation term ---------------------------------------------- #
+    # van has no multi-compound training record, so its deviation term can only be
+    # driven by the host's own ex21 singles and stays at zero on a pair: it is the
+    # control. vanhet brings Hillenmeyer HET's 26 pairs, the only public records a
+    # pair term can be fitted on, and vanhophet brings them beside Hoepfner.
+    for sources in ("van", "vanhet", "vanhophet"):
+        for host_train, host_tag in (("anchors+ex21", ""), ("anchors", "_anchors")):
+            out.append(
+                arm(
+                    f"{sources}_e150_cell_bliss_dev{host_tag}",
+                    sources,
+                    150,
+                    seeds=three,
+                    host_train=host_train,
+                    deviation="pair",
+                    **cell,
+                )
+            )
+    # the deviation on top of the functional form: if the curves carry the single-agent
+    # axis, the pair term has only the interaction left to carry
+    for sources in ("van", "vanhet"):
+        for host_train, host_tag in (("anchors+ex21", ""), ("anchors", "_anchors")):
+            out.append(
+                arm(
+                    f"{sources}_e150_cell_bliss_hill_loewe_dev{host_tag}",
+                    sources,
+                    150,
+                    seeds=three,
+                    host_train=host_train,
+                    host_form="hill",
+                    compose="loewe",
+                    deviation="pair",
+                    **cell,
+                )
+            )
+
+    # ---- 4. dose as its own campaign ---------------------------------------- #
+    # a held-out DOSE of a seen public compound is the direct test of a dose channel,
+    # and the Hill form is a channel that no earlier round had
+    for dose in ("off", "offset", "film"):
+        for form_tag, form in (("", {}), ("_hill", {"host_form": "hill"})):
+            out.append(
+                arm(
+                    f"vanhop_e150_cell_bliss{form_tag}_d{dose}_heldout",
+                    "vanhop",
+                    150,
+                    aux_holdout="dose",
+                    seeds=three,
+                    dose=dose,
+                    **form,
+                    **cell,
+                )
+            )
+    # the titration fine-tune under the Hill form, the arm the wet-lab dose axis would
+    # ship with if the public doses alone are not enough
+    out.append(
+        arm(
+            "van_e150_cell_bliss_hill_ft",
+            "van",
+            150,
+            seeds=three,
+            host_train="finetune_ex21",
+            finetune_scope="host_head+env_encoder",
+            host_form="hill",
+            **cell,
+        )
+    )
+
+    # ---- 5. the public bar --------------------------------------------------- #
+    # nothing in ten rounds reaches nested ridge on fingerprint counts, and these are
+    # the levers no round has moved under the cell readout: the graph prior (zero in
+    # every 040 arm), depth, width and regularization
+    for name, overrides in (
+        ("cgt0p1", {"cgt_lambda": 0.1}),
+        ("cgt1", {"cgt_lambda": 1.0}),
+        ("cgt2", {"cgt_layers": 2}),
+        ("wide", {"dim": 128, "hidden": 512}),
+        ("do0p4", {"dropout": 0.4}),
+        ("wd1e3", {"weight_decay": 1e-3}),
+        ("lr5e4", {"lr": 5e-4}),
+    ):
+        out.append(
+            arm(
+                f"van_e150_cell_bliss_{name}",
+                "van",
+                150,
+                seeds=three,
+                **overrides,
+                **cell,
+            )
+        )
+    out.append(
+        arm(
+            "vanhop_e150_cell_bliss_shead",
+            "vanhop",
+            150,
+            seeds=three,
+            source_head=True,
+            **cell,
+        )
+    )
+
+    # ---- 6. the source ladder under the functional form --------------------- #
+    for sources in ("vanhop", "vanhet", "vanwil", "vanhophet", "vanhophetwil"):
+        out.append(
+            arm(
+                f"{sources}_e150_cell_bliss_hill_loewe",
+                sources,
+                150,
+                seeds=three,
+                host_form="hill",
+                compose="loewe",
+                **cell,
+            )
+        )
+
+    # ---- 7. zero-shot x sources, three more seeds --------------------------- #
+    for sources in ("van", "vanhop", "vanhophet"):
+        out.append(
+            arm(
+                f"{sources}_e150_cell_anchors_bliss",
+                sources,
+                150,
+                name_suffix="_s345",
+                seeds=[3, 4, 5],
+                host_train="anchors",
+                **cell,
+            )
+        )
+
+    # ---- 8. the gene-cold split under the new operator ---------------------- #
+    for env_mode in ("attend", "displace"):
+        for deviation in ("off", "pair"):
+            tag = f"{env_mode}" + ("_dev" if deviation == "pair" else "")
+            out.append(
+                arm(
+                    f"van_e150_cell_bliss_{tag}_gene",
+                    "van",
+                    150,
+                    split="gene",
+                    seeds=three,
+                    env_mode=env_mode,
+                    deviation=deviation,
+                    **cell,
+                )
+            )
+
+    # ---- 9. the partition ensemble for the three candidate cells ------------ #
+    for tag, overrides in (
+        ("displace_co", {"env_mode": "displace", "cell_only": True}),
+        ("hill_loewe", {"host_form": "hill", "compose": "loewe"}),
+        ("dev", {"deviation": "pair"}),
+    ):
+        for fold_seed in (1, 2):
+            out.append(
+                arm(
+                    f"van_e150_cell_bliss_{tag}_fs{fold_seed}",
+                    "van",
+                    150,
+                    fold_seed=fold_seed,
+                    seeds=three,
+                    **overrides,
+                    **cell,
+                )
+            )
+    return out
+
+
 def configs(spec: dict[str, object], folds: list[int]) -> list[dict[str, object]]:
     """One config per fold of ``spec``."""
     out = []
@@ -795,13 +1101,15 @@ def main() -> None:
         "--wave",
         type=int,
         default=1,
-        choices=(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
+        choices=(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
         help=(
             "1 writes the r3_* screen, 2 the r3w2_* second wave, 3 the r4_* seed"
             " ensemble, 4 the r5_* Delta round, 5 the r5b_* convergence follow-up,"
             " 6 the r6_* graph regularization, 7 the r7_* cell readout, 8 the r8_*"
             " round-5 questions under the cell readout, 9 the r9_* composition round,"
-            " 10 the r10_* source ladder, zero-shot and dose arms under Bliss"
+            " 10 the r10_* source ladder, zero-shot and dose arms under Bliss,"
+            " 11 the r11_* direction campaign (the operator, the functional form,"
+            " the deviation term, dose, the public bar)"
         ),
     )
     args = parser.parse_args()
@@ -818,6 +1126,7 @@ def main() -> None:
         8: "r8",
         9: "r9",
         10: "r10",
+        11: "r11",
     }[args.wave]
     waves = {
         1: arms,
@@ -830,6 +1139,7 @@ def main() -> None:
         8: round8_arms,
         9: round9_arms,
         10: round10_arms,
+        11: round11_arms,
     }
     specs = waves[args.wave]()
     label = {
@@ -843,6 +1153,7 @@ def main() -> None:
         8: "ROUND 8",
         9: "ROUND 9",
         10: "ROUND 10",
+        11: "ROUND 11",
     }[args.wave]
 
     rows, lines = [], []

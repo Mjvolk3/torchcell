@@ -523,18 +523,26 @@ def rows(
     n_cols: int | list[int],
     widths: list[list[float] | None] | None = None,
     heights: list[float] | None = None,
+    placed: dict[int, list[list[float]]] | None = None,
 ) -> list[Any]:
     """One subfigure per row, so a long tick label cannot set another row's margin.
 
     ``n_cols`` is one count for every row or one per row; ``widths`` gives a row's
-    column width ratios (``None`` for equal columns); ``heights`` the row ratios.
+    column width ratios (``None`` for equal columns); ``heights`` the row ratios;
+    ``placed`` gives a row's axes as explicit ``[x0, y0, w, h]`` boxes in the row's
+    fraction instead of a gridspec. The layout engine leaves an axes made that way
+    alone, so one axes of the row may be shorter than its neighbors, which is how
+    a panel with an x axis ends its x label level with the bottoms of two without.
     """
     subs = fig.subfigures(n_rows, 1, height_ratios=heights)
     subs = [subs] if n_rows == 1 else list(subs)
     cols = [n_cols] * n_rows if isinstance(n_cols, int) else n_cols
     ratios = widths or [None] * n_rows
     out: list[Any] = []
-    for sf, n, ratio in zip(subs, cols, ratios, strict=True):
+    for i, (sf, n, ratio) in enumerate(zip(subs, cols, ratios, strict=True)):
+        if placed and i in placed:
+            out.extend(sf.add_axes(box) for box in placed[i])
+            continue
         axes = sf.subplots(1, n, gridspec_kw={"width_ratios": ratio} if ratio else None)
         out.extend(list(np.atleast_1d(axes)))
     return out
@@ -1295,15 +1303,10 @@ def draw_sources(ax: Any, R: Reads) -> None:
         )
     ax.set_yticks(y)
     ax.set_yticklabels([r[0] for r in rows_], fontsize=4.8)
-    # the tick labels and the x label sit inside the axes, in a blank band under
-    # the last bar, so nothing hangs below the row's shared bottom and b ends flush
-    # with a and c, which have no x axis (the owner, 2026-10-15)
-    ax.set_ylim(-2.6, 8.6)
+    ax.set_ylim(-0.6, 8.6)
     ax.set_xscale("log")
     ax.set_xlim(0.7, 1e7)
-    ax.tick_params(axis="x", direction="in", pad=-6.5, labelsize=5.0)
     ax.set_xlabel("compounds in the source")
-    ax.xaxis.set_label_coords(0.5, 0.125)
     ax.grid(axis="x", which="major", color="#DDDDDD", linewidth=0.3, zorder=0)
     ax.set_axisbelow(True)
     ax.text(
@@ -1347,13 +1350,7 @@ def draw_sources(ax: Any, R: Reads) -> None:
     ]
     # inside the axes, lower right, where the host rows leave room, so the legend
     # does not take height from every axes of the row
-    ax.legend(
-        handles=handles,
-        loc="center right",
-        bbox_to_anchor=(1.0, 0.42),
-        fontsize=4.4,
-        handlelength=1.2,
-    )
+    ax.legend(handles=handles, loc="lower right", fontsize=4.4, handlelength=1.2)
     n = 0
     title(ax, "what the trainer reads, and its culture", n)
 
@@ -1963,13 +1960,17 @@ def draw_single_agents(ax: Any, R: Reads) -> None:
             alpha=0.85,
             zorder=2,
         )
-    for sweep, style, _label, tag in SHEET_MODELS:
+    # every sheet model is scored on these wells (the numbers go to the caption),
+    # but only the dose-offset model is drawn, as one solid curve per inhibitor: the
+    # other two read one flat value per compound, and eighteen blue lines in three
+    # dash patterns could not be told apart (the owner, 2026-10-15)
+    for sweep, _style, _label, tag in SHEET_MODELS:
         h = R.host_mean(sweep)
         h = h[(h.run == "ex21") & (h.n_compounds == 1)]
         for ab in INHIB:
             name = INHIB_LONG[ab]
             sub = h[h.compounds == name].copy()
-            if sub.empty:
+            if sub.empty or sweep != DOSE_ARM:
                 continue
             fit = R.fit("ex21", ab)
             sub["x"] = sub.g_per_l.astype(float) / float(fit.ic50_g_per_l)
@@ -1978,8 +1979,7 @@ def draw_single_agents(ax: Any, R: Reads) -> None:
                 sub.x.to_numpy(),
                 sub.predicted.to_numpy(),
                 color=SRC_COLOR["cgt"],
-                linewidth=0.5,
-                linestyle=style,
+                linewidth=0.6,
                 zorder=2,
             )
         singles = h[h.n_compounds == 1]
@@ -2010,19 +2010,15 @@ def draw_single_agents(ax: Any, R: Reads) -> None:
                 linewidth=0.5,
                 label="Hill fit per inhibitor",
             ),
-            *[
-                Line2D(
-                    [],
-                    [],
-                    color=SRC_COLOR["cgt"],
-                    linewidth=0.5,
-                    linestyle=style,
-                    label=label,
-                )
-                for _arm, style, label, _tag in SHEET_MODELS
-            ],
+            Line2D(
+                [],
+                [],
+                color=SRC_COLOR["cgt"],
+                linewidth=0.6,
+                label="model with the dose offset, per inhibitor",
+            ),
         ],
-        ncol=2,
+        ncol=1,
     )
     title(ax, "the six single-agent titrations", n)
 
@@ -2350,6 +2346,16 @@ def fig_main(R: Reads) -> dict[str, str]:
             [0.85, 0.8, 1.6, 0.85],
         ],
         heights=[1.65, 1.0, 1.0, 1.0],
+        # the top row by hand: a and c run to the row's bottom, b stops short by
+        # its tick labels and x label, so the three bottom edges line up (the
+        # owner, 2026-10-15); b's y tick labels fill the gap after a
+        placed={
+            0: [
+                [0.000, 0.02, 0.360, 0.86],
+                [0.525, 0.175, 0.175, 0.705],
+                [0.730, 0.02, 0.270, 0.86],
+            ]
+        },
     )
     draw_sources(axes[1], R)
     draw_evaluation(axes[2], R)

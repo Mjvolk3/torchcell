@@ -1797,3 +1797,11 @@ The owner, reading the fifth pass: the field on a still did not cover its text a
 ## 2026.10.15 - The main sheet, seventh pass: b flush with a and c
 
 The owner: reduce b's white space so its x label ends flush with a and c. In a constrained-layout row every axes shares one bottom, and b was the only panel of the top row with an x axis, so its tick labels and x label hung below a and c. Two mechanisms failed first: taking b out of the layout freed its cell and a and c spilled into it; nesting b in a sub-gridspec of its own cell collapsed b to zero width. What works is leaving b nothing to hang: its x tick labels are drawn inside the axes (`direction="in"`, negative pad) and the x label at axes fraction 0.125, in a blank band under the last bar (`ylim` to -2.6), with the legend anchored at the right of the host rows where no annotation reaches. b's axes bottom is then the row's bottom, level with a and c, and the row's axes gained the height the decorations held.
+
+## 2026.10.15 - The main sheet, eighth pass: b's bottom edge level with a and c, one model curve on l
+
+The owner: the x label inside b's axes was not what was asked; the bottom edges of a, b and c should line up. And on l, no multiple blue dashed lines.
+
+**The top row is placed by hand.** `rows()` takes `placed`, a row's axes as explicit boxes in the row's fraction (`subfigure.add_axes`), which the constrained-layout engine leaves alone; so a and c run to the row's bottom (y from 0.02) and b stops short (y from 0.175) by the depth of its tick labels and x label, and the three bottom edges line up with b's label under its axes where it belongs. Rows two to four stay on gridspecs. The measured axes: a 64 by 46 mm, b 31 mm wide, c 48 mm.
+
+**Panel l draws one model.** The three sheet models are still scored on the titration wells (their Spearman values stay in the caption), but only the dose-offset model is drawn, one solid blue curve per inhibitor against the amber Hill fits; the zero-shot and fitted-flat models read one value per compound and their eighteen lines in three dash patterns could not be told apart.

@@ -1,41 +1,41 @@
 {
   "generated_by": "experiments/040-inhibitor-synergy-wetlab/scripts/figure_gate_panels.py",
-  "generated_at": "2026-10-15-22-09-33",
+  "generated_at": "2026-10-15-23-06-20",
   "figures": {
     "concept": {
-      "name": "gate_concept_2026-10-15-22-09-14",
-      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_concept_2026-10-15-22-09-14.png",
-      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_concept_2026-10-15-22-09-14.svg",
+      "name": "gate_concept_2026-10-15-23-06-00",
+      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_concept_2026-10-15-23-06-00.png",
+      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_concept_2026-10-15-23-06-00.svg",
       "pdf": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_concept.pdf"
     },
     "main": {
-      "name": "gate_main_2026-10-15-22-09-20",
-      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_main_2026-10-15-22-09-20.png",
-      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_main_2026-10-15-22-09-20.svg",
+      "name": "gate_main_2026-10-15-23-06-07",
+      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_main_2026-10-15-23-06-07.png",
+      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_main_2026-10-15-23-06-07.svg",
       "pdf": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_main.pdf"
     },
     "si1": {
-      "name": "gate_si1_benchmarks_2026-10-15-22-09-24",
-      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_si1_benchmarks_2026-10-15-22-09-24.png",
-      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_si1_benchmarks_2026-10-15-22-09-24.svg",
+      "name": "gate_si1_benchmarks_2026-10-15-23-06-10",
+      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_si1_benchmarks_2026-10-15-23-06-10.png",
+      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_si1_benchmarks_2026-10-15-23-06-10.svg",
       "pdf": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_si1_benchmarks.pdf"
     },
     "si2": {
-      "name": "gate_si2_growth_2026-10-15-22-09-25",
-      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_si2_growth_2026-10-15-22-09-25.png",
-      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_si2_growth_2026-10-15-22-09-25.svg",
+      "name": "gate_si2_growth_2026-10-15-23-06-12",
+      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_si2_growth_2026-10-15-23-06-12.png",
+      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_si2_growth_2026-10-15-23-06-12.svg",
       "pdf": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_si2_growth.pdf"
     },
     "si3": {
-      "name": "gate_si3_profiles_2026-10-15-22-09-27",
-      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_si3_profiles_2026-10-15-22-09-27.png",
-      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_si3_profiles_2026-10-15-22-09-27.svg",
+      "name": "gate_si3_profiles_2026-10-15-23-06-14",
+      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_si3_profiles_2026-10-15-23-06-14.png",
+      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_si3_profiles_2026-10-15-23-06-14.svg",
       "pdf": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_si3_profiles.pdf"
     },
     "si4": {
-      "name": "gate_si4_rounds_2026-10-15-22-09-29",
-      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_si4_rounds_2026-10-15-22-09-29.png",
-      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_si4_rounds_2026-10-15-22-09-29.svg",
+      "name": "gate_si4_rounds_2026-10-15-23-06-16",
+      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_si4_rounds_2026-10-15-23-06-16.png",
+      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_si4_rounds_2026-10-15-23-06-16.svg",
       "pdf": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_si4_rounds.pdf"
     },
     "si5": {
@@ -49,15 +49,15 @@
       "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/r3_arms_overview_2026-10-12-04-52-22.svg"
     },
     "si7": {
-      "name": "gate_si7_encoders_2026-10-15-22-09-31",
-      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_si7_encoders_2026-10-15-22-09-31.png",
-      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_si7_encoders_2026-10-15-22-09-31.svg",
+      "name": "gate_si7_encoders_2026-10-15-23-06-17",
+      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_si7_encoders_2026-10-15-23-06-17.png",
+      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_si7_encoders_2026-10-15-23-06-17.svg",
       "pdf": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_si7_encoders.pdf"
     },
     "si8": {
-      "name": "gate_si8_round10_2026-10-15-22-09-32",
-      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_si8_round10_2026-10-15-22-09-32.png",
-      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_si8_round10_2026-10-15-22-09-32.svg",
+      "name": "gate_si8_round10_2026-10-15-23-06-19",
+      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_si8_round10_2026-10-15-23-06-19.png",
+      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_si8_round10_2026-10-15-23-06-19.svg",
       "pdf": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-inhibitor-synergy-wetlab/notes/assets/images/040-inhibitor-synergy-wetlab/gate_si8_round10.pdf"
     },
     "boundary": {

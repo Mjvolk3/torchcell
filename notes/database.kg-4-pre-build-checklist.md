@@ -132,12 +132,14 @@ three arrays off three class lists:
 | tier | stores | `--cpus` | `--mem` | `--time` | concurrency | measured basis |
 |---|---:|---:|---:|---:|---|---|
 | `s` | 122 | 4 | 32 G | 8 h | `%6` | longest 52 min at 20 G |
-| `l` | 41 plus 27 reruns | 8 | 96 G | 24 h | `%3` | longest 4 h 32 min at 64 G (the Costanzo pair and Hale) |
-| `xl` | 1 | 8 | 160 G | 24 h | with `l` | 9 min at 120 G |
+| `l` | 41 plus 27 reruns | 8 | 96 G | 24 h | `%2` | longest 4 h 32 min at 64 G (the Costanzo pair and Hale) |
+| `xl` | 1 | 8 | 160 G | 24 h | before `s` | 9 min at 120 G |
+
+**The 384 G cap (owner, 2026-10-15: "apply the 384 cap").** The build reserves at most 384 G at any moment so the metabolic side keeps 129 G, its GPUs and its slurm jobs at 32 G or less beside it. In the sweep that is `l` at `%2` (192 G) beside `s` at `%6` (192 G), with the single `xl` task (160 G) run before `s` starts. The `l` tier is 22.3 h of measured task time over 40 stores (arrays 4686 and 4866), so `%2` puts it at about 11.2 h against 7.4 h at `%3`; the sweep's calendar is **12 to 14 h** under the cap instead of 9 to 13 h. The generation array is capped the same way in `torchcell/knowledge_graphs/conf/generation_tiers.yaml`: `large` 2 x 160 G beside `standard` 1 x 64 G, and the Hoepfner adapter in `large` once lane Y lands.
 
 Lane P's nine stores confirm the tiers hold with at least **3x memory margin** (largest
 store 10.0 GB peak resident against the 32 G small tier). Calendar floor **7 to 11 h**,
-set by the longest `l` store plus the `l` tier at `%3`. Tasks are independent, so recovery
+set by the longest `l` store plus the `l` tier at `%3` (`%2` under the 384 G cap, about +4 h). Tasks are independent, so recovery
 is re-running the named task alone.
 
 **Add lane V's collision guard to this step, not to generation.** The manifest now hashes
@@ -477,9 +479,9 @@ a start.
 | step | calendar | basis |
 |---|---|---|
 | prune `/scratch` | minutes | 407 directories, `scripts/deprecate.sh`, a rename on the same filesystem |
-| sweep, 170 dev stores | **9 to 13 h** | the 2026-10-13 arrays' 7-to-11 h floor (longest `l` store 4 h 32 min, `l` tier at `%3`) plus lane V's collision guard at about +48 min on Hoepfner and +30 min per Costanzo store, roughly 1 h 48 min on the tier that sets the floor |
+| sweep, 170 dev stores | **9 to 13 h**, 12 to 14 h under the 384 G cap (`l` at `%2`) | the 2026-10-13 arrays' 7-to-11 h floor (longest `l` store 4 h 32 min, `l` tier at `%3`) plus lane V's collision guard at about +48 min on Hoepfner and +30 min per Costanzo store, roughly 1 h 48 min on the tier that sets the floor |
 | zero-stale read | minutes | `--list-stale` must print nothing |
-| generation, per-adapter array | **about 2.6 h**, and 5.2 h if the three core-bound `large` adapters run at 2x their serial-container charge | lane S, job 4974, 141 tasks completed: `standard` 157 tasks at `%4` project 1.00 h, `large` 12 at `%2` project 2.61 h, `hoepfner` 1 projects 1.27 h; the three arrays run concurrently so the calendar is the largest row, not the 4.88 h sum |
+| generation, per-adapter array | **about 2.6 h**, about 4 h under the 384 G cap (`standard` at `%1`), and 5.2 h if the three core-bound `large` adapters run at 2x their serial-container charge | lane S, job 4974, 141 tasks completed: `standard` 157 tasks at `%4` project 1.00 h, `large` 12 at `%2` project 2.61 h, `hoepfner` 1 projects 1.27 h; the three arrays run concurrently so the calendar is the largest row, not the 4.88 h sum |
 | critical path inside it | **1.72 h, `PooledPromoterExpressionVaishnav2022Adapter`** | 6,175 s, longer than Hoepfner's 4,558 s; 1.1 cores mean of 64 at a mean 110 G with 0 recycles, so **parent-bound** and 32 CPUs will not shorten it |
 | merge plus the duplicate check | 10 min to 2 h | worst case measured at two full copies with every row duplicated on a contended disk: 1 h 55 min, 43.9 GB peak resident, 0 conflicts. Production hypothesis, untested: 10 to 30 min at 16 processes on a quiet disk |
 | CSV endpoint gate on the full build | about 25 min | 1,473 s and 40.1 GB max resident on the 383 G job 4901 partial with dataset resolution on |
@@ -539,7 +541,7 @@ but import warnings. **Lane W's verdict does not depend on it**: lane W re-keyed
 end to end (9,602,177 records) and stated that Hoepfner's 30.3 M follows by monotonicity, so
 it concluded without this arm and left the process running. It is squatting 22 percent of
 the node's memory, it is the reason integration 3's own full-tree re-run ran several times
-slower than the first, and the sweep's budget is 480 G of 513 G with everything else held.
+slower than the first, and the sweep's budget was 480 G of 513 G with everything else held, now 384 G under the cap.
 **Reap it before the sweep**, and if its result is wanted, re-run it after the build on a
 quiet node rather than against the budget.
 

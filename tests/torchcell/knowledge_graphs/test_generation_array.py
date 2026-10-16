@@ -50,7 +50,13 @@ from torchcell.knowledge_graphs.generation_array import (
 
 
 def test_the_tier_table_carries_the_overestimated_sizes_of_the_decision() -> None:
-    """Standard 16/64/8 h, large 32/160/16 h, hoepfner 64/320/36 h; standard is the default."""
+    """Standard 16/64/8 h at %1, large 32/160/16 h at %2, hoepfner 64/320/36 h unused.
+
+    The 384 G cap (owner, 2026-10-15): the arrays run together, so the peak is
+    large 2 x 160 G plus standard 1 x 64 G. Hoepfner runs in `large` once lane Y
+    holds the proprietary compounds out; the `hoepfner` tier stays defined for a
+    re-admission at the measured 320 G.
+    """
     table = load_tier_table()
     assert table.default_tier == "standard"
     sizes = {
@@ -58,11 +64,22 @@ def test_the_tier_table_carries_the_overestimated_sizes_of_the_decision() -> Non
         for name, t in table.tiers.items()
     }
     assert sizes == {
-        "standard": (16, 64, 8, 4),
+        "standard": (16, 64, 8, 1),
         "large": (32, 160, 16, 2),
         "hoepfner": (64, 320, 36, 1),
     }
-    assert table.tier_for("EnvChemgenHoepfner2014Adapter").name == "hoepfner"
+    assert table.tier_for("EnvChemgenHoepfner2014Adapter").name == "large"
+    peak = max(
+        t.mem_gb * t.concurrency
+        for t in table.tiers.values()
+        if t.name in {table.adapters[a] for a in table.adapters} | {table.default_tier}
+    )
+    booked = sum(
+        t.mem_gb * t.concurrency
+        for name, t in table.tiers.items()
+        if name in set(table.adapters.values()) | {table.default_tier}
+    )
+    assert peak <= 384 and booked == 384
     assert table.tier_for("DmfCostanzo2016Adapter").name == "large"
     assert table.tier_for("SmfCostanzo2016Adapter").name == "standard"
     assert table.tiers["hoepfner"].time_limit == "36:00:00"
@@ -153,6 +170,32 @@ def test_compress_ids_is_the_slurm_array_spelling() -> None:
 # ------------------------------------------------------------------- submissions
 
 
+def _table() -> TierTable:
+    """The three tiers of the 2026-10-15 decision with Hoepfner in its own tier.
+
+    The mechanism tests pin this table rather than the yaml, whose adapter mapping
+    moves with the build's measurements (Hoepfner went to `large` under the 384 G cap).
+    """
+    return TierTable(
+        default_tier="standard",
+        tiers={
+            "standard": GenerationTier(
+                name="standard", cpus=16, mem_gb=64, hours=8, concurrency=4
+            ),
+            "large": GenerationTier(
+                name="large", cpus=32, mem_gb=160, hours=16, concurrency=2
+            ),
+            "hoepfner": GenerationTier(
+                name="hoepfner", cpus=64, mem_gb=320, hours=36, concurrency=1
+            ),
+        },
+        adapters={
+            "DmfCostanzo2016Adapter": "large",
+            "EnvChemgenHoepfner2014Adapter": "hoepfner",
+        },
+    )
+
+
 def _order(n: int = 5) -> list[AdapterSlot]:
     names = [
         "SmallA",
@@ -171,7 +214,7 @@ def test_one_sbatch_per_tier_with_the_tier_sizes_and_the_environment() -> None:
     """Multi-member values ride the environment with --export=ALL, not --export's list."""
     subs = tier_submissions(
         _order(),
-        load_tier_table(),
+        _table(),
         script="array.slurm",
         out_name="2026-10-15_00-00-00",
         environment={
@@ -253,7 +296,10 @@ def test_the_resolved_generation_image_reaches_every_task_in_the_environment(
         for line in capsys.readouterr().out.splitlines()
         if line.startswith("DRY-RUN")
     ]
-    assert len(lines) == 3
+    # The plan reads the committed yaml, where the order's five adapters fall into
+    # two tiers under the 384 G cap (Hoepfner in `large`): standard 0,2,4 and large 1,3.
+    assert len(lines) == 2
+    assert "--array=0,2,4%1 " in lines[0] and "--array=1,3%2 " in lines[1]
     for line in lines:
         assert "GEN_IMAGE=tc-neo4j-gen:0123456789ab " in line
         assert "GEN_IMAGE" not in line.split("--export=")[1].split()[0]
@@ -266,7 +312,7 @@ def test_a_dependency_is_an_explicit_sbatch_argument() -> None:
     """SBATCH_DEPENDENCY in the environment was not honored (jobs 4920/4921)."""
     subs = tier_submissions(
         _order(),
-        load_tier_table(),
+        _table(),
         script="s",
         out_name="o",
         environment={},
@@ -275,32 +321,22 @@ def test_a_dependency_is_an_explicit_sbatch_argument() -> None:
     )
     assert subs[0].argv[-3:] == ["--dependency=afterany:4919", "--export=ALL", "s"]
     assert "--dependency" not in " ".join(
-        tier_submissions(
-            _order(), load_tier_table(), script="s", out_name="o", environment={}
-        )[0].argv
+        tier_submissions(_order(), _table(), script="s", out_name="o", environment={})[
+            0
+        ].argv
     )
 
 
 def test_a_submission_restricted_to_some_indices_covers_only_those_tiers() -> None:
     subs = tier_submissions(
-        _order(),
-        load_tier_table(),
-        script="s",
-        out_name="o",
-        environment={},
-        indices=[0, 4],
+        _order(), _table(), script="s", out_name="o", environment={}, indices=[0, 4]
     )
     assert [(s.tier, s.indices, s.argv[2]) for s in subs] == [
         ("standard", [0, 4], "--array=0,4%4")
     ]
     with pytest.raises(IndexError, match=r"outside the build order of 5: \[7\]"):
         tier_submissions(
-            _order(),
-            load_tier_table(),
-            script="s",
-            out_name="o",
-            environment={},
-            indices=[7],
+            _order(), _table(), script="s", out_name="o", environment={}, indices=[7]
         )
 
 
@@ -312,7 +348,7 @@ def test_submit_dry_run_prints_and_never_calls_sbatch(
 
     monkeypatch.setattr(subprocess, "run", refuse)
     subs = tier_submissions(
-        _order(), load_tier_table(), script="s", out_name="o", environment={}
+        _order(), _table(), script="s", out_name="o", environment={}
     )
     assert ga.submit(subs, dry_run=True) == []
     out = capsys.readouterr().out.splitlines()
@@ -338,8 +374,8 @@ def test_the_plan_command_is_a_dry_run(
         for line in capsys.readouterr().out.splitlines()
         if line.startswith("DRY-RUN")
     ]
-    assert len(lines) == 3
-    assert "INCLUDE_PRIVATE=1" in lines[0] and "--array=0,2,4%4" in lines[0]
+    assert len(lines) == 2  # standard and large; Hoepfner is in `large` under the cap
+    assert "INCLUDE_PRIVATE=1" in lines[0] and "--array=0,2,4%1" in lines[0]
 
 
 def test_submit_reads_the_job_ids_sbatch_prints(
@@ -355,7 +391,7 @@ def test_submit_reads_the_job_ids_sbatch_prints(
 
     monkeypatch.setattr(subprocess, "run", fake_run)
     subs = tier_submissions(
-        _order(), load_tier_table(), script="s", out_name="o", environment={"X": "1"}
+        _order(), _table(), script="s", out_name="o", environment={"X": "1"}
     )
     assert ga.submit(subs, dry_run=False) == [4001, 4002, 4003]
     assert [c[1]["GEN_TIER"] for c in calls] == ["standard", "large", "hoepfner"]
@@ -394,11 +430,7 @@ def test_missing_slots_are_those_without_a_marker_and_the_recovery_is_per_tier(
     missing = missing_slots(tmp_path, order)
     assert [s.index for s in missing] == [1, 4]
     lines = recovery_commands(
-        missing,
-        load_tier_table(),
-        script="array.slurm",
-        out_name="o",
-        environment={"K": "v"},
+        missing, _table(), script="array.slurm", out_name="o", environment={"K": "v"}
     )
     assert len(lines) == 2
     assert "--array=4%4" in lines[0] and "GEN_TIER=standard" in lines[0]
@@ -746,7 +778,7 @@ def test_the_missing_command_exits_one_and_prints_the_rerun(
     assert code == 1
     assert "1 of 2 adapter directories carry no DONE" in out
     assert "  001 BAdapter" in out
-    assert "sbatch --job-name=gen_adapter_standard --array=1%4" in out
+    assert "sbatch --job-name=gen_adapter_standard --array=1%1" in out
     (tmp_path / "adapters" / order[1].dirname / DONE_FILENAME).write_text(
         _marker(order[1])
     )

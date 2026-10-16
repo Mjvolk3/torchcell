@@ -20,6 +20,18 @@
 # the caps only bound each tier's share. MaxMemPerCPU=4100 raises an allocation's CPU
 # count (160 G -> 40 CPUs, 320 G -> 80 CPUs); the container limits stay at the tier's.
 #
+# THE 384 G CAP (owner, 2026-10-15: "apply the 384 cap", so the metabolic side keeps
+# 129 G and the GPUs beside the build). The three arrays are submitted together, so the
+# build's peak is the sum over tiers of concurrency x mem_gb: `large` 2 x 160 G plus
+# `standard` 1 x 64 G is 384 G. `standard` at %1 runs its 157 tasks (14,368 measured
+# task seconds, job 4974) in about 4.0 h beside the `large` tier's 2.6 h, so the array
+# is about 4 h instead of 2.6 h. The `hoepfner` tier is UNUSED: lane Y
+# (`unify-representability`) holds the 1,701 proprietary CMB ids out, which takes the
+# adapter from 30.3 M to about 3.1 M records, and it runs in `large`. Hypothesis
+# (untested): memory follows the record count, so 160 G is several times its need. The
+# tier stays defined because a public release of the identities would put the adapter
+# back here at the measured 320 G, and then the cap needs the large tier to wait on it.
+#
 # To move an adapter between tiers, edit `adapters:` below. An adapter name that is not
 # a mapped adapter class fails tests/torchcell/knowledge_graphs/test_generation_array.py.
 
@@ -30,7 +42,7 @@ tiers:
     cpus: 16
     mem_gb: 64
     hours: 8
-    concurrency: 4
+    concurrency: 1
   large:
     cpus: 32
     mem_gb: 160
@@ -43,7 +55,7 @@ tiers:
     concurrency: 1
 
 adapters:
-  EnvChemgenHoepfner2014Adapter: hoepfner
+  EnvChemgenHoepfner2014Adapter: large
   DmfCostanzo2016Adapter: large
   DmiCostanzo2016Adapter: large
   HetHillenmeyer2008Adapter: large

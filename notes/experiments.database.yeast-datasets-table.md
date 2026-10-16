@@ -45,130 +45,130 @@ table, not an absolute information content.
 
 | Dataset | Host | Genotypes | Env | Instances | Phenotype | Shape | Graph role | Signal (gzip, bits) |
 | :-- | :-- | --: | --: | --: | :-- | :-- | :-- | --: |
-| CellYieldDeChiara2022 | S. cerevisiae | 906 | 43 | 36,286 | environment_response (cell_yield) | scalar | global | 1.7×10⁷ |
-| CrisprMagicLian2019 | S. cerevisiae | 266,304 | 3 | 266,304 | environment_response (log2_ratio) | scalar | global | 1.3×10⁸ |
-| CrispriChemgenSmith2016 | S. cerevisiae | 1,035 | 26 | 14,463 | environment_response (log2_ratio) | scalar | global | 7.5×10⁶ |
-| CrispriMormino2022 | S. cerevisiae | 12 | 1 | 12 | environment_response (categorical) | scalar | global | 1.4×10⁴ |
-| DoublingTimeDeChiara2022 | S. cerevisiae | 906 | 43 | 36,295 | environment_response (growth_rate) | scalar | global | 1.7×10⁷ |
-| EnvChemgenAuesukaree2009 | S. cerevisiae | 333 | 6 | 525 | environment_response (categorical) | scalar | global | 3.1×10⁵ |
-| EnvChemgenCostanzo2021 | S. cerevisiae | 4,422 | 14 | 61,640 | environment_response (differential_fitness) | scalar | global | 1.1×10⁸ |
-| EnvChemgenHoepfner2014 | S. cerevisiae | 10,839 | 5,586 | 30,308,574 | environment_response (sensitivity_score) | scalar | global | 2.1×10¹⁰ |
-| EnvChemgenMota2024 | S. cerevisiae | 607 | 3 | 1,289 | environment_response (ordinal) | scalar | global | 7.4×10⁵ |
-| EnvChemgenParsons2006 | S. cerevisiae | 4,111 | 82 | 329,254 | environment_response (log2_ratio) | scalar | global | 2.2×10⁸ |
-| EnvChemgenPiotrowski2017 | S. cerevisiae | 289 | 11,949 | 3,435,820 | environment_response (z_score) | scalar | global | 1.4×10⁹ |
-| EnvChemgenVanacloig2022 | S. cerevisiae | 3,649 | 45 | 164,205 | environment_response (log2_ratio) | scalar | global | 9.3×10⁷ |
-| EnvChemgenWildenhain2015 | S. cerevisiae | 258 | 5,178 | 449,033 | environment_response (z_score) | scalar | global | 2.6×10⁸ |
-| EnvChemgenYoshikawa2009 | S. cerevisiae | 4,729 | 4 | 37,832 | environment_response (growth_rate) | scalar | global | 1.0×10⁷ |
-| FattyAcidSmith2006 | S. cerevisiae | 4,770 | 3 | 14,310 | environment_response (ordinal) | scalar | global | 1.8×10⁶ |
-| HetHillenmeyer2008 | S. cerevisiae | 17,659 | 512 | 3,074,132 | environment_response (log2_ratio) | scalar | global | 2.0×10⁹ |
-| HomHillenmeyer2008 | S. cerevisiae | 9,220 | 276 | 1,228,676 | environment_response (z_score) | scalar | global | 8.4×10⁸ |
-| IsolateGrowthPeter2018 | S. cerevisiae | 971 | 35 | 33,985 | environment_response (condition_growth_ratio) | scalar | global | 1.6×10⁷ |
+| CellYieldDeChiara2022 | *S. cerevisiae* | 906 | 43 | 36,286 | environment_response (cell_yield) | scalar | global | 1.7×10⁷ |
+| CrisprMagicLian2019 | *S. cerevisiae* | 266,304 | 3 | 266,304 | environment_response (log2_ratio) | scalar | global | 1.3×10⁸ |
+| CrispriChemgenSmith2016 | *S. cerevisiae* | 1,035 | 26 | 14,463 | environment_response (log2_ratio) | scalar | global | 7.5×10⁶ |
+| CrispriMormino2022 | *S. cerevisiae* | 12 | 1 | 12 | environment_response (categorical) | scalar | global | 1.4×10⁴ |
+| DoublingTimeDeChiara2022 | *S. cerevisiae* | 906 | 43 | 36,295 | environment_response (growth_rate) | scalar | global | 1.7×10⁷ |
+| EnvChemgenAuesukaree2009 | *S. cerevisiae* | 333 | 6 | 525 | environment_response (categorical) | scalar | global | 3.1×10⁵ |
+| EnvChemgenCostanzo2021 | *S. cerevisiae* | 4,422 | 14 | 61,640 | environment_response (differential_fitness) | scalar | global | 1.1×10⁸ |
+| EnvChemgenHoepfner2014 | *S. cerevisiae* | 10,839 | 5,586 | 30,308,574 | environment_response (sensitivity_score) | scalar | global | 2.1×10¹⁰ |
+| EnvChemgenMota2024 | *S. cerevisiae* | 607 | 3 | 1,289 | environment_response (ordinal) | scalar | global | 7.4×10⁵ |
+| EnvChemgenParsons2006 | *S. cerevisiae* | 4,111 | 82 | 329,254 | environment_response (log2_ratio) | scalar | global | 2.2×10⁸ |
+| EnvChemgenPiotrowski2017 | *S. cerevisiae* | 289 | 11,949 | 3,435,820 | environment_response (z_score) | scalar | global | 1.4×10⁹ |
+| EnvChemgenVanacloig2022 | *S. cerevisiae* | 3,649 | 45 | 164,205 | environment_response (log2_ratio) | scalar | global | 9.3×10⁷ |
+| EnvChemgenWildenhain2015 | *S. cerevisiae* | 258 | 5,178 | 449,033 | environment_response (z_score) | scalar | global | 2.6×10⁸ |
+| EnvChemgenYoshikawa2009 | *S. cerevisiae* | 4,729 | 4 | 37,832 | environment_response (growth_rate) | scalar | global | 1.0×10⁷ |
+| FattyAcidSmith2006 | *S. cerevisiae* | 4,770 | 3 | 14,310 | environment_response (ordinal) | scalar | global | 1.8×10⁶ |
+| HetHillenmeyer2008 | *S. cerevisiae* | 17,659 | 512 | 3,074,132 | environment_response (log2_ratio) | scalar | global | 2.0×10⁹ |
+| HomHillenmeyer2008 | *S. cerevisiae* | 9,220 | 276 | 1,228,676 | environment_response (z_score) | scalar | global | 8.4×10⁸ |
+| IsolateGrowthPeter2018 | *S. cerevisiae* | 971 | 35 | 33,985 | environment_response (condition_growth_ratio) | scalar | global | 1.6×10⁷ |
 
 #### Expression (RNA-seq)
 
 | Dataset | Host | Genotypes | Env | Instances | Phenotype | Shape | Graph role | Signal (gzip, bits) |
 | :-- | :-- | --: | --: | --: | :-- | :-- | :-- | --: |
-| Boocock2025 | S. cerevisiae | 79,516 | 2 | 79,516 | umi_count (scrnaseq_umi_count) | vector (3797) | node | 8.9×10⁹ |
-| CaudalPanTranscriptome2024 | S. cerevisiae | 943 | 1 | 943 | expression_tpm (rnaseq_tpm) | vector (6017) | node | 1.7×10⁹ |
-| NadalRibellesPerturbSeq2025 | S. cerevisiae | 3,150 | 2 | 6,188 | expression_log2_ratio (pseudobulk_scrnaseq_log2fc) | vector (5818) | node | 2.5×10⁹ |
-| Nguessan2025 | S. cerevisiae | 2,951 | 1 | 2,951 | umi_count (scrnaseq_umi_count) | vector (1670) | node | 4.5×10⁸ |
-| PooledPromoterExpressionVaishnav2022 | S. cerevisiae | 71,158 | 1 | 71,158 | expression_level | scalar | node | 1.3×10⁸ |
-| TfDeletionPseudobulkJackson2020 | S. cerevisiae | 72 | 11 | 784 | umi_count (scrnaseq_umi_count) | vector (5075) | node | 9.7×10⁷ |
+| Boocock2025 | *S. cerevisiae* | 79,516 | 2 | 79,516 | umi_count (scrnaseq_umi_count) | vector (3797) | node | 8.9×10⁹ |
+| CaudalPanTranscriptome2024 | *S. cerevisiae* | 943 | 1 | 943 | expression_tpm (rnaseq_tpm) | vector (6017) | node | 1.7×10⁹ |
+| NadalRibellesPerturbSeq2025 | *S. cerevisiae* | 3,150 | 2 | 6,188 | expression_log2_ratio (pseudobulk_scrnaseq_log2fc) | vector (5818) | node | 2.5×10⁹ |
+| Nguessan2025 | *S. cerevisiae* | 2,951 | 1 | 2,951 | umi_count (scrnaseq_umi_count) | vector (1670) | node | 4.5×10⁸ |
+| PooledPromoterExpressionVaishnav2022 | *S. cerevisiae* | 71,158 | 1 | 71,158 | expression_level | scalar | node | 1.3×10⁸ |
+| TfDeletionPseudobulkJackson2020 | *S. cerevisiae* | 72 | 11 | 784 | umi_count (scrnaseq_umi_count) | vector (5075) | node | 9.7×10⁷ |
 
 #### Expression (microarray)
 
 | Dataset | Host | Genotypes | Env | Instances | Phenotype | Shape | Graph role | Signal (gzip, bits) |
 | :-- | :-- | --: | --: | --: | :-- | :-- | :-- | --: |
-| DmMicroarraySameith2015 | S. cerevisiae | 72 | 1 | 72 | expression_log2_ratio | vector (6169) | node | 1.7×10⁸ |
-| InductionTimecourseHackett2020 | S. cerevisiae | 214 | 31 | 1,752 | log2_cleaned | vector (6175) | node | 4.7×10⁹ |
-| MicroarrayKemmeren2014 | S. cerevisiae | 1,484 | 1 | 1,484 | expression_log2_ratio | vector (6169) | node | 3.2×10⁹ |
-| MicroarrayScoreHu2007 | S. cerevisiae | 263 | 1 | 263 | expression_score (error_model_x_score_weighted_duplicate_average) | vector (6371) | node | 2.5×10⁸ |
-| SmMicroarraySameith2015 | S. cerevisiae | 82 | 1 | 82 | expression_log2_ratio | vector (6169) | node | 1.8×10⁸ |
+| DmMicroarraySameith2015 | *S. cerevisiae* | 72 | 1 | 72 | expression_log2_ratio | vector (6169) | node | 1.7×10⁸ |
+| InductionTimecourseHackett2020 | *S. cerevisiae* | 214 | 31 | 1,752 | log2_cleaned | vector (6175) | node | 4.7×10⁹ |
+| MicroarrayKemmeren2014 | *S. cerevisiae* | 1,484 | 1 | 1,484 | expression_log2_ratio | vector (6169) | node | 3.2×10⁹ |
+| MicroarrayScoreHu2007 | *S. cerevisiae* | 263 | 1 | 263 | expression_score (error_model_x_score_weighted_duplicate_average) | vector (6371) | node | 2.5×10⁸ |
+| SmMicroarraySameith2015 | *S. cerevisiae* | 82 | 1 | 82 | expression_log2_ratio | vector (6169) | node | 1.8×10⁸ |
 
 #### Fitness
 
 | Dataset | Host | Genotypes | Env | Instances | Phenotype | Shape | Graph role | Signal (gzip, bits) |
 | :-- | :-- | --: | --: | --: | :-- | :-- | :-- | --: |
-| Bloom2019 | S. cerevisiae | 13,950 | 38 | 530,100 | environment_response (control_regression_residual) | scalar | global | 2.6×10⁸ |
-| CrispriSegregantHale2024 | S. cerevisiae | 895,494 | 2 | 8,692,635 | environment_response (relative_fitness) | scalar | global | 6.7×10⁹ |
-| DmfCostanzo2016 | S. cerevisiae | 20,705,612 | 2 | 20,705,612 | fitness | scalar | global | 7.1×10⁹ |
-| DmfKuzmin2018 | S. cerevisiae | 410,571 | 1 | 410,571 | fitness | scalar | global | 1.5×10⁸ |
-| DmfKuzmin2020 | S. cerevisiae | 608,805 | 1 | 632,998 | fitness | scalar | global | 2.4×10⁸ |
-| SmfBaryshnikova2010 | S. cerevisiae | 6,023 | 2 | 6,023 | fitness | scalar | global | 1.8×10⁶ |
-| SmfCostanzo2016 | S. cerevisiae | 10,277 | 2 | 20,484 | fitness | scalar | global | 5.4×10⁶ |
-| SmfKuzmin2018 | S. cerevisiae | 1,539 | 1 | 1,539 | fitness | scalar | global | 3.9×10⁵ |
-| SmfKuzmin2020 | S. cerevisiae | 472 | 1 | 472 | fitness | scalar | global | 9.3×10⁴ |
-| SmfODuibhir2014 | S. cerevisiae | 1,312 | 1 | 1,312 | fitness | scalar | global | 2.0×10⁶ |
-| TmfKuzmin2018 | S. cerevisiae | 91,111 | 1 | 91,111 | fitness | scalar | global | 3.9×10⁷ |
-| TmfKuzmin2020 | S. cerevisiae | 290,355 | 1 | 301,798 | fitness | scalar | global | 1.3×10⁸ |
+| Bloom2019 | *S. cerevisiae* | 13,950 | 38 | 530,100 | environment_response (control_regression_residual) | scalar | global | 2.6×10⁸ |
+| CrispriSegregantHale2024 | *S. cerevisiae* | 895,494 | 2 | 8,692,635 | environment_response (relative_fitness) | scalar | global | 6.7×10⁹ |
+| DmfCostanzo2016 | *S. cerevisiae* | 20,705,612 | 2 | 20,705,612 | fitness | scalar | global | 7.1×10⁹ |
+| DmfKuzmin2018 | *S. cerevisiae* | 410,571 | 1 | 410,571 | fitness | scalar | global | 1.5×10⁸ |
+| DmfKuzmin2020 | *S. cerevisiae* | 608,805 | 1 | 632,998 | fitness | scalar | global | 2.4×10⁸ |
+| SmfBaryshnikova2010 | *S. cerevisiae* | 6,023 | 2 | 6,023 | fitness | scalar | global | 1.8×10⁶ |
+| SmfCostanzo2016 | *S. cerevisiae* | 10,277 | 2 | 20,484 | fitness | scalar | global | 5.4×10⁶ |
+| SmfKuzmin2018 | *S. cerevisiae* | 1,539 | 1 | 1,539 | fitness | scalar | global | 3.9×10⁵ |
+| SmfKuzmin2020 | *S. cerevisiae* | 472 | 1 | 472 | fitness | scalar | global | 9.3×10⁴ |
+| SmfODuibhir2014 | *S. cerevisiae* | 1,312 | 1 | 1,312 | fitness | scalar | global | 2.0×10⁶ |
+| TmfKuzmin2018 | *S. cerevisiae* | 91,111 | 1 | 91,111 | fitness | scalar | global | 3.9×10⁷ |
+| TmfKuzmin2020 | *S. cerevisiae* | 290,355 | 1 | 301,798 | fitness | scalar | global | 1.3×10⁸ |
 
 #### Gene interaction
 
 | Dataset | Host | Genotypes | Env | Instances | Phenotype | Shape | Graph role | Signal (gzip, bits) |
 | :-- | :-- | --: | --: | --: | :-- | :-- | :-- | --: |
-| DmiCostanzo2016 | S. cerevisiae | 20,705,612 | 2 | 20,705,612 | gene_interaction | scalar | edge | 6.0×10⁹ |
-| DmiKuzmin2018 | S. cerevisiae | 410,399 | 1 | 410,399 | gene_interaction | scalar | edge | 1.3×10⁸ |
-| DmiKuzmin2020 | S. cerevisiae | 608,604 | 1 | 632,797 | gene_interaction | scalar | edge | 2.1×10⁸ |
-| TmiKuzmin2018 | S. cerevisiae | 91,111 | 1 | 91,111 | gene_interaction | scalar | hyperedge | 3.4×10⁷ |
-| TmiKuzmin2020 | S. cerevisiae | 290,355 | 1 | 301,798 | gene_interaction | scalar | hyperedge | 1.1×10⁸ |
+| DmiCostanzo2016 | *S. cerevisiae* | 20,705,612 | 2 | 20,705,612 | gene_interaction | scalar | edge | 6.0×10⁹ |
+| DmiKuzmin2018 | *S. cerevisiae* | 410,399 | 1 | 410,399 | gene_interaction | scalar | edge | 1.3×10⁸ |
+| DmiKuzmin2020 | *S. cerevisiae* | 608,604 | 1 | 632,797 | gene_interaction | scalar | edge | 2.1×10⁸ |
+| TmiKuzmin2018 | *S. cerevisiae* | 91,111 | 1 | 91,111 | gene_interaction | scalar | hyperedge | 3.4×10⁷ |
+| TmiKuzmin2020 | *S. cerevisiae* | 290,355 | 1 | 301,798 | gene_interaction | scalar | hyperedge | 1.1×10⁸ |
 
 #### Genome architecture
 
 | Dataset | Host | Genotypes | Env | Instances | Phenotype | Shape | Graph role | Signal (gzip, bits) |
 | :-- | :-- | --: | --: | --: | :-- | :-- | :-- | --: |
-| GenomeArchitecturePuddu2019 | S. cerevisiae | 4,550 | 1 | 8,835 | genome_architecture | vector (28) | global | 1.2×10⁷ |
+| GenomeArchitecturePuddu2019 | *S. cerevisiae* | 4,550 | 1 | 8,835 | genome_architecture | vector (28) | global | 1.2×10⁷ |
 
 #### Life cycle
 
 | Dataset | Host | Genotypes | Env | Instances | Phenotype | Shape | Graph role | Signal (gzip, bits) |
 | :-- | :-- | --: | --: | --: | :-- | :-- | :-- | --: |
-| LifeCycleDeChiara2022 | S. cerevisiae | 905 | 5 | 4,039 | life_cycle | vector (4) | global | 1.3×10⁶ |
+| LifeCycleDeChiara2022 | *S. cerevisiae* | 905 | 5 | 4,039 | life_cycle | vector (4) | global | 1.3×10⁶ |
 
 #### Metabolite
 
 | Dataset | Host | Genotypes | Env | Instances | Phenotype | Shape | Graph role | Signal (gzip, bits) |
 | :-- | :-- | --: | --: | --: | :-- | :-- | :-- | --: |
-| AminoAcidCooper2010 | S. cerevisiae | 4,334 | 1 | 4,382 | metabolite_level (ce_lif_peak_area_ratio_to_plate_mean) | vector (16) | bipartite node | 5.2×10⁶ |
-| AminoAcidMulleder2016 | S. cerevisiae | 4,678 | 1 | 4,678 | metabolite_level (intracellular_concentration_mM) | vector (19) | bipartite node | 1.1×10⁷ |
-| BetaxanthinCachera2023 | S. cerevisiae | 4,759 | 1 | 4,759 | metabolite_level (cri_spa_corrected_hsv_yellowness_24h) | scalar | bipartite node | 4.5×10⁶ |
-| FattyAcidXue2025 | S. cerevisiae | 176 | 1 | 176 | metabolite_level (titer_mg_per_l) | vector (5) | bipartite node | 1.9×10⁵ |
-| IsobutanolScreenLopez2024 | S. cerevisiae | 4,607 | 1 | 4,805 | metabolite_level (biosensor_gfp_fluorescence_fold_change) | scalar | bipartite node | 9.0×10⁵ |
-| IsobutanolValidatedLopez2024 | S. cerevisiae | 226 | 1 | 227 | metabolite_level (biosensor_gfp_fluorescence_fold_change) | scalar | bipartite node | 7.4×10⁴ |
-| MetaboliteDaSilveira2014 | S. cerevisiae | 127 | 1 | 127 | metabolite_level (lipidomics_ms_relative_abundance_au) | vector (135) | bipartite node | 1.1×10⁶ |
-| MetaboliteZelezniak2018 | S. cerevisiae | 95 | 1 | 129 | metabolite_level (lc_srm_signal_batch_corrected_uncalibrated_dataset1) | vector (14) | bipartite node | 3.5×10⁵ |
-| OrganicAcidYoshida2012 | S. cerevisiae | 17 | 1 | 17 | metabolite_level (hplc_organic_acid_titer_mM) | vector (6) | bipartite node | 3.3×10⁴ |
+| AminoAcidCooper2010 | *S. cerevisiae* | 4,334 | 1 | 4,382 | metabolite_level (ce_lif_peak_area_ratio_to_plate_mean) | vector (16) | bipartite node | 5.2×10⁶ |
+| AminoAcidMulleder2016 | *S. cerevisiae* | 4,678 | 1 | 4,678 | metabolite_level (intracellular_concentration_mM) | vector (19) | bipartite node | 1.1×10⁷ |
+| BetaxanthinCachera2023 | *S. cerevisiae* | 4,759 | 1 | 4,759 | metabolite_level (cri_spa_corrected_hsv_yellowness_24h) | scalar | bipartite node | 4.5×10⁶ |
+| FattyAcidXue2025 | *S. cerevisiae* | 176 | 1 | 176 | metabolite_level (titer_mg_per_l) | vector (5) | bipartite node | 1.9×10⁵ |
+| IsobutanolScreenLopez2024 | *S. cerevisiae* | 4,607 | 1 | 4,805 | metabolite_level (biosensor_gfp_fluorescence_fold_change) | scalar | bipartite node | 9.0×10⁵ |
+| IsobutanolValidatedLopez2024 | *S. cerevisiae* | 226 | 1 | 227 | metabolite_level (biosensor_gfp_fluorescence_fold_change) | scalar | bipartite node | 7.4×10⁴ |
+| MetaboliteDaSilveira2014 | *S. cerevisiae* | 127 | 1 | 127 | metabolite_level (lipidomics_ms_relative_abundance_au) | vector (135) | bipartite node | 1.1×10⁶ |
+| MetaboliteZelezniak2018 | *S. cerevisiae* | 95 | 1 | 129 | metabolite_level (lc_srm_signal_batch_corrected_uncalibrated_dataset1) | vector (14) | bipartite node | 3.5×10⁵ |
+| OrganicAcidYoshida2012 | *S. cerevisiae* | 17 | 1 | 17 | metabolite_level (hplc_organic_acid_titer_mM) | vector (6) | bipartite node | 3.3×10⁴ |
 
 #### Morphology
 
 | Dataset | Host | Genotypes | Env | Instances | Phenotype | Shape | Graph role | Signal (gzip, bits) |
 | :-- | :-- | --: | --: | --: | :-- | :-- | :-- | --: |
-| CarotenoidOzaydin2013 | S. cerevisiae | 4,475 | 1 | 4,607 | visual_score | scalar | global | 7.7×10⁶ |
-| ScmdOhnuki2018 | S. cerevisiae | 1,112 | 1 | 1,112 | calmorph | vector (281) | global | 4.9×10⁷ |
-| ScmdOhnuki2022 | S. cerevisiae | 1,982 | 1 | 1,982 | calmorph | vector (281) | global | 8.8×10⁷ |
-| ScmdOhya2005 | S. cerevisiae | 4,718 | 1 | 4,718 | calmorph | vector (281) | global | 1.5×10⁸ |
+| CarotenoidOzaydin2013 | *S. cerevisiae* | 4,475 | 1 | 4,607 | visual_score | scalar | global | 7.7×10⁶ |
+| ScmdOhnuki2018 | *S. cerevisiae* | 1,112 | 1 | 1,112 | calmorph | vector (281) | global | 4.9×10⁷ |
+| ScmdOhnuki2022 | *S. cerevisiae* | 1,982 | 1 | 1,982 | calmorph | vector (281) | global | 8.8×10⁷ |
+| ScmdOhya2005 | *S. cerevisiae* | 4,718 | 1 | 4,718 | calmorph | vector (281) | global | 1.5×10⁸ |
 
 #### Protein abundance
 
 | Dataset | Host | Genotypes | Env | Instances | Phenotype | Shape | Graph role | Signal (gzip, bits) |
 | :-- | :-- | --: | --: | --: | :-- | :-- | :-- | --: |
-| ProteomeMessner2021 | S. cerevisiae | 1 | 18 | 70 | protein_abundance (swath_ms_diann_maxlfq_proteotypic_quantity) | vector (1920) | node | 1.2×10⁷ |
-| ProteomeMessner2023 | S. cerevisiae | 4,549 | 1 | 4,699 | protein_abundance (swath_ms_maxlfq_batch_corrected_quantity) | vector (1830) | node | 1.2×10⁹ |
-| ProteomeMuenzner2024 | S. cerevisiae | 795 | 1 | 795 | protein_abundance (swath_ms_maxlfq_precursor_batch_corrected_quantity) | vector (1542) | node | 9.6×10⁸ |
-| ProteomeZelezniak2018 | S. cerevisiae | 97 | 1 | 97 | protein_abundance (swath_ms_label_free_log_signal_sva) | vector (726) | node | 1.7×10⁷ |
+| ProteomeMessner2021 | *S. cerevisiae* | 1 | 18 | 70 | protein_abundance (swath_ms_diann_maxlfq_proteotypic_quantity) | vector (1920) | node | 1.2×10⁷ |
+| ProteomeMessner2023 | *S. cerevisiae* | 4,549 | 1 | 4,699 | protein_abundance (swath_ms_maxlfq_batch_corrected_quantity) | vector (1830) | node | 1.2×10⁹ |
+| ProteomeMuenzner2024 | *S. cerevisiae* | 795 | 1 | 795 | protein_abundance (swath_ms_maxlfq_precursor_batch_corrected_quantity) | vector (1542) | node | 9.6×10⁸ |
+| ProteomeZelezniak2018 | *S. cerevisiae* | 97 | 1 | 97 | protein_abundance (swath_ms_label_free_log_signal_sva) | vector (726) | node | 1.7×10⁷ |
 
 #### Protein synthesis / turnover
 
 | Dataset | Host | Genotypes | Env | Instances | Phenotype | Shape | Graph role | Signal (gzip, bits) |
 | :-- | :-- | --: | --: | --: | :-- | :-- | :-- | --: |
-| ProteinTurnoverMuenzner2024 | S. cerevisiae | 55 | 1 | 55 | degradation_rate (dynamic_silac_lys8_kdp_per_hour_no_dilution_correction) | vector (1015) | node | 6.9×10⁷ |
+| ProteinTurnoverMuenzner2024 | *S. cerevisiae* | 55 | 1 | 55 | degradation_rate (dynamic_silac_lys8_kdp_per_hour_no_dilution_correction) | vector (1015) | node | 6.9×10⁷ |
 
 #### Viability
 
 | Dataset | Host | Genotypes | Env | Instances | Phenotype | Shape | Graph role | Signal (gzip, bits) |
 | :-- | :-- | --: | --: | --: | :-- | :-- | :-- | --: |
-| GeneEssentialitySgd | S. cerevisiae | 1,180 | 5 | 1,329 | is_essential | scalar | node | 6.8×10⁵ |
-| SynthLethalityYeastSynthLethDb | S. cerevisiae | 14,000 | 1 | 14,000 | is_synthetic_lethal | scalar | edge | 8.0×10⁶ |
-| SynthRescueYeastSynthLethDb | S. cerevisiae | 6,948 | 1 | 6,948 | is_synthetic_rescue | scalar | edge | 4.0×10⁶ |
+| GeneEssentialitySgd | *S. cerevisiae* | 1,180 | 5 | 1,329 | is_essential | scalar | node | 6.8×10⁵ |
+| SynthLethalityYeastSynthLethDb | *S. cerevisiae* | 14,000 | 1 | 14,000 | is_synthetic_lethal | scalar | edge | 8.0×10⁶ |
+| SynthRescueYeastSynthLethDb | *S. cerevisiae* | 6,948 | 1 | 6,948 | is_synthetic_rescue | scalar | edge | 4.0×10⁶ |
 
 #### Total
 

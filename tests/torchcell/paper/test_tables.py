@@ -48,6 +48,19 @@ def test_tex_escape() -> None:
     assert tex_escape("smf_costanzo") == r"smf\_costanzo"
 
 
+def test_tex_escape_covers_the_specials_of_dataset_prose() -> None:
+    """A deletion allele, an accented author name and an inline power.
+
+    pdflatex with the default ``inputenc`` stops on each of these rather than dropping
+    it, so a description cell carrying one would fail the whole render.
+    """
+    assert tex_escape("ΔacrA") == r"$\Delta$acrA"
+    assert tex_escape("5 x 10^5 insertions") == r"5 x 10\textasciicircum{}5 insertions"
+    assert tex_escape("Nguessan") == "Nguessan"
+    assert tex_escape("Muñoz") == r"Mu\~{n}oz"
+    assert tex_escape("López") == r"L\'{o}pez"
+
+
 def _make_lmdb(tmp: Path, phenotypes: list[dict[str, Any]]) -> Path:
     """Write a torchcell-shaped LMDB with the given phenotype dicts."""
     d = tmp / "processed" / "lmdb"

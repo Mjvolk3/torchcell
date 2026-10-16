@@ -25,9 +25,13 @@ Per dataset, over the dev-tree LMDB (``$DATA_ROOT/data/torchcell/<slug>/processe
   thresholded at 0 (sigmoid then round), serialized as ``1`` / ``0`` in place.
 - ``binary_packed_bytes``: gzip of just those bits, packed 8 per byte in record order,
   with no structure around them. The one-bit floor on value-carried information.
-- ``description``: the summary paragraph of the dataset class's docstring (RST roles and
-  literals unwrapped, whitespace collapsed). Code metadata, not read from the LMDB, so it
-  is attached fresh on every run rather than cached.
+- ``description``: two to three sentences per dataset class from the committed
+  ``dataset_descriptions.json`` (every built class must have one). Attached fresh on
+  every run rather than cached.
+- ``edits_min`` / ``edits_mode`` / ``edits_max`` / ``perturbation_types`` /
+  ``natural_genome``: edits per genotype over 400 evenly spaced records (a sample, not a
+  full scan; ~1 min for every store), and from them ``seq_fit`` / ``seq_unit``, how well
+  a sequence-embedding-only model fits the dataset (rules in ``sequence_fit``).
 - ``shuffled_bytes``: every numeric leaf replaced by a draw without replacement from
   the same key path's values across the dataset (marginals kept, joint structure
   destroyed). Between the real Signal and the noise ceiling.
@@ -48,7 +52,6 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import inspect
 import json
 import math
 import os
@@ -69,7 +72,12 @@ import lmdb
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 
-from torchcell.data.experiment_dataset import ALL_ORGANISMS, Organism, parse_organisms
+from torchcell.data.experiment_dataset import (
+    ALL_ORGANISMS,
+    Organism,
+    parse_organisms,
+    resolve_interned,
+)
 from torchcell.database.build_dataset_lmdb import dataset_default_root
 from torchcell.knowledge_graphs.dataset_adapter_map import build_adapter_map
 from torchcell.paper.tables import (
@@ -142,24 +150,172 @@ SECTION_BY_EXPERIMENT_TYPE = {
 }
 
 
-_RST_ROLE_RE = re.compile(r":[a-z]+:`~?([^`]+)`")
-_RST_LITERAL_RE = re.compile(r"``([^`]+)``")
+DESCRIPTIONS_PATH = SCRIPT.parent / "dataset_descriptions.json"
 
 
-def docstring_summary(cls: type) -> str:
-    """The first paragraph of a class docstring as one plain line.
+def load_descriptions() -> dict[str, str]:
+    """``{dataset class name: description}`` from the committed descriptions file.
 
-    RST roles and double-backtick literals lose their markup, whitespace collapses. A class
-    without a docstring raises: every served loader documents itself, and an empty
-    description cell would hide the gap.
+    Two to three sentences per served dataset class, written from the loader module and
+    its Dendron note (what was measured, the strains and conditions, what one record
+    is). Kept beside the scripts rather than in the class docstrings while the ontology
+    unification is renaming those modules; the table is temporary until then.
     """
-    own = cls.__dict__.get("__doc__")
-    if not own:
-        raise ValueError(f"{cls.__name__} has no docstring of its own to describe it")
-    para = inspect.cleandoc(own).split("\n\n", 1)[0]
-    para = _RST_ROLE_RE.sub(r"\1", para)
-    para = _RST_LITERAL_RE.sub(r"\1", para)
-    return " ".join(para.split())
+    return dict(json.loads(DESCRIPTIONS_PATH.read_text()))
+
+
+# --- genotype sample: the sequence-embedding fit -----------------------------------
+
+GENOTYPE_SAMPLE = 400
+# Perturbation types that put DNA absent from the host genome into the strain: such a
+# gene has no node in the host's gene graph, so a sequence embedding is its only
+# representation.
+HETEROLOGOUS_TYPES = frozenset(
+    {"heterologous_pathway", "gene_addition", "variable_promoter_reporter"}
+)
+# A genotype with at least this many edits is a whole-genome or multi-edit strain.
+MULTI_EDIT = 4
+NATURAL_GENOME_EDITS = 100
+
+
+class GenotypeSample(BaseModel):
+    """Edits per genotype over evenly spaced records of one store."""
+
+    sampled_records: int
+    edits_min: int
+    edits_mode: int
+    edits_max: int
+    perturbation_types: list[str]
+    natural_genome: bool
+
+
+def sample_genotypes(lmdb_dir: str, k: int = GENOTYPE_SAMPLE) -> GenotypeSample:
+    """Read ``k`` evenly spaced records (interned references resolved) and count edits.
+
+    A segregant or isolate genotype stores its parents and cross instead of a
+    ``perturbations`` list; that is a natural genome, not a set of edits.
+    """
+    processed = osp.dirname(lmdb_dir)
+    interned: dict[str, Any] = {}
+    idir = osp.join(processed, "interned")
+    if osp.isdir(idir):
+        ienv = lmdb.open(idir, readonly=True, lock=False)
+        try:
+            with ienv.begin() as itxn:
+                for key, value in itxn.cursor():
+                    interned[key.decode()] = pickle.loads(value)  # noqa: S301
+        finally:
+            ienv.close()
+    env = lmdb.open(lmdb_dir, readonly=True, lock=False)
+    counts: dict[int, int] = {}
+    types: set[str] = set()
+    natural = False
+    try:
+        n = env.stat()["entries"]
+        idx = sorted({i * n // k for i in range(k)})
+        with env.begin() as txn:
+            for i in idx:
+                raw = txn.get(str(i).encode())
+                if raw is None:
+                    raise KeyError(f"{lmdb_dir}: no record under key {i} of {n}")
+                rec = resolve_interned(pickle.loads(raw), interned)  # noqa: S301
+                genotype = rec["experiment"]["genotype"]
+                if "perturbations" not in genotype:
+                    natural = True
+                    continue
+                perts = genotype["perturbations"]
+                counts[len(perts)] = counts.get(len(perts), 0) + 1
+                types.update(p["perturbation_type"] for p in perts)
+    finally:
+        env.close()
+    if not counts:
+        return GenotypeSample(
+            sampled_records=len(idx),
+            edits_min=0,
+            edits_mode=0,
+            edits_max=0,
+            perturbation_types=[],
+            natural_genome=True,
+        )
+    return GenotypeSample(
+        sampled_records=len(idx),
+        edits_min=min(counts),
+        edits_mode=max(counts, key=lambda c: (counts[c], -c)),
+        edits_max=max(counts),
+        perturbation_types=sorted(types),
+        natural_genome=natural,
+    )
+
+
+def sequence_fit(rec: DatasetProbeRecord) -> tuple[str, str]:
+    """``(tier, unit)``: how well a sequence-embedding-only model fits this dataset.
+
+    The unit is what one label attaches to once the cell graph is dropped, and the tier
+    is set by WHERE the label sits, then by the modal edit count ``k`` of the genotype
+    sample. A node-level or bipartite-node label keeps its anchor however complex the
+    strain is, because the label still attaches to one gene, protein, metabolite or
+    reaction, which has a sequence or a structure of its own. Only a whole-strain
+    (``global``) readout is nothing but its edit set, so that is where a multi-edit
+    strain costs a tier.
+
+    - natural genome (a segregant, a wild isolate, or ``k >= 100``): ``none``. Thousands
+      of segregating variants, and no edit to attach a sequence to.
+    - edge / hyperedge: ``best``, a gene pair or triple.
+    - node, ``k <= 1``: ``best``. The unperturbed readout of one gene, the inserted DNA
+      when the single edit is heterologous, or the perturbed gene's own label.
+    - node, ``k >= 2``: ``good``, readout gene x the perturbed genes.
+    - bipartite node: ``good``, metabolite (reaction for a flux) x the perturbed genes.
+    - global, ``k == 1``: ``best`` for one heterologous construct or one gene in one
+      environment, ``good`` for one gene across several (gene x condition).
+    - global, ``k`` of 2 or 3: ``good``, a gene pair or triple behind a strain readout.
+    - global, ``k >= 4``: ``weak`` when heterologous genes are among the edits (they are
+      the part a sequence model can see), ``none`` otherwise.
+    - global, ``k == 0``: ``none``, a strain readout with no edit.
+    """
+    k = rec.edits_mode
+    hetero = bool(HETEROLOGOUS_TYPES & set(rec.perturbation_types))
+    role = rec.graph_role
+    span = (
+        f" ({rec.edits_min}-{rec.edits_max} edits)"
+        if rec.edits_min != rec.edits_max
+        else ""
+    )
+    cond = " x condition" if rec.environments > 1 else ""
+    if rec.natural_genome or k >= NATURAL_GENOME_EDITS:
+        return "none", "natural genome (segregant or isolate)"
+    if role == "edge":
+        return "best", f"gene pair{span}"
+    if role == "hyperedge":
+        return "best", f"gene triple{span}"
+    if role == "node":
+        if k == 0:
+            return "best", f"1 gene, unperturbed strain{cond}{span}"
+        if k == 1 and hetero:
+            return "best", f"inserted DNA (promoter or reporter){cond}{span}"
+        if k == 1:
+            return "best", f"1 gene, its own label{cond}{span}"
+        return "good", f"readout gene x {k} perturbed gene(s){cond}{span}"
+    if role == "bipartite node":
+        target = "reaction" if rec.label_name == "net_flux" else "metabolite"
+        if k == 0:
+            return "good", f"{target}, unperturbed strain{cond}{span}"
+        return "good", f"{target} x {k} perturbed gene(s){cond}{span}"
+    if k == 1:
+        if hetero:
+            return "best", f"1 heterologous construct{cond}{span}"
+        if rec.environments > 1:
+            return "good", f"1 gene x condition{span}"
+        return "best", f"1 gene{span}"
+    if k in (2, 3):
+        return (
+            "good",
+            f"gene {'pair' if k == 2 else 'triple'}, strain readout{cond}{span}",
+        )
+    if k >= MULTI_EDIT:
+        if hetero:
+            return "weak", f"set of {k} edits incl. heterologous genes{span}"
+        return "none", f"multi-edit strain, {k} edits{span}"
+    return "none", f"unperturbed strain readout{cond}{span}"
 
 
 def section_for(experiment_type: str) -> str:
@@ -220,6 +376,14 @@ class DatasetProbeRecord(BaseModel):
     lmdb_bytes: int = 0
     seconds: float = 0.0
     description: str = ""
+    sampled_records: int = 0
+    edits_min: int = 0
+    edits_mode: int = 0
+    edits_max: int = 0
+    perturbation_types: list[str] = Field(default_factory=list)
+    natural_genome: bool = False
+    seq_fit: str = ""
+    seq_unit: str = ""
 
 
 class _CacheEntry(BaseModel):
@@ -643,16 +807,35 @@ def main() -> None:
             )
             cache.save()
 
-    classes = {
-        c.__name__: c
-        for c in build_adapter_map(include_private=False, organisms=organisms.members)
+    descriptions = load_descriptions()
+    served = {
+        c.__name__
+        for c in build_adapter_map(include_private=False, organisms=ALL_ORGANISMS)
     }
-    ordered = [
-        records[j.slug].model_copy(
-            update={"description": docstring_summary(classes[j.dataset_class])}
+    stale = sorted(set(descriptions) - served)
+    if stale:
+        raise ValueError(f"descriptions for classes no longer served: {stale}")
+    missing = sorted({j.dataset_class for j in jobs} - set(descriptions))
+    if missing:
+        raise ValueError(f"no description in {DESCRIPTIONS_PATH.name} for: {missing}")
+    with ctx.Pool(processes=args.workers) as pool:
+        samples = dict(
+            zip(
+                (j.slug for j in jobs),
+                pool.map(sample_genotypes, [j.lmdb_dir for j in jobs]),
+                strict=True,
+            )
         )
-        for j in sorted(jobs, key=lambda j: (j.organism, j.dataset_class))
-    ]
+    ordered = []
+    for j in sorted(jobs, key=lambda j: (j.organism, j.dataset_class)):
+        rec = records[j.slug].model_copy(
+            update={
+                "description": descriptions[j.dataset_class],
+                **samples[j.slug].model_dump(),
+            }
+        )
+        tier, unit = sequence_fit(rec)
+        ordered.append(rec.model_copy(update={"seq_fit": tier, "seq_unit": unit}))
     sections = sorted({r.section for r in ordered})
     out = (
         args.out

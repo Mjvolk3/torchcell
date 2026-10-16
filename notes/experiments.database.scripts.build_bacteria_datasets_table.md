@@ -172,3 +172,71 @@ canvas is sized from the wrapped line count of each row.
 fingerprint, so both JSONs were rewritten without rescanning an LMDB
 (`results/pre-build/2026-10-15/`); every number in the standard views is unchanged and only
 their source-JSON line moved.
+
+## 2026.10.15 - Longer descriptions, italic species, and a sequence-only fit column
+
+The expanded views gained two derived columns and their descriptions were rewritten at
+length. Same two notes and PDFs as the section above.
+
+**Descriptions moved out of the docstrings.** A one-line docstring summary could not say
+what was measured, with what technology, on which strains, and what one record is. The
+descriptions now live in `experiments/database/scripts/dataset_descriptions.json`, two to
+three sentences per class (169 entries, 150 to 420 characters, mean 342), each written from
+that loader's module docstring, class docstring, constants and Dendron note. The build
+script refuses a snapshot when a served class is missing from the file or the file names a
+class no longer served, so the set cannot drift from the adapter map. `docstring_summary` is
+gone. Species names are written plainly in the file and italicized by one rule in the
+renderer (`italic_species`), in the Host column and inside the descriptions, in both
+markdown and LaTeX.
+
+**Sequence-only fit: a measured genotype shape, not a judgment.** `sample_genotypes` reads
+400 evenly spaced records of each store (interned references resolved) and records the
+minimum, modal and maximum number of perturbations per genotype, the perturbation types
+present, and whether the genotype is a natural genome, meaning it stores a cross and its
+parents rather than an edit list. The whole 169-store sample takes about 50 s on 16 workers.
+`sequence_fit` turns one row into a tier and a label unit, by where the label sits first and
+the edit count second:
+
+- a node-level or bipartite-node label keeps its anchor however complex the strain is,
+  because the label attaches to one gene, protein, metabolite or reaction, each of which has
+  a sequence or structure of its own;
+- a whole-strain (`global`) readout is nothing but its edit set, so that is the only place a
+  multi-edit strain costs a tier: `weak` when heterologous genes are among the edits, since
+  those are the part a sequence model can see, `none` otherwise;
+- a natural genome scores `none` at any role: thousands of segregating variants and no edit
+  to attach a sequence to.
+
+Measured over the two snapshots:
+
+| Sequence-only fit | Bacteria datasets | Bacteria instances | Yeast datasets | Yeast instances |
+| :-- | --: | --: | --: | --: |
+| best | 45 | 651,583 | 24 | 22,268,559 |
+| good | 45 | 6,604,753 | 33 | 70,266,673 |
+| weak | 6 | 688 | 1 | 4,607 |
+| none | 4 | 444 | 11 | 726,947 |
+| **Total** | **100** | **7,257,468** | **69** | **93,266,786** |
+
+So 90 of 100 bacterial datasets and 57 of 69 yeast datasets are a `best` or `good` fit for a
+sequence-embedding-only model, and on the bacterial side the ten that are not hold 1,132 of
+7.26 M instances. The yeast `none` tier is where the instances are: 727 k records over
+eleven datasets, ten of them segregant and wild-isolate panels (Bloom 2019 at 530 k records,
+Boocock 2025, Nguessan 2025, Caudal 2024, the three De Chiara 2022 panels, Peter 2018, and
+both Muenzner 2024 stores), which a per-gene sequence model has no handle on. The eleventh is
+Ohnuki 2022, a four-edit strain set with no heterologous gene.
+
+**Hypothesis (untested), stated as one:** the tier is a claim about representability, not
+about accuracy. Nothing here measures how a sequence-only model actually scores on a `best`
+dataset, and a `good` tier says the label needs two embeddings crossed, not that the cross
+is learnable from them.
+
+**Two renderer fixes the longer prose forced.** `tex_escape` now maps Δ, α, γ, μ, the
+accented vowels of author names, and a caret (a description writes "5 x 10^5"); each of
+those stopped pdflatex outright rather than being dropped. The expanded preview canvas is
+17.5 in wide, and a wrapped line costs 0.119 in rather than 0.13 in, measured on this render:
+both expanded PDFs are a single page with zero overfull boxes and 1.2 in (bacteria) and
+2.4 in (yeast) of slack.
+
+**Tests.** `tests/torchcell/paper/test_dataset_sequence_fit.py` pins every `sequence_fit`
+rule, including the two that are easy to get backwards (a protein abundance label in an
+eight-edit strain stays `good`; a titer of the same strain is `weak`), and the shape of the
+descriptions file. `test_tables.py` covers the new escapes.

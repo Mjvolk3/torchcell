@@ -64,6 +64,21 @@ _TEX_REPLACEMENTS = {
     "β": r"$\beta$",
     "±": r"$\pm$",
     "≈": r"$\approx$",
+    # Greek and accented letters of dataset prose (deletion alleles, author names).
+    # pdflatex with the default inputenc stops on these rather than dropping them.
+    "Δ": r"$\Delta$",
+    "α": r"$\alpha$",
+    "γ": r"$\gamma$",
+    "μ": r"$\mu$",
+    "ñ": r"\~{n}",
+    "ó": r"\'{o}",
+    "é": r"\'{e}",
+    "á": r"\'{a}",
+    "ü": r"\"{u}",
+    "ö": r"\"{o}",
+    # Specials of plain prose: a caret in "5 x 10^5", braces in a strain label.
+    # Applied last, so they never touch the braces of a substitution above.
+    "^": r"\textasciicircum{}",
 }
 
 

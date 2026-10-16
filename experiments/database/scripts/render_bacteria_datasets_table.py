@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -75,6 +76,25 @@ ORGANISM_LABEL = {
     "pputida": "P. putida",
     "scerevisiae": "S. cerevisiae",
 }
+# Species names are italic in both targets, in the Host column and inside the
+# descriptions, where they are written plainly so one rule italicizes them everywhere.
+ITALIC_SPECIES = (
+    "S. cerevisiae",
+    "E. coli",
+    "P. putida",
+    "Saccharomyces cerevisiae",
+    "Escherichia coli",
+    "Pseudomonas putida",
+)
+_SPECIES_RE = re.compile("|".join(re.escape(s) for s in ITALIC_SPECIES))
+
+
+def italic_species(text: str) -> Cell:
+    r"""A cell whose species names are italic: ``*...*`` in markdown, ``\emph`` in LaTeX."""
+    md = _SPECIES_RE.sub(lambda m: f"*{m.group(0)}*", text)
+    tex = _SPECIES_RE.sub(lambda m: rf"\emph{{{m.group(0)}}}", tex_escape(text))
+    return Cell(md=md, tex=tex)
+
 
 MAIN_COLUMNS = [
     Column(header="Dataset", align="l"),
@@ -90,10 +110,13 @@ MAIN_COLUMNS = [
 
 # Wrapping widths for the expanded view's two free-text columns. The characters per
 # wrapped line at \footnotesize only size the standalone preview canvas.
-DESCRIPTION_WIDTH = "3.0in"
-DESCRIPTION_CHARS_PER_LINE = 52
-PHENOTYPE_WIDTH = "2.3in"
-PHENOTYPE_CHARS_PER_LINE = 38
+DESCRIPTION_WIDTH = "4.6in"
+DESCRIPTION_CHARS_PER_LINE = 80
+PHENOTYPE_WIDTH = "1.5in"
+PHENOTYPE_CHARS_PER_LINE = 26
+SEQ_UNIT_WIDTH = "1.5in"
+SEQ_UNIT_CHARS_PER_LINE = 26
+SEQ_FIT = "Sequence-only fit"
 EXPANDED_COLUMNS = [
     MAIN_COLUMNS[0],
     MAIN_COLUMNS[1],
@@ -103,7 +126,12 @@ EXPANDED_COLUMNS = [
     MAIN_COLUMNS[4],
     Column(header="Phenotype", align="l", width=PHENOTYPE_WIDTH),
     *MAIN_COLUMNS[6:],
+    Column(header=SEQ_FIT, align="l"),
+    Column(header="Label unit", align="l", width=SEQ_UNIT_WIDTH),
 ]
+
+# The tiers of build_bacteria_datasets_table.sequence_fit, in table order.
+SEQ_FIT_LABEL = {"best": "best", "good": "good", "weak": "weak", "none": "no"}
 
 CONTROL_COLUMNS = [
     Column(header="Dataset", align="l"),
@@ -163,12 +191,29 @@ EXPANDED_MD_INTRO = """\
 (-> results/pre-build/<date>/<organisms>_datasets.json); this note is a VIEW rendered by
 render_bacteria_datasets_table.py. Do not edit tables by hand. -->
 
-The table of [[experiments.database.{name}-datasets-table]] with one more column.
-*Description* is the summary paragraph of the dataset class's docstring in
-`torchcell/datasets/`, attached by the build script when it writes the JSON, so a better
-description is made by improving that docstring and rerunning both scripts. Every other
-column is read from the built LMDB; definitions and the Signal controls are in the
-non-expanded note. Commentary: [[experiments.database.scripts.build_bacteria_datasets_table]].
+The table of [[experiments.database.{name}-datasets-table]] with three more columns.
+
+*Description* is two to three sentences per dataset from
+`experiments/database/scripts/dataset_descriptions.json`, written from the loader module
+and its Dendron note: what was measured and with what technology, what the strains are,
+and what one stored record is. The build script refuses to write a snapshot with a
+served dataset missing from that file, so a better description is made by editing it and
+rerunning both scripts.
+
+*Sequence-only fit* says how well a model that sees only sequence embeddings, with no
+cell graph, fits the dataset, and *Label unit* names what one label attaches to once the
+graph is dropped. Both are derived by `sequence_fit` in the build script from the
+genotype of 400 evenly spaced records per store, never typed by hand. *best* = the label
+sits on one gene, one gene pair or triple, or one inserted construct, so a per-gene or
+per-pair sequence representation is the whole input. *good* = the label needs the
+readout entity crossed with the perturbed gene(s) or with the condition, which a pair of
+embeddings still carries. *weak* = a multi-edit strain, where only the heterologous genes
+have a sequence to stand on. *no* = a natural genome (a segregant or a wild isolate) or a
+whole-strain readout with no single edit to attach a sequence to.
+
+Every other column is read from the built LMDB; definitions and the Signal controls are
+in the non-expanded note. Commentary:
+[[experiments.database.scripts.build_bacteria_datasets_table]].
 """
 
 
@@ -199,7 +244,7 @@ def main_table(records: list[DatasetProbeRecord], sections: list[str]) -> PaperT
                     section=section,
                     cells={
                         "Dataset": short_name(r),
-                        "Host": ORGANISM_LABEL[r.organism],
+                        "Host": italic_species(ORGANISM_LABEL[r.organism]),
                         "Genotypes": f"{r.genotypes:,}" if r.probed else "—",
                         "Env": f"{r.environments:,}" if r.probed else "—",
                         "Instances": f"{r.instances:,}",
@@ -243,16 +288,60 @@ def expanded_table(
             update={
                 "cells": {
                     **row.cells,
-                    "Description": by_name[str(row.cells["Dataset"])].description,
+                    "Description": italic_species(
+                        by_name[str(row.cells["Dataset"])].description
+                    ),
                     "Phenotype": breakable_phenotype(
                         by_name[str(row.cells["Dataset"])]
                     ),
+                    SEQ_FIT: SEQ_FIT_LABEL[by_name[str(row.cells["Dataset"])].seq_fit],
+                    "Label unit": by_name[str(row.cells["Dataset"])].seq_unit,
                 }
             }
         )
         for row in main_t.rows
     ]
     return PaperTable(columns=EXPANDED_COLUMNS, rows=rows, footer=main_t.footer)
+
+
+SEQ_TALLY_COLUMNS = [
+    Column(header="Sequence-only fit", align="l"),
+    Column(header="Datasets", align="r"),
+    Column(header="Instances", align="r"),
+    Column(header="What the tier means", align="l", width="3.4in"),
+]
+
+SEQ_TIER_MEANING = {
+    "best": "the label sits on one gene, a gene pair or triple, or one inserted construct",
+    "good": "readout entity x perturbed gene(s), or gene x condition",
+    "weak": "a multi-edit strain, only its heterologous genes carry a sequence",
+    "none": "a natural genome, or a whole-strain readout with no single edit",
+}
+
+
+def seq_fit_tally(records: list[DatasetProbeRecord]) -> PaperTable:
+    """Datasets and instances per sequence-only fit tier."""
+    rows = [
+        Row(
+            cells={
+                "Sequence-only fit": SEQ_FIT_LABEL[tier],
+                "Datasets": f"{len(group):,}",
+                "Instances": f"{sum(r.instances for r in group):,}",
+                "What the tier means": SEQ_TIER_MEANING[tier],
+            }
+        )
+        for tier in ("best", "good", "weak", "none")
+        if (group := [r for r in records if r.seq_fit == tier])
+    ]
+    footer = Row(
+        bold=True,
+        cells={
+            "Sequence-only fit": "Total",
+            "Datasets": f"{len(records):,}",
+            "Instances": f"{sum(r.instances for r in records):,}",
+        },
+    )
+    return PaperTable(columns=SEQ_TALLY_COLUMNS, rows=rows, footer=footer)
 
 
 def control_table(records: list[DatasetProbeRecord], sections: list[str]) -> PaperTable:
@@ -413,9 +502,12 @@ def _render_expanded(
     tex = table.to_latex(
         caption=(
             f"{hosts} datasets ({payload['status']}, {payload['date']}) built as LMDBs in "
-            "the TorchCell dev tree, with a description of each. \\emph{Description} is the "
-            "summary line of the dataset class's docstring; the other columns are as in "
-            "the non-expanded table."
+            "the TorchCell dev tree, with a description of each. \\emph{Description} is "
+            "written from the loader module and its note. \\emph{Sequence-only fit} and "
+            "\\emph{Label unit} are derived from the genotype of 400 evenly spaced records "
+            "per store: how well a sequence-embedding-only model fits the dataset, and "
+            "what one label attaches to without the cell graph. The other columns are as "
+            "in the non-expanded table."
         ),
         label=f"tab:{name}-datasets-expanded",
         header_comment=f"GENERATED off {data_path.relative_to(REPO)} by render_bacteria_datasets_table.py -- do not edit by hand.",
@@ -436,6 +528,10 @@ def _render_expanded(
             "",
             table.to_markdown(sectioned=True, heading_level=4),
             "",
+            "### Sequence-only fit, summed over the table",
+            "",
+            seq_fit_tally(records).to_markdown(sectioned=False),
+            "",
             f"Source JSON: `{data_path.relative_to(REPO)}`.",
         ]
     )
@@ -445,17 +541,20 @@ def _render_expanded(
         max(
             -(-len(r.description) // DESCRIPTION_CHARS_PER_LINE),
             -(-len(phenotype_text(r)) // PHENOTYPE_CHARS_PER_LINE),
+            -(-len(r.seq_unit) // SEQ_UNIT_CHARS_PER_LINE),
         )
         for r in records
     )
-    # Measured on the 2026-10-15 render: a wrapped \footnotesize line takes ~0.125 in.
+    # Measured on the 2026-10-15 expanded render (the wide Description column): the
+    # estimate above over-counts lines slightly, so a line costs 0.119 in of canvas.
     _preview_pdf(
         data_path.parent,
         tex_out,
         pdf_out(name, suffix),
         n_lines + len(sections) * 2,
         base_in=2.5,
-        line_in=0.13,
+        line_in=0.119,
+        width_in=17.5,
     )
 
 
@@ -467,13 +566,14 @@ def _preview_pdf(
     *,
     base_in: float = 4.0,
     line_in: float = 0.17,
+    width_in: float = 14.0,
 ) -> None:
     r"""Standalone pdflatex canvas sized to the row count (a ``table*`` never paginates)."""
     height_in = base_in + n_lines * line_in
     wrapper = out_dir / f"_preview_{tex_out.stem}.tex"
     wrapper.write_text(
         "\\documentclass[9pt]{article}\n"
-        f"\\usepackage[paperwidth=14in,paperheight={height_in:.1f}in,margin=0.4in]{{geometry}}\n"
+        f"\\usepackage[paperwidth={width_in:.1f}in,paperheight={height_in:.1f}in,margin=0.4in]{{geometry}}\n"
         "\\usepackage[T1]{fontenc}\\usepackage{lmodern}\\usepackage{booktabs}\n"
         "\\usepackage{amsmath,amssymb}\\usepackage{textcomp}\\usepackage{array}\n"
         "\\pagestyle{empty}\\makeatletter\\setlength{\\@fptop}{0pt}\\makeatother\n"

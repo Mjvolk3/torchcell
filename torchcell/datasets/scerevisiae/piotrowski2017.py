@@ -63,10 +63,36 @@ COMPOUND IDENTITY. A label with a curated ``compound_identity_table`` row takes 
 label takes the InChIKey HASHED FROM THE RELEASED STANDARD InChI
 (``resolved_compound(..., derive_from_inchi=True)``), the source's own identifier, rather
 than one regenerated from its SMILES. The released SMILES and InChI are carried on the
-``Compound`` either way. A condition whose InChI is absent, or that RDKit cannot read, is
-STORED with the typed ``inchikey`` gap ``resolved_compound`` attaches
+``Compound`` either way. An IDENTIFIED condition whose InChI is absent, or that RDKit
+cannot read, is STORED with the typed ``inchikey`` gap ``resolved_compound`` attaches
 (``deferred_pending_source_review``: these labels have never been through the curator,
 #726), never dropped and never guessed; ``preprocess/conditions.json`` lists each one.
+Identified means a released compound name (Iyomycin B1, Kigamicin D, Kundrymycin,
+"Lactoferrin, from Bovin Milk", Mezzanomycin, Mucopeptin B and C carry no structure and
+stay stored under their names) or a released SMILES or InChI (GI261520A, NSC122750,
+NSC150817, NSC168184, NSC305780 and NSC5907 are code labels whose released SMILES RDKit
+cannot read, ``*`` wildcards included, and stay stored with the SMILES verbatim).
+
+UNIDENTIFIED AGENTS ARE HELD OUT (``UNIDENTIFIED_COMPOUND_RULE``, database constitution
+principle 2, owner ruling 2026-10-15). The criterion is mechanical: the Data Set 4 Name
+matches ``_CODE_LABEL`` (capital letters then digits, at most one trailing capital), the
+SMILES and InChI cells are both empty or ``NA``, the label has no curated
+compound-identity row, and ``RELEASED_IDENTITIES`` has no entry for it. Data Set 4 itself
+says the NP/NPD/NPE labels are NPDepo library codes (``NPDEPO_NOMENCLATURE``, cell A2) and
+that the identity of each compound is its structure strings (``STRUCTURE_STRINGS``, cell
+A3), and no other mirrored SI file (Data Sets 1-22, the halo-assay list, the RIKEN
+anticancer subset) gives a common name for any held-out code. Measured on the release
+with the loader's own readers: 19 conditions, 5,477 records, held out: IB01212, NPD2168,
+NPD2639, NPD2683, NPD3807, NPD403, NPD4135, NPD4152, NPD5035, NPD5517, NPD723, NPD7281,
+NPD8154, NPD866, NPD938, NPE513 and NPE553 (RIKEN screen, 289 records each) and NSC236657
+and NSC76455 (NCI-MECH-DIV, 282 each). Each is listed in the drop log's
+``unidentified_compounds_held_out`` with its dose and records, which is the request list
+for the empty admission table ``RELEASED_IDENTITIES``: only a public label-to-structure
+release (an NPDepo or NCI DTP record, mirrored and sha256-pinned) fills an entry, never an
+identity inferred from profile similarity, and a filled entry rebuilds the store.
+NSC305780 is released as two conditions (Cond-012229 at 0.5 uM, Cond-012230 at 100 uM),
+two wells of one compound, consistent with the Methods' re-screen at lower doses (Percent
+Growth 11.8 at 100 uM); both carry its released SMILES and both are stored.
 
 DOSE. Each condition's dose is its Data Set 4 cell (``10-ug/ml``, ``100-uM``, ...), under
 ``basis=fixed``: the libraries were screened at fixed concentrations and re-screened at
@@ -91,8 +117,11 @@ RECORDS NOT STORED (rules + counts in ``preprocess/dropped_records.json``; every
 cell is counted once, in rule order): ``condition_not_in_the_final_dataset``, the one
 released column Data Set 4 marks ``In_final_dataset = False`` (Cond-008510, 289 cells; the
 Data Set 5 title also counts 11,983, not 11,984). That exclusion is the release's own
-metadata, not a filter of ours. Then the range-dose conditions above. ``NA`` cells are not
-values and are counted beside the ledger (``not_scored_cells``), not as drops.
+metadata, not a filter of ours. Then the range-dose conditions above, then the 19
+unidentified-agent conditions (5,477 records). Of 3,438,421 numeric cells, 3,430,343 are
+stored and 8,078 are held out (289 + 2,312 + 5,477), and the build raises unless stored
+plus every rule equals the source. ``NA`` cells are not values and are counted beside the
+ledger (``not_scored_cells``), not as drops.
 
 REPLICATES. Each released profile is the mean of the condition's technical (PCR)
 replicates that survived the Note's batch-effect filter and correlation-graph collapsing:
@@ -171,6 +200,7 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
+from torchcell.datasets.scerevisiae.hoepfner2014 import ReleasedIdentity
 from torchcell.datasets.scerevisiae.vanacloig2022 import (
     ARRAY_KANMX,
     LIBRARY_STRAIN,
@@ -589,6 +619,71 @@ CHEMICAL_IDENTIFIERS = _paper(
     note="the released InChI is the source's own standard identifier, so its hash is the "
     "InChIKey stored for a label with no curated table row",
 )
+NPDEPO_NOMENCLATURE = _sheet(
+    ["NP", "NPD", "NPE"],
+    "NPDepo Nomenclature: NP (Natural Product), NPD (Natural Product Derivative), NPE "
+    "(Natural Product/Derivative Early, early members of the RIKEN collection with only "
+    "IUPAC names but renamed in this study for clarity)",
+    release=CONDITIONS,
+    page="sheet 'Suppl. dataset 4', cell A2",
+    note="an NP/NPD/NPE label is a RIKEN NPDepo library code, not a compound name; the "
+    "compound it names is stated only by the row's SMILES and InChI",
+)
+STRUCTURE_STRINGS = _sheet(
+    "InChI and SMILES",
+    "Structure strings: We provide the chemical structures as both InChI (IUPAC "
+    "International Chemical Identifier) and SMILES (Simplified Molecular-Input Line-entry "
+    "System), which can be used to generate a structure image through a number of "
+    "chemoinformatic programs or online means (e.g. PubChem, ChemAxon)",
+    release=CONDITIONS,
+    page="sheet 'Suppl. dataset 4', cell A3",
+    note="the release's structure columns are where a code label's identity lives; a "
+    "code label with both cells empty or NA has no released identity",
+)
+COLLECTIONS_BY_REQUEST = _paper(
+    "the non-RIKEN collections are obtained from their distributors",
+    "Each of the remaining collections are publicly available and can be requested at "
+    "the sites listed below.",
+    page=f"{_METHODS}, 'Description of compound collections' (paper.md line 232)",
+    note="an NSC label is a plate member of the NCI DTP collections the Methods point "
+    "to; the paper releases no structure for the NSC rows held out, so admitting one "
+    "needs a mirrored, sha256-pinned public NSC-to-structure release (RELEASED_IDENTITIES)",
+)
+
+#: A released ``Name`` shaped like a library or registry code: capital letters then
+#: digits, with at most one trailing capital (NPD403, NPE513, IB01212, NSC76455,
+#: GI261520A). A name with any other character (Kundrymycin, Mucopeptin B, "Lactoferrin,
+#: from Bovin Milk") is a released compound name.
+_CODE_LABEL = re.compile(r"^[A-Z]+\d+[A-Z]?$")
+
+UNIDENTIFIED_COMPOUND_RULE = (
+    "compound_has_no_released_name_or_structure_not_representable"
+)
+
+UNIDENTIFIED_COMPOUND_POLICY = (
+    "a condition whose Data Set 4 Name is a library or registry code (_CODE_LABEL: an "
+    "NPDepo NP/NPD/NPE code, an NCI NSC number, a RIKEN or GSK code), whose SMILES and "
+    "InChI cells are both empty or NA, and whose label has no curated compound-identity "
+    "row and no RELEASED_IDENTITIES entry, names no identifiable compound: what went into "
+    "the flask cannot be stated, so the experiment cannot be represented (database "
+    "constitution principle 2, owner ruling 2026-10-15). Its records are HELD OUT, never "
+    "stored under the bare code with an inchikey gap; each condition is listed with its "
+    "dose and scored cells, and is admitted the day its identity is released. A "
+    "condition with a released name (Kundrymycin, Lactoferrin) or a released SMILES or "
+    "InChI (GI261520A, NSC305780, even where RDKit cannot read it) is identified and "
+    "stays stored"
+)
+
+#: The ADMISSION TABLE, keyed by the released Data Set 4 label: EMPTY today. A condition
+#: is stored iff it is identified by the release (a released name, SMILES or InChI, or a
+#: curated compound-identity row) or has an entry here, whose name, SMILES and InChIKey
+#: build its ``Compound``. Only a public label-to-structure release fills it (a RIKEN
+#: NPDepo or NCI DTP record for the code), mirrored and sha256-pinned like any other
+#: artifact; an identity inferred from chemical-genetic profile similarity is a
+#: hypothesis and never goes here. A filled entry changes the stored records, so it
+#: rebuilds the store. The drop log's ``unidentified_compounds_held_out`` is the request
+#: list for that release.
+RELEASED_IDENTITIES: dict[str, ReleasedIdentity] = {}
 
 #: The two screens, their Note names, and the collection that maps to the first.
 SCREEN_RIKEN = "RIKEN"
@@ -989,18 +1084,61 @@ class CompoundLedgerEntry(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    route: Literal["curated_table", "released_inchi", "gapped"]
+    route: Literal["curated_table", "released_inchi", "released_identity", "gapped"]
     stored_name: str
     stored_inchikey: str | None
     released_inchi_key: str | None
     released_smiles_key: str | None
 
 
+def condition_is_identified(row: ConditionRow) -> bool:
+    """Whether the condition names identified material (``UNIDENTIFIED_COMPOUND_RULE``).
+
+    Identified: Data Set 4 releases a SMILES or an InChI for it (parseable or not), its
+    Name is not code-shaped (``_CODE_LABEL``: a released compound name), the curated
+    compound-identity table carries a row for the label, or ``RELEASED_IDENTITIES``
+    carries an entry for it. A code label with none of these names nothing a flask can
+    be said to contain.
+    """
+    if row.smiles is not None or row.inchi is not None:
+        return True
+    if _CODE_LABEL.fullmatch(row.name) is None:
+        return True
+    if row.name in RELEASED_IDENTITIES:
+        return True
+    return resolve_compound_identity(name=row.name).curated
+
+
 def compound_for(row: ConditionRow) -> Compound:
-    """The condition's compound: curated row, else the released InChI's hash, else a gap."""
-    return resolved_compound(
-        row.name, smiles=row.smiles, inchi=row.inchi, derive_from_inchi=True
+    """The condition's compound: curated row, else the released InChI's hash, else a gap.
+
+    A ``RELEASED_IDENTITIES`` entry supplies the name and SMILES Data Set 4 lacks (an
+    RDKit key is derived from that SMILES when no InChI is released), and its released
+    InChIKey fills a key the resolver could not, retiring that one gap.
+    """
+    released = RELEASED_IDENTITIES.get(row.name)
+    if released is None:
+        return resolved_compound(
+            row.name, smiles=row.smiles, inchi=row.inchi, derive_from_inchi=True
+        )
+    smiles = row.smiles if row.smiles is not None else released.smiles
+    compound = resolved_compound(
+        released.name or row.name,
+        smiles=smiles,
+        inchi=row.inchi,
+        derive_from_inchi=row.inchi is not None,
+        derive_from_smiles=row.inchi is None and smiles is not None,
     )
+    if released.inchikey is not None and compound.inchikey is None:
+        compound = compound.model_copy(
+            update={
+                "inchikey": released.inchikey,
+                "provenance_gaps": [
+                    gap for gap in compound.provenance_gaps if gap.field != "inchikey"
+                ],
+            }
+        )
+    return compound
 
 
 def compound_ledger_entry(row: ConditionRow, compound: Compound) -> CompoundLedgerEntry:
@@ -1010,10 +1148,14 @@ def compound_ledger_entry(row: ConditionRow, compound: Compound) -> CompoundLedg
     released SMILES; where a curated row won, a stored key that disagrees with them is
     what the ledger exists to show.
     """
-    curated = resolve_compound_identity(name=row.name).curated
-    route: Literal["curated_table", "released_inchi", "gapped"] = (
+    released = RELEASED_IDENTITIES.get(row.name)
+    lookup = row.name if released is None or released.name is None else released.name
+    curated = resolve_compound_identity(name=lookup).curated
+    route: Literal["curated_table", "released_inchi", "released_identity", "gapped"] = (
         "curated_table"
         if curated
+        else "released_identity"
+        if released is not None
         else "released_inchi"
         if compound.inchikey is not None
         else "gapped"
@@ -1046,8 +1188,25 @@ class DropRule(BaseModel):
     items: list[str] = []
 
 
+class UnidentifiedCondition(BaseModel):
+    """One condition held out under ``UNIDENTIFIED_COMPOUND_RULE`` (no name, no structure)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    condition_id: str
+    source_name: str
+    collection: str
+    screen: str
+    source_dose: str
+    n_records: int
+
+
 class DropLog(BaseModel):
-    """Every retention rule of a build, in the order applied, plus the NA cell count."""
+    """Every retention rule of a build, in the order applied, plus the NA cell count.
+
+    ``source_records = kept_records + sum(rule.n_records for rule in rules)``, and the
+    build raises when it does not hold.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
@@ -1056,6 +1215,10 @@ class DropLog(BaseModel):
     kept_records: int
     dropped_records: int
     rules: list[DropRule]
+    unidentified_compound_rule: str
+    unidentified_compound_policy: str
+    unidentified_compound_sources: list[SourcedValue]
+    unidentified_compounds_held_out: list[UnidentifiedCondition]
     released_cells: int
     not_scored_cells: int
     not_scored_strains_by_screen: dict[str, dict[str, int]]
@@ -1482,6 +1645,8 @@ class EnvChemgenPiotrowski2017Dataset(ExperimentDataset):
                 condition_rule.append("condition_not_in_the_final_dataset")
             elif dose.kind == "range":
                 condition_rule.append("dose_is_a_released_range")
+            elif not condition_is_identified(row):
+                condition_rule.append(UNIDENTIFIED_COMPOUND_RULE)
             else:
                 condition_rule.append(None)
         kept_columns = [j for j, rule in enumerate(condition_rule) if rule is None]
@@ -1503,6 +1668,7 @@ class EnvChemgenPiotrowski2017Dataset(ExperimentDataset):
                 "schema has no interval dose, and the required concentration cannot "
                 "carry a typed gap (needs schema)",
             ),
+            (UNIDENTIFIED_COMPOUND_RULE, UNIDENTIFIED_COMPOUND_POLICY),
         ):
             columns = [j for j, r in enumerate(condition_rule) if r == rule]
             rules.append(
@@ -1597,6 +1763,25 @@ class EnvChemgenPiotrowski2017Dataset(ExperimentDataset):
             kept_records=idx,
             dropped_records=source_records - idx,
             rules=rules,
+            unidentified_compound_rule=UNIDENTIFIED_COMPOUND_RULE,
+            unidentified_compound_policy=UNIDENTIFIED_COMPOUND_POLICY,
+            unidentified_compound_sources=[
+                NPDEPO_NOMENCLATURE,
+                STRUCTURE_STRINGS,
+                COLLECTIONS_BY_REQUEST,
+            ],
+            unidentified_compounds_held_out=[
+                UnidentifiedCondition(
+                    condition_id=rows[j].condition_id,
+                    source_name=rows[j].name,
+                    collection=rows[j].collection,
+                    screen=rows[j].screen,
+                    source_dose=doses[j].source,
+                    n_records=int(column_scored[j]),
+                )
+                for j, rule in enumerate(condition_rule)
+                if rule == UNIDENTIFIED_COMPOUND_RULE
+            ],
             released_cells=n_strains * n_conditions,
             not_scored_cells=int((~scored).sum()),
             not_scored_strains_by_screen=_not_scored_by_screen(matrix, rows),
@@ -1606,6 +1791,15 @@ class EnvChemgenPiotrowski2017Dataset(ExperimentDataset):
             raise RuntimeError(
                 f"drop accounting mismatch: rules total {accounted}, "
                 f"{drop_log.dropped_records} records missing from the build"
+            )
+        held_out = sum(c.n_records for c in drop_log.unidentified_compounds_held_out)
+        unidentified_rule = next(
+            rule for rule in rules if rule.rule == UNIDENTIFIED_COMPOUND_RULE
+        )
+        if held_out != unidentified_rule.n_records:
+            raise RuntimeError(
+                f"held-out accounting mismatch: {held_out} listed records vs "
+                f"{unidentified_rule.n_records} under {UNIDENTIFIED_COMPOUND_RULE}"
             )
         self._write_json("dropped_records.json", drop_log)
         self._write_json(

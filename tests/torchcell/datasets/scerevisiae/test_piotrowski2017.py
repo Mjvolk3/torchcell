@@ -9,7 +9,7 @@ so no build tree and no network are needed. The loader consults no genome. The m
 every module-level ``SourcedValue`` to its verbatim quote and the release pins to the
 literature mirror's manifest, and skip when the mirror is not mounted.
 
-The fixture (``_write_release``): seven strain rows x eight condition columns, value
+The fixture (``_write_release``): seven strain rows x nine condition columns, value
 ``v(i, j) = -(10 i + j) / 4`` for row ``i`` and column ``j`` except four ``NA`` cells
 (TFC3 in NPD0002's column, VPS8 in the three non-RIKEN columns).
 
@@ -18,13 +18,14 @@ The fixture (``_write_release``): seven strain rows x eight condition columns, v
   YAL058C-A (an R64 alias of YAL056C-A) and YBR001C (labelled by its ORF, whose pool
   common name is the ORF). Every one is stored under its released ORF and common name.
 - Conditions: Benomyl 10-ug/ml (a curated table row), NPD0001 100-uM (an InChI and no
-  table row), NPD0002 50-ng/ml (no structure: gapped), Ouabain 10-100-ug/ml (a range:
-  dropped), NPE0003 (In_final_dataset False: dropped), MMS 4e-05 under a percent
-  format (POSCON, so the NCI/NIH/GSK screen), and NSC0001 at 100-uM twice (two NCI
-  libraries, one compound, one dose).
+  table row), NPD0002 50-ng/ml (a library code with no structure: held out as an
+  unidentified agent), Ouabain 10-100-ug/ml (a range: dropped), NPE0003
+  (In_final_dataset False: dropped), MMS 4e-05 under a percent format (POSCON, so the
+  NCI/NIH/GSK screen), NSC0001 at 100-uM twice (two NCI libraries, one compound, one
+  dose), and Kundrymycin 50-ng/ml (a released name with no structure: stored, gapped).
 
-Counts: 56 cells, 4 NA, so 52 source records; the two dropped columns hold 7 each, so
-52 - 14 = 38 kept.
+Counts: 63 cells, 4 NA, so 59 source records; the two dropped columns hold 7 each and
+NPD0002 holds 6, so 59 - 20 = 39 kept.
 """
 
 from __future__ import annotations
@@ -43,6 +44,7 @@ import pytest
 from torchcell.datamodels.compound_identity import resolve_compound_identity
 from torchcell.datamodels.schema import ConcentrationUnit, DoseBasis
 from torchcell.datasets.scerevisiae import piotrowski2017 as p
+from torchcell.datasets.scerevisiae.hoepfner2014 import ReleasedIdentity
 from torchcell.datasets.scerevisiae.vanacloig2022 import LIBRARY_STRAIN
 from torchcell.verification.report import Provenance, StatDerivation, VerificationReport
 from torchcell.verification.sourced import SourcedValue
@@ -154,6 +156,17 @@ _CONDITIONS: list[tuple[Any, ...]] = [
         False,
         "CCO",
         _ETHANOL_INCHI,
+    ),
+    (
+        "Cond-000010",
+        "Kundrymycin",
+        "50-ng/ml",
+        "General",
+        "RIKEN NPDepo",
+        True,
+        False,
+        "NA",
+        "NA",
     ),
 ]
 #: A Data Set 4 row the matrix does not carry (Data Set 4 lists every condition).
@@ -387,12 +400,14 @@ def test_read_matrix_maps_na_to_nan_and_keeps_the_ids(tmp_path: Path) -> None:
 def test_drop_log_accounts_for_every_numeric_cell(built: Any) -> None:
     log = _drop_log(built)
     rules = {rule.rule: rule for rule in log.rules}
-    assert (log.released_cells, log.not_scored_cells) == (56, 4)
-    assert (log.source_records, log.kept_records, log.dropped_records) == (52, 38, 14)
+    assert (log.released_cells, log.not_scored_cells) == (63, 4)
+    assert (log.source_records, log.kept_records, log.dropped_records) == (59, 39, 20)
     assert [rule.rule for rule in log.rules] == [
         "condition_not_in_the_final_dataset",
         "dose_is_a_released_range",
+        p.UNIDENTIFIED_COMPOUND_RULE,
     ]
+    assert log.source_records == log.kept_records + sum(r.n_records for r in log.rules)
     assert rules["condition_not_in_the_final_dataset"].n_records == 7
     assert rules["condition_not_in_the_final_dataset"].items == [
         "Cond-000005 NPE0003 (10-ug/ml)"
@@ -400,6 +415,10 @@ def test_drop_log_accounts_for_every_numeric_cell(built: Any) -> None:
     assert rules["dose_is_a_released_range"].n_records == 7
     assert rules["dose_is_a_released_range"].items == [
         "Cond-000004 Ouabain (10-100-ug/ml)"
+    ]
+    assert rules[p.UNIDENTIFIED_COMPOUND_RULE].n_records == 6
+    assert rules[p.UNIDENTIFIED_COMPOUND_RULE].items == [
+        "Cond-000003 NPD0002 (50-ng/ml)"
     ]
     assert log.not_scored_strains_by_screen == {
         "RIKEN": {"TFC3": 1},
@@ -410,11 +429,11 @@ def test_drop_log_accounts_for_every_numeric_cell(built: Any) -> None:
 
 def test_records_are_condition_major_with_the_released_scores(built: Any) -> None:
     kept_rows = list(range(len(_STRAINS)))
-    kept_columns = [0, 1, 2, 5, 6, 7]
+    kept_columns = [0, 1, 5, 6, 7, 8]
     expected = [
         (j, i) for j in kept_columns for i in kept_rows if (i, j) not in _NA_CELLS
     ]
-    assert len(expected) == len(built) == 38
+    assert len(expected) == len(built) == 39
     for idx, (j, i) in enumerate(expected):
         phenotype = built[idx]["experiment"]["phenotype"]
         assert phenotype["environment_response"] == _value(i, j)
@@ -482,8 +501,8 @@ def test_doses_keep_the_released_number_and_unit(built: Any) -> None:
 
     assert dose(0) == (10.0, "ug/mL", "fixed")  # Benomyl 10-ug/ml
     assert dose(7) == (100.0, "uM", "fixed")  # NPD0001 100-uM
-    assert dose(14) == (0.05, "ug/mL", "fixed")  # NPD0002 50-ng/ml
-    assert dose(20) == (0.004, "percent", "fixed")  # MMS 4e-05 under 0.000%
+    assert dose(14) == (0.004, "percent", "fixed")  # MMS 4e-05 under 0.000%
+    assert dose(32) == (0.05, "ug/mL", "fixed")  # Kundrymycin 50-ng/ml
 
 
 def test_compound_takes_the_table_the_released_inchi_or_a_typed_gap(built: Any) -> None:
@@ -499,9 +518,9 @@ def test_compound_takes_the_table_the_released_inchi_or_a_typed_gap(built: Any) 
     released = compound(7)
     assert (released["name"], released["inchikey"]) == ("NPD0001", _ETHANOL_KEY)
     assert released["inchi"] == _ETHANOL_INCHI
-    gapped = compound(14)
+    gapped = compound(32)  # a released name with no structure: identified, gapped
     assert (gapped["name"], gapped["inchikey"], gapped["smiles"]) == (
-        "NPD0002",
+        "Kundrymycin",
         None,
         None,
     )
@@ -511,13 +530,13 @@ def test_compound_takes_the_table_the_released_inchi_or_a_typed_gap(built: Any) 
 
 
 def test_screen_and_replicate_ids_and_the_per_screen_reference(built: Any) -> None:
-    riken, nci = built[0], built[20]
+    riken, nci = built[0], built[14]
     assert riken["experiment"]["phenotype"]["screen_id"] == "RIKEN"
     assert nci["experiment"]["phenotype"]["screen_id"] == "NCI/NIH/GSK"
     assert riken["reference"]["phenotype_reference"]["screen_id"] == "RIKEN"
     assert nci["reference"]["phenotype_reference"]["screen_id"] == "NCI/NIH/GSK"
     # the same compound at the same dose in two NCI libraries stays two conditions
-    first, second = built[26], built[32]
+    first, second = built[20], built[26]
     assert first["experiment"]["environment"] == second["experiment"]["environment"]
     assert first["experiment"]["phenotype"]["replicate_id"] == "Cond-000007"
     assert second["experiment"]["phenotype"]["replicate_id"] == "Cond-000008"
@@ -571,6 +590,10 @@ def test_condition_ledger_lists_routes_and_the_pool_census(built: Any) -> None:
     ]
     assert ledger.route_counts == {"curated_table": 2, "gapped": 1, "released_inchi": 3}
     by_id = {row.condition_id: row for row in ledger.conditions}
+    assert by_id["Cond-000003"].drop_rule == p.UNIDENTIFIED_COMPOUND_RULE
+    assert by_id["Cond-000003"].compound is None
+    assert by_id["Cond-000010"].compound is not None
+    assert by_id["Cond-000010"].compound.route == "gapped"
     assert by_id["Cond-000004"].drop_rule == "dose_is_a_released_range"
     assert by_id["Cond-000004"].compound is None
     assert by_id["Cond-000006"].screen == "NCI/NIH/GSK"
@@ -581,6 +604,102 @@ def test_condition_ledger_lists_routes_and_the_pool_census(built: Any) -> None:
     assert len(ledger.absent_pool_strains) == p.POOL_V2.value - len(_STRAINS)
     assert ledger.released_key_comparisons == 3
     assert ledger.released_key_disagreements == 0
+
+
+def test_unidentified_agent_is_held_out_with_its_count_and_quotes(built: Any) -> None:
+    log = _drop_log(built)
+    (held,) = log.unidentified_compounds_held_out
+    assert held.model_dump() == {
+        "condition_id": "Cond-000003",
+        "source_name": "NPD0002",
+        "collection": "RIKEN NPDepo",
+        "screen": "RIKEN",
+        "source_dose": "50-ng/ml",
+        "n_records": 6,
+    }
+    assert log.unidentified_compound_rule == p.UNIDENTIFIED_COMPOUND_RULE
+    assert [sv.provenance.sha256 for sv in log.unidentified_compound_sources] == [
+        p.CONDITIONS.sha256,
+        p.CONDITIONS.sha256,
+        p.PAPER_MD_SHA256,
+    ]
+    stored = {
+        treatment["compound"]["name"]
+        for idx in range(len(built))
+        for treatment in built[idx]["experiment"]["environment"]["perturbations"]
+    }
+    assert "NPD0002" not in stored
+    assert "Kundrymycin" in stored
+    assert not any(
+        built[idx]["experiment"]["phenotype"]["replicate_id"] == "Cond-000003"
+        for idx in range(len(built))
+    )
+    assert log.source_records == log.kept_records + sum(r.n_records for r in log.rules)
+
+
+@pytest.mark.parametrize(
+    ("name", "smiles", "inchi", "identified"),
+    [
+        ("NPD403", None, None, False),  # a library code, no structure
+        ("NSC76455", None, None, False),  # a registry number, no structure
+        ("IB01212", None, None, False),
+        ("GI261520A", "Cl.COc1ccc2ncnc(Nc3ccc(OCc4ccccc4)cc3)c2c1", None, True),
+        ("NSC305780", "c1c(ccc2c1cccc2)Sc1cc2c(nc(nc2cc1)N)N.*.CCO", None, True),
+        ("Kundrymycin", None, None, True),  # a released name
+        ("Mucopeptin B", None, None, True),
+        ("Lactoferrin, from Bovin Milk", None, None, True),
+    ],
+)
+def test_condition_is_identified_by_a_released_name_or_structure(
+    name: str, smiles: str | None, inchi: str | None, identified: bool
+) -> None:
+    row = p.ConditionRow(
+        condition_id="Cond-000001",
+        name=name,
+        concentration_cell="10-ug/ml",
+        concentration_number_format="General",
+        collection="RIKEN NPDepo",
+        in_final_dataset=True,
+        in_high_confidence_set=False,
+        percent_growth=None,
+        smiles=smiles,
+        inchi=inchi,
+    )
+    assert p.condition_is_identified(row) is identified
+
+
+def test_a_released_identity_admits_a_held_out_label(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source = SourcedValue(
+        value="ethanol",
+        quote="synthetic release",
+        provenance=Provenance(
+            source_uri="synthetic.txt", citation_key="synthetic", sha256="0" * 64
+        ),
+    )
+    monkeypatch.setitem(
+        p.RELEASED_IDENTITIES,
+        "NPD0002",
+        ReleasedIdentity(name="NPD0002", smiles="CCO", source=source),
+    )
+    monkeypatch.setattr(
+        p.EnvChemgenPiotrowski2017Dataset, "download", lambda self: None
+    )
+    root = tmp_path / "env_chemgen_piotrowski2017"
+    _write_release(root / "raw")
+    dataset = p.EnvChemgenPiotrowski2017Dataset(root=str(root))
+    log = _drop_log(dataset)
+    assert log.unidentified_compounds_held_out == []
+    assert (log.source_records, log.kept_records) == (59, 45)
+    ledger = _condition_ledger(dataset)
+    entry = {row.condition_id: row for row in ledger.conditions}["Cond-000003"]
+    assert entry.drop_rule is None
+    assert entry.compound is not None
+    assert (entry.compound.route, entry.compound.stored_inchikey) == (
+        "released_identity",
+        _ETHANOL_KEY,
+    )
 
 
 def test_sourced_values_are_written_beside_the_build(built: Any) -> None:
@@ -714,6 +833,8 @@ _SHEET_CELLS = {
     "MATRIX_TITLE": ("All_conditions", "A1"),
     "POOL_COLLECTION": ("Suppl. dataset 2", "A4"),
     "FINAL_DATASET_FLAG": ("Suppl. dataset 4", "E6"),
+    "NPDEPO_NOMENCLATURE": ("Suppl. dataset 4", "A2"),
+    "STRUCTURE_STRINGS": ("Suppl. dataset 4", "A3"),
 }
 
 
@@ -740,8 +861,8 @@ def _docx_text(path: Path) -> str:
 def test_every_sourced_value_is_a_verbatim_quote_in_the_mirror() -> None:
     library = _library()
     values: dict[str, SourcedValue] = p.sourced_values()
-    # 29 of this module's own, plus ARRAY_KANMX (vanacloig2022's quote of this paper)
-    assert len(values) == 30
+    # 32 of this module's own, plus ARRAY_KANMX (vanacloig2022's quote of this paper)
+    assert len(values) == 33
     paper = (library / p.PAPER_MD).read_text(encoding="utf-8")
     note = _docx_text(library / p.NOTE_DOCX)
     for name, value in values.items():

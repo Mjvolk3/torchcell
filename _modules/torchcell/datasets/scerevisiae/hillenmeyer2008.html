@@ -210,11 +210,41 @@
 <span class="sd">  the conflict table); ``synthetic complete`` -&gt; ``SC``; ``YP glycerol`` -&gt;</span>
 <span class="sd">  ``YP_GLYCEROL_LIQUID``.</span>
 <span class="sd">- everything else -&gt; ``SmallMoleculePerturbation(resolved_compound(label), dose)`` with</span>
-<span class="sd">  ``solvent=None`` and a typed gap (no vehicle is stated per compound). A label the</span>
-<span class="sd">  curated compound table does not identify keeps the released label as</span>
-<span class="sd">  ``Compound.name`` and carries the typed ``inchikey`` gap ``resolved_compound`` attaches;</span>
-<span class="sd">  it is stored, and listed with its record count in</span>
-<span class="sd">  ``preprocess/compound_identity_gaps.json``.</span>
+<span class="sd">  ``solvent=None`` and a typed gap (no vehicle is stated per compound). An IDENTIFIED</span>
+<span class="sd">  label the curated compound table gives no InChIKey (a public name not yet resolved,</span>
+<span class="sd">  such as ``AG 1387 (Biomol)`` or ``amphotericin``, or a mixture) keeps the released</span>
+<span class="sd">  label as ``Compound.name`` and carries the typed ``inchikey`` gap</span>
+<span class="sd">  ``resolved_compound`` attaches; it is stored, and listed with its record count in</span>
+<span class="sd">  ``preprocess/compound_identity_gaps.json``. An UNIDENTIFIED label is held out (below).</span>
+
+<span class="sd">UNIDENTIFIED PERTURBING AGENTS (database constitution principle 2, owner ruling</span>
+<span class="sd">2026-10-15: "if you cannot tell me what goes into the flask so to speak, then we have</span>
+<span class="sd">no hope of modeling!"). The criterion is mechanical: a label is unidentified iff its row</span>
+<span class="sd">in the pinned compound-identity table has status ``PROPRIETARY`` and the loader's</span>
+<span class="sd">admission table ``RELEASED_IDENTITIES`` (empty today) has no entry for it. Twelve labels</span>
+<span class="sd">meet it, each checked against the SOM: the ten ChemDiv codes ``chemical diversity labs</span>
+<span class="sd">14a``, ``14f``, ``1c10``, ``218``, ``232``, ``246``, ``275``, ``3f2``, ``41``, ``6842``,</span>
+<span class="sd">plus ``RIL1 (Biomol)`` and ``telomerase inhibitor ix (Biomol)``. SOM Table S1 lists them</span>
+<span class="sd">only by these codes, and none is among the structures of Table S2, whose caption reads</span>
+<span class="sd">"Table S2. 316 compounds tested in this study for which the chemical structures were</span>
+<span class="sd">available. Not included are non-compound experiments such as environmental stresses and</span>
+<span class="sd">compounds for which the chemical structure was not known or unavailable." (AG 1478</span>
+<span class="sd">(Biomol) and Tyrphostin AG 957 are drawn there.) Every array dosing one of them is</span>
+<span class="sd">dropped under ``UNIDENTIFIED_COMPOUND_RULE`` and listed per label, with its headers, key</span>
+<span class="sd">file conditions, records not written and value cells, in</span>
+<span class="sd">``preprocess/dropped_records.json`` (``unidentified_compounds_held_out``), beside the</span>
+<span class="sd">quotes (``unidentified_compound_sources``). Measured on the raw mirror through the</span>
+<span class="sd">loader's own ``parse_columns``, ``group_columns`` and ``count_records`` (2026-10-15):</span>
+<span class="sd">HET 12 labels, 19 environments, 19 arrays, 110,449 records and value cells; HOM 10</span>
+<span class="sd">labels (no RIL1 or telomerase array), 11 environments, 11 arrays, 45,760 records and</span>
+<span class="sd">value cells. Stored after the hold-out: HET 2,963,683 records, HOM 1,182,916. The</span>
+<span class="sd">``chemical diversity labs 14a`` array of each arm is the header/key conflict whose key</span>
+<span class="sd">file says ``Tyrphostin``; the header is what the values are released under, so it is</span>
+<span class="sd">held out with the key string kept beside it. A label is</span>
+<span class="sd">admitted by an entry in ``RELEASED_IDENTITIES`` (a ``ReleasedIdentity`` with a name,</span>
+<span class="sd">SMILES or InChIKey and the ``SourcedValue`` of a public label-to-structure release);</span>
+<span class="sd">only such a release fills it, never an identity inferred from profile similarity, a</span>
+<span class="sd">filled entry rebuilds the store, and the ledger's held-out list is the request list.</span>
 
 <span class="sd">HEADER VS KEY FILE COMPOUND. On five header/key pairs the key file names a different</span>
 <span class="sd">compound from the matrix header and the SOM gives no tie-breaker. The array is served</span>
@@ -243,6 +273,8 @@
 <span class="sd">  (``PhysicalFactor`` has no heat-shock member, and a steady 45 C would be false), and a</span>
 <span class="sd">  dose on a media swap whose agent is named nowhere (a ``SmallMoleculePerturbation``</span>
 <span class="sd">  needs a compound name).</span>
+<span class="sd">- ARRAYS, not representable: an unidentified perturbing agent</span>
+<span class="sd">  (``UNIDENTIFIED_COMPOUND_RULE``, above).</span>
 
 <span class="sd">REPLICATE AGGREGATION. Within one (strain row, environment, control set) group each array</span>
 <span class="sd">contributes ONE value and the record's value is the mean over arrays with the sample SD</span>
@@ -280,7 +312,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -290,7 +322,11 @@
     <span class="n">post_process</span><span class="p">,</span>
     <span class="n">verify_raw_files</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.compound_identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolved_compound</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.compound_identity</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CompoundResolutionStatus</span><span class="p">,</span>
+    <span class="n">resolve_compound_identity</span><span class="p">,</span>
+    <span class="n">resolved_compound</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">HILLENMEYER_DROPOUT_MEDIA</span><span class="p">,</span>
     <span class="n">HILLENMEYER_PARTIAL_DROPOUT_LEVELS</span><span class="p">,</span>
@@ -302,6 +338,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">AssayType</span><span class="p">,</span>
     <span class="n">BarcodedKanMxDeletionPerturbation</span><span class="p">,</span>
+    <span class="n">Compound</span><span class="p">,</span>
     <span class="n">Concentration</span><span class="p">,</span>
     <span class="n">ConcentrationUnit</span><span class="p">,</span>
     <span class="n">ConstructedOrf</span><span class="p">,</span>
@@ -309,6 +346,7 @@
     <span class="n">DoseBasis</span><span class="p">,</span>
     <span class="n">EnvironmentPhysicalPerturbation</span><span class="p">,</span>
     <span class="n">EnvironmentResponsePhenotype</span><span class="p">,</span>
+    <span class="n">EukaryoticStrainBackground</span><span class="p">,</span>
     <span class="n">Experiment</span><span class="p">,</span>
     <span class="n">ExperimentReference</span><span class="p">,</span>
     <span class="n">Genotype</span><span class="p">,</span>
@@ -322,7 +360,6 @@
     <span class="n">Publication</span><span class="p">,</span>
     <span class="n">SampleUnit</span><span class="p">,</span>
     <span class="n">SmallMoleculePerturbation</span><span class="p">,</span>
-    <span class="n">StrainBackground</span><span class="p">,</span>
     <span class="n">StrainConstruction</span><span class="p">,</span>
     <span class="n">StrainEnvironmentResponseExperiment</span><span class="p">,</span>
     <span class="n">StrainEnvironmentResponseExperimentReference</span><span class="p">,</span>
@@ -338,6 +375,7 @@
     <span class="n">standard_background</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.scerevisiae.hoepfner2014</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReleasedIdentity</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.literature.manifest</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ROLE_RAW_DATA</span><span class="p">,</span>
     <span class="n">ArtifactRecord</span><span class="p">,</span>
@@ -345,6 +383,10 @@
     <span class="n">RetrievalMethod</span><span class="p">,</span>
     <span class="n">RetrievalRecord</span><span class="p">,</span>
     <span class="n">SourceCheck</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.registry</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SGD_S288C_R64</span><span class="p">,</span>
+    <span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -482,6 +524,21 @@
 <span class="n">QUOTE_DIPLOID</span> <span class="o">=</span> <span class="s2">"The diploid yeast deletion collections comprise"</span>
 <span class="c1">#: hom.txt, the only in-release statement of the strain background (27 arrays).</span>
 <span class="n">QUOTE_KEY_BY4743</span> <span class="o">=</span> <span class="s2">"synthetic complete for BY4743"</span>
+<span class="c1">#: SOM Table S2 caption: the structures the SOM releases, and what it leaves out.</span>
+<span class="n">QUOTE_TABLE_S2</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"Table S2. 316 compounds tested in this study for which the chemical structures "</span>
+    <span class="s2">"were available. Not included are non-compound experiments such as environmental "</span>
+    <span class="s2">"stresses and compounds for which the chemical structure was not known or "</span>
+    <span class="s2">"unavailable."</span>
+<span class="p">)</span>
+<span class="c1">#: SOM Table S1 ("other"), the ChemDiv library codes as the OCR carries them.</span>
+<span class="n">QUOTE_TABLE_S1_CHEMDIV</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"chemical diversity labs 14a, chemical diversity labs 14f, chemical diversity labs "</span>
+    <span class="s2">"1c10, chemical diversity labs 218, chemical diversity labs 232, chemical diversity "</span>
+    <span class="s2">"labs 246, chemical diversity labs 275, chemical diversity labs 3f2,"</span>
+<span class="p">)</span>
+<span class="c1">#: SOM Table S1, the Biomol telomerase inhibitor as the OCR carries it.</span>
+<span class="n">QUOTE_TABLE_S1_TELOMERASE</span> <span class="o">=</span> <span class="s2">"telomerase inhibitor ix (Biomol)"</span>
 
 <span class="c1">#: The ten construction batches the SOM names as carrying a shared secondary genotype.</span>
 <span class="n">SUSPICIOUS_BATCHES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
@@ -608,6 +665,30 @@
         <span class="n">note</span><span class="o">=</span><span class="s2">"the key file names the medium of 18 hom arrays whose header reads "</span>
         <span class="s2">"'minimal media' (key wins, KEY_HEADER_CONFLICTS)"</span><span class="p">,</span>
     <span class="p">),</span>
+    <span class="s2">"table_s2_structures"</span><span class="p">:</span> <span class="n">_som_sv</span><span class="p">(</span>
+        <span class="s2">"316 released structures; a compound outside Table S2 has none"</span><span class="p">,</span>
+        <span class="n">QUOTE_TABLE_S2</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"Table S2 is the SOM's only release of structures (page images, read "</span>
+        <span class="s2">"against the mirrored images/ of this key). None of the twelve held-out labels "</span>
+        <span class="s2">"is among its 316 drawings, while AG 1478 (Biomol) and Tyrphostin AG 957 are, so "</span>
+        <span class="s2">"the SOM's own vendor-labelled compounds are drawn when their structure was "</span>
+        <span class="s2">"known"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"table_s1_chemdiv_codes"</span><span class="p">:</span> <span class="n">_som_sv</span><span class="p">(</span>
+        <span class="s2">"chemical diversity labs &lt;code&gt;"</span><span class="p">,</span>
+        <span class="n">QUOTE_TABLE_S1_CHEMDIV</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"Table S1 lists the ChemDiv ('chemical diversity labs') compounds only by "</span>
+        <span class="s2">"library code, under 'other'. The OCR stops after 3f2; the PDF (paper.pdf, "</span>
+        <span class="s2">"sha256 eb052a3fd164af497a6365f84a57a452a321545c02340a9f528c1f97d2ae63f0) "</span>
+        <span class="s2">"continues 'chemical diversity labs 41, chemical diversity labs 6842' and lists "</span>
+        <span class="s2">"'antiinflammatory RIL1 (Biomol)', which the OCR drops"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"table_s1_telomerase_inhibitor"</span><span class="p">:</span> <span class="n">_som_sv</span><span class="p">(</span>
+        <span class="s2">"telomerase inhibitor ix (Biomol)"</span><span class="p">,</span>
+        <span class="n">QUOTE_TABLE_S1_TELOMERASE</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"a vendor product designation (Biomol, inhibitor number ix) with no "</span>
+        <span class="s2">"released name or structure; absent from Table S2"</span><span class="p">,</span>
+    <span class="p">),</span>
 <span class="p">}</span>
 <span class="n">_PRE_CULTURE_FROZEN</span> <span class="o">=</span> <span class="n">SOURCED_VALUES</span><span class="p">[</span><span class="s2">"pre_culture_frozen"</span><span class="p">]</span>
 <span class="n">_PRE_CULTURE_LOG_PHASE</span> <span class="o">=</span> <span class="n">SOURCED_VALUES</span><span class="p">[</span><span class="s2">"pre_culture_log_phase"</span><span class="p">]</span>
@@ -703,6 +784,36 @@
 <span class="c1">#: withdrawal in the release.</span>
 <span class="n">DROP_WRONG_GENE_DELETED</span> <span class="o">=</span> <span class="s2">"som_wrong_gene_deleted"</span>
 
+<span class="c1">#: Array rule for an unidentified perturbing agent (database constitution principle 2,</span>
+<span class="c1">#: owner ruling 2026-10-15): the same rule string Hoepfner 2014 uses.</span>
+<span class="n">UNIDENTIFIED_COMPOUND_RULE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"compound_has_no_released_name_or_structure_not_representable"</span>
+<span class="p">)</span>
+
+<span class="n">UNIDENTIFIED_COMPOUND_POLICY</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"a compound label whose pinned compound-identity row has status PROPRIETARY (a "</span>
+    <span class="s2">"vendor or library catalog code: the ChemDiv 'chemical diversity labs' codes and "</span>
+    <span class="s2">"two Biomol products) and no RELEASED_IDENTITIES entry is held out: the SOM lists it "</span>
+    <span class="s2">"only by its code in Table S1 and releases no structure for it in Table S2, so what "</span>
+    <span class="s2">"went into the flask cannot be stated and the experiment cannot be represented. "</span>
+    <span class="s2">"Every array dosing it is HELD OUT, never stored under the bare label with an "</span>
+    <span class="s2">"inchikey gap; the ledger lists each label with its arrays and record counts, and "</span>
+    <span class="s2">"the label is admitted the day a public label-to-structure release fills "</span>
+    <span class="s2">"RELEASED_IDENTITIES. Any other label (a public name the table has not resolved, "</span>
+    <span class="s2">"e.g. AG 1387 (Biomol), amphotericin, or a mixture) is identified and stays stored "</span>
+    <span class="s2">"with its typed inchikey gap"</span>
+<span class="p">)</span>
+
+<span class="c1">#: The ADMISSION TABLE, keyed by the released label: EMPTY today. A label is stored iff</span>
+<span class="c1">#: its identity-table status is not PROPRIETARY or it has an entry here, and an entry's</span>
+<span class="c1">#: name, SMILES and InChIKey build the stored ``Compound``. Only a public</span>
+<span class="c1">#: label-to-structure release (ChemDiv or Biomol, or a later paper), mirrored and</span>
+<span class="c1">#: sha256-pinned like any other artifact, fills it; an identity inferred from profile</span>
+<span class="c1">#: similarity is a hypothesis and never goes here. A filled entry changes the stored</span>
+<span class="c1">#: records, so it rebuilds the store. The ledger's ``unidentified_compounds_held_out``</span>
+<span class="c1">#: (every held-out label with its arrays and records) is the request list.</span>
+<span class="n">RELEASED_IDENTITIES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ReleasedIdentity</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
 <span class="n">DROP_RULES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
     <span class="n">DROP_HEAT_SHOCK_CYCLE</span><span class="p">:</span> <span class="s2">"needs schema: '37c, 45c' is a heat-shock cycle; "</span>
     <span class="s2">"PhysicalFactor has no heat_shock member (adding one changes a served class) and a "</span>
@@ -710,6 +821,8 @@
     <span class="n">DROP_UNNAMED_MEDIA_AGENT</span><span class="p">:</span> <span class="s2">"needs schema: a dose is given but the agent is named "</span>
     <span class="s2">"nowhere in the SOM or the release, and a SmallMoleculePerturbation needs a "</span>
     <span class="s2">"compound name"</span><span class="p">,</span>
+    <span class="n">UNIDENTIFIED_COMPOUND_RULE</span><span class="p">:</span> <span class="s2">"not representable: the dosed agent is a vendor or "</span>
+    <span class="s2">"library code with no released name or structure (UNIDENTIFIED_COMPOUND_POLICY)"</span><span class="p">,</span>
 <span class="p">}</span>
 <span class="n">STRAIN_DROP_RULES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
     <span class="n">DROP_WRONG_GENE_DELETED</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"author withdrawal, the SOM (paper.md:332): "</span>
@@ -1049,10 +1162,51 @@
     <span class="p">)</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">compound_is_identified</span><span class="p">(</span><span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Whether a released compound label names identified material.</span>
+
+<span class="sd">    ``UNIDENTIFIED_COMPOUND_RULE``: a label is unidentified iff its pinned</span>
+<span class="sd">    compound-identity row has status ``PROPRIETARY`` (a vendor or library code the SOM</span>
+<span class="sd">    releases no structure for) and ``RELEASED_IDENTITIES`` has no entry for it. Every</span>
+<span class="sd">    other label, a gapped public name or a mixture included, is identified.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">RELEASED_IDENTITIES</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="n">status</span> <span class="o">=</span> <span class="n">resolve_compound_identity</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">label</span><span class="p">)</span><span class="o">.</span><span class="n">status</span>
+    <span class="k">return</span> <span class="n">status</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">CompoundResolutionStatus</span><span class="o">.</span><span class="n">PROPRIETARY</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_compound</span><span class="p">(</span><span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Compound</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The compound of a released label: the shared table, or an admission entry.</span>
+
+<span class="sd">    A ``RELEASED_IDENTITIES`` entry supplies the name and SMILES the label lacks (its</span>
+<span class="sd">    SMILES yields an RDKit InChIKey), and its released InChIKey fills a key the resolver</span>
+<span class="sd">    could not, retiring that gap. Without an entry the label resolves as released.</span>
+<span class="sd">    """</span>
+    <span class="n">released</span> <span class="o">=</span> <span class="n">RELEASED_IDENTITIES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">released</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">resolved_compound</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+    <span class="n">compound</span> <span class="o">=</span> <span class="n">resolved_compound</span><span class="p">(</span>
+        <span class="n">released</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="n">released</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">label</span><span class="p">,</span>
+        <span class="n">smiles</span><span class="o">=</span><span class="n">released</span><span class="o">.</span><span class="n">smiles</span><span class="p">,</span>
+        <span class="n">derive_from_smiles</span><span class="o">=</span><span class="n">released</span><span class="o">.</span><span class="n">smiles</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">released</span><span class="o">.</span><span class="n">inchikey</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">compound</span><span class="o">.</span><span class="n">inchikey</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">compound</span> <span class="o">=</span> <span class="n">compound</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span>
+            <span class="n">update</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">"inchikey"</span><span class="p">:</span> <span class="n">released</span><span class="o">.</span><span class="n">inchikey</span><span class="p">,</span>
+                <span class="s2">"provenance_gaps"</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="n">gap</span> <span class="k">for</span> <span class="n">gap</span> <span class="ow">in</span> <span class="n">compound</span><span class="o">.</span><span class="n">provenance_gaps</span> <span class="k">if</span> <span class="n">gap</span><span class="o">.</span><span class="n">field</span> <span class="o">!=</span> <span class="s2">"inchikey"</span>
+                <span class="p">],</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">compound</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_small_molecule</span><span class="p">(</span><span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">conc</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">unit</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SmallMoleculePerturbation</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""One dosed compound, resolved through the shared table by its SOURCE label."""</span>
     <span class="k">return</span> <span class="n">SmallMoleculePerturbation</span><span class="p">(</span>
-        <span class="n">compound</span><span class="o">=</span><span class="n">resolved_compound</span><span class="p">(</span><span class="n">label</span><span class="p">),</span>
+        <span class="n">compound</span><span class="o">=</span><span class="n">_compound</span><span class="p">(</span><span class="n">label</span><span class="p">),</span>
         <span class="n">concentration</span><span class="o">=</span><span class="n">canonical_concentration</span><span class="p">(</span><span class="n">conc</span><span class="p">,</span> <span class="n">unit</span><span class="p">),</span>
         <span class="n">solvent</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span><span class="n">_solvent_gap</span><span class="p">()],</span>
@@ -1087,7 +1241,10 @@
 <span class="sd">    (the double-drug arms). Splitting the two is what keeps ``pH7.5 + FK506`` from being</span>
 <span class="sd">    stored as a plain pH stress and ``&lt;compound&gt; irradiated`` from being stored as bare</span>
 <span class="sd">    radiation. A compound the curated table does not identify is kept under its released</span>
-<span class="sd">    label with the typed ``inchikey`` gap ``resolved_compound`` attaches.</span>
+<span class="sd">    label with the typed ``inchikey`` gap ``resolved_compound`` attaches, unless the</span>
+<span class="sd">    label is unidentified (``compound_is_identified``): then the array is dropped under</span>
+<span class="sd">    ``UNIDENTIFIED_COMPOUND_RULE`` with the unidentified labels (joined by ``"; "``) as</span>
+<span class="sd">    its detail.</span>
 <span class="sd">    """</span>
     <span class="n">label</span> <span class="o">=</span> <span class="n">cond1</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="n">low</span> <span class="o">=</span> <span class="n">label</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
@@ -1098,6 +1255,7 @@
     <span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">drop_reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">drop_detail</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">compound_labels</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="k">if</span> <span class="n">_TEMP_CYCLE_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">label</span><span class="p">):</span>
         <span class="n">drop_reason</span><span class="p">,</span> <span class="n">drop_detail</span> <span class="o">=</span> <span class="n">DROP_HEAT_SHOCK_CYCLE</span><span class="p">,</span> <span class="n">label</span>
@@ -1120,9 +1278,8 @@
             <span class="n">EnvironmentPhysicalPerturbation</span><span class="p">(</span><span class="n">factor</span><span class="o">=</span><span class="n">PhysicalFactor</span><span class="o">.</span><span class="n">radiation</span><span class="p">)</span>
         <span class="p">)</span>
     <span class="k">elif</span> <span class="n">low</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">_IRRADIATED_SUFFIX</span><span class="p">):</span>
-        <span class="n">perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="n">_small_molecule</span><span class="p">(</span><span class="n">label</span><span class="p">[:</span> <span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">_IRRADIATED_SUFFIX</span><span class="p">)]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="n">conc1</span><span class="p">,</span> <span class="n">unit1</span><span class="p">)</span>
-        <span class="p">)</span>
+        <span class="n">compound_labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">label</span><span class="p">[:</span> <span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">_IRRADIATED_SUFFIX</span><span class="p">)]</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+        <span class="n">perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_small_molecule</span><span class="p">(</span><span class="n">compound_labels</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">conc1</span><span class="p">,</span> <span class="n">unit1</span><span class="p">))</span>
         <span class="n">perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="n">EnvironmentPhysicalPerturbation</span><span class="p">(</span><span class="n">factor</span><span class="o">=</span><span class="n">PhysicalFactor</span><span class="o">.</span><span class="n">radiation</span><span class="p">)</span>
         <span class="p">)</span>
@@ -1132,10 +1289,18 @@
             <span class="n">drop_reason</span> <span class="o">=</span> <span class="n">DROP_UNNAMED_MEDIA_AGENT</span>
             <span class="n">drop_detail</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">conc1</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">unit1</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="k">else</span><span class="p">:</span>
+        <span class="n">compound_labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
         <span class="n">perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_small_molecule</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">conc1</span><span class="p">,</span> <span class="n">unit1</span><span class="p">))</span>
 
     <span class="k">if</span> <span class="n">cond2</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+        <span class="n">compound_labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cond2</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
         <span class="n">perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_small_molecule</span><span class="p">(</span><span class="n">cond2</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="n">conc2</span><span class="p">,</span> <span class="n">unit2</span><span class="p">))</span>
+
+    <span class="n">unidentified</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">compound_labels</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">compound_is_identified</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="n">drop_reason</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">unidentified</span><span class="p">:</span>
+        <span class="n">drop_reason</span><span class="p">,</span> <span class="n">drop_detail</span> <span class="o">=</span> <span class="n">UNIDENTIFIED_COMPOUND_RULE</span><span class="p">,</span> <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">unidentified</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">ConditionParse</span><span class="p">(</span>
         <span class="n">media</span><span class="o">=</span><span class="n">media</span><span class="p">,</span>
@@ -1498,7 +1663,7 @@
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 <span class="c1"># Record builders</span>
 <span class="c1"># --------------------------------------------------------------------------- #</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">hillenmeyer_background</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">StrainBackground</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">hillenmeyer_background</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">EukaryoticStrainBackground</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""BY4743, named by the release's key file; every allele pending Brachmann 1998.</span>
 
 <span class="sd">    The name and ploidy are sourced (``hom.txt``; the main article), and the</span>
@@ -1512,7 +1677,9 @@
         <span class="n">note</span><span class="o">=</span><span class="s2">"BY4741 x BY4742 genotype is not in a mirrored source; the background "</span>
         <span class="s2">"name BY4743 is sourced to the release's hom.txt key file"</span><span class="p">,</span>
     <span class="p">)</span><span class="o">.</span><span class="n">alleles</span>
-    <span class="k">return</span> <span class="n">StrainBackground</span><span class="p">(</span>
+    <span class="k">return</span> <span class="n">EukaryoticStrainBackground</span><span class="p">(</span>
+        <span class="n">reference_strain</span><span class="o">=</span><span class="s2">"S288C"</span><span class="p">,</span>
+        <span class="n">assembly_set</span><span class="o">=</span><span class="n">SGD_S288C_R64</span><span class="p">,</span>
         <span class="n">name</span><span class="o">=</span><span class="n">BACKGROUND_STRAIN</span><span class="p">,</span>
         <span class="n">parents</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">construction</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -1547,7 +1714,7 @@
     <span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">marker_loci</span><span class="p">(</span><span class="n">background</span><span class="p">:</span> <span class="n">StrainBackground</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">marker_loci</span><span class="p">(</span><span class="n">background</span><span class="p">:</span> <span class="n">EukaryoticStrainBackground</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Loci where the background carries a non-R64 allele (the BY marker loci)."""</span>
     <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">systematic_gene_name</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">background</span><span class="o">.</span><span class="n">alleles</span><span class="p">)</span>
 
@@ -1629,7 +1796,7 @@
     <span class="n">spec</span><span class="p">:</span> <span class="n">_MatrixSpec</span><span class="p">,</span>
     <span class="n">control_set</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">n_control_arrays</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="n">background</span><span class="p">:</span> <span class="n">StrainBackground</span><span class="p">,</span>
+    <span class="n">background</span><span class="p">:</span> <span class="n">EukaryoticStrainBackground</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StrainEnvironmentResponseExperimentReference</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The matched no-drug control set this control set's scores were computed against.</span>
 
@@ -1661,6 +1828,8 @@
             <span class="n">strain</span><span class="o">=</span><span class="n">BACKGROUND_STRAIN</span><span class="p">,</span>
             <span class="n">ploidy</span><span class="o">=</span><span class="s2">"diploid"</span><span class="p">,</span>
             <span class="n">background</span><span class="o">=</span><span class="n">background</span><span class="p">,</span>
+            <span class="n">assembly_set</span><span class="o">=</span><span class="n">SGD_S288C_R64</span><span class="p">,</span>
+            <span class="n">assembly_accession</span><span class="o">=</span><span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
         <span class="p">),</span>
         <span class="n">environment_reference</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span>
         <span class="n">phenotype_reference</span><span class="o">=</span><span class="n">EnvironmentResponsePhenotype</span><span class="p">(</span>
@@ -1753,7 +1922,7 @@
     <span class="n">spec</span><span class="p">:</span> <span class="n">_MatrixSpec</span><span class="p">,</span>
     <span class="n">matrix</span><span class="p">:</span> <span class="n">MatrixRows</span><span class="p">,</span>
     <span class="n">groups</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">ColumnSpec</span><span class="p">]],</span>
-    <span class="n">background</span><span class="p">:</span> <span class="n">StrainBackground</span><span class="p">,</span>
+    <span class="n">background</span><span class="p">:</span> <span class="n">EukaryoticStrainBackground</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">StrainEnvironmentResponseExperiment</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">"""Every record of a matrix: (experiment, control set), strain row by strain row.</span>
 
@@ -1878,6 +2047,99 @@
             <span class="n">bucket</span><span class="p">[</span><span class="s2">"n_arrays"</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">members</span><span class="p">)</span>
             <span class="n">bucket</span><span class="p">[</span><span class="s2">"n_records"</span><span class="p">]</span> <span class="o">+=</span> <span class="n">n_records</span>
     <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">gaps</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">UnidentifiedCompoundHeldOut</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One label held out under ``UNIDENTIFIED_COMPOUND_RULE``, with what it carried.</span>
+
+<span class="sd">    ``n_records_not_written`` counts the (stored strain row, environment, control set)</span>
+<span class="sd">    records its arrays would have written; ``n_value_cells`` the released value cells of</span>
+<span class="sd">    those arrays over every row, the figure the cell accounting sums.</span>
+<span class="sd">    """</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"the released compound label, verbatim"</span><span class="p">)</span>
+    <span class="n">vendor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the vendor the label names ('Biomol' from a trailing '(Biomol)', "</span>
+        <span class="s2">"'chemical diversity labs' from that prefix), verbatim; None when it names none"</span>
+    <span class="p">)</span>
+    <span class="n">vendor_product_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the vendor's product name or catalog code with the vendor removed "</span>
+        <span class="s2">"(e.g. 'telomerase inhibitor ix'), the key for a catalog lookup that could admit "</span>
+        <span class="s2">"the label through RELEASED_IDENTITIES; None when the label names no vendor"</span>
+    <span class="p">)</span>
+    <span class="n">n_environments</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_arrays</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_records_not_written</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_value_cells</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">headers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"the deposited column headers, verbatim"</span><span class="p">)</span>
+    <span class="n">key_file_conditions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the key file's condition string for each array, verbatim"</span>
+    <span class="p">)</span>
+
+
+<span class="n">_VENDOR_SUFFIX</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^(?P&lt;product&gt;.+) \((?P&lt;vendor&gt;Biomol)\)$"</span><span class="p">)</span>
+<span class="n">_VENDOR_PREFIX</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^(?P&lt;vendor&gt;chemical diversity labs) (?P&lt;product&gt;\S+)$"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">vendor_catalog_entry</span><span class="p">(</span><span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""``(vendor, product name)`` a held-out label names, verbatim, or ``(None, None)``.</span>
+
+<span class="sd">    The two vendor spellings the release uses: a trailing ``(Biomol)`` and the</span>
+<span class="sd">    ``chemical diversity labs`` prefix. Nothing is normalized: the product name is the</span>
+<span class="sd">    released text with the vendor removed, so a catalog lookup sees what the source wrote.</span>
+<span class="sd">    """</span>
+    <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="p">(</span><span class="n">_VENDOR_SUFFIX</span><span class="p">,</span> <span class="n">_VENDOR_PREFIX</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"vendor"</span><span class="p">),</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"product"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">unidentified_compounds_held_out</span><span class="p">(</span>
+    <span class="n">matrix</span><span class="p">:</span> <span class="n">MatrixRows</span><span class="p">,</span> <span class="n">dropped</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">ColumnSpec</span><span class="p">]]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">UnidentifiedCompoundHeldOut</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Every label held out under ``UNIDENTIFIED_COMPOUND_RULE``, sorted by label.</span>
+
+<span class="sd">    An array dosing two unidentified labels is listed under each (none does in the</span>
+<span class="sd">    release; the per-label counts then overlap and the rule total stays the cell</span>
+<span class="sd">    accounting's).</span>
+<span class="sd">    """</span>
+    <span class="n">by_label</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">ColumnSpec</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">members</span> <span class="ow">in</span> <span class="n">dropped</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="n">head</span> <span class="o">=</span> <span class="n">members</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">head</span><span class="o">.</span><span class="n">drop_reason</span> <span class="o">!=</span> <span class="n">UNIDENTIFIED_COMPOUND_RULE</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">head</span><span class="o">.</span><span class="n">drop_detail</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"; "</span><span class="p">):</span>
+            <span class="n">by_label</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">members</span><span class="p">)</span>
+    <span class="n">held</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">UnidentifiedCompoundHeldOut</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">groups</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">by_label</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">column</span> <span class="k">for</span> <span class="n">members</span> <span class="ow">in</span> <span class="n">groups</span> <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">members</span><span class="p">]</span>
+        <span class="n">vendor</span><span class="p">,</span> <span class="n">product</span> <span class="o">=</span> <span class="n">vendor_catalog_entry</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+        <span class="n">held</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">UnidentifiedCompoundHeldOut</span><span class="p">(</span>
+                <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
+                <span class="n">vendor</span><span class="o">=</span><span class="n">vendor</span><span class="p">,</span>
+                <span class="n">vendor_product_name</span><span class="o">=</span><span class="n">product</span><span class="p">,</span>
+                <span class="n">n_environments</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">groups</span><span class="p">),</span>
+                <span class="n">n_arrays</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">columns</span><span class="p">),</span>
+                <span class="n">n_records_not_written</span><span class="o">=</span><span class="nb">sum</span><span class="p">(</span>
+                    <span class="n">count_records</span><span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">rows</span><span class="p">,</span> <span class="p">{</span><span class="n">members</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">group_key</span><span class="p">:</span> <span class="n">members</span><span class="p">})</span>
+                    <span class="k">for</span> <span class="n">members</span> <span class="ow">in</span> <span class="n">groups</span>
+                <span class="p">),</span>
+                <span class="n">n_value_cells</span><span class="o">=</span><span class="nb">sum</span><span class="p">(</span>
+                    <span class="nb">len</span><span class="p">(</span><span class="n">array_values</span><span class="p">(</span><span class="n">strain</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">members</span><span class="p">))</span>
+                    <span class="k">for</span> <span class="n">strain</span> <span class="ow">in</span> <span class="n">matrix</span><span class="o">.</span><span class="n">rows</span>
+                    <span class="k">for</span> <span class="n">members</span> <span class="ow">in</span> <span class="n">groups</span>
+                <span class="p">),</span>
+                <span class="n">headers</span><span class="o">=</span><span class="p">[</span><span class="n">column</span><span class="o">.</span><span class="n">header</span> <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">],</span>
+                <span class="n">key_file_conditions</span><span class="o">=</span><span class="p">[</span>
+                    <span class="n">column</span><span class="o">.</span><span class="n">key_check</span><span class="o">.</span><span class="n">key_condition</span> <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">columns</span>
+                <span class="p">],</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">held</span>
 
 
 <span class="c1"># --------------------------------------------------------------------------- #</span>
@@ -2044,6 +2306,8 @@
 <span class="sd">        rows, keyed by the GROUP, so one condition dropped at several control sets is</span>
 <span class="sd">        counted once per group. ``cell_accounting`` splits every released value cell into</span>
 <span class="sd">        stored, dropped-array and withdrawn-strain cells and raises if they do not sum.</span>
+<span class="sd">        The ``UNIDENTIFIED_COMPOUND_RULE`` arrays are also listed per label, with the</span>
+<span class="sd">        source quotes that the labels are codes with no released structure.</span>
 <span class="sd">        """</span>
         <span class="n">environments</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">by_rule</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -2072,6 +2336,20 @@
             <span class="s2">"kept_records"</span><span class="p">:</span> <span class="n">kept_records</span><span class="p">,</span>
             <span class="s2">"rules"</span><span class="p">:</span> <span class="n">DROP_RULES</span><span class="p">,</span>
             <span class="s2">"by_rule"</span><span class="p">:</span> <span class="n">by_rule</span><span class="p">,</span>
+            <span class="s2">"unidentified_compound_rule"</span><span class="p">:</span> <span class="n">UNIDENTIFIED_COMPOUND_RULE</span><span class="p">,</span>
+            <span class="s2">"unidentified_compound_policy"</span><span class="p">:</span> <span class="n">UNIDENTIFIED_COMPOUND_POLICY</span><span class="p">,</span>
+            <span class="s2">"unidentified_compound_sources"</span><span class="p">:</span> <span class="p">[</span>
+                <span class="n">SOURCED_VALUES</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"json"</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span>
+                    <span class="s2">"table_s2_structures"</span><span class="p">,</span>
+                    <span class="s2">"table_s1_chemdiv_codes"</span><span class="p">,</span>
+                    <span class="s2">"table_s1_telomerase_inhibitor"</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">],</span>
+            <span class="s2">"unidentified_compounds_held_out"</span><span class="p">:</span> <span class="p">[</span>
+                <span class="n">held</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">held</span> <span class="ow">in</span> <span class="n">unidentified_compounds_held_out</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">dropped_groups</span><span class="p">)</span>
+            <span class="p">],</span>
             <span class="s2">"cell_accounting"</span><span class="p">:</span> <span class="n">cell_accounting</span><span class="p">(</span>
                 <span class="n">matrix</span><span class="p">,</span> <span class="n">groups</span><span class="p">,</span> <span class="n">dropped_groups</span>
             <span class="p">)</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
@@ -2093,9 +2371,11 @@
             <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span>
                 <span class="p">{</span>
                     <span class="s2">"dataset"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-                    <span class="s2">"rule"</span><span class="p">:</span> <span class="s2">"a compound label the curated compound table does not "</span>
-                    <span class="s2">"identify is stored under the released label with the typed "</span>
-                    <span class="s2">"inchikey gap resolved_compound attaches; it is never dropped"</span><span class="p">,</span>
+                    <span class="s2">"rule"</span><span class="p">:</span> <span class="s2">"an IDENTIFIED compound label the curated compound table "</span>
+                    <span class="s2">"gives no InChIKey is stored under the released label with the "</span>
+                    <span class="s2">"typed inchikey gap resolved_compound attaches; an unidentified "</span>
+                    <span class="s2">"label (status PROPRIETARY) is held out under "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">UNIDENTIFIED_COMPOUND_RULE</span><span class="si">}</span><span class="s2"> and listed in dropped_records.json"</span><span class="p">,</span>
                     <span class="s2">"n_compounds"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">gaps</span><span class="p">),</span>
                     <span class="s2">"n_records"</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="n">g</span><span class="p">[</span><span class="s2">"n_records"</span><span class="p">]</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">gaps</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
                     <span class="s2">"compounds"</span><span class="p">:</span> <span class="n">gaps</span><span class="p">,</span>

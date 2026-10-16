@@ -178,6 +178,7 @@
     <span class="n">CultureFormat</span><span class="p">,</span>
     <span class="n">Environment</span><span class="p">,</span>
     <span class="n">EnvironmentPhysicalPerturbation</span><span class="p">,</span>
+    <span class="n">EukaryoticStrainBackground</span><span class="p">,</span>
     <span class="n">GenomicSpan</span><span class="p">,</span>
     <span class="n">IntegratedCassette</span><span class="p">,</span>
     <span class="n">Media</span><span class="p">,</span>
@@ -196,11 +197,14 @@
     <span class="s2">"BIOLOGIC_PERTURBATION_IDENTITY_FIELDS"</span><span class="p">,</span>
     <span class="s2">"COMPOUND_IDENTITY_PRECEDENCE"</span><span class="p">,</span>
     <span class="s2">"BACKGROUND_ALLELE_IDENTITY_FIELDS"</span><span class="p">,</span>
+    <span class="s2">"BACKGROUND_ALLELE_NON_IDENTITY_FIELDS"</span><span class="p">,</span>
     <span class="s2">"CONCENTRATION_IDENTITY_FIELDS"</span><span class="p">,</span>
     <span class="s2">"CULTURE_FORMAT_IDENTITY_FIELDS"</span><span class="p">,</span>
     <span class="s2">"ENVIRONMENT_IDENTITY_FIELDS"</span><span class="p">,</span>
     <span class="s2">"ENVIRONMENT_OPTIONAL_IDENTITY_FIELDS"</span><span class="p">,</span>
+    <span class="s2">"EUKARYOTIC_STRAIN_BACKGROUND_IDENTITY_FIELDS"</span><span class="p">,</span>
     <span class="s2">"INTEGRATED_CASSETTE_IDENTITY_FIELDS"</span><span class="p">,</span>
+    <span class="s2">"INTEGRATED_CASSETTE_NON_IDENTITY_FIELDS"</span><span class="p">,</span>
     <span class="s2">"MEDIA_COMPONENT_IDENTITY_FIELDS"</span><span class="p">,</span>
     <span class="s2">"MEDIA_IDENTITY_FIELDS"</span><span class="p">,</span>
     <span class="s2">"MEDIA_GAP_IDENTITY_FIELDS"</span><span class="p">,</span>
@@ -209,10 +213,12 @@
     <span class="s2">"PHYSICAL_EXPOSURE_IDENTITY_FIELDS"</span><span class="p">,</span>
     <span class="s2">"PHYSICAL_PERTURBATION_IDENTITY_FIELDS"</span><span class="p">,</span>
     <span class="s2">"PRE_CULTURE_IDENTITY_FIELDS"</span><span class="p">,</span>
+    <span class="s2">"PROJECTED_BACKGROUND_CLASSES"</span><span class="p">,</span>
     <span class="s2">"PROJECTED_PERTURBATION_CLASSES"</span><span class="p">,</span>
     <span class="s2">"SMALL_MOLECULE_IDENTITY_FIELDS"</span><span class="p">,</span>
     <span class="s2">"SOLVENT_IDENTITY_FIELDS"</span><span class="p">,</span>
     <span class="s2">"STRAIN_BACKGROUND_IDENTITY_FIELDS"</span><span class="p">,</span>
+    <span class="s2">"STRAIN_BACKGROUND_NON_IDENTITY_FIELDS"</span><span class="p">,</span>
     <span class="s2">"TEMPERATURE_IDENTITY_FIELDS"</span><span class="p">,</span>
     <span class="s2">"compound_identity_key"</span><span class="p">,</span>
     <span class="s2">"environment_identity"</span><span class="p">,</span>
@@ -249,14 +255,20 @@
     <span class="s2">"dropouts"</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="c1"># --- begin #901/#902/#903: a typed gap on the medium ---</span>
-<span class="n">MEDIA_OPTIONAL_IDENTITY_FIELDS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"provenance_gaps"</span><span class="p">,)</span>
+<span class="n">MEDIA_OPTIONAL_IDENTITY_FIELDS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"dropout_roles"</span><span class="p">,</span> <span class="s2">"provenance_gaps"</span><span class="p">)</span>
 <span class="sd">"""``Media`` fields projected only when SET. A stated medium carries no gap, so its id</span>
 <span class="sd">is the composition alone; a medium whose source states no name, state or class</span>
 <span class="sd">(SynLethDB, an SGD annotation with no condition) is keyed by its gaps as well, so</span>
 <span class="sd">one source's absence is not merged with a stated medium or with another source's</span>
 <span class="sd">absence. Only the gap's ``field``, ``reason`` and the artifact it was looked for in</span>
 <span class="sd">(``looked_in``: ``source_uri``, ``citation_key``, ``sha256``) are identity; its</span>
-<span class="sd">``note`` is the wording of who said so, dropped like a medium's ``name``."""</span>
+<span class="sd">``note`` is the wording of who said so, dropped like a medium's ``name``.</span>
+
+<span class="sd">``dropout_roles`` (lane X, 2026-10-15) joins them on the same rule: a role-level</span>
+<span class="sd">omission IS composition (a carbon-free SC is not SC), and projecting it only when</span>
+<span class="sd">the list is non-empty keeps every medium that states none byte-identical to what it</span>
+<span class="sd">hashed before the field existed, since an empty list and an absent field say the</span>
+<span class="sd">same thing. Roles are projected as their sorted values, not as gap objects."""</span>
 <span class="n">MEDIA_GAP_IDENTITY_FIELDS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"field"</span><span class="p">,</span> <span class="s2">"reason"</span><span class="p">,</span> <span class="s2">"looked_in"</span><span class="p">,</span> <span class="s2">"keys"</span><span class="p">)</span>
 <span class="c1"># --- end #901/#902/#903 ---</span>
 <span class="n">TEMPERATURE_IDENTITY_FIELDS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"value"</span><span class="p">,</span> <span class="s2">"unit"</span><span class="p">)</span>
@@ -344,11 +356,23 @@
     <span class="s2">"culture_format"</span><span class="p">,</span>
     <span class="s2">"pre_culture"</span><span class="p">,</span>
     <span class="s2">"auxotroph_supplements"</span><span class="p">,</span>
+    <span class="c1"># --- begin lane X: the phase a culture is HELD in is the condition ---</span>
+    <span class="s2">"growth_phase"</span><span class="p">,</span>
+    <span class="c1"># --- end lane X ---</span>
 <span class="p">)</span>
-<span class="sd">"""``CultureEnvironment`` fields (#507). Each is projected only when SET, so a</span>
-<span class="sd">``CultureEnvironment`` that states none of them has the same id as the plain</span>
-<span class="sd">``Environment`` with the same composition (the two classes join at the environment</span>
-<span class="sd">node); once set, a field is part of identity like any other."""</span>
+<span class="sd">"""Environment fields projected only when SET, so an environment that states none of</span>
+<span class="sd">them has the same id as one with the same composition that never could (the</span>
+<span class="sd">``CultureEnvironment`` protocol fields of #507 join the plain ``Environment`` at one</span>
+<span class="sd">node); once set, a field is part of identity like any other.</span>
+
+<span class="sd">``growth_phase`` (lane X) belongs here rather than in the required tuple for the same</span>
+<span class="sd">reason and by its own construction: ``Environment.growth_phase`` carries</span>
+<span class="sd">``exclude_if=lambda v: v is None``, so an environment that states no phase serializes</span>
+<span class="sd">exactly as it did before the field existed, and projecting it only when set keeps that</span>
+<span class="sd">true of its id. It IS identity when stated: ``CultureGrowthPhase`` distinguishes the</span>
+<span class="sd">harvest moment (a property of the sample, carried on the phenotype) from a culture HELD</span>
+<span class="sd">in a phase AS the condition, which is what this field is, so a stationary-phase</span>
+<span class="sd">starvation arm must not be the environment node its exponential control is."""</span>
 <span class="n">CULTURE_FORMAT_IDENTITY_FIELDS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
     <span class="s2">"vessel"</span><span class="p">,</span>
     <span class="s2">"working_volume_ul"</span><span class="p">,</span>
@@ -367,6 +391,7 @@
 <span class="p">)</span>
 <span class="n">BACKGROUND_ALLELE_IDENTITY_FIELDS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
     <span class="s2">"systematic_gene_name"</span><span class="p">,</span>
+    <span class="s2">"gene_namespace"</span><span class="p">,</span>
     <span class="s2">"allele_name"</span><span class="p">,</span>
     <span class="s2">"edit"</span><span class="p">,</span>
     <span class="s2">"functional"</span><span class="p">,</span>
@@ -374,14 +399,69 @@
     <span class="s2">"cassette"</span><span class="p">,</span>
     <span class="s2">"deleted_span"</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="sd">"""An allele is its locus, in its identifier space, as the edit the source designates.</span>
+
+<span class="sd">``gene_namespace`` is identity because it is half of the locus: the name alone does not</span>
+<span class="sd">say which genome it is a name in, which is why P1 put the field on every</span>
+<span class="sd">``GenePerturbation`` and P5 put it here. ``zygosity`` is projected as stated, ``None``</span>
+<span class="sd">included, so a background whose source gave no copy count is not the same background as</span>
+<span class="sd">one that did.</span>
+<span class="sd">"""</span>
+<span class="n">BACKGROUND_ALLELE_NON_IDENTITY_FIELDS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"gene_name"</span><span class="p">,</span>
+    <span class="s2">"provenance"</span><span class="p">,</span>
+    <span class="s2">"provenance_gaps"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="sd">"""What an allele projection drops, each for a stated reason.</span>
+
+<span class="sd">``gene_name`` is the CURRENT standard name of the locus, which an annotation release can</span>
+<span class="sd">change without the allele changing (``met15Δ0`` sits in YLR303W, which R64-4-1 calls</span>
+<span class="sd">MET17 and older releases called MET15); the systematic name is the stable half.</span>
+<span class="sd">``provenance`` and ``provenance_gaps`` record who stated the allele and what they left</span>
+<span class="sd">unstated, which is exactly what this layer exists to drop.</span>
+<span class="sd">"""</span>
 <span class="n">STRAIN_BACKGROUND_IDENTITY_FIELDS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
     <span class="s2">"name"</span><span class="p">,</span>
     <span class="s2">"reference_strain"</span><span class="p">,</span>
+    <span class="s2">"assembly_set"</span><span class="p">,</span>
+    <span class="s2">"alleles"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="sd">"""The host-agnostic background is its label, its reference, and its sorted allele set.</span>
+
+<span class="sd">``assembly_set`` joins the projection with P5: a background's alleles are edits against</span>
+<span class="sd">deposited bytes, so two records naming one strain against two assemblies are not stating</span>
+<span class="sd">the same strain. It is redundant with ``reference_strain`` only while the two are pinned</span>
+<span class="sd">to each other by the schema's cross-check, and the projection states the fact rather</span>
+<span class="sd">than relying on that.</span>
+<span class="sd">"""</span>
+<span class="n">EUKARYOTIC_STRAIN_BACKGROUND_IDENTITY_FIELDS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="o">*</span><span class="n">STRAIN_BACKGROUND_IDENTITY_FIELDS</span><span class="p">,</span>
     <span class="s2">"mating_type"</span><span class="p">,</span>
     <span class="s2">"ploidy"</span><span class="p">,</span>
-    <span class="s2">"alleles"</span><span class="p">,</span>
     <span class="s2">"integrations"</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="sd">"""A eukaryotic background adds the three facts its class adds.</span>
+
+<span class="sd">Before P5 these three were projected UNCONDITIONALLY, with no branch for a background</span>
+<span class="sd">that has none, so the projection could only ever be called on a eukaryote. Each is</span>
+<span class="sd">identity: BY4741 and BY4742 differ in mating type, a haploid and a diploid of one name</span>
+<span class="sd">are different strains, and bAID and bAID-X3::SIZ1i carry the same alleles and are not</span>
+<span class="sd">the same strain.</span>
+<span class="sd">"""</span>
+<span class="n">STRAIN_BACKGROUND_NON_IDENTITY_FIELDS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"parents"</span><span class="p">,</span>
+    <span class="s2">"construction"</span><span class="p">,</span>
+    <span class="s2">"genotype_statement"</span><span class="p">,</span>
+    <span class="s2">"provenance"</span><span class="p">,</span>
+    <span class="s2">"provenance_gaps"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="sd">"""What a background projection drops: how it was made and how it was worded.</span>
+
+<span class="sd">``parents`` and ``construction`` are the lineage and the method sentence, which two</span>
+<span class="sd">sources write differently for one strain. ``genotype_statement`` is the source's own</span>
+<span class="sd">genotype string, whose typed reading is ``alleles``; keeping the string would split one</span>
+<span class="sd">strain by its spelling (``MATα his3∆1`` against ``MATalpha his3-delta1``).</span>
+<span class="sd">"""</span>
 <span class="n">INTEGRATED_CASSETTE_IDENTITY_FIELDS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
     <span class="s2">"name"</span><span class="p">,</span>
     <span class="s2">"locus"</span><span class="p">,</span>
@@ -390,6 +470,30 @@
     <span class="s2">"marker"</span><span class="p">,</span>
     <span class="s2">"zygosity"</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="n">INTEGRATED_CASSETTE_NON_IDENTITY_FIELDS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"placement"</span><span class="p">,</span>
+    <span class="s2">"provenance"</span><span class="p">,</span>
+    <span class="s2">"provenance_gaps"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="sd">"""``placement`` is deliberately NOT part of a cassette's identity.</span>
+
+<span class="sd">It is the sha256-pinned construct the cassette was built from, and a source that</span>
+<span class="sd">deposits the map states the same physical cassette as one that does not: bAID is screened</span>
+<span class="sd">in Lian 2019 and in the in-house Bioscreen dataset, and the whole point of this layer is</span>
+<span class="sd">that those two land on one node. Projecting a pointer whose absence is typed would split</span>
+<span class="sd">them, which is the opposite of what ``parents`` and ``provenance`` are dropped for.</span>
+<span class="sd">"""</span>
+<span class="n">PROJECTED_BACKGROUND_CLASSES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">type</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">StrainBackground</span><span class="p">,</span>
+    <span class="n">EukaryoticStrainBackground</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="sd">"""Every concrete strain-background class has a branch in ``strain_background_identity``.</span>
+
+<span class="sd">The test pins this tuple to ``StrainBackground`` plus its subclasses, so a third class</span>
+<span class="sd">cannot land and be projected as its base: that would drop the fields it adds and merge</span>
+<span class="sd">two different strains onto one key, which is the defect</span>
+<span class="sd">``PROJECTED_PERTURBATION_CLASSES`` exists to prevent on the environment side.</span>
+<span class="sd">"""</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_canonical</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -490,7 +594,10 @@
 <span class="sd">    is. Components and dropouts are sorted, so listing order is not identity. A</span>
 <span class="sd">    medium's ``provenance_gaps`` are projected only when it carries one</span>
 <span class="sd">    (``MEDIA_OPTIONAL_IDENTITY_FIELDS``), so a stated medium's id is unchanged and a</span>
-<span class="sd">    gapped one never joins it.</span>
+<span class="sd">    gapped one never joins it. ``dropout_roles`` is projected on the same terms</span>
+<span class="sd">    (lane X): a role the source states is omitted is composition, so a carbon-free SC</span>
+<span class="sd">    does not join SC, and a medium that states no role-level omission hashes exactly</span>
+<span class="sd">    as it did before the field existed.</span>
 <span class="sd">    """</span>
     <span class="n">identity</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">"state"</span><span class="p">:</span> <span class="n">media</span><span class="o">.</span><span class="n">state</span><span class="p">,</span>
@@ -503,6 +610,10 @@
             <span class="n">compound_identity_key</span><span class="p">(</span><span class="n">dropout</span><span class="p">)</span> <span class="k">for</span> <span class="n">dropout</span> <span class="ow">in</span> <span class="n">media</span><span class="o">.</span><span class="n">dropouts</span>
         <span class="p">),</span>
     <span class="p">}</span>
+    <span class="c1"># --- begin lane X: a role-level omission the release states without a compound ---</span>
+    <span class="k">if</span> <span class="n">media</span><span class="o">.</span><span class="n">dropout_roles</span><span class="p">:</span>
+        <span class="n">identity</span><span class="p">[</span><span class="s2">"dropout_roles"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">role</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">role</span> <span class="ow">in</span> <span class="n">media</span><span class="o">.</span><span class="n">dropout_roles</span><span class="p">)</span>
+    <span class="c1"># --- end lane X ---</span>
     <span class="c1"># --- begin #901/#902/#903: a typed gap on the medium ---</span>
     <span class="k">if</span> <span class="n">media</span><span class="o">.</span><span class="n">provenance_gaps</span><span class="p">:</span>
         <span class="n">identity</span><span class="p">[</span><span class="s2">"provenance_gaps"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_sorted_identities</span><span class="p">(</span>
@@ -639,7 +750,10 @@
 <span class="sd">    ``None``, and a ``None`` temperature projects as ``None``, so a record that never</span>
 <span class="sd">    carried a temperature does not merge with one measured at 30 C. A</span>
 <span class="sd">    ``CultureEnvironment``'s protocol fields (``ENVIRONMENT_OPTIONAL_IDENTITY_FIELDS``)</span>
-<span class="sd">    are added only when set.</span>
+<span class="sd">    are added only when set, and so is ``growth_phase``, which the base class carries</span>
+<span class="sd">    (lane X): a culture HELD in stationary phase is a different condition from the same</span>
+<span class="sd">    medium in exponential growth, and before this a store could serve both as one</span>
+<span class="sd">    environment node.</span>
 <span class="sd">    """</span>
     <span class="n">identity</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">"media"</span><span class="p">:</span> <span class="n">media_identity</span><span class="p">(</span><span class="n">environment</span><span class="o">.</span><span class="n">media</span><span class="p">),</span>
@@ -661,6 +775,10 @@
         <span class="s2">"dilution_rate_per_hour"</span><span class="p">:</span> <span class="n">environment</span><span class="o">.</span><span class="n">dilution_rate_per_hour</span><span class="p">,</span>
         <span class="c1"># --- end #753 ---</span>
     <span class="p">}</span>
+    <span class="c1"># --- begin lane X: the phase a culture is HELD in is the condition ---</span>
+    <span class="k">if</span> <span class="n">environment</span><span class="o">.</span><span class="n">growth_phase</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">identity</span><span class="p">[</span><span class="s2">"growth_phase"</span><span class="p">]</span> <span class="o">=</span> <span class="n">environment</span><span class="o">.</span><span class="n">growth_phase</span><span class="o">.</span><span class="n">value</span>
+    <span class="c1"># --- end lane X ---</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">environment</span><span class="p">,</span> <span class="n">CultureEnvironment</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">identity</span>
     <span class="k">if</span> <span class="n">environment</span><span class="o">.</span><span class="n">culture_format</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -693,9 +811,10 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_background_allele_identity</span><span class="p">(</span><span class="n">allele</span><span class="p">:</span> <span class="n">BackgroundAllele</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Project an allele onto its locus, designation, edit, function and zygosity."""</span>
+<span class="w">    </span><span class="sd">"""Project an allele onto its locus, namespace, designation, edit and zygosity."""</span>
     <span class="k">return</span> <span class="p">{</span>
         <span class="s2">"systematic_gene_name"</span><span class="p">:</span> <span class="n">allele</span><span class="o">.</span><span class="n">systematic_gene_name</span><span class="p">,</span>
+        <span class="s2">"gene_namespace"</span><span class="p">:</span> <span class="n">allele</span><span class="o">.</span><span class="n">gene_namespace</span><span class="p">,</span>
         <span class="s2">"allele_name"</span><span class="p">:</span> <span class="n">allele</span><span class="o">.</span><span class="n">allele_name</span><span class="p">,</span>
         <span class="s2">"edit"</span><span class="p">:</span> <span class="n">allele</span><span class="o">.</span><span class="n">edit</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="s2">"functional"</span><span class="p">:</span> <span class="n">allele</span><span class="o">.</span><span class="n">functional</span><span class="p">,</span>
@@ -725,30 +844,47 @@
 <span class="sd">    Two datasets that both state BY4741 (one quoting its paper, one carrying a</span>
 <span class="sd">    pending-review gap) produce different ``model_dump``s and so different ``genome``</span>
 <span class="sd">    node ids; this projection is the join key that says they state the same strain:</span>
-<span class="sd">    name, reference, mating type, ploidy, the sorted allele set and the sorted set of</span>
-<span class="sd">    integrated cassettes. ``parents``, ``construction``, provenance and gaps are</span>
-<span class="sd">    dropped. Integrations are IN, because a cassette at a named site is genome content</span>
-<span class="sd">    exactly as an allele is: bAID and bAID-X3::SIZ1i carry the same alleles and are not</span>
-<span class="sd">    the same strain. Not used for node ids (the ``genome`` node id is unchanged); it is</span>
-<span class="sd">    the cross-dataset comparison key.</span>
+<span class="sd">    name, reference strain, assembly set and the sorted allele set, plus mating type,</span>
+<span class="sd">    ploidy and the sorted set of integrated cassettes for a</span>
+<span class="sd">    ``EukaryoticStrainBackground``. ``parents``, ``construction``, the verbatim genotype</span>
+<span class="sd">    statement, provenance and gaps are dropped. Integrations are IN, because a cassette</span>
+<span class="sd">    at a named site is genome content exactly as an allele is: bAID and</span>
+<span class="sd">    bAID-X3::SIZ1i carry the same alleles and are not the same strain.</span>
+
+<span class="sd">    One projection per concrete class, because the three eukaryote fields exist on one</span>
+<span class="sd">    of them: before P5 they were read unconditionally, so a background without them</span>
+<span class="sd">    could not be projected at all, and projecting a subclass as its base would drop</span>
+<span class="sd">    them and merge two strains onto one key. An unknown subclass therefore raises</span>
+<span class="sd">    rather than falling through to the base's fields. Not used for node ids (the</span>
+<span class="sd">    ``genome`` node id is unchanged); it is the cross-dataset comparison key.</span>
 <span class="sd">    """</span>
-    <span class="k">return</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">background</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">PROJECTED_BACKGROUND_CLASSES</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="s2">"no identity projection for "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">background</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">; a strain background is one of "</span>
+            <span class="o">+</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">PROJECTED_BACKGROUND_CLASSES</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="n">identity</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">"name"</span><span class="p">:</span> <span class="n">background</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
         <span class="s2">"reference_strain"</span><span class="p">:</span> <span class="n">background</span><span class="o">.</span><span class="n">reference_strain</span><span class="p">,</span>
-        <span class="s2">"mating_type"</span><span class="p">:</span> <span class="p">(</span>
-            <span class="kc">None</span> <span class="k">if</span> <span class="n">background</span><span class="o">.</span><span class="n">mating_type</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">background</span><span class="o">.</span><span class="n">mating_type</span><span class="o">.</span><span class="n">value</span>
-        <span class="p">),</span>
-        <span class="s2">"ploidy"</span><span class="p">:</span> <span class="n">background</span><span class="o">.</span><span class="n">ploidy</span><span class="p">,</span>
+        <span class="s2">"assembly_set"</span><span class="p">:</span> <span class="n">background</span><span class="o">.</span><span class="n">assembly_set</span><span class="p">,</span>
         <span class="s2">"alleles"</span><span class="p">:</span> <span class="n">_sorted_identities</span><span class="p">(</span>
             <span class="p">[</span><span class="n">_background_allele_identity</span><span class="p">(</span><span class="n">allele</span><span class="p">)</span> <span class="k">for</span> <span class="n">allele</span> <span class="ow">in</span> <span class="n">background</span><span class="o">.</span><span class="n">alleles</span><span class="p">]</span>
         <span class="p">),</span>
-        <span class="s2">"integrations"</span><span class="p">:</span> <span class="n">_sorted_identities</span><span class="p">(</span>
-            <span class="p">[</span>
-                <span class="n">_integrated_cassette_identity</span><span class="p">(</span><span class="n">cassette</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">cassette</span> <span class="ow">in</span> <span class="n">background</span><span class="o">.</span><span class="n">integrations</span>
-            <span class="p">]</span>
-        <span class="p">),</span>
-    <span class="p">}</span></div>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">background</span><span class="p">,</span> <span class="n">EukaryoticStrainBackground</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">identity</span>
+    <span class="n">identity</span><span class="p">[</span><span class="s2">"mating_type"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="kc">None</span> <span class="k">if</span> <span class="n">background</span><span class="o">.</span><span class="n">mating_type</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">background</span><span class="o">.</span><span class="n">mating_type</span><span class="o">.</span><span class="n">value</span>
+    <span class="p">)</span>
+    <span class="n">identity</span><span class="p">[</span><span class="s2">"ploidy"</span><span class="p">]</span> <span class="o">=</span> <span class="n">background</span><span class="o">.</span><span class="n">ploidy</span>
+    <span class="n">identity</span><span class="p">[</span><span class="s2">"integrations"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_sorted_identities</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">_integrated_cassette_identity</span><span class="p">(</span><span class="n">cassette</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">cassette</span> <span class="ow">in</span> <span class="n">background</span><span class="o">.</span><span class="n">integrations</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">identity</span></div>
 
 
 

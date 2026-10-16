@@ -147,7 +147,10 @@ environment node (#753).</p>
 <code class="docutils literal notranslate"><span class="pre">None</span></code>, and a <code class="docutils literal notranslate"><span class="pre">None</span></code> temperature projects as <code class="docutils literal notranslate"><span class="pre">None</span></code>, so a record that never
 carried a temperature does not merge with one measured at 30 C. A
 <code class="docutils literal notranslate"><span class="pre">CultureEnvironment</span></code>’s protocol fields (<code class="docutils literal notranslate"><span class="pre">ENVIRONMENT_OPTIONAL_IDENTITY_FIELDS</span></code>)
-are added only when set.</p>
+are added only when set, and so is <code class="docutils literal notranslate"><span class="pre">growth_phase</span></code>, which the base class carries
+(lane X): a culture HELD in stationary phase is a different condition from the same
+medium in exponential growth, and before this a store could serve both as one
+environment node.</p>
 </dd></dl>
 
 </section>

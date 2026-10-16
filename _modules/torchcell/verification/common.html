@@ -172,6 +172,14 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.construct_placement</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">addition_perturbation_types</span><span class="p">,</span>
+    <span class="n">construct_placement_census</span><span class="p">,</span>
+    <span class="n">construct_placement_result</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.perturbation_families</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ALLELE_BEARING_PERTURBATION_TYPES</span> <span class="k">as</span> <span class="n">_ALLELE_BEARING_PERTURBATION_TYPES</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Level</span><span class="p">,</span> <span class="n">LevelResult</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProvenanceGapCensus</span><span class="p">,</span> <span class="n">ProvenanceGapReason</span>
 
@@ -368,16 +376,11 @@
     <span class="k">return</span> <span class="s2">"name_only"</span>
 
 
-<span class="n">ALLELE_BEARING_PERTURBATION_TYPES</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
-    <span class="p">{</span>
-        <span class="s2">"allele"</span><span class="p">,</span>
-        <span class="s2">"damp"</span><span class="p">,</span>
-        <span class="s2">"suppressor_allele"</span><span class="p">,</span>
-        <span class="s2">"temperature_sensitive_allele"</span><span class="p">,</span>
-        <span class="s2">"sequence_variant"</span><span class="p">,</span>
-    <span class="p">}</span>
-<span class="p">)</span>
-<span class="sd">"""Perturbation types whose perturbed_gene_name carries an allele designation."""</span>
+<span class="c1">#: Perturbation types whose ``perturbed_gene_name`` carries an allele designation. The</span>
+<span class="c1">#: set and its complement live in :mod:`torchcell.verification.perturbation_families`,</span>
+<span class="c1">#: where a test holds the two to the ``GenePerturbationType`` union, so a new leaf cannot</span>
+<span class="c1">#: be judged by the common-name rules just because nobody remembered this list.</span>
+<span class="n">ALLELE_BEARING_PERTURBATION_TYPES</span> <span class="o">=</span> <span class="n">_ALLELE_BEARING_PERTURBATION_TYPES</span>
 
 
 <div class="viewcode-block" id="SharedRecordRules">
@@ -433,6 +436,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_gene_records</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_n_records_off_genome</span> <span class="o">=</span> <span class="mi">0</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">_additions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">_env_memo</span> <span class="o">=</span> <span class="n">_IdentityMemo</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_media_memo</span> <span class="o">=</span> <span class="n">_IdentityMemo</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_media_dumps</span> <span class="o">=</span> <span class="n">media_library_dumps</span><span class="p">()</span>
@@ -449,6 +454,7 @@
         <span class="n">experiment</span> <span class="o">=</span> <span class="n">record</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_add_gaps</span><span class="p">(</span><span class="n">experiment</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_add_gene_names</span><span class="p">(</span><span class="n">experiment</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_placements</span><span class="p">(</span><span class="n">experiment</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_add_uncertainty</span><span class="p">(</span><span class="n">experiment</span><span class="p">[</span><span class="s2">"phenotype"</span><span class="p">])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_add_environment</span><span class="p">(</span><span class="n">experiment</span><span class="p">[</span><span class="s2">"environment"</span><span class="p">])</span></div>
 
@@ -496,6 +502,19 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_census</span><span class="o">.</span><span class="n">n_records</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_census</span><span class="o">.</span><span class="n">n_gaps</span> <span class="o">&gt;</span> <span class="n">n_gaps_before</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_census</span><span class="o">.</span><span class="n">n_records_with_gaps</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_add_placements</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiment</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Keep the addition perturbations this record carries, for the placement row.</span>
+
+<span class="sd">        Only the addition leaves (``addition_perturbation_types()``) are kept, and only</span>
+<span class="sd">        the perturbation mappings themselves, which the census reads field by field. A</span>
+<span class="sd">        deletion-only store keeps nothing and emits no row.</span>
+<span class="sd">        """</span>
+        <span class="n">genotype</span> <span class="o">=</span> <span class="n">experiment</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"genotype"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="n">additions</span> <span class="o">=</span> <span class="n">addition_perturbation_types</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">perturbation</span> <span class="ow">in</span> <span class="n">genotype</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"perturbations"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]:</span>
+            <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">perturbation</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"perturbation_type"</span><span class="p">))</span> <span class="ow">in</span> <span class="n">additions</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_additions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">perturbation</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_add_gene_names</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiment</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">genotype</span> <span class="o">=</span> <span class="n">experiment</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"genotype"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
@@ -634,10 +653,22 @@
             <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_compound_identity_results</span><span class="p">(),</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_media_result</span><span class="p">(),</span>
         <span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_additions</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_construct_placement_result</span><span class="p">())</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sgd_genes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">out</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_gene_containment_results</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sgd_genes</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">out</span></div>
 
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_construct_placement_result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LevelResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""L1 report-class: how many additions are sequence-backed, placed, or gapped.</span>
+
+<span class="sd">        Emitted only when the store HAS gene additions, so the 23 stores with none keep</span>
+<span class="sd">        the row set they had. Report-class by the standing rule: its subject is the</span>
+<span class="sd">        record compared with OUR construct references, so it is listed under the verdict</span>
+<span class="sd">        with its statistic and never fails the store.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="n">construct_placement_result</span><span class="p">(</span><span class="n">construct_placement_census</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_additions</span><span class="p">))</span>
 
 <div class="viewcode-block" id="SharedRecordRules.census">
 <a class="viewcode-back" href="../../../generated/torchcell.verification.SharedRecordRules.html#torchcell.verification.SharedRecordRules.census">[docs]</a>

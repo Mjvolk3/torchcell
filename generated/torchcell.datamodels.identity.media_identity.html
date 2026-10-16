@@ -141,7 +141,10 @@
 is. Components and dropouts are sorted, so listing order is not identity. A
 medium’s <code class="docutils literal notranslate"><span class="pre">provenance_gaps</span></code> are projected only when it carries one
 (<code class="docutils literal notranslate"><span class="pre">MEDIA_OPTIONAL_IDENTITY_FIELDS</span></code>), so a stated medium’s id is unchanged and a
-gapped one never joins it.</p>
+gapped one never joins it. <code class="docutils literal notranslate"><span class="pre">dropout_roles</span></code> is projected on the same terms
+(lane X): a role the source states is omitted is composition, so a carbon-free SC
+does not join SC, and a medium that states no role-level omission hashes exactly
+as it did before the field existed.</p>
 </dd></dl>
 
 </section>

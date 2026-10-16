@@ -123,15 +123,34 @@
 <span class="sd">compounds (&gt;40M data points), each compound profiled in duplicate at (or near) its</span>
 <span class="sd">S. cerevisiae IC30.</span>
 
-<span class="sd">EVERY RELEASED COMPOUND IS STORED (2026.10.12, the data is the data). About 92% of the</span>
-<span class="sd">profiled compounds are PROPRIETARY Novartis ``CMBxxx`` entries with no released structure</span>
-<span class="sd">(paper.md line 110: "In addition to 1641 proprietary compounds (named CMBxxx), we included</span>
-<span class="sd">135 reference compounds ... Table S1"). They are released measurements of an unidentified</span>
-<span class="sd">compound, so every sensitivity column of both deposited matrices is stored except the</span>
-<span class="sd">CMB4019 condition below: 1,851 CMB ids, 2,953 HIP + 2,920 HOP columns. Until 2026.10.12 an</span>
-<span class="sd">``encodable_filter`` built a column only for a CMB id with a released SMILES, which held</span>
-<span class="sd">out 1,702 CMB ids, 2,650 HIP + 2,619 HOP columns and 26,992,230 records; that filter is</span>
-<span class="sd">removed, and whether a compound is featurizable is a modeling-time question.</span>
+<span class="sd">AN UNIDENTIFIED COMPOUND IS HELD OUT (2026.10.15, database constitution principle 2).</span>
+<span class="sd">Owner, 2026-10-15: "the data is the data - but we only capture experiments that could be</span>
+<span class="sd">meaningfully represented. basically if you cannot tell me what goes into the flask so to</span>
+<span class="sd">speak, then we have no hope of modeling!" Most profiled compounds are PROPRIETARY Novartis</span>
+<span class="sd">``CMBxxx`` entries with no released name or structure (paper.md line 110: "In addition to</span>
+<span class="sd">1641 proprietary compounds (named CMBxxx), we included 135 reference compounds with a</span>
+<span class="sd">previously reported molecular mechanism of action (Table S1)."; line 58: "The Novartis</span>
+<span class="sd">Institutes of Biomedical Research encourage future academic collaborations around</span>
+<span class="sd">individual compounds used in this study."). A CMB id with no Table S1 common name, no</span>
+<span class="sd">Table S1 SMILES, no curated compound-identity row and no ``RELEASED_IDENTITIES`` entry is</span>
+<span class="sd">HELD OUT under ``UNIDENTIFIED_COMPOUND_RULE``: its columns are never built, and the ledger</span>
+<span class="sd">lists it under ``unidentified_compounds_held_out`` with every column's header, study, uM</span>
+<span class="sd">dose and scored cells, plus both quotes as ``SourcedValue``s on the sha256-pinned</span>
+<span class="sd">paper.md. Measured on the raw mirror with the module's ``_column_census`` and a cell</span>
+<span class="sd">census over both matrices (2026.10.15): 1,701 CMB ids held out, HIP 2,649 + HOP 2,618</span>
+<span class="sd">columns, HIP 15,344,088 + HOP 11,836,672 = 27,180,760 scored cells; 150 CMB ids stored,</span>
+<span class="sd">HIP 304 + HOP 302 columns. From 2026.10.12 to 2026.10.15 these columns were stored under</span>
+<span class="sd">the bare ``CMB&lt;id&gt;`` label with an ``inchikey`` gap; a gap is for a missing attribute of</span>
+<span class="sd">an identified compound, never for its identity, so that route is retired.</span>
+
+<span class="sd">ADMISSION TABLE. ``RELEASED_IDENTITIES`` (keyed by CMB id, ``ReleasedIdentity`` entries</span>
+<span class="sd">carrying a name, SMILES and/or InChIKey with the ``SourcedValue`` that releases it) is</span>
+<span class="sd">EMPTY today. Only a public CMB-to-structure mapping released by Novartis fills it; an</span>
+<span class="sd">entry admits that CMB id on the next build (a store rebuild), and the ledger's held-out</span>
+<span class="sd">list is the request list. An identity inferred from HIP-HOP profile similarity is a</span>
+<span class="sd">hypothesis and is never an entry. The Dryad record is not re-fetched: the raw mirror is</span>
+<span class="sd">canonical and sha256-pinned, and a mismatch on the recorded retrieval is drift to report,</span>
+<span class="sd">not to follow.</span>
 
 <span class="sd">COMPOUND IDENTITY -- the compound is keyed by structure where one exists, never by a</span>
 <span class="sd">tagged label. The resolver is called with the CLEAN released label (the Table S1 common</span>
@@ -140,33 +159,34 @@
 <span class="sd">PubChem CID. Where no curated row exists the InChIKey is DERIVED from the Table S1 SMILES</span>
 <span class="sd">with ``inchikey_from_smiles`` (RDKit); a curated row always wins, because the two routes</span>
 <span class="sd">measurably disagree (concanamycin A's curated PubChem key and its SMILES-derived key</span>
-<span class="sd">differ in the stereo block). A compound with neither (a proprietary CMB id with no</span>
-<span class="sd">released SMILES, and CMB409 Boromycin, whose released SMILES RDKit 2026.03.6 cannot parse)</span>
-<span class="sd">is STORED under its released label with the typed ``inchikey`` gap ``resolved_compound``</span>
-<span class="sd">attaches, its released SMILES carried verbatim on ``Compound.smiles`` when there is one,</span>
-<span class="sd">and its released dose and vehicle exactly as every other column. The ledger's</span>
-<span class="sd">``compound_identity_gaps`` lists each such CMB id with its columns and records per arm.</span>
-<span class="sd">Measured on the deposited headers: 1,703 gapped CMB ids, 148 with an InChIKey (147</span>
-<span class="sd">distinct keys: CMB 244 and CMB 1818 are two fermentation batches of concanamycin A and</span>
-<span class="sd">correctly merge onto one key), 1,849 distinct stored compound names.</span>
+<span class="sd">differ in the stereo block). An IDENTIFIED compound with no derivable InChIKey is STORED</span>
+<span class="sd">under its released name with the typed ``inchikey`` gap ``resolved_compound`` attaches,</span>
+<span class="sd">its released SMILES carried verbatim on ``Compound.smiles`` when there is one: CMB409</span>
+<span class="sd">Boromycin, whose released SMILES RDKit 2026.03.6 cannot parse (name and structure are</span>
+<span class="sd">released, only the derived key is missing), and CMB222 "Enniatin derivative</span>
+<span class="sd">(Fermentation batch 1)", a released name with no SMILES. The ledger's</span>
+<span class="sd">``compound_identity_gaps`` lists each with its columns and records per arm. Measured on</span>
+<span class="sd">the deposited headers (2026.10.15): of the 150 stored CMB ids, 2 are gapped and 148 carry</span>
+<span class="sd">an InChIKey (CMB 244 and CMB 1818 are two fermentation batches of concanamycin A and</span>
+<span class="sd">correctly merge onto one key).</span>
 
 <span class="sd">RECORDS STORED AND HELD OUT. Every scored cell of a stored column is a record; a blank</span>
-<span class="sd">cell is not a value. Measured in-process on the raw matrices with this module's column</span>
-<span class="sd">census and row reader (2026.10.12): 30,308,574 records, HIP 17,104,778 over 2,953 columns</span>
-<span class="sd">and 5,869 rows, HOP 13,203,796 over 2,920 columns and 4,970 rows, against 3,083,827</span>
-<span class="sd">before. Two rules still hold cells out, and both are counted in</span>
-<span class="sd">``&lt;root&gt;/dropped_records.json`` (whose ``accounting`` proves scored cells = stored + held</span>
-<span class="sd">out per arm): ``NOT_ORF_SHAPED_RULE`` (a released token the ``GenePerturbation`` pattern</span>
-<span class="sd">rejects; measured 0 scored cells, the four ``R00x0`` tokens and ``YBR160W_AS`` carry no</span>
-<span class="sd">score) and the CMB4019 exclusion (6 columns, HIP 17,397 + HOP 13,623 scored cells over</span>
-<span class="sd">every row).</span>
+<span class="sd">cell is not a value. Measured on the raw matrices with this module's column census and a</span>
+<span class="sd">cell census (2026.10.15): 3,127,814 records, HIP 1,760,690 over 304 columns, HOP</span>
+<span class="sd">1,367,124 over 302 columns, against 30,308,574 stored from 2026.10.12 to 2026.10.15.</span>
+<span class="sd">Three rules hold cells out, each counted in ``&lt;root&gt;/dropped_records.json`` (whose</span>
+<span class="sd">``accounting`` proves scored cells = stored + held out per arm, HIP 17,122,175 and HOP</span>
+<span class="sd">13,217,419 scored cells): ``UNIDENTIFIED_COMPOUND_RULE`` (above, 27,180,760 cells),</span>
+<span class="sd">``NOT_ORF_SHAPED_RULE`` (a released token the ``GenePerturbation`` pattern rejects;</span>
+<span class="sd">measured 0 scored cells, the four ``R00x0`` tokens and ``YBR160W_AS`` carry no score) and</span>
+<span class="sd">the CMB4019 exclusion (6 columns, HIP 17,397 + HOP 13,623 scored cells over every row).</span>
 
 <span class="sd">SCREEN (study) IDENTITY -- ``EnvironmentResponsePhenotype.screen_id`` carries the</span>
 <span class="sd">deposited study number. It is a real batch covariate, *"&lt;Study number&gt;: an internal id</span>
 <span class="sd">for the study in which the compound was profiled. All compound profiles of one study use</span>
 <span class="sd">the same set of control samples and are normalized together."* (paper.md line 50), and it</span>
 <span class="sd">is what keeps one (strain, condition) L1-unique once the compound name is cleaned:</span>
-<span class="sd">measured over all 5,873 stored columns (2026.10.12), 531 collide on (released label, dose)</span>
+<span class="sd">measured over the 5,873 columns stored on 2026.10.12, 531 collide on (released label, dose)</span>
 <span class="sd">alone (HIP 257, HOP 274) and 0 collide on (resolved compound, dose, study). The reference is per (assay, study) for the same reason: each</span>
 <span class="sd">study normalizes against its OWN control samples.</span>
 
@@ -312,7 +332,8 @@
 <span class="sd">``HIP_scores.txt`` (644 MB) and ``HOP_scores.txt`` (505 MB) -- the deposited processed</span>
 <span class="sd">score matrices (rows = systematic ORF names, columns = per-experiment scores) -- and</span>
 <span class="sd">``Table_S1.xls`` (compound IC30 + common name + SMILES for the reference/novel MoA</span>
-<span class="sd">compounds; the ~1641 proprietary CMB compounds have no released name). The canonical copy</span>
+<span class="sd">compounds; the ~1641 proprietary CMB compounds have no released name and are held out).</span>
+<span class="sd">The canonical copy</span>
 <span class="sd">is the RAW MIRROR</span>
 <span class="sd">``$DATA_ROOT/torchcell-raw/hoepfnerHighresolutionChemicalDissection2014/`` and its</span>
 <span class="sd">``manifest.json`` of ``ArtifactRecord``s; ``download()`` symlinks and sha256-verifies from</span>
@@ -328,11 +349,11 @@
 <span class="sd">- Systematic ORF names are stored exactly as the matrices release them (no</span>
 <span class="sd">  ``resolve_gene_name``, no rename onto a current gene, no SGD gene universe); a token</span>
 <span class="sd">  the ``GenePerturbation`` pattern rejects is held out under ``NOT_ORF_SHAPED_RULE``</span>
-<span class="sd">  until a released-gene-name leaf exists. Empty cells are skipped.</span>
+<span class="sd">  until a released-identifier leaf exists. Empty cells are skipped.</span>
 <span class="sd">- Constant sub-objects are INTERNED into ``processed/interned``: one environment per</span>
 <span class="sd">  sensitivity column, one reference per (assay, study), one publication. A record stores</span>
 <span class="sd">  ``{"$ref": ...}`` pointers for them, which is what keeps a 3.1M-record LMDB small and</span>
-<span class="sd">  lets a streaming reader memoize per-condition work across the 30.3M records.</span>
+<span class="sd">  lets a streaming reader memoize per-condition work across its records.</span>
 <span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">csv</span>
@@ -352,7 +373,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">model_validator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -383,6 +404,7 @@
     <span class="n">EnvironmentPerturbationType</span><span class="p">,</span>
     <span class="n">EnvironmentPhysicalPerturbation</span><span class="p">,</span>
     <span class="n">EnvironmentResponsePhenotype</span><span class="p">,</span>
+    <span class="n">EukaryoticStrainBackground</span><span class="p">,</span>
     <span class="n">Experiment</span><span class="p">,</span>
     <span class="n">ExperimentReference</span><span class="p">,</span>
     <span class="n">Genotype</span><span class="p">,</span>
@@ -395,7 +417,6 @@
     <span class="n">SampleUnit</span><span class="p">,</span>
     <span class="n">SmallMoleculePerturbation</span><span class="p">,</span>
     <span class="n">Solvent</span><span class="p">,</span>
-    <span class="n">StrainBackground</span><span class="p">,</span>
     <span class="n">StrainConstruction</span><span class="p">,</span>
     <span class="n">StrainEnvironmentResponseExperiment</span><span class="p">,</span>
     <span class="n">StrainEnvironmentResponseExperimentReference</span><span class="p">,</span>
@@ -417,6 +438,10 @@
     <span class="n">RetrievalMethod</span><span class="p">,</span>
     <span class="n">RetrievalRecord</span><span class="p">,</span>
     <span class="n">sha256_file</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.registry</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SGD_S288C_R64</span><span class="p">,</span>
+    <span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -505,7 +530,7 @@
     <span class="s2">"GenePerturbation.systematic_gene_name pattern, e.g. R0010W or YBR160W_AS) cannot be "</span>
     <span class="s2">"stored on the existing deletion leaves, which require that pattern; the row is held "</span>
     <span class="s2">"out under this rule, with its token and its scored cells counted, until a yeast "</span>
-    <span class="s2">"released-gene-name leaf (a GenePerturbation child carrying the released identifier "</span>
+    <span class="s2">"released-identifier leaf (a GenePerturbation child carrying the released identifier "</span>
     <span class="s2">"verbatim with systematic_gene_name as a typed gap) exists. Every ORF-shaped token is "</span>
     <span class="s2">"stored as released, with no genome lookup"</span>
 <span class="p">)</span>
@@ -530,6 +555,56 @@
     <span class="s2">"medium change cannot be expressed with a sourced value. Storing it as YPD plus "</span>
     <span class="s2">"added glucose would state the opposite of starvation"</span>
 <span class="p">)</span>
+
+<span class="n">UNIDENTIFIED_COMPOUND_RULE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"compound_has_no_released_name_or_structure_not_representable"</span>
+<span class="p">)</span>
+
+<span class="n">UNIDENTIFIED_COMPOUND_POLICY</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"a CMB id with no Table S1 common name, no Table S1 SMILES and no curated "</span>
+    <span class="s2">"compound-identity row is a proprietary Novartis compound known only by its registry "</span>
+    <span class="s2">"number: what went into the flask cannot be stated, so the experiment cannot be "</span>
+    <span class="s2">"represented (database constitution principle 2, owner ruling 2026-10-15). Its "</span>
+    <span class="s2">"sensitivity columns are HELD OUT, never stored under the bare CMB label with an "</span>
+    <span class="s2">"inchikey gap; every held-out column is listed with its study, dose and scored "</span>
+    <span class="s2">"cells, and the compound is admitted the day its identity is released. A CMB id "</span>
+    <span class="s2">"with a released name or a released SMILES is identified and stays stored, even "</span>
+    <span class="s2">"when no InChIKey can be derived (CMB409 Boromycin)"</span>
+<span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ReleasedIdentity</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A publicly released identity for a compound the source left unidentified.</span>
+
+<span class="sd">    One entry of an admission table (``RELEASED_IDENTITIES``): the name, SMILES and/or</span>
+<span class="sd">    InChIKey a public release gives for a registry or vendor label, with the</span>
+<span class="sd">    ``SourcedValue`` (citation key, verbatim quote, sha256 of the mirrored artifact) that</span>
+<span class="sd">    releases it. At least one of the three identity fields is required. An identity</span>
+<span class="sd">    inferred from profile similarity is a hypothesis, never an entry.</span>
+<span class="sd">    """</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">smiles</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">inchikey</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">source</span><span class="p">:</span> <span class="n">SourcedValue</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_requires_an_identity</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ReleasedIdentity"</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">smiles</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">inchikey</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"a ReleasedIdentity needs a name, a SMILES or an InChIKey"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
+<span class="c1">#: The ADMISSION TABLE, keyed by CMB id: EMPTY today. A CMB id is stored iff it has a</span>
+<span class="c1">#: curated compound-identity row, a Table S1 name or SMILES, or an entry here. The only</span>
+<span class="c1">#: thing that fills it is a public CMB-to-structure mapping released by Novartis, mirrored</span>
+<span class="c1">#: and sha256-pinned like any other artifact; an identity inferred by comparing HIP-HOP</span>
+<span class="c1">#: profiles is a hypothesis and never goes here. A filled entry changes the stored records,</span>
+<span class="c1">#: so it rebuilds the store. The ledger's ``unidentified_compounds_held_out`` (every CMB id</span>
+<span class="c1">#: with its columns and doses) is the request list for that release.</span>
+<span class="n">RELEASED_IDENTITIES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">ReleasedIdentity</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
 <span class="c1">#: Highest dose the paper's 2% DMSO normalization covers (SOURCED_VALUES["dmso_ceiling_um"]).</span>
 <span class="n">DMSO_CEILING_UM</span> <span class="o">=</span> <span class="mf">200.0</span>
@@ -817,8 +892,16 @@
         <span class="s2">"In addition to 1641 proprietary compounds (named CMBxxx), we included 135 "</span>
         <span class="s2">"reference compounds with a previously reported molecular mechanism of action "</span>
         <span class="s2">"(Table S1)."</span><span class="p">,</span>
-        <span class="n">note</span><span class="o">=</span><span class="s2">"a CMB id with no released SMILES is stored under its released label with "</span>
-        <span class="s2">"the typed inchikey gap; the ledger's compound_identity_gaps counts them"</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"a CMB id with no released name, no released SMILES and no curated row is "</span>
+        <span class="s2">"held out under UNIDENTIFIED_COMPOUND_RULE; the ledger's "</span>
+        <span class="s2">"unidentified_compounds_held_out lists each with its columns and doses"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"proprietary_compound_identity"</span><span class="p">:</span> <span class="n">_sv</span><span class="p">(</span>
+        <span class="s2">"proprietary CMB structures are not released; access is by collaboration"</span><span class="p">,</span>
+        <span class="s2">"The Novartis Institutes of Biomedical Research encourage future academic "</span>
+        <span class="s2">"collaborations around individual compounds used in this study."</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"the paper releases no name or structure for the proprietary CMB ids, only "</span>
+        <span class="s2">"an offer of collaboration, so their identity is not in any mirrored artifact"</span><span class="p">,</span>
     <span class="p">),</span>
     <span class="s2">"cassette"</span><span class="p">:</span> <span class="n">SourcedValue</span><span class="p">(</span>
         <span class="n">value</span><span class="o">=</span><span class="s2">"kanMX4"</span><span class="p">,</span>
@@ -930,7 +1013,7 @@
 <span class="n">BACKGROUND_STRAIN</span> <span class="o">=</span> <span class="s2">"BY4743"</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">hoepfner_background</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">StrainBackground</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">hoepfner_background</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">EukaryoticStrainBackground</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The BY4743 background both pools are recorded on, every element gapped.</span>
 
 <span class="sd">    The paper names the collections (YSC1055 / YSC1056, OpenBiosystems, line 64) but</span>
@@ -948,7 +1031,9 @@
         <span class="p">)</span>
         <span class="k">for</span> <span class="n">allele_name</span><span class="p">,</span> <span class="n">zygosity</span> <span class="ow">in</span> <span class="n">genotype</span><span class="o">.</span><span class="n">alleles</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
     <span class="p">]</span>
-    <span class="k">return</span> <span class="n">StrainBackground</span><span class="p">(</span>
+    <span class="k">return</span> <span class="n">EukaryoticStrainBackground</span><span class="p">(</span>
+        <span class="n">reference_strain</span><span class="o">=</span><span class="s2">"S288C"</span><span class="p">,</span>
+        <span class="n">assembly_set</span><span class="o">=</span><span class="n">SGD_S288C_R64</span><span class="p">,</span>
         <span class="n">name</span><span class="o">=</span><span class="n">BACKGROUND_STRAIN</span><span class="p">,</span>
         <span class="n">parents</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">genotype</span><span class="o">.</span><span class="n">parents</span><span class="p">),</span>
         <span class="n">construction</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -1002,6 +1087,8 @@
         <span class="n">strain</span><span class="o">=</span><span class="n">BACKGROUND_STRAIN</span><span class="p">,</span>
         <span class="n">ploidy</span><span class="o">=</span><span class="s2">"diploid"</span><span class="p">,</span>
         <span class="n">background</span><span class="o">=</span><span class="n">hoepfner_background</span><span class="p">(),</span>
+        <span class="n">assembly_set</span><span class="o">=</span><span class="n">SGD_S288C_R64</span><span class="p">,</span>
+        <span class="n">assembly_accession</span><span class="o">=</span><span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
     <span class="p">)</span>
 
 
@@ -1120,7 +1207,12 @@
 <span class="c1"># Typed build-side records (written beside the LMDB, not into it)</span>
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">CompoundIdentityGap</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""One stored compound with no InChIKey: kept under its released label, gapped."""</span>
+<span class="w">    </span><span class="sd">"""One stored, IDENTIFIED compound with no InChIKey: kept under its released name.</span>
+
+<span class="sd">    The compound has a released name or a released SMILES, so it is identified; only the</span>
+<span class="sd">    derived InChIKey is a typed gap (CMB409 Boromycin, whose SMILES RDKit cannot parse,</span>
+<span class="sd">    and a named compound with no released structure).</span>
+<span class="sd">    """</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
 
@@ -1133,6 +1225,30 @@
     <span class="p">)</span>
     <span class="n">resolution_status</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">unresolved_reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">n_columns_by_assay</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
+    <span class="n">n_records_by_assay</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">HeldOutColumn</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One sensitivity column of an unidentified compound, held out with its dose."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">assay</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">header</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"the deposited column header, verbatim"</span><span class="p">)</span>
+    <span class="n">study</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">concentration_um</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">n_scored_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"scored cells of this column, held out"</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">UnidentifiedCompound</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One CMB id held out under ``UNIDENTIFIED_COMPOUND_RULE`` (no name, no structure)."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">cmb_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">source_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"the released label, CMB&lt;id&gt;"</span><span class="p">)</span>
+    <span class="n">columns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">HeldOutColumn</span><span class="p">]</span>
     <span class="n">n_columns_by_assay</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
     <span class="n">n_records_by_assay</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
 
@@ -1176,6 +1292,9 @@
     <span class="n">n_stored</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">n_not_orf_shaped</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">n_excluded_condition</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_unidentified_compound</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"scored cells of columns held out under UNIDENTIFIED_COMPOUND_RULE"</span>
+    <span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">DoseOutsideIc30</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
@@ -1195,8 +1314,8 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">DroppedRecordReport</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""The build's ledger: what was stored, what is held out, and under which rule.</span>
 
-<span class="sd">    Every scored sensitivity cell is accounted for per arm:</span>
-<span class="sd">    ``n_source_cells = n_stored + n_not_orf_shaped + n_excluded_condition``.</span>
+<span class="sd">    Every scored sensitivity cell is accounted for per arm: ``n_source_cells =</span>
+<span class="sd">    n_stored + n_not_orf_shaped + n_excluded_condition + n_unidentified_compound``.</span>
 <span class="sd">    """</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
@@ -1205,9 +1324,16 @@
     <span class="n">not_orf_shaped_rule</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">not_orf_shaped_policy</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">exclusion_rule</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">unidentified_compound_rule</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">unidentified_compound_policy</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">unidentified_compound_sources</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SourcedValue</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the paper's own statements that the CMB compounds are proprietary "</span>
+        <span class="s2">"and unreleased, each a verbatim quote on the sha256-pinned paper.md"</span>
+    <span class="p">)</span>
     <span class="n">n_kept</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">n_dropped</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"cells held out under NOT_ORF_SHAPED_RULE plus EXCLUSION_RULE"</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"cells held out under NOT_ORF_SHAPED_RULE, EXCLUSION_RULE and "</span>
+        <span class="s2">"UNIDENTIFIED_COMPOUND_RULE"</span>
     <span class="p">)</span>
     <span class="n">kept_by_assay</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
     <span class="n">dropped_by_assay</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
@@ -1216,10 +1342,14 @@
         <span class="n">description</span><span class="o">=</span><span class="s2">"per assay, rows whose released token fails the ORF pattern"</span>
     <span class="p">)</span>
     <span class="n">excluded_conditions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ExcludedCondition</span><span class="p">]</span>
+    <span class="n">unidentified_compounds_held_out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">UnidentifiedCompound</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"CMB ids with no released name, no released SMILES and no curated "</span>
+        <span class="s2">"row, held out under UNIDENTIFIED_COMPOUND_RULE with every column and dose"</span>
+    <span class="p">)</span>
     <span class="n">compound_identity_gaps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CompoundIdentityGap</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"stored compounds with no InChIKey (proprietary CMB ids with no "</span>
-        <span class="s2">"released SMILES, and CMB409 Boromycin whose SMILES RDKit cannot parse), each "</span>
-        <span class="s2">"stored under its released label with the typed inchikey gap"</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"STORED identified compounds with no InChIKey (a released name or "</span>
+        <span class="s2">"SMILES but no derivable key, e.g. CMB409 Boromycin whose SMILES RDKit cannot "</span>
+        <span class="s2">"parse), each stored under its released name with the typed inchikey gap"</span>
     <span class="p">)</span>
     <span class="n">n_cmb_ids_stored</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"distinct CMB ids over both arms' columns"</span>
@@ -1429,6 +1559,25 @@
     <span class="k">return</span> <span class="n">meta</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_compound_is_identified</span><span class="p">(</span><span class="n">cmb</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Whether a CMB id names identified material (``UNIDENTIFIED_COMPOUND_RULE``).</span>
+
+<span class="sd">    Identified: Table S1 releases a common name or a SMILES for it, the admission table</span>
+<span class="sd">    ``RELEASED_IDENTITIES`` carries an entry for it, or the curated compound-identity</span>
+<span class="sd">    table carries a row for its label. A CMB id with none of these</span>
+<span class="sd">    is a proprietary registry number whose flask content cannot be stated. A released</span>
+<span class="sd">    SMILES identifies the compound even when RDKit cannot parse it (CMB409 Boromycin):</span>
+<span class="sd">    the structure is released, only the derived InChIKey is missing.</span>
+<span class="sd">    """</span>
+    <span class="n">entry</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cmb</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"common_name"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"smiles"</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">cmb</span><span class="p">)</span> <span class="ow">in</span> <span class="n">RELEASED_IDENTITIES</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="n">resolve_compound_identity</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"CMB</span><span class="si">{</span><span class="n">cmb</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">curated</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_load_ic30</span><span class="p">(</span><span class="n">table_s1_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""CMB id -&gt; Table S1 ``IC30 (uM)`` for the reference and novel-MoA compounds."""</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
@@ -1551,17 +1700,19 @@
 <span class="w">    </span><span class="sd">"""Every deposited sensitivity column of one arm, by what the build does with it.</span>
 
 <span class="sd">    ``sensitivity`` is every sensitivity column of the arm (z-score companions are not);</span>
-<span class="sd">    ``excluded`` the columns of an ``EXCLUDED_CONDITIONS`` compound; ``positive_control``</span>
-<span class="sd">    the Benomyl (CMB991) columns; ``cmbs`` every CMB id seen. Stored columns come from</span>
-<span class="sd">    ``_column_meta``.</span>
+<span class="sd">    ``excluded`` the columns of an ``EXCLUDED_CONDITIONS`` compound; ``unidentified``</span>
+<span class="sd">    the columns held out under ``UNIDENTIFIED_COMPOUND_RULE`` (index, CMB id, header,</span>
+<span class="sd">    study, uM dose); ``positive_control`` the Benomyl (CMB991) columns; ``cmbs`` every</span>
+<span class="sd">    CMB id seen. Stored columns come from ``_column_meta``.</span>
 <span class="sd">    """</span>
 
-    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"sensitivity"</span><span class="p">,</span> <span class="s2">"cmbs"</span><span class="p">,</span> <span class="s2">"excluded"</span><span class="p">,</span> <span class="s2">"positive_control"</span><span class="p">)</span>
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"sensitivity"</span><span class="p">,</span> <span class="s2">"cmbs"</span><span class="p">,</span> <span class="s2">"excluded"</span><span class="p">,</span> <span class="s2">"unidentified"</span><span class="p">,</span> <span class="s2">"positive_control"</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sensitivity</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cmbs</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">excluded</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unidentified</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">positive_control</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
 
@@ -1581,6 +1732,7 @@
         <span class="s2">"empty_rows"</span><span class="p">,</span>
         <span class="s2">"source_cells"</span><span class="p">,</span>
         <span class="s2">"excluded"</span><span class="p">,</span>
+        <span class="s2">"unidentified"</span><span class="p">,</span>
         <span class="s2">"construction"</span><span class="p">,</span>
     <span class="p">)</span>
 
@@ -1594,6 +1746,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">empty_rows</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>  <span class="c1"># assay -&gt; rows scored nowhere stored</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">source_cells</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>  <span class="c1"># assay -&gt; scored sensitivity cells</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">excluded</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>  <span class="c1"># (assay, CMB) -&gt; cells</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unidentified</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>  <span class="c1"># (assay, col) -&gt; cells</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">construction</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>  <span class="c1"># HIP rows by Table S5 match</span>
 
 
@@ -1688,7 +1841,47 @@
 <span class="sd">        NOT part of the chemical identity: the dose is the ``Concentration``, the assay is</span>
 <span class="sd">        the genotype leaf, and the study is the phenotype's ``screen_id``.</span>
 <span class="sd">        """</span>
+        <span class="n">released</span> <span class="o">=</span> <span class="n">RELEASED_IDENTITIES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">cmb</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">released</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">released</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">released</span><span class="o">.</span><span class="n">name</span>
         <span class="k">return</span> <span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cmb</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"common_name"</span><span class="p">)</span> <span class="ow">or</span> <span class="sa">f</span><span class="s2">"CMB</span><span class="si">{</span><span class="n">cmb</span><span class="si">}</span><span class="s2">"</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compound</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">cmb</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Compound</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The column's compound: Table S1 first, then an admission-table entry.</span>
+
+<span class="sd">        ``resolved_compound`` of the clean name with the released SMILES (a curated row</span>
+<span class="sd">        wins, else an RDKit-derived key). A ``RELEASED_IDENTITIES`` entry supplies the</span>
+<span class="sd">        name and SMILES Table S1 lacks, and its released InChIKey fills a key the</span>
+<span class="sd">        resolver could not, retiring that one gap.</span>
+<span class="sd">        """</span>
+        <span class="n">released</span> <span class="o">=</span> <span class="n">RELEASED_IDENTITIES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">cmb</span><span class="p">))</span>
+        <span class="n">smiles</span> <span class="o">=</span> <span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cmb</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"smiles"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">smiles</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">released</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">smiles</span> <span class="o">=</span> <span class="n">released</span><span class="o">.</span><span class="n">smiles</span>
+        <span class="n">compound</span> <span class="o">=</span> <span class="n">resolved_compound</span><span class="p">(</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">_compound_name</span><span class="p">(</span><span class="n">cmb</span><span class="p">,</span> <span class="n">meta</span><span class="p">),</span>
+            <span class="n">smiles</span><span class="o">=</span><span class="n">smiles</span><span class="p">,</span>
+            <span class="n">known_proprietary</span><span class="o">=</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cmb</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"common_name"</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="n">released</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">derive_from_smiles</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">released</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="n">released</span><span class="o">.</span><span class="n">inchikey</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="n">compound</span><span class="o">.</span><span class="n">inchikey</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="n">compound</span> <span class="o">=</span> <span class="n">compound</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span>
+                <span class="n">update</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">"inchikey"</span><span class="p">:</span> <span class="n">released</span><span class="o">.</span><span class="n">inchikey</span><span class="p">,</span>
+                    <span class="s2">"provenance_gaps"</span><span class="p">:</span> <span class="p">[</span>
+                        <span class="n">gap</span>
+                        <span class="k">for</span> <span class="n">gap</span> <span class="ow">in</span> <span class="n">compound</span><span class="o">.</span><span class="n">provenance_gaps</span>
+                        <span class="k">if</span> <span class="n">gap</span><span class="o">.</span><span class="n">field</span> <span class="o">!=</span> <span class="s2">"inchikey"</span>
+                    <span class="p">],</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">compound</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_vehicle</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Compound</span><span class="p">:</span>
@@ -1923,12 +2116,13 @@
 <span class="w">        </span><span class="sd">"""Parse the arm's sensitivity columns into stored record templates.</span>
 
 <span class="sd">        Every sensitivity column is stored except an ``EXCLUDED_CONDITIONS`` compound's</span>
-<span class="sd">        (``_column_census`` counts those). The compound is ``resolved_compound`` of its</span>
-<span class="sd">        released label with the released Table S1 SMILES when there is one: a curated row</span>
-<span class="sd">        or an RDKit-parseable SMILES gives it an InChIKey, and otherwise (a proprietary</span>
-<span class="sd">        CMB id with no released structure, or CMB409 Boromycin whose SMILES RDKit cannot</span>
-<span class="sd">        parse) it is stored under the released label with the typed ``inchikey`` gap the</span>
-<span class="sd">        resolver attaches, its released SMILES carried verbatim when there is one.</span>
+<span class="sd">        and an unidentified compound's (``_column_census`` counts both). The compound is</span>
+<span class="sd">        ``resolved_compound`` of its released label with the released Table S1 SMILES</span>
+<span class="sd">        when there is one: a curated row or an RDKit-parseable SMILES gives it an</span>
+<span class="sd">        InChIKey, and otherwise (an identified compound with no derivable key, CMB409</span>
+<span class="sd">        Boromycin whose SMILES RDKit cannot parse) it is stored under its released name</span>
+<span class="sd">        with the typed ``inchikey`` gap the resolver attaches, its released SMILES</span>
+<span class="sd">        carried verbatim when there is one.</span>
 <span class="sd">        """</span>
         <span class="n">kept</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">_ColumnMeta</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">raw</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">header</span><span class="p">):</span>
@@ -1941,12 +2135,9 @@
             <span class="n">cmb</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"cmb"</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">cmb</span> <span class="ow">in</span> <span class="n">EXCLUDED_CONDITIONS</span><span class="p">:</span>
                 <span class="k">continue</span>  <span class="c1"># EXCLUSION_RULE, counted by _column_census</span>
-            <span class="n">compound</span> <span class="o">=</span> <span class="n">resolved_compound</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_compound_name</span><span class="p">(</span><span class="n">cmb</span><span class="p">,</span> <span class="n">meta</span><span class="p">),</span>
-                <span class="n">smiles</span><span class="o">=</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cmb</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"smiles"</span><span class="p">),</span>
-                <span class="n">known_proprietary</span><span class="o">=</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cmb</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"common_name"</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">,</span>
-                <span class="n">derive_from_smiles</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">_compound_is_identified</span><span class="p">(</span><span class="n">cmb</span><span class="p">,</span> <span class="n">meta</span><span class="p">):</span>
+                <span class="k">continue</span>  <span class="c1"># UNIDENTIFIED_COMPOUND_RULE, counted by _column_census</span>
+            <span class="n">compound</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compound</span><span class="p">(</span><span class="n">cmb</span><span class="p">,</span> <span class="n">meta</span><span class="p">)</span>
             <span class="n">conc</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"conc"</span><span class="p">))</span>
             <span class="n">study</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"study"</span><span class="p">)</span>
             <span class="n">environment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_environment</span><span class="p">(</span><span class="n">assay</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_treatment</span><span class="p">(</span><span class="n">cmb</span><span class="p">,</span> <span class="n">compound</span><span class="p">,</span> <span class="n">conc</span><span class="p">))</span>
@@ -1996,10 +2187,13 @@
 
 <span class="sd">        An ``EXCLUDED_CONDITIONS`` column must carry its expected Table S1 name, so a</span>
 <span class="sd">        renumbered or renamed compound fails the build instead of being excluded blind.</span>
+<span class="sd">        A column of a compound ``_compound_is_identified`` rejects is held out under</span>
+<span class="sd">        ``UNIDENTIFIED_COMPOUND_RULE`` with its header, study and dose.</span>
 <span class="sd">        """</span>
         <span class="n">census</span> <span class="o">=</span> <span class="n">_ColumnCensus</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">raw</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">header</span><span class="p">):</span>
-            <span class="n">match</span> <span class="o">=</span> <span class="n">_COL_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">'"'</span><span class="p">))</span>
+            <span class="n">column</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">'"'</span><span class="p">)</span>
+            <span class="n">match</span> <span class="o">=</span> <span class="n">_COL_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"z"</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">continue</span>
             <span class="k">if</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"assay"</span><span class="p">)</span> <span class="o">!=</span> <span class="n">assay</span><span class="p">:</span>
@@ -2017,6 +2211,16 @@
                         <span class="sa">f</span><span class="s2">"S1 names it </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">"</span>
                     <span class="p">)</span>
                 <span class="n">census</span><span class="o">.</span><span class="n">excluded</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">index</span><span class="p">,</span> <span class="n">cmb</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="ow">not</span> <span class="n">_compound_is_identified</span><span class="p">(</span><span class="n">cmb</span><span class="p">,</span> <span class="n">meta</span><span class="p">):</span>
+                <span class="n">census</span><span class="o">.</span><span class="n">unidentified</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">(</span>
+                        <span class="n">index</span><span class="p">,</span>
+                        <span class="n">cmb</span><span class="p">,</span>
+                        <span class="n">column</span><span class="p">,</span>
+                        <span class="k">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"study"</span><span class="p">),</span>
+                        <span class="nb">float</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"conc"</span><span class="p">)),</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
         <span class="k">return</span> <span class="n">census</span>
 
     <span class="c1"># ---- build ---------------------------------------------------------------- #</span>
@@ -2043,8 +2247,9 @@
 <span class="sd">        rename, no detection threshold. A row scored in no stored column carries no</span>
 <span class="sd">        record and is counted as not-a-value; a row whose token fails the</span>
 <span class="sd">        ``GenePerturbation`` ORF pattern is held out under ``NOT_ORF_SHAPED_RULE`` with</span>
-<span class="sd">        its cells counted. Every scored sensitivity cell and every excluded-condition</span>
-<span class="sd">        cell is counted in the SAME pass, so the ledger's accounting is measured. The</span>
+<span class="sd">        its cells counted. Every scored sensitivity cell, every excluded-condition cell</span>
+<span class="sd">        and every unidentified-compound cell is counted in the SAME pass, so the ledger's</span>
+<span class="sd">        accounting is measured. The</span>
 <span class="sd">        first record of each column is validated against the experiment schema, which is</span>
 <span class="sd">        what makes the per-column template safe. ``strains`` (Table S5, keyed by</span>
 <span class="sd">        upper-cased ORF) gives a HIP strain its construction record and its flag.</span>
@@ -2068,6 +2273,9 @@
                 <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">cmb</span> <span class="ow">in</span> <span class="n">census</span><span class="o">.</span><span class="n">excluded</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">filled</span><span class="p">(</span><span class="n">parts</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
                         <span class="n">counts</span><span class="o">.</span><span class="n">excluded</span><span class="p">[(</span><span class="n">assay</span><span class="p">,</span> <span class="n">cmb</span><span class="p">)]</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="ow">in</span> <span class="n">census</span><span class="o">.</span><span class="n">unidentified</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">filled</span><span class="p">(</span><span class="n">parts</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+                        <span class="n">counts</span><span class="o">.</span><span class="n">unidentified</span><span class="p">[(</span><span class="n">assay</span><span class="p">,</span> <span class="n">index</span><span class="p">)]</span> <span class="o">+=</span> <span class="mi">1</span>
                 <span class="n">n_scored</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">columns</span> <span class="k">if</span> <span class="n">filled</span><span class="p">(</span><span class="n">parts</span><span class="p">,</span> <span class="n">col</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
                 <span class="k">if</span> <span class="n">n_scored</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="n">counts</span><span class="o">.</span><span class="n">empty_rows</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
@@ -2182,11 +2390,13 @@
                 <span class="n">censuses</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_column_census</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">assay</span><span class="p">,</span> <span class="n">meta</span><span class="p">)</span>
                 <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
                     <span class="s2">"Hoepfner2014 </span><span class="si">%s</span><span class="s2">: </span><span class="si">%d</span><span class="s2"> stored sensitivity experiments (</span><span class="si">%d</span><span class="s2"> with no "</span>
-                    <span class="s2">"InChIKey, stored with the typed gap), </span><span class="si">%d</span><span class="s2"> excluded by rule"</span><span class="p">,</span>
+                    <span class="s2">"InChIKey, stored with the typed gap), </span><span class="si">%d</span><span class="s2"> excluded by rule, </span><span class="si">%d</span><span class="s2"> held "</span>
+                    <span class="s2">"out as unidentified compounds"</span><span class="p">,</span>
                     <span class="n">assay</span><span class="p">,</span>
                     <span class="nb">len</span><span class="p">(</span><span class="n">kept</span><span class="p">),</span>
                     <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">kept</span> <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">inchikey</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">),</span>
                     <span class="nb">len</span><span class="p">(</span><span class="n">censuses</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span><span class="o">.</span><span class="n">excluded</span><span class="p">),</span>
+                    <span class="nb">len</span><span class="p">(</span><span class="n">censuses</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span><span class="o">.</span><span class="n">unidentified</span><span class="p">),</span>
                 <span class="p">)</span>
                 <span class="k">for</span> <span class="n">study</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">col</span><span class="o">.</span><span class="n">study</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">kept</span><span class="p">}):</span>
                     <span class="n">reference_refs</span><span class="p">[(</span><span class="n">assay</span><span class="p">,</span> <span class="n">study</span><span class="p">)]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intern_ref</span><span class="p">(</span>
@@ -2285,6 +2495,42 @@
             <span class="p">)</span>
             <span class="k">for</span> <span class="n">cmb</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">EXCLUDED_CONDITIONS</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
         <span class="p">]</span>
+        <span class="n">unidentified</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">UnidentifiedCompound</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">cmb</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="p">{</span><span class="n">c</span> <span class="k">for</span> <span class="n">census</span> <span class="ow">in</span> <span class="n">censuses</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="ow">in</span> <span class="n">census</span><span class="o">.</span><span class="n">unidentified</span><span class="p">},</span>
+            <span class="n">key</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="n">held_columns</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">HeldOutColumn</span><span class="p">(</span>
+                    <span class="n">assay</span><span class="o">=</span><span class="n">assay</span><span class="p">,</span>
+                    <span class="n">header</span><span class="o">=</span><span class="n">header</span><span class="p">,</span>
+                    <span class="n">study</span><span class="o">=</span><span class="n">study</span><span class="p">,</span>
+                    <span class="n">concentration_um</span><span class="o">=</span><span class="n">conc</span><span class="p">,</span>
+                    <span class="n">n_scored_cells</span><span class="o">=</span><span class="n">counts</span><span class="o">.</span><span class="n">unidentified</span><span class="p">[(</span><span class="n">assay</span><span class="p">,</span> <span class="n">index</span><span class="p">)],</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">assay</span><span class="p">,</span> <span class="n">census</span> <span class="ow">in</span> <span class="n">censuses</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">header</span><span class="p">,</span> <span class="n">study</span><span class="p">,</span> <span class="n">conc</span> <span class="ow">in</span> <span class="n">census</span><span class="o">.</span><span class="n">unidentified</span>
+                <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="n">cmb</span>
+            <span class="p">]</span>
+            <span class="n">unidentified</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">UnidentifiedCompound</span><span class="p">(</span>
+                    <span class="n">cmb_id</span><span class="o">=</span><span class="n">cmb</span><span class="p">,</span>
+                    <span class="n">source_name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"CMB</span><span class="si">{</span><span class="n">cmb</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                    <span class="n">columns</span><span class="o">=</span><span class="n">held_columns</span><span class="p">,</span>
+                    <span class="n">n_columns_by_assay</span><span class="o">=</span><span class="p">{</span>
+                        <span class="n">assay</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">held_columns</span> <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">assay</span> <span class="o">==</span> <span class="n">assay</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">assay</span> <span class="ow">in</span> <span class="n">censuses</span>
+                    <span class="p">},</span>
+                    <span class="n">n_records_by_assay</span><span class="o">=</span><span class="p">{</span>
+                        <span class="n">assay</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span>
+                            <span class="n">col</span><span class="o">.</span><span class="n">n_scored_cells</span>
+                            <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">held_columns</span>
+                            <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">assay</span> <span class="o">==</span> <span class="n">assay</span>
+                        <span class="p">)</span>
+                        <span class="k">for</span> <span class="n">assay</span> <span class="ow">in</span> <span class="n">censuses</span>
+                    <span class="p">},</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
         <span class="n">accounting</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">CellAccounting</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">held_out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">assay</span><span class="p">,</span> <span class="n">census</span> <span class="ow">in</span> <span class="n">censuses</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -2292,6 +2538,9 @@
                 <span class="n">row</span><span class="o">.</span><span class="n">n_records</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">counts</span><span class="o">.</span><span class="n">not_orf_shaped</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">assay</span><span class="p">,</span> <span class="p">[])</span>
             <span class="p">)</span>
             <span class="n">n_excluded</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">n</span> <span class="k">for</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">_</span><span class="p">),</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">counts</span><span class="o">.</span><span class="n">excluded</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">a</span> <span class="o">==</span> <span class="n">assay</span><span class="p">)</span>
+            <span class="n">n_unidentified</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+                <span class="n">n</span> <span class="k">for</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">_</span><span class="p">),</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">counts</span><span class="o">.</span><span class="n">unidentified</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">a</span> <span class="o">==</span> <span class="n">assay</span>
+            <span class="p">)</span>
             <span class="n">accounting</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span> <span class="o">=</span> <span class="n">CellAccounting</span><span class="p">(</span>
                 <span class="n">n_sensitivity_columns</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">census</span><span class="o">.</span><span class="n">sensitivity</span><span class="p">),</span>
                 <span class="n">n_rows</span><span class="o">=</span><span class="n">counts</span><span class="o">.</span><span class="n">rows</span><span class="p">[</span><span class="n">assay</span><span class="p">],</span>
@@ -2300,17 +2549,18 @@
                 <span class="n">n_stored</span><span class="o">=</span><span class="n">counts</span><span class="o">.</span><span class="n">kept</span><span class="p">[</span><span class="n">assay</span><span class="p">],</span>
                 <span class="n">n_not_orf_shaped</span><span class="o">=</span><span class="n">n_not_orf</span><span class="p">,</span>
                 <span class="n">n_excluded_condition</span><span class="o">=</span><span class="n">n_excluded</span><span class="p">,</span>
+                <span class="n">n_unidentified_compound</span><span class="o">=</span><span class="n">n_unidentified</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="k">if</span> <span class="p">(</span>
                 <span class="n">counts</span><span class="o">.</span><span class="n">source_cells</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span>
-                <span class="o">!=</span> <span class="n">counts</span><span class="o">.</span><span class="n">kept</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span> <span class="o">+</span> <span class="n">n_not_orf</span> <span class="o">+</span> <span class="n">n_excluded</span>
+                <span class="o">!=</span> <span class="n">counts</span><span class="o">.</span><span class="n">kept</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span> <span class="o">+</span> <span class="n">n_not_orf</span> <span class="o">+</span> <span class="n">n_excluded</span> <span class="o">+</span> <span class="n">n_unidentified</span>
             <span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"Hoepfner2014 </span><span class="si">{</span><span class="n">assay</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">counts</span><span class="o">.</span><span class="n">source_cells</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span><span class="si">}</span><span class="s2"> scored cells != "</span>
                     <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">counts</span><span class="o">.</span><span class="n">kept</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span><span class="si">}</span><span class="s2"> stored + </span><span class="si">{</span><span class="n">n_not_orf</span><span class="si">}</span><span class="s2"> not ORF-shaped + "</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n_excluded</span><span class="si">}</span><span class="s2"> excluded"</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n_excluded</span><span class="si">}</span><span class="s2"> excluded + </span><span class="si">{</span><span class="n">n_unidentified</span><span class="si">}</span><span class="s2"> unidentified compound"</span>
                 <span class="p">)</span>
-            <span class="n">held_out</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span> <span class="o">=</span> <span class="n">n_not_orf</span> <span class="o">+</span> <span class="n">n_excluded</span>
+            <span class="n">held_out</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span> <span class="o">=</span> <span class="n">n_not_orf</span> <span class="o">+</span> <span class="n">n_excluded</span> <span class="o">+</span> <span class="n">n_unidentified</span>
         <span class="n">low</span><span class="p">,</span> <span class="n">high</span> <span class="o">=</span> <span class="n">IC30_RATIO_RANGE</span>
         <span class="n">outside</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DoseOutsideIc30</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">with_ic30</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -2339,6 +2589,12 @@
             <span class="n">not_orf_shaped_rule</span><span class="o">=</span><span class="n">NOT_ORF_SHAPED_RULE</span><span class="p">,</span>
             <span class="n">not_orf_shaped_policy</span><span class="o">=</span><span class="n">NOT_ORF_SHAPED_POLICY</span><span class="p">,</span>
             <span class="n">exclusion_rule</span><span class="o">=</span><span class="n">EXCLUSION_RULE</span><span class="p">,</span>
+            <span class="n">unidentified_compound_rule</span><span class="o">=</span><span class="n">UNIDENTIFIED_COMPOUND_RULE</span><span class="p">,</span>
+            <span class="n">unidentified_compound_policy</span><span class="o">=</span><span class="n">UNIDENTIFIED_COMPOUND_POLICY</span><span class="p">,</span>
+            <span class="n">unidentified_compound_sources</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">SOURCED_VALUES</span><span class="p">[</span><span class="s2">"proprietary_compounds"</span><span class="p">],</span>
+                <span class="n">SOURCED_VALUES</span><span class="p">[</span><span class="s2">"proprietary_compound_identity"</span><span class="p">],</span>
+            <span class="p">],</span>
             <span class="n">n_kept</span><span class="o">=</span><span class="nb">sum</span><span class="p">(</span><span class="n">counts</span><span class="o">.</span><span class="n">kept</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
             <span class="n">n_dropped</span><span class="o">=</span><span class="nb">sum</span><span class="p">(</span><span class="n">held_out</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
             <span class="n">kept_by_assay</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">counts</span><span class="o">.</span><span class="n">kept</span><span class="p">),</span>
@@ -2346,6 +2602,7 @@
             <span class="n">accounting</span><span class="o">=</span><span class="n">accounting</span><span class="p">,</span>
             <span class="n">not_orf_shaped</span><span class="o">=</span><span class="n">counts</span><span class="o">.</span><span class="n">not_orf_shaped</span><span class="p">,</span>
             <span class="n">excluded_conditions</span><span class="o">=</span><span class="n">excluded</span><span class="p">,</span>
+            <span class="n">unidentified_compounds_held_out</span><span class="o">=</span><span class="n">unidentified</span><span class="p">,</span>
             <span class="n">compound_identity_gaps</span><span class="o">=</span><span class="n">identity_gaps</span><span class="p">,</span>
             <span class="n">n_cmb_ids_stored</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span>
                 <span class="p">{</span><span class="n">col</span><span class="o">.</span><span class="n">cmb</span> <span class="k">for</span> <span class="n">cols</span> <span class="ow">in</span> <span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">}</span>

@@ -195,7 +195,7 @@
 
 <span class="sd">GENE IDENTITY (#1045) -- every listed token is one record under the token verbatim. A</span>
 <span class="sd">systematic name goes on ``KanMxDeletionPerturbation`` with both names the ORF; any other</span>
-<span class="sd">token goes on ``ReleasedGeneNamePerturbation`` (the released symbol, kind ``deletion``,</span>
+<span class="sd">token goes on ``ReleasedIdentifierPerturbation`` (the released symbol, kind ``deletion``,</span>
 <span class="sd">marker KanMX). No genome is consulted: nothing is renamed, adjudicated or dropped, and</span>
 <span class="sd">the join to R64 is a modeling-time act. The two tokens that are aliases of more than one</span>
 <span class="sd">current gene (PPA1, FEN1) are stored as the symbols the paper wrote; the earlier</span>
@@ -245,8 +245,8 @@
     <span class="n">MeasurementType</span><span class="p">,</span>
     <span class="n">Publication</span><span class="p">,</span>
     <span class="n">ReferenceGenome</span><span class="p">,</span>
-    <span class="n">ReleasedGeneKind</span><span class="p">,</span>
-    <span class="n">ReleasedGeneNamePerturbation</span><span class="p">,</span>
+    <span class="n">ReleasedIdentifierPerturbation</span><span class="p">,</span>
+    <span class="n">ReleasedKind</span><span class="p">,</span>
     <span class="n">ResponseCategory</span><span class="p">,</span>
     <span class="n">SampleUnit</span><span class="p">,</span>
     <span class="n">SmallMoleculePerturbation</span><span class="p">,</span>
@@ -261,6 +261,10 @@
     <span class="n">RetrievalMethod</span><span class="p">,</span>
     <span class="n">RetrievalRecord</span><span class="p">,</span>
     <span class="n">sha256_file</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.registry</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SGD_S288C_R64</span><span class="p">,</span>
+    <span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="n">SourcedValue</span>
@@ -452,7 +456,7 @@
 <span class="c1">#: Retention rule (#1045): every listed token is a record under the token verbatim.</span>
 <span class="n">RETENTION_RULE</span> <span class="o">=</span> <span class="p">(</span>
     <span class="s2">"one record per listed gene token verbatim: a systematic name on "</span>
-    <span class="s2">"KanMxDeletionPerturbation, any other token on ReleasedGeneNamePerturbation; no "</span>
+    <span class="s2">"KanMxDeletionPerturbation, any other token on ReleasedIdentifierPerturbation; no "</span>
     <span class="s2">"genome is consulted, nothing is renamed, adjudicated or dropped. Measured over "</span>
     <span class="s2">"this release: 525 listed tokens, 525 records"</span>
 <span class="p">)</span>
@@ -469,18 +473,19 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_released_deletion</span><span class="p">(</span>
     <span class="n">token</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KanMxDeletionPerturbation</span> <span class="o">|</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KanMxDeletionPerturbation</span> <span class="o">|</span> <span class="n">ReleasedIdentifierPerturbation</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The deletion under the token the table releases (#1045)."""</span>
     <span class="k">if</span> <span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">token</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">KanMxDeletionPerturbation</span><span class="p">(</span>
             <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">token</span><span class="p">,</span> <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">token</span>
         <span class="p">)</span>
-    <span class="k">return</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">(</span>
+    <span class="k">return</span> <span class="n">ReleasedIdentifierPerturbation</span><span class="p">(</span>
         <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">token</span><span class="p">,</span>
+        <span class="n">gene_namespace</span><span class="o">=</span><span class="s2">"scerevisiae_s288c_sgd_systematic"</span><span class="p">,</span>
         <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">token</span><span class="p">,</span>
-        <span class="n">released_gene_name</span><span class="o">=</span><span class="n">token</span><span class="p">,</span>
-        <span class="n">released_kind</span><span class="o">=</span><span class="n">ReleasedGeneKind</span><span class="o">.</span><span class="n">deletion</span><span class="p">,</span>
-        <span class="n">marker</span><span class="o">=</span><span class="s2">"KanMX"</span><span class="p">,</span>
+        <span class="n">identifier_kind</span><span class="o">=</span><span class="s2">"gene name, as Tables 1-6 list it"</span><span class="p">,</span>
+        <span class="n">released_kind</span><span class="o">=</span><span class="n">ReleasedKind</span><span class="o">.</span><span class="n">deletion</span><span class="p">,</span>
+        <span class="n">cassette</span><span class="o">=</span><span class="s2">"KanMX"</span><span class="p">,</span>
     <span class="p">)</span>
 
 
@@ -778,7 +783,10 @@
         <span class="k">return</span> <span class="n">EnvironmentResponseExperimentReference</span><span class="p">(</span>
             <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
             <span class="n">genome_reference</span><span class="o">=</span><span class="n">ReferenceGenome</span><span class="p">(</span>
-                <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="n">_BACKGROUND</span><span class="o">.</span><span class="n">value</span>
+                <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span>
+                <span class="n">strain</span><span class="o">=</span><span class="n">_BACKGROUND</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">assembly_set</span><span class="o">=</span><span class="n">SGD_S288C_R64</span><span class="p">,</span>
+                <span class="n">assembly_accession</span><span class="o">=</span><span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
             <span class="p">),</span>
             <span class="n">environment_reference</span><span class="o">=</span><span class="n">Environment</span><span class="p">(</span>
                 <span class="n">media</span><span class="o">=</span><span class="n">YPD_AGAR</span><span class="p">,</span>

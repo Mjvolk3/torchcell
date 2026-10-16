@@ -183,19 +183,26 @@
 <span class="sd">member and adding one changes a class in all 36 served dataset closures, so the rule is</span>
 <span class="sd">recorded here and in the dendron note instead of in ``Concentration.basis``.</span>
 
-<span class="sd">RECORDS (``preprocess/dropped_records.json`` is the accounting): every released row is a</span>
-<span class="sd">record. The 7,410 rows (51.2%) whose drug is a vendor catalog code -- 1181-0519, 4130-1276</span>
-<span class="sd">and 0KPI-0099 (ChemDiv), 9121982, 9125678, 7312221, CBF-666774, 6630449 and 9150499</span>
-<span class="sd">(ChemBridge), ST016598 (TimTec) -- are stored under the released label with a typed</span>
-<span class="sd">``inchikey`` gap on the ``Compound`` (``resolved_compound`` attaches</span>
-<span class="sd">``not_reported_by_primary`` to a label the pinned identity table marks PROPRIETARY: the</span>
-<span class="sd">primary released no structure, SMILES or CAS). They are listed under</span>
-<span class="sd">``compound_identity_gaps`` with their record counts (2026.10.12, #1045; the previous</span>
-<span class="sd">build dropped them). The tenth public compound, ``NSC-180973``, resolves through the</span>
-<span class="sd">pinned identity table's synonym for tamoxifen, the alias the paper's own Additional file</span>
-<span class="sd">8 releases. The two rules that can still leave a row without a record are a row with no</span>
-<span class="sd">``A`` or ``var(A)`` and a guide with no spacer in Additional file 4; both are 0 on the</span>
-<span class="sd">pinned files. An ``ORF`` cell that is not ORF-shaped is counted under</span>
+<span class="sd">RECORDS (``preprocess/dropped_records.json`` is the accounting): every released row of an</span>
+<span class="sd">identified compound is a record. AN UNIDENTIFIED COMPOUND IS HELD OUT (2026.10.15,</span>
+<span class="sd">database constitution principle 2; owner: "if you cannot tell me what goes into the flask</span>
+<span class="sd">so to speak, then we have no hope of modeling!"). The rows whose drug is a vendor catalog</span>
+<span class="sd">code -- 1181-0519, 4130-1276 and 0KPI-0099 (ChemDiv), 9121982, 9125678, 7312221,</span>
+<span class="sd">CBF-666774, 6630449 and 9150499 (ChemBridge), ST016598 (TimTec) -- are held out under</span>
+<span class="sd">``UNIDENTIFIED_COMPOUND_RULE``: the pinned identity table marks each PROPRIETARY, and</span>
+<span class="sd">Additional file 8 ("All chemical compounds used in this study are listed in Additional</span>
+<span class="sd">file 8.", the ``COMPOUND_LIST`` quote) gives only the code and the vendor, no structure,</span>
+<span class="sd">SMILES or CAS. Measured on the pinned Additional file 10 by the build (2026.10.15): 7,410</span>
+<span class="sd">of 14,463 rows held out over 10 codes, 7,053 stored. From 2026.10.12 to 2026.10.15 these</span>
+<span class="sd">rows were stored under the bare code with a typed ``inchikey`` gap (#1045); a gap is for a</span>
+<span class="sd">missing attribute of an identified compound, never its identity. The ledger lists each</span>
+<span class="sd">code with its doses and rows under ``unidentified_compounds_held_out``; the EMPTY</span>
+<span class="sd">admission table ``RELEASED_IDENTITIES`` admits a code the day a public structure for it</span>
+<span class="sd">is mirrored (a store rebuild). The tenth public compound, ``NSC-180973``, resolves</span>
+<span class="sd">through the pinned identity table's synonym for tamoxifen, the alias the paper's own</span>
+<span class="sd">Additional file 8 releases. The two other rules that can leave a row without a record are</span>
+<span class="sd">a row with no ``A`` or ``var(A)`` and a guide with no spacer in Additional file 4; both</span>
+<span class="sd">are 0 on the pinned files. An ``ORF`` cell that is not ORF-shaped is counted under</span>
 <span class="sd">``stored_on_released_gene_name_leaf`` (0 of 14,463 rows) as released (#1045).</span>
 
 <span class="sd">DUPLICATE-BY-POOL: 272 (guide, drug, concentration) triples appear twice, always the pool</span>
@@ -239,10 +246,15 @@
     <span class="n">verify_raw_files</span><span class="p">,</span>
     <span class="n">verify_sha256</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.compound_identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolved_compound</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.compound_identity</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CompoundResolutionStatus</span><span class="p">,</span>
+    <span class="n">resolve_compound_identity</span><span class="p">,</span>
+    <span class="n">resolved_compound</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">SC_URA</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">AssayType</span><span class="p">,</span>
+    <span class="n">Compound</span><span class="p">,</span>
     <span class="n">Concentration</span><span class="p">,</span>
     <span class="n">ConcentrationUnit</span><span class="p">,</span>
     <span class="n">CrisprConstruct</span><span class="p">,</span>
@@ -257,20 +269,25 @@
     <span class="n">MeasurementType</span><span class="p">,</span>
     <span class="n">Publication</span><span class="p">,</span>
     <span class="n">ReferenceGenome</span><span class="p">,</span>
-    <span class="n">ReleasedGeneKind</span><span class="p">,</span>
-    <span class="n">ReleasedGeneNamePerturbation</span><span class="p">,</span>
+    <span class="n">ReleasedIdentifierPerturbation</span><span class="p">,</span>
+    <span class="n">ReleasedKind</span><span class="p">,</span>
     <span class="n">SampleUnit</span><span class="p">,</span>
     <span class="n">SmallMoleculePerturbation</span><span class="p">,</span>
     <span class="n">Temperature</span><span class="p">,</span>
     <span class="n">UncertaintyType</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.scerevisiae.hoepfner2014</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReleasedIdentity</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.literature.manifest</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ROLE_SI_DATA</span><span class="p">,</span>
     <span class="n">ArtifactRecord</span><span class="p">,</span>
     <span class="n">Manifest</span><span class="p">,</span>
     <span class="n">RetrievalMethod</span><span class="p">,</span>
     <span class="n">RetrievalRecord</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.registry</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SGD_S288C_R64</span><span class="p">,</span>
+    <span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -327,6 +344,28 @@
     <span class="p">)</span>
 
 
+<span class="n">UNIDENTIFIED_COMPOUND_RULE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"compound_has_no_released_name_or_structure_not_representable"</span>
+<span class="p">)</span>
+
+<span class="n">UNIDENTIFIED_COMPOUND_POLICY</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"the Drug label is a ChemDiv / ChemBridge / TimTec catalog code the pinned compound "</span>
+    <span class="s2">"identity table marks PROPRIETARY: Additional file 8 releases only the code and its "</span>
+    <span class="s2">"vendor, no name, structure, SMILES or CAS, so what went into the flask cannot be "</span>
+    <span class="s2">"stated and the experiment cannot be represented (database constitution principle 2, "</span>
+    <span class="s2">"owner ruling 2026-10-15). Its rows are HELD OUT, never stored under the bare code "</span>
+    <span class="s2">"with an inchikey gap; each code is listed with its doses and rows, and is admitted "</span>
+    <span class="s2">"the day a public identity enters RELEASED_IDENTITIES"</span>
+<span class="p">)</span>
+
+<span class="c1">#: The ADMISSION TABLE, keyed by the released Drug label: EMPTY today. A drug the</span>
+<span class="c1">#: identity table marks PROPRIETARY is stored iff it has an entry here. Only a public</span>
+<span class="c1">#: code-to-structure release (the vendor's or a primary's), mirrored and sha256-pinned,</span>
+<span class="c1">#: fills it; an identity inferred from chemical-genetic profile similarity is a hypothesis</span>
+<span class="c1">#: and never goes here. A filled entry changes the stored records, so it rebuilds the</span>
+<span class="c1">#: store. The ledger's ``unidentified_compounds_held_out`` is the request list.</span>
+<span class="n">RELEASED_IDENTITIES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ReleasedIdentity</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
 <span class="n">_POOLED_QUOTE</span> <span class="o">=</span> <span class="p">(</span>
     <span class="s2">"Briefly, $7 0 0 ~ </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathrm { L }$ yeast cultures were grown $+ / -$ a drug "</span>
     <span class="s2">"listed in Additional file 8, and $+ / -$ ATc) in 48 well plates at $3 0 ~ ^ { </span><span class="se">\\</span><span class="s2">circ "</span>
@@ -382,6 +421,14 @@
     <span class="s2">"Recording 8 or 3 here would shrink the stored SE by sqrt(8) or sqrt(3) against a "</span>
     <span class="s2">"variance that is already the combined estimate's"</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="n">COMPOUND_LIST</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
+    <span class="s2">"Additional file 8"</span><span class="p">,</span>
+    <span class="s2">"All chemical compounds used in this study are listed in Additional file 8."</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"Additional file 8 (13059_2016_900_MOESM8_ESM.xlsx, sha256 a22ef00ace51...) "</span>
+    <span class="s2">"gives each compound as 'Name of compound (alias in parentheses)' with its 'Vendor'; "</span>
+    <span class="s2">"for the ten catalog codes the name IS the code (ChemDiv, Chembridge, TimTec) and no "</span>
+    <span class="s2">"structure column exists, so the paper releases no identity for them"</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="n">UPSTREAM_FILTER</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
     <span class="s2">"30 reads in the -ATc control"</span><span class="p">,</span>
     <span class="s2">"gRNAs with fewer than 30 reads following growth in the minus ATc control condition "</span>
@@ -411,6 +458,39 @@
     <span class="s2">"uM"</span><span class="p">:</span> <span class="n">ConcentrationUnit</span><span class="o">.</span><span class="n">micromolar</span><span class="p">,</span>
     <span class="s2">"nM"</span><span class="p">:</span> <span class="n">ConcentrationUnit</span><span class="o">.</span><span class="n">nanomolar</span><span class="p">,</span>
 <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">drug_is_identified</span><span class="p">(</span><span class="n">drug</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Whether a Drug label names identified material (``UNIDENTIFIED_COMPOUND_RULE``).</span>
+
+<span class="sd">    Identified unless the pinned identity table marks the label PROPRIETARY (a vendor</span>
+<span class="sd">    catalog code with no released structure) and ``RELEASED_IDENTITIES`` has no entry</span>
+<span class="sd">    for it. A public name the table has not resolved yet is identified.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">drug</span> <span class="ow">in</span> <span class="n">RELEASED_IDENTITIES</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="n">status</span> <span class="o">=</span> <span class="n">resolve_compound_identity</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">drug</span><span class="p">)</span><span class="o">.</span><span class="n">status</span>
+    <span class="k">return</span> <span class="n">status</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">CompoundResolutionStatus</span><span class="o">.</span><span class="n">PROPRIETARY</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">released_compound</span><span class="p">(</span><span class="n">drug</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Compound</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The drug's ``Compound``: the resolver, or an admission-table entry's identity."""</span>
+    <span class="n">released</span> <span class="o">=</span> <span class="n">RELEASED_IDENTITIES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">drug</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">released</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">resolved_compound</span><span class="p">(</span><span class="n">drug</span><span class="p">)</span>
+    <span class="n">compound</span> <span class="o">=</span> <span class="n">resolved_compound</span><span class="p">(</span>
+        <span class="n">released</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="n">drug</span><span class="p">,</span> <span class="n">smiles</span><span class="o">=</span><span class="n">released</span><span class="o">.</span><span class="n">smiles</span><span class="p">,</span> <span class="n">derive_from_smiles</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">released</span><span class="o">.</span><span class="n">inchikey</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">compound</span><span class="o">.</span><span class="n">inchikey</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">compound</span> <span class="o">=</span> <span class="n">compound</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span>
+            <span class="n">update</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">"inchikey"</span><span class="p">:</span> <span class="n">released</span><span class="o">.</span><span class="n">inchikey</span><span class="p">,</span>
+                <span class="s2">"provenance_gaps"</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="n">gap</span> <span class="k">for</span> <span class="n">gap</span> <span class="ow">in</span> <span class="n">compound</span><span class="o">.</span><span class="n">provenance_gaps</span> <span class="k">if</span> <span class="n">gap</span><span class="o">.</span><span class="n">field</span> <span class="o">!=</span> <span class="s2">"inchikey"</span>
+                <span class="p">],</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">compound</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">parse_concentration</span><span class="p">(</span><span class="n">drug</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">raw</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Concentration</span><span class="p">:</span>
@@ -558,11 +638,20 @@
     <span class="n">n_records</span><span class="p">:</span> <span class="nb">int</span>
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">HeldOutDrug</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One drug held out under ``UNIDENTIFIED_COMPOUND_RULE``, with its doses and rows."""</span>
+
+    <span class="n">drug</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">concentrations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">n_records</span><span class="p">:</span> <span class="nb">int</span>
+
+
 <span class="k">class</span><span class="w"> </span><span class="nc">DropLog</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Every retention rule applied to a build, in order, plus the gapped compounds.</span>
 
-<span class="sd">    ``compound_identity_gaps`` are not drops: those rows are stored, each compound</span>
-<span class="sd">    carrying its typed gap.</span>
+<span class="sd">    ``compound_identity_gaps`` are not drops: those rows are stored, each identified</span>
+<span class="sd">    compound carrying its typed gap. ``unidentified_compounds_held_out`` are the rows of</span>
+<span class="sd">    the ``UNIDENTIFIED_COMPOUND_RULE`` rule, per drug, with the quote that grounds it.</span>
 <span class="sd">    """</span>
 
     <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span>
@@ -571,6 +660,8 @@
     <span class="n">dropped_records</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DropRule</span><span class="p">]</span>
     <span class="n">compound_identity_gaps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">GappedCompound</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">unidentified_compounds_held_out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">HeldOutDrug</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">unidentified_compound_sources</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SourcedValue</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
 
 <div class="viewcode-block" id="CrispriChemgenSmith2016Dataset">
@@ -640,7 +731,7 @@
 <span class="sd">        The ``ORF`` cell (stripped) is the systematic name and the ``Gene`` cell the</span>
 <span class="sd">        perturbed name, the ORF again where it is blank. No genome is consulted.</span>
 <span class="sd">        ``placed`` is False for a cell that is not ORF-shaped, which goes on the</span>
-<span class="sd">        released-gene-name leaf (#1045; 0 of the 20 released targets).</span>
+<span class="sd">        released-identifier leaf (#1045; 0 of the 20 released targets).</span>
 <span class="sd">        """</span>
         <span class="n">orf</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">orf_cell</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="n">gene</span> <span class="o">=</span> <span class="s2">""</span> <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">gene_cell</span><span class="p">)</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">gene_cell</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
@@ -665,7 +756,7 @@
             <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">TEMPERATURE_C</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
             <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
                 <span class="n">SmallMoleculePerturbation</span><span class="p">(</span>
-                    <span class="n">compound</span><span class="o">=</span><span class="n">resolved_compound</span><span class="p">(</span><span class="n">drug</span><span class="p">),</span>
+                    <span class="n">compound</span><span class="o">=</span><span class="n">released_compound</span><span class="p">(</span><span class="n">drug</span><span class="p">),</span>
                     <span class="n">concentration</span><span class="o">=</span><span class="n">parse_concentration</span><span class="p">(</span><span class="n">drug</span><span class="p">,</span> <span class="n">conc_raw</span><span class="p">),</span>
                 <span class="p">)</span>
             <span class="p">],</span>
@@ -681,7 +772,10 @@
         <span class="k">return</span> <span class="n">EnvironmentResponseExperimentReference</span><span class="p">(</span>
             <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
             <span class="n">genome_reference</span><span class="o">=</span><span class="n">ReferenceGenome</span><span class="p">(</span>
-                <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="s2">"BY4741"</span>
+                <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span>
+                <span class="n">strain</span><span class="o">=</span><span class="s2">"BY4741"</span><span class="p">,</span>
+                <span class="n">assembly_set</span><span class="o">=</span><span class="n">SGD_S288C_R64</span><span class="p">,</span>
+                <span class="n">assembly_accession</span><span class="o">=</span><span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
             <span class="p">),</span>
             <span class="n">environment_reference</span><span class="o">=</span><span class="n">environment</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(),</span>
             <span class="n">phenotype_reference</span><span class="o">=</span><span class="n">EnvironmentResponsePhenotype</span><span class="p">(</span>
@@ -728,15 +822,23 @@
         <span class="n">env</span><span class="p">,</span> <span class="n">interned_env</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_open_write_lmdb</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">))</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">n_nan</span> <span class="o">=</span> <span class="n">n_no_spacer</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">held_out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">held_out_doses</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">released_targets</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="n">no_spacer_guides</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">,</span> <span class="n">interned_env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">itxn</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">(),</span> <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"smith2016"</span><span class="p">):</span>
+                <span class="n">drug</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"Drug"</span><span class="p">])</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">drug_is_identified</span><span class="p">(</span><span class="n">drug</span><span class="p">):</span>
+                    <span class="n">held_out</span><span class="p">[</span><span class="n">drug</span><span class="p">]</span> <span class="o">=</span> <span class="n">held_out</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">drug</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+                    <span class="n">held_out_doses</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">drug</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+                        <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"Concentration"</span><span class="p">])</span>
+                    <span class="p">)</span>
+                    <span class="k">continue</span>
                 <span class="n">effect</span><span class="p">,</span> <span class="n">variance</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">"A"</span><span class="p">],</span> <span class="n">row</span><span class="p">[</span><span class="s2">"var(A)"</span><span class="p">]</span>
                 <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">effect</span><span class="p">)</span> <span class="ow">or</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">variance</span><span class="p">):</span>
                     <span class="n">n_nan</span> <span class="o">+=</span> <span class="mi">1</span>
                     <span class="k">continue</span>
-                <span class="n">drug</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"Drug"</span><span class="p">])</span>
                 <span class="n">orf</span><span class="p">,</span> <span class="n">gene</span><span class="p">,</span> <span class="n">placed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_released_target</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"ORF"</span><span class="p">],</span> <span class="n">row</span><span class="p">[</span><span class="s2">"Gene"</span><span class="p">])</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">placed</span><span class="p">:</span>
                     <span class="n">released_targets</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">orf</span><span class="p">)</span>
@@ -756,7 +858,7 @@
                     <span class="n">n_guides</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                     <span class="n">library_pool</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"#Pool"</span><span class="p">]),</span>
                 <span class="p">)</span>
-                <span class="n">target</span><span class="p">:</span> <span class="n">CrisprInterferencePerturbation</span> <span class="o">|</span> <span class="n">ReleasedGeneNamePerturbation</span>
+                <span class="n">target</span><span class="p">:</span> <span class="n">CrisprInterferencePerturbation</span> <span class="o">|</span> <span class="n">ReleasedIdentifierPerturbation</span>
                 <span class="k">if</span> <span class="n">placed</span><span class="p">:</span>
                     <span class="n">target</span> <span class="o">=</span> <span class="n">CrisprInterferencePerturbation</span><span class="p">(</span>
                         <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
@@ -764,11 +866,12 @@
                         <span class="n">crispr</span><span class="o">=</span><span class="n">construct</span><span class="p">,</span>
                     <span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="n">target</span> <span class="o">=</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">(</span>
+                    <span class="n">target</span> <span class="o">=</span> <span class="n">ReleasedIdentifierPerturbation</span><span class="p">(</span>
                         <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+                        <span class="n">gene_namespace</span><span class="o">=</span><span class="s2">"scerevisiae_s288c_sgd_systematic"</span><span class="p">,</span>
                         <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">gene</span><span class="p">,</span>
-                        <span class="n">released_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
-                        <span class="n">released_kind</span><span class="o">=</span><span class="n">ReleasedGeneKind</span><span class="o">.</span><span class="n">crispr_interference</span><span class="p">,</span>
+                        <span class="n">identifier_kind</span><span class="o">=</span><span class="s2">"gene identifier of the guide table, as released"</span><span class="p">,</span>
+                        <span class="n">released_kind</span><span class="o">=</span><span class="n">ReleasedKind</span><span class="o">.</span><span class="n">crispr_interference</span><span class="p">,</span>
                         <span class="n">crispr</span><span class="o">=</span><span class="n">construct</span><span class="p">,</span>
                     <span class="p">)</span>
                 <span class="n">experiment</span> <span class="o">=</span> <span class="n">EnvironmentResponseExperiment</span><span class="p">(</span>
@@ -798,6 +901,13 @@
 
         <span class="n">rules</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">DropRule</span><span class="p">(</span>
+                <span class="n">rule</span><span class="o">=</span><span class="n">UNIDENTIFIED_COMPOUND_RULE</span><span class="p">,</span>
+                <span class="n">scope</span><span class="o">=</span><span class="s2">"compound"</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="n">UNIDENTIFIED_COMPOUND_POLICY</span><span class="p">,</span>
+                <span class="n">n_records</span><span class="o">=</span><span class="nb">sum</span><span class="p">(</span><span class="n">held_out</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
+                <span class="n">items</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">held_out</span><span class="p">),</span>
+            <span class="p">),</span>
+            <span class="n">DropRule</span><span class="p">(</span>
                 <span class="n">rule</span><span class="o">=</span><span class="s2">"row_has_no_A_or_var_A"</span><span class="p">,</span>
                 <span class="n">scope</span><span class="o">=</span><span class="s2">"row"</span><span class="p">,</span>
                 <span class="n">description</span><span class="o">=</span><span class="p">(</span>
@@ -812,7 +922,7 @@
                 <span class="n">scope</span><span class="o">=</span><span class="s2">"row"</span><span class="p">,</span>
                 <span class="n">description</span><span class="o">=</span><span class="p">(</span>
                     <span class="s2">"the ORF cell is not ORF-shaped, so the target is stored on "</span>
-                    <span class="s2">"ReleasedGeneNamePerturbation verbatim with its construct (#1045), "</span>
+                    <span class="s2">"ReleasedIdentifierPerturbation verbatim with its construct (#1045), "</span>
                     <span class="s2">"never dropped; listed here (0 today; all 20 released targets are "</span>
                     <span class="s2">"ORF-shaped)"</span>
                 <span class="p">),</span>
@@ -854,6 +964,15 @@
             <span class="n">dropped_records</span><span class="o">=</span><span class="n">source_records</span> <span class="o">-</span> <span class="n">idx</span><span class="p">,</span>
             <span class="n">rules</span><span class="o">=</span><span class="n">rules</span><span class="p">,</span>
             <span class="n">compound_identity_gaps</span><span class="o">=</span><span class="n">compound_identity_gaps</span><span class="p">,</span>
+            <span class="n">unidentified_compounds_held_out</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">HeldOutDrug</span><span class="p">(</span>
+                    <span class="n">drug</span><span class="o">=</span><span class="n">drug</span><span class="p">,</span>
+                    <span class="n">concentrations</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">held_out_doses</span><span class="p">[</span><span class="n">drug</span><span class="p">]),</span>
+                    <span class="n">n_records</span><span class="o">=</span><span class="n">count</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">drug</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">held_out</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+            <span class="p">],</span>
+            <span class="n">unidentified_compound_sources</span><span class="o">=</span><span class="p">[</span><span class="n">COMPOUND_LIST</span><span class="p">],</span>
         <span class="p">)</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"dropped_records.json"</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
             <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">drop_log</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
@@ -865,12 +984,15 @@
             <span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s2">"Smith2016: wrote </span><span class="si">%d</span><span class="s2"> of </span><span class="si">%d</span><span class="s2"> rows (</span><span class="si">%d</span><span class="s2"> under a typed compound-identity gap on "</span>
-            <span class="s2">"</span><span class="si">%d</span><span class="s2"> vendor-code drugs); </span><span class="si">%d</span><span class="s2"> with no A/var(A), </span><span class="si">%d</span><span class="s2"> targets on the "</span>
-            <span class="s2">"released-gene-name leaf, </span><span class="si">%d</span><span class="s2"> guides with no spacer"</span><span class="p">,</span>
+            <span class="s2">"</span><span class="si">%d</span><span class="s2"> drugs); held out </span><span class="si">%d</span><span class="s2"> rows of </span><span class="si">%d</span><span class="s2"> unidentified vendor-code drugs; </span><span class="si">%d</span><span class="s2"> with "</span>
+            <span class="s2">"no A/var(A), </span><span class="si">%d</span><span class="s2"> targets on the released-identifier leaf, </span><span class="si">%d</span><span class="s2"> guides with no "</span>
+            <span class="s2">"spacer"</span><span class="p">,</span>
             <span class="n">idx</span><span class="p">,</span>
             <span class="n">source_records</span><span class="p">,</span>
             <span class="nb">sum</span><span class="p">(</span><span class="n">gapped_records</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">gapped_records</span><span class="p">),</span>
+            <span class="nb">sum</span><span class="p">(</span><span class="n">held_out</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">held_out</span><span class="p">),</span>
             <span class="n">n_nan</span><span class="p">,</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">released_targets</span><span class="p">),</span>
             <span class="n">n_no_spacer</span><span class="p">,</span>

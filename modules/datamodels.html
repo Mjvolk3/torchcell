@@ -598,19 +598,19 @@
 <td><p>How a background allele's sequence differs from the R64 locus.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.GenomicSpan.html#torchcell.datamodels.schema.GenomicSpan" title="torchcell.datamodels.schema.GenomicSpan"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.GenomicSpan</span></code></a></p></td>
-<td><p>A 1-based, end-inclusive interval on one chromosome of the R64 assembly.</p></td>
+<td><p>A 1-based, end-inclusive interval on one replicon of a deposited assembly set.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.BackgroundAllele.html#torchcell.datamodels.schema.BackgroundAllele" title="torchcell.datamodels.schema.BackgroundAllele"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.BackgroundAllele</span></code></a></p></td>
-<td><p>One allele a strain background carries, as an edit against R64.</p></td>
+<td><p>One allele a strain background carries, as an edit against its reference genome.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.StrainBackground.html#torchcell.datamodels.schema.StrainBackground" title="torchcell.datamodels.schema.StrainBackground"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.StrainBackground</span></code></a></p></td>
-<td><p>The genome content a strain carries beyond R64, constant across a collection.</p></td>
+<td><p>The genome content a strain carries beyond its reference genome.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.ReferenceGenome.html#torchcell.datamodels.schema.ReferenceGenome" title="torchcell.datamodels.schema.ReferenceGenome"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.ReferenceGenome</span></code></a></p></td>
-<td><p>Reference genome identified by species and strain.</p></td>
+<td><p>The deposited reference a record's identifiers and background edits are written against.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.StrainReferenceGenome.html#torchcell.datamodels.schema.StrainReferenceGenome" title="torchcell.datamodels.schema.StrainReferenceGenome"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.StrainReferenceGenome</span></code></a></p></td>
-<td><p>A <code class="docutils literal notranslate"><span class="pre">ReferenceGenome</span></code> that states its typed <code class="docutils literal notranslate"><span class="pre">StrainBackground</span></code> (#507).</p></td>
+<td><p>A <code class="docutils literal notranslate"><span class="pre">ReferenceGenome</span></code> that states its typed strain background (#507).</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.schema.SOTerm.html#torchcell.datamodels.schema.SOTerm" title="torchcell.datamodels.schema.SOTerm"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.SOTerm</span></code></a></p></td>
 <td><p>A Sequence Ontology term: a <code class="docutils literal notranslate"><span class="pre">SO:NNNNNNN</span></code> id paired with its name.</p></td>
@@ -1007,7 +1007,7 @@
 <td><p>A <code class="docutils literal notranslate"><span class="pre">BackgroundAllele</span></code> for a <code class="docutils literal notranslate"><span class="pre">STANDARD_ALLELES</span></code> designation.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.datamodels.strain_background.standard_background.html#torchcell.datamodels.strain_background.standard_background" title="torchcell.datamodels.strain_background.standard_background"><code class="xref py py-obj docutils literal notranslate"><span class="pre">strain_background.standard_background</span></code></a></p></td>
-<td><p>A <code class="docutils literal notranslate"><span class="pre">StrainBackground</span></code> for BY4741 / BY4742 / BY4743.</p></td>
+<td><p>A <code class="docutils literal notranslate"><span class="pre">EukaryoticStrainBackground</span></code> for BY4741 / BY4742 / BY4743.</p></td>
 </tr>
 </tbody>
 </table>

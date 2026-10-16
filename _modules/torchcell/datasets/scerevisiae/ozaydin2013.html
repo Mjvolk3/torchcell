@@ -141,6 +141,17 @@
 <span class="sd">can hold and is listed, with its text, in ``preprocess/dropped_records.json``; a row whose</span>
 <span class="sd">ORF cell is not ORF-shaped (``YLR287-A``, 1 row) is counted there under</span>
 <span class="sd">``deferred_to_released_gene_name_leaf`` until that leaf lands.</span>
+
+<span class="sd">Every row is one physical strain of the deletion collection, and the sheet says which:</span>
+<span class="sd">``record no.``, ``Batch``, ``Plate``, ``Row`` and ``Col`` are the collection's own record</span>
+<span class="sd">number, construction batch and arrayed position (``(Batch, Plate, Row, Col)`` is unique</span>
+<span class="sd">over all 5,153 rows; ``record no.`` is not, 6853 and 7379 each head two rows). They are</span>
+<span class="sd">stored verbatim on the deletion's ``construction`` (``StrainConstruction``:</span>
+<span class="sd">``strain_accession`` = the record number, ``batch``, ``plate``, ``well`` = ``Row`` + ``Col``,</span>
+<span class="sd">``B3``). Lane Q, 2026-10-15: 31 pairs of rows agree in every cell the record used to carry</span>
+<span class="sd">(ORF, strain, color, parsed comment flags) and differ only here, so the two records were</span>
+<span class="sd">byte-identical, shared one content id, and the graph held 4,576 Experiment nodes for 4,607</span>
+<span class="sd">stored records; the position is the released fact that tells the two strains apart.</span>
 <span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
@@ -173,21 +184,31 @@
     <span class="n">GeneAdditionPerturbation</span><span class="p">,</span>
     <span class="n">Genotype</span><span class="p">,</span>
     <span class="n">KanMxDeletionPerturbation</span><span class="p">,</span>
+    <span class="n">Localization</span><span class="p">,</span>
     <span class="n">Media</span><span class="p">,</span>
     <span class="n">MediaComponent</span><span class="p">,</span>
     <span class="n">MediaComponentRole</span><span class="p">,</span>
     <span class="n">Publication</span><span class="p">,</span>
     <span class="n">ReferenceGenome</span><span class="p">,</span>
-    <span class="n">ReleasedGeneKind</span><span class="p">,</span>
-    <span class="n">ReleasedGeneNamePerturbation</span><span class="p">,</span>
+    <span class="n">ReleasedIdentifierPerturbation</span><span class="p">,</span>
+    <span class="n">ReleasedKind</span><span class="p">,</span>
+    <span class="n">StrainConstruction</span><span class="p">,</span>
     <span class="n">Temperature</span><span class="p">,</span>
     <span class="n">VisualScoreExperiment</span><span class="p">,</span>
     <span class="n">VisualScoreExperimentReference</span><span class="p">,</span>
     <span class="n">VisualScorePhenotype</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.registry</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SGD_S288C_R64</span><span class="p">,</span>
+    <span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="n">SourcedValue</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ProvenanceGap</span><span class="p">,</span>
+    <span class="n">ProvenanceGapReason</span><span class="p">,</span>
+    <span class="n">SourcedValue</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -271,38 +292,86 @@
 <span class="sd">other served dataset states this plate, and ``media.py``'s ``SC_URA`` is liquid."""</span>
 
 
+<span class="c1">#: The backbone name Table 2 prints for YB/I/BTS1, verbatim.</span>
+<span class="n">REPLICON_STATEMENT</span> <span class="o">=</span> <span class="s2">"YEplac195"</span>
+
+<span class="c1">#: What was read before concluding that no construct sequence is available.</span>
+<span class="n">_PLACEMENT_GAP_NOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"Table 2 'Plasmids used in this study' describes YB/I/BTS1 as 'YEplac195 "</span>
+    <span class="s2">"TDH3p-crtYB-CYC1t; TDH3p-crtI-CYC1t; TDH3p-BTS1-CYC1t' and cites Verwaal et al. "</span>
+    <span class="s2">"(2007); the paper deposits no GenBank map and states only 'Information about all "</span>
+    <span class="s2">"the strains and plasmids have been deposited in the public instance of the JBEI "</span>
+    <span class="s2">"Registry (https://public-registry.jbei.org/)', which answers 403 anonymously"</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_placement_gap</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">ProvenanceGap</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The typed absence of a construct sequence for the YB/I/BTS1 cassette."""</span>
+    <span class="k">return</span> <span class="n">ProvenanceGap</span><span class="p">(</span>
+        <span class="n">field</span><span class="o">=</span><span class="s2">"placement"</span><span class="p">,</span>
+        <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_released_by_primary</span><span class="p">,</span>
+        <span class="n">looked_in</span><span class="o">=</span><span class="n">_PAPER</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="n">_PLACEMENT_GAP_NOTE</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
 <span class="c1"># The constant engineered background: every screened strain carries the carotenogenic</span>
-<span class="c1"># 2-micron plasmid YB/I/BTS1 (YEplac195; Ozaydin Table 2 / Verwaal et al. 2007). Two</span>
-<span class="c1"># heterologous genes from X. dendrorhous + one extra native copy of BTS1 (YPL069C).</span>
-<span class="c1"># plasmid_contig_id/locus_tag stay None until the plasmid-sequence store lands; the</span>
-<span class="c1"># raw sequence is Euroscarf P30796 (physical-only) -&gt; reconstruct-from-parts. See</span>
+<span class="c1"># plasmid YB/I/BTS1, whose backbone Table 2 names as ``YEplac195`` (Ozaydin Table 2 /</span>
+<span class="c1"># Verwaal et al. 2007). Two heterologous genes from X. dendrorhous + one extra native</span>
+<span class="c1"># copy of BTS1 (YPL069C). See</span>
 <span class="c1"># [[torchcell.datamodels.gene-addition-perturbation-design]].</span>
+<span class="c1">#</span>
+<span class="c1"># ``replicon_statement`` carries the backbone name the paper prints and nothing more.</span>
+<span class="c1"># The localization token this loader used before P4 asserted a 2-micron replicon, which</span>
+<span class="c1"># this paper never writes: measured, ``paper.md`` carries no "2 micron", "2\mu" or</span>
+<span class="c1"># "multicopy" string for YB/I/BTS1, and the 2-micron claim comes from the YEplac195</span>
+<span class="c1"># backbone's own literature. ``Localization`` therefore reads ``episomal_replicon`` and</span>
+<span class="c1"># the source's own word for the replicon is kept verbatim beside it.</span>
+<span class="c1">#</span>
+<span class="c1"># ``placement`` is a typed gap. The paper deposits no map and releases no sequence; what</span>
+<span class="c1"># it states is a registry deposit, "Information about all the strains and plasmids have</span>
+<span class="c1"># been deposited in the public instance of the JBEI Registry</span>
+<span class="c1"># (https://public-registry.jbei.org/)", and that registry answers 403 to an anonymous</span>
+<span class="c1"># REST request (measured 2026-10-15), so the artifact exists and is withheld rather than</span>
+<span class="c1"># never reported.</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_carotenogenic_cassette</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">GeneAdditionPerturbation</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Fresh YB/I/BTS1 cassette perturbations (new objects per record)."""</span>
     <span class="k">return</span> <span class="p">[</span>
         <span class="n">GeneAdditionPerturbation</span><span class="p">(</span>
             <span class="n">systematic_gene_name</span><span class="o">=</span><span class="s2">"crtYB"</span><span class="p">,</span>
+            <span class="n">gene_namespace</span><span class="o">=</span><span class="s2">"scerevisiae_s288c_sgd_systematic"</span><span class="p">,</span>
             <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="s2">"crtYB"</span><span class="p">,</span>
             <span class="n">source_organism</span><span class="o">=</span><span class="s2">"Xanthophyllomyces dendrorhous"</span><span class="p">,</span>
             <span class="n">is_heterologous</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">localization</span><span class="o">=</span><span class="s2">"episomal_2micron"</span><span class="p">,</span>
+            <span class="n">localization</span><span class="o">=</span><span class="n">Localization</span><span class="o">.</span><span class="n">episomal_replicon</span><span class="p">,</span>
+            <span class="n">replicon_statement</span><span class="o">=</span><span class="n">REPLICON_STATEMENT</span><span class="p">,</span>
             <span class="n">construct_name</span><span class="o">=</span><span class="s2">"YB/I/BTS1"</span><span class="p">,</span>
+            <span class="n">placement</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span><span class="n">_placement_gap</span><span class="p">()],</span>
         <span class="p">),</span>
         <span class="n">GeneAdditionPerturbation</span><span class="p">(</span>
             <span class="n">systematic_gene_name</span><span class="o">=</span><span class="s2">"crtI"</span><span class="p">,</span>
+            <span class="n">gene_namespace</span><span class="o">=</span><span class="s2">"scerevisiae_s288c_sgd_systematic"</span><span class="p">,</span>
             <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="s2">"crtI"</span><span class="p">,</span>
             <span class="n">source_organism</span><span class="o">=</span><span class="s2">"Xanthophyllomyces dendrorhous"</span><span class="p">,</span>
             <span class="n">is_heterologous</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">localization</span><span class="o">=</span><span class="s2">"episomal_2micron"</span><span class="p">,</span>
+            <span class="n">localization</span><span class="o">=</span><span class="n">Localization</span><span class="o">.</span><span class="n">episomal_replicon</span><span class="p">,</span>
+            <span class="n">replicon_statement</span><span class="o">=</span><span class="n">REPLICON_STATEMENT</span><span class="p">,</span>
             <span class="n">construct_name</span><span class="o">=</span><span class="s2">"YB/I/BTS1"</span><span class="p">,</span>
+            <span class="n">placement</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span><span class="n">_placement_gap</span><span class="p">()],</span>
         <span class="p">),</span>
         <span class="n">GeneAdditionPerturbation</span><span class="p">(</span>
             <span class="n">systematic_gene_name</span><span class="o">=</span><span class="s2">"YPL069C"</span><span class="p">,</span>
+            <span class="n">gene_namespace</span><span class="o">=</span><span class="s2">"scerevisiae_s288c_sgd_systematic"</span><span class="p">,</span>
             <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="s2">"BTS1"</span><span class="p">,</span>
             <span class="n">source_organism</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span>
             <span class="n">is_heterologous</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="n">localization</span><span class="o">=</span><span class="s2">"episomal_2micron"</span><span class="p">,</span>
+            <span class="n">localization</span><span class="o">=</span><span class="n">Localization</span><span class="o">.</span><span class="n">episomal_replicon</span><span class="p">,</span>
+            <span class="n">replicon_statement</span><span class="o">=</span><span class="n">REPLICON_STATEMENT</span><span class="p">,</span>
             <span class="n">construct_name</span><span class="o">=</span><span class="s2">"YB/I/BTS1"</span><span class="p">,</span>
+            <span class="n">placement</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span><span class="n">_placement_gap</span><span class="p">()],</span>
         <span class="p">),</span>
     <span class="p">]</span>
 
@@ -311,23 +380,53 @@
 <span class="n">_SYSTEMATIC_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](-[A-Z])?$"</span><span class="p">)</span>
 
 
+<span class="c1">#: The released columns that place a row's strain in the deletion collection.</span>
+<span class="n">POSITION_COLUMNS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"record no."</span><span class="p">,</span> <span class="s2">"Batch"</span><span class="p">,</span> <span class="s2">"Plate"</span><span class="p">,</span> <span class="s2">"Row"</span><span class="p">,</span> <span class="s2">"Col"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_cell_text</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A released cell as text: an integral number without a decimal point, else</span>
+<span class="sd">    the stripped string (``Plate`` and ``Col`` are integer cells, ``Batch`` and ``Row``</span>
+<span class="sd">    text).</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">and</span> <span class="n">value</span><span class="o">.</span><span class="n">is_integer</span><span class="p">():</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_construction</span><span class="p">(</span><span class="n">row</span><span class="p">:</span> <span class="s2">"pd.Series[Any]"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StrainConstruction</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The row's strain in its collection, verbatim: the record number as the</span>
+<span class="sd">    collection accession, the construction batch, the plate and the well (``Row`` and</span>
+<span class="sd">    ``Col`` joined, ``B3``). ``Plate`` and ``Col`` are integer cells in the release.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">StrainConstruction</span><span class="p">(</span>
+        <span class="n">strain_accession</span><span class="o">=</span><span class="n">_cell_text</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"record_no"</span><span class="p">]),</span>
+        <span class="n">batch</span><span class="o">=</span><span class="n">_cell_text</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"batch"</span><span class="p">]),</span>
+        <span class="n">plate</span><span class="o">=</span><span class="n">_cell_text</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"plate"</span><span class="p">]),</span>
+        <span class="n">well</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_cell_text</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">'row'</span><span class="p">])</span><span class="si">}{</span><span class="n">_cell_text</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">'col'</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_released_deletion</span><span class="p">(</span>
-    <span class="n">orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KanMxDeletionPerturbation</span> <span class="o">|</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">:</span>
+    <span class="n">orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">construction</span><span class="p">:</span> <span class="n">StrainConstruction</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KanMxDeletionPerturbation</span> <span class="o">|</span> <span class="n">ReleasedIdentifierPerturbation</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The deletion under the released identifier (#1045): an ORF-shaped one on the</span>
-<span class="sd">    placed KanMX leaf with both names the ORF, any other on the released-gene-name leaf</span>
-<span class="sd">    verbatim (kind deletion, marker KanMX).</span>
+<span class="sd">    placed KanMX leaf with both names the ORF, any other on the released-identifier leaf</span>
+<span class="sd">    verbatim (kind deletion, marker KanMX). Either carries the strain's collection</span>
+<span class="sd">    position as its ``construction``.</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">orf</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">KanMxDeletionPerturbation</span><span class="p">(</span>
-            <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span> <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">orf</span>
+            <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span> <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span> <span class="n">construction</span><span class="o">=</span><span class="n">construction</span>
         <span class="p">)</span>
-    <span class="k">return</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">(</span>
+    <span class="k">return</span> <span class="n">ReleasedIdentifierPerturbation</span><span class="p">(</span>
         <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+        <span class="n">gene_namespace</span><span class="o">=</span><span class="s2">"scerevisiae_s288c_sgd_systematic"</span><span class="p">,</span>
         <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
-        <span class="n">released_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
-        <span class="n">released_kind</span><span class="o">=</span><span class="n">ReleasedGeneKind</span><span class="o">.</span><span class="n">deletion</span><span class="p">,</span>
-        <span class="n">marker</span><span class="o">=</span><span class="s2">"KanMX"</span><span class="p">,</span>
+        <span class="n">identifier_kind</span><span class="o">=</span><span class="s2">"ORF column entry, as released"</span><span class="p">,</span>
+        <span class="n">released_kind</span><span class="o">=</span><span class="n">ReleasedKind</span><span class="o">.</span><span class="n">deletion</span><span class="p">,</span>
+        <span class="n">cassette</span><span class="o">=</span><span class="s2">"KanMX"</span><span class="p">,</span>
+        <span class="n">construction</span><span class="o">=</span><span class="n">construction</span><span class="p">,</span>
     <span class="p">)</span>
 
 
@@ -446,6 +545,13 @@
             <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ORF name"</span><span class="p">))</span>
         <span class="p">}</span>
 
+        <span class="n">missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">POSITION_COLUMNS</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Ozaydin sheet 'Color scores of all deletions' lacks the released "</span>
+                <span class="sa">f</span><span class="s2">"position columns </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2">; every row's strain is placed by them"</span>
+            <span class="p">)</span>
+
         <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">released_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">text_rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -462,14 +568,24 @@
             <span class="n">strain</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"Strain"</span><span class="p">])</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Strain"</span><span class="p">))</span> <span class="k">else</span> <span class="s2">"BY4741"</span>
             <span class="p">)</span>
+            <span class="n">position</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">"record_no"</span><span class="p">:</span> <span class="n">_cell_text</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"record no."</span><span class="p">]),</span>
+                <span class="s2">"batch"</span><span class="p">:</span> <span class="n">_cell_text</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"Batch"</span><span class="p">]),</span>
+                <span class="s2">"plate"</span><span class="p">:</span> <span class="n">_cell_text</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"Plate"</span><span class="p">]),</span>
+                <span class="s2">"row"</span><span class="p">:</span> <span class="n">_cell_text</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"Row"</span><span class="p">]),</span>
+                <span class="s2">"col"</span><span class="p">:</span> <span class="n">_cell_text</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"Col"</span><span class="p">]),</span>
+            <span class="p">}</span>
             <span class="k">if</span> <span class="n">num</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">text_rows</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"orf"</span><span class="p">:</span> <span class="n">orf</span><span class="p">,</span> <span class="s2">"strain"</span><span class="p">:</span> <span class="n">strain</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">:</span> <span class="n">text</span><span class="p">})</span>
+                <span class="n">text_rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">{</span><span class="s2">"orf"</span><span class="p">:</span> <span class="n">orf</span><span class="p">,</span> <span class="s2">"strain"</span><span class="p">:</span> <span class="n">strain</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">:</span> <span class="n">text</span><span class="p">,</span> <span class="o">**</span><span class="n">position</span><span class="p">}</span>
+                <span class="p">)</span>
                 <span class="k">continue</span>
             <span class="n">meta</span> <span class="o">=</span> <span class="n">top200_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">orf</span><span class="p">,</span> <span class="p">{})</span>
             <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="p">{</span>
                     <span class="s2">"orf"</span><span class="p">:</span> <span class="n">orf</span><span class="p">,</span>
                     <span class="s2">"strain"</span><span class="p">:</span> <span class="n">strain</span><span class="p">,</span>
+                    <span class="o">**</span><span class="n">position</span><span class="p">,</span>
                     <span class="s2">"visual_score"</span><span class="p">:</span> <span class="n">num</span><span class="p">,</span>
                     <span class="s2">"visual_score_min"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
                     <span class="s2">"n_replicates"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
@@ -494,7 +610,7 @@
                     <span class="s2">"description"</span><span class="p">:</span> <span class="p">(</span>
                         <span class="s2">"the released ORF cell is not ORF-shaped (YLR287-A: the release "</span>
                         <span class="s2">"dropped the strand letter), so its rows are stored on "</span>
-                        <span class="s2">"ReleasedGeneNamePerturbation under that name verbatim, never "</span>
+                        <span class="s2">"ReleasedIdentifierPerturbation under that name verbatim, never "</span>
                         <span class="s2">"resolved against the genome and never dropped (#1045); listed "</span>
                         <span class="s2">"here, not removed"</span>
                     <span class="p">),</span>
@@ -525,7 +641,7 @@
         <span class="n">usable</span><span class="p">,</span> <span class="n">accounting</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_released_rows</span><span class="p">()</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s2">"Ozaydin: </span><span class="si">%d</span><span class="s2"> released rows, </span><span class="si">%d</span><span class="s2"> records (one per scored row); </span><span class="si">%d</span><span class="s2"> text-only "</span>
-            <span class="s2">"rows listed in the ledger, </span><span class="si">%d</span><span class="s2"> names on the released-gene-name leaf"</span><span class="p">,</span>
+            <span class="s2">"rows listed in the ledger, </span><span class="si">%d</span><span class="s2"> names on the released-identifier leaf"</span><span class="p">,</span>
             <span class="n">accounting</span><span class="p">[</span><span class="s2">"source_rows"</span><span class="p">],</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">usable</span><span class="p">),</span>
             <span class="n">accounting</span><span class="p">[</span><span class="s2">"rules"</span><span class="p">][</span><span class="mi">2</span><span class="p">][</span><span class="s2">"n_records"</span><span class="p">],</span>
@@ -576,10 +692,16 @@
 <span class="w">        </span><span class="sd">"""Build the VisualScore experiment/reference/publication for one ORF."""</span>
         <span class="c1"># The row's own Strain cell, as released (BY4741 where the cell is blank).</span>
         <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
-            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"strain"</span><span class="p">])</span>
+            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span>
+            <span class="n">strain</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"strain"</span><span class="p">]),</span>
+            <span class="n">assembly_set</span><span class="o">=</span><span class="n">SGD_S288C_R64</span><span class="p">,</span>
+            <span class="n">assembly_accession</span><span class="o">=</span><span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
-            <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span><span class="n">_released_deletion</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">]),</span> <span class="o">*</span><span class="n">_carotenogenic_cassette</span><span class="p">()]</span>
+            <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">_released_deletion</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">],</span> <span class="n">_construction</span><span class="p">(</span><span class="n">row</span><span class="p">)),</span>
+                <span class="o">*</span><span class="n">_carotenogenic_cassette</span><span class="p">(),</span>
+            <span class="p">]</span>
         <span class="p">)</span>
         <span class="c1"># Screen scored on SC-URA agar (URA-selective plasmid), 30 C.</span>
         <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span>

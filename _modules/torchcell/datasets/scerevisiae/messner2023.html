@@ -208,11 +208,15 @@
     <span class="n">ProteinAbundancePhenotype</span><span class="p">,</span>
     <span class="n">Publication</span><span class="p">,</span>
     <span class="n">ReferenceGenome</span><span class="p">,</span>
-    <span class="n">ReleasedGeneKind</span><span class="p">,</span>
-    <span class="n">ReleasedGeneNamePerturbation</span><span class="p">,</span>
+    <span class="n">ReleasedIdentifierPerturbation</span><span class="p">,</span>
+    <span class="n">ReleasedKind</span><span class="p">,</span>
     <span class="n">Temperature</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.registry</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SGD_S288C_R64</span><span class="p">,</span>
+    <span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -240,21 +244,22 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_released_deletion</span><span class="p">(</span>
     <span class="n">orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KanMxDeletionPerturbation</span> <span class="o">|</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KanMxDeletionPerturbation</span> <span class="o">|</span> <span class="n">ReleasedIdentifierPerturbation</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The deletion under the released identifier (#1045): an ORF-shaped one on the</span>
-<span class="sd">    placed KanMX leaf with both names the ORF, any other on the released-gene-name leaf</span>
+<span class="sd">    placed KanMX leaf with both names the ORF, any other on the released-identifier leaf</span>
 <span class="sd">    verbatim (kind deletion, marker KanMX).</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="n">_NUCLEAR_ORF_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">orf</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">KanMxDeletionPerturbation</span><span class="p">(</span>
             <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span> <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">orf</span>
         <span class="p">)</span>
-    <span class="k">return</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">(</span>
+    <span class="k">return</span> <span class="n">ReleasedIdentifierPerturbation</span><span class="p">(</span>
         <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+        <span class="n">gene_namespace</span><span class="o">=</span><span class="s2">"scerevisiae_s288c_sgd_systematic"</span><span class="p">,</span>
         <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
-        <span class="n">released_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
-        <span class="n">released_kind</span><span class="o">=</span><span class="n">ReleasedGeneKind</span><span class="o">.</span><span class="n">deletion</span><span class="p">,</span>
-        <span class="n">marker</span><span class="o">=</span><span class="s2">"KanMX"</span><span class="p">,</span>
+        <span class="n">identifier_kind</span><span class="o">=</span><span class="s2">"ORF column entry of the sample metadata, as released"</span><span class="p">,</span>
+        <span class="n">released_kind</span><span class="o">=</span><span class="n">ReleasedKind</span><span class="o">.</span><span class="n">deletion</span><span class="p">,</span>
+        <span class="n">cassette</span><span class="o">=</span><span class="s2">"KanMX"</span><span class="p">,</span>
     <span class="p">)</span>
 
 
@@ -468,7 +473,7 @@
             <span class="c1"># systematic names are uppercase -- normalize, never drop on case alone.</span>
             <span class="n">deletion_orf</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">by_filename</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">filename</span><span class="p">,</span> <span class="s2">"ORF"</span><span class="p">])</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">_NUCLEAR_ORF_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">deletion_orf</span><span class="p">):</span>
-                <span class="c1"># no ORF form: the released-gene-name leaf, verbatim (0 of 4,699)</span>
+                <span class="c1"># no ORF form: the released-identifier leaf, verbatim (0 of 4,699)</span>
                 <span class="n">released_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">deletion_orf</span><span class="p">)</span>
             <span class="n">series</span> <span class="o">=</span> <span class="n">matrix</span><span class="p">[</span><span class="n">filename</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>  <span class="c1"># measured proteins only (noimpute)</span>
             <span class="n">abundance</span> <span class="o">=</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">o</span><span class="p">):</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">series</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
@@ -489,7 +494,7 @@
             <span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s2">"Messner: </span><span class="si">%d</span><span class="s2"> KO strains, WT reference with </span><span class="si">%d</span><span class="s2"> proteins, </span><span class="si">%d</span><span class="s2"> KO ORFs on the "</span>
-            <span class="s2">"released-gene-name leaf"</span><span class="p">,</span>
+            <span class="s2">"released-identifier leaf"</span><span class="p">,</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span>
             <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_reference</span><span class="p">[</span><span class="s2">"abundance"</span><span class="p">]),</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">released_names</span><span class="p">),</span>
@@ -547,7 +552,10 @@
         <span class="c1"># (Mulleder); the prototrophy-restoring marker is not yet modeled as a</span>
         <span class="c1"># GeneAddition here (as in the Mulleder loader).</span>
         <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
-            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="s2">"BY4741"</span>
+            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span>
+            <span class="n">strain</span><span class="o">=</span><span class="s2">"BY4741"</span><span class="p">,</span>
+            <span class="n">assembly_set</span><span class="o">=</span><span class="n">SGD_S288C_R64</span><span class="p">,</span>
+            <span class="n">assembly_accession</span><span class="o">=</span><span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span><span class="n">perturbations</span><span class="o">=</span><span class="p">[</span><span class="n">_released_deletion</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">])])</span>
         <span class="c1"># Grown in synthetic minimal (SM) liquid medium at 30 C: 6.7 g/L YNB without</span>

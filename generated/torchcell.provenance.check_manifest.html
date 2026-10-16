@@ -127,7 +127,10 @@
 <dd><p>Compare a manifest’s stored fingerprints against the current local schema surface.</p>
 <p>A manifest without <code class="docutils literal notranslate"><span class="pre">perturbation_leaves</span></code> (written under manifest schema version
 1) is stale too: the preflight reads the store’s leaves off that field, and a store
-with no measured leaves cannot be checked against its conf’s lanes.</p>
+with no measured leaves cannot be checked against its conf’s lanes. The same holds
+for <code class="docutils literal notranslate"><span class="pre">content_id_collisions</span></code> (version 2 and earlier): the preflight reads the
+store’s collision count off that field, and a store that never measured it could
+carry the silent record loss of lane Q’s four datasets unseen.</p>
 </dd></dl>
 
 </section>

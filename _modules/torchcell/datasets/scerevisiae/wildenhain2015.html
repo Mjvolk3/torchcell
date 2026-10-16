@@ -151,7 +151,7 @@
 
 <span class="sd">The released rows whose ``orf`` is not a systematic name are strain screens, not</span>
 <span class="sd">controls: ``NULL/wild type`` is the BY4741 screen; ``NA/NNK1`` is mapped to YKL171W</span>
-<span class="sd">(a synonym route that the released-gene-name leaf of #1067's yeast analogue replaces</span>
+<span class="sd">(a synonym route that the released-identifier leaf of #1067's yeast analogue replaces</span>
 <span class="sd">once it exists; until then the mapping keeps the 678 rows served); ``NA/TSCII``,</span>
 <span class="sd">``NULL/YGL11`` and ``NULL/wtn01`` name no strain a mirrored source identifies and are</span>
 <span class="sd">held in the ledger under ``strain_label_unresolved`` for the same leaf. No genome is</span>
@@ -190,14 +190,35 @@
 <span class="sd">of a cell into one record with a sample SD; under the owner rule of 2026-10-12 every</span>
 <span class="sd">released screen is stored as released.</span>
 
-<span class="sd">RECORDS DROPPED (rule + count in ``preprocess/dropped_records.json``, applied in this</span>
-<span class="sd">order): ``strain_label_unresolved`` (the TSCII, YGL11 and wtn01 rows, held for the</span>
-<span class="sd">released-gene-name leaf), then ``re_exported_duplicate_row`` (the release's own</span>
-<span class="sd">byte-identical re-emissions). The 5 SID-only compounds (no CID and no SMILES) are</span>
-<span class="sd">STORED: ``resolved_compound`` names them by their SID and attaches the typed</span>
-<span class="sd">``inchikey`` gap, and the ledger lists them under</span>
-<span class="sd">``compounds_without_a_structure_identifier``; every other CID resolves to an InChIKey</span>
-<span class="sd">and a canonical PubChem name through the pinned compound-identity table.</span>
+<span class="sd">RECORDS DROPPED (rule + count in ``preprocess/dropped_records.json``, counted in</span>
+<span class="sd">released rows and applied in this order): ``strain_label_unresolved`` (the TSCII, YGL11</span>
+<span class="sd">and wtn01 rows, held for the released-identifier leaf), then</span>
+<span class="sd">``compound_has_no_released_name_or_structure_not_representable``</span>
+<span class="sd">(``UNIDENTIFIED_COMPOUND_RULE``), then ``re_exported_duplicate_row`` (the release's own</span>
+<span class="sd">byte-identical re-emissions). The ledger proves ``source_records = kept_records +`` the</span>
+<span class="sd">three rules and the build refuses on a mismatch.</span>
+
+<span class="sd">UNIDENTIFIED PERTURBING AGENTS (database constitution principle 2, owner ruling</span>
+<span class="sd">2026-10-15: "if you cannot tell me what goes into the flask so to speak, then we have no</span>
+<span class="sd">hope of modeling!"). The release's compound columns are ``PUBCHEM_SID``, ``PUBCHEM_CID``</span>
+<span class="sd">and ``PUBCHEM_EXT_DATASOURCE_SMILES``; it has no name column</span>
+<span class="sd">(``RELEASED_COMPOUND_IDENTIFIER``), and the authors put structures on the unmirrored</span>
+<span class="sd">chemgrid.org portal instead (``STRUCTURES_ON_CHEMGRID``). The criterion is mechanical: a</span>
+<span class="sd">cell's compound is identified iff its row carries a CID or a SMILES, the pinned</span>
+<span class="sd">compound-identity table has a curated row for its label, or ``RELEASED_IDENTITIES`` (the</span>
+<span class="sd">admission table, EMPTY today) has an entry for it. Five SIDs fail all four (SID</span>
+<span class="sd">268734404, 268735390, 268737906, 277425705, 277425722): 410 released rows with no CID,</span>
+<span class="sd">SMILES, URL or comment (only ``cryptagen = 0``), of which 4 sit on an unresolved strain</span>
+<span class="sd">label and the other 406 rows (378 distinct screens over 368 cells) are HELD OUT under</span>
+<span class="sd">``UNIDENTIFIED_COMPOUND_RULE``, never stored under the bare ``SID n`` label with an</span>
+<span class="sd">``inchikey`` gap. Each is listed under ``unidentified_compounds_held_out``, which is the</span>
+<span class="sd">request list for a public SID-to-structure release; only such a release fills</span>
+<span class="sd">``RELEASED_IDENTITIES`` (never an identity inferred from profile similarity), and a filled</span>
+<span class="sd">entry rebuilds the store. Every one of the 5,173 released CIDs carries a SMILES and</span>
+<span class="sd">resolves to an InChIKey and a canonical PubChem name through the pinned table, so no CID</span>
+<span class="sd">compound is gapped. Measured on the pinned export (sha256 ``c461c679...``) by</span>
+<span class="sd">``_collapse_matrix`` plus the rules above: 492,126 source rows = 448,655 stored records +</span>
+<span class="sd">4,678 strain-label rows + 406 unidentified-compound rows + 38,387 re-exported rows.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -228,7 +249,10 @@
     <span class="n">verify_raw_files</span><span class="p">,</span>
     <span class="n">verify_sha256</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.compound_identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolved_compound</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.compound_identity</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">resolve_compound_identity</span><span class="p">,</span>
+    <span class="n">resolved_compound</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">SC</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">AssayType</span><span class="p">,</span>
@@ -242,6 +266,7 @@
     <span class="n">EndpointRule</span><span class="p">,</span>
     <span class="n">EnvironmentPerturbationType</span><span class="p">,</span>
     <span class="n">EnvironmentResponsePhenotype</span><span class="p">,</span>
+    <span class="n">EukaryoticStrainBackground</span><span class="p">,</span>
     <span class="n">Experiment</span><span class="p">,</span>
     <span class="n">ExperimentReference</span><span class="p">,</span>
     <span class="n">Genotype</span><span class="p">,</span>
@@ -255,7 +280,6 @@
     <span class="n">SampleUnit</span><span class="p">,</span>
     <span class="n">SmallMoleculePerturbation</span><span class="p">,</span>
     <span class="n">Solvent</span><span class="p">,</span>
-    <span class="n">StrainBackground</span><span class="p">,</span>
     <span class="n">StrainEnvironmentResponseExperiment</span><span class="p">,</span>
     <span class="n">StrainEnvironmentResponseExperimentReference</span><span class="p">,</span>
     <span class="n">StrainReferenceGenome</span><span class="p">,</span>
@@ -269,12 +293,17 @@
     <span class="n">standard_background</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.scerevisiae.hoepfner2014</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReleasedIdentity</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.literature.manifest</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ROLE_RAW_DATA</span><span class="p">,</span>
     <span class="n">ArtifactRecord</span><span class="p">,</span>
     <span class="n">Manifest</span><span class="p">,</span>
     <span class="n">RetrievalMethod</span><span class="p">,</span>
     <span class="n">RetrievalRecord</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.registry</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SGD_S288C_R64</span><span class="p">,</span>
+    <span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -678,10 +707,10 @@
     <span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_by4741_background</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">StrainBackground</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_by4741_background</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">EukaryoticStrainBackground</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""BY4741 as the 2016 paper states it, each allele's construction pending review."""</span>
     <span class="n">background</span> <span class="o">=</span> <span class="n">standard_background</span><span class="p">(</span><span class="s2">"BY4741"</span><span class="p">,</span> <span class="n">provenance</span><span class="o">=</span><span class="p">[</span><span class="n">BY4741_GENOTYPE</span><span class="p">])</span>
-    <span class="k">return</span> <span class="n">StrainBackground</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span>
+    <span class="k">return</span> <span class="n">EukaryoticStrainBackground</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span>
         <span class="p">{</span>
             <span class="o">**</span><span class="n">background</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
             <span class="s2">"alleles"</span><span class="p">:</span> <span class="p">[</span><span class="n">_background_allele</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">background</span><span class="o">.</span><span class="n">alleles</span><span class="p">],</span>
@@ -694,6 +723,8 @@
     <span class="n">strain</span><span class="o">=</span><span class="n">BY4741_GENOTYPE</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="n">ploidy</span><span class="o">=</span><span class="s2">"haploid"</span><span class="p">,</span>
     <span class="n">background</span><span class="o">=</span><span class="n">_by4741_background</span><span class="p">(),</span>
+    <span class="n">assembly_set</span><span class="o">=</span><span class="n">SGD_S288C_R64</span><span class="p">,</span>
+    <span class="n">assembly_accession</span><span class="o">=</span><span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="c1">#: The 33 released ORFs that are essential in torchcell's SGD essentiality set (#504</span>
@@ -725,7 +756,7 @@
 <span class="w">    </span><span class="sd">"""How one released (orf, sym) pair whose ``orf`` is not a systematic name is read.</span>
 
 <span class="sd">    ``mapped_to_orf``: a real gene's strain released without its ORF (served on that</span>
-<span class="sd">    ORF by a pinned map, no genome read; the released-gene-name leaf replaces the map).</span>
+<span class="sd">    ORF by a pinned map, no genome read; the released-identifier leaf replaces the map).</span>
 <span class="sd">    ``wild_type``: the BY4741 parental screen (served as the empty genotype).</span>
 <span class="sd">    ``unresolved``: no strain the mirrored sources name; held in the ledger under</span>
 <span class="sd">    ``strain_label_unresolved`` for the same leaf.</span>
@@ -794,6 +825,54 @@
     <span class="p">(</span><span class="s2">"Inconclusive"</span><span class="p">,</span> <span class="s2">"resistant"</span><span class="p">):</span> <span class="n">ResponseCategory</span><span class="o">.</span><span class="n">not_determined</span><span class="p">,</span>
     <span class="p">(</span><span class="s2">"Inconclusive"</span><span class="p">,</span> <span class="s2">""</span><span class="p">):</span> <span class="n">ResponseCategory</span><span class="o">.</span><span class="n">not_determined</span><span class="p">,</span>
 <span class="p">}</span>
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Unidentified perturbing agents (database constitution principle 2, 2026-10-15)</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="n">UNIDENTIFIED_COMPOUND_RULE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"compound_has_no_released_name_or_structure_not_representable"</span>
+<span class="p">)</span>
+
+<span class="c1">#: The release's compound columns, as its own column caption defines its identifier.</span>
+<span class="n">RELEASED_COMPOUND_IDENTIFIER</span> <span class="o">=</span> <span class="n">_aid</span><span class="p">(</span>
+    <span class="s2">"PubChem SID / CID / SMILES; no name column"</span><span class="p">,</span>
+    <span class="s2">"Pubchem_ext_datasource_regid: compound identifier used in on chemgrid.org/cgm"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the per-compound columns of 1159580.csv.gz are PUBCHEM_SID, PUBCHEM_CID and "</span>
+    <span class="s2">"PUBCHEM_EXT_DATASOURCE_SMILES; the release has no compound-name column. A row with "</span>
+    <span class="s2">"no CID and no SMILES therefore names its compound only by its PubChem substance "</span>
+    <span class="s2">"registry number (the SID)"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="c1">#: Where the authors put structures instead: a web portal, not the release.</span>
+<span class="n">STRUCTURES_ON_CHEMGRID</span> <span class="o">=</span> <span class="n">_scidata</span><span class="p">(</span>
+    <span class="s2">"structures on chemgrid.org, not in the release"</span><span class="p">,</span>
+    <span class="s2">"Library compositions and chemical structures are available at www.chemgrid.org."</span><span class="p">,</span>
+    <span class="n">line</span><span class="o">=</span><span class="s2">"46"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"chemgrid.org is an interactive portal with no bulk export and is not "</span>
+    <span class="s2">"mirrored, so it is no source of identity for a compound the PubChem release leaves "</span>
+    <span class="s2">"without a CID or SMILES"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">UNIDENTIFIED_COMPOUND_POLICY</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"a released compound identity with no PUBCHEM_CID, no PUBCHEM_EXT_DATASOURCE_SMILES "</span>
+    <span class="s2">"(the release has no name column), no curated compound-identity row for its label "</span>
+    <span class="s2">"and no RELEASED_IDENTITIES entry is a PubChem substance registry number only: what "</span>
+    <span class="s2">"went into the well cannot be stated, so the experiment cannot be represented "</span>
+    <span class="s2">"(database constitution principle 2, owner ruling 2026-10-15). Its rows are HELD "</span>
+    <span class="s2">"OUT, never stored under the bare 'SID n' label with an inchikey gap; each is "</span>
+    <span class="s2">"listed with its released rows, cells and distinct screens, and the label is "</span>
+    <span class="s2">"admitted the day a public release gives its name or structure. A CID is a "</span>
+    <span class="s2">"standardized PubChem structure record, so every CID row is identified and stored"</span>
+<span class="p">)</span>
+
+<span class="c1">#: The ADMISSION TABLE, keyed by the released label (``"SID &lt;n&gt;"``): EMPTY today. A</span>
+<span class="c1">#: label is stored iff it is identified (a CID, a released SMILES or a curated</span>
+<span class="c1">#: compound-identity row) or has an entry here; the entry's name, SMILES and InChIKey</span>
+<span class="c1">#: build its ``Compound``. Only a PUBLIC label-to-structure release fills it, mirrored and</span>
+<span class="c1">#: sha256-pinned like any other artifact; an identity inferred from chemical-genetic</span>
+<span class="c1">#: profile similarity is a hypothesis and never goes here. A filled entry changes the</span>
+<span class="c1">#: stored records, so it rebuilds the store. The ledger's</span>
+<span class="c1">#: ``unidentified_compounds_held_out`` is the request list for that release.</span>
+<span class="n">RELEASED_IDENTITIES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ReleasedIdentity</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
 <span class="c1">#: Systematic ORF pattern; any other ``orf`` must be listed in NON_ORF_STRAIN_LABELS.</span>
 <span class="n">_SYSTEMATIC_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](-[A-Z])?$"</span><span class="p">)</span>
@@ -952,13 +1031,27 @@
     <span class="n">items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">UnidentifiedCompound</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One released label held out under ``UNIDENTIFIED_COMPOUND_RULE``."""</span>
+
+    <span class="n">identity</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">pubchem_sid</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">n_rows</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_cells</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_screens</span><span class="p">:</span> <span class="nb">int</span>
+
+
 <span class="k">class</span><span class="w"> </span><span class="nc">DropLog</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Every retention rule applied to a build, in the order they were applied.</span>
 
 <span class="sd">    ``source_records`` counts released datapoint rows (a row with a z_score);</span>
 <span class="sd">    ``kept_records`` the records written, one per distinct released screen.</span>
-<span class="sd">    ``compounds_without_a_structure_identifier`` lists the compound identities stored</span>
-<span class="sd">    with a typed ``inchikey`` gap (nothing is dropped for them).</span>
+<span class="sd">    ``source_records = kept_records + `` every rule's ``n_records`` (counted in</span>
+<span class="sd">    released rows), checked at build time. ``compounds_without_a_structure_identifier``</span>
+<span class="sd">    lists STORED compound identities that carry a typed ``inchikey`` gap and no CID or</span>
+<span class="sd">    ChEBI id (an admitted ``RELEASED_IDENTITIES`` label whose key is not released);</span>
+<span class="sd">    ``unidentified_compounds_held_out`` lists the labels held out under</span>
+<span class="sd">    ``UNIDENTIFIED_COMPOUND_RULE``.</span>
 <span class="sd">    """</span>
 
     <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span>
@@ -967,6 +1060,10 @@
     <span class="n">dropped_records</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DropRule</span><span class="p">]</span>
     <span class="n">compounds_without_a_structure_identifier</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">unidentified_compound_rule</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">unidentified_compound_policy</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">unidentified_compound_sources</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SourcedValue</span><span class="p">]</span>
+    <span class="n">unidentified_compounds_held_out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">UnidentifiedCompound</span><span class="p">]</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">ScreenDatapoint</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
@@ -1040,6 +1137,21 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">z</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">orf</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">identity</span><span class="si">}</span><span class="s2">: z_score </span><span class="si">{</span><span class="n">z_raw</span><span class="si">!r}</span><span class="s2"> is not finite"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">z</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_compound_is_identified</span><span class="p">(</span><span class="n">cell</span><span class="p">:</span> <span class="n">MatrixCell</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Whether a cell's released compound is identified (``UNIDENTIFIED_COMPOUND_RULE``).</span>
+
+<span class="sd">    Identified: the row carries a ``PUBCHEM_CID`` or a released SMILES, the curated</span>
+<span class="sd">    compound-identity table carries a row for its label, or ``RELEASED_IDENTITIES`` has</span>
+<span class="sd">    an entry for it. The release has no name column, so a label with none of these is a</span>
+<span class="sd">    PubChem substance registry number (``SID n``) and nothing else.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">cell</span><span class="o">.</span><span class="n">pubchem_cid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">cell</span><span class="o">.</span><span class="n">smiles</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">if</span> <span class="n">cell</span><span class="o">.</span><span class="n">identity</span> <span class="ow">in</span> <span class="n">RELEASED_IDENTITIES</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="n">resolve_compound_identity</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">cell</span><span class="o">.</span><span class="n">identity</span><span class="p">)</span><span class="o">.</span><span class="n">curated</span>
 
 
 <div class="viewcode-block" id="EnvChemgenWildenhain2015Dataset">
@@ -1201,10 +1313,34 @@
 
     <span class="c1"># ---- environment / phenotype builders -------------------------------------- #</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_compound</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cell</span><span class="p">:</span> <span class="n">MatrixCell</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Compound</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The compound's canonical identity: the table's PubChem name + InChIKey."""</span>
-        <span class="k">return</span> <span class="n">resolved_compound</span><span class="p">(</span>
-            <span class="n">cell</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span> <span class="n">pubchem_cid</span><span class="o">=</span><span class="n">cell</span><span class="o">.</span><span class="n">pubchem_cid</span><span class="p">,</span> <span class="n">smiles</span><span class="o">=</span><span class="n">cell</span><span class="o">.</span><span class="n">smiles</span>
+<span class="w">        </span><span class="sd">"""The compound's canonical identity: the table's PubChem name + InChIKey.</span>
+
+<span class="sd">        A ``RELEASED_IDENTITIES`` entry for the label supplies the name and SMILES the</span>
+<span class="sd">        release lacks, and its released InChIKey fills a key the resolver could not.</span>
+<span class="sd">        """</span>
+        <span class="n">released</span> <span class="o">=</span> <span class="n">RELEASED_IDENTITIES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cell</span><span class="o">.</span><span class="n">identity</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">released</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">resolved_compound</span><span class="p">(</span>
+                <span class="n">cell</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span> <span class="n">pubchem_cid</span><span class="o">=</span><span class="n">cell</span><span class="o">.</span><span class="n">pubchem_cid</span><span class="p">,</span> <span class="n">smiles</span><span class="o">=</span><span class="n">cell</span><span class="o">.</span><span class="n">smiles</span>
+            <span class="p">)</span>
+        <span class="n">compound</span> <span class="o">=</span> <span class="n">resolved_compound</span><span class="p">(</span>
+            <span class="n">released</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="n">cell</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span>
+            <span class="n">pubchem_cid</span><span class="o">=</span><span class="n">cell</span><span class="o">.</span><span class="n">pubchem_cid</span><span class="p">,</span>
+            <span class="n">smiles</span><span class="o">=</span><span class="n">cell</span><span class="o">.</span><span class="n">smiles</span> <span class="ow">or</span> <span class="n">released</span><span class="o">.</span><span class="n">smiles</span><span class="p">,</span>
+            <span class="n">derive_from_smiles</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="k">if</span> <span class="n">released</span><span class="o">.</span><span class="n">inchikey</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">compound</span><span class="o">.</span><span class="n">inchikey</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">compound</span> <span class="o">=</span> <span class="n">compound</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span>
+                <span class="n">update</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">"inchikey"</span><span class="p">:</span> <span class="n">released</span><span class="o">.</span><span class="n">inchikey</span><span class="p">,</span>
+                    <span class="s2">"provenance_gaps"</span><span class="p">:</span> <span class="p">[</span>
+                        <span class="n">gap</span>
+                        <span class="k">for</span> <span class="n">gap</span> <span class="ow">in</span> <span class="n">compound</span><span class="o">.</span><span class="n">provenance_gaps</span>
+                        <span class="k">if</span> <span class="n">gap</span><span class="o">.</span><span class="n">field</span> <span class="o">!=</span> <span class="s2">"inchikey"</span>
+                    <span class="p">],</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">compound</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_culture_environment</span><span class="p">(</span>
@@ -1390,7 +1526,7 @@
         <span class="p">}</span>
         <span class="n">unresolved</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">unresolved_pairs</span><span class="p">)</span>
         <span class="c1"># Rule 1: unresolved strain labels are held, whatever their compound, until the</span>
-        <span class="c1"># released-gene-name leaf exists. Counted in released rows.</span>
+        <span class="c1"># released-identifier leaf exists. Counted in released rows.</span>
         <span class="n">held</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">cells</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">cell</span><span class="o">.</span><span class="n">orf</span> <span class="ow">in</span> <span class="n">unresolved</span><span class="p">}</span>
         <span class="n">held_by_label</span> <span class="o">=</span> <span class="p">{</span>
             <span class="n">label</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">held</span> <span class="k">if</span> <span class="n">cells</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">orf</span> <span class="o">==</span> <span class="n">label</span><span class="p">)</span>
@@ -1402,14 +1538,41 @@
             <span class="k">if</span> <span class="n">n</span>
         <span class="p">)</span>
 
-        <span class="c1"># Rule 2: the release's own re-emissions of a datapoint collapse onto its first</span>
+        <span class="c1"># Rule 2: a compound with no released name or structure is held out</span>
+        <span class="c1"># (UNIDENTIFIED_COMPOUND_RULE). Counted in released rows of the cells left.</span>
+        <span class="n">unidentified_keys</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">key</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">cells</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">held</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_compound_is_identified</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="n">held_out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">UnidentifiedCompound</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">unidentified_keys</span><span class="p">):</span>
+            <span class="n">cell</span> <span class="o">=</span> <span class="n">cells</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="n">entry</span> <span class="o">=</span> <span class="n">held_out</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span>
+                <span class="n">cell</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span>
+                <span class="n">UnidentifiedCompound</span><span class="p">(</span>
+                    <span class="n">identity</span><span class="o">=</span><span class="n">cell</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span>
+                    <span class="n">pubchem_sid</span><span class="o">=</span><span class="n">cell</span><span class="o">.</span><span class="n">identity</span><span class="o">.</span><span class="n">removeprefix</span><span class="p">(</span><span class="s2">"SID "</span><span class="p">),</span>
+                    <span class="n">n_rows</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                    <span class="n">n_cells</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                    <span class="n">n_screens</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+            <span class="n">entry</span><span class="o">.</span><span class="n">n_rows</span> <span class="o">+=</span> <span class="n">cell</span><span class="o">.</span><span class="n">n_screens</span> <span class="o">+</span> <span class="n">cell</span><span class="o">.</span><span class="n">n_re_exported_rows</span>
+            <span class="n">entry</span><span class="o">.</span><span class="n">n_cells</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">entry</span><span class="o">.</span><span class="n">n_screens</span> <span class="o">+=</span> <span class="n">cell</span><span class="o">.</span><span class="n">n_screens</span>
+        <span class="n">n_unidentified_rows</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">n_rows</span> <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">held_out</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="n">held</span> <span class="o">|=</span> <span class="n">unidentified_keys</span>
+
+        <span class="c1"># Rule 3: the release's own re-emissions of a datapoint collapse onto its first</span>
         <span class="c1"># row (true duplicates; the other tags stay on the datapoint).</span>
         <span class="n">n_re_exported</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
             <span class="n">cell</span><span class="o">.</span><span class="n">n_re_exported_rows</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">cells</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">held</span>
         <span class="p">)</span>
 
-        <span class="c1"># Every DISTINCT compound identity is resolved once; one with no InChIKey, CID</span>
-        <span class="c1"># or ChEBI id is STORED with the typed inchikey gap resolved_compound attaches.</span>
+        <span class="c1"># Every DISTINCT stored compound identity is resolved once; one with no</span>
+        <span class="c1"># InChIKey, CID or ChEBI id (only an admitted RELEASED_IDENTITIES label can be</span>
+        <span class="c1"># one) is STORED with the typed inchikey gap resolved_compound attaches.</span>
         <span class="n">compounds</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Compound</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">cells</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">held</span> <span class="ow">and</span> <span class="n">cell</span><span class="o">.</span><span class="n">identity</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">compounds</span><span class="p">:</span>
@@ -1485,7 +1648,7 @@
                     <span class="n">description</span><span class="o">=</span><span class="p">(</span>
                         <span class="s2">"the released orf is not a systematic name and the sym names "</span>
                         <span class="s2">"no strain a mirrored source identifies (NON_ORF_STRAIN_LABELS); "</span>
-                        <span class="s2">"held for the released-gene-name leaf. Counted in released "</span>
+                        <span class="s2">"held for the released-identifier leaf. Counted in released "</span>
                         <span class="s2">"rows. Items: label (cells, released rows)"</span>
                     <span class="p">),</span>
                     <span class="n">n_records</span><span class="o">=</span><span class="n">n_held_rows</span><span class="p">,</span>
@@ -1494,6 +1657,22 @@
                         <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">label_rows</span><span class="p">[</span><span class="n">unresolved_pairs</span><span class="p">[</span><span class="n">label</span><span class="p">]]</span><span class="si">}</span><span class="s2"> rows)"</span>
                         <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">held_by_label</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
                         <span class="k">if</span> <span class="n">n</span>
+                    <span class="p">],</span>
+                <span class="p">),</span>
+                <span class="n">DropRule</span><span class="p">(</span>
+                    <span class="n">rule</span><span class="o">=</span><span class="n">UNIDENTIFIED_COMPOUND_RULE</span><span class="p">,</span>
+                    <span class="n">scope</span><span class="o">=</span><span class="s2">"compound"</span><span class="p">,</span>
+                    <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">"the released compound has no PUBCHEM_CID, no SMILES (the "</span>
+                        <span class="s2">"release has no name column), no curated identity row and no "</span>
+                        <span class="s2">"RELEASED_IDENTITIES entry: a registry number only, so the "</span>
+                        <span class="s2">"experiment cannot be represented. Counted in released rows. "</span>
+                        <span class="s2">"Items: label (cells, released rows)"</span>
+                    <span class="p">),</span>
+                    <span class="n">n_records</span><span class="o">=</span><span class="n">n_unidentified_rows</span><span class="p">,</span>
+                    <span class="n">items</span><span class="o">=</span><span class="p">[</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">entry</span><span class="o">.</span><span class="n">identity</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">entry</span><span class="o">.</span><span class="n">n_cells</span><span class="si">}</span><span class="s2"> cells, </span><span class="si">{</span><span class="n">entry</span><span class="o">.</span><span class="n">n_rows</span><span class="si">}</span><span class="s2"> rows)"</span>
+                        <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">held_out</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
                     <span class="p">],</span>
                 <span class="p">),</span>
                 <span class="n">DropRule</span><span class="p">(</span>
@@ -1511,24 +1690,35 @@
                 <span class="p">),</span>
             <span class="p">],</span>
             <span class="n">compounds_without_a_structure_identifier</span><span class="o">=</span><span class="n">unidentified</span><span class="p">,</span>
+            <span class="n">unidentified_compound_rule</span><span class="o">=</span><span class="n">UNIDENTIFIED_COMPOUND_RULE</span><span class="p">,</span>
+            <span class="n">unidentified_compound_policy</span><span class="o">=</span><span class="n">UNIDENTIFIED_COMPOUND_POLICY</span><span class="p">,</span>
+            <span class="n">unidentified_compound_sources</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">RELEASED_COMPOUND_IDENTIFIER</span><span class="p">,</span>
+                <span class="n">STRUCTURES_ON_CHEMGRID</span><span class="p">,</span>
+            <span class="p">],</span>
+            <span class="n">unidentified_compounds_held_out</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">held_out</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
         <span class="p">)</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"dropped_records.json"</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
             <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">drop_log</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
-        <span class="k">if</span> <span class="n">drop_log</span><span class="o">.</span><span class="n">dropped_records</span> <span class="o">!=</span> <span class="n">n_held_rows</span> <span class="o">+</span> <span class="n">n_re_exported</span><span class="p">:</span>
+        <span class="n">rule_total</span> <span class="o">=</span> <span class="n">n_held_rows</span> <span class="o">+</span> <span class="n">n_unidentified_rows</span> <span class="o">+</span> <span class="n">n_re_exported</span>
+        <span class="k">if</span> <span class="n">drop_log</span><span class="o">.</span><span class="n">dropped_records</span> <span class="o">!=</span> <span class="n">rule_total</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"drop accounting mismatch: rule total </span><span class="si">{</span><span class="n">n_held_rows</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">n_re_exported</span><span class="si">}</span><span class="s2">, "</span>
+                <span class="sa">f</span><span class="s2">"drop accounting mismatch: rule total </span><span class="si">{</span><span class="n">rule_total</span><span class="si">}</span><span class="s2">, "</span>
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">drop_log</span><span class="o">.</span><span class="n">dropped_records</span><span class="si">}</span><span class="s2"> records missing from the build"</span>
             <span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s2">"Wrote </span><span class="si">%d</span><span class="s2"> Wildenhain2015 records over </span><span class="si">%d</span><span class="s2"> cells (</span><span class="si">%d</span><span class="s2"> kanMX deletion, </span><span class="si">%d</span><span class="s2"> wild "</span>
-            <span class="s2">"type; </span><span class="si">%d</span><span class="s2"> rows held for an unresolved strain label; </span><span class="si">%d</span><span class="s2"> re-exported duplicate "</span>
-            <span class="s2">"rows collapsed; </span><span class="si">%d</span><span class="s2"> compounds stored with an inchikey gap; </span><span class="si">%d</span><span class="s2"> cells whose "</span>
-            <span class="s2">"every screen is non-replicate flagged)"</span><span class="p">,</span>
+            <span class="s2">"type; </span><span class="si">%d</span><span class="s2"> rows held for an unresolved strain label; </span><span class="si">%d</span><span class="s2"> rows of </span><span class="si">%d</span><span class="s2"> "</span>
+            <span class="s2">"unidentified compounds held out; </span><span class="si">%d</span><span class="s2"> re-exported duplicate rows collapsed; "</span>
+            <span class="s2">"</span><span class="si">%d</span><span class="s2"> compounds stored with an inchikey gap; </span><span class="si">%d</span><span class="s2"> cells whose every screen is "</span>
+            <span class="s2">"non-replicate flagged)"</span><span class="p">,</span>
             <span class="n">idx</span><span class="p">,</span>
             <span class="n">n_cells</span><span class="p">,</span>
             <span class="n">by_kind</span><span class="p">[</span><span class="s2">"deletion"</span><span class="p">],</span>
             <span class="n">by_kind</span><span class="p">[</span><span class="s2">"wild_type"</span><span class="p">],</span>
             <span class="n">n_held_rows</span><span class="p">,</span>
+            <span class="n">n_unidentified_rows</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">held_out</span><span class="p">),</span>
             <span class="n">n_re_exported</span><span class="p">,</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">unidentified</span><span class="p">),</span>
             <span class="n">n_all_non_replicating</span><span class="p">,</span>

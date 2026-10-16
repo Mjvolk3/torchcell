@@ -217,12 +217,13 @@
 <span class="n">LANE_OF_LABEL</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">"Genotype"</span><span class="p">:</span> <span class="s2">"genotype"</span><span class="p">,</span>
     <span class="s2">"Perturbation"</span><span class="p">:</span> <span class="s2">"genotype"</span><span class="p">,</span>
-    <span class="s2">"BacterialPerturbation"</span><span class="p">:</span> <span class="s2">"genotype"</span><span class="p">,</span>
-    <span class="c1"># A called bacterial variant (issue #731): a SIBLING of BacterialPerturbation</span>
-    <span class="c1"># under `genotype`, so it takes the same lane. Not in ANCESTOR_LABELS, for the</span>
-    <span class="c1"># reason PhagePerturbation is not: that tuple measures the labels the SERVED</span>
-    <span class="c1"># store carries, and no variant dataset is served yet.</span>
-    <span class="s2">"BacterialSequenceVariantPerturbation"</span><span class="p">:</span> <span class="s2">"genotype"</span><span class="p">,</span>
+    <span class="c1"># A called sequence variant (issue #731), is_a Perturbation since the ontology</span>
+    <span class="c1"># unification (G, 2026-10-15; the former BacterialPerturbation and</span>
+    <span class="c1"># BacterialSequenceVariantPerturbation labels are retired), so it takes the same</span>
+    <span class="c1"># lane. Not in ANCESTOR_LABELS, for the reason PhagePerturbation is not: that tuple</span>
+    <span class="c1"># measures the labels the SERVED store carries, and no variant dataset is served</span>
+    <span class="c1"># yet.</span>
+    <span class="s2">"SequenceVariantPerturbation"</span><span class="p">:</span> <span class="s2">"genotype"</span><span class="p">,</span>
     <span class="s2">"SegregantGenotype"</span><span class="p">:</span> <span class="s2">"genotype"</span><span class="p">,</span>
     <span class="s2">"PerturbedSegregantGenotype"</span><span class="p">:</span> <span class="s2">"genotype"</span><span class="p">,</span>  <span class="c1"># Hale 2024</span>
     <span class="s2">"CrisprConstruct"</span><span class="p">:</span> <span class="s2">"genotype"</span><span class="p">,</span>
@@ -255,8 +256,7 @@
 <span class="n">CAPTION_OF_LABEL</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">"Genotype"</span><span class="p">:</span> <span class="s2">"</span><span class="si">{perturbed_gene_name}</span><span class="s2">"</span><span class="p">,</span>
     <span class="s2">"Perturbation"</span><span class="p">:</span> <span class="s2">"</span><span class="si">{perturbed_gene_name}</span><span class="s2">"</span><span class="p">,</span>
-    <span class="s2">"BacterialPerturbation"</span><span class="p">:</span> <span class="s2">"</span><span class="si">{perturbed_gene_name}</span><span class="s2">"</span><span class="p">,</span>
-    <span class="s2">"BacterialSequenceVariantPerturbation"</span><span class="p">:</span> <span class="s2">"</span><span class="si">{perturbed_gene_name}</span><span class="s2">"</span><span class="p">,</span>
+    <span class="s2">"SequenceVariantPerturbation"</span><span class="p">:</span> <span class="s2">"</span><span class="si">{perturbed_gene_name}</span><span class="s2">"</span><span class="p">,</span>
     <span class="s2">"SegregantGenotype"</span><span class="p">:</span> <span class="s2">"</span><span class="si">{segregant_id}</span><span class="s2">"</span><span class="p">,</span>
     <span class="s2">"PerturbedSegregantGenotype"</span><span class="p">:</span> <span class="s2">"</span><span class="si">{segregant_id}</span><span class="s2">"</span><span class="p">,</span>
     <span class="s2">"CrisprConstruct"</span><span class="p">:</span> <span class="s2">"</span><span class="si">{effector}</span><span class="s2">"</span><span class="p">,</span>

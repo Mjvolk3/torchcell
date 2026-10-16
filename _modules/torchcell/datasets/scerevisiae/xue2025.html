@@ -158,7 +158,7 @@
 <span class="sd">parsed row. All 13 genes (baseline + 10 TFs) are stored under their released names.</span>
 
 <span class="sd">GENE IDENTITY (#1045): the release names every gene by its common name only, and each</span>
-<span class="sd">is stored under that name verbatim on ``ReleasedGeneNamePerturbation`` (kind</span>
+<span class="sd">is stored under that name verbatim on ``ReleasedIdentifierPerturbation`` (kind</span>
 <span class="sd">``deletion``, marker KanMX); a systematic name, had the release used one, would go on</span>
 <span class="sd">``KanMxDeletionPerturbation``. No genome is consulted, so ``TFC7`` (the standard name of</span>
 <span class="sd">YOR110W and an alias of YNL039W) is stored as the symbol the release wrote, and the join</span>
@@ -244,11 +244,15 @@
     <span class="n">MetabolitePhenotype</span><span class="p">,</span>
     <span class="n">Publication</span><span class="p">,</span>
     <span class="n">ReferenceGenome</span><span class="p">,</span>
-    <span class="n">ReleasedGeneKind</span><span class="p">,</span>
-    <span class="n">ReleasedGeneNamePerturbation</span><span class="p">,</span>
+    <span class="n">ReleasedIdentifierPerturbation</span><span class="p">,</span>
+    <span class="n">ReleasedKind</span><span class="p">,</span>
     <span class="n">Temperature</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.registry</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SGD_S288C_R64</span><span class="p">,</span>
+    <span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -288,18 +292,19 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_released_deletion</span><span class="p">(</span>
     <span class="n">gene</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KanMxDeletionPerturbation</span> <span class="o">|</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KanMxDeletionPerturbation</span> <span class="o">|</span> <span class="n">ReleasedIdentifierPerturbation</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The deletion under the name the release gives (#1045)."""</span>
     <span class="k">if</span> <span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">gene</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">KanMxDeletionPerturbation</span><span class="p">(</span>
             <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">gene</span><span class="p">,</span> <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">gene</span>
         <span class="p">)</span>
-    <span class="k">return</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">(</span>
+    <span class="k">return</span> <span class="n">ReleasedIdentifierPerturbation</span><span class="p">(</span>
         <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">gene</span><span class="p">,</span>
+        <span class="n">gene_namespace</span><span class="o">=</span><span class="s2">"scerevisiae_s288c_sgd_systematic"</span><span class="p">,</span>
         <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">gene</span><span class="p">,</span>
-        <span class="n">released_gene_name</span><span class="o">=</span><span class="n">gene</span><span class="p">,</span>
-        <span class="n">released_kind</span><span class="o">=</span><span class="n">ReleasedGeneKind</span><span class="o">.</span><span class="n">deletion</span><span class="p">,</span>
-        <span class="n">marker</span><span class="o">=</span><span class="s2">"KanMX"</span><span class="p">,</span>
+        <span class="n">identifier_kind</span><span class="o">=</span><span class="s2">"genotype column entry, as released"</span><span class="p">,</span>
+        <span class="n">released_kind</span><span class="o">=</span><span class="n">ReleasedKind</span><span class="o">.</span><span class="n">deletion</span><span class="p">,</span>
+        <span class="n">cassette</span><span class="o">=</span><span class="s2">"KanMX"</span><span class="p">,</span>
     <span class="p">)</span>
 
 
@@ -491,7 +496,10 @@
             <span class="n">doi_url</span><span class="o">=</span><span class="sa">f</span><span class="s2">"https://doi.org/</span><span class="si">{</span><span class="n">_DOI</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
-            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="s2">"BY4741"</span>
+            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span>
+            <span class="n">strain</span><span class="o">=</span><span class="s2">"BY4741"</span><span class="p">,</span>
+            <span class="n">assembly_set</span><span class="o">=</span><span class="n">SGD_S288C_R64</span><span class="p">,</span>
+            <span class="n">assembly_accession</span><span class="o">=</span><span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="c1"># Measured WT reference: the wt BY4741 row's 5 FFA titers (constant across records).</span>

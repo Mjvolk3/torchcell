@@ -130,7 +130,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">wraps</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">chain</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Final</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">get_args</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">wandb</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">biocypher._create</span><span class="w"> </span><span class="kn">import</span> <span class="n">BioCypherEdge</span><span class="p">,</span> <span class="n">BioCypherNode</span>
@@ -148,24 +148,24 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.interned_constant</span><span class="w"> </span><span class="kn">import</span> <span class="n">split_experiment_dump</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">BacterialCrisprActivationPerturbation</span><span class="p">,</span>
-    <span class="n">BacterialCrisprInterferencePerturbation</span><span class="p">,</span>
-    <span class="n">BacterialDegronPerturbation</span><span class="p">,</span>
-    <span class="n">BacterialDeletionPerturbation</span><span class="p">,</span>
-    <span class="n">BacterialMarkedAllelePerturbation</span><span class="p">,</span>
-    <span class="n">BacterialReleasedCrisprPerturbation</span><span class="p">,</span>
-    <span class="n">BacterialReleasedStrainPerturbation</span><span class="p">,</span>
-    <span class="n">BacterialReleasedTransposonPerturbation</span><span class="p">,</span>
-    <span class="n">BacterialSequenceVariantPerturbation</span><span class="p">,</span>
-    <span class="n">BacterialSiteVariantPerturbation</span><span class="p">,</span>
-    <span class="n">BacterialSpanDeletionPerturbation</span><span class="p">,</span>
-    <span class="n">HeterologousPathwayPerturbation</span><span class="p">,</span>
+    <span class="n">NON_ASSEMBLY_REGISTRY_SETS</span><span class="p">,</span>
+    <span class="n">AssemblySet</span><span class="p">,</span>
     <span class="n">PhagePerturbation</span><span class="p">,</span>
-    <span class="n">PromoterReplacementPerturbation</span><span class="p">,</span>
-    <span class="n">TransposonInsertionPerturbation</span><span class="p">,</span>
+    <span class="n">SpanDeletionCallPerturbation</span><span class="p">,</span>
+    <span class="n">VariantCallPerturbation</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.fast_csv</span><span class="w"> </span><span class="kn">import</span> <span class="n">RenderedChunk</span><span class="p">,</span> <span class="n">RowSpecs</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.loader</span><span class="w"> </span><span class="kn">import</span> <span class="n">CpuExperimentLoaderMultiprocessing</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.registry</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ECOLI_B_REL606</span><span class="p">,</span>
+    <span class="n">ECOLI_K12_BW25113</span><span class="p">,</span>
+    <span class="n">ECOLI_K12_MG1655</span><span class="p">,</span>
+    <span class="n">ECOLI_K12_W3110</span><span class="p">,</span>
+    <span class="n">PETER2018_1011</span><span class="p">,</span>
+    <span class="n">PPUTIDA_KT2440</span><span class="p">,</span>
+    <span class="n">SCEREVISIAE_CENPK113_7D</span><span class="p">,</span>
+    <span class="n">SGD_S288C_R64</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -191,50 +191,90 @@
 <span class="sd">2.7x more chunks, and the pool is rebuilt every chunks_per_worker x workers of them.</span>
 <span class="sd">"""</span>
 <span class="n">SINGLE_PASS_MIN_CHUNK</span> <span class="o">=</span> <span class="mi">256</span>
-<span class="n">BACTERIAL_PERTURBATION_LEAVES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">type</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">BacterialDeletionPerturbation</span><span class="p">,</span>
-    <span class="n">TransposonInsertionPerturbation</span><span class="p">,</span>
-    <span class="n">BacterialCrisprInterferencePerturbation</span><span class="p">,</span>
-    <span class="n">PromoterReplacementPerturbation</span><span class="p">,</span>
-    <span class="n">HeterologousPathwayPerturbation</span><span class="p">,</span>
-    <span class="c1"># round-2 leaves (#749, #792, #799). Each projects the same five properties the</span>
-    <span class="c1"># `bacterial perturbation` graph class declares; their leaf-specific fields</span>
-    <span class="c1"># (cassette, tag, degron, insertion_site, collection) carry no node property, as</span>
-    <span class="c1"># `BacterialDeletionPerturbation.collection` does not, and travel in the</span>
-    <span class="c1"># serialized record.</span>
-    <span class="n">BacterialMarkedAllelePerturbation</span><span class="p">,</span>
-    <span class="n">BacterialDegronPerturbation</span><span class="p">,</span>
-    <span class="n">BacterialCrisprActivationPerturbation</span><span class="p">,</span>
-    <span class="c1"># #691: a strain under its released identifier. The same five properties; its</span>
-    <span class="c1"># strain_label, released_kind, identifier_kind, cassette and collection travel in the</span>
-    <span class="c1"># serialized record, as the round-2 leaves' own fields do.</span>
-    <span class="n">BacterialReleasedStrainPerturbation</span><span class="p">,</span>
-    <span class="c1"># #691 round 2: a CRISPR guide and a transposon insertion against a released</span>
-    <span class="c1"># identifier. The same five properties; crispr, expression_direction, barcode,</span>
-    <span class="c1"># insertion_position, insertion_strand, transposon and library_pool travel in the</span>
-    <span class="c1"># serialized record, as they do on the placed leaves of each technology.</span>
-    <span class="n">BacterialReleasedCrisprPerturbation</span><span class="p">,</span>
-    <span class="n">BacterialReleasedTransposonPerturbation</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="sd">"""The gene-perturbation leaves written as ``bacterial perturbation`` nodes.</span>
+<span class="n">REGISTRY_SET_OF_NAMESPACE</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"scerevisiae_s288c_sgd_systematic"</span><span class="p">:</span> <span class="n">SGD_S288C_R64</span><span class="p">,</span>
+    <span class="s2">"scerevisiae_cenpk113_7d_locus_tag"</span><span class="p">:</span> <span class="n">SCEREVISIAE_CENPK113_7D</span><span class="p">,</span>
+    <span class="s2">"scerevisiae_peter2018_pangenome_orf"</span><span class="p">:</span> <span class="n">PETER2018_1011</span><span class="p">,</span>
+    <span class="s2">"ecoli_k12_mg1655_bnumber"</span><span class="p">:</span> <span class="n">ECOLI_K12_MG1655</span><span class="p">,</span>
+    <span class="s2">"ecoli_k12_bw25113_locus_tag"</span><span class="p">:</span> <span class="n">ECOLI_K12_BW25113</span><span class="p">,</span>
+    <span class="s2">"pputida_kt2440_locus_tag"</span><span class="p">:</span> <span class="n">PPUTIDA_KT2440</span><span class="p">,</span>
+    <span class="s2">"ecoli_b_rel606_locus_tag"</span><span class="p">:</span> <span class="n">ECOLI_B_REL606</span><span class="p">,</span>
+    <span class="s2">"ecoli_k12_w3110_refseq_locus_tag"</span><span class="p">:</span> <span class="n">ECOLI_K12_W3110</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="sd">"""``GeneIdNamespace`` member -&gt; the registry set its identifiers are written in.</span>
 
-<span class="sd">The leaves that carry ``gene_namespace`` MINUS the called-variant leaves below, which</span>
-<span class="sd">have their own class. A yeast leaf is never one of them, so a yeast record emits no</span>
-<span class="sd">``bacterial perturbation`` node, and ``_perturbation_node`` (served) is not touched to</span>
-<span class="sd">exclude them: a bacterial adapter conf enables ``bacterial perturbation (chunked)``</span>
-<span class="sd">instead of ``perturbation (chunked)``.</span>
+<span class="sd">Total over the namespace vocabulary and a bijection onto registry set ids, pinned by</span>
+<span class="sd">``tests/torchcell/adapters/test_bacterial_graph_classes.py``. A registry set is not</span>
+<span class="sd">always an assembly: the Peter 2018 pangenome ORF ids are written in</span>
+<span class="sd">``peter2018_1011_assemblies``, which ``NON_ASSEMBLY_REGISTRY_SETS`` excludes from the</span>
+<span class="sd">``AssemblySet`` vocabulary by name (a panel of 1,011 assemblies and the pangenome</span>
+<span class="sd">matrices, not one reference a record pins). ``HOST_GENOME_OF_NAMESPACE`` below is this</span>
+<span class="sd">map projected onto that vocabulary.</span>
 <span class="sd">"""</span>
-<span class="n">BACTERIAL_VARIANT_PERTURBATION_LEAVES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">type</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">BacterialSequenceVariantPerturbation</span><span class="p">,</span>
-    <span class="n">BacterialSiteVariantPerturbation</span><span class="p">,</span>
-    <span class="n">BacterialSpanDeletionPerturbation</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="sd">"""The leaves written as ``bacterial sequence variant perturbation`` nodes (#731).</span>
 
-<span class="sd">Exactly the leaves that compose a ``BacterialVariantCall``.</span>
-<span class="sd">``BacterialSpanDeletionPerturbation`` is also a ``BacterialDeletionPerturbation``, so the</span>
-<span class="sd">``bacterial perturbation`` method excludes this tuple explicitly; without that a span</span>
-<span class="sd">deletion would be written twice, once under each label.</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_host_genome_of_namespace</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Project ``REGISTRY_SET_OF_NAMESPACE`` onto the ``AssemblySet`` vocabulary.</span>
+
+<span class="sd">    A namespace whose registry set is an assembly maps to that set id; one whose set is</span>
+<span class="sd">    listed in ``NON_ASSEMBLY_REGISTRY_SETS`` maps to ``None``; any other set is a defect</span>
+<span class="sd">    in this module and is refused at import rather than written into a node.</span>
+<span class="sd">    """</span>
+    <span class="n">assemblies</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">get_args</span><span class="p">(</span><span class="n">AssemblySet</span><span class="p">))</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">namespace</span><span class="p">,</span> <span class="n">registry_set</span> <span class="ow">in</span> <span class="n">REGISTRY_SET_OF_NAMESPACE</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">registry_set</span> <span class="ow">in</span> <span class="n">assemblies</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">namespace</span><span class="p">]</span> <span class="o">=</span> <span class="n">registry_set</span>
+        <span class="k">elif</span> <span class="n">registry_set</span> <span class="ow">in</span> <span class="n">NON_ASSEMBLY_REGISTRY_SETS</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">namespace</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"namespace </span><span class="si">{</span><span class="n">namespace</span><span class="si">!r}</span><span class="s2"> is written in registry set "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">registry_set</span><span class="si">!r}</span><span class="s2">, which is neither an AssemblySet member nor "</span>
+                <span class="s2">"listed in NON_ASSEMBLY_REGISTRY_SETS"</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<span class="n">HOST_GENOME_OF_NAMESPACE</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="n">_host_genome_of_namespace</span><span class="p">()</span>
+<span class="sd">"""``GeneIdNamespace`` member -&gt; the deposited assembly set its identifiers are written in,</span>
+<span class="sd">or ``None`` when that set is not an assembly.</span>
+
+<span class="sd">The ``host_genome`` property of every ``perturbation`` node (ontology unification G,</span>
+<span class="sd">2026-10-15). A perturbation states its host as ``gene_namespace``, one identifier space</span>
+<span class="sd">per deposited registry set (schema.py, P1); a ``genome`` node states the set it pins as</span>
+<span class="sd">``assembly_set``, a member of the closed ``AssemblySet`` vocabulary or ``None`` for a</span>
+<span class="sd">typed gap. The two are the same fact in two vocabularies, so this map projects the</span>
+<span class="sd">namespace into the ``AssemblySet`` vocabulary and ``perturbation.host_genome =</span>
+<span class="sd">genome.assembly_set`` is a value join. It is the assembly-set id and never the strain</span>
+<span class="sd">string: BY4741, BY4742 and S288C are three ``genome`` nodes writing their identifiers</span>
+<span class="sd">against the one S288C set, and a strain-keyed value would fragment the join across them</span>
+<span class="sd">(review 3 finding 9).</span>
+
+<span class="sd">``None`` is the honest value for ``scerevisiae_peter2018_pangenome_orf``: the Peter 2018</span>
+<span class="sd">pangenome is a registry set and not an assembly (``NON_ASSEMBLY_REGISTRY_SETS``), no</span>
+<span class="sd">``genome`` node pins it, and a Caudal 2024 record pins S288C for the names and</span>
+<span class="sd">coordinates of its other perturbations. Before lane Q (2026-10-15) the map carried the</span>
+<span class="sd">registry id ``peter2018_1011_assemblies`` for that namespace, a value no</span>
+<span class="sd">``genome.assembly_set`` can hold, so the join could never resolve for the 79,016</span>
+<span class="sd">pangenome-namespaced perturbations of the served Caudal store; it stayed latent only</span>
+<span class="sd">because Caudal's conf has no perturbation lane. The node's blob keeps</span>
+<span class="sd">``gene_namespace``, which is where a ``null`` ``host_genome`` is explained</span>
+<span class="sd">(``tests/torchcell/adapters/test_host_genome_vocabulary.py``). A namespace outside the</span>
+<span class="sd">map is a ``KeyError`` at generation, which is the honest failure: a new identifier</span>
+<span class="sd">space is deposited in the registry first and named in ``REGISTRY_SET_OF_NAMESPACE``</span>
+<span class="sd">second.</span>
+<span class="sd">"""</span>
+<span class="n">VARIANT_CALL_LEAVES</span><span class="p">:</span> <span class="n">Final</span> <span class="o">=</span> <span class="p">(</span><span class="n">VariantCallPerturbation</span><span class="p">,</span> <span class="n">SpanDeletionCallPerturbation</span><span class="p">)</span>
+<span class="sd">"""The gene-perturbation leaves written as ``sequence variant perturbation`` nodes.</span>
+
+<span class="sd">The leaves that COMPOSE a ``GenomeVariantCall`` (a ``call`` field, #731): the</span>
+<span class="sd">``VariantCallPerturbation`` family (locus and site calls) and</span>
+<span class="sd">``SpanDeletionCallPerturbation``, which is a ``DeletionStrainPerturbation`` by class</span>
+<span class="sd">(one locus removed entirely by a called span) and carries the call beside it. The rule</span>
+<span class="sd">is the physical thing the leaf states, a called variant, not a host; the</span>
+<span class="sd">union-to-label test in ``tests/torchcell/adapters/test_bacterial_graph_classes.py``</span>
+<span class="sd">pins it to exactly the union members whose ``call`` field is a ``GenomeVariantCall``.</span>
 <span class="sd">"""</span>
 <span class="n">CGROUP_MEMORY_CURRENT</span> <span class="o">=</span> <span class="s2">"/sys/fs/cgroup/memory.current"</span>
 <span class="n">CGROUP_MEMORY_MAX</span> <span class="o">=</span> <span class="s2">"/sys/fs/cgroup/memory.max"</span>
@@ -366,11 +406,6 @@
             <span class="p">(</span><span class="s2">"segregant background (chunked)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_segregant_background_node</span><span class="p">),</span>
             <span class="c1"># --- end Hale 2024 ---</span>
             <span class="p">(</span><span class="s2">"perturbation (chunked)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_perturbation_node</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"bacterial perturbation (chunked)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bacterial_perturbation_node</span><span class="p">),</span>
-            <span class="p">(</span>
-                <span class="s2">"bacterial sequence variant perturbation (chunked)"</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_bacterial_variant_perturbation_node</span><span class="p">,</span>
-            <span class="p">),</span>
             <span class="p">(</span><span class="s2">"crispr construct (chunked)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_crispr_construct_node</span><span class="p">),</span>
             <span class="p">(</span><span class="s2">"environment (chunked)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_environment_node</span><span class="p">),</span>
             <span class="p">(</span><span class="s2">"environment reference"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_environment_reference_nodes</span><span class="p">),</span>
@@ -382,11 +417,6 @@
             <span class="p">(</span>
                 <span class="s2">"environment perturbation reference"</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_get_environment_perturbation_reference_nodes</span><span class="p">,</span>
-            <span class="p">),</span>
-            <span class="p">(</span><span class="s2">"phage perturbation (chunked)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_phage_perturbation_node</span><span class="p">),</span>
-            <span class="p">(</span>
-                <span class="s2">"phage perturbation reference"</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_get_phage_perturbation_reference_nodes</span><span class="p">,</span>
             <span class="p">),</span>
             <span class="p">(</span><span class="s2">"fitness phenotype (chunked)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fitness_phenotype_node</span><span class="p">),</span>
             <span class="p">(</span>
@@ -658,6 +688,11 @@
                 <span class="s2">"perturbation to genotype (chunked)"</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_perturbation_to_genotype_edges</span><span class="p">,</span>
             <span class="p">),</span>
+            <span class="c1"># The host-genome edge is OFF in every conf (ontology unification G): the</span>
+            <span class="c1"># `host_genome` property is the mandatory join key, and this edge adds a</span>
+            <span class="c1"># row per perturbation per record, the order of `perturbation member of`</span>
+            <span class="c1"># (47.3 M rows in the job 4901 partial). A conf opts in by listing it.</span>
+            <span class="p">(</span><span class="s2">"perturbation to genome (chunked)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_perturbation_to_genome_edges</span><span class="p">),</span>
             <span class="c1"># --- begin Hale 2024 ---</span>
             <span class="p">(</span>
                 <span class="s2">"segregant background to genotype (chunked)"</span><span class="p">,</span>
@@ -1157,14 +1192,21 @@
 <span class="sd">        ``StrainReferenceGenome``'s typed ``background`` rides along in full: its</span>
 <span class="sd">        ``alleles`` AND its ``integrations`` (the cassettes an engineered host carries at</span>
 <span class="sd">        a named site) are in the blob with no per-field adapter change, which is how the</span>
-<span class="sd">        background has always reached the graph. ``species`` and ``strain`` stay the</span>
-<span class="sd">        queryable scalars.</span>
+<span class="sd">        background has always reached the graph. ``species``, ``strain`` and</span>
+<span class="sd">        ``assembly_set`` are the queryable scalars.</span>
+
+<span class="sd">        ``assembly_set`` is the deposited set the reference pins (the registry id an</span>
+<span class="sd">        ``AssemblyReferenceGenome`` states; P2 of the ontology unification declares it</span>
+<span class="sd">        on every ``ReferenceGenome``, set or typed gap), the value every ``perturbation``</span>
+<span class="sd">        node's ``host_genome`` joins on. A reference that states none projects ``None``:</span>
+<span class="sd">        the host is not invented from the strain string.</span>
 <span class="sd">        """</span>
         <span class="n">nodes</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">seen_node_ids</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">experiment_reference_index</span><span class="p">):</span>
+            <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">genome_reference</span>
             <span class="n">genome_id</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span>
-                <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">genome_reference</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">genome_reference</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
             <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">genome_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen_node_ids</span><span class="p">:</span>
                 <span class="n">seen_node_ids</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">genome_id</span><span class="p">)</span>
@@ -1173,15 +1215,34 @@
                     <span class="n">preferred_id</span><span class="o">=</span><span class="s2">"genome"</span><span class="p">,</span>
                     <span class="n">node_label</span><span class="o">=</span><span class="s2">"genome"</span><span class="p">,</span>
                     <span class="n">properties</span><span class="o">=</span><span class="p">{</span>
-                        <span class="s2">"species"</span><span class="p">:</span> <span class="n">data</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">genome_reference</span><span class="o">.</span><span class="n">species</span><span class="p">,</span>
-                        <span class="s2">"strain"</span><span class="p">:</span> <span class="n">data</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">genome_reference</span><span class="o">.</span><span class="n">strain</span><span class="p">,</span>
-                        <span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
-                            <span class="n">data</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">genome_reference</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
-                        <span class="p">),</span>
+                        <span class="s2">"species"</span><span class="p">:</span> <span class="n">genome_reference</span><span class="o">.</span><span class="n">species</span><span class="p">,</span>
+                        <span class="s2">"strain"</span><span class="p">:</span> <span class="n">genome_reference</span><span class="o">.</span><span class="n">strain</span><span class="p">,</span>
+                        <span class="s2">"assembly_set"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_assembly_set_of</span><span class="p">(</span><span class="n">genome_reference</span><span class="p">),</span>
+                        <span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">genome_reference</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()),</span>
                     <span class="p">},</span>
                 <span class="p">)</span>
                 <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">nodes</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_assembly_set_of</span><span class="p">(</span><span class="n">genome_reference</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The registry id of the assembly set a reference genome pins, or ``None``.</span>
+
+<span class="sd">        Read off the ``assembly_set`` field where the reference declares one</span>
+<span class="sd">        (``AssemblyReferenceGenome`` today, every ``ReferenceGenome`` under P2) and</span>
+<span class="sd">        ``None`` where it declares none or carries a typed gap in its place. The value is</span>
+<span class="sd">        the registry id itself, which is what ``HOST_GENOME_OF_NAMESPACE`` projects every</span>
+<span class="sd">        perturbation's namespace into, so the join needs no second vocabulary.</span>
+<span class="sd">        """</span>
+        <span class="n">assembly_set</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">genome_reference</span><span class="p">,</span> <span class="s2">"assembly_set"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">assembly_set</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">assembly_set</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_genome_node_id</span><span class="p">(</span><span class="n">genome_reference</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The ``genome`` node id: sha256 of the reference genome's dump, as the node uses."""</span>
+        <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">genome_reference</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
 
     <span class="nd">@data_chunker</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_experiment_node</span><span class="p">(</span>
@@ -1349,118 +1410,89 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_perturbation_node</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">method_name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BioCypherNode</span><span class="p">]:</span>
-        <span class="n">perturbations</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">genotype</span><span class="o">.</span><span class="n">perturbations</span>
+<span class="w">        </span><span class="sd">"""One node per gene perturbation of the genotype, the label chosen BY LEAF.</span>
+
+<span class="sd">        Every member of ``GenePerturbationType`` is served here (ontology unification G,</span>
+<span class="sd">        2026-10-15): a leaf that composes a ``GenomeVariantCall``</span>
+<span class="sd">        (``VARIANT_CALL_LEAVES``, #731) is written as ``sequence variant</span>
+<span class="sd">        perturbation``, ``is_a perturbation`` in the graph schema, with the call's</span>
+<span class="sd">        replicon, interval, kind, frequency and mode as columns; every other leaf is</span>
+<span class="sd">        written as ``perturbation``. The two labels are two literal ``BioCypherNode``</span>
+<span class="sd">        sites because ``ontology_checks.adapter_property_mismatches`` reads the label</span>
+<span class="sd">        and the property keys off the AST.</span>
+
+<span class="sd">        The lane used to be chosen by CONF (``bacterial perturbation (chunked)`` keyed</span>
+<span class="sd">        on a class tuple, ``perturbation (chunked)`` on everything), so a leaf a conf did</span>
+<span class="sd">        not list got an edge from ``_perturbation_to_genotype_edges`` and no node</span>
+<span class="sd">        (Carruthers 2025's ``GeneAdditionPerturbation`` under the bacterial-only confs,</span>
+<span class="sd">        audit C 1.3). One method that partitions the union by leaf cannot leave a member</span>
+<span class="sd">        unserved; ``tests/torchcell/adapters/test_bacterial_graph_classes.py`` pins the</span>
+<span class="sd">        union-to-label bijection.</span>
+
+<span class="sd">        ``host_genome`` is the record's ``gene_namespace`` projected into the</span>
+<span class="sd">        ``AssemblySet`` vocabulary (``HOST_GENOME_OF_NAMESPACE``), so it equals the</span>
+<span class="sd">        ``assembly_set`` of the ``genome`` node the record is written against, or is</span>
+<span class="sd">        ``None`` for a namespace whose registry set is not an assembly (the Peter 2018</span>
+<span class="sd">        pangenome ORFs). The node id is the sha256 of the leaf's ``model_dump``, the id</span>
+<span class="sd">        every edge method computes.</span>
+<span class="sd">        """</span>
         <span class="n">nodes</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">perturbation</span> <span class="ow">in</span> <span class="n">perturbations</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">perturbation</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">genotype</span><span class="o">.</span><span class="n">perturbations</span><span class="p">:</span>
             <span class="n">perturbation_id</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span>
                 <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">perturbation</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
             <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
-            <span class="n">node</span> <span class="o">=</span> <span class="n">BioCypherNode</span><span class="p">(</span>
-                <span class="n">node_id</span><span class="o">=</span><span class="n">perturbation_id</span><span class="p">,</span>
-                <span class="n">preferred_id</span><span class="o">=</span><span class="n">perturbation</span><span class="o">.</span><span class="n">perturbation_type</span><span class="p">,</span>
-                <span class="n">node_label</span><span class="o">=</span><span class="s2">"perturbation"</span><span class="p">,</span>
-                <span class="n">properties</span><span class="o">=</span><span class="p">{</span>
-                    <span class="s2">"systematic_gene_name"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">systematic_gene_name</span><span class="p">,</span>
-                    <span class="s2">"perturbed_gene_name"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">perturbed_gene_name</span><span class="p">,</span>
-                    <span class="s2">"perturbation_type"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">perturbation_type</span><span class="p">,</span>
-                    <span class="s2">"description"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">description</span><span class="p">,</span>
-                    <span class="c1"># strain_id is declared only on the Sga*/Marker/Natural*/</span>
-                    <span class="c1"># SequenceVariant/CopyNumberVariant leaves -- not on the base</span>
-                    <span class="c1"># KanMxDeletion/GeneAddition types the metabolite/morphology</span>
-                    <span class="c1"># datasets use, so read it defensively.</span>
-                    <span class="s2">"strain_id"</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">perturbation</span><span class="p">,</span> <span class="s2">"strain_id"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-                <span class="p">},</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">perturbation</span><span class="p">,</span> <span class="n">VARIANT_CALL_LEAVES</span><span class="p">):</span>
+                <span class="c1"># the narrowed union's abstract base declares no perturbation_type;</span>
+                <span class="c1"># the leaf (a GenePerturbation) does</span>
+                <span class="n">leaf</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">perturbation</span>
+                <span class="n">call</span> <span class="o">=</span> <span class="n">leaf</span><span class="o">.</span><span class="n">call</span>
+                <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">BioCypherNode</span><span class="p">(</span>
+                        <span class="n">node_id</span><span class="o">=</span><span class="n">perturbation_id</span><span class="p">,</span>
+                        <span class="n">preferred_id</span><span class="o">=</span><span class="n">leaf</span><span class="o">.</span><span class="n">perturbation_type</span><span class="p">,</span>
+                        <span class="n">node_label</span><span class="o">=</span><span class="s2">"sequence variant perturbation"</span><span class="p">,</span>
+                        <span class="n">properties</span><span class="o">=</span><span class="p">{</span>
+                            <span class="s2">"systematic_gene_name"</span><span class="p">:</span> <span class="n">leaf</span><span class="o">.</span><span class="n">systematic_gene_name</span><span class="p">,</span>
+                            <span class="s2">"perturbed_gene_name"</span><span class="p">:</span> <span class="n">leaf</span><span class="o">.</span><span class="n">perturbed_gene_name</span><span class="p">,</span>
+                            <span class="s2">"perturbation_type"</span><span class="p">:</span> <span class="n">leaf</span><span class="o">.</span><span class="n">perturbation_type</span><span class="p">,</span>
+                            <span class="s2">"description"</span><span class="p">:</span> <span class="n">leaf</span><span class="o">.</span><span class="n">description</span><span class="p">,</span>
+                            <span class="s2">"host_genome"</span><span class="p">:</span> <span class="n">HOST_GENOME_OF_NAMESPACE</span><span class="p">[</span>
+                                <span class="n">leaf</span><span class="o">.</span><span class="n">gene_namespace</span>
+                            <span class="p">],</span>
+                            <span class="s2">"reference_sequence"</span><span class="p">:</span> <span class="n">call</span><span class="o">.</span><span class="n">reference_sequence</span><span class="p">,</span>
+                            <span class="s2">"position_start"</span><span class="p">:</span> <span class="n">call</span><span class="o">.</span><span class="n">position_start</span><span class="p">,</span>
+                            <span class="s2">"position_end"</span><span class="p">:</span> <span class="n">call</span><span class="o">.</span><span class="n">position_end</span><span class="p">,</span>
+                            <span class="s2">"variant_type"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">call</span><span class="o">.</span><span class="n">variant_type</span><span class="p">),</span>
+                            <span class="c1"># None when the release wrote a RANGE rather than one</span>
+                            <span class="c1"># number; the verbatim cell stays in the Experiment blob.</span>
+                            <span class="s2">"variant_frequency"</span><span class="p">:</span> <span class="n">call</span><span class="o">.</span><span class="n">frequency</span><span class="p">,</span>
+                            <span class="s2">"call_mode"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">call</span><span class="o">.</span><span class="n">call_mode</span><span class="p">),</span>
+                        <span class="p">},</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">BioCypherNode</span><span class="p">(</span>
+                    <span class="n">node_id</span><span class="o">=</span><span class="n">perturbation_id</span><span class="p">,</span>
+                    <span class="n">preferred_id</span><span class="o">=</span><span class="n">perturbation</span><span class="o">.</span><span class="n">perturbation_type</span><span class="p">,</span>
+                    <span class="n">node_label</span><span class="o">=</span><span class="s2">"perturbation"</span><span class="p">,</span>
+                    <span class="n">properties</span><span class="o">=</span><span class="p">{</span>
+                        <span class="s2">"systematic_gene_name"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">systematic_gene_name</span><span class="p">,</span>
+                        <span class="s2">"perturbed_gene_name"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">perturbed_gene_name</span><span class="p">,</span>
+                        <span class="s2">"perturbation_type"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">perturbation_type</span><span class="p">,</span>
+                        <span class="s2">"description"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">description</span><span class="p">,</span>
+                        <span class="s2">"host_genome"</span><span class="p">:</span> <span class="n">HOST_GENOME_OF_NAMESPACE</span><span class="p">[</span>
+                            <span class="n">perturbation</span><span class="o">.</span><span class="n">gene_namespace</span>
+                        <span class="p">],</span>
+                        <span class="c1"># strain_id is declared only on the Sga*/Marker/Natural*/</span>
+                        <span class="c1"># SequenceVariant/CopyNumberVariant leaves, not on the base</span>
+                        <span class="c1"># KanMxDeletion/GeneAddition types or any bacterial leaf, so</span>
+                        <span class="c1"># read it defensively.</span>
+                        <span class="s2">"strain_id"</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">perturbation</span><span class="p">,</span> <span class="s2">"strain_id"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+                    <span class="p">},</span>
+                <span class="p">)</span>
             <span class="p">)</span>
-            <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">nodes</span>
-
-    <span class="c1"># --- Bacterial perturbations (a sibling class of `perturbation`) ---</span>
-    <span class="c1"># A bacterial leaf carries gene_namespace, the host locus-tag space its</span>
-    <span class="c1"># systematic_gene_name is written in; the served `perturbation` class has no such</span>
-    <span class="c1"># property and cannot gain one without a full rebuild, so these leaves are their own</span>
-    <span class="c1"># class. The node id is the sha256 of the leaf's model_dump, the id</span>
-    <span class="c1"># _perturbation_to_genotype_edges and _crispr_construct_to_perturbation_edges</span>
-    <span class="c1"># already address, so those edge methods connect these nodes unchanged.</span>
-
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_bacterial_perturbation_node_from</span><span class="p">(</span><span class="n">perturbation</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BioCypherNode</span><span class="p">:</span>
-        <span class="n">perturbation_id</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span>
-            <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">perturbation</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
-            <span class="n">node_id</span><span class="o">=</span><span class="n">perturbation_id</span><span class="p">,</span>
-            <span class="n">preferred_id</span><span class="o">=</span><span class="n">perturbation</span><span class="o">.</span><span class="n">perturbation_type</span><span class="p">,</span>
-            <span class="n">node_label</span><span class="o">=</span><span class="s2">"bacterial perturbation"</span><span class="p">,</span>
-            <span class="n">properties</span><span class="o">=</span><span class="p">{</span>
-                <span class="s2">"systematic_gene_name"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">systematic_gene_name</span><span class="p">,</span>
-                <span class="s2">"perturbed_gene_name"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">perturbed_gene_name</span><span class="p">,</span>
-                <span class="s2">"perturbation_type"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">perturbation_type</span><span class="p">,</span>
-                <span class="s2">"description"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">description</span><span class="p">,</span>
-                <span class="s2">"gene_namespace"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">gene_namespace</span><span class="p">,</span>
-            <span class="p">},</span>
-        <span class="p">)</span>
-
-    <span class="nd">@data_chunker</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_bacterial_perturbation_node</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">method_name</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BioCypherNode</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""One node per perturbation of a bacterial leaf class; none for a yeast leaf.</span>
-
-<span class="sd">        A called-variant leaf is excluded even when it is a subclass of one of these</span>
-<span class="sd">        (``BacterialSpanDeletionPerturbation`` is a ``BacterialDeletionPerturbation``):</span>
-<span class="sd">        it belongs to ``bacterial sequence variant perturbation`` and writing it here</span>
-<span class="sd">        too would serve one perturbation as two nodes.</span>
-<span class="sd">        """</span>
-        <span class="k">return</span> <span class="p">[</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_bacterial_perturbation_node_from</span><span class="p">(</span><span class="n">perturbation</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">perturbation</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">genotype</span><span class="o">.</span><span class="n">perturbations</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">perturbation</span><span class="p">,</span> <span class="n">BACTERIAL_PERTURBATION_LEAVES</span><span class="p">)</span>
-            <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">perturbation</span><span class="p">,</span> <span class="n">BACTERIAL_VARIANT_PERTURBATION_LEAVES</span><span class="p">)</span>
-        <span class="p">]</span>
-
-    <span class="c1"># --- Called bacterial variants (issue #731) ---</span>
-    <span class="c1"># A variant leaf composes a ``BacterialVariantCall``, so the replicon, the 1-based</span>
-    <span class="c1"># interval, the variant kind and the call frequency are read off ``.call`` rather</span>
-    <span class="c1"># than off the leaf. The node id is the sha256 of the leaf's model_dump, the same id</span>
-    <span class="c1"># _perturbation_to_genotype_edges addresses, so that edge method is unchanged.</span>
-
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_bacterial_variant_perturbation_node_from</span><span class="p">(</span><span class="n">perturbation</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BioCypherNode</span><span class="p">:</span>
-        <span class="n">perturbation_id</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span>
-            <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">perturbation</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
-        <span class="n">call</span> <span class="o">=</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">call</span>
-        <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
-            <span class="n">node_id</span><span class="o">=</span><span class="n">perturbation_id</span><span class="p">,</span>
-            <span class="n">preferred_id</span><span class="o">=</span><span class="n">perturbation</span><span class="o">.</span><span class="n">perturbation_type</span><span class="p">,</span>
-            <span class="n">node_label</span><span class="o">=</span><span class="s2">"bacterial sequence variant perturbation"</span><span class="p">,</span>
-            <span class="n">properties</span><span class="o">=</span><span class="p">{</span>
-                <span class="s2">"systematic_gene_name"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">systematic_gene_name</span><span class="p">,</span>
-                <span class="s2">"perturbed_gene_name"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">perturbed_gene_name</span><span class="p">,</span>
-                <span class="s2">"perturbation_type"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">perturbation_type</span><span class="p">,</span>
-                <span class="s2">"description"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">description</span><span class="p">,</span>
-                <span class="s2">"gene_namespace"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">gene_namespace</span><span class="p">,</span>
-                <span class="s2">"reference_sequence"</span><span class="p">:</span> <span class="n">call</span><span class="o">.</span><span class="n">reference_sequence</span><span class="p">,</span>
-                <span class="s2">"position_start"</span><span class="p">:</span> <span class="n">call</span><span class="o">.</span><span class="n">position_start</span><span class="p">,</span>
-                <span class="s2">"position_end"</span><span class="p">:</span> <span class="n">call</span><span class="o">.</span><span class="n">position_end</span><span class="p">,</span>
-                <span class="s2">"variant_type"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">call</span><span class="o">.</span><span class="n">variant_type</span><span class="p">),</span>
-                <span class="c1"># None when the release wrote a RANGE rather than one number; the</span>
-                <span class="c1"># verbatim cell stays in the Experiment blob either way.</span>
-                <span class="s2">"variant_frequency"</span><span class="p">:</span> <span class="n">call</span><span class="o">.</span><span class="n">frequency</span><span class="p">,</span>
-                <span class="s2">"call_mode"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">call</span><span class="o">.</span><span class="n">call_mode</span><span class="p">),</span>
-            <span class="p">},</span>
-        <span class="p">)</span>
-
-    <span class="nd">@data_chunker</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_bacterial_variant_perturbation_node</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">method_name</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BioCypherNode</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""One node per CALLED variant of the genotype; none for any other leaf."""</span>
-        <span class="k">return</span> <span class="p">[</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_bacterial_variant_perturbation_node_from</span><span class="p">(</span><span class="n">perturbation</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">perturbation</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">genotype</span><span class="o">.</span><span class="n">perturbations</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">perturbation</span><span class="p">,</span> <span class="n">BACTERIAL_VARIANT_PERTURBATION_LEAVES</span><span class="p">)</span>
-        <span class="p">]</span>
 
     <span class="c1"># Environment.temperature is Optional: a curation layer that never carried a</span>
     <span class="c1"># temperature records a typed gap instead of guessing one. Every read of it is</span>
@@ -1588,15 +1620,14 @@
     <span class="c1"># like a gene perturbation, so a condition such as "YPD + 0.4 M NaCl" is queryable</span>
     <span class="c1"># rather than only embedded in the environment's serialized_data.</span>
     <span class="c1">#</span>
-    <span class="c1"># A `PhagePerturbation` is NOT emitted here: it has its own node class and its own</span>
-    <span class="c1"># method below, and both ids are the same composition projection, so a conf enabling</span>
-    <span class="c1"># both lanes would otherwise write one content id under two labels (issue #756). The</span>
-    <span class="c1"># two lanes PARTITION `environment.perturbations` -- phages to `phage perturbation`,</span>
-    <span class="c1"># every other leaf to `environment perturbation` -- so a dataset whose environment</span>
-    <span class="c1"># carries a phage AND a compound enables both and each leaf is written exactly once.</span>
-    <span class="c1"># The filter edits a SERVED method, which is adapter drift on every served dataset</span>
-    <span class="c1"># enabling it and therefore a full rebuild; it changes no served OUTPUT, since no</span>
-    <span class="c1"># served dataset's environment carries a phage.</span>
+    <span class="c1"># ONE method serves every member of ``EnvironmentPerturbationType`` and chooses the</span>
+    <span class="c1"># label by leaf (ontology unification G, 2026-10-15): a ``PhagePerturbation`` is</span>
+    <span class="c1"># written as ``phage perturbation`` (its own class, with the MOI, the taxon and the</span>
+    <span class="c1"># accession as columns; the dose is not a concentration) and every other leaf as</span>
+    <span class="c1"># ``environment perturbation``. The two used to be two conf-enabled lanes, so a conf</span>
+    <span class="c1"># that enabled the phage lane alone left a small molecule its loader can build with</span>
+    <span class="c1"># an edge and no node (Mutalik 2020, audit C 1.3 item 2). Each leaf is written</span>
+    <span class="c1"># exactly once, under one label, by construction.</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_environment_perturbation_node_from</span><span class="p">(</span><span class="n">perturbation</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BioCypherNode</span><span class="p">:</span>
@@ -1630,40 +1661,43 @@
             <span class="p">},</span>
         <span class="p">)</span>
 
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_environment_axis_node_from</span><span class="p">(</span><span class="n">perturbation</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BioCypherNode</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The node of one environment perturbation, its label chosen by leaf."""</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">perturbation</span><span class="p">,</span> <span class="n">PhagePerturbation</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">CellAdapter</span><span class="o">.</span><span class="n">_phage_perturbation_node_from</span><span class="p">(</span><span class="n">perturbation</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">CellAdapter</span><span class="o">.</span><span class="n">_environment_perturbation_node_from</span><span class="p">(</span><span class="n">perturbation</span><span class="p">)</span>
+
     <span class="nd">@data_chunker</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_environment_perturbation_node</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">method_name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BioCypherNode</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""One node per NON-phage perturbation of the environment; phages have their own."""</span>
+<span class="w">        </span><span class="sd">"""One node per perturbation of the environment, phages under their own label."""</span>
         <span class="k">return</span> <span class="p">[</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_environment_perturbation_node_from</span><span class="p">(</span><span class="n">perturbation</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_environment_axis_node_from</span><span class="p">(</span><span class="n">perturbation</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">perturbation</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">environment</span><span class="o">.</span><span class="n">perturbations</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">perturbation</span><span class="p">,</span> <span class="n">PhagePerturbation</span><span class="p">)</span>
         <span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_environment_perturbation_reference_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BioCypherNode</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Every reference environment's perturbations, deduplicated by content id."""</span>
         <span class="n">nodes</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">seen_node_ids</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">experiment_reference_index</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">perturbation</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">environment_reference</span><span class="o">.</span><span class="n">perturbations</span><span class="p">:</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">perturbation</span><span class="p">,</span> <span class="n">PhagePerturbation</span><span class="p">):</span>
-                    <span class="k">continue</span>
-                <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_environment_perturbation_node_from</span><span class="p">(</span><span class="n">perturbation</span><span class="p">)</span>
+                <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_environment_axis_node_from</span><span class="p">(</span><span class="n">perturbation</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">get_id</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen_node_ids</span><span class="p">:</span>
                     <span class="n">seen_node_ids</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">get_id</span><span class="p">())</span>
                     <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">nodes</span>
 
     <span class="c1"># --- Phage challenges (the environment axis of a phage-resistance screen) ---</span>
-    <span class="c1"># A phage gets its OWN node class and method for the same reason `crispr construct`</span>
-    <span class="c1"># and `bacterial perturbation` do: giving `environment perturbation` the MOI, the</span>
-    <span class="c1"># taxon and the accession as properties would change a served class, and the dose is</span>
-    <span class="c1"># not a concentration so it cannot ride the concentration columns.</span>
-    <span class="c1"># This method and `_environment_perturbation_node` PARTITION the environment's</span>
-    <span class="c1"># perturbations on `isinstance(..., PhagePerturbation)`, so a conf may enable both</span>
-    <span class="c1"># lanes and no content id is written under two labels (issue #756). The id is the</span>
-    <span class="c1"># same composition projection the other environment-side nodes use, so</span>
+    <span class="c1"># A phage gets its OWN node class for the reason `crispr construct` does: the MOI,</span>
+    <span class="c1"># the taxon and the accession are its columns, and the dose is not a concentration,</span>
+    <span class="c1"># so it cannot ride the concentration columns of `environment perturbation`. The id</span>
+    <span class="c1"># is the same composition projection the other environment-side nodes use, so</span>
     <span class="c1"># `_environment_perturbation_to_environment_edges` addresses these nodes unchanged.</span>
+    <span class="c1"># The projection is called from `_environment_axis_node_from` above; there is no</span>
+    <span class="c1"># separate phage lane to enable.</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_phage_perturbation_node_from</span><span class="p">(</span><span class="n">perturbation</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BioCypherNode</span><span class="p">:</span>
@@ -1686,31 +1720,6 @@
                 <span class="s2">"titer_pfu_per_ml"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">titer_pfu_per_ml</span><span class="p">,</span>
             <span class="p">},</span>
         <span class="p">)</span>
-
-    <span class="nd">@data_chunker</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_phage_perturbation_node</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">method_name</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BioCypherNode</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""One node per phage of the environment; none for any other perturbation."""</span>
-        <span class="k">return</span> <span class="p">[</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_phage_perturbation_node_from</span><span class="p">(</span><span class="n">perturbation</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">perturbation</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">environment</span><span class="o">.</span><span class="n">perturbations</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">perturbation</span><span class="p">,</span> <span class="n">PhagePerturbation</span><span class="p">)</span>
-        <span class="p">]</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_get_phage_perturbation_reference_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BioCypherNode</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""The phages of every reference environment, deduplicated by content id."""</span>
-        <span class="n">nodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BioCypherNode</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">seen_node_ids</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">experiment_reference_index</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">perturbation</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">environment_reference</span><span class="o">.</span><span class="n">perturbations</span><span class="p">:</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">perturbation</span><span class="p">,</span> <span class="n">PhagePerturbation</span><span class="p">):</span>
-                    <span class="k">continue</span>
-                <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_phage_perturbation_node_from</span><span class="p">(</span><span class="n">perturbation</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">get_id</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen_node_ids</span><span class="p">:</span>
-                    <span class="n">seen_node_ids</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">get_id</span><span class="p">())</span>
-                    <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">nodes</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_environment_reference_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BioCypherNode</span><span class="p">]:</span>
         <span class="n">nodes</span> <span class="o">=</span> <span class="p">[]</span>
@@ -3545,7 +3554,7 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_bacterial_morphology_properties</span><span class="p">(</span><span class="n">phenotype</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Node properties of a ``BacterialMorphologyPhenotype`` (experiment or reference).</span>
+<span class="w">        </span><span class="sd">"""Node properties of a ``MorphologyPhenotype`` (experiment or reference).</span>
 
 <span class="sd">        The two dict-valued fields serialize to JSON strings, the CalMorph convention,</span>
 <span class="sd">        and ``assay`` rides beside them because the keys inside those strings are only</span>
@@ -4047,6 +4056,39 @@
                 <span class="p">)</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">edges</span>
+
+    <span class="nd">@data_chunker</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_perturbation_to_genome_edges</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">method_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BioCypherEdge</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""``perturbation of genome``: each perturbation to the genome it is written against.</span>
+
+<span class="sd">        The genome node id is computable per record because the chunk carries the</span>
+<span class="sd">        record's reference (``data["reference"]``), the same slot the verifiers read, so</span>
+<span class="sd">        no extra pass is needed. OFF in every conf: the ``host_genome`` property on the</span>
+<span class="sd">        node is the mandatory join key, and this edge costs one row per perturbation per</span>
+<span class="sd">        record, the order of ``perturbation member of`` (47.3 M rows in 124 of 170</span>
+<span class="sd">        adapters of the job 4901 partial). A conf opts in by listing</span>
+<span class="sd">        ``perturbation to genome (chunked)``; the first build that does measures it.</span>
+
+<span class="sd">        A perturbation whose namespace projects to no assembly (``host_genome`` None,</span>
+<span class="sd">        the Peter 2018 pangenome ORFs) gets no edge: the record's genome node pins the</span>
+<span class="sd">        S288C set its other identifiers are written against, which is not the set a</span>
+<span class="sd">        pangenome ORF id is written in, and the edge is the traversal form of the</span>
+<span class="sd">        property, so it is absent exactly where the property is null.</span>
+<span class="sd">        """</span>
+        <span class="n">genome_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_genome_node_id</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">]</span><span class="o">.</span><span class="n">genome_reference</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">BioCypherEdge</span><span class="p">(</span>
+                <span class="n">source_id</span><span class="o">=</span><span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span>
+                    <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">perturbation</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">(),</span>
+                <span class="n">target_id</span><span class="o">=</span><span class="n">genome_id</span><span class="p">,</span>
+                <span class="n">relationship_label</span><span class="o">=</span><span class="s2">"perturbation of genome"</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">perturbation</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">genotype</span><span class="o">.</span><span class="n">perturbations</span>
+            <span class="k">if</span> <span class="n">HOST_GENOME_OF_NAMESPACE</span><span class="p">[</span><span class="n">perturbation</span><span class="o">.</span><span class="n">gene_namespace</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">]</span>
 
     <span class="nd">@data_chunker</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_environment_to_experiment_edge</span><span class="p">(</span>

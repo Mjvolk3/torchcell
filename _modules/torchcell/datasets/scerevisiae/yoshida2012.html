@@ -146,7 +146,7 @@
 <span class="sd">Background: the BY4741/BY4742 haploid deletion collection (KanMX4 deletions). The genotype</span>
 <span class="sd">is one deletion per strain under the name Table 3 releases, verbatim (#1045): a</span>
 <span class="sd">systematic name (``YDR379C-A``) goes on ``KanMxDeletionPerturbation`` with both names the</span>
-<span class="sd">ORF, a common name on ``ReleasedGeneNamePerturbation`` (the symbol, kind ``deletion``,</span>
+<span class="sd">ORF, a common name on ``ReleasedIdentifierPerturbation`` (the symbol, kind ``deletion``,</span>
 <span class="sd">marker KanMX). No genome is consulted; the join to R64 is a modeling-time act.</span>
 
 <span class="sd">Provenance / extraction: the data IS Table 3 in the paper -- there is no external SI file.</span>
@@ -191,12 +191,16 @@
     <span class="n">MetabolitePhenotype</span><span class="p">,</span>
     <span class="n">Publication</span><span class="p">,</span>
     <span class="n">ReferenceGenome</span><span class="p">,</span>
-    <span class="n">ReleasedGeneKind</span><span class="p">,</span>
-    <span class="n">ReleasedGeneNamePerturbation</span><span class="p">,</span>
+    <span class="n">ReleasedIdentifierPerturbation</span><span class="p">,</span>
+    <span class="n">ReleasedKind</span><span class="p">,</span>
     <span class="n">Temperature</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.scerevisiae.zelezniak2018</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_metabolite_s_id_map</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.registry</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SGD_S288C_R64</span><span class="p">,</span>
+    <span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="n">SourcedValue</span>
 
@@ -531,18 +535,19 @@
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_released_deletion</span><span class="p">(</span>
         <span class="n">gene</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KanMxDeletionPerturbation</span> <span class="o">|</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KanMxDeletionPerturbation</span> <span class="o">|</span> <span class="n">ReleasedIdentifierPerturbation</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""The deletion under the name Table 3 releases (#1045)."""</span>
         <span class="k">if</span> <span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">gene</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">KanMxDeletionPerturbation</span><span class="p">(</span>
                 <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">gene</span><span class="p">,</span> <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">gene</span>
             <span class="p">)</span>
-        <span class="k">return</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">(</span>
+        <span class="k">return</span> <span class="n">ReleasedIdentifierPerturbation</span><span class="p">(</span>
             <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">gene</span><span class="p">,</span>
+            <span class="n">gene_namespace</span><span class="o">=</span><span class="s2">"scerevisiae_s288c_sgd_systematic"</span><span class="p">,</span>
             <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">gene</span><span class="p">,</span>
-            <span class="n">released_gene_name</span><span class="o">=</span><span class="n">gene</span><span class="p">,</span>
-            <span class="n">released_kind</span><span class="o">=</span><span class="n">ReleasedGeneKind</span><span class="o">.</span><span class="n">deletion</span><span class="p">,</span>
-            <span class="n">marker</span><span class="o">=</span><span class="s2">"KanMX"</span><span class="p">,</span>
+            <span class="n">identifier_kind</span><span class="o">=</span><span class="s2">"gene name, as Table 3 writes it"</span><span class="p">,</span>
+            <span class="n">released_kind</span><span class="o">=</span><span class="n">ReleasedKind</span><span class="o">.</span><span class="n">deletion</span><span class="p">,</span>
+            <span class="n">cassette</span><span class="o">=</span><span class="s2">"KanMX"</span><span class="p">,</span>
         <span class="p">)</span>
 
 <div class="viewcode-block" id="OrganicAcidYoshida2012Dataset.process">
@@ -649,7 +654,10 @@
 <span class="w">        </span><span class="sd">"""Build the Metabolite experiment/reference/publication for one deletion strain."""</span>
         <span class="c1"># Background = BY4742/BY4741 haploid KanMX4 deletion collection.</span>
         <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
-            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="s2">"BY4742"</span>
+            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span>
+            <span class="n">strain</span><span class="o">=</span><span class="s2">"BY4742"</span><span class="p">,</span>
+            <span class="n">assembly_set</span><span class="o">=</span><span class="n">SGD_S288C_R64</span><span class="p">,</span>
+            <span class="n">assembly_accession</span><span class="o">=</span><span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span><span class="n">perturbations</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_released_deletion</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">])])</span>
         <span class="c1"># Static (no shaking) YPD liquid, 25 C, 72 h (Methods; Table 3 caption).</span>

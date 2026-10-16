@@ -137,6 +137,10 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.levels</span><span class="w"> </span><span class="kn">import</span> <span class="n">l0_structural</span><span class="p">,</span> <span class="n">l1_count</span><span class="p">,</span> <span class="n">l2_value_fidelity</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.perturbation_families</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">addition_perturbation_types</span><span class="p">,</span>
+    <span class="n">heterologous_identifier</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Level</span><span class="p">,</span>
     <span class="n">LevelResult</span><span class="p">,</span>
@@ -150,15 +154,18 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_deleted_genes</span><span class="p">(</span><span class="n">experiment</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Systematic names deleted in this experiment's genotype.</span>
 
-<span class="sd">    Excludes ``gene_addition`` perturbations: the engineered cassette background is</span>
-<span class="sd">    constant across every strain (and heterologous names are not real ORFs), so it is</span>
-<span class="sd">    not a screened deletion and must not enter the L1/L4 deleted-ORF key.</span>
+<span class="sd">    Excludes every leaf that ADDS DNA</span>
+<span class="sd">    (:func:`~torchcell.verification.perturbation_families.addition_perturbation_types`,</span>
+<span class="sd">    the subclasses of ``GeneAdditionPerturbation``): an added copy is not a scored</span>
+<span class="sd">    deletion, whatever organism it came from. The test was the literal string</span>
+<span class="sd">    ``gene_addition``, one of the union's four addition leaves.</span>
 <span class="sd">    """</span>
+    <span class="n">additions</span> <span class="o">=</span> <span class="n">addition_perturbation_types</span><span class="p">()</span>
     <span class="k">return</span> <span class="p">[</span>
         <span class="n">p</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">]</span>
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">experiment</span><span class="p">[</span><span class="s2">"genotype"</span><span class="p">][</span><span class="s2">"perturbations"</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"systematic_gene_name"</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-        <span class="ow">and</span> <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"perturbation_type"</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">"gene_addition"</span>
+        <span class="ow">and</span> <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"perturbation_type"</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">additions</span>
     <span class="p">]</span>
 
 
@@ -274,10 +281,23 @@
 <div class="viewcode-block" id="visual_score_gene_set">
 <a class="viewcode-back" href="../../../generated/torchcell.verification.visual_score_gene_set.html#torchcell.verification.visual_score_gene_set">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">visual_score_gene_set</span><span class="p">(</span><span class="n">records</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Record</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Union of deleted systematic gene names across records (the L4 overlap key)."""</span>
+<span class="w">    </span><span class="sd">"""The host loci a dataset's records name: the L4 gene-universe overlap key.</span>
+
+<span class="sd">    Every perturbed systematic name except the HETEROLOGOUS ones, the shared test</span>
+<span class="sd">    (:func:`~torchcell.verification.perturbation_families.heterologous_identifier`) the</span>
+<span class="sd">    bioproduction families apply: a name whose ``source_organism`` is not the record's</span>
+<span class="sd">    own species is a gene of another genome, while an extra copy of a NATIVE gene names</span>
+<span class="sd">    its real locus and belongs in the universe. The scored-deletion key (:func:`_deleted_genes`)</span>
+<span class="sd">    answers a different question and keeps its own rule.</span>
+<span class="sd">    """</span>
     <span class="n">genes</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">records</span><span class="p">:</span>
-        <span class="n">genes</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">_deleted_genes</span><span class="p">(</span><span class="n">rec</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]))</span>
+        <span class="n">species</span> <span class="o">=</span> <span class="n">rec</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">][</span><span class="s2">"genome_reference"</span><span class="p">][</span><span class="s2">"species"</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">rec</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"genotype"</span><span class="p">][</span><span class="s2">"perturbations"</span><span class="p">]:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"systematic_gene_name"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">heterologous_identifier</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">species</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">genes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">genes</span></div>
 
 

@@ -134,54 +134,60 @@
 <h1>torchcell.datamodels.schema.StrainBackground<a class="headerlink" href="#torchcell-datamodels-schema-strainbackground" title="Link to this heading"></a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="torchcell.datamodels.schema.StrainBackground">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">StrainBackground</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">*,</span> <span class="pre">provenance_gaps:</span> <span class="pre">list[~torchcell.verification.sourced.ProvenanceGap]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;,</span> <span class="pre">name:</span> <span class="pre">str,</span> <span class="pre">reference_strain:</span> <span class="pre">~typing.Literal['S288C']</span> <span class="pre">=</span> <span class="pre">'S288C',</span> <span class="pre">parents:</span> <span class="pre">list[str]</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">construction:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">mating_type:</span> <span class="pre">~torchcell.datamodels.schema.MatingType</span> <span class="pre">|</span> <span class="pre">None,</span> <span class="pre">ploidy:</span> <span class="pre">~typing.Literal['haploid',</span> <span class="pre">'diploid'],</span> <span class="pre">alleles:</span> <span class="pre">list[~torchcell.datamodels.schema.BackgroundAllele]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;,</span> <span class="pre">integrations:</span> <span class="pre">list[~torchcell.datamodels.schema.IntegratedCassette]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;,</span> <span class="pre">provenance:</span> <span class="pre">list[~torchcell.verification.sourced.SourcedValue]</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchcell/datamodels/schema.html#StrainBackground"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.datamodels.schema.StrainBackground" title="Link to this definition"></a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">StrainBackground</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">*,</span> <span class="pre">provenance_gaps:</span> <span class="pre">list[~torchcell.verification.sourced.ProvenanceGap]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;,</span> <span class="pre">name:</span> <span class="pre">str,</span> <span class="pre">reference_strain:</span> <span class="pre">~typing.Literal['S288C',</span> <span class="pre">'CENPK113-7D',</span> <span class="pre">'MG1655',</span> <span class="pre">'BW25113',</span> <span class="pre">'KT2440',</span> <span class="pre">'REL606',</span> <span class="pre">'W3110'],</span> <span class="pre">assembly_set:</span> <span class="pre">~typing.Literal['ecoli_K12_MG1655_ASM584v2',</span> <span class="pre">'ecoli_K12_BW25113_ASM75055v1',</span> <span class="pre">'pputida_KT2440_ASM756v2',</span> <span class="pre">'ecoli_B_REL606_ASM1798v1',</span> <span class="pre">'ecoli_K12_W3110_ASM1024v1',</span> <span class="pre">'sgd_S288C_R64-4-1_20230830',</span> <span class="pre">'scerevisiae_CENPK113-7D_ASM257140v2'],</span> <span class="pre">parents:</span> <span class="pre">list[str]</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">construction:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">genotype_statement:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">alleles:</span> <span class="pre">list[~torchcell.datamodels.schema.BackgroundAllele]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;,</span> <span class="pre">provenance:</span> <span class="pre">list[~torchcell.verification.sourced.SourcedValue]</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchcell/datamodels/schema.html#StrainBackground"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.datamodels.schema.StrainBackground" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="torchcell.datamodels.schema.ProvenanceGapMixin.html#torchcell.datamodels.schema.ProvenanceGapMixin" title="torchcell.datamodels.schema.ProvenanceGapMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProvenanceGapMixin</span></code></a></p>
-<p>The genome content a strain carries beyond R64, constant across a collection.</p>
+<p>The genome content a strain carries beyond its reference genome.</p>
+<p>ONE class for every host (P5, ontology-unify 2026-10-15), holding what both
+families state: the strain label, the sequenced strain the alleles are edits
+against, the deposited bytes that strain means, the parents, the construction, the
+source’s verbatim genotype string and the typed alleles. The retired
+<code class="docutils literal notranslate"><span class="pre">BacterialStrainBackground</span></code> differed from this by exactly the three eukaryote
+facts, which <code class="docutils literal notranslate"><span class="pre">EukaryoticStrainBackground</span></code> carries, and the schema.py comment that
+chose the duplication chose it on cost.</p>
 <p><code class="docutils literal notranslate"><span class="pre">name</span></code> is the strain or lineage label the records join on (<code class="docutils literal notranslate"><span class="pre">BY4741</span></code>,
-<code class="docutils literal notranslate"><span class="pre">BY4743</span></code>, or a descriptive name for an SGA progeny pool); it must equal
-<code class="docutils literal notranslate"><span class="pre">StrainReferenceGenome.strain</span></code>. <code class="docutils literal notranslate"><span class="pre">parents</span></code> are the strains it was made from, verbatim
-(<code class="docutils literal notranslate"><span class="pre">[&quot;BY4741&quot;,</span> <span class="pre">&quot;BY4742&quot;]</span></code> for BY4743; the SGA query and array for a progeny
-pool). <code class="docutils literal notranslate"><span class="pre">construction</span></code> is a one-line method statement (how the background was
-made, e.g. an SGA cross and its selections). <code class="docutils literal notranslate"><span class="pre">reference_strain</span></code> is the sequenced
-strain every allele is an edit against; it is pinned to S288C because the edit
-list of a non-S288C background against R64 would be thousands of variants, which
-this object is not for.</p>
-<p><code class="docutils literal notranslate"><span class="pre">mating_type</span></code> and <code class="docutils literal notranslate"><span class="pre">provenance</span></code> are set or gapped (a typed absence, never a
-silent None). A haploid background is MATa or MATalpha; every allele’s zygosity
-must fit the ploidy (<code class="docutils literal notranslate"><span class="pre">haploid</span></code> in a haploid, <code class="docutils literal notranslate"><span class="pre">homozygous</span></code>/<code class="docutils literal notranslate"><span class="pre">heterozygous</span></code> in a
-diploid), and so must every integration’s. A gene carries one allele entry, or two
-heterozygous entries for a compound heterozygote.</p>
-<p><code class="docutils literal notranslate"><span class="pre">integrations</span></code> carries the cassettes the strain has INTEGRATED (an engineered host
-such as bAID, whose Cas effectors sit at a Ty1 delta site). It is separate from
-<code class="docutils literal notranslate"><span class="pre">alleles</span></code> because an insertion at a landing pad is not an edit to an R64 ORF and
-has no <code class="docutils literal notranslate"><span class="pre">AlleleEdit</span></code>; it defaults to empty, so every background written before it
-existed reads exactly as before.</p>
+<code class="docutils literal notranslate"><span class="pre">BW25113</span></code>, or a descriptive name for an SGA progeny pool); it must equal
+<code class="docutils literal notranslate"><span class="pre">StrainReferenceGenome.strain</span></code>. <code class="docutils literal notranslate"><span class="pre">parents</span></code> are the strains it was made from,
+verbatim (<code class="docutils literal notranslate"><span class="pre">[&quot;BY4741&quot;,</span> <span class="pre">&quot;BY4742&quot;]</span></code> for BY4743; the SGA query and array for a
+progeny pool). <code class="docutils literal notranslate"><span class="pre">construction</span></code> is a one-line method statement (how the background
+was made, e.g. an SGA cross and its selections). <code class="docutils literal notranslate"><span class="pre">genotype_statement</span></code> is the
+genotype exactly as the source writes it, kept beside the typed alleles so nothing
+the source said is lost: BW25113’s lesions come from its own deposited GenBank
+<code class="docutils literal notranslate"><span class="pre">source</span></code> feature rather than from a paper, and a yeast strain table states the
+same kind of string.</p>
+<p><code class="docutils literal notranslate"><span class="pre">reference_strain</span></code> is the sequenced strain every allele is an edit against and
+<code class="docutils literal notranslate"><span class="pre">assembly_set</span></code> is the deposited set that strain means; the two must agree
+(<code class="docutils literal notranslate"><span class="pre">REFERENCE_STRAIN_ASSEMBLY_SETS</span></code>). The pin is REQUIRED with no default and no
+typed gap, which is the one place this field’s contract differs from
+<code class="docutils literal notranslate"><span class="pre">ReferenceGenome.assembly_set</span></code>: that carrier’s companion field is the free string
+<code class="docutils literal notranslate"><span class="pre">strain</span></code> and may name a strain the tier has not deposited, so it needs the gap,
+while <code class="docutils literal notranslate"><span class="pre">reference_strain</span></code> here is a closed vocabulary with one member per deposited
+set, so a background that can name its reference has already named a deposited set
+and a gap branch would be unreachable. A background whose reference is not deposited
+is not representable, deliberately: its edit list against another reference would be
+thousands of variants.</p>
+<p><code class="docutils literal notranslate"><span class="pre">provenance</span></code> is set or gapped (a typed absence, never a silent None). A single-copy
+genome carries one allele entry per locus and states no copy count, so every
+allele’s <code class="docutils literal notranslate"><span class="pre">zygosity</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code> here; <code class="docutils literal notranslate"><span class="pre">EukaryoticStrainBackground</span></code> is where a
+copy count is a fact and is required.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="torchcell.datamodels.schema.StrainBackground.alleles_at">
 <span class="sig-name descname"><span class="pre">alleles_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">systematic_gene_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="torchcell.datamodels.schema.BackgroundAllele.html#torchcell.datamodels.schema.BackgroundAllele" title="torchcell.datamodels.schema.BackgroundAllele"><span class="pre">BackgroundAllele</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/torchcell/datamodels/schema.html#StrainBackground.alleles_at"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.datamodels.schema.StrainBackground.alleles_at" title="Link to this definition"></a></dt>
-<dd><p>The background’s allele entries at one locus (empty = the R64 allele).</p>
+<dd><p>The background’s allele entries at one locus (empty = the reference allele).</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="torchcell.datamodels.schema.StrainBackground.functional_copies">
 <span class="sig-name descname"><span class="pre">functional_copies</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">systematic_gene_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><span class="pre">int</span></a></span></span><a class="reference internal" href="../_modules/torchcell/datamodels/schema.html#StrainBackground.functional_copies"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.datamodels.schema.StrainBackground.functional_copies" title="Link to this definition"></a></dt>
-<dd><p>Functional copies of a gene in the UNPERTURBED background.</p>
-<p>Ploidy copies minus the copies carrying a non-functional background allele:
-BY4743 <code class="docutils literal notranslate"><span class="pre">his3Δ1/his3Δ1</span></code> -&gt; 0, <code class="docutils literal notranslate"><span class="pre">LYS2/lys2Δ0</span></code> -&gt; 1, an untouched gene -&gt; 2.
-Raises when an allele at the locus has a gapped zygosity, since the count is
-then not determined by the record.</p>
+<dd><p>Functional copies of a gene in the UNPERTURBED background: 1 or 0.</p>
+<p>One copy, so the answer is 1 unless the background carries a non-functional
+allele at the locus. <code class="docutils literal notranslate"><span class="pre">EukaryoticStrainBackground</span></code> overrides this with the
+ploidy-aware count.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="torchcell.datamodels.schema.StrainBackground.is_fully_sourced">
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_fully_sourced</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><span class="pre">bool</span></a></em><a class="headerlink" href="#torchcell.datamodels.schema.StrainBackground.is_fully_sourced" title="Link to this definition"></a></dt>
-<dd><p>True when the background, every allele and every integration carry no gap.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="torchcell.datamodels.schema.StrainBackground.integrations_at">
-<span class="sig-name descname"><span class="pre">integrations_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">locus</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><span class="pre">IntegratedCassette</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/torchcell/datamodels/schema.html#StrainBackground.integrations_at"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.datamodels.schema.StrainBackground.integrations_at" title="Link to this definition"></a></dt>
-<dd><p>The cassettes integrated at one named site (empty = nothing integrated).</p>
+<dd><p>True when the background and every allele carry no declared gap.</p>
 </dd></dl>
 
 <dl class="py attribute">

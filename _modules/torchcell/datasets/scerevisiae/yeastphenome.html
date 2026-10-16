@@ -155,12 +155,29 @@
 <span class="sd">value or a basis), a unit ``ConcentrationUnit`` lacks (``ng/ml``, ``U/ml``), and a</span>
 <span class="sd">genotype edit written as a condition (``expression of human CYP1A2``, ``loss +</span>
 <span class="sd">cytoduction of mtDNA``). Each such column is listed with its record count in the</span>
-<span class="sd">dataset note; the units are an additive enum change for the schema branch. The medium</span>
-<span class="sd">token is stored as released: a base the library tables name is rich or synthetic by</span>
-<span class="sd">that table, any other base (``SC - Ura``, ``YPG [3%]``) is classified by its prefix</span>
-<span class="sd">(``YP`` rich; ``SC``/``SD``/``YNB``/``CSM``/``MM``/``SynBase`` synthetic) and anything else</span>
-<span class="sd">stores ``is_synthetic`` as a typed gap; a header with no medium field stores a ``Media``</span>
-<span class="sd">whose name, state and synthetic flag are typed gaps (the SGD precedent).</span>
+<span class="sd">dataset note; the units are an additive enum change for the schema branch.</span>
+
+<span class="sd">MEDIA (2026.10.15, lane X of the ontology unification: the token's composition is typed, not spelled into a name).</span>
+<span class="sd">The medium token is stored as released -- the WHOLE token, verbatim, in ``Media.name``</span>
+<span class="sd">-- and everything it states about composition is read into typed fields by</span>
+<span class="sd">``_parse_media_token``: a named dropout (``SC - Ade``) into ``dropouts``, an appended</span>
+<span class="sd">component or a vehicle or a selection agent (``SC, HEPES [25 mM]``, ``SC + DMSO</span>
+<span class="sd">[0.5%]``, ``YPD + G418 [200 ug/ml]``) into ``components`` at its stated dose, and a</span>
+<span class="sd">nutrient CLASS the curation declares absent without naming the compound (``SC (-C)``,</span>
+<span class="sd">``SD + His + Leu + Lys + Ura, -N``) into ``Media.dropout_roles``. Before this the name</span>
+<span class="sd">was ``token.split("+")[0]``, so the ``+`` half reached no field at all (six tokens</span>
+<span class="sd">stored the plain name ``SC`` over 212,402 records, six stored ``YPD`` over 239,081,</span>
+<span class="sd">five stored ``SD`` over 23,354) and the retained half's statement sat inside a name</span>
+<span class="sd">``media_identity`` drops: 53,951 records shared an environment node with a record</span>
+<span class="sd">measured in a different medium, among them Galardini 2019's nitrogen-free arm and its</span>
+<span class="sd">own control. An unknown token form RAISES rather than storing a medium with its</span>
+<span class="sd">statement unread. The base RECIPE stays unexpanded: no library object is substituted</span>
+<span class="sd">for the token, ``base_medium`` carries the join to the shared family, and a base the</span>
+<span class="sd">library tables name is rich or synthetic by that table, any other base (``SC - Ura``,</span>
+<span class="sd">``YPG [3%]``) is classified by its prefix (``YP`` rich;</span>
+<span class="sd">``SC``/``SD``/``YNB``/``CSM``/``MM``/``SynBase`` synthetic) and anything else stores</span>
+<span class="sd">``is_synthetic`` as a typed gap; a header with no medium field stores a ``Media`` whose</span>
+<span class="sd">name, state and synthetic flag are typed gaps (the SGD precedent).</span>
 
 <span class="sd">LABEL = the NPV (normalized phenotypic value). YeastPhenome's canonical label</span>
 <span class="sd">(Turco2023) is a per-screen, mode-referenced modified z-score: the mode of each screen</span>
@@ -213,6 +230,8 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">BiologicAgentClass</span><span class="p">,</span>
     <span class="n">BiologicPerturbation</span><span class="p">,</span>
+    <span class="n">ComponentDefinition</span><span class="p">,</span>
+    <span class="n">Compound</span><span class="p">,</span>
     <span class="n">Concentration</span><span class="p">,</span>
     <span class="n">ConcentrationUnit</span><span class="p">,</span>
     <span class="n">EngineeredCopyNumberPerturbation</span><span class="p">,</span>
@@ -228,15 +247,26 @@
     <span class="n">KanMxDeletionPerturbation</span><span class="p">,</span>
     <span class="n">MeasurementType</span><span class="p">,</span>
     <span class="n">Media</span><span class="p">,</span>
+    <span class="n">MediaComponent</span><span class="p">,</span>
+    <span class="n">MediaComponentRole</span><span class="p">,</span>
     <span class="n">Publication</span><span class="p">,</span>
     <span class="n">ReferenceGenome</span><span class="p">,</span>
-    <span class="n">ReleasedGeneKind</span><span class="p">,</span>
-    <span class="n">ReleasedGeneNamePerturbation</span><span class="p">,</span>
+    <span class="n">ReleasedIdentifierPerturbation</span><span class="p">,</span>
+    <span class="n">ReleasedKind</span><span class="p">,</span>
     <span class="n">SmallMoleculePerturbation</span><span class="p">,</span>
     <span class="n">Temperature</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span><span class="p">,</span> <span class="n">ProvenanceGap</span><span class="p">,</span> <span class="n">ProvenanceGapReason</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.registry</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SGD_S288C_R64</span><span class="p">,</span>
+    <span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Provenance</span><span class="p">,</span>
+    <span class="n">ProvenanceGap</span><span class="p">,</span>
+    <span class="n">ProvenanceGapReason</span><span class="p">,</span>
+    <span class="n">SourcedValue</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -720,14 +750,264 @@
     <span class="k">return</span> <span class="kc">None</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_parse_media</span><span class="p">(</span><span class="n">media_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">phenotype</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Media</span><span class="p">:</span>
+<span class="c1"># --- begin lane X: the released medium token's composition, in typed fields --------- #</span>
+<span class="c1"># A curated media token is a base medium followed by ``+``-joined additions, any of</span>
+<span class="c1"># which may carry ``,``-separated suffixes. Every form the v1.0 pin releases:</span>
+<span class="c1">#</span>
+<span class="c1">#   SC                                   the base alone</span>
+<span class="c1">#   SC - Ade                             a NAMED dropout off the base</span>
+<span class="c1">#   SC (-C)                              a ROLE-level dropout (no compound named)</span>
+<span class="c1">#   SC, Glycerol [2%]                    an appended component at a stated dose</span>
+<span class="c1">#   SC, HEPES [25 mM]                    the same, a buffer</span>
+<span class="c1">#   YPG [3%]                             a dose on the base's own, unexpanded component</span>
+<span class="c1">#   SC + DMSO [0.5%]                     a vehicle in the medium at a stated fraction</span>
+<span class="c1">#   YPD + G418 [200 ug/ml] + DMSO [1%]   a selection agent and a vehicle</span>
+<span class="c1">#   SD + his + leu + lys + ura           auxotroph supplements, no dose stated</span>
+<span class="c1">#   SD + His + Leu + Lys + Ura, -N       the same, nitrogen-free</span>
+<span class="c1">#   SD + His + Leu + Lys + Ura (2)       the curation's own index, which states no</span>
+<span class="c1">#                                        composition and stays in the released name</span>
+<span class="c1">#</span>
+<span class="c1"># Before this the loader stored ``media_field.split("+")[0]`` as ``name`` and nothing</span>
+<span class="c1"># else, so the ``+`` half of the token reached no field at all: six released tokens</span>
+<span class="c1"># stored the plain name ``SC`` over 212,402 records, six stored ``YPD`` over 239,081 and</span>
+<span class="c1"># five stored ``SD`` over 23,354 (474,837 of 524,682 records carried a name that is not</span>
+<span class="c1"># the token). What the retained half states -- a dropout, a carbon source, a buffer --</span>
+<span class="c1"># sat inside ``name``, which ``media_identity`` drops, so the five SC dropout arms and</span>
+<span class="c1"># their complete control were ONE served environment node over 30,628 records, two</span>
+<span class="c1"># vehicle controls and a buffered medium were one over 13,649, and a nitrogen-starved</span>
+<span class="c1"># medium was the node of its own control over 9,674.</span>
+<span class="c1">#</span>
+<span class="c1"># Each compound the token names is read through the shared resolver, so a dropout joins</span>
+<span class="c1"># the SAME compound entity another dataset's medium lists as a component. The</span>
+<span class="c1"># curation's three-letter spellings are not resolver keys, so this table maps each to</span>
+<span class="c1"># one, with the role it fills. A vehicle has no role of its own in</span>
+<span class="c1"># ``MediaComponentRole`` and takes ``other``; a selection agent is a COMPONENT by the</span>
+<span class="c1"># schema's own ruling (constant to the medium, not the studied edit).</span>
+<span class="n">_VEHICLE</span> <span class="o">=</span> <span class="s2">"vehicle"</span>
+<span class="n">_SUPPLEMENT</span> <span class="o">=</span> <span class="s2">"supplement"</span>
+<span class="n">_APPENDED</span> <span class="o">=</span> <span class="s2">"appended"</span>
+<span class="n">_SELECTION</span> <span class="o">=</span> <span class="s2">"selection"</span>
+
+<span class="n">_MEDIUM_COMPOUNDS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">MediaComponentRole</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"dmso"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"DMSO"</span><span class="p">,</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">other</span><span class="p">,</span> <span class="n">_VEHICLE</span><span class="p">),</span>
+    <span class="s2">"meoh"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"methanol"</span><span class="p">,</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">other</span><span class="p">,</span> <span class="n">_VEHICLE</span><span class="p">),</span>
+    <span class="s2">"etoh"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"ethanol"</span><span class="p">,</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">other</span><span class="p">,</span> <span class="n">_VEHICLE</span><span class="p">),</span>
+    <span class="s2">"g418"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"G418 (geneticin)"</span><span class="p">,</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">selection_agent</span><span class="p">,</span> <span class="n">_SELECTION</span><span class="p">),</span>
+    <span class="s2">"ade"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"adenine"</span><span class="p">,</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">nucleobase</span><span class="p">,</span> <span class="n">_SUPPLEMENT</span><span class="p">),</span>
+    <span class="s2">"arg"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"L-arginine"</span><span class="p">,</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">amino_acid</span><span class="p">,</span> <span class="n">_SUPPLEMENT</span><span class="p">),</span>
+    <span class="s2">"his"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"L-histidine"</span><span class="p">,</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">amino_acid</span><span class="p">,</span> <span class="n">_SUPPLEMENT</span><span class="p">),</span>
+    <span class="s2">"leu"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"L-leucine"</span><span class="p">,</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">amino_acid</span><span class="p">,</span> <span class="n">_SUPPLEMENT</span><span class="p">),</span>
+    <span class="s2">"lys"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"L-lysine"</span><span class="p">,</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">amino_acid</span><span class="p">,</span> <span class="n">_SUPPLEMENT</span><span class="p">),</span>
+    <span class="s2">"met"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"L-methionine"</span><span class="p">,</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">amino_acid</span><span class="p">,</span> <span class="n">_SUPPLEMENT</span><span class="p">),</span>
+    <span class="s2">"trp"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"L-tryptophan"</span><span class="p">,</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">amino_acid</span><span class="p">,</span> <span class="n">_SUPPLEMENT</span><span class="p">),</span>
+    <span class="s2">"ura"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"uracil"</span><span class="p">,</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">nucleobase</span><span class="p">,</span> <span class="n">_SUPPLEMENT</span><span class="p">),</span>
+    <span class="s2">"glycerol"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"glycerol"</span><span class="p">,</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">carbon_source</span><span class="p">,</span> <span class="n">_APPENDED</span><span class="p">),</span>
+    <span class="s2">"hepes"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"HEPES"</span><span class="p">,</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">buffer</span><span class="p">,</span> <span class="n">_APPENDED</span><span class="p">),</span>
+<span class="p">}</span>
+
+<span class="c1">#: What a component line means, by the position the token puts the compound in.</span>
+<span class="n">_COMPONENT_NOTES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">_VEHICLE</span><span class="p">:</span> <span class="s2">"the curation states this vehicle in the medium field of the column "</span>
+    <span class="s2">"header, beside the base medium and not in the condition, so it is a component of "</span>
+    <span class="s2">"the medium rather than the solvent slot of a dosed compound -- which is also the "</span>
+    <span class="s2">"only encoding that holds for the two columns whose condition is 'standard' (a "</span>
+    <span class="s2">"vehicle control has no perturbation to carry a Solvent)"</span><span class="p">,</span>
+    <span class="n">_SUPPLEMENT</span><span class="p">:</span> <span class="s2">"a nutrient the curation adds to the base medium to complement the "</span>
+    <span class="s2">"deletion collection's auxotrophies. CultureEnvironment.auxotroph_supplements is "</span>
+    <span class="s2">"the slot for these, and this dataset's experiment class states the base "</span>
+    <span class="s2">"Environment, which has none; the token states them as part of the medium, so that "</span>
+    <span class="s2">"is where they are stored, with base_medium still carrying the join to the base"</span><span class="p">,</span>
+    <span class="n">_APPENDED</span><span class="p">:</span> <span class="s2">"a component the curation appends to the base medium after a comma, "</span>
+    <span class="s2">"with its dose"</span><span class="p">,</span>
+    <span class="n">_SELECTION</span><span class="p">:</span> <span class="s2">"a selection agent is a COMPONENT, not an environment perturbation: it "</span>
+    <span class="s2">"is constant to the medium rather than the studied edit (schema.py, Media section)"</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1">#: A dose written on the base word itself names the base's own characteristic</span>
+<span class="c1">#: component, which the curation abbreviates to a letter and never expands. Only the</span>
+<span class="c1">#: bases whose abbreviated component's ROLE is unambiguous are read; any other dosed</span>
+<span class="c1">#: base raises rather than guessing which ingredient the dose belongs to.</span>
+<span class="n">_BASE_DOSED_ROLE</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">MediaComponentRole</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"YPG"</span><span class="p">:</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">carbon_source</span>
+<span class="p">}</span>
+
+<span class="c1">#: The nutrient CLASS a token declares absent without naming the compound removed.</span>
+<span class="n">_ROLE_DROPOUTS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">MediaComponentRole</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"C"</span><span class="p">:</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">carbon_source</span><span class="p">,</span>
+    <span class="s2">"N"</span><span class="p">:</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">nitrogen_source</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1"># "&lt;name&gt; [&lt;value&gt; &lt;unit&gt;]" anywhere a medium token states a dose.</span>
+<span class="n">_MEDIA_DOSE_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+    <span class="sa">r</span><span class="s2">"^(?P&lt;name&gt;.*\S)\s*\[(?P&lt;val&gt;[0-9]+(?:\.[0-9]+)?)\s*(?P&lt;unit&gt;[^\]]+)\]$"</span>
+<span class="p">)</span>
+<span class="c1"># "SC (-C)": the base with a nutrient CLASS removed.</span>
+<span class="n">_ROLE_DROPOUT_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^(?P&lt;rest&gt;.*\S)\s*\(-(?P&lt;role&gt;[A-Z])\)$"</span><span class="p">)</span>
+<span class="c1"># "SD + His + Leu + Lys + Ura (2)": the curation's own index for a second medium it</span>
+<span class="c1"># spells identically; it states nothing about composition.</span>
+<span class="n">_CURATION_INDEX_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^(?P&lt;rest&gt;.*\S)\s*\((?P&lt;index&gt;[0-9]+)\)$"</span><span class="p">)</span>
+<span class="c1"># "SC - Ade": the base with a NAMED nutrient dropped.</span>
+<span class="n">_NAMED_DROPOUT_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^(?P&lt;base&gt;\S+)\s*-\s*(?P&lt;nutrient&gt;[A-Za-z]+)$"</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ParsedMediaToken</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The typed composition a curated media token states, and its base word."""</span>
+
+    <span class="n">base_word</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">components</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">MediaComponent</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">dropouts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Compound</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">dropout_roles</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">MediaComponentRole</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_media_dose</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">unit</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Concentration</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A dose a medium token states; an unmapped unit raises rather than being dropped."""</span>
+    <span class="n">mapped</span> <span class="o">=</span> <span class="n">_UNIT_MAP</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">unit</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+    <span class="k">if</span> <span class="n">mapped</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"the curated medium token states a dose in </span><span class="si">{</span><span class="n">unit</span><span class="si">!r}</span><span class="s2">, which "</span>
+            <span class="s2">"ConcentrationUnit does not carry; add the unit rather than dropping the dose"</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">Concentration</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="n">unit</span><span class="o">=</span><span class="n">mapped</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_media_component</span><span class="p">(</span>
+    <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dose</span><span class="p">:</span> <span class="n">Concentration</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">token</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MediaComponent</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One compound a medium token names, resolved and roled, with its stated dose."""</span>
+    <span class="n">entry</span> <span class="o">=</span> <span class="n">_MEDIUM_COMPOUNDS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+    <span class="k">if</span> <span class="n">entry</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"the curated medium token </span><span class="si">{</span><span class="n">token</span><span class="si">!r}</span><span class="s2"> names </span><span class="si">{</span><span class="n">key</span><span class="si">!r}</span><span class="s2">, which is in no "</span>
+            <span class="s2">"_MEDIUM_COMPOUNDS row; add the compound, its role and its note rather "</span>
+            <span class="s2">"than storing the token with the statement left inside its name"</span>
+        <span class="p">)</span>
+    <span class="n">resolver_key</span><span class="p">,</span> <span class="n">role</span><span class="p">,</span> <span class="n">kind</span> <span class="o">=</span> <span class="n">entry</span>
+    <span class="k">return</span> <span class="n">MediaComponent</span><span class="p">(</span>
+        <span class="n">compound</span><span class="o">=</span><span class="n">resolved_compound</span><span class="p">(</span><span class="n">resolver_key</span><span class="p">),</span>
+        <span class="n">role</span><span class="o">=</span><span class="n">role</span><span class="p">,</span>
+        <span class="n">concentration</span><span class="o">=</span><span class="n">dose</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="n">_COMPONENT_NOTES</span><span class="p">[</span><span class="n">kind</span><span class="p">],</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_parse_media_token</span><span class="p">(</span><span class="n">token</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ParsedMediaToken</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Read a curated media token into typed composition, or raise on an unknown form.</span>
+
+<span class="sd">    No fallback: a token form this grammar does not cover raises, because the</span>
+<span class="sd">    alternative is a stored medium whose statement sits unparsed inside its name, which</span>
+<span class="sd">    is the defect this function exists to remove. The ``SCREENS`` list is pinned by</span>
+<span class="sd">    sha256, so the 28 released tokens are a closed set; widening it is what surfaces a</span>
+<span class="sd">    new form.</span>
+<span class="sd">    """</span>
+    <span class="n">subpieces</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">piece_index</span><span class="p">,</span> <span class="n">piece</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">token</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"+"</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">sub_index</span><span class="p">,</span> <span class="n">sub</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">piece</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">","</span><span class="p">)):</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">text</span><span class="p">:</span>
+                <span class="n">subpieces</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">piece_index</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">sub_index</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="n">text</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">subpieces</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">subpieces</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"the curated medium token </span><span class="si">{</span><span class="n">token</span><span class="si">!r}</span><span class="s2"> states no base medium"</span><span class="p">)</span>
+
+    <span class="n">parsed</span> <span class="o">=</span> <span class="n">ParsedMediaToken</span><span class="p">(</span><span class="n">base_word</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">is_base</span><span class="p">,</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">subpieces</span><span class="p">:</span>
+        <span class="n">rest</span> <span class="o">=</span> <span class="n">text</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">m</span> <span class="o">:=</span> <span class="n">_CURATION_INDEX_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">rest</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">rest</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"rest"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">m</span> <span class="o">:=</span> <span class="n">_ROLE_DROPOUT_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">rest</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">role</span> <span class="o">=</span> <span class="n">_ROLE_DROPOUTS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"role"</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">role</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"the curated medium token </span><span class="si">{</span><span class="n">token</span><span class="si">!r}</span><span class="s2"> declares the nutrient class "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">'role'</span><span class="p">)</span><span class="si">!r}</span><span class="s2"> absent, which _ROLE_DROPOUTS does not name"</span>
+                <span class="p">)</span>
+            <span class="n">parsed</span><span class="o">.</span><span class="n">dropout_roles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">role</span><span class="p">)</span>
+            <span class="n">rest</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"rest"</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">rest</span> <span class="ow">in</span> <span class="p">{</span><span class="sa">f</span><span class="s2">"-</span><span class="si">{</span><span class="n">letter</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">letter</span> <span class="ow">in</span> <span class="n">_ROLE_DROPOUTS</span><span class="p">}:</span>
+            <span class="n">parsed</span><span class="o">.</span><span class="n">dropout_roles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_ROLE_DROPOUTS</span><span class="p">[</span><span class="n">rest</span><span class="p">[</span><span class="mi">1</span><span class="p">:]])</span>
+            <span class="k">continue</span>
+        <span class="n">dose</span><span class="p">:</span> <span class="n">Concentration</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">m</span> <span class="o">:=</span> <span class="n">_MEDIA_DOSE_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">rest</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">dose</span> <span class="o">=</span> <span class="n">_media_dose</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"val"</span><span class="p">),</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"unit"</span><span class="p">))</span>
+            <span class="n">rest</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"name"</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_base</span><span class="p">:</span>
+            <span class="n">parsed</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_media_component</span><span class="p">(</span><span class="n">rest</span><span class="p">,</span> <span class="n">dose</span><span class="p">,</span> <span class="n">token</span><span class="p">))</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">m</span> <span class="o">:=</span> <span class="n">_NAMED_DROPOUT_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">rest</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">entry</span> <span class="o">=</span> <span class="n">_MEDIUM_COMPOUNDS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"nutrient"</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+            <span class="k">if</span> <span class="n">entry</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"the curated medium token </span><span class="si">{</span><span class="n">token</span><span class="si">!r}</span><span class="s2"> drops "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">'nutrient'</span><span class="p">)</span><span class="si">!r}</span><span class="s2">, which is in no _MEDIUM_COMPOUNDS row"</span>
+                <span class="p">)</span>
+            <span class="n">parsed</span><span class="o">.</span><span class="n">dropouts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">resolved_compound</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+            <span class="n">rest</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"base"</span><span class="p">)</span>
+        <span class="n">parsed</span><span class="o">.</span><span class="n">base_word</span> <span class="o">=</span> <span class="n">rest</span>
+        <span class="k">if</span> <span class="n">dose</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">role</span> <span class="o">=</span> <span class="n">_BASE_DOSED_ROLE</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">rest</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">role</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"the curated medium token </span><span class="si">{</span><span class="n">token</span><span class="si">!r}</span><span class="s2"> doses the base </span><span class="si">{</span><span class="n">rest</span><span class="si">!r}</span><span class="s2">, whose "</span>
+                <span class="s2">"abbreviated component _BASE_DOSED_ROLE does not name"</span>
+            <span class="p">)</span>
+        <span class="n">parsed</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">MediaComponent</span><span class="p">(</span>
+                <span class="n">compound</span><span class="o">=</span><span class="n">Compound</span><span class="p">(</span>
+                    <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">rest</span><span class="si">}</span><span class="s2"> carbon source, abbreviated by the curation"</span>
+                <span class="p">),</span>
+                <span class="n">role</span><span class="o">=</span><span class="n">role</span><span class="p">,</span>
+                <span class="n">concentration</span><span class="o">=</span><span class="n">dose</span><span class="p">,</span>
+                <span class="n">definition</span><span class="o">=</span><span class="n">ComponentDefinition</span><span class="o">.</span><span class="n">composition_deferred</span><span class="p">,</span>
+                <span class="n">note</span><span class="o">=</span><span class="sa">f</span><span class="s2">"the token </span><span class="si">{</span><span class="n">token</span><span class="si">!r}</span><span class="s2"> states the dose of the base's own "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">role</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> and abbreviates that ingredient to a letter; "</span>
+                <span class="s2">"YeastPhenome's curation carries no expansion, so the stated dose is "</span>
+                <span class="s2">"kept against an unexpanded line rather than a guessed molecule"</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">parsed</span><span class="o">.</span><span class="n">base_word</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"the curated medium token </span><span class="si">{</span><span class="n">token</span><span class="si">!r}</span><span class="s2"> states no base medium"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">parsed</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_media_statement</span><span class="p">(</span><span class="n">token</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">screen</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">SourcedValue</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The released token itself, pinned to the bytes of the screen file it came from.</span>
+
+<span class="sd">    The token is a verbatim substring of that file's header line, and the header is the</span>
+<span class="sd">    only place the curation states a medium, so one medium-level quote is the audit</span>
+<span class="sd">    anchor for every typed field read out of it.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">SourcedValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="n">token</span><span class="p">,</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="n">Provenance</span><span class="p">(</span>
+            <span class="n">source_uri</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Datasets/</span><span class="si">{</span><span class="n">screen</span><span class="p">[</span><span class="s1">'pmid'</span><span class="p">]</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">screen</span><span class="p">[</span><span class="s1">'stem'</span><span class="p">]</span><span class="si">}</span><span class="s2">_valuez.txt"</span><span class="p">,</span>
+            <span class="n">citation_key</span><span class="o">=</span><span class="n">CURATION</span><span class="o">.</span><span class="n">citation_key</span><span class="p">,</span>
+            <span class="n">sha256</span><span class="o">=</span><span class="n">screen</span><span class="p">[</span><span class="s2">"valuez_sha256"</span><span class="p">],</span>
+        <span class="p">),</span>
+        <span class="n">quote</span><span class="o">=</span><span class="n">token</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"the media field of the column header, verbatim; every typed component, "</span>
+        <span class="s2">"dropout and dropped role on this medium is read from this one statement, and "</span>
+        <span class="s2">"nothing else about the recipe is stated by the curation"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_parse_media</span><span class="p">(</span>
+    <span class="n">media_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">phenotype</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">screen</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Media</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The curated media token (``YPD + EtOH``) as a ``Media``, stored as released.</span>
 
-<span class="sd">    Base = the token before '+'. ``state`` is inferred from the growth readout:</span>
-<span class="sd">    colony-size / spot-assay / killing-zone =&gt; solid, else (turbidity / pooled / CFU)</span>
-<span class="sd">    =&gt; liquid. ``is_synthetic`` comes from the two library tables, else from the base's</span>
-<span class="sd">    prefix, else is a typed gap. A header with no medium field (4 fields) stores a</span>
-<span class="sd">    ``Media`` whose name, state and synthetic flag are all typed gaps.</span>
+<span class="sd">    ``name`` is the token VERBATIM; what the token states about composition is read</span>
+<span class="sd">    into ``components``, ``dropouts`` and ``dropout_roles`` by</span>
+<span class="sd">    :func:`_parse_media_token`, so no statement is left inside the name (lane X, 2026-10-15).</span>
+<span class="sd">    ``state`` is inferred from the growth readout: colony-size / spot-assay /</span>
+<span class="sd">    killing-zone =&gt; solid, else (turbidity / pooled / CFU) =&gt; liquid. ``is_synthetic``</span>
+<span class="sd">    comes from the two library tables, else from the base word's prefix, else is a typed</span>
+<span class="sd">    gap. A header with no medium field (4 fields) stores a ``Media`` whose name, state</span>
+<span class="sd">    and synthetic flag are all typed gaps.</span>
+
+<span class="sd">    The base recipe itself stays unexpanded: no library object is substituted for the</span>
+<span class="sd">    token, so ``components`` holds exactly what the token states and ``base_medium``</span>
+<span class="sd">    carries the join to the shared family, which is this loader's standing treatment of</span>
+<span class="sd">    a secondary curation layer that names a medium without printing it.</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="n">media_field</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">note</span> <span class="o">=</span> <span class="s2">"the curated column header carries no medium field (4-field header)"</span>
@@ -739,27 +1019,38 @@
                 <span class="n">_media_gap</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">note</span><span class="p">)</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"name"</span><span class="p">,</span> <span class="s2">"state"</span><span class="p">,</span> <span class="s2">"is_synthetic"</span><span class="p">)</span>
             <span class="p">],</span>
         <span class="p">)</span>
-    <span class="n">base</span> <span class="o">=</span> <span class="n">media_field</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"+"</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="n">token</span> <span class="o">=</span> <span class="n">media_field</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="n">parsed</span> <span class="o">=</span> <span class="n">_parse_media_token</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+    <span class="n">base</span> <span class="o">=</span> <span class="n">parsed</span><span class="o">.</span><span class="n">base_word</span>
     <span class="n">p</span> <span class="o">=</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="n">state</span> <span class="o">=</span> <span class="s2">"solid"</span> <span class="k">if</span> <span class="p">(</span><span class="s2">"colony"</span> <span class="ow">in</span> <span class="n">p</span> <span class="ow">or</span> <span class="s2">"spot"</span> <span class="ow">in</span> <span class="n">p</span> <span class="ow">or</span> <span class="s2">"killing"</span> <span class="ow">in</span> <span class="n">p</span><span class="p">)</span> <span class="k">else</span> <span class="s2">"liquid"</span>
-    <span class="n">anchor</span> <span class="o">=</span> <span class="n">_base_medium</span><span class="p">(</span><span class="n">base</span><span class="p">)</span>
+    <span class="n">shared</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"name"</span><span class="p">:</span> <span class="n">token</span><span class="p">,</span>
+        <span class="s2">"state"</span><span class="p">:</span> <span class="n">state</span><span class="p">,</span>
+        <span class="s2">"base_medium"</span><span class="p">:</span> <span class="n">_base_medium</span><span class="p">(</span><span class="n">base</span><span class="p">),</span>
+        <span class="s2">"components"</span><span class="p">:</span> <span class="n">parsed</span><span class="o">.</span><span class="n">components</span><span class="p">,</span>
+        <span class="s2">"dropouts"</span><span class="p">:</span> <span class="n">parsed</span><span class="o">.</span><span class="n">dropouts</span><span class="p">,</span>
+        <span class="s2">"dropout_roles"</span><span class="p">:</span> <span class="n">parsed</span><span class="o">.</span><span class="n">dropout_roles</span><span class="p">,</span>
+        <span class="s2">"provenance"</span><span class="p">:</span> <span class="p">[</span><span class="n">_media_statement</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">screen</span><span class="p">)],</span>
+    <span class="p">}</span>
     <span class="k">if</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">_RICH_MEDIA</span> <span class="ow">or</span> <span class="n">base</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">_RICH_PREFIXES</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">Media</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">base</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span> <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">base_medium</span><span class="o">=</span><span class="n">anchor</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Media</span><span class="p">(</span><span class="n">is_synthetic</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">shared</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">_SYNTHETIC_MEDIA</span> <span class="ow">or</span> <span class="n">base</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">_SYNTHETIC_PREFIXES</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">Media</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">base</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span> <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">base_medium</span><span class="o">=</span><span class="n">anchor</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Media</span><span class="p">(</span><span class="n">is_synthetic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">shared</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">Media</span><span class="p">(</span>
-        <span class="n">name</span><span class="o">=</span><span class="n">base</span><span class="p">,</span>
-        <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span>
         <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">base_medium</span><span class="o">=</span><span class="n">anchor</span><span class="p">,</span>
         <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span>
             <span class="n">_media_gap</span><span class="p">(</span>
                 <span class="s2">"is_synthetic"</span><span class="p">,</span>
-                <span class="sa">f</span><span class="s2">"the curated medium token </span><span class="si">{</span><span class="n">media_field</span><span class="si">!r}</span><span class="s2"> names a base in neither "</span>
+                <span class="sa">f</span><span class="s2">"the curated medium token </span><span class="si">{</span><span class="n">token</span><span class="si">!r}</span><span class="s2"> names a base in neither "</span>
                 <span class="s2">"the rich nor the synthetic table and with no classifying prefix"</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">],</span>
+        <span class="o">**</span><span class="n">shared</span><span class="p">,</span>
     <span class="p">)</span>
+
+
+<span class="c1"># --- end lane X -------------------------------------------------------------------- #</span>
 
 
 <div class="viewcode-block" id="YeastPhenomeDataset">
@@ -909,7 +1200,7 @@
                             <span class="n">n_cells</span><span class="p">,</span>
                         <span class="p">)</span>
                         <span class="k">continue</span>
-                    <span class="n">media</span> <span class="o">=</span> <span class="n">_parse_media</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">"media"</span><span class="p">],</span> <span class="n">meta</span><span class="p">[</span><span class="s2">"phenotype"</span><span class="p">]</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
+                    <span class="n">media</span> <span class="o">=</span> <span class="n">_parse_media</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">"media"</span><span class="p">],</span> <span class="n">meta</span><span class="p">[</span><span class="s2">"phenotype"</span><span class="p">]</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
                     <span class="n">zygosity</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s2">"zygosity"</span><span class="p">]</span> <span class="ow">or</span> <span class="s2">""</span>
                     <span class="n">background</span> <span class="o">=</span> <span class="n">_ZYGOSITY</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">zygosity</span><span class="p">)</span>
                     <span class="c1"># Readout method (microarray/barseq/turbidity/...) is part of the</span>
@@ -997,7 +1288,11 @@
         <span class="k">return</span> <span class="n">EnvironmentResponseExperimentReference</span><span class="p">(</span>
             <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
             <span class="n">genome_reference</span><span class="o">=</span><span class="n">ReferenceGenome</span><span class="p">(</span>
-                <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="n">strain</span><span class="p">,</span> <span class="n">ploidy</span><span class="o">=</span><span class="n">ploidy</span>
+                <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span>
+                <span class="n">strain</span><span class="o">=</span><span class="n">strain</span><span class="p">,</span>
+                <span class="n">ploidy</span><span class="o">=</span><span class="n">ploidy</span><span class="p">,</span>
+                <span class="n">assembly_set</span><span class="o">=</span><span class="n">SGD_S288C_R64</span><span class="p">,</span>
+                <span class="n">assembly_accession</span><span class="o">=</span><span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
             <span class="p">),</span>
             <span class="n">environment_reference</span><span class="o">=</span><span class="n">environment</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(),</span>
             <span class="n">phenotype_reference</span><span class="o">=</span><span class="n">phenotype_reference</span><span class="p">,</span>
@@ -1012,21 +1307,22 @@
 <span class="sd">        ``KanMxDeletionPerturbation``; a heterozygous-diploid column (``het``) is one copy</span>
 <span class="sd">        dropped 2 -&gt; 1, the ``EngineeredCopyNumberPerturbation``. Curation gives only the</span>
 <span class="sd">        ORF, so ``perturbed_gene_name`` is the ORF (no common name carried). A row id</span>
-<span class="sd">        with no ORF form goes on ``ReleasedGeneNamePerturbation`` verbatim (#1045), kind</span>
+<span class="sd">        with no ORF form goes on ``ReleasedIdentifierPerturbation`` verbatim (#1045), kind</span>
 <span class="sd">        ``heterozygous_deletion`` for a ``het`` column and ``deletion`` otherwise.</span>
 <span class="sd">        """</span>
         <span class="n">perturbation</span><span class="p">:</span> <span class="n">GenePerturbationType</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">orf</span><span class="p">):</span>
-            <span class="n">perturbation</span> <span class="o">=</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">(</span>
+            <span class="n">perturbation</span> <span class="o">=</span> <span class="n">ReleasedIdentifierPerturbation</span><span class="p">(</span>
                 <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+                <span class="n">gene_namespace</span><span class="o">=</span><span class="s2">"scerevisiae_s288c_sgd_systematic"</span><span class="p">,</span>
                 <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
-                <span class="n">released_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+                <span class="n">identifier_kind</span><span class="o">=</span><span class="s2">"row identifier of the curated matrix, as released"</span><span class="p">,</span>
                 <span class="n">released_kind</span><span class="o">=</span><span class="p">(</span>
-                    <span class="n">ReleasedGeneKind</span><span class="o">.</span><span class="n">heterozygous_deletion</span>
+                    <span class="n">ReleasedKind</span><span class="o">.</span><span class="n">heterozygous_deletion</span>
                     <span class="k">if</span> <span class="n">zygosity</span> <span class="o">==</span> <span class="s2">"het"</span>
-                    <span class="k">else</span> <span class="n">ReleasedGeneKind</span><span class="o">.</span><span class="n">deletion</span>
+                    <span class="k">else</span> <span class="n">ReleasedKind</span><span class="o">.</span><span class="n">deletion</span>
                 <span class="p">),</span>
-                <span class="n">marker</span><span class="o">=</span><span class="s2">"KanMX"</span><span class="p">,</span>
+                <span class="n">cassette</span><span class="o">=</span><span class="s2">"KanMX"</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">elif</span> <span class="n">zygosity</span> <span class="o">==</span> <span class="s2">"het"</span><span class="p">:</span>
             <span class="n">perturbation</span> <span class="o">=</span> <span class="n">EngineeredCopyNumberPerturbation</span><span class="p">(</span>

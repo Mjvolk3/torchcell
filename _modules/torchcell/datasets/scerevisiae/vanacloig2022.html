@@ -261,6 +261,7 @@
     <span class="n">EndpointRule</span><span class="p">,</span>
     <span class="n">EnvironmentPhysicalPerturbation</span><span class="p">,</span>
     <span class="n">EnvironmentResponsePhenotype</span><span class="p">,</span>
+    <span class="n">EukaryoticStrainBackground</span><span class="p">,</span>
     <span class="n">Experiment</span><span class="p">,</span>
     <span class="n">ExperimentReference</span><span class="p">,</span>
     <span class="n">Genotype</span><span class="p">,</span>
@@ -271,7 +272,6 @@
     <span class="n">SampleUnit</span><span class="p">,</span>
     <span class="n">SmallMoleculePerturbation</span><span class="p">,</span>
     <span class="n">Solvent</span><span class="p">,</span>
-    <span class="n">StrainBackground</span><span class="p">,</span>
     <span class="n">StrainEnvironmentResponseExperiment</span><span class="p">,</span>
     <span class="n">StrainEnvironmentResponseExperimentReference</span><span class="p">,</span>
     <span class="n">StrainReferenceGenome</span><span class="p">,</span>
@@ -291,6 +291,10 @@
     <span class="n">Manifest</span><span class="p">,</span>
     <span class="n">RetrievalMethod</span><span class="p">,</span>
     <span class="n">RetrievalRecord</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.registry</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SGD_S288C_R64</span><span class="p">,</span>
+    <span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -773,7 +777,7 @@
 <span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">library_background</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">StrainBackground</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">library_background</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">EukaryoticStrainBackground</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The constant genome content of every screened strain beyond R64.</span>
 
 <span class="sd">    Sourced: MATa (selected), haploid, can1Δ::STE2pr-Sp_his5 and lyp1Δ (the SGA</span>
@@ -800,7 +804,9 @@
             <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"his3Δ1"</span><span class="p">,</span> <span class="s2">"leu2Δ0"</span><span class="p">,</span> <span class="s2">"ura3Δ0"</span><span class="p">,</span> <span class="s2">"met15Δ0"</span><span class="p">)</span>
         <span class="p">),</span>
     <span class="p">]</span>
-    <span class="k">return</span> <span class="n">StrainBackground</span><span class="p">(</span>
+    <span class="k">return</span> <span class="n">EukaryoticStrainBackground</span><span class="p">(</span>
+        <span class="n">reference_strain</span><span class="o">=</span><span class="s2">"S288C"</span><span class="p">,</span>
+        <span class="n">assembly_set</span><span class="o">=</span><span class="n">SGD_S288C_R64</span><span class="p">,</span>
         <span class="n">name</span><span class="o">=</span><span class="n">LIBRARY_STRAIN</span><span class="p">,</span>
         <span class="n">parents</span><span class="o">=</span><span class="p">[</span><span class="s2">"Y13206"</span><span class="p">,</span> <span class="s2">"MATa xxxΔ::kanMX deletion array"</span><span class="p">],</span>
         <span class="n">construction</span><span class="o">=</span><span class="p">(</span>
@@ -1469,7 +1475,7 @@
 <span class="w">    </span><span class="sd">"""Split the matrix's rows into stored rows and rows that hold no record.</span>
 
 <span class="sd">    A row whose EVERY count column is missing holds no value in any condition. A row</span>
-<span class="sd">    whose gene column is not ORF-shaped would need a released-gene-name leaf the schema</span>
+<span class="sd">    whose gene column is not ORF-shaped would need a released-identifier leaf the schema</span>
 <span class="sd">    does not have yet, so it is counted under its own rule. Every other row is stored</span>
 <span class="sd">    under its released ORF and ``std_name``. Two stored rows releasing the same ORF and</span>
 <span class="sd">    the same barcode would produce identical records, so the build refuses rather than</span>
@@ -1672,6 +1678,8 @@
             <span class="n">strain</span><span class="o">=</span><span class="n">LIBRARY_STRAIN</span><span class="p">,</span>
             <span class="n">ploidy</span><span class="o">=</span><span class="s2">"haploid"</span><span class="p">,</span>
             <span class="n">background</span><span class="o">=</span><span class="n">library_background</span><span class="p">(),</span>
+            <span class="n">assembly_set</span><span class="o">=</span><span class="n">SGD_S288C_R64</span><span class="p">,</span>
+            <span class="n">assembly_accession</span><span class="o">=</span><span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_reference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compound</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StrainEnvironmentResponseExperimentReference</span><span class="p">:</span>

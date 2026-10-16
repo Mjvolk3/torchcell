@@ -159,6 +159,17 @@
 <span class="sd">  per record the annotation's SGD experiment type verbatim (1,121 "systematic mutation</span>
 <span class="sd">  set", 166 "classical genetics" of the 1,287 stored in the pinned dump). The mirrored</span>
 <span class="sd">  SGD literature does not define the "inviable" term itself.</span>
+<span class="sd">- **The annotation's reference is on the evidence (lane V, 2026-10-15).** SGD curates</span>
+<span class="sd">  one gene's inviable null phenotype from more than one paper: 17 (gene, allele,</span>
+<span class="sd">  condition) groups of the pinned dump carry two or three annotations with different</span>
+<span class="sd">  ``pubmed_id`` (MRS6 from 7750142, 8132658 and 7882424; USO1, SRP14, UBC1 and 11</span>
+<span class="sd">  others from Giaever's 12140549 and Dowell's 20413493). The PubMed id was only on the</span>
+<span class="sd">  record's ``Publication``, which the ``Experiment`` dump does not include, so those 35</span>
+<span class="sd">  annotations dumped to 17 experiments and the graph held one ``Experiment`` node per</span>
+<span class="sd">  group with two or three ``Publication`` nodes pointing at it: 18 curated annotations</span>
+<span class="sd">  were in the LMDB and absent from the served graph. ``GeneEssentialityEvidence.</span>
+<span class="sd">  curated_reference_pubmed_id`` carries it, because what a curated call rests on is one</span>
+<span class="sd">  annotation of one report, and that is part of what the call IS.</span>
 <span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
@@ -196,6 +207,8 @@
     <span class="n">GeneEssentialityPhenotype</span><span class="p">,</span>
     <span class="n">Genotype</span><span class="p">,</span>
     <span class="n">Media</span><span class="p">,</span>
+    <span class="n">MediaComponent</span><span class="p">,</span>
+    <span class="n">MediaComponentRole</span><span class="p">,</span>
     <span class="n">NamedAllelePerturbation</span><span class="p">,</span>
     <span class="n">PhysicalFactor</span><span class="p">,</span>
     <span class="n">Publication</span><span class="p">,</span>
@@ -205,6 +218,10 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.graph.sgd</span><span class="w"> </span><span class="kn">import</span> <span class="n">data_root</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.registry</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SGD_S288C_R64</span><span class="p">,</span>
+    <span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ProvenanceGap</span><span class="p">,</span>
@@ -305,15 +322,24 @@
 <span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">sgd_evidence</span><span class="p">(</span><span class="n">experiment_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GeneEssentialityEvidence</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">sgd_evidence</span><span class="p">(</span>
+    <span class="n">experiment_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">pubmed_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GeneEssentialityEvidence</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The curated-annotation evidence (#924), with the annotation's SGD experiment</span>
-<span class="sd">    type when given; the reference (None) carries the rule and definition only.</span>
+<span class="sd">    type and the PubMed id of the reference it was curated from when given; the</span>
+<span class="sd">    reference (both ``None``) carries the rule and definition only.</span>
+
+<span class="sd">    The PubMed id is on the evidence because a curated call rests on one report and</span>
+<span class="sd">    which report it is is part of what the call IS: 17 (gene, allele, condition) groups</span>
+<span class="sd">    of the pinned dump are curated from two or three different papers each, and without</span>
+<span class="sd">    it those 35 annotations dumped to 17 experiments (lane V, 2026-10-15).</span>
 <span class="sd">    """</span>
     <span class="k">return</span> <span class="n">GeneEssentialityEvidence</span><span class="p">(</span>
         <span class="n">evidence_class</span><span class="o">=</span><span class="n">EssentialityEvidenceClass</span><span class="o">.</span><span class="n">curated_annotation</span><span class="p">,</span>
         <span class="n">evidence_type</span><span class="o">=</span><span class="n">EssentialityEvidenceType</span><span class="o">.</span><span class="n">curated_null_phenotype</span><span class="p">,</span>
         <span class="n">statements</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">EVIDENCE_STATEMENTS</span><span class="p">),</span>
         <span class="n">curated_experiment_type</span><span class="o">=</span><span class="n">experiment_type</span><span class="p">,</span>
+        <span class="n">curated_reference_pubmed_id</span><span class="o">=</span><span class="n">pubmed_id</span><span class="p">,</span>
     <span class="p">)</span>
 
 
@@ -371,11 +397,39 @@
 <span class="c1">#: hence ``is_synthetic`` False). SGD states no physical state, and ``Media.state`` is</span>
 <span class="c1">#: solid, liquid or gas, so the state alone is the gap: neither plate nor broth is</span>
 <span class="c1">#: guessed.</span>
+<span class="c1">#:</span>
+<span class="c1">#: The CARBON SOURCE and its dose are stated too, and before lane X of the ontology</span>
+<span class="c1">#: unification they reached no typed field: the component list was empty and the</span>
+<span class="c1">#: "2% glucose" half of the condition lived</span>
+<span class="c1">#: only inside ``name``, which ``media_identity`` drops. It is now a typed component at</span>
+<span class="c1">#: the dose SGD writes, the same reading the bare ``2% glucose`` condition below already</span>
+<span class="c1">#: got as a ``carbon_source`` factor; a percentage whose basis SGD does not define is</span>
+<span class="c1">#: ``ConcentrationUnit.percent``, which is what that unit means.</span>
 <span class="n">SGD_STATELESS_YPD</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span>
     <span class="n">name</span><span class="o">=</span><span class="s2">"YPD with 2</span><span class="si">% g</span><span class="s2">lucose"</span><span class="p">,</span>
     <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">base_medium</span><span class="o">=</span><span class="s2">"YPD"</span><span class="p">,</span>
+    <span class="n">components</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">MediaComponent</span><span class="p">(</span>
+            <span class="n">compound</span><span class="o">=</span><span class="n">resolved_compound</span><span class="p">(</span><span class="s2">"glucose"</span><span class="p">),</span>
+            <span class="n">role</span><span class="o">=</span><span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">carbon_source</span><span class="p">,</span>
+            <span class="n">concentration</span><span class="o">=</span><span class="n">Concentration</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">ConcentrationUnit</span><span class="o">.</span><span class="n">percent</span><span class="p">),</span>
+            <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">SourcedValue</span><span class="p">(</span>
+                    <span class="n">value</span><span class="o">=</span><span class="s2">"2</span><span class="si">% g</span><span class="s2">lucose"</span><span class="p">,</span>
+                    <span class="n">provenance</span><span class="o">=</span><span class="n">SGD_DUMP</span><span class="p">,</span>
+                    <span class="n">quote</span><span class="o">=</span><span class="s2">"YPD with 2</span><span class="si">% g</span><span class="s2">lucose"</span><span class="p">,</span>
+                    <span class="n">note</span><span class="o">=</span><span class="s2">"the annotation's own condition property (class_type "</span>
+                    <span class="s2">"'media'), verbatim; SGD states the dose as a percentage and "</span>
+                    <span class="s2">"never defines its basis, so the unit is a bare percent"</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">],</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"the carbon source the condition property states; the rest of the "</span>
+            <span class="s2">"YPD recipe is not stated by the annotation, which is what base_medium "</span>
+            <span class="s2">"carries"</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">],</span>
     <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span>
         <span class="n">ProvenanceGap</span><span class="p">(</span>
             <span class="n">field</span><span class="o">=</span><span class="s2">"state"</span><span class="p">,</span>
@@ -638,7 +692,14 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">refuse_duplicate_annotations</span><span class="p">(</span><span class="n">annotations</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">SgdAnnotation</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Raise when two annotations share gene, allele, condition and PubMed id."""</span>
+<span class="w">    </span><span class="sd">"""Raise when two annotations share gene, allele, condition and PubMed id.</span>
+
+<span class="sd">    Since the evidence carries ``curated_reference_pubmed_id`` this key is a subset of</span>
+<span class="sd">    what the stored experiment dumps, so a build that passes here has one content id</span>
+<span class="sd">    per record: the dump holds the gene, the allele, the condition's environment, the</span>
+<span class="sd">    SGD experiment type and the PubMed id, and no two annotations agree on all five.</span>
+<span class="sd">    Measured on the pinned dump: 1,329 annotations, 1,329 distinct dumps (lane V).</span>
+<span class="sd">    """</span>
     <span class="n">keys</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">(</span>
         <span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">systematic_name</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">allele</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">conditions</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">pubmed_id</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">annotations</span>
     <span class="p">)</span>
@@ -869,13 +930,17 @@
     <span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Build the experiment, reference, and publication for one annotation."""</span>
         <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
-            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="s2">"S288C"</span>
+            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span>
+            <span class="n">strain</span><span class="o">=</span><span class="s2">"S288C"</span><span class="p">,</span>
+            <span class="n">assembly_set</span><span class="o">=</span><span class="n">SGD_S288C_R64</span><span class="p">,</span>
+            <span class="n">assembly_accession</span><span class="o">=</span><span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span><span class="n">perturbations</span><span class="o">=</span><span class="p">[</span><span class="n">sgd_perturbation</span><span class="p">(</span><span class="n">annotation</span><span class="p">)])</span>
 
         <span class="n">phenotype</span> <span class="o">=</span> <span class="n">GeneEssentialityPhenotype</span><span class="p">(</span>
-            <span class="n">is_essential</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">evidence</span><span class="o">=</span><span class="n">sgd_evidence</span><span class="p">(</span><span class="n">annotation</span><span class="o">.</span><span class="n">experiment</span><span class="p">)</span>
+            <span class="n">is_essential</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">evidence</span><span class="o">=</span><span class="n">sgd_evidence</span><span class="p">(</span><span class="n">annotation</span><span class="o">.</span><span class="n">experiment</span><span class="p">,</span> <span class="n">annotation</span><span class="o">.</span><span class="n">pubmed_id</span><span class="p">),</span>
         <span class="p">)</span>
         <span class="n">phenotype_reference</span> <span class="o">=</span> <span class="n">GeneEssentialityPhenotype</span><span class="p">(</span>
             <span class="n">is_essential</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">evidence</span><span class="o">=</span><span class="n">sgd_evidence</span><span class="p">()</span>

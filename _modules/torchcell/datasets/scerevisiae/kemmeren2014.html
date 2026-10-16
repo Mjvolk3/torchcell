@@ -152,6 +152,10 @@
     <span class="n">Temperature</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.registry</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SGD_S288C_R64</span><span class="p">,</span>
+    <span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -243,7 +247,7 @@
 <span class="c1"># served it under, read from that build's preprocess/data.csv (``title``,</span>
 <span class="c1"># ``systematic_gene_name``), never from the genome. Every ORF is a Table S1 ``orf name``</span>
 <span class="c1"># (so the mating-type row joins) except YNCB0010W and YLR003C, which join through the</span>
-<span class="c1"># TLC1 and CMS1 rows. This table is pending group 1's released-gene-name leaf (a</span>
+<span class="c1"># TLC1 and CMS1 rows. This table is pending group 1's released-identifier leaf (a</span>
 <span class="c1"># GenePerturbation child carrying the released symbol with ``systematic_gene_name`` as</span>
 <span class="c1"># a typed gap); once it lands, these 38 names are stored verbatim and the table goes.</span>
 <span class="n">RELEASE_TITLE_NAMES_WITHOUT_AN_ORF</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
@@ -1448,7 +1452,10 @@
             <span class="p">)</span>
         <span class="n">strain</span> <span class="o">=</span> <span class="n">sample_info</span><span class="p">[</span><span class="s2">"strain"</span><span class="p">]</span>
         <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
-            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="n">strain</span>
+            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span>
+            <span class="n">strain</span><span class="o">=</span><span class="n">strain</span><span class="p">,</span>
+            <span class="n">assembly_set</span><span class="o">=</span><span class="n">SGD_S288C_R64</span><span class="p">,</span>
+            <span class="n">assembly_accession</span><span class="o">=</span><span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="c1"># Create genotype for deletion mutant</span>

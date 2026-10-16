@@ -141,7 +141,7 @@
 <span class="sd">Every row that names a gene and carries a 24 h level is one record under the name the</span>
 <span class="sd">``gene`` column releases, verbatim (#1045): a systematic name goes on</span>
 <span class="sd">``KanMxDeletionPerturbation`` (both names the ORF), any other name on</span>
-<span class="sd">``ReleasedGeneNamePerturbation`` (the released symbol, kind ``deletion``, marker KanMX).</span>
+<span class="sd">``ReleasedIdentifierPerturbation`` (the released symbol, kind ``deletion``, marker KanMX).</span>
 <span class="sd">The token is upper-cased (two systematic names are released in mixed case) and</span>
 <span class="sd">otherwise verbatim. No genome is consulted and nothing is renamed or merged; the pinned</span>
 <span class="sd">file (4,788 rows) repeats no gene token. The rows without a record are the 28 whose gene cell is ``0`` or</span>
@@ -158,7 +158,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">urllib.request</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
@@ -175,14 +175,21 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.compound_identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolved_compound</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">YPD</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ArtifactRef</span><span class="p">,</span>
     <span class="n">Concentration</span><span class="p">,</span>
     <span class="n">ConcentrationUnit</span><span class="p">,</span>
+    <span class="n">ConstructPlacement</span><span class="p">,</span>
+    <span class="n">ConstructSpan</span><span class="p">,</span>
+    <span class="n">ConstructVariantCall</span><span class="p">,</span>
     <span class="n">Environment</span><span class="p">,</span>
     <span class="n">Experiment</span><span class="p">,</span>
     <span class="n">ExperimentReference</span><span class="p">,</span>
+    <span class="n">FeatureKey</span><span class="p">,</span>
     <span class="n">GeneAdditionPerturbation</span><span class="p">,</span>
     <span class="n">Genotype</span><span class="p">,</span>
+    <span class="n">HostPlacement</span><span class="p">,</span>
     <span class="n">KanMxDeletionPerturbation</span><span class="p">,</span>
+    <span class="n">Localization</span><span class="p">,</span>
     <span class="n">Media</span><span class="p">,</span>
     <span class="n">MediaComponent</span><span class="p">,</span>
     <span class="n">MediaComponentRole</span><span class="p">,</span>
@@ -191,10 +198,16 @@
     <span class="n">MetabolitePhenotype</span><span class="p">,</span>
     <span class="n">Publication</span><span class="p">,</span>
     <span class="n">ReferenceGenome</span><span class="p">,</span>
-    <span class="n">ReleasedGeneKind</span><span class="p">,</span>
-    <span class="n">ReleasedGeneNamePerturbation</span><span class="p">,</span>
+    <span class="n">ReleasedIdentifierPerturbation</span><span class="p">,</span>
+    <span class="n">ReleasedKind</span><span class="p">,</span>
+    <span class="n">VariantType</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.construct.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">CACHERA2023_CRI_SPA_PLASMIDS</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.registry</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SGD_S288C_R64</span><span class="p">,</span>
+    <span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ProvenanceGap</span><span class="p">,</span>
@@ -318,55 +331,221 @@
 <span class="p">)</span>
 
 
-<span class="c1"># The constant engineered background transferred by CRI-SPA into every YKO strain: the</span>
-<span class="c1"># Btx-cassette, chromosomally integrated at site XII-5 (paper Methods; pBTX1/pBTX2). Two</span>
-<span class="c1"># heterologous plant genes (CYP76AD1, DOD) + two feedback-resistant mutant alleles of</span>
-<span class="c1"># NATIVE yeast genes (ARO4^K229L / YBR249C, ARO7^G141S / YPR060C) integrated ectopically</span>
-<span class="c1"># (hence GeneAddition with a variant, NOT AllelePerturbation at the native locus). The</span>
-<span class="c1"># natMX marker is not a betaxanthin gene and is omitted. source_organism for DOD needs</span>
-<span class="c1"># confirmation against DeLoache 2015 (ref 25) at review. plasmid_contig_id stays None</span>
-<span class="c1"># until the plasmid-sequence store lands (Cachera GenBank maps in the OUP SI zip). See</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># The Btx-cassette's MATERIAL: the pBTX1 contig, its four gene features, and the two</span>
+<span class="c1"># designed alleles as contig coordinates (P4, 2026-10-15).</span>
+<span class="c1">#</span>
+<span class="c1"># Every value below is measured by</span>
+<span class="c1"># ``experiments/036-dataset-fixes-before-kg-build/scripts/cachera2023_btx_cassette_placement.py``</span>
+<span class="c1"># (results JSON beside it) from the deposited construct set</span>
+<span class="c1"># ``cachera2023_cri_spa_plasmids``, and nothing here is read off a design note.</span>
+<span class="c1">#</span>
+<span class="c1"># WHY pBTX1 and not pBTX2. The paper, line 46: "CD-Btx was constructed from UC+XII-5a by</span>
+<span class="c1"># transforming with the integrative plasmid pBTX1 harboring the betaxanthin-synthesizing</span>
+<span class="c1"># genes CYP76AD1 and DOD, an NTC selectable marker, negative feedback resistant ARO4</span>
+<span class="c1"># K229L, ARO7 G141S and an sgRNA expression cassette for targeting the XII-5 site. The</span>
+<span class="c1"># BY-Btx strain was made by transforming the NotI excised insert of pBTX2". The screen</span>
+<span class="c1"># transfers the cassette FROM CD-Btx into the YKO library ("we then used CD-Btx to</span>
+<span class="c1"># transfer the Btx-cassette to the 4787 unique deletion strains"), so the cassette in</span>
+<span class="c1"># every screened strain is pBTX1's. pBTX2 is the BY-Btx vector; since 2026-10-15 a span</span>
+<span class="c1"># holds the parts of an origin-crossing location, so pBTX2 indexes too (handle</span>
+<span class="c1"># 63f89c1eaa13), but it is a different replicon on different coordinates and no record</span>
+<span class="c1"># here points at it.</span>
+<span class="c1">#</span>
+<span class="c1"># WHY the host span is a typed gap. The paper names the landing pad "XII-5" and never</span>
+<span class="c1"># gives its S288C coordinates, which is the common case for a named pad; the genome</span>
+<span class="c1"># never gates a record, so the pad is stated verbatim and the coordinate is a gap.</span>
+<span class="c1">#</span>
+<span class="c1"># WHY the insert span is a typed gap, re-measured 2026-10-15 with pBTX2 indexed. pBTX1</span>
+<span class="c1"># annotates both homology arms ("XII-5 up B" at 10..220, "XII-5 dw A" at 9598..9859),</span>
+<span class="c1"># but the three readings of "the transferred interval" they admit disagree: arm to arm</span>
+<span class="c1"># inclusive is 9,850 bp, between the arms exclusive is 9,377 bp, and the paper's own</span>
+<span class="c1"># figure is "the considerable size, 9.3 kb, of the Btx-cassette". pBTX1 carries NO NotI</span>
+<span class="c1"># site, so there is no cut to resolve the arms against. The contrast is what settles it:</span>
+<span class="c1"># on pBTX2 the same question HAS an exact answer, because the paper says "the NotI</span>
+<span class="c1"># excised insert of pBTX2" and the bytes carry exactly two NotI sites (GCGGCCGC at 1527</span>
+<span class="c1"># and 10797), whose top-strand cuts bound 1529..10798 = 9,270 bp, which is the paper's</span>
+<span class="c1"># 9.3 kb. That interval is on pBTX2's coordinates and pBTX2 is not this record's contig,</span>
+<span class="c1"># so it is recorded in the construct index (pBTX2's own quoted name statement is that</span>
+<span class="c1"># NotI sentence) and in</span>
+<span class="c1"># ``experiments/036-dataset-fixes-before-kg-build/results/cachera2023_construct_span_parts.json``,</span>
+<span class="c1"># and it is NOT transferred onto a pBTX1 placement. The source states no interval of</span>
+<span class="c1"># pBTX1 as transferred, so neither does the record.</span>
+<span class="c1">#</span>
+<span class="c1"># Two heterologous plant genes (CYP76AD1, DOD) plus two feedback-resistant mutant</span>
+<span class="c1"># alleles of NATIVE yeast genes (ARO4^K229L / YBR249C, ARO7^G141S / YPR060C) integrated</span>
+<span class="c1"># ectopically (hence GeneAddition with a variant, NOT AllelePerturbation at the native</span>
+<span class="c1"># locus). The natMX marker is not a betaxanthin gene and is omitted. source_organism for</span>
+<span class="c1"># DOD needs confirmation against DeLoache 2015 (ref 25) at review. See</span>
 <span class="c1"># [[torchcell.datamodels.gene-addition-perturbation-design]].</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1">#: The construct set the placement reads, and the contig's 12-hex handle in it.</span>
+<span class="n">CONSTRUCT_SET</span> <span class="o">=</span> <span class="n">CACHERA2023_CRI_SPA_PLASMIDS</span>
+<span class="n">PBTX1_HANDLE</span> <span class="o">=</span> <span class="s2">"bbaca60509e0"</span>
+<span class="c1">#: The sha256 of ``si/plasmids/pBTX001(ante113).gb`` IS the contig's identity; the</span>
+<span class="c1">#: GenBank LOCUS line of that file reads ``ANTE113_with_NatMX``, so the name the paper</span>
+<span class="c1">#: uses is a quoted statement in the construct index and never a minted id.</span>
+<span class="n">PBTX1_SHA256</span> <span class="o">=</span> <span class="s2">"bbaca60509e079222f7cdd1bb54b70d93445af3a699c65109d94b553fc0087f7"</span>
+<span class="n">PBTX1_PATH</span> <span class="o">=</span> <span class="s2">"si/plasmids/pBTX001(ante113).gb"</span>
+<span class="n">PBTX1_BYTES</span> <span class="o">=</span> <span class="mi">31895</span>
+<span class="n">PBTX1_REF</span> <span class="o">=</span> <span class="n">ArtifactRef</span><span class="p">(</span>
+    <span class="n">tier</span><span class="o">=</span><span class="s2">"library"</span><span class="p">,</span>
+    <span class="n">key</span><span class="o">=</span><span class="n">CITATION_KEY</span><span class="p">,</span>
+    <span class="n">path</span><span class="o">=</span><span class="n">PBTX1_PATH</span><span class="p">,</span>
+    <span class="n">sha256</span><span class="o">=</span><span class="n">PBTX1_SHA256</span><span class="p">,</span>
+    <span class="nb">bytes</span><span class="o">=</span><span class="n">PBTX1_BYTES</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1">#: The landing pad, verbatim, and the assembly set its (unpublished) coordinate would be</span>
+<span class="c1">#: written against.</span>
+<span class="n">INTEGRATION_SITE</span> <span class="o">=</span> <span class="s2">"XII-5"</span>
+<span class="n">ASSEMBLY_SET</span> <span class="o">=</span> <span class="n">SGD_S288C_R64</span>
+
+<span class="c1">#: The gene features of pBTX1, keyed by the loader's gene key: label, SO id</span>
+<span class="c1">#: (``SO:0000704`` gene), 1-based end-inclusive span and orientation. Each was checked</span>
+<span class="c1">#: to be a CDS in frame against the contig's own bases (length a multiple of three, ATG</span>
+<span class="c1">#: start, one terminal stop, no internal stop).</span>
+<span class="n">_FEATURE_SPANS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span>
+    <span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"inline"</span><span class="p">,</span> <span class="s2">"reverse_complement"</span><span class="p">]]</span>
+<span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"CYP76AD1"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"CYP76AD/P450 fusion"</span><span class="p">,</span> <span class="mi">4388</span><span class="p">,</span> <span class="mi">5887</span><span class="p">,</span> <span class="s2">"reverse_complement"</span><span class="p">),</span>
+    <span class="s2">"DOD"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"DOPA 4,5 dioxygenase"</span><span class="p">,</span> <span class="mi">7190</span><span class="p">,</span> <span class="mi">7999</span><span class="p">,</span> <span class="s2">"inline"</span><span class="p">),</span>
+    <span class="s2">"YBR249C"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"ARO4-K229L"</span><span class="p">,</span> <span class="mi">2684</span><span class="p">,</span> <span class="mi">3796</span><span class="p">,</span> <span class="s2">"inline"</span><span class="p">),</span>
+    <span class="s2">"YPR060C"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"ARO7-G141S"</span><span class="p">,</span> <span class="mi">472</span><span class="p">,</span> <span class="mi">1242</span><span class="p">,</span> <span class="s2">"reverse_complement"</span><span class="p">),</span>
+<span class="p">}</span>
+
+<span class="c1">#: The two designed alleles as contig coordinates, derived from the feature span and the</span>
+<span class="c1">#: codon number and CONFIRMED against the bytes: codon 229 of the ARO4 feature reads</span>
+<span class="c1">#: ``TTA`` (Leu) and codon 141 of the ARO7 feature reads ``AGT`` (Ser), so the map</span>
+<span class="c1">#: carries the designed residue at the coordinate the record states. The codon is three</span>
+<span class="c1">#: bases, so the call is a ``substitution`` over the codon's span rather than an SNV.</span>
+<span class="n">_ALLELE_CALLS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"YBR249C"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"K229L"</span><span class="p">,</span> <span class="mi">3368</span><span class="p">,</span> <span class="mi">3370</span><span class="p">,</span> <span class="mi">229</span><span class="p">),</span>
+    <span class="s2">"YPR060C"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"G141S"</span><span class="p">,</span> <span class="mi">820</span><span class="p">,</span> <span class="mi">822</span><span class="p">,</span> <span class="mi">141</span><span class="p">),</span>
+<span class="p">}</span>
+
+<span class="c1">#: ``HostPlacement.span`` and ``.insert_span``: typed absences, with what was read.</span>
+<span class="n">_SPAN_GAP_NOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"the paper names the landing pad 'XII-5' and gives no S288C coordinate for it; the "</span>
+    <span class="s2">"sgRNA target feature on pBTX1 ('target sequence XII-5', 14691..14710) is a "</span>
+    <span class="s2">"coordinate on the VECTOR, not on chromosome XII"</span>
+<span class="p">)</span>
+<span class="n">_INSERT_SPAN_GAP_NOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"pBTX1 annotates both homology arms ('XII-5 up B' 10..220, 'XII-5 dw A' "</span>
+    <span class="s2">"9598..9859), but the readings they admit disagree with each other and with the "</span>
+    <span class="s2">"paper's own figure: 9,850 bp arm to arm inclusive, 9,377 bp between the arms, "</span>
+    <span class="s2">"against 'the considerable size, 9.3 kb, of the Btx-cassette'. pBTX1 carries no "</span>
+    <span class="s2">"NotI site, so no cut resolves the arms; the sister vector pBTX2 does admit an "</span>
+    <span class="s2">"exact interval (the paper's 'NotI excised insert of pBTX2', two GCGGCCGC sites at "</span>
+    <span class="s2">"1527 and 10797, cuts bounding 1529..10798 = 9,270 bp = the paper's 9.3 kb), but "</span>
+    <span class="s2">"that is pBTX2's coordinate space and this record's contig is pBTX1. The source "</span>
+    <span class="s2">"states no interval of pBTX1 as transferred, so the record states none"</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_host_placement</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">HostPlacement</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The XII-5 landing pad: named by the paper, with both spans typed absent."""</span>
+    <span class="k">return</span> <span class="n">HostPlacement</span><span class="p">(</span>
+        <span class="n">assembly_set</span><span class="o">=</span><span class="n">ASSEMBLY_SET</span><span class="p">,</span>
+        <span class="n">site_label</span><span class="o">=</span><span class="n">INTEGRATION_SITE</span><span class="p">,</span>
+        <span class="n">span</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">insert_span</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">ProvenanceGap</span><span class="p">(</span>
+                <span class="n">field</span><span class="o">=</span><span class="s2">"span"</span><span class="p">,</span>
+                <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
+                <span class="n">looked_in</span><span class="o">=</span><span class="n">_PAPER</span><span class="p">,</span>
+                <span class="n">note</span><span class="o">=</span><span class="n">_SPAN_GAP_NOTE</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">ProvenanceGap</span><span class="p">(</span>
+                <span class="n">field</span><span class="o">=</span><span class="s2">"insert_span"</span><span class="p">,</span>
+                <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
+                <span class="n">looked_in</span><span class="o">=</span><span class="n">_PAPER</span><span class="p">,</span>
+                <span class="n">note</span><span class="o">=</span><span class="n">_INSERT_SPAN_GAP_NOTE</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">],</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_placement</span><span class="p">(</span><span class="n">gene_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ConstructPlacement</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The pBTX1 placement of one Btx-cassette gene, with its designed allele."""</span>
+    <span class="n">label</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">orientation</span> <span class="o">=</span> <span class="n">_FEATURE_SPANS</span><span class="p">[</span><span class="n">gene_key</span><span class="p">]</span>
+    <span class="n">call</span> <span class="o">=</span> <span class="n">_ALLELE_CALLS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">gene_key</span><span class="p">)</span>
+    <span class="n">variants</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">call</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">statement</span><span class="p">,</span> <span class="n">position_start</span><span class="p">,</span> <span class="n">position_end</span><span class="p">,</span> <span class="n">codon_number</span> <span class="o">=</span> <span class="n">call</span>
+        <span class="n">variants</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">ConstructVariantCall</span><span class="p">(</span>
+                <span class="n">variant_type</span><span class="o">=</span><span class="n">VariantType</span><span class="o">.</span><span class="n">substitution</span><span class="p">,</span>
+                <span class="n">variant_statement</span><span class="o">=</span><span class="n">statement</span><span class="p">,</span>
+                <span class="n">reference_contig_sha256</span><span class="o">=</span><span class="n">PBTX1_SHA256</span><span class="p">,</span>
+                <span class="n">position_start</span><span class="o">=</span><span class="n">position_start</span><span class="p">,</span>
+                <span class="n">position_end</span><span class="o">=</span><span class="n">position_end</span><span class="p">,</span>
+                <span class="n">amino_acid_change</span><span class="o">=</span><span class="n">statement</span><span class="p">,</span>
+                <span class="n">codon_number</span><span class="o">=</span><span class="n">codon_number</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">ConstructPlacement</span><span class="p">(</span>
+        <span class="n">contig_sha256</span><span class="o">=</span><span class="n">PBTX1_SHA256</span><span class="p">,</span>
+        <span class="n">contig_ref</span><span class="o">=</span><span class="n">PBTX1_REF</span><span class="p">,</span>
+        <span class="n">feature_key</span><span class="o">=</span><span class="n">FeatureKey</span><span class="p">(</span>
+            <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
+            <span class="n">so_id</span><span class="o">=</span><span class="s2">"SO:0000704"</span><span class="p">,</span>
+            <span class="n">span</span><span class="o">=</span><span class="n">ConstructSpan</span><span class="o">.</span><span class="n">one</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">orientation</span><span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">host_placement</span><span class="o">=</span><span class="n">_host_placement</span><span class="p">(),</span>
+        <span class="n">variants</span><span class="o">=</span><span class="n">variants</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_betaxanthin_cassette</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">GeneAdditionPerturbation</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Fresh Btx-cassette perturbations (new objects per record)."""</span>
     <span class="k">return</span> <span class="p">[</span>
         <span class="n">GeneAdditionPerturbation</span><span class="p">(</span>
             <span class="n">systematic_gene_name</span><span class="o">=</span><span class="s2">"CYP76AD1"</span><span class="p">,</span>
+            <span class="n">gene_namespace</span><span class="o">=</span><span class="s2">"scerevisiae_s288c_sgd_systematic"</span><span class="p">,</span>
             <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="s2">"CYP76AD1"</span><span class="p">,</span>
             <span class="n">source_organism</span><span class="o">=</span><span class="s2">"Beta vulgaris"</span><span class="p">,</span>
             <span class="n">is_heterologous</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">localization</span><span class="o">=</span><span class="s2">"chromosomal_integration"</span><span class="p">,</span>
-            <span class="n">integration_locus</span><span class="o">=</span><span class="s2">"XII-5"</span><span class="p">,</span>
+            <span class="n">localization</span><span class="o">=</span><span class="n">Localization</span><span class="o">.</span><span class="n">chromosomal_integration</span><span class="p">,</span>
+            <span class="n">integration_locus</span><span class="o">=</span><span class="n">INTEGRATION_SITE</span><span class="p">,</span>
             <span class="n">construct_name</span><span class="o">=</span><span class="s2">"Btx-cassette"</span><span class="p">,</span>
+            <span class="n">placement</span><span class="o">=</span><span class="n">_placement</span><span class="p">(</span><span class="s2">"CYP76AD1"</span><span class="p">),</span>
         <span class="p">),</span>
         <span class="n">GeneAdditionPerturbation</span><span class="p">(</span>
             <span class="n">systematic_gene_name</span><span class="o">=</span><span class="s2">"DOD"</span><span class="p">,</span>
+            <span class="n">gene_namespace</span><span class="o">=</span><span class="s2">"scerevisiae_s288c_sgd_systematic"</span><span class="p">,</span>
             <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="s2">"DOD"</span><span class="p">,</span>
             <span class="n">source_organism</span><span class="o">=</span><span class="s2">"Mirabilis jalapa"</span><span class="p">,</span>
             <span class="n">is_heterologous</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">localization</span><span class="o">=</span><span class="s2">"chromosomal_integration"</span><span class="p">,</span>
-            <span class="n">integration_locus</span><span class="o">=</span><span class="s2">"XII-5"</span><span class="p">,</span>
+            <span class="n">localization</span><span class="o">=</span><span class="n">Localization</span><span class="o">.</span><span class="n">chromosomal_integration</span><span class="p">,</span>
+            <span class="n">integration_locus</span><span class="o">=</span><span class="n">INTEGRATION_SITE</span><span class="p">,</span>
             <span class="n">construct_name</span><span class="o">=</span><span class="s2">"Btx-cassette"</span><span class="p">,</span>
+            <span class="n">placement</span><span class="o">=</span><span class="n">_placement</span><span class="p">(</span><span class="s2">"DOD"</span><span class="p">),</span>
         <span class="p">),</span>
         <span class="n">GeneAdditionPerturbation</span><span class="p">(</span>
             <span class="n">systematic_gene_name</span><span class="o">=</span><span class="s2">"YBR249C"</span><span class="p">,</span>
+            <span class="n">gene_namespace</span><span class="o">=</span><span class="s2">"scerevisiae_s288c_sgd_systematic"</span><span class="p">,</span>
             <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="s2">"ARO4"</span><span class="p">,</span>
             <span class="n">source_organism</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span>
             <span class="n">is_heterologous</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="n">localization</span><span class="o">=</span><span class="s2">"chromosomal_integration"</span><span class="p">,</span>
-            <span class="n">integration_locus</span><span class="o">=</span><span class="s2">"XII-5"</span><span class="p">,</span>
+            <span class="n">localization</span><span class="o">=</span><span class="n">Localization</span><span class="o">.</span><span class="n">chromosomal_integration</span><span class="p">,</span>
+            <span class="n">integration_locus</span><span class="o">=</span><span class="n">INTEGRATION_SITE</span><span class="p">,</span>
             <span class="n">construct_name</span><span class="o">=</span><span class="s2">"Btx-cassette"</span><span class="p">,</span>
             <span class="n">variant</span><span class="o">=</span><span class="s2">"K229L"</span><span class="p">,</span>
+            <span class="n">placement</span><span class="o">=</span><span class="n">_placement</span><span class="p">(</span><span class="s2">"YBR249C"</span><span class="p">),</span>
         <span class="p">),</span>
         <span class="n">GeneAdditionPerturbation</span><span class="p">(</span>
             <span class="n">systematic_gene_name</span><span class="o">=</span><span class="s2">"YPR060C"</span><span class="p">,</span>
+            <span class="n">gene_namespace</span><span class="o">=</span><span class="s2">"scerevisiae_s288c_sgd_systematic"</span><span class="p">,</span>
             <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="s2">"ARO7"</span><span class="p">,</span>
             <span class="n">source_organism</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span>
             <span class="n">is_heterologous</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="n">localization</span><span class="o">=</span><span class="s2">"chromosomal_integration"</span><span class="p">,</span>
-            <span class="n">integration_locus</span><span class="o">=</span><span class="s2">"XII-5"</span><span class="p">,</span>
+            <span class="n">localization</span><span class="o">=</span><span class="n">Localization</span><span class="o">.</span><span class="n">chromosomal_integration</span><span class="p">,</span>
+            <span class="n">integration_locus</span><span class="o">=</span><span class="n">INTEGRATION_SITE</span><span class="p">,</span>
             <span class="n">construct_name</span><span class="o">=</span><span class="s2">"Btx-cassette"</span><span class="p">,</span>
             <span class="n">variant</span><span class="o">=</span><span class="s2">"G141S"</span><span class="p">,</span>
+            <span class="n">placement</span><span class="o">=</span><span class="n">_placement</span><span class="p">(</span><span class="s2">"YPR060C"</span><span class="p">),</span>
         <span class="p">),</span>
     <span class="p">]</span>
 
@@ -406,22 +585,23 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_released_deletion</span><span class="p">(</span>
     <span class="n">gene</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KanMxDeletionPerturbation</span> <span class="o">|</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KanMxDeletionPerturbation</span> <span class="o">|</span> <span class="n">ReleasedIdentifierPerturbation</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The varying deletion under the name the ``gene`` column releases (#1045).</span>
 
 <span class="sd">    A systematic name goes on the placed KanMX leaf with both names the ORF; any other</span>
-<span class="sd">    name goes on the released-gene-name leaf as the symbol the source wrote.</span>
+<span class="sd">    name goes on the released-identifier leaf as the symbol the source wrote.</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">gene</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">KanMxDeletionPerturbation</span><span class="p">(</span>
             <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">gene</span><span class="p">,</span> <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">gene</span>
         <span class="p">)</span>
-    <span class="k">return</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">(</span>
+    <span class="k">return</span> <span class="n">ReleasedIdentifierPerturbation</span><span class="p">(</span>
         <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">gene</span><span class="p">,</span>
+        <span class="n">gene_namespace</span><span class="o">=</span><span class="s2">"scerevisiae_s288c_sgd_systematic"</span><span class="p">,</span>
         <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">gene</span><span class="p">,</span>
-        <span class="n">released_gene_name</span><span class="o">=</span><span class="n">gene</span><span class="p">,</span>
-        <span class="n">released_kind</span><span class="o">=</span><span class="n">ReleasedGeneKind</span><span class="o">.</span><span class="n">deletion</span><span class="p">,</span>
-        <span class="n">marker</span><span class="o">=</span><span class="s2">"KanMX"</span><span class="p">,</span>
+        <span class="n">identifier_kind</span><span class="o">=</span><span class="s2">"gene column entry, as released"</span><span class="p">,</span>
+        <span class="n">released_kind</span><span class="o">=</span><span class="n">ReleasedKind</span><span class="o">.</span><span class="n">deletion</span><span class="p">,</span>
+        <span class="n">cassette</span><span class="o">=</span><span class="s2">"KanMX"</span><span class="p">,</span>
     <span class="p">)</span>
 
 
@@ -623,7 +803,10 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">MetaboliteExperiment</span><span class="p">,</span> <span class="n">MetaboliteExperimentReference</span><span class="p">,</span> <span class="n">Publication</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Build the Metabolite experiment/reference/publication for one released row."""</span>
         <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
-            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="s2">"BY4741"</span>
+            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span>
+            <span class="n">strain</span><span class="o">=</span><span class="s2">"BY4741"</span><span class="p">,</span>
+            <span class="n">assembly_set</span><span class="o">=</span><span class="n">SGD_S288C_R64</span><span class="p">,</span>
+            <span class="n">assembly_accession</span><span class="o">=</span><span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
             <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span><span class="n">_released_deletion</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]),</span> <span class="o">*</span><span class="n">_betaxanthin_cassette</span><span class="p">()]</span>

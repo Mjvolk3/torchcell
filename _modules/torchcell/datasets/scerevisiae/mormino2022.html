@@ -129,7 +129,7 @@
 <span class="sd">RECORD = one isolated strain as an ``EnvironmentResponseExperiment``:</span>
 
 <span class="sd">- GENOTYPE: one CRISPRi target under the name Table 1 releases, verbatim (#1045): a</span>
-<span class="sd">  common name (all 12) on ``ReleasedGeneNamePerturbation`` with kind</span>
+<span class="sd">  common name (all 12) on ``ReleasedIdentifierPerturbation`` with kind</span>
 <span class="sd">  ``crispr_interference``, a systematic name on ``CrisprInterferencePerturbation``; no</span>
 <span class="sd">  genome is consulted. The construct (effector ``dCas9-Mxi1``,</span>
 <span class="sd">  ``n_guides=1`` -- an isolated strain carries exactly one gRNA; the "1-16 gRNAs each" in</span>
@@ -231,12 +231,13 @@
     <span class="n">ExperimentReference</span><span class="p">,</span>
     <span class="n">GeneAdditionPerturbation</span><span class="p">,</span>
     <span class="n">Genotype</span><span class="p">,</span>
+    <span class="n">Localization</span><span class="p">,</span>
     <span class="n">MeasurementType</span><span class="p">,</span>
     <span class="n">PhysicalFactor</span><span class="p">,</span>
     <span class="n">Publication</span><span class="p">,</span>
     <span class="n">ReferenceGenome</span><span class="p">,</span>
-    <span class="n">ReleasedGeneKind</span><span class="p">,</span>
-    <span class="n">ReleasedGeneNamePerturbation</span><span class="p">,</span>
+    <span class="n">ReleasedIdentifierPerturbation</span><span class="p">,</span>
+    <span class="n">ReleasedKind</span><span class="p">,</span>
     <span class="n">ResponseCategory</span><span class="p">,</span>
     <span class="n">SampleUnit</span><span class="p">,</span>
     <span class="n">SmallMoleculePerturbation</span><span class="p">,</span>
@@ -253,8 +254,16 @@
     <span class="n">RetrievalMethod</span><span class="p">,</span>
     <span class="n">RetrievalRecord</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.registry</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SGD_S288C_R64</span><span class="p">,</span>
+    <span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="n">SourcedValue</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ProvenanceGap</span><span class="p">,</span>
+    <span class="n">ProvenanceGapReason</span><span class="p">,</span>
+    <span class="n">SourcedValue</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -444,29 +453,63 @@
         <span class="p">)</span>
 
 
+<span class="c1">#: What was read before concluding that no construct sequence is available. The paper</span>
+<span class="c1">#: states a repository deposit and no sequence: "All plasmids and primers used in the</span>
+<span class="c1">#: study are listed in Additional file 2. Plasmids used in the study are shared through</span>
+<span class="c1">#: Addgene." An Addgene handle is the artifact withheld, not an artifact released, and</span>
+<span class="c1">#: no accession number for pMM4_14L appears in the paper or Additional file 2.</span>
+<span class="n">_PLACEMENT_GAP_NOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"Additional file 2 lists the plasmids by name and the paper states 'Plasmids used "</span>
+    <span class="s2">"in the study are shared through Addgene'; no Addgene accession for pMM4_14L and no "</span>
+    <span class="s2">"GenBank map is released, so there are no construct bytes of ours to point at"</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_placement_gap</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">ProvenanceGap</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The typed absence of a construct sequence for the pMM4_14L cassette."""</span>
+    <span class="k">return</span> <span class="n">ProvenanceGap</span><span class="p">(</span>
+        <span class="n">field</span><span class="o">=</span><span class="s2">"placement"</span><span class="p">,</span>
+        <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_released_by_primary</span><span class="p">,</span>
+        <span class="n">looked_in</span><span class="o">=</span><span class="n">Provenance</span><span class="p">(</span>
+            <span class="n">source_uri</span><span class="o">=</span><span class="n">PAPER_MD</span><span class="p">,</span>
+            <span class="n">citation_key</span><span class="o">=</span><span class="n">CITATION_KEY</span><span class="p">,</span>
+            <span class="n">sha256</span><span class="o">=</span><span class="n">PAPER_MD_SHA256</span><span class="p">,</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">"MinerU OCR of the publisher PDF (torchcell-library mirror)"</span><span class="p">,</span>
+            <span class="n">page</span><span class="o">=</span><span class="s2">"Methods, 'Design of constructs and modular cloning'; Additional file 2"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">note</span><span class="o">=</span><span class="n">_PLACEMENT_GAP_NOTE</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">biosensor_cassette</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">GeneAdditionPerturbation</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""The pMM4_14L biosensor cassette every CBL strain carries, integrated at HO."""</span>
     <span class="k">return</span> <span class="p">[</span>
         <span class="n">GeneAdditionPerturbation</span><span class="p">(</span>
             <span class="n">systematic_gene_name</span><span class="o">=</span><span class="s2">"BM3R1-HAA1-mTurquoise2"</span><span class="p">,</span>
+            <span class="n">gene_namespace</span><span class="o">=</span><span class="s2">"scerevisiae_s288c_sgd_systematic"</span><span class="p">,</span>
             <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="s2">"BM3R1-HAA1-mTurquoise2"</span><span class="p">,</span>
             <span class="n">source_organism</span><span class="o">=</span><span class="p">(</span>
                 <span class="s2">"synthetic fusion (BM3R1 from Bacillus megaterium, HAA1 from "</span>
                 <span class="s2">"Saccharomyces cerevisiae, mTurquoise2 a synthetic fluorescent protein)"</span>
             <span class="p">),</span>
             <span class="n">is_heterologous</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">localization</span><span class="o">=</span><span class="s2">"chromosomal_integration"</span><span class="p">,</span>
+            <span class="n">localization</span><span class="o">=</span><span class="n">Localization</span><span class="o">.</span><span class="n">chromosomal_integration</span><span class="p">,</span>
             <span class="n">construct_name</span><span class="o">=</span><span class="s2">"pMM4_14L"</span><span class="p">,</span>
             <span class="n">integration_locus</span><span class="o">=</span><span class="s2">"HO"</span><span class="p">,</span>
+            <span class="n">placement</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span><span class="n">_placement_gap</span><span class="p">()],</span>
         <span class="p">),</span>
         <span class="n">GeneAdditionPerturbation</span><span class="p">(</span>
             <span class="n">systematic_gene_name</span><span class="o">=</span><span class="s2">"sfpHluorin"</span><span class="p">,</span>
+            <span class="n">gene_namespace</span><span class="o">=</span><span class="s2">"scerevisiae_s288c_sgd_systematic"</span><span class="p">,</span>
             <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="s2">"sfpHluorin"</span><span class="p">,</span>
             <span class="n">source_organism</span><span class="o">=</span><span class="s2">"synthetic (superfolder pHluorin, an Aequorea victoria GFP variant)"</span><span class="p">,</span>
             <span class="n">is_heterologous</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">localization</span><span class="o">=</span><span class="s2">"chromosomal_integration"</span><span class="p">,</span>
+            <span class="n">localization</span><span class="o">=</span><span class="n">Localization</span><span class="o">.</span><span class="n">chromosomal_integration</span><span class="p">,</span>
             <span class="n">construct_name</span><span class="o">=</span><span class="s2">"pMM4_14L"</span><span class="p">,</span>
             <span class="n">integration_locus</span><span class="o">=</span><span class="s2">"HO"</span><span class="p">,</span>
+            <span class="n">placement</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span><span class="n">_placement_gap</span><span class="p">()],</span>
         <span class="p">),</span>
     <span class="p">]</span>
 
@@ -687,11 +730,11 @@
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_released_target</span><span class="p">(</span>
         <span class="n">common</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CrisprInterferencePerturbation</span> <span class="o">|</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CrisprInterferencePerturbation</span> <span class="o">|</span> <span class="n">ReleasedIdentifierPerturbation</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""The CRISPRi target under the name Table 1 releases (#1045).</span>
 
 <span class="sd">        A systematic name goes on ``CrisprInterferencePerturbation``; a common name (all</span>
-<span class="sd">        12 of Table 1) on ``ReleasedGeneNamePerturbation`` with kind</span>
+<span class="sd">        12 of Table 1) on ``ReleasedIdentifierPerturbation`` with kind</span>
 <span class="sd">        ``crispr_interference`` and the same construct. No genome is consulted.</span>
 <span class="sd">        """</span>
         <span class="n">construct</span> <span class="o">=</span> <span class="n">CrisprConstruct</span><span class="p">(</span><span class="n">effector</span><span class="o">=</span><span class="n">EFFECTOR</span><span class="p">,</span> <span class="n">guide_sequence</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_guides</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -701,11 +744,12 @@
                 <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">common</span><span class="p">,</span>
                 <span class="n">crispr</span><span class="o">=</span><span class="n">construct</span><span class="p">,</span>
             <span class="p">)</span>
-        <span class="k">return</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">(</span>
+        <span class="k">return</span> <span class="n">ReleasedIdentifierPerturbation</span><span class="p">(</span>
             <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">common</span><span class="p">,</span>
+            <span class="n">gene_namespace</span><span class="o">=</span><span class="s2">"scerevisiae_s288c_sgd_systematic"</span><span class="p">,</span>
             <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">common</span><span class="p">,</span>
-            <span class="n">released_gene_name</span><span class="o">=</span><span class="n">common</span><span class="p">,</span>
-            <span class="n">released_kind</span><span class="o">=</span><span class="n">ReleasedGeneKind</span><span class="o">.</span><span class="n">crispr_interference</span><span class="p">,</span>
+            <span class="n">identifier_kind</span><span class="o">=</span><span class="s2">"common name, as Table 1 writes it"</span><span class="p">,</span>
+            <span class="n">released_kind</span><span class="o">=</span><span class="n">ReleasedKind</span><span class="o">.</span><span class="n">crispr_interference</span><span class="p">,</span>
             <span class="n">crispr</span><span class="o">=</span><span class="n">construct</span><span class="p">,</span>
         <span class="p">)</span>
 
@@ -747,7 +791,10 @@
         <span class="k">return</span> <span class="n">EnvironmentResponseExperimentReference</span><span class="p">(</span>
             <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
             <span class="n">genome_reference</span><span class="o">=</span><span class="n">ReferenceGenome</span><span class="p">(</span>
-                <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="s2">"BY4742"</span>
+                <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span>
+                <span class="n">strain</span><span class="o">=</span><span class="s2">"BY4742"</span><span class="p">,</span>
+                <span class="n">assembly_set</span><span class="o">=</span><span class="n">SGD_S288C_R64</span><span class="p">,</span>
+                <span class="n">assembly_accession</span><span class="o">=</span><span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
             <span class="p">),</span>
             <span class="n">environment_reference</span><span class="o">=</span><span class="n">environment</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(),</span>
             <span class="n">phenotype_reference</span><span class="o">=</span><span class="n">EnvironmentResponsePhenotype</span><span class="p">(</span>

@@ -300,6 +300,15 @@
         <span class="s2">"feature_containment"</span><span class="p">,</span>
         <span class="s2">"deleted_gene_containment_sgd"</span><span class="p">,</span>
         <span class="s2">"promoter_gene_is_a_locus"</span><span class="p">,</span>
+        <span class="c1"># a stored or released identifier read against OUR annotation of the host. Each</span>
+        <span class="c1"># of these three says in its own message that it is "a finding, never a gate"</span>
+        <span class="c1"># and "the genome never gates storage", and each was classified ``gate`` until</span>
+        <span class="c1"># 2026-10-15 because its name was off this list: the measured instance of the</span>
+        <span class="c1"># defect the audit predicted (lane R, item 3). The exhaustiveness test over</span>
+        <span class="c1"># every rule name the fleet emits is what finds the next one.</span>
+        <span class="s2">"perturbed_locus_in_bw25113_annotation"</span><span class="p">,</span>
+        <span class="s2">"released_b_numbers_on_mg1655_annotation"</span><span class="p">,</span>
+        <span class="s2">"released_tags_on_kt2440_annotation"</span><span class="p">,</span>
         <span class="c1"># bacterial loaders' own gates: stored identifiers against the pinned assembly</span>
         <span class="s2">"promoter_genes_in_the_host_gene_universe"</span><span class="p">,</span>
         <span class="s2">"stored_tags_are_loci"</span><span class="p">,</span>
@@ -335,6 +344,56 @@
     <span class="s2">"protein_and_perturbed_locus_containment_"</span><span class="p">,</span>
     <span class="s2">"assembly_pin"</span><span class="p">,</span>
     <span class="s2">"no_viable_deletion_in_"</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="c1">#: Words that appear in the NAME of a rule whose subject is our genome reference. Not a</span>
+<span class="c1">#: classifier: :func:`finding_class_of` never reads this, and a name matching one of them</span>
+<span class="c1">#: is not thereby a ``report`` rule. It is the vocabulary</span>
+<span class="c1">#: ``tests/torchcell/verification/test_finding_class.py`` sweeps the fleet with, so a new</span>
+<span class="c1">#: rule whose name speaks of an annotation, an assembly, a locus or a containment is</span>
+<span class="c1">#: either classified here or listed in :data:`DATA_FIDELITY_RULES_NAMED_LIKE_GENOME_RULES`</span>
+<span class="c1">#: with its reason. That is what makes the registry above exhaustive by test rather than</span>
+<span class="c1">#: by hand: three rules had already slipped past it.</span>
+<span class="n">GENOME_REFERENCE_NAME_VOCABULARY</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"containment"</span><span class="p">,</span>
+    <span class="s2">"annotation"</span><span class="p">,</span>
+    <span class="s2">"assembly"</span><span class="p">,</span>
+    <span class="s2">"pinned"</span><span class="p">,</span>
+    <span class="s2">"_loci"</span><span class="p">,</span>
+    <span class="s2">"canonical_gene"</span><span class="p">,</span>
+    <span class="s2">"current_genome"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1">#: Rules whose NAME matches :data:`GENOME_REFERENCE_NAME_VOCABULARY` and that are</span>
+<span class="c1">#: nevertheless ``gate``, each because its subject is the RELEASE and not our reference:</span>
+<span class="c1">#:</span>
+<span class="c1">#: - ``both_screens_are_balanced_and_strain_pinned`` (Cui 2018), ``table_s1_call_histogram_is_pinned``</span>
+<span class="c1">#:   (Gerdes 2003), ``per_medium_key_counts_are_the_pinned_ones`` (Li 2014),</span>
+<span class="c1">#:   ``per_condition_censored_and_interval_key_counts_are_the_pinned_ones`` (Gupta 2024),</span>
+<span class="c1">#:   ``quantified_sites_per_sample_are_the_pinned_ones`` (Potel 2018): "pinned" here is a</span>
+<span class="c1">#:   count or a key set this repo pinned from the released file, not an assembly pin.</span>
+<span class="c1">#: - ``released_annotations`` (SGD essentiality): the annotations are the SOURCE's, and</span>
+<span class="c1">#:   the rule is that the store holds the ones the release states.</span>
+<span class="c1">#: - ``stored_loci_are_the_released_b_numbers_on_the_bw25113_pin`` (Hawkins 2020): its own</span>
+<span class="c1">#:   docstring states "No annotation is read" -- the claim is that the keys are the</span>
+<span class="c1">#:   released b-numbers verbatim.</span>
+<span class="c1">#: - ``supplementary_note_2_loci_are_measured_in_every_record`` (Menasalvas 2025): the</span>
+<span class="c1">#:   loci are the ones the release's own Supplementary Note names.</span>
+<span class="c1">#: - ``fitness_companion_containment`` (SGA interactions): the companion is the same</span>
+<span class="c1">#:   paper's fitness release, so the rule is cross-release fidelity, not an annotation.</span>
+<span class="n">DATA_FIDELITY_RULES_NAMED_LIKE_GENOME_RULES</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">"both_screens_are_balanced_and_strain_pinned"</span><span class="p">,</span>
+        <span class="s2">"fitness_companion_containment"</span><span class="p">,</span>
+        <span class="s2">"per_condition_censored_and_interval_key_counts_are_the_pinned_ones"</span><span class="p">,</span>
+        <span class="s2">"per_medium_key_counts_are_the_pinned_ones"</span><span class="p">,</span>
+        <span class="s2">"quantified_sites_per_sample_are_the_pinned_ones"</span><span class="p">,</span>
+        <span class="s2">"released_annotations"</span><span class="p">,</span>
+        <span class="s2">"stored_loci_are_the_released_b_numbers_on_the_bw25113_pin"</span><span class="p">,</span>
+        <span class="s2">"supplementary_note_2_loci_are_measured_in_every_record"</span><span class="p">,</span>
+        <span class="s2">"table_s1_call_histogram_is_pinned"</span><span class="p">,</span>
+    <span class="p">}</span>
 <span class="p">)</span>
 
 

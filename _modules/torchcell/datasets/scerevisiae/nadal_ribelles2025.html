@@ -220,12 +220,16 @@
     <span class="n">PseudobulkExpressionPhenotype</span><span class="p">,</span>
     <span class="n">Publication</span><span class="p">,</span>
     <span class="n">ReferenceGenome</span><span class="p">,</span>
-    <span class="n">ReleasedGeneKind</span><span class="p">,</span>
-    <span class="n">ReleasedGeneNamePerturbation</span><span class="p">,</span>
+    <span class="n">ReleasedIdentifierPerturbation</span><span class="p">,</span>
+    <span class="n">ReleasedKind</span><span class="p">,</span>
     <span class="n">SmallMoleculePerturbation</span><span class="p">,</span>
     <span class="n">Temperature</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.registry</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SGD_S288C_R64</span><span class="p">,</span>
+    <span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="n">SourcedValue</span>
 
@@ -468,13 +472,13 @@
             <span class="n">cond</span><span class="p">,</span> <span class="n">raw_orf</span> <span class="o">=</span> <span class="n">_parse_fc_key</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
             <span class="n">sys_name</span> <span class="o">=</span> <span class="n">_deletion_systematic</span><span class="p">(</span><span class="n">raw_orf</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">sys_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="c1"># the label names no ORF: stored on the released-gene-name leaf verbatim</span>
+                <span class="c1"># the label names no ORF: stored on the released-identifier leaf verbatim</span>
                 <span class="c1"># (#1045), upper-cased as every label is</span>
                 <span class="n">sys_name</span> <span class="o">=</span> <span class="n">raw_orf</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
                 <span class="n">released_labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sys_name</span><span class="p">)</span>
                 <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
                     <span class="s2">"Record </span><span class="si">%s</span><span class="s2">/</span><span class="si">%s</span><span class="s2">: genotype label is not ORF-shaped; stored on the "</span>
-                    <span class="s2">"released-gene-name leaf"</span><span class="p">,</span>
+                    <span class="s2">"released-identifier leaf"</span><span class="p">,</span>
                     <span class="n">cond</span><span class="p">,</span>
                     <span class="n">raw_orf</span><span class="p">,</span>
                 <span class="p">)</span>
@@ -508,7 +512,7 @@
             <span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s2">"Read </span><span class="si">%d</span><span class="s2"> records as released; </span><span class="si">%d</span><span class="s2"> gene values under their released names; "</span>
-            <span class="s2">"</span><span class="si">%d</span><span class="s2"> genotype labels on the released-gene-name leaf"</span><span class="p">,</span>
+            <span class="s2">"</span><span class="si">%d</span><span class="s2"> genotype labels on the released-identifier leaf"</span><span class="p">,</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">records</span><span class="p">),</span>
             <span class="n">n_gene_values</span><span class="p">,</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">released_labels</span><span class="p">),</span>
@@ -525,7 +529,7 @@
                             <span class="s2">"rule"</span><span class="p">:</span> <span class="s2">"stored_on_released_gene_name_leaf"</span><span class="p">,</span>
                             <span class="s2">"description"</span><span class="p">:</span> <span class="p">(</span>
                                 <span class="s2">"the fcs genotype label is not ORF-shaped, so the deleted "</span>
-                                <span class="s2">"gene is stored on ReleasedGeneNamePerturbation under the "</span>
+                                <span class="s2">"gene is stored on ReleasedIdentifierPerturbation under the "</span>
                                 <span class="s2">"label verbatim with the URA3 marker and its strain id "</span>
                                 <span class="s2">"(#1045), never dropped; listed here (0 of 6188 released "</span>
                                 <span class="s2">"tables)"</span>
@@ -600,7 +604,10 @@
         <span class="k">return</span> <span class="n">PseudobulkExpressionExperimentReference</span><span class="p">(</span>
             <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
             <span class="n">genome_reference</span><span class="o">=</span><span class="n">ReferenceGenome</span><span class="p">(</span>
-                <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="s2">"S288C"</span>
+                <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span>
+                <span class="n">strain</span><span class="o">=</span><span class="s2">"S288C"</span><span class="p">,</span>
+                <span class="n">assembly_set</span><span class="o">=</span><span class="n">SGD_S288C_R64</span><span class="p">,</span>
+                <span class="n">assembly_accession</span><span class="o">=</span><span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
             <span class="p">),</span>
             <span class="n">environment_reference</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_environment</span><span class="p">(</span><span class="n">cond</span><span class="p">),</span>
             <span class="n">phenotype_reference</span><span class="o">=</span><span class="n">phenotype_reference</span><span class="p">,</span>
@@ -657,7 +664,7 @@
         <span class="n">Publication</span><span class="p">,</span>
     <span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Build the pseudobulk experiment/reference/publication for one record."""</span>
-        <span class="n">perturbation</span><span class="p">:</span> <span class="n">MarkerDeletionPerturbation</span> <span class="o">|</span> <span class="n">ReleasedGeneNamePerturbation</span>
+        <span class="n">perturbation</span><span class="p">:</span> <span class="n">MarkerDeletionPerturbation</span> <span class="o">|</span> <span class="n">ReleasedIdentifierPerturbation</span>
         <span class="k">if</span> <span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">]):</span>
             <span class="n">perturbation</span> <span class="o">=</span> <span class="n">MarkerDeletionPerturbation</span><span class="p">(</span>
                 <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">],</span>
@@ -666,12 +673,13 @@
                 <span class="n">strain_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"strain_id"</span><span class="p">],</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">perturbation</span> <span class="o">=</span> <span class="n">ReleasedGeneNamePerturbation</span><span class="p">(</span>
+            <span class="n">perturbation</span> <span class="o">=</span> <span class="n">ReleasedIdentifierPerturbation</span><span class="p">(</span>
                 <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">],</span>
+                <span class="n">gene_namespace</span><span class="o">=</span><span class="s2">"scerevisiae_s288c_sgd_systematic"</span><span class="p">,</span>
                 <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"perturbed_gene_name"</span><span class="p">],</span>
-                <span class="n">released_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">],</span>
-                <span class="n">released_kind</span><span class="o">=</span><span class="n">ReleasedGeneKind</span><span class="o">.</span><span class="n">deletion</span><span class="p">,</span>
-                <span class="n">marker</span><span class="o">=</span><span class="n">DELETION_MARKER</span><span class="p">,</span>
+                <span class="n">identifier_kind</span><span class="o">=</span><span class="s2">"gene identifier, as the release writes it"</span><span class="p">,</span>
+                <span class="n">released_kind</span><span class="o">=</span><span class="n">ReleasedKind</span><span class="o">.</span><span class="n">deletion</span><span class="p">,</span>
+                <span class="n">cassette</span><span class="o">=</span><span class="n">DELETION_MARKER</span><span class="p">,</span>
                 <span class="n">strain_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"strain_id"</span><span class="p">],</span>
             <span class="p">)</span>
         <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span><span class="n">perturbations</span><span class="o">=</span><span class="p">[</span><span class="n">perturbation</span><span class="p">])</span>

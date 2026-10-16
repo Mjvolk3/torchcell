@@ -58,13 +58,14 @@ No landing of any kind goes to `main` between this tag and the end of step 8: ev
 landing re-stales the dev stores, which is what makes the sweep the last step before the
 build (decision note, stage ordering).
 
-### 2. Hold the node
+### 2. Hold nothing: the 384 G cap replaces the hold
 
-The sweep is memory bound and the owner's ruling is that a ready KG rebuild has node
-priority (owner, 2026-10-13: "i just want this to have priority when it is ready to
-build so we can pause other gpus runs etc."). Hold every pending job of the user that is
-not part of the sweep, leave running jobs to finish, and tell the other sessions to
-submit nothing above 24 G during the window.
+The 2026-10-13 ruling gave a ready rebuild node priority and held every other pending
+job. The owner replaced that on 2026-10-15 with a cap ("apply the 384 cap"): the build
+reserves at most 384 G at any moment, the metabolic side keeps 129 G, all four GPUs and
+its slurm jobs at 32 G or less, and nothing is held. The sweep conductor below submits
+under the cap and holds no job; the loop that follows is the old procedure, kept for the
+record and not run.
 
 ```bash
 HELD=/scratch/projects/torchcell/database/slurm/sweep_held_$(date +%s).txt; : > "$HELD"
@@ -73,12 +74,12 @@ for j in $(squeue -h -u "$USER" -t PD -o "%i %j" | grep -v -E ' kg4-sweep' | awk
 done
 ```
 
-**The two helper scripts the 2026-10-13 sweep used are NOT in the repository.**
-`sweep_conductor.sh` and `release_held.sh` live only in a session scratchpad
-(`/scratch/tmp/claude-1000/-home-michaelvolk-Documents-projects-torchcell/ebf6929f-c5a0-46a3-a925-7ca89fee3498/scratchpad/`),
-so the driver either copies them out or runs the loop above and releases by hand in step
-12. Holding GPU packs idles a GPU for the hold's duration, so ask the owner first
-(memory: `gilahyper-fifo-hold-release-to-reorder`).
+**The sweep conductor is committed: `database/scripts/kg_sweep_conductor.sh`**, with
+its measured inputs in `database/slurm/sweep_measurements/` (sacct MaxRSS and Elapsed
+of arrays 4011, 4457, 4604 and 4685 to 4897). It writes the three tier lists from
+`--list-stale`, prints the three `sbatch` lines, and submits them with `s` waiting on
+`xl`; `DRY=1` prints without submitting. The 2026-10-13 sweep ran a scratchpad copy at
+`l` `%5` x 64 G with holds; `release_held.sh` is retired with the hold.
 
 ### 3. Prune the superseded store copies on `/scratch`
 
@@ -491,8 +492,8 @@ a start.
 **Total, about 14 to 25 h of node time** (the rows added at their low and their high ends:
 9 + 2.6 + 0.2 + 0.4 + 1 + 1 against 13 + 5.2 + 2 + 0.4 + 3 + 1), dominated by the sweep.
 The sweep and the generation array both have per-task recovery, so a failure costs the
-failed task and not the step. Hold the GPU packs from the sweep's start until the import
-finishes, and keep any other job under 24 G during the window.
+failed task and not the step. Under the 384 G cap nothing is held: the metabolic side keeps 129 G, its GPUs and
+jobs at 32 G or less from the sweep's start until the import finishes.
 
 ### Disk, measured at integration 3
 
@@ -595,10 +596,9 @@ quiet node rather than against the budget.
   undeclared `content_id_collisions` and the only written escape names `EnvChemgenMota2024Dataset`
   at exactly 2. 179 stores and 102,263,636 records have been scanned, so a surprise is unlikely
   rather than impossible.
-- **The sweep procedure as executed on 2026-10-13 is not reproducible from the repository**:
-  `sweep_conductor.sh` and `release_held.sh` exist only in a session scratchpad (lane M). That
-  is a provenance gap of exactly the kind the constitution exists to prevent, and it should be
-  committed before the 4.0 sweep rather than after.
+- **The sweep procedure is now in the repository** (`database/scripts/kg_sweep_conductor.sh`
+  and `database/slurm/sweep_measurements/`), closing the provenance gap the 2026-10-13 sweep
+  left when its conductor lived only in a session scratchpad.
 - **Two retired bacterial graph labels and every content id change**, so no KG 3.0 query that
   names them and no id-based comparison survives. That is intended and disclosed in
   [[database.kg-4-release-note]].

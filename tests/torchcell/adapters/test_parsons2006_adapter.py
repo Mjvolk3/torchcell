@@ -75,7 +75,7 @@ def test_adapter_emits_the_strain_resolved_nodes(
     three references (one per medium) on ONE BY4741 genome node, and a barcoded kanMX
     deletion per genotype. The compound nodes carry the pinned table's InChIKeys
     (sulfometuron-methyl, MMS, the thialysine hydrochloride Table S1's CAS number names)
-    at the Table S1 doses, and the crude extract, stored with its typed inchikey gap,
+    at the Table S1 doses, and Agelasine E, a named compound with no released structure,
     carries none.
     """
     monkeypatch.delenv("TC_DATA_URL", raising=False)
@@ -137,17 +137,22 @@ def test_adapter_emits_the_strain_resolved_nodes(
             3.0,
             "uM",
         ),
-        ("Extract 95-57", None, 30.0, "ug/mL"),
+        # Agelasine E: a released name with no released structure is identified
+        # (constitution principle 2), stored with the typed inchikey gap. The crude
+        # extract column is HELD OUT by the loader since 2026-10-15 and reaches no node.
+        ("Agelasine E", None, 1.0, "uM"),
     }
     phenotypes = by_label["environment response phenotype"]
     # one node per record plus ONE reference phenotype: the three references' phenotypes
     # are identical (log2 ratio 0, the same units), and phenotype ids are content
-    # hashes, so two records with the same (ratio, p-value) also share an id. Of the
-    # 8 records the as-released build adds, three extract records repeat an MMS
-    # record's (ratio, p-value) and YIL170W's four carry two distinct pairs
-    # (+1.25 and -1.25, p 0.01), so they add 1 + 2 ids
+    # hashes, so two records with the same (ratio, p-value) also share an id. With the
+    # five extract cells held out, the 19 stored records carry, row by row of the
+    # synthetic matrix (ratio 0.25 (row + 1), sign + for sulfometuron, thialysine and
+    # Agelasine E, - for MMS; p 2.0 unless noted): YAL001C 1 pair (MMS blank),
+    # YDL039C 3 (thialysine has no p-value), YDL038C 3 (sulfometuron at the 300 cap),
+    # YGR272C 2 and YIL170W 2, so 11 record ids plus the reference's.
     assert len(phenotypes) == 19 + 1
-    assert len({ph.get_id() for ph in phenotypes}) == 9 + 1 + 1 + 2
+    assert len({ph.get_id() for ph in phenotypes}) == 11 + 1
     assert {p.get_properties()["measurement_type"] for p in phenotypes} == {
         "log2_ratio"
     }

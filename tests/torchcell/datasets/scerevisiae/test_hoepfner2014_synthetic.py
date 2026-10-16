@@ -21,8 +21,10 @@ that exercise the cell parser.
 HIP header columns (index: header): 1 ``Ad. 3_50_HIP_0077`` (n = 2), 2 its z-score
 companion (skipped), 3 ``MADL 3_50_HIP_0091`` (n = 1), 4 ``Ad. 409_1.2_HIP_0077``, 5
 ``Ad. 777_10_HIP_0077``, 6 ``Ad. 888_10_HIP_0077``, 7 ``Ad. 3_50_HOP_0077`` (other assay,
-skipped). HOP header: 1 ``Ad. 3_50_HOP_0077``, 2 ``Ad. 409_1.2_HOP_0077``. Every
-sensitivity column is stored.
+skipped). HOP header: 1 ``Ad. 3_50_HOP_0077``, 2 ``Ad. 409_1.2_HOP_0077``, 3 ``Ad.
+5000_20_HOP_0077``. CMB 5000 has no Table S1 row (no name, no SMILES, no curated row): it
+is an unidentified proprietary compound, HELD OUT under ``UNIDENTIFIED_COMPOUND_RULE``
+(2026.10.15) with its 2 scored cells counted; every other sensitivity column is stored.
 
 HIP rows (cells at columns 1..7) and what they become:
 
@@ -41,7 +43,7 @@ with no second cell (record 29; the short line exercises the column-bound guard)
 YAL001C again 0.99 "" (record 30; a repeated ORF row is stored, see the Finding test).
 
 Ledger arithmetic: stored HIP 26 + HOP 5 = 31; HIP scored cells 27 = 26 stored + 1 held
-out (R0010W); HOP 5 = 5 stored. Boromycin's identity gap covers HIP 4 records (YAL001C,
+out (R0010W); HOP 7 = 5 stored + 2 held out (CMB 5000). Boromycin's identity gap covers HIP 4 records (YAL001C,
 YCL074W, YBR271W, YHR999W) and HOP 1; CMB 888's covers HIP 5. References are one per
 (assay, study): HIP_0091 members [1, 9, 13, 18, 23], HIP_0077 the other HIP records,
 HOP_0077 [26-30]. Table S5 flags: YBR271W 5 HIP records, YLR074C 3. Table S5 lists five
@@ -125,12 +127,13 @@ _HOP_HEADER = [
     "Systematic Name",
     "Ad. scores for Exp. 3_50_HOP_0077",
     "Ad. scores for Exp. 409_1.2_HOP_0077",
+    "Ad. scores for Exp. 5000_20_HOP_0077",
 ]
 _HOP_ROWS: list[list[str]] = [
-    ["YAL001C", "1.0", "0.7"],
-    ["YBR271W", "-0.25", ""],
+    ["YAL001C", "1.0", "0.7", "0.5"],
+    ["YBR271W", "-0.25", "", "0.6"],
     ["YAL034C-B", "0.33"],
-    ["YAL001C", "0.99", ""],
+    ["YAL001C", "0.99", "", ""],
 ]
 
 
@@ -586,7 +589,8 @@ def test_ledger_accounts_for_every_scored_cell(
     dataset: m.EnvChemgenHoepfner2014Dataset,
 ) -> None:
     """``<root>/dropped_records.json``: HIP 27 scored cells = 26 stored + 1 held out
-    (R0010W, not ORF-shaped); HOP 5 = 5 stored. Boromycin (released SMILES, RDKit parse
+    (R0010W, not ORF-shaped); HOP 7 = 5 stored + 2 held out (CMB 5000, unidentified:
+    listed with its one column, study and dose, and the two paper quotes). Boromycin (released SMILES, RDKit parse
     failure as the unresolved reason) and CMB 888 (no SMILES) are listed in
     ``compound_identity_gaps`` with their stored columns and records per arm; the
     CMB4019 exclusion has no column here; amitriptyline's 50 uM, Boromycin's 1.2 uM and
@@ -595,6 +599,12 @@ def test_ledger_accounts_for_every_scored_cell(
     report = json.loads((Path(dataset.root) / "dropped_records.json").read_text())
     report.pop("created_at")
     gaps = report.pop("compound_identity_gaps")
+    sources = report.pop("unidentified_compound_sources")
+    assert [source["quote"] for source in sources] == [
+        m.SOURCED_VALUES["proprietary_compounds"].quote,
+        m.SOURCED_VALUES["proprietary_compound_identity"].quote,
+    ]
+    assert {source["provenance"]["sha256"] for source in sources} == {m.PAPER_MD_SHA256}
     assert report == {
         "dataset": _DATASET,
         "not_orf_shaped_rule": (
@@ -602,10 +612,14 @@ def test_ledger_accounts_for_every_scored_cell(
         ),
         "not_orf_shaped_policy": m.NOT_ORF_SHAPED_POLICY,
         "exclusion_rule": m.EXCLUSION_RULE,
+        "unidentified_compound_rule": (
+            "compound_has_no_released_name_or_structure_not_representable"
+        ),
+        "unidentified_compound_policy": m.UNIDENTIFIED_COMPOUND_POLICY,
         "n_kept": 31,
-        "n_dropped": 1,
+        "n_dropped": 3,
         "kept_by_assay": {"HIP": 26, "HOP": 5},
-        "dropped_by_assay": {"HIP": 1, "HOP": 0},
+        "dropped_by_assay": {"HIP": 1, "HOP": 2},
         "accounting": {
             "HIP": {
                 "n_sensitivity_columns": 5,
@@ -615,15 +629,17 @@ def test_ledger_accounts_for_every_scored_cell(
                 "n_stored": 26,
                 "n_not_orf_shaped": 1,
                 "n_excluded_condition": 0,
+                "n_unidentified_compound": 0,
             },
             "HOP": {
-                "n_sensitivity_columns": 2,
+                "n_sensitivity_columns": 3,
                 "n_rows": 4,
                 "n_rows_without_any_score": 0,
-                "n_source_cells": 5,
+                "n_source_cells": 7,
                 "n_stored": 5,
                 "n_not_orf_shaped": 0,
                 "n_excluded_condition": 0,
+                "n_unidentified_compound": 2,
             },
         },
         "not_orf_shaped": {
@@ -636,6 +652,23 @@ def test_ledger_accounts_for_every_scored_cell(
                 "table_s1_name": "D-Glucose (starvation)",
                 "n_columns_by_assay": {"HIP": 0, "HOP": 0},
                 "n_records_by_assay": {"HIP": 0, "HOP": 0},
+            }
+        ],
+        "unidentified_compounds_held_out": [
+            {
+                "cmb_id": "5000",
+                "source_name": "CMB5000",
+                "columns": [
+                    {
+                        "assay": "HOP",
+                        "header": "Ad. scores for Exp. 5000_20_HOP_0077",
+                        "study": "0077",
+                        "concentration_um": 20.0,
+                        "n_scored_cells": 2,
+                    }
+                ],
+                "n_columns_by_assay": {"HIP": 0, "HOP": 1},
+                "n_records_by_assay": {"HIP": 0, "HOP": 2},
             }
         ],
         "n_cmb_ids_stored": 4,
@@ -967,14 +1000,74 @@ def test_a_short_matrix_line_stops_at_its_last_cell(
     dataset: m.EnvChemgenHoepfner2014Dataset,
 ) -> None:
     """Record 29 is the HOP row ``YAL034C-B`` whose line carries only the first cell
-    (0.33); the Boromycin column lies beyond the line's end and adds no record and no
-    scored cell (HOP stores 5 of 5 scored cells).
+    (0.33); the Boromycin and CMB 5000 columns lie beyond the line's end and add no
+    record and no scored cell (HOP stores 5 of its 7 scored cells; the other 2 are CMB
+    5000's, held out).
     """
     (perturbation,) = dataset[29]["experiment"]["genotype"]["perturbations"]
     assert perturbation == _hop_genotype("YAL034C-B").perturbations[0].model_dump()
     assert dataset[29]["experiment"]["phenotype"]["environment_response"] == 0.33
     report = json.loads((Path(dataset.root) / "dropped_records.json").read_text())
-    assert report["accounting"]["HOP"]["n_source_cells"] == 5
+    assert report["accounting"]["HOP"]["n_source_cells"] == 7
+    assert report["accounting"]["HOP"]["n_stored"] == 5
+
+
+def test_an_unidentified_compound_is_absent_from_the_store_and_listed_in_the_ledger(
+    dataset: m.EnvChemgenHoepfner2014Dataset,
+) -> None:
+    """CMB 5000 (no Table S1 name, SMILES or curated row) is held out: no stored record
+    carries it, the ledger lists it under ``unidentified_compounds_held_out`` and not
+    under ``compound_identity_gaps``, and every arm balances: scored cells = stored +
+    not ORF-shaped + excluded + unidentified.
+    """
+    stored_compounds = {
+        perturbation["compound"]["name"]
+        for index in range(len(dataset))
+        for perturbation in dataset[index]["experiment"]["environment"]["perturbations"]
+    }
+    assert "CMB5000" not in stored_compounds
+    assert len(dataset) == 31
+    report = json.loads((Path(dataset.root) / "dropped_records.json").read_text())
+    assert [c["cmb_id"] for c in report["unidentified_compounds_held_out"]] == ["5000"]
+    assert "5000" not in {g["cmb_id"] for g in report["compound_identity_gaps"]}
+    for row in report["accounting"].values():
+        assert row["n_source_cells"] == (
+            row["n_stored"]
+            + row["n_not_orf_shaped"]
+            + row["n_excluded_condition"]
+            + row["n_unidentified_compound"]
+        )
+    assert report["n_kept"] + report["n_dropped"] == sum(
+        row["n_source_cells"] for row in report["accounting"].values()
+    )
+
+
+def test_an_admission_table_entry_admits_a_held_out_compound(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A ``RELEASED_IDENTITIES`` entry (empty today) is the only route in: with one for
+    CMB 5000 the compound is identified and built from the entry's name, SMILES and the
+    curated key the name resolves to; with none it is held out. An entry without any
+    identity field is refused.
+    """
+    meta: dict[str, dict[str, str | None]] = {}
+    assert m.RELEASED_IDENTITIES == {}
+    assert m._compound_is_identified("5000", meta) is False
+    release = m.ReleasedIdentity(
+        name="Amitriptyline",
+        smiles=_AMITRIPTYLINE,
+        source=m.SOURCED_VALUES["proprietary_compound_identity"],
+    )
+    monkeypatch.setitem(m.RELEASED_IDENTITIES, 5000, release)
+    assert m._compound_is_identified("5000", meta) is True
+    compound = m.EnvChemgenHoepfner2014Dataset._compound("5000", meta)
+    assert (compound.name, compound.inchikey) == (
+        "amitriptyline",
+        "KRMDCWKBEZIMAB-UHFFFAOYSA-N",
+    )
+    assert compound.provenance_gaps == []
+    with pytest.raises(ValueError, match="needs a name, a SMILES or an InChIKey"):
+        m.ReleasedIdentity(source=m.SOURCED_VALUES["proprietary_compound_identity"])
 
 
 def test_solve_anubis_returns_the_smallest_nonce_meeting_the_difficulty() -> None:

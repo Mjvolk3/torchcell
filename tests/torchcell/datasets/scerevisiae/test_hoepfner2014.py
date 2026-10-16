@@ -9,9 +9,11 @@ condition, so these tests drive ``_column_meta`` / ``_environment`` / ``_referen
 pinned is exactly what the review found broken: the compound is keyed on its CLEAN name
 and carries a structure identifier, the screen id is a typed field rather than text inside
 that name, the medium is the shared library object on BOTH arms, the vehicle carries its
-own identity, the two assays record their own exposure durations, and a compound with no
-identifier (a proprietary CMB id with no released SMILES, or Boromycin) is STORED under its
-released label with the typed ``inchikey`` gap.
+own identity, the two assays record their own exposure durations, an identified compound
+with no derivable InChIKey (Boromycin, a named compound with no SMILES) is STORED under its
+released name with the typed ``inchikey`` gap, and a proprietary CMB id with no released
+name or structure is HELD OUT under ``UNIDENTIFIED_COMPOUND_RULE`` (2026.10.15, database
+constitution principle 2), absent from the stored columns and present in the census.
 
 2026.09.30 (Phase 16): the end-to-end build is pinned in ``test_hoepfner2014_synthetic.py``;
 this file adds the pieces that build does not reach, on the same synthetic header:
@@ -211,31 +213,42 @@ def test_boromycin_column_is_stored_with_the_inchikey_gap_and_its_released_smile
     assert treated["solvent"]["name"] == "DMSO"
 
 
-def test_proprietary_compound_without_a_released_smiles_is_stored_with_the_gap() -> (
-    None
-):
-    """A CMB id Table S1 does not list (proprietary, no structure released) and CMB888
-    (a name, no SMILES) are both STORED under their released label with the typed
-    ``inchikey`` gap, the released uM dose at basis IC30 and the 2% DMSO vehicle.
+def test_named_compound_without_a_released_smiles_is_stored_with_the_gap() -> None:
+    """CMB888 (a released name, no SMILES) is identified: STORED under its released
+    name with the typed ``inchikey`` gap, the released uM dose at basis IC30 and the
+    2% DMSO vehicle.
+    """
+    by_cmb = {col.cmb: col for col in _columns()}
+    treated = by_cmb["888"].env_dump["perturbations"][0]
+    compound = treated["compound"]
+    assert (compound["name"], compound["inchikey"], compound["smiles"]) == (
+        "Unreleased",
+        None,
+        None,
+    )
+    assert [gap["field"] for gap in compound["provenance_gaps"]] == ["inchikey"]
+    assert treated["concentration"]["value"] == 10.0
+    assert treated["concentration"]["basis"] == DoseBasis.IC30
+    assert treated["solvent"]["percent"] == 2.0
+
+
+def test_unidentified_proprietary_compound_is_held_out_never_stored() -> None:
+    """A CMB id Table S1 does not list (no name, no SMILES, no curated row) is not a
+    stored column: ``_column_meta`` skips it and ``_column_census`` lists it under
+    ``unidentified`` with its header, study and dose (``UNIDENTIFIED_COMPOUND_RULE``).
+    An identified CMB id (name only, SMILES only, or an unparseable SMILES) is not.
     """
     header = [*HEADER, '"Ad. scores for Exp. 1234_10_HIP_0077"']
     kept = _dataset()._column_meta(header, "HIP", META, _FakeTxn())
-    by_cmb = {col.cmb: col for col in kept}
-    assert set(by_cmb) == {"3", "409", "777", "888", "1234"}
-    for cmb, name in (("1234", "CMB1234"), ("888", "Unreleased")):
-        treated = by_cmb[cmb].env_dump["perturbations"][0]
-        compound = treated["compound"]
-        assert (compound["name"], compound["inchikey"], compound["smiles"]) == (
-            name,
-            None,
-            None,
-        )
-        assert [gap["field"] for gap in compound["provenance_gaps"]] == ["inchikey"]
-        assert treated["concentration"]["value"] == 10.0
-        assert treated["concentration"]["basis"] == DoseBasis.IC30
-        assert treated["solvent"]["percent"] == 2.0
-    proprietary = by_cmb["1234"].env_dump["perturbations"][0]["compound"]
-    assert proprietary["provenance_gaps"][0]["reason"] == "not_reported_by_primary"
+    assert {col.cmb for col in kept} == {"3", "409", "777", "888"}
+    census = EnvChemgenHoepfner2014Dataset._column_census(header, "HIP", META)
+    assert census.unidentified == [
+        (8, "1234", "Ad. scores for Exp. 1234_10_HIP_0077", "0077", 10.0)
+    ]
+    assert "1234" in census.cmbs
+    assert module._compound_is_identified("1234", META) is False
+    for cmb in ("3", "409", "777", "888"):
+        assert module._compound_is_identified(cmb, META) is True
 
 
 def test_z_score_and_other_assay_columns_are_not_kept() -> None:
@@ -743,10 +756,11 @@ def _real_raw() -> Path:
 
 
 def test_real_header_solvent_ph_and_ic30_columns() -> None:
-    """#506 items 4 and 7 on the deposited headers, every stored column (2026.10.12):
-    2,953 HIP / 2,920 HOP stored columns, 69 per arm above 200 uM (39 CMB ids), 6 pH-agent
-    columns per arm, and 64 HIP / 60 HOP of the columns with a Table S1 IC30 (295 / 293)
-    outside 0.5x to 2x it. The header is parsed with the module's column regex (building
+    """#506 items 4 and 7 on the deposited headers, every stored column (2026.10.15):
+    2,649 HIP / 2,618 HOP columns of 1,701 unidentified CMB ids held out, 304 HIP / 302
+    HOP stored columns, 33 per arm above 200 uM (17 CMB ids), 6 pH-agent columns per
+    arm, and 64 HIP / 60 HOP of the columns with a Table S1 IC30 (295 / 293) outside
+    0.5x to 2x it. The header is parsed with the module's column regex (building
     every column template takes over a minute); the above-ceiling solvent gap is checked
     through ``_treatment``.
     """
@@ -754,17 +768,22 @@ def test_real_header_solvent_ph_and_ic30_columns() -> None:
     meta = module._load_compound_meta(str(raw / "Table_S1.xls"))
     ic30 = module._load_ic30(str(raw / "Table_S1.xls"))
     over: set[str] = set()
-    for filename, assay, n_stored, n_ic30, n_out in (
-        ("HIP_scores.txt", "HIP", 2953, 295, 64),
-        ("HOP_scores.txt", "HOP", 2920, 293, 60),
+    unidentified: set[str] = set()
+    for filename, assay, n_stored, n_held, n_ic30, n_out in (
+        ("HIP_scores.txt", "HIP", 304, 2649, 295, 64),
+        ("HOP_scores.txt", "HOP", 302, 2618, 293, 60),
     ):
         with open(raw / filename) as handle:
             header = handle.readline().rstrip("\n").split("\t")
         census = _dataset()._column_census(header, assay, meta)
-        excluded = {index for index, _ in census.excluded}
+        assert len(census.unidentified) == n_held
+        unidentified |= {cmb for _, cmb, *_ in census.unidentified}
+        skipped = {index for index, _ in census.excluded} | {
+            index for index, *_ in census.unidentified
+        }
         stored = []
         for index in census.sensitivity:
-            if index in excluded:
+            if index in skipped:
                 continue
             match = module._COL_RE.match(header[index].strip().strip('"'))
             assert match is not None
@@ -772,7 +791,7 @@ def test_real_header_solvent_ph_and_ic30_columns() -> None:
         assert len(stored) == n_stored
         above = [(cmb, conc) for cmb, conc in stored if conc > module.DMSO_CEILING_UM]
         over |= {cmb for cmb, _ in above}
-        assert len(above) == 69
+        assert len(above) == 33
         cmb, conc = above[0]
         treated = _dataset()._treatment(cmb, resolved_compound("x"), conc)[0]
         assert isinstance(treated, SmallMoleculePerturbation)
@@ -783,7 +802,8 @@ def test_real_header_solvent_ph_and_ic30_columns() -> None:
         assert sum(1 for c, v in with_ic30 if not 0.5 <= v / ic30[c] <= 2.0) == n_out
         assert len(census.excluded) == 3  # CMB4019 at 0.25, 0.5, 0.75
         assert census.positive_control == []  # Benomyl is in the separate files
-    assert len(over) == 39
+    assert len(over) == 17
+    assert len(unidentified) == 1701
 
 
 def test_real_hop_tokens_that_are_not_orf_shaped_carry_no_score() -> None:

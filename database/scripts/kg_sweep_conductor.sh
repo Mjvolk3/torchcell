@@ -87,7 +87,10 @@ PYEOF
 NXL=$(grep -c . "$OUT/sweep_xl_$SHA.txt" || true)
 NL=$(grep -c . "$OUT/sweep_l_$SHA.txt" || true)
 NS=$(grep -c . "$OUT/sweep_s_$SHA.txt" || true)
-EXP="--export=ALL,TORCHCELL_SRC=$TORCHCELL_SRC,KG_ORGANISMS=$KG_ORGANISMS"
+# KG_ORGANISMS is a comma list and sbatch splits --export on commas (job 4899 built
+# yeast-only that way), so it rides the environment through --export=ALL instead.
+export KG_ORGANISMS
+EXP="--export=ALL,TORCHCELL_SRC=$TORCHCELL_SRC"
 CMD_XL="sbatch --parsable --job-name=kg4-sweep-xl --array=1-${NXL}%1 --cpus-per-task=8 --mem=160G --time=24:00:00 $EXP,CLASSES_FILE=$OUT/sweep_xl_$SHA.txt $SCRIPT"
 CMD_L="sbatch --parsable --job-name=kg4-sweep-l --array=1-${NL}%2 --cpus-per-task=8 --mem=96G --time=24:00:00 $EXP,CLASSES_FILE=$OUT/sweep_l_$SHA.txt $SCRIPT"
 CMD_S="sbatch --parsable --job-name=kg4-sweep-s --array=1-${NS}%6 --cpus-per-task=4 --mem=32G --time=08:00:00 $EXP,CLASSES_FILE=$OUT/sweep_s_$SHA.txt $SCRIPT"

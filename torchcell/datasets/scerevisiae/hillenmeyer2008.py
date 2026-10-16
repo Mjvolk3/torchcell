@@ -96,11 +96,41 @@ SOM Table S1 and cond2, when present, ALWAYS adds a second small molecule:
   the conflict table); ``synthetic complete`` -> ``SC``; ``YP glycerol`` ->
   ``YP_GLYCEROL_LIQUID``.
 - everything else -> ``SmallMoleculePerturbation(resolved_compound(label), dose)`` with
-  ``solvent=None`` and a typed gap (no vehicle is stated per compound). A label the
-  curated compound table does not identify keeps the released label as
-  ``Compound.name`` and carries the typed ``inchikey`` gap ``resolved_compound`` attaches;
-  it is stored, and listed with its record count in
-  ``preprocess/compound_identity_gaps.json``.
+  ``solvent=None`` and a typed gap (no vehicle is stated per compound). An IDENTIFIED
+  label the curated compound table gives no InChIKey (a public name not yet resolved,
+  such as ``AG 1387 (Biomol)`` or ``amphotericin``, or a mixture) keeps the released
+  label as ``Compound.name`` and carries the typed ``inchikey`` gap
+  ``resolved_compound`` attaches; it is stored, and listed with its record count in
+  ``preprocess/compound_identity_gaps.json``. An UNIDENTIFIED label is held out (below).
+
+UNIDENTIFIED PERTURBING AGENTS (database constitution principle 2, owner ruling
+2026-10-15: "if you cannot tell me what goes into the flask so to speak, then we have
+no hope of modeling!"). The criterion is mechanical: a label is unidentified iff its row
+in the pinned compound-identity table has status ``PROPRIETARY`` and the loader's
+admission table ``RELEASED_IDENTITIES`` (empty today) has no entry for it. Twelve labels
+meet it, each checked against the SOM: the ten ChemDiv codes ``chemical diversity labs
+14a``, ``14f``, ``1c10``, ``218``, ``232``, ``246``, ``275``, ``3f2``, ``41``, ``6842``,
+plus ``RIL1 (Biomol)`` and ``telomerase inhibitor ix (Biomol)``. SOM Table S1 lists them
+only by these codes, and none is among the structures of Table S2, whose caption reads
+"Table S2. 316 compounds tested in this study for which the chemical structures were
+available. Not included are non-compound experiments such as environmental stresses and
+compounds for which the chemical structure was not known or unavailable." (AG 1478
+(Biomol) and Tyrphostin AG 957 are drawn there.) Every array dosing one of them is
+dropped under ``UNIDENTIFIED_COMPOUND_RULE`` and listed per label, with its headers, key
+file conditions, records not written and value cells, in
+``preprocess/dropped_records.json`` (``unidentified_compounds_held_out``), beside the
+quotes (``unidentified_compound_sources``). Measured on the raw mirror through the
+loader's own ``parse_columns``, ``group_columns`` and ``count_records`` (2026-10-15):
+HET 12 labels, 19 environments, 19 arrays, 110,449 records and value cells; HOM 10
+labels (no RIL1 or telomerase array), 11 environments, 11 arrays, 45,760 records and
+value cells. Stored after the hold-out: HET 2,963,683 records, HOM 1,182,916. The
+``chemical diversity labs 14a`` array of each arm is the header/key conflict whose key
+file says ``Tyrphostin``; the header is what the values are released under, so it is
+held out with the key string kept beside it. A label is
+admitted by an entry in ``RELEASED_IDENTITIES`` (a ``ReleasedIdentity`` with a name,
+SMILES or InChIKey and the ``SourcedValue`` of a public label-to-structure release);
+only such a release fills it, never an identity inferred from profile similarity, a
+filled entry rebuilds the store, and the ledger's held-out list is the request list.
 
 HEADER VS KEY FILE COMPOUND. On five header/key pairs the key file names a different
 compound from the matrix header and the SOM gives no tie-breaker. The array is served
@@ -129,6 +159,8 @@ NOT STORED (counted per rule in ``preprocess/dropped_records.json`` and
   (``PhysicalFactor`` has no heat-shock member, and a steady 45 C would be false), and a
   dose on a media swap whose agent is named nowhere (a ``SmallMoleculePerturbation``
   needs a compound name).
+- ARRAYS, not representable: an unidentified perturbing agent
+  (``UNIDENTIFIED_COMPOUND_RULE``, above).
 
 REPLICATE AGGREGATION. Within one (strain row, environment, control set) group each array
 contributes ONE value and the record's value is the mean over arrays with the sample SD
@@ -166,7 +198,7 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 from tqdm import tqdm
 
 from torchcell.data import (
@@ -176,7 +208,11 @@ from torchcell.data import (
     post_process,
     verify_raw_files,
 )
-from torchcell.datamodels.compound_identity import resolved_compound
+from torchcell.datamodels.compound_identity import (
+    CompoundResolutionStatus,
+    resolve_compound_identity,
+    resolved_compound,
+)
 from torchcell.datamodels.media import (
     HILLENMEYER_DROPOUT_MEDIA,
     HILLENMEYER_PARTIAL_DROPOUT_LEVELS,
@@ -188,6 +224,7 @@ from torchcell.datamodels.media import (
 from torchcell.datamodels.schema import (
     AssayType,
     BarcodedKanMxDeletionPerturbation,
+    Compound,
     Concentration,
     ConcentrationUnit,
     ConstructedOrf,
@@ -224,6 +261,7 @@ from torchcell.datamodels.strain_background import (
     standard_background,
 )
 from torchcell.datasets.dataset_registry import register_dataset
+from torchcell.datasets.scerevisiae.hoepfner2014 import ReleasedIdentity
 from torchcell.literature.manifest import (
     ROLE_RAW_DATA,
     ArtifactRecord,
@@ -372,6 +410,21 @@ QUOTE_TABLE_S1_MEDIA = (
 QUOTE_DIPLOID = "The diploid yeast deletion collections comprise"
 #: hom.txt, the only in-release statement of the strain background (27 arrays).
 QUOTE_KEY_BY4743 = "synthetic complete for BY4743"
+#: SOM Table S2 caption: the structures the SOM releases, and what it leaves out.
+QUOTE_TABLE_S2 = (
+    "Table S2. 316 compounds tested in this study for which the chemical structures "
+    "were available. Not included are non-compound experiments such as environmental "
+    "stresses and compounds for which the chemical structure was not known or "
+    "unavailable."
+)
+#: SOM Table S1 ("other"), the ChemDiv library codes as the OCR carries them.
+QUOTE_TABLE_S1_CHEMDIV = (
+    "chemical diversity labs 14a, chemical diversity labs 14f, chemical diversity labs "
+    "1c10, chemical diversity labs 218, chemical diversity labs 232, chemical diversity "
+    "labs 246, chemical diversity labs 275, chemical diversity labs 3f2,"
+)
+#: SOM Table S1, the Biomol telomerase inhibitor as the OCR carries it.
+QUOTE_TABLE_S1_TELOMERASE = "telomerase inhibitor ix (Biomol)"
 
 #: The ten construction batches the SOM names as carrying a shared secondary genotype.
 SUSPICIOUS_BATCHES: tuple[str, ...] = (
@@ -498,6 +551,30 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         note="the key file names the medium of 18 hom arrays whose header reads "
         "'minimal media' (key wins, KEY_HEADER_CONFLICTS)",
     ),
+    "table_s2_structures": _som_sv(
+        "316 released structures; a compound outside Table S2 has none",
+        QUOTE_TABLE_S2,
+        note="Table S2 is the SOM's only release of structures (page images, read "
+        "against the mirrored images/ of this key). None of the twelve held-out labels "
+        "is among its 316 drawings, while AG 1478 (Biomol) and Tyrphostin AG 957 are, so "
+        "the SOM's own vendor-labelled compounds are drawn when their structure was "
+        "known",
+    ),
+    "table_s1_chemdiv_codes": _som_sv(
+        "chemical diversity labs <code>",
+        QUOTE_TABLE_S1_CHEMDIV,
+        note="Table S1 lists the ChemDiv ('chemical diversity labs') compounds only by "
+        "library code, under 'other'. The OCR stops after 3f2; the PDF (paper.pdf, "
+        "sha256 eb052a3fd164af497a6365f84a57a452a321545c02340a9f528c1f97d2ae63f0) "
+        "continues 'chemical diversity labs 41, chemical diversity labs 6842' and lists "
+        "'antiinflammatory RIL1 (Biomol)', which the OCR drops",
+    ),
+    "table_s1_telomerase_inhibitor": _som_sv(
+        "telomerase inhibitor ix (Biomol)",
+        QUOTE_TABLE_S1_TELOMERASE,
+        note="a vendor product designation (Biomol, inhibitor number ix) with no "
+        "released name or structure; absent from Table S2",
+    ),
 }
 _PRE_CULTURE_FROZEN = SOURCED_VALUES["pre_culture_frozen"]
 _PRE_CULTURE_LOG_PHASE = SOURCED_VALUES["pre_culture_log_phase"]
@@ -593,6 +670,36 @@ DROP_UNNAMED_MEDIA_AGENT = "unnamed_agent_dosed_into_a_media_swap"
 #: withdrawal in the release.
 DROP_WRONG_GENE_DELETED = "som_wrong_gene_deleted"
 
+#: Array rule for an unidentified perturbing agent (database constitution principle 2,
+#: owner ruling 2026-10-15): the same rule string Hoepfner 2014 uses.
+UNIDENTIFIED_COMPOUND_RULE = (
+    "compound_has_no_released_name_or_structure_not_representable"
+)
+
+UNIDENTIFIED_COMPOUND_POLICY = (
+    "a compound label whose pinned compound-identity row has status PROPRIETARY (a "
+    "vendor or library catalog code: the ChemDiv 'chemical diversity labs' codes and "
+    "two Biomol products) and no RELEASED_IDENTITIES entry is held out: the SOM lists it "
+    "only by its code in Table S1 and releases no structure for it in Table S2, so what "
+    "went into the flask cannot be stated and the experiment cannot be represented. "
+    "Every array dosing it is HELD OUT, never stored under the bare label with an "
+    "inchikey gap; the ledger lists each label with its arrays and record counts, and "
+    "the label is admitted the day a public label-to-structure release fills "
+    "RELEASED_IDENTITIES. Any other label (a public name the table has not resolved, "
+    "e.g. AG 1387 (Biomol), amphotericin, or a mixture) is identified and stays stored "
+    "with its typed inchikey gap"
+)
+
+#: The ADMISSION TABLE, keyed by the released label: EMPTY today. A label is stored iff
+#: its identity-table status is not PROPRIETARY or it has an entry here, and an entry's
+#: name, SMILES and InChIKey build the stored ``Compound``. Only a public
+#: label-to-structure release (ChemDiv or Biomol, or a later paper), mirrored and
+#: sha256-pinned like any other artifact, fills it; an identity inferred from profile
+#: similarity is a hypothesis and never goes here. A filled entry changes the stored
+#: records, so it rebuilds the store. The ledger's ``unidentified_compounds_held_out``
+#: (every held-out label with its arrays and records) is the request list.
+RELEASED_IDENTITIES: dict[str, ReleasedIdentity] = {}
+
 DROP_RULES: dict[str, str] = {
     DROP_HEAT_SHOCK_CYCLE: "needs schema: '37c, 45c' is a heat-shock cycle; "
     "PhysicalFactor has no heat_shock member (adding one changes a served class) and a "
@@ -600,6 +707,8 @@ DROP_RULES: dict[str, str] = {
     DROP_UNNAMED_MEDIA_AGENT: "needs schema: a dose is given but the agent is named "
     "nowhere in the SOM or the release, and a SmallMoleculePerturbation needs a "
     "compound name",
+    UNIDENTIFIED_COMPOUND_RULE: "not representable: the dosed agent is a vendor or "
+    "library code with no released name or structure (UNIDENTIFIED_COMPOUND_POLICY)",
 }
 STRAIN_DROP_RULES: dict[str, str] = {
     DROP_WRONG_GENE_DELETED: f"author withdrawal, the SOM (paper.md:332): "
@@ -939,10 +1048,51 @@ def _solvent_gap() -> ProvenanceGap:
     )
 
 
+def compound_is_identified(label: str) -> bool:
+    """Whether a released compound label names identified material.
+
+    ``UNIDENTIFIED_COMPOUND_RULE``: a label is unidentified iff its pinned
+    compound-identity row has status ``PROPRIETARY`` (a vendor or library code the SOM
+    releases no structure for) and ``RELEASED_IDENTITIES`` has no entry for it. Every
+    other label, a gapped public name or a mixture included, is identified.
+    """
+    if label in RELEASED_IDENTITIES:
+        return True
+    status = resolve_compound_identity(name=label).status
+    return status is not CompoundResolutionStatus.PROPRIETARY
+
+
+def _compound(label: str) -> Compound:
+    """The compound of a released label: the shared table, or an admission entry.
+
+    A ``RELEASED_IDENTITIES`` entry supplies the name and SMILES the label lacks (its
+    SMILES yields an RDKit InChIKey), and its released InChIKey fills a key the resolver
+    could not, retiring that gap. Without an entry the label resolves as released.
+    """
+    released = RELEASED_IDENTITIES.get(label)
+    if released is None:
+        return resolved_compound(label)
+    compound = resolved_compound(
+        released.name if released.name is not None else label,
+        smiles=released.smiles,
+        derive_from_smiles=released.smiles is not None,
+    )
+    if released.inchikey is not None and compound.inchikey is None:
+        compound = compound.model_copy(
+            update={
+                "inchikey": released.inchikey,
+                "provenance_gaps": [
+                    gap for gap in compound.provenance_gaps if gap.field != "inchikey"
+                ],
+            }
+        )
+    return compound
+
+
 def _small_molecule(label: str, conc: str, unit: str) -> SmallMoleculePerturbation:
     """One dosed compound, resolved through the shared table by its SOURCE label."""
     return SmallMoleculePerturbation(
-        compound=resolved_compound(label),
+        compound=_compound(label),
         concentration=canonical_concentration(conc, unit),
         solvent=None,
         provenance_gaps=[_solvent_gap()],
@@ -977,7 +1127,10 @@ def parse_condition(
     (the double-drug arms). Splitting the two is what keeps ``pH7.5 + FK506`` from being
     stored as a plain pH stress and ``<compound> irradiated`` from being stored as bare
     radiation. A compound the curated table does not identify is kept under its released
-    label with the typed ``inchikey`` gap ``resolved_compound`` attaches.
+    label with the typed ``inchikey`` gap ``resolved_compound`` attaches, unless the
+    label is unidentified (``compound_is_identified``): then the array is dropped under
+    ``UNIDENTIFIED_COMPOUND_RULE`` with the unidentified labels (joined by ``"; "``) as
+    its detail.
     """
     label = cond1.strip()
     low = label.lower()
@@ -988,6 +1141,7 @@ def parse_condition(
     ] = []
     drop_reason: str | None = None
     drop_detail: str | None = None
+    compound_labels: list[str] = []
 
     if _TEMP_CYCLE_RE.match(label):
         drop_reason, drop_detail = DROP_HEAT_SHOCK_CYCLE, label
@@ -1010,9 +1164,8 @@ def parse_condition(
             EnvironmentPhysicalPerturbation(factor=PhysicalFactor.radiation)
         )
     elif low.endswith(_IRRADIATED_SUFFIX):
-        perturbations.append(
-            _small_molecule(label[: -len(_IRRADIATED_SUFFIX)].strip(), conc1, unit1)
-        )
+        compound_labels.append(label[: -len(_IRRADIATED_SUFFIX)].strip())
+        perturbations.append(_small_molecule(compound_labels[-1], conc1, unit1))
         perturbations.append(
             EnvironmentPhysicalPerturbation(factor=PhysicalFactor.radiation)
         )
@@ -1022,10 +1175,18 @@ def parse_condition(
             drop_reason = DROP_UNNAMED_MEDIA_AGENT
             drop_detail = f"{label}: {conc1.strip()} {unit1.strip()}".strip()
     else:
+        compound_labels.append(label)
         perturbations.append(_small_molecule(label, conc1, unit1))
 
     if cond2.strip():
+        compound_labels.append(cond2.strip())
         perturbations.append(_small_molecule(cond2.strip(), conc2, unit2))
+
+    unidentified = [
+        name for name in compound_labels if not compound_is_identified(name)
+    ]
+    if drop_reason is None and unidentified:
+        drop_reason, drop_detail = UNIDENTIFIED_COMPOUND_RULE, "; ".join(unidentified)
 
     return ConditionParse(
         media=media,
@@ -1774,6 +1935,69 @@ def compound_identity_gaps(
     return dict(sorted(gaps.items()))
 
 
+class UnidentifiedCompoundHeldOut(BaseModel):
+    """One label held out under ``UNIDENTIFIED_COMPOUND_RULE``, with what it carried.
+
+    ``n_records_not_written`` counts the (stored strain row, environment, control set)
+    records its arrays would have written; ``n_value_cells`` the released value cells of
+    those arrays over every row, the figure the cell accounting sums.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    label: str = Field(description="the released compound label, verbatim")
+    n_environments: int
+    n_arrays: int
+    n_records_not_written: int
+    n_value_cells: int
+    headers: list[str] = Field(description="the deposited column headers, verbatim")
+    key_file_conditions: list[str] = Field(
+        description="the key file's condition string for each array, verbatim"
+    )
+
+
+def unidentified_compounds_held_out(
+    matrix: MatrixRows, dropped: dict[str, list[ColumnSpec]]
+) -> list[UnidentifiedCompoundHeldOut]:
+    """Every label held out under ``UNIDENTIFIED_COMPOUND_RULE``, sorted by label.
+
+    An array dosing two unidentified labels is listed under each (none does in the
+    release; the per-label counts then overlap and the rule total stays the cell
+    accounting's).
+    """
+    by_label: dict[str, list[list[ColumnSpec]]] = {}
+    for members in dropped.values():
+        head = members[0]
+        if head.drop_reason != UNIDENTIFIED_COMPOUND_RULE:
+            continue
+        for label in str(head.drop_detail).split("; "):
+            by_label.setdefault(label, []).append(members)
+    held: list[UnidentifiedCompoundHeldOut] = []
+    for label, groups in sorted(by_label.items()):
+        columns = [column for members in groups for column in members]
+        held.append(
+            UnidentifiedCompoundHeldOut(
+                label=label,
+                n_environments=len(groups),
+                n_arrays=len(columns),
+                n_records_not_written=sum(
+                    count_records(matrix.rows, {members[0].group_key: members})
+                    for members in groups
+                ),
+                n_value_cells=sum(
+                    len(array_values(strain.values, members))
+                    for strain in matrix.rows
+                    for members in groups
+                ),
+                headers=[column.header for column in columns],
+                key_file_conditions=[
+                    column.key_check.key_condition for column in columns
+                ],
+            )
+        )
+    return held
+
+
 # --------------------------------------------------------------------------- #
 # Dataset
 # --------------------------------------------------------------------------- #
@@ -1938,6 +2162,8 @@ class _Hillenmeyer2008Base(ExperimentDataset):
         rows, keyed by the GROUP, so one condition dropped at several control sets is
         counted once per group. ``cell_accounting`` splits every released value cell into
         stored, dropped-array and withdrawn-strain cells and raises if they do not sum.
+        The ``UNIDENTIFIED_COMPOUND_RULE`` arrays are also listed per label, with the
+        source quotes that the labels are codes with no released structure.
         """
         environments: list[dict[str, Any]] = []
         by_rule: dict[str, dict[str, int]] = {}
@@ -1966,6 +2192,20 @@ class _Hillenmeyer2008Base(ExperimentDataset):
             "kept_records": kept_records,
             "rules": DROP_RULES,
             "by_rule": by_rule,
+            "unidentified_compound_rule": UNIDENTIFIED_COMPOUND_RULE,
+            "unidentified_compound_policy": UNIDENTIFIED_COMPOUND_POLICY,
+            "unidentified_compound_sources": [
+                SOURCED_VALUES[key].model_dump(mode="json")
+                for key in (
+                    "table_s2_structures",
+                    "table_s1_chemdiv_codes",
+                    "table_s1_telomerase_inhibitor",
+                )
+            ],
+            "unidentified_compounds_held_out": [
+                held.model_dump()
+                for held in unidentified_compounds_held_out(matrix, dropped_groups)
+            ],
             "cell_accounting": cell_accounting(
                 matrix, groups, dropped_groups
             ).model_dump(),
@@ -1987,9 +2227,11 @@ class _Hillenmeyer2008Base(ExperimentDataset):
             json.dump(
                 {
                     "dataset": self.name,
-                    "rule": "a compound label the curated compound table does not "
-                    "identify is stored under the released label with the typed "
-                    "inchikey gap resolved_compound attaches; it is never dropped",
+                    "rule": "an IDENTIFIED compound label the curated compound table "
+                    "gives no InChIKey is stored under the released label with the "
+                    "typed inchikey gap resolved_compound attaches; an unidentified "
+                    "label (status PROPRIETARY) is held out under "
+                    f"{UNIDENTIFIED_COMPOUND_RULE} and listed in dropped_records.json",
                     "n_compounds": len(gaps),
                     "n_records": sum(g["n_records"] for g in gaps.values()),
                     "compounds": gaps,

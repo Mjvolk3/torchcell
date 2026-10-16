@@ -823,3 +823,21 @@ def test_a_key_wins_column_that_drops_names_header_and_key_in_its_detail() -> No
         "synthetic complete: 400 um (header 'minimal media', key file "
         "'synthetic complete for BY4743')"
     )
+
+
+@pytest.mark.parametrize(
+    ("label", "expected"),
+    [
+        ("telomerase inhibitor ix (Biomol)", ("Biomol", "telomerase inhibitor ix")),
+        ("RIL1 (Biomol)", ("Biomol", "RIL1")),
+        ("chemical diversity labs 1c10", ("chemical diversity labs", "1c10")),
+        ("amphotericin", (None, None)),
+    ],
+)
+def test_a_held_out_label_carries_its_vendor_and_product_name(
+    label: str, expected: tuple[str | None, str | None]
+) -> None:
+    """The held-out ledger row names the vendor and the product name verbatim, so a
+    catalog lookup (e.g. Biomol's telomerase inhibitor ix) can admit it later.
+    """
+    assert hillenmeyer2008.vendor_catalog_entry(label) == expected

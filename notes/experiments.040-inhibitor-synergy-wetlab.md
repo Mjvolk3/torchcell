@@ -1767,3 +1767,19 @@ The owner's second review of figure 2: a as a three-by-three of molecules with t
 **Panels i, k, n.** Row three's widths favor i (1.15) and row four's n (1.35); k's legend moved inside the axes (upper left, where no point sits); n's colorbar is thinner and shorter; j's x label and title shortened so k's y label is clear. The sheet legend is three columns, so row one gains the height.
 
 The build: 32 pages, 0 errors, 1 warning; the review PDF `gate_main.pdf` rewritten.
+
+## 2026.10.15 - The main sheet, fifth pass: the field, the arrows, edge-to-edge fronts, and a correction on the gene tokens
+
+The owner's third review: round corners on a's field and full cover; c's labels on two lines, longer arrows, "frozen" hitting the transformer box, the row-three arrow starting on the 5-HMF label; n's fronts should meet the left and bottom edges, the plates wider, the grown-cell dots smaller, the border lighter; use the palette (more blue is fine); k's x axis crowded and its legend on the points.
+
+**A correction.** The cartoon and its caption said the gene tokens are the frozen cell graph transformer's. They are not frozen and they are not the composite embedding: `train_mixture.build_encoder` builds the one-layer cell graph transformer with `node_embeddings=None` and a learnable gene table of `cgt_dim` (180) rows, and the optimizer trains the encoder's parameters at `cgt_lr` (5e-4) beside the rest; "frozen" holds only for the titration fine-tune stage. The label now reads "6,607 gene tokens (a learned table)" and the caption says so and names what it is not. Reusing the composite sequence embedding of the interactions figure (SpeciesLM, CaLM with ProtT5, 3,328 fixed dimensions per gene) is a config change, since `CellGraphTransformer` takes `node_embeddings`; whether it helps here is untested. Hypothesis (untested): it would need the graph prior on, because in the interactions figure the composite embedding did not train without it (panel m there), and this encoder runs with the prior weight at zero.
+
+**Panel a.** The field is a `FancyBboxPatch` in axes fraction with `mutation_aspect` set to the axes' width over height, so the corners are round in points on a non-square axes; it is padded 5 pt sideways and 4 pt vertically past the column's widest structure and its last name.
+
+**Panel c.** Arrows twice as long (six units, head scale six); the fingerprint label on two lines; the token labeled; the token's two-line note right-aligned under it; the gene-token label on two lines so it clears the transformer box; the mixture row ends in a box "each read alone, composed as Bliss" with the two composition formulas and the scoring line under the row.
+
+**Panel n.** A front is now `front_steps` on the monotone-closed alive mask: a staircase of cell edges from the grid's left edge at the top of the highest growing row (the acetic acid dose the rule crosses alone) to the bottom edge at the right of row zero's growing cells (the inhibitor dose it crosses alone), so every front meets both edges as its dose-response does. Before, the front was a polyline through row centers that stopped short of both edges. The rules go through the same closure as the model (their surfaces fall with either dose, so it is the identity). Row four's widths are 0.85, 0.8, 1.6, 0.85, the dots are 0.5 pt, the plate border 0.6 pt, the colorbar thinner.
+
+**Palette.** Every blue on the sheet is a palette member: steel blue (`PLOT_PALETTE[4]`) for the chemistry-feature learners, denim (`PLOT_PALETTE[10]`) for the transformer, and their `PLOT_PALETTE_FILL` partners for the token strips and boxes; the signed colormap runs palette blue through white to palette red, the fitness colormap white to the measured amber. No literal blue is typed anywhere in the script.
+
+**Panel k.** Major ticks every half unit on both axes, the legend above the axes in one column again.

@@ -1146,14 +1146,21 @@ def draw_molecules(ax: Any, R: Reads) -> None:
     total_h = sum(row_h) + 2 * gap_y + header_pt
     left0 = (axes_w_pt - total_w) / 2.0
     top = (axes_h_pt + total_h) / 2.0
-    # the Vanacloig column's field, behind the third column, with its header
-    x_field = left0 + col_w[0] + col_w[1] + 2 * gap_x - gap_x / 2
+    # the Vanacloig column's field, behind the third column and its names, with its
+    # header: padded on every side, its corners round in points (the axes is not
+    # square, so the box's mutation aspect undoes the axes' own aspect)
+    pad_x, pad_y, corner_pt = 5.0, 4.0, 4.0
+    x_field = left0 + col_w[0] + col_w[1] + 2 * gap_x - pad_x
+    w_field = col_w[2] + 2 * pad_x
+    y_field = top - total_h - pad_y
+    h_field = total_h + 2 * pad_y
     field = ax.add_patch(
         FancyBboxPatch(
-            (x_field / axes_w_pt, (top - total_h) / axes_h_pt - 0.01),
-            (col_w[2] + gap_x) / axes_w_pt,
-            total_h / axes_h_pt + 0.02,
-            boxstyle="round,pad=0.0,rounding_size=0.02",
+            (x_field / axes_w_pt, y_field / axes_h_pt),
+            w_field / axes_w_pt,
+            h_field / axes_h_pt,
+            boxstyle=f"round,pad=0.0,rounding_size={corner_pt / axes_w_pt}",
+            mutation_aspect=axes_w_pt / axes_h_pt,
             transform=ax.transAxes,
             facecolor=SRC_FILL["measured"],
             edgecolor="none",
@@ -1162,8 +1169,8 @@ def draw_molecules(ax: Any, R: Reads) -> None:
     )
     field.set_in_layout(False)
     header = ax.text(
-        (x_field + (col_w[2] + gap_x) / 2) / axes_w_pt,
-        top / axes_h_pt,
+        (x_field + w_field / 2) / axes_w_pt,
+        (top - 1.0) / axes_h_pt,
         "nearest in Vanacloig 2022",
         transform=ax.transAxes,
         fontsize=4.4,
@@ -1405,35 +1412,50 @@ def draw_evaluation(ax: Any, R: Reads) -> None:
     # ---- row one: a molecule becomes a token
     y1 = 42.0
     box_, _w, _h = acs_structure(
-        ax, R.smiles["furfural"], (17, y1), box_alignment=(0.5, 0.5)
+        ax, R.smiles["furfural"], (16, y1), box_alignment=(0.5, 0.5)
     )
     box_.set_in_layout(False)
-    ax.text(17, y1 - 5.6, "furfural", fontsize=fs, ha="center", va="top")
-    arrow(ax, 34, y1, 37.5, y1)
-    strip(ax, 38, y1 - 2.0, 16, 4.0, 12, meas_fill, meas, dark=(1, 4, 5, 9))
-    ax.text(46, y1 - 3.0, "2,048 FCFP4 counts", fontsize=fs, ha="center", va="top")
-    arrow(ax, 54.5, y1, 58, y1)
-    box(ax, 58.5, y1 - 3.0, 12, 6, "MLP", cgt, cgt_fill, fs=fs)
-    arrow(ax, 71, y1, 74.5, y1)
-    token(ax, 75, y1 - 2.0, 4.0, cgt)
+    ax.text(16, y1 - 5.6, "furfural", fontsize=fs, ha="center", va="top")
+    arrow(ax, 33, y1, 39, y1)
+    strip(ax, 40, y1 - 2.0, 12, 4.0, 10, meas_fill, meas, dark=(1, 4, 7))
     ax.text(
-        81,
-        y1,
-        "one token per\ninhibitor; its dose\nscales the offset",
+        46,
+        y1 - 3.0,
+        "2,048 FCFP4\ncounts",
         fontsize=fs,
-        ha="left",
-        va="center",
-        linespacing=1.15,
+        ha="center",
+        va="top",
+        linespacing=1.1,
+    )
+    arrow(ax, 53, y1, 59, y1)
+    box(ax, 60, y1 - 3.0, 10, 6, "MLP", cgt, cgt_fill, fs=fs)
+    arrow(ax, 71, y1, 77, y1)
+    token(ax, 78, y1 - 2.0, 4.0, cgt)
+    ax.text(80, y1 + 3.6, "token", fontsize=fs, ha="center", va="bottom")
+    ax.text(
+        100,
+        y1 - 3.6,
+        "one token per inhibitor\nits dose scales the offset",
+        fontsize=fs,
+        ha="right",
+        va="top",
+        linespacing=1.1,
     )
     # ---- row two: the token in front of the genome, one head
     y2 = 25.0
     token(ax, 0.5, y2 - 2.0, 4.0, cgt)
-    strip(ax, 5.5, y2 - 2.0, 28, 4.0, 14, cgt_fill, cgt, dark=(4, 10))
+    strip(ax, 5.5, y2 - 2.0, 26, 4.0, 13, cgt_fill, cgt, dark=(4, 9))
     ax.text(
-        19, y2 + 2.8, "6,607 gene tokens, frozen", fontsize=fs, ha="center", va="bottom"
+        18.5,
+        y2 + 2.8,
+        "6,607 gene tokens\n(a learned table)",
+        fontsize=fs,
+        ha="center",
+        va="bottom",
+        linespacing=1.1,
     )
     ax.text(
-        19,
+        18.5,
         y2 - 2.8,
         "dark: deleted genes;\nthe host is the empty set",
         fontsize=fs,
@@ -1441,51 +1463,46 @@ def draw_evaluation(ax: Any, R: Reads) -> None:
         va="top",
         linespacing=1.1,
     )
-    arrow(ax, 34.5, y2, 38, y2)
-    box(ax, 38.5, y2 - 4.0, 24, 8, "transformer\nlayer + head", cgt, cgt_fill, fs=fs)
-    arrow(ax, 63, y2 + 1.5, 66.5, y2 + 3.8)
-    arrow(ax, 63, y2 - 1.5, 66.5, y2 - 3.8)
-    box(ax, 67, y2 + 1.6, 33, 5.6, "deleted-gene rows:\nprofile", cgt, "white", fs=fs)
-    box(ax, 67, y2 - 7.2, 33, 5.6, "gene mean:\nhost growth", cgt, "white", fs=fs)
+    arrow(ax, 32.5, y2, 38.5, y2)
+    box(ax, 39.5, y2 - 4.0, 22, 8, "transformer\nlayer + head", cgt, cgt_fill, fs=fs)
+    arrow(ax, 62, y2 + 1.5, 67.5, y2 + 3.8)
+    arrow(ax, 62, y2 - 1.5, 67.5, y2 - 3.8)
+    box(ax, 68, y2 + 1.6, 32, 5.6, "deleted-gene rows:\nprofile", cgt, "white", fs=fs)
+    box(ax, 68, y2 - 7.2, 32, 5.6, "gene mean:\nhost growth", cgt, "white", fs=fs)
     # ---- row three: a mixture composes as Bliss
-    y3 = 7.0
+    y3 = 9.5
     x = 0.5
-    for name, advance in (("furfural", 21.0), ("acetic acid", 27.0), ("5-HMF", 0.0)):
+    for name, advance in (("furfural", 20.0), ("acetic acid", 25.0), ("5-HMF", 0.0)):
         token(ax, x, y3 - 2.0, 4.0, cgt)
         ax.text(x + 5.0, y3, name, fontsize=fs, ha="left", va="center")
         x += advance
-    ax.text(
-        30,
+    arrow(ax, 62, y3, 68, y3)
+    box(
+        ax,
+        69,
         y3 - 3.0,
-        "a mixture is a set; each token read alone",
+        31,
+        6,
+        "each read alone,\ncomposed as Bliss",
+        cgt,
+        cgt_fill,
+        fs=fs,
+    )
+    ax.text(
+        0.5,
+        y3 - 4.6,
+        r"host fitness $= f_1 \cdot f_2 \cdot f_3$, screen response $= r_1 + r_2 + r_3$",
         fontsize=fs,
-        ha="center",
+        ha="left",
         va="top",
     )
-    arrow(ax, 64, y3, 67.5, y3)
     ax.text(
-        68.5,
-        y3 + 2.6,
-        r"host fitness $= f_1 \cdot f_2 \cdot f_3$",
+        0.5,
+        y3 - 8.2,
+        f"a mixture is a set of tokens; scored on {wc['n_combinations']} unseen combinations",
         fontsize=fs,
         ha="left",
-        va="center",
-    )
-    ax.text(
-        68.5,
-        y3 - 0.6,
-        r"screen response $= r_1 + r_2 + r_3$",
-        fontsize=fs,
-        ha="left",
-        va="center",
-    )
-    ax.text(
-        68.5,
-        y3 - 3.8,
-        f"scored on {wc['n_combinations']} unseen combinations",
-        fontsize=fs,
-        ha="left",
-        va="center",
+        va="top",
         color=GRAY,
     )
     title(ax, "the model: a token per inhibitor, one head")
@@ -1792,7 +1809,7 @@ def draw_dose(ax: Any, R: Reads) -> None:
         ],
         ncol=1,
     )
-    title(ax, "dose: the same compound in two media", n)
+    title(ax, "dose in two media", n)
 
 
 def draw_het_rule(ax: Any, R: Reads) -> None:
@@ -1901,7 +1918,7 @@ def draw_profiles(ax: Any, R: Reads) -> None:
     ax.tick_params(axis="y", labelsize=4.4)
     # the shared-term count is stated in the caption (goSharedTermsStore); drawn in
     # the panel it sat on the bars at every corner
-    title(ax, "predicted vs measured profile")
+    title(ax, "predicted vs measured")
 
 
 def draw_single_agents(ax: Any, R: Reads) -> None:
@@ -2085,6 +2102,27 @@ def draw_combinations(ax: Any, R: Reads) -> None:
     title(ax, "grown combinations")
 
 
+def front_steps(alive: NDArray[np.bool_], x0: float) -> tuple[list[float], list[float]]:
+    """The growth front of a monotone alive mask [ny, nx] as a staircase of cell edges.
+
+    It starts on the grid's left edge at the top of the highest row that grows (the
+    acetic acid dose the front crosses on its own) and ends on the bottom edge at the
+    right of the growing cells of row zero (the inhibitor dose it crosses on its own),
+    so a rule's front always meets both edges, as the dose-response it is built from
+    does. Empty when nothing grows.
+    """
+    width = [int(np.max(np.where(row)[0])) + 1 if row.any() else 0 for row in alive]
+    rows = [j for j, w in enumerate(width) if w > 0]
+    if not rows:
+        return [], []
+    j_top = max(rows)
+    xs, ys = [x0], [float(j_top + 1)]
+    for j in range(j_top, -1, -1):
+        xs.extend([x0 + width[j], x0 + width[j]])
+        ys.extend([float(j + 1), float(j)])
+    return xs, ys
+
+
 #: a front's white halo: a solid colored line reads on the yellow fitness fill and on
 #: an empty cell alike, where a dashed line of the same color did not
 FRONT_HALO = [
@@ -2127,7 +2165,7 @@ def draw_isoboles(ax: Any, R: Reads) -> None:
                     [x0 + i + 0.5],
                     [j + 0.5],
                     marker="o",
-                    markersize=0.8,
+                    markersize=0.5,
                     color="black",
                     zorder=4,
                 )
@@ -2138,7 +2176,7 @@ def draw_isoboles(ax: Any, R: Reads) -> None:
                 ny,
                 facecolor="none",
                 edgecolor="black",
-                linewidth=0.9,
+                linewidth=0.6,
                 zorder=6,
             )
         )
@@ -2150,11 +2188,16 @@ def draw_isoboles(ax: Any, R: Reads) -> None:
         # solid line over a white halo, so it reads on the yellow fill and on white
         # alike (owner, 2026-10-15: no dashed lines here).
         for column, src in (("bliss", "bliss"), ("loewe", "loewe")):
-            front = sub[sub[column] >= tau]
-            if len(front):
-                edge = front.groupby("acetic_acid_g_per_l").inhibitor_g_per_l.max()
-                xs = [x0 + doses_x.index(v) + 1.0 for v in edge.to_numpy()]
-                ys = [doses_y.index(v) + 0.5 for v in edge.index.to_numpy()]
+            rule = np.zeros((len(doses_y), len(doses_x)), dtype=bool)
+            for _, r in sub.iterrows():
+                rule[
+                    doses_y.index(r.acetic_acid_g_per_l),
+                    doses_x.index(r.inhibitor_g_per_l),
+                ] = bool(r[column] >= tau)
+            # the rule's surface falls with either dose, so its closure is itself;
+            # the staircase runs from the left edge to the bottom edge
+            xs, ys = front_steps(monotone_alive(rule), x0)
+            if xs:
                 ax.plot(
                     xs,
                     ys,
@@ -2191,12 +2234,7 @@ def draw_isoboles(ax: Any, R: Reads) -> None:
                 f"isobole{macro_name(run.capitalize())}Model{tag}Cells",
                 int(np.isfinite(grid).sum()),
             )
-            mx = [
-                x0 + int(np.max(np.where(closed[j])[0])) + 1.0
-                for j in range(len(doses_y))
-                if closed[j].any()
-            ]
-            my = [j + 0.5 for j in range(len(doses_y)) if closed[j].any()]
+            mx, my = front_steps(closed, x0)
             if mx and drawn:
                 ax.plot(
                     mx,
@@ -2237,7 +2275,7 @@ def draw_isoboles(ax: Any, R: Reads) -> None:
     for s in ax.spines.values():
         s.set_visible(False)
     sm = plt.cm.ScalarMappable(cmap=CMAP_FITNESS, norm=norm)
-    cb = ax.figure.colorbar(sm, ax=ax, fraction=0.02, pad=0.01, shrink=0.75)
+    cb = ax.figure.colorbar(sm, ax=ax, fraction=0.015, pad=0.01, shrink=0.7)
     cb.set_label("observed fitness", fontsize=4.6)
     cb.ax.tick_params(labelsize=4.4, length=1.5)
     cb.outline.set_linewidth(0.4)
@@ -2262,7 +2300,7 @@ def draw_isoboles(ax: Any, R: Reads) -> None:
                 [],
                 color="black",
                 marker="o",
-                markersize=1.6,
+                markersize=1.2,
                 linestyle="none",
                 label="a cell that grew",
             ),
@@ -2294,7 +2332,7 @@ def fig_main(R: Reads) -> dict[str, str]:
             [1.4, 0.85, 1.0],
             [1.0, 1.05, 0.85, 1.1],
             [0.85, 1.15, 1.05, 0.95],
-            [0.9, 0.85, 1.35, 0.9],
+            [0.85, 0.8, 1.6, 0.85],
         ],
         heights=[1.6, 1.0, 1.0, 1.0],
     )
@@ -2307,7 +2345,7 @@ def fig_main(R: Reads) -> dict[str, str]:
     draw_het_rule(axes[8], R)
     draw_profiles(axes[9], R)
     draw_similarity_vs_deviation(
-        axes[10], R, title_text="does similarity anticipate synergy", inside=True
+        axes[10], R, title_text="does similarity anticipate synergy"
     )
     draw_single_agents(axes[11], R)
     draw_combinations(axes[12], R)
@@ -2855,7 +2893,11 @@ def similarity_matrix(
 
 
 def draw_similarity_vs_deviation(
-    ax: Any, R: Reads, title_text: str | None = None, inside: bool = False
+    ax: Any,
+    R: Reads,
+    title_text: str | None = None,
+    inside: bool = False,
+    legend_cols: int = 1,
 ) -> None:
     """Does profile similarity anticipate the pair's departure from Bliss."""
     d = R.svd_pairs
@@ -2897,7 +2939,7 @@ def draw_similarity_vs_deviation(
     ax.set_xlabel("profile similarity of the pair")
     ax.set_ylabel("observed minus Bliss, fitness")
     vgrid(ax, 0.1)
-    hgrid(ax, 0.2)
+    hgrid(ax, 0.5)
     handles = [
         Patch(
             facecolor=SRC_COLOR["measured"],
@@ -2916,7 +2958,7 @@ def draw_similarity_vs_deviation(
         ax.legend(handles=handles, loc="upper left", fontsize=4.4, handlelength=1.2)
         n = 0
     else:
-        n = panel_legend(ax, handles, ncol=1)
+        n = panel_legend(ax, handles, ncol=legend_cols)
     title(ax, title_text or "similarity against deviation, both profile versions", n)
 
 

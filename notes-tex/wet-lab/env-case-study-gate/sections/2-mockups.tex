@@ -96,10 +96,12 @@ combinations and the isobole grids never. \status{todo}\,\fstat{file}
 a) is featurized as its \hydnFingerprintBits{} FCFP4 counts and passed through the
 compound MLP to one token; under the dose offset of round ten the token stays dose-free
 and its dose scales the medium offset. The token sits in front of the
-\hydnGeneTokens{} gene tokens of the frozen cell graph transformer (a strain's deleted
-genes dark; the host is the empty set); one further transformer layer reads them
-together and one head reads either the rows at the deleted genes, the strain's response
-profile, or the mean over the genes, the host's growth. A mixture is a set of tokens,
+\hydnGeneTokens{} gene tokens, a learned table read through the one-layer cell graph
+transformer and trained with the rest at its own rate, not the composite sequence
+embedding of the interactions figure (a strain's deleted genes dark; the host is the
+empty set); one further transformer layer reads them together and one head reads either
+the rows at the deleted genes, the strain's response profile, or the mean over the
+genes, the host's growth. A mixture is a set of tokens,
 each read alone through that head, and the readings compose as Bliss independence: a
 product on the host's fitness scale, a sum on a screen's log response. The model is
 then scored on the \hydnCombinations{} combinations it never saw. A layout; the

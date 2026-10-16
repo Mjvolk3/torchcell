@@ -44,6 +44,14 @@ first row, the two YJR066W / vanillin screens are two records with their own tag
 and released spellings (``Tor1``, ``TOR1``), the SID-only compound is a record with its
 ``inchikey`` gap, CDC28 (SGD-essential) is the deletion record the release calls it, and
 an ORF no genome carries is a record.
+
+2026.10.15 (database constitution principle 2, owner ruling): a compound with no CID, no
+SMILES, no curated row and no ``RELEASED_IDENTITIES`` entry is a registry number only and
+is HELD OUT under ``UNIDENTIFIED_COMPOUND_RULE``, never stored with an ``inchikey`` gap.
+The fixture's SID 99 row is therefore absent from the store and listed in the ledger, so
+the nine rows give seven records (wild type 0, YAL001C 1 to 3, YJR066W 4 to 6) and the
+ledger balances 9 = 7 + 0 strain + 1 unidentified + 1 re-exported. A monkeypatched
+admission-table entry admits SID 99 under its released name and structure.
 """
 
 from __future__ import annotations
@@ -91,6 +99,7 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.datamodels.strain_background import BRACHMANN_1998, GIAEVER_2002
 from torchcell.datasets.scerevisiae import wildenhain2015 as w
+from torchcell.datasets.scerevisiae.hoepfner2014 import ReleasedIdentity
 from torchcell.literature.manifest import (
     ROLE_RAW_DATA,
     ArtifactRecord,
@@ -98,6 +107,7 @@ from torchcell.literature.manifest import (
     RetrievalMethod,
     RetrievalRecord,
 )
+from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import (
     ProvenanceGap,
     ProvenanceGapReason,
@@ -203,7 +213,7 @@ def _rows() -> list[list[str]]:
             z_score="-0.2",
             **{"non replicate": "0"},
         ),
-        # no CID and no SMILES -> stored with the typed inchikey gap
+        # no CID and no SMILES -> held out under UNIDENTIFIED_COMPOUND_RULE
         _row(
             PUBCHEM_SID="99",
             PUBCHEM_ACTIVITY_OUTCOME="Inactive",
@@ -286,25 +296,32 @@ def _screen_gap() -> ProvenanceGap:
     )
 
 
-def test_drop_rules_hold_unresolved_strains_then_re_exported_rows(built: Any) -> None:
-    """The fixture has no unresolved strain label (rule 1 holds 0 rows); rule 2 collapses
-    the one re-exported row. 9 released rows, 8 records (one per distinct screen); the
-    SID-only compound is stored with its inchikey gap and listed, not dropped.
+def test_drop_rules_hold_unresolved_strains_then_unidentified_then_re_exported(
+    built: Any,
+) -> None:
+    """The fixture has no unresolved strain label (rule 1 holds 0 rows); rule 2 holds the
+    one SID-only row; rule 3 collapses the one re-exported row. 9 released rows, 7
+    records (one per distinct screen), and 9 = 7 + 0 + 1 + 1.
     """
     log = w.DropLog.model_validate_json(
         open(osp.join(built.root, "preprocess", "dropped_records.json")).read()
     )
     assert [rule.rule for rule in log.rules] == [
         "strain_label_unresolved",
+        "compound_has_no_released_name_or_structure_not_representable",
         "re_exported_duplicate_row",
     ]
     assert log.rules[0].scope == "strain"
     assert log.rules[0].n_records == 0 and log.rules[0].items == []
-    assert log.rules[1].scope == "library_row"
+    assert log.rules[1].scope == "compound"
     assert log.rules[1].n_records == 1
-    assert log.compounds_without_a_structure_identifier == ["SID 99"]
-    assert log.source_records == 9 and log.kept_records == 8
-    assert len(built) == 8
+    assert log.rules[1].items == ["SID 99 (1 cells, 1 rows)"]
+    assert log.rules[2].scope == "library_row"
+    assert log.rules[2].n_records == 1
+    assert log.compounds_without_a_structure_identifier == []
+    assert log.source_records == 9 and log.kept_records == 7
+    assert log.dropped_records == sum(rule.n_records for rule in log.rules) == 2
+    assert len(built) == 7
 
 
 def test_re_exported_duplicate_is_one_screen_not_two(built: Any) -> None:
@@ -348,13 +365,78 @@ def test_two_screens_are_two_records_as_released(built: Any) -> None:
         ]
 
 
-def test_sid_only_compound_is_stored_with_an_inchikey_gap(built: Any) -> None:
-    record = _only(built, ("YAL001C", "SID 99"))
+def test_sid_only_compound_is_held_out_absent_from_the_store_and_in_the_ledger(
+    built: Any,
+) -> None:
+    """SID 99 (no CID, no SMILES, no curated row, no admission entry) is no record; the
+    ledger names it with its rows, cells and screens, the rule, the policy and the two
+    sourced statements, and the accounting balances.
+    """
+    compounds = {compound for _, compound in _by_key(built)}
+    assert "SID 99" not in compounds
+    assert compounds == {"vanillin", "ethanol"}
+    log = w.DropLog.model_validate_json(
+        open(osp.join(built.root, "preprocess", "dropped_records.json")).read()
+    )
+    assert (
+        log.unidentified_compound_rule
+        == w.UNIDENTIFIED_COMPOUND_RULE
+        == ("compound_has_no_released_name_or_structure_not_representable")
+    )
+    assert log.unidentified_compound_policy == w.UNIDENTIFIED_COMPOUND_POLICY
+    assert log.unidentified_compound_sources == [
+        w.RELEASED_COMPOUND_IDENTIFIER,
+        w.STRUCTURES_ON_CHEMGRID,
+    ]
+    assert log.unidentified_compounds_held_out == [
+        w.UnidentifiedCompound(
+            identity="SID 99", pubchem_sid="99", n_rows=1, n_cells=1, n_screens=1
+        )
+    ]
+    assert log.source_records == log.kept_records + sum(
+        rule.n_records for rule in log.rules
+    )
+
+
+_CAFFEINE = "CN1C=NC2=C1C(=O)N(C(=O)N2C)C"
+
+
+def test_a_released_identity_entry_admits_a_held_out_label(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """An admission-table entry for SID 99 stores its row under the entry's name, with
+    the SMILES-derived InChIKey and no gap; nothing is held out under the rule.
+    """
+    entry = ReleasedIdentity(
+        name="released compound 99",
+        smiles=_CAFFEINE,
+        source=SourcedValue(
+            value="SID 99 -> caffeine structure",
+            quote="a synthetic public release",
+            provenance=Provenance(
+                source_uri="data/synthetic.json",
+                citation_key="syntheticRelease2026",
+                sha256="0" * 64,
+                method="test",
+            ),
+        ),
+    )
+    monkeypatch.setattr(w, "RELEASED_IDENTITIES", {"SID 99": entry})
+    _write_raw(tmp_path, _rows())
+    dataset = _build(tmp_path, monkeypatch)
+    assert len(dataset) == 8
+    record = _only(dataset, ("YAL001C", "released compound 99"))
     compound = record["experiment"]["environment"]["perturbations"][0]["compound"]
-    assert compound["name"] == "SID 99"
-    assert compound["inchikey"] is None and compound["pubchem_cid"] is None
-    assert [gap["field"] for gap in compound["provenance_gaps"]] == ["inchikey"]
+    assert compound["inchikey"] == "RYYVLZVUVIJVGH-UHFFFAOYSA-N"
+    assert compound["smiles"] == _CAFFEINE
+    assert [gap["field"] for gap in compound["provenance_gaps"]] == []
     assert record["experiment"]["phenotype"]["environment_response"] == 0.1
+    log = w.DropLog.model_validate_json(
+        (tmp_path / "preprocess" / "dropped_records.json").read_text()
+    )
+    assert log.unidentified_compounds_held_out == []
+    assert log.rules[1].n_records == 0
+    assert log.source_records == 9 and log.kept_records == 8
 
 
 def test_released_call_maps_onto_the_shared_category_axis(built: Any) -> None:
@@ -825,8 +907,8 @@ def _single_screen_gaps() -> list[ProvenanceGap]:
 
 
 def test_each_released_screen_equals_the_hand_built_experiment(built: Any) -> None:
-    """Records 5 and 6 = YJR066W / vanillin (cells sort by strain then compound identity:
-    wild type 0, YAL001C 1 to 4, YJR066W 5 to 7), the two released screens in ascending z:
+    """Records 4 and 5 = YJR066W / vanillin (cells sort by strain then compound identity:
+    wild type 0, YAL001C 1 to 3, YJR066W 4 to 6), the two released screens in ascending z:
     z -6.0 (tag 4, spelled ``Tor1``) then z -4.0 (tag 3, ``TOR1``), each ``Active /
     sensitive``, n_samples 1 screen, both dispersion fields a typed gap; nothing is
     averaged and the gene name is the row's own.
@@ -852,11 +934,11 @@ def test_each_released_screen_equals_the_hand_built_experiment(built: Any) -> No
             ),
         ).model_dump()
 
-    assert built[5]["experiment"] == expected(-6.0, "4", "Tor1")
-    assert built[6]["experiment"] == expected(-4.0, "3", "TOR1")
-    assert built[5]["reference"] == _reference()
+    assert built[4]["experiment"] == expected(-6.0, "4", "Tor1")
+    assert built[5]["experiment"] == expected(-4.0, "3", "TOR1")
+    assert built[4]["reference"] == _reference()
     assert (
-        built[5]["publication"]
+        built[4]["publication"]
         == Publication(
             doi="10.1016/j.cels.2015.12.003",
             doi_url="https://doi.org/10.1016/j.cels.2015.12.003",
@@ -891,14 +973,14 @@ def test_single_screen_record_equals_the_hand_built_experiment(built: Any) -> No
 
 
 def test_side_files_hold_one_reference_for_every_record(built: Any) -> None:
-    """The reference no longer carries the compound, so all eight records share one."""
+    """The reference no longer carries the compound, so all seven records share one."""
     preprocess = Path(built.preprocess_dir)
     assert json.loads((preprocess / "gene_set.json").read_text()) == [
         "YAL001C",
         "YJR066W",
     ]
     index = json.loads((preprocess / "experiment_reference_index.json").read_text())
-    assert [entry["member_indices"] for entry in index] == [list(range(8))]
+    assert [entry["member_indices"] for entry in index] == [list(range(7))]
     assert index[0]["reference"]["environment_reference"]["perturbations"] == []
     assert not (preprocess / "data.csv").exists()
     assert built.experiment_class is StrainEnvironmentResponseExperiment
@@ -930,8 +1012,8 @@ def test_logged_counts_skip_blank_lines_and_blank_z_scores(
     """Build (a): the fixture rows plus a strain row with an empty ``z_score`` and a
     trailing blank line. Neither is a datapoint, so the counts stay 9 datapoints (the
     nine fixture rows, one of them the wild-type screen's non-ORF label) and 6 cells;
-    8 records are written over the 6 cells (7 kanMX deletion screens + the wild type),
-    1 re-exported row collapsed, the SID-only compound stored with its gap, and no cell
+    7 records are written over the 5 stored cells (6 kanMX deletion screens + the wild
+    type), the SID-only row held out, 1 re-exported row collapsed, and no cell
     has every screen flagged ``non replicate`` (YJR066W / vanillin has one flagged screen
     of two). Build (b): the fixture with that cell's other screen flagged too, so the
     closing count is 1.
@@ -939,17 +1021,17 @@ def test_logged_counts_skip_blank_lines_and_blank_z_scores(
     caplog.set_level(logging.INFO, logger=w.log.name)
     rows = [*_rows(), _row(PUBCHEM_SID="5", PUBCHEM_CID="702", orf="YJR066W")]
     _write_raw(tmp_path / "a", rows, blank_line=True)
-    assert len(_build(tmp_path / "a", monkeypatch)) == 8
+    assert len(_build(tmp_path / "a", monkeypatch)) == 7
     messages = [r.getMessage() for r in caplog.records if r.name == w.log.name]
     assert messages[0] == (
         "Wildenhain2015: 9 datapoints (1 on a non-ORF strain label) -> 6 (strain, "
         "compound) cells"
     )
     assert messages[-1] == (
-        "Wrote 8 Wildenhain2015 records over 6 cells (7 kanMX deletion, 1 wild type; 0 "
-        "rows held for an unresolved strain label; 1 re-exported duplicate rows "
-        "collapsed; 1 compounds stored with an inchikey gap; 0 cells whose every screen "
-        "is non-replicate flagged)"
+        "Wrote 7 Wildenhain2015 records over 5 cells (6 kanMX deletion, 1 wild type; 0 "
+        "rows held for an unresolved strain label; 1 rows of 1 unidentified compounds "
+        "held out; 1 re-exported duplicate rows collapsed; 0 compounds stored with an "
+        "inchikey gap; 0 cells whose every screen is non-replicate flagged)"
     )
     caplog.clear()
     flagged = _rows()
@@ -958,10 +1040,10 @@ def test_logged_counts_skip_blank_lines_and_blank_z_scores(
     _build(tmp_path / "b", monkeypatch)
     messages = [r.getMessage() for r in caplog.records if r.name == w.log.name]
     assert messages[-1] == (
-        "Wrote 8 Wildenhain2015 records over 6 cells (7 kanMX deletion, 1 wild type; 0 "
-        "rows held for an unresolved strain label; 1 re-exported duplicate rows "
-        "collapsed; 1 compounds stored with an inchikey gap; 1 cells whose every screen "
-        "is non-replicate flagged)"
+        "Wrote 7 Wildenhain2015 records over 5 cells (6 kanMX deletion, 1 wild type; 0 "
+        "rows held for an unresolved strain label; 1 rows of 1 unidentified compounds "
+        "held out; 1 re-exported duplicate rows collapsed; 0 compounds stored with an "
+        "inchikey gap; 1 cells whose every screen is non-replicate flagged)"
     )
 
 
@@ -1334,7 +1416,7 @@ def test_build_links_the_mirror_into_raw_then_builds(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """No ``raw/``: ``download`` symlinks both verified mirror files, and the build then
-    reads the linked csv (the ``_rows`` fixture, five records).
+    reads the linked csv (the ``_rows`` fixture, seven records).
     """
     raw_source = tmp_path / "gz"
     _write_raw(raw_source, _rows())
@@ -1346,7 +1428,7 @@ def test_build_links_the_mirror_into_raw_then_builds(
     mirror = w.deposit_raw_mirror(csv_path=csv_path, aid_path=aid_path)
     root = tmp_path / "env_chemgen_wildenhain2015"
     dataset = w.EnvChemgenWildenhain2015Dataset(root=str(root))
-    assert len(dataset) == 8
+    assert len(dataset) == 7
     for name, rel in w.raw_relpaths().items():
         assert os.readlink(root / "raw" / name) == str(mirror / rel)
     # a second download leaves the existing links in place
@@ -1372,9 +1454,9 @@ def test_a_drop_log_that_disagrees_with_its_rules_refuses_after_writing_it(
 ) -> None:
     """The ``built`` fixture rows with ``DropLog`` reporting one extra dropped record.
 
-    The fixture holds 0 unresolved strains and drops 1 SID-only compound cell, so the
-    rule total is 0 + 1 = 1 while the tampered log says 2: the exact mismatch message
-    (this loader says ``rule total``, singular), the tampered 2 already on disk.
+    The fixture holds 0 unresolved strains, 1 SID-only row and 1 re-exported row, so the
+    rule total is 0 + 1 + 1 = 2 while the tampered log says 3: the exact mismatch message
+    (this loader says ``rule total``, singular), the tampered 3 already on disk.
     """
     real = w.DropLog
 
@@ -1388,7 +1470,7 @@ def test_a_drop_log_that_disagrees_with_its_rules_refuses_after_writing_it(
     with pytest.raises(RuntimeError) as err:
         _build(root, monkeypatch)
     assert str(err.value) == (
-        "drop accounting mismatch: rule total 1, 2 records missing from the build"
+        "drop accounting mismatch: rule total 2, 3 records missing from the build"
     )
     log = json.loads((root / "preprocess" / "dropped_records.json").read_text())
-    assert log["dropped_records"] == 2
+    assert log["dropped_records"] == 3

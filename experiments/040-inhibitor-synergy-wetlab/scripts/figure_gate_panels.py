@@ -1295,10 +1295,15 @@ def draw_sources(ax: Any, R: Reads) -> None:
         )
     ax.set_yticks(y)
     ax.set_yticklabels([r[0] for r in rows_], fontsize=4.8)
-    ax.set_ylim(-0.6, 8.6)
+    # the tick labels and the x label sit inside the axes, in a blank band under
+    # the last bar, so nothing hangs below the row's shared bottom and b ends flush
+    # with a and c, which have no x axis (the owner, 2026-10-15)
+    ax.set_ylim(-2.6, 8.6)
     ax.set_xscale("log")
     ax.set_xlim(0.7, 1e7)
+    ax.tick_params(axis="x", direction="in", pad=-6.5, labelsize=5.0)
     ax.set_xlabel("compounds in the source")
+    ax.xaxis.set_label_coords(0.5, 0.125)
     ax.grid(axis="x", which="major", color="#DDDDDD", linewidth=0.3, zorder=0)
     ax.set_axisbelow(True)
     ax.text(
@@ -1342,7 +1347,13 @@ def draw_sources(ax: Any, R: Reads) -> None:
     ]
     # inside the axes, lower right, where the host rows leave room, so the legend
     # does not take height from every axes of the row
-    ax.legend(handles=handles, loc="lower right", fontsize=4.4, handlelength=1.2)
+    ax.legend(
+        handles=handles,
+        loc="center right",
+        bbox_to_anchor=(1.0, 0.42),
+        fontsize=4.4,
+        handlelength=1.2,
+    )
     n = 0
     title(ax, "what the trainer reads, and its culture", n)
 

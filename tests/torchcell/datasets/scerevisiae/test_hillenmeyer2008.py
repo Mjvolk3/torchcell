@@ -33,6 +33,7 @@ from torchcell.datamodels.schema import (
     heterozygous_deletion_functional_copies,
 )
 from torchcell.datamodels.strain_background import BRACHMANN_1998
+from torchcell.datasets.scerevisiae import hillenmeyer2008
 from torchcell.datasets.scerevisiae.hillenmeyer2008 import (
     CITATION_KEY,
     DROP_HEAT_SHOCK_CYCLE,
@@ -40,6 +41,7 @@ from torchcell.datasets.scerevisiae.hillenmeyer2008 import (
     MATRICES,
     SOURCED_VALUES,
     SUSPICIOUS_BATCHES,
+    UNIDENTIFIED_COMPOUND_RULE,
     WAYBACK_TIMESTAMPS,
     KeyHeaderOutcome,
     KeyHeaderRule,
@@ -47,6 +49,7 @@ from torchcell.datasets.scerevisiae.hillenmeyer2008 import (
     build_environment,
     canonical_concentration,
     check_key_header,
+    compound_is_identified,
     constructed_orf,
     hillenmeyer_background,
     marker_loci,
@@ -59,6 +62,7 @@ from torchcell.datasets.scerevisiae.hillenmeyer2008 import (
     strain_perturbation,
     wayback_url,
 )
+from torchcell.datasets.scerevisiae.hoepfner2014 import ReleasedIdentity
 
 BLANK = ("", "", "")
 
@@ -205,7 +209,7 @@ def test_heat_shock_cycle_is_dropped_rather_than_stored_as_a_steady_temperature(
 @pytest.mark.parametrize(
     "label",
     [
-        "chemical diversity labs 14a",
+        "AG 1387 (Biomol)",
         "tyrphostin",
         "amphotericin",
         "FeCl4",
@@ -228,7 +232,82 @@ def test_a_compound_with_no_structure_identifier_is_stored_with_the_inchikey_gap
     assert "inchikey" in drug.compound.gapped_fields()
 
 
-def test_an_unidentified_second_compound_is_stored_beside_the_first() -> None:
+#: The twelve labels whose pinned identity row is PROPRIETARY (SOM Table S1 lists them
+#: only by code; none is among the Table S2 structures).
+_UNIDENTIFIED_LABELS = [
+    *(
+        f"chemical diversity labs {code}"
+        for code in (
+            "14a",
+            "14f",
+            "1c10",
+            "218",
+            "232",
+            "246",
+            "275",
+            "3f2",
+            "41",
+            "6842",
+        )
+    ),
+    "RIL1 (Biomol)",
+    "telomerase inhibitor ix (Biomol)",
+]
+
+
+@pytest.mark.parametrize("label", _UNIDENTIFIED_LABELS)
+def test_a_vendor_or_library_code_with_no_released_structure_is_held_out(
+    label: str,
+) -> None:
+    """The array is dropped under the unidentified-agent rule, the label as detail."""
+    assert not compound_is_identified(label)
+    parse = _parse(label, "100", "um")
+    assert (parse.drop_reason, parse.drop_detail) == (UNIDENTIFIED_COMPOUND_RULE, label)
+
+
+def test_a_gapped_public_name_is_identified_and_stays_stored() -> None:
+    """AG 1387 (Biomol) is a tyrphostin AG number, a public name the table has not
+    resolved (UNRESOLVED_PUBLIC): identified, stored with the inchikey gap.
+    """
+    assert compound_is_identified("AG 1387 (Biomol)")
+    assert _parse("AG 1387 (Biomol)", "100", "um").drop_reason is None
+
+
+def test_an_unidentified_second_compound_holds_out_the_whole_array() -> None:
+    """A named first drug does not rescue an array whose second agent is a code."""
+    parse = _parse("fluconazole", "50", "um", "chemical diversity labs 41", "10", "um")
+    assert (parse.drop_reason, parse.drop_detail) == (
+        UNIDENTIFIED_COMPOUND_RULE,
+        "chemical diversity labs 41",
+    )
+
+
+def test_a_released_identity_entry_admits_a_held_out_label(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An admission-table entry makes the label identified; its name and InChIKey
+    build the stored compound and retire the inchikey gap.
+    """
+    label = "chemical diversity labs 14a"
+    entry = ReleasedIdentity(
+        name="synthetic released compound",
+        inchikey="AAAAAAAAAAAAAA-UHFFFAOYSA-N",
+        source=SOURCED_VALUES["table_s2_structures"],
+    )
+    monkeypatch.setattr(hillenmeyer2008, "RELEASED_IDENTITIES", {label: entry})
+    assert compound_is_identified(label)
+    parse = _parse(label, "100", "um")
+    assert (parse.drop_reason, parse.drop_detail) == (None, None)
+    (drug,) = parse.perturbations
+    assert isinstance(drug, SmallMoleculePerturbation)
+    assert (drug.compound.name, drug.compound.inchikey) == (
+        "synthetic released compound",
+        "AAAAAAAAAAAAAA-UHFFFAOYSA-N",
+    )
+    assert "inchikey" not in drug.compound.gapped_fields()
+
+
+def test_a_gapped_second_compound_is_stored_beside_the_first() -> None:
     parse = _parse("fluconazole", "50", "um", "amphotericin", "10", "um")
     assert parse.drop_reason is None
     first, second = parse.perturbations
@@ -501,14 +580,26 @@ def test_minimal_media_called_sc_for_by4743_in_the_key_is_served_on_sc() -> None
 def test_a_compound_name_conflict_is_served_under_the_header_compound(
     header_cond: str, key_cond: str
 ) -> None:
-    """The SOM gives no tie-breaker; the values are released under the header."""
+    """The SOM gives no tie-breaker; the values are released under the header.
+
+    The header's compound decides storage: the ChemDiv code 14a is unidentified, so
+    that array is held out under the header label (the key's string stays on the check).
+    """
     column = _one_column(header_cond, key_cond)
     assert column.key_check.rule is KeyHeaderRule.header_served_key_disagrees
     assert (column.key_check.header_condition, column.key_check.key_condition) == (
         header_cond,
         key_cond,
     )
-    assert (column.drop_reason, column.drop_detail) == (None, None)
+    expected = (
+        (None, None)
+        if compound_is_identified(header_cond)
+        else (UNIDENTIFIED_COMPOUND_RULE, header_cond)
+    )
+    assert (column.drop_reason, column.drop_detail) == expected
+    assert compound_is_identified(header_cond) is (
+        header_cond != "chemical diversity labs 14a"
+    )
     (drug,) = column.environment.perturbations
     assert isinstance(drug, SmallMoleculePerturbation)
     assert drug.compound == resolved_compound(header_cond)

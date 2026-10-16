@@ -14,19 +14,20 @@ benomyl 6.9 uM 20gen -> CS1 (pool het_01; one group of two arrays), A3 benomyl 6
 -5gen -> CS2 (pool het_02), A4 amphotericin (no curated structure: STORED with the typed
 inchikey gap), A5 ``37c, 45c`` (heat-shock cycle: the one array rule left, needs schema),
 A6 colchicine whose key file says colchiceine (STORED under the header's compound), A7
-minimal media at 0gen -> CS0 (STORED with duration 0 and a typed pre-culture gap). CS1 has
-3 control arrays, CS2 2, CS0 1. Groups in column order: G1 (A1, A2), G2 (A3), G3 (A4),
-G4 (A6), G5 (A7).
+minimal media at 0gen -> CS0 (STORED with duration 0 and a typed pre-culture gap), A8
+``chemical diversity labs 14a`` (a ChemDiv library code, identity-table status
+PROPRIETARY: HELD OUT under UNIDENTIFIED_COMPOUND_RULE). CS1 has 3 control arrays, CS2
+2, CS0 1. Groups in column order: G1 (A1, A2), G2 (A3), G3 (A4), G4 (A6), G5 (A7).
 
-HET rows (A1..A7):
+HET rows (A1..A8):
 
-    "YAL001C:chr00_1"  1.0   3.0   0.5  2.0  NA  1.0  1.0   suspicious batch chr00_1
-    YAL001C:chr1_2     2.0   NA    ""   ""   ""               second construction
+    "YAL001C:chr00_1"  1.0   3.0   0.5  2.0  NA  1.0  1.0  3.0  suspicious batch chr00_1
+    YAL001C:chr1_2     2.0   NA    ""   ""   ""                  second construction
     YBR001C:chr3_9     0.25  0.25  NaN  null 1.0
-    YAR044W:chr5_1     4.0   (line ends)                      merged by a later SGD release
-    YOR202W:chr15_3    1.0                                    HIS3, a BY4743 marker locus
-    YDL227C:ctrl_1     5.0   5.0                              'ctrl_' batch, stored
-    YPL999W:chr1_1     9     9     9    9    9                no current gene, stored
+    YAR044W:chr5_1     4.0   (line ends)                         merged by a later SGD release
+    YOR202W:chr15_3    1.0                                       HIS3, a BY4743 marker locus
+    YDL227C:ctrl_1     5.0   5.0                                 'ctrl_' batch, stored
+    YPL999W:chr1_1     9     9     9    9    9   NA   NA   4.0  no current gene, stored
 
 Every row is stored under its released ORF and batch, and nothing averages across rows.
 Records: 0-4 YAL001C/chr00_1 in G1 (1.0, 3.0: mean 2.0, sample SD sqrt(2)), G2 0.5, G3
@@ -89,15 +90,16 @@ _HET_HEADER = [
     "A5:37c, 45c::::::20gen:het_01:old scanner",
     "A6:colchicine:250:um::::20gen:het_01:old scanner",
     "A7:minimal media::::::0gen:het_02:old scanner",
+    "A8:chemical diversity labs 14a:10:um::::20gen:het_01:old scanner",
 ]
 _HET_ROWS = [
-    ['"YAL001C:chr00_1"', "1.0", "3.0", "0.5", "2.0", "NA", "1.0", "1.0"],
+    ['"YAL001C:chr00_1"', "1.0", "3.0", "0.5", "2.0", "NA", "1.0", "1.0", "3.0"],
     ["YAL001C:chr1_2", "2.0", "NA", "", "", ""],
     ["YBR001C:chr3_9", "0.25", "0.25", "NaN", "null", "1.0"],
     ["YAR044W:chr5_1", "4.0"],
     ["YOR202W:chr15_3", "1.0"],
     ["YDL227C:ctrl_1", "5.0", "5.0"],
-    ["YPL999W:chr1_1", "9", "9", "9", "9", "9"],
+    ["YPL999W:chr1_1", "9", "9", "9", "9", "9", "NA", "NA", "4.0"],
 ]
 
 
@@ -125,6 +127,7 @@ def _source_files() -> dict[str, str]:
                 ["A5", "37c, 45c", _CS1],
                 ["A6", "colchiceine", _CS1],
                 ["A7", "no drug minimal media", _CS0],
+                ["A8", "chemical diversity labs 14a", _CS1],
             ]
         ),
         "hom.txt": _tsv(
@@ -537,9 +540,10 @@ def test_het_side_files_gene_set_reference_index_and_manifest(
 def test_het_ledgers_count_the_remaining_rule_the_gaps_and_every_cell(
     het: m.HetHillenmeyer2008Dataset,
 ) -> None:
-    """Only the heat-shock array is not stored (needs schema); it is counted over the
-    stored rows. The compound gap ledger lists amphotericin with its two records, and
-    the 19 released value cells split into 17 stored + 2 in the dropped array.
+    """The heat-shock array (needs schema) and the ChemDiv-code array (unidentified
+    agent) are not stored; each is counted over the stored rows. The compound gap ledger
+    lists amphotericin with its two records, and the 21 released value cells split into
+    17 stored + 2 in each dropped array.
     """
     preprocess = Path(het.root) / "preprocess"
     report = json.loads((preprocess / "dropped_records.json").read_text())
@@ -550,24 +554,27 @@ def test_het_ledgers_count_the_remaining_rule_the_gaps_and_every_cell(
         sorted(report["rules"])
         == sorted(m.DROP_RULES)
         == [
+            "compound_has_no_released_name_or_structure_not_representable",
             "heat_shock_cycle_not_representable",
             "unnamed_agent_dosed_into_a_media_swap",
         ]
     )
+    one_array = {"n_environments": 1, "n_arrays": 1, "n_records_not_written": 2}
     assert report["by_rule"] == {
-        "heat_shock_cycle_not_representable": {
-            "n_environments": 1,
-            "n_arrays": 1,
-            "n_records_not_written": 2,
-        }
+        "heat_shock_cycle_not_representable": one_array,
+        m.UNIDENTIFIED_COMPOUND_RULE: one_array,
     }
     assert [(e["rule"], e["detail"]) for e in report["environments"]] == [
-        ("heat_shock_cycle_not_representable", "37c, 45c")
+        (m.UNIDENTIFIED_COMPOUND_RULE, "chemical diversity labs 14a"),
+        ("heat_shock_cycle_not_representable", "37c, 45c"),
     ]
     assert report["cell_accounting"] == {
-        "n_value_cells": 19,
+        "n_value_cells": 21,
         "n_in_stored_records": 17,
-        "n_in_dropped_arrays": {"heat_shock_cycle_not_representable": 2},
+        "n_in_dropped_arrays": {
+            "heat_shock_cycle_not_representable": 2,
+            m.UNIDENTIFIED_COMPOUND_RULE: 2,
+        },
         "n_in_withdrawn_strains": {},
     }
     gaps = json.loads((preprocess / "compound_identity_gaps.json").read_text())
@@ -578,7 +585,7 @@ def test_het_ledgers_count_the_remaining_rule_the_gaps_and_every_cell(
     strains = json.loads((preprocess / "dropped_strains.json").read_text())
     assert strains["by_rule"] == {}
     checks = json.loads((preprocess / "key_header_checks.json").read_text())
-    assert checks["n_by_outcome"] == {"agree": 5, "spelling_variant": 1, "conflict": 1}
+    assert checks["n_by_outcome"] == {"agree": 6, "spelling_variant": 1, "conflict": 1}
     (conflict,) = [c for c in checks["disagreements"] if c["outcome"] == "conflict"]
     assert conflict == {
         "filename": "A6",
@@ -589,6 +596,50 @@ def test_het_ledgers_count_the_remaining_rule_the_gaps_and_every_cell(
     }
     assert not (preprocess / "constructed_orfs.json").exists()
     assert not (preprocess / "dropped_genes.json").exists()
+
+
+def test_an_unidentified_compound_is_held_out_of_the_store_and_listed_in_the_ledger(
+    het: m.HetHillenmeyer2008Dataset,
+) -> None:
+    """A8 doses a ChemDiv library code (status PROPRIETARY, no released structure): no
+    stored record carries it, the ledger lists it with its two value cells and the
+    SOM quotes, and the cells still balance (stored + every held-out rule = released).
+    """
+    names = {
+        p.compound.name
+        for i in range(len(het))
+        for p in _experiment(het, i).environment.perturbations
+        if isinstance(p, SmallMoleculePerturbation)
+    }
+    assert names == {"benomyl", "amphotericin", "colchicine"}
+    preprocess = Path(het.root) / "preprocess"
+    report = json.loads((preprocess / "dropped_records.json").read_text())
+    assert report["unidentified_compound_rule"] == m.UNIDENTIFIED_COMPOUND_RULE
+    assert report["unidentified_compound_policy"] == m.UNIDENTIFIED_COMPOUND_POLICY
+    assert report["unidentified_compounds_held_out"] == [
+        {
+            "label": "chemical diversity labs 14a",
+            "n_environments": 1,
+            "n_arrays": 1,
+            "n_records_not_written": 2,
+            "n_value_cells": 2,
+            "headers": [_HET_HEADER[8]],
+            "key_file_conditions": ["chemical diversity labs 14a"],
+        }
+    ]
+    sources = report["unidentified_compound_sources"]
+    assert [s["quote"] for s in sources] == [
+        m.QUOTE_TABLE_S2,
+        m.QUOTE_TABLE_S1_CHEMDIV,
+        m.QUOTE_TABLE_S1_TELOMERASE,
+    ]
+    assert {s["provenance"]["sha256"] for s in sources} == {m.SOM_SHA256}
+    accounting = report["cell_accounting"]
+    assert accounting["n_value_cells"] == accounting["n_in_stored_records"] + sum(
+        accounting["n_in_dropped_arrays"].values()
+    ) + sum(accounting["n_in_withdrawn_strains"].values())
+    gaps = json.loads((preprocess / "compound_identity_gaps.json").read_text())
+    assert "chemical diversity labs 14a" not in gaps["compounds"]
 
 
 def test_het_batch_reports_flag_the_suspicious_construction(

@@ -76,14 +76,35 @@ category, and typed gaps on the per-screen uncertainty (the release carries none
 of a cell into one record with a sample SD; under the owner rule of 2026-10-12 every
 released screen is stored as released.
 
-RECORDS DROPPED (rule + count in ``preprocess/dropped_records.json``, applied in this
-order): ``strain_label_unresolved`` (the TSCII, YGL11 and wtn01 rows, held for the
-released-identifier leaf), then ``re_exported_duplicate_row`` (the release's own
-byte-identical re-emissions). The 5 SID-only compounds (no CID and no SMILES) are
-STORED: ``resolved_compound`` names them by their SID and attaches the typed
-``inchikey`` gap, and the ledger lists them under
-``compounds_without_a_structure_identifier``; every other CID resolves to an InChIKey
-and a canonical PubChem name through the pinned compound-identity table.
+RECORDS DROPPED (rule + count in ``preprocess/dropped_records.json``, counted in
+released rows and applied in this order): ``strain_label_unresolved`` (the TSCII, YGL11
+and wtn01 rows, held for the released-identifier leaf), then
+``compound_has_no_released_name_or_structure_not_representable``
+(``UNIDENTIFIED_COMPOUND_RULE``), then ``re_exported_duplicate_row`` (the release's own
+byte-identical re-emissions). The ledger proves ``source_records = kept_records +`` the
+three rules and the build refuses on a mismatch.
+
+UNIDENTIFIED PERTURBING AGENTS (database constitution principle 2, owner ruling
+2026-10-15: "if you cannot tell me what goes into the flask so to speak, then we have no
+hope of modeling!"). The release's compound columns are ``PUBCHEM_SID``, ``PUBCHEM_CID``
+and ``PUBCHEM_EXT_DATASOURCE_SMILES``; it has no name column
+(``RELEASED_COMPOUND_IDENTIFIER``), and the authors put structures on the unmirrored
+chemgrid.org portal instead (``STRUCTURES_ON_CHEMGRID``). The criterion is mechanical: a
+cell's compound is identified iff its row carries a CID or a SMILES, the pinned
+compound-identity table has a curated row for its label, or ``RELEASED_IDENTITIES`` (the
+admission table, EMPTY today) has an entry for it. Five SIDs fail all four (SID
+268734404, 268735390, 268737906, 277425705, 277425722): 410 released rows with no CID,
+SMILES, URL or comment (only ``cryptagen = 0``), of which 4 sit on an unresolved strain
+label and the other 406 rows (378 distinct screens over 368 cells) are HELD OUT under
+``UNIDENTIFIED_COMPOUND_RULE``, never stored under the bare ``SID n`` label with an
+``inchikey`` gap. Each is listed under ``unidentified_compounds_held_out``, which is the
+request list for a public SID-to-structure release; only such a release fills
+``RELEASED_IDENTITIES`` (never an identity inferred from profile similarity), and a filled
+entry rebuilds the store. Every one of the 5,173 released CIDs carries a SMILES and
+resolves to an InChIKey and a canonical PubChem name through the pinned table, so no CID
+compound is gapped. Measured on the pinned export (sha256 ``c461c679...``) by
+``_collapse_matrix`` plus the rules above: 492,126 source rows = 448,655 stored records +
+4,678 strain-label rows + 406 unidentified-compound rows + 38,387 re-exported rows.
 """
 
 from __future__ import annotations
@@ -114,7 +135,10 @@ from torchcell.data import (
     verify_raw_files,
     verify_sha256,
 )
-from torchcell.datamodels.compound_identity import resolved_compound
+from torchcell.datamodels.compound_identity import (
+    resolve_compound_identity,
+    resolved_compound,
+)
 from torchcell.datamodels.media import SC
 from torchcell.datamodels.schema import (
     AssayType,
@@ -155,6 +179,7 @@ from torchcell.datamodels.strain_background import (
     standard_background,
 )
 from torchcell.datasets.dataset_registry import register_dataset
+from torchcell.datasets.scerevisiae.hoepfner2014 import ReleasedIdentity
 from torchcell.literature.manifest import (
     ROLE_RAW_DATA,
     ArtifactRecord,
@@ -687,6 +712,54 @@ OUTCOME_CATEGORY: dict[tuple[str, str], ResponseCategory] = {
     ("Inconclusive", ""): ResponseCategory.not_determined,
 }
 
+# --------------------------------------------------------------------------- #
+# Unidentified perturbing agents (database constitution principle 2, 2026-10-15)
+# --------------------------------------------------------------------------- #
+UNIDENTIFIED_COMPOUND_RULE = (
+    "compound_has_no_released_name_or_structure_not_representable"
+)
+
+#: The release's compound columns, as its own column caption defines its identifier.
+RELEASED_COMPOUND_IDENTIFIER = _aid(
+    "PubChem SID / CID / SMILES; no name column",
+    "Pubchem_ext_datasource_regid: compound identifier used in on chemgrid.org/cgm",
+    note="the per-compound columns of 1159580.csv.gz are PUBCHEM_SID, PUBCHEM_CID and "
+    "PUBCHEM_EXT_DATASOURCE_SMILES; the release has no compound-name column. A row with "
+    "no CID and no SMILES therefore names its compound only by its PubChem substance "
+    "registry number (the SID)",
+)
+#: Where the authors put structures instead: a web portal, not the release.
+STRUCTURES_ON_CHEMGRID = _scidata(
+    "structures on chemgrid.org, not in the release",
+    "Library compositions and chemical structures are available at www.chemgrid.org.",
+    line="46",
+    note="chemgrid.org is an interactive portal with no bulk export and is not "
+    "mirrored, so it is no source of identity for a compound the PubChem release leaves "
+    "without a CID or SMILES",
+)
+
+UNIDENTIFIED_COMPOUND_POLICY = (
+    "a released compound identity with no PUBCHEM_CID, no PUBCHEM_EXT_DATASOURCE_SMILES "
+    "(the release has no name column), no curated compound-identity row for its label "
+    "and no RELEASED_IDENTITIES entry is a PubChem substance registry number only: what "
+    "went into the well cannot be stated, so the experiment cannot be represented "
+    "(database constitution principle 2, owner ruling 2026-10-15). Its rows are HELD "
+    "OUT, never stored under the bare 'SID n' label with an inchikey gap; each is "
+    "listed with its released rows, cells and distinct screens, and the label is "
+    "admitted the day a public release gives its name or structure. A CID is a "
+    "standardized PubChem structure record, so every CID row is identified and stored"
+)
+
+#: The ADMISSION TABLE, keyed by the released label (``"SID <n>"``): EMPTY today. A
+#: label is stored iff it is identified (a CID, a released SMILES or a curated
+#: compound-identity row) or has an entry here; the entry's name, SMILES and InChIKey
+#: build its ``Compound``. Only a PUBLIC label-to-structure release fills it, mirrored and
+#: sha256-pinned like any other artifact; an identity inferred from chemical-genetic
+#: profile similarity is a hypothesis and never goes here. A filled entry changes the
+#: stored records, so it rebuilds the store. The ledger's
+#: ``unidentified_compounds_held_out`` is the request list for that release.
+RELEASED_IDENTITIES: dict[str, ReleasedIdentity] = {}
+
 #: Systematic ORF pattern; any other ``orf`` must be listed in NON_ORF_STRAIN_LABELS.
 _SYSTEMATIC_RE = re.compile(r"^Y[A-P][LR]\d{3}[WC](-[A-Z])?$")
 
@@ -844,13 +917,27 @@ class DropRule(BaseModel):
     items: list[str] = []
 
 
+class UnidentifiedCompound(BaseModel):
+    """One released label held out under ``UNIDENTIFIED_COMPOUND_RULE``."""
+
+    identity: str
+    pubchem_sid: str
+    n_rows: int
+    n_cells: int
+    n_screens: int
+
+
 class DropLog(BaseModel):
     """Every retention rule applied to a build, in the order they were applied.
 
     ``source_records`` counts released datapoint rows (a row with a z_score);
     ``kept_records`` the records written, one per distinct released screen.
-    ``compounds_without_a_structure_identifier`` lists the compound identities stored
-    with a typed ``inchikey`` gap (nothing is dropped for them).
+    ``source_records = kept_records + `` every rule's ``n_records`` (counted in
+    released rows), checked at build time. ``compounds_without_a_structure_identifier``
+    lists STORED compound identities that carry a typed ``inchikey`` gap and no CID or
+    ChEBI id (an admitted ``RELEASED_IDENTITIES`` label whose key is not released);
+    ``unidentified_compounds_held_out`` lists the labels held out under
+    ``UNIDENTIFIED_COMPOUND_RULE``.
     """
 
     dataset: str
@@ -859,6 +946,10 @@ class DropLog(BaseModel):
     dropped_records: int
     rules: list[DropRule]
     compounds_without_a_structure_identifier: list[str] = []
+    unidentified_compound_rule: str
+    unidentified_compound_policy: str
+    unidentified_compound_sources: list[SourcedValue]
+    unidentified_compounds_held_out: list[UnidentifiedCompound]
 
 
 class ScreenDatapoint(BaseModel):
@@ -932,6 +1023,21 @@ def _parse_z(z_raw: str, orf: str, identity: str) -> float:
     if not math.isfinite(z):
         raise RuntimeError(f"{orf}/{identity}: z_score {z_raw!r} is not finite")
     return z
+
+
+def _compound_is_identified(cell: MatrixCell) -> bool:
+    """Whether a cell's released compound is identified (``UNIDENTIFIED_COMPOUND_RULE``).
+
+    Identified: the row carries a ``PUBCHEM_CID`` or a released SMILES, the curated
+    compound-identity table carries a row for its label, or ``RELEASED_IDENTITIES`` has
+    an entry for it. The release has no name column, so a label with none of these is a
+    PubChem substance registry number (``SID n``) and nothing else.
+    """
+    if cell.pubchem_cid is not None or cell.smiles is not None:
+        return True
+    if cell.identity in RELEASED_IDENTITIES:
+        return True
+    return resolve_compound_identity(name=cell.identity).curated
 
 
 @register_dataset
@@ -1088,10 +1194,34 @@ class EnvChemgenWildenhain2015Dataset(ExperimentDataset):
 
     # ---- environment / phenotype builders -------------------------------------- #
     def _compound(self, cell: MatrixCell) -> Compound:
-        """The compound's canonical identity: the table's PubChem name + InChIKey."""
-        return resolved_compound(
-            cell.identity, pubchem_cid=cell.pubchem_cid, smiles=cell.smiles
+        """The compound's canonical identity: the table's PubChem name + InChIKey.
+
+        A ``RELEASED_IDENTITIES`` entry for the label supplies the name and SMILES the
+        release lacks, and its released InChIKey fills a key the resolver could not.
+        """
+        released = RELEASED_IDENTITIES.get(cell.identity)
+        if released is None:
+            return resolved_compound(
+                cell.identity, pubchem_cid=cell.pubchem_cid, smiles=cell.smiles
+            )
+        compound = resolved_compound(
+            released.name or cell.identity,
+            pubchem_cid=cell.pubchem_cid,
+            smiles=cell.smiles or released.smiles,
+            derive_from_smiles=True,
         )
+        if released.inchikey is not None and compound.inchikey is None:
+            compound = compound.model_copy(
+                update={
+                    "inchikey": released.inchikey,
+                    "provenance_gaps": [
+                        gap
+                        for gap in compound.provenance_gaps
+                        if gap.field != "inchikey"
+                    ],
+                }
+            )
+        return compound
 
     @staticmethod
     def _culture_environment(
@@ -1287,14 +1417,41 @@ class EnvChemgenWildenhain2015Dataset(ExperimentDataset):
             if n
         )
 
-        # Rule 2: the release's own re-emissions of a datapoint collapse onto its first
+        # Rule 2: a compound with no released name or structure is held out
+        # (UNIDENTIFIED_COMPOUND_RULE). Counted in released rows of the cells left.
+        unidentified_keys = {
+            key
+            for key, cell in cells.items()
+            if key not in held and not _compound_is_identified(cell)
+        }
+        held_out: dict[str, UnidentifiedCompound] = {}
+        for key in sorted(unidentified_keys):
+            cell = cells[key]
+            entry = held_out.setdefault(
+                cell.identity,
+                UnidentifiedCompound(
+                    identity=cell.identity,
+                    pubchem_sid=cell.identity.removeprefix("SID "),
+                    n_rows=0,
+                    n_cells=0,
+                    n_screens=0,
+                ),
+            )
+            entry.n_rows += cell.n_screens + cell.n_re_exported_rows
+            entry.n_cells += 1
+            entry.n_screens += cell.n_screens
+        n_unidentified_rows = sum(entry.n_rows for entry in held_out.values())
+        held |= unidentified_keys
+
+        # Rule 3: the release's own re-emissions of a datapoint collapse onto its first
         # row (true duplicates; the other tags stay on the datapoint).
         n_re_exported = sum(
             cell.n_re_exported_rows for key, cell in cells.items() if key not in held
         )
 
-        # Every DISTINCT compound identity is resolved once; one with no InChIKey, CID
-        # or ChEBI id is STORED with the typed inchikey gap resolved_compound attaches.
+        # Every DISTINCT stored compound identity is resolved once; one with no
+        # InChIKey, CID or ChEBI id (only an admitted RELEASED_IDENTITIES label can be
+        # one) is STORED with the typed inchikey gap resolved_compound attaches.
         compounds: dict[str, Compound] = {}
         for key, cell in cells.items():
             if key not in held and cell.identity not in compounds:
@@ -1382,6 +1539,22 @@ class EnvChemgenWildenhain2015Dataset(ExperimentDataset):
                     ],
                 ),
                 DropRule(
+                    rule=UNIDENTIFIED_COMPOUND_RULE,
+                    scope="compound",
+                    description=(
+                        "the released compound has no PUBCHEM_CID, no SMILES (the "
+                        "release has no name column), no curated identity row and no "
+                        "RELEASED_IDENTITIES entry: a registry number only, so the "
+                        "experiment cannot be represented. Counted in released rows. "
+                        "Items: label (cells, released rows)"
+                    ),
+                    n_records=n_unidentified_rows,
+                    items=[
+                        f"{entry.identity} ({entry.n_cells} cells, {entry.n_rows} rows)"
+                        for entry in held_out.values()
+                    ],
+                ),
+                DropRule(
                     rule="re_exported_duplicate_row",
                     scope="library_row",
                     description=(
@@ -1396,24 +1569,35 @@ class EnvChemgenWildenhain2015Dataset(ExperimentDataset):
                 ),
             ],
             compounds_without_a_structure_identifier=unidentified,
+            unidentified_compound_rule=UNIDENTIFIED_COMPOUND_RULE,
+            unidentified_compound_policy=UNIDENTIFIED_COMPOUND_POLICY,
+            unidentified_compound_sources=[
+                RELEASED_COMPOUND_IDENTIFIER,
+                STRUCTURES_ON_CHEMGRID,
+            ],
+            unidentified_compounds_held_out=list(held_out.values()),
         )
         with open(osp.join(self.preprocess_dir, "dropped_records.json"), "w") as handle:
             handle.write(drop_log.model_dump_json(indent=2))
-        if drop_log.dropped_records != n_held_rows + n_re_exported:
+        rule_total = n_held_rows + n_unidentified_rows + n_re_exported
+        if drop_log.dropped_records != rule_total:
             raise RuntimeError(
-                f"drop accounting mismatch: rule total {n_held_rows + n_re_exported}, "
+                f"drop accounting mismatch: rule total {rule_total}, "
                 f"{drop_log.dropped_records} records missing from the build"
             )
         log.info(
             "Wrote %d Wildenhain2015 records over %d cells (%d kanMX deletion, %d wild "
-            "type; %d rows held for an unresolved strain label; %d re-exported duplicate "
-            "rows collapsed; %d compounds stored with an inchikey gap; %d cells whose "
-            "every screen is non-replicate flagged)",
+            "type; %d rows held for an unresolved strain label; %d rows of %d "
+            "unidentified compounds held out; %d re-exported duplicate rows collapsed; "
+            "%d compounds stored with an inchikey gap; %d cells whose every screen is "
+            "non-replicate flagged)",
             idx,
             n_cells,
             by_kind["deletion"],
             by_kind["wild_type"],
             n_held_rows,
+            n_unidentified_rows,
+            len(held_out),
             n_re_exported,
             len(unidentified),
             n_all_non_replicating,

@@ -101,6 +101,17 @@ if [ "${DRY:-0}" = 1 ]; then
     echo "DRY=1, nothing submitted"
     exit 0
 fi
+# FIFO reorder, not a hold: the node schedules by submit order and backfill did not
+# start CPU-only jobs behind a GPU-waiting pack (2026-10-16 00:50, lane Y's rebuilds
+# planned for 18:03 with 341 G free). Every pending job of ours is held for the seconds
+# the three sbatch calls take, then released; a job waiting on a GPU keeps waiting on
+# the GPU and loses nothing, and the arrays sit ahead of it in the queue.
+HELD="$OUT/sweep_reorder_held_$SHA.txt"; : > "$HELD"
+for j in $(squeue -h -u "$USER" -t PD -o "%i %j %R" | grep -v ' kg4-sweep' | grep -v JobHeldUser | awk '{print $1}'); do
+    scontrol hold "$j" && echo "$j" >> "$HELD"
+done
+release_held() { for j in $(cat "$HELD"); do scontrol release "$j" || true; done; echo "released $(wc -l < "$HELD") reordered jobs"; }
+trap release_held EXIT
 XL=0; L=0; SJ=0
 [ "$NXL" -gt 0 ] && { XL=$($CMD_XL); echo "xl=$XL"; }
 [ "$NL" -gt 0 ] && { L=$($CMD_L); echo "l=$L"; }

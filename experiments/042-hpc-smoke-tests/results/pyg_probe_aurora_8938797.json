@@ -1,0 +1,269 @@
+{
+  "info": {
+    "machine": "aurora",
+    "hostname": "x4415c5s0b0n0",
+    "job_id": "8938797.aurora-pbs-0001.hostmgmt.cm.aurora.alcf.anl.gov",
+    "python": "3.13.16",
+    "torch": "2.11.0+xpu",
+    "torch_geometric": "2.8.1",
+    "device": "xpu:0",
+    "device_name": "Intel(R) Data Center GPU Max 1550"
+  },
+  "checks": {
+    "scatter_sum": {
+      "status": "ok",
+      "detail": "out (512, 32) grad (512, 32)",
+      "core": "True"
+    },
+    "scatter_mean": {
+      "status": "ok",
+      "detail": "out (512, 32) grad (512, 32)",
+      "core": "True"
+    },
+    "scatter_max": {
+      "status": "ok",
+      "detail": "out (512, 32) grad (512, 32)",
+      "core": "True"
+    },
+    "scatter_min": {
+      "status": "ok",
+      "detail": "out (512, 32) grad (512, 32)",
+      "core": "True"
+    },
+    "scatter_mul": {
+      "status": "ok",
+      "detail": "out (512, 32) grad (512, 32)",
+      "core": "True"
+    },
+    "global_add_pool": {
+      "status": "ok",
+      "detail": "(8, 32)",
+      "core": "True"
+    },
+    "global_mean_pool": {
+      "status": "ok",
+      "detail": "(8, 32)",
+      "core": "True"
+    },
+    "global_max_pool": {
+      "status": "ok",
+      "detail": "(8, 32)",
+      "core": "True"
+    },
+    "to_dense_batch": {
+      "status": "ok",
+      "detail": "(8, 64, 32)",
+      "core": "True"
+    },
+    "softmax_by_index": {
+      "status": "ok",
+      "detail": "(4096,)",
+      "core": "True"
+    },
+    "conv_GCNConv": {
+      "status": "ok",
+      "detail": "out (512, 64), 2 param grads",
+      "core": "True"
+    },
+    "conv_SAGEConv": {
+      "status": "ok",
+      "detail": "out (512, 64), 3 param grads",
+      "core": "True"
+    },
+    "conv_GATv2Conv": {
+      "status": "ok",
+      "detail": "out (512, 64), 6 param grads",
+      "core": "True"
+    },
+    "conv_GINConv": {
+      "status": "ok",
+      "detail": "out (512, 64), 4 param grads",
+      "core": "True"
+    },
+    "conv_TransformerConv": {
+      "status": "ok",
+      "detail": "out (512, 64), 8 param grads",
+      "core": "True"
+    },
+    "HeteroConv_SAGE": {
+      "status": "ok",
+      "detail": "gene (300, 32), reaction (120, 32)",
+      "core": "True"
+    },
+    "autocast_bf16": {
+      "status": "ok",
+      "detail": "dtype torch.bfloat16",
+      "core": "True"
+    },
+    "import_torch_scatter": {
+      "status": "fail",
+      "detail": "ModuleNotFoundError: No module named 'torch_scatter'",
+      "core": "False"
+    },
+    "import_torchcell.models": {
+      "status": "fail",
+      "detail": "ModuleNotFoundError: No module named 'torch_scatter'",
+      "core": "False"
+    },
+    "import_torchcell.data.graph_processor": {
+      "status": "fail",
+      "detail": "ModuleNotFoundError: No module named 'torch_scatter'",
+      "core": "False"
+    },
+    "import_torchcell.models.act": {
+      "status": "ok",
+      "detail": "torchcell.models.act",
+      "core": "False"
+    },
+    "import_torchcell.models.cell_graph_transformer": {
+      "status": "fail",
+      "detail": "ModuleNotFoundError: No module named 'torch_scatter'",
+      "core": "False"
+    },
+    "import_torchcell.models.cell_graph_transformer_metabolism": {
+      "status": "fail",
+      "detail": "ModuleNotFoundError: No module named 'torch_scatter'",
+      "core": "False"
+    },
+    "import_torchcell.models.dango": {
+      "status": "fail",
+      "detail": "ModuleNotFoundError: No module named 'torch_scatter'",
+      "core": "False"
+    },
+    "import_torchcell.models.dcell": {
+      "status": "ok",
+      "detail": "torchcell.models.dcell",
+      "core": "False"
+    },
+    "import_torchcell.models.dcell_opt": {
+      "status": "fail",
+      "detail": "ModuleNotFoundError: No module named 'torch_scatter'",
+      "core": "False"
+    },
+    "import_torchcell.models.deep_set": {
+      "status": "fail",
+      "detail": "ModuleNotFoundError: No module named 'torch_scatter'",
+      "core": "False"
+    },
+    "import_torchcell.models.diffusion_decoder": {
+      "status": "fail",
+      "detail": "ModuleNotFoundError: No module named 'torch_scatter'",
+      "core": "False"
+    },
+    "import_torchcell.models.equivariant_cell_graph_transformer": {
+      "status": "fail",
+      "detail": "ModuleNotFoundError: No module named 'torch_scatter'",
+      "core": "False"
+    },
+    "import_torchcell.models.esm2": {
+      "status": "fail",
+      "detail": "ModuleNotFoundError: No module named 'torch_scatter'",
+      "core": "False"
+    },
+    "import_torchcell.models.fungal_up_down_transformer": {
+      "status": "fail",
+      "detail": "ModuleNotFoundError: No module named 'torch_scatter'",
+      "core": "False"
+    },
+    "import_torchcell.models.genslm": {
+      "status": "fail",
+      "detail": "ModuleNotFoundError: No module named 'torch_scatter'",
+      "core": "False"
+    },
+    "import_torchcell.models.gpu_edge_mask_generator": {
+      "status": "fail",
+      "detail": "ModuleNotFoundError: No module named 'torch_scatter'",
+      "core": "False"
+    },
+    "import_torchcell.models.hetero_cell_bipartite_dango": {
+      "status": "fail",
+      "detail": "ModuleNotFoundError: No module named 'torch_scatter'",
+      "core": "False"
+    },
+    "import_torchcell.models.hetero_cell_bipartite_dango_diff_gi": {
+      "status": "fail",
+      "detail": "ModuleNotFoundError: No module named 'torch_scatter'",
+      "core": "False"
+    },
+    "import_torchcell.models.hetero_cell_bipartite_dango_gi": {
+      "status": "fail",
+      "detail": "ModuleNotFoundError: No module named 'torch_scatter'",
+      "core": "False"
+    },
+    "import_torchcell.models.hetero_cell_bipartite_dango_gi_lazy": {
+      "status": "fail",
+      "detail": "ModuleNotFoundError: No module named 'torch_scatter'",
+      "core": "False"
+    },
+    "import_torchcell.models.hetero_cell_nsa_retry": {
+      "status": "fail",
+      "detail": "ModuleNotFoundError: No module named 'torch_scatter'",
+      "core": "False"
+    },
+    "import_torchcell.models.linear": {
+      "status": "fail",
+      "detail": "ModuleNotFoundError: No module named 'torch_scatter'",
+      "core": "False"
+    },
+    "import_torchcell.models.llm": {
+      "status": "fail",
+      "detail": "ModuleNotFoundError: No module named 'torch_scatter'",
+      "core": "False"
+    },
+    "import_torchcell.models.mlp": {
+      "status": "fail",
+      "detail": "ModuleNotFoundError: No module named 'torch_scatter'",
+      "core": "False"
+    },
+    "import_torchcell.models.norm": {
+      "status": "fail",
+      "detail": "ModuleNotFoundError: No module named 'torch_scatter'",
+      "core": "False"
+    },
+    "import_torchcell.models.nucleotide_transformer": {
+      "status": "fail",
+      "detail": "ModuleNotFoundError: No module named 'torch_scatter'",
+      "core": "False"
+    },
+    "import_torchcell.models.protT5": {
+      "status": "fail",
+      "detail": "ModuleNotFoundError: No module named 'torch_scatter'",
+      "core": "False"
+    },
+    "import_torchcell.models.self_attention_deep_set": {
+      "status": "fail",
+      "detail": "ModuleNotFoundError: No module named 'torch_scatter'",
+      "core": "False"
+    }
+  },
+  "core_failures": [],
+  "import_failures": [
+    "import_torch_scatter",
+    "import_torchcell.models",
+    "import_torchcell.data.graph_processor",
+    "import_torchcell.models.cell_graph_transformer",
+    "import_torchcell.models.cell_graph_transformer_metabolism",
+    "import_torchcell.models.dango",
+    "import_torchcell.models.dcell_opt",
+    "import_torchcell.models.deep_set",
+    "import_torchcell.models.diffusion_decoder",
+    "import_torchcell.models.equivariant_cell_graph_transformer",
+    "import_torchcell.models.esm2",
+    "import_torchcell.models.fungal_up_down_transformer",
+    "import_torchcell.models.genslm",
+    "import_torchcell.models.gpu_edge_mask_generator",
+    "import_torchcell.models.hetero_cell_bipartite_dango",
+    "import_torchcell.models.hetero_cell_bipartite_dango_diff_gi",
+    "import_torchcell.models.hetero_cell_bipartite_dango_gi",
+    "import_torchcell.models.hetero_cell_bipartite_dango_gi_lazy",
+    "import_torchcell.models.hetero_cell_nsa_retry",
+    "import_torchcell.models.linear",
+    "import_torchcell.models.llm",
+    "import_torchcell.models.mlp",
+    "import_torchcell.models.norm",
+    "import_torchcell.models.nucleotide_transformer",
+    "import_torchcell.models.protT5",
+    "import_torchcell.models.self_attention_deep_set"
+  ],
+  "wandb_url": "https://forge.coreweave.com/wandb/zhao-group/torchcell_042_hpc_smoke/runs/jac7lt4w"
+}

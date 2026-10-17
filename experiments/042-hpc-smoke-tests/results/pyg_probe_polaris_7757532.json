@@ -1,0 +1,237 @@
+{
+  "info": {
+    "machine": "polaris",
+    "hostname": "x3111c0s7b0n0",
+    "job_id": "7757532.polaris-pbs-01.hsn.cm.polaris.alcf.anl.gov",
+    "python": "3.13.16",
+    "torch": "2.11.0+cu128",
+    "torch_geometric": "2.8.1",
+    "device": "cuda:0",
+    "device_name": "NVIDIA A100-SXM4-40GB"
+  },
+  "checks": {
+    "scatter_sum": {
+      "status": "ok",
+      "detail": "out (512, 32) grad (512, 32)",
+      "core": "True"
+    },
+    "scatter_mean": {
+      "status": "ok",
+      "detail": "out (512, 32) grad (512, 32)",
+      "core": "True"
+    },
+    "scatter_max": {
+      "status": "ok",
+      "detail": "out (512, 32) grad (512, 32)",
+      "core": "True"
+    },
+    "scatter_min": {
+      "status": "ok",
+      "detail": "out (512, 32) grad (512, 32)",
+      "core": "True"
+    },
+    "scatter_mul": {
+      "status": "ok",
+      "detail": "out (512, 32) grad (512, 32)",
+      "core": "True"
+    },
+    "global_add_pool": {
+      "status": "ok",
+      "detail": "(8, 32)",
+      "core": "True"
+    },
+    "global_mean_pool": {
+      "status": "ok",
+      "detail": "(8, 32)",
+      "core": "True"
+    },
+    "global_max_pool": {
+      "status": "ok",
+      "detail": "(8, 32)",
+      "core": "True"
+    },
+    "to_dense_batch": {
+      "status": "ok",
+      "detail": "(8, 64, 32)",
+      "core": "True"
+    },
+    "softmax_by_index": {
+      "status": "ok",
+      "detail": "(4096,)",
+      "core": "True"
+    },
+    "conv_GCNConv": {
+      "status": "ok",
+      "detail": "out (512, 64), 2 param grads",
+      "core": "True"
+    },
+    "conv_SAGEConv": {
+      "status": "ok",
+      "detail": "out (512, 64), 3 param grads",
+      "core": "True"
+    },
+    "conv_GATv2Conv": {
+      "status": "ok",
+      "detail": "out (512, 64), 6 param grads",
+      "core": "True"
+    },
+    "conv_GINConv": {
+      "status": "ok",
+      "detail": "out (512, 64), 4 param grads",
+      "core": "True"
+    },
+    "conv_TransformerConv": {
+      "status": "ok",
+      "detail": "out (512, 64), 8 param grads",
+      "core": "True"
+    },
+    "HeteroConv_SAGE": {
+      "status": "ok",
+      "detail": "gene (300, 32), reaction (120, 32)",
+      "core": "True"
+    },
+    "autocast_bf16": {
+      "status": "ok",
+      "detail": "dtype torch.bfloat16",
+      "core": "True"
+    },
+    "import_torch_scatter": {
+      "status": "ok",
+      "detail": "2.1.2+pt211cu128",
+      "core": "False"
+    },
+    "import_torchcell.data.graph_processor": {
+      "status": "ok",
+      "detail": "torchcell.data.graph_processor",
+      "core": "False"
+    },
+    "import_torchcell.models.act": {
+      "status": "ok",
+      "detail": "torchcell.models.act",
+      "core": "False"
+    },
+    "import_torchcell.models.cell_graph_transformer": {
+      "status": "ok",
+      "detail": "torchcell.models.cell_graph_transformer",
+      "core": "False"
+    },
+    "import_torchcell.models.cell_graph_transformer_metabolism": {
+      "status": "ok",
+      "detail": "torchcell.models.cell_graph_transformer_metabolism",
+      "core": "False"
+    },
+    "import_torchcell.models.dango": {
+      "status": "ok",
+      "detail": "torchcell.models.dango",
+      "core": "False"
+    },
+    "import_torchcell.models.dcell": {
+      "status": "ok",
+      "detail": "torchcell.models.dcell",
+      "core": "False"
+    },
+    "import_torchcell.models.dcell_opt": {
+      "status": "ok",
+      "detail": "torchcell.models.dcell_opt",
+      "core": "False"
+    },
+    "import_torchcell.models.deep_set": {
+      "status": "ok",
+      "detail": "torchcell.models.deep_set",
+      "core": "False"
+    },
+    "import_torchcell.models.diffusion_decoder": {
+      "status": "ok",
+      "detail": "torchcell.models.diffusion_decoder",
+      "core": "False"
+    },
+    "import_torchcell.models.equivariant_cell_graph_transformer": {
+      "status": "ok",
+      "detail": "torchcell.models.equivariant_cell_graph_transformer",
+      "core": "False"
+    },
+    "import_torchcell.models.esm2": {
+      "status": "ok",
+      "detail": "torchcell.models.esm2",
+      "core": "False"
+    },
+    "import_torchcell.models.fungal_up_down_transformer": {
+      "status": "ok",
+      "detail": "torchcell.models.fungal_up_down_transformer",
+      "core": "False"
+    },
+    "import_torchcell.models.genslm": {
+      "status": "ok",
+      "detail": "torchcell.models.genslm",
+      "core": "False"
+    },
+    "import_torchcell.models.gpu_edge_mask_generator": {
+      "status": "ok",
+      "detail": "torchcell.models.gpu_edge_mask_generator",
+      "core": "False"
+    },
+    "import_torchcell.models.hetero_cell_bipartite_dango": {
+      "status": "ok",
+      "detail": "torchcell.models.hetero_cell_bipartite_dango",
+      "core": "False"
+    },
+    "import_torchcell.models.hetero_cell_bipartite_dango_diff_gi": {
+      "status": "ok",
+      "detail": "torchcell.models.hetero_cell_bipartite_dango_diff_gi",
+      "core": "False"
+    },
+    "import_torchcell.models.hetero_cell_bipartite_dango_gi": {
+      "status": "ok",
+      "detail": "torchcell.models.hetero_cell_bipartite_dango_gi",
+      "core": "False"
+    },
+    "import_torchcell.models.hetero_cell_bipartite_dango_gi_lazy": {
+      "status": "ok",
+      "detail": "torchcell.models.hetero_cell_bipartite_dango_gi_lazy",
+      "core": "False"
+    },
+    "import_torchcell.models.hetero_cell_nsa_retry": {
+      "status": "ok",
+      "detail": "torchcell.models.hetero_cell_nsa_retry",
+      "core": "False"
+    },
+    "import_torchcell.models.linear": {
+      "status": "ok",
+      "detail": "torchcell.models.linear",
+      "core": "False"
+    },
+    "import_torchcell.models.llm": {
+      "status": "ok",
+      "detail": "torchcell.models.llm",
+      "core": "False"
+    },
+    "import_torchcell.models.mlp": {
+      "status": "ok",
+      "detail": "torchcell.models.mlp",
+      "core": "False"
+    },
+    "import_torchcell.models.norm": {
+      "status": "ok",
+      "detail": "torchcell.models.norm",
+      "core": "False"
+    },
+    "import_torchcell.models.nucleotide_transformer": {
+      "status": "ok",
+      "detail": "torchcell.models.nucleotide_transformer",
+      "core": "False"
+    },
+    "import_torchcell.models.protT5": {
+      "status": "ok",
+      "detail": "torchcell.models.protT5",
+      "core": "False"
+    },
+    "import_torchcell.models.self_attention_deep_set": {
+      "status": "ok",
+      "detail": "torchcell.models.self_attention_deep_set",
+      "core": "False"
+    }
+  },
+  "core_failures": [],
+  "import_failures": [],
+  "wandb_url": "https://forge.coreweave.com/wandb/zhao-group/torchcell_042_hpc_smoke/runs/4opaa6kv"
+}

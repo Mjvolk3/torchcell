@@ -489,6 +489,13 @@
     <span class="n">node_variants</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
     <span class="n">edge_variants</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
     <span class="n">rewritten_part_files</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">longest_row_bytes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the longest CSV row the merge measured, newline included"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">read_buffer_bytes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"the --read-buffer-size the merged import call carried"</span>
+    <span class="p">)</span>
     <span class="n">merge_report</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"path of the merge_report.json the counts came from"</span>
     <span class="p">)</span>
@@ -1230,6 +1237,8 @@
         <span class="n">edge_duplicates</span><span class="o">=</span><span class="n">report</span><span class="o">.</span><span class="n">edge_duplicates</span><span class="p">,</span>
         <span class="n">node_variants</span><span class="o">=</span><span class="n">report</span><span class="o">.</span><span class="n">node_variants</span><span class="p">,</span>
         <span class="n">edge_variants</span><span class="o">=</span><span class="n">report</span><span class="o">.</span><span class="n">edge_variants</span><span class="p">,</span>
+        <span class="n">longest_row_bytes</span><span class="o">=</span><span class="n">report</span><span class="o">.</span><span class="n">longest_row_bytes</span><span class="p">,</span>
+        <span class="n">read_buffer_bytes</span><span class="o">=</span><span class="n">report</span><span class="o">.</span><span class="n">read_buffer_bytes</span><span class="p">,</span>
         <span class="n">rewritten_part_files</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">rewritten</span><span class="p">),</span>
         <span class="n">merge_report</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">merge_report</span><span class="p">),</span>
     <span class="p">)</span>

@@ -360,6 +360,13 @@ class GenerationRecord(BaseModel):
     node_variants: dict[str, int] = Field(default_factory=dict)
     edge_variants: dict[str, int] = Field(default_factory=dict)
     rewritten_part_files: int = 0
+    longest_row_bytes: int = Field(
+        default=0,
+        description="the longest CSV row the merge measured, newline included",
+    )
+    read_buffer_bytes: int = Field(
+        default=0, description="the --read-buffer-size the merged import call carried"
+    )
     merge_report: str | None = Field(
         default=None, description="path of the merge_report.json the counts came from"
     )
@@ -1020,6 +1027,8 @@ def generation_record_from_merge(merge_report: Path | None) -> GenerationRecord:
         edge_duplicates=report.edge_duplicates,
         node_variants=report.node_variants,
         edge_variants=report.edge_variants,
+        longest_row_bytes=report.longest_row_bytes,
+        read_buffer_bytes=report.read_buffer_bytes,
         rewritten_part_files=len(report.rewritten),
         merge_report=str(merge_report),
     )

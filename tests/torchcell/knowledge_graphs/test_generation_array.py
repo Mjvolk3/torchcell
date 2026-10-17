@@ -38,6 +38,7 @@ from torchcell.knowledge_graphs.generation_array import (
     load_tier_table,
     merge_outputs,
     missing_slots,
+    read_buffer_bytes,
     read_done,
     read_order,
     recovery_commands,
@@ -928,15 +929,49 @@ def test_scan_part_hashes_the_key_and_the_whole_row_and_parses_a_quoted_tab(
     """
     part = tmp_path / "N-part000.csv"
     part.write_text("n1\t'a'\t'N'\nn1\t'b'\t'N'\nn2\t'with\ttab'\t'N'\n")
-    rows = scan_part(str(part), 3, 0, None)
+    rows, longest = scan_part(str(part), 3, 0, None)
     assert len(rows) == 3
+    assert longest == len("n2\t'with\ttab'\t'N'\n")
     assert (rows[0]["k0"], rows[0]["k1"]) == (rows[1]["k0"], rows[1]["k1"])
     assert rows[0]["row"] != rows[1]["row"]
     assert (rows[2]["k0"], rows[2]["k1"]) != (rows[0]["k0"], rows[0]["k1"])
     edge = tmp_path / "E-part000.csv"
     edge.write_text("s1\t\tt1\t'E'\ns1\t\tt2\t'E'\n")
-    e = scan_part(str(edge), 4, 0, 2)
+    e, _ = scan_part(str(edge), 4, 0, 2)
     assert (e[0]["k0"], e[0]["k1"]) != (e[1]["k0"], e[1]["k1"])
+
+
+def test_the_read_buffer_is_neo4j_default_until_a_row_nears_it() -> None:
+    """4 MiB for rows up to 2 MiB; twice the longest row rounded up to a MiB above that.
+    The 2026-10-17 build's longest row, an interned 5.4 MB genotype, gets 11 MiB.
+    """
+    mib = 2**20
+    assert read_buffer_bytes(0) == 4 * mib
+    assert read_buffer_bytes(2 * mib) == 4 * mib
+    assert read_buffer_bytes(2 * mib + 1) == 5 * mib
+    assert read_buffer_bytes(5443661) == 11 * mib
+
+
+def test_the_merge_sizes_the_read_buffer_from_the_longest_row(tmp_path: Path) -> None:
+    """A 2 MiB + 1 byte row makes the call carry --read-buffer-size=5 MiB and the
+    report record the row; short rows carry neo4j's 4 MiB default.
+    """
+    slot = AdapterSlot(index=0, dataset_class="DA", adapter_class="AAdapter")
+    long_value = "x" * (2 * 2**20)
+    row = f"g1\t'{long_value}'\t'G'"
+    _write_dir(tmp_path, slot, nodes={"G": [row, "g2\t'y'\t'G'"]}, edges={})
+    report = merge_outputs(tmp_path, [slot])
+    call = (tmp_path / IMPORT_CALL_FILENAME).read_text()
+    assert f"--read-buffer-size={read_buffer_bytes(len(row) + 1)} " in call
+    assert call.count("--read-buffer-size=") == 1
+    assert call.index("--read-buffer-size=") < call.index("--nodes=")
+    assert report.longest_row_bytes == len(row) + 1
+    assert report.read_buffer_bytes == read_buffer_bytes(len(row) + 1) == 5 * 2**20
+    assert report.labels["G"].longest_row_bytes == len(row) + 1
+    short = tmp_path / "short"
+    _write_dir(short, slot, nodes={"G": ["g1\t'y'\t'G'"]}, edges={})
+    assert merge_outputs(short, [slot]).read_buffer_bytes == 4 * 2**20
+    assert "--read-buffer-size=4194304 " in (short / IMPORT_CALL_FILENAME).read_text()
 
 
 def test_check_label_duplicates_counts_rows_beyond_the_first_directory(

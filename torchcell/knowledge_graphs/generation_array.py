@@ -25,7 +25,13 @@ without a marker": ``missing`` prints them and the exact ``sbatch --array=`` per
   of every directory carrying it. The command prefix (delimiter, quote,
   ``--skip-duplicate-nodes=true``, ``--skip-bad-relationships``) is transplanted from
   a per-directory call BioCypher wrote, so the flags are the BioCypher config's, and
-  ``--skip-duplicate-nodes=true`` is verified to be among them.
+  ``--skip-duplicate-nodes=true`` is verified to be among them. The hash pass measures
+  the longest row of every label, and the call carries
+  ``--read-buffer-size=<bytes>`` sized from it (``read_buffer_bytes``): neo4j's CSV
+  reader needs a newline inside each read buffer, so a row longer than its 4 MiB
+  default fails the whole import before the first node is written ("Weird input
+  data, no newline character in the whole buffer 4194304", job 5581 on 2026-10-17,
+  an interned Peter 2018 pan-genome genotype of 5.4 MB).
 * **Duplicates.** BioCypher (and ``FastCsvSink``) deduplicate within ONE process;
   across directories content-id nodes recur (genome, environment, media, perturbation,
   genotype, experiment reference). Node rows: ``--skip-duplicate-nodes=true`` keeps
@@ -103,6 +109,22 @@ _RELS_ARG_RE = re.compile(r'--relationships="([^"]+)" ')
 # (MAX_ARG_STRLEN, 128 KiB); a label carried by every directory is one argument.
 MAX_ARG_BYTES = 120 * 1024
 _ROW_DTYPE = np.dtype([("k0", "<u8"), ("k1", "<u8"), ("row", "<u8")])
+#: neo4j-admin import's default ``--read-buffer-size``; a row must fit in one buffer
+#: with a newline, so the merged call raises it when any row comes near.
+NEO4J_DEFAULT_READ_BUFFER_BYTES = 4 * 2**20
+_READ_BUFFER_RE = re.compile(r"--read-buffer-size=\S+ ")
+
+
+def read_buffer_bytes(longest_row_bytes: int) -> int:
+    """The ``--read-buffer-size`` for a build whose longest row is this many bytes.
+
+    neo4j's default when every row is under a quarter of it; otherwise twice the longest
+    row, rounded up to a whole MiB, so a row plus its newline never spans two buffers.
+    """
+    needed = 2 * longest_row_bytes
+    if needed <= NEO4J_DEFAULT_READ_BUFFER_BYTES:
+        return NEO4J_DEFAULT_READ_BUFFER_BYTES
+    return -(-needed // 2**20) * 2**20
 
 
 # ----------------------------------------------------------------------------- tiers
@@ -522,8 +544,9 @@ def _key_columns(files: LabelFiles) -> tuple[int, int | None]:
 
 def scan_part(
     path: str, n_columns: int, key_col: int, end_col: int | None
-) -> NDArray[Any]:
-    r"""Hash every row of a part file: (128-bit key, 64-bit row), one record per row.
+) -> tuple[NDArray[Any], int]:
+    r"""Hash every row of a part file: (128-bit key, 64-bit row), one record per row,
+    and the longest row in bytes, newline included.
 
     The key is the node id, or ``start\x00end`` for an edge. A row whose tab count is
     the header's has no tab inside a quoted value and is split directly; any other row
@@ -534,8 +557,11 @@ def scan_part(
 
     expected_tabs = n_columns - 1
     buf = bytearray()
+    longest = 0
     with open(path, "rb", buffering=16 * 2**20) as handle:
         for line in handle:
+            if len(line) > longest:
+                longest = len(line)
             if line.count(b"\t") == expected_tabs:
                 fields = line.rstrip(b"\n").split(b"\t")
             else:
@@ -550,7 +576,7 @@ def scan_part(
                 key = fields[key_col] + b"\x00" + fields[end_col]
             buf += hashlib.blake2b(key, digest_size=16).digest()
             buf += hashlib.blake2b(line, digest_size=8).digest()
-    return np.frombuffer(bytes(buf), dtype=_ROW_DTYPE)
+    return np.frombuffer(bytes(buf), dtype=_ROW_DTYPE), longest
 
 
 #: Plain columns a content-addressed node may carry differently per source: a label,
@@ -611,6 +637,9 @@ class LabelDuplicates(BaseModel):
         default_factory=list, description="every variant key, located"
     )
     seconds: float = Field(default=0.0, description="wall time of the label's check")
+    longest_row_bytes: int = Field(
+        default=0, description="the longest row of the label, newline included"
+    )
     drop_rows: dict[str, list[int]] = Field(
         default_factory=dict,
         description="edges only: part path -> row numbers (0-based) to drop",
@@ -631,14 +660,16 @@ class ConflictSample(BaseModel):
 
 def _scan_label(
     files: LabelFiles, workers: int
-) -> tuple[NDArray[Any], NDArray[Any], NDArray[Any]]:
-    """Rows of every part of a label: hashes, directory index, row number within the part."""
+) -> tuple[NDArray[Any], NDArray[Any], NDArray[Any], int]:
+    """Rows of every part of a label: hashes, directory index, row number within the
+    part, and the longest row in bytes.
+    """
     key_col, end_col = _key_columns(files)
     n_columns = len(files.columns)
     parts = files.parts
     if workers > 1 and len(parts) > 1:
         with ProcessPoolExecutor(max_workers=min(workers, len(parts))) as pool:
-            arrays = list(
+            scanned = list(
                 pool.map(
                     scan_part,
                     [p for _, p in parts],
@@ -648,7 +679,9 @@ def _scan_label(
                 )
             )
     else:
-        arrays = [scan_part(p, n_columns, key_col, end_col) for _, p in parts]
+        scanned = [scan_part(p, n_columns, key_col, end_col) for _, p in parts]
+    arrays = [a for a, _ in scanned]
+    longest = max((n for _, n in scanned), default=0)
     hashes = np.concatenate(arrays) if arrays else np.empty(0, dtype=_ROW_DTYPE)
     part_index = (
         np.concatenate(
@@ -662,7 +695,7 @@ def _scan_label(
         if arrays
         else np.empty(0, dtype=np.int64)
     )
-    return hashes, part_index, row_number
+    return hashes, part_index, row_number, longest
 
 
 def check_label_duplicates(
@@ -677,7 +710,7 @@ def check_label_duplicates(
     is the sort, not the number of keys that recur (two copies of a 100 M-row label
     are 100 M duplicate keys).
     """
-    hashes, part_index, row_number = _scan_label(files, workers)
+    hashes, part_index, row_number, longest = _scan_label(files, workers)
     n = len(hashes)
     outcome = LabelDuplicates(
         label=files.label,
@@ -686,6 +719,7 @@ def check_label_duplicates(
         duplicate_rows=0,
         duplicate_keys=0,
         conflicting_keys=0,
+        longest_row_bytes=longest,
     )
     if n == 0:
         return outcome, []
@@ -961,6 +995,13 @@ class MergeReport(BaseModel):
     )
     import_call: str
     merged_at: str
+    longest_row_bytes: int = Field(
+        default=0, description="the longest row of any label, newline included"
+    )
+    read_buffer_bytes: int = Field(
+        default=NEO4J_DEFAULT_READ_BUFFER_BYTES,
+        description="the --read-buffer-size the import call carries",
+    )
 
     @property
     def node_duplicates(self) -> dict[str, int]:
@@ -1132,7 +1173,15 @@ def merge_outputs(
                     f"{MAX_ARG_BYTES} byte single-argument limit"
                 )
             args.append(arg)
-    v5 = prefix + "".join(args) + suffix
+    longest = max((o.longest_row_bytes for o in outcomes.values()), default=0)
+    buffer = read_buffer_bytes(longest)
+    prefix = _READ_BUFFER_RE.sub("", prefix)
+    v5 = prefix + f"--read-buffer-size={buffer} " + "".join(args) + suffix
+    log.info(
+        "longest row %d bytes; the import call carries --read-buffer-size=%d",
+        longest,
+        buffer,
+    )
     script = (
         "#!/bin/bash\n"
         "version=$(bin/neo4j-admin --version | cut -d '.' -f 1)\n"
@@ -1151,6 +1200,8 @@ def merge_outputs(
         rewritten=rewritten,
         import_call=str(call_path),
         merged_at=datetime.now(UTC).isoformat(),
+        longest_row_bytes=longest,
+        read_buffer_bytes=buffer,
     )
     (out_dir / MERGE_REPORT_FILENAME).write_text(
         report.model_dump_json(indent=1) + "\n", encoding="utf-8"
@@ -1315,6 +1366,10 @@ def main(argv: list[str] | None = None) -> int:
                     )
                 )
         print(f"rewritten part files: {len(report.rewritten)}")
+        print(
+            f"longest row {report.longest_row_bytes} bytes; "
+            f"--read-buffer-size={report.read_buffer_bytes}"
+        )
         print(f"MERGED_CALL={report.import_call}")
         return 0
     order = _order_from_args(args)

@@ -1013,6 +1013,8 @@ def test_the_generation_record_is_serial_without_a_merge_report_and_array_with_o
         },
         import_call="/out/neo4j-admin-import-call.sh",
         merged_at="2026-10-15T00:00:00+00:00",
+        longest_row_bytes=5443661,
+        read_buffer_bytes=11534336,
     )
     path = tmp_path / "merge_report.json"
     path.write_text(report.model_dump_json())
@@ -1023,6 +1025,8 @@ def test_the_generation_record_is_serial_without_a_merge_report_and_array_with_o
         node_duplicates={"Genome": 150},
         edge_duplicates={"MediaMemberOf": 700},
         node_variants={"Genome": 2},
+        longest_row_bytes=5443661,
+        read_buffer_bytes=11534336,
         rewritten_part_files=1,
         merge_report=str(path),
     )

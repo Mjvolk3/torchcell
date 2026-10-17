@@ -177,3 +177,19 @@ bash scripts/kg_release.sh serve-rollback tc-neo4j-pre-<timestamp>   # back to t
 ```
 
 Every step that changes something refuses on a failed precondition and prints what to do next. A failure partway through `serve-swap` before the swap leaves `tc-neo4j` serving untouched; a rerun resumes, because registration is idempotent.
+
+## 2026.10.17 - KG 4.0 shipped and served on Radiant from the archive mount, measured
+
+The 4.0 sequence of the 2026.10.13 section ran end to end on 2026-10-17, every step under slurm from the primary checkout (job ids in `/scratch/projects/torchcell/database/slurm/gen_job_7b56568db.txt`):
+
+| step | measured |
+|---|---|
+| `backup` (online, detached in `tc-neo4j-readonly`) | 10:39 to 11:29 CDT, 50 min: 26 min receiving 252 G of store files, 24 min compressing; artifact `torchcell-2026-10-17T15-59-52.backup` 19.0 GB |
+| `archive` + `ship 2026.10.17-4295f7ca` + `keep` x2 (job 5707) | 4 min 58 s, rsync to Taiga and SHA256SUMS verified there |
+| `deploy 2026.10.17-4295f7ca --from-archive-mount --pin` (job 5709) | restore in place on zhao5 in 880 s (14 min 40 s), checked against `release.json` |
+| `serve-swap --latest 2026.10.17-4295f7ca --pinned 2026.10.06-4b293d34` (job 5711) | stop to online 12:23:09 to 12:23:51, 42 s; kept `tc-neo4j-pre-20261017-122309` on delta_bbub |
+| `ops.sh sync` | in sync (2026.10.17-4295f7ca): Radiant default `kg-2026-10-17-4295f7ca` with latest, torchcell; `kg-2026-10-06-4b293d34` with pinned |
+
+The 3.0 restore onto zhao5 (step 0) had been done on 2026-10-13. The estimates of the 2026.10.13 section held: the restore ran at 0.3 GB/s of store and the swap downtime was under a minute. One thing the sequence note did not say: the `kg-ship` slurm job must run from a checkout that still exists when it starts (a job queued from a worktree that the merge queue then removed would have failed), so run it from the primary checkout after the snapshot lands, or set `SNAPSHOT_ROOT` to a tree that stays.
+
+GilaHyper serves both versions too: `deploy 2026.10.06-4b293d34` restores 3.0 beside `torchcell` as `kg-2026-10-06-4b293d34`, but the local deploy always points `latest` at what it restored, so the aliases are re-pointed right after (`ALTER ALIAS latest SET DATABASE torchcell; ALTER ALIAS pinned SET DATABASE \`kg-2026-10-06-4b293d34\``), a window of seconds.

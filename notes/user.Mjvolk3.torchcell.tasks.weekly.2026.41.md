@@ -79,5 +79,5 @@ created: 1791256185172
 ## 2026.10.16
 
 - [x] 040 round 11 written: five switchable model pieces (gene-embedding displacement, cell-only readout, Hill host form, Bliss / Loewe / highest-single composition, pair deviation term), 19 of 19 CPU checks, nine grids of 105 one-GPU jobs on bfjt-delta-gpu [[experiments.040-inhibitor-synergy-wetlab]]
-- [ ] 040 round 11 submitted on Delta: blocked on a Lustre stall (the torchcell env's files hang on read); `r11_delta_gate.sh` submits after the smoke passes
+- [x] 040 round 11 submitted on Delta, 105 jobs 22951907 to 22952011, after Lustre target 106 died and 040 moved to its own env, data root and tree
 - [ ] Read round 11 when it lands: rerun `r3_readout.py` and `r3_host_predictions.py` over `results/mixture-delta`, refresh the gate sheet

@@ -13,7 +13,7 @@ A knowledge-graph release and a package version are used as a pair. The client r
 | 2026.09.21-ab6d8c5d | 1.2 | v1.2.1 | v1.2.1, v1.3.0, v1.4.0, v1.4.1, v1.5.0, v1.6.0, v1.6.1 |
 | 2026.10.02-833970cd | 2.0 | v1.6.1 | v1.2.1, v1.3.0, v1.4.0, v1.4.1, v1.5.0, v1.6.0, v1.6.1 |
 | 2026.10.06-4b293d34 | 3.0 | v1.6.2 | v1.6.2 |
-| 2026.10.17-4295f7ca | 4.0 | v1.8.3 | v1.8.0, v1.8.1, v1.8.2, v1.8.3 |
+| 2026.10.17-4295f7ca | 4.0 | v1.8.3 | v1.8.0, v1.8.1, v1.8.2, v1.8.3, v1.8.4 |
 
 ## Releases
 
@@ -47,6 +47,7 @@ A knowledge-graph release and a package version are used as a pair. The client r
 | v1.8.1 | incompatible (all 51 datasets drift) | incompatible (all 51 datasets drift) | incompatible (all 51 datasets drift) | compatible |
 | v1.8.2 | incompatible (all 51 datasets drift) | incompatible (all 51 datasets drift) | incompatible (all 51 datasets drift) | compatible |
 | v1.8.3 | incompatible (all 51 datasets drift) | incompatible (all 51 datasets drift) | incompatible (all 51 datasets drift) | compatible |
+| v1.8.4 | incompatible (all 51 datasets drift) | incompatible (all 51 datasets drift) | incompatible (all 51 datasets drift) | compatible |
 
 ## How compatibility is decided
 

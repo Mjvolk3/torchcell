@@ -53,8 +53,15 @@ set -u
 
 # Absolute, never SLURM_SUBMIT_DIR: `ssh delta 'sbatch ...'` submits from $HOME.
 PROJECT_ROOT="/scratch/bbub/mjvolk3/torchcell-040"
-DELTA_DATA_ROOT="${DELTA_DATA_ROOT:-/scratch/bbub/mjvolk3/torchcell}"
-DELTA_PY="${DELTA_PY:-/work/hdd/bbub/miniconda3/envs/torchcell/bin/python}"
+# FROM ROUND 11 (2026-10-17) the data root and the interpreter are 040's own. Lustre
+# target 106 (dltawork-OST006a) stopped answering on 2026-10-16, which left about one
+# file in a hundred unreadable in the shared env (5,863 files), the shared data root
+# (1,026) and the old tree (213); any job that touches one hangs to its time limit. The
+# env was rebuilt package for package (33 conda builds, 263 pip pins) into
+# envs/torchcell-r11, and the inputs were copied fresh from GilaHyper into
+# torchcell-040-data. The shared paths are untouched for the other Delta trees.
+DELTA_DATA_ROOT="${DELTA_DATA_ROOT:-/scratch/bbub/mjvolk3/torchcell-040-data}"
+DELTA_PY="${DELTA_PY:-/scratch/bbub/mjvolk3/envs/torchcell-r11/bin/python}"
 # The W&B settings of the Delta trees live in the 031 tree's env file (written at its
 # setup with the Delta roots); the roots below are exported after it so they win.
 DELTA_ENV_FILE="${DELTA_ENV_FILE:-/scratch/bbub/mjvolk3/torchcell-031/.env}"

@@ -27,7 +27,7 @@
 set -u
 
 PROJECT=/scratch/bbub/mjvolk3/torchcell-040
-PY=/work/hdd/bbub/miniconda3/envs/torchcell/bin/python
+PY=/scratch/bbub/mjvolk3/envs/torchcell-r11/bin/python
 EXP=experiments/040-inhibitor-synergy-wetlab
 LOG_DIR=$PROJECT/$EXP/slurm/output
 PROBE_EVERY=${PROBE_EVERY:-600}

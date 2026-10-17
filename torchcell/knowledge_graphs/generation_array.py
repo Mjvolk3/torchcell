@@ -34,14 +34,18 @@ without a marker": ``missing`` prints them and the exact ``sbatch --array=`` per
   an interned Peter 2018 pan-genome genotype of 5.4 MB).
 * **Duplicates.** BioCypher (and ``FastCsvSink``) deduplicate within ONE process;
   across directories content-id nodes recur (genome, environment, media, perturbation,
-  genotype, experiment reference). Node rows: ``--skip-duplicate-nodes=true`` keeps
-  the first row neo4j sees, and the check proves every duplicate id maps to a
-  byte-identical row (a 128-bit id hash and a 64-bit row hash per row, sort-merged per
-  label with numpy). Edge rows: neo4j has no skip for duplicate relationships, so a
-  ``(start, end)`` key that recurs across directories keeps the copy of the lowest
-  index and the later directories' rows are dropped into a rewritten part file under
-  ``<out>/merged/<dir>/``, which the import call references; the dropped rows must be
-  byte-identical to the kept ones. A duplicate that is not byte-identical is read back
+  genotype, experiment reference). A key that recurs across directories, node id or
+  edge ``(start, end)``, keeps the copy of the lowest index and the later directories'
+  rows are dropped into a rewritten part file under ``<out>/merged/<dir>/``, which the
+  import call references; the check proves the dropped rows are byte-identical to the
+  kept ones (a 128-bit key hash and a 64-bit row hash per row, sort-merged per label
+  with numpy). Node rows are dropped too, not left to ``--skip-duplicate-nodes=true``:
+  neo4j counts every skipped duplicate as a bad entry against ``--bad-tolerance``
+  (default 1000) and aborts the import past it ("1063 bad entries were found, which
+  exceeds the set fault tolerance", job 5590 on 2026-10-17, against 22 M duplicate
+  Genotype rows), so the flag stays only as a guard for a key an adapter repeated
+  inside ONE directory (``repeated_in_directory_rows``, kept as the adapter wrote
+  them, expected zero). A duplicate that is not byte-identical is read back
   and reconciled against the identity design of ``torchcell.datamodels.identity``: a
   content id covers composition, value and typed unit, never who stated it, so two
   rows of one id may differ in the NON-IDENTITY fields (``NON_IDENTITY_COLUMNS``, the
@@ -620,7 +624,17 @@ class LabelDuplicates(BaseModel):
     kind: Literal["node", "edge"]
     rows: int
     duplicate_rows: int = Field(
-        description="rows whose key already appeared in a lower-index directory"
+        description=(
+            "rows whose key already appeared in a lower-index directory; every one "
+            "is dropped from a rewritten part"
+        )
+    )
+    repeated_in_directory_rows: int = Field(
+        default=0,
+        description=(
+            "rows whose key already appeared in the SAME directory; kept as the "
+            "adapter wrote them, and for a node label each is one neo4j bad entry"
+        ),
     )
     duplicate_keys: int
     conflicting_keys: int = Field(
@@ -642,7 +656,7 @@ class LabelDuplicates(BaseModel):
     )
     drop_rows: dict[str, list[int]] = Field(
         default_factory=dict,
-        description="edges only: part path -> row numbers (0-based) to drop",
+        description="part path -> row numbers (0-based) to drop from the rewrite",
     )
 
 
@@ -745,20 +759,20 @@ def check_label_duplicates(
     conflicting = multi & (row_min != row_max)
     outcome.duplicate_keys = int(multi.sum())
     outcome.duplicate_rows = int(later.sum())
+    outcome.repeated_in_directory_rows = int((~new_group & ~later).sum())
     outcome.conflicting_keys = int(conflicting.sum())
     conflict_starts = starts[conflicting]
     # Every conflicting key is returned (bounded by MAX_VARIANT_KEYS plus one, so the
     # merge can tell "too many" from "exactly the cap"), because each is read back and
-    # reconciled; the drop list of an edge label is computed whether or not keys
-    # conflict, and the merge uses it only once every conflict reconciled.
+    # reconciled; the drop list is computed whether or not keys conflict, and the
+    # merge uses it only once every conflict reconciled.
     conflicts = [(k0[i], k1[i]) for i in conflict_starts[: MAX_VARIANT_KEYS + 1]]
-    if files.kind == "edge":
-        drop_parts = parts[later]
-        drop_numbers = numbers[later]
-        for part in np.unique(drop_parts):
-            chosen = drop_numbers[drop_parts == part]
-            chosen.sort()
-            outcome.drop_rows[files.parts[int(part)][1]] = chosen.tolist()
+    drop_parts = parts[later]
+    drop_numbers = numbers[later]
+    for part in np.unique(drop_parts):
+        chosen = drop_numbers[drop_parts == part]
+        chosen.sort()
+        outcome.drop_rows[files.parts[int(part)][1]] = chosen.tolist()
     return outcome, conflicts
 
 
@@ -1005,7 +1019,7 @@ class MergeReport(BaseModel):
 
     @property
     def node_duplicates(self) -> dict[str, int]:
-        """Duplicate node rows per label (the rows ``--skip-duplicate-nodes`` skips)."""
+        """Duplicate node rows per label, each dropped from a rewritten part."""
         return {
             name: d.duplicate_rows
             for name, d in self.labels.items()
@@ -1354,14 +1368,20 @@ def main(argv: list[str] | None = None) -> int:
             Path(args.out_dir), order, workers=args.workers, rewrite=not args.no_rewrite
         )
         for name, outcome in report.labels.items():
-            if outcome.duplicate_rows:
+            if outcome.duplicate_rows or outcome.repeated_in_directory_rows:
                 print(
                     f"{name}: {outcome.rows} rows, {outcome.duplicate_rows} duplicate rows "
-                    f"over {outcome.duplicate_keys} keys ({outcome.kind})"
+                    f"over {outcome.duplicate_keys} keys ({outcome.kind}) dropped"
                     + (
                         f", {outcome.variant_keys} keys differ only in non-identity "
                         "fields (lowest-index row imported)"
                         if outcome.variant_keys
+                        else ""
+                    )
+                    + (
+                        f", {outcome.repeated_in_directory_rows} rows repeat a key "
+                        "inside one directory (kept)"
+                        if outcome.repeated_in_directory_rows
                         else ""
                     )
                 )

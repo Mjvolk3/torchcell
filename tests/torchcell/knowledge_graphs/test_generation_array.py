@@ -569,12 +569,17 @@ def test_the_merge_writes_one_call_per_label_header_and_comma_joined_parts(
         f'--nodes="{a}/Experiment-header.csv,{a}/Experiment-part000.csv,{b}/Experiment-part000.csv" '
         in v5
     )
+    # the duplicated genome row and edge row of B were dropped into rewritten parts
+    # under merged/; neo4j counts a skipped duplicate node as a bad entry, so none may
+    # reach it
+    merged_genome_b = (
+        f"{CONTAINER_ROOT}/{MERGED_DIRNAME}/001_BAdapter/Genome-part000.csv"
+    )
     assert (
-        f'--nodes="{a}/Genome-header.csv,{a}/Genome-part000.csv,{b}/Genome-part000.csv" '
+        f'--nodes="{a}/Genome-header.csv,{a}/Genome-part000.csv,{merged_genome_b}" '
         in v5
     )
     assert f'--nodes="{a}/OnlyA-header.csv,{a}/OnlyA-part000.csv" ' in v5
-    # the duplicated edge row of B was dropped into a rewritten part under merged/
     merged_b = (
         f"{CONTAINER_ROOT}/{MERGED_DIRNAME}/001_BAdapter/GenomeMemberOf-part000.csv"
     )
@@ -592,12 +597,20 @@ def test_the_merge_writes_one_call_per_label_header_and_comma_joined_parts(
         tmp_path / MERGED_DIRNAME / "001_BAdapter" / "GenomeMemberOf-part000.csv"
     )
     assert rewritten.read_text() == "g2\t\te3\t'GenomeMemberOf'\n"
+    rewritten_genome = tmp_path / MERGED_DIRNAME / "001_BAdapter" / "Genome-part000.csv"
+    assert rewritten_genome.read_text() == "g2\t'BY4741'\t'Genome'\n"
     assert report.node_duplicates == {"Experiment": 0, "Genome": 1, "OnlyA": 0}
     assert report.edge_duplicates == {"ExperimentMemberOf": 0, "GenomeMemberOf": 1}
     assert report.rewritten == {
+        str(tmp_path / "adapters" / "001_BAdapter" / "Genome-part000.csv"): str(
+            rewritten_genome
+        ),
         str(tmp_path / "adapters" / "001_BAdapter" / "GenomeMemberOf-part000.csv"): str(
             rewritten
-        )
+        ),
+    }
+    assert report.labels["Genome"].drop_rows == {
+        str(tmp_path / "adapters" / "001_BAdapter" / "Genome-part000.csv"): [0]
     }
     assert report.labels["Genome"].duplicate_keys == 1
     assert report.labels["Genome"].rows == 3
@@ -997,7 +1010,27 @@ def test_check_label_duplicates_counts_rows_beyond_the_first_directory(
         outcome.duplicate_rows,
         outcome.conflicting_keys,
     ) == (6, 1, 2, 0)
-    assert conflicts == [] and outcome.drop_rows == {}
+    assert conflicts == []
+    # the later directories' copies of g1 are dropped; A's row is the one imported
+    assert outcome.drop_rows == {
+        str(tmp_path / "adapters" / f"{slot.dirname}" / "G-part000.csv"): [0]
+        for slot in order[1:]
+    }
+    assert outcome.repeated_in_directory_rows == 0
+
+
+def test_a_node_key_repeated_inside_one_directory_is_counted_not_dropped(
+    tmp_path: Path,
+) -> None:
+    """Only cross-directory copies are dropped; an adapter's own repeat is kept and
+    counted, since for a node it is one neo4j bad entry against the 1000 tolerance.
+    """
+    slot = AdapterSlot(index=0, dataset_class="DA", adapter_class="AAdapter")
+    _write_dir(tmp_path, slot, nodes={"G": ["g1\t'x'\t'G'", "g1\t'x'\t'G'"]}, edges={})
+    report = merge_outputs(tmp_path, [slot])
+    outcome = report.labels["G"]
+    assert (outcome.duplicate_rows, outcome.repeated_in_directory_rows) == (0, 1)
+    assert report.rewritten == {}
 
 
 def test_the_missing_command_exits_one_and_prints_the_rerun(

@@ -10,6 +10,10 @@
 # Code, configs and env files cross; notes, paper, images, data, results and job
 # output stay home. The remote tree is job-owned: nothing on the remote machine
 # edits it, and a later sync never reaches a running job that snapshotted it.
+#
+# Top-level excludes are anchored with a leading slash: an unanchored `data/` also
+# matched the PACKAGE directory torchcell/data/, and the first Polaris probe (job
+# 7757497) reported `No module named 'torchcell.data'` for that reason.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -21,14 +25,14 @@ echo "== sync $SRC -> $TC_MACHINE:$TC_TREE =="
 rsync -a --delete --human-readable --stats \
   -e "ssh $TC_SSH_OPTS" \
   --rsync-path="mkdir -p '$TC_TREE' && rsync" \
-  --exclude '.git/' \
-  --exclude '.claude/worktrees/' \
-  --exclude 'notes/' \
-  --exclude 'notes-tex/' \
-  --exclude 'paper/' \
-  --exclude 'data/' \
-  --exclude 'database/data/' \
-  --exclude 'wandb/' \
+  --exclude '/.git/' \
+  --exclude '/.claude/worktrees/' \
+  --exclude '/notes/' \
+  --exclude '/notes-tex/' \
+  --exclude '/paper/' \
+  --exclude '/data/' \
+  --exclude '/database/data/' \
+  --exclude '/wandb/' \
   --exclude '__pycache__/' \
   --exclude '.mypy_cache/' \
   --exclude '.pytest_cache/' \

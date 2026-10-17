@@ -1,0 +1,30 @@
+#!/bin/bash -l
+#PBS -A GenesisHackathonOct26
+#PBS -q debug
+#PBS -l select=1:ngpus=4
+#PBS -l walltime=00:20:00
+#PBS -l filesystems=home:eagle
+#PBS -N 042-pyg-probe-polaris
+#PBS -j oe
+#PBS -o /eagle/GenesisHackathonOct26/mjvolk3/torchcell/experiments/042-hpc-smoke-tests/slurm/output/
+# experiments/042-hpc-smoke-tests/scripts/polaris_pyg_probe.pbs
+# [[experiments.042-hpc-smoke-tests.scripts.polaris_pyg_probe]]
+# CUDA baseline for the PyG and torchcell-model probe.  qsub <this file> on the login node.
+set -euo pipefail
+
+TC_PREFIX=/eagle/GenesisHackathonOct26/mjvolk3
+TC_TREE=$TC_PREFIX/torchcell
+PY=$TC_PREFIX/miniforge3/envs/torchcell/bin/python
+
+export http_proxy=http://proxy.alcf.anl.gov:3128
+export https_proxy=http://proxy.alcf.anl.gov:3128
+export no_proxy=localhost,127.0.0.1,.alcf.anl.gov
+
+cd "$TC_TREE"
+set -a; source .env; set +a
+export PYTHONUNBUFFERED=1 PYTHONPATH="$TC_TREE" PROBE_TRACE=1
+echo "job $PBS_JOBID on $(hostname) at $(date)"
+
+"$PY" experiments/042-hpc-smoke-tests/scripts/pyg_probe.py \
+  --machine polaris \
+  --out "experiments/042-hpc-smoke-tests/results/pyg_probe_polaris_${PBS_JOBID%%.*}.json"

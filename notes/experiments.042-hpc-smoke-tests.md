@@ -91,3 +91,40 @@ Result JSON: `results/smoke_polaris_7757261.json` (copied back from the machine)
 `#PBS -o <dir>/` writes the job output as `<dir>/<jobid>.OU`, not `<jobname>.o<seq>`, so a
 dispatcher reading job output looks for the job id. The GilaHyper validation run (RTX 6000 Ada)
 is [2ix39tqe](https://wandb.ai/zhao-group/torchcell_042_hpc_smoke/runs/2ix39tqe).
+
+## 2026.10.17 - PyG and torchcell-model probe: does PyG run on Aurora's XPU?
+
+The smoke test above trained a plain MLP; it never called a PyG layer or a torchcell model, so
+whether PyG works on Intel XPU was still open. `scripts/pyg_probe.py`
+([[experiments.042-hpc-smoke-tests.scripts.pyg_probe]]) runs 45 named checks and records each
+one; `scripts/{polaris,aurora}_pyg_probe.pbs` run it in `debug`. GilaHyper validation: 45/45.
+
+| machine | job | GPU | PyG core (17) | torch_scatter | torchcell imports (27) | verdict |
+|---|---|---|---|---|---|---|
+| polaris | 7757532 | A100-SXM4-40GB | 17/17 | present | 27/27 | everything runs |
+| aurora | 8938797 | Max 1550, one tile | **17/17** | absent | 2/27 (`act`, `dcell`) | PyG runs; torchcell blocked by one dependency |
+
+PyG on XPU, measured: `torch_geometric.utils.scatter` for sum, mean, max, min, mul with
+gradients; `global_add/mean/max_pool`, `to_dense_batch`, index `softmax`; GCNConv, SAGEConv,
+GATv2Conv, GINConv, TransformerConv forward and backward; a two-type `HeteroConv`; bf16
+autocast. All pass on the pip `torch 2.11.0+xpu` wheel with PyG 2.8.1, no site module loaded.
+
+torchcell on XPU, measured: every one of the 25 failing imports ends in
+`ModuleNotFoundError: No module named 'torch_scatter'`, including modules that never use it
+(`mlp`, `norm`, `protT5`), because `torchcell/models/__init__.py` imports `deep_set`, which does
+`from torch_scatter import scatter_add, scatter_mean` at module top. There is no second root
+cause in the probe's reach. The nine files that import `torch_scatter` directly: `models/
+{deep_set, self_attention_deep_set, linear, dango, cell_graph_transformer,
+equivariant_cell_graph_transformer, hetero_cell_bipartite_dango_gi,
+hetero_cell_bipartite_dango_gi_lazy}.py` and `data/graph_processor.py`.
+
+Hypothesis (untested): replacing those imports with `torch_geometric.utils.scatter`, which has the
+same reduce semantics and already routes to the native ops when `torch_scatter` is absent, makes
+every model importable on Aurora. Whether a full training step then runs on XPU, and at what
+throughput against the A100, is the next measurement; the Lightning XPU accelerator is the other
+missing piece for the Lightning-based trainers. First probe attempts, for the record: Polaris
+7757497 and Aurora 8938786 ran on a tree missing `torchcell/data/` (the unanchored `data/` rsync
+exclude, fixed in `sync_code.sh`), and 8938786 died at `import torchcell.models` before the
+import section was made crash-proof.
+
+Result JSONs: `results/pyg_probe_polaris_7757532.json`, `results/pyg_probe_aurora_8938797.json`.

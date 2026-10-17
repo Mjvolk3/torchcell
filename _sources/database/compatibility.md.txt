@@ -38,6 +38,10 @@ A knowledge-graph release and a package version are used as a pair. The client r
 | v1.7.0 | incompatible (all 51 datasets drift) | incompatible (all 51 datasets drift) | incompatible (all 51 datasets drift) |
 | v1.7.1 | incompatible (all 51 datasets drift) | incompatible (all 51 datasets drift) | incompatible (all 51 datasets drift) |
 | v1.7.2 | incompatible (all 51 datasets drift) | incompatible (all 51 datasets drift) | incompatible (all 51 datasets drift) |
+| v1.7.3 | incompatible (all 51 datasets drift) | incompatible (all 51 datasets drift) | incompatible (all 51 datasets drift) |
+| v1.7.4 | incompatible (all 51 datasets drift) | incompatible (all 51 datasets drift) | incompatible (all 51 datasets drift) |
+| v1.7.5 | incompatible (all 51 datasets drift) | incompatible (all 51 datasets drift) | incompatible (all 51 datasets drift) |
+| v1.8.0 | incompatible (all 51 datasets drift) | incompatible (all 51 datasets drift) | incompatible (all 51 datasets drift) |
 
 ## How compatibility is decided
 

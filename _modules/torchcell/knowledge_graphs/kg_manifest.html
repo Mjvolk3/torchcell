@@ -474,13 +474,20 @@
 <span class="sd">    merged by ``torchcell.knowledge_graphs.generation_array`` (2026-10-15). The</span>
 <span class="sd">    duplicate counts are the rows whose content id recurred across adapter</span>
 <span class="sd">    directories: nodes are skipped by ``--skip-duplicate-nodes`` after the merge proved</span>
-<span class="sd">    them byte-identical, edges were dropped into rewritten part files.</span>
+<span class="sd">    them byte-identical or variants, edges were dropped into rewritten part files. The</span>
+<span class="sd">    variant counts are the keys whose rows differed only in non-identity fields</span>
+<span class="sd">    (``generation_array.NON_IDENTITY_COLUMNS`` and ``NON_IDENTITY_JSON_KEYS``: a</span>
+<span class="sd">    source's provenance, gaps, notes and free-text names on a shared content node);</span>
+<span class="sd">    the lowest-index directory's row is the one the store holds, and the merge report</span>
+<span class="sd">    names every such key.</span>
 <span class="sd">    """</span>
 
     <span class="n">mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"serial"</span><span class="p">,</span> <span class="s2">"array"</span><span class="p">]</span>
     <span class="n">n_adapter_directories</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">node_duplicates</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
     <span class="n">edge_duplicates</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">node_variants</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">edge_variants</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
     <span class="n">rewritten_part_files</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">merge_report</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"path of the merge_report.json the counts came from"</span>
@@ -1221,6 +1228,8 @@
         <span class="n">n_adapter_directories</span><span class="o">=</span><span class="n">report</span><span class="o">.</span><span class="n">n_adapters</span><span class="p">,</span>
         <span class="n">node_duplicates</span><span class="o">=</span><span class="n">report</span><span class="o">.</span><span class="n">node_duplicates</span><span class="p">,</span>
         <span class="n">edge_duplicates</span><span class="o">=</span><span class="n">report</span><span class="o">.</span><span class="n">edge_duplicates</span><span class="p">,</span>
+        <span class="n">node_variants</span><span class="o">=</span><span class="n">report</span><span class="o">.</span><span class="n">node_variants</span><span class="p">,</span>
+        <span class="n">edge_variants</span><span class="o">=</span><span class="n">report</span><span class="o">.</span><span class="n">edge_variants</span><span class="p">,</span>
         <span class="n">rewritten_part_files</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">rewritten</span><span class="p">),</span>
         <span class="n">merge_report</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">merge_report</span><span class="p">),</span>
     <span class="p">)</span>

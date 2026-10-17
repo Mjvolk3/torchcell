@@ -349,9 +349,12 @@ _deploy_local() {  # <release> <pin> <dry>
         echo "dry run: a deploy then points latest$( (( pin )) && echo ' and pinned') at $db and runs ops.sh sync"
         return 0
     fi
-    _cypher system "ALTER ALIAS latest SET DATABASE \`$db\`;"
-    if (( pin )); then _cypher system "ALTER ALIAS pinned SET DATABASE \`$db\`;"; fi
-    echo "latest -> $db$( (( pin )) && echo ' (pinned too)'); the previous database stays for rollback (ALTER ALIAS latest SET DATABASE <name>)"
+    # Neo4j 5 syntax is SET DATABASE TARGET; without TARGET the server answers
+    # "expected 'DRIVER', 'PASSWORD', 'PROPERTIES', 'TARGET' or 'USER'" (job 5713,
+    # 2026-10-17, after the 3.0 restore had already passed its check).
+    _cypher system "ALTER ALIAS latest SET DATABASE TARGET \`$db\`;"
+    if (( pin )); then _cypher system "ALTER ALIAS pinned SET DATABASE TARGET \`$db\`;"; fi
+    echo "latest -> $db$( (( pin )) && echo ' (pinned too)'); the previous database stays for rollback (ALTER ALIAS latest SET DATABASE TARGET <name>)"
     PYTHONWARNINGS=ignore "$PY" -m torchcell.knowledge_graphs.releases --repo "$REPO_ROOT" status --label "$(hostname -s)" 2>/dev/null | grep -vE '^INFO --|DeprecationWarning|^<frozen|^$'
     bash "$REPO_ROOT/scripts/ops.sh" sync
 }

@@ -1,0 +1,30 @@
+{
+  "info": {
+    "machine": "polaris",
+    "hostname": "x3108c0s13b0n0",
+    "job_id": "7757261.polaris-pbs-01.hsn.cm.polaris.alcf.anl.gov",
+    "python": "3.13.16",
+    "platform": "Linux-6.4.0-150700.53.73-default-x86_64-with-glibc2.38",
+    "torch": "2.11.0+cu128",
+    "torch_cuda": "12.8",
+    "torch_geometric": "2.8.1",
+    "lightning": "2.6.6",
+    "wandb": "0.31.0",
+    "torchcell_file": "/eagle/GenesisHackathonOct26/mjvolk3/torchcell/torchcell/__init__.py",
+    "device": "cuda:0",
+    "device_name": "NVIDIA A100-SXM4-40GB",
+    "wandb_mode": "online"
+  },
+  "manual": {
+    "first_loss": 1.2088524103164673,
+    "last_loss": 0.028718989342451096,
+    "steps": 300,
+    "steps_per_s": 57.89598628396625,
+    "scatter_impl": "torch_scatter"
+  },
+  "lightning": {
+    "steps": 100,
+    "last_loss": 0.022308092564344406
+  },
+  "wandb_url": "https://forge.coreweave.com/wandb/zhao-group/torchcell_042_hpc_smoke/runs/1ghwjzac"
+}

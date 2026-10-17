@@ -1,0 +1,32 @@
+#!/bin/bash -l
+#PBS -A GenesisHackathonOct26
+#PBS -q debug
+#PBS -l select=1:ngpus=4
+#PBS -l walltime=00:20:00
+#PBS -l filesystems=home:eagle
+#PBS -N 042-smoke-polaris
+#PBS -j oe
+#PBS -o /eagle/GenesisHackathonOct26/mjvolk3/torchcell/experiments/042-hpc-smoke-tests/slurm/output/
+# experiments/042-hpc-smoke-tests/scripts/polaris_smoke.pbs
+# [[experiments.042-hpc-smoke-tests.scripts.polaris_smoke]]
+# Submit from the Polaris login node:  qsub <this file>   (paths match machines.sh).
+set -euo pipefail
+
+TC_PREFIX=/eagle/GenesisHackathonOct26/mjvolk3
+TC_TREE=$TC_PREFIX/torchcell
+PY=$TC_PREFIX/miniforge3/envs/torchcell/bin/python
+
+# Compute nodes reach the internet only through the ALCF proxy (W&B online needs it).
+export http_proxy=http://proxy.alcf.anl.gov:3128
+export https_proxy=http://proxy.alcf.anl.gov:3128
+export no_proxy=localhost,127.0.0.1,.alcf.anl.gov
+
+cd "$TC_TREE"
+set -a; source .env; set +a
+export PYTHONUNBUFFERED=1 PYTHONPATH="$TC_TREE"
+echo "job $PBS_JOBID on $(hostname) at $(date)"
+nvidia-smi --query-gpu=name,memory.total --format=csv
+
+"$PY" experiments/042-hpc-smoke-tests/scripts/smoke_train.py \
+  --machine polaris \
+  --out "experiments/042-hpc-smoke-tests/results/smoke_polaris_${PBS_JOBID%%.*}.json"

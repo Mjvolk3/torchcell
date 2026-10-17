@@ -1,0 +1,29 @@
+{
+  "info": {
+    "machine": "aurora",
+    "hostname": "x4310c0s0b0n0",
+    "job_id": "8938709.aurora-pbs-0001.hostmgmt.cm.aurora.alcf.anl.gov",
+    "python": "3.13.16",
+    "platform": "Linux-6.4.0-150700.53.78-default-x86_64-with-glibc2.38",
+    "torch": "2.11.0+xpu",
+    "torch_cuda": null,
+    "torch_geometric": "2.8.1",
+    "lightning": "2.6.6",
+    "wandb": "0.31.0",
+    "torchcell_file": "/flare/GenesisHackathonOct26/mjvolk3/torchcell/torchcell/__init__.py",
+    "device": "xpu:0",
+    "device_name": "Intel(R) Data Center GPU Max 1550",
+    "wandb_mode": "online"
+  },
+  "manual": {
+    "first_loss": 15.95250129699707,
+    "last_loss": 0.02565382421016693,
+    "steps": 300,
+    "steps_per_s": 47.09435700823087,
+    "scatter_impl": "torch.index_add_"
+  },
+  "lightning": {
+    "skipped": "no Lightning accelerator for xpu"
+  },
+  "wandb_url": "https://forge.coreweave.com/wandb/zhao-group/torchcell_042_hpc_smoke/runs/5a4n3mri"
+}

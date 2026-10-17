@@ -1,0 +1,36 @@
+#!/bin/bash -l
+#PBS -A GenesisHackathonOct26
+#PBS -q debug
+#PBS -l select=1
+#PBS -l walltime=00:20:00
+#PBS -l filesystems=home:flare
+#PBS -N 042-smoke-aurora
+#PBS -j oe
+#PBS -o /flare/GenesisHackathonOct26/mjvolk3/torchcell/experiments/042-hpc-smoke-tests/slurm/output/
+# experiments/042-hpc-smoke-tests/scripts/aurora_smoke.pbs
+# [[experiments.042-hpc-smoke-tests.scripts.aurora_smoke]]
+# Submit from the Aurora login node:  qsub <this file>   (paths match machines.sh).
+#
+# Our own torch 2.11.0+xpu env, NOT the site `frameworks` module (python 3.12, below
+# torchcell's floor). One tile is exposed so the smoke test runs on a single device.
+set -euo pipefail
+
+TC_PREFIX=/flare/GenesisHackathonOct26/mjvolk3
+TC_TREE=$TC_PREFIX/torchcell
+PY=$TC_PREFIX/miniforge3/envs/torchcell/bin/python
+
+export http_proxy=http://proxy.alcf.anl.gov:3128
+export https_proxy=http://proxy.alcf.anl.gov:3128
+export no_proxy=localhost,127.0.0.1,.alcf.anl.gov
+export ZE_FLAT_DEVICE_HIERARCHY=FLAT
+export ZE_AFFINITY_MASK=0
+
+cd "$TC_TREE"
+set -a; source .env; set +a
+export PYTHONUNBUFFERED=1 PYTHONPATH="$TC_TREE"
+echo "job $PBS_JOBID on $(hostname) at $(date)"
+"$PY" -c "import torch; print('xpu devices', torch.xpu.device_count())"
+
+"$PY" experiments/042-hpc-smoke-tests/scripts/smoke_train.py \
+  --machine aurora \
+  --out "experiments/042-hpc-smoke-tests/results/smoke_aurora_${PBS_JOBID%%.*}.json"

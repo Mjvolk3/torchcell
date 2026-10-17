@@ -1,0 +1,30 @@
+{
+  "info": {
+    "machine": "perlmutter",
+    "hostname": "nid001229",
+    "job_id": "59896274",
+    "python": "3.13.16",
+    "platform": "Linux-6.4.0-150600.23.125_15.0.29-cray_shasta_c-x86_64-with-glibc2.38",
+    "torch": "2.11.0+cu128",
+    "torch_cuda": "12.8",
+    "torch_geometric": "2.8.1",
+    "lightning": "2.6.6",
+    "wandb": "0.31.0",
+    "torchcell_file": "/global/cfs/cdirs/m5429/mjvolk3/torchcell/torchcell/__init__.py",
+    "device": "cuda:0",
+    "device_name": "NVIDIA A100-SXM4-40GB",
+    "wandb_mode": "online"
+  },
+  "manual": {
+    "first_loss": 2.6041765213012695,
+    "last_loss": 0.022562049329280853,
+    "steps": 300,
+    "steps_per_s": 103.53929000398337,
+    "scatter_impl": "torch_scatter"
+  },
+  "lightning": {
+    "steps": 100,
+    "last_loss": 0.0330669991672039
+  },
+  "wandb_url": "https://forge.coreweave.com/wandb/zhao-group/torchcell_042_hpc_smoke/runs/ltt5crz1"
+}

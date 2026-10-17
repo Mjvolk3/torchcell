@@ -103,3 +103,18 @@ Measured on `/db/database/biocypher-out/2026-10-16_13-12-52` (scratch classifica
 What the store loses under this rule is exactly what it lost under the pooled build: the per-source gap note and quote on a shared environment or medium node, which stay in each dataset's LMDB and in the report. Attaching per-source provenance to a shared content node is a representation question for the schema (a per-dataset membership edge property, or a provenance node), recorded here as a follow-up and not decided by the merge.
 
 Run on the real `Environment` and `EnvironmentPerturbation` labels from the fix worktree: 116 and 5 conflicting keys, 116 and 5 variants, 0 refused, 1.4 s and 0.2 s.
+
+### Deep dive on the 130 variant keys (job 5569)
+
+`variant_deep_dive.py` (scratchpad, slurm job 5569, 8 cpus, 64 G, read-only) ran `check_label_duplicates` and `reconcile_conflicts` on the four conflicting labels of `/db/database/biocypher-out/2026-10-16_13-12-52` and grouped every variant by the directory pair and the differing paths. Result file: `/scratch/projects/torchcell/database/slurm/variant_deep_dive_7b56568db.json`. 130 of 130 reconcile, 0 refused.
+
+Four families, all measured on the real rows:
+
+| label | keys | directory pairs | what differs |
+|---|---|---|---|
+| Environment | 116 | Borchert 2024 vs FitnessBrowser putida 86, Borchert 2023 vs 2024 13, Caglar 2017 siblings 5, Lamoureux 2023 siblings 6, Price 2018 vs Wetmore 2015, Costanzo family, Ohya vs Ohnuki, O'Duibhir vs Caudal, Messner vs Boocock, Hillenmeyer vs Parsons, Kemmeren family | `provenance_gaps` on `duration_hours` / `duration_generations` (which paper was looked in, its page, its note), or the medium's `provenance` quotes (the nested `Media.provenance[i]`) |
+| Media | 8 | the SC, YPD liquid, YPD solid, SM, SC minus lysine, DM500 media shared across 2 to 13 datasets | `provenance[i]` quotes (each paper's own sentence naming the medium), one `name` (Hillenmeyer "lysine dropout" vs Parsons "synthetic complete media lacking lysine") |
+| EnvironmentPerturbation | 5 | Shiver 2016 vs Nichols 2011 | `compound_name` case only: acriflavine vs Acriflavine, amoxicillin vs Amoxicillin, ampicillin vs Ampicillin |
+| FitnessPhenotype | 1 | Kuzmin 2018 vs Kuzmin 2020, Choe 2019 | `preferred_id`: `phenotype_<id>` where the fitness 1.0 record is an experiment phenotype vs `fitness phenotype` where it is the reference phenotype |
+
+In every Environment row the identity fields agree (temperature, `duration_hours` null, `duration_generations` null, the same `Media` identity); the rows differ in how each loader documented the absence. Three of the families are the same paper documented differently across sibling loaders (Caglar 072 and 075 carry the duration gap, 074 does not; Costanzo 054 carries a `deferred_pending_source_review` gap with no `looked_in`, 000 and 053 carry none; Lamoureux 104 cites the `time` column, 102 and 103 cite the methods). Those are loader inconsistencies to align later, not source disagreements. The rest are genuinely different papers sharing one physical condition: the 86 Borchert 2024 vs FitnessBrowser keys are the Price 2018 RCH2 and LB media at 30 C with the gap note citing Borchert's release in one and the Fitness Browser deposit in the other.

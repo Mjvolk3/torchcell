@@ -812,6 +812,11 @@ curl -sf http://localhost:7474/browser/ | grep -q 'torchcell-seed.js' \
     || { echo "served Browser page has no torchcell-seed.js tag: is $IMAGE the seeded image?"; exit 1; }
 
 echo "---------------- 5 RECORD + ARCHIVE"
+# The serving container relaunched by the swap ran the same entrypoint chmod, so the
+# merge report and the CSVs the manifest reads are closed again on the host (job 5613
+# died here on 2026-10-17 with Permission denied on merge_report.json, after the swap).
+docker run --rm --entrypoint bash -v "$SERVE_ROOT/biocypher-out":/out "$IMAGE" -c \
+    "chmod 755 /out && chmod -R a+rX /out/$OUT_TS"
 if [ -f "$KG_MANIFEST" ]; then
     mv "$KG_MANIFEST" "$KG_MANIFEST.superseded.$SWAP_TS"
     echo "previous manifest kept at $KG_MANIFEST.superseded.$SWAP_TS"

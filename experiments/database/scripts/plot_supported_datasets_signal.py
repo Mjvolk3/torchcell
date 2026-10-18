@@ -64,7 +64,7 @@ PANEL_W_MM = PANEL_WIDTHS_MM["full"]  # 179 mm -- 51 labeled points need the wid
 # needed 163 mm, still under MAX_HEIGHT_MM (170). The slot placer below (place_labels)
 # replaced adjustText at that height; if it ever reports no collision-free layout, this
 # is the constant to raise.
-PANEL_H_MM = 163.0
+PANEL_H_MM = 170.0  # the Nature ceiling; 70 labeled points need it
 # One marker per category, so the dark repeats (palette 7/8) never rest on color
 # alone. Index order matches the JSON's ``sections`` order.
 MARKERS = ["o", "s", "^", "D", "v", "P", "X", "h"]
@@ -76,7 +76,7 @@ LABEL_PT = 5
 # center and the near edge of the label box; directions are compass slots with a
 # penalty (in points of equivalent radius) so a right-hand slot is preferred over a
 # left-hand one at the same distance, and above/below are the last resort.
-RADII_PT = (3.0, 4.5, 6.0, 8.0, 10.5, 13.5, 17.0, 21.0, 26.0, 32.0, 40.0, 50.0, 62.0)
+RADII_PT = (3.0, 4.5, 6.0, 8.0, 10.5, 13.5, 17.0, 21.0, 26.0, 32.0, 40.0, 50.0, 62.0, 76.0, 92.0, 110.0, 130.0)
 DIRECTIONS = (  # (angle in degrees, penalty); 0 is to the right, 90 is up
     (0, 0.0),
     (180, 1.0),
@@ -96,10 +96,10 @@ LEADER_MIN_PT = 6.0  # a label this far from its marker gets a leader line
 MARKER_RADIUS_PT = 18**0.5 / 2  # scatter s=18 is an area in pt^2
 MARKER_PAD_PT = 1.0
 CROWD_PT = 30.0  # neighborhood half-width used to order the placement
-PLACEMENT_ATTEMPTS = 80  # placement orders tried; the cheapest collision-free one wins
+PLACEMENT_ATTEMPTS = 120  # placement orders tried; the cheapest collision-free one wins
 PLACEMENT_SEED = 0
-MAX_EJECT_AT_ONCE = 3  # a slot blocked by more placed labels than this is not taken
-MAX_EJECTIONS_PER_LABEL = 6  # the cycling guard for the repair
+MAX_EJECT_AT_ONCE = 4  # a slot blocked by more placed labels than this is not taken
+MAX_EJECTIONS_PER_LABEL = 20  # the cycling guard for the repair
 HALO_PAD_EM = 0.12
 # A tight translucent white plate behind each label so the text reads over the grid.
 # Kept translucent: at full strength a plate erases whatever it lands on.
@@ -300,6 +300,18 @@ def _align(angle: float) -> tuple[str, str]:
     )
 
 
+def label_texts(records: list[DatasetSignalRecord]) -> list[str]:
+    """The text each marker is labeled with: the registry name's "Author Year" head,
+    with its parenthetical kept only where two datasets share a head (Costanzo 2016
+    smf/dmf/dmi, Hillenmeyer 2008 het/hom, the De Chiara 2022 stores). Category is
+    already carried by color and marker, so the long descriptive tails only cost room:
+    at 70 labels the full names had no collision-free layout on a 179 x 170 mm panel.
+    """
+    heads = [r.name.split(" (")[0] for r in records]
+    dup = {h for h in heads if heads.count(h) > 1}
+    return [r.name if h in dup else h for r, h in zip(records, heads, strict=True)]
+
+
 def place_labels(
     fig: Figure, ax: Axes, leg: Legend, records: list[DatasetSignalRecord]
 ) -> None:
@@ -325,6 +337,7 @@ def place_labels(
     fp = FontProperties(family=plt.rcParams["font.sans-serif"], size=LABEL_PT)
     halo_pad = HALO_PAD_EM * LABEL_PT * px_per_pt
 
+    texts = label_texts(records)
     axes_box = Box(*ax.get_window_extent(renderer).extents)
     axes_box = Box(axes_box.x0 + 1, axes_box.y0 + 1, axes_box.x1 - 1, axes_box.y1 - 1)
     obstacles = [Box(*leg.get_window_extent(renderer).extents)]
@@ -335,8 +348,8 @@ def place_labels(
     m = (MARKER_RADIUS_PT + MARKER_PAD_PT) * px_per_pt
     marker_boxes = [Box(cx - m, cy - m, cx + m, cy + m) for cx, cy in centers]
     extents = [
-        renderer.get_text_width_height_descent(r.name, fp, ismath=False)
-        for r in records
+        renderer.get_text_width_height_descent(t, fp, ismath=False)
+        for t in texts
     ]
 
     crowd = CROWD_PT * px_per_pt
@@ -506,7 +519,7 @@ def place_labels(
             else None
         )
         ax.annotate(
-            records[i].name,
+            texts[i],
             xy=(records[i].instances, records[i].signal_bytes * BITS_PER_BYTE),
             xytext=(ux * r_pt, uy * r_pt),
             textcoords="offset points",

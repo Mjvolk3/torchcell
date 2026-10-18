@@ -1,8 +1,8 @@
 {
   "data/torchcell/amino_acid_cooper2010#instance": {
-    "bytes": 641890,
-    "key": "1789464048:17432576",
-    "n": 4313
+    "bytes": 657158,
+    "key": "1792143309:18145280",
+    "n": 4382
   },
   "data/torchcell/amino_acid_mulleder2016": {
     "bytes": 913971,
@@ -10,8 +10,8 @@
     "n": 4678
   },
   "data/torchcell/amino_acid_mulleder2016#instance": {
-    "bytes": 1014089,
-    "key": "1789370907:19369984",
+    "bytes": 1431570,
+    "key": "1792143309:38531072",
     "n": 4678
   },
   "data/torchcell/betaxanthin_cachera2023": {
@@ -20,14 +20,19 @@
     "n": 4735
   },
   "data/torchcell/betaxanthin_cachera2023#instance": {
-    "bytes": 278136,
-    "key": "1789370878:19537920",
-    "n": 4719
+    "bytes": 1120148,
+    "key": "1792143589:58691584",
+    "n": 4759
   },
   "data/torchcell/bloom2019#instance": {
-    "bytes": 30782196,
-    "key": "1789280627:1990766592",
+    "bytes": 32225931,
+    "key": "1792142564:1990766592",
     "n": 530100
+  },
+  "data/torchcell/boocock2025#instance": {
+    "bytes": 1110354843,
+    "key": "1792140016:4011266048",
+    "n": 79516
   },
   "data/torchcell/carotenoid_ozaydin2013": {
     "bytes": 21891,
@@ -35,9 +40,9 @@
     "n": 4474
   },
   "data/torchcell/carotenoid_ozaydin2013#instance": {
-    "bytes": 130116,
-    "key": "1789370848:18526208",
-    "n": 4474
+    "bytes": 1166452,
+    "key": "1792143308:75685888",
+    "n": 4607
   },
   "data/torchcell/caudal_pantranscriptome2024": {
     "bytes": 94054411,
@@ -45,24 +50,34 @@
     "n": 943
   },
   "data/torchcell/caudal_pantranscriptome2024#instance": {
-    "bytes": 189462736,
-    "key": "1789377278:771559424",
+    "bytes": 226343899,
+    "key": "1792164754:1072443392",
     "n": 943
   },
+  "data/torchcell/cell_yield_dechiara2022#instance": {
+    "bytes": 2107345,
+    "key": "1792170302:136556544",
+    "n": 36286
+  },
   "data/torchcell/crispr_magic_lian2019#instance": {
-    "bytes": 16277254,
-    "key": "1789280922:974471168",
+    "bytes": 17050593,
+    "key": "1792172523:1103118336",
     "n": 266304
   },
   "data/torchcell/crispri_chemgen_smith2016#instance": {
-    "bytes": 263807,
-    "key": "1789279145:26468352",
+    "bytes": 290502,
+    "key": "1792122328:29200384",
     "n": 7053
   },
   "data/torchcell/crispri_mormino2022#instance": {
-    "bytes": 1546,
-    "key": "1789279046:61440",
+    "bytes": 2338,
+    "key": "1792143866:61440",
     "n": 12
+  },
+  "data/torchcell/crispri_segregant_hale2024#instance": {
+    "bytes": 838370468,
+    "key": "1792156844:32821501952",
+    "n": 8692635
   },
   "data/torchcell/dm_microarray_sameith2015": {
     "bytes": 20893941,
@@ -70,8 +85,8 @@
     "n": 72
   },
   "data/torchcell/dm_microarray_sameith2015#instance": {
-    "bytes": 21278411,
-    "key": "1789377644:45723648",
+    "bytes": 21285480,
+    "key": "1792141637:45723648",
     "n": 72
   },
   "data/torchcell/dmf_costanzo2016": {
@@ -80,8 +95,8 @@
     "n": 20705612
   },
   "data/torchcell/dmf_costanzo2016#instance": {
-    "bytes": 889931487,
-    "key": "1789381157:77821829120",
+    "bytes": 922789908,
+    "key": "1792149315:77970964480",
     "n": 20705612
   },
   "data/torchcell/dmf_kuzmin2018": {
@@ -90,8 +105,8 @@
     "n": 410399
   },
   "data/torchcell/dmf_kuzmin2018#instance": {
-    "bytes": 18859617,
-    "key": "1789963050:1541849088",
+    "bytes": 19534426,
+    "key": "1792159963:1541828608",
     "n": 410571
   },
   "data/torchcell/dmf_kuzmin2020": {
@@ -100,8 +115,8 @@
     "n": 632797
   },
   "data/torchcell/dmf_kuzmin2020#instance": {
-    "bytes": 29174990,
-    "key": "1789963537:2377216000",
+    "bytes": 30145157,
+    "key": "1792161009:2191925248",
     "n": 632998
   },
   "data/torchcell/dmi_costanzo2016": {
@@ -110,8 +125,8 @@
     "n": 20705612
   },
   "data/torchcell/dmi_costanzo2016#instance": {
-    "bytes": 727157150,
-    "key": "1789385805:77586927616",
+    "bytes": 788585599,
+    "key": "1792152133:77821845504",
     "n": 20705612
   },
   "data/torchcell/dmi_kuzmin2018": {
@@ -120,8 +135,8 @@
     "n": 410399
   },
   "data/torchcell/dmi_kuzmin2018#instance": {
-    "bytes": 15854983,
-    "key": "1789376845:1541210112",
+    "bytes": 16990096,
+    "key": "1792160401:1541210112",
     "n": 410399
   },
   "data/torchcell/dmi_kuzmin2020": {
@@ -130,9 +145,14 @@
     "n": 632797
   },
   "data/torchcell/dmi_kuzmin2020#instance": {
-    "bytes": 24426235,
-    "key": "1789376512:2376458240",
+    "bytes": 26375372,
+    "key": "1792161577:2376458240",
     "n": 632797
+  },
+  "data/torchcell/doubling_time_dechiara2022#instance": {
+    "bytes": 2093717,
+    "key": "1792168517:136589312",
+    "n": 36295
   },
   "data/torchcell/env_chemgen_auesukaree2009": {
     "bytes": 1709,
@@ -140,8 +160,8 @@
     "n": 525
   },
   "data/torchcell/env_chemgen_auesukaree2009#instance": {
-    "bytes": 31440,
-    "key": "1789279046:4333568",
+    "bytes": 36999,
+    "key": "1792144008:4333568",
     "n": 525
   },
   "data/torchcell/env_chemgen_costanzo2021": {
@@ -150,9 +170,9 @@
     "n": 61318
   },
   "data/torchcell/env_chemgen_costanzo2021#instance": {
-    "bytes": 12568230,
-    "key": "1789279209:757587968",
-    "n": 61430
+    "bytes": 13383639,
+    "key": "1792172978:760176640",
+    "n": 61640
   },
   "data/torchcell/env_chemgen_hillenmeyer2008_het": {
     "bytes": 44294486,
@@ -160,9 +180,9 @@
     "n": 2921078
   },
   "data/torchcell/env_chemgen_hillenmeyer2008_het#instance": {
-    "bytes": 168920062,
-    "key": "1789319421:10305445888",
-    "n": 2698797
+    "bytes": 234748347,
+    "key": "1792131640:12284391424",
+    "n": 2963683
   },
   "data/torchcell/env_chemgen_hillenmeyer2008_hom": {
     "bytes": 19883160,
@@ -170,9 +190,9 @@
     "n": 1179520
   },
   "data/torchcell/env_chemgen_hillenmeyer2008_hom#instance": {
-    "bytes": 74286651,
-    "key": "1789318561:4215001088",
-    "n": 1088620
+    "bytes": 102535971,
+    "key": "1792130666:4903436288",
+    "n": 1182916
   },
   "data/torchcell/env_chemgen_hoepfner2014": {
     "bytes": 435045213,
@@ -180,9 +200,9 @@
     "n": 29996238
   },
   "data/torchcell/env_chemgen_hoepfner2014#instance": {
-    "bytes": 223472679,
-    "key": "1789319973:12581830656",
-    "n": 3124319
+    "bytes": 283020131,
+    "key": "1792122409:12965527552",
+    "n": 3127814
   },
   "data/torchcell/env_chemgen_mota2024": {
     "bytes": 4038,
@@ -190,14 +210,24 @@
     "n": 1273
   },
   "data/torchcell/env_chemgen_mota2024#instance": {
-    "bytes": 78076,
-    "key": "1789279103:10465280",
-    "n": 1270
+    "bytes": 90735,
+    "key": "1792143797:10625024",
+    "n": 1289
+  },
+  "data/torchcell/env_chemgen_parsons2006#instance": {
+    "bytes": 25357487,
+    "key": "1792130171:1246187520",
+    "n": 300834
+  },
+  "data/torchcell/env_chemgen_piotrowski2017#instance": {
+    "bytes": 185877074,
+    "key": "1792130344:14221000704",
+    "n": 3430343
   },
   "data/torchcell/env_chemgen_smith2006#instance": {
-    "bytes": 170929,
-    "key": "1789279146:47845376",
-    "n": 12747
+    "bytes": 219368,
+    "key": "1792143108:59244544",
+    "n": 14310
   },
   "data/torchcell/env_chemgen_vanacloig2022": {
     "bytes": 6083115,
@@ -205,9 +235,9 @@
     "n": 164115
   },
   "data/torchcell/env_chemgen_vanacloig2022#instance": {
-    "bytes": 10924634,
-    "key": "1789277151:593129472",
-    "n": 143218
+    "bytes": 11874817,
+    "key": "1792172897:680087552",
+    "n": 164205
   },
   "data/torchcell/env_chemgen_wildenhain2015": {
     "bytes": 3508134,
@@ -215,13 +245,18 @@
     "n": 428573
   },
   "data/torchcell/env_chemgen_wildenhain2015#instance": {
-    "bytes": 25383501,
-    "key": "1789279462:1744531456",
-    "n": 428206
+    "bytes": 32876562,
+    "key": "1792122695:1858662400",
+    "n": 448655
+  },
+  "data/torchcell/env_chemgen_yoshikawa2009#instance": {
+    "bytes": 1692929,
+    "key": "1792166512:156639232",
+    "n": 37832
   },
   "data/torchcell/ffa_xue2025#instance": {
-    "bytes": 22620,
-    "key": "1789370638:733184",
+    "bytes": 26390,
+    "key": "1792143727:733184",
     "n": 176
   },
   "data/torchcell/gene_essentiality_sgd": {
@@ -230,23 +265,48 @@
     "n": 1329
   },
   "data/torchcell/gene_essentiality_sgd#instance": {
-    "bytes": 18100,
-    "key": "1789370342:4997120",
+    "bytes": 87682,
+    "key": "1792141672:10952704",
     "n": 1329
   },
+  "data/torchcell/genome_architecture_puddu2019#instance": {
+    "bytes": 1456285,
+    "key": "1792142902:36577280",
+    "n": 8835
+  },
+  "data/torchcell/induction_timecourse_hackett2020#instance": {
+    "bytes": 586668075,
+    "key": "1792141679:1214042112",
+    "n": 1752
+  },
+  "data/torchcell/inhibitor_bioscreen_volk2021#instance": {
+    "bytes": 51882,
+    "key": "1792143239:3670016",
+    "n": 977
+  },
   "data/torchcell/isobutanol_screen_lopez2024#instance": {
-    "bytes": 119175,
-    "key": "1789370943:17092608",
-    "n": 4554
+    "bytes": 111609,
+    "key": "1792143587:18034688",
+    "n": 4805
   },
   "data/torchcell/isobutanol_validated_lopez2024#instance": {
-    "bytes": 9643,
-    "key": "1789370608:843776",
-    "n": 224
+    "bytes": 9518,
+    "key": "1792143727:856064",
+    "n": 227
+  },
+  "data/torchcell/isolate_growth_peter2018#instance": {
+    "bytes": 1949853,
+    "key": "1792167934:140713984",
+    "n": 33985
+  },
+  "data/torchcell/life_cycle_dechiara2022#instance": {
+    "bytes": 167053,
+    "key": "1792166172:12963840",
+    "n": 4039
   },
   "data/torchcell/metabolite_dasilveira2014#instance": {
-    "bytes": 125291,
-    "key": "1789370517:1052672",
+    "bytes": 141707,
+    "key": "1792143587:2035712",
     "n": 127
   },
   "data/torchcell/metabolite_zelezniak2018": {
@@ -255,9 +315,9 @@
     "n": 95
   },
   "data/torchcell/metabolite_zelezniak2018#instance": {
-    "bytes": 38629,
-    "key": "1789370551:454656",
-    "n": 95
+    "bytes": 44241,
+    "key": "1792143799:1069056",
+    "n": 129
   },
   "data/torchcell/microarray_kemmeren2014": {
     "bytes": 395803262,
@@ -265,24 +325,54 @@
     "n": 1484
   },
   "data/torchcell/microarray_kemmeren2014#instance": {
-    "bytes": 396563076,
-    "key": "1789435063:954310656",
+    "bytes": 399664635,
+    "key": "1792142482:942235648",
     "n": 1484
   },
+  "data/torchcell/microarray_score_hu2007#instance": {
+    "bytes": 31647972,
+    "key": "1792162054:56344576",
+    "n": 263
+  },
   "data/torchcell/nadal_ribelles_perturbseq2025#instance": {
-    "bytes": 281046113,
-    "key": "1789371574:1295347712",
+    "bytes": 311167826,
+    "key": "1792138325:1372659712",
     "n": 6188
   },
+  "data/torchcell/nguessan2025#instance": {
+    "bytes": 56288399,
+    "key": "1792166364:183934976",
+    "n": 2951
+  },
   "data/torchcell/organic_acid_yoshida2012#instance": {
-    "bytes": 1757,
-    "key": "1789370580:73728",
+    "bytes": 4279,
+    "key": "1792143448:151552",
     "n": 17
   },
+  "data/torchcell/pooled_promoter_expression_vaishnav2022#instance": {
+    "bytes": 16164614,
+    "key": "1792162129:1169022976",
+    "n": 71158
+  },
+  "data/torchcell/protein_turnover_muenzner2024#instance": {
+    "bytes": 9223384,
+    "key": "1792142938:49139712",
+    "n": 55
+  },
+  "data/torchcell/proteome_messner2021#instance": {
+    "bytes": 1525488,
+    "key": "1792143102:8761344",
+    "n": 70
+  },
   "data/torchcell/proteome_messner2023#instance": {
-    "bytes": 135702644,
-    "key": "1789377353:531910656",
+    "bytes": 144623575,
+    "key": "1792172660:555782144",
     "n": 4699
+  },
+  "data/torchcell/proteome_muenzner2024#instance": {
+    "bytes": 128501170,
+    "key": "1792171008:705208320",
+    "n": 795
   },
   "data/torchcell/proteome_zelezniak2018": {
     "bytes": 2024641,
@@ -290,19 +380,19 @@
     "n": 97
   },
   "data/torchcell/proteome_zelezniak2018#instance": {
-    "bytes": 2072716,
-    "key": "1789370397:5521408",
+    "bytes": 2189641,
+    "key": "1792143798:5746688",
     "n": 97
   },
   "data/torchcell/scmd_ohnuki2018#instance": {
-    "bytes": 5950688,
-    "key": "1789370820:27385856",
+    "bytes": 6178313,
+    "key": "1792143589:27385856",
     "n": 1112
   },
   "data/torchcell/scmd_ohnuki2022#instance": {
-    "bytes": 10971728,
-    "key": "1789370767:40624128",
-    "n": 1979
+    "bytes": 11012376,
+    "key": "1792143450:40685568",
+    "n": 1982
   },
   "data/torchcell/scmd_ohya2005": {
     "bytes": 18784045,
@@ -315,14 +405,14 @@
     "n": 82
   },
   "data/torchcell/sm_microarray_sameith2015#instance": {
-    "bytes": 23092475,
-    "key": "1789377627:52072448",
+    "bytes": 21909251,
+    "key": "1792141638:52072448",
     "n": 82
   },
   "data/torchcell/smf_baryshnikova2010#instance": {
-    "bytes": 218654,
-    "key": "1789279108:22495232",
-    "n": 5993
+    "bytes": 227004,
+    "key": "1792143308:20418560",
+    "n": 6023
   },
   "data/torchcell/smf_costanzo2016": {
     "bytes": 103398,
@@ -330,8 +420,8 @@
     "n": 20484
   },
   "data/torchcell/smf_costanzo2016#instance": {
-    "bytes": 684601,
-    "key": "1789370708:76894208",
+    "bytes": 695749,
+    "key": "1792141129:76894208",
     "n": 20484
   },
   "data/torchcell/smf_kuzmin2018": {
@@ -340,8 +430,8 @@
     "n": 1539
   },
   "data/torchcell/smf_kuzmin2018#instance": {
-    "bytes": 43595,
-    "key": "1789370435:3276800",
+    "bytes": 50284,
+    "key": "1792159715:5742592",
     "n": 1539
   },
   "data/torchcell/smf_kuzmin2020": {
@@ -350,14 +440,24 @@
     "n": 472
   },
   "data/torchcell/smf_kuzmin2020#instance": {
-    "bytes": 11438,
-    "key": "1789370488:1773568",
+    "bytes": 12142,
+    "key": "1792141118:1773568",
     "n": 472
   },
   "data/torchcell/smf_oduibhir2014#instance": {
-    "bytes": 248432,
-    "key": "1789377179:16187392",
+    "bytes": 250613,
+    "key": "1792141118:16187392",
     "n": 1312
+  },
+  "data/torchcell/syn_leth_db_yeast#instance": {
+    "bytes": 950404,
+    "key": "1792141133:57962496",
+    "n": 14000
+  },
+  "data/torchcell/syn_rescue_db_yeast#instance": {
+    "bytes": 477661,
+    "key": "1792141438:29069312",
+    "n": 6948
   },
   "data/torchcell/synth_lethality_yeast_synth_leth_db": {
     "bytes": 15684,
@@ -379,14 +479,19 @@
     "key": "1727875410:13164544",
     "n": 6948
   },
+  "data/torchcell/tf_deletion_pseudobulk_jackson2020#instance": {
+    "bytes": 12149442,
+    "key": "1792142928:40824832",
+    "n": 784
+  },
   "data/torchcell/tmf_kuzmin2018": {
     "bytes": 572199,
     "key": "1727830330:201293824",
     "n": 91111
   },
   "data/torchcell/tmf_kuzmin2018#instance": {
-    "bytes": 4851735,
-    "key": "1789377391:342085632",
+    "bytes": 5173875,
+    "key": "1792160138:316751872",
     "n": 91111
   },
   "data/torchcell/tmf_kuzmin2020": {
@@ -395,8 +500,8 @@
     "n": 301798
   },
   "data/torchcell/tmf_kuzmin2020#instance": {
-    "bytes": 13421064,
-    "key": "1789377114:1133342720",
+    "bytes": 16374825,
+    "key": "1792141338:1045356544",
     "n": 301798
   },
   "data/torchcell/tmi_kuzmin2018": {
@@ -405,8 +510,8 @@
     "n": 91111
   },
   "data/torchcell/tmi_kuzmin2018#instance": {
-    "bytes": 4058077,
-    "key": "1789377467:342085632",
+    "bytes": 4509575,
+    "key": "1792160569:319365120",
     "n": 91111
   },
   "data/torchcell/tmi_kuzmin2020": {
@@ -415,8 +520,8 @@
     "n": 301798
   },
   "data/torchcell/tmi_kuzmin2020#instance": {
-    "bytes": 13436106,
-    "key": "1789377116:1133342720",
+    "bytes": 14717647,
+    "key": "1792161961:1045352448",
     "n": 301798
   },
   "database/data/torchcell/scmd_ohya2005": {

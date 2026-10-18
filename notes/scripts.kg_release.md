@@ -193,3 +193,16 @@ The 4.0 sequence of the 2026.10.13 section ran end to end on 2026-10-17, every s
 The 3.0 restore onto zhao5 (step 0) had been done on 2026-10-13. The estimates of the 2026.10.13 section held: the restore ran at 0.3 GB/s of store and the swap downtime was under a minute. One thing the sequence note did not say: the `kg-ship` slurm job must run from a checkout that still exists when it starts (a job queued from a worktree that the merge queue then removed would have failed), so run it from the primary checkout after the snapshot lands, or set `SNAPSHOT_ROOT` to a tree that stays.
 
 GilaHyper serves both versions too: `deploy 2026.10.06-4b293d34` (job 5713) restored 3.0 beside `torchcell` as `kg-2026-10-06-4b293d34` in 11 min and its check passed (51 datasets, 100,127,516 nodes), then the script's own alias step failed on syntax: Neo4j 5 wants `ALTER ALIAS ... SET DATABASE TARGET`, and the local deploy path had no `TARGET` (the archive-mount path did). The aliases were set by hand (`ALTER ALIAS pinned SET DATABASE TARGET \`kg-2026-10-06-4b293d34\``; `latest` stayed on `torchcell`, which is what was wanted), the script is fixed, and `ops.sh sync` reads both hosts in sync with 4.0 as latest and 3.0 as pinned. Note that the local deploy always points `latest` at what it restored, so a restore meant only as `pinned` needs `latest` re-pointed right after.
+
+## 2026.10.17 - Restored databases are named torchcelldb-<release>
+
+The physical name a deploy gives a restored release was `kg-<release>` (dots as dashes). The prefix exists because Neo4j refuses a database name that does not start with an ASCII letter and a release id starts with its date; measured on the GilaHyper DBMS:
+
+```
+CREATE DATABASE `2026-10-17-test`
+Could not create database '2026-10-17-test'. Database name '2026-10-17-test' is not starting with an ASCII alphabetic character.
+```
+
+The prefix is now `DB_PREFIX` (default `torchcelldb`, so `torchcelldb-2026-10-17-4295f7ca`; `tcdb` was not used because `torchcell/database/tcdb.py` already carries that name), used by `deploy`, `serve-swap`, `serve-point` and `restore-test` (`torchcelldbtest-<release>`). Clients are untouched: they open the aliases `latest`, `pinned` and, on Radiant, `torchcell`, which the same commands retarget. `deploy 2026.10.06-4b293d34 --dry-run` on GilaHyper reports the new name and 1390 G free.
+
+The databases already served keep their `kg-` names until they are redeployed: Neo4j 5 has no rename, so a restore under the new name (Radiant 4.0 took 880 s, 3.0 about 11 min on either host) followed by `serve-point` and a `DROP DATABASE ... DESTROY DATA` of the old one is the route, and GilaHyper's 4.0 is the live rebuild's `torchcell`, not a deploy.

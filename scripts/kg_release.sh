@@ -28,7 +28,8 @@
 #                                   serve an archived release from THIS host's DBMS:
 #                                   pull it from Taiga when $ARCHIVE_ROOT lacks it,
 #                                   verify SHA256SUMS, `neo4j-admin database restore`
-#                                   it into database kg-<release> beside what is served,
+#                                   it into database $DB_PREFIX-<release> (default
+#                                   torchcelldb-<release>) beside what is served,
 #                                   create it, check it against release.json (release
 #                                   id, version, every dataset's experiment count, the
 #                                   node total), retarget the `latest` alias (and
@@ -74,7 +75,7 @@
 #                                   to <name> and start it on its old store
 #   kg_release.sh restore-test <release>
 #                                   the deploy's restore and checks into a throwaway
-#                                   database kgtest-<release>, which is dropped at the
+#                                   database ${DB_PREFIX}test-<release>, which is dropped at the
 #                                   end; aliases untouched. Proves the artifact restores
 #                                   before it is trusted as the sole copy.
 #   kg_release.sh retag <release> <tag>
@@ -135,6 +136,11 @@ TAIGA_DEST="${TAIGA_DEST:-/mnt/zhao5/mjvolk3/projects/torchcell/kg-releases}"
 KEEP_DAYS="${KEEP_DAYS:-60}"
 KG_MANIFEST="${KG_MANIFEST:-/scratch/projects/torchcell/database/kg_manifest.json}"
 IMAGE="${IMAGE:-michaelvolk/tc-neo4j:5.26.28-browser.1}"
+# The physical name a restored release gets: $DB_PREFIX-<release with dots as dashes>.
+# Neo4j refuses a database name that does not start with an ASCII letter, and a release
+# id starts with its date, so a prefix is needed; clients use the aliases (latest, pinned,
+# torchcell on Radiant), the prefix is only what SHOW DATABASES lists.
+DB_PREFIX="${DB_PREFIX:-torchcelldb}"
 CS="cypher-shell -u ${NEO4J_USER:-neo4j} -p ${NEO4J_PASSWORD:-torchcell}"
 SERVE_HOST="${SERVE_HOST:-$TAIGA_HOST}"
 SERVE_CONTAINER="${SERVE_CONTAINER:-tc-neo4j}"
@@ -284,7 +290,7 @@ cmd_purge() {
     done
 }
 
-_db_name() {  # <prefix> <release> -> a Neo4j database name: letters, digits, dashes
+_db_name() {  # <prefix> <release> -> a Neo4j database name: a letter first, then letters, digits, dashes
     printf '%s-%s' "$1" "${2//./-}"
 }
 
@@ -342,7 +348,7 @@ _restore_into() {  # <release> <db> <dry>
 
 _deploy_local() {  # <release> <pin> <dry>
     local release="$1" pin="$2" dry="$3" db
-    db=$(_db_name kg "$release")
+    db=$(_db_name "$DB_PREFIX" "$release")
     _release_dir_ready "$release" "$dry"
     _restore_into "$release" "$db" "$dry"
     if (( dry )); then
@@ -554,7 +560,7 @@ _wait_online() {  # <container> <database>: poll for up to 10 min until it repor
 # database left writable would be a writable public graph.
 _register_restored() {  # <container> <release>
     local c="$1" release="$2" db rows rj query pairing access i
-    db=$(_db_name kg "$release")
+    db=$(_db_name "$DB_PREFIX" "$release")
     rj=$(_archived_release_json "$release")
     query=$(_releases restore-check-query)
     echo "== register $release as $db in $c"
@@ -598,7 +604,7 @@ _point_aliases() {  # <container> <latest db> <pinned db, empty to leave pinned 
 
 _check_serving() {  # <container> <latest release>: default, aliases and the release through `torchcell`
     local c="$1" release="$2" db got
-    db=$(_db_name kg "$release")
+    db=$(_db_name "$DB_PREFIX" "$release")
     _wait_online "$c" "$db"
     got=$(_rcypher "$c" system "SHOW DEFAULT DATABASE YIELD name RETURN name;" | tail -1 | tr -d '"')
     [[ "$got" == "$db" ]] || die "default database is $got, expected $db"
@@ -610,7 +616,7 @@ _check_serving() {  # <container> <latest release>: default, aliases and the rel
 
 _deploy_archive_mount() {  # <release> <pin> <dry>
     local release="$1" pin="$2" dry="$3" db artifact bytes free_gb need_gb online=0 pinned_db=""
-    db=$(_db_name kg "$release")
+    db=$(_db_name "$DB_PREFIX" "$release")
     need_gb="${MIN_FREE_GB:-1000}"
     _work
     echo "== deploy $release from the archive mount on $SERVE_HOST"
@@ -678,8 +684,8 @@ _parse_point_args() {  # --latest <release> [--pinned <release>] [--dry-run] -> 
 cmd_serve_swap() {
     _parse_point_args "$@"
     local latest_db pinned_db stage="$SERVE_CONTAINER-staging" kept problems=0 r db
-    latest_db=$(_db_name kg "$P_LATEST")
-    pinned_db=$(_db_name kg "${P_PINNED:-$P_LATEST}")
+    latest_db=$(_db_name "$DB_PREFIX" "$P_LATEST")
+    pinned_db=$(_db_name "$DB_PREFIX" "${P_PINNED:-$P_LATEST}")
     _work
     _read_serving_config "$SERVE_CONTAINER"
     echo "== serve-swap: $SERVE_CONTAINER on $SERVE_HOST from $CFG_DATA to $SERVE_DATA"
@@ -687,7 +693,7 @@ cmd_serve_swap() {
     [[ "$CFG_STATE" == running ]] || die "$SERVE_CONTAINER is $CFG_STATE"
     if _remote docker inspect "$stage" > /dev/null 2>&1; then die "a container $stage exists; read its logs and remove it first"; fi
     for r in "$P_LATEST" ${P_PINNED:+"$P_PINNED"}; do
-        db=$(_db_name kg "$r")
+        db=$(_db_name "$DB_PREFIX" "$r")
         if _remote test -d "$SERVE_DATA/databases/$db"; then echo "   restored $db"; else echo "   NOT restored: $db (kg_release.sh deploy $r --from-archive-mount)"; problems=1; fi
         if [[ -f "$(_snapshot_path "$r")" ]]; then echo "   snapshot $(_snapshot_path "$r")"; else echo "   NO snapshot $(_snapshot_path "$r")"; problems=1; fi
         if _remote test -f "$TAIGA_DEST/$r/release.json"; then echo "   archive  $TAIGA_DEST/$r/release.json"; else echo "   NO archive $TAIGA_DEST/$r/release.json"; problems=1; fi
@@ -728,8 +734,8 @@ cmd_serve_swap() {
 cmd_serve_point() {
     _parse_point_args "$@"
     local latest_db pinned_db="" names r
-    latest_db=$(_db_name kg "$P_LATEST")
-    if [[ -n "$P_PINNED" ]]; then pinned_db=$(_db_name kg "$P_PINNED"); fi
+    latest_db=$(_db_name "$DB_PREFIX" "$P_LATEST")
+    if [[ -n "$P_PINNED" ]]; then pinned_db=$(_db_name "$DB_PREFIX" "$P_PINNED"); fi
     _read_serving_config "$SERVE_CONTAINER"
     [[ "$CFG_DATA" == "$SERVE_DATA" ]] || die "serve-point acts on the archive-mount DBMS; $SERVE_CONTAINER runs on $CFG_DATA"
     names=$(_rcypher "$SERVE_CONTAINER" system "SHOW DATABASES YIELD name, currentStatus RETURN name, currentStatus;")
@@ -806,7 +812,7 @@ cmd_deploy() {
 cmd_restore_test() {
     local release="${1:-}"
     [[ -n "$release" ]] || { echo "usage: $0 restore-test <release>"; exit 2; }
-    local db; db=$(_db_name kgtest "$release")
+    local db; db=$(_db_name "${DB_PREFIX}test" "$release")
     _release_dir_ready "$release"
     _restore_into "$release" "$db"
     # The throwaway database carries the same KgRelease node as the served one, so a

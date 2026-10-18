@@ -24,6 +24,7 @@ import argparse
 import json
 import os
 from datetime import date
+from multiprocessing import get_context
 from pathlib import Path
 
 import lmdb
@@ -33,7 +34,9 @@ from pydantic import BaseModel
 from torchcell.paper.tables import (
     DatasetSignalRecord,
     SignalCache,
+    _CacheEntry,
     instance_bytes,
+    lmdb_fingerprint,
     phenotype_descriptor,
     read_first_record,
 )
@@ -69,6 +72,7 @@ SECTIONS = [
     "Expression (RNA-seq)",
     "Metabolite",
     "Protein abundance",
+    "Genome architecture",
 ]
 
 CURATED: list[CuratedRow] = [
@@ -302,7 +306,7 @@ CURATED: list[CuratedRow] = [
         genotypes="14,000",
         env="1",
         phenotype="synthetic lethality",
-        data_subpath="data/torchcell/synth_lethality_yeast_synth_leth_db",
+        data_subpath="data/torchcell/syn_leth_db_yeast",
     ),
     CuratedRow(
         section="Viability",
@@ -310,7 +314,7 @@ CURATED: list[CuratedRow] = [
         genotypes="6,948",
         env="1",
         phenotype="synthetic rescue",
-        data_subpath="data/torchcell/synth_rescue_yeast_synth_leth_db",
+        data_subpath="data/torchcell/syn_rescue_db_yeast",
     ),
     CuratedRow(
         section="Morphology",
@@ -480,6 +484,161 @@ CURATED: list[CuratedRow] = [
         phenotype="isobutanol biosensor fold-change (validated)",
         data_subpath="data/torchcell/isobutanol_validated_lopez2024",
     ),
+    # The 19 S. cerevisiae datasets new in KG 4.0 (release 2026.10.17-4295f7ca); the
+    # genotype and environment counts are the ones build_bacteria_datasets_table.py
+    # --organisms scerevisiae measured on 2026-10-14 (dataset_probe_cache.json).
+    CuratedRow(
+        section="Expression (RNA-seq)",
+        name="Boocock 2025 (single-cell eQTL, 4 crosses)",
+        genotypes="79,516",
+        env="2",
+        phenotype="UMI counts per cell (10x 3')",
+        data_subpath="data/torchcell/boocock2025",
+    ),
+    CuratedRow(
+        section="Expression (RNA-seq)",
+        name="N'Guessan 2025 (single-cell BY x RM segregants)",
+        genotypes="2,951",
+        env="1",
+        phenotype="UMI counts per cell (10x 3')",
+        data_subpath="data/torchcell/nguessan2025",
+    ),
+    CuratedRow(
+        section="Expression (RNA-seq)",
+        name="Jackson 2020 (TF-deletion pseudobulk)",
+        genotypes="72",
+        env="11",
+        phenotype="pseudobulk UMI counts",
+        data_subpath="data/torchcell/tf_deletion_pseudobulk_jackson2020",
+    ),
+    CuratedRow(
+        section="Expression (RNA-seq)",
+        name="Vaishnav 2022 (promoter sort-seq)",
+        genotypes="71,158",
+        env="1",
+        phenotype="reporter expression per promoter",
+        data_subpath="data/torchcell/pooled_promoter_expression_vaishnav2022",
+    ),
+    CuratedRow(
+        section="Expression (microarray)",
+        name="Hackett 2020 (IDEA induction time courses)",
+        genotypes="214",
+        env="31",
+        phenotype="mRNA log2 (cleaned) time course",
+        data_subpath="data/torchcell/induction_timecourse_hackett2020",
+    ),
+    CuratedRow(
+        section="Expression (microarray)",
+        name="Hu 2007 (TF-deletion error-model scores)",
+        genotypes="263",
+        env="1",
+        phenotype="mRNA expression score (X)",
+        data_subpath="data/torchcell/microarray_score_hu2007",
+    ),
+    CuratedRow(
+        section="Protein abundance",
+        name="Muenzner 2024 (natural-isolate proteomes)",
+        genotypes="795",
+        env="1",
+        phenotype="protein abundance (SWATH-MS)",
+        data_subpath="data/torchcell/proteome_muenzner2024",
+    ),
+    CuratedRow(
+        section="Protein abundance",
+        name="Muenzner 2024 (protein turnover)",
+        genotypes="55",
+        env="1",
+        phenotype="protein degradation rate (dynamic SILAC)",
+        data_subpath="data/torchcell/protein_turnover_muenzner2024",
+    ),
+    CuratedRow(
+        section="Protein abundance",
+        name="Messner 2021 (drug-response proteomes)",
+        genotypes="1",
+        env="18",
+        phenotype="protein abundance (Scanning SWATH)",
+        data_subpath="data/torchcell/proteome_messner2021",
+    ),
+    CuratedRow(
+        section="Genome architecture",
+        name="Puddu 2019 (YKO genome architecture)",
+        genotypes="4,550",
+        env="1",
+        phenotype="copy number of named loci",
+        data_subpath="data/torchcell/genome_architecture_puddu2019",
+    ),
+    CuratedRow(
+        section="Environmental / chemogenomic",
+        name="Hale 2024 (CRISPRi x segregants)",
+        genotypes="895,494",
+        env="2",
+        phenotype="lineage fitness per guide",
+        data_subpath="data/torchcell/crispri_segregant_hale2024",
+    ),
+    CuratedRow(
+        section="Environmental / chemogenomic",
+        name="Piotrowski 2017 (MOSAIC chemical genetics)",
+        genotypes="289",
+        env="11,949",
+        phenotype="chemical-genetic z-score",
+        data_subpath="data/torchcell/env_chemgen_piotrowski2017",
+    ),
+    CuratedRow(
+        section="Environmental / chemogenomic",
+        name="Parsons 2006 (chemical-genetic profiles)",
+        genotypes="4,111",
+        env="82",
+        phenotype="growth response (barcode pool)",
+        data_subpath="data/torchcell/env_chemgen_parsons2006",
+    ),
+    CuratedRow(
+        section="Environmental / chemogenomic",
+        name="Yoshikawa 2009 (ethanol and stress screen)",
+        genotypes="4,729",
+        env="4",
+        phenotype="growth response (barcode pool)",
+        data_subpath="data/torchcell/env_chemgen_yoshikawa2009",
+    ),
+    CuratedRow(
+        section="Environmental / chemogenomic",
+        name="Peter 2018 (1,011 isolates, 35 conditions)",
+        genotypes="971",
+        env="35",
+        phenotype="colony growth (end point)",
+        data_subpath="data/torchcell/isolate_growth_peter2018",
+    ),
+    CuratedRow(
+        section="Environmental / chemogenomic",
+        name="De Chiara 2022 (doubling time)",
+        genotypes="906",
+        env="43",
+        phenotype="doubling time",
+        data_subpath="data/torchcell/doubling_time_dechiara2022",
+    ),
+    CuratedRow(
+        section="Environmental / chemogenomic",
+        name="De Chiara 2022 (cell yield)",
+        genotypes="906",
+        env="43",
+        phenotype="cell yield",
+        data_subpath="data/torchcell/cell_yield_dechiara2022",
+    ),
+    CuratedRow(
+        section="Environmental / chemogenomic",
+        name="De Chiara 2022 (life cycle)",
+        genotypes="905",
+        env="5",
+        phenotype="sporulation and chronological life span",
+        data_subpath="data/torchcell/life_cycle_dechiara2022",
+    ),
+    CuratedRow(
+        section="Environmental / chemogenomic",
+        name="Volk 2021 (Bioscreen inhibitors, private)",
+        genotypes="1",
+        env="977",
+        phenotype="Bioscreen growth under inhibitors",
+        data_subpath="data/torchcell/inhibitor_bioscreen_volk2021",
+    ),
 ]
 
 # Datasets in scope but not yet built (no LMDB) -> no signal.
@@ -506,6 +665,51 @@ def entry_count(lmdb_dir: Path) -> int:
         env.close()
 
 
+def _scan(job: tuple[str, str, str]) -> tuple[str, str, int, int]:
+    """Pool worker: ``(cache_id, lmdb_dir, label) -> (cache_id, fingerprint, n, bytes)``."""
+    from torchcell.paper.tables import stream_gzip_signal
+
+    cache_id, d, label = job
+    n, nbytes = stream_gzip_signal(d, extract=instance_bytes, label=label)
+    return cache_id, lmdb_fingerprint(d), n, nbytes
+
+
+def _prefill_cache(
+    cache: SignalCache, data_root: str, max_gb: float | None, workers: int
+) -> None:
+    """Scan every store the cache misses in a process pool, largest first, and persist
+    each result as it lands, so the serial pass hits the cache for all of them and a
+    killed run resumes where it stopped."""
+    pending: list[tuple[float, tuple[str, str, str]]] = []
+    for r in CURATED:
+        d = lmdb_dir(r, data_root)
+        if d is None:
+            continue
+        size_gb = (d / "data.mdb").stat().st_size / 1e9
+        if max_gb is not None and size_gb > max_gb:
+            continue
+        cache_id = f"{r.data_subpath}#{SIGNAL_VARIANT}"
+        hit = cache.entries.get(cache_id)
+        if hit is not None and hit.key == lmdb_fingerprint(d):
+            continue
+        pending.append((size_gb, (cache_id, str(d), r.name)))
+    pending.sort(key=lambda t: -t[0])
+    print(
+        f"signal scan: {len(pending)} stores to scan, {sum(g for g, _ in pending):.1f} GB, "
+        f"{workers} workers",
+        flush=True,
+    )
+    if not pending:
+        return
+    with get_context("fork").Pool(processes=workers) as pool:
+        for cache_id, fp, n, nbytes in pool.imap_unordered(
+            _scan, [j for _, j in pending]
+        ):
+            cache.entries[cache_id] = _CacheEntry(key=fp, n=n, bytes=nbytes)
+            cache.save()
+            print(f"  scanned {cache_id}: n={n:,} signal={nbytes:,}B", flush=True)
+
+
 def main() -> None:
     """Scan LMDBs and write the raw-data JSON under a dated pre-build dir."""
     ap = argparse.ArgumentParser(description=__doc__)
@@ -518,6 +722,12 @@ def main() -> None:
     ap.add_argument(
         "--no-cache", action="store_true", help="Ignore the signal cache; recompute."
     )
+    ap.add_argument(
+        "--workers",
+        type=int,
+        default=1,
+        help="processes scanning LMDBs in parallel (largest first); 1 keeps the serial pass",
+    )
     args = ap.parse_args()
 
     load_dotenv()
@@ -526,6 +736,8 @@ def main() -> None:
         SignalCache(path=CACHE_PATH) if args.no_cache else SignalCache.load(CACHE_PATH)
     )
 
+    if args.workers > 1:
+        _prefill_cache(cache, data_root, args.max_gb, args.workers)
     records: list[DatasetSignalRecord] = []
     for r in CURATED:
         d = lmdb_dir(r, data_root)

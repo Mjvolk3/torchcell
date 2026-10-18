@@ -23,6 +23,7 @@ Run from the repo root (defaults to the newest pre-build snapshot):
 from __future__ import annotations
 
 import argparse
+from datetime import date
 import json
 import math
 import os
@@ -519,6 +520,18 @@ def place_labels(
         )
 
 
+def _release(release_id: str | None) -> dict:
+    """The committed release snapshot the figure is stamped with: KG version, release
+    id and the paired torchcell tag. Newest snapshot by name when none is given."""
+    releases = REPO / "database" / "releases"
+    if release_id is None:
+        names = sorted(
+            p.stem for p in releases.glob("*.json") if not p.name.endswith(".closures.json")
+        )
+        release_id = names[-1]
+    return json.loads((releases / f"{release_id}.json").read_text())
+
+
 def main() -> None:
     """Draw the instances-vs-signal scatter and save PNG + true-size SVG."""
     ap = argparse.ArgumentParser(description=__doc__)
@@ -527,6 +540,12 @@ def main() -> None:
         type=Path,
         default=None,
         help="supported_datasets.json (default: newest)",
+    )
+    ap.add_argument(
+        "--release",
+        default=None,
+        help="KG release id the figure is stamped with (default: newest committed snapshot "
+        "under database/releases)",
     )
     args = ap.parse_args()
     load_dotenv()
@@ -565,8 +584,10 @@ def main() -> None:
     ax.set_yscale("log")
     ax.set_xlabel("Instances (dataset length)")
     ax.set_ylabel("Signal (gzip, bits)")
+    release = _release(args.release)
     ax.set_title(
-        f"Training signal vs scale — {payload['status']} ({payload['date']})",
+        f"S. cerevisiae datasets in KG {release['version']}: release {release['release']}, "
+        f"torchcell {release['torchcell_tag']}; signal probed {payload['date']}",
         loc="left",
         color=INK,
     )
@@ -597,11 +618,21 @@ def main() -> None:
 
     out_dir = osp.join(os.environ["ASSET_IMAGES_DIR"], "database")
     os.makedirs(out_dir, exist_ok=True)
+    fig.text(
+        0.995,
+        0.004,
+        f"{SCRIPT.relative_to(REPO)}  {date.today().isoformat()}",
+        ha="right",
+        va="bottom",
+        fontsize=5,
+        color="#666666",
+    )
     stem = osp.join(out_dir, "supported-datasets-instances-vs-signal")
     fig.savefig(f"{stem}.png", dpi=300, facecolor="white")
     savefig_true_size_svg(fig, f"{stem}.svg", facecolor="white")
+    fig.savefig(f"{stem}.pdf", facecolor="white")
     plt.close(fig)
-    print(f"Wrote {stem}.png + .svg  ({len(records)} datasets)")
+    print(f"Wrote {stem}.png + .svg + .pdf  ({len(records)} datasets)")
 
 
 if __name__ == "__main__":

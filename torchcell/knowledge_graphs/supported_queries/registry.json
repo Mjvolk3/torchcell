@@ -50,6 +50,29 @@
       "docs_page": null
     },
     {
+      "id": "expression_proteome_morphology_043",
+      "title": "Expression, proteome and CalMorph morphology over 15 KG 4.0 datasets (experiment 043)",
+      "cql_path": "queries/expression_proteome_morphology_043.cql",
+      "converter": null,
+      "phenotype_classes": [
+        "CalMorphPhenotype",
+        "MicroarrayExpressionPhenotype",
+        "MicroarrayExpressionScorePhenotype",
+        "PooledSortSeqExpressionPhenotype",
+        "ProteinAbundancePhenotype",
+        "ProteinTurnoverPhenotype",
+        "PseudobulkExpressionPhenotype",
+        "RNASeqExpressionPhenotype",
+        "SingleCellExpressionPhenotype"
+      ],
+      "status": "supported",
+      "since_kg_version": "4.0",
+      "deprecated_in": null,
+      "validated_release": "2026.10.17-4295f7ca",
+      "dataset_composite": "1bbf284e9d159ce8eb8c5fb0355673cf4a2f38dff27742205fa9d35007c15997",
+      "docs_page": null
+    },
+    {
       "id": "solid_growth_025",
       "title": "Every solid-medium growth record (fitness, interactions, essentiality, synthetic lethality)",
       "cql_path": "queries/solid_growth_025.cql",

@@ -83,7 +83,7 @@ from mixture_rules import monotone_alive  # noqa: E402
 
 from torchcell.timestamp import timestamp  # noqa: E402
 from torchcell.utils import (
-    ACS_BOND_PT,
+    NATURE_BOND_PT,
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
     PLOT_PALETTE_FILL,
@@ -98,13 +98,14 @@ from torchcell.utils import (
 load_dotenv()
 apply_paper_style()
 # Real LaTeX for the equations of the model panel only (``usetex=True`` per text
-# artist): Helvetica through helvet and sansmath, so a formula set by LaTeX sits in the
-# same sans face as the Arial labels around it. matplotlib wraps usetex text in
-# ``\rmfamily`` when ``font.family`` is a face it does not know (Arial), so the ROMAN
-# default is what has to be Helvetica. Everything else stays Arial mathtext.
+# artist): the words in Helvetica through helvet, so they sit with the Arial labels
+# around them, and the mathematics in LaTeX's own Computer Modern math font, so an
+# equation reads as LaTeX (owner, 2026-10-19: under sansmath it looked like Arial
+# mathtext). matplotlib wraps usetex text in ``\rmfamily`` when ``font.family`` is a
+# face it does not know (Arial), so the ROMAN default is what has to be Helvetica.
+# Everything else on the sheets stays Arial mathtext.
 plt.rcParams["text.latex.preamble"] = (
-    r"\usepackage{amsmath}\usepackage{helvet}\usepackage{sansmath}\sansmath"
-    r"\renewcommand{\rmdefault}{phv}"
+    r"\usepackage{amsmath}\usepackage{helvet}\renewcommand{\rmdefault}{phv}"
 )
 #: the cell graph transformer's gene table, one token per gene (train_mixture.py)
 GENE_TOKENS = 6607
@@ -1168,10 +1169,11 @@ def tanimoto_counts(a: NDArray[np.float32], b: NDArray[np.float32]) -> float:
     return float(np.minimum(a, b).sum() / np.maximum(a, b).sum())
 
 
-#: the ACS bond length the sheet's structures are drawn at: 0.6 of the standard's
-#: 0.381 cm, so ten structures fit the data row (owner, 2026-10-19: smaller
-#: molecules, and the Vanacloig neighbors back)
-SHEET_BOND_PT = 0.5 * ACS_BOND_PT
+#: the bond length the sheet's structures are drawn at: half of Nature's stylesheet
+#: bond of 0.381 cm, so twelve structures fit the data row (owner, 2026-10-19: smaller
+#: molecules, and the Vanacloig neighbors back); labels and lines stay at the
+#: stylesheet's 6 pt and 0.6 pt
+SHEET_BOND_PT = 0.45 * NATURE_BOND_PT
 
 
 def nearest_vanacloig(R: Reads) -> dict[str, tuple[str, float]]:
@@ -1193,13 +1195,12 @@ def nearest_vanacloig(R: Reads) -> dict[str, tuple[str, float]]:
 
 
 def draw_molecules(ax: Any, R: Reads) -> None:
-    """Panel a: the six inhibitors and the nearest Vanacloig compound of each one no
-    screen holds, five rows by two columns at 0.6 of the ACS bond length.
-
-    Row one is furfural and 5-HMF, the two inhibitors Vanacloig 2022 itself profiles,
-    on the measured-value field; rows two to five put each of the other four beside
-    the Vanacloig compound nearest it by FCFP4 count Tanimoto, that column on the
-    field, the similarity after the neighbor's name. Every structure is drawn by
+    """Panel a: this study's six inhibitors in one column and, beside each, what
+    Vanacloig 2022 holds for it: the compound itself for furfural and 5-HMF, which the
+    screen profiles, and for the other four the profiled compound nearest it by FCFP4
+    count Tanimoto, with the similarity after its name. The Vanacloig column sits on
+    the measured-value field. Six rows by two columns at half the ACS bond length
+    (owner, 2026-10-19: the six must read as six). Every structure is drawn by
     ``torchcell.utils.acs_structure`` at a fixed bond length, so the grid is laid out
     from the structures' own widths and heights in points and nothing scales with the
     axes; the structures are kept out of the layout engine so an overhang cannot
@@ -1208,20 +1209,16 @@ def draw_molecules(ax: Any, R: Reads) -> None:
     blank(ax, 100, 50)
     fits = {ab: R.fit("ex21", ab) for ab in INHIB}
     near = nearest_vanacloig(R)
-    held = sorted(
-        {LONG_TO_ABBR[n] for n in R.overlap.inhibitor.unique()}, key=INHIB.index
-    )
-    assert held == ["FF", "HMF"], held
-    others = [ab for ab in INHIB if ab not in held]
-    grid: list[list[tuple[str, str]]] = [[("inh", "FF"), ("inh", "HMF")]]
-    grid += [[("inh", ab), ("nbr", near[ab][0])] for ab in others]
-    smiles = {
-        key: R.smiles[INHIB_LONG[key]] if kind == "inh" else R.smiles[key]
-        for row in grid
-        for kind, key in row
-    }
+    held = {LONG_TO_ABBR[n] for n in R.overlap.inhibitor.unique()}
+    assert held == {"FF", "HMF"}, held
+    # one row per inhibitor: (inhibitor, the nearest other Vanacloig compound); a dot
+    # before the name marks the two the screen profiles itself (owner, 2026-10-19:
+    # show more of Vanacloig's molecules)
+    grid = [(ab, near[ab][0]) for ab in INHIB]
+    smiles = {INHIB_LONG[ab]: R.smiles[INHIB_LONG[ab]] for ab, _ in grid}
+    smiles.update({nbr: R.smiles[nbr] for _, nbr in grid})
     size = {
-        k: acs_structure_svg(s, bond_pt=SHEET_BOND_PT)[1:] for k, s in smiles.items()
+        k: acs_structure_svg(v, bond_pt=SHEET_BOND_PT)[1:] for k, v in smiles.items()
     }
     title(ax, "the inhibitors (host IC50, g/L)")
     fig = ax.figure.get_figure(root=True)
@@ -1232,33 +1229,37 @@ def draw_molecules(ax: Any, R: Reads) -> None:
     num("panelAWidthMm", round(axes_w_pt / 72.0 * 25.4, 1))
     num("panelAHeightMm", round(axes_h_pt / 72.0 * 25.4, 1))
     name_pt, gap_x, gap_y, header_pt, pad = 4.6, 6.0, 1.0, 5.0, 2.0
-    col_w = [max(size[row[j][1]][0] for row in grid) for j in range(2)]
-    row_h = [max(size[key][1] for _kind, key in row) + name_pt for row in grid]
+    col_w = [
+        max(size[INHIB_LONG[ab]][0] for ab, _ in grid),
+        max(size[nbr][0] for _, nbr in grid),
+    ]
+    row_h = [max(size[INHIB_LONG[ab]][1], size[nbr][1]) + name_pt for ab, nbr in grid]
     total_w = sum(col_w) + gap_x
-    total_h = sum(row_h) + (len(grid) - 1) * gap_y + 2 * header_pt
-    left0 = (axes_w_pt - total_w) / 2.0
+    total_h = sum(row_h) + (len(grid) - 1) * gap_y + header_pt
+    # the field's padding is inside the axes too, so the grid and its field are
+    # centered together and the field cannot run past the axes into panel b
+    left0 = (axes_w_pt - total_w - 2 * pad) / 2.0 + pad
     top = (axes_h_pt + total_h) / 2.0
     x_col = [left0, left0 + col_w[0] + gap_x]
-
-    def field(x0: float, y0: float, w: float, h: float, head: str) -> None:
-        patch = ax.add_patch(
-            FancyBboxPatch(
-                (x0 / axes_w_pt, y0 / axes_h_pt),
-                w / axes_w_pt,
-                h / axes_h_pt,
-                boxstyle=f"round,pad=0.0,rounding_size={3.0 / axes_w_pt}",
-                mutation_aspect=axes_w_pt / axes_h_pt,
-                transform=ax.transAxes,
-                facecolor=SRC_FILL["measured"],
-                edgecolor="none",
-                zorder=0,
-            )
+    field = ax.add_patch(
+        FancyBboxPatch(
+            ((x_col[1] - pad) / axes_w_pt, (top - total_h - pad) / axes_h_pt),
+            (col_w[1] + 2 * pad) / axes_w_pt,
+            (total_h + 2 * pad) / axes_h_pt,
+            boxstyle=f"round,pad=0.0,rounding_size={3.0 / axes_w_pt}",
+            mutation_aspect=axes_w_pt / axes_h_pt,
+            transform=ax.transAxes,
+            facecolor=SRC_FILL["measured"],
+            edgecolor="none",
+            zorder=0,
         )
-        patch.set_in_layout(False)
-        patch.set_clip_on(False)
+    )
+    field.set_in_layout(False)
+    field.set_clip_on(False)
+    for j, head in enumerate(("this study", "nearest in Vanacloig 2022")):
         t = ax.text(
-            (x0 + w / 2) / axes_w_pt,
-            (y0 + h - 0.8) / axes_h_pt,
+            (x_col[j] + col_w[j] / 2) / axes_w_pt,
+            (top - 0.8) / axes_h_pt,
             head,
             transform=ax.transAxes,
             fontsize=4.2,
@@ -1267,32 +1268,18 @@ def draw_molecules(ax: Any, R: Reads) -> None:
             style="italic",
         )
         t.set_in_layout(False)
-
-    # row one's field spans both columns: these two are profiled by Vanacloig
-    y_row1_bottom = top - header_pt - row_h[0]
-    field(
-        left0 - pad,
-        y_row1_bottom - pad,
-        total_w + 2 * pad,
-        row_h[0] + header_pt + pad,
-        "in Vanacloig 2022",
-    )
-    # the neighbor column's field, rows two to five
-    y_rest_top = y_row1_bottom - gap_y - 1.5
-    y_rest_bottom = top - total_h
-    field(
-        x_col[1] - pad,
-        y_rest_bottom - pad,
-        col_w[1] + 2 * pad,
-        y_rest_top - y_rest_bottom + 2 * pad,
-        "nearest in Vanacloig",
-    )
     y = top - header_pt
-    for r, (row, h) in enumerate(zip(grid, row_h, strict=True)):
-        if r == 1:
-            y -= header_pt + 1.5  # the second field's header
+    for (ab, nbr), h in zip(grid, row_h, strict=True):
         band = h - name_pt
-        for j, (kind, key) in enumerate(row):
+        cells = [
+            (
+                INHIB_LONG[ab],
+                f"{'● ' if ab in held else ''}{INHIB_NAME[ab]}, "
+                f"{float(fits[ab].ic50_g_per_l):.2g}",
+            ),
+            (nbr, f"{nbr}, {near[ab][1]:.2f}"),
+        ]
+        for j, (key, label) in enumerate(cells):
             cx = (x_col[j] + col_w[j] / 2.0) / axes_w_pt
             box_, _w, _h = acs_structure(
                 ax,
@@ -1303,10 +1290,6 @@ def draw_molecules(ax: Any, R: Reads) -> None:
                 bond_pt=SHEET_BOND_PT,
             )
             box_.set_in_layout(False)
-            if kind == "inh":
-                label = f"{INHIB_NAME[key]}, {float(fits[key].ic50_g_per_l):.2g}"
-            else:
-                label = f"{key}, {near[row[0][1]][1]:.2f}"
             t = ax.annotate(
                 label,
                 (cx, y / axes_h_pt),
@@ -1348,7 +1331,7 @@ SOURCE_TITLE = {
 #: run ids (ex21, ex23, ex26 to ex28) staying in the source table, the script and the
 #: experiment note as the internal record (owner, 2026-10-18)
 HOST_TITLE = {
-    "host_anchor": "public IC30 doses",
+    "host_anchor": "IC30 anchors (screens)",
     "host_ex21": "this study: titration",
     "host_ex23": "this study: combinations",
     "host_isobole": "this study: isobole grids",
@@ -1363,7 +1346,7 @@ GENOTYPE = {
     "hoepfner_hop": "homozygous deletions",
     "hillenmeyer_het": "heterozygous deletions",
     "wildenhain": "haploid deletions",
-    "host_anchor": "wild type, asserted",
+    "host_anchor": "wild type, 0.70 asserted",
     "host_ex21": "wild type (bAID host)",
     "host_ex23": "wild type (bAID host)",
     "host_isobole": "wild type (bAID host)",
@@ -1371,15 +1354,17 @@ GENOTYPE = {
 #: row position of each source on the two data panels, which share it: the four
 #: gene-level screens on top, a gap, then the host records by split
 SOURCE_Y = {
-    "vanacloig": 8.0,
-    "hoepfner_hop": 7.0,
-    "hillenmeyer_het": 6.0,
-    "wildenhain": 5.0,
+    "vanacloig": 7.0,
+    "hoepfner_hop": 6.0,
+    "hillenmeyer_het": 5.0,
+    "wildenhain": 4.0,
     "host_anchor": 3.0,
     "host_ex21": 2.0,
     "host_ex23": 1.0,
     "host_isobole": 0.0,
 }
+#: the rule between the screens and the host records on both halves of panel b
+SOURCE_RULE_Y = 3.5
 #: a source's label, as the panel names it (``source_labels.py`` states the formula)
 LABEL_SHORT = {
     "vanacloig": "log2 ratio",
@@ -1421,7 +1406,7 @@ def draw_sources(ax: Any, R: Reads) -> None:
     for split in ["host_anchor", "host_ex21", "host_ex23", "host_isobole"]:
         r = c.loc[split]
         if split == "host_anchor":
-            detail = f"{int(r.n_compounds)} compounds\nfitness asserted"
+            detail = f"{int(r.n_compounds)} compounds\nat the screen's IC30"
             n = int(r.n_conditions)
         else:
             detail = f"{int(r.n_compounds)} inhibitors\n{CULTURE['host']}"
@@ -1459,7 +1444,8 @@ def draw_sources(ax: Any, R: Reads) -> None:
         fontsize=3.9,
         linespacing=1.05,
     )
-    ax.set_ylim(-0.6, 8.6)
+    ax.set_ylim(-0.6, 7.6)
+    ax.axhline(SOURCE_RULE_Y, color="#AAAAAA", linewidth=0.4, zorder=1)
     ax.set_xscale("log")
     ax.set_xlim(30, 1e14)
     ax.set_xticks([1e2, 1e5, 1e8, 1e11])
@@ -1583,7 +1569,7 @@ def draw_label_shapes(ax: Any, R: Reads) -> None:
                     zorder=4,
                 )
                 ax.text(x + 0.05, fy(yi, v), text, fontsize=3.9, ha=ha, va="center")
-            label = "asserted, not measured"
+            label = "asserted by the definition of IC30"
         elif src == "host_ex21":
             ex21 = R.wells[R.wells.run == "ex21"]
             for ab in INHIB:
@@ -1685,9 +1671,7 @@ def draw_label_shapes(ax: Any, R: Reads) -> None:
                 linewidth=0.4,
                 zorder=3,
             )
-        ax.text(
-            0.5, yi + 0.36, label, fontsize=4.0, ha="center", va="center", color=GRAY
-        )
+        ax.text(0.5, yi + 0.36, label, fontsize=4.0, ha="center", va="center")
     summ = R.label_sum.set_index("source")
     for src in ("host_ex21", "host_ex23", "host_isobole"):
         num(
@@ -1700,7 +1684,8 @@ def draw_label_shapes(ax: Any, R: Reads) -> None:
             float(summ.loc[src].share_below_zero),
         )
     ax.set_xlim(0, 1)
-    ax.set_ylim(-0.6, 8.6)
+    ax.set_ylim(-0.6, 7.6)
+    ax.axhline(SOURCE_RULE_Y, color="#AAAAAA", linewidth=0.4, zorder=1)
     ax.set_xticks([])
     ax.set_yticks([])
     for side in ("top", "right", "left"):
@@ -1865,12 +1850,12 @@ def draw_join(ax: Any, R: Reads) -> None:
     )
 
     # the split: blocks in the fills of b
-    def block(x0: float, w: float, yb: float, fill: str, text: str) -> None:
+    def block(x0: float, w: float, yb: float, h: float, fill: str, text: str) -> None:
         ax.add_patch(
             plt.Rectangle(
                 (x0, yb),
                 w,
-                9,
+                h,
                 facecolor=fill,
                 edgecolor="black",
                 linewidth=0.4,
@@ -1879,7 +1864,7 @@ def draw_join(ax: Any, R: Reads) -> None:
         )
         ax.text(
             x0 + w / 2,
-            yb + 4.5,
+            yb + h / 2,
             text,
             fontsize=3.9,
             ha="center",
@@ -1890,27 +1875,31 @@ def draw_join(ax: Any, R: Reads) -> None:
 
     ax.text(0, 27, "public", fontsize=fs, ha="left", va="center")
     for j in range(5):
-        block(16 + j * 13.2, 12.4, 22.5, light if j == 4 else dark, f"fold {j + 1}")
+        block(
+            16 + j * 13.2, 12.4, 23.5, 7.5, light if j == 4 else dark, f"fold {j + 1}"
+        )
     ax.text(
         16,
-        20.5,
+        19,
         f"{n_cmp} compounds, one fold of five held out",
         fontsize=3.9,
         ha="left",
         va="center",
     )
-    ax.text(0, 9, "this\nstudy", fontsize=fs, ha="left", va="center", linespacing=1.1)
+    ax.text(0, 8, "this\nstudy", fontsize=fs, ha="left", va="center", linespacing=1.1)
     block(
         16,
         38,
-        4.5,
+        2,
+        12,
         dark,
         f"{n_anchor} anchors,\ntitration ({int(c.loc['host_ex21'].n_cells)} wells)",
     )
     block(
         56,
         44,
-        4.5,
+        2,
+        12,
         light,
         f"{wc['n_combinations']} combinations,\n{int(c.loc['host_isobole'].n_cells)} isobole wells",
     )
@@ -1985,7 +1974,7 @@ def draw_evaluation(ax: Any, R: Reads) -> None:
     tex_kw = dict(fontsize=eq, ha="left", va="top", usetex=True)
     # ---- stage one: a molecule becomes a token
     ax.text(0, 150, "1  featurize one inhibitor", **stage_kw)
-    y1 = 139.0
+    y1 = 141.0
     box_, _w, _h = acs_structure(
         ax,
         R.smiles["furfural"],
@@ -1994,7 +1983,7 @@ def draw_evaluation(ax: Any, R: Reads) -> None:
         bond_pt=SHEET_BOND_PT,
     )
     box_.set_in_layout(False)
-    ax.text(11, y1 - 7.5, "furfural", fontsize=fs, ha="center", va="top")
+    ax.text(11, y1 - 5.8, "furfural", fontsize=fs, ha="center", va="top")
     arrow(ax, 24, y1, 28, y1)
     strip(ax, 29, y1 - 2.4, 12, 4.8, 10, meas_fill, meas, dark=(1, 4, 7))
     arrow(ax, 42, y1, 46, y1)
@@ -2004,46 +1993,48 @@ def draw_evaluation(ax: Any, R: Reads) -> None:
     ax.text(70, y1, r"$t_i$", fontsize=eq, ha="left", va="center", usetex=True)
     ax.text(
         0,
-        y1 - 12.0,
+        y1 - 12.5,
         r"$t_i = \mathrm{MLP}\big(\underbrace{\mathrm{FCFP4}(m_i)}_{2{,}048\ \text{counts}}\big)$",
         **tex_kw,
     )
     # ---- stage two: the token reads the genome, one head reads the cell
-    ax.text(0, 106, "2  read the cell", **stage_kw)
+    ax.text(0, 107, "2  read the cell", **stage_kw)
     ax.text(
         0,
-        101,
+        102,
         r"$[\,t_i';\ H^c\,] = \mathrm{Layer}\big([\,\underbrace{t_i}_{\text{compound}}\ ;\ \underbrace{G}_{6{,}607\ \text{genes}}\,]\big)$",
         **tex_kw,
     )
     ax.text(
         0,
-        81,
+        83,
         r"$\hat y_i = \mathrm{head}\big(\underbrace{H^c_D}_{\text{deleted rows}}\quad \underbrace{\overline{H^c}}_{\text{gene mean}}\quad \underbrace{t_i'}_{\text{token}}\big)$",
         **tex_kw,
     )
     ax.text(
         0,
-        61,
+        64,
         r"$\qquad\quad + \underbrace{o(t_i)\,(1 + g(d_i))}_{\text{offset, scaled by the dose } d_i}$",
         **tex_kw,
     )
     ax.text(
         0,
-        41,
-        r"a strain ($H^c_D$: its deleted rows, summed): $\hat y_i = \hat r_{g,i}$, its profile over $g$;"
+        45,
+        r"a strain ($H^c_D$: its deleted rows, summed):"
         "\n"
-        r"the host ($D = \emptyset$, no cell token): $\hat y_i = \hat f_i$, its growth",
+        r"$\hat y_i = \hat r_{g,i}$, its profile over strains $g$;"
+        "\n"
+        r"the host ($D = \emptyset$, no cell token): $\hat y_i = \hat f_i$",
         fontsize=fs,
         ha="left",
         va="top",
         usetex=True,
     )
     # ---- stage three: a mixture composes as Bliss
-    ax.text(0, 28, "3  compose a mixture", **stage_kw)
+    ax.text(0, 27, "3  compose a mixture", **stage_kw)
     ax.text(
         0,
-        23,
+        22,
         "each token read alone through the same head, then",
         fontsize=fs,
         ha="left",
@@ -2051,7 +2042,7 @@ def draw_evaluation(ax: Any, R: Reads) -> None:
     )
     ax.text(
         0,
-        17,
+        16,
         r"$\underbrace{\hat f_{\mathrm{mix}} = \textstyle\prod_i \hat f_i}_{\text{host, fitness scale}}\qquad \underbrace{\hat r_{g,\mathrm{mix}} = \textstyle\sum_i \hat r_{g,i}}_{\text{screen, log scale}}$",
         **tex_kw,
     )
@@ -3658,7 +3649,7 @@ def draw_source_sets(ax: Any, R: Reads, readout: str) -> None:
         bar_label = "Loewe from the titration fits"
         bar_value = float(NUM["loeweAuroc"])
         bar_src = "loewe"
-        xlabel = "growth AUROC over the 63 combinations (served call)"
+        xlabel = "AUROC, grew vs no growth, 63 combinations"
         xmax = 1.0
     d = d[d.fold_seed == 0]
     data: list[tuple[str, Any, Any, str, bool]] = []
@@ -3779,7 +3770,7 @@ def draw_dose_pairs(ax: Any, R: Reads) -> None:
     ax.set_yticklabels([r[0] for r in rows_])
     ax.set_ylim(-0.6, len(rows_) - 0.4)
     ax.set_xlim(0.3, 0.7)
-    ax.set_xlabel("growth AUROC over the 63 combinations (served call)")
+    ax.set_xlabel("AUROC, grew vs no growth, 63 combinations")
     hgrid(ax, 0.1)
     ax.axvline(
         float(NUM["loeweAuroc"]), color=SRC_COLOR["loewe"], linewidth=0.8, zorder=1
@@ -4111,7 +4102,11 @@ def draw_bliss_ladder(
             "loewe",
         )
         xlabel, xmax = (
-            ("growth AUROC" if compact else "growth AUROC over the 63 combinations"),
+            (
+                "AUROC, grew vs not"
+                if compact
+                else "AUROC, grew against no growth, 63 combinations"
+            ),
             1.0,
         )
     d = d[d.fold_seed == 0]
@@ -4204,7 +4199,7 @@ def draw_dose_arms(ax: Any, R: Reads) -> None:
             facecolor=SRC_COLOR["cgt"],
             edgecolor="black",
             linewidth=0.4,
-            label="growth AUROC over the 63 combinations",
+            label="AUROC, grew against no growth, 63 combinations",
         ),
         Patch(
             facecolor=SRC_FILL["cgt"],

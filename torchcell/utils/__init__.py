@@ -8,6 +8,9 @@ from .utils import (
     ACS_FONT_PT,
     ACS_LINE_PT,
     MAX_HEIGHT_MM,
+    NATURE_BOND_PT,
+    NATURE_FONT_PT,
+    NATURE_LINE_PT,
     PANEL_WIDTHS_MM,
     PAPER_RC,
     PLOT_PALETTE,
@@ -28,6 +31,9 @@ from .utils import (
 
 __all__ = [
     "ACS_BOND_PT",
+    "NATURE_BOND_PT",
+    "NATURE_FONT_PT",
+    "NATURE_LINE_PT",
     "ACS_FONT_PT",
     "ACS_LINE_PT",
     "acs_structure",

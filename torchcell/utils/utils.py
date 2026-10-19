@@ -323,19 +323,28 @@ def savefig_true_size_svg(
         f.write(svg)
 
 
-# --- Chemical structures at the ACS 1996 standard --------------------------------
+# --- Chemical structures at Nature's ChemDraw stylesheet -------------------------
 #
-# The publication standard for a drawn structure is ChemDraw's "ACS Document 1996"
-# template, which Nature and the ACS journals accept as submitted: a fixed bond length
-# of 0.381 cm, double-bond spacing at 18 percent of the bond length, a 0.021 cm line,
-# Arial labels with implicit hydrogens shown on heteroatoms (HO, OH, NH) and none on
-# the carbon skeleton. RDKit implements the same template (``SetACS1996Mode``: bond
-# 14.4 pt, line 0.6 pt, offset 0.18, monochrome, 10 pt labels); here the bond is
-# rescaled to the ACS length in points and the label to Nature's figure-text size, so
-# a structure drawn into a panel at ``fontsize=6`` matches the panel's own type.
-ACS_BOND_PT = 10.8  # 0.381 cm, the ACS 1996 fixed bond length
-ACS_LINE_PT = 0.6  # 0.021 cm, the ACS 1996 line width
-ACS_FONT_PT = 6.0  # atom labels, Nature's figure-text default (band 5 to 7 pt)
+# The publication standard for a drawn structure here is Nature's own ChemDraw
+# stylesheet (``nr-chemdraw-stylesheet.cds``, the "Nature" preset; owner, 2026-10-19:
+# the default for every plot): Arial or Helvetica atom labels at 6 pt, a fixed bond
+# length of 0.381 cm (10.8 pt), double-bond spacing at 18 percent of the bond, a
+# 0.021 cm (0.60 pt) line, a 120 degree chain angle, no labels on terminal carbons,
+# implicit hydrogens shown on heteroatoms (HO, OH, NH). It is NOT ChemDraw's "ACS
+# Document 1996" preset, whose bond is 0.508 cm (14.4 pt) with 10 pt labels. RDKit has
+# only the ACS 1996 preset built in (``SetACS1996Mode``: bond 14.4 pt, line 0.6 pt,
+# offset 0.18, monochrome, 10 pt labels, 120 degree chains), so a structure is drawn
+# in that mode and the bond, the label size and the font are then set to Nature's
+# values; the two presets agree on everything else RDKit exposes. Nature's bold width
+# (1.56 pt, for bold bonds), hash spacing (1.70 pt, for hashed wedges) and margin
+# width (1.19 pt) have no RDKit option and matter only for stereo drawings.
+NATURE_BOND_PT = 10.8  # 0.381 cm, Nature's fixed bond length
+NATURE_LINE_PT = 0.6  # 0.021 cm, Nature's line width (the same in ACS 1996)
+NATURE_FONT_PT = 6.0  # atom labels, Nature's 6 pt Arial
+#: the older names, kept for the scripts that import them; the values are Nature's
+ACS_BOND_PT = NATURE_BOND_PT
+ACS_LINE_PT = NATURE_LINE_PT
+ACS_FONT_PT = NATURE_FONT_PT
 
 _SVG_NUMBER = re.compile(r"[-+]?(?:\d+\.\d*|\.\d+|\d+)(?:[eE][-+]?\d+)?")
 _SVG_COMMAND = re.compile(r"([MLQCZ])([^MLQCZ]*)")
@@ -390,12 +399,15 @@ def acs_structure_svg(
     font_pt: float = ACS_FONT_PT,
     line_pt: float = ACS_LINE_PT,
 ) -> tuple[str, float, float]:
-    """RDKit's ACS 1996 drawing of ``smiles`` as SVG text, with its width and height.
+    """The structure of ``smiles`` at Nature's ChemDraw stylesheet, as SVG text with
+    its width and height.
 
-    The canvas is flexible (RDKit sizes it to the molecule), one SVG pixel is one
-    point, the bond is ``bond_pt`` long, the labels are set in Arial at ``font_pt``
-    as glyph outlines (so the drawing needs no font at render time), and the line is
-    ``line_pt`` wide. Returns ``(svg, width_pt, height_pt)``.
+    RDKit's ACS 1996 mode is the base (the only preset it has); the bond, the label
+    size and the font are Nature's by default. The canvas is flexible (RDKit sizes it
+    to the molecule), one SVG pixel is one point, the bond is ``bond_pt`` long, the
+    labels are set in Arial at ``font_pt`` as glyph outlines (so the drawing needs no
+    font at render time), and the line is ``line_pt`` wide. Returns ``(svg, width_pt,
+    height_pt)``.
     """
     from matplotlib import font_manager
     from rdkit import Chem
@@ -427,7 +439,8 @@ def acs_structure_svg(
 
 
 def acs_structure_box(smiles: str, **kwargs: Any) -> Any:
-    """The ACS 1996 structure as a :class:`DrawingArea` in points, black on nothing.
+    """The structure at Nature's stylesheet as a :class:`DrawingArea` in points, black
+    on nothing.
 
     Every RDKit path becomes a matplotlib patch: a stroked path for a bond (its
     ``stroke-width`` kept, butt caps, miter joins, as RDKit draws it) and a filled
@@ -477,7 +490,7 @@ def acs_structure(
     box_alignment: tuple[float, float] = (0.5, 0.5),
     **kwargs: Any,
 ) -> tuple[Any, float, float]:
-    """Draw ``smiles`` at the ACS 1996 standard, anchored at ``xy`` on ``ax``.
+    """Draw ``smiles`` at Nature's ChemDraw stylesheet, anchored at ``xy`` on ``ax``.
 
     The structure keeps its physical size whatever the axes' data scale, because the
     drawing area is in points, so two structures on one sheet have the same bond

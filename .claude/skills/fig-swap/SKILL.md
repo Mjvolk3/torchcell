@@ -110,3 +110,29 @@ make -C paper/nature-biotech editing
 
 Reference: [[paper.nature-biotech.figures]] (2026.08.16 section) and
 [[paper.nature-biotech.style-guide]] (Figures: Nature specs + axis-label style).
+\n
+## Standards for what goes into a panel (owner, 2026-10-19)
+
+- **Chemical structures follow Nature's ChemDraw stylesheet** (`nr-chemdraw-stylesheet.cds`,
+  the "Nature" preset): Arial or Helvetica atom labels at 6 pt, a fixed bond of 0.381 cm
+  (10.8 pt), double-bond spacing 18 percent of the bond, a 0.021 cm (0.60 pt) line, 120
+  degree chain angle, no labels on terminal carbons, implicit hydrogens on heteroatoms.
+  It is not ChemDraw's "ACS Document 1996" preset (0.508 cm bond, 10 pt labels). RDKit has
+  only the ACS 1996 preset (`rdMolDraw2D.SetACS1996Mode`), so draw through
+  `torchcell.utils.acs_structure` / `acs_structure_svg`, which start from that preset and
+  set the bond, label size and font to Nature's (`NATURE_BOND_PT`, `NATURE_FONT_PT`,
+  `NATURE_LINE_PT`); never call RDKit's drawer directly for a figure. A sheet that packs
+  structures smaller passes `bond_pt=` and says so in its caption; labels and lines stay
+  at the stylesheet's sizes. Say "Nature's stylesheet" in captions, not "ACS 1996".
+- **Mathematics is set by LaTeX**, never by matplotlib's mathtext: `usetex=True` on the text
+  artist, under the PDF backend (Agg has no dvipng on GilaHyper; rasterize the PNG from the
+  PDF with `pdftoppm`), preamble `amsmath` + `helvet` + `\renewcommand{\rmdefault}{phv}`
+  so words are Helvetica beside the Arial labels and the math is Computer Modern. Name
+  components under braces (`\underbrace{...}_{\text{...}}`) rather than in prose. The 040
+  gate sheet (`experiments/040-inhibitor-synergy-wetlab/scripts/figure_gate_panels.py`,
+  `draw_evaluation`) is the worked example. draw.io renders LaTeX too (its math typesetting
+  option), so a draw.io figure sets equations the same way, never as plain text.
+- **Panel letters obey the white-cross rule**: on a line of their own above the panel, at
+  its outer left, the row's letters on one baseline (`letters_status` in the gate sheet);
+  one-line titles no wider than the panel; `torchcell.utils.text_clashes` run before every
+  save, and the review card (`notes-tex/common/figure_cards.py`) on one page.

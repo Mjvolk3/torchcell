@@ -312,3 +312,20 @@ Related: [[paper.proof-writing-standard]], [[paper.nature-biotech.figures]],
 - Any artifact used in the paper or `notes/` (figure, table, derived number) MUST be produced
   by a committed script that reads the real result files, and the artifact should point to its
   generating script.
+
+## 2026.10.19 - Chemical structures follow Nature's ChemDraw stylesheet, not ACS 1996
+
+Owner, 2026-10-19: the default for every drawn structure is Nature's own ChemDraw
+stylesheet (`nr-chemdraw-stylesheet.cds`, the "Nature" preset): Arial or Helvetica atom
+labels at 6 pt, a fixed bond length of 0.381 cm (10.8 pt), double-bond spacing at 18
+percent of the bond, a 0.021 cm (0.60 pt) line, bold width 0.055 cm, margin width 0.042
+cm, hash spacing 0.060 cm, a 120 degree chain angle, no labels on terminal carbons,
+implicit hydrogens shown on heteroatoms, regular-weight labels (bold only for compound
+numbers). "ACS Document 1996" is a different preset (0.508 cm bond, 10 pt labels) and is
+not ours. RDKit has only the ACS 1996 preset built in, so `torchcell.utils.acs_structure`
+draws in that mode and sets the bond, the label size and the font to Nature's values
+(`NATURE_BOND_PT`, `NATURE_FONT_PT`, `NATURE_LINE_PT`); the two presets agree on the
+rest of what RDKit exposes, and Nature's bold, hash and margin widths matter only for
+stereo drawings, which RDKit cannot be told. A sheet may draw structures smaller to pack
+them (the 040 gate sheet uses half the bond length) and says so in its caption; the
+labels and lines stay at the stylesheet's sizes.

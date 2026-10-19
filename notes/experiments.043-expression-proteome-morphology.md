@@ -398,6 +398,64 @@ mean -2.42 for the deleted transcript).
 8. Accessory ORFs and the reporter: encode as extra tokens or report and skip (prototype
    reports and skips).
 
+## 2026.10.19 - Output-side design: readouts, heads, tokens, losses, evaluation protocol
+
+Design section for the group: `notes-tex/multimodal/043-datasets-primer/sections/output-design.tex`
+(not yet `\input` into `043-datasets-primer.tex`; the integrator adds it). Diagram:
+[[experiments.043-expression-proteome-morphology.mermaid.output-side]]. Prototype of the
+heads and the loss: `torchcell/models/readout_heads_043.py` (`ExperimentTypeEmbedding`
+flat or DAG-path, `PerGeneReadout` shared head over the gene's own state $H_g$ with a
+per-dataset affine $a_k f([H_g ; t]) + b_k$, `GlobalScalarReadout` over $[h ; z_S ; t]$,
+`MaskedTypedLoss` MSE or 19-quantile pinball on the measured entries), tested by
+`tests/torchcell/models/test_readout_heads_043.py` (14 passed; ruff and mypy clean on the
+module).
+
+### Evaluation protocol
+
+| split | held out | n | metric | bar |
+|---|---|---|---|---|
+| A, Kemmeren by gene | 10% of Kemmeren deletion genes; every deletion record naming one, in every deletion dataset (Kemmeren, Hu, Jackson, Nadal, Messner, Zelezniak, Ohya); isolates and segregants not held out | 148 strains, 6,169 genes | per-gene Pearson across held-out strains (mean, median over genes); per-strain Pearson across genes (median) | ceiling 0.729 test-retest, 0.653 decomposition (job 5893); reference 019 by-strain 0.180 +/- 0.006 |
+| B, Sameith doubles | all 72 double deletions; the 82 constituent singles stay in training as Kemmeren records (Sameith Sm excluded outright: the same arrays) | 72 strains, 6,169 genes | per-strain Pearson vs measured; paired difference vs the additive null $M_x + M_y$ (the paper's expected value, paper.md line 39) and vs the stronger single; the same restricted to genes with $\|M_{xy} - (M_x + M_y)\| > \log_2 1.5$ | additive null (no model); ceiling 0.729 (same arrays, no double replicate released) |
+| C, Muenzner isolates | a fifth of the proteome isolates, the same strains out of Caudal (759 shared) and turnover | 159 isolates, 1,540 proteins | per-protein Pearson across held-out isolates; per-isolate Pearson across proteins | no Muenzner ceiling measured; reference Caudal x Muenzner 0.208 per isolate, 0.160 per gene (job 5892); reference 019 Messner 0.085 +/- 0.008 |
+| morphology probe | Ohya 2005, never trained; 5-fold over genotypes | 4,678 genotypes, 116 moving features | ridge from frozen $h$, $z_S$, mean $H$, their concatenation; out-of-fold Pearson per feature, median over the 116 | 019 trained head 0.149 +/- 0.022; sequence ridge 0.08 to 0.14; Kemmeren ridge 0.348 (1,437) and Messner 0.278 (4,279), transductive; ceiling 0.847 (116) or 0.611 (281) |
+
+Arms: 2 x 2 of {with, without natural-genome datasets} x {with, without Vaishnav}, plus
+the split-head control, the no-token ablation (the 035 `cgt_genes` analog) and the
+deletion-only reference (primer batch 1). Three initializations and two split seeds per
+arm. Epoch budget and window declared with the launch (019: 500 epochs, window 400 to
+499); a cell is read by its escape fraction first and its window mean second; no maximum
+over epochs is reported; test indices pinned to a file before training.
+
+### Owner decisions (option, option, facts; proposal in bold)
+
+1. Heads: **joined by readout type with per-dataset affines (six heads, 15 affines)** vs
+   one head per dataset. Same-type agreement 0.002 to 0.107 (expression), 0.049
+   (protein); an affine cannot change a correlation; no joint training across types has
+   been scored. Split is the control arm.
+2. Experiment-type token: **flat class id** vs ontology path. The served ontology is flat
+   (34 leaves directly under `phenotype` in `biocypher/config/torchcell_schema_config.yaml`;
+   only the two microarray classes share a parent in the pydantic schema), so a path needs
+   a modeling-side grouping or the unification.
+3. Token entry: **head only** (base) vs CLS row vs attended token (arm). 035 on 123
+   compound-evaluations: -0.007, -0.025, +0.008 against ridge, all CIs through zero.
+4. Loss: **MSE** (base) vs 19-quantile pinball (arm). 019 morphology on $z_S$: MSE 12 of
+   12 escapes, pinball 8 of 10 and late; measured on morphology only.
+5. Dataset weighting: **equal per dataset, agreement-weighted for Nadal and Jackson** vs
+   by ceiling vs by record count (arm). Boocock 79,516 + Vaishnav 71,158 = 87% of the
+   173,617 records.
+6. Nadal-Ribelles sentinels: **$|\log_2 FC| > 20$ set to missing** (20.2% of cells, 028)
+   vs keep.
+7. Jackson target: **deletion effect vs the HO control of the same environment** vs
+   absolute $\log_2(CPM+1)$ with the environment token. Construction pairs 0.129 vs 0.095
+   on the effect; one genotype across environments 0.010.
+8. Split A leakage: **gene held out of every deletion dataset** vs expression datasets
+   only.
+9. Split C: a fifth of the isolates, contingent on the input side admitting isolates.
+10. Budget and window: declare at launch; 019's 500 / 400 to 499 is the precedent.
+
+Hypothesis (untested), stated as such in the section: the affine absorbs the scale and
+the dataset token the mean profile, leaving the shared head the per-gene response.
+
 ## 2026.10.19 - Data tensors and the dataset module
 
 Scripts: [[experiments.043-expression-proteome-morphology.scripts.data_shapes_043]] (full

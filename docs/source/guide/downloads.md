@@ -6,9 +6,10 @@ directory (the records LMDB and its `interned` sibling) and `preprocess/` direct
 (`build_manifest.json`, `gene_set.json`, `experiment_reference_index.json`), exactly
 as the loader wrote them, so a download replaces the build step. The raw files each
 loader consumed are served from the same endpoint, hash-pinned by their `manifest.json`,
-and so are two more file tiers that graph records point at without storing their bytes:
-the genomes tier (reference and isolate assembly sets) and the objects tier (derived
-files such as embeddings, matrices and indexed FASTA).
+and so are three more file tiers: two that graph records point at without storing their
+bytes, the genomes tier (reference and isolate assembly sets) and the objects tier
+(derived files such as embeddings, matrices and indexed FASTA), and the library tier,
+which serves each paper's supplementary material (never the paper itself).
 
 The endpoint is `http://torchcell-database.ncsa.illinois.edu:8724`, on the database
 host, serving the archive store and the raw mirror from the Taiga project storage. No
@@ -25,7 +26,7 @@ The interactive documentation lives at `<TC_DATA_URL>/docs` and the OpenAPI sche
 
 | Route | Returns |
 |---|---|
-| `GET /health` | liveness, artifact and raw-key counts |
+| `GET /health` | liveness, artifact and per-tier key counts |
 | `GET /datasets` | the artifact index: one row per packaged archive |
 | `GET /datasets/{slug}` | every packaged version of one dataset |
 | `GET /datasets/{slug}/{archive}` | the archive; `X-Artifact-SHA256`, `Accept-Ranges: bytes` |
@@ -41,6 +42,10 @@ The interactive documentation lives at `<TC_DATA_URL>/docs` and the OpenAPI sche
 | `GET /objects/{object_key}/manifest` | the key's `manifest.json` |
 | `GET /objects/{object_key}/files` | the files that manifest lists, with sha256 |
 | `GET /objects/{object_key}/artifact/{path}` | one objects file; `X-Artifact-SHA256`, `Accept-Ranges: bytes` |
+| `GET /library` | citation keys in the library tier that carry a manifest |
+| `GET /library/{citation_key}/manifest` | the key's `manifest.json`, without paper, OCR or layout records |
+| `GET /library/{citation_key}/files` | the supplementary files that manifest lists, with sha256 |
+| `GET /library/{citation_key}/artifact/{path}` | one supplementary file; `X-Artifact-SHA256`, `Accept-Ranges: bytes` |
 
 An index row records the dataset `slug`, the loader `dataset_class`, the
 `torchcell_version` and git commit the LMDB was built with, the knowledge-graph
@@ -49,9 +54,9 @@ the release manifest), the archive name, `archive_sha256`, `archive_bytes`, and
 `status` (`supported` or `deprecated`). Pick the newest `supported` row whose
 `torchcell_version` shares your installed `major.minor`.
 
-## Raw, genomes and objects tiers
+## Raw, genomes, objects and library tiers
 
-The three file tiers share one serving rule. Each key (a citation key, an assembly set,
+The four file tiers share one serving rule. Each key (a citation key, an assembly set,
 or an object key) is a directory with a `manifest.json` listing every file by path,
 role, size and sha256; a file is served only if its key's manifest lists it, and the
 `X-Artifact-SHA256` header of the response is the manifest's hash, so a client checks
@@ -67,14 +72,21 @@ interrupted download of a large assembly container resumes.
 - **Objects** (`/objects`): derived files a record points at, keyed by a citation key
   or a named derived set; the manifest is the literature `Manifest`, and each file's
   processing record names the script and inputs that produced it.
+- **Library** (`/library`): a paper's supplementary material, keyed by citation key;
+  the manifest is the literature `Manifest`. Only the SI and data roles are served
+  (`si_data`, `si_pdf`, `si_ocr`, `si_text`, `raw_data`, `dataset_raw`, `annotations`,
+  `other`), for example a plasmid GenBank file a strain record points at. The paper,
+  its OCR markdown, OCR images and layout files are never listed or served; they stay
+  behind a key on the literature endpoint.
 
-`/genomes` and `/objects` list only keys that carry a manifest, and an endpoint without
-one of those tiers answers its listing with an empty list.
+`/genomes`, `/objects` and `/library` list only keys that carry a manifest, and an
+endpoint without one of those tiers answers its listing with an empty list.
 
-Paper content is withheld. In the raw and objects tiers a manifest record whose role
-begins `paper_` (`paper_pdf`, `paper_text`, `paper_ocr`, `paper_fulltext`) is left out
-of `/manifest` and `/files`, and a request for its bytes answers 404 `paper content is
-not served`. SI files and data files under the same key are served as usual.
+Paper content is withheld. In the raw, objects and library tiers a manifest record
+whose role begins `paper_` (`paper_pdf`, `paper_text`, `paper_ocr`, `paper_fulltext`)
+or `ocr_` (`ocr_image`, `ocr_layout`, `ocr_provenance`) is left out of `/manifest` and
+`/files`, and a request for its bytes answers 404 `paper content is not served`. SI
+files and data files under the same key are served as usual.
 
 ## curl
 
@@ -105,6 +117,9 @@ curl -C - -D headers.txt \
 grep -i x-artifact-sha256 headers.txt; sha256sum "<file>"   # the two must agree
 curl "$TC_DATA_URL/objects"
 curl "$TC_DATA_URL/objects/<object_key>/files"
+
+# library tier: a paper's supplementary files (the paper itself is not served)
+curl "$TC_DATA_URL/library/<citation_key>/files"
 ```
 
 ## Environment variables
@@ -116,6 +131,7 @@ curl "$TC_DATA_URL/objects/<object_key>/files"
 | `TC_DATA_RAW_ROOT` | server | the raw mirror; defaults to `$DATA_ROOT/torchcell-raw` |
 | `TC_DATA_GENOMES_ROOT` | server | the genomes tier; defaults to `$DATA_ROOT/torchcell-genomes`; may be absent |
 | `TC_DATA_OBJECTS_ROOT` | server | the objects tier; defaults to `$DATA_ROOT/torchcell-objects`; may be absent |
+| `TC_DATA_LIBRARY_ROOT` | server | the library tier, of which only supplementary material is served; defaults to `$DATA_ROOT/torchcell-library`; may be absent |
 | `TC_DATA_HOST`, `TC_DATA_PORT` | server | bind address and port (default `0.0.0.0:8724`) |
 
 ## From Python
@@ -160,7 +176,7 @@ unpack_artifact(archive, "data/torchcell/smf_costanzo2016")
 ```
 
 The raw mirror keys and files are one `GET` away; see the Swagger page for the exact
-shapes. All three file tiers have client methods:
+shapes. All four file tiers have client methods:
 
 ```python
 from torchcell.datasets.client import DatasetClient
@@ -178,6 +194,7 @@ client.download_genome_file(
 client.objects()
 client.object_manifest("<object_key>")  # literature Manifest
 client.download_object_file("<object_key>", "<path>", dest="objects/<path>")
+client.download_library_file("<citation_key>", "<path>", dest="library/<path>")
 ```
 
 Each download looks up the file's row in the key's manifest first (a path the manifest

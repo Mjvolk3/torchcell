@@ -134,6 +134,7 @@ def _serve(root: Path, dataset_dir: Path) -> TestClient:
         raw_root=raw,
         genomes_root=root / "genomes",
         objects_root=root / "objects",
+        library_root=root / "library",
     )
     return TestClient(create_app(config))
 

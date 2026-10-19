@@ -1,6 +1,8 @@
 # docker/docker-compose.tc-data.yml
 # Standalone deployment for the dataset endpoint (tc-data), a PUBLIC read-only mirror:
-# no route needs a key, and paper content (manifest roles beginning paper_) is withheld.
+# no route needs a key, and paper content (manifest roles beginning paper_ or ocr_: the
+# paper, its OCR and layout files) is withheld; the library tier serves only a paper's
+# supplementary material.
 # Kept separate from docker-compose.tc-lit.yml (the keyed literature endpoint) so each
 # starts and stops on its own; the Neo4j store is built and served by database/. On Radiant the container
 # runs as the uid:gid that owns the Taiga trees (TC_DATA_UID; measured 2026-09-30 as
@@ -14,6 +16,9 @@
 #   TC_DATA_RAW_ROOT    host raw mirror (one dir per citation key with manifest.json)
 #   TC_DATA_GENOMES_ROOT  host genomes tier (one dir per assembly set with manifest.json)
 #   TC_DATA_OBJECTS_ROOT  host objects tier (one dir per object key with manifest.json)
+#   TC_DATA_LIBRARY_ROOT  host library tier (one dir per citation key with manifest.json;
+#                       only the non-paper files are served, and ship_artifact_tiers.sh
+#                       ships only those to Taiga)
 #   TC_DATA_PORT        host port to expose (default 8724)
 #   TC_DATA_UID         uid or uid:gid to run as (Radiant: 1000:555647; default 67392)
 #
@@ -40,11 +45,13 @@ services:
       - "${TC_DATA_RAW_ROOT}:/data/torchcell-raw:ro"
       - "${TC_DATA_GENOMES_ROOT:?set TC_DATA_GENOMES_ROOT in tc-data.conf}:/data/torchcell-genomes:ro"
       - "${TC_DATA_OBJECTS_ROOT:?set TC_DATA_OBJECTS_ROOT in tc-data.conf}:/data/torchcell-objects:ro"
+      - "${TC_DATA_LIBRARY_ROOT:?set TC_DATA_LIBRARY_ROOT in tc-data.conf}:/data/torchcell-library:ro"
     environment:
       TC_DATA_ROOT: /data/store
       TC_DATA_RAW_ROOT: /data/torchcell-raw
       TC_DATA_GENOMES_ROOT: /data/torchcell-genomes
       TC_DATA_OBJECTS_ROOT: /data/torchcell-objects
+      TC_DATA_LIBRARY_ROOT: /data/torchcell-library
       TC_DATA_HOST: 0.0.0.0
       TC_DATA_PORT: 8724
     restart: unless-stopped

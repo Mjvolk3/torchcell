@@ -11,6 +11,10 @@ ordered list of sources tried.
 2026.10.12 (public read-only tc-data): no key anywhere. Without a ``client`` and without
 ``TC_DATA_URL`` the default remote is tc-data on ``DEFAULT_URL``; tests of that path stub
 the source (``offline_tc_data`` or a recording ``manifest``) so no request is made.
+
+2026.10.19 (library tier): ``TcDataSource`` serves the library tier. A library ref to a
+supplementary file (``si/plasmids/pBTX001(ante113).gb``) resolves end to end through
+tc-data; the paper beside it is withheld by the server, so its ref is a miss.
 """
 
 from __future__ import annotations
@@ -47,10 +51,13 @@ from torchcell.artifacts.resolve import RemoteEndpointError, RemoteMissError, ca
 from torchcell.datasets.artifact import ArtifactIndex
 from torchcell.datasets.server import DataServerConfig, create_app
 from torchcell.endpoint_http import DEFAULT_URL
+from torchcell.literature.manifest import Manifest
 from torchcell.sequence.genome.registry import GenomeManifest
 
 DATA = b">YAL001C\nATGAAA\n"
 OTHER = b">YAL001C\nATGTTT\n"
+LIBRARY_KEY = "cacheraCRISPAHighthroughputMethod2023"
+LIBRARY_FILE = "si/plasmids/pBTX001(ante113).gb"
 
 
 def _no_env_remote(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -389,12 +396,18 @@ def test_resolve_reads_data_root_from_the_environment(
 
 
 def _tc_data(tmp_path: Path, raise_server_exceptions: bool = True) -> TcDataSource:
-    """tc-data over the real app: a raw mirror with one key, through the ASGI client.
+    """tc-data over the real app: one raw key and one library key, via the ASGI client.
 
     ``raise_server_exceptions=False`` lets a server fault arrive as its HTTP 500.
     """
     raw_root = tmp_path / "served" / "torchcell-raw"
     write_tier(tmp_path / "served", "raw", "kemmeren2014", {"data/expr.tsv": DATA})
+    write_tier(
+        tmp_path / "served",
+        "library",
+        LIBRARY_KEY,
+        {LIBRARY_FILE: DATA, "paper.pdf": b"%PDF-1.7 paper"},
+    )
     store = tmp_path / "store"
     store.mkdir()
     ArtifactIndex(generated_at="t0", artifacts=[]).save(store / "index.json")
@@ -403,6 +416,7 @@ def _tc_data(tmp_path: Path, raise_server_exceptions: bool = True) -> TcDataSour
         raw_root=raw_root,
         genomes_root=tmp_path / "served-genomes",
         objects_root=tmp_path / "served-objects",
+        library_root=tmp_path / "served" / "torchcell-library",
     )
     http = TestClient(
         create_app(config), raise_server_exceptions=raise_server_exceptions
@@ -431,10 +445,40 @@ def test_tc_data_source_turns_404s_into_misses(tmp_path: Path) -> None:
         source.manifest("raw", "absent2020")
     with pytest.raises(RemoteMissError, match=r"/artifact/data/none.tsv: HTTP 404"):
         source.download("raw", "kemmeren2014", "data/none.tsv", tmp_path / "x")
-    with pytest.raises(RemoteMissError, match="tc-data does not serve the 'library'"):
-        source.manifest("library", "kemmeren2014")
-    with pytest.raises(RemoteMissError, match="tc-data does not serve the 'library'"):
-        source.download("library", "kemmeren2014", "paper.md", tmp_path / "x")
+    with pytest.raises(
+        RemoteMissError, match=r"/library/absent2020/manifest: HTTP 404"
+    ):
+        source.manifest("library", "absent2020")
+
+
+def test_tc_data_source_serves_the_library_tier_without_the_paper(
+    tmp_path: Path,
+) -> None:
+    """The supplementary file resolves through tc-data; the paper is listed in the
+    on-disk manifest yet absent from the public one, so its ref has no remote source.
+    """
+    assert TcDataSource.SERVED_TIERS == ("raw", "genomes", "objects", "library")
+    source = _tc_data(tmp_path)
+    on_disk = tmp_path / "served" / "torchcell-library" / LIBRARY_KEY / "manifest.json"
+    listed = Manifest.model_validate_json(on_disk.read_text()).files
+    roles = {f.path: f.role for f in listed}
+    assert roles == {LIBRARY_FILE: "si_data", "paper.pdf": "paper_pdf"}
+    public = source.manifest("library", LIBRARY_KEY)
+    assert [f.path for f in public.files] == [LIBRARY_FILE]
+    client_root = tmp_path / "client"
+    ref = ref_for("library", LIBRARY_KEY, LIBRARY_FILE, DATA)
+    assert check(ref, data_root=client_root, client=source) is True
+    got = resolve(ref, data_root=client_root, client=source)
+    assert got == ResolvedArtifact(
+        path=client_root / "artifact-cache" / sha(DATA) / "pBTX001(ante113).gb",
+        source="remote",
+        verified=True,
+    )
+    assert got.path.read_bytes() == DATA
+    paper = ref_for("library", LIBRARY_KEY, "paper.pdf", b"%PDF-1.7 paper")
+    assert check(paper, data_root=client_root, client=source) is False
+    with pytest.raises(RemoteMissError, match=r"/artifact/paper.pdf: HTTP 404"):
+        source.download("library", LIBRARY_KEY, "paper.pdf", tmp_path / "x")
 
 
 def test_tc_data_source_raises_on_a_server_error(tmp_path: Path) -> None:

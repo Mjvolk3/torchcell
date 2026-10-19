@@ -15,6 +15,12 @@ pinned here on a 25-byte CSV under one manifested citation key.
 2026.10.12 (public read-only): the client sends no key. ``DatasetClient()`` defaults to
 the public ``DEFAULT_URL``, ``from_env`` prefers ``TC_DATA_URL`` when set, and the only
 header a request carries is ``Range`` on a resume.
+
+2026.10.19 (library tier): ``library_keys``, ``library_manifest``, ``library_files`` and
+``download_library_file`` run against a library tier holding one key with an SI GenBank
+file whose name carries parentheses, beside a paper PDF and an OCR image the server
+withholds. The client never sees the withheld records, so asking for the paper raises
+``KeyError`` before any byte is requested.
 """
 
 import hashlib
@@ -59,6 +65,12 @@ RAW_KEY = "fakeKey2020"
 RAW_FILE = "data/table.csv"
 RAW_CSV = b"gene,fitness\nYAL001C,0.9\n"
 RAW_CSV_SHA = hashlib.sha256(RAW_CSV).hexdigest()
+LIBRARY_KEY = "cacheraCRISPAHighthroughputMethod2023"
+LIBRARY_FILE = "si/plasmids/pBTX001(ante113).gb"
+LIBRARY_BYTES = b"LOCUS       pBTX001  5120 bp  DNA  circular\nORIGIN\n//\n"
+LIBRARY_SHA = hashlib.sha256(LIBRARY_BYTES).hexdigest()
+LIBRARY_PAPER = b"%PDF-1.7 the paper itself"
+LIBRARY_OCR = b"\x89PNG ocr page image"
 
 
 def _artifact(sha: str = PAYLOAD_SHA, version: str = "1.2.1") -> DatasetArtifact:
@@ -143,6 +155,41 @@ def _raw(root: Path) -> Path:
     return raw
 
 
+def _library(root: Path) -> Path:
+    library = root / "library"
+    key = library / LIBRARY_KEY
+    (key / "si" / "plasmids").mkdir(parents=True)
+    (key / "images").mkdir()
+    (key / LIBRARY_FILE).write_bytes(LIBRARY_BYTES)
+    (key / "paper.pdf").write_bytes(LIBRARY_PAPER)
+    (key / "images" / "p1.png").write_bytes(LIBRARY_OCR)
+    manifest = Manifest(
+        citation_key=LIBRARY_KEY,
+        files=[
+            ArtifactRecord(
+                path="paper.pdf",
+                role="paper_pdf",
+                bytes=len(LIBRARY_PAPER),
+                sha256=hashlib.sha256(LIBRARY_PAPER).hexdigest(),
+            ),
+            ArtifactRecord(
+                path=LIBRARY_FILE,
+                role="si_data",
+                bytes=len(LIBRARY_BYTES),
+                sha256=LIBRARY_SHA,
+            ),
+            ArtifactRecord(
+                path="images/p1.png",
+                role="ocr_image",
+                bytes=len(LIBRARY_OCR),
+                sha256=hashlib.sha256(LIBRARY_OCR).hexdigest(),
+            ),
+        ],
+    )
+    (key / "manifest.json").write_text(manifest.model_dump_json())
+    return library
+
+
 def _client(root: Path, artifact: DatasetArtifact) -> DatasetClient:
     raw = _raw(root)
     config = DataServerConfig(
@@ -150,6 +197,7 @@ def _client(root: Path, artifact: DatasetArtifact) -> DatasetClient:
         raw_root=raw,
         genomes_root=_genomes(root),
         objects_root=_objects(root),
+        library_root=_library(root),
     )
     return DatasetClient("http://testserver/", http=TestClient(create_app(config)))
 
@@ -534,3 +582,93 @@ def test_raw_download_of_an_unlisted_path_raises_before_any_request(
     monkeypatch.setattr(client._http, "stream", lambda *a, **k: pytest.fail("streamed"))
     with pytest.raises(KeyError, match=f"raw/{RAW_KEY}/data/unlisted.csv"):
         client.download_raw_file(RAW_KEY, "data/unlisted.csv", tmp_path / "x")
+
+
+# --- 2026.10.19: the library tier, supplementary material only ---------------------- #
+def test_library_listing_manifest_and_files_hold_only_the_si_file(
+    tmp_path: Path,
+) -> None:
+    client = _client(tmp_path, _artifact())
+    assert client.library_keys() == [LIBRARY_KEY]
+    on_disk = Manifest.model_validate_json(
+        (tmp_path / "library" / LIBRARY_KEY / "manifest.json").read_text()
+    )
+    public = client.library_manifest(LIBRARY_KEY)
+    assert public == on_disk.model_copy(update={"files": [on_disk.files[1]]})
+    assert client.library_files(LIBRARY_KEY) == [
+        ManifestFileListing(
+            path=LIBRARY_FILE,
+            role="si_data",
+            bytes=len(LIBRARY_BYTES),
+            sha256=LIBRARY_SHA,
+        )
+    ]
+
+
+def test_library_download_verifies_and_resumes_with_a_range_request(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The parenthesized path is percent-encoded on the way out and the bytes that come
+    back are the GenBank file, hash-checked against the ``/files`` row.
+    """
+    client = _client(tmp_path, _artifact())
+    whole = tmp_path / "out" / "pBTX001(ante113).gb"
+    assert client.download_library_file(LIBRARY_KEY, LIBRARY_FILE, whole) == whole
+    assert whole.read_bytes() == LIBRARY_BYTES
+    resumed = tmp_path / "out" / "resumed.gb"
+    resumed.with_name(resumed.name + ".part").write_bytes(LIBRARY_BYTES[:7])
+    seen: list[tuple[str, dict[str, str]]] = []
+    original = client._http.stream
+
+    def spy(method: str, url: str, **kwargs: Any) -> Any:
+        seen.append((url, dict(kwargs["headers"])))
+        return original(method, url, **kwargs)
+
+    monkeypatch.setattr(client._http, "stream", spy)
+    client.download_library_file(LIBRARY_KEY, LIBRARY_FILE, resumed)
+    assert seen == [
+        (
+            f"http://testserver/library/{LIBRARY_KEY}/artifact/"
+            "si/plasmids/pBTX001%28ante113%29.gb",
+            {"Range": "bytes=7-"},
+        )
+    ]
+    assert resumed.read_bytes() == LIBRARY_BYTES
+
+
+def test_library_download_refuses_a_tampered_body_and_removes_the_partial(
+    tmp_path: Path,
+) -> None:
+    tampered = b"x" * len(LIBRARY_BYTES)
+    client = _tampering_client(tmp_path, header=None, body=tampered)
+    dest = tmp_path / "out" / "plasmid.gb"
+    with pytest.raises(
+        ArtifactIntegrityError,
+        match=f"sha256 {hashlib.sha256(tampered).hexdigest()} != manifest "
+        f"{LIBRARY_SHA}; partial file removed",
+    ):
+        client.download_library_file(LIBRARY_KEY, LIBRARY_FILE, dest)
+    assert not dest.exists()
+    assert not dest.with_name(dest.name + ".part").exists()
+
+
+@pytest.mark.parametrize("rel", ["paper.pdf", "images/p1.png", "si/absent.gb"])
+def test_library_download_of_a_path_the_public_manifest_lacks_raises_first(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, rel: str
+) -> None:
+    """The paper and OCR image are in the on-disk manifest but not the public one, so
+    the client refuses them exactly like a path no manifest lists, before streaming.
+    """
+    client = _client(tmp_path, _artifact())
+    monkeypatch.setattr(client._http, "stream", lambda *a, **k: pytest.fail("streamed"))
+    with pytest.raises(KeyError, match=f"library/{LIBRARY_KEY}/{rel}"):
+        client.download_library_file(LIBRARY_KEY, rel, tmp_path / "x")
+    assert not (tmp_path / "x").exists()
+
+
+def test_library_methods_raise_on_an_unknown_key(tmp_path: Path) -> None:
+    client = _client(tmp_path, _artifact())
+    with pytest.raises(EndpointError, match="HTTP 404"):
+        client.library_manifest("noSuchKey1999")
+    with pytest.raises(EndpointError, match="HTTP 404"):
+        client.library_files("noSuchKey1999")

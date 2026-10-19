@@ -5,12 +5,13 @@
 
 """``tc-data``: public read-only HTTP endpoint for packaged datasets and the file tiers.
 
-Serves four directory trees over the network with no key on any route: everything here
+Serves five directory trees over the network with no key on any route: everything here
 is published data (packaged datasets, SI and raw data files, reference genomes, derived
-objects). The one thing withheld is paper content: in the raw and objects tiers a
-manifest record whose ``role`` starts with ``paper_`` (``WITHHELD_ROLE_PREFIX``) is
-dropped from ``/manifest`` and ``/files`` and its bytes answer 404. Papers are served by
-the keyed literature endpoint (``torchcell.literature.server``), not here.
+objects, a paper's supplementary material). The one thing withheld is paper content: in
+the raw, objects and library tiers a manifest record whose ``role`` starts with
+``paper_`` or ``ocr_`` (``WITHHELD_ROLE_PREFIXES``) is dropped from ``/manifest`` and
+``/files`` and its bytes answer 404. Papers, their OCR and layout files are served by the
+keyed literature endpoint (``torchcell.literature.server``), not here.
 
 - The artifact store ``$TC_DATA_ROOT``: ``index.json`` (an ``ArtifactIndex``) and one
   ``<slug>/<archive>`` per packaged dataset, written by
@@ -19,7 +20,7 @@ the keyed literature endpoint (``torchcell.literature.server``), not here.
   ``X-Artifact-SHA256`` from its index row. Archives are large, so
   ``Accept-Ranges: bytes`` is advertised and a ``Range`` header is honored (206 with
   ``Content-Range``), which is what lets the client resume a partial download.
-- Three manifest-gated file tiers, one directory per key, each key holding a
+- Four manifest-gated file tiers, one directory per key, each key holding a
   ``manifest.json`` that lists every file with path, role, bytes and sha256:
 
   - the raw mirror ``$TC_DATA_RAW_ROOT`` (default ``$DATA_ROOT/torchcell-raw``), keyed
@@ -28,17 +29,22 @@ the keyed literature endpoint (``torchcell.literature.server``), not here.
     keyed by assembly set, ``GenomeManifest`` shape
     (``torchcell.sequence.genome.registry``);
   - the objects tier ``$TC_DATA_OBJECTS_ROOT`` (default ``$DATA_ROOT/torchcell-objects``),
-    keyed by a citation key or a named derived set, literature ``Manifest`` shape.
+    keyed by a citation key or a named derived set, literature ``Manifest`` shape;
+  - the library tier ``$TC_DATA_LIBRARY_ROOT`` (default ``$DATA_ROOT/torchcell-library``),
+    keyed by citation key, literature ``Manifest`` shape. Only a paper's supplementary
+    material is served from it (the ``si_*`` and data roles); the paper PDF, its OCR
+    markdown, OCR images and layout files are never listed or served.
 
-  The three tiers share one serving path (:func:`_serve_listed_file`): a file is served
+  The four tiers share one serving path (:func:`_serve_listed_file`): a file is served
   only when its key's manifest lists it, ``X-Artifact-SHA256`` carries the manifest hash
   (never a hash computed from the bytes), and ranges are honored as for archives. The
-  raw mirror must exist at startup; a genomes or objects root that is absent on disk
-  lists no keys and answers every other route of its tier 404.
+  raw mirror must exist at startup; a genomes, objects or library root that is absent on
+  disk lists no keys and answers every other route of its tier 404.
 
 Swagger UI is on at ``/docs`` (``/openapi.json`` for the schema). Configuration is
 environment-driven: ``TC_DATA_ROOT``, ``TC_DATA_RAW_ROOT``, ``TC_DATA_GENOMES_ROOT``,
-``TC_DATA_OBJECTS_ROOT``, ``TC_DATA_HOST`` and ``TC_DATA_PORT`` (8724).
+``TC_DATA_OBJECTS_ROOT``, ``TC_DATA_LIBRARY_ROOT``, ``TC_DATA_HOST`` and ``TC_DATA_PORT``
+(8724).
 """
 
 from __future__ import annotations
@@ -72,15 +78,20 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 APP_TITLE = "torchcell dataset endpoint"
-APP_VERSION = "2.0.0"
+APP_VERSION = "2.1.0"
 DEFAULT_PORT = 8724
 RAW_SUBDIR = "torchcell-raw"
 GENOMES_SUBDIR = GENOMES_DIR
 OBJECTS_SUBDIR = "torchcell-objects"
+#: Spelled out, not imported from ``torchcell.artifacts.tiers.LIBRARY_DIR``: importing the
+#: artifacts package pulls in httpx and the schema, which the slim tc-data image lacks
+#: (docker/Dockerfile.tc-data). A test pins the two equal.
+LIBRARY_SUBDIR = "torchcell-library"
 ARCHIVE_MEDIA_TYPE = "application/x-xz"
 FILE_MEDIA_TYPE = "application/octet-stream"
-#: Manifest roles never listed or served (paper_pdf, paper_text, paper_ocr, ...).
-WITHHELD_ROLE_PREFIX = "paper_"
+#: Manifest role prefixes never listed or served: the paper itself (paper_pdf,
+#: paper_ocr, ...) and its OCR derivatives (ocr_image, ocr_layout, ocr_provenance).
+WITHHELD_ROLE_PREFIXES: tuple[str, ...] = ("paper_", "ocr_")
 
 
 def _tier_root_from_env(var: str, subdir: str) -> Path:
@@ -102,6 +113,9 @@ class DataServerConfig(BaseModel):
     objects_root: Path = Field(
         description="The objects tier (one dir per object key); may be absent."
     )
+    library_root: Path = Field(
+        description="The library tier (one dir per citation key); may be absent."
+    )
     host: str = "0.0.0.0"
     port: int = DEFAULT_PORT
 
@@ -109,9 +123,9 @@ class DataServerConfig(BaseModel):
     def from_env(cls) -> Self:
         """Build config from ``TC_DATA_*``; the tier roots default under ``$DATA_ROOT``.
 
-        The store and the raw mirror must exist. The genomes and objects roots are not
-        checked: a root that is absent serves an empty listing, so a host without one of
-        those tiers runs unchanged.
+        The store and the raw mirror must exist. The genomes, objects and library roots
+        are not checked: a root that is absent serves an empty listing, so a host without
+        one of those tiers runs unchanged.
         """
         store_root = Path(os.environ["TC_DATA_ROOT"])
         if not store_root.is_dir():
@@ -124,6 +138,7 @@ class DataServerConfig(BaseModel):
             raw_root=raw_root,
             genomes_root=_tier_root_from_env("TC_DATA_GENOMES_ROOT", GENOMES_SUBDIR),
             objects_root=_tier_root_from_env("TC_DATA_OBJECTS_ROOT", OBJECTS_SUBDIR),
+            library_root=_tier_root_from_env("TC_DATA_LIBRARY_ROOT", LIBRARY_SUBDIR),
             host=os.environ.get("TC_DATA_HOST", "0.0.0.0"),
             port=int(os.environ.get("TC_DATA_PORT", str(DEFAULT_PORT))),
         )
@@ -150,6 +165,13 @@ class ObjectKeyListing(BaseModel):
     count: int
 
 
+class LibraryKeyListing(BaseModel):
+    """Citation keys in the library tier that carry a ``manifest.json``."""
+
+    citation_keys: list[str]
+    count: int
+
+
 class Health(BaseModel):
     """Liveness summary (no auth)."""
 
@@ -158,18 +180,20 @@ class Health(BaseModel):
     n_raw_keys: int
     n_genome_sets: int
     n_object_keys: int
+    n_library_keys: int
     store_root: str
     raw_root: str
     genomes_root: str
     objects_root: str
+    library_root: str
 
 
 class FileTier(BaseModel):
     """One manifest-gated tier: where it lives and what its keys are called.
 
     ``list_bare_keys`` keeps the raw mirror's listing contract (every key directory,
-    with or without a manifest); the genomes and objects tiers list only keys that
-    carry a ``manifest.json``, the only keys they can serve.
+    with or without a manifest); the genomes, objects and library tiers list only keys
+    that carry a ``manifest.json``, the only keys they can serve.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -251,7 +275,7 @@ def _list_tier_keys(tier: FileTier) -> list[str]:
 
 def _is_withheld(record: ArtifactRecord) -> bool:
     """Whether a manifest record is paper content, which tc-data never lists or serves."""
-    return record.role.startswith(WITHHELD_ROLE_PREFIX)
+    return record.role.startswith(WITHHELD_ROLE_PREFIXES)
 
 
 def _public_files(files: Sequence[ArtifactRecord]) -> list[ArtifactRecord]:
@@ -267,7 +291,7 @@ def _public_manifest(manifest: Manifest) -> Manifest:
 def _serve_public_file(
     base: Path, files: Sequence[ArtifactRecord], rel_path: str
 ) -> FileResponse:
-    """Serve a raw or objects file; a paper record is 404 ``paper content is not served``.
+    """Serve a raw, objects or library file; a paper record is 404 (not served).
 
     The withheld check comes first so the detail names the reason; every other path
     goes through :func:`_serve_listed_file` over the public records.
@@ -326,8 +350,15 @@ def objects_tier(config: DataServerConfig) -> FileTier:
     )
 
 
+def library_tier(config: DataServerConfig) -> FileTier:
+    """The library tier as a :class:`FileTier` (lists manifested citation keys)."""
+    return FileTier(
+        root=config.library_root, key_noun="citation key", list_bare_keys=False
+    )
+
+
 def _literature_manifest(tier: FileTier, base: Path) -> Manifest:
-    """A raw or objects key's literature-shaped ``Manifest``; corrupt JSON is a 500."""
+    """A raw, objects or library key's literature-shaped ``Manifest``; corrupt JSON is a 500."""
     return Manifest.model_validate_json(_tier_manifest_text(tier, base))
 
 
@@ -351,7 +382,8 @@ def create_app(config: DataServerConfig) -> FastAPI:
         title=APP_TITLE,
         summary=(
             "Public read-only access to packaged torchcell datasets, the raw mirror, "
-            "the genomes tier and the objects tier; no key; paper content withheld."
+            "the genomes tier, the objects tier and the library tier's supplementary "
+            "material; no key; paper content withheld."
         ),
         description=(
             "No route needs a key. Dataset archives are `tar.xz` files holding a built dataset's `processed/` "
@@ -360,10 +392,12 @@ def create_app(config: DataServerConfig) -> FastAPI:
             "index row's `archive_sha256`. The raw mirror serves the source files "
             "each dataset loader consumed, the genomes tier serves reference and "
             "isolate assembly sets, and the objects tier serves derived bytes that "
-            "graph records point at (embeddings, matrices, indexed FASTA); each is "
-            "hash-pinned by its key's `manifest.json`. Paper content (manifest "
-            "roles beginning `paper_`) is withheld from the raw and objects tiers: "
-            "it is not listed and its bytes answer 404."
+            "graph records point at (embeddings, matrices, indexed FASTA), and the "
+            "library tier serves a paper's supplementary material (SI files and "
+            "data); each is hash-pinned by its key's `manifest.json`. Paper content "
+            "(manifest roles beginning `paper_` or `ocr_`: the paper, its OCR and "
+            "layout files) is withheld from the raw, objects and library tiers: it is "
+            "not listed and its bytes answer 404."
         ),
         version=APP_VERSION,
     )
@@ -371,6 +405,7 @@ def create_app(config: DataServerConfig) -> FastAPI:
     raw = raw_tier(config)
     genomes = genomes_tier(config)
     objects = objects_tier(config)
+    library = library_tier(config)
 
     @app.get("/health", response_model=Health, tags=["service"])
     def health() -> Health:
@@ -385,10 +420,12 @@ def create_app(config: DataServerConfig) -> FastAPI:
             n_raw_keys=len(_list_tier_keys(raw)),
             n_genome_sets=len(_list_tier_keys(genomes)),
             n_object_keys=len(_list_tier_keys(objects)),
+            n_library_keys=len(_list_tier_keys(library)),
             store_root=str(config.store_root),
             raw_root=str(config.raw_root),
             genomes_root=str(config.genomes_root),
             objects_root=str(config.objects_root),
+            library_root=str(config.library_root),
         )
 
     @app.get("/datasets", response_model=ArtifactIndex, tags=["datasets"])
@@ -544,6 +581,48 @@ def create_app(config: DataServerConfig) -> FastAPI:
             base, _literature_manifest(objects, base).files, rel_path
         )
 
+    @app.get("/library", response_model=LibraryKeyListing, tags=["library"])
+    def list_library_keys() -> LibraryKeyListing:
+        """Citation keys with a `manifest.json` (empty when the library root is absent)."""
+        keys = _list_tier_keys(library)
+        return LibraryKeyListing(citation_keys=keys, count=len(keys))
+
+    @app.get(
+        "/library/{citation_key}/manifest", response_model=Manifest, tags=["library"]
+    )
+    def get_library_manifest(citation_key: str) -> Manifest:
+        """A key's `manifest.json` without paper, OCR or layout records."""
+        return _public_manifest(
+            _literature_manifest(library, _tier_key_dir(library, citation_key))
+        )
+
+    @app.get(
+        "/library/{citation_key}/files",
+        response_model=list[ManifestFileListing],
+        tags=["library"],
+    )
+    def list_library_files(citation_key: str) -> list[ManifestFileListing]:
+        """The supplementary files a key's manifest lists, with role, bytes and sha256."""
+        return _file_listing(
+            _public_files(
+                _literature_manifest(
+                    library, _tier_key_dir(library, citation_key)
+                ).files
+            )
+        )
+
+    @app.get("/library/{citation_key}/artifact/{rel_path:path}", tags=["library"])
+    def get_library_artifact(citation_key: str, rel_path: str) -> FileResponse:
+        """Stream one supplementary file; `X-Artifact-SHA256` carries the manifest hash.
+
+        Only files the manifest lists are served, never the paper, its OCR or layout
+        files (404 `paper content is not served`); `Range` requests are honored.
+        """
+        base = _tier_key_dir(library, citation_key)
+        return _serve_public_file(
+            base, _literature_manifest(library, base).files, rel_path
+        )
+
     return app
 
 
@@ -567,11 +646,13 @@ def main() -> None:
     host = args.host or config.host
     port = config.port if args.port is None else args.port
     log.info(
-        "dataset endpoint: store %s, raw %s, genomes %s, objects %s on %s:%d",
+        "dataset endpoint: store %s, raw %s, genomes %s, objects %s, "
+        "library %s (supplementary material only) on %s:%d",
         config.store_root,
         config.raw_root,
         config.genomes_root,
         config.objects_root,
+        config.library_root,
         host,
         port,
     )

@@ -40,6 +40,14 @@ with no header answers 200 on every listed path. Paper content is withheld from 
 and objects tiers: a manifest record whose role starts ``paper_`` is dropped from
 ``/manifest`` and ``/files``, and its bytes answer 404 ``paper content is not served``
 while an SI file beside it serves 200 with its manifest hash. ``--gen-key`` is gone.
+
+2026.10.19 (library tier, APP_VERSION 2.1.0): ``/library`` serves a paper's
+supplementary material from ``$DATA_ROOT/torchcell-library``. Withholding widens to the
+role prefixes ``paper_`` and ``ocr_``: the fixture key holds
+``si/plasmids/pBTX001(ante113).gb`` (si_data, the one library file the KG 4.0 release
+points at), ``paper.pdf`` (paper_pdf) and ``images/p1.png`` (ocr_image); only the GenBank
+file is listed or served, and its parenthesized name round-trips through the URL. The
+listing names only manifested keys, and an absent library root lists none.
 """
 
 import argparse
@@ -76,6 +84,12 @@ OBJECT_KEY = "fakeObjects2024"
 OBJECT_FILE = "emb/vectors.npy"
 OBJECT_BYTES = bytes(range(64))
 OBJECT_SHA = hashlib.sha256(OBJECT_BYTES).hexdigest()
+LIBRARY_KEY = "cacheraCRISPAHighthroughputMethod2023"
+LIBRARY_FILE = "si/plasmids/pBTX001(ante113).gb"
+LIBRARY_BYTES = b"LOCUS       pBTX001  5120 bp  DNA  circular\nORIGIN\n//\n"
+LIBRARY_SHA = hashlib.sha256(LIBRARY_BYTES).hexdigest()
+LIBRARY_PAPER = b"%PDF-1.7 the paper itself"
+LIBRARY_OCR_IMAGE = b"\x89PNG ocr page image"
 
 
 def _artifact() -> DatasetArtifact:
@@ -189,6 +203,44 @@ def build_objects(root: Path) -> Path:
     return objects
 
 
+def build_library(root: Path) -> Path:
+    """A library tier: one key with an SI file, the paper and an OCR image; one bare key."""
+    library = root / "library"
+    key = library / LIBRARY_KEY
+    (key / "si" / "plasmids").mkdir(parents=True)
+    (key / "images").mkdir()
+    (key / LIBRARY_FILE).write_bytes(LIBRARY_BYTES)
+    (key / "paper.pdf").write_bytes(LIBRARY_PAPER)
+    (key / "images" / "p1.png").write_bytes(LIBRARY_OCR_IMAGE)
+    (key / "si" / "unlisted.gb").write_bytes(b"not in manifest")
+    manifest = Manifest(
+        citation_key=LIBRARY_KEY,
+        files=[
+            ArtifactRecord(
+                path=LIBRARY_FILE,
+                role="si_data",
+                bytes=len(LIBRARY_BYTES),
+                sha256=LIBRARY_SHA,
+            ),
+            ArtifactRecord(
+                path="paper.pdf",
+                role="paper_pdf",
+                bytes=len(LIBRARY_PAPER),
+                sha256=hashlib.sha256(LIBRARY_PAPER).hexdigest(),
+            ),
+            ArtifactRecord(
+                path="images/p1.png",
+                role="ocr_image",
+                bytes=len(LIBRARY_OCR_IMAGE),
+                sha256=hashlib.sha256(LIBRARY_OCR_IMAGE).hexdigest(),
+            ),
+        ],
+    )
+    (key / "manifest.json").write_text(manifest.model_dump_json(indent=2))
+    (library / "bareLibrary2019").mkdir()
+    return library
+
+
 @pytest.fixture
 def client(tmp_path: Path) -> TestClient:
     config = DataServerConfig(
@@ -196,6 +248,7 @@ def client(tmp_path: Path) -> TestClient:
         raw_root=build_raw(tmp_path),
         genomes_root=build_genomes(tmp_path),
         objects_root=build_objects(tmp_path),
+        library_root=build_library(tmp_path),
     )
     return TestClient(create_app(config))
 
@@ -211,10 +264,12 @@ def test_health_needs_no_auth_and_counts_store_and_raw(
         "n_raw_keys": 2,
         "n_genome_sets": 1,
         "n_object_keys": 1,
+        "n_library_keys": 1,
         "store_root": str(tmp_path / "store"),
         "raw_root": str(tmp_path / "raw"),
         "genomes_root": str(tmp_path / "genomes"),
         "objects_root": str(tmp_path / "objects"),
+        "library_root": str(tmp_path / "library"),
     }
 
 
@@ -231,6 +286,10 @@ def test_health_needs_no_auth_and_counts_store_and_raw(
         "/objects",
         f"/objects/{OBJECT_KEY}/files",
         f"/objects/{OBJECT_KEY}/artifact/{OBJECT_FILE}",
+        "/library",
+        f"/library/{LIBRARY_KEY}/manifest",
+        f"/library/{LIBRARY_KEY}/files",
+        f"/library/{LIBRARY_KEY}/artifact/{LIBRARY_FILE}",
     ],
 )
 def test_every_route_answers_without_a_key(client: TestClient, path: str) -> None:
@@ -239,7 +298,7 @@ def test_every_route_answers_without_a_key(client: TestClient, path: str) -> Non
 
 
 def test_app_version_marks_the_public_endpoint() -> None:
-    assert APP_VERSION == "2.0.0"
+    assert APP_VERSION == "2.1.0"
 
 
 def test_index_route_returns_the_store_index_verbatim(
@@ -389,6 +448,10 @@ def test_openapi_lists_every_route_and_docs_is_served(client: TestClient) -> Non
         "/objects/{object_key}/manifest",
         "/objects/{object_key}/files",
         "/objects/{object_key}/artifact/{rel_path}",
+        "/library",
+        "/library/{citation_key}/manifest",
+        "/library/{citation_key}/files",
+        "/library/{citation_key}/artifact/{rel_path}",
     }
     docs = client.get("/docs")
     assert docs.status_code == 200
@@ -402,10 +465,12 @@ def test_config_from_env_reads_tc_data_variables(
     raw = build_raw(tmp_path)
     genomes = build_genomes(tmp_path)
     objects = build_objects(tmp_path)
+    library = build_library(tmp_path)
     monkeypatch.setenv("TC_DATA_ROOT", str(store))
     monkeypatch.setenv("TC_DATA_RAW_ROOT", str(raw))
     monkeypatch.setenv("TC_DATA_GENOMES_ROOT", str(genomes))
     monkeypatch.setenv("TC_DATA_OBJECTS_ROOT", str(objects))
+    monkeypatch.setenv("TC_DATA_LIBRARY_ROOT", str(library))
     monkeypatch.setenv("TC_DATA_PORT", "9001")
     config = DataServerConfig.from_env()
     assert (
@@ -413,8 +478,9 @@ def test_config_from_env_reads_tc_data_variables(
         config.raw_root,
         config.genomes_root,
         config.objects_root,
+        config.library_root,
         config.port,
-    ) == (store, raw, genomes, objects, 9001)
+    ) == (store, raw, genomes, objects, library, 9001)
 
 
 def test_config_from_env_defaults_raw_root_under_data_root(
@@ -423,17 +489,24 @@ def test_config_from_env_defaults_raw_root_under_data_root(
     store = build_store(tmp_path)
     (tmp_path / "torchcell-raw").mkdir()
     monkeypatch.setenv("TC_DATA_ROOT", str(store))
-    for var in ("TC_DATA_RAW_ROOT", "TC_DATA_GENOMES_ROOT", "TC_DATA_OBJECTS_ROOT"):
+    for var in (
+        "TC_DATA_RAW_ROOT",
+        "TC_DATA_GENOMES_ROOT",
+        "TC_DATA_OBJECTS_ROOT",
+        "TC_DATA_LIBRARY_ROOT",
+    ):
         monkeypatch.delenv(var, raising=False)
     monkeypatch.setenv("DATA_ROOT", str(tmp_path))
     config = DataServerConfig.from_env()
     assert config.raw_root == tmp_path / "torchcell-raw"
-    # The genomes and objects roots default under DATA_ROOT and need not exist.
-    assert (config.genomes_root, config.objects_root) == (
+    # The genomes, objects and library roots default under DATA_ROOT, need not exist.
+    assert (config.genomes_root, config.objects_root, config.library_root) == (
         tmp_path / "torchcell-genomes",
         tmp_path / "torchcell-objects",
+        tmp_path / "torchcell-library",
     )
     assert not config.genomes_root.exists() and not config.objects_root.exists()
+    assert not config.library_root.exists()
     monkeypatch.setenv("TC_DATA_ROOT", str(tmp_path / "missing"))
     with pytest.raises(FileNotFoundError, match="artifact store does not exist"):
         DataServerConfig.from_env()
@@ -441,12 +514,13 @@ def test_config_from_env_defaults_raw_root_under_data_root(
 
 # --- 2026.09.30 (Phase 15): the remaining refusals, the header source, the CLI ------ #
 def _config(store: Path, raw: Path, tmp_path: Path) -> DataServerConfig:
-    """Store and raw mirror as given; genomes and objects roots that do not exist."""
+    """Store and raw mirror as given; genomes, objects, library roots that do not exist."""
     return DataServerConfig(
         store_root=store,
         raw_root=raw,
         genomes_root=tmp_path / "no-genomes",
         objects_root=tmp_path / "no-objects",
+        library_root=tmp_path / "no-library",
     )
 
 
@@ -457,6 +531,7 @@ def _clear_data_env(monkeypatch: pytest.MonkeyPatch) -> None:
         "TC_DATA_RAW_ROOT",
         "TC_DATA_GENOMES_ROOT",
         "TC_DATA_OBJECTS_ROOT",
+        "TC_DATA_LIBRARY_ROOT",
     ):
         monkeypatch.delenv(var, raising=False)
 
@@ -706,7 +781,8 @@ def test_main_runs_uvicorn_with_config_or_override_host_and_port(
     assert calls[0][0].state.config.store_root == store
     tiers = (
         f"genomes {tmp_path / 'torchcell-genomes'}, "
-        f"objects {tmp_path / 'torchcell-objects'}"
+        f"objects {tmp_path / 'torchcell-objects'}, "
+        f"library {tmp_path / 'torchcell-library'} (supplementary material only)"
     )
     assert [r.getMessage() for r in caplog.records] == [
         f"dataset endpoint: store {store}, raw {raw}, {tiers} on 0.0.0.0:9100",
@@ -938,6 +1014,7 @@ def test_paper_content_is_never_listed_or_served(
                 raw_root=raw,
                 genomes_root=tmp_path / "no-genomes",
                 objects_root=objects,
+                library_root=tmp_path / "no-library",
             )
         )
     )
@@ -967,3 +1044,150 @@ def test_paper_content_is_never_listed_or_served(
     # A path in no manifest keeps the generic detail.
     unlisted = http.get(f"/{tier}/{key}/artifact/si/absent.csv")
     assert unlisted.json() == {"detail": "file not in the manifest"}
+
+
+# --- 2026.10.19: the library tier serves supplementary material, never the paper ---- #
+def test_library_subdir_matches_the_artifact_tier_layout() -> None:
+    """The server spells the directory out (the slim image cannot import the artifacts
+    package); it must stay the directory ``torchcell.artifacts.tiers`` resolves.
+    """
+    from torchcell.artifacts.tiers import LIBRARY_DIR, MANIFEST_TIER_DIRS
+
+    assert server.LIBRARY_SUBDIR == LIBRARY_DIR == MANIFEST_TIER_DIRS["library"]
+    assert server.WITHHELD_ROLE_PREFIXES == ("paper_", "ocr_")
+
+
+def test_library_listing_names_only_manifested_keys(client: TestClient) -> None:
+    """``bareLibrary2019`` has no manifest, so the listing names only the Cachera key."""
+    resp = client.get("/library")
+    assert (resp.status_code, resp.json()) == (
+        200,
+        {"citation_keys": [LIBRARY_KEY], "count": 1},
+    )
+
+
+def test_library_manifest_and_files_show_only_the_si_file(
+    client: TestClient, tmp_path: Path
+) -> None:
+    """The paper_pdf and ocr_image records are dropped; the rest of the manifest is the
+    on-disk one unchanged.
+    """
+    manifest = client.get(f"/library/{LIBRARY_KEY}/manifest")
+    assert manifest.status_code == 200
+    on_disk = Manifest.model_validate_json(
+        (tmp_path / "library" / LIBRARY_KEY / "manifest.json").read_text()
+    )
+    assert Manifest.model_validate(manifest.json()) == on_disk.model_copy(
+        update={"files": on_disk.files[:1]}
+    )
+    files = client.get(f"/library/{LIBRARY_KEY}/files")
+    assert (files.status_code, files.json()) == (
+        200,
+        [
+            {
+                "path": LIBRARY_FILE,
+                "role": "si_data",
+                "bytes": len(LIBRARY_BYTES),
+                "sha256": LIBRARY_SHA,
+            }
+        ],
+    )
+    bare = client.get("/library/bareLibrary2019/files")
+    assert (bare.status_code, bare.json()) == (
+        404,
+        {"detail": "no manifest.json for this citation key"},
+    )
+
+
+def test_library_si_file_with_parentheses_serves_and_honors_a_range(
+    client: TestClient,
+) -> None:
+    """``pBTX001(ante113).gb`` is sent both raw and percent-encoded; each form reaches
+    the same listed file, and ``bytes=5-10`` is a 206 slice carrying the whole-file hash.
+    """
+    for rel in (LIBRARY_FILE, "si/plasmids/pBTX001%28ante113%29.gb"):
+        resp = client.get(f"/library/{LIBRARY_KEY}/artifact/{rel}")
+        assert resp.status_code == 200
+        assert resp.content == LIBRARY_BYTES
+        assert resp.headers["X-Artifact-SHA256"] == LIBRARY_SHA
+        assert resp.headers["accept-ranges"] == "bytes"
+    part = client.get(
+        f"/library/{LIBRARY_KEY}/artifact/{LIBRARY_FILE}",
+        headers={"Range": "bytes=5-10"},
+    )
+    assert part.status_code == 206
+    assert part.content == LIBRARY_BYTES[5:11]
+    assert part.headers["content-range"] == f"bytes 5-10/{len(LIBRARY_BYTES)}"
+    assert part.headers["X-Artifact-SHA256"] == LIBRARY_SHA
+
+
+@pytest.mark.parametrize("rel", ["paper.pdf", "images/p1.png"])
+def test_library_paper_and_ocr_files_are_not_served(
+    client: TestClient, rel: str
+) -> None:
+    """Both are listed in the on-disk manifest and present on disk, yet answer 404."""
+    resp = client.get(f"/library/{LIBRARY_KEY}/artifact/{rel}")
+    assert (resp.status_code, resp.json()) == (
+        404,
+        {"detail": "paper content is not served"},
+    )
+    assert LIBRARY_PAPER not in resp.content
+    assert LIBRARY_OCR_IMAGE not in resp.content
+
+
+def test_library_unlisted_path_is_the_generic_404(client: TestClient) -> None:
+    resp = client.get(f"/library/{LIBRARY_KEY}/artifact/si/unlisted.gb")
+    assert (resp.status_code, resp.json()) == (
+        404,
+        {"detail": "file not in the manifest"},
+    )
+
+
+def test_absent_library_root_lists_nothing_and_404s_every_key_route(
+    tmp_path: Path,
+) -> None:
+    config = _config(build_store(tmp_path), build_raw(tmp_path), tmp_path)
+    http = TestClient(create_app(config))
+    assert http.get("/library").json() == {"citation_keys": [], "count": 0}
+    health = http.get("/health").json()
+    assert (health["n_library_keys"], health["library_root"]) == (
+        0,
+        str(tmp_path / "no-library"),
+    )
+    for route in ("manifest", "files", f"artifact/{LIBRARY_FILE}"):
+        resp = http.get(f"/library/{LIBRARY_KEY}/{route}")
+        assert (resp.status_code, resp.json()) == (
+            404,
+            {"detail": "unknown citation key"},
+        )
+    assert not (tmp_path / "no-library").exists()
+
+
+def test_library_manifest_without_files_is_empty_and_an_invalid_one_is_a_500(
+    tmp_path: Path,
+) -> None:
+    """``Manifest.files`` defaults to ``[]``, so a manifest with no ``files`` key (one
+    library key has that shape) validates and lists nothing. A manifest the model cannot
+    validate (``files`` not a list) is a 500 on every route of that key, exactly as on
+    the raw tier, and the other keys are untouched.
+    """
+    library = build_library(tmp_path)
+    for name, body in (
+        ("noFilesKey2021", {"citation_key": "noFilesKey2021"}),
+        ("brokenKey2021", {"citation_key": "brokenKey2021", "files": "x"}),
+    ):
+        (library / name).mkdir()
+        (library / name / "manifest.json").write_text(json.dumps(body))
+    config = _config(build_store(tmp_path), build_raw(tmp_path), tmp_path)
+    config = config.model_copy(update={"library_root": library})
+    http = TestClient(create_app(config), raise_server_exceptions=False)
+    assert http.get("/library").json()["citation_keys"] == [
+        "brokenKey2021",
+        LIBRARY_KEY,
+        "noFilesKey2021",
+    ]
+    empty = http.get("/library/noFilesKey2021/files")
+    assert (empty.status_code, empty.json()) == (200, [])
+    for route in ("manifest", "files", "artifact/si/x.gb"):
+        assert http.get(f"/library/brokenKey2021/{route}").status_code == 500
+    assert http.get(f"/library/{LIBRARY_KEY}/files").status_code == 200

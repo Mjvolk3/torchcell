@@ -100,15 +100,15 @@ class RemoteSource(Protocol):
 
 
 class TcDataSource:
-    """``RemoteSource`` over the tc-data endpoint for the raw, genomes and objects tiers.
+    """``RemoteSource`` over the tc-data endpoint for all four artifact tiers.
 
-    URL shapes: ``/{tier}/{key}/manifest`` and ``/{tier}/{key}/artifact/{path}``. The
-    raw tier is served today; ``/genomes`` and ``/objects`` arrive with phase 2 of the
-    artifact tier. The library tier is served by tc-lit, not tc-data, so asking this
-    source for it is a miss.
+    URL shapes: ``/{tier}/{key}/manifest`` and ``/{tier}/{key}/artifact/{path}``.
+    tc-data serves the raw, genomes, objects and library tiers. For the library tier it
+    serves only the non-paper files (supplementary material); the paper itself, its OCR
+    and layout files stay behind a key on tc-lit, so a ref to one of them is a miss here.
     """
 
-    SERVED_TIERS: tuple[str, ...] = ("raw", "genomes", "objects")
+    SERVED_TIERS: tuple[str, ...] = ("raw", "genomes", "objects", "library")
 
     def __init__(
         self,

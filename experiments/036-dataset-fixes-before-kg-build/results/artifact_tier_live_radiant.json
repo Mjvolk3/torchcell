@@ -1,0 +1,25 @@
+{
+ "run_at": "2026-10-19T06:32:31+00:00",
+ "torchcell_version": "1.8.4",
+ "graph": "neo4j+s://torchcell-database.ncsa.illinois.edu:7687",
+ "tc_data": "http://torchcell-database.ncsa.illinois.edu:8724",
+ "records": 6,
+ "query_and_gate_seconds": 17.3,
+ "distinct_refs": [
+  "tc://genomes/peter2018_1011_assemblies/1011LossOfFunction.xls.gz",
+  "tc://genomes/peter2018_1011_assemblies/41586_2018_30_MOESM3_ESM.xls#Table S1",
+  "tc://genomes/peter2018_1011_assemblies/allReferenceGenesWithSNPsAndIndelsInferred.tar.gz#YAL001C.fasta#ALN_YAL001C_TFC3",
+  "tc://genomes/peter2018_1011_assemblies/allReferenceGenesWithSNPsAndIndelsInferred.tar.gz#YAL001C.fasta#BAR_YAL001C_TFC3",
+  "tc://genomes/peter2018_1011_assemblies/allReferenceGenesWithSNPsAndIndelsInferred.tar.gz#YAL001C.fasta#BCK_YAL001C_TFC3",
+  "tc://genomes/peter2018_1011_assemblies/allReferenceGenesWithSNPsAndIndelsInferred.tar.gz#YAL001C.fasta#BEN_YAL001C_TFC3",
+  "tc://genomes/peter2018_1011_assemblies/allReferenceGenesWithSNPsAndIndelsInferred.tar.gz#YAL001C.fasta#CCP_YAL001C_TFC3",
+  "tc://genomes/peter2018_1011_assemblies/allReferenceGenesWithSNPsAndIndelsInferred.tar.gz#YAL001C.fasta#SACE_YDI_YAL001C_TFC3",
+  "tc://genomes/peter2018_1011_assemblies/genesMatrix_Frameshift.tab.gz"
+ ],
+ "materialized": {
+  "ref": "tc://genomes/peter2018_1011_assemblies/1011LossOfFunction.xls.gz",
+  "bytes": 281760,
+  "seconds": 0.11,
+  "cache_path_relative": "artifact-cache/067327e1970c48f278dd08abb18f140622458829a6abc320207245c8c4b61c34/1011LossOfFunction.xls.gz"
+ }
+}

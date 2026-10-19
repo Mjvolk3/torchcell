@@ -14,10 +14,13 @@ and the ``X-Artifact-SHA256`` header, and only then renames it into place; a mis
 removes the bad file and raises. ``unpack_artifact`` extracts ``processed/`` and
 ``preprocess/`` into a dataset root with the ``data`` tar filter (no traversal).
 
-The raw, genomes and objects tiers are file trees gated by a per-key ``manifest.json``:
-``genomes`` / ``objects`` list the keys, ``*_manifest`` and ``*_files`` return the
-manifest and its file rows, and ``download_raw_file`` / ``download_genome_file`` /
-``download_object_file`` stream one listed file through the same resumable path as ``download``. The expected
+The raw, genomes, objects and library tiers are file trees gated by a per-key
+``manifest.json``: ``genomes`` / ``objects`` / ``library_keys`` list the keys,
+``*_manifest`` and ``*_files`` return the manifest and its file rows, and
+``download_raw_file`` / ``download_genome_file`` / ``download_object_file`` /
+``download_library_file`` stream one listed file through the same resumable path as
+``download``. The library tier carries a paper's supplementary material only; the paper,
+its OCR and layout files are not served by tc-data, so they never appear. The expected
 sha256 and size come from the key's ``/files`` row; the server's ``X-Artifact-SHA256``
 must equal that row and the completed bytes must hash to it, or the partial file is
 removed and :class:`ArtifactIntegrityError` is raised.
@@ -57,7 +60,7 @@ PART_SUFFIX = ".part"
 
 
 #: The manifest-gated tiers the client downloads single files from.
-FileTierName = Literal["raw", "genomes", "objects"]
+FileTierName = Literal["raw", "genomes", "objects", "library"]
 
 
 class EndpointError(RuntimeError):
@@ -207,6 +210,29 @@ class DatasetClient:
     def download_object_file(self, object_key: str, rel_path: str, dest: Path) -> Path:
         """Stream one objects-tier file to ``dest``, verified; see :meth:`_download_listed`."""
         return self._download_listed("objects", object_key, rel_path, dest)
+
+    def library_keys(self) -> list[str]:
+        """``GET /library``: citation keys in the library tier that carry a manifest."""
+        names: list[str] = self._get("/library").json()["citation_keys"]
+        return names
+
+    def library_manifest(self, citation_key: str) -> Manifest:
+        """``GET /library/{citation_key}/manifest``: the public literature ``Manifest``.
+
+        The paper, OCR and layout records are already dropped by the server.
+        """
+        content = self._get(f"/library/{_segment(citation_key)}/manifest").content
+        return Manifest.model_validate_json(content)
+
+    def library_files(self, citation_key: str) -> list[ManifestFileListing]:
+        """``GET /library/{citation_key}/files``: path, role, bytes, sha256 per file."""
+        return self._tier_files("library", citation_key)
+
+    def download_library_file(
+        self, citation_key: str, rel_path: str, dest: Path
+    ) -> Path:
+        """Stream one library-tier file to ``dest``, verified; see :meth:`_download_listed`."""
+        return self._download_listed("library", citation_key, rel_path, dest)
 
     def _tier_files(self, tier: FileTierName, key: str) -> list[ManifestFileListing]:
         payload = self._get(f"/{tier}/{_segment(key)}/files").json()

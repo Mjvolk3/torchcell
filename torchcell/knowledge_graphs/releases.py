@@ -1114,8 +1114,10 @@ def classify_pointers(
     so each key's manifest is fetched once. A file is ``listed`` when the manifest lists
     its path with the pinned sha256, ``sha256_mismatch`` when it lists the path with
     another, and ``missing`` when the path is absent or the source has no such key (a
-    ``RemoteMissError``, which includes a tier tc-data does not serve). Any other error
-    of the source propagates.
+    ``RemoteMissError``). tc-data serves all four tiers, so a library pointer is checked
+    like any other; its public manifest omits paper content (``paper_`` and ``ocr_``
+    roles), so a pointer at a paper file reads ``missing``. Any other error of the
+    source propagates.
     """
     from torchcell.artifacts.resolve import RemoteMissError
     from torchcell.artifacts.tiers import find_record

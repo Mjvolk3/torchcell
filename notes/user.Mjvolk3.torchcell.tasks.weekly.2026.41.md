@@ -94,3 +94,4 @@ created: 1791256185172
 ## 2026.10.19
 
 - [x] Gate figure 2, top row to the owner's second pass: the Vanacloig neighbors back at half the bond length, genotypes on b, this study's labels drawn as they are, c as a graphic, d with the trainer's equations braced in LaTeX, the panel letters on their own band (white-cross rule), one-line titles checked against the panel width [[experiments.040-inhibitor-synergy-wetlab]]
+- [x] Gate figure 2, top row to the owner's third pass: the math set in Times rather than Computer Modern and the model panel at 4.8 pt throughout, the structures back in the stylesheet's proportion (bond and label scale together, line width held), the join panel's dose labels off its fold boxes and its split blocks holding their text [[experiments.040-inhibitor-synergy-wetlab]]

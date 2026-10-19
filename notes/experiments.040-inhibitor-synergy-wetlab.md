@@ -1918,3 +1918,53 @@ W&B: hill zero-shot 3arargdi, hill fine-tune s9xzpgs2, hill + Loewe 546jaw3o, co
 **Third pass, same day.** a now reads as six: this study's inhibitors in one column, Vanacloig's nearest other compound beside each (4-hydroxybenzaldehyde 0.29, sodium acetate 0.42 and 0.25, 2,6-dimethylpyrazine 0.31, azelaic acid 0.38, ethanol 0.36), a dot on furfural and 5-HMF which the screen profiles itself; structures at 0.45 of the bond. Every structure follows Nature's ChemDraw stylesheet (6 pt Arial, 0.381 cm bond, 18 percent spacing, 0.6 pt line) on RDKit's ACS 1996 base, the only preset RDKit has; `torchcell.utils` names the constants `NATURE_*` and the paper style guide and the fig-swap skill record it. b's text is black, the gap row is a rule, and the anchors row says "IC30 anchors (screens), wild type, 0.70 asserted": the public screens' IC30 doses read as host records at 0.70 by the definition of IC30 (`anchor_records`). d's mathematics is LaTeX's own Computer Modern (sansmath dropped), the words Helvetica. "Growth AUROC" is spelled out as the AUROC of a predicted fitness against whether a combination grew, on the axes and in the section's first paragraph.
 
 **The structure standard, verified.** The owner asked whether Nature's documents say ACS 1996. They do not: the Nature Chemistry and Nature Chemical Biology structure guides give drawing rules and point to the Nature ChemDraw template, and the Communications Physics guide links the template as `NR_chemdraw_stylesheet.cds` and says structures "should, however, be scaled in proportion to fit our Figure dimensions, without changing the bond thickness". The file (ChemDraw 16.0.1.4, 73 KB) parsed by its CDX document-settings tags gives chain angle 120 degrees (0x0803), bond spacing 18.0 percent (0x0804), bond length 10.80 pt = 0.381 cm (0x0805), bold width 1.56 pt (0x0806), line width 0.595 pt (0x0807), margin width 1.19 pt (0x0808), hash spacing 1.70 pt (0x0809), Helvetica as the one font, label and caption styles at 6 pt (0x080a, 0x080b). That is the table the owner pasted and what `torchcell.utils.acs_structure` draws; ChemDraw's ACS Document 1996 preset (14.4 pt bond, 10 pt labels) is what RDKit's `SetACS1996Mode` provides and what the function rescales from. The sheet's half-size structures follow the scaling rule: proportionally smaller, line width kept.
+
+## 2026.10.19 - Row one reviewed again: the math face, the structure proportion, the join panel's boxes
+
+Owner's third reading of `fig:main`, on the rendered page: the LaTeX does not match the
+rest of the figure and its text is extremely thin; there is still a clash between boxes
+and text; and is this the correct molecular representation for the inhibitors?
+
+**The math face.** Every string of the model panel was 4.0 to 4.6 pt, under Nature's
+5 pt floor, and its mathematics was Computer Modern, whose hairlines disappear beside
+6 pt Arial. Figure 1 of the same document carries no mathematics at all, so there was
+nothing in the document for it to match. The math is now Times through `mathptmx` and
+the panel runs at 4.8 pt throughout. Times is heavier and about a fifth narrower: the
+head equation measured 43.3 mm in Computer Modern at 4.6 pt and 34.5 mm in Times at the
+same size. Nature's 5 pt floor still does not fit this panel. It is 41.6 mm wide and
+134.9 pt tall over a 150-unit canvas, and at 5.2 pt its eleven blocks need about 152
+units with no gaps. Holding the floor would mean a wider panel or one block fewer, which
+is the owner's call.
+
+The words inside an equation were already Helvetica, and the labels around it already
+Arial, so the complaint was about weight and size, not about prose being set in a serif.
+
+**The structure proportion.** The SMILES are right (furfural `C1=COC(=C1)C=O`, acetic
+acid `CC(=O)O`, formic acid `OC=O`, levulinic `CC(=O)CCC(=O)O`, lactic `CC(O)C(=O)O`,
+5-HMF from the identity-gap table). The depiction was not. `SHEET_BOND_PT` scaled the
+bond to 45 percent of Nature's stylesheet and `acs_structure_svg` kept `font_pt` at its
+6 pt default, so the label stood above the bond at a ratio of 0.81 against the
+stylesheet's 1.80. That is what the owner was seeing: formic acid as two labels joined
+by a stub, and the sodium of an acetate sitting on its carbonyl oxygen. Bond and label
+now scale together at `SHEET_SCALE = 0.55` (bond 5.94 pt, label 3.30 pt) and the line
+width is held at 0.6 pt, which is the Communications Physics rule. 0.55 is the largest
+scale whose six rows fit panel a: measured grid heights are 107.6 pt at 0.45, 119.6 pt
+at 0.55 and 138.6 pt at 0.65 against about 124 pt of panel.
+
+A label at Nature's 5 pt floor would need a 9 pt bond, and azelaic acid, the nearest
+Vanacloig neighbor to levulinic acid, is then 32.5 mm wide against a column of about
+15 mm. The neighbor column cannot hold a stylesheet-proportioned structure at a
+floor-legal label size in a four-panel row.
+
+**The join panel.** The dose sketch wrote "dose" and "(103 anchors)" across the tops of
+the five fold boxes, and the two split blocks carried more text than they could hold, so
+"titration (180 wells)" ran out of its box on both sides. The sketch moved up, the blocks
+now name only their split ("103 anchors", "63 combinations") and the well counts went to
+a line beneath them, which is the pattern the public row already used.
+
+The sheet's clash checker reports zero overlaps, `make check` is clean apart from one
+heading with no status chip, and the review card is one page.
+
+**Build order matters.** `make numbers` regenerates the sheets, `make plots` converts the
+new timestamped SVGs into `figures/`, and only then does `make all` find them. Running
+`make all` straight after `make numbers` fails with "Unable to load picture or PDF file".

@@ -122,12 +122,22 @@ Reference: [[paper.nature-biotech.figures]] (2026.08.16 section) and
   `torchcell.utils.acs_structure` / `acs_structure_svg`, which start from that preset and
   set the bond, label size and font to Nature's (`NATURE_BOND_PT`, `NATURE_FONT_PT`,
   `NATURE_LINE_PT`); never call RDKit's drawer directly for a figure. A sheet that packs
-  structures smaller passes `bond_pt=` and says so in its caption; labels and lines stay
-  at the stylesheet's sizes. Say "Nature's stylesheet" in captions, not "ACS 1996".
+  structures smaller passes **both** `bond_pt=` and `font_pt=`, scaled by the same factor,
+  and holds the line width: Communications Physics says a structure "should be scaled in
+  proportion ... without changing the bond thickness". Passing `bond_pt=` alone leaves the
+  label at 6 pt standing over a shrunken bond, which collapses small molecules (formic acid
+  reads as two labels joined by a stub; a salt's counter-ion lands on the carbonyl). Pick
+  the scale from the panel: measure the grid's height against the axes before choosing.
+  Say "Nature's stylesheet" in captions, not "ACS 1996".
 - **Mathematics is set by LaTeX**, never by matplotlib's mathtext: `usetex=True` on the text
   artist, under the PDF backend (Agg has no dvipng on GilaHyper; rasterize the PNG from the
-  PDF with `pdftoppm`), preamble `amsmath` + `helvet` + `\renewcommand{\rmdefault}{phv}`
-  so words are Helvetica beside the Arial labels and the math is Computer Modern. Name
+  PDF with `pdftoppm`), preamble `amsmath` + `mathptmx` + `helvet` +
+  `\renewcommand{\rmdefault}{phv}` so words are Helvetica beside the Arial labels and the
+  math is Times. Not Computer Modern: at a figure's type size its hairlines vanish beside
+  Arial, and Times is both heavier and about a fifth narrower, which is the width an
+  equation needs to hold a legible size. The Helvetica line comes AFTER `mathptmx`, which
+  sets the roman default to Times. A `usetex` size is quantized by LaTeX's font selection,
+  so measure the string at the size you will use rather than scaling a measurement. Name
   components under braces (`\underbrace{...}_{\text{...}}`) rather than in prose. The 040
   gate sheet (`experiments/040-inhibitor-synergy-wetlab/scripts/figure_gate_panels.py`,
   `draw_evaluation`) is the worked example. draw.io renders LaTeX too (its math typesetting

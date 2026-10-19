@@ -327,8 +327,10 @@ draws in that mode and sets the bond, the label size and the font to Nature's va
 (`NATURE_BOND_PT`, `NATURE_FONT_PT`, `NATURE_LINE_PT`); the two presets agree on the
 rest of what RDKit exposes, and Nature's bold, hash and margin widths matter only for
 stereo drawings, which RDKit cannot be told. A sheet may draw structures smaller to pack
-them (the 040 gate sheet uses half the bond length) and says so in its caption; the
-labels and lines stay at the stylesheet's sizes.
+them (the 040 gate sheet uses 0.55 of the bond length) and says so in its caption; the
+bond length and the atom label scale TOGETHER and the line width does not. See the
+correction of 2026.10.19 below: holding the label at 6 pt while the bond shrinks is
+what breaks a small structure.
 
 **Verified against the file, 2026-10-19.** `NR_chemdraw_stylesheet.cds` (ChemDraw 16.0.1.4,
 served at `https://www.nature.com/authors/guides/NR_chemdraw_stylesheet.cds`, the file the
@@ -345,3 +347,47 @@ Communications Physics guide adds the scaling rule our sheets follow: structures
 the template "should, however, be scaled in proportion to fit our Figure dimensions, without
 changing the bond thickness." The downloaded file and the parsed settings are in the 040
 experiment note's record of 2026-10-19.
+
+## 2026.10.19 - Scaling a structure, and the math face inside a panel
+
+Two corrections from the 040 gate sheet's main figure, both found by the owner reading
+the rendered panel rather than the code.
+
+**A reduced structure scales its label with its bond.** The sheet drew the bond at 45
+percent of Nature's stylesheet and left the atom label at the stylesheet's 6 pt, so the
+label stood above the bond: a ratio of 0.81 where the stylesheet's own is 1.80. Small
+molecules collapsed under their own labels. Formic acid read as two labels joined by a
+stub, with no visible carbonyl, and the sodium of an acetate sat on top of the carbonyl
+oxygen. The rule, which the Communications Physics guide states and we now follow, is
+that a template structure "should be scaled in proportion ... without changing the bond
+thickness": bond and label scale together, line width is held. `acs_structure_svg` takes
+`bond_pt` and `font_pt` separately, so a caller that passes only `bond_pt` silently
+breaks the proportion. Pass both.
+
+The scale a panel can carry is set by the panel, not by taste. At the stylesheet's
+proportion a label at Nature's 5 pt floor needs a 9 pt bond, and a nine-carbon diacid is
+then about 33 mm wide, which no column of a four-panel row can hold. The 040 sheet runs
+at 0.55 (bond 5.94 pt, label 3.30 pt), the largest scale whose six rows fit its panel.
+An atom label inside a scaled drawing is part of the drawing, not free-standing figure
+text, so it is allowed under the 5 pt floor; a panel's own labels are not.
+
+**Computer Modern is too thin for a figure panel.** Mathematics set with `usetex` in
+Computer Modern at figure sizes prints as hairlines next to the Arial around it, which
+is what the owner saw: "the LaTeX ... text is extremely thin." Load `mathptmx` so the
+math is Times, which is both heavier and about a fifth narrower at the same size; the
+width it frees is what lets an equation hold a larger size. The roman default is still
+set to Helvetica AFTER `mathptmx`, because `mathptmx` sets it to Times and matplotlib
+wraps `usetex` text in `\rmfamily`, so the words in an equation stay sans beside the
+panel's Arial while the symbols read as LaTeX.
+
+```python
+plt.rcParams["text.latex.preamble"] = (
+    r"\usepackage{amsmath}\usepackage{mathptmx}\usepackage{helvet}"
+    r"\renewcommand{\rmdefault}{phv}"
+)
+```
+
+A `usetex` size is quantized by LaTeX's font selection, so width does not scale smoothly
+with the number asked for: the same equation measured 34.5 mm at 4.6 pt, 46.3 mm at
+5.0 pt and 39.0 mm at 5.2 pt. Measure the string at the size you intend to use rather
+than scaling a measurement.

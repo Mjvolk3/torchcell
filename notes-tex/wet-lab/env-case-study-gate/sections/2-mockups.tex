@@ -67,12 +67,16 @@ block is marked idea even though its counts are on file. \\
 %% points, then the detail); the paragraph after the figure holds the panel-by-panel
 %% detail with each panel's status, and the table after that the files behind it.
 \tcfig{\figMain}{\textbf{Composition is what the wet lab buys, and no public screen
-lifts the public score.} The six hydrolysate inhibitors (\textbf{a}) are met by one
-wild-type host, and four public deletion screens hold a strain-level profile for two of
-them; what joins the sources is one gene table, one compound table and one growth
+lifts the public score.} The six hydrolysate inhibitors are met by one wild-type host;
+Vanacloig 2022 profiles two of them itself, and the nearest profiled compound of each of
+the other four sits beside it (\textbf{a}). Four public deletion screens of three
+genotypes and this study's wild-type wells differ in size, culture and in what a label
+is, a strain-level score on a screen's own scale against a growth rate per well
+(\textbf{b}); what joins them is one gene table, one compound table and one growth
 reading, with a screen's IC30 dose asserting the wild type at \hydicThirtyFitness{}
-(\textbf{b}, \textbf{c}). The cell graph transformer reads one token per inhibitor through
-one head and composes the readings inside the decoder as Bliss independence (\textbf{d}).
+(\textbf{c}). The cell graph transformer reads one token per inhibitor through one head,
+the host as the empty genotype at the gene mean, the dose as a gain on the medium's
+offset, and composes the readings as Bliss independence (\textbf{d}).
 On the public side nested ridge on fingerprint counts, \hydladderRidge{}, is not beaten by
 any transformer arm (\textbf{e}, \textbf{f}), ridge gains about \hydcurvePerDoubling{} per
 doubling of fitted compounds with the environment encoder below it at every count
@@ -102,70 +106,89 @@ held-out compounds; wet-lab scores are the served growth call.}{fig:main}
 
 \textbf{Panels of \cref{fig:main}.}
 \textbf{a}, The six inhibitors from their curated SMILES at the ACS 1996 drawing
-standard (a fixed bond of 0.381 cm, a 0.6 pt line, double bonds spaced at 18 percent
-of the bond, Arial labels at the figure-text size, implicit hydrogens on the
-heteroatoms only; RDKit's ACS mode through \texttt{torchcell.utils.acs\_structure}),
-the weak acids in one column and the furan aldehydes with the keto acid in the other.
-The hydrolysate's two families are the furan aldehydes from sugar dehydration
-(pentoses to furfural, hexoses to 5-HMF) and the weak acids (5-HMF opens to levulinic
-and formic acid, acetyl groups release acetic acid). After each inhibitor's name, the
-host's half-maximal dose from its titration fit. The Vanacloig 2022 compound nearest
-each of the inhibitors no screen holds, by FCFP4 count Tanimoto over the pool's curated
-SMILES: 4-hydroxybenzaldehyde to furfural (\hydneighborFfSimilarity{}), vanillin to
-5-HMF (\hydneighborHmfSimilarity{}), methylglyoxal to levulinic acid
-(\hydneighborLvaSimilarity{}). \status{todo}\,\fstat{file}
+standard at half the standard's bond length (0.19 cm; a 0.6 pt line, double bonds
+spaced at 18 percent of the bond, Arial labels, implicit hydrogens on the heteroatoms
+only; RDKit's ACS mode through \texttt{torchcell.utils.acs\_structure}). The top row,
+on the measured-value field, is the two inhibitors Vanacloig 2022 profiles itself,
+furfural and 5-HMF; each of the other four stands beside the profiled compound nearest
+it by FCFP4 count Tanimoto over the pool's curated SMILES, that column on the field with
+the similarity after the name: sodium acetate to acetic acid
+(\hydneighborAaSimilarity{}) and to formic acid (\hydneighborFaSimilarity{}), azelaic
+acid to levulinic acid (\hydneighborLvaSimilarity{}), ethanol to lactic acid
+(\hydneighborLaSimilarity{}). The hydrolysate's two families are the furan aldehydes
+from sugar dehydration (pentoses to furfural, hexoses to 5-HMF) and the weak acids
+(5-HMF opens to levulinic and formic acid, acetyl groups release acetic acid). After
+each inhibitor's name, the host's half-maximal dose from its titration fit.
+\status{todo}\,\fstat{file}
 \textbf{b}, Left, what the mixture trainer reads from a four-source run, one bar per
 source on a log scale: a screen's cells, this study's wells, the anchors' conditions,
-with the compound count and the culture beside each bar. The task's profiles are
+with the genotype on each row's second line (Vanacloig's haploid deletions on the
+PDR1, PDR3 and SNQ2 sensitized host; Hoepfner's homozygous and Hillenmeyer's
+heterozygous deletions in diploids; Wildenhain's haploid deletions; this study's
+wild-type BY4742-iAID6 host with no deletion) and the compound count and the culture
+beside each bar. The task's profiles are
 \hydnVanacloigCells{} anaerobic, static cells over \hydnVanacloigCompounds{} compounds;
 the auxiliary screens add \hydnHoepfnerCells{}, \hydnHillenmeyerCells{} and
 \hydnWildenhainCells{} aerobic cells, \hydnFourSourceCells{} in all. The host readout is
 aerobic, shaken YPD, a different oxygen regime from the profiles. The anchors are the
 \hydnAnchorsFour{} public conditions whose served dose is an IC30 (\hydnAnchorCompounds{}
 compounds of Vanacloig and Hoepfner, and the compound-free medium), at an asserted, not
-measured, fitness. Right, what a label is, one histogram per source of the value the
-trainer reads before it standardizes the source: a screen's value is one deletion
-strain's growth under one compound at one dose, relative to that screen's control,
-oriented so that a sick deletion is negative, on the screen's own scale (Vanacloig a
-log2 ratio to the inhibitor-free control, Hoepfner a MAD-scaled sensitivity score,
-Hillenmeyer a negated fitness-defect log2 ratio, Wildenhain a z-score in IQR units),
-each band spanning its 0.5th to 99.5th percentile with zero marked; a well of this
-study is the wild-type host's relative growth rate on one shared scale, 1 at the
-uninhibited rate and 0 at no growth, with no growth in a share of
+measured, fitness. Right, what a label is. A screen's row is a histogram of the value
+the trainer reads before it standardizes the source: one deletion strain's growth under
+one compound at one dose, relative to that screen's control, oriented so that a sick
+deletion is negative, on the screen's own scale (Vanacloig a log2 ratio to the
+inhibitor-free control, Hoepfner a MAD-scaled sensitivity score, Hillenmeyer a negated
+fitness-defect log2 ratio, Wildenhain a z-score in IQR units), the band spanning its
+0.5th to 99.5th percentile with zero marked. This study's rows draw the labels as they
+are, on one fitness scale of 0 to 1.6 with 1 ticked: the six titration curves with their
+wells, the \hydnCombinations{} combinations as bars sorted by fitness with no growth at
+zero, and the three isobole grids as cells; no growth in a share of
 \hydlabelNoGrowthHostexTwoOne{} of the titration wells,
 \hydlabelNoGrowthHostexTwoThree{} of the combination wells and
-\hydlabelNoGrowthHostisobole{} of the isobole wells. The anchors and the titration are
+\hydlabelNoGrowthHostisobole{} of the isobole wells. The anchors' row is a sketch of
+what is asserted and never measured: fitness 1 with no compound and
+\hydicThirtyFitness{} at a screen's IC30 dose. The anchors and the titration are
 trained on; the combinations and the isobole grids never. \status{todo}\,\fstat{file}
-\textbf{c}, What the sources share and what is trained on and tested on. Every screen
-is a deletion collection of the same genes, so one table of \hydnGeneTokens{} gene
-tokens serves all of them, a screen covering \hydjoinGenesMin{} to \hydjoinGenesMax{};
-every compound is one row of one structure table (FCFP4 counts), screens share
-\hydjoinSharedMin{} to \hydjoinSharedMax{} compounds, and of this study's six
-inhibitors \hydjoinInhibitorsInScreens{} (furfural and 5-HMF) are in Vanacloig and the
-other four in no screen; every value is a growth reading, a screen's of a strain against
-its control and this study's of the wild type, and an IC30 dose asserts the wild type
-at \hydicThirtyFitness{}, which is what ties a screen's dose scale to the host's. The
-trainer sees every screen, with Vanacloig in compound-cold folds (all but one fold of
-\hydnVanacloigCompounds{} compounds), the \hydnAnchorsFour{} anchors and the titration
-(\hydnTitrationConditions{} conditions, \hydnTitrationWells{} wells); it is tested on
-the held-out compounds' profiles (centered Spearman over genes) and on this study's
-\hydnCombinations{} combinations (growth AUROC, fitness Spearman) and
-\hydnIsoboleWells{} isobole wells (the growth front). A layout; the counts are the
-trainer's. \status{todo}\,\fstat{idea}
-\textbf{d}, The model in three stages, its equations set by LaTeX. One inhibitor
-(furfural, drawn as in a) is featurized as its \hydnFingerprintBits{} FCFP4 counts and
-passed through the compound MLP to one token; under the dose offset of round ten the
-token stays dose-free and its dose scales the medium offset. The token sits in front
-of the \hydnGeneTokens{} gene tokens, a learned table read through the one-layer cell
-graph transformer and trained with the rest at its own rate, not the composite sequence
-embedding of the interactions figure (a strain's deleted genes dark; the host deletes
-none); one further transformer layer reads them together and one head reads either the
-rows at the deleted genes, the strain's response profile $\hat r_g$, or the mean over
-the genes, the host's growth $\hat f$. A mixture is a set of tokens, each read alone
-through that head, and the readings compose as Bliss independence: a product on the
-host's fitness scale, a sum on a screen's log response. The model is then scored on
-the \hydnCombinations{} combinations it never saw. A layout; the counts are the
-trainer's. \status{todo}\,\fstat{idea}
+\textbf{c}, What the sources share and what is trained on and tested on, as three
+drawings. Genes: every screen is a deletion collection of the same genes, so one table
+of \hydnGeneTokens{} gene tokens serves all of them, each screen's coverage drawn as a
+bar of that length (\hydjoinGenesMin{} to \hydjoinGenesMax{}); this study's host
+deletes none. Compounds: every compound is one row of one structure table (FCFP4
+counts), screens share \hydjoinSharedMin{} to \hydjoinSharedMax{} compounds, and of
+this study's six inhibitors the \hydjoinInhibitorsInScreens{} filled squares (furfural
+and 5-HMF) are in Vanacloig, the other four in no screen. Growth: every value is a
+growth reading, a screen's of a strain against its control and this study's of the
+wild type, and an IC30 dose asserts the wild type at \hydicThirtyFitness{}, the marked
+point of the sketch, which is what ties a screen's dose scale to the host's. The split,
+in the fills of b: the trainer sees every screen, with Vanacloig in compound-cold folds
+(one of five held out, \hydnVanacloigCompounds{} compounds), the \hydnAnchorsFour{}
+anchors and the titration (\hydnTitrationConditions{} conditions,
+\hydnTitrationWells{} wells); it is tested on the held-out compounds' profiles
+(centered Spearman over genes) and on this study's \hydnCombinations{} combinations
+(growth AUROC, fitness Spearman) and \hydnIsoboleWells{} isobole wells (the growth
+front). A layout; the counts are the trainer's. \status{todo}\,\fstat{idea}
+\textbf{d}, The model in three stages, its equations the trainer's
+(\texttt{MixtureModel} of \file{scripts/train_mixture.py}), set by LaTeX with each
+component named under its brace. One inhibitor $m_i$ (furfural, drawn as in a) is
+featurized as its \hydnFingerprintBits{} FCFP4 counts and passed through the compound
+MLP to one token $t_i$. The token is placed in front of the \hydnGeneTokens{} gene
+tokens $G$, a learned table read through the one-layer cell graph transformer and
+trained with the rest at its own rate, not the composite sequence embedding of the
+interactions figure; one further transformer layer reads the sequence, so the token
+reads the genome and the genes read the compound, giving the cell-in-medium state $H^c$
+and the read token $t_i'$. One head reads a state made of the rows of $H^c$ at the
+strain's deleted genes $D$, the mean over genes and $t_i'$ (and, not drawn, the
+encoder's own post-deletion rows and a learned source token), scaled and shifted per
+source; a strain gives $\hat r_{g,i}$, its response, which over strains $g$ is the
+profile the centered Spearman ranks; the host, which deletes nothing, gives $\hat f_i$,
+its growth. There is no cell token: the host's state is the gene mean. The dose enters
+once, as a gain $1 + g(d_i)$ on the medium offset $o(t_i)$, a per-medium bias added to
+the head, with $g$ an MLP of the standardized log molar dose started at zero (the dose
+offset of round ten). A mixture is a set of tokens, each read alone through that head,
+and the readings compose as Bliss independence: a product on the host's fitness scale, a
+sum on a screen's log response. The model is then scored on the \hydnCombinations{}
+combinations it never saw. A layout; the counts are the trainer's.
+\status{todo}\,\fstat{idea}
 \textbf{e}, The ladder, ten best arms of \hydladderNArms{} on Vanacloig's compound-cold
 folds: nested ridge on fingerprint counts reads \hydladderRidge{}, the next arm
 \hydladderSecond{}, the tenth \hydladderTenth{}. \status{todo}\,\fstat{file}
@@ -272,8 +295,10 @@ than a cleared difference. \status{todo}\,\fstat{file}
 \toprule
 \multicolumn{2}{@{}l}{\textbf{Sources for \cref{fig:main}}} \\
 \midrule
-a & \file{profile_fingerprint_check.csv} (the curated SMILES, and the FCFP4 count
-Tanimoto that picks each inhibitor's nearest Vanacloig compound) and
+a & \file{profile_fingerprint_check.csv} (the curated SMILES of the pool's compounds;
+the sheet computes each inhibitor's nearest by FCFP4 count Tanimoto, itself and the
+other inhibitors excluded) and \file{source_inhibitor_overlap.csv} (which inhibitors a
+screen profiles), and
 \file{scripts/mixture_data.py} \texttt{IDENTITY\_GAP\_SMILES} for formic and lactic
 acid; \file{single_agent_fits.csv} for the half-maximal doses. The structures are
 RDKit's ACS 1996 drawings as vector paths (\texttt{torchcell.utils.acs\_structure}).
@@ -282,8 +307,10 @@ b & \file{results/mixture-delta/r3_vanhophetwil_e150_p0/*_f0_counts.csv}, the
 per-source counts \file{scripts/train_mixture.py} writes beside every run;
 \file{source_label_histograms.csv} and \file{source_label_summary.csv}
 (\file{scripts/source_labels.py}, the oriented value per source read from the 033 cell
-table and from \file{wetlab_wells.csv}). The culture conditions are the loaders' sourced
-values (\file{vanacloig2022.py}, \file{hoepfner2014.py}, \file{hillenmeyer2008.py},
+table and from \file{wetlab_wells.csv}); \file{wetlab_wells.csv},
+\file{single_agent_fits.csv}, \file{mixture_combinations.csv} and
+\file{isobole_cells.csv} for this study's rows drawn as they are. The genotypes and the
+culture conditions are the loaders' sourced values (\file{vanacloig2022.py}, \file{hoepfner2014.py}, \file{hillenmeyer2008.py},
 \file{wildenhain2015.py}, \file{private_torchcell/bioscreen.py}; the Bioscreen archive
 states no shaking, so ``shaken'' is the operator's statement). ``This study'' is the
 private Bioscreen archive: the titration is run ex21, the combinations ex23, the

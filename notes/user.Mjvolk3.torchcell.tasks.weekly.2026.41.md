@@ -90,3 +90,7 @@ created: 1791256185172
 - [x] Caption standard recorded in [[writing-style-guide]]: the title states the takeaway or the plain content, the body the main points, the secondary points, then the detail; the caption fits on the page; "this study" on a sheet, the run ids in the source table
 - [x] Gate figure 2 redesigned: the data row (inhibitors, each source's size, culture and what a label is, what the sources share and what is trained on and tested on, the model with LaTeX equations), every panel titled with its takeaway or content flush left after its letter, the two source ladders paired, the caption rewritten to the standard on one page with the figure [[experiments.040-inhibitor-synergy-wetlab]]
 - [ ] Round 11, the rest: pull the 17 resubmitted sweeps and 2 node-killed jobs from Delta, rerun `r11_readout.py` and `r11_gate_section.py`, re-read the isoboles (the Hill arms read the grid interiors worse than the control, 0.29 to 0.51 against 0.19)
+
+## 2026.10.19
+
+- [x] Gate figure 2, top row to the owner's second pass: the Vanacloig neighbors back at half the bond length, genotypes on b, this study's labels drawn as they are, c as a graphic, d with the trainer's equations braced in LaTeX, the panel letters on their own band (white-cross rule), one-line titles checked against the panel width [[experiments.040-inhibitor-synergy-wetlab]]

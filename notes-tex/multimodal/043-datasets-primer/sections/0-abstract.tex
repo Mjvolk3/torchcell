@@ -1,0 +1,22 @@
+%% notes-tex/multimodal/043-datasets-primer/sections/0-abstract.tex
+%% SOURCE: numbers from results/store_census.json, results/cross_dataset_correlation.json
+%% and results/within_dataset_ceilings.json (scripts in experiments/043-expression-proteome-morphology/scripts/)
+
+\begin{abstract}
+\noindent
+The 043 store holds 173{,}617 records of 15 yeast datasets that read mRNA, protein
+abundance or turnover, or CalMorph morphology, kept as served with no aggregation. Its
+genotypes fall into four classes, and today a model sees only one of them as intended:
+deletions are gene sets, isolates mark almost every gene as perturbed, segregants mark
+none, and the promoter library has no gene-level genotype. Each dataset is set against
+its own reproducibility. Kemmeren 2014's two cultures of 114 mutants give an own-culture
+ceiling of 0.729; it replaces the experiment 019 ceiling, which rested on Sameith 2015's
+single mutants, found here to be Kemmeren's own arrays. Two constructions of one Jackson
+2020 genotype agree on the deletion effect at a median $r$ of 0.129 against 0.095 for
+different genotypes; Hu 2007 released no replicate; no segregant appears in two panels.
+Between datasets, agreement is low (median per-genotype $r$ from $-$0.006 to 0.208 apart
+from the Sameith copy), and morphology is the label most often shared with expression and
+protein. A proposal for two training batches, deletions with morphology held out and
+isolates with segregants under a stated allele assumption, closes the document; it is
+presented for decision, not decided.
+\end{abstract}

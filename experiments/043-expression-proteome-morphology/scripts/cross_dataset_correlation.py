@@ -718,8 +718,8 @@ SHORT = {
     "06_jackson_between_environments": "6 Jackson env x env",
     "07_messner_x_zelezniak": "7 Messner x Zelezniak",
     "08_kemmeren_x_messner": "8 Kemmeren x Messner",
-    "09a_caudal_x_muenzner_proteome": "9 Caudal x Muenzner",
-    "09b_muenzner_turnover_x_abundance": "9 turnover x abundance",
+    "09a_caudal_x_muenzner_proteome": "9a Caudal x Muenzner",
+    "09b_muenzner_turnover_x_abundance": "9b turnover x abundance",
 }
 
 
@@ -738,7 +738,7 @@ def figures(result: dict[str, Any], out_dir: str, image_dir: str) -> dict[str, s
         if len(frame):
             data.append(frame.pearson.to_numpy())
             labels.append(f"{SHORT.get(n, n)} (n={len(frame)})")
-    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(60)))
+    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(80)))
     bp = ax.boxplot(data, patch_artist=True, widths=0.6, showfliers=False)
     for i, box in enumerate(bp["boxes"]):
         box.set_facecolor(PLOT_PALETTE[i % len(PLOT_PALETTE)])
@@ -750,7 +750,7 @@ def figures(result: dict[str, Any], out_dir: str, image_dir: str) -> dict[str, s
             line.set_linewidth(0.5)
     ax.set_xticks(range(1, len(labels) + 1))
     ax.set_xticklabels(labels, rotation=45, ha="right")
-    ax.set_ylabel("Per-genotype Pearson r across shared genes")
+    ax.set_ylabel("Per-genotype Pearson r\n(across shared genes)")
     ax.axhline(0, color="black", linewidth=0.5)
     ax.set_ylim(-1, 1.05)
     ax.yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(0.2))

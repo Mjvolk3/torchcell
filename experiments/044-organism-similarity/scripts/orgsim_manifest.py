@@ -32,6 +32,7 @@ MANIFEST_PATH = osp.join(RESULTS_DIR, "organisms.json")
 WORK_DIR = osp.join(DATA_ROOT, "data", "organism_similarity")
 PROTEOME_DIR = osp.join(WORK_DIR, "proteomes")
 ORGSIM_BIN = "/scratch/projects/torchcell-scratch/envs/orgsim/bin"
+DATASETS_BIN = osp.join(ORGSIM_BIN, "datasets")
 
 
 def sha256_file(path: str) -> str:

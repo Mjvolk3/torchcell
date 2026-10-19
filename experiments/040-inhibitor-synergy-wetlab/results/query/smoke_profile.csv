@@ -1,0 +1,6 @@
+checkpoint,fold,seed,source,medium,gene,predicted_response,in_source_panel,gene_fitted
+r3smoke_gene_split_van_fold0_fs0_seed0,0,0,vanacloig,furfural=1.5mM,YAL005C,-1.1486648308494793,True,True
+r3smoke_gene_split_van_fold0_fs0_seed0,0,0,vanacloig,furfural=1.5mM,YGL013C,-1.153513519665284,False,False
+r3smoke_gene_split_van_fold0_fs0_seed0,0,0,vanacloig,furfural=1.5mM,YBR009C,-1.1632108972968933,True,True
+r3smoke_gene_split_van_fold0_fs0_seed0,0,0,vanacloig,furfural=1.5mM,YOR202W,-1.1593272703846738,True,True
+r3smoke_gene_split_van_fold0_fs0_seed0,0,0,vanacloig,furfural=1.5mM,YHR025W,-1.1438161420336748,True,False

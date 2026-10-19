@@ -1,0 +1,101 @@
+compound,target,n_genes,spearman,pearson,ceiling,condition,source,fold,member,name
+"Ascosteroside, MK6059",raw,4461,0.29558053810764356,0.34039174457203913,,"Ascosteroside, MK6059|-7.699",hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+"Ascosteroside, MK6059",centered,4461,-0.037942895007514514,0.033188373622785795,,"Ascosteroside, MK6059|-7.699",hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+Bafilomycin A1,raw,4461,0.32790853284600746,0.6360169171236109,,Bafilomycin A1|-4.360,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+Bafilomycin A1,centered,4461,-0.09641295940507073,0.3215616430180596,,Bafilomycin A1|-4.360,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+Benzothiazole derivative,raw,4469,0.21295848239600854,0.5500017327062324,,Benzothiazole derivative|-5.301,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+Benzothiazole derivative,centered,4469,0.20345305339836287,-0.4457762601173137,,Benzothiazole derivative|-5.301,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+CMB1509,raw,4454,0.30434094322437283,0.33370308681528477,,CMB1509|-5.412,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+CMB1509,centered,4454,-0.08498753552783415,-0.0026931655389530475,,CMB1509|-5.412,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+Concanamycin A Derivative,raw,4470,0.41547431559074255,0.6491831355979684,,Concanamycin A Derivative|-6.324,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+Concanamycin A Derivative,centered,4470,-0.0965399015739378,0.412080960491048,,Concanamycin A Derivative|-6.324,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+D-Sorbitol,raw,4469,-0.01693973444896865,-0.04241990626608472,,D-Sorbitol|-0.260,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+D-Sorbitol,centered,4469,-0.25095645455411825,-0.008366862004039598,,D-Sorbitol|-0.260,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+D-Sorbitol,raw,4469,-0.021288732841302827,-0.01685947549554428,,D-Sorbitol|-0.187,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+D-Sorbitol,centered,4469,-0.24953200556345362,-0.011599600171858614,,D-Sorbitol|-0.187,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+Ethidium Bromide,raw,4454,0.08331920470177677,0.056123317432088496,,Ethidium Bromide|-4.155,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+Ethidium Bromide,centered,4454,0.26093971761826745,0.12317348410085115,,Ethidium Bromide|-4.155,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+Ethidium Bromide,raw,4466,0.10111498617926191,0.10194924435902923,,Ethidium Bromide|-4.086,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+Ethidium Bromide,centered,4466,0.11803771276467172,-0.11098391272586677,,Ethidium Bromide|-4.086,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+Methylmercury,raw,4413,-0.021118110704010363,-0.04796953535069372,,Methylmercury|-7.000,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+Methylmercury,centered,4413,0.29269197653760337,0.4704783703542552,,Methylmercury|-7.000,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+Methylmercury,raw,4413,0.0559033682788161,0.028190712306001422,,Methylmercury|-6.602,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+Methylmercury,centered,4413,0.4302878679508415,0.5404029252628976,,Methylmercury|-6.602,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+Methylmercury,raw,4413,0.0646483754724837,0.04775684809520307,,Methylmercury|-6.301,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+Methylmercury,centered,4413,0.3740982705250126,0.4592607080758273,,Methylmercury|-6.301,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+Peptolide SDZ 90-215,raw,4454,0.21026635801030968,0.5500507855179749,,Peptolide SDZ 90-215|-5.523,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+Peptolide SDZ 90-215,centered,4454,-0.05035312948469883,0.28167183269182317,,Peptolide SDZ 90-215|-5.523,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+Peptolide SDZ 90-215,raw,4454,0.32566168726934197,0.5940282552994005,,Peptolide SDZ 90-215|-5.398,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+Peptolide SDZ 90-215,centered,4454,-0.006483116536297841,0.36683322622561393,,Peptolide SDZ 90-215|-5.398,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+Peptolide SDZ 90-215,raw,4454,0.3621156739904251,0.6032822706078073,,Peptolide SDZ 90-215|-5.222,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+Peptolide SDZ 90-215,centered,4454,0.03933846736522309,0.38897922798441414,,Peptolide SDZ 90-215|-5.222,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+"Ps-341, Velcade, Bortezomib",raw,4466,0.11761323719257084,0.07255948278874859,,"Ps-341, Velcade, Bortezomib|-3.699",hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+"Ps-341, Velcade, Bortezomib",centered,4466,0.2818383637967849,0.33503465774401914,,"Ps-341, Velcade, Bortezomib|-3.699",hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+"Ps-341, Velcade, Bortezomib",raw,4466,0.14949848409440733,0.11674879399880983,,"Ps-341, Velcade, Bortezomib|-3.523",hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+"Ps-341, Velcade, Bortezomib",centered,4466,0.2521427054859325,0.259585473664649,,"Ps-341, Velcade, Bortezomib|-3.523",hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+Sodium Dodecyl Sulfate (SDS),raw,4462,-0.016901554845402587,0.12688509147059804,,Sodium Dodecyl Sulfate (SDS)|-3.824,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+Sodium Dodecyl Sulfate (SDS),centered,4462,0.22263309274967896,0.24734010509481383,,Sodium Dodecyl Sulfate (SDS)|-3.824,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+Sodium Dodecyl Sulfate (SDS),raw,4438,0.09960682606179232,0.2660313875980243,,Sodium Dodecyl Sulfate (SDS)|-3.699,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+Sodium Dodecyl Sulfate (SDS),centered,4438,0.2647660691953814,0.15975801405521298,,Sodium Dodecyl Sulfate (SDS)|-3.699,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+Sodium Hydroxide,raw,4469,0.2568342463120373,0.2862630870283923,,Sodium Hydroxide|-2.000,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+Sodium Hydroxide,centered,4469,0.037622598214090204,0.07248022275668033,,Sodium Hydroxide|-2.000,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+Sodium Hydroxide,raw,4469,0.2297407695135371,0.2910513947536027,,Sodium Hydroxide|-2.097,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+Sodium Hydroxide,centered,4469,0.1078932638049483,0.09205467425609462,,Sodium Hydroxide|-2.097,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+Soraphen A,raw,4441,0.374266141523806,0.35028807705240605,,Soraphen A|-6.301,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+Soraphen A,centered,4441,0.0815909078808988,0.03609585488960271,,Soraphen A|-6.301,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+TAN-999,raw,4467,0.016654002991052692,0.030650268817787,,TAN-999|-7.000,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+TAN-999,centered,4467,-0.27240608503944114,-0.46913481299171644,,TAN-999|-7.000,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+TAN-999,raw,4467,0.16525067571039517,0.3795470760137311,,TAN-999|-6.000,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+TAN-999,centered,4467,-0.16249429564585025,0.10103189577574354,,TAN-999|-6.000,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+amitriptyline,raw,4462,0.2153833450234321,0.4571451051039082,,amitriptyline|-4.301,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+amitriptyline,centered,4462,0.14552758798121745,-0.2529940294895512,,amitriptyline|-4.301,hoepfner_hop,0,seed0,mix_vanhop_e150_n5_f0
+"Ascosteroside, MK6059",raw,4461,0.29558053810764356,0.34039174457203913,,"Ascosteroside, MK6059|-7.699",hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+"Ascosteroside, MK6059",centered,4461,-0.037942895007514514,0.033188373622785795,,"Ascosteroside, MK6059|-7.699",hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+Bafilomycin A1,raw,4461,0.32790853284600746,0.6360169171236109,,Bafilomycin A1|-4.360,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+Bafilomycin A1,centered,4461,-0.09641295940507073,0.3215616430180596,,Bafilomycin A1|-4.360,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+Benzothiazole derivative,raw,4469,0.21295848239600854,0.5500017327062324,,Benzothiazole derivative|-5.301,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+Benzothiazole derivative,centered,4469,0.20345305339836287,-0.4457762601173137,,Benzothiazole derivative|-5.301,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+CMB1509,raw,4454,0.30434094322437283,0.33370308681528477,,CMB1509|-5.412,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+CMB1509,centered,4454,-0.08498753552783415,-0.0026931655389530475,,CMB1509|-5.412,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+Concanamycin A Derivative,raw,4470,0.41547431559074255,0.6491831355979684,,Concanamycin A Derivative|-6.324,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+Concanamycin A Derivative,centered,4470,-0.0965399015739378,0.412080960491048,,Concanamycin A Derivative|-6.324,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+D-Sorbitol,raw,4469,-0.01693973444896865,-0.04241990626608472,,D-Sorbitol|-0.260,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+D-Sorbitol,centered,4469,-0.25095645455411825,-0.008366862004039598,,D-Sorbitol|-0.260,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+D-Sorbitol,raw,4469,-0.021288732841302827,-0.01685947549554428,,D-Sorbitol|-0.187,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+D-Sorbitol,centered,4469,-0.24953200556345362,-0.011599600171858614,,D-Sorbitol|-0.187,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+Ethidium Bromide,raw,4454,0.08331920470177677,0.056123317432088496,,Ethidium Bromide|-4.155,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+Ethidium Bromide,centered,4454,0.26093971761826745,0.12317348410085115,,Ethidium Bromide|-4.155,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+Ethidium Bromide,raw,4466,0.10111498617926191,0.10194924435902923,,Ethidium Bromide|-4.086,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+Ethidium Bromide,centered,4466,0.11803771276467172,-0.11098391272586677,,Ethidium Bromide|-4.086,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+Methylmercury,raw,4413,-0.021118110704010363,-0.04796953535069372,,Methylmercury|-7.000,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+Methylmercury,centered,4413,0.29269197653760337,0.4704783703542552,,Methylmercury|-7.000,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+Methylmercury,raw,4413,0.0559033682788161,0.028190712306001422,,Methylmercury|-6.602,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+Methylmercury,centered,4413,0.4302878679508415,0.5404029252628976,,Methylmercury|-6.602,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+Methylmercury,raw,4413,0.0646483754724837,0.04775684809520307,,Methylmercury|-6.301,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+Methylmercury,centered,4413,0.3740982705250126,0.4592607080758273,,Methylmercury|-6.301,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+Peptolide SDZ 90-215,raw,4454,0.21026635801030968,0.5500507855179749,,Peptolide SDZ 90-215|-5.523,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+Peptolide SDZ 90-215,centered,4454,-0.05035312948469883,0.28167183269182317,,Peptolide SDZ 90-215|-5.523,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+Peptolide SDZ 90-215,raw,4454,0.32566168726934197,0.5940282552994005,,Peptolide SDZ 90-215|-5.398,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+Peptolide SDZ 90-215,centered,4454,-0.006483116536297841,0.36683322622561393,,Peptolide SDZ 90-215|-5.398,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+Peptolide SDZ 90-215,raw,4454,0.3621156739904251,0.6032822706078073,,Peptolide SDZ 90-215|-5.222,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+Peptolide SDZ 90-215,centered,4454,0.03933846736522309,0.38897922798441414,,Peptolide SDZ 90-215|-5.222,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+"Ps-341, Velcade, Bortezomib",raw,4466,0.11761323719257084,0.07255948278874859,,"Ps-341, Velcade, Bortezomib|-3.699",hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+"Ps-341, Velcade, Bortezomib",centered,4466,0.2818383637967849,0.33503465774401914,,"Ps-341, Velcade, Bortezomib|-3.699",hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+"Ps-341, Velcade, Bortezomib",raw,4466,0.14949848409440733,0.11674879399880983,,"Ps-341, Velcade, Bortezomib|-3.523",hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+"Ps-341, Velcade, Bortezomib",centered,4466,0.2521427054859325,0.259585473664649,,"Ps-341, Velcade, Bortezomib|-3.523",hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+Sodium Dodecyl Sulfate (SDS),raw,4462,-0.016901554845402587,0.12688509147059804,,Sodium Dodecyl Sulfate (SDS)|-3.824,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+Sodium Dodecyl Sulfate (SDS),centered,4462,0.22263309274967896,0.24734010509481383,,Sodium Dodecyl Sulfate (SDS)|-3.824,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+Sodium Dodecyl Sulfate (SDS),raw,4438,0.09960682606179232,0.2660313875980243,,Sodium Dodecyl Sulfate (SDS)|-3.699,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+Sodium Dodecyl Sulfate (SDS),centered,4438,0.2647660691953814,0.15975801405521298,,Sodium Dodecyl Sulfate (SDS)|-3.699,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+Sodium Hydroxide,raw,4469,0.2568342463120373,0.2862630870283923,,Sodium Hydroxide|-2.000,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+Sodium Hydroxide,centered,4469,0.037622598214090204,0.07248022275668033,,Sodium Hydroxide|-2.000,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+Sodium Hydroxide,raw,4469,0.2297407695135371,0.2910513947536027,,Sodium Hydroxide|-2.097,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+Sodium Hydroxide,centered,4469,0.1078932638049483,0.09205467425609462,,Sodium Hydroxide|-2.097,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+Soraphen A,raw,4441,0.374266141523806,0.35028807705240605,,Soraphen A|-6.301,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+Soraphen A,centered,4441,0.0815909078808988,0.03609585488960271,,Soraphen A|-6.301,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+TAN-999,raw,4467,0.016654002991052692,0.030650268817787,,TAN-999|-7.000,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+TAN-999,centered,4467,-0.27240608503944114,-0.46913481299171644,,TAN-999|-7.000,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+TAN-999,raw,4467,0.16525067571039517,0.3795470760137311,,TAN-999|-6.000,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+TAN-999,centered,4467,-0.16249429564585025,0.10103189577574354,,TAN-999|-6.000,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+amitriptyline,raw,4462,0.2153833450234321,0.4571451051039082,,amitriptyline|-4.301,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0
+amitriptyline,centered,4462,0.14552758798121745,-0.2529940294895512,,amitriptyline|-4.301,hoepfner_hop,0,ensemble,mix_vanhop_e150_n5_f0

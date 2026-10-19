@@ -1,0 +1,49 @@
+compound,target,n_genes,spearman,pearson,ceiling,fold,member,name
+4-hydroxybenzoic acid,raw,3508,0.38902862824713086,0.42642825993790506,0.505437342324569,0,seed0,mix_van_e150_cell_bliss_displace_co_fs2_f0
+4-hydroxybenzoic acid,centered,3505,0.5489851612265805,0.6664625039582136,0.7089626200674108,0,seed0,mix_van_e150_cell_bliss_displace_co_fs2_f0
+cinnamic acid,raw,3503,0.33454618619817783,0.3924843351064468,0.807648558403561,0,seed0,mix_van_e150_cell_bliss_displace_co_fs2_f0
+cinnamic acid,centered,3502,0.2608135474606457,0.27429084766826023,0.8191678493772971,0,seed0,mix_van_e150_cell_bliss_displace_co_fs2_f0
+methylglyoxal,raw,3482,-0.02928410265173792,-0.1022175554272937,0.9198342493438169,0,seed0,mix_van_e150_cell_bliss_displace_co_fs2_f0
+methylglyoxal,centered,3479,-0.1336855344014218,-0.2412893330653033,0.9322957727887475,0,seed0,mix_van_e150_cell_bliss_displace_co_fs2_f0
+p-coumaric acid,raw,3508,0.4389719928760674,0.6117889173493671,0.27617350939799307,0,seed0,mix_van_e150_cell_bliss_displace_co_fs2_f0
+p-coumaric acid,centered,3508,0.34459421457740674,0.44263442697097627,0.0,0,seed0,mix_van_e150_cell_bliss_displace_co_fs2_f0
+syringaldehyde,raw,3512,0.5544817589134087,0.5933929434345727,0.8430944025495708,0,seed0,mix_van_e150_cell_bliss_displace_co_fs2_f0
+syringaldehyde,centered,3512,0.5377362879779786,0.5038343057538516,0.8334434377885249,0,seed0,mix_van_e150_cell_bliss_displace_co_fs2_f0
+vanillic acid,raw,3484,0.3952860706910019,0.40154915968280525,0.873157041192053,0,seed0,mix_van_e150_cell_bliss_displace_co_fs2_f0
+vanillic acid,centered,3484,0.36996233323628414,0.31053655202465724,0.8397473700523098,0,seed0,mix_van_e150_cell_bliss_displace_co_fs2_f0
+4-hydroxybenzoic acid,raw,3508,0.3284503627159748,0.37400928265150474,0.505437342324569,0,seed1,mix_van_e150_cell_bliss_displace_co_fs2_f0
+4-hydroxybenzoic acid,centered,3505,0.4944415361873985,0.611201037620449,0.7089626200674108,0,seed1,mix_van_e150_cell_bliss_displace_co_fs2_f0
+cinnamic acid,raw,3503,0.34403916111325705,0.41177869337094525,0.807648558403561,0,seed1,mix_van_e150_cell_bliss_displace_co_fs2_f0
+cinnamic acid,centered,3502,0.2741099990714548,0.29466037077312207,0.8191678493772971,0,seed1,mix_van_e150_cell_bliss_displace_co_fs2_f0
+methylglyoxal,raw,3482,0.17328375079922304,-0.021489347471856997,0.9198342493438169,0,seed1,mix_van_e150_cell_bliss_displace_co_fs2_f0
+methylglyoxal,centered,3479,0.04969157469751384,-0.20924903220425664,0.9322957727887475,0,seed1,mix_van_e150_cell_bliss_displace_co_fs2_f0
+p-coumaric acid,raw,3508,0.44285329852408056,0.6044031732012975,0.27617350939799307,0,seed1,mix_van_e150_cell_bliss_displace_co_fs2_f0
+p-coumaric acid,centered,3508,0.3618067576945793,0.44636852346995837,0.0,0,seed1,mix_van_e150_cell_bliss_displace_co_fs2_f0
+syringaldehyde,raw,3512,0.46440890295972787,0.5628698579675584,0.8430944025495708,0,seed1,mix_van_e150_cell_bliss_displace_co_fs2_f0
+syringaldehyde,centered,3512,0.39001142004139977,0.39919262567090763,0.8334434377885249,0,seed1,mix_van_e150_cell_bliss_displace_co_fs2_f0
+vanillic acid,raw,3484,0.40027905077273696,0.4027903635092504,0.873157041192053,0,seed1,mix_van_e150_cell_bliss_displace_co_fs2_f0
+vanillic acid,centered,3484,0.37417160921643117,0.31910356472621004,0.8397473700523098,0,seed1,mix_van_e150_cell_bliss_displace_co_fs2_f0
+4-hydroxybenzoic acid,raw,3508,0.3614509084914596,0.39664405450836826,0.505437342324569,0,seed2,mix_van_e150_cell_bliss_displace_co_fs2_f0
+4-hydroxybenzoic acid,centered,3505,0.4951838756107447,0.6120274647800773,0.7089626200674108,0,seed2,mix_van_e150_cell_bliss_displace_co_fs2_f0
+cinnamic acid,raw,3503,0.3433293418288823,0.4111497140526275,0.807648558403561,0,seed2,mix_van_e150_cell_bliss_displace_co_fs2_f0
+cinnamic acid,centered,3502,0.26759412046575737,0.2897159624502561,0.8191678493772971,0,seed2,mix_van_e150_cell_bliss_displace_co_fs2_f0
+methylglyoxal,raw,3482,0.20008020550986147,0.002945436537187346,0.9198342493438169,0,seed2,mix_van_e150_cell_bliss_displace_co_fs2_f0
+methylglyoxal,centered,3479,0.009146848333016626,-0.28088229861758635,0.9322957727887475,0,seed2,mix_van_e150_cell_bliss_displace_co_fs2_f0
+p-coumaric acid,raw,3508,0.4388694362870193,0.5983655814914933,0.27617350939799307,0,seed2,mix_van_e150_cell_bliss_displace_co_fs2_f0
+p-coumaric acid,centered,3508,0.35981180007750785,0.44193286582431346,0.0,0,seed2,mix_van_e150_cell_bliss_displace_co_fs2_f0
+syringaldehyde,raw,3512,0.4612429481124416,0.5653143385010685,0.8430944025495708,0,seed2,mix_van_e150_cell_bliss_displace_co_fs2_f0
+syringaldehyde,centered,3512,0.42175813903963527,0.4261112497428345,0.8334434377885249,0,seed2,mix_van_e150_cell_bliss_displace_co_fs2_f0
+vanillic acid,raw,3484,0.4048690846077574,0.38994722668637793,0.873157041192053,0,seed2,mix_van_e150_cell_bliss_displace_co_fs2_f0
+vanillic acid,centered,3484,0.3908354101485073,0.3175150480917096,0.8397473700523098,0,seed2,mix_van_e150_cell_bliss_displace_co_fs2_f0
+4-hydroxybenzoic acid,raw,3508,0.37212178545902647,0.41943951743441876,0.505437342324569,0,ensemble,mix_van_e150_cell_bliss_displace_co_fs2_f0
+4-hydroxybenzoic acid,centered,3505,0.5233624895825285,0.6480850684290904,0.7089626200674108,0,ensemble,mix_van_e150_cell_bliss_displace_co_fs2_f0
+cinnamic acid,raw,3503,0.34386646535642007,0.4071966327159793,0.807648558403561,0,ensemble,mix_van_e150_cell_bliss_displace_co_fs2_f0
+cinnamic acid,centered,3502,0.270360061178283,0.2881376425289001,0.8191678493772971,0,ensemble,mix_van_e150_cell_bliss_displace_co_fs2_f0
+methylglyoxal,raw,3482,0.15949989515681468,-0.03384081656846022,0.9198342493438169,0,ensemble,mix_van_e150_cell_bliss_displace_co_fs2_f0
+methylglyoxal,centered,3479,0.012958322827220734,-0.2765820624708713,0.9322957727887475,0,ensemble,mix_van_e150_cell_bliss_displace_co_fs2_f0
+p-coumaric acid,raw,3508,0.4427445712136359,0.606924201836774,0.27617350939799307,0,ensemble,mix_van_e150_cell_bliss_displace_co_fs2_f0
+p-coumaric acid,centered,3508,0.3585276926391511,0.44565621301439706,0.0,0,ensemble,mix_van_e150_cell_bliss_displace_co_fs2_f0
+syringaldehyde,raw,3512,0.5081812444864807,0.58659980516976,0.8430944025495708,0,ensemble,mix_van_e150_cell_bliss_displace_co_fs2_f0
+syringaldehyde,centered,3512,0.47238190962420296,0.4597415806294118,0.8334434377885249,0,ensemble,mix_van_e150_cell_bliss_displace_co_fs2_f0
+vanillic acid,raw,3484,0.40520145789269124,0.4017359197628882,0.873157041192053,0,ensemble,mix_van_e150_cell_bliss_displace_co_fs2_f0
+vanillic acid,centered,3484,0.38244406567686234,0.3194396085265568,0.8397473700523098,0,ensemble,mix_van_e150_cell_bliss_displace_co_fs2_f0

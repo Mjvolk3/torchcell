@@ -1,0 +1,25 @@
+compound,target,n_genes,spearman,pearson,ceiling,fold,member,name
+"2,2'-bipyridine",raw,3488,-0.007525164787351965,-0.003442215219288873,0.933492750710942,0,seed0,r3smoke_four_sources_attributes_head
+"2,2'-bipyridine",centered,3486,-0.010925135617619612,-0.028727224105007682,0.9563816885746026,0,seed0,r3smoke_four_sources_attributes_head
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.03114960013387923,0.04018763412516811,0.9115685305555769,0,seed0,r3smoke_four_sources_attributes_head
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3482,0.03365685163979878,0.024004267101655888,0.8721587526514974,0,seed0,r3smoke_four_sources_attributes_head
+acetosyringone,raw,3496,-0.025062942082546218,-0.028196866046943155,0.8957051853886657,0,seed0,r3smoke_four_sources_attributes_head
+acetosyringone,centered,3491,-0.0016608064110857676,-0.007067499065941423,0.8621258971956102,0,seed0,r3smoke_four_sources_attributes_head
+acetovanillone,raw,3508,-0.010224846180327976,-0.016477490866244338,0.912907133190153,0,seed0,r3smoke_four_sources_attributes_head
+acetovanillone,centered,3507,0.012725913440810777,-0.0005842762000276472,0.8921575536150955,0,seed0,r3smoke_four_sources_attributes_head
+furfural,raw,3492,0.010867395322713738,0.019625122740039778,0.8770802207938314,0,seed0,r3smoke_four_sources_attributes_head
+furfural,centered,3491,-0.0018827766392603368,0.001961575777726593,0.893722287283485,0,seed0,r3smoke_four_sources_attributes_head
+vanillin,raw,3504,0.0037877950782091215,0.0023402948960378235,0.8077135748399356,0,seed0,r3smoke_four_sources_attributes_head
+vanillin,centered,3502,-0.0028196147388687203,0.006709310203135692,0.71557075481543,0,seed0,r3smoke_four_sources_attributes_head
+"2,2'-bipyridine",raw,3488,-0.007525164787351965,-0.003442215219288873,0.933492750710942,0,ensemble,r3smoke_four_sources_attributes_head
+"2,2'-bipyridine",centered,3486,-0.010925135617619612,-0.028727224105007682,0.9563816885746026,0,ensemble,r3smoke_four_sources_attributes_head
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.03114960013387923,0.04018763412516811,0.9115685305555769,0,ensemble,r3smoke_four_sources_attributes_head
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3482,0.03365685163979878,0.024004267101655888,0.8721587526514974,0,ensemble,r3smoke_four_sources_attributes_head
+acetosyringone,raw,3496,-0.025062942082546218,-0.028196866046943155,0.8957051853886657,0,ensemble,r3smoke_four_sources_attributes_head
+acetosyringone,centered,3491,-0.0016608064110857676,-0.007067499065941423,0.8621258971956102,0,ensemble,r3smoke_four_sources_attributes_head
+acetovanillone,raw,3508,-0.010224846180327976,-0.016477490866244338,0.912907133190153,0,ensemble,r3smoke_four_sources_attributes_head
+acetovanillone,centered,3507,0.012725913440810777,-0.0005842762000276472,0.8921575536150955,0,ensemble,r3smoke_four_sources_attributes_head
+furfural,raw,3492,0.010867395322713738,0.019625122740039778,0.8770802207938314,0,ensemble,r3smoke_four_sources_attributes_head
+furfural,centered,3491,-0.0018827766392603368,0.001961575777726593,0.893722287283485,0,ensemble,r3smoke_four_sources_attributes_head
+vanillin,raw,3504,0.0037877950782091215,0.0023402948960378235,0.8077135748399356,0,ensemble,r3smoke_four_sources_attributes_head
+vanillin,centered,3502,-0.0028196147388687203,0.006709310203135692,0.71557075481543,0,ensemble,r3smoke_four_sources_attributes_head

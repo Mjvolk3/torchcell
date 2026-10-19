@@ -1,0 +1,49 @@
+compound,target,n_genes,spearman,pearson,ceiling,fold,member,name
+"2,2'-bipyridine",raw,3488,-0.18530138535017168,-0.17939732170607892,0.933492750710942,0,seed0,mix_van_e150_cell_bliss_displace_co_doff_f0
+"2,2'-bipyridine",centered,3486,0.1400755886051762,0.4157369119162896,0.9563816885746026,0,seed0,mix_van_e150_cell_bliss_displace_co_doff_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.5749712143012984,0.67475211159133,0.9115685305555769,0,seed0,mix_van_e150_cell_bliss_displace_co_doff_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3482,0.48426393401472906,0.4929486256849899,0.8721587526514974,0,seed0,mix_van_e150_cell_bliss_displace_co_doff_f0
+acetosyringone,raw,3496,-0.0095400095223782,0.36696044866807864,0.8957051853886657,0,seed0,mix_van_e150_cell_bliss_displace_co_doff_f0
+acetosyringone,centered,3491,-0.10610420215314911,0.11414148337782459,0.8621258971956102,0,seed0,mix_van_e150_cell_bliss_displace_co_doff_f0
+acetovanillone,raw,3508,0.12724626096834366,0.4061291440176365,0.912907133190153,0,seed0,mix_van_e150_cell_bliss_displace_co_doff_f0
+acetovanillone,centered,3507,0.004034996105263035,0.17013937826044756,0.8921575536150955,0,seed0,mix_van_e150_cell_bliss_displace_co_doff_f0
+furfural,raw,3492,-0.021646851318426218,-0.05126194047333143,0.8770802207938314,0,seed0,mix_van_e150_cell_bliss_displace_co_doff_f0
+furfural,centered,3491,-0.0017562759173993343,-0.06728159308623678,0.893722287283485,0,seed0,mix_van_e150_cell_bliss_displace_co_doff_f0
+vanillin,raw,3504,0.47512904845114906,0.5644006741000509,0.8077135748399356,0,seed0,mix_van_e150_cell_bliss_displace_co_doff_f0
+vanillin,centered,3502,0.4145839435434165,0.36509833956300997,0.71557075481543,0,seed0,mix_van_e150_cell_bliss_displace_co_doff_f0
+"2,2'-bipyridine",raw,3488,0.024325786408073896,0.3020921839931392,0.933492750710942,0,seed1,mix_van_e150_cell_bliss_displace_co_doff_f0
+"2,2'-bipyridine",centered,3486,0.43589888263239523,0.6329527638028067,0.9563816885746026,0,seed1,mix_van_e150_cell_bliss_displace_co_doff_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.577696439150722,0.6792629576763117,0.9115685305555769,0,seed1,mix_van_e150_cell_bliss_displace_co_doff_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3482,0.48781180782709216,0.4917120879225656,0.8721587526514974,0,seed1,mix_van_e150_cell_bliss_displace_co_doff_f0
+acetosyringone,raw,3496,0.06017349904885519,0.46727767278468846,0.8957051853886657,0,seed1,mix_van_e150_cell_bliss_displace_co_doff_f0
+acetosyringone,centered,3491,-0.11782896818490876,0.14728731474329096,0.8621258971956102,0,seed1,mix_van_e150_cell_bliss_displace_co_doff_f0
+acetovanillone,raw,3508,0.30595826914438856,0.48528486717231134,0.912907133190153,0,seed1,mix_van_e150_cell_bliss_displace_co_doff_f0
+acetovanillone,centered,3507,0.13365670004503882,0.22724793714252578,0.8921575536150955,0,seed1,mix_van_e150_cell_bliss_displace_co_doff_f0
+furfural,raw,3492,0.1331027897857926,0.09959057272632979,0.8770802207938314,0,seed1,mix_van_e150_cell_bliss_displace_co_doff_f0
+furfural,centered,3491,0.3867279064951737,0.39990603705804456,0.893722287283485,0,seed1,mix_van_e150_cell_bliss_displace_co_doff_f0
+vanillin,raw,3504,0.4806500627119492,0.5844692598739327,0.8077135748399356,0,seed1,mix_van_e150_cell_bliss_displace_co_doff_f0
+vanillin,centered,3502,0.3777333737150008,0.3244262760848319,0.71557075481543,0,seed1,mix_van_e150_cell_bliss_displace_co_doff_f0
+"2,2'-bipyridine",raw,3488,-0.2058083859892822,-0.24834049044827422,0.933492750710942,0,seed2,mix_van_e150_cell_bliss_displace_co_doff_f0
+"2,2'-bipyridine",centered,3486,0.04049475960073875,0.4143249350366601,0.9563816885746026,0,seed2,mix_van_e150_cell_bliss_displace_co_doff_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.5740946298700352,0.6915598946872917,0.9115685305555769,0,seed2,mix_van_e150_cell_bliss_displace_co_doff_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3482,0.5049099974396919,0.5356795223732119,0.8721587526514974,0,seed2,mix_van_e150_cell_bliss_displace_co_doff_f0
+acetosyringone,raw,3496,-0.009217876001421248,0.42684803985979225,0.8957051853886657,0,seed2,mix_van_e150_cell_bliss_displace_co_doff_f0
+acetosyringone,centered,3491,-0.11838606110682892,0.07372446179807833,0.8621258971956102,0,seed2,mix_van_e150_cell_bliss_displace_co_doff_f0
+acetovanillone,raw,3508,0.12071668373267196,0.41530774287462646,0.912907133190153,0,seed2,mix_van_e150_cell_bliss_displace_co_doff_f0
+acetovanillone,centered,3507,0.003370216686745539,0.15305359493379508,0.8921575536150955,0,seed2,mix_van_e150_cell_bliss_displace_co_doff_f0
+furfural,raw,3492,0.002554322860490512,-0.030491241873947684,0.8770802207938314,0,seed2,mix_van_e150_cell_bliss_displace_co_doff_f0
+furfural,centered,3491,0.23253402147430752,0.2420629859862098,0.893722287283485,0,seed2,mix_van_e150_cell_bliss_displace_co_doff_f0
+vanillin,raw,3504,0.46720452639183657,0.5843994350014428,0.8077135748399356,0,seed2,mix_van_e150_cell_bliss_displace_co_doff_f0
+vanillin,centered,3502,0.4148369358717755,0.3678025850081772,0.71557075481543,0,seed2,mix_van_e150_cell_bliss_displace_co_doff_f0
+"2,2'-bipyridine",raw,3488,-0.11971241862566073,-0.044768676054320854,0.933492750710942,0,ensemble,mix_van_e150_cell_bliss_displace_co_doff_f0
+"2,2'-bipyridine",centered,3486,0.2648027379206198,0.5800496481299808,0.9563816885746026,0,ensemble,mix_van_e150_cell_bliss_displace_co_doff_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.5849293429679189,0.6926902251462443,0.9115685305555769,0,ensemble,mix_van_e150_cell_bliss_displace_co_doff_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3482,0.4969633451245806,0.518778122792762,0.8721587526514974,0,ensemble,mix_van_e150_cell_bliss_displace_co_doff_f0
+acetosyringone,raw,3496,0.009490108384885454,0.4268354409558188,0.8957051853886657,0,ensemble,mix_van_e150_cell_bliss_displace_co_doff_f0
+acetosyringone,centered,3491,-0.1133009938507536,0.11181022957385214,0.8621258971956102,0,ensemble,mix_van_e150_cell_bliss_displace_co_doff_f0
+acetovanillone,raw,3508,0.16698432075844877,0.44333611371810466,0.912907133190153,0,ensemble,mix_van_e150_cell_bliss_displace_co_doff_f0
+acetovanillone,centered,3507,0.026034393746610464,0.18566960180669223,0.8921575536150955,0,ensemble,mix_van_e150_cell_bliss_displace_co_doff_f0
+furfural,raw,3492,0.0019448496007197136,-0.028011627974319508,0.8770802207938314,0,ensemble,mix_van_e150_cell_bliss_displace_co_doff_f0
+furfural,centered,3491,0.22383513299220578,0.25014560228828675,0.893722287283485,0,ensemble,mix_van_e150_cell_bliss_displace_co_doff_f0
+vanillin,raw,3504,0.49920699540903074,0.5937412877658311,0.8077135748399356,0,ensemble,mix_van_e150_cell_bliss_displace_co_doff_f0
+vanillin,centered,3502,0.4249416364994667,0.36860584073443436,0.71557075481543,0,ensemble,mix_van_e150_cell_bliss_displace_co_doff_f0

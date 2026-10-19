@@ -1,0 +1,49 @@
+compound,target,n_genes,spearman,pearson,ceiling,fold,member,name
+1-ethyl-3-methylimidazolium chloride,raw,3490,0.510495787027729,0.6106401857946724,0.8997525277118116,0,seed0,mix_van_e150_cell_bliss_displace_co_fs1_f0
+1-ethyl-3-methylimidazolium chloride,centered,3489,0.5271216532946994,0.7021296908905766,0.9231860633959543,0,seed0,mix_van_e150_cell_bliss_displace_co_fs1_f0
+"2,6-dimethylpyrazine",raw,3503,0.2854268173157523,0.18972138783524722,0.8722364335473455,0,seed0,mix_van_e150_cell_bliss_displace_co_fs1_f0
+"2,6-dimethylpyrazine",centered,3502,0.28756661939205685,0.22017362101394355,0.8804500636674485,0,seed0,mix_van_e150_cell_bliss_displace_co_fs1_f0
+methylglyoxal,raw,3482,-0.058090211999532376,-0.10858350572737166,0.9198342493438169,0,seed0,mix_van_e150_cell_bliss_displace_co_fs1_f0
+methylglyoxal,centered,3479,-0.1473799589989023,-0.333124548137782,0.9343894844796992,0,seed0,mix_van_e150_cell_bliss_displace_co_fs1_f0
+nonylacridine orange,raw,3505,0.07433291758015262,0.022655653188500543,0.8837382582661709,0,seed0,mix_van_e150_cell_bliss_displace_co_fs1_f0
+nonylacridine orange,centered,3505,0.23584921194303599,0.13720781392096415,0.8654297857589744,0,seed0,mix_van_e150_cell_bliss_displace_co_fs1_f0
+syringaldehyde,raw,3512,0.49344122293313525,0.5907174307841148,0.8430944025495708,0,seed0,mix_van_e150_cell_bliss_displace_co_fs1_f0
+syringaldehyde,centered,3512,0.3886510950433523,0.43140864172791676,0.8235698160496793,0,seed0,mix_van_e150_cell_bliss_displace_co_fs1_f0
+vanillic acid,raw,3484,0.42139541796045576,0.4070651540455498,0.873157041192053,0,seed0,mix_van_e150_cell_bliss_displace_co_fs1_f0
+vanillic acid,centered,3484,0.29565030267022296,0.16811317278614551,0.8134720487648535,0,seed0,mix_van_e150_cell_bliss_displace_co_fs1_f0
+1-ethyl-3-methylimidazolium chloride,raw,3490,0.5114235375775387,0.6168885126327129,0.8997525277118116,0,seed1,mix_van_e150_cell_bliss_displace_co_fs1_f0
+1-ethyl-3-methylimidazolium chloride,centered,3489,0.5281912427472525,0.7040343079700478,0.9231860633959543,0,seed1,mix_van_e150_cell_bliss_displace_co_fs1_f0
+"2,6-dimethylpyrazine",raw,3503,0.25085060455219227,0.145002856134782,0.8722364335473455,0,seed1,mix_van_e150_cell_bliss_displace_co_fs1_f0
+"2,6-dimethylpyrazine",centered,3502,0.23263991664359338,0.18600192463414197,0.8804500636674485,0,seed1,mix_van_e150_cell_bliss_displace_co_fs1_f0
+methylglyoxal,raw,3482,-0.025221333809472973,-0.07552417706301284,0.9198342493438169,0,seed1,mix_van_e150_cell_bliss_displace_co_fs1_f0
+methylglyoxal,centered,3479,-0.038660980918783054,-0.19238978596822995,0.9343894844796992,0,seed1,mix_van_e150_cell_bliss_displace_co_fs1_f0
+nonylacridine orange,raw,3505,0.1880081184738605,-0.009028260597431951,0.8837382582661709,0,seed1,mix_van_e150_cell_bliss_displace_co_fs1_f0
+nonylacridine orange,centered,3505,0.29185591087285107,0.13155356676329003,0.8654297857589744,0,seed1,mix_van_e150_cell_bliss_displace_co_fs1_f0
+syringaldehyde,raw,3512,0.4371984772468018,0.5575476380815602,0.8430944025495708,0,seed1,mix_van_e150_cell_bliss_displace_co_fs1_f0
+syringaldehyde,centered,3512,0.28531334608966025,0.34590665577652824,0.8235698160496793,0,seed1,mix_van_e150_cell_bliss_displace_co_fs1_f0
+vanillic acid,raw,3484,0.4303213356843807,0.4124930883588174,0.873157041192053,0,seed1,mix_van_e150_cell_bliss_displace_co_fs1_f0
+vanillic acid,centered,3484,0.2688488762053407,0.14094373784673295,0.8134720487648535,0,seed1,mix_van_e150_cell_bliss_displace_co_fs1_f0
+1-ethyl-3-methylimidazolium chloride,raw,3490,0.49518106909900583,0.6026010860519592,0.8997525277118116,0,seed2,mix_van_e150_cell_bliss_displace_co_fs1_f0
+1-ethyl-3-methylimidazolium chloride,centered,3489,0.5132056560777761,0.6993738991902395,0.9231860633959543,0,seed2,mix_van_e150_cell_bliss_displace_co_fs1_f0
+"2,6-dimethylpyrazine",raw,3503,0.32778481880873106,0.1886323431774129,0.8722364335473455,0,seed2,mix_van_e150_cell_bliss_displace_co_fs1_f0
+"2,6-dimethylpyrazine",centered,3502,0.3346096285905595,0.23291913119378488,0.8804500636674485,0,seed2,mix_van_e150_cell_bliss_displace_co_fs1_f0
+methylglyoxal,raw,3482,-0.06961884997452894,-0.07133976073023894,0.9198342493438169,0,seed2,mix_van_e150_cell_bliss_displace_co_fs1_f0
+methylglyoxal,centered,3479,0.1161464536716784,0.09743598220754951,0.9343894844796992,0,seed2,mix_van_e150_cell_bliss_displace_co_fs1_f0
+nonylacridine orange,raw,3505,0.024421184265282506,0.06513879605348429,0.8837382582661709,0,seed2,mix_van_e150_cell_bliss_displace_co_fs1_f0
+nonylacridine orange,centered,3505,0.06569255488710604,-0.003100083355921316,0.8654297857589744,0,seed2,mix_van_e150_cell_bliss_displace_co_fs1_f0
+syringaldehyde,raw,3512,0.46867795438370613,0.5582512361459031,0.8430944025495708,0,seed2,mix_van_e150_cell_bliss_displace_co_fs1_f0
+syringaldehyde,centered,3512,0.3716513287980614,0.389103688256674,0.8235698160496793,0,seed2,mix_van_e150_cell_bliss_displace_co_fs1_f0
+vanillic acid,raw,3484,0.42348712740638866,0.40545703594584875,0.873157041192053,0,seed2,mix_van_e150_cell_bliss_displace_co_fs1_f0
+vanillic acid,centered,3484,0.29022862310861613,0.1746474518077792,0.8134720487648535,0,seed2,mix_van_e150_cell_bliss_displace_co_fs1_f0
+1-ethyl-3-methylimidazolium chloride,raw,3490,0.5079301500193814,0.611557315894654,0.8997525277118116,0,ensemble,mix_van_e150_cell_bliss_displace_co_fs1_f0
+1-ethyl-3-methylimidazolium chloride,centered,3489,0.5248082159306643,0.7033148934534817,0.9231860633959543,0,ensemble,mix_van_e150_cell_bliss_displace_co_fs1_f0
+"2,6-dimethylpyrazine",raw,3503,0.2989854156495189,0.17739623127407075,0.8722364335473455,0,ensemble,mix_van_e150_cell_bliss_displace_co_fs1_f0
+"2,6-dimethylpyrazine",centered,3502,0.2902737366082517,0.21568050369650912,0.8804500636674485,0,ensemble,mix_van_e150_cell_bliss_displace_co_fs1_f0
+methylglyoxal,raw,3482,-0.05435220959676537,-0.09167169232899759,0.9198342493438169,0,ensemble,mix_van_e150_cell_bliss_displace_co_fs1_f0
+methylglyoxal,centered,3479,-0.04591051807748909,-0.20961094364596083,0.9343894844796992,0,ensemble,mix_van_e150_cell_bliss_displace_co_fs1_f0
+nonylacridine orange,raw,3505,0.09672500369628047,0.026454817276325506,0.8837382582661709,0,ensemble,mix_van_e150_cell_bliss_displace_co_fs1_f0
+nonylacridine orange,centered,3505,0.252790235596578,0.122997191728116,0.8654297857589744,0,ensemble,mix_van_e150_cell_bliss_displace_co_fs1_f0
+syringaldehyde,raw,3512,0.47445855919774316,0.5750958211904027,0.8430944025495708,0,ensemble,mix_van_e150_cell_bliss_displace_co_fs1_f0
+syringaldehyde,centered,3512,0.362997971065106,0.40073640031399876,0.8235698160496793,0,ensemble,mix_van_e150_cell_bliss_displace_co_fs1_f0
+vanillic acid,raw,3484,0.43211627684369247,0.41236815553401635,0.873157041192053,0,ensemble,mix_van_e150_cell_bliss_displace_co_fs1_f0
+vanillic acid,centered,3484,0.2933299206993629,0.16559140331861655,0.8134720487648535,0,ensemble,mix_van_e150_cell_bliss_displace_co_fs1_f0

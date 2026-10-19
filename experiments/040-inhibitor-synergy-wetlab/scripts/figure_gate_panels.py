@@ -1406,7 +1406,7 @@ def draw_sources(ax: Any, R: Reads) -> None:
     for split in ["host_anchor", "host_ex21", "host_ex23", "host_isobole"]:
         r = c.loc[split]
         if split == "host_anchor":
-            detail = f"{int(r.n_compounds)} compounds\nat the screen's IC30"
+            detail = f"{int(r.n_compounds)} screen compounds\nat their IC30 dose"
             n = int(r.n_conditions)
         else:
             detail = f"{int(r.n_compounds)} inhibitors\n{CULTURE['host']}"
@@ -2008,18 +2008,12 @@ def draw_evaluation(ax: Any, R: Reads) -> None:
     ax.text(
         0,
         83,
-        r"$\hat y_i = \mathrm{head}\big(\underbrace{H^c_D}_{\text{deleted rows}}\quad \underbrace{\overline{H^c}}_{\text{gene mean}}\quad \underbrace{t_i'}_{\text{token}}\big)$",
+        r"$\hat y_i = \mathrm{head}\big(\underbrace{H^c_D}_{\text{deleted}},\ \underbrace{\overline{H^c}}_{\text{mean}},\ \underbrace{t_i'}_{\text{token}}\big) + \underbrace{o(t_i)\,(1 + g(d_i))}_{\text{offset, scaled by dose } d_i}$",
         **tex_kw,
     )
     ax.text(
         0,
-        64,
-        r"$\qquad\quad + \underbrace{o(t_i)\,(1 + g(d_i))}_{\text{offset, scaled by the dose } d_i}$",
-        **tex_kw,
-    )
-    ax.text(
-        0,
-        46,
+        62,
         r"a strain ($H^c_D$: its deleted rows, summed):"
         "\n"
         r"$\hat y_i = \hat r_{g,i}$, its profile over strains $g$;"
@@ -2031,10 +2025,10 @@ def draw_evaluation(ax: Any, R: Reads) -> None:
         usetex=True,
     )
     # ---- stage three: a mixture composes as Bliss
-    ax.text(0, 28, "3  compose a mixture", **stage_kw)
+    ax.text(0, 44, "3  compose a mixture", **stage_kw)
     ax.text(
         0,
-        23.5,
+        39,
         "each token read alone through the same head, then",
         fontsize=fs,
         ha="left",
@@ -2042,7 +2036,7 @@ def draw_evaluation(ax: Any, R: Reads) -> None:
     )
     ax.text(
         0,
-        18,
+        33,
         r"$\underbrace{\hat f_{\mathrm{mix}} = \textstyle\prod_i \hat f_i}_{\text{host, fitness scale}}\qquad \underbrace{\hat r_{g,\mathrm{mix}} = \textstyle\sum_i \hat r_{g,i}}_{\text{screen, log scale}}$",
         **tex_kw,
     )

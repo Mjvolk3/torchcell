@@ -1,0 +1,2 @@
+run,first,second,tau,checkpoints,predicted_alive,predicted_alive_after_closure,island_cells_dropped,jaccard_raw,alive_not_observed_raw,observed_not_alive_raw,jaccard_monotone,alive_not_observed_monotone,observed_not_alive_monotone,mean_observed_minus_predicted
+ex26,furfural,acetic acid,0.5869962782180699,1,100,100,0,0.13580246913580246,70,0,0.13580246913580246,70,0,-0.6686986131901341

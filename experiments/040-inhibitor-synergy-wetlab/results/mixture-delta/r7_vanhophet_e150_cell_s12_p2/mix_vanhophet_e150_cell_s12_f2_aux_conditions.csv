@@ -1,0 +1,397 @@
+compound,target,n_genes,spearman,pearson,ceiling,condition,source,fold,member,name
+"Ascosteroside, MK6059",raw,4461,0.3074855602783713,0.35414551925577537,,"Ascosteroside, MK6059|-7.699",hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+"Ascosteroside, MK6059",centered,4461,0.021190806163333215,0.022115518904607355,,"Ascosteroside, MK6059|-7.699",hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+Bafilomycin A1,raw,4461,0.3511386828400536,0.6634556364579208,,Bafilomycin A1|-4.360,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+Bafilomycin A1,centered,4461,0.011470607593021757,0.39261704879386167,,Bafilomycin A1|-4.360,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+Benzothiazole derivative,raw,4469,0.2153872775950971,0.6568393573546293,,Benzothiazole derivative|-5.301,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+Benzothiazole derivative,centered,4469,-0.053011914023208075,0.5400577454403224,,Benzothiazole derivative|-5.301,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+CMB1509,raw,4454,0.3095651371035917,0.37377076625176325,,CMB1509|-5.412,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+CMB1509,centered,4454,-0.03271278702555085,-0.0019214186944719672,,CMB1509|-5.412,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+Concanamycin A Derivative,raw,4470,0.499193373893482,0.7247892659172345,,Concanamycin A Derivative|-6.324,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+Concanamycin A Derivative,centered,4470,0.21381843676111595,0.5468798275591897,,Concanamycin A Derivative|-6.324,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+D-Sorbitol,raw,4469,-0.02558426063038299,-0.09592402327579698,,D-Sorbitol|-0.260,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+D-Sorbitol,centered,4469,0.2327603997010822,0.2863691888473029,,D-Sorbitol|-0.260,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+D-Sorbitol,raw,4469,-0.03250566369906505,-0.07224036360764334,,D-Sorbitol|-0.187,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+D-Sorbitol,centered,4469,0.22689570010406646,0.26319902139990786,,D-Sorbitol|-0.187,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+Ethidium Bromide,raw,4454,0.0498403912876742,0.03487715435626167,,Ethidium Bromide|-4.155,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+Ethidium Bromide,centered,4454,-0.15123060816151684,-0.4095134648672141,,Ethidium Bromide|-4.155,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+Ethidium Bromide,raw,4466,0.06745944554587374,0.09382178358260175,,Ethidium Bromide|-4.086,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+Ethidium Bromide,centered,4466,-0.10488896919179845,-0.242636186664725,,Ethidium Bromide|-4.086,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+Methylmercury,raw,4413,-0.020896998259278102,-0.03610102601077771,,Methylmercury|-7.000,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+Methylmercury,centered,4413,0.10641813064535902,0.009378129808148556,,Methylmercury|-7.000,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+Methylmercury,raw,4413,0.04813072290126855,0.0029266250486366893,,Methylmercury|-6.602,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+Methylmercury,centered,4413,0.1760684638860113,-0.025071263138000947,,Methylmercury|-6.602,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+Methylmercury,raw,4413,0.044137837694267004,0.022715814567433896,,Methylmercury|-6.301,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+Methylmercury,centered,4413,0.11810523218049965,-0.08735574367784929,,Methylmercury|-6.301,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+Peptolide SDZ 90-215,raw,4454,0.22827647972493134,0.5630299261359436,,Peptolide SDZ 90-215|-5.523,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+Peptolide SDZ 90-215,centered,4454,-0.13368686085914,0.25471058636082844,,Peptolide SDZ 90-215|-5.523,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+Peptolide SDZ 90-215,raw,4454,0.3228628902235521,0.6124088234401686,,Peptolide SDZ 90-215|-5.398,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+Peptolide SDZ 90-215,centered,4454,-0.06954332963202127,0.3409167705334629,,Peptolide SDZ 90-215|-5.398,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+Peptolide SDZ 90-215,raw,4454,0.36339581996102716,0.6312410556240658,,Peptolide SDZ 90-215|-5.222,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+Peptolide SDZ 90-215,centered,4454,-0.01097855501898487,0.37266754262536833,,Peptolide SDZ 90-215|-5.222,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+"Ps-341, Velcade, Bortezomib",raw,4466,0.08322879571902375,0.07191461949158896,,"Ps-341, Velcade, Bortezomib|-3.699",hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+"Ps-341, Velcade, Bortezomib",centered,4466,0.12038043836190246,0.20328522998318296,,"Ps-341, Velcade, Bortezomib|-3.699",hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+"Ps-341, Velcade, Bortezomib",raw,4466,0.09967388761486358,0.11617881639231929,,"Ps-341, Velcade, Bortezomib|-3.523",hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+"Ps-341, Velcade, Bortezomib",centered,4466,0.07741142382171574,0.1409799966138684,,"Ps-341, Velcade, Bortezomib|-3.523",hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+Sodium Dodecyl Sulfate (SDS),raw,4462,0.013180777693197913,0.06461409442447098,,Sodium Dodecyl Sulfate (SDS)|-3.824,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+Sodium Dodecyl Sulfate (SDS),centered,4462,0.21088407156068753,0.2577887069161192,,Sodium Dodecyl Sulfate (SDS)|-3.824,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+Sodium Dodecyl Sulfate (SDS),raw,4438,0.11899492357764245,0.2438663634122279,,Sodium Dodecyl Sulfate (SDS)|-3.699,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+Sodium Dodecyl Sulfate (SDS),centered,4438,0.27134751013223585,0.16667035190520213,,Sodium Dodecyl Sulfate (SDS)|-3.699,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+Sodium Hydroxide,raw,4469,0.26189704127639407,0.2252370215832767,,Sodium Hydroxide|-2.000,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+Sodium Hydroxide,centered,4469,-0.10114413874351641,-0.24411170247151584,,Sodium Hydroxide|-2.000,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+Sodium Hydroxide,raw,4469,0.23727416381512687,0.24824808611160845,,Sodium Hydroxide|-2.097,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+Sodium Hydroxide,centered,4469,-0.08532517895526988,-0.19389378736003657,,Sodium Hydroxide|-2.097,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+Soraphen A,raw,4441,0.37444835731787446,0.35438558590921787,,Soraphen A|-6.301,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+Soraphen A,centered,4441,0.052352672343873884,0.04298593613721156,,Soraphen A|-6.301,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+TAN-999,raw,4467,0.005889652590045143,0.04067405619869249,,TAN-999|-7.000,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+TAN-999,centered,4467,-0.3674508880221433,-0.5149360510851768,,TAN-999|-7.000,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+TAN-999,raw,4467,0.21000103391408445,0.4322072806914466,,TAN-999|-6.000,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+TAN-999,centered,4467,-0.1744729371329108,0.15341261092023203,,TAN-999|-6.000,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+amitriptyline,raw,4462,0.20705244492733169,0.5587243382218714,,amitriptyline|-4.301,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+amitriptyline,centered,4462,0.15129745363217428,0.062246556502975385,,amitriptyline|-4.301,hoepfner_hop,2,seed1,mix_vanhophet_e150_cell_s12_f2
+"(1r,6s)-3-hydroxy-4-methyl-7-oxabicyclo(4.1.0)hept-3-ene-2,5-dione",raw,5704,-0.00044502002966606254,-0.0082803844599539,,"(1r,6s)-3-hydroxy-4-methyl-7-oxabicyclo(4.1.0)hept-3-ene-2,5-dione|-3.000",hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+"(1r,6s)-3-hydroxy-4-methyl-7-oxabicyclo(4.1.0)hept-3-ene-2,5-dione",centered,5704,-0.00354788382047445,-0.1323044938484254,,"(1r,6s)-3-hydroxy-4-methyl-7-oxabicyclo(4.1.0)hept-3-ene-2,5-dione|-3.000",hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+aklavin hydrochloride,raw,5677,0.16606465566286813,0.2451244546576675,,aklavin hydrochloride|-3.903,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+aklavin hydrochloride,centered,5677,0.2868352512391395,0.41781437890369055,,aklavin hydrochloride|-3.903,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+aklavin hydrochloride,raw,5677,0.06799993147047957,0.32744142787982033,,aklavin hydrochloride|-3.602,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+aklavin hydrochloride,centered,5677,0.024567654541698864,0.061784798384771536,,aklavin hydrochloride|-3.602,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+aklavin hydrochloride,raw,5677,0.1829776153909417,0.0818030418879331,,aklavin hydrochloride|-3.301,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+aklavin hydrochloride,centered,5677,0.12456418494974736,0.09878152122767413,,aklavin hydrochloride|-3.301,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+beclomethasone dipropionate,raw,5677,0.06891858773591357,-0.0005180733197967189,,beclomethasone dipropionate|-3.000,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+beclomethasone dipropionate,centered,5677,-0.04206323803008722,-0.11890700253304498,,beclomethasone dipropionate|-3.000,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+benzyl benzoate,raw,5677,0.2041728635166553,0.13489669218167138,,benzyl benzoate|-3.000,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+benzyl benzoate,centered,5677,-0.22484436049047946,-0.24063082453872908,,benzyl benzoate|-3.000,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+biochanin a,raw,5704,0.023541815054436144,-0.03985276506253957,,biochanin a|-5.403,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+biochanin a,centered,5704,-0.055942123614789015,-0.10713746288206856,,biochanin a|-5.403,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+borrelidin,raw,5704,0.085644413031335,0.10789999899810113,,borrelidin|-4.806,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+borrelidin,centered,5704,-0.01633107247810149,-0.04992287887647445,,borrelidin|-4.806,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+bufexamac,raw,5677,0.34434802153483296,0.3297399112987664,0.9796022541272387,bufexamac|-3.000,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+bufexamac,centered,5677,0.06890965312773357,-0.042832319614053815,0.9778275149953655,bufexamac|-3.000,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+clofoctol,raw,5677,0.4413579960636512,0.4351840578302126,,clofoctol|-3.000,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+clofoctol,centered,5677,0.2841357511223604,0.33502656759437627,,clofoctol|-3.000,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+dipropyl disulfide,raw,5704,0.39350103494754307,0.6390544775570074,,dipropyl disulfide|nan,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+dipropyl disulfide,centered,5704,0.3974568658351364,0.5183667234249585,,dipropyl disulfide|nan,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+filipin,raw,5704,-0.005675972682132639,-0.10498611553516447,,filipin|-4.000,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+filipin,centered,5704,0.12301021353725787,-0.17756144199466584,,filipin|-4.000,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+fluconazole,raw,5677,0.16844519838238137,0.16205220052747482,0.9958704769154206,fluconazole|-3.884,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+fluconazole,centered,5677,0.08746081290251956,0.15031771018897414,0.9958783074065773,fluconazole|-3.884,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+fluconazole,raw,5677,0.2659295241870267,0.20970064727085977,,fluconazole|-4.788,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+fluconazole,centered,5677,-0.15811257828270459,-0.2887598218626685,,fluconazole|-4.788,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+fluconazole,raw,5677,0.08385988085838336,0.11080885355193139,0.9144292457293011,fluconazole|-4.505,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+fluconazole,centered,5677,0.06785883849460599,0.07848212646948362,0.9104803498126642,fluconazole|-4.505,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+fluconazole,raw,5677,0.4763469330078827,0.375085052741894,0.6765169301170069,fluconazole|-4.487,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+fluconazole,centered,5677,-0.09479406955391544,-0.14303188705103137,0.5666716094763674,fluconazole|-4.487,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+flunarizine hydrochloride,raw,5677,0.4132776684503847,0.5421560579377487,,flunarizine hydrochloride|-4.028,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+flunarizine hydrochloride,centered,5677,0.007588605472557089,0.22724008361072065,,flunarizine hydrochloride|-4.028,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+ipriflavone,raw,5677,0.012432964184608403,-0.0917548728503266,,ipriflavone|-3.000,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+ipriflavone,centered,5677,-0.15173545945109668,-0.31831174064168216,,ipriflavone|-3.000,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+itraconazole,raw,5677,0.36168188780659305,0.38061150256308635,0.9044717571974262,itraconazole|-4.752,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+itraconazole,centered,5677,0.01030283889065955,0.17868648346261212,0.8956637755401731,itraconazole|-4.752,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+itraconazole,raw,5677,0.428865129786172,0.4028977588899176,,itraconazole|-5.658,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+itraconazole,centered,5677,-0.14386458986606135,-0.0007228598160474993,,itraconazole|-5.658,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+itraconazole,raw,5677,0.22895984696855054,0.24755574611698122,,itraconazole|-4.451,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+itraconazole,centered,5677,0.10732608691093556,0.23667428279951486,,itraconazole|-4.451,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+itraconazole,raw,5677,0.5362336812433828,0.5441857327733319,,itraconazole|-4.425,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+itraconazole,centered,5677,-0.13881766079138944,0.15436032886690837,,itraconazole|-4.425,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+itraconazole,raw,5677,0.4777371364669008,0.47258117211095935,0.8570059672177448,itraconazole|-5.357,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+itraconazole,centered,5677,-0.016846468903459314,0.17676569302294473,0.8147296008011582,itraconazole|-5.357,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+itraconazole,raw,5677,0.3806969495121664,0.4604471100533777,0.7815326963478256,itraconazole|-5.056,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+itraconazole,centered,5677,0.08448776312412433,0.3105549689164477,0.7428524169722777,itraconazole|-5.056,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+ketoconazole,raw,5677,0.18342157303741805,0.10615292928385063,0.0,ketoconazole|-6.000,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+ketoconazole,centered,5677,0.12046064994291254,0.002959471134562803,0.0,ketoconazole|-6.000,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+ketoconazole,raw,5734,0.005581297265144916,0.02765728560770754,,ketoconazole|-4.928,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+ketoconazole,centered,5734,0.15172592667944054,0.06699218871887293,,ketoconazole|-4.928,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+ketoconazole,raw,5677,0.45969167964932733,0.24161723275700586,,ketoconazole|-5.699,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+ketoconazole,centered,5677,-0.2522275458558353,-0.26171028126310475,,ketoconazole|-5.699,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+ketoconazole,raw,5677,0.3202688438899444,0.16067737942604746,,ketoconazole|-6.301,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+ketoconazole,centered,5677,-0.19257322924905643,-0.30246447939117643,,ketoconazole|-6.301,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+levodopa,raw,5704,0.14895974833501063,0.28352832964613045,0.6212680787068475,levodopa|nan,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+levodopa,centered,5704,0.19957711348113252,0.18675039093575266,0.646152202292338,levodopa|nan,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+meclocycline sulfosalicylate,raw,5677,0.40986832693260244,0.31793331717810175,,meclocycline sulfosalicylate|-3.426,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+meclocycline sulfosalicylate,centered,5677,-0.10457564998170128,-0.24920509477417738,,meclocycline sulfosalicylate|-3.426,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+meclofenamate sodium,raw,5677,0.24607576771471723,0.2174528608893197,,meclofenamate sodium|-3.000,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+meclofenamate sodium,centered,5677,-0.12658000014468457,-0.16843080339573613,,meclofenamate sodium|-3.000,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+monastrol,raw,5704,0.0025629087733067893,-0.04539591086025753,,monastrol|-4.000,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+monastrol,centered,5704,-0.1452494125911151,-0.3023375995198208,,monastrol|-4.000,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+novobiocin,raw,5728,0.2890830321115771,0.286533946617867,,novobiocin|-3.000,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+novobiocin,centered,5728,0.012200719139959092,-0.022284923691660033,,novobiocin|-3.000,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+oxethazaine,raw,5677,0.3376161093731424,0.32456531119903664,,oxethazaine|-3.602,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+oxethazaine,centered,5677,-0.01145671504060404,0.02110778769230988,,oxethazaine|-3.602,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+piperine,raw,5677,0.2295611264205509,0.19220929771525358,,piperine|-3.602,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+piperine,centered,5677,-0.14297457091383262,-0.19236869924495958,,piperine|-3.602,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+propiomazine maleate,raw,5677,0.2622924593583906,0.27026204982379703,,propiomazine maleate|-3.301,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+propiomazine maleate,centered,5677,0.07727257830263809,0.11573083593724297,,propiomazine maleate|-3.301,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+sirtinol,raw,5704,-0.019488821501257317,-0.01897937105272976,,sirtinol|-4.301,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+sirtinol,centered,5704,-0.205353910475827,-0.3058884889652627,,sirtinol|-4.301,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+staurosporine,raw,5704,0.2190626993924056,0.33047219734657657,,staurosporine|-5.204,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+staurosporine,centered,5704,0.03392244093928667,0.045691921669367655,,staurosporine|-5.204,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+tomatine,raw,5677,0.19384593900247593,0.12820850500446854,0.9334343291717245,tomatine|-4.204,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+tomatine,centered,5677,-0.146867870643967,-0.2597954105291792,0.9216210197513823,tomatine|-4.204,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+triamterene,raw,5677,0.23015131706529915,0.09563194866562055,,triamterene|-3.301,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+triamterene,centered,5677,0.011767155051030495,0.019007330469114216,,triamterene|-3.301,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+usnic acid,raw,5677,0.16281197495214683,0.13373280491332679,,usnic acid|-3.301,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+usnic acid,centered,5677,0.1794171480597637,0.1761302032376079,,usnic acid|-3.301,hillenmeyer_het,2,seed1,mix_vanhophet_e150_cell_s12_f2
+"Ascosteroside, MK6059",raw,4461,0.28759809922665625,0.402756185689065,,"Ascosteroside, MK6059|-7.699",hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+"Ascosteroside, MK6059",centered,4461,-0.0004806894699507945,0.09798211554481766,,"Ascosteroside, MK6059|-7.699",hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+Bafilomycin A1,raw,4461,0.3428997304009105,0.6169471335913584,,Bafilomycin A1|-4.360,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+Bafilomycin A1,centered,4461,-7.405645363967746e-05,0.34462420719073084,,Bafilomycin A1|-4.360,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+Benzothiazole derivative,raw,4469,0.19143203147631063,0.4767879649162959,,Benzothiazole derivative|-5.301,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+Benzothiazole derivative,centered,4469,0.11121490777897071,-0.12240999467897698,,Benzothiazole derivative|-5.301,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+CMB1509,raw,4454,0.3071382015468287,0.38805831141676367,,CMB1509|-5.412,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+CMB1509,centered,4454,0.0016641548180161996,0.07038961617061028,,CMB1509|-5.412,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+Concanamycin A Derivative,raw,4470,0.4837159528699064,0.7432862732037143,,Concanamycin A Derivative|-6.324,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+Concanamycin A Derivative,centered,4470,0.10719644514614488,0.5343460131039344,,Concanamycin A Derivative|-6.324,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+D-Sorbitol,raw,4469,0.009627558566580027,-0.07651457192625354,,D-Sorbitol|-0.260,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+D-Sorbitol,centered,4469,0.11010952430638174,0.0474951747017074,,D-Sorbitol|-0.260,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+D-Sorbitol,raw,4469,-0.00010374070067178466,-0.05834704035950803,,D-Sorbitol|-0.187,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+D-Sorbitol,centered,4469,0.11110821704467932,0.029365000939906592,,D-Sorbitol|-0.187,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+Ethidium Bromide,raw,4454,0.13117444059725925,0.15214004826058336,,Ethidium Bromide|-4.155,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+Ethidium Bromide,centered,4454,-0.1895866997511061,-0.35827463824914346,,Ethidium Bromide|-4.155,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+Ethidium Bromide,raw,4466,0.14123767464248674,0.22268626395656932,,Ethidium Bromide|-4.086,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+Ethidium Bromide,centered,4466,-0.05639868205792888,-0.12486513510126633,,Ethidium Bromide|-4.086,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+Methylmercury,raw,4413,-0.0014272388809354372,-0.06634147901611631,,Methylmercury|-7.000,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+Methylmercury,centered,4413,0.15666936209243618,0.13478016192290182,,Methylmercury|-7.000,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+Methylmercury,raw,4413,0.04886527472997815,-0.014909022259478658,,Methylmercury|-6.602,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+Methylmercury,centered,4413,0.21387195213061544,0.13880165128918515,,Methylmercury|-6.602,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+Methylmercury,raw,4413,0.04041041764010645,-0.0011616011995825486,,Methylmercury|-6.301,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+Methylmercury,centered,4413,0.1492727265005276,0.032579438733681805,,Methylmercury|-6.301,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+Peptolide SDZ 90-215,raw,4454,0.2079494180842888,0.5680572108159397,,Peptolide SDZ 90-215|-5.523,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+Peptolide SDZ 90-215,centered,4454,-0.0726874737772574,0.29846173253567065,,Peptolide SDZ 90-215|-5.523,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+Peptolide SDZ 90-215,raw,4454,0.30085570214268587,0.6158685247933399,,Peptolide SDZ 90-215|-5.398,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+Peptolide SDZ 90-215,centered,4454,-0.05708513329798799,0.37089542617825066,,Peptolide SDZ 90-215|-5.398,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+Peptolide SDZ 90-215,raw,4454,0.3404620288497608,0.6267745266734311,,Peptolide SDZ 90-215|-5.222,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+Peptolide SDZ 90-215,centered,4454,-0.01552921356953512,0.3841307617510945,,Peptolide SDZ 90-215|-5.222,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+"Ps-341, Velcade, Bortezomib",raw,4466,0.12790741144341045,0.18379074048227392,,"Ps-341, Velcade, Bortezomib|-3.699",hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+"Ps-341, Velcade, Bortezomib",centered,4466,-0.028663161990361254,0.2405454472111415,,"Ps-341, Velcade, Bortezomib|-3.699",hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+"Ps-341, Velcade, Bortezomib",raw,4466,0.152794051592772,0.2351959466586046,,"Ps-341, Velcade, Bortezomib|-3.523",hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+"Ps-341, Velcade, Bortezomib",centered,4466,0.010489649096032968,0.2555771355588395,,"Ps-341, Velcade, Bortezomib|-3.523",hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+Sodium Dodecyl Sulfate (SDS),raw,4462,0.010375705388427393,0.05245489114635715,,Sodium Dodecyl Sulfate (SDS)|-3.824,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+Sodium Dodecyl Sulfate (SDS),centered,4462,0.20520155595297465,0.23280916337930008,,Sodium Dodecyl Sulfate (SDS)|-3.824,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+Sodium Dodecyl Sulfate (SDS),raw,4438,0.08725007114543805,0.19558557832012932,,Sodium Dodecyl Sulfate (SDS)|-3.699,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+Sodium Dodecyl Sulfate (SDS),centered,4438,0.2560405160961971,0.14724744943592735,,Sodium Dodecyl Sulfate (SDS)|-3.699,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+Sodium Hydroxide,raw,4469,0.2593343564253499,0.24764815497623782,,Sodium Hydroxide|-2.000,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+Sodium Hydroxide,centered,4469,-0.08372345861189108,-0.22948706091601223,,Sodium Hydroxide|-2.000,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+Sodium Hydroxide,raw,4469,0.22669527371938,0.23724754607944637,,Sodium Hydroxide|-2.097,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+Sodium Hydroxide,centered,4469,-0.067816926348047,-0.22066620184560376,,Sodium Hydroxide|-2.097,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+Soraphen A,raw,4441,0.35411397896393354,0.4023462996247425,,Soraphen A|-6.301,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+Soraphen A,centered,4441,0.014816721849268539,0.06645209257408946,,Soraphen A|-6.301,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+TAN-999,raw,4467,0.01254807534160644,0.028183030833295715,,TAN-999|-7.000,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+TAN-999,centered,4467,-0.24164588024104267,-0.4329391988689693,,TAN-999|-7.000,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+TAN-999,raw,4467,0.22546291558372186,0.4253599684862868,,TAN-999|-6.000,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+TAN-999,centered,4467,-0.06228841911358741,0.1705582508534289,,TAN-999|-6.000,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+amitriptyline,raw,4462,0.26596190194462593,0.5784071166740461,,amitriptyline|-4.301,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+amitriptyline,centered,4462,0.23026423182137112,0.34308237711765305,,amitriptyline|-4.301,hoepfner_hop,2,seed2,mix_vanhophet_e150_cell_s12_f2
+"(1r,6s)-3-hydroxy-4-methyl-7-oxabicyclo(4.1.0)hept-3-ene-2,5-dione",raw,5704,0.01049546218841068,0.00807543707045957,,"(1r,6s)-3-hydroxy-4-methyl-7-oxabicyclo(4.1.0)hept-3-ene-2,5-dione|-3.000",hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+"(1r,6s)-3-hydroxy-4-methyl-7-oxabicyclo(4.1.0)hept-3-ene-2,5-dione",centered,5704,-0.013741127532493656,-0.09508133720516652,,"(1r,6s)-3-hydroxy-4-methyl-7-oxabicyclo(4.1.0)hept-3-ene-2,5-dione|-3.000",hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+aklavin hydrochloride,raw,5677,0.14577551904970112,0.22475971853386273,,aklavin hydrochloride|-3.903,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+aklavin hydrochloride,centered,5677,0.27190326570112155,0.4195283422028503,,aklavin hydrochloride|-3.903,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+aklavin hydrochloride,raw,5677,0.09195044516758057,0.33836269244939826,,aklavin hydrochloride|-3.602,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+aklavin hydrochloride,centered,5677,0.11816417910989424,0.07317021813810334,,aklavin hydrochloride|-3.602,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+aklavin hydrochloride,raw,5677,0.19025972066107907,0.10257690077025346,,aklavin hydrochloride|-3.301,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+aklavin hydrochloride,centered,5677,0.07934991300564832,0.1168365751313904,,aklavin hydrochloride|-3.301,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+beclomethasone dipropionate,raw,5677,0.06700112519793223,0.014105861588274158,,beclomethasone dipropionate|-3.000,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+beclomethasone dipropionate,centered,5677,-0.020347234977085137,-0.12605681986873266,,beclomethasone dipropionate|-3.000,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+benzyl benzoate,raw,5677,0.23722963313167905,0.17387148921800658,,benzyl benzoate|-3.000,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+benzyl benzoate,centered,5677,-0.2517024733426184,-0.27593764357798656,,benzyl benzoate|-3.000,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+biochanin a,raw,5704,0.037459365752311735,0.025401336900421064,,biochanin a|-5.403,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+biochanin a,centered,5704,-0.11296884771486719,0.010421605480709795,,biochanin a|-5.403,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+borrelidin,raw,5704,0.07399060272590835,0.10148613239626501,,borrelidin|-4.806,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+borrelidin,centered,5704,-0.10261533187657915,-0.1144912093298536,,borrelidin|-4.806,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+bufexamac,raw,5677,0.3916638483669809,0.399705034508632,0.9796022541272387,bufexamac|-3.000,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+bufexamac,centered,5677,0.25554402818698835,0.27375949001170724,0.9778275149953655,bufexamac|-3.000,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+clofoctol,raw,5677,0.4392418192896134,0.4309556529584103,,clofoctol|-3.000,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+clofoctol,centered,5677,0.24288630357407545,0.24991288379926077,,clofoctol|-3.000,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+dipropyl disulfide,raw,5704,0.34708404063784315,0.6343281887879157,,dipropyl disulfide|nan,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+dipropyl disulfide,centered,5704,0.44164822901008133,0.5539743991424916,,dipropyl disulfide|nan,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+filipin,raw,5704,0.0009309100740720276,-0.09576551736224995,,filipin|-4.000,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+filipin,centered,5704,0.1791827802618835,-0.11976926923312806,,filipin|-4.000,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+fluconazole,raw,5677,0.17529699374763982,0.14214817663807142,0.9958704769154206,fluconazole|-3.884,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+fluconazole,centered,5677,0.10196845436374256,0.07634333393092496,0.9958783074065773,fluconazole|-3.884,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+fluconazole,raw,5677,0.3046729859516369,0.335305112232254,,fluconazole|-4.788,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+fluconazole,centered,5677,-0.0250156802332806,-0.0627977849035739,,fluconazole|-4.788,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+fluconazole,raw,5677,0.08971483050471643,0.1316003000153398,0.9144292457293011,fluconazole|-4.505,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+fluconazole,centered,5677,-0.03197904499978745,0.02019822258803467,0.9104803498126642,fluconazole|-4.505,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+fluconazole,raw,5677,0.5356880899956542,0.5005098289891218,0.6765169301170069,fluconazole|-4.487,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+fluconazole,centered,5677,0.1854307072471954,0.11828292384696962,0.5666716094763674,fluconazole|-4.487,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+flunarizine hydrochloride,raw,5677,0.3993377615914804,0.5355023566163184,,flunarizine hydrochloride|-4.028,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+flunarizine hydrochloride,centered,5677,-0.0773354322626639,0.12083421429075995,,flunarizine hydrochloride|-4.028,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+ipriflavone,raw,5677,0.050002770124322436,-0.024653564279044485,,ipriflavone|-3.000,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+ipriflavone,centered,5677,-0.18381128965564528,-0.2437745960831242,,ipriflavone|-3.000,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+itraconazole,raw,5677,0.3490828229580015,0.37108413060633344,0.9044717571974262,itraconazole|-4.752,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+itraconazole,centered,5677,-0.09438476985744303,0.09767874687418292,0.8956637755401731,itraconazole|-4.752,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+itraconazole,raw,5677,0.347225888312446,0.35919362542770156,,itraconazole|-5.658,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+itraconazole,centered,5677,-0.19729800750206364,-0.09371783614420963,,itraconazole|-5.658,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+itraconazole,raw,5677,0.25943094579917547,0.2602285830908733,,itraconazole|-4.451,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+itraconazole,centered,5677,0.031681770538341106,0.19957897695023158,,itraconazole|-4.451,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+itraconazole,raw,5677,0.4651716227607413,0.5125343135013821,,itraconazole|-4.425,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+itraconazole,centered,5677,-0.28830956583534234,0.018410200609118733,,itraconazole|-4.425,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+itraconazole,raw,5677,0.4183369950172892,0.46130693236231546,0.8570059672177448,itraconazole|-5.357,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+itraconazole,centered,5677,-0.12735465146445224,0.09187635937647143,0.8147296008011582,itraconazole|-5.357,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+itraconazole,raw,5677,0.3731824943229013,0.4588346305420152,0.7815326963478256,itraconazole|-5.056,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+itraconazole,centered,5677,-0.028796734383393512,0.2327206202653651,0.7428524169722777,itraconazole|-5.056,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+ketoconazole,raw,5677,0.20376899195546186,0.14876638640357265,0.0,ketoconazole|-6.000,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+ketoconazole,centered,5677,0.06505063691251349,-0.12438612995299538,0.0,ketoconazole|-6.000,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+ketoconazole,raw,5734,-0.0023794786357686473,0.005132225656035948,,ketoconazole|-4.928,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+ketoconazole,centered,5734,0.05120355283423959,0.02312544625061914,,ketoconazole|-4.928,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+ketoconazole,raw,5677,0.505980993826551,0.33654355573161115,,ketoconazole|-5.699,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+ketoconazole,centered,5677,-0.0908520066978978,-0.24066525257917032,,ketoconazole|-5.699,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+ketoconazole,raw,5677,0.3643331732663017,0.25183524427197734,,ketoconazole|-6.301,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+ketoconazole,centered,5677,-0.10422238689328743,-0.2905143795042016,,ketoconazole|-6.301,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+levodopa,raw,5704,0.15599902860095874,0.2569852757496457,0.6212680787068475,levodopa|nan,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+levodopa,centered,5704,0.24215748874144957,0.1779011819397114,0.646152202292338,levodopa|nan,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+meclocycline sulfosalicylate,raw,5677,0.4759300530936744,0.403143700953083,,meclocycline sulfosalicylate|-3.426,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+meclocycline sulfosalicylate,centered,5677,-0.0741509504897666,-0.22637525096566252,,meclocycline sulfosalicylate|-3.426,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+meclofenamate sodium,raw,5677,0.29984842608901974,0.29655755295874103,,meclofenamate sodium|-3.000,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+meclofenamate sodium,centered,5677,-0.10395055284738874,-0.13585411923863225,,meclofenamate sodium|-3.000,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+monastrol,raw,5704,0.01887702981187722,-0.006156532765384543,,monastrol|-4.000,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+monastrol,centered,5704,-0.06952004567240859,-0.17791564364075216,,monastrol|-4.000,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+novobiocin,raw,5728,0.2741643008048841,0.2695795043894486,,novobiocin|-3.000,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+novobiocin,centered,5728,-0.15008796347460893,-0.22836665523191235,,novobiocin|-3.000,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+oxethazaine,raw,5677,0.37014540956863207,0.32334611600453966,,oxethazaine|-3.602,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+oxethazaine,centered,5677,0.10929979754509862,-0.04710525597419598,,oxethazaine|-3.602,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+piperine,raw,5677,0.24269990797804308,0.21593032405430737,,piperine|-3.602,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+piperine,centered,5677,-0.13918260104293995,-0.14315489697347505,,piperine|-3.602,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+propiomazine maleate,raw,5677,0.27302765221092734,0.28592588616659,,propiomazine maleate|-3.301,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+propiomazine maleate,centered,5677,0.09538016181560688,0.1318004487402769,,propiomazine maleate|-3.301,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+sirtinol,raw,5704,-0.0021568638663173635,-0.029934788557223126,,sirtinol|-4.301,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+sirtinol,centered,5704,-0.06624344551503782,-0.27900532788450594,,sirtinol|-4.301,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+staurosporine,raw,5704,0.2050139218213185,0.30792562234491033,,staurosporine|-5.204,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+staurosporine,centered,5704,-0.04121691287211421,0.007837260400944106,,staurosporine|-5.204,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+tomatine,raw,5677,0.12459818827812114,0.1018588462994697,0.9334343291717245,tomatine|-4.204,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+tomatine,centered,5677,-0.15786900493941985,-0.24690635241744682,0.9216210197513823,tomatine|-4.204,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+triamterene,raw,5677,0.24271133785365825,0.13259946638455158,,triamterene|-3.301,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+triamterene,centered,5677,0.019356557122795038,-0.08367250289457201,,triamterene|-3.301,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+usnic acid,raw,5677,0.1424116491199444,0.10225347890643322,,usnic acid|-3.301,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+usnic acid,centered,5677,0.0071417727630982124,-0.15173653879031737,,usnic acid|-3.301,hillenmeyer_het,2,seed2,mix_vanhophet_e150_cell_s12_f2
+"Ascosteroside, MK6059",raw,4461,0.3027114682823757,0.3801761537504998,,"Ascosteroside, MK6059|-7.699",hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+"Ascosteroside, MK6059",centered,4461,0.014872489549164144,0.05030862093540434,,"Ascosteroside, MK6059|-7.699",hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+Bafilomycin A1,raw,4461,0.3615689710289457,0.6511522130170351,,Bafilomycin A1|-4.360,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+Bafilomycin A1,centered,4461,0.012167927035044063,0.37958750257810314,,Bafilomycin A1|-4.360,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+Benzothiazole derivative,raw,4469,0.2117246869706316,0.6316051736679695,,Benzothiazole derivative|-5.301,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+Benzothiazole derivative,centered,4469,0.07432715807414311,0.5159776835229986,,Benzothiazole derivative|-5.301,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+CMB1509,raw,4454,0.32207775983389386,0.3860741664560686,,CMB1509|-5.412,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+CMB1509,centered,4454,-0.008270746228567634,0.03140725739037023,,CMB1509|-5.412,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+Concanamycin A Derivative,raw,4470,0.5119051744328152,0.7422650492054721,,Concanamycin A Derivative|-6.324,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+Concanamycin A Derivative,centered,4470,0.193108591649045,0.5539318408126643,,Concanamycin A Derivative|-6.324,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+D-Sorbitol,raw,4469,-0.003968284411899209,-0.08776961425666979,,D-Sorbitol|-0.260,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+D-Sorbitol,centered,4469,0.19087004339000263,0.18772790176586265,,D-Sorbitol|-0.260,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+D-Sorbitol,raw,4469,-0.009259526541823632,-0.06647312519400175,,D-Sorbitol|-0.187,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+D-Sorbitol,centered,4469,0.18320676951807405,0.16478340919675113,,D-Sorbitol|-0.187,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+Ethidium Bromide,raw,4454,0.10369890045590884,0.09255126811659214,,Ethidium Bromide|-4.155,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+Ethidium Bromide,centered,4454,-0.19493744500063556,-0.40498068657607184,,Ethidium Bromide|-4.155,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+Ethidium Bromide,raw,4466,0.11658312854372058,0.15834911112123204,,Ethidium Bromide|-4.086,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+Ethidium Bromide,centered,4466,-0.07063471701826056,-0.1964466769379553,,Ethidium Bromide|-4.086,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+Methylmercury,raw,4413,-0.006914831882184215,-0.04974553136848836,,Methylmercury|-7.000,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+Methylmercury,centered,4413,0.14054677198759372,0.07311559601989483,,Methylmercury|-7.000,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+Methylmercury,raw,4413,0.05456931429184313,-0.004714894863833434,,Methylmercury|-6.602,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+Methylmercury,centered,4413,0.20077143761422603,0.055852238679581744,,Methylmercury|-6.602,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+Methylmercury,raw,4413,0.04742844017965607,0.012800824553911539,,Methylmercury|-6.301,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+Methylmercury,centered,4413,0.13461308703737018,-0.03250614657740177,,Methylmercury|-6.301,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+Peptolide SDZ 90-215,raw,4454,0.2238848573981037,0.5718152081543465,,Peptolide SDZ 90-215|-5.523,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+Peptolide SDZ 90-215,centered,4454,-0.11434288887755627,0.2857152191261572,,Peptolide SDZ 90-215|-5.523,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+Peptolide SDZ 90-215,raw,4454,0.32131881463122464,0.6209639422275646,,Peptolide SDZ 90-215|-5.398,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+Peptolide SDZ 90-215,centered,4454,-0.07587277843215451,0.36636919865327516,,Peptolide SDZ 90-215|-5.398,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+Peptolide SDZ 90-215,raw,4454,0.36428224194096176,0.6360573115215504,,Peptolide SDZ 90-215|-5.222,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+Peptolide SDZ 90-215,centered,4454,-0.021769636156308676,0.3885278002726194,,Peptolide SDZ 90-215|-5.222,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+"Ps-341, Velcade, Bortezomib",raw,4466,0.11254397716966938,0.13998077137062157,,"Ps-341, Velcade, Bortezomib|-3.699",hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+"Ps-341, Velcade, Bortezomib",centered,4466,0.06461254463274035,0.2665622009626182,,"Ps-341, Velcade, Bortezomib|-3.699",hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+"Ps-341, Velcade, Bortezomib",raw,4466,0.13489896113654387,0.19042896298861978,,"Ps-341, Velcade, Bortezomib|-3.523",hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+"Ps-341, Velcade, Bortezomib",centered,4466,0.04252696765138145,0.23172131995855694,,"Ps-341, Velcade, Bortezomib|-3.523",hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+Sodium Dodecyl Sulfate (SDS),raw,4462,0.012287033013204274,0.06316460084576789,,Sodium Dodecyl Sulfate (SDS)|-3.824,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+Sodium Dodecyl Sulfate (SDS),centered,4462,0.20952707851819247,0.2498605685283157,,Sodium Dodecyl Sulfate (SDS)|-3.824,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+Sodium Dodecyl Sulfate (SDS),raw,4438,0.10710633767166373,0.23712677654210804,,Sodium Dodecyl Sulfate (SDS)|-3.699,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+Sodium Dodecyl Sulfate (SDS),centered,4438,0.26738425970036456,0.15998280539940804,,Sodium Dodecyl Sulfate (SDS)|-3.699,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+Sodium Hydroxide,raw,4469,0.2716372025990374,0.23836048043005406,,Sodium Hydroxide|-2.000,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+Sodium Hydroxide,centered,4469,-0.09012718036998009,-0.25831536595001003,,Sodium Hydroxide|-2.000,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+Sodium Hydroxide,raw,4469,0.24196169312661206,0.24819360227796608,,Sodium Hydroxide|-2.097,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+Sodium Hydroxide,centered,4469,-0.07689711340033568,-0.2218813286387298,,Sodium Hydroxide|-2.097,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+Soraphen A,raw,4441,0.37853882381404214,0.3801965758043963,,Soraphen A|-6.301,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+Soraphen A,centered,4441,0.027469334355162772,0.05320003277446532,,Soraphen A|-6.301,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+TAN-999,raw,4467,0.01465914299945531,0.03537921423727636,,TAN-999|-7.000,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+TAN-999,centered,4467,-0.30785229000168274,-0.48755423932764863,,TAN-999|-7.000,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+TAN-999,raw,4467,0.2235332460761733,0.43385780892178355,,TAN-999|-6.000,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+TAN-999,centered,4467,-0.11947789063849655,0.16588042092580244,,TAN-999|-6.000,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+amitriptyline,raw,4462,0.24103220124271507,0.582618536819534,,amitriptyline|-4.301,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+amitriptyline,centered,4462,0.18305494990445423,0.2100260927576226,,amitriptyline|-4.301,hoepfner_hop,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+"(1r,6s)-3-hydroxy-4-methyl-7-oxabicyclo(4.1.0)hept-3-ene-2,5-dione",raw,5704,0.00830878078707252,-0.0008327163082408407,,"(1r,6s)-3-hydroxy-4-methyl-7-oxabicyclo(4.1.0)hept-3-ene-2,5-dione|-3.000",hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+"(1r,6s)-3-hydroxy-4-methyl-7-oxabicyclo(4.1.0)hept-3-ene-2,5-dione",centered,5704,-0.002954561456831104,-0.13103885875647195,,"(1r,6s)-3-hydroxy-4-methyl-7-oxabicyclo(4.1.0)hept-3-ene-2,5-dione|-3.000",hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+aklavin hydrochloride,raw,5677,0.1562444718899565,0.2420153433583215,,aklavin hydrochloride|-3.903,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+aklavin hydrochloride,centered,5677,0.2879810622212587,0.43500767144840724,,aklavin hydrochloride|-3.903,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+aklavin hydrochloride,raw,5677,0.08386619512727234,0.34187147033961884,,aklavin hydrochloride|-3.602,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+aklavin hydrochloride,centered,5677,0.09843558661745584,0.0696823923389224,,aklavin hydrochloride|-3.602,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+aklavin hydrochloride,raw,5677,0.19346633518248366,0.09420395195573653,,aklavin hydrochloride|-3.301,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+aklavin hydrochloride,centered,5677,0.09765113490699676,0.11133701891966893,,aklavin hydrochloride|-3.301,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+beclomethasone dipropionate,raw,5677,0.07308180306223658,0.00685273586071725,,beclomethasone dipropionate|-3.000,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+beclomethasone dipropionate,centered,5677,-0.03649756431786515,-0.1302937656425235,,beclomethasone dipropionate|-3.000,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+benzyl benzoate,raw,5677,0.23113240940711252,0.15476816534572027,,benzyl benzoate|-3.000,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+benzyl benzoate,centered,5677,-0.25615813867064335,-0.26763633333354775,,benzyl benzoate|-3.000,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+biochanin a,raw,5704,0.03426737595856662,-0.010130710484614842,,biochanin a|-5.403,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+biochanin a,centered,5704,-0.085433279877727,-0.06389747369985678,,biochanin a|-5.403,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+borrelidin,raw,5704,0.08157058164963929,0.1075973733386071,,borrelidin|-4.806,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+borrelidin,centered,5704,-0.062012195883650416,-0.08049142180528203,,borrelidin|-4.806,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+bufexamac,raw,5677,0.37918861981490026,0.3769104896461248,0.9796022541272387,bufexamac|-3.000,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+bufexamac,centered,5677,0.19143220569009048,0.15921507306557203,0.9778275149953655,bufexamac|-3.000,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+clofoctol,raw,5677,0.45721032811279916,0.45111838353000105,,clofoctol|-3.000,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+clofoctol,centered,5677,0.27929246162332194,0.31671135831048053,,clofoctol|-3.000,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+dipropyl disulfide,raw,5704,0.39327636802448174,0.6538031654994313,,dipropyl disulfide|nan,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+dipropyl disulfide,centered,5704,0.43628160699942037,0.553095484249613,,dipropyl disulfide|nan,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+filipin,raw,5704,-0.005021743559798845,-0.1030666691471718,,filipin|-4.000,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+filipin,centered,5704,0.17796555882928886,-0.15511870865833263,,filipin|-4.000,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+fluconazole,raw,5677,0.17752781880004842,0.15682866180311408,0.9958704769154206,fluconazole|-3.884,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+fluconazole,centered,5677,0.12295527564967429,0.14602925337155406,0.9958783074065773,fluconazole|-3.884,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+fluconazole,raw,5677,0.29654539803145225,0.28856680635494897,,fluconazole|-4.788,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+fluconazole,centered,5677,-0.11327352925244483,-0.24670609714220224,,fluconazole|-4.788,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+fluconazole,raw,5677,0.08599973442961253,0.12669817948108295,0.9144292457293011,fluconazole|-4.505,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+fluconazole,centered,5677,0.008574351827236214,0.06831466424202422,0.9104803498126642,fluconazole|-4.505,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+fluconazole,raw,5677,0.5238088765517219,0.46000994454747374,0.6765169301170069,fluconazole|-4.487,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+fluconazole,centered,5677,0.06366072659814495,-0.061960237391653766,0.5666716094763674,fluconazole|-4.487,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+flunarizine hydrochloride,raw,5677,0.41610171393747775,0.5485328061307879,,flunarizine hydrochloride|-4.028,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+flunarizine hydrochloride,centered,5677,-0.036013168490995465,0.18564753043802454,,flunarizine hydrochloride|-4.028,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+ipriflavone,raw,5677,0.03810680375763753,-0.06101268029417764,,ipriflavone|-3.000,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+ipriflavone,centered,5677,-0.1698704256380327,-0.30087596854958426,,ipriflavone|-3.000,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+itraconazole,raw,5677,0.3706554327741525,0.385055130130054,0.9044717571974262,itraconazole|-4.752,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+itraconazole,centered,5677,-0.06773904589579474,0.14128946075260643,0.8956637755401731,itraconazole|-4.752,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+itraconazole,raw,5677,0.40908870961724136,0.39090108247674105,,itraconazole|-5.658,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+itraconazole,centered,5677,-0.1884215821684711,-0.05197986728541476,,itraconazole|-5.658,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+itraconazole,raw,5677,0.2517115793755767,0.2598195937838343,,itraconazole|-4.451,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+itraconazole,centered,5677,0.05362525871606135,0.22581257418732936,,itraconazole|-4.451,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+itraconazole,raw,5677,0.5261460731402543,0.5415827660871836,,itraconazole|-4.425,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+itraconazole,centered,5677,-0.25518654227723725,0.08571348407468521,,itraconazole|-4.425,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+itraconazole,raw,5677,0.47020824902536446,0.47837439010765664,0.8570059672177448,itraconazole|-5.357,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+itraconazole,centered,5677,-0.09877857363762213,0.1371527397333212,0.8147296008011582,itraconazole|-5.357,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+itraconazole,raw,5677,0.3923580005464791,0.4707473471213991,0.7815326963478256,itraconazole|-5.056,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+itraconazole,centered,5677,0.004476482771513296,0.28023978081164835,0.7428524169722777,itraconazole|-5.056,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+ketoconazole,raw,5677,0.2014439988584174,0.13284760288774125,0.0,ketoconazole|-6.000,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+ketoconazole,centered,5677,0.12118656522139207,-0.059565006580216684,0.0,ketoconazole|-6.000,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+ketoconazole,raw,5734,0.00048335915697239666,0.015748914910104238,,ketoconazole|-4.928,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+ketoconazole,centered,5734,0.13352357235496193,0.048935898140900956,,ketoconazole|-4.928,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+ketoconazole,raw,5677,0.5008697769395968,0.3012184564926748,,ketoconazole|-5.699,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+ketoconazole,centered,5677,-0.21163917214387623,-0.2651105350133381,,ketoconazole|-5.699,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+ketoconazole,raw,5677,0.35672911030120685,0.21603093426737718,,ketoconazole|-6.301,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+ketoconazole,centered,5677,-0.1751564594808075,-0.31248383861458884,,ketoconazole|-6.301,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+levodopa,raw,5704,0.1579836601801436,0.27978734529690863,0.6212680787068475,levodopa|nan,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+levodopa,centered,5704,0.22938487768930071,0.19114766636469235,0.646152202292338,levodopa|nan,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+meclocycline sulfosalicylate,raw,5677,0.4627984716283539,0.37269912826845947,,meclocycline sulfosalicylate|-3.426,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+meclocycline sulfosalicylate,centered,5677,-0.09070270014064286,-0.2517349146364302,,meclocycline sulfosalicylate|-3.426,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+meclofenamate sodium,raw,5677,0.28623996534895774,0.2590160469261194,,meclofenamate sodium|-3.000,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+meclofenamate sodium,centered,5677,-0.12251291548602808,-0.16701804203161738,,meclofenamate sodium|-3.000,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+monastrol,raw,5704,0.012182325169359179,-0.027303654718236318,,monastrol|-4.000,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+monastrol,centered,5704,-0.08930211117860809,-0.25758992548287135,,monastrol|-4.000,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+novobiocin,raw,5728,0.2911333425883822,0.2856693976084525,,novobiocin|-3.000,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+novobiocin,centered,5728,-0.07217068267022204,-0.1405847012372162,,novobiocin|-3.000,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+oxethazaine,raw,5677,0.36363336038736865,0.33693756249958007,,oxethazaine|-3.602,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+oxethazaine,centered,5677,0.046700395303337354,-0.013591127666072005,,oxethazaine|-3.602,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+piperine,raw,5677,0.24531529420371218,0.20689088630132998,,piperine|-3.602,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+piperine,centered,5677,-0.15387770875624365,-0.18218175578044615,,piperine|-3.602,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+propiomazine maleate,raw,5677,0.27617144258363624,0.286121345830126,,propiomazine maleate|-3.301,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+propiomazine maleate,centered,5677,0.09159871013528455,0.1297753677069377,,propiomazine maleate|-3.301,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+sirtinol,raw,5704,-0.011112918574793611,-0.02514971255134285,,sirtinol|-4.301,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+sirtinol,centered,5704,-0.13153539012745605,-0.30279516549255775,,sirtinol|-4.301,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+staurosporine,raw,5704,0.21363861694036615,0.3256767773577163,,staurosporine|-5.204,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+staurosporine,centered,5704,-0.011982377281795516,0.029005890544403754,,staurosporine|-5.204,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+tomatine,raw,5677,0.15889315371309484,0.11592500593301029,0.9334343291717245,tomatine|-4.204,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+tomatine,centered,5677,-0.16206145954048082,-0.2618619720565097,0.9216210197513823,tomatine|-4.204,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+triamterene,raw,5677,0.25729305560962357,0.12205513726773284,,triamterene|-3.301,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+triamterene,centered,5677,0.016954419517856895,-0.03267199774975484,,triamterene|-3.301,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+usnic acid,raw,5677,0.1517717252310513,0.12079904825631196,,usnic acid|-3.301,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2
+usnic acid,centered,5677,0.10069559706340668,-0.020842961944676806,,usnic acid|-3.301,hillenmeyer_het,2,ensemble,mix_vanhophet_e150_cell_s12_f2

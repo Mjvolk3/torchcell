@@ -1,0 +1,265 @@
+compound,target,n_genes,spearman,pearson,ceiling,condition,source,fold,member,name
+"1,3-bis(o-tolyl)thiourea",raw,5704,0.04719889585567721,0.10789264852946677,,"1,3-bis(o-tolyl)thiourea|-5.721",hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+"1,3-bis(o-tolyl)thiourea",centered,5704,-0.05661674831738854,-0.35831194871735944,,"1,3-bis(o-tolyl)thiourea|-5.721",hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+2-(3-methoxypropylamino)-n-[4-(trifluoromethoxy)phenyl]acetamide,raw,5704,0.2682915911199843,0.4431630996098069,,2-(3-methoxypropylamino)-n-[4-(trifluoromethoxy)phenyl]acetamide|-3.301,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+2-(3-methoxypropylamino)-n-[4-(trifluoromethoxy)phenyl]acetamide,centered,5704,0.1666463569158003,0.30483070860745226,,2-(3-methoxypropylamino)-n-[4-(trifluoromethoxy)phenyl]acetamide|-3.301,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+"3,5-dinitrobenzamide",raw,5677,0.14872237982665654,0.18812217393833605,0.0,"3,5-dinitrobenzamide|-3.000",hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+"3,5-dinitrobenzamide",centered,5677,-0.19575403392679078,-0.2250389667806613,0.0,"3,5-dinitrobenzamide|-3.000",hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+amoxapine,raw,5677,0.3936845134510118,0.3750197442876664,,amoxapine|-3.301,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+amoxapine,centered,5677,0.20000008063392224,0.17911954956226783,,amoxapine|-3.301,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+berberine chloride,raw,5677,0.2651344966475055,0.4343153442469095,0.915383084446467,berberine chloride|-3.903,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+berberine chloride,centered,5677,0.09434146211345723,0.36193280837580966,0.9097583161195052,berberine chloride|-3.903,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+camptothecin,raw,5677,0.4043824800555203,0.4488660678805147,,camptothecin|-3.301,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+camptothecin,centered,5677,-0.12892357590847328,-0.16418394041368994,,camptothecin|-3.301,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+carmustine,raw,5677,0.001742180663167829,-0.003409170857861639,,carmustine|-4.505,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+carmustine,centered,5677,0.07933241834876577,-0.17601043695539387,,carmustine|-4.505,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+carmustine,raw,5704,-0.0052575951367297875,0.03658627812141129,,carmustine|-4.204,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+carmustine,centered,5704,0.22167921615850145,0.23184130297335728,,carmustine|-4.204,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+chrysin,raw,5677,0.004338480247444658,-0.012379068981541244,,chrysin|-3.301,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+chrysin,centered,5677,-0.02940235229908541,-0.04608332083812459,,chrysin|-3.301,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+embelin,raw,5677,0.22397819346070572,0.29474149825048895,,embelin|-3.903,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+embelin,centered,5677,0.12593197606118725,0.14189749756558961,,embelin|-3.903,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+"estradiol, diacetate",raw,5677,0.23830684020580004,0.16192605408506824,,"estradiol, diacetate|-3.000",hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+"estradiol, diacetate",centered,5677,-0.07386592682178104,0.08049983391046413,,"estradiol, diacetate|-3.000",hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+fenbendazole,raw,5677,0.3090088778204547,0.365204366032067,,fenbendazole|-3.602,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+fenbendazole,centered,5677,-0.09745547319382215,0.06195816337095975,,fenbendazole|-3.602,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+fenbendazole,raw,5677,0.19877323157140478,0.22292144053566423,0.44287055349621207,fenbendazole|-3.301,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+fenbendazole,centered,5677,-0.06039038894673436,0.013520874747967222,0.44019077754370406,fenbendazole|-3.301,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+fenbufen,raw,5677,0.301725902716458,0.26906624422348663,,fenbufen|-3.301,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+fenbufen,centered,5677,-0.2007650313182134,-0.09243601798735146,,fenbufen|-3.301,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+fenoprofen,raw,5677,0.36582116472272447,0.36088301236190545,,fenoprofen|-3.602,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+fenoprofen,centered,5677,0.03140009615774285,0.02501361067147244,,fenoprofen|-3.602,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+filipin,raw,5704,0.01597991703901313,0.021591293522018443,,filipin|-4.000,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+filipin,centered,5704,0.26739604532786476,0.3152391046829415,,filipin|-4.000,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+methoxyvone,raw,5677,0.03912153779106293,-0.06471713409330057,,methoxyvone|-3.000,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+methoxyvone,centered,5677,-0.11618131694531753,-0.15826766676972318,,methoxyvone|-3.000,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+mitomycin c,raw,5677,0.3038464941683073,0.25268904520933166,,mitomycin c|-3.000,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+mitomycin c,centered,5677,-0.13508796046168683,-0.05938010165891642,,mitomycin c|-3.000,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+mitomycin c,raw,5704,0.2949905029533674,0.4893002627376742,,mitomycin c|-4.301,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+mitomycin c,centered,5704,0.2041484621297125,0.2910570720358697,,mitomycin c|-4.301,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+mitoxantrone,raw,5704,0.13806457089339016,0.30471302170477604,,mitoxantrone|-4.204,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+mitoxantrone,centered,5704,-0.1686820822262767,0.009792376807902623,,mitoxantrone|-4.204,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+naringenin,raw,5677,0.16292552236529934,0.19798387060202505,,naringenin|-3.000,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+naringenin,centered,5677,0.011532564054024967,0.10562885125680717,,naringenin|-3.000,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+paclitaxel,raw,5704,0.19716533917002582,0.357326497127453,0.7959544660127595,paclitaxel|-3.602,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+paclitaxel,centered,5704,-0.21599967012056495,0.022295610784174802,0.7451648239734129,paclitaxel|-3.602,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+perillic acid,raw,5677,0.14211005563906673,0.07115230765365467,,perillic acid|-3.602,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+perillic acid,centered,5677,-0.23622333590994898,-0.08413538730873485,,perillic acid|-3.602,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+pimethixene maleate,raw,5677,0.4287449155968844,0.4688414022349445,,pimethixene maleate|-3.903,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+pimethixene maleate,centered,5677,-0.1801692505083838,0.028613389725473518,,pimethixene maleate|-3.903,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+prazosin hydrochloride,raw,5677,0.26157195369566616,0.2826128988086145,,prazosin hydrochloride|-3.000,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+prazosin hydrochloride,centered,5677,0.08171000035734341,0.19935858226204178,,prazosin hydrochloride|-3.000,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+probucol,raw,5677,0.3676944770815357,0.41107568932435423,,probucol|-3.000,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+probucol,centered,5677,0.07059450073715082,0.10952287143788028,,probucol|-3.000,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+reserpine,raw,5704,0.027277890252780133,-0.021057229331417848,,reserpine|-4.000,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+reserpine,centered,5704,-0.11115317266188192,-0.27852931610759274,,reserpine|-4.000,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+reserpine,raw,5677,0.10427211900363705,-0.003592525877048835,,reserpine|-3.903,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+reserpine,centered,5677,-0.11333933824889197,-0.32330465943925,,reserpine|-3.903,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+resveratrol,raw,5704,0.1051682553831735,0.29109424486425023,,resveratrol|-2.699,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+resveratrol,centered,5704,0.16494905967754117,0.3615749524602974,,resveratrol|-2.699,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+sirtinol,raw,5704,-0.023918000266078772,-0.0038834516886505272,,sirtinol|-4.301,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+sirtinol,centered,5704,-0.13812267800050954,-0.14688361984336554,,sirtinol|-4.301,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+spironolactone,raw,5677,0.20736015327992577,0.2817970279467383,,spironolactone|-3.301,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+spironolactone,centered,5677,-0.024763195541302102,-0.06069969691381743,,spironolactone|-3.301,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+thiabendazole,raw,5728,0.06990318854356233,0.031101343608495535,,thiabendazole|-3.602,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+thiabendazole,centered,5728,-0.10770593095968838,-0.14222770674624624,,thiabendazole|-3.602,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+thiabendazole,raw,5677,0.19267234475960432,0.1722427920858809,0.8763218672376593,thiabendazole|-3.301,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+thiabendazole,centered,5677,-0.03942465696093038,-0.19276291329681522,0.8678834113199817,thiabendazole|-3.301,hillenmeyer_het,0,seed0,mix_vanhet_e150_cell_bliss_f0
+"1,3-bis(o-tolyl)thiourea",raw,5704,-0.057244368100276936,-0.14198098039757218,,"1,3-bis(o-tolyl)thiourea|-5.721",hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+"1,3-bis(o-tolyl)thiourea",centered,5704,-0.11933841073291605,-0.410972277277482,,"1,3-bis(o-tolyl)thiourea|-5.721",hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+2-(3-methoxypropylamino)-n-[4-(trifluoromethoxy)phenyl]acetamide,raw,5704,0.3010280701250357,0.46220881746165104,,2-(3-methoxypropylamino)-n-[4-(trifluoromethoxy)phenyl]acetamide|-3.301,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+2-(3-methoxypropylamino)-n-[4-(trifluoromethoxy)phenyl]acetamide,centered,5704,0.09317346823972648,0.21329114844131045,,2-(3-methoxypropylamino)-n-[4-(trifluoromethoxy)phenyl]acetamide|-3.301,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+"3,5-dinitrobenzamide",raw,5677,0.11595184620874549,0.1627681388892143,0.0,"3,5-dinitrobenzamide|-3.000",hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+"3,5-dinitrobenzamide",centered,5677,-0.2159629335154491,-0.20297418918385682,0.0,"3,5-dinitrobenzamide|-3.000",hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+amoxapine,raw,5677,0.4212857135561505,0.40109859116522073,,amoxapine|-3.301,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+amoxapine,centered,5677,0.3162464205321957,0.2979915844679421,,amoxapine|-3.301,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+berberine chloride,raw,5677,0.17858960448986227,0.4493338406415424,0.915383084446467,berberine chloride|-3.903,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+berberine chloride,centered,5677,-0.0673795137062467,0.3434504200632566,0.9097583161195052,berberine chloride|-3.903,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+camptothecin,raw,5677,0.361497504435765,0.4119921468184128,,camptothecin|-3.301,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+camptothecin,centered,5677,-0.07673779568935095,-0.08540615623633292,,camptothecin|-3.301,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+carmustine,raw,5677,-0.03716204404870329,-0.047684286792105686,,carmustine|-4.505,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+carmustine,centered,5677,0.03266355029357706,-0.20765681956009283,,carmustine|-4.505,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+carmustine,raw,5704,-0.0012958495676266737,0.05551792998124354,,carmustine|-4.204,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+carmustine,centered,5704,0.18020096207382605,0.1859689627684138,,carmustine|-4.204,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+chrysin,raw,5677,-0.07118206214490942,-0.0914273133031866,,chrysin|-3.301,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+chrysin,centered,5677,-0.009815735065697826,0.024672569136506752,,chrysin|-3.301,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+embelin,raw,5677,0.21145547314534077,0.2935981875297342,,embelin|-3.903,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+embelin,centered,5677,0.15149321734802687,0.20079685065791303,,embelin|-3.903,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+"estradiol, diacetate",raw,5677,0.25355811925390687,0.16128333811813755,,"estradiol, diacetate|-3.000",hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+"estradiol, diacetate",centered,5677,0.13728973299935424,0.10708111499709526,,"estradiol, diacetate|-3.000",hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+fenbendazole,raw,5677,0.18668976464132803,0.2906748197899452,,fenbendazole|-3.602,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+fenbendazole,centered,5677,-0.10584466476963988,0.06486628020969239,,fenbendazole|-3.602,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+fenbendazole,raw,5677,0.1359787035036501,0.19605981396328148,0.44287055349621207,fenbendazole|-3.301,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+fenbendazole,centered,5677,0.04252028410758903,0.11696399862171783,0.44019077754370406,fenbendazole|-3.301,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+fenbufen,raw,5677,0.41325533524044755,0.33785534739028783,,fenbufen|-3.301,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+fenbufen,centered,5677,0.20591276007590287,0.06221941233005987,,fenbufen|-3.301,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+fenoprofen,raw,5677,0.38073063170228394,0.3709481086467149,,fenoprofen|-3.602,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+fenoprofen,centered,5677,0.20279541197662684,0.15421183725902776,,fenoprofen|-3.602,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+filipin,raw,5704,0.026425399085553813,-0.005846128909168952,,filipin|-4.000,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+filipin,centered,5704,0.13961332597937917,0.16345169547786748,,filipin|-4.000,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+methoxyvone,raw,5677,0.014682877354104359,-0.07005878542781688,,methoxyvone|-3.000,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+methoxyvone,centered,5677,0.08907240186504338,0.07715627828693816,,methoxyvone|-3.000,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+mitomycin c,raw,5677,0.10889389798647639,0.1815407329970153,,mitomycin c|-3.000,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+mitomycin c,centered,5677,-0.21205861263307366,-0.1610743595888781,,mitomycin c|-3.000,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+mitomycin c,raw,5704,0.3353425807362963,0.503928123392732,,mitomycin c|-4.301,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+mitomycin c,centered,5704,0.25739813622676516,0.3064058020005324,,mitomycin c|-4.301,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+mitoxantrone,raw,5704,0.1511921705875118,0.2748820522013561,,mitoxantrone|-4.204,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+mitoxantrone,centered,5704,-0.21205273988430476,-0.07115808767603012,,mitoxantrone|-4.204,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+naringenin,raw,5677,0.22530464630387476,0.26137132875232316,,naringenin|-3.000,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+naringenin,centered,5677,0.12587690923994282,0.1580012810193199,,naringenin|-3.000,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+paclitaxel,raw,5704,-0.06495587346747043,-0.1569345586417757,0.7959544660127595,paclitaxel|-3.602,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+paclitaxel,centered,5704,-0.46388458285737605,-0.5757278770920412,0.7451648239734129,paclitaxel|-3.602,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+perillic acid,raw,5677,0.18202429946621482,0.1026972300888778,,perillic acid|-3.602,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+perillic acid,centered,5677,-0.014815258490620868,-0.04300549346876406,,perillic acid|-3.602,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+pimethixene maleate,raw,5677,0.4580207228523728,0.4986431029367181,,pimethixene maleate|-3.903,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+pimethixene maleate,centered,5677,0.28353085155906876,0.3354725896356372,,pimethixene maleate|-3.903,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+prazosin hydrochloride,raw,5677,0.1234488161337854,0.14334835383912461,,prazosin hydrochloride|-3.000,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+prazosin hydrochloride,centered,5677,0.04660070937054939,0.10962359137755892,,prazosin hydrochloride|-3.000,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+probucol,raw,5677,0.35589029588176113,0.3976952088877287,,probucol|-3.000,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+probucol,centered,5677,0.1462266670318792,0.15944333996148835,,probucol|-3.000,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+reserpine,raw,5704,0.006263647421368583,-0.10152735681839545,,reserpine|-4.000,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+reserpine,centered,5704,-0.24950639848359923,-0.352715481584669,,reserpine|-4.000,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+reserpine,raw,5677,0.04003609116381397,-0.02591672632523037,,reserpine|-3.903,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+reserpine,centered,5677,-0.24116751415992582,-0.2988270313710801,,reserpine|-3.903,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+resveratrol,raw,5704,0.08678005258502752,0.18135722587183453,,resveratrol|-2.699,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+resveratrol,centered,5704,0.019705099144278548,0.08062607073561139,,resveratrol|-2.699,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+sirtinol,raw,5704,-0.025565287325169172,-0.015434566027435329,,sirtinol|-4.301,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+sirtinol,centered,5704,-0.22760967307820634,-0.2567020647947217,,sirtinol|-4.301,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+spironolactone,raw,5677,0.20383181836119355,0.2611046970841499,,spironolactone|-3.301,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+spironolactone,centered,5677,-0.09085178980573598,-0.09522225651091101,,spironolactone|-3.301,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+thiabendazole,raw,5728,0.05329603603783263,0.06120166705844561,,thiabendazole|-3.602,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+thiabendazole,centered,5728,0.07279432106047233,0.09425709106466248,,thiabendazole|-3.602,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+thiabendazole,raw,5677,0.12287416474250315,0.10977061954617871,0.8763218672376593,thiabendazole|-3.301,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+thiabendazole,centered,5677,-0.05896156961769163,-0.09869147795392383,0.8678834113199817,thiabendazole|-3.301,hillenmeyer_het,0,seed1,mix_vanhet_e150_cell_bliss_f0
+"1,3-bis(o-tolyl)thiourea",raw,5704,0.006138425587845015,-0.03305212955847944,,"1,3-bis(o-tolyl)thiourea|-5.721",hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+"1,3-bis(o-tolyl)thiourea",centered,5704,-0.07141117052864454,-0.31129747092983057,,"1,3-bis(o-tolyl)thiourea|-5.721",hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+2-(3-methoxypropylamino)-n-[4-(trifluoromethoxy)phenyl]acetamide,raw,5704,0.3184867261295654,0.456137317620474,,2-(3-methoxypropylamino)-n-[4-(trifluoromethoxy)phenyl]acetamide|-3.301,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+2-(3-methoxypropylamino)-n-[4-(trifluoromethoxy)phenyl]acetamide,centered,5704,0.22774350585490521,0.25743508731002335,,2-(3-methoxypropylamino)-n-[4-(trifluoromethoxy)phenyl]acetamide|-3.301,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+"3,5-dinitrobenzamide",raw,5677,0.12270841542994036,0.18409875521932328,0.0,"3,5-dinitrobenzamide|-3.000",hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+"3,5-dinitrobenzamide",centered,5677,-0.22068706979591335,-0.18998346273094002,0.0,"3,5-dinitrobenzamide|-3.000",hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+amoxapine,raw,5677,0.41138621243663737,0.40316767636699125,,amoxapine|-3.301,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+amoxapine,centered,5677,0.2326530861423188,0.22283729009972622,,amoxapine|-3.301,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+berberine chloride,raw,5677,0.323194318132596,0.5074149469678292,0.915383084446467,berberine chloride|-3.903,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+berberine chloride,centered,5677,0.19044553477689005,0.4458168772521842,0.9097583161195052,berberine chloride|-3.903,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+camptothecin,raw,5677,0.23575863304174344,0.28941510295781886,,camptothecin|-3.301,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+camptothecin,centered,5677,-0.1541112426131716,-0.1343300124113047,,camptothecin|-3.301,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+carmustine,raw,5677,-0.063406489008395,-0.1413729931992306,,carmustine|-4.505,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+carmustine,centered,5677,0.17501886229018374,-0.1548964993258256,,carmustine|-4.505,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+carmustine,raw,5704,0.008147585300251597,0.0691041237229096,,carmustine|-4.204,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+carmustine,centered,5704,0.31335963290952723,0.24308737790739507,,carmustine|-4.204,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+chrysin,raw,5677,-0.0745761082642215,-0.053685010654967474,,chrysin|-3.301,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+chrysin,centered,5677,-0.04679948707417493,0.0018313247786152656,,chrysin|-3.301,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+embelin,raw,5677,0.2292956736124947,0.3351010457002088,,embelin|-3.903,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+embelin,centered,5677,0.1519814314494585,0.23896720941869362,,embelin|-3.903,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+"estradiol, diacetate",raw,5677,0.18008704258953542,0.18752451321425895,,"estradiol, diacetate|-3.000",hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+"estradiol, diacetate",centered,5677,0.0748301269503817,0.11932951432858303,,"estradiol, diacetate|-3.000",hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+fenbendazole,raw,5677,0.27282528136102796,0.35096033283131883,,fenbendazole|-3.602,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+fenbendazole,centered,5677,-0.14244469837712534,0.08549201151912833,,fenbendazole|-3.602,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+fenbendazole,raw,5677,0.18598644703266978,0.24100098658594232,0.44287055349621207,fenbendazole|-3.301,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+fenbendazole,centered,5677,-0.014218390968487859,0.09382369173142052,0.44019077754370406,fenbendazole|-3.301,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+fenbufen,raw,5677,0.4548132935006387,0.38659433522378217,,fenbufen|-3.301,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+fenbufen,centered,5677,0.28863280630056126,0.10794385088105786,,fenbufen|-3.301,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+fenoprofen,raw,5677,0.3608082700622046,0.34757172181689006,,fenoprofen|-3.602,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+fenoprofen,centered,5677,0.10242560659045259,0.1093644912914943,,fenoprofen|-3.602,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+filipin,raw,5704,0.011173801796995916,-0.043887460112884025,,filipin|-4.000,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+filipin,centered,5704,0.05184071633694172,-0.025953842014963938,,filipin|-4.000,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+methoxyvone,raw,5677,0.03199089374211537,-0.03187705895277428,,methoxyvone|-3.000,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+methoxyvone,centered,5677,0.11204247265965836,0.06854020110708199,,methoxyvone|-3.000,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+mitomycin c,raw,5677,0.1746054061520386,0.20458372792597518,,mitomycin c|-3.000,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+mitomycin c,centered,5677,-0.20298455001093663,-0.13785736973824125,,mitomycin c|-3.000,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+mitomycin c,raw,5704,0.3237148793952041,0.5022278589153699,,mitomycin c|-4.301,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+mitomycin c,centered,5704,0.2437531425307546,0.30676097121858725,,mitomycin c|-4.301,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+mitoxantrone,raw,5704,0.15931618150561888,0.3078268184832534,,mitoxantrone|-4.204,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+mitoxantrone,centered,5704,-0.10306866870827283,0.05565097926065393,,mitoxantrone|-4.204,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+naringenin,raw,5677,0.24074325732333443,0.2858667165068083,,naringenin|-3.000,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+naringenin,centered,5677,0.05708838008335148,0.11632496711490185,,naringenin|-3.000,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+paclitaxel,raw,5704,0.20459035764402989,0.29806435049198193,0.7959544660127595,paclitaxel|-3.602,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+paclitaxel,centered,5704,-0.2724019200046832,-0.018359770059665007,0.7451648239734129,paclitaxel|-3.602,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+perillic acid,raw,5677,0.4446575761319035,0.4194503091778433,,perillic acid|-3.602,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+perillic acid,centered,5677,0.12984930377966744,0.17986918991872092,,perillic acid|-3.602,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+pimethixene maleate,raw,5677,0.5181334358092321,0.5614679126477481,,pimethixene maleate|-3.903,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+pimethixene maleate,centered,5677,0.339794410465727,0.3483144942253781,,pimethixene maleate|-3.903,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+prazosin hydrochloride,raw,5677,0.18355017366740564,0.25683827351441435,,prazosin hydrochloride|-3.000,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+prazosin hydrochloride,centered,5677,0.09016250730102096,0.2041569031622987,,prazosin hydrochloride|-3.000,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+probucol,raw,5677,0.335404748967161,0.4091898997441771,,probucol|-3.000,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+probucol,centered,5677,0.03148627673046719,0.15438403673521053,,probucol|-3.000,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+reserpine,raw,5704,0.009006268277135916,-0.08233260781473532,,reserpine|-4.000,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+reserpine,centered,5704,-0.29246863632562237,-0.39494828504910345,,reserpine|-4.000,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+reserpine,raw,5677,0.06895707905540897,0.012050720849620151,,reserpine|-3.903,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+reserpine,centered,5677,-0.2061815677934554,-0.3127613995909244,,reserpine|-3.903,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+resveratrol,raw,5704,0.04879679956480836,0.046603444665469736,,resveratrol|-2.699,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+resveratrol,centered,5704,-0.20210720409429062,-0.28877605214548224,,resveratrol|-2.699,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+sirtinol,raw,5704,-0.019035797598335066,-0.007187448615528021,,sirtinol|-4.301,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+sirtinol,centered,5704,-0.18741680775917716,-0.21422345309318877,,sirtinol|-4.301,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+spironolactone,raw,5677,0.23057533686747558,0.32868445825547316,,spironolactone|-3.301,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+spironolactone,centered,5677,-0.006320680858184647,0.02124860958488117,,spironolactone|-3.301,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+thiabendazole,raw,5728,0.08021037510837084,0.08219021994717342,,thiabendazole|-3.602,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+thiabendazole,centered,5728,0.06876869733528339,0.11633767240146449,,thiabendazole|-3.602,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+thiabendazole,raw,5677,0.12675394822530384,0.10976090159754925,0.8763218672376593,thiabendazole|-3.301,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+thiabendazole,centered,5677,-0.05497453721290071,-0.07812972448615026,0.8678834113199817,thiabendazole|-3.301,hillenmeyer_het,0,seed2,mix_vanhet_e150_cell_bliss_f0
+"1,3-bis(o-tolyl)thiourea",raw,5704,-0.004315070710247215,-0.0220197344857211,,"1,3-bis(o-tolyl)thiourea|-5.721",hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+"1,3-bis(o-tolyl)thiourea",centered,5704,-0.08038624793246554,-0.3696248815267329,,"1,3-bis(o-tolyl)thiourea|-5.721",hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+2-(3-methoxypropylamino)-n-[4-(trifluoromethoxy)phenyl]acetamide,raw,5704,0.3076515720307355,0.47007334115678007,,2-(3-methoxypropylamino)-n-[4-(trifluoromethoxy)phenyl]acetamide|-3.301,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+2-(3-methoxypropylamino)-n-[4-(trifluoromethoxy)phenyl]acetamide,centered,5704,0.2216538222795216,0.27417953762655833,,2-(3-methoxypropylamino)-n-[4-(trifluoromethoxy)phenyl]acetamide|-3.301,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+"3,5-dinitrobenzamide",raw,5677,0.13182682100331328,0.18206225422874814,0.0,"3,5-dinitrobenzamide|-3.000",hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+"3,5-dinitrobenzamide",centered,5677,-0.22297049897215168,-0.2147587168815683,0.0,"3,5-dinitrobenzamide|-3.000",hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+amoxapine,raw,5677,0.41703135890122245,0.40268192504349537,,amoxapine|-3.301,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+amoxapine,centered,5677,0.2587419586563372,0.24628309591802508,,amoxapine|-3.301,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+berberine chloride,raw,5677,0.278847225162273,0.4853933066197213,0.915383084446467,berberine chloride|-3.903,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+berberine chloride,centered,5677,0.055274551743836595,0.41500459162680664,0.9097583161195052,berberine chloride|-3.903,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+camptothecin,raw,5677,0.35486543321656555,0.4149290282343869,,camptothecin|-3.301,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+camptothecin,centered,5677,-0.1342999453820021,-0.1318827011900412,,camptothecin|-3.301,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+carmustine,raw,5677,-0.038641829440844266,-0.0635539574511835,,carmustine|-4.505,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+carmustine,centered,5677,0.11682982582288749,-0.19155100710559705,,carmustine|-4.505,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+carmustine,raw,5704,0.0018516143078635987,0.05505604216320231,,carmustine|-4.204,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+carmustine,centered,5704,0.274618926493179,0.23765675601376757,,carmustine|-4.204,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+chrysin,raw,5677,-0.046653945999599954,-0.056204186358191154,,chrysin|-3.301,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+chrysin,centered,5677,-0.027962529856813453,-0.005269935740588825,,chrysin|-3.301,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+embelin,raw,5677,0.2388509036221585,0.3203221105399433,,embelin|-3.903,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+embelin,centered,5677,0.15052503527062147,0.20923174279706622,,embelin|-3.903,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+"estradiol, diacetate",raw,5677,0.23848379152531188,0.18632983953103083,,"estradiol, diacetate|-3.000",hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+"estradiol, diacetate",centered,5677,0.08862434715199691,0.1113458286480323,,"estradiol, diacetate|-3.000",hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+fenbendazole,raw,5677,0.27029868633503834,0.3583975447958157,,fenbendazole|-3.602,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+fenbendazole,centered,5677,-0.1285970237355017,0.07698099166000928,,fenbendazole|-3.602,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+fenbendazole,raw,5677,0.18406242969000233,0.23380912164818468,0.44287055349621207,fenbendazole|-3.301,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+fenbendazole,centered,5677,-0.012667425348665818,0.08555665293063706,0.44019077754370406,fenbendazole|-3.301,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+fenbufen,raw,5677,0.4170329183686589,0.34758995594484365,,fenbufen|-3.301,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+fenbufen,centered,5677,0.12387032670163992,0.02429729480091154,,fenbufen|-3.301,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+fenoprofen,raw,5677,0.3783495008539671,0.37086078425035457,,fenoprofen|-3.602,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+fenoprofen,centered,5677,0.1110358837995153,0.11072551927713785,,fenoprofen|-3.602,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+filipin,raw,5704,0.0177349742066851,-0.014899347960412708,,filipin|-4.000,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+filipin,centered,5704,0.11622268621420791,0.1036951046423371,,filipin|-4.000,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+methoxyvone,raw,5677,0.032281177009567195,-0.05830600920260103,,methoxyvone|-3.000,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+methoxyvone,centered,5677,0.030716142491040842,0.0022821163833103013,,methoxyvone|-3.000,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+mitomycin c,raw,5677,0.20831667690231748,0.21998813686284804,,mitomycin c|-3.000,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+mitomycin c,centered,5677,-0.2145732127843436,-0.12430573937348101,,mitomycin c|-3.000,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+mitomycin c,raw,5704,0.33472368004792646,0.5109769093123309,,mitomycin c|-4.301,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+mitomycin c,centered,5704,0.25959150257750585,0.3148766791341609,,mitomycin c|-4.301,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+mitoxantrone,raw,5704,0.15150705334842954,0.30524589903970295,,mitoxantrone|-4.204,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+mitoxantrone,centered,5704,-0.23670774603666225,-0.0026025397991321472,,mitoxantrone|-4.204,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+naringenin,raw,5677,0.2190275038930951,0.26988150120327553,,naringenin|-3.000,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+naringenin,centered,5677,0.06624090047974532,0.13400139241000775,,naringenin|-3.000,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+paclitaxel,raw,5704,0.1062167867268025,0.16070080609079193,0.7959544660127595,paclitaxel|-3.602,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+paclitaxel,centered,5704,-0.430355445577495,-0.43409021122049524,0.7451648239734129,paclitaxel|-3.602,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+perillic acid,raw,5677,0.31201803749149426,0.28154544447522384,,perillic acid|-3.602,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+perillic acid,centered,5677,-0.08781810768875552,-0.04221164760617049,,perillic acid|-3.602,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+pimethixene maleate,raw,5677,0.4961529059916478,0.5341838539992935,,pimethixene maleate|-3.903,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+pimethixene maleate,centered,5677,0.22703718551147503,0.313791474610092,,pimethixene maleate|-3.903,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+prazosin hydrochloride,raw,5677,0.22768969738564074,0.2721181045799732,,prazosin hydrochloride|-3.000,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+prazosin hydrochloride,centered,5677,0.08015810813862906,0.18365838291366035,,prazosin hydrochloride|-3.000,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+probucol,raw,5677,0.370018817512337,0.4230566921008279,,probucol|-3.000,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+probucol,centered,5677,0.11990927145312584,0.17003232483523073,,probucol|-3.000,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+reserpine,raw,5704,0.009798516429177612,-0.07287560880457297,,reserpine|-4.000,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+reserpine,centered,5704,-0.2889509268350057,-0.4094243851154769,,reserpine|-4.000,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+reserpine,raw,5677,0.06943118762905812,-0.005819789251393261,,reserpine|-3.903,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+reserpine,centered,5677,-0.22119322408991215,-0.3729906963423786,,reserpine|-3.903,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+resveratrol,raw,5704,0.08511322880573868,0.18471327692258918,,resveratrol|-2.699,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+resveratrol,centered,5704,0.003042712887496167,0.15179523070941098,,resveratrol|-2.699,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+sirtinol,raw,5704,-0.024767943785973134,-0.008573052626066766,,sirtinol|-4.301,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+sirtinol,centered,5704,-0.2110487611107984,-0.21776125758728934,,sirtinol|-4.301,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+spironolactone,raw,5677,0.221910923423967,0.30627433443313107,,spironolactone|-3.301,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+spironolactone,centered,5677,-0.05929559977174626,-0.05700033278421064,,spironolactone|-3.301,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+thiabendazole,raw,5728,0.06326877830149419,0.05644121748751103,,thiabendazole|-3.602,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+thiabendazole,centered,5728,0.052340801771850416,0.06731249416042064,,thiabendazole|-3.602,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+thiabendazole,raw,5677,0.17374758750161812,0.15572460620199255,0.8763218672376593,thiabendazole|-3.301,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0
+thiabendazole,centered,5677,-0.05661516265153089,-0.11873644352520567,0.8678834113199817,thiabendazole|-3.301,hillenmeyer_het,0,ensemble,mix_vanhet_e150_cell_bliss_f0

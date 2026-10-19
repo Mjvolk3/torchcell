@@ -1,0 +1,49 @@
+compound,target,n_genes,spearman,pearson,ceiling,fold,member,name
+"2,2'-bipyridine",raw,3488,0.03139608005555182,-0.20760340931056895,0.933492750710942,0,seed0,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+"2,2'-bipyridine",centered,3486,0.47725773525638987,0.6326146373031565,0.9563816885746026,0,seed0,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.5524635028583627,0.6850065501133312,0.9115685305555769,0,seed0,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3482,0.48309949758010956,0.49198014830912057,0.8721587526514974,0,seed0,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+acetosyringone,raw,3496,0.11312435104651167,0.468328059771195,0.8957051853886657,0,seed0,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+acetosyringone,centered,3491,-0.038301587787942945,0.17949736115850753,0.8621258971956102,0,seed0,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+acetovanillone,raw,3508,0.19323794971017844,0.4019875210665974,0.912907133190153,0,seed0,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+acetovanillone,centered,3507,0.03352675690841098,0.14018936780575056,0.8921575536150955,0,seed0,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+furfural,raw,3492,0.04053485598925198,0.02072508871815123,0.8770802207938314,0,seed0,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+furfural,centered,3491,0.2793103511302697,0.34601767264835415,0.893722287283485,0,seed0,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+vanillin,raw,3504,0.4861905540959673,0.5441188045147813,0.8077135748399356,0,seed0,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+vanillin,centered,3502,0.39597996862277673,0.3267945541827946,0.71557075481543,0,seed0,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+"2,2'-bipyridine",raw,3488,-0.017756040053795254,-0.4576482525924631,0.933492750710942,0,seed1,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+"2,2'-bipyridine",centered,3486,0.20590464966085564,-0.3211357110317762,0.9563816885746026,0,seed1,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.1477472158021729,0.4019710756427097,0.9115685305555769,0,seed1,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3482,0.27338834990971733,0.21666515811384476,0.8721587526514974,0,seed1,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+acetosyringone,raw,3496,0.28535532406904923,0.4708764564848916,0.8957051853886657,0,seed1,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+acetosyringone,centered,3491,0.06586587010505612,0.16257496069792743,0.8621258971956102,0,seed1,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+acetovanillone,raw,3508,0.2781311098513976,0.3263895361112256,0.912907133190153,0,seed1,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+acetovanillone,centered,3507,0.06108119935777811,0.0791422052136957,0.8921575536150955,0,seed1,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+furfural,raw,3492,0.04513027522032535,0.056876395916534005,0.8770802207938314,0,seed1,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+furfural,centered,3491,0.3056873029089341,0.2746402446303739,0.893722287283485,0,seed1,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+vanillin,raw,3504,0.25658041235196666,0.39469685411260025,0.8077135748399356,0,seed1,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+vanillin,centered,3502,0.19407711886975373,0.13360769214185703,0.71557075481543,0,seed1,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+"2,2'-bipyridine",raw,3488,-0.1429994663607031,-0.4948745788199532,0.933492750710942,0,seed2,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+"2,2'-bipyridine",centered,3486,-0.025288441498238164,-0.1908630873937795,0.9563816885746026,0,seed2,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.42201688596586673,0.6205210381407139,0.9115685305555769,0,seed2,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3482,0.3513167634651244,0.4189791997271502,0.8721587526514974,0,seed2,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+acetosyringone,raw,3496,0.13176850731415166,0.4814204493620302,0.8957051853886657,0,seed2,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+acetosyringone,centered,3491,-0.016227327057977033,0.13444766100253666,0.8621258971956102,0,seed2,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+acetovanillone,raw,3508,0.17127919510605658,0.3846745357150067,0.912907133190153,0,seed2,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+acetovanillone,centered,3507,0.03937873786945882,0.1269324955146604,0.8921575536150955,0,seed2,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+furfural,raw,3492,0.024317883839056552,0.03353584817123038,0.8770802207938314,0,seed2,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+furfural,centered,3491,0.2311345529309074,0.3210140117233766,0.893722287283485,0,seed2,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+vanillin,raw,3504,0.44216008022507364,0.534758440413565,0.8077135748399356,0,seed2,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+vanillin,centered,3502,0.37160636029024274,0.3166803368421803,0.71557075481543,0,seed2,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+"2,2'-bipyridine",raw,3488,-0.07632383901867584,-0.5239034636443791,0.933492750710942,0,ensemble,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+"2,2'-bipyridine",centered,3486,0.33285574916631133,0.29328024591364754,0.9563816885746026,0,ensemble,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.47983380123086283,0.6540863483918213,0.9115685305555769,0,ensemble,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3482,0.44283378222669795,0.4584019290233287,0.8721587526514974,0,ensemble,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+acetosyringone,raw,3496,0.1503261729561387,0.5301926784509952,0.8957051853886657,0,ensemble,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+acetosyringone,centered,3491,-0.01609052003301754,0.171064266272705,0.8621258971956102,0,ensemble,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+acetovanillone,raw,3508,0.2014175712858565,0.4204589558920097,0.912907133190153,0,ensemble,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+acetovanillone,centered,3507,0.041139884696391196,0.1396445019754677,0.8921575536150955,0,ensemble,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+furfural,raw,3492,0.03581543579136594,0.04577369679538503,0.8770802207938314,0,ensemble,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+furfural,centered,3491,0.2772009840660302,0.34553627498808154,0.893722287283485,0,ensemble,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+vanillin,raw,3504,0.4765580580011313,0.5735982026336308,0.8077135748399356,0,ensemble,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0
+vanillin,centered,3502,0.39158309276695186,0.3314051962216748,0.71557075481543,0,ensemble,mix_vanhop_e150_cell_bliss_hill_doff_heldout_f0

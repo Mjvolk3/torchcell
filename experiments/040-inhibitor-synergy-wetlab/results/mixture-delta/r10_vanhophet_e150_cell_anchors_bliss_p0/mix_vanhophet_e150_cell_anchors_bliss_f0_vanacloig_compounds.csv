@@ -1,0 +1,49 @@
+compound,target,n_genes,spearman,pearson,ceiling,fold,member,name
+"2,2'-bipyridine",raw,3488,-0.18032948546070474,-0.6037299300157557,0.933492750710942,0,seed0,mix_vanhophet_e150_cell_anchors_bliss_f0
+"2,2'-bipyridine",centered,3486,-0.1906258607329404,-0.6418598683234823,0.9563816885746026,0,seed0,mix_vanhophet_e150_cell_anchors_bliss_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.5625307982080345,0.6725785098483853,0.9115685305555769,0,seed0,mix_vanhophet_e150_cell_anchors_bliss_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3482,0.504147233011729,0.5067749584566846,0.8721587526514974,0,seed0,mix_vanhophet_e150_cell_anchors_bliss_f0
+acetosyringone,raw,3496,-0.06871893347709972,0.32946885722373853,0.8957051853886657,0,seed0,mix_vanhophet_e150_cell_anchors_bliss_f0
+acetosyringone,centered,3491,-0.23798314626152606,-0.044267324618714174,0.8621258971956102,0,seed0,mix_vanhophet_e150_cell_anchors_bliss_f0
+acetovanillone,raw,3508,0.5075548725187071,0.6169437871011151,0.912907133190153,0,seed0,mix_vanhophet_e150_cell_anchors_bliss_f0
+acetovanillone,centered,3507,0.4264063501227633,0.48782434350340337,0.8921575536150955,0,seed0,mix_vanhophet_e150_cell_anchors_bliss_f0
+furfural,raw,3492,0.19107994635948877,0.17581336799809213,0.8770802207938314,0,seed0,mix_vanhophet_e150_cell_anchors_bliss_f0
+furfural,centered,3491,0.4280575882151935,0.4028561637373818,0.893722287283485,0,seed0,mix_vanhophet_e150_cell_anchors_bliss_f0
+vanillin,raw,3504,0.5142628741358511,0.6083120239878987,0.8077135748399356,0,seed0,mix_vanhophet_e150_cell_anchors_bliss_f0
+vanillin,centered,3502,0.43765707108692553,0.3956104655782928,0.71557075481543,0,seed0,mix_vanhophet_e150_cell_anchors_bliss_f0
+"2,2'-bipyridine",raw,3488,-0.2163077826787913,-0.38098018598465466,0.933492750710942,0,seed1,mix_vanhophet_e150_cell_anchors_bliss_f0
+"2,2'-bipyridine",centered,3486,-0.24756610996760073,-0.2622889616093512,0.9563816885746026,0,seed1,mix_vanhophet_e150_cell_anchors_bliss_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.5788815777392732,0.6953569460338366,0.9115685305555769,0,seed1,mix_vanhophet_e150_cell_anchors_bliss_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3482,0.49107708585277005,0.5152963893294559,0.8721587526514974,0,seed1,mix_vanhophet_e150_cell_anchors_bliss_f0
+acetosyringone,raw,3496,-0.06761171292113755,0.29695397088696424,0.8957051853886657,0,seed1,mix_vanhophet_e150_cell_anchors_bliss_f0
+acetosyringone,centered,3491,-0.23661223586729185,-0.0906082646009736,0.8621258971956102,0,seed1,mix_vanhophet_e150_cell_anchors_bliss_f0
+acetovanillone,raw,3508,0.42409644582411815,0.5490178164903192,0.912907133190153,0,seed1,mix_vanhophet_e150_cell_anchors_bliss_f0
+acetovanillone,centered,3507,0.3102453935596089,0.3763098678479588,0.8921575536150955,0,seed1,mix_vanhophet_e150_cell_anchors_bliss_f0
+furfural,raw,3492,0.14705436988960172,0.09928831932184203,0.8770802207938314,0,seed1,mix_vanhophet_e150_cell_anchors_bliss_f0
+furfural,centered,3491,0.4124370953709357,0.3967824616678877,0.893722287283485,0,seed1,mix_vanhophet_e150_cell_anchors_bliss_f0
+vanillin,raw,3504,0.49034839259338703,0.5853573268649017,0.8077135748399356,0,seed1,mix_vanhophet_e150_cell_anchors_bliss_f0
+vanillin,centered,3502,0.4101321024641992,0.36240422572180675,0.71557075481543,0,seed1,mix_vanhophet_e150_cell_anchors_bliss_f0
+"2,2'-bipyridine",raw,3488,-0.20380476564695355,-0.44566059031690824,0.933492750710942,0,seed2,mix_vanhophet_e150_cell_anchors_bliss_f0
+"2,2'-bipyridine",centered,3486,-0.24806021476359236,-0.43633260097027593,0.9563816885746026,0,seed2,mix_vanhophet_e150_cell_anchors_bliss_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.5816264120504108,0.6726679727758872,0.9115685305555769,0,seed2,mix_vanhophet_e150_cell_anchors_bliss_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3482,0.4906986086370536,0.503559896644585,0.8721587526514974,0,seed2,mix_vanhophet_e150_cell_anchors_bliss_f0
+acetosyringone,raw,3496,0.03602334615430047,0.4368190727321514,0.8957051853886657,0,seed2,mix_vanhophet_e150_cell_anchors_bliss_f0
+acetosyringone,centered,3491,-0.09726161578685232,0.12450701015206615,0.8621258971956102,0,seed2,mix_vanhophet_e150_cell_anchors_bliss_f0
+acetovanillone,raw,3508,0.4227089269160058,0.5828989286483148,0.912907133190153,0,seed2,mix_vanhophet_e150_cell_anchors_bliss_f0
+acetovanillone,centered,3507,0.34033764093252816,0.44278070192056246,0.8921575536150955,0,seed2,mix_vanhophet_e150_cell_anchors_bliss_f0
+furfural,raw,3492,0.14355286478148793,0.03254884777293106,0.8770802207938314,0,seed2,mix_vanhophet_e150_cell_anchors_bliss_f0
+furfural,centered,3491,0.36720152614495394,0.34664101289169946,0.893722287283485,0,seed2,mix_vanhophet_e150_cell_anchors_bliss_f0
+vanillin,raw,3504,0.5093302841039563,0.6049585695707036,0.8077135748399356,0,seed2,mix_vanhophet_e150_cell_anchors_bliss_f0
+vanillin,centered,3502,0.42562285807986533,0.37758436388641453,0.71557075481543,0,seed2,mix_vanhophet_e150_cell_anchors_bliss_f0
+"2,2'-bipyridine",raw,3488,-0.21074610332299398,-0.5074447536874968,0.933492750710942,0,ensemble,mix_vanhophet_e150_cell_anchors_bliss_f0
+"2,2'-bipyridine",centered,3486,-0.25796919631595644,-0.5419840367370938,0.9563816885746026,0,ensemble,mix_vanhophet_e150_cell_anchors_bliss_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.6002421691841253,0.6952193193182132,0.9115685305555769,0,ensemble,mix_vanhophet_e150_cell_anchors_bliss_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3482,0.5241982581379984,0.5258329024395734,0.8721587526514974,0,ensemble,mix_vanhophet_e150_cell_anchors_bliss_f0
+acetosyringone,raw,3496,-0.03642065238756443,0.3607550713142948,0.8957051853886657,0,ensemble,mix_vanhophet_e150_cell_anchors_bliss_f0
+acetosyringone,centered,3491,-0.20080152908282475,-0.0067019226807206985,0.8621258971956102,0,ensemble,mix_vanhophet_e150_cell_anchors_bliss_f0
+acetovanillone,raw,3508,0.46249157829192605,0.5940891226214821,0.912907133190153,0,ensemble,mix_vanhophet_e150_cell_anchors_bliss_f0
+acetovanillone,centered,3507,0.37158244553712433,0.45314514731891686,0.8921575536150955,0,ensemble,mix_vanhophet_e150_cell_anchors_bliss_f0
+furfural,raw,3492,0.15951395696002457,0.09996750532844748,0.8770802207938314,0,ensemble,mix_vanhophet_e150_cell_anchors_bliss_f0
+furfural,centered,3491,0.40831322015755467,0.3865080559628112,0.893722287283485,0,ensemble,mix_vanhophet_e150_cell_anchors_bliss_f0
+vanillin,raw,3504,0.5132850449531036,0.6079530932125439,0.8077135748399356,0,ensemble,mix_vanhophet_e150_cell_anchors_bliss_f0
+vanillin,centered,3502,0.4372136066836528,0.3907860678739683,0.71557075481543,0,ensemble,mix_vanhophet_e150_cell_anchors_bliss_f0

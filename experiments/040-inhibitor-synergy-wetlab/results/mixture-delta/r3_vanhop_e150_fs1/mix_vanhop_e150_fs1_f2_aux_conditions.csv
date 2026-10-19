@@ -1,0 +1,101 @@
+compound,target,n_genes,spearman,pearson,ceiling,condition,source,fold,member,name
+5-fluorouracil,raw,4465,0.12879380786682562,0.1918352221758622,,5-fluorouracil|-5.161,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+5-fluorouracil,centered,4465,0.17900662007268575,0.27806211128878067,,5-fluorouracil|-5.161,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+"Alamathecin, Peptaibol Derivative",raw,4465,0.27573404360739295,0.3241664582838504,,"Alamathecin, Peptaibol Derivative|-4.925",hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+"Alamathecin, Peptaibol Derivative",centered,4465,0.10183431034625655,0.14437116553363788,,"Alamathecin, Peptaibol Derivative|-4.925",hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+"Alamathecin, Peptaibol Derivative",raw,4465,0.041199535690833095,-0.012153682839922235,,"Alamathecin, Peptaibol Derivative|-5.511",hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+"Alamathecin, Peptaibol Derivative",centered,4465,-0.18975262525427752,-0.23749818949572973,,"Alamathecin, Peptaibol Derivative|-5.511",hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+CMB1509,raw,4454,0.3131644608716266,0.38600153047557645,,CMB1509|-5.412,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+CMB1509,centered,4454,0.02342919096561465,0.1567137204960594,,CMB1509|-5.412,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+Cobalt(Il)-Chlorid,raw,4461,0.08634333550331534,0.24408357965069236,,Cobalt(Il)-Chlorid|-3.699,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+Cobalt(Il)-Chlorid,centered,4461,0.06378098677617357,0.027333935538612346,,Cobalt(Il)-Chlorid|-3.699,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+Cobalt(Il)-Chlorid,raw,4451,0.13776887416570116,0.3856804773406772,,Cobalt(Il)-Chlorid|-4.033,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+Cobalt(Il)-Chlorid,centered,4451,0.017521975613545057,0.13718665458578932,,Cobalt(Il)-Chlorid|-4.033,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+Concanamycin A (Fermentation batch 2),raw,4456,0.20546657355014417,0.666904364406583,,Concanamycin A (Fermentation batch 2)|-7.699,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+Concanamycin A (Fermentation batch 2),centered,4456,-0.008313390386211508,0.5110002847268583,,Concanamycin A (Fermentation batch 2)|-7.699,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+Copper(II)Sulfate,raw,4469,-0.015202625784191235,-0.037495331729911124,,Copper(II)Sulfate|-3.921,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+Copper(II)Sulfate,centered,4469,-0.04417614430764221,-0.10689816309397879,,Copper(II)Sulfate|-3.921,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+Copper(II)Sulfate,raw,4469,-0.006172999499426637,-0.036641191915713994,,Copper(II)Sulfate|-3.699,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+Copper(II)Sulfate,centered,4469,-0.0214607261569129,-0.09448089320916969,,Copper(II)Sulfate|-3.699,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+Copper(II)Sulfate,raw,4461,0.01061672473746554,-0.0106093666965526,,Copper(II)Sulfate|-4.301,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+Copper(II)Sulfate,centered,4461,-0.04021509889991067,-0.0761257719277849,,Copper(II)Sulfate|-4.301,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+Copper(II)Sulfate,raw,4461,0.047181986631227996,0.06843369289681929,,Copper(II)Sulfate|-4.125,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+Copper(II)Sulfate,centered,4461,-0.02282694215175577,-0.05883429954565784,,Copper(II)Sulfate|-4.125,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+Cyproconazole,raw,4458,0.24074717210833393,0.3481557674814548,,Cyproconazole|-6.553,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+Cyproconazole,centered,4458,-0.17350860043461963,-0.07958014366867253,,Cyproconazole|-6.553,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+D-Sorbitol,raw,4469,0.009264107679279621,-0.047760851835488165,,D-Sorbitol|-0.260,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+D-Sorbitol,centered,4469,-0.11244832518560906,-0.1009360483818964,,D-Sorbitol|-0.260,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+D-Sorbitol,raw,4469,0.012657545386351514,-0.008071252388489106,,D-Sorbitol|-0.187,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+D-Sorbitol,centered,4469,-0.11153939788228431,-0.07404542852883617,,D-Sorbitol|-0.187,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+Enniatin A1,raw,4445,0.4626784482048665,0.7127790198815256,,Enniatin A1|-4.824,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+Enniatin A1,centered,4445,0.1221641219331125,0.5683711708275306,,Enniatin A1|-4.824,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+Enniatin A1,raw,4442,0.09760328487008577,0.44793574323432916,,Enniatin A1|-5.125,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+Enniatin A1,centered,4442,-0.053917105368639036,0.2341426313262059,,Enniatin A1|-5.125,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+Methylmercury,raw,4413,-0.006978232459237707,-0.07419654460759399,,Methylmercury|-7.000,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+Methylmercury,centered,4413,0.14904672433919305,0.17140063406918862,,Methylmercury|-7.000,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+Methylmercury,raw,4413,0.042850007741381535,-0.013216243467698507,,Methylmercury|-6.602,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+Methylmercury,centered,4413,0.1936795108828411,0.2263124294013187,,Methylmercury|-6.602,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+Methylmercury,raw,4413,0.03888524553079287,0.027420447639795027,,Methylmercury|-6.301,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+Methylmercury,centered,4413,0.14749768083316336,0.17577904537053496,,Methylmercury|-6.301,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+Squalestatin Derivative,raw,4457,0.20979715880061614,0.3646870923021822,,Squalestatin Derivative|-5.097,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+Squalestatin Derivative,centered,4457,0.11421136605324546,0.3715764862332281,,Squalestatin Derivative|-5.097,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+anisomycin,raw,4467,0.19630081862262838,0.2634792477983178,,anisomycin|-5.000,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+anisomycin,centered,4467,-0.04616063216317767,-0.0262045029697183,,anisomycin|-5.000,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+benzethonium,raw,4461,0.13710055788362532,0.0015164495816176547,,benzethonium|-4.854,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+benzethonium,centered,4461,-0.057198535373724955,-0.18528142910201453,,benzethonium|-4.854,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+clotrimazole,raw,4456,0.38613489507884746,0.5339239571344848,,clotrimazole|-6.327,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+clotrimazole,centered,4456,0.07927805496176685,0.34556387556318724,,clotrimazole|-6.327,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+fluconazole,raw,4461,0.10065148946623788,0.36986268810627476,,fluconazole|-4.523,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+fluconazole,centered,4461,0.23524667067227084,0.133000958933658,,fluconazole|-4.523,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+fluconazole,raw,4461,0.20816735313000323,0.3094769583387563,,fluconazole|-4.222,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+fluconazole,centered,4461,-0.2669352801317952,-0.21089201423775622,,fluconazole|-4.222,hoepfner_hop,2,seed0,mix_vanhop_e150_fs1_f2
+5-fluorouracil,raw,4465,0.12879380786682562,0.1918352221758622,,5-fluorouracil|-5.161,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+5-fluorouracil,centered,4465,0.17900662007268575,0.27806211128878067,,5-fluorouracil|-5.161,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+"Alamathecin, Peptaibol Derivative",raw,4465,0.27573404360739295,0.3241664582838504,,"Alamathecin, Peptaibol Derivative|-4.925",hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+"Alamathecin, Peptaibol Derivative",centered,4465,0.10183431034625655,0.14437116553363788,,"Alamathecin, Peptaibol Derivative|-4.925",hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+"Alamathecin, Peptaibol Derivative",raw,4465,0.041199535690833095,-0.012153682839922235,,"Alamathecin, Peptaibol Derivative|-5.511",hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+"Alamathecin, Peptaibol Derivative",centered,4465,-0.18975262525427752,-0.23749818949572973,,"Alamathecin, Peptaibol Derivative|-5.511",hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+CMB1509,raw,4454,0.3131644608716266,0.38600153047557645,,CMB1509|-5.412,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+CMB1509,centered,4454,0.02342919096561465,0.1567137204960594,,CMB1509|-5.412,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+Cobalt(Il)-Chlorid,raw,4461,0.08634333550331534,0.24408357965069236,,Cobalt(Il)-Chlorid|-3.699,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+Cobalt(Il)-Chlorid,centered,4461,0.06378098677617357,0.027333935538612346,,Cobalt(Il)-Chlorid|-3.699,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+Cobalt(Il)-Chlorid,raw,4451,0.13776887416570116,0.3856804773406772,,Cobalt(Il)-Chlorid|-4.033,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+Cobalt(Il)-Chlorid,centered,4451,0.017521975613545057,0.13718665458578932,,Cobalt(Il)-Chlorid|-4.033,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+Concanamycin A (Fermentation batch 2),raw,4456,0.20546657355014417,0.666904364406583,,Concanamycin A (Fermentation batch 2)|-7.699,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+Concanamycin A (Fermentation batch 2),centered,4456,-0.008313390386211508,0.5110002847268583,,Concanamycin A (Fermentation batch 2)|-7.699,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+Copper(II)Sulfate,raw,4469,-0.015202625784191235,-0.037495331729911124,,Copper(II)Sulfate|-3.921,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+Copper(II)Sulfate,centered,4469,-0.04417614430764221,-0.10689816309397879,,Copper(II)Sulfate|-3.921,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+Copper(II)Sulfate,raw,4469,-0.006172999499426637,-0.036641191915713994,,Copper(II)Sulfate|-3.699,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+Copper(II)Sulfate,centered,4469,-0.0214607261569129,-0.09448089320916969,,Copper(II)Sulfate|-3.699,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+Copper(II)Sulfate,raw,4461,0.01061672473746554,-0.0106093666965526,,Copper(II)Sulfate|-4.301,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+Copper(II)Sulfate,centered,4461,-0.04021509889991067,-0.0761257719277849,,Copper(II)Sulfate|-4.301,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+Copper(II)Sulfate,raw,4461,0.047181986631227996,0.06843369289681929,,Copper(II)Sulfate|-4.125,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+Copper(II)Sulfate,centered,4461,-0.02282694215175577,-0.05883429954565784,,Copper(II)Sulfate|-4.125,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+Cyproconazole,raw,4458,0.24074717210833393,0.3481557674814548,,Cyproconazole|-6.553,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+Cyproconazole,centered,4458,-0.17350860043461963,-0.07958014366867253,,Cyproconazole|-6.553,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+D-Sorbitol,raw,4469,0.009264107679279621,-0.047760851835488165,,D-Sorbitol|-0.260,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+D-Sorbitol,centered,4469,-0.11244832518560906,-0.1009360483818964,,D-Sorbitol|-0.260,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+D-Sorbitol,raw,4469,0.012657545386351514,-0.008071252388489106,,D-Sorbitol|-0.187,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+D-Sorbitol,centered,4469,-0.11153939788228431,-0.07404542852883617,,D-Sorbitol|-0.187,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+Enniatin A1,raw,4445,0.4626784482048665,0.7127790198815256,,Enniatin A1|-4.824,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+Enniatin A1,centered,4445,0.1221641219331125,0.5683711708275306,,Enniatin A1|-4.824,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+Enniatin A1,raw,4442,0.09760328487008577,0.44793574323432916,,Enniatin A1|-5.125,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+Enniatin A1,centered,4442,-0.053917105368639036,0.2341426313262059,,Enniatin A1|-5.125,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+Methylmercury,raw,4413,-0.006978232459237707,-0.07419654460759399,,Methylmercury|-7.000,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+Methylmercury,centered,4413,0.14904672433919305,0.17140063406918862,,Methylmercury|-7.000,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+Methylmercury,raw,4413,0.042850007741381535,-0.013216243467698507,,Methylmercury|-6.602,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+Methylmercury,centered,4413,0.1936795108828411,0.2263124294013187,,Methylmercury|-6.602,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+Methylmercury,raw,4413,0.03888524553079287,0.027420447639795027,,Methylmercury|-6.301,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+Methylmercury,centered,4413,0.14749768083316336,0.17577904537053496,,Methylmercury|-6.301,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+Squalestatin Derivative,raw,4457,0.20979715880061614,0.3646870923021822,,Squalestatin Derivative|-5.097,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+Squalestatin Derivative,centered,4457,0.11421136605324546,0.3715764862332281,,Squalestatin Derivative|-5.097,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+anisomycin,raw,4467,0.19630081862262838,0.2634792477983178,,anisomycin|-5.000,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+anisomycin,centered,4467,-0.04616063216317767,-0.0262045029697183,,anisomycin|-5.000,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+benzethonium,raw,4461,0.13710055788362532,0.0015164495816176547,,benzethonium|-4.854,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+benzethonium,centered,4461,-0.057198535373724955,-0.18528142910201453,,benzethonium|-4.854,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+clotrimazole,raw,4456,0.38613489507884746,0.5339239571344848,,clotrimazole|-6.327,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+clotrimazole,centered,4456,0.07927805496176685,0.34556387556318724,,clotrimazole|-6.327,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+fluconazole,raw,4461,0.10065148946623788,0.36986268810627476,,fluconazole|-4.523,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+fluconazole,centered,4461,0.23524667067227084,0.133000958933658,,fluconazole|-4.523,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+fluconazole,raw,4461,0.20816735313000323,0.3094769583387563,,fluconazole|-4.222,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2
+fluconazole,centered,4461,-0.2669352801317952,-0.21089201423775622,,fluconazole|-4.222,hoepfner_hop,2,ensemble,mix_vanhop_e150_fs1_f2

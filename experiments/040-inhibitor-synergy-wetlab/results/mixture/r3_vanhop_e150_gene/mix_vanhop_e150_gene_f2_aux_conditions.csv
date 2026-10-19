@@ -1,0 +1,101 @@
+compound,target,n_genes,spearman,pearson,ceiling,condition,source,fold,member,name
+"Ascosteroside, MK6059",raw,4461,0.3411909991609631,0.39089659729760884,,"Ascosteroside, MK6059|-7.699",hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+"Ascosteroside, MK6059",centered,4461,0.0025159072632789958,0.06306959217215036,,"Ascosteroside, MK6059|-7.699",hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+Bafilomycin A1,raw,4461,0.31289984330952536,0.6176862525198618,,Bafilomycin A1|-4.360,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+Bafilomycin A1,centered,4461,-0.08585651162033957,0.3456469192242073,,Bafilomycin A1|-4.360,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+Benzothiazole derivative,raw,4469,0.20308353560293008,0.47011908438708766,,Benzothiazole derivative|-5.301,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+Benzothiazole derivative,centered,4469,0.1606703408202915,-0.40396274338051447,,Benzothiazole derivative|-5.301,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+CMB1509,raw,4454,0.32535576666194604,0.36519991258880646,,CMB1509|-5.412,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+CMB1509,centered,4454,-0.06229281136779046,-0.04200845049495229,,CMB1509|-5.412,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+Concanamycin A Derivative,raw,4470,0.4760806899233139,0.706396825816367,,Concanamycin A Derivative|-6.324,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+Concanamycin A Derivative,centered,4470,0.2384643359009149,0.5072225524515215,,Concanamycin A Derivative|-6.324,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+D-Sorbitol,raw,4469,-0.013441065093780616,0.025743426290940938,,D-Sorbitol|-0.260,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+D-Sorbitol,centered,4469,-0.08676364522626623,0.046262593926219904,,D-Sorbitol|-0.260,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+D-Sorbitol,raw,4469,-0.0075033882219811086,0.050319973047694554,,D-Sorbitol|-0.187,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+D-Sorbitol,centered,4469,-0.05819461005609794,0.06382148806469148,,D-Sorbitol|-0.187,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+Ethidium Bromide,raw,4454,0.15789666117907067,0.24739777130287988,,Ethidium Bromide|-4.155,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+Ethidium Bromide,centered,4454,0.22789895029580606,0.42530537981479277,,Ethidium Bromide|-4.155,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+Ethidium Bromide,raw,4466,0.20162484480365878,0.34421321310732944,,Ethidium Bromide|-4.086,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+Ethidium Bromide,centered,4466,0.10055110040984197,0.2616744301850569,,Ethidium Bromide|-4.086,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+Methylmercury,raw,4413,0.010478853836324003,-0.040169700001671735,,Methylmercury|-7.000,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+Methylmercury,centered,4413,0.3057653701063967,0.44393010026985014,,Methylmercury|-7.000,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+Methylmercury,raw,4413,0.09513797753646619,0.04783847498787638,,Methylmercury|-6.602,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+Methylmercury,centered,4413,0.3970054985475521,0.5170407386478924,,Methylmercury|-6.602,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+Methylmercury,raw,4413,0.10096399207231882,0.12101090804485914,,Methylmercury|-6.301,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+Methylmercury,centered,4413,0.3629431648139191,0.4654156564561669,,Methylmercury|-6.301,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+Peptolide SDZ 90-215,raw,4454,0.22242310649195876,0.5554202622401382,,Peptolide SDZ 90-215|-5.523,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+Peptolide SDZ 90-215,centered,4454,-0.1221076108628594,0.26837384225024913,,Peptolide SDZ 90-215|-5.523,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+Peptolide SDZ 90-215,raw,4454,0.33062635936483437,0.6054251754339626,,Peptolide SDZ 90-215|-5.398,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+Peptolide SDZ 90-215,centered,4454,-0.06753509509026871,0.36028277697245864,,Peptolide SDZ 90-215|-5.398,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+Peptolide SDZ 90-215,raw,4454,0.36839534271403385,0.6265082615278681,,Peptolide SDZ 90-215|-5.222,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+Peptolide SDZ 90-215,centered,4454,-0.02749183926858529,0.3951068221668587,,Peptolide SDZ 90-215|-5.222,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+"Ps-341, Velcade, Bortezomib",raw,4466,0.11102907492181495,0.10576077526510366,,"Ps-341, Velcade, Bortezomib|-3.699",hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+"Ps-341, Velcade, Bortezomib",centered,4466,-0.10140561014346203,-0.026567975386129455,,"Ps-341, Velcade, Bortezomib|-3.699",hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+"Ps-341, Velcade, Bortezomib",raw,4466,0.1364103529069182,0.15603606768044906,,"Ps-341, Velcade, Bortezomib|-3.523",hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+"Ps-341, Velcade, Bortezomib",centered,4466,-0.07586465015933562,0.006418958910213188,,"Ps-341, Velcade, Bortezomib|-3.523",hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+Sodium Dodecyl Sulfate (SDS),raw,4462,0.03895590424222067,0.07599697872344116,,Sodium Dodecyl Sulfate (SDS)|-3.824,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+Sodium Dodecyl Sulfate (SDS),centered,4462,0.21122322078952122,0.23954200518698446,,Sodium Dodecyl Sulfate (SDS)|-3.824,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+Sodium Dodecyl Sulfate (SDS),raw,4438,0.09864777690651012,0.13900886767550072,,Sodium Dodecyl Sulfate (SDS)|-3.699,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+Sodium Dodecyl Sulfate (SDS),centered,4438,0.2530511465056962,0.14608315968518326,,Sodium Dodecyl Sulfate (SDS)|-3.699,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+Sodium Hydroxide,raw,4469,0.2684865300865396,0.3407066488288098,,Sodium Hydroxide|-2.000,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+Sodium Hydroxide,centered,4469,-0.02808882322427545,-0.05783053042167339,,Sodium Hydroxide|-2.000,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+Sodium Hydroxide,raw,4469,0.2497287944173453,0.33455458735411364,,Sodium Hydroxide|-2.097,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+Sodium Hydroxide,centered,4469,0.04800099450774807,-0.0201125016076974,,Sodium Hydroxide|-2.097,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+Soraphen A,raw,4441,0.3642632536333794,0.35971898224500676,,Soraphen A|-6.301,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+Soraphen A,centered,4441,0.05689547937502788,0.04010116696021678,,Soraphen A|-6.301,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+TAN-999,raw,4467,0.0030687850656562236,0.03201595772268829,,TAN-999|-7.000,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+TAN-999,centered,4467,-0.270046504114146,-0.46909203282466927,,TAN-999|-7.000,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+TAN-999,raw,4467,0.18564006924490623,0.37994544980616984,,TAN-999|-6.000,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+TAN-999,centered,4467,-0.1378167463337636,0.0944198255553171,,TAN-999|-6.000,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+amitriptyline,raw,4462,0.20570361940474882,0.28805707057491237,,amitriptyline|-4.301,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+amitriptyline,centered,4462,-0.007915391948581853,-0.341861172601278,,amitriptyline|-4.301,hoepfner_hop,2,seed0,mix_vanhop_e150_gene_f2
+"Ascosteroside, MK6059",raw,4461,0.3411909991609631,0.39089659729760884,,"Ascosteroside, MK6059|-7.699",hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+"Ascosteroside, MK6059",centered,4461,0.0025159072632789958,0.06306959217215036,,"Ascosteroside, MK6059|-7.699",hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+Bafilomycin A1,raw,4461,0.31289984330952536,0.6176862525198618,,Bafilomycin A1|-4.360,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+Bafilomycin A1,centered,4461,-0.08585651162033957,0.3456469192242073,,Bafilomycin A1|-4.360,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+Benzothiazole derivative,raw,4469,0.20308353560293008,0.47011908438708766,,Benzothiazole derivative|-5.301,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+Benzothiazole derivative,centered,4469,0.1606703408202915,-0.40396274338051447,,Benzothiazole derivative|-5.301,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+CMB1509,raw,4454,0.32535576666194604,0.36519991258880646,,CMB1509|-5.412,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+CMB1509,centered,4454,-0.06229281136779046,-0.04200845049495229,,CMB1509|-5.412,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+Concanamycin A Derivative,raw,4470,0.4760806899233139,0.706396825816367,,Concanamycin A Derivative|-6.324,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+Concanamycin A Derivative,centered,4470,0.2384643359009149,0.5072225524515215,,Concanamycin A Derivative|-6.324,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+D-Sorbitol,raw,4469,-0.013441065093780616,0.025743426290940938,,D-Sorbitol|-0.260,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+D-Sorbitol,centered,4469,-0.08676364522626623,0.046262593926219904,,D-Sorbitol|-0.260,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+D-Sorbitol,raw,4469,-0.0075033882219811086,0.050319973047694554,,D-Sorbitol|-0.187,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+D-Sorbitol,centered,4469,-0.05819461005609794,0.06382148806469148,,D-Sorbitol|-0.187,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+Ethidium Bromide,raw,4454,0.15789666117907067,0.24739777130287988,,Ethidium Bromide|-4.155,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+Ethidium Bromide,centered,4454,0.22789895029580606,0.42530537981479277,,Ethidium Bromide|-4.155,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+Ethidium Bromide,raw,4466,0.20162484480365878,0.34421321310732944,,Ethidium Bromide|-4.086,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+Ethidium Bromide,centered,4466,0.10055110040984197,0.2616744301850569,,Ethidium Bromide|-4.086,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+Methylmercury,raw,4413,0.010478853836324003,-0.040169700001671735,,Methylmercury|-7.000,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+Methylmercury,centered,4413,0.3057653701063967,0.44393010026985014,,Methylmercury|-7.000,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+Methylmercury,raw,4413,0.09513797753646619,0.04783847498787638,,Methylmercury|-6.602,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+Methylmercury,centered,4413,0.3970054985475521,0.5170407386478924,,Methylmercury|-6.602,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+Methylmercury,raw,4413,0.10096399207231882,0.12101090804485914,,Methylmercury|-6.301,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+Methylmercury,centered,4413,0.3629431648139191,0.4654156564561669,,Methylmercury|-6.301,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+Peptolide SDZ 90-215,raw,4454,0.22242310649195876,0.5554202622401382,,Peptolide SDZ 90-215|-5.523,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+Peptolide SDZ 90-215,centered,4454,-0.1221076108628594,0.26837384225024913,,Peptolide SDZ 90-215|-5.523,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+Peptolide SDZ 90-215,raw,4454,0.33062635936483437,0.6054251754339626,,Peptolide SDZ 90-215|-5.398,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+Peptolide SDZ 90-215,centered,4454,-0.06753509509026871,0.36028277697245864,,Peptolide SDZ 90-215|-5.398,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+Peptolide SDZ 90-215,raw,4454,0.36839534271403385,0.6265082615278681,,Peptolide SDZ 90-215|-5.222,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+Peptolide SDZ 90-215,centered,4454,-0.02749183926858529,0.3951068221668587,,Peptolide SDZ 90-215|-5.222,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+"Ps-341, Velcade, Bortezomib",raw,4466,0.11102907492181495,0.10576077526510366,,"Ps-341, Velcade, Bortezomib|-3.699",hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+"Ps-341, Velcade, Bortezomib",centered,4466,-0.10140561014346203,-0.026567975386129455,,"Ps-341, Velcade, Bortezomib|-3.699",hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+"Ps-341, Velcade, Bortezomib",raw,4466,0.1364103529069182,0.15603606768044906,,"Ps-341, Velcade, Bortezomib|-3.523",hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+"Ps-341, Velcade, Bortezomib",centered,4466,-0.07586465015933562,0.006418958910213188,,"Ps-341, Velcade, Bortezomib|-3.523",hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+Sodium Dodecyl Sulfate (SDS),raw,4462,0.03895590424222067,0.07599697872344116,,Sodium Dodecyl Sulfate (SDS)|-3.824,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+Sodium Dodecyl Sulfate (SDS),centered,4462,0.21122322078952122,0.23954200518698446,,Sodium Dodecyl Sulfate (SDS)|-3.824,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+Sodium Dodecyl Sulfate (SDS),raw,4438,0.09864777690651012,0.13900886767550072,,Sodium Dodecyl Sulfate (SDS)|-3.699,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+Sodium Dodecyl Sulfate (SDS),centered,4438,0.2530511465056962,0.14608315968518326,,Sodium Dodecyl Sulfate (SDS)|-3.699,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+Sodium Hydroxide,raw,4469,0.2684865300865396,0.3407066488288098,,Sodium Hydroxide|-2.000,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+Sodium Hydroxide,centered,4469,-0.02808882322427545,-0.05783053042167339,,Sodium Hydroxide|-2.000,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+Sodium Hydroxide,raw,4469,0.2497287944173453,0.33455458735411364,,Sodium Hydroxide|-2.097,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+Sodium Hydroxide,centered,4469,0.04800099450774807,-0.0201125016076974,,Sodium Hydroxide|-2.097,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+Soraphen A,raw,4441,0.3642632536333794,0.35971898224500676,,Soraphen A|-6.301,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+Soraphen A,centered,4441,0.05689547937502788,0.04010116696021678,,Soraphen A|-6.301,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+TAN-999,raw,4467,0.0030687850656562236,0.03201595772268829,,TAN-999|-7.000,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+TAN-999,centered,4467,-0.270046504114146,-0.46909203282466927,,TAN-999|-7.000,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+TAN-999,raw,4467,0.18564006924490623,0.37994544980616984,,TAN-999|-6.000,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+TAN-999,centered,4467,-0.1378167463337636,0.0944198255553171,,TAN-999|-6.000,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+amitriptyline,raw,4462,0.20570361940474882,0.28805707057491237,,amitriptyline|-4.301,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2
+amitriptyline,centered,4462,-0.007915391948581853,-0.341861172601278,,amitriptyline|-4.301,hoepfner_hop,2,ensemble,mix_vanhop_e150_gene_f2

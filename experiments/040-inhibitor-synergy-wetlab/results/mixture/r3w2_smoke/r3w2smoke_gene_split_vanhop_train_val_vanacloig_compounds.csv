@@ -1,0 +1,113 @@
+compound,target,n_genes,spearman,pearson,ceiling,fold,member,name
+1-butyl-3-methylimidazolium chloride,raw,686,0.03576978444219745,0.04069535732605019,0.8070343714568953,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+1-butyl-3-methylimidazolium chloride,gene_centered,686,0.03246742216594229,0.00808925306757853,0.8435372785177151,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+1-ethyl-3-methylimidazolium chloride,raw,689,0.04442089468841239,0.02885143969061374,0.9067943797427727,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+1-ethyl-3-methylimidazolium chloride,gene_centered,689,0.05398678936397502,0.03588349903818801,0.9167991100546823,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+"2,2'-bipyridine",raw,692,-0.021973865546719838,0.033129231604172436,0.9207268757345493,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+"2,2'-bipyridine",gene_centered,692,0.0009338086160008217,0.021128065397587305,0.9449003400054828,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+"2,6-dimethylpyrazine",raw,697,0.008855556828839595,-0.005424404248476215,0.8649348011118326,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+"2,6-dimethylpyrazine",gene_centered,697,0.022866752535956686,0.019380180700482336,0.8673704234084779,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,690,-0.03967651472707172,-0.04025292093068309,0.9024797732690023,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",gene_centered,690,0.01729742453262771,0.013841469588661027,0.8523535878742432,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+4'-hydroxyacetophenone,raw,697,-0.05011470040134778,-0.055243773902391505,0.8387309247048363,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+4'-hydroxyacetophenone,gene_centered,697,-0.02083312406684288,-0.036948443188711974,0.7532666861171169,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+4-hydroxybenzaldehyde,raw,691,-0.043986195556017633,-0.048800178324285515,0.7787594537806652,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+4-hydroxybenzaldehyde,gene_centered,691,-0.09550333285829167,-0.07180232181423743,0.6757435198108063,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+4-hydroxybenzoic acid,raw,695,-0.040031029320364,-0.039056907355020924,0.3921292304145123,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+4-hydroxybenzoic acid,gene_centered,695,-0.04486075962847929,-0.008302013926330065,0.5919292756784195,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+5-(hydroxymethyl)furfural,raw,697,0.033861408527872915,0.0042865539361319,0.0,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+5-(hydroxymethyl)furfural,gene_centered,697,-0.013412890596706114,0.001104297689017224,0.5577414052795102,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+acetamide,raw,689,0.0027959655593442893,0.012503712549142752,0.5306891677591836,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+acetamide,gene_centered,689,-0.025583302724359477,-0.04321101227847698,0.727741289283441,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+acetosyringone,raw,694,-0.07274122690750576,-0.06772345582696807,0.9097715098152122,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+acetosyringone,gene_centered,694,-0.020852158144649663,-0.028850007045930916,0.8721048537044281,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+acetovanillone,raw,697,-0.05360353269305124,-0.07236240785890492,0.9190238650204282,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+acetovanillone,gene_centered,697,0.02697131578938962,0.037778481758919194,0.8854057008132059,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+azelaic acid,raw,694,0.02812012664612458,0.005204453427254301,0.8690597633983614,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+azelaic acid,gene_centered,694,-0.017964656469343917,-0.022515086660844313,0.8354687432455685,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+benomyl,raw,692,0.004079632821741048,-0.014187116076180657,0.9253579509494556,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+benomyl,gene_centered,692,-0.020709676013119706,0.025492416894433278,0.9355619411262421,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+benzoic acid,raw,689,-0.008619810461675837,0.009057226221252644,0.6540576274662931,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+benzoic acid,gene_centered,689,0.011578890779318401,0.00948831876598266,0.7777804384725576,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+cinnamic acid,raw,697,0.04015507660539638,0.035769635553161656,0.8373031589847238,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+cinnamic acid,gene_centered,697,-0.01858189250172018,0.00115779386728151,0.8207005255755061,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+crystal violet,raw,670,0.06709480729290256,0.0017149550416957673,0.9523905969852192,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+crystal violet,gene_centered,670,0.007862866206550094,0.035957120709528674,0.946410868233471,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+ferulamide,raw,691,-0.031541833812695715,-0.002765179459062474,0.9030024632825752,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+ferulamide,gene_centered,691,-0.027102596669306565,-0.012530802099890093,0.8616132265663167,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+ferulic acid,raw,693,-0.07221789300318249,-0.0424956360685258,0.9301660358258296,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+ferulic acid,gene_centered,693,-0.049295003753728216,-0.04774883092244341,0.9078602202455723,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+furfural,raw,689,-0.05388591535072423,-0.01702517876998244,0.894561244300317,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+furfural,gene_centered,689,-0.0005339423672717537,0.01633643221824544,0.9129960399200313,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+methylglyoxal,raw,691,0.05602241654527542,0.037111961920012954,0.9271681878467175,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+methylglyoxal,gene_centered,691,0.020719357744535993,0.01763497012580067,0.9294944256879724,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+nonylacridine orange,raw,697,0.060239624167109505,0.009514490543448212,0.8970704563653409,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+nonylacridine orange,gene_centered,697,0.05909896040704657,0.0394524770259432,0.8785274794843868,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+p-coumaric acid,raw,697,-0.010038126271590226,0.012772825220111379,0.37272694583241217,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+p-coumaric acid,gene_centered,697,-0.005297045437878585,0.006267906568098267,0.0,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+sinapic acid,raw,691,-0.05825102817781762,-0.03633176596795975,0.6690867271942905,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+sinapic acid,gene_centered,691,-0.0057422368053947175,0.003472107093299844,0.30234810700425124,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+syringaldehyde,raw,697,-0.06882002025744396,-0.07766349805519525,0.8464946238763168,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+syringaldehyde,gene_centered,697,-0.04550082669440804,-0.057249531493178255,0.8213607353016813,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+syringic acid,raw,695,-0.06364402598972659,-0.06354031448192221,0.8926524707179024,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+syringic acid,gene_centered,695,0.0008843265390367036,-0.020056760873045427,0.8791440840211655,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+vanillic acid,raw,696,-0.04001510191208023,-0.035288066833205685,0.8733735254111479,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+vanillic acid,gene_centered,696,0.029774021217076112,0.028801737270551016,0.8205594867618026,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+vanillin,raw,698,-0.04675868201415907,-0.028980260908763156,0.8007472286848607,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+vanillin,gene_centered,698,-0.004263631013131295,-0.04086222427582517,0.6948262686303424,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+1-butyl-3-methylimidazolium chloride,raw,686,0.03576978444219745,0.04069535732605019,0.8070343714568953,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+1-butyl-3-methylimidazolium chloride,gene_centered,686,0.03246742216594229,0.00808925306757853,0.8435372785177151,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+1-ethyl-3-methylimidazolium chloride,raw,689,0.04442089468841239,0.02885143969061374,0.9067943797427727,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+1-ethyl-3-methylimidazolium chloride,gene_centered,689,0.05398678936397502,0.03588349903818801,0.9167991100546823,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+"2,2'-bipyridine",raw,692,-0.021973865546719838,0.033129231604172436,0.9207268757345493,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+"2,2'-bipyridine",gene_centered,692,0.0009338086160008217,0.021128065397587305,0.9449003400054828,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+"2,6-dimethylpyrazine",raw,697,0.008855556828839595,-0.005424404248476215,0.8649348011118326,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+"2,6-dimethylpyrazine",gene_centered,697,0.022866752535956686,0.019380180700482336,0.8673704234084779,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,690,-0.03967651472707172,-0.04025292093068309,0.9024797732690023,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",gene_centered,690,0.01729742453262771,0.013841469588661027,0.8523535878742432,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+4'-hydroxyacetophenone,raw,697,-0.05011470040134778,-0.055243773902391505,0.8387309247048363,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+4'-hydroxyacetophenone,gene_centered,697,-0.02083312406684288,-0.036948443188711974,0.7532666861171169,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+4-hydroxybenzaldehyde,raw,691,-0.043986195556017633,-0.048800178324285515,0.7787594537806652,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+4-hydroxybenzaldehyde,gene_centered,691,-0.09550333285829167,-0.07180232181423743,0.6757435198108063,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+4-hydroxybenzoic acid,raw,695,-0.040031029320364,-0.039056907355020924,0.3921292304145123,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+4-hydroxybenzoic acid,gene_centered,695,-0.04486075962847929,-0.008302013926330065,0.5919292756784195,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+5-(hydroxymethyl)furfural,raw,697,0.033861408527872915,0.0042865539361319,0.0,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+5-(hydroxymethyl)furfural,gene_centered,697,-0.013412890596706114,0.001104297689017224,0.5577414052795102,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+acetamide,raw,689,0.0027959655593442893,0.012503712549142752,0.5306891677591836,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+acetamide,gene_centered,689,-0.025583302724359477,-0.04321101227847698,0.727741289283441,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+acetosyringone,raw,694,-0.07274122690750576,-0.06772345582696807,0.9097715098152122,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+acetosyringone,gene_centered,694,-0.020852158144649663,-0.028850007045930916,0.8721048537044281,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+acetovanillone,raw,697,-0.05360353269305124,-0.07236240785890492,0.9190238650204282,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+acetovanillone,gene_centered,697,0.02697131578938962,0.037778481758919194,0.8854057008132059,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+azelaic acid,raw,694,0.02812012664612458,0.005204453427254301,0.8690597633983614,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+azelaic acid,gene_centered,694,-0.017964656469343917,-0.022515086660844313,0.8354687432455685,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+benomyl,raw,692,0.004079632821741048,-0.014187116076180657,0.9253579509494556,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+benomyl,gene_centered,692,-0.020709676013119706,0.025492416894433278,0.9355619411262421,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+benzoic acid,raw,689,-0.008619810461675837,0.009057226221252644,0.6540576274662931,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+benzoic acid,gene_centered,689,0.011578890779318401,0.00948831876598266,0.7777804384725576,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+cinnamic acid,raw,697,0.04015507660539638,0.035769635553161656,0.8373031589847238,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+cinnamic acid,gene_centered,697,-0.01858189250172018,0.00115779386728151,0.8207005255755061,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+crystal violet,raw,670,0.06709480729290256,0.0017149550416957673,0.9523905969852192,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+crystal violet,gene_centered,670,0.007862866206550094,0.035957120709528674,0.946410868233471,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+ferulamide,raw,691,-0.031541833812695715,-0.002765179459062474,0.9030024632825752,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+ferulamide,gene_centered,691,-0.027102596669306565,-0.012530802099890093,0.8616132265663167,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+ferulic acid,raw,693,-0.07221789300318249,-0.0424956360685258,0.9301660358258296,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+ferulic acid,gene_centered,693,-0.049295003753728216,-0.04774883092244341,0.9078602202455723,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+furfural,raw,689,-0.05388591535072423,-0.01702517876998244,0.894561244300317,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+furfural,gene_centered,689,-0.0005339423672717537,0.01633643221824544,0.9129960399200313,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+methylglyoxal,raw,691,0.05602241654527542,0.037111961920012954,0.9271681878467175,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+methylglyoxal,gene_centered,691,0.020719357744535993,0.01763497012580067,0.9294944256879724,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+nonylacridine orange,raw,697,0.060239624167109505,0.009514490543448212,0.8970704563653409,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+nonylacridine orange,gene_centered,697,0.05909896040704657,0.0394524770259432,0.8785274794843868,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+p-coumaric acid,raw,697,-0.010038126271590226,0.012772825220111379,0.37272694583241217,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+p-coumaric acid,gene_centered,697,-0.005297045437878585,0.006267906568098267,0.0,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+sinapic acid,raw,691,-0.05825102817781762,-0.03633176596795975,0.6690867271942905,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+sinapic acid,gene_centered,691,-0.0057422368053947175,0.003472107093299844,0.30234810700425124,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+syringaldehyde,raw,697,-0.06882002025744396,-0.07766349805519525,0.8464946238763168,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+syringaldehyde,gene_centered,697,-0.04550082669440804,-0.057249531493178255,0.8213607353016813,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+syringic acid,raw,695,-0.06364402598972659,-0.06354031448192221,0.8926524707179024,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+syringic acid,gene_centered,695,0.0008843265390367036,-0.020056760873045427,0.8791440840211655,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+vanillic acid,raw,696,-0.04001510191208023,-0.035288066833205685,0.8733735254111479,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+vanillic acid,gene_centered,696,0.029774021217076112,0.028801737270551016,0.8205594867618026,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+vanillin,raw,698,-0.04675868201415907,-0.028980260908763156,0.8007472286848607,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+vanillin,gene_centered,698,-0.004263631013131295,-0.04086222427582517,0.6948262686303424,0,ensemble,r3w2smoke_gene_split_vanhop_train_val

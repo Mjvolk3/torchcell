@@ -1,0 +1,553 @@
+compound,target,n_genes,spearman,pearson,ceiling,condition,source,fold,member,name
+2-Deoxy-D-Glucose,raw,4449,0.13157606076639444,0.18065772191071003,,2-Deoxy-D-Glucose|-3.301,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+2-Deoxy-D-Glucose,centered,4449,0.11836165868558694,0.2043480483515235,,2-Deoxy-D-Glucose|-3.301,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+"Alamathecin, Peptaibol Derivative",raw,4465,0.07611792299634457,0.03655704467662238,,"Alamathecin, Peptaibol Derivative|-5.511",hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+"Alamathecin, Peptaibol Derivative",centered,4465,0.3310064748011255,0.4196471886961485,,"Alamathecin, Peptaibol Derivative|-5.511",hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Amiodarone Hydrochloride,raw,4467,0.2511475766873188,0.4771969311155977,,Amiodarone Hydrochloride|-4.872,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Amiodarone Hydrochloride,centered,4467,-0.1178986257924847,0.184760016566814,,Amiodarone Hydrochloride|-4.872,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Antibiotic X-206,raw,4465,0.28101598408359557,0.5419300525923515,,Antibiotic X-206|-6.000,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Antibiotic X-206,centered,4465,-0.08847743925471198,0.40898013496393165,,Antibiotic X-206|-6.000,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Bleomycin A2,raw,4464,0.19542039122451071,0.4853539751258632,,Bleomycin A2|-7.301,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Bleomycin A2,centered,4464,-0.15738665633924215,0.21761183835272743,,Bleomycin A2|-7.301,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+CMB107,raw,4459,0.014444511725562367,0.004262743353197503,,CMB107|-8.000,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+CMB107,centered,4459,0.2743192383162709,0.18070779143916002,,CMB107|-8.000,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+CMB1257,raw,4465,0.20421904760718446,0.3308191182717638,,CMB1257|-4.368,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+CMB1257,centered,4465,0.10006440903929535,-0.01984247884701595,,CMB1257|-4.368,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+CMB1356,raw,4451,0.1970919698617319,0.2659607368484031,,CMB1356|-5.523,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+CMB1356,centered,4451,0.22900194148866995,0.16617319453994164,,CMB1356|-5.523,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+CMB2112,raw,4462,0.18735854971952234,0.3736618225021218,,CMB2112|-4.444,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+CMB2112,centered,4462,0.1272807193678072,-0.2631512415782134,,CMB2112|-4.444,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+CMB3701,raw,4469,0.2850303655373525,0.39738812398605017,,CMB3701|-3.824,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+CMB3701,centered,4469,0.0608162883851563,0.06681820103761504,,CMB3701|-3.824,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Calcium Chloride,raw,4469,0.19636842771220211,0.35469980991632477,,Calcium Chloride|-1.284,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Calcium Chloride,centered,4469,0.1007628961893441,-0.05783542178079526,,Calcium Chloride|-1.284,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Chondramide,raw,4437,0.3083786285435947,0.5371360353333432,,Chondramide|-3.959,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Chondramide,centered,4437,0.09589525879289801,0.41752864454961003,,Chondramide|-3.959,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Cleisthantin derivative,raw,4467,0.22294655635654512,0.5013348831966705,,Cleisthantin derivative|-4.921,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Cleisthantin derivative,centered,4467,-0.10263078762097308,0.25411237015023797,,Cleisthantin derivative|-4.921,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Cleisthantin derivative,raw,4470,0.1806670699106215,0.40392592559865337,,Cleisthantin derivative|-4.918,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Cleisthantin derivative,centered,4470,-0.21200550620850347,0.016008777398663965,,Cleisthantin derivative|-4.918,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Cobalt(Il)-Chlorid,raw,4461,0.02936150370246921,0.14454500147343022,,Cobalt(Il)-Chlorid|-3.699,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Cobalt(Il)-Chlorid,centered,4461,0.3119129105731893,0.20596939616607587,,Cobalt(Il)-Chlorid|-3.699,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Concanamycin A (Fermentation batch 1),raw,4466,0.17533655497958106,0.45254764343980064,,Concanamycin A (Fermentation batch 1)|-6.959,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Concanamycin A (Fermentation batch 1),centered,4466,-0.23007793631221957,0.1572864664037683,,Concanamycin A (Fermentation batch 1)|-6.959,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Copper(II)Sulfate,raw,4461,-0.04016897181753527,-0.05074859837947757,,Copper(II)Sulfate|-4.301,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Copper(II)Sulfate,centered,4461,0.3948403599309462,0.44861964162411216,,Copper(II)Sulfate|-4.301,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+D-Sorbitol,raw,4469,-0.00974227569927537,-0.010312880747516979,,D-Sorbitol|-0.187,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+D-Sorbitol,centered,4469,0.36371862021601853,0.4226453762729303,,D-Sorbitol|-0.187,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+"Deferasirox, Exjade",raw,4466,0.34985450030372656,0.5098180318038402,,"Deferasirox, Exjade|-3.398",hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+"Deferasirox, Exjade",centered,4466,0.013022256456900904,-0.18470051298080484,,"Deferasirox, Exjade|-3.398",hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+"Deferiprone, Ferriprox",raw,4462,0.21397497453555975,0.30798998274595046,,"Deferiprone, Ferriprox|-3.523",hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+"Deferiprone, Ferriprox",centered,4462,0.12248999938647125,0.15145703178269243,,"Deferiprone, Ferriprox|-3.523",hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Dequalinium chloride,raw,4465,0.052301783465749395,0.03313990220850919,,Dequalinium chloride|-7.000,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Dequalinium chloride,centered,4465,0.39876932741617643,0.5742934356035231,,Dequalinium chloride|-7.000,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+"Desferrioxamine, Deferoxamine",raw,4462,-0.010569945366839124,-0.010448159064955276,,"Desferrioxamine, Deferoxamine|-3.699",hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+"Desferrioxamine, Deferoxamine",centered,4462,0.38582127446890374,0.43935931717401167,,"Desferrioxamine, Deferoxamine|-3.699",hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Dihydrosphingosine,raw,4428,0.05783403384025303,0.09030146852348067,,Dihydrosphingosine|-4.699,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Dihydrosphingosine,centered,4428,0.3249891163588341,0.31471486883199623,,Dihydrosphingosine|-4.699,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+EDTA,raw,4456,0.04471555739264856,0.13549144705764138,,EDTA|-4.000,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+EDTA,centered,4456,0.33098970724138327,0.30779868885963374,,EDTA|-4.000,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Echinocandin C Derivative,raw,4466,0.25513048489469903,0.3688108077102467,,Echinocandin C Derivative|-8.000,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Echinocandin C Derivative,centered,4466,-0.04178771658072343,-0.028415334933923998,,Echinocandin C Derivative|-8.000,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Enniatin A1,raw,4445,0.4559205510383557,0.6702137250394983,,Enniatin A1|-4.824,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Enniatin A1,centered,4445,0.20856760971859048,0.46872407467658384,,Enniatin A1|-4.824,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Enniatin derivative (Fermentation batch 2),raw,4392,0.07748179395301365,0.22014571001544567,,Enniatin derivative (Fermentation batch 2)|-5.097,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Enniatin derivative (Fermentation batch 2),centered,4392,-0.335471864571872,-0.229137566740521,,Enniatin derivative (Fermentation batch 2)|-5.097,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Epothilon B Derivative,raw,4465,0.09360921978104561,0.20562328410421368,,Epothilon B Derivative|-5.301,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Epothilon B Derivative,centered,4465,-0.32573974438401376,-0.2112586662176477,,Epothilon B Derivative|-5.301,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Ergokonin A,raw,4466,0.26384443153478554,0.43197999798763076,,Ergokonin A|-6.041,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Ergokonin A,centered,4466,0.03102634927632623,0.1909904443136468,,Ergokonin A|-6.041,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Ethidium Bromide,raw,4466,0.12205211162163448,0.19405258233899783,,Ethidium Bromide|-4.086,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Ethidium Bromide,centered,4466,0.10638946377796243,0.18147948110019163,,Ethidium Bromide|-4.086,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Hoechst 33258,raw,4468,-0.027891057832587118,-0.005945776694411645,,Hoechst 33258|-4.523,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Hoechst 33258,centered,4468,0.2860674702380524,0.27763929622291805,,Hoechst 33258|-4.523,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Latrunculin A,raw,4456,0.29962382248061203,0.4570771997099116,,Latrunculin A|-6.155,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Latrunculin A,centered,4456,0.005690842810910563,0.2725248387233756,,Latrunculin A|-6.155,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Lysolipin X,raw,4464,0.2952049468745235,0.39449486468225653,,Lysolipin X|-5.699,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Lysolipin X,centered,4464,-0.06479404187740068,-0.10010036543340994,,Lysolipin X|-5.699,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Manganese(II) Chloride,raw,4461,0.039831671354703634,0.09703303922344778,,Manganese(II) Chloride|-5.000,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Manganese(II) Chloride,centered,4461,0.3384101548904121,0.24334921772137896,,Manganese(II) Chloride|-5.000,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Mercury(II) chloride,raw,4413,0.11457464077779733,0.154498701351264,,Mercury(II) chloride|-4.456,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Mercury(II) chloride,centered,4413,0.3181689967508139,0.3351229815546715,,Mercury(II) chloride|-4.456,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Methylmercury,raw,4413,0.058934523255838374,0.08248581811401674,,Methylmercury|-6.301,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Methylmercury,centered,4413,0.32897400412864547,0.38012634496122194,,Methylmercury|-6.301,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Mycophenolic Acid (Myfortic),raw,4465,0.2532185138576836,0.38099998916319594,,Mycophenolic Acid (Myfortic)|-4.000,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Mycophenolic Acid (Myfortic),centered,4465,0.017423811713241512,0.07613987147267312,,Mycophenolic Acid (Myfortic)|-4.000,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Nigericin,raw,4441,0.4102858667911747,0.6067265290326883,,Nigericin|-4.921,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Nigericin,centered,4441,0.20318950704812222,0.47348398359300825,,Nigericin|-4.921,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Peptolide SDZ 90-215,raw,4454,0.2075974118302762,0.46437712983312396,,Peptolide SDZ 90-215|-5.523,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Peptolide SDZ 90-215,centered,4454,-0.19514986847971616,0.16529379463634578,,Peptolide SDZ 90-215|-5.523,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Potassium Chloride,raw,4469,0.09732376656023413,0.1688715791905458,,Potassium Chloride|-0.357,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Potassium Chloride,centered,4469,0.26288549160365277,0.21059178381831062,,Potassium Chloride|-0.357,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+"Ps-341, Velcade, Bortezomib",raw,4466,0.08725962355131771,0.08121525722289881,,"Ps-341, Velcade, Bortezomib|-3.699",hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+"Ps-341, Velcade, Bortezomib",centered,4466,0.28345619873053296,0.26676227019557414,,"Ps-341, Velcade, Bortezomib|-3.699",hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Quinacrine,raw,4469,0.20362146942364953,0.2747700367432394,,Quinacrine|-3.699,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Quinacrine,centered,4469,0.22624953219449467,0.3422596361394499,,Quinacrine|-3.699,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Radicicol,raw,4465,0.35249049874607447,0.5207348602753652,,Radicicol|-4.125,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Radicicol,centered,4465,0.14468587788060147,0.30131843699145705,,Radicicol|-4.125,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Rapamycin Derivative,raw,4462,0.18884467792311885,0.45879497187035767,,Rapamycin Derivative|-7.523,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Rapamycin Derivative,centered,4462,0.17920767936385465,-0.21658296056100587,,Rapamycin Derivative|-7.523,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Ravidomycin,raw,4462,0.22472525341302743,0.3068708804659499,,Ravidomycin|-4.894,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Ravidomycin,centered,4462,-0.022448601071543,-0.01171410245780631,,Ravidomycin|-4.894,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Scalaradial,raw,4454,0.06586506867790273,0.12254774840334733,,Scalaradial|-5.301,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Scalaradial,centered,4454,-0.15747873389302314,-0.2243159435992938,,Scalaradial|-5.301,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Sinefungin,raw,4470,0.11513120955161515,0.1412148078113933,,Sinefungin|-5.824,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Sinefungin,centered,4470,0.1564771669411059,0.2386406052907691,,Sinefungin|-5.824,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Sodium Dodecyl Sulfate (SDS),raw,4438,0.1605101261573227,0.25872463941325546,,Sodium Dodecyl Sulfate (SDS)|-3.699,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Sodium Dodecyl Sulfate (SDS),centered,4438,0.2287532989521776,0.13924005663129566,,Sodium Dodecyl Sulfate (SDS)|-3.699,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Sodium Hydroxide,raw,4469,0.21339567689743702,0.3306241114450431,,Sodium Hydroxide|-2.097,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Sodium Hydroxide,centered,4469,0.07991227942165358,0.06352147829560648,,Sodium Hydroxide|-2.097,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+TAN-999,raw,4467,0.0086034875737304,0.036531512718654215,,TAN-999|-7.000,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+TAN-999,centered,4467,-0.16769456658697574,-0.33995926304637614,,TAN-999|-7.000,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+TOFA,raw,4471,0.05101499940408555,0.07526123652408925,,TOFA|-6.699,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+TOFA,centered,4471,0.34775950827540447,0.4203007700277727,,TOFA|-6.699,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Trapoxin A,raw,4392,0.2561678313484855,0.31187033951051574,,Trapoxin A|-3.824,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Trapoxin A,centered,4392,-0.08822978687455844,-0.07747864714831411,,Trapoxin A|-3.824,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Tunicamycin B,raw,4457,0.36710810205395933,0.4240770904052448,,Tunicamycin B|-6.699,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Tunicamycin B,centered,4457,-0.07343978179489218,-0.10324451059366098,,Tunicamycin B|-6.699,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Valinomycin Derivative,raw,4463,0.19414441450952627,0.2720397209792949,,Valinomycin Derivative|-5.523,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Valinomycin Derivative,centered,4463,0.10483021486480558,0.07159584893519133,,Valinomycin Derivative|-5.523,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Valinomycin Derivative,raw,4452,0.20379379808135428,0.33161896800319923,,Valinomycin Derivative|-5.398,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+Valinomycin Derivative,centered,4452,0.029346617954217228,0.013188708144447033,,Valinomycin Derivative|-5.398,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+YW3548/BE49385A,raw,4454,0.31416988727962364,0.374145804721944,,YW3548/BE49385A|-6.757,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+YW3548/BE49385A,centered,4454,0.009930073761773003,-0.035720500351446555,,YW3548/BE49385A|-6.757,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+"Zeocin, Zeomycin",raw,4465,0.15734037527535216,0.43323101814744086,,"Zeocin, Zeomycin|-8.000",hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+"Zeocin, Zeomycin",centered,4465,0.10569429153618053,-0.023327795314048612,,"Zeocin, Zeomycin|-8.000",hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+caffeine,raw,4466,0.15372329241425217,0.20298140992222583,,caffeine|-2.699,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+caffeine,centered,4466,0.2494191326426482,0.19412587160468756,,caffeine|-2.699,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+calmidazolium,raw,4442,0.18045059297395946,0.27944378668119896,,calmidazolium|-5.347,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+calmidazolium,centered,4442,0.19625163533498854,0.0387113202030982,,calmidazolium|-5.347,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+cerulenin,raw,4466,0.11204598991539921,0.18619208836330842,,cerulenin|-5.678,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+cerulenin,centered,4466,0.26310508360987117,0.14346246764959253,,cerulenin|-5.678,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+chlorpromazine,raw,4467,0.17720108273837507,0.36292105094974764,,chlorpromazine|-4.597,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+chlorpromazine,centered,4467,0.026640773822977765,-0.18884859638304569,,chlorpromazine|-4.597,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+curcumin,raw,4469,0.24473553528670602,0.37172263526201016,,curcumin|-4.125,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+curcumin,centered,4469,0.13650397441118378,0.03969055481174439,,curcumin|-4.125,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+cycloheximide,raw,4470,0.09055460706338192,0.16998003515304816,,cycloheximide|-7.523,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+cycloheximide,centered,4470,0.29814746288854543,0.24957107410057403,,cycloheximide|-7.523,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+fluconazole,raw,4461,0.07542915867695384,0.22133956751805006,,fluconazole|-4.523,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+fluconazole,centered,4461,0.2992237731532197,0.08958842173268938,,fluconazole|-4.523,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+geldanamycin,raw,4460,0.30293049610356754,0.5514259838740094,,geldanamycin|-3.824,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+geldanamycin,centered,4460,0.0262703888623959,0.4379221159486417,,geldanamycin|-3.824,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+hydrochloric acid,raw,4469,0.1522308505210813,0.41602938459004796,,hydrochloric acid|-1.222,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+hydrochloric acid,centered,4469,0.08536611751308919,-0.29813502677188264,,hydrochloric acid|-1.222,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+hydroxyurea,raw,4456,0.0213566405875601,0.01821007912347249,,hydroxyurea|-3.699,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+hydroxyurea,centered,4456,0.37644525782970367,0.43306000840167397,,hydroxyurea|-3.699,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+nocodazole,raw,4460,0.09095788164758993,0.15949415636158204,,nocodazole|-5.097,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+nocodazole,centered,4460,0.28923002839407946,0.14896113581713666,,nocodazole|-5.097,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+rapamycin,raw,4462,0.2494651786725875,0.5507572834798887,,rapamycin|-9.097,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+rapamycin,centered,4462,0.10256912359703878,-0.2746196362864055,,rapamycin|-9.097,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+sodium acetate,raw,4469,0.1485731291533877,0.2815435680442557,,sodium acetate|-0.824,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+sodium acetate,centered,4469,0.11464323340885031,0.09961751792280332,,sodium acetate|-0.824,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+sodium chloride,raw,4469,0.12556263514474816,0.25986642039928304,,sodium chloride|-0.444,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+sodium chloride,centered,4469,0.1918493078510112,0.12737416432486628,,sodium chloride|-0.444,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+triclosan,raw,4436,0.04538804569357667,0.06473610548802639,,triclosan|-5.222,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+triclosan,centered,4436,0.3288507685944089,0.2832672138958582,,triclosan|-5.222,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+verrucarin a,raw,4454,0.20912038233138092,0.34727624342259705,,verrucarin a|-5.699,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+verrucarin a,centered,4454,-0.08813968409610941,0.09529363672977116,,verrucarin a|-5.699,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+zinc chloride,raw,4469,0.29520398046579555,0.4730477881504325,,zinc chloride|-1.398,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+zinc chloride,centered,4469,-0.10070001782248549,-0.24019196948414803,,zinc chloride|-1.398,hoepfner_hop,1,seed0,mix_vanhophet_e150_film_dose_f1
+"1-ter-butyl-3-p-tolyl-1h-pyrazolo[3,4-d]pyrimidin-4-ylamine",raw,5704,0.006646962354499579,-0.003249104231764036,,"1-ter-butyl-3-p-tolyl-1h-pyrazolo[3,4-d]pyrimidin-4-ylamine|-5.523",hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+"1-ter-butyl-3-p-tolyl-1h-pyrazolo[3,4-d]pyrimidin-4-ylamine",centered,5704,0.1990903224851583,0.16991630454086262,,"1-ter-butyl-3-p-tolyl-1h-pyrazolo[3,4-d]pyrimidin-4-ylamine|-5.523",hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+"3,6-dibromo-alpha-((dimethylamino)methyl)-9h-carbazole-9-ethanol",raw,5704,0.13760300912280812,0.14762470397195906,,"3,6-dibromo-alpha-((dimethylamino)methyl)-9h-carbazole-9-ethanol|-4.721",hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+"3,6-dibromo-alpha-((dimethylamino)methyl)-9h-carbazole-9-ethanol",centered,5704,-0.011140134504628871,0.025631281349190772,,"3,6-dibromo-alpha-((dimethylamino)methyl)-9h-carbazole-9-ethanol|-4.721",hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+"3-(4-chlorophenyl)-1-(1,1-dimethylethyl)-1h-pyrazolo(3,4-d)pyrimidin-4-amine",raw,5704,-0.07266486075182071,-0.10307120673759228,,"3-(4-chlorophenyl)-1-(1,1-dimethylethyl)-1h-pyrazolo(3,4-d)pyrimidin-4-amine|-5.523",hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+"3-(4-chlorophenyl)-1-(1,1-dimethylethyl)-1h-pyrazolo(3,4-d)pyrimidin-4-amine",centered,5704,0.23269928572224208,0.19779462411049242,,"3-(4-chlorophenyl)-1-(1,1-dimethylethyl)-1h-pyrazolo(3,4-d)pyrimidin-4-amine|-5.523",hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+4-aminobenzoic acid,raw,5704,-0.08433246926406425,-0.0790429833373964,,4-aminobenzoic acid|-3.301,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+4-aminobenzoic acid,centered,5704,0.2138044500437721,0.14989485582764195,,4-aminobenzoic acid|-3.301,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+5-chloro-8-hydroxyquinoline,raw,5677,0.2819223238609719,0.26984980895262595,,5-chloro-8-hydroxyquinoline|-5.108,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+5-chloro-8-hydroxyquinoline,centered,5677,0.05894970943881636,0.07366107828945702,,5-chloro-8-hydroxyquinoline|-5.108,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+5-fluorouracil,raw,5771,0.11633889838485903,0.11953929458788763,0.8082884935453383,5-fluorouracil|-4.717,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+5-fluorouracil,centered,5771,0.04387482408492252,0.016776214224382635,0.8014932535209649,5-fluorouracil|-4.717,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+5-fluorouridine,raw,5677,0.29489879725123885,0.24844119987456198,,5-fluorouridine|-4.623,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+5-fluorouridine,centered,5677,0.13865911901915962,0.11619575254133681,,5-fluorouridine|-4.623,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+"7-oxabicyclo(2.2.1)heptane-2,3-dicarboxylic acid, 1,4-dimethyl-, (exo,exo)-",raw,5704,0.1478215987556186,0.17110230443623192,,"7-oxabicyclo(2.2.1)heptane-2,3-dicarboxylic acid, 1,4-dimethyl-, (exo,exo)-|-3.000",hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+"7-oxabicyclo(2.2.1)heptane-2,3-dicarboxylic acid, 1,4-dimethyl-, (exo,exo)-",centered,5704,0.028429622866350306,0.00047414612438286685,,"7-oxabicyclo(2.2.1)heptane-2,3-dicarboxylic acid, 1,4-dimethyl-, (exo,exo)-|-3.000",hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+aklavin hydrochloride,raw,5677,0.0705995442420352,0.07299175599247548,,aklavin hydrochloride|-3.903,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+aklavin hydrochloride,centered,5677,0.061875660626583534,0.027011913796949984,,aklavin hydrochloride|-3.903,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+alizarin,raw,5704,0.1330070492527024,0.16021708422483202,,alizarin|-3.903,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+alizarin,centered,5704,0.09577205850696664,0.03874904364992168,,alizarin|-3.903,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+amphotericin b,raw,5677,0.12199227493014034,0.14689741823579924,0.8894941686363187,amphotericin b|-6.208,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+amphotericin b,centered,5677,0.03931903503317257,-0.00024383107507156747,0.8931963652903344,amphotericin b|-6.208,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+anisomycin,raw,5677,0.263399914765799,0.23198485171159744,,anisomycin|-4.505,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+anisomycin,centered,5677,0.08286229662153596,0.07278886739631649,,anisomycin|-4.505,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+atorvastatin,raw,5677,0.3070579982400715,0.2860721409822273,0.7594780947017442,atorvastatin|-3.903,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+atorvastatin,centered,5677,-0.15404636928228185,-0.13000072927926726,0.7236597141434168,atorvastatin|-3.903,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+azane;dichloroplatinum,raw,5677,-0.05333016551725747,0.017619265448287194,0.19127928977202963,azane;dichloroplatinum|-3.903,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+azane;dichloroplatinum,centered,5677,0.1995745928626396,0.11215124928538132,0.6016037247441177,azane;dichloroplatinum|-3.903,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+cantharidin,raw,5704,0.036013242496548276,0.07401828000814575,,cantharidin|-3.699,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+cantharidin,centered,5704,0.11121465309692401,0.04146965113559968,,cantharidin|-3.699,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+carmustine,raw,5704,0.0014591667779839267,0.04443599787110581,,carmustine|-4.204,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+carmustine,centered,5704,0.1875496127829608,0.11490168396743304,,carmustine|-4.204,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+caspofungin,raw,5677,0.26431454662997467,0.22616486211010692,0.6568218324856095,caspofungin|-7.301,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+caspofungin,centered,5677,0.024331176220977007,0.028586554307275032,0.3734773976045961,caspofungin|-7.301,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+chlorambucil,raw,5677,0.17727612751271782,0.21373464013226554,,chlorambucil|-3.097,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+chlorambucil,centered,5677,-0.06224989399773914,-0.03019267752076338,,chlorambucil|-3.097,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+ciclopirox olamine,raw,5677,0.3143399876016391,0.2880546318323724,,ciclopirox olamine|-5.409,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+ciclopirox olamine,centered,5677,-0.12037043952641802,-0.0745311481814529,,ciclopirox olamine|-5.409,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+clotrimazole,raw,5677,0.32617780216320486,0.29893282921066894,,clotrimazole|-6.000,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+clotrimazole,centered,5677,-0.23081955843621396,-0.1937166678853789,,clotrimazole|-6.000,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+clozapine,raw,5786,0.048441570556539935,0.0512786200518787,0.8628093789678758,clozapine|-3.903,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+clozapine,centered,5747,-0.13370866277442583,-0.060121678837876995,0.8944006942166571,clozapine|-3.903,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+curcumin,raw,5704,0.2132910946149634,0.22587923769459559,,curcumin|-3.824,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+curcumin,centered,5704,0.007038138908858024,0.019139435175230982,,curcumin|-3.824,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+cycloheximide,raw,5704,-0.0010156960915122843,-0.004432857589059823,,cycloheximide|-10.523,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+cycloheximide,centered,5704,0.209506014087518,0.17963135516191306,,cycloheximide|-10.523,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+damnacanthal,raw,5704,0.1367508906874053,0.1513277515727205,,damnacanthal|-4.000,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+damnacanthal,centered,5704,-0.07391826992132897,-0.03859315119503086,,damnacanthal|-4.000,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+daunorubicin,raw,5677,0.01986370688137664,0.04638131078533469,,daunorubicin|-3.903,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+daunorubicin,centered,5677,-0.07373216630338295,-0.05598118709311175,,daunorubicin|-3.903,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+dyclonine,raw,5747,0.21455619507498,0.23217954223320186,0.9118575059165669,dyclonine|-3.301,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+dyclonine,centered,5733,-0.017529647440676012,-0.05577602329605558,0.8988498824561898,dyclonine|-3.301,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+emodin,raw,5677,0.0711991618621794,0.13046795525602836,,emodin|-3.000,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+emodin,centered,5677,0.07145076122660612,0.03055371803892044,,emodin|-3.000,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+estradiol,raw,5677,-0.10216156078568803,-0.05066277190726181,,estradiol|-3.000,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+estradiol,centered,5677,0.12882843887665268,0.10712942191041255,,estradiol|-3.000,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+exalamide,raw,5677,0.29703630118376245,0.2624141177753436,,exalamide|-4.505,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+exalamide,centered,5677,-0.07100989676035432,-0.03932985481518524,,exalamide|-4.505,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+fenbendazole,raw,5677,0.25409094811744065,0.22118236060592084,,fenbendazole|-3.602,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+fenbendazole,centered,5677,-0.021855897374827824,0.009613342177204559,,fenbendazole|-3.602,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+fenpropimorph,raw,5677,0.020357484548811183,0.02694604509619858,0.6708750472326369,fenpropimorph|-9.398,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+fenpropimorph,centered,5677,0.18424966079726152,0.1683962547595107,0.7392059219487125,fenpropimorph|-9.398,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+floxuridine,raw,5677,0.2554560411706197,0.24370107528255433,0.6604308114063174,floxuridine|-1.097,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+floxuridine,centered,5677,-0.04659571238568261,-0.013361180031513063,0.6451253571856931,floxuridine|-1.097,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+fluconazole,raw,5677,0.13892175257859046,0.1207047481759937,0.9958704769154206,fluconazole|-3.884,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+fluconazole,centered,5677,-0.04790255567185116,-0.023676504183384846,0.9959449625189424,fluconazole|-3.884,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+flufenamic acid,raw,5677,0.1900655582979689,0.14902267956907914,,flufenamic acid|-4.505,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+flufenamic acid,centered,5677,0.05174091384559031,0.06277376899699763,,flufenamic acid|-4.505,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+haloperidol,raw,5747,0.10006299026086612,0.1653041160193536,0.8536640682926802,haloperidol|-3.602,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+haloperidol,centered,5733,0.10387097665989561,-0.011825723209751332,0.8640774416817661,haloperidol|-3.602,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+hexetidine,raw,5677,0.19518089401456523,0.18240379420519023,,hexetidine|-4.807,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+hexetidine,centered,5677,0.017104436034321942,0.023577975370539545,,hexetidine|-4.807,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+hydroxyurea,raw,5677,0.27145572516214417,0.24284805361107886,,hydroxyurea|-1.602,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+hydroxyurea,centered,5677,-0.03674752194089018,-0.03333257229486594,,hydroxyurea|-1.602,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+itraconazole,raw,5677,0.271238304650526,0.240855236300102,0.9044717571974262,itraconazole|-4.752,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+itraconazole,centered,5677,0.15390217118884095,0.12233526953827076,0.8993293204639129,itraconazole|-4.752,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+ketoconazole,raw,5677,0.23353921848315332,0.21089250683089159,,ketoconazole|-6.301,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+ketoconazole,centered,5677,-0.022966639163934346,-0.004049684902104474,,ketoconazole|-6.301,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+lovastatin,raw,5677,0.19832086432406262,0.1725734208390055,0.8595197287087697,lovastatin|-4.112,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+lovastatin,centered,5677,0.04736045559938025,0.023481771384696818,0.8697544000900183,lovastatin|-4.112,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+mebendazole,raw,5677,0.19229846623269894,0.18747090890978593,,mebendazole|-3.301,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+mebendazole,centered,5677,0.01868352865781394,0.0062719087815375175,,mebendazole|-3.301,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+mechlorethamine,raw,5677,0.047620274093318274,0.14535527052667155,0.8781101833591887,mechlorethamine|-4.204,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+mechlorethamine,centered,5677,0.10831085961762484,0.019262535735704234,0.8588327364968911,mechlorethamine|-4.204,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+methotrexate,raw,5728,0.17930272503753494,0.18258975556151655,0.7879288295455519,methotrexate|-3.602,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+methotrexate,centered,5728,0.04916377141742764,0.009663866260096523,0.77480630674833,methotrexate|-3.602,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+miconazole,raw,5736,0.12288535565600314,0.12192363381872282,0.8042185093904773,miconazole|-6.699,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+miconazole,centered,5736,-0.01161255194756735,-0.006827842292304766,0.8067514818344049,miconazole|-6.699,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+mitomycin c,raw,5704,0.14623726841831272,0.14964354375138494,,mitomycin c|-4.301,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+mitomycin c,centered,5704,-0.023536346221926494,-0.01480760894003432,,mitomycin c|-4.301,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+mitoxantrone hydrochloride,raw,5786,0.0024664905104975353,0.027204513286831357,,mitoxantrone hydrochloride|-4.301,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+mitoxantrone hydrochloride,centered,5747,0.19722599424560328,0.13991466927673946,,mitoxantrone hydrochloride|-4.301,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+mycophenolic acid,raw,5677,0.29354472433591255,0.260552424886623,,mycophenolic acid|-3.903,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+mycophenolic acid,centered,5677,0.15828565484880278,0.1328317262268898,,mycophenolic acid|-3.903,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+"n,n'-di-2-propen-1-ylurea",raw,5704,0.19650112209216902,0.2209231213463361,,"n,n'-di-2-propen-1-ylurea|-2.000",hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+"n,n'-di-2-propen-1-ylurea",centered,5704,-0.07918415783106554,-0.07434283406306474,,"n,n'-di-2-propen-1-ylurea|-2.000",hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+nocodazole,raw,5738,-5.503889400095739e-05,-0.007252865182188096,,nocodazole|-5.161,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+nocodazole,centered,5725,0.046353655559662456,0.024709220417359738,,nocodazole|-5.161,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+norcantharidin,raw,5704,0.09840304196438428,0.1348805899028802,0.8536227463178451,norcantharidin|-2.602,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+norcantharidin,centered,5704,0.07150042162547034,0.03480212124293019,0.8319713323689013,norcantharidin|-2.602,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+npc216413,raw,5677,0.2501686215046164,0.23693715005152627,,npc216413|-3.000,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+npc216413,centered,5677,0.16204138041604227,0.143935634799493,,npc216413|-3.000,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+paraquat,raw,5704,0.1241853315566806,0.12320046028528037,0.9644061456766013,paraquat|-2.699,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+paraquat,centered,5704,0.014554965945707377,-0.022364741112537875,0.9634021715647524,paraquat|-2.699,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+parthenolide,raw,5677,0.15011407834185933,0.14701811275290994,,parthenolide|-3.903,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+parthenolide,centered,5677,-0.02811154085626125,-0.02958812694784201,,parthenolide|-3.903,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+progesterone,raw,5738,0.20039347107166022,0.19816360700338298,,progesterone|-3.000,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+progesterone,centered,5725,-0.014378170889826753,-0.02002827741991457,,progesterone|-3.000,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+rapamycin,raw,5704,0.08820742788943187,0.10346659368042768,,rapamycin|-8.301,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+rapamycin,centered,5704,0.0841607673258993,0.053712308262526966,,rapamycin|-8.301,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+reserpine,raw,5704,0.02281060967667572,0.005094440654852361,,reserpine|-4.000,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+reserpine,centered,5704,0.19318695909426953,0.1705317712144466,,reserpine|-4.000,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+semustine,raw,5677,0.12175759353582007,0.14057946847743086,,semustine|-4.204,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+semustine,centered,5677,-0.03486974817731718,-0.02410170392429242,,semustine|-4.204,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+sodium chloride,raw,5704,0.089341331563735,0.09296288089666647,0.9778947640047275,sodium chloride|-0.155,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+sodium chloride,centered,5704,0.048537210397301515,0.036749401807723674,0.978025000150214,sodium chloride|-0.155,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+sodium fluoride,raw,5704,-0.03151188325170815,-0.000984274967019755,0.9386243670908176,sodium fluoride|-1.699,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+sodium fluoride,centered,5704,0.11346390235995572,0.07438601326983636,0.9476293085484172,sodium fluoride|-1.699,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+splitomicin,raw,5728,0.12863426940029868,0.1434018748302447,,splitomicin|-3.602,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+splitomicin,centered,5728,0.06381832338714348,0.037847464393986806,,splitomicin|-3.602,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+tacrolimus,raw,5704,0.23443916181224314,0.2319800867450145,,tacrolimus|-4.000,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+tacrolimus,centered,5704,0.09874589874472216,0.08262856760192835,,tacrolimus|-4.000,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+thiabendazole,raw,5728,0.1117895522976521,0.12662058599397477,,thiabendazole|-3.602,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+thiabendazole,centered,5728,-0.002191195570249913,-0.025911702107219384,,thiabendazole|-3.602,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+tolnaftate,raw,5677,0.3016729015961623,0.28419688572890695,0.5622385567063485,tolnaftate|-3.602,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+tolnaftate,centered,5677,0.05730757739247769,0.0179948090159709,0.0,tolnaftate|-3.602,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+tris(2-chloroethyl)amine,raw,5677,0.28918737119823373,0.27324655263953673,0.2964767810979863,tris(2-chloroethyl)amine|-3.301,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+tris(2-chloroethyl)amine,centered,5677,-0.03616143846965805,-0.030955184825777162,0.0,tris(2-chloroethyl)amine|-3.301,hillenmeyer_het,1,seed0,mix_vanhophet_e150_film_dose_f1
+2-Deoxy-D-Glucose,raw,4449,0.13157606076639444,0.18065772191071003,,2-Deoxy-D-Glucose|-3.301,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+2-Deoxy-D-Glucose,centered,4449,0.11836165868558694,0.2043480483515235,,2-Deoxy-D-Glucose|-3.301,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+"Alamathecin, Peptaibol Derivative",raw,4465,0.07611792299634457,0.03655704467662238,,"Alamathecin, Peptaibol Derivative|-5.511",hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+"Alamathecin, Peptaibol Derivative",centered,4465,0.3310064748011255,0.4196471886961485,,"Alamathecin, Peptaibol Derivative|-5.511",hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Amiodarone Hydrochloride,raw,4467,0.2511475766873188,0.4771969311155977,,Amiodarone Hydrochloride|-4.872,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Amiodarone Hydrochloride,centered,4467,-0.1178986257924847,0.184760016566814,,Amiodarone Hydrochloride|-4.872,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Antibiotic X-206,raw,4465,0.28101598408359557,0.5419300525923515,,Antibiotic X-206|-6.000,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Antibiotic X-206,centered,4465,-0.08847743925471198,0.40898013496393165,,Antibiotic X-206|-6.000,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Bleomycin A2,raw,4464,0.19542039122451071,0.4853539751258632,,Bleomycin A2|-7.301,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Bleomycin A2,centered,4464,-0.15738665633924215,0.21761183835272743,,Bleomycin A2|-7.301,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+CMB107,raw,4459,0.014444511725562367,0.004262743353197503,,CMB107|-8.000,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+CMB107,centered,4459,0.2743192383162709,0.18070779143916002,,CMB107|-8.000,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+CMB1257,raw,4465,0.20421904760718446,0.3308191182717638,,CMB1257|-4.368,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+CMB1257,centered,4465,0.10006440903929535,-0.01984247884701595,,CMB1257|-4.368,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+CMB1356,raw,4451,0.1970919698617319,0.2659607368484031,,CMB1356|-5.523,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+CMB1356,centered,4451,0.22900194148866995,0.16617319453994164,,CMB1356|-5.523,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+CMB2112,raw,4462,0.18735854971952234,0.3736618225021218,,CMB2112|-4.444,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+CMB2112,centered,4462,0.1272807193678072,-0.2631512415782134,,CMB2112|-4.444,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+CMB3701,raw,4469,0.2850303655373525,0.39738812398605017,,CMB3701|-3.824,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+CMB3701,centered,4469,0.0608162883851563,0.06681820103761504,,CMB3701|-3.824,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Calcium Chloride,raw,4469,0.19636842771220211,0.35469980991632477,,Calcium Chloride|-1.284,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Calcium Chloride,centered,4469,0.1007628961893441,-0.05783542178079526,,Calcium Chloride|-1.284,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Chondramide,raw,4437,0.3083786285435947,0.5371360353333432,,Chondramide|-3.959,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Chondramide,centered,4437,0.09589525879289801,0.41752864454961003,,Chondramide|-3.959,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Cleisthantin derivative,raw,4467,0.22294655635654512,0.5013348831966705,,Cleisthantin derivative|-4.921,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Cleisthantin derivative,centered,4467,-0.10263078762097308,0.25411237015023797,,Cleisthantin derivative|-4.921,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Cleisthantin derivative,raw,4470,0.1806670699106215,0.40392592559865337,,Cleisthantin derivative|-4.918,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Cleisthantin derivative,centered,4470,-0.21200550620850347,0.016008777398663965,,Cleisthantin derivative|-4.918,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Cobalt(Il)-Chlorid,raw,4461,0.02936150370246921,0.14454500147343022,,Cobalt(Il)-Chlorid|-3.699,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Cobalt(Il)-Chlorid,centered,4461,0.3119129105731893,0.20596939616607587,,Cobalt(Il)-Chlorid|-3.699,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Concanamycin A (Fermentation batch 1),raw,4466,0.17533655497958106,0.45254764343980064,,Concanamycin A (Fermentation batch 1)|-6.959,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Concanamycin A (Fermentation batch 1),centered,4466,-0.23007793631221957,0.1572864664037683,,Concanamycin A (Fermentation batch 1)|-6.959,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Copper(II)Sulfate,raw,4461,-0.04016897181753527,-0.05074859837947757,,Copper(II)Sulfate|-4.301,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Copper(II)Sulfate,centered,4461,0.3948403599309462,0.44861964162411216,,Copper(II)Sulfate|-4.301,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+D-Sorbitol,raw,4469,-0.00974227569927537,-0.010312880747516979,,D-Sorbitol|-0.187,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+D-Sorbitol,centered,4469,0.36371862021601853,0.4226453762729303,,D-Sorbitol|-0.187,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+"Deferasirox, Exjade",raw,4466,0.34985450030372656,0.5098180318038402,,"Deferasirox, Exjade|-3.398",hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+"Deferasirox, Exjade",centered,4466,0.013022256456900904,-0.18470051298080484,,"Deferasirox, Exjade|-3.398",hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+"Deferiprone, Ferriprox",raw,4462,0.21397497453555975,0.30798998274595046,,"Deferiprone, Ferriprox|-3.523",hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+"Deferiprone, Ferriprox",centered,4462,0.12248999938647125,0.15145703178269243,,"Deferiprone, Ferriprox|-3.523",hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Dequalinium chloride,raw,4465,0.052301783465749395,0.03313990220850919,,Dequalinium chloride|-7.000,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Dequalinium chloride,centered,4465,0.39876932741617643,0.5742934356035231,,Dequalinium chloride|-7.000,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+"Desferrioxamine, Deferoxamine",raw,4462,-0.010569945366839124,-0.010448159064955276,,"Desferrioxamine, Deferoxamine|-3.699",hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+"Desferrioxamine, Deferoxamine",centered,4462,0.38582127446890374,0.43935931717401167,,"Desferrioxamine, Deferoxamine|-3.699",hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Dihydrosphingosine,raw,4428,0.05783403384025303,0.09030146852348067,,Dihydrosphingosine|-4.699,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Dihydrosphingosine,centered,4428,0.3249891163588341,0.31471486883199623,,Dihydrosphingosine|-4.699,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+EDTA,raw,4456,0.04471555739264856,0.13549144705764138,,EDTA|-4.000,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+EDTA,centered,4456,0.33098970724138327,0.30779868885963374,,EDTA|-4.000,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Echinocandin C Derivative,raw,4466,0.25513048489469903,0.3688108077102467,,Echinocandin C Derivative|-8.000,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Echinocandin C Derivative,centered,4466,-0.04178771658072343,-0.028415334933923998,,Echinocandin C Derivative|-8.000,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Enniatin A1,raw,4445,0.4559205510383557,0.6702137250394983,,Enniatin A1|-4.824,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Enniatin A1,centered,4445,0.20856760971859048,0.46872407467658384,,Enniatin A1|-4.824,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Enniatin derivative (Fermentation batch 2),raw,4392,0.07748179395301365,0.22014571001544567,,Enniatin derivative (Fermentation batch 2)|-5.097,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Enniatin derivative (Fermentation batch 2),centered,4392,-0.335471864571872,-0.229137566740521,,Enniatin derivative (Fermentation batch 2)|-5.097,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Epothilon B Derivative,raw,4465,0.09360921978104561,0.20562328410421368,,Epothilon B Derivative|-5.301,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Epothilon B Derivative,centered,4465,-0.32573974438401376,-0.2112586662176477,,Epothilon B Derivative|-5.301,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Ergokonin A,raw,4466,0.26384443153478554,0.43197999798763076,,Ergokonin A|-6.041,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Ergokonin A,centered,4466,0.03102634927632623,0.1909904443136468,,Ergokonin A|-6.041,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Ethidium Bromide,raw,4466,0.12205211162163448,0.19405258233899783,,Ethidium Bromide|-4.086,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Ethidium Bromide,centered,4466,0.10638946377796243,0.18147948110019163,,Ethidium Bromide|-4.086,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Hoechst 33258,raw,4468,-0.027891057832587118,-0.005945776694411645,,Hoechst 33258|-4.523,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Hoechst 33258,centered,4468,0.2860674702380524,0.27763929622291805,,Hoechst 33258|-4.523,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Latrunculin A,raw,4456,0.29962382248061203,0.4570771997099116,,Latrunculin A|-6.155,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Latrunculin A,centered,4456,0.005690842810910563,0.2725248387233756,,Latrunculin A|-6.155,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Lysolipin X,raw,4464,0.2952049468745235,0.39449486468225653,,Lysolipin X|-5.699,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Lysolipin X,centered,4464,-0.06479404187740068,-0.10010036543340994,,Lysolipin X|-5.699,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Manganese(II) Chloride,raw,4461,0.039831671354703634,0.09703303922344778,,Manganese(II) Chloride|-5.000,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Manganese(II) Chloride,centered,4461,0.3384101548904121,0.24334921772137896,,Manganese(II) Chloride|-5.000,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Mercury(II) chloride,raw,4413,0.11457464077779733,0.154498701351264,,Mercury(II) chloride|-4.456,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Mercury(II) chloride,centered,4413,0.3181689967508139,0.3351229815546715,,Mercury(II) chloride|-4.456,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Methylmercury,raw,4413,0.058934523255838374,0.08248581811401674,,Methylmercury|-6.301,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Methylmercury,centered,4413,0.32897400412864547,0.38012634496122194,,Methylmercury|-6.301,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Mycophenolic Acid (Myfortic),raw,4465,0.2532185138576836,0.38099998916319594,,Mycophenolic Acid (Myfortic)|-4.000,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Mycophenolic Acid (Myfortic),centered,4465,0.017423811713241512,0.07613987147267312,,Mycophenolic Acid (Myfortic)|-4.000,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Nigericin,raw,4441,0.4102858667911747,0.6067265290326883,,Nigericin|-4.921,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Nigericin,centered,4441,0.20318950704812222,0.47348398359300825,,Nigericin|-4.921,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Peptolide SDZ 90-215,raw,4454,0.2075974118302762,0.46437712983312396,,Peptolide SDZ 90-215|-5.523,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Peptolide SDZ 90-215,centered,4454,-0.19514986847971616,0.16529379463634578,,Peptolide SDZ 90-215|-5.523,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Potassium Chloride,raw,4469,0.09732376656023413,0.1688715791905458,,Potassium Chloride|-0.357,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Potassium Chloride,centered,4469,0.26288549160365277,0.21059178381831062,,Potassium Chloride|-0.357,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+"Ps-341, Velcade, Bortezomib",raw,4466,0.08725962355131771,0.08121525722289881,,"Ps-341, Velcade, Bortezomib|-3.699",hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+"Ps-341, Velcade, Bortezomib",centered,4466,0.28345619873053296,0.26676227019557414,,"Ps-341, Velcade, Bortezomib|-3.699",hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Quinacrine,raw,4469,0.20362146942364953,0.2747700367432394,,Quinacrine|-3.699,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Quinacrine,centered,4469,0.22624953219449467,0.3422596361394499,,Quinacrine|-3.699,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Radicicol,raw,4465,0.35249049874607447,0.5207348602753652,,Radicicol|-4.125,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Radicicol,centered,4465,0.14468587788060147,0.30131843699145705,,Radicicol|-4.125,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Rapamycin Derivative,raw,4462,0.18884467792311885,0.45879497187035767,,Rapamycin Derivative|-7.523,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Rapamycin Derivative,centered,4462,0.17920767936385465,-0.21658296056100587,,Rapamycin Derivative|-7.523,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Ravidomycin,raw,4462,0.22472525341302743,0.3068708804659499,,Ravidomycin|-4.894,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Ravidomycin,centered,4462,-0.022448601071543,-0.01171410245780631,,Ravidomycin|-4.894,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Scalaradial,raw,4454,0.06586506867790273,0.12254774840334733,,Scalaradial|-5.301,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Scalaradial,centered,4454,-0.15747873389302314,-0.2243159435992938,,Scalaradial|-5.301,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Sinefungin,raw,4470,0.11513120955161515,0.1412148078113933,,Sinefungin|-5.824,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Sinefungin,centered,4470,0.1564771669411059,0.2386406052907691,,Sinefungin|-5.824,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Sodium Dodecyl Sulfate (SDS),raw,4438,0.1605101261573227,0.25872463941325546,,Sodium Dodecyl Sulfate (SDS)|-3.699,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Sodium Dodecyl Sulfate (SDS),centered,4438,0.2287532989521776,0.13924005663129566,,Sodium Dodecyl Sulfate (SDS)|-3.699,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Sodium Hydroxide,raw,4469,0.21339567689743702,0.3306241114450431,,Sodium Hydroxide|-2.097,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Sodium Hydroxide,centered,4469,0.07991227942165358,0.06352147829560648,,Sodium Hydroxide|-2.097,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+TAN-999,raw,4467,0.0086034875737304,0.036531512718654215,,TAN-999|-7.000,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+TAN-999,centered,4467,-0.16769456658697574,-0.33995926304637614,,TAN-999|-7.000,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+TOFA,raw,4471,0.05101499940408555,0.07526123652408925,,TOFA|-6.699,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+TOFA,centered,4471,0.34775950827540447,0.4203007700277727,,TOFA|-6.699,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Trapoxin A,raw,4392,0.2561678313484855,0.31187033951051574,,Trapoxin A|-3.824,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Trapoxin A,centered,4392,-0.08822978687455844,-0.07747864714831411,,Trapoxin A|-3.824,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Tunicamycin B,raw,4457,0.36710810205395933,0.4240770904052448,,Tunicamycin B|-6.699,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Tunicamycin B,centered,4457,-0.07343978179489218,-0.10324451059366098,,Tunicamycin B|-6.699,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Valinomycin Derivative,raw,4463,0.19414441450952627,0.2720397209792949,,Valinomycin Derivative|-5.523,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Valinomycin Derivative,centered,4463,0.10483021486480558,0.07159584893519133,,Valinomycin Derivative|-5.523,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Valinomycin Derivative,raw,4452,0.20379379808135428,0.33161896800319923,,Valinomycin Derivative|-5.398,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+Valinomycin Derivative,centered,4452,0.029346617954217228,0.013188708144447033,,Valinomycin Derivative|-5.398,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+YW3548/BE49385A,raw,4454,0.31416988727962364,0.374145804721944,,YW3548/BE49385A|-6.757,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+YW3548/BE49385A,centered,4454,0.009930073761773003,-0.035720500351446555,,YW3548/BE49385A|-6.757,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+"Zeocin, Zeomycin",raw,4465,0.15734037527535216,0.43323101814744086,,"Zeocin, Zeomycin|-8.000",hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+"Zeocin, Zeomycin",centered,4465,0.10569429153618053,-0.023327795314048612,,"Zeocin, Zeomycin|-8.000",hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+caffeine,raw,4466,0.15372329241425217,0.20298140992222583,,caffeine|-2.699,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+caffeine,centered,4466,0.2494191326426482,0.19412587160468756,,caffeine|-2.699,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+calmidazolium,raw,4442,0.18045059297395946,0.27944378668119896,,calmidazolium|-5.347,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+calmidazolium,centered,4442,0.19625163533498854,0.0387113202030982,,calmidazolium|-5.347,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+cerulenin,raw,4466,0.11204598991539921,0.18619208836330842,,cerulenin|-5.678,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+cerulenin,centered,4466,0.26310508360987117,0.14346246764959253,,cerulenin|-5.678,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+chlorpromazine,raw,4467,0.17720108273837507,0.36292105094974764,,chlorpromazine|-4.597,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+chlorpromazine,centered,4467,0.026640773822977765,-0.18884859638304569,,chlorpromazine|-4.597,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+curcumin,raw,4469,0.24473553528670602,0.37172263526201016,,curcumin|-4.125,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+curcumin,centered,4469,0.13650397441118378,0.03969055481174439,,curcumin|-4.125,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+cycloheximide,raw,4470,0.09055460706338192,0.16998003515304816,,cycloheximide|-7.523,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+cycloheximide,centered,4470,0.29814746288854543,0.24957107410057403,,cycloheximide|-7.523,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+fluconazole,raw,4461,0.07542915867695384,0.22133956751805006,,fluconazole|-4.523,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+fluconazole,centered,4461,0.2992237731532197,0.08958842173268938,,fluconazole|-4.523,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+geldanamycin,raw,4460,0.30293049610356754,0.5514259838740094,,geldanamycin|-3.824,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+geldanamycin,centered,4460,0.0262703888623959,0.4379221159486417,,geldanamycin|-3.824,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+hydrochloric acid,raw,4469,0.1522308505210813,0.41602938459004796,,hydrochloric acid|-1.222,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+hydrochloric acid,centered,4469,0.08536611751308919,-0.29813502677188264,,hydrochloric acid|-1.222,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+hydroxyurea,raw,4456,0.0213566405875601,0.01821007912347249,,hydroxyurea|-3.699,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+hydroxyurea,centered,4456,0.37644525782970367,0.43306000840167397,,hydroxyurea|-3.699,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+nocodazole,raw,4460,0.09095788164758993,0.15949415636158204,,nocodazole|-5.097,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+nocodazole,centered,4460,0.28923002839407946,0.14896113581713666,,nocodazole|-5.097,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+rapamycin,raw,4462,0.2494651786725875,0.5507572834798887,,rapamycin|-9.097,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+rapamycin,centered,4462,0.10256912359703878,-0.2746196362864055,,rapamycin|-9.097,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+sodium acetate,raw,4469,0.1485731291533877,0.2815435680442557,,sodium acetate|-0.824,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+sodium acetate,centered,4469,0.11464323340885031,0.09961751792280332,,sodium acetate|-0.824,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+sodium chloride,raw,4469,0.12556263514474816,0.25986642039928304,,sodium chloride|-0.444,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+sodium chloride,centered,4469,0.1918493078510112,0.12737416432486628,,sodium chloride|-0.444,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+triclosan,raw,4436,0.04538804569357667,0.06473610548802639,,triclosan|-5.222,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+triclosan,centered,4436,0.3288507685944089,0.2832672138958582,,triclosan|-5.222,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+verrucarin a,raw,4454,0.20912038233138092,0.34727624342259705,,verrucarin a|-5.699,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+verrucarin a,centered,4454,-0.08813968409610941,0.09529363672977116,,verrucarin a|-5.699,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+zinc chloride,raw,4469,0.29520398046579555,0.4730477881504325,,zinc chloride|-1.398,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+zinc chloride,centered,4469,-0.10070001782248549,-0.24019196948414803,,zinc chloride|-1.398,hoepfner_hop,1,ensemble,mix_vanhophet_e150_film_dose_f1
+"1-ter-butyl-3-p-tolyl-1h-pyrazolo[3,4-d]pyrimidin-4-ylamine",raw,5704,0.006646962354499579,-0.003249104231764036,,"1-ter-butyl-3-p-tolyl-1h-pyrazolo[3,4-d]pyrimidin-4-ylamine|-5.523",hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+"1-ter-butyl-3-p-tolyl-1h-pyrazolo[3,4-d]pyrimidin-4-ylamine",centered,5704,0.1990903224851583,0.16991630454086262,,"1-ter-butyl-3-p-tolyl-1h-pyrazolo[3,4-d]pyrimidin-4-ylamine|-5.523",hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+"3,6-dibromo-alpha-((dimethylamino)methyl)-9h-carbazole-9-ethanol",raw,5704,0.13760300912280812,0.14762470397195906,,"3,6-dibromo-alpha-((dimethylamino)methyl)-9h-carbazole-9-ethanol|-4.721",hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+"3,6-dibromo-alpha-((dimethylamino)methyl)-9h-carbazole-9-ethanol",centered,5704,-0.011140134504628871,0.025631281349190772,,"3,6-dibromo-alpha-((dimethylamino)methyl)-9h-carbazole-9-ethanol|-4.721",hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+"3-(4-chlorophenyl)-1-(1,1-dimethylethyl)-1h-pyrazolo(3,4-d)pyrimidin-4-amine",raw,5704,-0.07266486075182071,-0.10307120673759228,,"3-(4-chlorophenyl)-1-(1,1-dimethylethyl)-1h-pyrazolo(3,4-d)pyrimidin-4-amine|-5.523",hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+"3-(4-chlorophenyl)-1-(1,1-dimethylethyl)-1h-pyrazolo(3,4-d)pyrimidin-4-amine",centered,5704,0.23269928572224208,0.19779462411049242,,"3-(4-chlorophenyl)-1-(1,1-dimethylethyl)-1h-pyrazolo(3,4-d)pyrimidin-4-amine|-5.523",hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+4-aminobenzoic acid,raw,5704,-0.08433246926406425,-0.0790429833373964,,4-aminobenzoic acid|-3.301,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+4-aminobenzoic acid,centered,5704,0.2138044500437721,0.14989485582764195,,4-aminobenzoic acid|-3.301,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+5-chloro-8-hydroxyquinoline,raw,5677,0.2819223238609719,0.26984980895262595,,5-chloro-8-hydroxyquinoline|-5.108,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+5-chloro-8-hydroxyquinoline,centered,5677,0.05894970943881636,0.07366107828945702,,5-chloro-8-hydroxyquinoline|-5.108,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+5-fluorouracil,raw,5771,0.11633889838485903,0.11953929458788763,0.8082884935453383,5-fluorouracil|-4.717,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+5-fluorouracil,centered,5771,0.04387482408492252,0.016776214224382635,0.8014932535209649,5-fluorouracil|-4.717,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+5-fluorouridine,raw,5677,0.29489879725123885,0.24844119987456198,,5-fluorouridine|-4.623,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+5-fluorouridine,centered,5677,0.13865911901915962,0.11619575254133681,,5-fluorouridine|-4.623,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+"7-oxabicyclo(2.2.1)heptane-2,3-dicarboxylic acid, 1,4-dimethyl-, (exo,exo)-",raw,5704,0.1478215987556186,0.17110230443623192,,"7-oxabicyclo(2.2.1)heptane-2,3-dicarboxylic acid, 1,4-dimethyl-, (exo,exo)-|-3.000",hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+"7-oxabicyclo(2.2.1)heptane-2,3-dicarboxylic acid, 1,4-dimethyl-, (exo,exo)-",centered,5704,0.028429622866350306,0.00047414612438286685,,"7-oxabicyclo(2.2.1)heptane-2,3-dicarboxylic acid, 1,4-dimethyl-, (exo,exo)-|-3.000",hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+aklavin hydrochloride,raw,5677,0.0705995442420352,0.07299175599247548,,aklavin hydrochloride|-3.903,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+aklavin hydrochloride,centered,5677,0.061875660626583534,0.027011913796949984,,aklavin hydrochloride|-3.903,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+alizarin,raw,5704,0.1330070492527024,0.16021708422483202,,alizarin|-3.903,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+alizarin,centered,5704,0.09577205850696664,0.03874904364992168,,alizarin|-3.903,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+amphotericin b,raw,5677,0.12199227493014034,0.14689741823579924,0.8894941686363187,amphotericin b|-6.208,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+amphotericin b,centered,5677,0.03931903503317257,-0.00024383107507156747,0.8931963652903344,amphotericin b|-6.208,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+anisomycin,raw,5677,0.263399914765799,0.23198485171159744,,anisomycin|-4.505,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+anisomycin,centered,5677,0.08286229662153596,0.07278886739631649,,anisomycin|-4.505,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+atorvastatin,raw,5677,0.3070579982400715,0.2860721409822273,0.7594780947017442,atorvastatin|-3.903,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+atorvastatin,centered,5677,-0.15404636928228185,-0.13000072927926726,0.7236597141434168,atorvastatin|-3.903,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+azane;dichloroplatinum,raw,5677,-0.05333016551725747,0.017619265448287194,0.19127928977202963,azane;dichloroplatinum|-3.903,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+azane;dichloroplatinum,centered,5677,0.1995745928626396,0.11215124928538132,0.6016037247441177,azane;dichloroplatinum|-3.903,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+cantharidin,raw,5704,0.036013242496548276,0.07401828000814575,,cantharidin|-3.699,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+cantharidin,centered,5704,0.11121465309692401,0.04146965113559968,,cantharidin|-3.699,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+carmustine,raw,5704,0.0014591667779839267,0.04443599787110581,,carmustine|-4.204,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+carmustine,centered,5704,0.1875496127829608,0.11490168396743304,,carmustine|-4.204,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+caspofungin,raw,5677,0.26431454662997467,0.22616486211010692,0.6568218324856095,caspofungin|-7.301,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+caspofungin,centered,5677,0.024331176220977007,0.028586554307275032,0.3734773976045961,caspofungin|-7.301,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+chlorambucil,raw,5677,0.17727612751271782,0.21373464013226554,,chlorambucil|-3.097,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+chlorambucil,centered,5677,-0.06224989399773914,-0.03019267752076338,,chlorambucil|-3.097,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+ciclopirox olamine,raw,5677,0.3143399876016391,0.2880546318323724,,ciclopirox olamine|-5.409,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+ciclopirox olamine,centered,5677,-0.12037043952641802,-0.0745311481814529,,ciclopirox olamine|-5.409,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+clotrimazole,raw,5677,0.32617780216320486,0.29893282921066894,,clotrimazole|-6.000,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+clotrimazole,centered,5677,-0.23081955843621396,-0.1937166678853789,,clotrimazole|-6.000,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+clozapine,raw,5786,0.048441570556539935,0.0512786200518787,0.8628093789678758,clozapine|-3.903,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+clozapine,centered,5747,-0.13370866277442583,-0.060121678837876995,0.8944006942166571,clozapine|-3.903,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+curcumin,raw,5704,0.2132910946149634,0.22587923769459559,,curcumin|-3.824,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+curcumin,centered,5704,0.007038138908858024,0.019139435175230982,,curcumin|-3.824,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+cycloheximide,raw,5704,-0.0010156960915122843,-0.004432857589059823,,cycloheximide|-10.523,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+cycloheximide,centered,5704,0.209506014087518,0.17963135516191306,,cycloheximide|-10.523,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+damnacanthal,raw,5704,0.1367508906874053,0.1513277515727205,,damnacanthal|-4.000,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+damnacanthal,centered,5704,-0.07391826992132897,-0.03859315119503086,,damnacanthal|-4.000,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+daunorubicin,raw,5677,0.01986370688137664,0.04638131078533469,,daunorubicin|-3.903,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+daunorubicin,centered,5677,-0.07373216630338295,-0.05598118709311175,,daunorubicin|-3.903,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+dyclonine,raw,5747,0.21455619507498,0.23217954223320186,0.9118575059165669,dyclonine|-3.301,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+dyclonine,centered,5733,-0.017529647440676012,-0.05577602329605558,0.8988498824561898,dyclonine|-3.301,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+emodin,raw,5677,0.0711991618621794,0.13046795525602836,,emodin|-3.000,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+emodin,centered,5677,0.07145076122660612,0.03055371803892044,,emodin|-3.000,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+estradiol,raw,5677,-0.10216156078568803,-0.05066277190726181,,estradiol|-3.000,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+estradiol,centered,5677,0.12882843887665268,0.10712942191041255,,estradiol|-3.000,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+exalamide,raw,5677,0.29703630118376245,0.2624141177753436,,exalamide|-4.505,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+exalamide,centered,5677,-0.07100989676035432,-0.03932985481518524,,exalamide|-4.505,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+fenbendazole,raw,5677,0.25409094811744065,0.22118236060592084,,fenbendazole|-3.602,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+fenbendazole,centered,5677,-0.021855897374827824,0.009613342177204559,,fenbendazole|-3.602,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+fenpropimorph,raw,5677,0.020357484548811183,0.02694604509619858,0.6708750472326369,fenpropimorph|-9.398,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+fenpropimorph,centered,5677,0.18424966079726152,0.1683962547595107,0.7392059219487125,fenpropimorph|-9.398,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+floxuridine,raw,5677,0.2554560411706197,0.24370107528255433,0.6604308114063174,floxuridine|-1.097,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+floxuridine,centered,5677,-0.04659571238568261,-0.013361180031513063,0.6451253571856931,floxuridine|-1.097,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+fluconazole,raw,5677,0.13892175257859046,0.1207047481759937,0.9958704769154206,fluconazole|-3.884,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+fluconazole,centered,5677,-0.04790255567185116,-0.023676504183384846,0.9959449625189424,fluconazole|-3.884,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+flufenamic acid,raw,5677,0.1900655582979689,0.14902267956907914,,flufenamic acid|-4.505,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+flufenamic acid,centered,5677,0.05174091384559031,0.06277376899699763,,flufenamic acid|-4.505,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+haloperidol,raw,5747,0.10006299026086612,0.1653041160193536,0.8536640682926802,haloperidol|-3.602,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+haloperidol,centered,5733,0.10387097665989561,-0.011825723209751332,0.8640774416817661,haloperidol|-3.602,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+hexetidine,raw,5677,0.19518089401456523,0.18240379420519023,,hexetidine|-4.807,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+hexetidine,centered,5677,0.017104436034321942,0.023577975370539545,,hexetidine|-4.807,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+hydroxyurea,raw,5677,0.27145572516214417,0.24284805361107886,,hydroxyurea|-1.602,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+hydroxyurea,centered,5677,-0.03674752194089018,-0.03333257229486594,,hydroxyurea|-1.602,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+itraconazole,raw,5677,0.271238304650526,0.240855236300102,0.9044717571974262,itraconazole|-4.752,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+itraconazole,centered,5677,0.15390217118884095,0.12233526953827076,0.8993293204639129,itraconazole|-4.752,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+ketoconazole,raw,5677,0.23353921848315332,0.21089250683089159,,ketoconazole|-6.301,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+ketoconazole,centered,5677,-0.022966639163934346,-0.004049684902104474,,ketoconazole|-6.301,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+lovastatin,raw,5677,0.19832086432406262,0.1725734208390055,0.8595197287087697,lovastatin|-4.112,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+lovastatin,centered,5677,0.04736045559938025,0.023481771384696818,0.8697544000900183,lovastatin|-4.112,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+mebendazole,raw,5677,0.19229846623269894,0.18747090890978593,,mebendazole|-3.301,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+mebendazole,centered,5677,0.01868352865781394,0.0062719087815375175,,mebendazole|-3.301,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+mechlorethamine,raw,5677,0.047620274093318274,0.14535527052667155,0.8781101833591887,mechlorethamine|-4.204,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+mechlorethamine,centered,5677,0.10831085961762484,0.019262535735704234,0.8588327364968911,mechlorethamine|-4.204,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+methotrexate,raw,5728,0.17930272503753494,0.18258975556151655,0.7879288295455519,methotrexate|-3.602,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+methotrexate,centered,5728,0.04916377141742764,0.009663866260096523,0.77480630674833,methotrexate|-3.602,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+miconazole,raw,5736,0.12288535565600314,0.12192363381872282,0.8042185093904773,miconazole|-6.699,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+miconazole,centered,5736,-0.01161255194756735,-0.006827842292304766,0.8067514818344049,miconazole|-6.699,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+mitomycin c,raw,5704,0.14623726841831272,0.14964354375138494,,mitomycin c|-4.301,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+mitomycin c,centered,5704,-0.023536346221926494,-0.01480760894003432,,mitomycin c|-4.301,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+mitoxantrone hydrochloride,raw,5786,0.0024664905104975353,0.027204513286831357,,mitoxantrone hydrochloride|-4.301,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+mitoxantrone hydrochloride,centered,5747,0.19722599424560328,0.13991466927673946,,mitoxantrone hydrochloride|-4.301,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+mycophenolic acid,raw,5677,0.29354472433591255,0.260552424886623,,mycophenolic acid|-3.903,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+mycophenolic acid,centered,5677,0.15828565484880278,0.1328317262268898,,mycophenolic acid|-3.903,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+"n,n'-di-2-propen-1-ylurea",raw,5704,0.19650112209216902,0.2209231213463361,,"n,n'-di-2-propen-1-ylurea|-2.000",hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+"n,n'-di-2-propen-1-ylurea",centered,5704,-0.07918415783106554,-0.07434283406306474,,"n,n'-di-2-propen-1-ylurea|-2.000",hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+nocodazole,raw,5738,-5.503889400095739e-05,-0.007252865182188096,,nocodazole|-5.161,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+nocodazole,centered,5725,0.046353655559662456,0.024709220417359738,,nocodazole|-5.161,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+norcantharidin,raw,5704,0.09840304196438428,0.1348805899028802,0.8536227463178451,norcantharidin|-2.602,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+norcantharidin,centered,5704,0.07150042162547034,0.03480212124293019,0.8319713323689013,norcantharidin|-2.602,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+npc216413,raw,5677,0.2501686215046164,0.23693715005152627,,npc216413|-3.000,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+npc216413,centered,5677,0.16204138041604227,0.143935634799493,,npc216413|-3.000,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+paraquat,raw,5704,0.1241853315566806,0.12320046028528037,0.9644061456766013,paraquat|-2.699,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+paraquat,centered,5704,0.014554965945707377,-0.022364741112537875,0.9634021715647524,paraquat|-2.699,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+parthenolide,raw,5677,0.15011407834185933,0.14701811275290994,,parthenolide|-3.903,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+parthenolide,centered,5677,-0.02811154085626125,-0.02958812694784201,,parthenolide|-3.903,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+progesterone,raw,5738,0.20039347107166022,0.19816360700338298,,progesterone|-3.000,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+progesterone,centered,5725,-0.014378170889826753,-0.02002827741991457,,progesterone|-3.000,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+rapamycin,raw,5704,0.08820742788943187,0.10346659368042768,,rapamycin|-8.301,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+rapamycin,centered,5704,0.0841607673258993,0.053712308262526966,,rapamycin|-8.301,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+reserpine,raw,5704,0.02281060967667572,0.005094440654852361,,reserpine|-4.000,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+reserpine,centered,5704,0.19318695909426953,0.1705317712144466,,reserpine|-4.000,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+semustine,raw,5677,0.12175759353582007,0.14057946847743086,,semustine|-4.204,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+semustine,centered,5677,-0.03486974817731718,-0.02410170392429242,,semustine|-4.204,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+sodium chloride,raw,5704,0.089341331563735,0.09296288089666647,0.9778947640047275,sodium chloride|-0.155,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+sodium chloride,centered,5704,0.048537210397301515,0.036749401807723674,0.978025000150214,sodium chloride|-0.155,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+sodium fluoride,raw,5704,-0.03151188325170815,-0.000984274967019755,0.9386243670908176,sodium fluoride|-1.699,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+sodium fluoride,centered,5704,0.11346390235995572,0.07438601326983636,0.9476293085484172,sodium fluoride|-1.699,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+splitomicin,raw,5728,0.12863426940029868,0.1434018748302447,,splitomicin|-3.602,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+splitomicin,centered,5728,0.06381832338714348,0.037847464393986806,,splitomicin|-3.602,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+tacrolimus,raw,5704,0.23443916181224314,0.2319800867450145,,tacrolimus|-4.000,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+tacrolimus,centered,5704,0.09874589874472216,0.08262856760192835,,tacrolimus|-4.000,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+thiabendazole,raw,5728,0.1117895522976521,0.12662058599397477,,thiabendazole|-3.602,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+thiabendazole,centered,5728,-0.002191195570249913,-0.025911702107219384,,thiabendazole|-3.602,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+tolnaftate,raw,5677,0.3016729015961623,0.28419688572890695,0.5622385567063485,tolnaftate|-3.602,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+tolnaftate,centered,5677,0.05730757739247769,0.0179948090159709,0.0,tolnaftate|-3.602,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+tris(2-chloroethyl)amine,raw,5677,0.28918737119823373,0.27324655263953673,0.2964767810979863,tris(2-chloroethyl)amine|-3.301,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1
+tris(2-chloroethyl)amine,centered,5677,-0.03616143846965805,-0.030955184825777162,0.0,tris(2-chloroethyl)amine|-3.301,hillenmeyer_het,1,ensemble,mix_vanhophet_e150_film_dose_f1

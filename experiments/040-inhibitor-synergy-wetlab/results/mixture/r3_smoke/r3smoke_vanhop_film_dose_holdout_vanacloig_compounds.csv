@@ -1,0 +1,25 @@
+compound,target,n_genes,spearman,pearson,ceiling,fold,member,name
+"2,2'-bipyridine",raw,3488,-0.00826696920523671,0.014118208586256113,0.933492750710942,0,seed0,r3smoke_vanhop_film_dose_holdout
+"2,2'-bipyridine",centered,3486,-0.024845387390314323,0.004406001896586166,0.9563816885746026,0,seed0,r3smoke_vanhop_film_dose_holdout
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,-0.0014316509333792895,-0.030093477384563874,0.9115685305555769,0,seed0,r3smoke_vanhop_film_dose_holdout
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3482,-0.003940654198433405,-0.014360599492452122,0.8721587526514974,0,seed0,r3smoke_vanhop_film_dose_holdout
+acetosyringone,raw,3496,0.0046835513991904,-0.007855255612468911,0.8957051853886657,0,seed0,r3smoke_vanhop_film_dose_holdout
+acetosyringone,centered,3491,-0.016958485352256313,-0.009832784213758631,0.8621258971956102,0,seed0,r3smoke_vanhop_film_dose_holdout
+acetovanillone,raw,3508,0.002575164175145195,-0.010947922393219959,0.912907133190153,0,seed0,r3smoke_vanhop_film_dose_holdout
+acetovanillone,centered,3507,-0.001198316818249279,0.019298240210332933,0.8921575536150955,0,seed0,r3smoke_vanhop_film_dose_holdout
+furfural,raw,3492,0.004111838897611223,-0.0012716874983853773,0.8770802207938314,0,seed0,r3smoke_vanhop_film_dose_holdout
+furfural,centered,3491,0.002187828208570491,0.00792384894324464,0.893722287283485,0,seed0,r3smoke_vanhop_film_dose_holdout
+vanillin,raw,3504,-0.007354096239969546,-0.021470521169246505,0.8077135748399356,0,seed0,r3smoke_vanhop_film_dose_holdout
+vanillin,centered,3502,0.011168455727684549,0.004623671899271201,0.71557075481543,0,seed0,r3smoke_vanhop_film_dose_holdout
+"2,2'-bipyridine",raw,3488,-0.00826696920523671,0.014118208586256113,0.933492750710942,0,ensemble,r3smoke_vanhop_film_dose_holdout
+"2,2'-bipyridine",centered,3486,-0.024845387390314323,0.004406001896586166,0.9563816885746026,0,ensemble,r3smoke_vanhop_film_dose_holdout
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,-0.0014316509333792895,-0.030093477384563874,0.9115685305555769,0,ensemble,r3smoke_vanhop_film_dose_holdout
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3482,-0.003940654198433405,-0.014360599492452122,0.8721587526514974,0,ensemble,r3smoke_vanhop_film_dose_holdout
+acetosyringone,raw,3496,0.0046835513991904,-0.007855255612468911,0.8957051853886657,0,ensemble,r3smoke_vanhop_film_dose_holdout
+acetosyringone,centered,3491,-0.016958485352256313,-0.009832784213758631,0.8621258971956102,0,ensemble,r3smoke_vanhop_film_dose_holdout
+acetovanillone,raw,3508,0.002575164175145195,-0.010947922393219959,0.912907133190153,0,ensemble,r3smoke_vanhop_film_dose_holdout
+acetovanillone,centered,3507,-0.001198316818249279,0.019298240210332933,0.8921575536150955,0,ensemble,r3smoke_vanhop_film_dose_holdout
+furfural,raw,3492,0.004111838897611223,-0.0012716874983853773,0.8770802207938314,0,ensemble,r3smoke_vanhop_film_dose_holdout
+furfural,centered,3491,0.002187828208570491,0.00792384894324464,0.893722287283485,0,ensemble,r3smoke_vanhop_film_dose_holdout
+vanillin,raw,3504,-0.007354096239969546,-0.021470521169246505,0.8077135748399356,0,ensemble,r3smoke_vanhop_film_dose_holdout
+vanillin,centered,3502,0.011168455727684549,0.004623671899271201,0.71557075481543,0,ensemble,r3smoke_vanhop_film_dose_holdout

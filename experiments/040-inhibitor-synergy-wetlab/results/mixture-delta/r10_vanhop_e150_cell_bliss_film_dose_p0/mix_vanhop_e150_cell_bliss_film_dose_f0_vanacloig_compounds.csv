@@ -1,0 +1,49 @@
+compound,target,n_genes,spearman,pearson,ceiling,fold,member,name
+"2,2'-bipyridine",raw,3488,-0.1646381268532897,-0.35080495828181124,0.933492750710942,0,seed0,mix_vanhop_e150_cell_bliss_film_dose_f0
+"2,2'-bipyridine",centered,3486,0.052327838559759164,0.26471901326496433,0.9563816885746026,0,seed0,mix_vanhop_e150_cell_bliss_film_dose_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.5869272296595499,0.6877127695291309,0.9115685305555769,0,seed0,mix_vanhop_e150_cell_bliss_film_dose_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3482,0.5195498908254255,0.5364008315029826,0.8721587526514974,0,seed0,mix_vanhop_e150_cell_bliss_film_dose_f0
+acetosyringone,raw,3496,0.09513840268664914,0.4707234460766804,0.8957051853886657,0,seed0,mix_vanhop_e150_cell_bliss_film_dose_f0
+acetosyringone,centered,3491,-0.054051932354967885,0.16472837242001614,0.8621258971956102,0,seed0,mix_vanhop_e150_cell_bliss_film_dose_f0
+acetovanillone,raw,3508,0.18572859289833996,0.4248997311968067,0.912907133190153,0,seed0,mix_vanhop_e150_cell_bliss_film_dose_f0
+acetovanillone,centered,3507,0.03899777700327925,0.16471946887175257,0.8921575536150955,0,seed0,mix_vanhop_e150_cell_bliss_film_dose_f0
+furfural,raw,3492,0.06032002730004095,0.07863222238747976,0.8770802207938314,0,seed0,mix_vanhop_e150_cell_bliss_film_dose_f0
+furfural,centered,3491,0.3315631510424214,0.3413537069818411,0.893722287283485,0,seed0,mix_vanhop_e150_cell_bliss_film_dose_f0
+vanillin,raw,3504,0.474094529233727,0.5943577416210022,0.8077135748399356,0,seed0,mix_vanhop_e150_cell_bliss_film_dose_f0
+vanillin,centered,3502,0.40623483529160354,0.3624927647784391,0.71557075481543,0,seed0,mix_vanhop_e150_cell_bliss_film_dose_f0
+"2,2'-bipyridine",raw,3488,-0.06989740732276195,-0.32953049795998984,0.933492750710942,0,seed1,mix_vanhop_e150_cell_bliss_film_dose_f0
+"2,2'-bipyridine",centered,3486,0.18960469053370277,0.26084487115357613,0.9563816885746026,0,seed1,mix_vanhop_e150_cell_bliss_film_dose_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.3481199790719158,0.5734373547919726,0.9115685305555769,0,seed1,mix_vanhop_e150_cell_bliss_film_dose_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3482,0.39543226824750066,0.3977762043494993,0.8721587526514974,0,seed1,mix_vanhop_e150_cell_bliss_film_dose_f0
+acetosyringone,raw,3496,0.1693991750834794,0.4956461100943879,0.8957051853886657,0,seed1,mix_vanhop_e150_cell_bliss_film_dose_f0
+acetosyringone,centered,3491,0.02986042724263874,0.25469942965111386,0.8621258971956102,0,seed1,mix_vanhop_e150_cell_bliss_film_dose_f0
+acetovanillone,raw,3508,0.18577869086312016,0.3733755218575986,0.912907133190153,0,seed1,mix_vanhop_e150_cell_bliss_film_dose_f0
+acetovanillone,centered,3507,0.037039651360732416,0.12453435264455615,0.8921575536150955,0,seed1,mix_vanhop_e150_cell_bliss_film_dose_f0
+furfural,raw,3492,0.02524540579530566,0.033206513430111544,0.8770802207938314,0,seed1,mix_vanhop_e150_cell_bliss_film_dose_f0
+furfural,centered,3491,0.2234975995374688,0.2700110401256795,0.893722287283485,0,seed1,mix_vanhop_e150_cell_bliss_film_dose_f0
+vanillin,raw,3504,0.3293340786745391,0.44927824692807716,0.8077135748399356,0,seed1,mix_vanhop_e150_cell_bliss_film_dose_f0
+vanillin,centered,3502,0.30906763719265556,0.23849160918610932,0.71557075481543,0,seed1,mix_vanhop_e150_cell_bliss_film_dose_f0
+"2,2'-bipyridine",raw,3488,-0.14627459571704798,-0.2998852747708718,0.933492750710942,0,seed2,mix_vanhop_e150_cell_bliss_film_dose_f0
+"2,2'-bipyridine",centered,3486,0.1859219712911076,0.5706337961924127,0.9563816885746026,0,seed2,mix_vanhop_e150_cell_bliss_film_dose_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.5794906522152613,0.6639096862148052,0.9115685305555769,0,seed2,mix_vanhop_e150_cell_bliss_film_dose_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3482,0.4737770142100695,0.45614155095100606,0.8721587526514974,0,seed2,mix_vanhop_e150_cell_bliss_film_dose_f0
+acetosyringone,raw,3496,0.07688424013065807,0.4683066395910918,0.8957051853886657,0,seed2,mix_vanhop_e150_cell_bliss_film_dose_f0
+acetosyringone,centered,3491,-0.04109283195633187,0.16729399361094785,0.8621258971956102,0,seed2,mix_vanhop_e150_cell_bliss_film_dose_f0
+acetovanillone,raw,3508,0.16207915041812535,0.4316477189347928,0.912907133190153,0,seed2,mix_vanhop_e150_cell_bliss_film_dose_f0
+acetovanillone,centered,3507,0.029604913305984498,0.16873148194591978,0.8921575536150955,0,seed2,mix_vanhop_e150_cell_bliss_film_dose_f0
+furfural,raw,3492,0.05568230535785327,0.06023262370760594,0.8770802207938314,0,seed2,mix_vanhop_e150_cell_bliss_film_dose_f0
+furfural,centered,3491,0.34486232733940825,0.37897713015247597,0.893722287283485,0,seed2,mix_vanhop_e150_cell_bliss_film_dose_f0
+vanillin,raw,3504,0.487867655765724,0.5830947866763133,0.8077135748399356,0,seed2,mix_vanhop_e150_cell_bliss_film_dose_f0
+vanillin,centered,3502,0.4142276642721456,0.3459262987014995,0.71557075481543,0,seed2,mix_vanhop_e150_cell_bliss_film_dose_f0
+"2,2'-bipyridine",raw,3488,-0.15182500267300095,-0.3531474045560762,0.933492750710942,0,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f0
+"2,2'-bipyridine",centered,3486,0.14344500262855622,0.4228643679942699,0.9563816885746026,0,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.5769377048948652,0.6802117680414469,0.9115685305555769,0,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3482,0.5078418561371237,0.49740841559553084,0.8721587526514974,0,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f0
+acetosyringone,raw,3496,0.10259404973268219,0.5043507416433981,0.8957051853886657,0,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f0
+acetosyringone,centered,3491,-0.029663191068937923,0.19684437253846426,0.8621258971956102,0,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f0
+acetovanillone,raw,3508,0.1839798209076859,0.4368972647489262,0.912907133190153,0,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f0
+acetovanillone,centered,3507,0.035802445013208846,0.16726216617027376,0.8921575536150955,0,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f0
+furfural,raw,3492,0.04566123441154642,0.06773464272691007,0.8770802207938314,0,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f0
+furfural,centered,3491,0.32791687897903143,0.3652526997515085,0.893722287283485,0,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f0
+vanillin,raw,3504,0.487277248651929,0.5907658848933299,0.8077135748399356,0,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f0
+vanillin,centered,3502,0.41107405430183747,0.3500810346273992,0.71557075481543,0,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f0

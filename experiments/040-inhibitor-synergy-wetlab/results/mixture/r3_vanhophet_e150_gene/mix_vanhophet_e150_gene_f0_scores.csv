@@ -1,0 +1,45 @@
+task,subset,metric,value,n,reference_rule,reference_value,call,fold,member,name,fold_seed,training_call,beats_reference
+vanacloig,test_genes,gene_centered_spearman_median,0.05554048734308065,28,,,both,0,seed0,mix_vanhophet_e150_gene_f0,0,served,
+vanacloig,test_genes,raw_spearman_median,0.07770165991608446,28,,,both,0,seed0,mix_vanhophet_e150_gene_f0,0,served,
+hoepfner_hop,heldout_compound,centered_spearman_median,-0.00809465693033841,25,,,both,0,seed0,mix_vanhophet_e150_gene_f0,0,served,
+hoepfner_hop,heldout_compound,raw_spearman_median,0.19227045161643574,25,,,both,0,seed0,mix_vanhophet_e150_gene_f0,0,served,
+hillenmeyer_het,heldout_compound,centered_spearman_median,0.04161644434458139,41,,,both,0,seed0,mix_vanhophet_e150_gene_f0,0,served,
+hillenmeyer_het,heldout_compound,raw_spearman_median,0.2407812138788152,41,,,both,0,seed0,mix_vanhophet_e150_gene_f0,0,served,
+ex21,all_wells,fitness_spearman_train_fit,0.4470311345931584,180,,,both,0,seed0,mix_vanhophet_e150_gene_f0,0,served,
+ex21,5-(hydroxymethyl)furfural,fitness_spearman_train_fit,,27,,,both,0,seed0,mix_vanhophet_e150_gene_f0,0,served,
+ex21,acetic acid,fitness_spearman_train_fit,,27,,,both,0,seed0,mix_vanhophet_e150_gene_f0,0,served,
+ex21,formic acid,fitness_spearman_train_fit,,27,,,both,0,seed0,mix_vanhophet_e150_gene_f0,0,served,
+ex21,furfural,fitness_spearman_train_fit,,27,,,both,0,seed0,mix_vanhophet_e150_gene_f0,0,served,
+ex21,lactic acid,fitness_spearman_train_fit,,27,,,both,0,seed0,mix_vanhophet_e150_gene_f0,0,served,
+ex21,levulinic acid,fitness_spearman_train_fit,,27,,,both,0,seed0,mix_vanhophet_e150_gene_f0,0,served,
+ex23,combinations,growth_auroc,0.5051020408163265,63,loewe_ex21,0.9580498866213152,served,0,seed0,mix_vanhophet_e150_gene_f0,0,served,below
+ex23,combinations,worst_scenario_spearman,0.0612283745477564,63,"loewe_ex21 (all 63, no growth 0)",0.7721221654788084,served,0,seed0,mix_vanhophet_e150_gene_f0,0,served,below
+ex23,combinations_that_grew,fitness_spearman,0.35454545454545455,21,bliss_ex23,0.5727272727272726,served,0,seed0,mix_vanhophet_e150_gene_f0,0,served,below
+isobole_ex26,interior_cells,mean_observed_minus_predicted,-0.40697986319013413,81,bliss_ex21,-0.0819865762791027,served,0,seed0,mix_vanhophet_e150_gene_f0,0,served,further
+isobole_ex27,interior_cells,mean_observed_minus_predicted,-0.4114700848550704,81,bliss_ex21,-0.4464534611740319,served,0,seed0,mix_vanhophet_e150_gene_f0,0,served,closer
+isobole_ex28,interior_cells,mean_observed_minus_predicted,-0.46678193562704995,81,bliss_ex21,-0.017328758933014,served,0,seed0,mix_vanhophet_e150_gene_f0,0,served,further
+ex23,combinations,growth_auroc,0.441578947368421,63,loewe_ex21,0.9515789473684212,software,0,seed0,mix_vanhophet_e150_gene_f0,0,served,below
+ex23,combinations,worst_scenario_spearman,6.79322494427608e-05,63,"loewe_ex21 (all 63, no growth 0)",0.7998212253100504,software,0,seed0,mix_vanhophet_e150_gene_f0,0,served,below
+ex23,combinations_that_grew,fitness_spearman,0.46085786580530486,25,bliss_ex23,0.8646153846153846,software,0,seed0,mix_vanhophet_e150_gene_f0,0,served,below
+vanacloig,test_genes,gene_centered_spearman_median,0.05554048734308065,28,,,both,0,ensemble,mix_vanhophet_e150_gene_f0,0,served,
+vanacloig,test_genes,raw_spearman_median,0.07770165991608446,28,,,both,0,ensemble,mix_vanhophet_e150_gene_f0,0,served,
+hoepfner_hop,heldout_compound,centered_spearman_median,-0.00809465693033841,25,,,both,0,ensemble,mix_vanhophet_e150_gene_f0,0,served,
+hoepfner_hop,heldout_compound,raw_spearman_median,0.19227045161643574,25,,,both,0,ensemble,mix_vanhophet_e150_gene_f0,0,served,
+hillenmeyer_het,heldout_compound,centered_spearman_median,0.04161644434458139,41,,,both,0,ensemble,mix_vanhophet_e150_gene_f0,0,served,
+hillenmeyer_het,heldout_compound,raw_spearman_median,0.2407812138788152,41,,,both,0,ensemble,mix_vanhophet_e150_gene_f0,0,served,
+ex21,all_wells,fitness_spearman_train_fit,0.4470311345931584,180,,,both,0,ensemble,mix_vanhophet_e150_gene_f0,0,served,
+ex21,5-(hydroxymethyl)furfural,fitness_spearman_train_fit,,27,,,both,0,ensemble,mix_vanhophet_e150_gene_f0,0,served,
+ex21,acetic acid,fitness_spearman_train_fit,,27,,,both,0,ensemble,mix_vanhophet_e150_gene_f0,0,served,
+ex21,formic acid,fitness_spearman_train_fit,,27,,,both,0,ensemble,mix_vanhophet_e150_gene_f0,0,served,
+ex21,furfural,fitness_spearman_train_fit,,27,,,both,0,ensemble,mix_vanhophet_e150_gene_f0,0,served,
+ex21,lactic acid,fitness_spearman_train_fit,,27,,,both,0,ensemble,mix_vanhophet_e150_gene_f0,0,served,
+ex21,levulinic acid,fitness_spearman_train_fit,,27,,,both,0,ensemble,mix_vanhophet_e150_gene_f0,0,served,
+ex23,combinations,growth_auroc,0.5051020408163265,63,loewe_ex21,0.9580498866213152,served,0,ensemble,mix_vanhophet_e150_gene_f0,0,served,below
+ex23,combinations,worst_scenario_spearman,0.0612283745477564,63,"loewe_ex21 (all 63, no growth 0)",0.7721221654788084,served,0,ensemble,mix_vanhophet_e150_gene_f0,0,served,below
+ex23,combinations_that_grew,fitness_spearman,0.35454545454545455,21,bliss_ex23,0.5727272727272726,served,0,ensemble,mix_vanhophet_e150_gene_f0,0,served,below
+isobole_ex26,interior_cells,mean_observed_minus_predicted,-0.40697986319013413,81,bliss_ex21,-0.0819865762791027,served,0,ensemble,mix_vanhophet_e150_gene_f0,0,served,further
+isobole_ex27,interior_cells,mean_observed_minus_predicted,-0.4114700848550704,81,bliss_ex21,-0.4464534611740319,served,0,ensemble,mix_vanhophet_e150_gene_f0,0,served,closer
+isobole_ex28,interior_cells,mean_observed_minus_predicted,-0.46678193562704995,81,bliss_ex21,-0.017328758933014,served,0,ensemble,mix_vanhophet_e150_gene_f0,0,served,further
+ex23,combinations,growth_auroc,0.441578947368421,63,loewe_ex21,0.9515789473684212,software,0,ensemble,mix_vanhophet_e150_gene_f0,0,served,below
+ex23,combinations,worst_scenario_spearman,6.79322494427608e-05,63,"loewe_ex21 (all 63, no growth 0)",0.7998212253100504,software,0,ensemble,mix_vanhophet_e150_gene_f0,0,served,below
+ex23,combinations_that_grew,fitness_spearman,0.46085786580530486,25,bliss_ex23,0.8646153846153846,software,0,ensemble,mix_vanhophet_e150_gene_f0,0,served,below

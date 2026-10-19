@@ -1,0 +1,49 @@
+compound,target,n_genes,spearman,pearson,ceiling,fold,member,name
+1-butyl-3-methylimidazolium chloride,raw,3483,0.520766990124092,0.6094612099455766,0.8198231470383691,2,seed0,mix_van_e150_cell_bliss_displace_co_fs2_f2
+1-butyl-3-methylimidazolium chloride,centered,3482,0.5312146947621516,0.7216990041770553,0.8765957711615572,2,seed0,mix_van_e150_cell_bliss_displace_co_fs2_f2
+"2,2'-bipyridine",raw,3488,0.3046719119825095,0.157699505584959,0.933492750710942,2,seed0,mix_van_e150_cell_bliss_displace_co_fs2_f2
+"2,2'-bipyridine",centered,3486,0.5594004771634652,0.564834468829541,0.9607605764794224,2,seed0,mix_van_e150_cell_bliss_displace_co_fs2_f2
+acetosyringone,raw,3496,-0.010821067648064541,0.40317870829966335,0.8957051853886657,2,seed0,mix_van_e150_cell_bliss_displace_co_fs2_f2
+acetosyringone,centered,3491,-0.14771265836702907,0.05854652473542003,0.8590077390738247,2,seed0,mix_van_e150_cell_bliss_displace_co_fs2_f2
+acetovanillone,raw,3508,0.46828040683209493,0.6787664663985289,0.912907133190153,2,seed0,mix_van_e150_cell_bliss_displace_co_fs2_f2
+acetovanillone,centered,3507,0.38912063424957816,0.5724243025975077,0.8892234638379066,2,seed0,mix_van_e150_cell_bliss_displace_co_fs2_f2
+benomyl,raw,3490,-0.21632944468743806,-0.21202685111223774,0.8675155610064766,2,seed0,mix_van_e150_cell_bliss_displace_co_fs2_f2
+benomyl,centered,3489,-0.37506559396711914,-0.5532370916139656,0.9183172142282519,2,seed0,mix_van_e150_cell_bliss_displace_co_fs2_f2
+sinapic acid,raw,3493,0.3588491172967687,0.5667305816568933,0.5900613638043121,2,seed0,mix_van_e150_cell_bliss_displace_co_fs2_f2
+sinapic acid,centered,3491,0.20458999877952563,0.27820339114716885,0.0,2,seed0,mix_van_e150_cell_bliss_displace_co_fs2_f2
+1-butyl-3-methylimidazolium chloride,raw,3483,0.4375404844303294,0.5686569978158854,0.8198231470383691,2,seed1,mix_van_e150_cell_bliss_displace_co_fs2_f2
+1-butyl-3-methylimidazolium chloride,centered,3482,0.49759617938357525,0.7168902963969054,0.8765957711615572,2,seed1,mix_van_e150_cell_bliss_displace_co_fs2_f2
+"2,2'-bipyridine",raw,3488,-0.07913394204451793,-0.3088177176706951,0.933492750710942,2,seed1,mix_van_e150_cell_bliss_displace_co_fs2_f2
+"2,2'-bipyridine",centered,3486,0.5812683350954758,0.7559902463481767,0.9607605764794224,2,seed1,mix_van_e150_cell_bliss_displace_co_fs2_f2
+acetosyringone,raw,3496,0.1251301400252066,0.46249527832924053,0.8957051853886657,2,seed1,mix_van_e150_cell_bliss_displace_co_fs2_f2
+acetosyringone,centered,3491,-0.08857856602786844,0.016180855503159956,0.8590077390738247,2,seed1,mix_van_e150_cell_bliss_displace_co_fs2_f2
+acetovanillone,raw,3508,0.29065657628362573,0.47069111752263354,0.912907133190153,2,seed1,mix_van_e150_cell_bliss_displace_co_fs2_f2
+acetovanillone,centered,3507,0.005705889824275822,0.09772888941609605,0.8892234638379066,2,seed1,mix_van_e150_cell_bliss_displace_co_fs2_f2
+benomyl,raw,3490,0.010228524707541462,-0.09041081469139253,0.8675155610064766,2,seed1,mix_van_e150_cell_bliss_displace_co_fs2_f2
+benomyl,centered,3489,-0.15242450089432627,-0.006639669842247114,0.9183172142282519,2,seed1,mix_van_e150_cell_bliss_displace_co_fs2_f2
+sinapic acid,raw,3493,0.473178505593834,0.6412018310137946,0.5900613638043121,2,seed1,mix_van_e150_cell_bliss_displace_co_fs2_f2
+sinapic acid,centered,3491,0.2521904217911903,0.28865679713683084,0.0,2,seed1,mix_van_e150_cell_bliss_displace_co_fs2_f2
+1-butyl-3-methylimidazolium chloride,raw,3483,0.501235557578428,0.5917342795684032,0.8198231470383691,2,seed2,mix_van_e150_cell_bliss_displace_co_fs2_f2
+1-butyl-3-methylimidazolium chloride,centered,3482,0.5672446449366803,0.7460135807404683,0.8765957711615572,2,seed2,mix_van_e150_cell_bliss_displace_co_fs2_f2
+"2,2'-bipyridine",raw,3488,-0.02803080599986325,-0.0014577307534254544,0.933492750710942,2,seed2,mix_van_e150_cell_bliss_displace_co_fs2_f2
+"2,2'-bipyridine",centered,3486,0.5678721039424297,0.7997363469193757,0.9607605764794224,2,seed2,mix_van_e150_cell_bliss_displace_co_fs2_f2
+acetosyringone,raw,3496,0.12057256145070921,0.4432301228753581,0.8957051853886657,2,seed2,mix_van_e150_cell_bliss_displace_co_fs2_f2
+acetosyringone,centered,3491,-0.09106854586720892,-0.046283358908280885,0.8590077390738247,2,seed2,mix_van_e150_cell_bliss_displace_co_fs2_f2
+acetovanillone,raw,3508,0.22615156940618175,0.4383153212319672,0.912907133190153,2,seed2,mix_van_e150_cell_bliss_displace_co_fs2_f2
+acetovanillone,centered,3507,-0.011644405608244736,0.07645921146003835,0.8892234638379066,2,seed2,mix_van_e150_cell_bliss_displace_co_fs2_f2
+benomyl,raw,3490,-0.06316851545903449,-0.12469109156553258,0.8675155610064766,2,seed2,mix_van_e150_cell_bliss_displace_co_fs2_f2
+benomyl,centered,3489,0.3250437570944126,0.2880410679072074,0.9183172142282519,2,seed2,mix_van_e150_cell_bliss_displace_co_fs2_f2
+sinapic acid,raw,3493,0.47944761831306065,0.6382464699492155,0.5900613638043121,2,seed2,mix_van_e150_cell_bliss_displace_co_fs2_f2
+sinapic acid,centered,3491,0.261585952626736,0.2773433659684972,0.0,2,seed2,mix_van_e150_cell_bliss_displace_co_fs2_f2
+1-butyl-3-methylimidazolium chloride,raw,3483,0.5257523592939637,0.6270636656750389,0.8198231470383691,2,ensemble,mix_van_e150_cell_bliss_displace_co_fs2_f2
+1-butyl-3-methylimidazolium chloride,centered,3482,0.5664536212995693,0.7517860086085452,0.8765957711615572,2,ensemble,mix_van_e150_cell_bliss_displace_co_fs2_f2
+"2,2'-bipyridine",raw,3488,0.22231620141487166,0.07618366219475581,0.933492750710942,2,ensemble,mix_van_e150_cell_bliss_displace_co_fs2_f2
+"2,2'-bipyridine",centered,3486,0.650117604140729,0.7683688382993816,0.9607605764794224,2,ensemble,mix_van_e150_cell_bliss_displace_co_fs2_f2
+acetosyringone,raw,3496,0.06730089647418641,0.4570437487198129,0.8957051853886657,2,ensemble,mix_van_e150_cell_bliss_displace_co_fs2_f2
+acetosyringone,centered,3491,-0.12491244426912365,0.019324652941700167,0.8590077390738247,2,ensemble,mix_van_e150_cell_bliss_displace_co_fs2_f2
+acetovanillone,raw,3508,0.3693677954890626,0.5745953113253702,0.912907133190153,2,ensemble,mix_van_e150_cell_bliss_displace_co_fs2_f2
+acetovanillone,centered,3507,0.21538191018264932,0.365636486961484,0.8892234638379066,2,ensemble,mix_van_e150_cell_bliss_displace_co_fs2_f2
+benomyl,raw,3490,-0.11106374814030168,-0.16847458210880564,0.8675155610064766,2,ensemble,mix_van_e150_cell_bliss_displace_co_fs2_f2
+benomyl,centered,3489,-0.3230185549790228,-0.5345015724209974,0.9183172142282519,2,ensemble,mix_van_e150_cell_bliss_displace_co_fs2_f2
+sinapic acid,raw,3493,0.453822691275095,0.6444755546645955,0.5900613638043121,2,ensemble,mix_van_e150_cell_bliss_displace_co_fs2_f2
+sinapic acid,centered,3491,0.25114551312046063,0.3145322881782777,0.0,2,ensemble,mix_van_e150_cell_bliss_displace_co_fs2_f2

@@ -1,0 +1,49 @@
+compound,target,n_genes,spearman,pearson,ceiling,fold,member,name
+1-butyl-3-methylimidazolium chloride,raw,3483,0.538726737107641,0.6600333958363178,0.8198231470383691,2,seed0,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+1-butyl-3-methylimidazolium chloride,centered,3482,0.5673368692514577,0.7559053850633571,0.8734729503384993,2,seed0,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+5-(hydroxymethyl)furfural,raw,3503,0.2332695007444871,0.1560374879567843,0.0,2,seed0,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+5-(hydroxymethyl)furfural,centered,3503,0.34145703391779614,0.3220483621151534,0.6420614542017117,2,seed0,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+azelaic acid,raw,3495,0.30341342763052975,0.40820666776415465,0.8666732262919424,2,seed0,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+azelaic acid,centered,3494,0.12614755878583087,0.2680187767239253,0.8436186178533334,2,seed0,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+benomyl,raw,3490,0.19214351625443,0.18812483671882319,0.8675155610064766,2,seed0,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+benomyl,centered,3489,0.261033118925426,0.12031592343902463,0.917096881665478,2,seed0,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+ferulic acid,raw,3498,0.46260412732690814,0.678238346485339,0.9219505587175544,2,seed0,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+ferulic acid,centered,3497,0.3787378838664669,0.5135681307102474,0.8958024751441768,2,seed0,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+methylglyoxal,raw,3482,-0.05923801589462284,-0.03054434016099912,0.9198342493438169,2,seed0,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+methylglyoxal,centered,3479,0.2870404765420495,0.44104188973085084,0.9375811386650508,2,seed0,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+1-butyl-3-methylimidazolium chloride,raw,3483,0.5483489061680509,0.6495502252631731,0.8198231470383691,2,seed1,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+1-butyl-3-methylimidazolium chloride,centered,3482,0.5679628443604398,0.7610898925487417,0.8734729503384993,2,seed1,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+5-(hydroxymethyl)furfural,raw,3503,0.2709597628991001,0.15959714066578137,0.0,2,seed1,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+5-(hydroxymethyl)furfural,centered,3503,0.4264602239578594,0.39035071202964716,0.6420614542017117,2,seed1,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+azelaic acid,raw,3495,0.10783053630789101,0.2826079232857116,0.8666732262919424,2,seed1,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+azelaic acid,centered,3494,-0.0842138677417727,0.14072167296254628,0.8436186178533334,2,seed1,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+benomyl,raw,3490,-0.03779595982292117,0.07645946793122081,0.8675155610064766,2,seed1,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+benomyl,centered,3489,0.44428170798791716,0.5666513983366687,0.917096881665478,2,seed1,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+ferulic acid,raw,3498,0.4388600059111319,0.6467085055534173,0.9219505587175544,2,seed1,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+ferulic acid,centered,3497,0.3434955715196952,0.4622622690010484,0.8958024751441768,2,seed1,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+methylglyoxal,raw,3482,-0.07427581275992308,-0.02797391257955234,0.9198342493438169,2,seed1,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+methylglyoxal,centered,3479,0.18604080683091803,0.42958536686352067,0.9375811386650508,2,seed1,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+1-butyl-3-methylimidazolium chloride,raw,3483,0.5773394219583996,0.6766322134010597,0.8198231470383691,2,seed2,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+1-butyl-3-methylimidazolium chloride,centered,3482,0.6004896565588982,0.7650678723128879,0.8734729503384993,2,seed2,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+5-(hydroxymethyl)furfural,raw,3503,0.20183597694748862,0.01897972572603867,0.0,2,seed2,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+5-(hydroxymethyl)furfural,centered,3503,0.3391104023783057,0.32795754119722625,0.6420614542017117,2,seed2,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+azelaic acid,raw,3495,0.21556446519301384,0.3130252740259762,0.8666732262919424,2,seed2,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+azelaic acid,centered,3494,0.010628212733240931,0.18393380310790214,0.8436186178533334,2,seed2,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+benomyl,raw,3490,0.22481284899353499,0.4304881348882153,0.8675155610064766,2,seed2,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+benomyl,centered,3489,0.5434840067588559,0.6559345096945598,0.917096881665478,2,seed2,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+ferulic acid,raw,3498,0.4657399496554045,0.6814949370041891,0.9219505587175544,2,seed2,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+ferulic acid,centered,3497,0.39529681152498647,0.5459482751400392,0.8958024751441768,2,seed2,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+methylglyoxal,raw,3482,-0.09379174873304241,-0.040988023006556996,0.9198342493438169,2,seed2,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+methylglyoxal,centered,3479,0.23362325992782282,0.42263890321777076,0.9375811386650508,2,seed2,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+1-butyl-3-methylimidazolium chloride,raw,3483,0.5672111913573677,0.671701350898103,0.8198231470383691,2,ensemble,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+1-butyl-3-methylimidazolium chloride,centered,3482,0.5910486805267572,0.7686293888201315,0.8734729503384993,2,ensemble,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+5-(hydroxymethyl)furfural,raw,3503,0.2529806222527923,0.11740118489683829,0.0,2,ensemble,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+5-(hydroxymethyl)furfural,centered,3503,0.38617111937606574,0.35950096659580416,0.6420614542017117,2,ensemble,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+azelaic acid,raw,3495,0.22419339112382294,0.36752087307587417,0.8666732262919424,2,ensemble,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+azelaic acid,centered,3494,0.008595293365709272,0.20411778195927796,0.8436186178533334,2,ensemble,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+benomyl,raw,3490,0.20837729102119854,0.2927421460159169,0.8675155610064766,2,ensemble,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+benomyl,centered,3489,0.5270263673061443,0.5759783843016861,0.917096881665478,2,ensemble,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+ferulic acid,raw,3498,0.47068903255327776,0.6850091395324946,0.9219505587175544,2,ensemble,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+ferulic acid,centered,3497,0.38542657612710957,0.5277046683457881,0.8958024751441768,2,ensemble,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+methylglyoxal,raw,3482,-0.08612865593606435,-0.03678987480076889,0.9198342493438169,2,ensemble,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2
+methylglyoxal,centered,3479,0.24494093965493163,0.4407960978913254,0.9375811386650508,2,ensemble,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f2

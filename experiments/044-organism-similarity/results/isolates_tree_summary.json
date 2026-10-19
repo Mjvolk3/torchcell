@@ -1,0 +1,11 @@
+{
+  "matrix": "/scratch/projects/torchcell-scratch/data/peter2018/1011DistanceMatrixBasedOnSNPs.tab.gz",
+  "matrix_sha256": "140da4e5193584c01e60c554a2ba5075a542d925be540afe7c7a92b7377af928",
+  "table_s1": "/scratch/projects/torchcell-scratch/torchcell-genomes/peter2018_1011_assemblies/41586_2018_30_MOESM3_ESM.xls",
+  "table_s1_sha256": "b11de13b50bcf91bb2a40cdbd0f2f35372bdef6fc9a018d7538cf5e5eea7f273",
+  "rapidnj_command": "/scratch/projects/torchcell-scratch/envs/orgsim/bin/rapidnj /scratch/projects/torchcell-scratch/data/organism_similarity/isolates_tree/peter1011.phy -i pd -o t -x /home/michaelvolk/Documents/projects/torchcell.worktrees/exp/044-organism-similarity/experiments/044-organism-similarity/results/isolates_nj.nwk",
+  "n_isolates": 1011,
+  "n_matched_to_table_s1": 1010,
+  "n_with_clade": 962,
+  "n_clades": 29
+}

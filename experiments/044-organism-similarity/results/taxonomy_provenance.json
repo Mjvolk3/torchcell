@@ -1,0 +1,6 @@
+{
+  "source_url": "https://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz",
+  "sha256": "0dc67b47aa5bf52198c6f73794bebc61712473ecfec6df4f8641099739e0933b",
+  "bytes": 79871708,
+  "retrieval_command": "urllib.request.urlretrieve('https://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz', ...)"
+}

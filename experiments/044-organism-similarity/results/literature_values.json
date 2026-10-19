@@ -1,0 +1,29 @@
+{
+  "source": "1000 Genomes Project Consortium 2015, Nature 526:68-74",
+  "doi": "10.1038/nature15393",
+  "pmcid": "PMC4750478",
+  "label": "literature value, not computed here",
+  "full_text_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC4750478/fullTextXML",
+  "full_text_sha256": "4c635f9f419d8c02af3a667d797033cf288a9f15b42461ead408f49e94af836b",
+  "quote_nucleotide": "We find that a typical genome differs from the reference human genome at 4.1 million to 5.0 million sites",
+  "quote_protein": "a typical genome contained 149–182 sites with protein truncating variants, 10,000 to 12,000 sites with peptide-sequence-altering variants",
+  "peptide_altering_sites": [
+    10000,
+    12000
+  ],
+  "human_per_gene_proteome_residues": 11696518,
+  "protein_identity_vs_reference": [
+    0.9989740536457089,
+    0.9991450447047574
+  ],
+  "nucleotide_sites": [
+    4100000,
+    5000000
+  ],
+  "grch38_ungapped_length": 2948318359,
+  "nucleotide_identity_vs_reference": [
+    0.9983041180119722,
+    0.9986093767698171
+  ],
+  "denominators": "residues: this study's per-gene human proteome; ungapped length: NCBI assembly report of GCF_000001405.40"
+}

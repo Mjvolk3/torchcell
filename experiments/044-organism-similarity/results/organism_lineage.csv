@@ -1,0 +1,35 @@
+key,taxid,organism_name,color_group,groups,has_proteome,is_bacteria,is_fungi,is_saccharomycotina,is_saccharomyces,is_mammalia,phylum,class,order,family,genus
+scer_s288c,559292,Saccharomyces cerevisiae,reference,reference;established,True,False,True,True,True,False,Ascomycota,Saccharomycetes,Saccharomycetales,Saccharomycetaceae,Saccharomyces
+pkud_sd108,4909,Pichia kudriavzevii,cabbi,cabbi;emerging,True,False,True,True,False,False,Ascomycota,Pichiomycetes,Pichiales,Pichiaceae,Pichia
+pkud_cbs573,4909,Pichia kudriavzevii,emerging,emerging,True,False,True,True,False,False,Ascomycota,Pichiomycetes,Pichiales,Pichiaceae,Pichia
+ecoli_mg1655,511145,Escherichia coli,reference,reference;established,True,True,False,False,False,False,Pseudomonadota,Gammaproteobacteria,Enterobacterales,Enterobacteriaceae,Escherichia
+pput_kt2440,160488,Pseudomonas putida,reference,reference;emerging,True,True,False,False,False,False,Pseudomonadota,Gammaproteobacteria,Pseudomonadales,Pseudomonadaceae,Pseudomonas
+cglu_atcc13032,196627,Corynebacterium glutamicum ATCC 13032,established,established,True,True,False,False,False,False,Actinomycetota,Actinomycetes,Mycobacteriales,Corynebacteriaceae,Corynebacterium
+bsub_168,224308,Bacillus subtilis subsp. subtilis str. 168,established,established,True,True,False,False,False,False,Bacillota,Bacilli,Caryophanales,Bacillaceae,Bacillus
+blic_dsm13,1402,Bacillus licheniformis,established,established,True,True,False,False,False,False,Bacillota,Bacilli,Caryophanales,Bacillaceae,Bacillus
+kpha_gs115,644223,Komagataella phaffii GS115,established,established,True,False,True,True,False,False,Ascomycota,Pichiomycetes,Pichiales,Pichiaceae,Komagataella
+cgri_cho,10029,Cricetulus griseus,mammal,mammal;established,True,False,False,False,False,True,Chordata,Mammalia,Rodentia,Cricetidae,Cricetulus
+hsap_grch38,9606,Homo sapiens,mammal,mammal;established,True,False,False,False,False,True,Chordata,Mammalia,Primates,Hominidae,Homo
+llac_il1403,272623,Lactococcus lactis subsp. lactis Il1403,established,established,True,True,False,False,False,False,Bacillota,Bacilli,Lactobacillales,Streptococcaceae,Lactococcus
+alim,87102,Aurantiochytrium limacinum,established,established,False,False,False,False,False,False,,Bigyra,Thraustochytrida,Thraustochytriidae,Aurantiochytrium
+ylip_clib122,284591,Yarrowia lipolytica CLIB122,cabbi,cabbi;emerging,True,False,True,True,False,False,Ascomycota,Dipodascomycetes,Dipodascales,,Yarrowia
+rtor_np11,1130832,Rhodotorula toruloides NP11,cabbi,cabbi;emerging,True,False,True,False,False,False,Basidiomycota,Microbotryomycetes,Sporidiobolales,Sporidiobolaceae,Rhodotorula
+cnec_h16,381666,Cupriavidus necator H16,emerging,emerging,True,True,False,False,False,False,Pseudomonadota,Betaproteobacteria,Burkholderiales,Burkholderiaceae,Cupriavidus
+kmar_dmku3,1003335,Kluyveromyces marxianus DMKU3-1042,emerging,emerging,True,False,True,True,False,False,Ascomycota,Saccharomycetes,Saccharomycetales,Saccharomycetaceae,Kluyveromyces
+hblu_td01,2778948,Halomonas bluephagenesis,emerging,emerging,True,True,False,False,False,False,Pseudomonadota,Gammaproteobacteria,Oceanospirillales,Halomonadaceae,Halomonas
+opol_ncyc495,460523,Ogataea polymorpha,emerging,emerging,True,False,True,True,False,False,Ascomycota,Pichiomycetes,Pichiales,Pichiaceae,Ogataea
+vnat_atcc14048,1219067,Vibrio natriegens NBRC 15636 = ATCC 14048 = DSM 759,emerging,emerging,True,True,False,False,False,False,Pseudomonadota,Gammaproteobacteria,Vibrionales,Vibrionaceae,Vibrio
+mext_am1,272630,Methylorubrum extorquens AM1,emerging,emerging,True,True,False,False,False,False,Pseudomonadota,Alphaproteobacteria,Hyphomicrobiales,Methylobacteriaceae,Methylorubrum
+lsta_y11557,675824,Lipomyces starkeyi NRRL Y-11557,cabbi,cabbi,True,False,True,True,False,False,Ascomycota,Lipomycetes,Lipomycetales,Lipomycetaceae,Lipomyces
+zbai_ist302,4954,Zygosaccharomyces bailii,cabbi,cabbi,True,False,True,True,False,False,Ascomycota,Saccharomycetes,Saccharomycetales,Saccharomycetaceae,Zygosaccharomyces
+zrou_cbs732,4956,Zygosaccharomyces rouxii,cabbi,cabbi,True,False,True,True,False,False,Ascomycota,Saccharomycetes,Saccharomycetales,Saccharomycetaceae,Zygosaccharomyces
+ltet_y64009,54092,Lipomyces tetrasporus,cabbi,cabbi,True,False,True,True,False,False,Ascomycota,Lipomycetes,Lipomycetales,Lipomycetaceae,Lipomyces
+spar_cbs432,27291,Saccharomyces paradoxus,genus,genus,True,False,True,True,True,False,Ascomycota,Saccharomycetes,Saccharomycetales,Saccharomycetaceae,Saccharomyces
+seub_fm1318,1080349,Saccharomyces eubayanus,genus,genus,True,False,True,True,True,False,Ascomycota,Saccharomycetes,Saccharomycetales,Saccharomycetaceae,Saccharomyces
+ptro,9598,Pan troglodytes,mammal,mammal,True,False,False,False,False,True,Chordata,Mammalia,Primates,Hominidae,Pan
+ggor,9595,Gorilla gorilla gorilla,mammal,mammal,True,False,False,False,False,True,Chordata,Mammalia,Primates,Hominidae,Gorilla
+pabe,9601,Pongo abelii,mammal,mammal,True,False,False,False,False,True,Chordata,Mammalia,Primates,Hominidae,Pongo
+mmul,9544,Macaca mulatta,mammal,mammal,True,False,False,False,False,True,Chordata,Mammalia,Primates,Cercopithecidae,Macaca
+mmus_c57bl6j,10090,Mus musculus,mammal,mammal,True,False,False,False,False,True,Chordata,Mammalia,Rodentia,Muridae,Mus
+rnor,10116,Rattus norvegicus,mammal,mammal,True,False,False,False,False,True,Chordata,Mammalia,Rodentia,Muridae,Rattus
+ggal,9031,Gallus gallus,outgroup,outgroup,True,False,False,False,False,False,Chordata,Aves,Galliformes,Phasianidae,Gallus

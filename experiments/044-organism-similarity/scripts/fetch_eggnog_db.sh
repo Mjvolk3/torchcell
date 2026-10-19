@@ -18,15 +18,18 @@ BASE="http://eggnog5.embl.de/download/emapperdb-5.0.2"
 mkdir -p "$DB"
 cd "$DB"
 PROV="$DB/eggnog_db_provenance.tsv"
-printf 'file\tsource_url\tsha256\tretrieved_at\n' > "$PROV"
+# server_last_modified is the Last-Modified wget preserves on the file; downloaded_at
+# is the local change time of the archive (when this script wrote it).
+printf 'file\tsource_url\tsha256\tserver_last_modified\tdownloaded_at\n' > "$PROV"
 for f in eggnog.db.gz eggnog.taxa.tar.gz eggnog_proteins.dmnd.gz; do
   if [ ! -s "$f" ]; then
     wget -q --user-agent=Mozilla/5.0 -O "$f" "$BASE/$f"
   fi
-  printf '%s\t%s\t%s\t%s\n' "$f" "$BASE/$f" "$(sha256sum "$f" | cut -d' ' -f1)" \
-    "$(date -u -r "$f" +%Y-%m-%dT%H:%M:%SZ)" >> "$PROV"
+  printf '%s\t%s\t%s\t%s\t%s\n' "$f" "$BASE/$f" "$(sha256sum "$f" | cut -d' ' -f1)" \
+    "$(date -u -r "$f" +%Y-%m-%dT%H:%M:%SZ)" \
+    "$(date -u -d "@$(stat -c %Z "$f")" +%Y-%m-%dT%H:%M:%SZ)" >> "$PROV"
 done
-gunzip -k eggnog.db.gz
-tar -zxf eggnog.taxa.tar.gz
-gunzip -k eggnog_proteins.dmnd.gz
+[ -s eggnog.db ] || gunzip -k eggnog.db.gz
+[ -s eggnog.taxa.db ] || tar -zxf eggnog.taxa.tar.gz
+[ -s eggnog_proteins.dmnd ] || gunzip -k eggnog_proteins.dmnd.gz
 echo "done: $(ls -la "$DB")"

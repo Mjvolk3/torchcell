@@ -1214,9 +1214,14 @@ class Neo4jQueryRaw:
 
     @staticmethod
     def extract_systematic_gene_names(genotype: dict[str, Any]) -> list[str]:
-        """Return the systematic gene names of all perturbations in a genotype."""
+        """Return the systematic gene names of all perturbations in a genotype.
+
+        A ``SegregantGenotype`` has no ``perturbations`` key by design (its gene-keyed
+        properties are absent), so a genotype without the key has no perturbed genes.
+        """
         gene_names: list[str] = []
-        for perturbation in cast(list[dict[str, Any]], genotype.get("perturbations")):
+        perturbations = cast(list[dict[str, Any]], genotype.get("perturbations") or [])
+        for perturbation in perturbations:
             gene_name = cast(str, perturbation.get("systematic_gene_name"))
             gene_names.append(gene_name)
         return gene_names

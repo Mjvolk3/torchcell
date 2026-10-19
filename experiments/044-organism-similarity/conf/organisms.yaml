@@ -1,0 +1,468 @@
+# experiments/044-organism-similarity/conf/organisms.yaml
+# [[experiments.044-organism-similarity.plan]]
+#
+# The 34 reference organisms of the 044 plan table (rows 1 and 3-35; row 2, the 1,011
+# isolates, is handled by scripts 05 and 06 from the peter2018 tier set). Justification
+# text is the plan's, condensed from the owner's deep-research table (2026-10-19).
+#
+# source:
+#   tier   -> read through torchcell.sequence.genome.registry.resolve(set, member)
+#   sd108  -> the SD108 release clone (sha256 recorded by 01_organisms.py)
+#   ncbi   -> `datasets download genome accession <accession> --include protein,gff3`
+#   absent -> no annotated proteome; kept on the cladogram, excluded from proteome axes
+# accession_choice records why an ncbi accession differs from (or equals) the NCBI
+# reference assembly that `datasets summary genome taxon "<taxon_query>" --reference`
+# returns; 01_organisms.py records that reference accession beside the chosen one.
+# groups: the first group is the color group in every figure.
+
+organisms:
+  - key: scer_s288c
+    row: 1
+    display: S. cerevisiae S288C
+    taxon_query: Saccharomyces cerevisiae
+    taxid: 559292
+    preferred_strain: S288C
+    groups: [reference, established]
+    source: tier
+    tier_set: sgd_S288C_R64-4-1_20230830
+    tier_protein: orf_trans_all_R64-4-1_20230830.fasta
+    justification: >-
+      SGD R64-4-1 reference. Established host #1: baker's yeast, ethanol, recombinant
+      proteins; fed-batch is the standard biomass process.
+
+  - key: pkud_sd108
+    row: 3
+    display: P. kudriavzevii SD108
+    taxon_query: Pichia kudriavzevii
+    taxid: 4909
+    preferred_strain: SD108
+    groups: [cabbi, emerging]
+    source: sd108
+    sd108_protein: /scratch/projects/torchcell-scratch/tmp/044-inputs/sd108-repo/Assembly_Build/final/annotation/proteins.faa
+    sd108_gff: /scratch/projects/torchcell-scratch/tmp/044-inputs/sd108-repo/Assembly_Build/final/annotation/SD108_genome_v1.gff3
+    sd108_commit: 8ca6a106
+    justification: >-
+      Our curated genome (private repo Aurosish/I.orientalis_SD108_Genome_Reconstruction,
+      commit 8ca6a106, 5 chromosomes + mito + rDNA, 5,144 nuclear protein-coding genes).
+      Low-pH organic acids; succinate >100 g/L in bench fed-batch.
+
+  - key: pkud_cbs573
+    row: 4
+    display: P. kudriavzevii CBS573
+    taxon_query: Pichia kudriavzevii
+    preferred_strain: CBS573
+    groups: [emerging]
+    source: ncbi
+    accession: GCF_003054445.1
+    accession_choice: NCBI reference assembly; it is the named type strain CBS573.
+    justification: >-
+      The public reference beside our SD108, so the figure shows how far our strain sits
+      from the type strain.
+
+  - key: ecoli_mg1655
+    row: 5
+    display: E. coli K-12 MG1655
+    taxon_query: Escherichia coli
+    taxid: 511145
+    preferred_strain: K-12 MG1655
+    groups: [reference, established]
+    source: tier
+    tier_set: ecoli_K12_MG1655_ASM584v2
+    tier_protein: GCA_000005845.2_ASM584v2_protein.faa.gz
+    justification: >-
+      Established host #2: proteins, enzymes, amino acids.
+
+  - key: pput_kt2440
+    row: 6
+    display: P. putida KT2440
+    taxon_query: Pseudomonas putida
+    taxid: 160488
+    preferred_strain: KT2440
+    groups: [reference, emerging]
+    source: tier
+    tier_set: pputida_KT2440_ASM756v2
+    tier_protein: GCA_000007565.2_ASM756v2_protein.faa.gz
+    justification: >-
+      Emerging #13: aromatic valorization, PHA, beta-ketoadipate from glucose/xylose in
+      fed-batch.
+
+  - key: cglu_atcc13032
+    row: 7
+    display: C. glutamicum ATCC 13032
+    taxon_query: Corynebacterium glutamicum
+    preferred_strain: ATCC 13032
+    groups: [established]
+    source: ncbi
+    accession: GCF_000011325.1
+    accession_choice: NCBI reference assembly; it is the named strain ATCC 13032.
+    justification: >-
+      Million-ton amino-acid fermentation (glutamate, lysine); robust aerobic fed-batch.
+
+  - key: bsub_168
+    row: 8
+    display: B. subtilis 168
+    taxon_query: Bacillus subtilis
+    preferred_strain: "168"
+    groups: [established]
+    source: ncbi
+    accession: GCF_000009045.1
+    accession_choice: NCBI reference assembly; it is the named strain 168.
+    justification: >-
+      Secreted industrial enzymes; the Gram-positive secretion workhorse.
+
+  - key: blic_dsm13
+    row: 9
+    display: B. licheniformis DSM 13
+    taxon_query: Bacillus licheniformis
+    preferred_strain: DSM 13 (ATCC 14580)
+    groups: [established]
+    source: ncbi
+    accession: GCF_034478925.1
+    accession_choice: >-
+      NCBI reference assembly; its strain is ATCC 14580, which is the named strain
+      (DSM 13 = ATCC 14580).
+    justification: >-
+      Proteases and other secreted enzymes at industrial scale.
+
+  - key: kpha_gs115
+    row: 10
+    display: K. phaffii GS115
+    taxon_query: Komagataella phaffii
+    preferred_strain: GS115
+    groups: [established]
+    source: ncbi
+    accession: GCF_000027005.1
+    accession_choice: NCBI reference assembly; it is the named strain GS115.
+    justification: >-
+      "Pichia pastoris": recombinant enzymes, food proteins, biologics; glycerol/methanol
+      fed-batch.
+
+  - key: cgri_cho
+    row: 11
+    display: C. griseus (hamster)
+    taxon_query: Cricetulus griseus
+    preferred_strain: Chinese hamster (CHO source species)
+    groups: [mammal, established]
+    source: ncbi
+    accession: GCF_003668045.3
+    accession_choice: >-
+      NCBI reference assembly CriGri-PICRH-1.0 (Chinese hamster 17A/GY, the animal, not a
+      CHO cell line). The species proteome is what the mammal axis needs; CHO cell-line
+      assemblies (CriGri_1.0, CHOZN) carry the same species annotation.
+    justification: >-
+      Dominant mammalian platform for therapeutic proteins; suspension fed-batch is the
+      manufacturing standard. Also the hamster point on the mammal axis.
+
+  - key: hsap_grch38
+    row: 12
+    display: H. sapiens GRCh38
+    taxon_query: Homo sapiens
+    preferred_strain: GRCh38 (HEK293)
+    groups: [mammal, established]
+    source: ncbi
+    accession: GCF_000001405.40
+    accession_choice: NCBI reference assembly GRCh38.p14.
+    justification: >-
+      Viral vectors (AAV, adenovirus) and proteins in suspension; the anchor of every
+      mammalian comparison.
+
+  - key: llac_il1403
+    row: 13
+    display: L. lactis IL1403
+    taxon_query: Lactococcus lactis
+    preferred_strain: IL1403
+    groups: [established]
+    source: ncbi
+    accession: GCF_000006865.1
+    accession_choice: >-
+      The NCBI reference is strain 14B4 (GCF_003176835.1); the named strain IL1403 has the
+      original complete RefSeq assembly ASM686v1, so the named strain is used.
+    justification: >-
+      Dairy starter biomass and nisin; long-established food-biotech organism.
+
+  - key: alim
+    row: 14
+    display: A. limacinum
+    taxon_query: Aurantiochytrium limacinum
+    taxid: 87102
+    preferred_strain: any annotated
+    groups: [established]
+    source: absent
+    absence_reason: >-
+      No annotated assembly at NCBI: `datasets summary genome taxon "Aurantiochytrium
+      limacinum" --annotated` and the same query for "Schizochytrium" return zero records
+      (2026-10-19); the reference GCA_036850685.1 (BL10) carries no annotation. Kept on the
+      cladogram, excluded from the proteome axes.
+    justification: >-
+      DHA oils; heterotrophic protist in sugar-fed reactors.
+
+  - key: ylip_clib122
+    row: 15
+    display: Y. lipolytica CLIB122
+    taxon_query: Yarrowia lipolytica
+    preferred_strain: CLIB122
+    groups: [cabbi, emerging]
+    source: ncbi
+    accession: GCF_000002525.2
+    accession_choice: >-
+      The NCBI reference is CLIB89(W29) (GCF_001761485.1); the named strain CLIB122 has an
+      annotated RefSeq assembly (ASM252v1, Genolevures), so the named strain is used.
+    justification: >-
+      Lipids, carotenoids, organic acids; EPA commercialized; CABBI conversion yeast.
+
+  - key: rtor_np11
+    row: 16
+    display: R. toruloides NP11
+    taxon_query: Rhodotorula toruloides
+    preferred_strain: NP11
+    groups: [cabbi, emerging]
+    source: ncbi
+    accession: GCF_000320785.1
+    accession_choice: NCBI reference assembly; it is the named strain NP11.
+    justification: >-
+      Microbial oils; 50 m^3 fed-batch scale-up reported 2025; CABBI conversion yeast.
+
+  - key: cnec_h16
+    row: 17
+    display: C. necator H16
+    taxon_query: Cupriavidus necator
+    preferred_strain: H16
+    groups: [emerging]
+    source: ncbi
+    accession: GCF_000009285.1
+    accession_choice: >-
+      The NCBI reference is strain N-1 (GCF_000219215.1); the named strain H16 has the
+      original RefSeq assembly ASM928v2, so the named strain is used.
+    justification: >-
+      PHB; CO2/formate/H2-linked manufacturing.
+
+  - key: kmar_dmku3
+    row: 18
+    display: K. marxianus DMKU3-1042
+    taxon_query: Kluyveromyces marxianus
+    preferred_strain: DMKU3-1042
+    groups: [emerging]
+    source: ncbi
+    accession: GCF_001417885.1
+    accession_choice: NCBI reference assembly; it is the named strain DMKU3-1042.
+    justification: >-
+      Thermotolerant; lactose/whey valorization.
+
+  - key: hblu_td01
+    row: 19
+    display: H. bluephagenesis TD01
+    taxon_query: Halomonas bluephagenesis
+    preferred_strain: TD01
+    groups: [emerging]
+    source: ncbi
+    accession: GCF_054790765.1
+    accession_choice: NCBI reference assembly; it is the named strain TD01.
+    justification: >-
+      PHA under nonsterile high-salt conditions; 5,000 L fed-batch in 2025.
+
+  - key: opol_ncyc495
+    row: 20
+    display: O. polymorpha NCYC 495
+    taxon_query: Ogataea polymorpha
+    preferred_strain: NCYC 495
+    groups: [emerging]
+    source: ncbi
+    accession: GCF_001664045.1
+    accession_choice: >-
+      NCBI reference assembly Hanpo2 (NCYC 495 leu1.1), the plan's first-named strain; the
+      plan's alternative O. parapolymorpha DL-1 is not used.
+    justification: >-
+      Methylotrophic protein and vaccine-antigen host.
+
+  - key: vnat_atcc14048
+    row: 21
+    display: V. natriegens ATCC 14048
+    taxon_query: Vibrio natriegens
+    preferred_strain: ATCC 14048
+    groups: [emerging]
+    source: ncbi
+    accession: GCF_001456255.1
+    accession_choice: NCBI reference assembly; it is the named strain ATCC 14048.
+    justification: >-
+      Fastest-growing chassis; ~60 g/L dry biomass in fed-batch.
+
+  - key: mext_am1
+    row: 22
+    display: M. extorquens AM1
+    taxon_query: Methylorubrum extorquens
+    preferred_strain: AM1
+    groups: [emerging]
+    source: ncbi
+    accession: GCF_000022685.1
+    accession_choice: >-
+      The NCBI reference is strain DM4 (GCF_000083545.1); the named strain AM1 has an
+      annotated RefSeq assembly (ASM2268v1), so the named strain is used.
+    justification: >-
+      Methanol-to-chemicals C1 chassis.
+
+  - key: lsta_y11557
+    row: 23
+    display: L. starkeyi NRRL Y-11557
+    taxon_query: Lipomyces starkeyi
+    preferred_strain: NRRL Y-11557
+    groups: [cabbi]
+    source: ncbi
+    accession: GCA_001661325.1
+    accession_choice: >-
+      The NCBI reference (GCA_018804115.1, AS 2.1560) carries no annotation; the named
+      strain NRRL Y-11557 has a JGI-annotated GenBank assembly (Lipst1_1), so it is used.
+    justification: >-
+      Oleaginous; 130 g/L biomass and 88 g/L lipid in 5 L fed-batch; CABBI systems-biology
+      organism.
+
+  - key: zbai_ist302
+    row: 24
+    display: Z. bailii IST302
+    taxon_query: Zygosaccharomyces bailii
+    preferred_strain: CLIB 213
+    groups: [cabbi]
+    source: ncbi
+    accession: GCA_900162805.1
+    accession_choice: >-
+      The NCBI reference (GCA_949129075.1) carries no annotation. The named strain CLIB 213
+      has a GenBank annotation (GCA_000442885.1, ZYBA0) that lists only 864 protein-coding
+      genes, a partial annotation of a ~5,000-gene yeast, which would read as a missing
+      proteome on every ortholog axis. IST302 (GCA_900162805.1, 5,141 protein-coding genes)
+      is the complete annotated Z. bailii assembly at NCBI, same species, so it is used and
+      the strain substitution is stated in the figure label.
+    justification: >-
+      Acid- and preservative-tolerant; CABBI CRISPR strain made 35 g/L lactate.
+
+  - key: zrou_cbs732
+    row: 25
+    display: Z. rouxii CBS 732
+    taxon_query: Zygosaccharomyces rouxii
+    preferred_strain: CBS 732
+    groups: [cabbi]
+    source: ncbi
+    accession: GCF_000026365.1
+    accession_choice: NCBI reference assembly; it is the named strain CBS 732.
+    justification: >-
+      Osmotolerant; D-arabitol 152.8 g/L in fed-batch; CABBI sequenced NRRL Y-64007.
+
+  - key: ltet_y64009
+    row: 26
+    display: L. tetrasporus NRRL Y-64009
+    taxon_query: Lipomyces tetrasporus
+    preferred_strain: NRRL Y-64009
+    groups: [cabbi]
+    source: ncbi
+    accession: GCF_029532465.1
+    accession_choice: >-
+      NCBI reference assembly Liptet1 (JGI annotation); it is the CABBI-sequenced strain
+      NRRL Y-64009.
+    justification: >-
+      CABBI sequenced NRRL Y-64009; lipid accumulation on hydrolysates.
+
+  - key: spar_cbs432
+    row: 27
+    display: S. paradoxus CBS432
+    taxon_query: Saccharomyces paradoxus
+    preferred_strain: CBS432
+    groups: [genus]
+    source: ncbi
+    accession: GCF_002079055.1
+    accession_choice: NCBI reference assembly; it is the named strain CBS432.
+    justification: >-
+      The sister species: the genus rung of the claim.
+
+  - key: seub_fm1318
+    row: 28
+    display: S. eubayanus FM1318
+    taxon_query: Saccharomyces eubayanus
+    preferred_strain: FM1318
+    groups: [genus]
+    source: ncbi
+    accession: GCF_001298625.1
+    accession_choice: NCBI reference assembly; it is the named strain FM1318.
+    justification: >-
+      The far end of the genus (lager parent).
+
+  - key: ptro
+    row: 29
+    display: P. troglodytes
+    taxon_query: Pan troglodytes
+    preferred_strain: reference
+    groups: [mammal]
+    source: ncbi
+    accession: GCF_028858775.2
+    accession_choice: NCBI reference assembly NHGRI_mPanTro3-v2.1_pri.
+    justification: >-
+      Human/chimp is the floor of mammalian divergence (Peris's lower anchor).
+
+  - key: ggor
+    row: 30
+    display: G. gorilla
+    taxon_query: Gorilla gorilla
+    preferred_strain: reference
+    groups: [mammal]
+    source: ncbi
+    accession: GCF_029281585.2
+    accession_choice: NCBI reference assembly NHGRI_mGorGor1-v2.1_pri.
+    justification: >-
+      Great ape.
+
+  - key: pabe
+    row: 31
+    display: P. abelii
+    taxon_query: Pongo abelii
+    preferred_strain: reference
+    groups: [mammal]
+    source: ncbi
+    accession: GCF_028885655.2
+    accession_choice: NCBI reference assembly NHGRI_mPonAbe1-v2.1_pri.
+    justification: >-
+      Great ape, the most distant.
+
+  - key: mmul
+    row: 32
+    display: M. mulatta
+    taxon_query: Macaca mulatta
+    preferred_strain: reference
+    groups: [mammal]
+    source: ncbi
+    accession: GCF_049350105.2
+    accession_choice: NCBI reference assembly T2T-MMU8v2.0.
+    justification: >-
+      Peris's second anchor.
+
+  - key: mmus_c57bl6j
+    row: 33
+    display: M. musculus C57BL/6J
+    taxon_query: Mus musculus
+    preferred_strain: C57BL/6J
+    groups: [mammal]
+    source: ncbi
+    accession: GCF_000001635.27
+    accession_choice: NCBI reference assembly GRCm39; it is the named strain C57BL/6J.
+    justification: >-
+      The model rodent; human/mouse is the classic ~85% protein identity pair.
+
+  - key: rnor
+    row: 34
+    display: R. norvegicus
+    taxon_query: Rattus norvegicus
+    preferred_strain: reference
+    groups: [mammal]
+    source: ncbi
+    accession: GCF_036323735.1
+    accession_choice: NCBI reference assembly GRCr8.
+    justification: >-
+      Model rodent.
+
+  - key: ggal
+    row: 35
+    display: G. gallus
+    taxon_query: Gallus gallus
+    preferred_strain: reference
+    groups: [outgroup]
+    source: ncbi
+    accession: GCF_016699485.2
+    accession_choice: NCBI reference assembly bGalGal1.mat.broiler.GRCg7b.
+    justification: >-
+      Peris's amniote outgroup; bounds "within mammals" from outside.

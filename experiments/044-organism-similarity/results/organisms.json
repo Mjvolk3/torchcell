@@ -1,0 +1,1711 @@
+{
+  "created_at": "2026-10-19T21:37:17+00:00",
+  "datasets_version": "18.39.0",
+  "organisms": [
+    {
+      "key": "scer_s288c",
+      "row": 1,
+      "display": "S. cerevisiae S288C",
+      "organism_name": "Saccharomyces cerevisiae",
+      "taxid": 559292,
+      "strain": "S288C",
+      "preferred_strain": "S288C",
+      "groups": [
+        "reference",
+        "established"
+      ],
+      "justification": "SGD R64-4-1 reference. Established host #1: baker's yeast, ethanol, recombinant proteins; fed-batch is the standard biomass process.",
+      "reference_accession": null,
+      "accession_choice": "genomes tier set sgd_S288C_R64-4-1_20230830",
+      "proteome": {
+        "source": "tier",
+        "accession": null,
+        "assembly_name": null,
+        "annotation_provider": null,
+        "tier_set": "sgd_S288C_R64-4-1_20230830",
+        "sd108_commit": null,
+        "source_url": "http://sgd-archive.yeastgenome.org/sequence/S288C_reference/genome_releases/S288C_reference_genome_R64-4-1_20230830.tgz",
+        "retrieval_method": "genomes_tier_resolve",
+        "retrieval_command": "torchcell.sequence.genome.registry.resolve('sgd_S288C_R64-4-1_20230830', 'orf_trans_all_R64-4-1_20230830.fasta')",
+        "datasets_version": null,
+        "retrieved_at": "2026-10-19T21:34:39+00:00",
+        "protein_fasta": {
+          "path": "/scratch/projects/torchcell-scratch/torchcell-genomes/sgd_S288C_R64-4-1_20230830/orf_trans_all_R64-4-1_20230830.fasta",
+          "sha256": "9438eb58e02942bdd4a3af68a4ac04682176e53ee1dab66daefd3092f63edcb4",
+          "bytes": 5499107
+        },
+        "gff": null,
+        "n_proteins_raw": 6716
+      },
+      "absence_reason": null,
+      "prep": {
+        "rule": "SGD orf_trans_all: one translation per systematic ORF name, passed through unchanged (no isoforms to collapse).",
+        "n_proteins_raw": 6716,
+        "n_proteins_prepped": 6716,
+        "n_proteins_without_gene": 0,
+        "output": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/proteomes/scer_s288c.faa",
+          "sha256": "0afd77d12c9104c287e8cd320b180a5c198e8cb0c5ff8845f0591381563e8c10",
+          "bytes": 3195420
+        }
+      }
+    },
+    {
+      "key": "pkud_sd108",
+      "row": 3,
+      "display": "P. kudriavzevii SD108",
+      "organism_name": "Pichia kudriavzevii",
+      "taxid": 4909,
+      "strain": "SD108",
+      "preferred_strain": "SD108",
+      "groups": [
+        "cabbi",
+        "emerging"
+      ],
+      "justification": "Our curated genome (private repo Aurosish/I.orientalis_SD108_Genome_Reconstruction, commit 8ca6a106, 5 chromosomes + mito + rDNA, 5,144 nuclear protein-coding genes). Low-pH organic acids; succinate >100 g/L in bench fed-batch.",
+      "reference_accession": null,
+      "accession_choice": "our curated SD108 release (private repo clone)",
+      "proteome": {
+        "source": "sd108",
+        "accession": null,
+        "assembly_name": null,
+        "annotation_provider": "Aurosish/I.orientalis_SD108_Genome_Reconstruction",
+        "tier_set": null,
+        "sd108_commit": "8ca6a106",
+        "source_url": null,
+        "retrieval_method": "git_clone_private_repo",
+        "retrieval_command": "git clone Aurosish/I.orientalis_SD108_Genome_Reconstruction (commit 8ca6a106) -> $DATA_ROOT/tmp/044-inputs/sd108-repo",
+        "datasets_version": null,
+        "retrieved_at": "2026-10-19T21:34:39+00:00",
+        "protein_fasta": {
+          "path": "/scratch/projects/torchcell-scratch/tmp/044-inputs/sd108-repo/Assembly_Build/final/annotation/proteins.faa",
+          "sha256": "8c3e0d460416fae377858abe2f72300005bed570b49edfac6b06a74bceddbbae",
+          "bytes": 2772771
+        },
+        "gff": {
+          "path": "/scratch/projects/torchcell-scratch/tmp/044-inputs/sd108-repo/Assembly_Build/final/annotation/SD108_genome_v1.gff3",
+          "sha256": "1c3c658dafd15cbb79924f91ec0bdb58c06987190961643fc5f39de53e51428c",
+          "bytes": 4883873
+        },
+        "n_proteins_raw": 5159
+      },
+      "absence_reason": null,
+      "prep": {
+        "rule": "longest protein per GFF gene (CDS protein_id or feature ID, Parent chain to the first gene/pseudogene feature, gene keyed by Dbxref GeneID when present); ties keep the smallest protein id.",
+        "n_proteins_raw": 5159,
+        "n_proteins_prepped": 5159,
+        "n_proteins_without_gene": 0,
+        "output": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/proteomes/pkud_sd108.faa",
+          "sha256": "6fbb06b022e39ede3f11ff9ff492bfd2040903207d5667cebc5652935446c47b",
+          "bytes": 2782458
+        }
+      }
+    },
+    {
+      "key": "pkud_cbs573",
+      "row": 4,
+      "display": "P. kudriavzevii CBS573",
+      "organism_name": "Pichia kudriavzevii",
+      "taxid": 4909,
+      "strain": "CBS573",
+      "preferred_strain": "CBS573",
+      "groups": [
+        "emerging"
+      ],
+      "justification": "The public reference beside our SD108, so the figure shows how far our strain sits from the type strain.",
+      "reference_accession": "GCF_003054445.1",
+      "accession_choice": "NCBI reference assembly; it is the named type strain CBS573.",
+      "proteome": {
+        "source": "ncbi",
+        "accession": "GCF_003054445.1",
+        "assembly_name": "ASM305444v1",
+        "annotation_provider": "University College Dublin",
+        "tier_set": null,
+        "sd108_commit": null,
+        "source_url": "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/GCF_003054445.1/download?include_annotation_type=PROT_FASTA,GENOME_GFF",
+        "retrieval_method": "ncbi_datasets_cli",
+        "retrieval_command": "datasets download genome accession GCF_003054445.1 --include protein,gff3 --filename $DATA_ROOT/data/organism_similarity/ncbi/pkud_cbs573/GCF_003054445.1.zip",
+        "datasets_version": "18.39.0",
+        "retrieved_at": "2026-10-19T21:34:43+00:00",
+        "protein_fasta": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/pkud_cbs573/extracted/ncbi_dataset/data/GCF_003054445.1/protein.faa",
+          "sha256": "3c61b773ab86e5296993d8e135ce9cf3ec259e693084f64865e2ae3744d3e19c",
+          "bytes": 3061410
+        },
+        "gff": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/pkud_cbs573/extracted/ncbi_dataset/data/GCF_003054445.1/genomic.gff",
+          "sha256": "fa07c1534b5b04c55d7e2fd0b1ef2c5191f55e59ee93b08f310b3896abb22c11",
+          "bytes": 7768326
+        },
+        "n_proteins_raw": 5139
+      },
+      "absence_reason": null,
+      "prep": {
+        "rule": "longest protein per GFF gene (CDS protein_id or feature ID, Parent chain to the first gene/pseudogene feature, gene keyed by Dbxref GeneID when present); ties keep the smallest protein id.",
+        "n_proteins_raw": 5139,
+        "n_proteins_prepped": 5139,
+        "n_proteins_without_gene": 0,
+        "output": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/proteomes/pkud_cbs573.faa",
+          "sha256": "cead8cd5827d7c8edb405dc7b2c63bc5b138c5c42e96fce7d7ba6a171d692c70",
+          "bytes": 2814603
+        }
+      }
+    },
+    {
+      "key": "ecoli_mg1655",
+      "row": 5,
+      "display": "E. coli K-12 MG1655",
+      "organism_name": "Escherichia coli",
+      "taxid": 511145,
+      "strain": "K-12 MG1655",
+      "preferred_strain": "K-12 MG1655",
+      "groups": [
+        "reference",
+        "established"
+      ],
+      "justification": "Established host #2: proteins, enzymes, amino acids.",
+      "reference_accession": null,
+      "accession_choice": "genomes tier set ecoli_K12_MG1655_ASM584v2",
+      "proteome": {
+        "source": "tier",
+        "accession": "GCA_000005845.2",
+        "assembly_name": null,
+        "annotation_provider": null,
+        "tier_set": "ecoli_K12_MG1655_ASM584v2",
+        "sd108_commit": null,
+        "source_url": "https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/005/845/GCA_000005845.2_ASM584v2/GCA_000005845.2_ASM584v2_protein.faa.gz",
+        "retrieval_method": "genomes_tier_resolve",
+        "retrieval_command": "torchcell.sequence.genome.registry.resolve('ecoli_K12_MG1655_ASM584v2', 'GCA_000005845.2_ASM584v2_protein.faa.gz')",
+        "datasets_version": null,
+        "retrieved_at": "2026-10-19T21:34:43+00:00",
+        "protein_fasta": {
+          "path": "/scratch/projects/torchcell-scratch/torchcell-genomes/ecoli_K12_MG1655_ASM584v2/GCA_000005845.2_ASM584v2_protein.faa.gz",
+          "sha256": "900cb656bba2f4fde8dafc43c80c84ddd326c85ef1d10b476e0a49a104db5263",
+          "bytes": 901247
+        },
+        "gff": {
+          "path": "/scratch/projects/torchcell-scratch/torchcell-genomes/ecoli_K12_MG1655_ASM584v2/GCA_000005845.2_ASM584v2_genomic.gff.gz",
+          "sha256": "5be073e97f95efe337d1e5b69cd5af61d8cbee3450f8cb92c3ea722c8cb0af9b",
+          "bytes": 384317
+        },
+        "n_proteins_raw": 4300
+      },
+      "absence_reason": null,
+      "prep": {
+        "rule": "longest protein per GFF gene (CDS protein_id or feature ID, Parent chain to the first gene/pseudogene feature, gene keyed by Dbxref GeneID when present); ties keep the smallest protein id.",
+        "n_proteins_raw": 4300,
+        "n_proteins_prepped": 4290,
+        "n_proteins_without_gene": 0,
+        "output": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/proteomes/ecoli_mg1655.faa",
+          "sha256": "c4a7e33452b4c4cbdad1cf391c0b9b28091f2dba7c45734a137347cf8592d748",
+          "bytes": 1451371
+        }
+      }
+    },
+    {
+      "key": "pput_kt2440",
+      "row": 6,
+      "display": "P. putida KT2440",
+      "organism_name": "Pseudomonas putida",
+      "taxid": 160488,
+      "strain": "KT2440",
+      "preferred_strain": "KT2440",
+      "groups": [
+        "reference",
+        "emerging"
+      ],
+      "justification": "Emerging #13: aromatic valorization, PHA, beta-ketoadipate from glucose/xylose in fed-batch.",
+      "reference_accession": null,
+      "accession_choice": "genomes tier set pputida_KT2440_ASM756v2",
+      "proteome": {
+        "source": "tier",
+        "accession": "GCA_000007565.2",
+        "assembly_name": null,
+        "annotation_provider": null,
+        "tier_set": "pputida_KT2440_ASM756v2",
+        "sd108_commit": null,
+        "source_url": "https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/007/565/GCA_000007565.2_ASM756v2/GCA_000007565.2_ASM756v2_protein.faa.gz",
+        "retrieval_method": "genomes_tier_resolve",
+        "retrieval_command": "torchcell.sequence.genome.registry.resolve('pputida_KT2440_ASM756v2', 'GCA_000007565.2_ASM756v2_protein.faa.gz')",
+        "datasets_version": null,
+        "retrieved_at": "2026-10-19T21:34:43+00:00",
+        "protein_fasta": {
+          "path": "/scratch/projects/torchcell-scratch/torchcell-genomes/pputida_KT2440_ASM756v2/GCA_000007565.2_ASM756v2_protein.faa.gz",
+          "sha256": "914c6cc763fb5f404dbfe9dcd16c3eacec98d4a477a0bec3caf52bc58a24f0a9",
+          "bytes": 1189638
+        },
+        "gff": {
+          "path": "/scratch/projects/torchcell-scratch/torchcell-genomes/pputida_KT2440_ASM756v2/GCA_000007565.2_ASM756v2_genomic.gff.gz",
+          "sha256": "703bff9433dfd5d4b2e9aaebdccc3555be7790efaf5dba227a590f964c4978d0",
+          "bytes": 391311
+        },
+        "n_proteins_raw": 5564
+      },
+      "absence_reason": null,
+      "prep": {
+        "rule": "longest protein per GFF gene (CDS protein_id or feature ID, Parent chain to the first gene/pseudogene feature, gene keyed by Dbxref GeneID when present); ties keep the smallest protein id.",
+        "n_proteins_raw": 5564,
+        "n_proteins_prepped": 5564,
+        "n_proteins_without_gene": 0,
+        "output": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/proteomes/pput_kt2440.faa",
+          "sha256": "4046cae1fb3c4080c52fa8daef7dbd30ee4cc503be4cf83c21d7f0a3ce977b7c",
+          "bytes": 1983474
+        }
+      }
+    },
+    {
+      "key": "cglu_atcc13032",
+      "row": 7,
+      "display": "C. glutamicum ATCC 13032",
+      "organism_name": "Corynebacterium glutamicum ATCC 13032",
+      "taxid": 196627,
+      "strain": "ATCC 13032",
+      "preferred_strain": "ATCC 13032",
+      "groups": [
+        "established"
+      ],
+      "justification": "Million-ton amino-acid fermentation (glutamate, lysine); robust aerobic fed-batch.",
+      "reference_accession": "GCF_000011325.1",
+      "accession_choice": "NCBI reference assembly; it is the named strain ATCC 13032.",
+      "proteome": {
+        "source": "ncbi",
+        "accession": "GCF_000011325.1",
+        "assembly_name": "ASM1132v1",
+        "annotation_provider": "NCBI RefSeq",
+        "tier_set": null,
+        "sd108_commit": null,
+        "source_url": "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/GCF_000011325.1/download?include_annotation_type=PROT_FASTA,GENOME_GFF",
+        "retrieval_method": "ncbi_datasets_cli",
+        "retrieval_command": "datasets download genome accession GCF_000011325.1 --include protein,gff3 --filename $DATA_ROOT/data/organism_similarity/ncbi/cglu_atcc13032/GCF_000011325.1.zip",
+        "datasets_version": "18.39.0",
+        "retrieved_at": "2026-10-19T21:34:46+00:00",
+        "protein_fasta": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/cglu_atcc13032/extracted/ncbi_dataset/data/GCF_000011325.1/protein.faa",
+          "sha256": "c408607d247adff1d0ea3cada0b0e3f20f8645f10c8fd914818fb4f8bc0e8bff",
+          "bytes": 1183199
+        },
+        "gff": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/cglu_atcc13032/extracted/ncbi_dataset/data/GCF_000011325.1/genomic.gff",
+          "sha256": "35251a1f71f6e59e7794bf28229e7bf744dfe3d92b37fac9921144de831c1875",
+          "bytes": 1904140
+        },
+        "n_proteins_raw": 2941
+      },
+      "absence_reason": null,
+      "prep": {
+        "rule": "longest protein per GFF gene (CDS protein_id or feature ID, Parent chain to the first gene/pseudogene feature, gene keyed by Dbxref GeneID when present); ties keep the smallest protein id.",
+        "n_proteins_raw": 2941,
+        "n_proteins_prepped": 2941,
+        "n_proteins_without_gene": 0,
+        "output": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/proteomes/cglu_atcc13032.faa",
+          "sha256": "1dd701c51b8ce6c53a2408b3add9b098d5d47a1989eb13d6287a157320de0045",
+          "bytes": 1043582
+        }
+      }
+    },
+    {
+      "key": "bsub_168",
+      "row": 8,
+      "display": "B. subtilis 168",
+      "organism_name": "Bacillus subtilis subsp. subtilis str. 168",
+      "taxid": 224308,
+      "strain": "168",
+      "preferred_strain": "168",
+      "groups": [
+        "established"
+      ],
+      "justification": "Secreted industrial enzymes; the Gram-positive secretion workhorse.",
+      "reference_accession": "GCF_000009045.1",
+      "accession_choice": "NCBI reference assembly; it is the named strain 168.",
+      "proteome": {
+        "source": "ncbi",
+        "accession": "GCF_000009045.1",
+        "assembly_name": "ASM904v1",
+        "annotation_provider": "NCBI RefSeq",
+        "tier_set": null,
+        "sd108_commit": null,
+        "source_url": "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/GCF_000009045.1/download?include_annotation_type=PROT_FASTA,GENOME_GFF",
+        "retrieval_method": "ncbi_datasets_cli",
+        "retrieval_command": "datasets download genome accession GCF_000009045.1 --include protein,gff3 --filename $DATA_ROOT/data/organism_similarity/ncbi/bsub_168/GCF_000009045.1.zip",
+        "datasets_version": "18.39.0",
+        "retrieved_at": "2026-10-19T21:34:52+00:00",
+        "protein_fasta": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/bsub_168/extracted/ncbi_dataset/data/GCF_000009045.1/protein.faa",
+          "sha256": "c0b6f56f434d113c4c71ba619f9916dd24eef1834b77bd972e77edd7ea05eec8",
+          "bytes": 1678330
+        },
+        "gff": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/bsub_168/extracted/ncbi_dataset/data/GCF_000009045.1/genomic.gff",
+          "sha256": "3c877fd4660b532ecbce74c423c000a73751dc5a04104d0e84653c299720f542",
+          "bytes": 3809073
+        },
+        "n_proteins_raw": 4237
+      },
+      "absence_reason": null,
+      "prep": {
+        "rule": "longest protein per GFF gene (CDS protein_id or feature ID, Parent chain to the first gene/pseudogene feature, gene keyed by Dbxref GeneID when present); ties keep the smallest protein id.",
+        "n_proteins_raw": 4237,
+        "n_proteins_prepped": 4237,
+        "n_proteins_without_gene": 0,
+        "output": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/proteomes/bsub_168.faa",
+          "sha256": "cffb2ff56c94b4c61088df261be020a1400db98170471588b7d1c0142fb8c7da",
+          "bytes": 1341830
+        }
+      }
+    },
+    {
+      "key": "blic_dsm13",
+      "row": 9,
+      "display": "B. licheniformis DSM 13",
+      "organism_name": "Bacillus licheniformis",
+      "taxid": 1402,
+      "strain": "ATCC 14580",
+      "preferred_strain": "DSM 13 (ATCC 14580)",
+      "groups": [
+        "established"
+      ],
+      "justification": "Proteases and other secreted enzymes at industrial scale.",
+      "reference_accession": "GCF_034478925.1",
+      "accession_choice": "NCBI reference assembly; its strain is ATCC 14580, which is the named strain (DSM 13 = ATCC 14580).",
+      "proteome": {
+        "source": "ncbi",
+        "accession": "GCF_034478925.1",
+        "assembly_name": "ASM3447892v1",
+        "annotation_provider": "NCBI RefSeq",
+        "tier_set": null,
+        "sd108_commit": null,
+        "source_url": "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/GCF_034478925.1/download?include_annotation_type=PROT_FASTA,GENOME_GFF",
+        "retrieval_method": "ncbi_datasets_cli",
+        "retrieval_command": "datasets download genome accession GCF_034478925.1 --include protein,gff3 --filename $DATA_ROOT/data/organism_similarity/ncbi/blic_dsm13/GCF_034478925.1.zip",
+        "datasets_version": "18.39.0",
+        "retrieved_at": "2026-10-19T21:34:55+00:00",
+        "protein_fasta": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/blic_dsm13/extracted/ncbi_dataset/data/GCF_034478925.1/protein.faa",
+          "sha256": "ec19a1d593e6b800b19ce3c37633fd3918798281a67b699fcb9963c15dcc5cca",
+          "bytes": 1531199
+        },
+        "gff": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/blic_dsm13/extracted/ncbi_dataset/data/GCF_034478925.1/genomic.gff",
+          "sha256": "7092ae0c57b2afc9c8272c1152bd5a9efec06fc41f9e515cd9965f3695d29a2b",
+          "bytes": 2931262
+        },
+        "n_proteins_raw": 4169
+      },
+      "absence_reason": null,
+      "prep": {
+        "rule": "longest protein per GFF gene (CDS protein_id or feature ID, Parent chain to the first gene/pseudogene feature, gene keyed by Dbxref GeneID when present); ties keep the smallest protein id.",
+        "n_proteins_raw": 4169,
+        "n_proteins_prepped": 4169,
+        "n_proteins_without_gene": 0,
+        "output": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/proteomes/blic_dsm13.faa",
+          "sha256": "851f4a41b874b1df2be2810bf32b5c2247f9192ea5f5713c8d40c92c0189efa1",
+          "bytes": 1333827
+        }
+      }
+    },
+    {
+      "key": "kpha_gs115",
+      "row": 10,
+      "display": "K. phaffii GS115",
+      "organism_name": "Komagataella phaffii GS115",
+      "taxid": 644223,
+      "strain": "GS115",
+      "preferred_strain": "GS115",
+      "groups": [
+        "established"
+      ],
+      "justification": "\"Pichia pastoris\": recombinant enzymes, food proteins, biologics; glycerol/methanol fed-batch.",
+      "reference_accession": "GCF_000027005.1",
+      "accession_choice": "NCBI reference assembly; it is the named strain GS115.",
+      "proteome": {
+        "source": "ncbi",
+        "accession": "GCF_000027005.1",
+        "assembly_name": "ASM2700v1",
+        "annotation_provider": "Unit for Molecular Glycobiology, Department for Molecular Biomedical Research, VIB, UGent, Belgium",
+        "tier_set": null,
+        "sd108_commit": null,
+        "source_url": "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/GCF_000027005.1/download?include_annotation_type=PROT_FASTA,GENOME_GFF",
+        "retrieval_method": "ncbi_datasets_cli",
+        "retrieval_command": "datasets download genome accession GCF_000027005.1 --include protein,gff3 --filename $DATA_ROOT/data/organism_similarity/ncbi/kpha_gs115/GCF_000027005.1.zip",
+        "datasets_version": "18.39.0",
+        "retrieved_at": "2026-10-19T21:34:59+00:00",
+        "protein_fasta": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/kpha_gs115/extracted/ncbi_dataset/data/GCF_000027005.1/protein.faa",
+          "sha256": "d665c21809acbca62d4a9e440f8bbe6dc7828735d3b2944690ace7c1faf18a37",
+          "bytes": 2911068
+        },
+        "gff": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/kpha_gs115/extracted/ncbi_dataset/data/GCF_000027005.1/genomic.gff",
+          "sha256": "138ace24be741b6d6135affd3b4777224b3be4e3e5e937f0655c6a786484dc26",
+          "bytes": 6848769
+        },
+        "n_proteins_raw": 5040
+      },
+      "absence_reason": null,
+      "prep": {
+        "rule": "longest protein per GFF gene (CDS protein_id or feature ID, Parent chain to the first gene/pseudogene feature, gene keyed by Dbxref GeneID when present); ties keep the smallest protein id.",
+        "n_proteins_raw": 5040,
+        "n_proteins_prepped": 5040,
+        "n_proteins_without_gene": 0,
+        "output": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/proteomes/kpha_gs115.faa",
+          "sha256": "92e90a78aa5cce16355c26f77df388a926b29d200883b2be5f83a2a35fc100fa",
+          "bytes": 2568026
+        }
+      }
+    },
+    {
+      "key": "cgri_cho",
+      "row": 11,
+      "display": "C. griseus (hamster)",
+      "organism_name": "Cricetulus griseus",
+      "taxid": 10029,
+      "strain": "17A/GY",
+      "preferred_strain": "Chinese hamster (CHO source species)",
+      "groups": [
+        "mammal",
+        "established"
+      ],
+      "justification": "Dominant mammalian platform for therapeutic proteins; suspension fed-batch is the manufacturing standard. Also the hamster point on the mammal axis.",
+      "reference_accession": "GCF_003668045.3",
+      "accession_choice": "NCBI reference assembly CriGri-PICRH-1.0 (Chinese hamster 17A/GY, the animal, not a CHO cell line). The species proteome is what the mammal axis needs; CHO cell-line assemblies (CriGri_1.0, CHOZN) carry the same species annotation.",
+      "proteome": {
+        "source": "ncbi",
+        "accession": "GCF_003668045.3",
+        "assembly_name": "CriGri-PICRH-1.0",
+        "annotation_provider": "NCBI RefSeq",
+        "tier_set": null,
+        "sd108_commit": null,
+        "source_url": "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/GCF_003668045.3/download?include_annotation_type=PROT_FASTA,GENOME_GFF",
+        "retrieval_method": "ncbi_datasets_cli",
+        "retrieval_command": "datasets download genome accession GCF_003668045.3 --include protein,gff3 --filename $DATA_ROOT/data/organism_similarity/ncbi/cgri_cho/GCF_003668045.3.zip",
+        "datasets_version": "18.39.0",
+        "retrieved_at": "2026-10-19T21:35:05+00:00",
+        "protein_fasta": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/cgri_cho/extracted/ncbi_dataset/data/GCF_003668045.3/protein.faa",
+          "sha256": "5705927e3032a9cf5197b4a93ac09a69d7b8f19230ec0cc32413c28fda0a9fe9",
+          "bytes": 34776409
+        },
+        "gff": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/cgri_cho/extracted/ncbi_dataset/data/GCF_003668045.3/genomic.gff",
+          "sha256": "c558958cd70f8f249ceebec84e544ccd3d20125783934333046201eb6df80a51",
+          "bytes": 348327957
+        },
+        "n_proteins_raw": 46638
+      },
+      "absence_reason": null,
+      "prep": {
+        "rule": "longest protein per GFF gene (CDS protein_id or feature ID, Parent chain to the first gene/pseudogene feature, gene keyed by Dbxref GeneID when present); ties keep the smallest protein id.",
+        "n_proteins_raw": 46638,
+        "n_proteins_prepped": 21776,
+        "n_proteins_without_gene": 0,
+        "output": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/proteomes/cgri_cho.faa",
+          "sha256": "f37e7a7834f511be469d2251b847ff7b716b41291d9edb974a3fb05a2a1e41ce",
+          "bytes": 12705511
+        }
+      }
+    },
+    {
+      "key": "hsap_grch38",
+      "row": 12,
+      "display": "H. sapiens GRCh38",
+      "organism_name": "Homo sapiens",
+      "taxid": 9606,
+      "strain": null,
+      "preferred_strain": "GRCh38 (HEK293)",
+      "groups": [
+        "mammal",
+        "established"
+      ],
+      "justification": "Viral vectors (AAV, adenovirus) and proteins in suspension; the anchor of every mammalian comparison.",
+      "reference_accession": "GCF_000001405.40",
+      "accession_choice": "NCBI reference assembly GRCh38.p14.",
+      "proteome": {
+        "source": "ncbi",
+        "accession": "GCF_000001405.40",
+        "assembly_name": "GRCh38.p14",
+        "annotation_provider": "NCBI RefSeq",
+        "tier_set": null,
+        "sd108_commit": null,
+        "source_url": "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/GCF_000001405.40/download?include_annotation_type=PROT_FASTA,GENOME_GFF",
+        "retrieval_method": "ncbi_datasets_cli",
+        "retrieval_command": "datasets download genome accession GCF_000001405.40 --include protein,gff3 --filename $DATA_ROOT/data/organism_similarity/ncbi/hsap_grch38/GCF_000001405.40.zip",
+        "datasets_version": "18.39.0",
+        "retrieved_at": "2026-10-19T21:35:14+00:00",
+        "protein_fasta": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/hsap_grch38/extracted/ncbi_dataset/data/GCF_000001405.40/protein.faa",
+          "sha256": "cbac7abbff75d82baa659e8a0b0ab95d1bc7a8ab90c1fe74d141235e6ada891e",
+          "bytes": 106319716
+        },
+        "gff": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/hsap_grch38/extracted/ncbi_dataset/data/GCF_000001405.40/genomic.gff",
+          "sha256": "cb83677489562c165a046c8833813e81d36f0b703d2ebbb2e3c6adb84a5c0780",
+          "bytes": 1596800025
+        },
+        "n_proteins_raw": 136807
+      },
+      "absence_reason": null,
+      "prep": {
+        "rule": "longest protein per GFF gene (CDS protein_id or feature ID, Parent chain to the first gene/pseudogene feature, gene keyed by Dbxref GeneID when present); ties keep the smallest protein id.",
+        "n_proteins_raw": 136807,
+        "n_proteins_prepped": 20076,
+        "n_proteins_without_gene": 0,
+        "output": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/proteomes/hsap_grch38.faa",
+          "sha256": "651d876fcea62dd19ab411e546b9f8583f4c185bfb62bcd61b9989a2d5d3cc7e",
+          "bytes": 12386411
+        }
+      }
+    },
+    {
+      "key": "llac_il1403",
+      "row": 13,
+      "display": "L. lactis IL1403",
+      "organism_name": "Lactococcus lactis subsp. lactis Il1403",
+      "taxid": 272623,
+      "strain": "IL1403",
+      "preferred_strain": "IL1403",
+      "groups": [
+        "established"
+      ],
+      "justification": "Dairy starter biomass and nisin; long-established food-biotech organism.",
+      "reference_accession": "GCF_003176835.1",
+      "accession_choice": "The NCBI reference is strain 14B4 (GCF_003176835.1); the named strain IL1403 has the original complete RefSeq assembly ASM686v1, so the named strain is used.",
+      "proteome": {
+        "source": "ncbi",
+        "accession": "GCF_000006865.1",
+        "assembly_name": "ASM686v1",
+        "annotation_provider": "NCBI RefSeq",
+        "tier_set": null,
+        "sd108_commit": null,
+        "source_url": "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/GCF_000006865.1/download?include_annotation_type=PROT_FASTA,GENOME_GFF",
+        "retrieval_method": "ncbi_datasets_cli",
+        "retrieval_command": "datasets download genome accession GCF_000006865.1 --include protein,gff3 --filename $DATA_ROOT/data/organism_similarity/ncbi/llac_il1403/GCF_000006865.1.zip",
+        "datasets_version": "18.39.0",
+        "retrieved_at": "2026-10-19T21:35:22+00:00",
+        "protein_fasta": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/llac_il1403/extracted/ncbi_dataset/data/GCF_000006865.1/protein.faa",
+          "sha256": "1c6e3d96b56782f15d35655fdac55fcc7ee8a5758a3410cca812574c6925acf8",
+          "bytes": 820056
+        },
+        "gff": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/llac_il1403/extracted/ncbi_dataset/data/GCF_000006865.1/genomic.gff",
+          "sha256": "778fe81fc9ea17324ffbc69df7a325594b9401714aaef79deb2d85ba43c043c3",
+          "bytes": 1412145
+        },
+        "n_proteins_raw": 2230
+      },
+      "absence_reason": null,
+      "prep": {
+        "rule": "longest protein per GFF gene (CDS protein_id or feature ID, Parent chain to the first gene/pseudogene feature, gene keyed by Dbxref GeneID when present); ties keep the smallest protein id.",
+        "n_proteins_raw": 2230,
+        "n_proteins_prepped": 2230,
+        "n_proteins_without_gene": 0,
+        "output": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/proteomes/llac_il1403.faa",
+          "sha256": "387fe91903711501daaf2ee2d570ce8bfc0873dda4a8efaabc72596ce288f55e",
+          "bytes": 716969
+        }
+      }
+    },
+    {
+      "key": "alim",
+      "row": 14,
+      "display": "A. limacinum",
+      "organism_name": "Aurantiochytrium limacinum",
+      "taxid": 87102,
+      "strain": null,
+      "preferred_strain": "any annotated",
+      "groups": [
+        "established"
+      ],
+      "justification": "DHA oils; heterotrophic protist in sugar-fed reactors.",
+      "reference_accession": "GCA_036850685.1",
+      "accession_choice": null,
+      "proteome": null,
+      "absence_reason": "No annotated assembly at NCBI: `datasets summary genome taxon \"Aurantiochytrium limacinum\" --annotated` and the same query for \"Schizochytrium\" return zero records (2026-10-19); the reference GCA_036850685.1 (BL10) carries no annotation. Kept on the cladogram, excluded from the proteome axes.",
+      "prep": null
+    },
+    {
+      "key": "ylip_clib122",
+      "row": 15,
+      "display": "Y. lipolytica CLIB122",
+      "organism_name": "Yarrowia lipolytica CLIB122",
+      "taxid": 284591,
+      "strain": "CLIB122",
+      "preferred_strain": "CLIB122",
+      "groups": [
+        "cabbi",
+        "emerging"
+      ],
+      "justification": "Lipids, carotenoids, organic acids; EPA commercialized; CABBI conversion yeast.",
+      "reference_accession": "GCF_001761485.1",
+      "accession_choice": "The NCBI reference is CLIB89(W29) (GCF_001761485.1); the named strain CLIB122 has an annotated RefSeq assembly (ASM252v1, Genolevures), so the named strain is used.",
+      "proteome": {
+        "source": "ncbi",
+        "accession": "GCF_000002525.2",
+        "assembly_name": "ASM252v1",
+        "annotation_provider": "Genolevures Consortium",
+        "tier_set": null,
+        "sd108_commit": null,
+        "source_url": "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/GCF_000002525.2/download?include_annotation_type=PROT_FASTA,GENOME_GFF",
+        "retrieval_method": "ncbi_datasets_cli",
+        "retrieval_command": "datasets download genome accession GCF_000002525.2 --include protein,gff3 --filename $DATA_ROOT/data/organism_similarity/ncbi/ylip_clib122/GCF_000002525.2.zip",
+        "datasets_version": "18.39.0",
+        "retrieved_at": "2026-10-19T21:35:26+00:00",
+        "protein_fasta": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/ylip_clib122/extracted/ncbi_dataset/data/GCF_000002525.2/protein.faa",
+          "sha256": "f5ac60efb4f0a27f50411f9fc0e5b00f1327257c7bbc7a66c7b94a509a77ff38",
+          "bytes": 3556336
+        },
+        "gff": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/ylip_clib122/extracted/ncbi_dataset/data/GCF_000002525.2/genomic.gff",
+          "sha256": "b186a35aa77c1e7430f16b948af89126d4791825eeadba988d2caf2cbd1298e5",
+          "bytes": 9354469
+        },
+        "n_proteins_raw": 6472
+      },
+      "absence_reason": null,
+      "prep": {
+        "rule": "longest protein per GFF gene (CDS protein_id or feature ID, Parent chain to the first gene/pseudogene feature, gene keyed by Dbxref GeneID when present); ties keep the smallest protein id.",
+        "n_proteins_raw": 6472,
+        "n_proteins_prepped": 6471,
+        "n_proteins_without_gene": 0,
+        "output": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/proteomes/ylip_clib122.faa",
+          "sha256": "38fce7ea1645dae4b81ec5ec9d5762f2075b88554cf2ff59c694001cf0a41e73",
+          "bytes": 3359676
+        }
+      }
+    },
+    {
+      "key": "rtor_np11",
+      "row": 16,
+      "display": "R. toruloides NP11",
+      "organism_name": "Rhodotorula toruloides NP11",
+      "taxid": 1130832,
+      "strain": "NP11",
+      "preferred_strain": "NP11",
+      "groups": [
+        "cabbi",
+        "emerging"
+      ],
+      "justification": "Microbial oils; 50 m^3 fed-batch scale-up reported 2025; CABBI conversion yeast.",
+      "reference_accession": "GCF_000320785.1",
+      "accession_choice": "NCBI reference assembly; it is the named strain NP11.",
+      "proteome": {
+        "source": "ncbi",
+        "accession": "GCF_000320785.1",
+        "assembly_name": "RHOziaDV1.0",
+        "annotation_provider": "Dalian Institute of Chemical Physics",
+        "tier_set": null,
+        "sd108_commit": null,
+        "source_url": "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/GCF_000320785.1/download?include_annotation_type=PROT_FASTA,GENOME_GFF",
+        "retrieval_method": "ncbi_datasets_cli",
+        "retrieval_command": "datasets download genome accession GCF_000320785.1 --include protein,gff3 --filename $DATA_ROOT/data/organism_similarity/ncbi/rtor_np11/GCF_000320785.1.zip",
+        "datasets_version": "18.39.0",
+        "retrieved_at": "2026-10-19T21:35:30+00:00",
+        "protein_fasta": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/rtor_np11/extracted/ncbi_dataset/data/GCF_000320785.1/protein.faa",
+          "sha256": "6037dd04c51ebd58fbf3042d55d58ad4aa69161914a7e48578cf8bbf97d08b49",
+          "bytes": 5053643
+        },
+        "gff": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/rtor_np11/extracted/ncbi_dataset/data/GCF_000320785.1/genomic.gff",
+          "sha256": "b8bdc6469ad1def3bf06a617cdd09a849b5e2c479b5d8b332edfe01c31aec277",
+          "bytes": 38493339
+        },
+        "n_proteins_raw": 8140
+      },
+      "absence_reason": null,
+      "prep": {
+        "rule": "longest protein per GFF gene (CDS protein_id or feature ID, Parent chain to the first gene/pseudogene feature, gene keyed by Dbxref GeneID when present); ties keep the smallest protein id.",
+        "n_proteins_raw": 8140,
+        "n_proteins_prepped": 8140,
+        "n_proteins_without_gene": 0,
+        "output": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/proteomes/rtor_np11.faa",
+          "sha256": "d0852402f7b370590fa7024489d33a8e0bedc57b45328aef3df51797c6825c49",
+          "bytes": 4607118
+        }
+      }
+    },
+    {
+      "key": "cnec_h16",
+      "row": 17,
+      "display": "C. necator H16",
+      "organism_name": "Cupriavidus necator H16",
+      "taxid": 381666,
+      "strain": "H16",
+      "preferred_strain": "H16",
+      "groups": [
+        "emerging"
+      ],
+      "justification": "PHB; CO2/formate/H2-linked manufacturing.",
+      "reference_accession": "GCF_000219215.1",
+      "accession_choice": "The NCBI reference is strain N-1 (GCF_000219215.1); the named strain H16 has the original RefSeq assembly ASM928v2, so the named strain is used.",
+      "proteome": {
+        "source": "ncbi",
+        "accession": "GCF_000009285.1",
+        "assembly_name": "ASM928v2",
+        "annotation_provider": "NCBI RefSeq",
+        "tier_set": null,
+        "sd108_commit": null,
+        "source_url": "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/GCF_000009285.1/download?include_annotation_type=PROT_FASTA,GENOME_GFF",
+        "retrieval_method": "ncbi_datasets_cli",
+        "retrieval_command": "datasets download genome accession GCF_000009285.1 --include protein,gff3 --filename $DATA_ROOT/data/organism_similarity/ncbi/cnec_h16/GCF_000009285.1.zip",
+        "datasets_version": "18.39.0",
+        "retrieved_at": "2026-10-19T21:35:32+00:00",
+        "protein_fasta": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/cnec_h16/extracted/ncbi_dataset/data/GCF_000009285.1/protein.faa",
+          "sha256": "ecdc7fdca3923b2cf818a29cc2bf14ced56efb819ab620866b56228c36f6b2a0",
+          "bytes": 2669510
+        },
+        "gff": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/cnec_h16/extracted/ncbi_dataset/data/GCF_000009285.1/genomic.gff",
+          "sha256": "de1d0e9c251ef1251d3ca325910ea3c28bc293a423c026bda6c7df9bae6dc10e",
+          "bytes": 4146440
+        },
+        "n_proteins_raw": 6618
+      },
+      "absence_reason": null,
+      "prep": {
+        "rule": "longest protein per GFF gene (CDS protein_id or feature ID, Parent chain to the first gene/pseudogene feature, gene keyed by Dbxref GeneID when present); ties keep the smallest protein id.",
+        "n_proteins_raw": 6618,
+        "n_proteins_prepped": 6618,
+        "n_proteins_without_gene": 0,
+        "output": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/proteomes/cnec_h16.faa",
+          "sha256": "9474f1c05635f453be5af55fa9039ae46e2b5c07b980bbe2339d75429d4bd50e",
+          "bytes": 2334325
+        }
+      }
+    },
+    {
+      "key": "kmar_dmku3",
+      "row": 18,
+      "display": "K. marxianus DMKU3-1042",
+      "organism_name": "Kluyveromyces marxianus DMKU3-1042",
+      "taxid": 1003335,
+      "strain": "DMKU3-1042",
+      "preferred_strain": "DMKU3-1042",
+      "groups": [
+        "emerging"
+      ],
+      "justification": "Thermotolerant; lactose/whey valorization.",
+      "reference_accession": "GCF_001417885.1",
+      "accession_choice": "NCBI reference assembly; it is the named strain DMKU3-1042.",
+      "proteome": {
+        "source": "ncbi",
+        "accession": "GCF_001417885.1",
+        "assembly_name": "Kmar_1.0",
+        "annotation_provider": "Yamaguchi University",
+        "tier_set": null,
+        "sd108_commit": null,
+        "source_url": "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/GCF_001417885.1/download?include_annotation_type=PROT_FASTA,GENOME_GFF",
+        "retrieval_method": "ncbi_datasets_cli",
+        "retrieval_command": "datasets download genome accession GCF_001417885.1 --include protein,gff3 --filename $DATA_ROOT/data/organism_similarity/ncbi/kmar_dmku3/GCF_001417885.1.zip",
+        "datasets_version": "18.39.0",
+        "retrieved_at": "2026-10-19T21:35:36+00:00",
+        "protein_fasta": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/kmar_dmku3/extracted/ncbi_dataset/data/GCF_001417885.1/protein.faa",
+          "sha256": "da83b48cb8755edc9faed4aba1a4ec8886cd062042b195c387b7e780c848ef8e",
+          "bytes": 2914239
+        },
+        "gff": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/kmar_dmku3/extracted/ncbi_dataset/data/GCF_001417885.1/genomic.gff",
+          "sha256": "fcb02abbf2b74157cebcbe1ddfb869cadab487c164c0a1fe4b41cb1048b5c75d",
+          "bytes": 5589624
+        },
+        "n_proteins_raw": 4952
+      },
+      "absence_reason": null,
+      "prep": {
+        "rule": "longest protein per GFF gene (CDS protein_id or feature ID, Parent chain to the first gene/pseudogene feature, gene keyed by Dbxref GeneID when present); ties keep the smallest protein id.",
+        "n_proteins_raw": 4952,
+        "n_proteins_prepped": 4941,
+        "n_proteins_without_gene": 0,
+        "output": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/proteomes/kmar_dmku3.faa",
+          "sha256": "3d736af9370122299ff846dafd7709333cc4cd9230a78d17f2a77d43065342b1",
+          "bytes": 2649100
+        }
+      }
+    },
+    {
+      "key": "hblu_td01",
+      "row": 19,
+      "display": "H. bluephagenesis TD01",
+      "organism_name": "Halomonas bluephagenesis",
+      "taxid": 2778948,
+      "strain": "TD01",
+      "preferred_strain": "TD01",
+      "groups": [
+        "emerging"
+      ],
+      "justification": "PHA under nonsterile high-salt conditions; 5,000 L fed-batch in 2025.",
+      "reference_accession": "GCF_054790765.1",
+      "accession_choice": "NCBI reference assembly; it is the named strain TD01.",
+      "proteome": {
+        "source": "ncbi",
+        "accession": "GCF_054790765.1",
+        "assembly_name": "ASM5479076v1",
+        "annotation_provider": "NCBI RefSeq",
+        "tier_set": null,
+        "sd108_commit": null,
+        "source_url": "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/GCF_054790765.1/download?include_annotation_type=PROT_FASTA,GENOME_GFF",
+        "retrieval_method": "ncbi_datasets_cli",
+        "retrieval_command": "datasets download genome accession GCF_054790765.1 --include protein,gff3 --filename $DATA_ROOT/data/organism_similarity/ncbi/hblu_td01/GCF_054790765.1.zip",
+        "datasets_version": "18.39.0",
+        "retrieved_at": "2026-10-19T21:35:39+00:00",
+        "protein_fasta": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/hblu_td01/extracted/ncbi_dataset/data/GCF_054790765.1/protein.faa",
+          "sha256": "8480a6276eed8d8b772b211f31fd3262e490e4c29c1e69948f2f3c16b9d85bc2",
+          "bytes": 1503101
+        },
+        "gff": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/hblu_td01/extracted/ncbi_dataset/data/GCF_054790765.1/genomic.gff",
+          "sha256": "32f2ccdf7d61bb2674a27ae2afed82fdcd8c13b4408299220fd725e5e27f4689",
+          "bytes": 2344853
+        },
+        "n_proteins_raw": 3635
+      },
+      "absence_reason": null,
+      "prep": {
+        "rule": "longest protein per GFF gene (CDS protein_id or feature ID, Parent chain to the first gene/pseudogene feature, gene keyed by Dbxref GeneID when present); ties keep the smallest protein id.",
+        "n_proteins_raw": 3635,
+        "n_proteins_prepped": 3635,
+        "n_proteins_without_gene": 0,
+        "output": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/proteomes/hblu_td01.faa",
+          "sha256": "f42dd753c64253778cb382359d64198a0c95078bfe26ee8acf3b1560d0b528c2",
+          "bytes": 1315850
+        }
+      }
+    },
+    {
+      "key": "opol_ncyc495",
+      "row": 20,
+      "display": "O. polymorpha NCYC 495",
+      "organism_name": "Ogataea polymorpha",
+      "taxid": 460523,
+      "strain": "NCYC 495 leu1.1",
+      "preferred_strain": "NCYC 495",
+      "groups": [
+        "emerging"
+      ],
+      "justification": "Methylotrophic protein and vaccine-antigen host.",
+      "reference_accession": "GCF_001664045.1",
+      "accession_choice": "NCBI reference assembly Hanpo2 (NCYC 495 leu1.1), the plan's first-named strain; the plan's alternative O. parapolymorpha DL-1 is not used.",
+      "proteome": {
+        "source": "ncbi",
+        "accession": "GCF_001664045.1",
+        "assembly_name": "Hanpo2",
+        "annotation_provider": "JGI-PGF",
+        "tier_set": null,
+        "sd108_commit": null,
+        "source_url": "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/GCF_001664045.1/download?include_annotation_type=PROT_FASTA,GENOME_GFF",
+        "retrieval_method": "ncbi_datasets_cli",
+        "retrieval_command": "datasets download genome accession GCF_001664045.1 --include protein,gff3 --filename $DATA_ROOT/data/organism_similarity/ncbi/opol_ncyc495/GCF_001664045.1.zip",
+        "datasets_version": "18.39.0",
+        "retrieved_at": "2026-10-19T21:35:45+00:00",
+        "protein_fasta": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/opol_ncyc495/extracted/ncbi_dataset/data/GCF_001664045.1/protein.faa",
+          "sha256": "77a681cdb5a2108ce78cba3b9974b263ea8e1fca7f731031dc7ec0f6cc53dbde",
+          "bytes": 2751434
+        },
+        "gff": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/opol_ncyc495/extracted/ncbi_dataset/data/GCF_001664045.1/genomic.gff",
+          "sha256": "481a6f6cb233c6c8b49470efda789a68398acb3938c954c1d132b40a5af751f4",
+          "bytes": 7800766
+        },
+        "n_proteins_raw": 5155
+      },
+      "absence_reason": null,
+      "prep": {
+        "rule": "longest protein per GFF gene (CDS protein_id or feature ID, Parent chain to the first gene/pseudogene feature, gene keyed by Dbxref GeneID when present); ties keep the smallest protein id.",
+        "n_proteins_raw": 5155,
+        "n_proteins_prepped": 5153,
+        "n_proteins_without_gene": 0,
+        "output": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/proteomes/opol_ncyc495.faa",
+          "sha256": "c1ac7b3e5cdc6592e30d5420a1d107c3971ccc43595a3babdf2bd08f5ef1207c",
+          "bytes": 2496723
+        }
+      }
+    },
+    {
+      "key": "vnat_atcc14048",
+      "row": 21,
+      "display": "V. natriegens ATCC 14048",
+      "organism_name": "Vibrio natriegens NBRC 15636 = ATCC 14048 = DSM 759",
+      "taxid": 1219067,
+      "strain": "ATCC 14048",
+      "preferred_strain": "ATCC 14048",
+      "groups": [
+        "emerging"
+      ],
+      "justification": "Fastest-growing chassis; ~60 g/L dry biomass in fed-batch.",
+      "reference_accession": "GCF_001456255.1",
+      "accession_choice": "NCBI reference assembly; it is the named strain ATCC 14048.",
+      "proteome": {
+        "source": "ncbi",
+        "accession": "GCF_001456255.1",
+        "assembly_name": "ASM145625v1",
+        "annotation_provider": "NCBI RefSeq",
+        "tier_set": null,
+        "sd108_commit": null,
+        "source_url": "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/GCF_001456255.1/download?include_annotation_type=PROT_FASTA,GENOME_GFF",
+        "retrieval_method": "ncbi_datasets_cli",
+        "retrieval_command": "datasets download genome accession GCF_001456255.1 --include protein,gff3 --filename $DATA_ROOT/data/organism_similarity/ncbi/vnat_atcc14048/GCF_001456255.1.zip",
+        "datasets_version": "18.39.0",
+        "retrieved_at": "2026-10-19T21:35:50+00:00",
+        "protein_fasta": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/vnat_atcc14048/extracted/ncbi_dataset/data/GCF_001456255.1/protein.faa",
+          "sha256": "6c3617f8f0d39a91757ec4fec997db56ee63ce0a430e4c80c4eb4893a86ef435",
+          "bytes": 1818590
+        },
+        "gff": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/vnat_atcc14048/extracted/ncbi_dataset/data/GCF_001456255.1/genomic.gff",
+          "sha256": "205fb011972b480a0091a846e5a2b632f17317bf0dba001c8c85ee219684900e",
+          "bytes": 3168769
+        },
+        "n_proteins_raw": 4504
+      },
+      "absence_reason": null,
+      "prep": {
+        "rule": "longest protein per GFF gene (CDS protein_id or feature ID, Parent chain to the first gene/pseudogene feature, gene keyed by Dbxref GeneID when present); ties keep the smallest protein id.",
+        "n_proteins_raw": 4504,
+        "n_proteins_prepped": 4504,
+        "n_proteins_without_gene": 0,
+        "output": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/proteomes/vnat_atcc14048.faa",
+          "sha256": "7206c33214ba10af185bc0b5f42c7017a878e87e9931333123c593e8a2d8616a",
+          "bytes": 1633861
+        }
+      }
+    },
+    {
+      "key": "mext_am1",
+      "row": 22,
+      "display": "M. extorquens AM1",
+      "organism_name": "Methylorubrum extorquens AM1",
+      "taxid": 272630,
+      "strain": "AM1",
+      "preferred_strain": "AM1",
+      "groups": [
+        "emerging"
+      ],
+      "justification": "Methanol-to-chemicals C1 chassis.",
+      "reference_accession": "GCF_000083545.1",
+      "accession_choice": "The NCBI reference is strain DM4 (GCF_000083545.1); the named strain AM1 has an annotated RefSeq assembly (ASM2268v1), so the named strain is used.",
+      "proteome": {
+        "source": "ncbi",
+        "accession": "GCF_000022685.1",
+        "assembly_name": "ASM2268v1",
+        "annotation_provider": "NCBI RefSeq",
+        "tier_set": null,
+        "sd108_commit": null,
+        "source_url": "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/GCF_000022685.1/download?include_annotation_type=PROT_FASTA,GENOME_GFF",
+        "retrieval_method": "ncbi_datasets_cli",
+        "retrieval_command": "datasets download genome accession GCF_000022685.1 --include protein,gff3 --filename $DATA_ROOT/data/organism_similarity/ncbi/mext_am1/GCF_000022685.1.zip",
+        "datasets_version": "18.39.0",
+        "retrieved_at": "2026-10-19T21:35:53+00:00",
+        "protein_fasta": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/mext_am1/extracted/ncbi_dataset/data/GCF_000022685.1/protein.faa",
+          "sha256": "7d0128a59bd5575c3345722322d5c0d746c749afbe211f7ace7b4e47bd6b97ba",
+          "bytes": 2379740
+        },
+        "gff": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/mext_am1/extracted/ncbi_dataset/data/GCF_000022685.1/genomic.gff",
+          "sha256": "5f4cef7f04653c31071ea47a30ca3b4d0df4a614c86fd3fb0f06b8a8c1a45067",
+          "bytes": 3997160
+        },
+        "n_proteins_raw": 6151
+      },
+      "absence_reason": null,
+      "prep": {
+        "rule": "longest protein per GFF gene (CDS protein_id or feature ID, Parent chain to the first gene/pseudogene feature, gene keyed by Dbxref GeneID when present); ties keep the smallest protein id.",
+        "n_proteins_raw": 6151,
+        "n_proteins_prepped": 6151,
+        "n_proteins_without_gene": 0,
+        "output": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/proteomes/mext_am1.faa",
+          "sha256": "5c140f8ba958990560df9e9b3b34b6ae1be5fbcf547178a455b972fb90018d57",
+          "bytes": 2062572
+        }
+      }
+    },
+    {
+      "key": "lsta_y11557",
+      "row": 23,
+      "display": "L. starkeyi NRRL Y-11557",
+      "organism_name": "Lipomyces starkeyi NRRL Y-11557",
+      "taxid": 675824,
+      "strain": "NRRL Y-11557",
+      "preferred_strain": "NRRL Y-11557",
+      "groups": [
+        "cabbi"
+      ],
+      "justification": "Oleaginous; 130 g/L biomass and 88 g/L lipid in 5 L fed-batch; CABBI systems-biology organism.",
+      "reference_accession": "GCA_018804115.1",
+      "accession_choice": "The NCBI reference (GCA_018804115.1, AS 2.1560) carries no annotation; the named strain NRRL Y-11557 has a JGI-annotated GenBank assembly (Lipst1_1), so it is used.",
+      "proteome": {
+        "source": "ncbi",
+        "accession": "GCA_001661325.1",
+        "assembly_name": "Lipst1_1",
+        "annotation_provider": "JGI",
+        "tier_set": null,
+        "sd108_commit": null,
+        "source_url": "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/GCA_001661325.1/download?include_annotation_type=PROT_FASTA,GENOME_GFF",
+        "retrieval_method": "ncbi_datasets_cli",
+        "retrieval_command": "datasets download genome accession GCA_001661325.1 --include protein,gff3 --filename $DATA_ROOT/data/organism_similarity/ncbi/lsta_y11557/GCA_001661325.1.zip",
+        "datasets_version": "18.39.0",
+        "retrieved_at": "2026-10-19T21:35:59+00:00",
+        "protein_fasta": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/lsta_y11557/extracted/ncbi_dataset/data/GCA_001661325.1/protein.faa",
+          "sha256": "225af7e1ef9350b4e7dc76d203677c18c28ceae75ce4335643c61d2f6aeffbfc",
+          "bytes": 4061544
+        },
+        "gff": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/lsta_y11557/extracted/ncbi_dataset/data/GCA_001661325.1/genomic.gff",
+          "sha256": "1813720688ba2e17e102e17185932bda273701632f0168a5a958448bf7b0033d",
+          "bytes": 20606946
+        },
+        "n_proteins_raw": 8183
+      },
+      "absence_reason": null,
+      "prep": {
+        "rule": "longest protein per GFF gene (CDS protein_id or feature ID, Parent chain to the first gene/pseudogene feature, gene keyed by Dbxref GeneID when present); ties keep the smallest protein id.",
+        "n_proteins_raw": 8183,
+        "n_proteins_prepped": 8182,
+        "n_proteins_without_gene": 0,
+        "output": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/proteomes/lsta_y11557.faa",
+          "sha256": "ffd9b39dc4f0d3db3af3bed9e45ef03d721b300aabd78dd3f8074a8fd54f1d6b",
+          "bytes": 3564672
+        }
+      }
+    },
+    {
+      "key": "zbai_ist302",
+      "row": 24,
+      "display": "Z. bailii IST302",
+      "organism_name": "Zygosaccharomyces bailii",
+      "taxid": 4954,
+      "strain": "IST302",
+      "preferred_strain": "CLIB 213",
+      "groups": [
+        "cabbi"
+      ],
+      "justification": "Acid- and preservative-tolerant; CABBI CRISPR strain made 35 g/L lactate.",
+      "reference_accession": "GCA_949129075.1",
+      "accession_choice": "The NCBI reference (GCA_949129075.1) carries no annotation. The named strain CLIB 213 has a GenBank annotation (GCA_000442885.1, ZYBA0) that lists only 864 protein-coding genes, a partial annotation of a ~5,000-gene yeast, which would read as a missing proteome on every ortholog axis. IST302 (GCA_900162805.1, 5,141 protein-coding genes) is the complete annotated Z. bailii assembly at NCBI, same species, so it is used and the strain substitution is stated in the figure label.",
+      "proteome": {
+        "source": "ncbi",
+        "accession": "GCA_900162805.1",
+        "assembly_name": "version 1",
+        "annotation_provider": "Institute of Bioinformatics and Systems Biology",
+        "tier_set": null,
+        "sd108_commit": null,
+        "source_url": "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/GCA_900162805.1/download?include_annotation_type=PROT_FASTA,GENOME_GFF",
+        "retrieval_method": "ncbi_datasets_cli",
+        "retrieval_command": "datasets download genome accession GCA_900162805.1 --include protein,gff3 --filename $DATA_ROOT/data/organism_similarity/ncbi/zbai_ist302/GCA_900162805.1.zip",
+        "datasets_version": "18.39.0",
+        "retrieved_at": "2026-10-19T21:36:03+00:00",
+        "protein_fasta": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/zbai_ist302/extracted/ncbi_dataset/data/GCA_900162805.1/protein.faa",
+          "sha256": "4465591255057599488d7bbc75d3f06f6615ce1d7fda9a8e939d349f9d192ade",
+          "bytes": 2945815
+        },
+        "gff": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/zbai_ist302/extracted/ncbi_dataset/data/GCA_900162805.1/genomic.gff",
+          "sha256": "2665f490cfa2dbb1481eb2341bca97cd875a110939ec6d3e787548c5a2d8945e",
+          "bytes": 2167382
+        },
+        "n_proteins_raw": 5141
+      },
+      "absence_reason": null,
+      "prep": {
+        "rule": "longest protein per GFF gene (CDS protein_id or feature ID, Parent chain to the first gene/pseudogene feature, gene keyed by Dbxref GeneID when present); ties keep the smallest protein id.",
+        "n_proteins_raw": 5141,
+        "n_proteins_prepped": 5141,
+        "n_proteins_without_gene": 0,
+        "output": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/proteomes/zbai_ist302.faa",
+          "sha256": "d2dfcd819c20212edfa677ea446d51d7ff13a03be955ba93f97f76a675010d5f",
+          "bytes": 2654036
+        }
+      }
+    },
+    {
+      "key": "zrou_cbs732",
+      "row": 25,
+      "display": "Z. rouxii CBS 732",
+      "organism_name": "Zygosaccharomyces rouxii",
+      "taxid": 4956,
+      "strain": "CBS 732",
+      "preferred_strain": "CBS 732",
+      "groups": [
+        "cabbi"
+      ],
+      "justification": "Osmotolerant; D-arabitol 152.8 g/L in fed-batch; CABBI sequenced NRRL Y-64007.",
+      "reference_accession": "GCF_000026365.1",
+      "accession_choice": "NCBI reference assembly; it is the named strain CBS 732.",
+      "proteome": {
+        "source": "ncbi",
+        "accession": "GCF_000026365.1",
+        "assembly_name": "ASM2636v1",
+        "annotation_provider": "Genolevures Consortium",
+        "tier_set": null,
+        "sd108_commit": null,
+        "source_url": "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/GCF_000026365.1/download?include_annotation_type=PROT_FASTA,GENOME_GFF",
+        "retrieval_method": "ncbi_datasets_cli",
+        "retrieval_command": "datasets download genome accession GCF_000026365.1 --include protein,gff3 --filename $DATA_ROOT/data/organism_similarity/ncbi/zrou_cbs732/GCF_000026365.1.zip",
+        "datasets_version": "18.39.0",
+        "retrieved_at": "2026-10-19T21:36:07+00:00",
+        "protein_fasta": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/zrou_cbs732/extracted/ncbi_dataset/data/GCF_000026365.1/protein.faa",
+          "sha256": "0ea7a60fa692d6f2d607d2ca3bfb58e5c972b0eead5df49bdaa02c21d63d43a8",
+          "bytes": 2854495
+        },
+        "gff": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/zrou_cbs732/extracted/ncbi_dataset/data/GCF_000026365.1/genomic.gff",
+          "sha256": "0cbee4f57eca5078679d84815a58efff3e880d4c51675a046e5d28945b666a73",
+          "bytes": 7076040
+        },
+        "n_proteins_raw": 4991
+      },
+      "absence_reason": null,
+      "prep": {
+        "rule": "longest protein per GFF gene (CDS protein_id or feature ID, Parent chain to the first gene/pseudogene feature, gene keyed by Dbxref GeneID when present); ties keep the smallest protein id.",
+        "n_proteins_raw": 4991,
+        "n_proteins_prepped": 4991,
+        "n_proteins_without_gene": 0,
+        "output": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/proteomes/zrou_cbs732.faa",
+          "sha256": "0ce6cc5b5dc01f61be028dcc1de48ce3b1695a2a1005e9751a6b537472f40723",
+          "bytes": 2648927
+        }
+      }
+    },
+    {
+      "key": "ltet_y64009",
+      "row": 26,
+      "display": "L. tetrasporus NRRL Y-64009",
+      "organism_name": "Lipomyces tetrasporus",
+      "taxid": 54092,
+      "strain": "NRRL Y-64009",
+      "preferred_strain": "NRRL Y-64009",
+      "groups": [
+        "cabbi"
+      ],
+      "justification": "CABBI sequenced NRRL Y-64009; lipid accumulation on hydrolysates.",
+      "reference_accession": "GCF_029532465.1",
+      "accession_choice": "NCBI reference assembly Liptet1 (JGI annotation); it is the CABBI-sequenced strain NRRL Y-64009.",
+      "proteome": {
+        "source": "ncbi",
+        "accession": "GCF_029532465.1",
+        "assembly_name": "Liptet1",
+        "annotation_provider": "DOE Joint Genome Institute",
+        "tier_set": null,
+        "sd108_commit": null,
+        "source_url": "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/GCF_029532465.1/download?include_annotation_type=PROT_FASTA,GENOME_GFF",
+        "retrieval_method": "ncbi_datasets_cli",
+        "retrieval_command": "datasets download genome accession GCF_029532465.1 --include protein,gff3 --filename $DATA_ROOT/data/organism_similarity/ncbi/ltet_y64009/GCF_029532465.1.zip",
+        "datasets_version": "18.39.0",
+        "retrieved_at": "2026-10-19T21:36:13+00:00",
+        "protein_fasta": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/ltet_y64009/extracted/ncbi_dataset/data/GCF_029532465.1/protein.faa",
+          "sha256": "70b9425e46b1ca17bab97f40106eb9e7037ed82f2d8ef6daa9f4187c21d66b6f",
+          "bytes": 4233590
+        },
+        "gff": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/ltet_y64009/extracted/ncbi_dataset/data/GCF_029532465.1/genomic.gff",
+          "sha256": "e0dc90e3fdd33c304b0004b2b4ebc2200e99d49f332994bc4b37bbec9fb21816",
+          "bytes": 23086346
+        },
+        "n_proteins_raw": 8004
+      },
+      "absence_reason": null,
+      "prep": {
+        "rule": "longest protein per GFF gene (CDS protein_id or feature ID, Parent chain to the first gene/pseudogene feature, gene keyed by Dbxref GeneID when present); ties keep the smallest protein id.",
+        "n_proteins_raw": 8004,
+        "n_proteins_prepped": 8004,
+        "n_proteins_without_gene": 0,
+        "output": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/proteomes/ltet_y64009.faa",
+          "sha256": "6a2e545f6b869a6d3cdc90ff4c9c8078d227aaa768ef0fedb71783e3b703ed9d",
+          "bytes": 3792582
+        }
+      }
+    },
+    {
+      "key": "spar_cbs432",
+      "row": 27,
+      "display": "S. paradoxus CBS432",
+      "organism_name": "Saccharomyces paradoxus",
+      "taxid": 27291,
+      "strain": "CBS432",
+      "preferred_strain": "CBS432",
+      "groups": [
+        "genus"
+      ],
+      "justification": "The sister species: the genus rung of the claim.",
+      "reference_accession": "GCF_002079055.1",
+      "accession_choice": "NCBI reference assembly; it is the named strain CBS432.",
+      "proteome": {
+        "source": "ncbi",
+        "accession": "GCF_002079055.1",
+        "assembly_name": "ASM207905v1",
+        "annotation_provider": "SC",
+        "tier_set": null,
+        "sd108_commit": null,
+        "source_url": "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/GCF_002079055.1/download?include_annotation_type=PROT_FASTA,GENOME_GFF",
+        "retrieval_method": "ncbi_datasets_cli",
+        "retrieval_command": "datasets download genome accession GCF_002079055.1 --include protein,gff3 --filename $DATA_ROOT/data/organism_similarity/ncbi/spar_cbs432/GCF_002079055.1.zip",
+        "datasets_version": "18.39.0",
+        "retrieved_at": "2026-10-19T21:36:15+00:00",
+        "protein_fasta": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/spar_cbs432/extracted/ncbi_dataset/data/GCF_002079055.1/protein.faa",
+          "sha256": "202ed86adb51f9790d782d72c1be714ab7c0ededb8ec129f3987eed7672cbc7a",
+          "bytes": 3196019
+        },
+        "gff": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/spar_cbs432/extracted/ncbi_dataset/data/GCF_002079055.1/genomic.gff",
+          "sha256": "fac7082a328aae09ca67dcbd7b3a69231c7ef411c5ba879f3d6c28a3b33a14d6",
+          "bytes": 7793933
+        },
+        "n_proteins_raw": 5542
+      },
+      "absence_reason": null,
+      "prep": {
+        "rule": "longest protein per GFF gene (CDS protein_id or feature ID, Parent chain to the first gene/pseudogene feature, gene keyed by Dbxref GeneID when present); ties keep the smallest protein id.",
+        "n_proteins_raw": 5542,
+        "n_proteins_prepped": 5538,
+        "n_proteins_without_gene": 0,
+        "output": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/proteomes/spar_cbs432.faa",
+          "sha256": "fa4f979958407d7dce591dc0c4a409fd634896bd7bf4edc9dbb1e2f9f8d49dc5",
+          "bytes": 2975525
+        }
+      }
+    },
+    {
+      "key": "seub_fm1318",
+      "row": 28,
+      "display": "S. eubayanus FM1318",
+      "organism_name": "Saccharomyces eubayanus",
+      "taxid": 1080349,
+      "strain": "FM1318",
+      "preferred_strain": "FM1318",
+      "groups": [
+        "genus"
+      ],
+      "justification": "The far end of the genus (lager parent).",
+      "reference_accession": "GCF_001298625.1",
+      "accession_choice": "NCBI reference assembly; it is the named strain FM1318.",
+      "proteome": {
+        "source": "ncbi",
+        "accession": "GCF_001298625.1",
+        "assembly_name": "SEUB3.0",
+        "annotation_provider": "University of Wisconsin-Madison",
+        "tier_set": null,
+        "sd108_commit": null,
+        "source_url": "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/GCF_001298625.1/download?include_annotation_type=PROT_FASTA,GENOME_GFF",
+        "retrieval_method": "ncbi_datasets_cli",
+        "retrieval_command": "datasets download genome accession GCF_001298625.1 --include protein,gff3 --filename $DATA_ROOT/data/organism_similarity/ncbi/seub_fm1318/GCF_001298625.1.zip",
+        "datasets_version": "18.39.0",
+        "retrieved_at": "2026-10-19T21:36:18+00:00",
+        "protein_fasta": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/seub_fm1318/extracted/ncbi_dataset/data/GCF_001298625.1/protein.faa",
+          "sha256": "733abeddac62bedb3c8f29212cd5933e08cc224f750f7d66fe0d2ccbb95501f1",
+          "bytes": 3078918
+        },
+        "gff": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/seub_fm1318/extracted/ncbi_dataset/data/GCF_001298625.1/genomic.gff",
+          "sha256": "5cb68e75485b8c653da111a20861e621c09d04330a05fa8e11efbd53090d1f5c",
+          "bytes": 7304689
+        },
+        "n_proteins_raw": 5379
+      },
+      "absence_reason": null,
+      "prep": {
+        "rule": "longest protein per GFF gene (CDS protein_id or feature ID, Parent chain to the first gene/pseudogene feature, gene keyed by Dbxref GeneID when present); ties keep the smallest protein id.",
+        "n_proteins_raw": 5379,
+        "n_proteins_prepped": 5379,
+        "n_proteins_without_gene": 0,
+        "output": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/proteomes/seub_fm1318.faa",
+          "sha256": "efb636481cd29561fead9b9e876a40c36b07905904c170361d389306b559b654",
+          "bytes": 2864322
+        }
+      }
+    },
+    {
+      "key": "ptro",
+      "row": 29,
+      "display": "P. troglodytes",
+      "organism_name": "Pan troglodytes",
+      "taxid": 9598,
+      "strain": "AG18354",
+      "preferred_strain": "reference",
+      "groups": [
+        "mammal"
+      ],
+      "justification": "Human/chimp is the floor of mammalian divergence (Peris's lower anchor).",
+      "reference_accession": "GCF_028858775.2",
+      "accession_choice": "NCBI reference assembly NHGRI_mPanTro3-v2.1_pri.",
+      "proteome": {
+        "source": "ncbi",
+        "accession": "GCF_028858775.2",
+        "assembly_name": "NHGRI_mPanTro3-v2.1_pri",
+        "annotation_provider": "NCBI RefSeq",
+        "tier_set": null,
+        "sd108_commit": null,
+        "source_url": "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/GCF_028858775.2/download?include_annotation_type=PROT_FASTA,GENOME_GFF",
+        "retrieval_method": "ncbi_datasets_cli",
+        "retrieval_command": "datasets download genome accession GCF_028858775.2 --include protein,gff3 --filename $DATA_ROOT/data/organism_similarity/ncbi/ptro/GCF_028858775.2.zip",
+        "datasets_version": "18.39.0",
+        "retrieved_at": "2026-10-19T21:36:24+00:00",
+        "protein_fasta": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/ptro/extracted/ncbi_dataset/data/GCF_028858775.2/protein.faa",
+          "sha256": "5aa8abf87c0e54e53d213a677ee26b88061c30df8196aed34527881b74893972",
+          "bytes": 88943151
+        },
+        "gff": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/ptro/extracted/ncbi_dataset/data/GCF_028858775.2/genomic.gff",
+          "sha256": "fe99a08bb8c63677ac5af93709f28772e6a23dec90209736b5a786b38027addd",
+          "bytes": 1049850058
+        },
+        "n_proteins_raw": 109159
+      },
+      "absence_reason": null,
+      "prep": {
+        "rule": "longest protein per GFF gene (CDS protein_id or feature ID, Parent chain to the first gene/pseudogene feature, gene keyed by Dbxref GeneID when present); ties keep the smallest protein id.",
+        "n_proteins_raw": 109159,
+        "n_proteins_prepped": 22543,
+        "n_proteins_without_gene": 0,
+        "output": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/proteomes/ptro.faa",
+          "sha256": "27c8f20b67ae67611c90e3ac1260b2e52457be2ed21cda82d7629b576f2362c1",
+          "bytes": 13105540
+        }
+      }
+    },
+    {
+      "key": "ggor",
+      "row": 30,
+      "display": "G. gorilla",
+      "organism_name": "Gorilla gorilla gorilla",
+      "taxid": 9595,
+      "strain": "KB3781",
+      "preferred_strain": "reference",
+      "groups": [
+        "mammal"
+      ],
+      "justification": "Great ape.",
+      "reference_accession": "GCF_029281585.2",
+      "accession_choice": "NCBI reference assembly NHGRI_mGorGor1-v2.1_pri.",
+      "proteome": {
+        "source": "ncbi",
+        "accession": "GCF_029281585.2",
+        "assembly_name": "NHGRI_mGorGor1-v2.1_pri",
+        "annotation_provider": "NCBI RefSeq",
+        "tier_set": null,
+        "sd108_commit": null,
+        "source_url": "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/GCF_029281585.2/download?include_annotation_type=PROT_FASTA,GENOME_GFF",
+        "retrieval_method": "ncbi_datasets_cli",
+        "retrieval_command": "datasets download genome accession GCF_029281585.2 --include protein,gff3 --filename $DATA_ROOT/data/organism_similarity/ncbi/ggor/GCF_029281585.2.zip",
+        "datasets_version": "18.39.0",
+        "retrieved_at": "2026-10-19T21:36:32+00:00",
+        "protein_fasta": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/ggor/extracted/ncbi_dataset/data/GCF_029281585.2/protein.faa",
+          "sha256": "d63ef1f5c31ff0d3ec4a4badf9ecb02e842c8f1b27a11fb592a57880f4015986",
+          "bytes": 64345898
+        },
+        "gff": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/ggor/extracted/ncbi_dataset/data/GCF_029281585.2/genomic.gff",
+          "sha256": "6bffc509f4929d98a85cc304a2db465395a6051fbc6d8adaeb43ced8a38484ad",
+          "bytes": 692640816
+        },
+        "n_proteins_raw": 81002
+      },
+      "absence_reason": null,
+      "prep": {
+        "rule": "longest protein per GFF gene (CDS protein_id or feature ID, Parent chain to the first gene/pseudogene feature, gene keyed by Dbxref GeneID when present); ties keep the smallest protein id.",
+        "n_proteins_raw": 81002,
+        "n_proteins_prepped": 22640,
+        "n_proteins_without_gene": 0,
+        "output": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/proteomes/ggor.faa",
+          "sha256": "ded278a27c2297cfd0e6d8e626afcb622887634e9758d6a51fb74ba91f607b50",
+          "bytes": 13195278
+        }
+      }
+    },
+    {
+      "key": "pabe",
+      "row": 31,
+      "display": "P. abelii",
+      "organism_name": "Pongo abelii",
+      "taxid": 9601,
+      "strain": "AG06213",
+      "preferred_strain": "reference",
+      "groups": [
+        "mammal"
+      ],
+      "justification": "Great ape, the most distant.",
+      "reference_accession": "GCF_028885655.2",
+      "accession_choice": "NCBI reference assembly NHGRI_mPonAbe1-v2.1_pri.",
+      "proteome": {
+        "source": "ncbi",
+        "accession": "GCF_028885655.2",
+        "assembly_name": "NHGRI_mPonAbe1-v2.1_pri",
+        "annotation_provider": "NCBI RefSeq",
+        "tier_set": null,
+        "sd108_commit": null,
+        "source_url": "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/GCF_028885655.2/download?include_annotation_type=PROT_FASTA,GENOME_GFF",
+        "retrieval_method": "ncbi_datasets_cli",
+        "retrieval_command": "datasets download genome accession GCF_028885655.2 --include protein,gff3 --filename $DATA_ROOT/data/organism_similarity/ncbi/pabe/GCF_028885655.2.zip",
+        "datasets_version": "18.39.0",
+        "retrieved_at": "2026-10-19T21:36:40+00:00",
+        "protein_fasta": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/pabe/extracted/ncbi_dataset/data/GCF_028885655.2/protein.faa",
+          "sha256": "3b341944abe2252f37b1fb8f984f09d3e053004bc082b48380d819d8321b932d",
+          "bytes": 63833920
+        },
+        "gff": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/pabe/extracted/ncbi_dataset/data/GCF_028885655.2/genomic.gff",
+          "sha256": "9e6550985a22d516578e2e0644ebca39e835bb94f0ef6f95668eca2158d31aed",
+          "bytes": 718169094
+        },
+        "n_proteins_raw": 81635
+      },
+      "absence_reason": null,
+      "prep": {
+        "rule": "longest protein per GFF gene (CDS protein_id or feature ID, Parent chain to the first gene/pseudogene feature, gene keyed by Dbxref GeneID when present); ties keep the smallest protein id.",
+        "n_proteins_raw": 81635,
+        "n_proteins_prepped": 22203,
+        "n_proteins_without_gene": 0,
+        "output": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/proteomes/pabe.faa",
+          "sha256": "b9fc9ca49a51a4e799dce57301c83918b32b2f90a4d30b78ffcc2ce6a4e0ebf1",
+          "bytes": 12919796
+        }
+      }
+    },
+    {
+      "key": "mmul",
+      "row": 32,
+      "display": "M. mulatta",
+      "organism_name": "Macaca mulatta",
+      "taxid": 9544,
+      "strain": "MMU2019108-1",
+      "preferred_strain": "reference",
+      "groups": [
+        "mammal"
+      ],
+      "justification": "Peris's second anchor.",
+      "reference_accession": "GCF_049350105.2",
+      "accession_choice": "NCBI reference assembly T2T-MMU8v2.0.",
+      "proteome": {
+        "source": "ncbi",
+        "accession": "GCF_049350105.2",
+        "assembly_name": "T2T-MMU8v2.0",
+        "annotation_provider": "NCBI RefSeq",
+        "tier_set": null,
+        "sd108_commit": null,
+        "source_url": "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/GCF_049350105.2/download?include_annotation_type=PROT_FASTA,GENOME_GFF",
+        "retrieval_method": "ncbi_datasets_cli",
+        "retrieval_command": "datasets download genome accession GCF_049350105.2 --include protein,gff3 --filename $DATA_ROOT/data/organism_similarity/ncbi/mmul/GCF_049350105.2.zip",
+        "datasets_version": "18.39.0",
+        "retrieved_at": "2026-10-19T21:36:48+00:00",
+        "protein_fasta": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/mmul/extracted/ncbi_dataset/data/GCF_049350105.2/protein.faa",
+          "sha256": "d255d17e2d5a13a3f40c28bd279e74e076e61a4fb6be4e9f2049091506eaaa6a",
+          "bytes": 83636895
+        },
+        "gff": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/mmul/extracted/ncbi_dataset/data/GCF_049350105.2/genomic.gff",
+          "sha256": "735e809f1cfb334d9d0cbf933398952512d0d82a3b69fa8311235744f5b8d5e3",
+          "bytes": 1079581032
+        },
+        "n_proteins_raw": 109385
+      },
+      "absence_reason": null,
+      "prep": {
+        "rule": "longest protein per GFF gene (CDS protein_id or feature ID, Parent chain to the first gene/pseudogene feature, gene keyed by Dbxref GeneID when present); ties keep the smallest protein id.",
+        "n_proteins_raw": 109385,
+        "n_proteins_prepped": 21513,
+        "n_proteins_without_gene": 0,
+        "output": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/proteomes/mmul.faa",
+          "sha256": "3cf713d1d70a904e8f554b6f508237f8b772d243a4627d25e4881f2a4ceb7d45",
+          "bytes": 12641809
+        }
+      }
+    },
+    {
+      "key": "mmus_c57bl6j",
+      "row": 33,
+      "display": "M. musculus C57BL/6J",
+      "organism_name": "Mus musculus",
+      "taxid": 10090,
+      "strain": "C57BL/6J",
+      "preferred_strain": "C57BL/6J",
+      "groups": [
+        "mammal"
+      ],
+      "justification": "The model rodent; human/mouse is the classic ~85% protein identity pair.",
+      "reference_accession": "GCF_000001635.27",
+      "accession_choice": "NCBI reference assembly GRCm39; it is the named strain C57BL/6J.",
+      "proteome": {
+        "source": "ncbi",
+        "accession": "GCF_000001635.27",
+        "assembly_name": "GRCm39",
+        "annotation_provider": "NCBI RefSeq",
+        "tier_set": null,
+        "sd108_commit": null,
+        "source_url": "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/GCF_000001635.27/download?include_annotation_type=PROT_FASTA,GENOME_GFF",
+        "retrieval_method": "ncbi_datasets_cli",
+        "retrieval_command": "datasets download genome accession GCF_000001635.27 --include protein,gff3 --filename $DATA_ROOT/data/organism_similarity/ncbi/mmus_c57bl6j/GCF_000001635.27.zip",
+        "datasets_version": "18.39.0",
+        "retrieved_at": "2026-10-19T21:36:57+00:00",
+        "protein_fasta": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/mmus_c57bl6j/extracted/ncbi_dataset/data/GCF_000001635.27/protein.faa",
+          "sha256": "bfbd83c18828c666f243a12e937cab163843dca6eae81d7cf5d09a4844309ea0",
+          "bytes": 74585627
+        },
+        "gff": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/mmus_c57bl6j/extracted/ncbi_dataset/data/GCF_000001635.27/genomic.gff",
+          "sha256": "74d2e5384435868a6378ca58be52b19f20bfadfe5f53e973a9159e215806881e",
+          "bytes": 921533202
+        },
+        "n_proteins_raw": 97339
+      },
+      "absence_reason": null,
+      "prep": {
+        "rule": "longest protein per GFF gene (CDS protein_id or feature ID, Parent chain to the first gene/pseudogene feature, gene keyed by Dbxref GeneID when present); ties keep the smallest protein id.",
+        "n_proteins_raw": 97339,
+        "n_proteins_prepped": 22198,
+        "n_proteins_without_gene": 0,
+        "output": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/proteomes/mmus_c57bl6j.faa",
+          "sha256": "37715e06900093ecfb9670dac6ce79e481e6f90a70b9d8fd43f4087c0b2f559f",
+          "bytes": 13001108
+        }
+      }
+    },
+    {
+      "key": "rnor",
+      "row": 34,
+      "display": "R. norvegicus",
+      "organism_name": "Rattus norvegicus",
+      "taxid": 10116,
+      "strain": "BN/NHsdMcwi",
+      "preferred_strain": "reference",
+      "groups": [
+        "mammal"
+      ],
+      "justification": "Model rodent.",
+      "reference_accession": "GCF_036323735.1",
+      "accession_choice": "NCBI reference assembly GRCr8.",
+      "proteome": {
+        "source": "ncbi",
+        "accession": "GCF_036323735.1",
+        "assembly_name": "GRCr8",
+        "annotation_provider": "NCBI RefSeq",
+        "tier_set": null,
+        "sd108_commit": null,
+        "source_url": "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/GCF_036323735.1/download?include_annotation_type=PROT_FASTA,GENOME_GFF",
+        "retrieval_method": "ncbi_datasets_cli",
+        "retrieval_command": "datasets download genome accession GCF_036323735.1 --include protein,gff3 --filename $DATA_ROOT/data/organism_similarity/ncbi/rnor/GCF_036323735.1.zip",
+        "datasets_version": "18.39.0",
+        "retrieved_at": "2026-10-19T21:37:06+00:00",
+        "protein_fasta": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/rnor/extracted/ncbi_dataset/data/GCF_036323735.1/protein.faa",
+          "sha256": "f5bc48bb57c039e945e92fa3342e33485b097f5329fe05c6ca91623bfe24dabf",
+          "bytes": 72952774
+        },
+        "gff": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/rnor/extracted/ncbi_dataset/data/GCF_036323735.1/genomic.gff",
+          "sha256": "62d187473e2559c98bdf589a86318dfa43d54c04c5c0e62fdae2335206163337",
+          "bytes": 1002282849
+        },
+        "n_proteins_raw": 97483
+      },
+      "absence_reason": null,
+      "prep": {
+        "rule": "longest protein per GFF gene (CDS protein_id or feature ID, Parent chain to the first gene/pseudogene feature, gene keyed by Dbxref GeneID when present); ties keep the smallest protein id.",
+        "n_proteins_raw": 97483,
+        "n_proteins_prepped": 23209,
+        "n_proteins_without_gene": 0,
+        "output": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/proteomes/rnor.faa",
+          "sha256": "ea96ccda061a1fd08d2d11c0f3021d306346a11080f04f1d38eb3ce3e9ba3963",
+          "bytes": 13134972
+        }
+      }
+    },
+    {
+      "key": "ggal",
+      "row": 35,
+      "display": "G. gallus",
+      "organism_name": "Gallus gallus",
+      "taxid": 9031,
+      "strain": "bGalGal1",
+      "preferred_strain": "reference",
+      "groups": [
+        "outgroup"
+      ],
+      "justification": "Peris's amniote outgroup; bounds \"within mammals\" from outside.",
+      "reference_accession": "GCF_016699485.2",
+      "accession_choice": "NCBI reference assembly bGalGal1.mat.broiler.GRCg7b.",
+      "proteome": {
+        "source": "ncbi",
+        "accession": "GCF_016699485.2",
+        "assembly_name": "bGalGal1.mat.broiler.GRCg7b",
+        "annotation_provider": "NCBI RefSeq",
+        "tier_set": null,
+        "sd108_commit": null,
+        "source_url": "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/GCF_016699485.2/download?include_annotation_type=PROT_FASTA,GENOME_GFF",
+        "retrieval_method": "ncbi_datasets_cli",
+        "retrieval_command": "datasets download genome accession GCF_016699485.2 --include protein,gff3 --filename $DATA_ROOT/data/organism_similarity/ncbi/ggal/GCF_016699485.2.zip",
+        "datasets_version": "18.39.0",
+        "retrieved_at": "2026-10-19T21:37:15+00:00",
+        "protein_fasta": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/ggal/extracted/ncbi_dataset/data/GCF_016699485.2/protein.faa",
+          "sha256": "84866d486fa0d74ac5fc0127c3b852b982ecc64ff88738d18ee49a3e0e93007e",
+          "bytes": 56204740
+        },
+        "gff": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/ncbi/ggal/extracted/ncbi_dataset/data/GCF_016699485.2/genomic.gff",
+          "sha256": "8081150e4adad07762ec94e000d156eb3f09f92132a7a602fff2e35d461e32e5",
+          "bytes": 691053434
+        },
+        "n_proteins_raw": 68683
+      },
+      "absence_reason": null,
+      "prep": {
+        "rule": "longest protein per GFF gene (CDS protein_id or feature ID, Parent chain to the first gene/pseudogene feature, gene keyed by Dbxref GeneID when present); ties keep the smallest protein id.",
+        "n_proteins_raw": 68683,
+        "n_proteins_prepped": 18023,
+        "n_proteins_without_gene": 0,
+        "output": {
+          "path": "/scratch/projects/torchcell-scratch/data/organism_similarity/proteomes/ggal.faa",
+          "sha256": "269fb2fcb3b01c9fcc14f301bfa42a0ce92e6bc9693362deac386e585ebe336b",
+          "bytes": 10997980
+        }
+      }
+    }
+  ]
+}

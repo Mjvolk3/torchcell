@@ -139,12 +139,13 @@ def _describe(dataset: Neo4jCellDataset, index: int, record: dict[str, Any]) -> 
     phenotype = experiment["phenotype"]
     label = phenotype["label_name"]
     value = phenotype.get(label)
-    perts = experiment["genotype"]["perturbations"]
+    # A SegregantGenotype has no perturbation list.
+    perts = experiment["genotype"].get("perturbations") or []
     summary: dict[str, Any] = {
         "index": index,
         "dataset_name": experiment["dataset_name"],
         "experiment_type": experiment["experiment_type"],
-        "genotype_type": experiment["genotype"].get("genotype_type"),
+        "genotype_fields": sorted(experiment["genotype"]),
         "label_name": label,
         "label_length": len(value) if isinstance(value, (dict, list)) else None,
         "n_perturbations": len(perts),
@@ -161,6 +162,9 @@ def _describe(dataset: Neo4jCellDataset, index: int, record: dict[str, Any]) -> 
         summary["get_error"] = f"{type(exc).__name__}: {exc}"
         return summary
     summary["get_repr"] = repr(item)
+    summary["perturbation_indices_length"] = len(item["gene"].perturbation_indices)
+    summary["pert_mask_sum"] = int(item["gene"].pert_mask.sum())
+    summary["phenotype_types"] = list(item["gene"].phenotype_types)
     return summary
 
 

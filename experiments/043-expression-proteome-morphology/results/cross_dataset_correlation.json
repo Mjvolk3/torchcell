@@ -1,0 +1,1305 @@
+{
+ "pairs": {
+  "01_kemmeren_x_sameith_sm": {
+   "n_shared_genotypes": 82,
+   "n_shared_genes": 6169,
+   "A_per_genotype_pearson": {
+    "n": 82,
+    "median": 1.0,
+    "q1": 1.0,
+    "q3": 1.0
+   },
+   "A_per_genotype_spearman": {
+    "n": 82,
+    "median": 1.0,
+    "q1": 1.0,
+    "q3": 1.0
+   },
+   "B_per_gene_pearson": {
+    "n": 6169,
+    "median": 1.0,
+    "q1": 1.0,
+    "q3": 1.0
+   },
+   "B_fraction_genes_above_0.3": 1.0
+  },
+  "02_kemmeren_x_hu": {
+   "n_shared_genotypes": 255,
+   "n_shared_genes": 5803,
+   "A_per_genotype_pearson": {
+    "n": 255,
+    "median": 0.1072122601267836,
+    "q1": 0.012652309968430364,
+    "q3": 0.18390272099244465
+   },
+   "A_per_genotype_spearman": {
+    "n": 255,
+    "median": 0.0817886295274139,
+    "q1": -2.4506960387196173e-05,
+    "q3": 0.15127874511584793
+   },
+   "B_per_gene_pearson": {
+    "n": 5803,
+    "median": 0.0971826171604491,
+    "q1": 0.023279479201999312,
+    "q3": 0.19671864381926552
+   },
+   "B_fraction_genes_above_0.3": 0.10201619851800793
+  },
+  "03_kemmeren_x_nadal_condition1": {
+   "n_shared_genotypes": 913,
+   "n_shared_genes": 5926,
+   "A_per_genotype_pearson": {
+    "n": 913,
+    "median": 0.0019969335985284297,
+    "q1": -0.0171393453103051,
+    "q3": 0.02177072532638135
+   },
+   "A_per_genotype_spearman": {
+    "n": 913,
+    "median": 0.006976203301176962,
+    "q1": -0.010848138233860693,
+    "q3": 0.026503329627171373
+   },
+   "B_per_gene_pearson": {
+    "n": 5891,
+    "median": 0.017113714994461925,
+    "q1": -0.010394535967643809,
+    "q3": 0.04603137398513647
+   },
+   "B_fraction_genes_above_0.3": 0.00679001867255135,
+   "environment": "33a1eacd12ce"
+  },
+  "03_kemmeren_x_nadal_condition2": {
+   "n_shared_genotypes": 920,
+   "n_shared_genes": 5926,
+   "A_per_genotype_pearson": {
+    "n": 920,
+    "median": -0.0008076291770854078,
+    "q1": -0.020834219111906173,
+    "q3": 0.02160682388697866
+   },
+   "A_per_genotype_spearman": {
+    "n": 920,
+    "median": 0.005358010710933437,
+    "q1": -0.014441119763290943,
+    "q3": 0.027810600379295027
+   },
+   "B_per_gene_pearson": {
+    "n": 5896,
+    "median": 0.015418292533276355,
+    "q1": -0.011000921669988246,
+    "q3": 0.042911242154363184
+   },
+   "B_fraction_genes_above_0.3": 0.006105834464043419,
+   "environment": "5f3603465471"
+  },
+  "05a_nadal_condition1_x_condition2": {
+   "n_shared_genotypes": 2952,
+   "n_shared_genes": 6385,
+   "A_per_genotype_pearson": {
+    "n": 2952,
+    "median": 0.20810929592786145,
+    "q1": 0.1676851099621625,
+    "q3": 0.2309407881047605
+   },
+   "A_per_genotype_spearman": {
+    "n": 2952,
+    "median": 0.042824005511240715,
+    "q1": 0.028095371435444234,
+    "q3": 0.058704663428124235
+   },
+   "B_per_gene_pearson": {
+    "n": 6134,
+    "median": 0.183453927298329,
+    "q1": 0.10808961651418739,
+    "q3": 0.22306114730832055
+   },
+   "B_fraction_genes_above_0.3": 0.05037495924356048
+  },
+  "05b_nadal_within_condition_duplicates": {
+   "n_shared_genotypes": 105,
+   "n_shared_genes": 6385,
+   "A_per_genotype_pearson": {
+    "n": 105,
+    "median": 0.37598774798987844,
+    "q1": 0.32308738230282363,
+    "q3": 0.4523115545474489
+   },
+   "A_per_genotype_spearman": {
+    "n": 105,
+    "median": 0.17793663968690634,
+    "q1": 0.14170785025852622,
+    "q3": 0.24023245822698
+   },
+   "B_per_gene_pearson": {
+    "n": 5897,
+    "median": 0.06162879017192862,
+    "q1": -0.01961352165292204,
+    "q3": 0.16621157425841127
+   },
+   "B_fraction_genes_above_0.3": 0.08868916398168561
+  },
+  "04_kemmeren_x_jackson_ypd1": {
+   "n_shared_genotypes": 11,
+   "n_shared_genes": 5340,
+   "A_per_genotype_pearson": {
+    "n": 11,
+    "median": 0.04284272876753403,
+    "q1": 0.026436570229666785,
+    "q3": 0.07020631177231318
+   },
+   "A_per_genotype_spearman": {
+    "n": 11,
+    "median": 0.04706681572871293,
+    "q1": 0.017629316394387192,
+    "q3": 0.05756755136432128
+   },
+   "B_per_gene_pearson": {
+    "n": 5340,
+    "median": 0.035453621374524236,
+    "q1": -0.21741185197989127,
+    "q3": 0.295763610227588
+   },
+   "B_fraction_genes_above_0.3": 0.24662921348314606,
+   "environment": "25f7d50fb210"
+  },
+  "04_kemmeren_x_jackson_ypd2": {
+   "n_shared_genotypes": 11,
+   "n_shared_genes": 5353,
+   "A_per_genotype_pearson": {
+    "n": 11,
+    "median": 0.06553401335318676,
+    "q1": 0.02676107758031334,
+    "q3": 0.20987533558845675
+   },
+   "A_per_genotype_spearman": {
+    "n": 11,
+    "median": 0.030439455301355865,
+    "q1": -0.006404606162032559,
+    "q3": 0.14181660377230781
+   },
+   "B_per_gene_pearson": {
+    "n": 5353,
+    "median": 0.11825659793246188,
+    "q1": -0.1353065998680451,
+    "q3": 0.38079369931415197
+   },
+   "B_fraction_genes_above_0.3": 0.32094152811507565,
+   "environment": "2fba8beb3f4c"
+  },
+  "04_kemmeren_x_jackson_ypd3": {
+   "n_shared_genotypes": 11,
+   "n_shared_genes": 5601,
+   "A_per_genotype_pearson": {
+    "n": 11,
+    "median": 0.07644552544881292,
+    "q1": 0.03580883232590267,
+    "q3": 0.14885936793965193
+   },
+   "A_per_genotype_spearman": {
+    "n": 11,
+    "median": 0.045239556862783276,
+    "q1": 0.026108518281990227,
+    "q3": 0.08385024672221772
+   },
+   "B_per_gene_pearson": {
+    "n": 5601,
+    "median": 0.0521781697232204,
+    "q1": -0.20063088264712597,
+    "q3": 0.3035859534340835
+   },
+   "B_fraction_genes_above_0.3": 0.25281199785752545,
+   "environment": "89820c3bd8bc"
+  },
+  "06_jackson_between_environments": {
+   "n_environments": 11,
+   "n_genotypes": 11,
+   "n_genotype_environment_pairs": 605,
+   "A_per_genotype_pearson": {
+    "n": 605,
+    "median": 0.009575059949405901,
+    "q1": -0.004611394611490137,
+    "q3": 0.028670681866146724
+   },
+   "A_per_genotype_spearman": {
+    "n": 605,
+    "median": 0.009212160466541873,
+    "q1": -0.004342489172879789,
+    "q3": 0.02972268536413959
+   },
+   "note": "log2 ratio to HO in each environment; genes with >= 10 UMIs summed"
+  },
+  "07_messner_x_zelezniak": {
+   "n_shared_genotypes": 89,
+   "n_shared_genes": 715,
+   "A_per_genotype_pearson": {
+    "n": 89,
+    "median": 0.04903621714942341,
+    "q1": -0.015527917335565591,
+    "q3": 0.18451209986487008
+   },
+   "A_per_genotype_spearman": {
+    "n": 89,
+    "median": 0.04950726060432629,
+    "q1": -0.030185852428241663,
+    "q3": 0.1868661735898016
+   },
+   "B_per_gene_pearson": {
+    "n": 715,
+    "median": 0.08487259289772889,
+    "q1": -0.0007582261868616668,
+    "q3": 0.17629739759306032
+   },
+   "B_fraction_genes_above_0.3": 0.06713286713286713
+  },
+  "08_kemmeren_x_messner": {
+   "n_shared_genotypes": 1349,
+   "n_shared_genes": 1832,
+   "A_per_genotype_pearson": {
+    "n": 1349,
+    "median": 0.030803243658443766,
+    "q1": -0.02456981439373762,
+    "q3": 0.11225607440741349
+   },
+   "A_per_genotype_spearman": {
+    "n": 1349,
+    "median": 0.03427888908166868,
+    "q1": -0.02727334321810476,
+    "q3": 0.11337483437047566
+   },
+   "B_per_gene_pearson": {
+    "n": 1832,
+    "median": 0.09422090357886784,
+    "q1": 0.043401247585730884,
+    "q3": 0.1570349766692154
+   },
+   "B_fraction_genes_above_0.3": 0.03275109170305677
+  },
+  "09a_caudal_x_muenzner_proteome": {
+   "n_shared_genotypes": 759,
+   "n_shared_genes": 1572,
+   "A_per_genotype_pearson": {
+    "n": 759,
+    "median": 0.2080282973432805,
+    "q1": 0.1085609249825953,
+    "q3": 0.30736436002364487
+   },
+   "A_per_genotype_spearman": {
+    "n": 759,
+    "median": 0.17593753140211582,
+    "q1": 0.08547416567449154,
+    "q3": 0.2666162237249333
+   },
+   "B_per_gene_pearson": {
+    "n": 1572,
+    "median": 0.160381821975436,
+    "q1": 0.08431033116122429,
+    "q3": 0.2562839884159457
+   },
+   "B_fraction_genes_above_0.3": 0.1825699745547074
+  },
+  "09b_muenzner_turnover_x_abundance": {
+   "n_shared_genotypes": 55,
+   "n_shared_genes": 1269,
+   "A_per_genotype_pearson": {
+    "n": 55,
+    "median": -0.00561250625241941,
+    "q1": -0.053378178101865355,
+    "q3": 0.04704293211964815
+   },
+   "A_per_genotype_spearman": {
+    "n": 55,
+    "median": -0.002795127061119791,
+    "q1": -0.03560118045908979,
+    "q3": 0.04934647546584203
+   },
+   "B_per_gene_pearson": {
+    "n": 1120,
+    "median": -0.007398418516326144,
+    "q1": -0.12621187867527411,
+    "q3": 0.10646174332914654
+   },
+   "B_fraction_genes_above_0.3": 0.06607142857142857
+  }
+ },
+ "morphology": {
+  "all_features": {
+   "kemmeren": {
+    "n_genotypes": 1437,
+    "n_input_features": 6169,
+    "n_target_features": 281,
+    "mean_r_over_features": 0.23843032897446836,
+    "median_r_over_features": 0.2378043976780544,
+    "null_mean_r": -0.004601895881215154,
+    "null_median_r": -0.007886365534242368
+   },
+   "messner": {
+    "n_genotypes": 4279,
+    "n_input_features": 1850,
+    "n_target_features": 281,
+    "mean_r_over_features": 0.17859433729330615,
+    "median_r_over_features": 0.17164260721259036,
+    "null_mean_r": 0.008260852726938633,
+    "null_median_r": 0.009126504286142596
+   },
+   "sameith_sm": {
+    "n_genotypes": 81,
+    "n_input_features": 6169,
+    "n_target_features": 281,
+    "mean_r_over_features": -0.013523880117522442,
+    "median_r_over_features": -0.027249786081887384,
+    "null_mean_r": -0.07704993513040537,
+    "null_median_r": -0.06202335187457429
+   },
+   "hu": {
+    "n_genotypes": 259,
+    "n_input_features": 6427,
+    "n_target_features": 281,
+    "mean_r_over_features": 0.11410803143814824,
+    "median_r_over_features": 0.1050881438311849,
+    "null_mean_r": -0.051606775069567595,
+    "null_median_r": -0.0610326940781868
+   }
+  },
+  "moving_features": {
+   "kemmeren": {
+    "n_genotypes": 1437,
+    "n_input_features": 6169,
+    "n_target_features": 116,
+    "mean_r_over_features": 0.3264604891893496,
+    "median_r_over_features": 0.34813435324769076,
+    "null_mean_r": -0.012275294762220758,
+    "null_median_r": -0.016853803600262753
+   },
+   "messner": {
+    "n_genotypes": 4279,
+    "n_input_features": 1850,
+    "n_target_features": 116,
+    "mean_r_over_features": 0.25261379912849086,
+    "median_r_over_features": 0.27827772739762646,
+    "null_mean_r": 0.01048802135636043,
+    "null_median_r": 0.011750389598186152
+   },
+   "sameith_sm": {
+    "n_genotypes": 81,
+    "n_input_features": 6169,
+    "n_target_features": 116,
+    "mean_r_over_features": -0.06939817281731442,
+    "median_r_over_features": -0.08464151345743098,
+    "null_mean_r": -0.06259874571227175,
+    "null_median_r": -0.038396330078183466
+   },
+   "hu": {
+    "n_genotypes": 259,
+    "n_input_features": 6427,
+    "n_target_features": 116,
+    "mean_r_over_features": 0.20554656761458287,
+    "median_r_over_features": 0.23478407802151224,
+    "null_mean_r": -0.040348081521101496,
+    "null_median_r": -0.0478519523164941
+   }
+  },
+  "moving_features_source": {
+   "path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/multimodal-phenotype-retrospective/experiments/019-simb-multimodal/results/calmorph_moving_features.json",
+   "sha256": "312fd7a6d3d786fc8aa18bcbc51a3fb4d91b6885f250133db46f54d09feb17d4",
+   "n": 116
+  }
+ },
+ "extract": {
+  "records_seen": 173617,
+  "seconds": 1047.602523803711,
+  "counts": {
+   "kemmeren": {
+    "records": 1482,
+    "genes": 6169
+   },
+   "messner": {
+    "records": 4624,
+    "genes": 1850
+   },
+   "zelezniak": {
+    "records": 97,
+    "genes": 726
+   },
+   "ohya": {
+    "records": 4678,
+    "genes": 281
+   },
+   "sameith_sm": {
+    "records": 82,
+    "genes": 6169
+   },
+   "hu": {
+    "records": 262,
+    "genes": 6429
+   },
+   "caudal": {
+    "records": 943,
+    "genes": 6483
+   },
+   "jackson": {
+    "records": 784,
+    "genes": 6518
+   },
+   "muenzner": {
+    "records": 795,
+    "genes": 1576
+   },
+   "turnover": {
+    "records": 55,
+    "genes": 1836
+   },
+   "nadal": {
+    "records": 6118,
+    "genes": 6385
+   }
+  },
+  "unmapped_ids": {
+   "nadal": 411
+  },
+  "environments": {
+   "042e9aca39c0": {
+    "media": "SC",
+    "temperature": {
+     "value": 30.0,
+     "unit": "Celsius"
+    },
+    "fields": {
+     "aerobicity": "aerobic",
+     "duration_hours": null,
+     "duration_generations": null
+    },
+    "perturbations": []
+   },
+   "8f819c781251": {
+    "media": "SM (synthetic minimal: 6.7 g/L YNB without amino acids + 2% glucose), liquid",
+    "temperature": {
+     "value": 30.0,
+     "unit": "Celsius"
+    },
+    "fields": {
+     "aerobicity": "aerobic",
+     "duration_hours": null,
+     "duration_generations": null
+    },
+    "perturbations": []
+   },
+   "ed4dc0d4d175": {
+    "media": "SM (synthetic minimal, composition deferred to Mulleder 2012), liquid",
+    "temperature": {
+     "value": 30.0,
+     "unit": "Celsius"
+    },
+    "fields": {
+     "aerobicity": "aerobic",
+     "duration_hours": null,
+     "duration_generations": null
+    },
+    "perturbations": []
+   },
+   "a9376e030b59": {
+    "media": "YPD (yeast extract / peptone / dextrose), liquid",
+    "temperature": {
+     "value": 25.0,
+     "unit": "Celsius"
+    },
+    "fields": {
+     "aerobicity": "aerobic",
+     "duration_hours": null,
+     "duration_generations": null
+    },
+    "perturbations": []
+   },
+   "a805d6f93770": {
+    "media": "YPD (yeast extract / peptone / dextrose), liquid",
+    "temperature": null,
+    "fields": {
+     "aerobicity": "aerobic",
+     "duration_hours": null,
+     "duration_generations": null
+    },
+    "perturbations": []
+   },
+   "c7d8fd2babbb": {
+    "media": "SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose)",
+    "temperature": {
+     "value": 30.0,
+     "unit": "Celsius"
+    },
+    "fields": {
+     "aerobicity": "aerobic",
+     "duration_hours": null,
+     "duration_generations": null
+    },
+    "perturbations": []
+   },
+   "57a078e53dee": {
+    "media": "Jackson 2020 nitrogen-limited minimal medium, 2% glucose + 800 uM urea (NLIM-UREA)",
+    "temperature": null,
+    "fields": {
+     "aerobicity": "aerobic",
+     "duration_hours": 4.0,
+     "duration_generations": null,
+     "culture_format": {
+      "provenance_gaps": [],
+      "vessel": "shake flask",
+      "working_volume_ul": 50000.0,
+      "shaking_rpm": null,
+      "inoculum_cells": null,
+      "inoculum_cells_per_strain": null,
+      "inoculum_od600": null,
+      "endpoint": "fixed_duration",
+      "provenance": [
+       {
+        "value": "50 mL shake flask",
+        "provenance": {
+         "source_uri": "paper.md",
+         "citation_key": "jacksonGeneRegulatoryNetwork2020",
+         "sha256": "453924f3d5ed998e99695768cf5b4067f2dbac3fb0af53dcbf8fd9017f199697",
+         "method": null,
+         "page": "'Culturing and harvest'",
+         "retrieved": null
+        },
+        "quote": "of the washed cells were used to inoculate $5 0 ~ \\mathsf { m L }$ of the relevant media for the specific experimental condition in a shake flask.",
+        "note": null
+       },
+       {
+        "value": "harvest 4 h after inoculation, DIAUXY 10 h",
+        "provenance": {
+         "source_uri": "paper.md",
+         "citation_key": "jacksonGeneRegulatoryNetwork2020",
+         "sha256": "453924f3d5ed998e99695768cf5b4067f2dbac3fb0af53dcbf8fd9017f199697",
+         "method": null,
+         "page": "Table 1 legend",
+         "retrieved": null
+        },
+        "quote": "All cultures were harvested $4 \\ : \\mathrm { h r }$ after inoculation, except for the culture harvested after the diauxic shift [DIAUXY], which was harvested $1 0 \\ : \\mathrm { h r }$ after inoculation.",
+        "note": null
+       }
+      ]
+     }
+    },
+    "perturbations": []
+   },
+   "31a2aac58b27": {
+    "media": "Jackson 2020 minimal medium, 2% (v/v) ethanol + 20 mM ammonium sulfate (MMEtOH)",
+    "temperature": null,
+    "fields": {
+     "aerobicity": "aerobic",
+     "duration_hours": 4.0,
+     "duration_generations": null,
+     "culture_format": {
+      "provenance_gaps": [],
+      "vessel": "shake flask",
+      "working_volume_ul": 50000.0,
+      "shaking_rpm": null,
+      "inoculum_cells": null,
+      "inoculum_cells_per_strain": null,
+      "inoculum_od600": null,
+      "endpoint": "fixed_duration",
+      "provenance": [
+       {
+        "value": "50 mL shake flask",
+        "provenance": {
+         "source_uri": "paper.md",
+         "citation_key": "jacksonGeneRegulatoryNetwork2020",
+         "sha256": "453924f3d5ed998e99695768cf5b4067f2dbac3fb0af53dcbf8fd9017f199697",
+         "method": null,
+         "page": "'Culturing and harvest'",
+         "retrieved": null
+        },
+        "quote": "of the washed cells were used to inoculate $5 0 ~ \\mathsf { m L }$ of the relevant media for the specific experimental condition in a shake flask.",
+        "note": null
+       },
+       {
+        "value": "harvest 4 h after inoculation, DIAUXY 10 h",
+        "provenance": {
+         "source_uri": "paper.md",
+         "citation_key": "jacksonGeneRegulatoryNetwork2020",
+         "sha256": "453924f3d5ed998e99695768cf5b4067f2dbac3fb0af53dcbf8fd9017f199697",
+         "method": null,
+         "page": "Table 1 legend",
+         "retrieved": null
+        },
+        "quote": "All cultures were harvested $4 \\ : \\mathrm { h r }$ after inoculation, except for the culture harvested after the diauxic shift [DIAUXY], which was harvested $1 0 \\ : \\mathrm { h r }$ after inoculation.",
+        "note": null
+       }
+      ]
+     }
+    },
+    "perturbations": []
+   },
+   "85560dec9149": {
+    "media": "Jackson 2020 nitrogen-limited minimal medium, 2% glucose + 800 uM L-glutamine (NLIM-GLN)",
+    "temperature": null,
+    "fields": {
+     "aerobicity": "aerobic",
+     "duration_hours": 4.0,
+     "duration_generations": null,
+     "culture_format": {
+      "provenance_gaps": [],
+      "vessel": "shake flask",
+      "working_volume_ul": 50000.0,
+      "shaking_rpm": null,
+      "inoculum_cells": null,
+      "inoculum_cells_per_strain": null,
+      "inoculum_od600": null,
+      "endpoint": "fixed_duration",
+      "provenance": [
+       {
+        "value": "50 mL shake flask",
+        "provenance": {
+         "source_uri": "paper.md",
+         "citation_key": "jacksonGeneRegulatoryNetwork2020",
+         "sha256": "453924f3d5ed998e99695768cf5b4067f2dbac3fb0af53dcbf8fd9017f199697",
+         "method": null,
+         "page": "'Culturing and harvest'",
+         "retrieved": null
+        },
+        "quote": "of the washed cells were used to inoculate $5 0 ~ \\mathsf { m L }$ of the relevant media for the specific experimental condition in a shake flask.",
+        "note": null
+       },
+       {
+        "value": "harvest 4 h after inoculation, DIAUXY 10 h",
+        "provenance": {
+         "source_uri": "paper.md",
+         "citation_key": "jacksonGeneRegulatoryNetwork2020",
+         "sha256": "453924f3d5ed998e99695768cf5b4067f2dbac3fb0af53dcbf8fd9017f199697",
+         "method": null,
+         "page": "Table 1 legend",
+         "retrieved": null
+        },
+        "quote": "All cultures were harvested $4 \\ : \\mathrm { h r }$ after inoculation, except for the culture harvested after the diauxic shift [DIAUXY], which was harvested $1 0 \\ : \\mathrm { h r }$ after inoculation.",
+        "note": null
+       }
+      ]
+     }
+    },
+    "perturbations": []
+   },
+   "309887d86bc2": {
+    "media": "Jackson 2020 nitrogen-limited minimal medium, 2% glucose + 800 uM ammonium sulfate (NLIM-NH4)",
+    "temperature": null,
+    "fields": {
+     "aerobicity": "aerobic",
+     "duration_hours": 4.0,
+     "duration_generations": null,
+     "culture_format": {
+      "provenance_gaps": [],
+      "vessel": "shake flask",
+      "working_volume_ul": 50000.0,
+      "shaking_rpm": null,
+      "inoculum_cells": null,
+      "inoculum_cells_per_strain": null,
+      "inoculum_od600": null,
+      "endpoint": "fixed_duration",
+      "provenance": [
+       {
+        "value": "50 mL shake flask",
+        "provenance": {
+         "source_uri": "paper.md",
+         "citation_key": "jacksonGeneRegulatoryNetwork2020",
+         "sha256": "453924f3d5ed998e99695768cf5b4067f2dbac3fb0af53dcbf8fd9017f199697",
+         "method": null,
+         "page": "'Culturing and harvest'",
+         "retrieved": null
+        },
+        "quote": "of the washed cells were used to inoculate $5 0 ~ \\mathsf { m L }$ of the relevant media for the specific experimental condition in a shake flask.",
+        "note": null
+       },
+       {
+        "value": "harvest 4 h after inoculation, DIAUXY 10 h",
+        "provenance": {
+         "source_uri": "paper.md",
+         "citation_key": "jacksonGeneRegulatoryNetwork2020",
+         "sha256": "453924f3d5ed998e99695768cf5b4067f2dbac3fb0af53dcbf8fd9017f199697",
+         "method": null,
+         "page": "Table 1 legend",
+         "retrieved": null
+        },
+        "quote": "All cultures were harvested $4 \\ : \\mathrm { h r }$ after inoculation, except for the culture harvested after the diauxic shift [DIAUXY], which was harvested $1 0 \\ : \\mathrm { h r }$ after inoculation.",
+        "note": null
+       }
+      ]
+     }
+    },
+    "perturbations": []
+   },
+   "005a55874b02": {
+    "media": "YP + 2% (v/v) ethanol, liquid (Jackson 2020 YPEtOH)",
+    "temperature": null,
+    "fields": {
+     "aerobicity": "aerobic",
+     "duration_hours": 4.0,
+     "duration_generations": null,
+     "culture_format": {
+      "provenance_gaps": [],
+      "vessel": "shake flask",
+      "working_volume_ul": 50000.0,
+      "shaking_rpm": null,
+      "inoculum_cells": null,
+      "inoculum_cells_per_strain": null,
+      "inoculum_od600": null,
+      "endpoint": "fixed_duration",
+      "provenance": [
+       {
+        "value": "50 mL shake flask",
+        "provenance": {
+         "source_uri": "paper.md",
+         "citation_key": "jacksonGeneRegulatoryNetwork2020",
+         "sha256": "453924f3d5ed998e99695768cf5b4067f2dbac3fb0af53dcbf8fd9017f199697",
+         "method": null,
+         "page": "'Culturing and harvest'",
+         "retrieved": null
+        },
+        "quote": "of the washed cells were used to inoculate $5 0 ~ \\mathsf { m L }$ of the relevant media for the specific experimental condition in a shake flask.",
+        "note": null
+       },
+       {
+        "value": "harvest 4 h after inoculation, DIAUXY 10 h",
+        "provenance": {
+         "source_uri": "paper.md",
+         "citation_key": "jacksonGeneRegulatoryNetwork2020",
+         "sha256": "453924f3d5ed998e99695768cf5b4067f2dbac3fb0af53dcbf8fd9017f199697",
+         "method": null,
+         "page": "Table 1 legend",
+         "retrieved": null
+        },
+        "quote": "All cultures were harvested $4 \\ : \\mathrm { h r }$ after inoculation, except for the culture harvested after the diauxic shift [DIAUXY], which was harvested $1 0 \\ : \\mathrm { h r }$ after inoculation.",
+        "note": null
+       }
+      ]
+     }
+    },
+    "perturbations": []
+   },
+   "25f7d50fb210": {
+    "media": "YPD (yeast extract / peptone / dextrose), liquid",
+    "temperature": null,
+    "fields": {
+     "aerobicity": "aerobic",
+     "duration_hours": 10.0,
+     "duration_generations": null,
+     "culture_format": {
+      "provenance_gaps": [],
+      "vessel": "shake flask",
+      "working_volume_ul": 50000.0,
+      "shaking_rpm": null,
+      "inoculum_cells": null,
+      "inoculum_cells_per_strain": null,
+      "inoculum_od600": null,
+      "endpoint": "fixed_duration",
+      "provenance": [
+       {
+        "value": "50 mL shake flask",
+        "provenance": {
+         "source_uri": "paper.md",
+         "citation_key": "jacksonGeneRegulatoryNetwork2020",
+         "sha256": "453924f3d5ed998e99695768cf5b4067f2dbac3fb0af53dcbf8fd9017f199697",
+         "method": null,
+         "page": "'Culturing and harvest'",
+         "retrieved": null
+        },
+        "quote": "of the washed cells were used to inoculate $5 0 ~ \\mathsf { m L }$ of the relevant media for the specific experimental condition in a shake flask.",
+        "note": null
+       },
+       {
+        "value": "harvest 4 h after inoculation, DIAUXY 10 h",
+        "provenance": {
+         "source_uri": "paper.md",
+         "citation_key": "jacksonGeneRegulatoryNetwork2020",
+         "sha256": "453924f3d5ed998e99695768cf5b4067f2dbac3fb0af53dcbf8fd9017f199697",
+         "method": null,
+         "page": "Table 1 legend",
+         "retrieved": null
+        },
+        "quote": "All cultures were harvested $4 \\ : \\mathrm { h r }$ after inoculation, except for the culture harvested after the diauxic shift [DIAUXY], which was harvested $1 0 \\ : \\mathrm { h r }$ after inoculation.",
+        "note": null
+       }
+      ]
+     }
+    },
+    "perturbations": []
+   },
+   "89820c3bd8bc": {
+    "media": "YPD (yeast extract / peptone / dextrose), liquid",
+    "temperature": null,
+    "fields": {
+     "aerobicity": "aerobic",
+     "duration_hours": 4.0,
+     "duration_generations": null,
+     "culture_format": {
+      "provenance_gaps": [],
+      "vessel": "shake flask",
+      "working_volume_ul": 50000.0,
+      "shaking_rpm": null,
+      "inoculum_cells": null,
+      "inoculum_cells_per_strain": null,
+      "inoculum_od600": null,
+      "endpoint": "fixed_duration",
+      "provenance": [
+       {
+        "value": "50 mL shake flask",
+        "provenance": {
+         "source_uri": "paper.md",
+         "citation_key": "jacksonGeneRegulatoryNetwork2020",
+         "sha256": "453924f3d5ed998e99695768cf5b4067f2dbac3fb0af53dcbf8fd9017f199697",
+         "method": null,
+         "page": "'Culturing and harvest'",
+         "retrieved": null
+        },
+        "quote": "of the washed cells were used to inoculate $5 0 ~ \\mathsf { m L }$ of the relevant media for the specific experimental condition in a shake flask.",
+        "note": null
+       },
+       {
+        "value": "harvest 4 h after inoculation, DIAUXY 10 h",
+        "provenance": {
+         "source_uri": "paper.md",
+         "citation_key": "jacksonGeneRegulatoryNetwork2020",
+         "sha256": "453924f3d5ed998e99695768cf5b4067f2dbac3fb0af53dcbf8fd9017f199697",
+         "method": null,
+         "page": "Table 1 legend",
+         "retrieved": null
+        },
+        "quote": "All cultures were harvested $4 \\ : \\mathrm { h r }$ after inoculation, except for the culture harvested after the diauxic shift [DIAUXY], which was harvested $1 0 \\ : \\mathrm { h r }$ after inoculation.",
+        "note": null
+       }
+      ]
+     }
+    },
+    "perturbations": [
+     {
+      "provenance_gaps": [],
+      "perturbation_type": "small_molecule",
+      "description": "rapamycin added 3.5 h after inoculation, 30 min before the 4 h harvest",
+      "compound": {
+       "provenance_gaps": [],
+       "name": "rapamycin",
+       "inchikey": "QFJCIRLUMZQUOT-HPLJOQBZSA-N",
+       "inchi": null,
+       "smiles": "CC1CCC2CC(C(=CC=CC=CC(CC(C(=O)C(C(C(=CC(C(=O)CC(OC(=O)C3CCCCN3C(=O)C(=O)C1(O2)O)C(C)CC4CCC(C(C4)OC)O)C)C)O)OC)C)C)C)OC",
+       "pubchem_cid": 5284616,
+       "chebi_id": "CHEBI:9168",
+       "roles": []
+      },
+      "concentration": {
+       "value": 0.2,
+       "unit": "ug/mL",
+       "basis": null
+      },
+      "solvent": {
+       "name": "ethanol",
+       "percent": 0.02,
+       "compound": {
+        "provenance_gaps": [],
+        "name": "ethanol",
+        "inchikey": "LFQSCWFLJHTTHZ-UHFFFAOYSA-N",
+        "inchi": null,
+        "smiles": "CCO",
+        "pubchem_cid": 702,
+        "chebi_id": "CHEBI:16236",
+        "roles": []
+       }
+      }
+     }
+    ]
+   },
+   "2fba8beb3f4c": {
+    "media": "YPD (yeast extract / peptone / dextrose), liquid",
+    "temperature": null,
+    "fields": {
+     "aerobicity": "aerobic",
+     "duration_hours": 4.0,
+     "duration_generations": null,
+     "culture_format": {
+      "provenance_gaps": [],
+      "vessel": "shake flask",
+      "working_volume_ul": 50000.0,
+      "shaking_rpm": null,
+      "inoculum_cells": null,
+      "inoculum_cells_per_strain": null,
+      "inoculum_od600": null,
+      "endpoint": "fixed_duration",
+      "provenance": [
+       {
+        "value": "50 mL shake flask",
+        "provenance": {
+         "source_uri": "paper.md",
+         "citation_key": "jacksonGeneRegulatoryNetwork2020",
+         "sha256": "453924f3d5ed998e99695768cf5b4067f2dbac3fb0af53dcbf8fd9017f199697",
+         "method": null,
+         "page": "'Culturing and harvest'",
+         "retrieved": null
+        },
+        "quote": "of the washed cells were used to inoculate $5 0 ~ \\mathsf { m L }$ of the relevant media for the specific experimental condition in a shake flask.",
+        "note": null
+       },
+       {
+        "value": "harvest 4 h after inoculation, DIAUXY 10 h",
+        "provenance": {
+         "source_uri": "paper.md",
+         "citation_key": "jacksonGeneRegulatoryNetwork2020",
+         "sha256": "453924f3d5ed998e99695768cf5b4067f2dbac3fb0af53dcbf8fd9017f199697",
+         "method": null,
+         "page": "Table 1 legend",
+         "retrieved": null
+        },
+        "quote": "All cultures were harvested $4 \\ : \\mathrm { h r }$ after inoculation, except for the culture harvested after the diauxic shift [DIAUXY], which was harvested $1 0 \\ : \\mathrm { h r }$ after inoculation.",
+        "note": null
+       }
+      ]
+     }
+    },
+    "perturbations": []
+   },
+   "d1f886a77721": {
+    "media": "Jackson 2020 carbon-starvation medium, 1 mM ammonium sulfate, no carbon source (CSTARVE)",
+    "temperature": null,
+    "fields": {
+     "aerobicity": "aerobic",
+     "duration_hours": 4.0,
+     "duration_generations": null,
+     "culture_format": {
+      "provenance_gaps": [],
+      "vessel": "shake flask",
+      "working_volume_ul": 50000.0,
+      "shaking_rpm": null,
+      "inoculum_cells": null,
+      "inoculum_cells_per_strain": null,
+      "inoculum_od600": null,
+      "endpoint": "fixed_duration",
+      "provenance": [
+       {
+        "value": "50 mL shake flask",
+        "provenance": {
+         "source_uri": "paper.md",
+         "citation_key": "jacksonGeneRegulatoryNetwork2020",
+         "sha256": "453924f3d5ed998e99695768cf5b4067f2dbac3fb0af53dcbf8fd9017f199697",
+         "method": null,
+         "page": "'Culturing and harvest'",
+         "retrieved": null
+        },
+        "quote": "of the washed cells were used to inoculate $5 0 ~ \\mathsf { m L }$ of the relevant media for the specific experimental condition in a shake flask.",
+        "note": null
+       },
+       {
+        "value": "harvest 4 h after inoculation, DIAUXY 10 h",
+        "provenance": {
+         "source_uri": "paper.md",
+         "citation_key": "jacksonGeneRegulatoryNetwork2020",
+         "sha256": "453924f3d5ed998e99695768cf5b4067f2dbac3fb0af53dcbf8fd9017f199697",
+         "method": null,
+         "page": "Table 1 legend",
+         "retrieved": null
+        },
+        "quote": "All cultures were harvested $4 \\ : \\mathrm { h r }$ after inoculation, except for the culture harvested after the diauxic shift [DIAUXY], which was harvested $1 0 \\ : \\mathrm { h r }$ after inoculation.",
+        "note": null
+       }
+      ]
+     }
+    },
+    "perturbations": []
+   },
+   "fbf37e55f920": {
+    "media": "SM (synthetic minimal: 6.8 g/L YNB without amino acids + 2% glucose), liquid",
+    "temperature": {
+     "value": 30.0,
+     "unit": "Celsius"
+    },
+    "fields": {
+     "aerobicity": "aerobic",
+     "duration_hours": null,
+     "duration_generations": null
+    },
+    "perturbations": []
+   },
+   "c9e271a3a23b": {
+    "media": "Jackson 2020 minimal medium, 2% glucose + 20 mM ammonium sulfate (MMD)",
+    "temperature": null,
+    "fields": {
+     "aerobicity": "aerobic",
+     "duration_hours": 4.0,
+     "duration_generations": null,
+     "culture_format": {
+      "provenance_gaps": [],
+      "vessel": "shake flask",
+      "working_volume_ul": 50000.0,
+      "shaking_rpm": null,
+      "inoculum_cells": null,
+      "inoculum_cells_per_strain": null,
+      "inoculum_od600": null,
+      "endpoint": "fixed_duration",
+      "provenance": [
+       {
+        "value": "50 mL shake flask",
+        "provenance": {
+         "source_uri": "paper.md",
+         "citation_key": "jacksonGeneRegulatoryNetwork2020",
+         "sha256": "453924f3d5ed998e99695768cf5b4067f2dbac3fb0af53dcbf8fd9017f199697",
+         "method": null,
+         "page": "'Culturing and harvest'",
+         "retrieved": null
+        },
+        "quote": "of the washed cells were used to inoculate $5 0 ~ \\mathsf { m L }$ of the relevant media for the specific experimental condition in a shake flask.",
+        "note": null
+       },
+       {
+        "value": "harvest 4 h after inoculation, DIAUXY 10 h",
+        "provenance": {
+         "source_uri": "paper.md",
+         "citation_key": "jacksonGeneRegulatoryNetwork2020",
+         "sha256": "453924f3d5ed998e99695768cf5b4067f2dbac3fb0af53dcbf8fd9017f199697",
+         "method": null,
+         "page": "Table 1 legend",
+         "retrieved": null
+        },
+        "quote": "All cultures were harvested $4 \\ : \\mathrm { h r }$ after inoculation, except for the culture harvested after the diauxic shift [DIAUXY], which was harvested $1 0 \\ : \\mathrm { h r }$ after inoculation.",
+        "note": null
+       }
+      ]
+     }
+    },
+    "perturbations": []
+   },
+   "be55c43cd341": {
+    "media": "Jackson 2020 nitrogen-limited minimal medium, 2% glucose + 800 uM L-proline (NLIM-PRO)",
+    "temperature": null,
+    "fields": {
+     "aerobicity": "aerobic",
+     "duration_hours": 4.0,
+     "duration_generations": null,
+     "culture_format": {
+      "provenance_gaps": [],
+      "vessel": "shake flask",
+      "working_volume_ul": 50000.0,
+      "shaking_rpm": null,
+      "inoculum_cells": null,
+      "inoculum_cells_per_strain": null,
+      "inoculum_od600": null,
+      "endpoint": "fixed_duration",
+      "provenance": [
+       {
+        "value": "50 mL shake flask",
+        "provenance": {
+         "source_uri": "paper.md",
+         "citation_key": "jacksonGeneRegulatoryNetwork2020",
+         "sha256": "453924f3d5ed998e99695768cf5b4067f2dbac3fb0af53dcbf8fd9017f199697",
+         "method": null,
+         "page": "'Culturing and harvest'",
+         "retrieved": null
+        },
+        "quote": "of the washed cells were used to inoculate $5 0 ~ \\mathsf { m L }$ of the relevant media for the specific experimental condition in a shake flask.",
+        "note": null
+       },
+       {
+        "value": "harvest 4 h after inoculation, DIAUXY 10 h",
+        "provenance": {
+         "source_uri": "paper.md",
+         "citation_key": "jacksonGeneRegulatoryNetwork2020",
+         "sha256": "453924f3d5ed998e99695768cf5b4067f2dbac3fb0af53dcbf8fd9017f199697",
+         "method": null,
+         "page": "Table 1 legend",
+         "retrieved": null
+        },
+        "quote": "All cultures were harvested $4 \\ : \\mathrm { h r }$ after inoculation, except for the culture harvested after the diauxic shift [DIAUXY], which was harvested $1 0 \\ : \\mathrm { h r }$ after inoculation.",
+        "note": null
+       }
+      ]
+     }
+    },
+    "perturbations": []
+   },
+   "ab85e0823b60": {
+    "media": "SM + 80 mg/L [13C6/15N2] L-lysine (SILAC Lys-8), liquid",
+    "temperature": {
+     "value": 30.0,
+     "unit": "Celsius"
+    },
+    "fields": {
+     "aerobicity": "aerobic",
+     "duration_hours": null,
+     "duration_generations": null
+    },
+    "perturbations": []
+   },
+   "5f3603465471": {
+    "media": "YPD (yeast extract / peptone / dextrose), liquid",
+    "temperature": {
+     "value": 30.0,
+     "unit": "Celsius"
+    },
+    "fields": {
+     "aerobicity": "aerobic",
+     "duration_hours": 0.25,
+     "duration_generations": null
+    },
+    "perturbations": [
+     {
+      "provenance_gaps": [],
+      "perturbation_type": "small_molecule",
+      "description": "Small-molecule compound added to the base medium",
+      "compound": {
+       "provenance_gaps": [],
+       "name": "sodium chloride",
+       "inchikey": "FAPWRFPIFSIZLT-UHFFFAOYSA-M",
+       "inchi": null,
+       "smiles": "[Na+].[Cl-]",
+       "pubchem_cid": 5234,
+       "chebi_id": "CHEBI:26710",
+       "roles": []
+      },
+      "concentration": {
+       "value": 0.4,
+       "unit": "M",
+       "basis": null
+      },
+      "solvent": null
+     }
+    ]
+   },
+   "33a1eacd12ce": {
+    "media": "YPD (yeast extract / peptone / dextrose), liquid",
+    "temperature": {
+     "value": 30.0,
+     "unit": "Celsius"
+    },
+    "fields": {
+     "aerobicity": "aerobic",
+     "duration_hours": null,
+     "duration_generations": null
+    },
+    "perturbations": []
+   }
+  },
+  "segregants": {
+   "boocock": {
+    "n_ids": 79516,
+    "crosses": [
+     "3004",
+     "A",
+     "B"
+    ],
+    "parents": [
+     [
+      "BY",
+      "dbf065ffc3f5bbaa7554ef53c6861399eecc597fe058df5f81ba557944e3f86b"
+     ],
+     [
+      "CBS2888",
+      "53540d095958ae8c32509c04485f0d2d0948069c7647f828698d611899a9b4da"
+     ],
+     [
+      "RM",
+      "53540d095958ae8c32509c04485f0d2d0948069c7647f828698d611899a9b4da"
+     ],
+     [
+      "YJM145",
+      "53540d095958ae8c32509c04485f0d2d0948069c7647f828698d611899a9b4da"
+     ],
+     [
+      "YJM981",
+      "53540d095958ae8c32509c04485f0d2d0948069c7647f828698d611899a9b4da"
+     ],
+     [
+      "YPS163",
+      "53540d095958ae8c32509c04485f0d2d0948069c7647f828698d611899a9b4da"
+     ]
+    ]
+   },
+   "nguessan": {
+    "n_ids": 2951,
+    "crosses": [
+     "BBQTL_BYxRM"
+    ],
+    "parents": [
+     [
+      "BY4741",
+      "dbf065ffc3f5bbaa7554ef53c6861399eecc597fe058df5f81ba557944e3f86b"
+     ],
+     [
+      "RM11-1a",
+      "53540d095958ae8c32509c04485f0d2d0948069c7647f828698d611899a9b4da"
+     ]
+    ]
+   }
+  },
+  "segregant_ids_shared": 0,
+  "segregant_crosses_shared": []
+ },
+ "quantity": {
+  "kemmeren": {
+   "label": "expression_log2_ratio",
+   "released": "two-channel microarray log2 ratio, deletion over wild type",
+   "scale": "log2",
+   "used": "as released"
+  },
+  "sameith_sm": {
+   "label": "expression_log2_ratio",
+   "released": "two-channel microarray log2 ratio, deletion over wild type",
+   "scale": "log2",
+   "used": "as released"
+  },
+  "hu": {
+   "label": "expression_score",
+   "released": "error-model X score (weighted duplicate average), deletion vs BY4741",
+   "scale": "signed score, log-ratio based",
+   "used": "as released"
+  },
+  "nadal": {
+   "label": "expression_log2_ratio",
+   "released": "pseudobulk scRNA-seq log2 fold change vs wild type",
+   "scale": "log2",
+   "used": "as released; standard names mapped to ORFs"
+  },
+  "jackson": {
+   "label": "umi_count",
+   "released": "pseudobulk UMI counts per gene (zeros omitted)",
+   "scale": "linear counts",
+   "used": "log2((CPM+1)/(CPM_HO+1)) vs the HO deletion in the same environment"
+  },
+  "messner": {
+   "label": "protein_abundance",
+   "released": "SWATH-MS MaxLFQ batch-corrected quantity",
+   "scale": "linear",
+   "used": "log2(strain / record reference); UniProt mapped to ORFs"
+  },
+  "zelezniak": {
+   "label": "protein_abundance",
+   "released": "SWATH-MS label-free log signal (SVA)",
+   "scale": "log",
+   "used": "strain minus record reference (difference of logs)"
+  },
+  "muenzner": {
+   "label": "protein_abundance",
+   "released": "SWATH-MS MaxLFQ precursor batch-corrected quantity",
+   "scale": "linear",
+   "used": "log2, centered per protein over the isolates"
+  },
+  "turnover": {
+   "label": "degradation_rate",
+   "released": "dynamic SILAC degradation rate, per hour",
+   "scale": "linear",
+   "used": "log2, centered per protein over the isolates"
+  },
+  "caudal": {
+   "label": "expression_tpm",
+   "released": "RNA-seq TPM",
+   "scale": "linear",
+   "used": "log2(TPM+1), centered per gene over the isolates"
+  },
+  "ohya": {
+   "label": "calmorph",
+   "released": "CalMorph feature values",
+   "scale": "mixed per feature",
+   "used": "z-scored per feature over the shared genotypes, clipped at 8"
+  }
+ },
+ "figures": {
+  "per_genotype": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/043-expression-proteome-morphology/notes/assets/images/043-expression-proteome-morphology/cross_dataset_per_genotype_pearson_2026-10-19-14-37-41.svg",
+  "mrna_protein": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/043-expression-proteome-morphology/notes/assets/images/043-expression-proteome-morphology/cross_dataset_mrna_protein_per_gene_2026-10-19-14-37-41.svg",
+  "morphology": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/043-expression-proteome-morphology/notes/assets/images/043-expression-proteome-morphology/cross_dataset_morphology_ridge_2026-10-19-14-37-41.svg"
+ },
+ "generated_by": "experiments/043-expression-proteome-morphology/scripts/cross_dataset_correlation.py",
+ "slurm_job_id": "5892"
+}

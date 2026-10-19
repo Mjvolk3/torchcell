@@ -17,9 +17,10 @@ the phenotype ``graph_level`` filter. The genotype clause takes one of three sha
 
 * ``all``: every perturbation names a gene in ``$gene_set`` and there is at least one
   (deletion and allele panels, the shape of the supported query).
-* ``any``: at least one perturbation names a gene in ``$gene_set``. The natural isolates
-  (Caudal 2024, Muenzner 2024) carry accessory-ORF absences and thousands of
-  ``sequence_variant`` perturbations outside S288C, which ``all`` would drop.
+* ``any``: no perturbation at all, or at least one names a gene in ``$gene_set``. The
+  natural isolates (Caudal 2024, Muenzner 2024) carry accessory-ORF absences and
+  thousands of ``sequence_variant`` perturbations outside S288C, which ``all`` would
+  drop; one Muenzner 2024 proteome strain carries none, which ``ANY`` alone would drop.
 * ``none``: no gene clause and no ``Genotype`` label. Boocock 2025 and Nguessan 2025 have
   ``SegregantGenotype`` genotypes (``segregant genotype`` is_a ``genotype`` in
   ``biocypher/config/torchcell_schema_config.yaml``, reached through
@@ -114,7 +115,7 @@ HEADER = """\
 // Block shape of torchcell/knowledge_graphs/queries/expression_proteome_morphology.cql
 // (property-shaped RETURN, no medium filter). Gene clause per block:
 //   all  = every perturbation names a gene in $gene_set, at least one perturbation
-//   any  = at least one perturbation names a gene in $gene_set (natural isolates)
+//   any  = no perturbation, or at least one names a gene in $gene_set (natural isolates)
 //   none = no gene clause, unlabeled genotype (segregants, promoter library)"""
 
 
@@ -126,7 +127,12 @@ def _gene_clause(clause: GeneClause) -> str:
             f"\n AND SIZE({perts}) > 0"
         )
     if clause == "any":
-        return f"\n AND ANY(p IN {perts}\nWHERE p.systematic_gene_name IN $gene_set)"
+        # SIZE = 0 keeps an isolate with no perturbation (the S288C-identical strain):
+        # ANY over an empty list is false and would drop it.
+        return (
+            f"\n AND (SIZE({perts}) = 0\n OR ANY(p IN {perts}"
+            "\nWHERE p.systematic_gene_name IN $gene_set))"
+        )
     return ""
 
 

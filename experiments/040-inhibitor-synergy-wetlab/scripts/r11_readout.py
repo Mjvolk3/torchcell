@@ -18,10 +18,11 @@ Columns (served growth call where a call applies):
 ``tit``     ex21 titration Spearman over all 180 wells (a train fit when ex21 is fitted)
 ``dose``    how many of the six inhibitors' own titrations the model orders at all
             (a per-inhibitor Spearman exists only when the prediction moves with dose)
-            and their mean. ANY prediction that falls monotonically with dose scores
-            0.767 here, the data's own ordering by dose, so 0.767 is the ceiling of a
-            monotone curve (every Hill arm), not a fit; only a model that is not
-            monotone in dose can read above it
+            and their mean. A prediction that falls strictly with dose scores 0.767
+            here, the data's own ordering by dose, whatever the curve; a curve that
+            saturates ties some doses and moves it (the Hill arms read 0.767 to
+            0.796). It separates a model that reads dose from one that does not, not
+            one dose-response curve from another; ``tit`` does that
 ``auroc``   ex23 growth AUROC over the 63 combinations (Loewe 0.958, Bliss 0.872)
 ``worst``   ex23 Spearman over all 63 with no growth at zero (Loewe 0.772)
 ``grown``   ex23 fitness Spearman over the combinations that grew (Bliss 0.573)

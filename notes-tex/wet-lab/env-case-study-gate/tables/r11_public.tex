@@ -1,0 +1,41 @@
+%% SOURCE: written by experiments/040-inhibitor-synergy-wetlab/scripts/r11_gate_section.py from results/mixture-delta/r11_*/*_scores.csv
+\begin{table}[htbp]\centering\footnotesize
+\caption{\textbf{Round eleven on the public side.} The Vanacloig column is the compound-cold centered Spearman (gene-cold rows: over held-out genes); nested ridge on fingerprint counts reads \hydladderRidge{}. The held-out column is each auxiliary screen's centered Spearman on its held-out compounds, in the order Hoepfner / Hillenmeyer / Wildenhain, or on a held-out dose of a seen compound in the dose rows. Growth AUROC is beside each for the cost on the wet-lab side.}\label{tab:r11public}
+\begin{tabular}{llrrlr}
+\toprule
+question & arm & folds & Vanacloig & held-out public & growth AUROC \\
+\midrule
+operator & control: tokens attend to the genes & 3 & 0.265 & -- & 0.850 \\
+ & attend, head reads the cell only & 3 & 0.307 & -- & 0.866 \\
+ & attend, two medium layers & 3 & 0.325 & -- & 0.850 \\
+ & displace the gene embeddings & 3 & 0.300 & -- & 0.849 \\
+ & displace, head reads the cell only & 3 & 0.276 & -- & 0.863 \\
+\midrule
+public bar & two CGT layers & 3 & 0.333 & -- & 0.885 \\
+ & dropout 0.4 & 3 & 0.285 & -- & 0.877 \\
+ & weight decay 1e-3 & 3 & 0.275 & -- & 0.859 \\
+ & learning rate 5e-4 & 3 & 0.273 & -- & 0.859 \\
+ & graph prior 0.1 & 2 & 0.122 & -- & 0.877 \\
+ & graph prior 1 & 2 & 0.224 & -- & 0.875 \\
+\midrule
+sources & Vanacloig, Hill + Loewe & 3 & 0.350 & -- & 0.913 \\
+ & + Hoepfner & 3 & 0.299 & 0.039 & 0.917 \\
+ & + Hillenmeyer & 3 & 0.333 & 0.008 & 0.909 \\
+ & + Wildenhain & 3 & 0.254 & 0.333 & 0.920 \\
+ & + Hoepfner + Hillenmeyer & 2 & 0.316 & 0.098 / 0.040 & 0.923 \\
+ & + all three & 3 & 0.200 & 0.106 / 0.036 / 0.136 & 0.917 \\
+\midrule
+held-out dose & no dose channel & 3 & 0.329 & 0.258 & 0.876 \\
+ & FiLM & 3 & 0.303 & 0.252 & 0.659 \\
+ & dose gain on the offset & 2 & 0.251 & 0.210 & 0.844 \\
+ & Hill, no dose channel & 2 & 0.303 & 0.220 & 0.881 \\
+ & Hill + FiLM & 1 & 0.177 & 0.282 & 0.848 \\
+ & Hill + dose gain & 3 & 0.241 & 0.214 & 0.876 \\
+\midrule
+gene-cold & attend & 3 & -0.001 & -- & 0.826 \\
+ & attend + pair term & 3 & 0.007 & -- & 0.851 \\
+ & displace & 3 & 0.002 & -- & 0.826 \\
+ & displace + pair term & 3 & 0.003 & -- & 0.825 \\
+\bottomrule
+\end{tabular}
+\end{table}

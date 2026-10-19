@@ -1,0 +1,25 @@
+%% SOURCE: written by experiments/040-inhibitor-synergy-wetlab/scripts/r11_gate_section.py from results/mixture-delta/r11_*/*_scores.csv
+\begin{table}[htbp]\centering\footnotesize
+\caption{\textbf{Round eleven on the wet-lab wells.} Fold ensembles of three seeds, averaged over the folds named, fold seed zero, served growth call. Growth AUROC and the worst-scenario Spearman are over the \hydnCombinations{} combinations (no growth read as zero for the second); grown is the fitness Spearman over the combinations that grew; titration is the Spearman over all \extitration{} wells, a train fit except for the zero-shot arms, which never saw one.}\label{tab:r11host}
+\begin{tabular}{lrrrrr}
+\toprule
+arm & folds & growth AUROC & worst-scenario Spearman & grown Spearman & titration Spearman \\
+\midrule
+Loewe rule, ex21 Hill fits & -- & 0.958 & 0.772 & -- & -- \\
+Bliss rule, measured singles & -- & -- & -- & 0.573 & -- \\
+\midrule
+control: round-10 Bliss arm & 3 & 0.850 & 0.607 & 0.548 & 0.437 \\
+Hill + Bliss & 3 & 0.849 & 0.597 & 0.552 & 0.758 \\
+Hill + Loewe & 3 & 0.913 & 0.699 & 0.619 & 0.763 \\
+Hill + highest single & 3 & 0.764 & 0.489 & 0.555 & 0.754 \\
+head + highest single & 3 & 0.757 & 0.484 & 0.500 & 0.421 \\
+Hill, titration fine-tune & 3 & 0.954 & 0.764 & 0.683 & 0.626 \\
+Hill + Loewe + dose gain & 3 & 0.904 & 0.686 & 0.632 & 0.767 \\
+head + dose gain & 3 & 0.898 & 0.676 & 0.568 & 0.865 \\
+displacement + dose gain & 3 & 0.559 & 0.125 & 0.203 & 0.937 \\
+Hill + Bliss, zero-shot & 3 & 0.977 & 0.791 & 0.529 & 0.591 \\
+Hill + Loewe, zero-shot & 3 & 0.921 & 0.677 & 0.272 & 0.578 \\
+head + Bliss, zero-shot, 3 screens & 3 & 0.943 & 0.749 & 0.623 & 0.030 \\
+\bottomrule
+\end{tabular}
+\end{table}

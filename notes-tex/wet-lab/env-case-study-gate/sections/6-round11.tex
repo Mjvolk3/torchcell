@@ -1,0 +1,88 @@
+%% notes-tex/wet-lab/env-case-study-gate/sections/6-round11.tex
+%% SOURCE: every number is a macro of tables/r11_numbers.tex, and the two tables and the
+%% figure are written by experiments/040-inhibitor-synergy-wetlab/scripts/r11_gate_section.py
+%% from the round-eleven score tables (results/mixture-delta/r11_*/*_scores.csv, pulled
+%% from Delta) through scripts/r11_readout.py. The model-free bars are macros of
+%% tables/gate_numbers.tex. The reading is PARTIAL: \rElevennScored{} of \rElevennConfigs{}
+%% configs at the time of writing; `make numbers` re-reads the tables as the reruns land.
+
+\clearpage
+\section{Round eleven: the decoder takes the rules' functional form\secstatus{todo}}
+\label{sec:round11}
+
+\pfstep{What the round asked} Ten rounds left three readings: composition is what buys
+the private readout, no public screen lifts the target or is learned at a held-out
+compound, and every dose arm over-predicts the isobole interiors. Round eleven tested five
+new parts of the model, each switchable and each defaulting to the round-ten arm, so every
+cell of the round is an ablation of one part. \emph{Displacement}: the compound token
+moves every gene embedding along a learned direction, gated per gene, which is the
+environment's version of the encoder's deletion operator, against the round-ten design in
+which the compound tokens attend to the genes. \emph{Cell-only}: the head reads the
+perturbed cell state and nothing else, so a compound's whole effect has to pass through
+the gene embeddings. \emph{Hill form}: a second readout of the same state gives each
+inhibitor a dose-response curve, an IC50 and a slope, and the host's fitness is that curve
+at the medium's dose. \emph{Composition}: the single-inhibitor readings of a mixture
+combine by Bliss independence, by Loewe additivity solved on the curves, or by the highest
+single agent, the three model-free rules of the figure now computed inside the decoder.
+\emph{Pair term}: a learned correction on every pair of a mixture's compounds, zero at
+the start, which is the environment's analog of a genetic interaction. The \rElevennArms{}
+arms ran as \rElevennJobs{} one-GPU jobs on Delta; \rElevennScored{} of their
+\rElevennConfigs{} configs are scored, the rest rerunning after Lustre write errors.
+
+\pfstep{The control and the noise} Every arm is read against the round-ten Bliss arm,
+re-run in this round on the same folds, seeds and inputs. Its growth AUROC is
+\rElevencontrolAuroc{} and its compound-cold Vanacloig score \rElevencontrolVan{}. A
+single seed scatters around its fold's three-seed ensemble by \rElevenseedSdVan{} on the
+Vanacloig score and \rElevenseedSdAuroc{} on the AUROC; the \hydnCombinations{}
+combinations are the same wells on every fold, so the fold-to-fold spread of a host score,
+\rElevencontrolFoldSd{} for the control, is the floor a host difference has to clear.
+Everything here is one fold partition.
+
+\tcfig{\figRElevenHost}{\textbf{Round eleven on the wet-lab wells.} One row per arm, the
+bar the mean over folds of each fold's three-seed ensemble, the open circles the folds.
+Hatched arms never saw a titration or a combination well: their only host records are
+the public IC30 anchors and the compound-free medium. Vertical lines: the control (gray),
+Loewe additivity from the \extitration{} Hill fits (purple), Bliss independence from the
+measured singles (red). \textbf{a},~Growth AUROC over the \hydnCombinations{}
+combinations. \textbf{b},~Spearman over the same combinations with no growth read as
+zero, the ranking a process engineer needs. \textbf{c},~Fitness Spearman over the
+combinations that grew. The displacement arm with the dose gain is the only arm that
+falls far below the control.}{fig:r11host}
+
+
+\pfstep{The reading} The Hill form composed by Bliss and trained on the public anchors
+alone orders the combinations at a growth AUROC of \rElevenzsAuroc{} (folds
+\rElevenzsAurocMin{} to \rElevenzsAurocMax{}) against Loewe's \hydloeweAuroc{}, and ranks
+all of them at a worst-scenario Spearman of \rElevenzsWorst{}; it is the first arm of the
+experiment above the Loewe rule, on one partition and three seeds, with single seeds from
+\rElevenzsSeedMin{} to \rElevenzsSeedMax{}. Fitted on the titration, the decoder's rules
+order as the model-free rules do: Loewe \rElevenloeweAuroc{}, Bliss \rElevenhillAuroc{},
+the highest single agent \rElevenhsaAuroc{}. The Hill fine-tune is the balanced arm
+(\rElevenftAuroc{} growth, \rElevenftGrown{} on the combinations that grew, against
+Bliss's \hydblissSpearman{}). Displacing the gene embeddings leaves the public score
+(\rElevenoperatorVanMin{} to \rElevenoperatorVanMax{}) and the host unchanged, and with the
+dose gain it reads the titration at \rElevendisplaceDoffTit{} while composition collapses
+to \rElevendisplaceDoffAuroc{}. No arm reaches nested ridge's \hydladderRidge{} on the
+public side, no dose channel beats none on a held-out public dose
+(\rElevendoseOff{} without one), and the gene-cold split reads zero
+(\rElevengeneMin{} to \rElevengeneMax{}). \Cref{fig:r11model} wires the leading arm.
+
+\input{tables/r11_host}
+\input{tables/r11_public}
+
+%% SOURCE: figures/r11_model_wiring.pdf is the mermaid diagram of
+%% notes/experiments.040-inhibitor-synergy-wetlab.mermaid.hill-bliss-model.md, rendered by
+%% notes/assets/publish/scripts/mermaid_pdf.sh; every size and setting in it is read from
+%% experiments/040-inhibitor-synergy-wetlab/scripts/train_mixture.py and
+%% conf/mixture/r11_van_e150_cell_bliss_hill_anchors.yaml.
+\tcfig{figures/r11_model_wiring.pdf}{\textbf{Supplement nine: the leading round-eleven
+arm, wired.} The zero-shot Hill and Bliss arm of \cref{fig:r11host}. Purple, inputs and
+the host records; orange, the operators (the deletion operator, the compound MLP, the
+Bliss split, the Hill curve and its composition); red, the transformer layers and the
+optimization; yellow, the readouts. Every record is a cell: a public strain is read at its
+deleted genes, and the host is the record with no deleted gene, whose two gene blocks of
+the cell state are zero. The host's fitness is a Hill curve per inhibitor, its IC50 and
+slope read from the same cell state the gene head reads, evaluated at the medium's dose and
+multiplied over the inhibitors of a mixture; the only host records are the public IC30
+anchors and the compound-free medium. The graph-prior weight is zero, so the nine gene
+graphs carry no signal into this arm.}{fig:r11model}

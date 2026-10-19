@@ -24,3 +24,4 @@ SCRIPTS := $(ROOT)/experiments/040-inhibitor-synergy-wetlab/scripts
 .PHONY: numbers
 numbers:
 	cd $(ROOT) && PYTHONPATH=$(ROOT) $(PYTHON) $(SCRIPTS)/figure_gate_panels.py
+	cd $(ROOT) && PYTHONPATH=$(ROOT) $(PYTHON) $(SCRIPTS)/r11_gate_section.py

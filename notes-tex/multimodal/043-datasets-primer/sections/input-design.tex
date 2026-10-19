@@ -1,0 +1,421 @@
+%% notes-tex/multimodal/043-datasets-primer/sections/input-design.tex
+%% SOURCE: torchcell/datamodels/schema.py (genotype classes); results/store_census.json
+%% (counts per record); the retrospective branch's notes-tex/perturbation-operator (the
+%% operator as it stands) and torchcell/models/equivariant_cell_graph_transformer.py
+%% (forward, pooled_perturbed, GlobalHead); experiments/019-simb-multimodal/conf/
+%% train_cgt_multitask.yaml (node_embeddings: [], learnable embedding); main's
+%% torchcell/datasets/node_embedding_builder.py and torchcell/sequence/genome/base.py.
+%% Prototype: torchcell/models/genotype_tokens_043.py.
+
+\section{The input side: sequence, genotype and the perturbed cell graph\secstatus{todo}}
+\label{sec:input}
+
+Five genotype classes have to enter one model so that every gene-level readout trains
+together: engineered deletions and double deletions, natural isolates, segregants and
+promoter variants. What follows fixes the abstraction between the stored genotype and
+the perturbation operator: a \term{gene token} per reference gene from a swappable
+sequence encoder, a \term{change type} per gene per strain that says how the strain's
+copy of that gene differs from the reference, an optional \term{position} feature, and
+\term{strain tokens} for what is true of the strain rather than of one gene. The
+perturbation operator then reads marked genes exactly as it reads deleted genes today,
+with one addition that Sec.~\ref{sec:input-operator} names. Everything measured below
+is read off the 043 store census or the retrospective branch's model code; what is
+proposed is marked as such, and the decisions the design cannot make alone are collected
+in Sec.~\ref{sec:input-decisions}. Table~\ref{tab:input-symbols} defines the symbols.
+
+%% SOURCE: hand-authored definitions; the widths are those of the 1,084,619-parameter
+%% expression model (perturbation-operator document, tab:symbols).
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption[]{\textbf{Symbols of the input side}, alphabetical. Widths are those of the
+1{,}084{,}619-parameter expression model of experiment 019 (\file{conf/cgt_expr_012.yaml}:
+$d=90$, $h=9$ heads).}
+\label{tab:input-symbols}
+\begin{tabular}{>{\raggedright\arraybackslash}p{34mm}>{\raggedright\arraybackslash}p{136mm}}
+\toprule
+Symbol & Meaning \\
+\midrule
+$a_i\in\mathcal{A}$ & allele parent of gene $i$ in a segregant: the parent whose block
+covers the gene; $\varnothing$ for every other gene and every other genotype class \\
+$B$ & strains in a batch \\
+$c_i\in\mathcal{C}$ & change type of gene $i$ under the strain's genotype
+(Table~\ref{tab:change-types}); $\mathrm{ref}$ when the strain carries the reference copy \\
+$\mathcal{C}$ & the change-type vocabulary, seven members \\
+$d$ & width of a gene token and of a gene state, 90 \\
+$E\in\mathbb{R}^{(|G|+1)\times d}$ & encoder output over the reference cell graph: row 0
+the CLS state $h$, rows $1$ to $|G|$ the wild-type gene states $h_i$ \\
+$f_\theta:\Sigma^*\to\mathbb{R}^{d_f}$ & the sequence encoder, from a nucleotide or amino
+acid string to a vector; frozen or trained \\
+$g_\phi:\Sigma^*\to\mathbb{R}^{d_g}$ & the promoter encoder, from a promoter sequence to
+a vector \\
+$G$ & the reference gene set of the cell graph; $|G|=6{,}607$ \\
+$H\in\mathbb{R}^{B\times|G|\times d}$ & perturbed gene states, the operator's output
+(\file{H_genes_pert}) \\
+$h,\;h^{\mathrm{pert}}\in\mathbb{R}^{d}$ & the CLS state before and after the operator \\
+$M$ & marked genes of a strain, $M=\sum_i m_i$; the operator's key count \\
+$m\in\{0,1\}^{|G|}$ & the mark: $m_i=\mathbf{1}[c_i\neq\mathrm{ref}]$ \\
+$\mathbf{p}_t\in\mathbb{R}^{d}$ & token of the $t$-th marked gene, the operator's key
+and value source \\
+$\pi_i=(\chi_i,\rho_i)$ & position of gene $i$: chromosome index $\chi_i\in\{0,\dots,16\}$
+(0 the mitochondrion) and normalized coordinate
+$\rho_i=\tfrac{1}{2}(\mathrm{start}_i+\mathrm{end}_i)/L_{\chi_i}$ \\
+$s_i(\gamma)\in\Sigma^*$ & realized sequence of gene $i$ under genotype $\gamma$ \\
+$T\in\mathbb{R}^{|\mathcal{C}|\times d}$, $A\in\mathbb{R}^{|\mathcal{A}|\times d}$ &
+learned change-type and allele-parent embeddings; $T_{\mathrm{ref}}=A_{\varnothing}=0$ \\
+$u_k\in\mathbb{R}^{d}$ & the $k$-th strain token (parent identity, dataset, medium) \\
+$X\in\mathbb{R}^{|G|\times d}$ & reference gene tokens, one row per gene, shared by every
+strain \\
+$\tilde X\in\mathbb{R}^{B\times|G|\times d}$ & realized gene tokens of a batch,
+$\tilde X_{b,i}=X_i+T_{c_{b,i}}+A_{a_{b,i}}$ \\
+$z_S\in\mathbb{R}^{d}$ & pool over a strain's marked rows of $H$ (\file{pooled_perturbed}) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{What enters the model today\secstatus{todo}}
+\label{sec:input-today}
+
+The 019 expression model builds its gene tokens from a learned table, not from
+sequence: \file{conf/train_cgt_multitask.yaml} sets \file{node_embeddings: []} and
+\file{learnable_embedding.enabled: true}, so $X$ is an \file{nn.Embedding(6607, d)}
+indexed by gene order, and the CLS row is one learned vector shared by every strain. The
+encoder runs once per step on the wild-type graph; a strain enters only through the
+operator, whose token for a deleted gene is that gene's encoder state,
+$\mathbf{p}_t=h_{g(t)}$. The Methods write $\mathbf{p}_t=r(e_t)+\mathbf{t}_{\tau_t}+m_t\mathbf{w}$
+with a perturbation-type embedding $\mathbf{t}_\tau$; the code implements neither the type
+term nor the magnitude term (perturbation-operator document, Table of symbols). Three
+consequences for the 043 classes are measured:
+\begin{itemize}
+\item A deletion and any other mark on the same gene produce the same key and the same
+value, since the token is the gene state alone.
+\item The \texttt{Perturbation} processor marks every perturbation of a record, so a
+Caudal isolate enters with 5{,}575 of 6{,}607 genes in \file{pert_mask}
+(Sec.~\ref{sec:genotypes}), and under operator A their 5{,}575 values are averaged into
+one vector delivered to every gene.
+\item A segregant enters with \file{pert_mask} all false and is the reference strain.
+\end{itemize}
+The sequence encoders exist on \file{main} and are already keyed by gene:
+\file{NodeEmbeddingBuilder} serves ProtT5 on the protein (\file{prot_t5_xl_uniref50}),
+nucleotide-transformer windows of 5{,}979 bp around the ORF and of 1{,}003 bp upstream and
+300 bp downstream, the fungal up-down transformer on the upstream and downstream
+flanks, CALM and codon frequency on the coding sequence, and one-hot identity. Each is
+one frozen row per reference gene, concatenated into \file{cell_graph["gene"].x} and
+projected by the model's preprocessor. None of them has a per-strain version.
+
+\subsection{The gene token\secstatus{todo}}
+\label{sec:input-token}
+
+\notesec{Definition} Gene $i$'s token is the sequence encoder applied to its realized
+sequence under the genotype, $X_i(\gamma)=W_f\,f_\theta(s_i(\gamma))$, with
+$W_f\in\mathbb{R}^{d\times d_f}$ the projection to model width. For every unmarked gene
+$s_i(\gamma)$ is the reference sequence, so $X_i$ is the reference token, computed once
+and shared by every strain. The encoder is the swappable part: $f_\theta$ may be any
+\file{NodeEmbeddingBuilder} product, a concatenation of several, a learned identity
+table (today's model, with $f_\theta$ the one-hot encoder and $W_f$ the table), or a
+trained encoder.
+
+\notesec{Deleted gene: the row stays, marked} The deleted gene's row is neither removed
+from $X$ nor zeroed. Removing it is the token-edit design, which costs one encoder pass
+per strain because the gene set then differs by strain
+(\file{notes-tex/perturbation-operator}, Sec.~4); the 019 configuration pays the encoder
+once per step and that is the dominant cost it was tuned around (\file{cgt_expr_012.yaml}
+header). Zeroing it before the encoder has the same cost and a second defect: a zero row
+through layer normalization is the normalized bias, one constant vector, so every
+deleted gene becomes the same token and the identity of what was deleted is lost before
+the first attention layer. The row therefore keeps its reference token and the deletion
+is carried by the change type, $c_i=\mathrm{del}$, which the operator reads as a
+learned vector added to the token (Sec.~\ref{sec:input-operator}). The gene's own
+readout entry is then predicted from a token that says ``this gene, deleted'', which
+is the information the deleted-gene flag $\delta_{i,t}$ of the perturbation-operator
+document supplies; the predicted $+0.036$ against a measured $-2.42$ for that entry is
+what the flag, and now the mark, exists to fix.
+
+\notesec{Variant gene: now the reference token plus a mark, later the variant sequence}
+For a natural isolate, every \texttt{SequenceVariantPerturbation} points at the
+isolate's allele through a sha256-pinned \file{sequence_ref}
+(\file{tc://genomes/peter2018_1011_assemblies/...#<gene>.fasta#<token>}), so
+$f_\theta(s_i^{\mathrm{strain}})$ is computable for every variant gene. The census
+puts 5{,}047 variant genes per Caudal record over 943 records, 4{,}759{,}608 variant
+perturbations in Caudal and 3{,}988{,}281 in the Muenzner proteome; the two name the same
+isolates (759 shared), so the alleles overlap, and the number of distinct alleles is not
+in the census. Until an allele-keyed embedding store exists the variant token is
+$X_i+T_{\mathrm{var}}$: the reference token plus one learned vector that says ``this
+gene differs from the reference'', the same vector for every variant gene. With the
+store it becomes $W_f f_\theta(s_i^{\mathrm{strain}})+T_{\mathrm{var}}$, and the change
+type stays, because a model should know a token is non-reference without having to
+infer it from the feature. The two forms differ in what the model can learn: the first
+can learn that a gene is variant, the second which variant.
+
+\notesec{Loss of function and absence} A \texttt{NaturalLossOfFunctionPerturbation} is a
+released call on a gene (nonsense plus SIFT, or homozygous frameshift), 383 per Caudal
+record; a \texttt{NaturalGeneAbsencePerturbation} is a reference gene the isolate lacks,
+135 per record. Both keep the reference row and carry their own change type. Most
+loss-of-function genes also carry a sequence variant; one gene carries one change type,
+resolved by precedence (Table~\ref{tab:change-types}).
+
+\notesec{Accessory gene present} A \texttt{NaturalGenePresencePerturbation} names a
+pangenome ORF with no row in $G$, 84 per Caudal record. It has no reference token and
+cannot be a row of $X$. The prototype reports every such mark per strain
+(\file{off_graph_marks}) and encodes nothing for it; including it means an extra token
+per accessory ORF from $f_\theta$ on its sequence, which the data supports
+(\file{sequence_ref}) and the prototype does not yet build.
+
+\notesec{Promoter variant} A Vaishnav record is one 80 bp variable region inside the
+constant \file{pTpA} scaffold driving YFP, 71{,}158 records under one gene-name
+genotype, so the only varying input is the promoter sequence $p$. Its token is the
+promoter encoder on $p$ plus the reporter: $u_{\mathrm{rep}}=W_g\,g_\phi(p)+T_{\mathrm{prom}}+X_{\mathrm{YFP}}$,
+where $X_{\mathrm{YFP}}$ is $f_\theta$ on the reporter's coding sequence (YFP is a gene
+addition, not a row of $G$, so this is an extra token like an accessory ORF). The
+readout is one scalar per record. Training $g_\phi$ on these 71{,}158 sequences is what
+the dataset is for; applying the trained $g_\phi$ to each native gene's upstream window
+(the 1{,}003 bp five-prime window already exists as a frozen nucleotide-transformer
+embedding) would give every reference gene a promoter term. Hypothesis (untested): a
+promoter term learned on the reporter library transfers to native promoters at all; the
+test is whether adding $g_\phi(\text{upstream}_i)$ to $X_i$ moves the held-out Kemmeren
+score.
+
+\subsection{The change-type vocabulary\secstatus{todo}}
+\label{sec:input-changes}
+
+Table~\ref{tab:change-types} is the vocabulary and the map from every
+\file{perturbation_type} of the store onto it, with the count of marks per record. The
+mask is $m_i=\mathbf{1}[c_i\neq\mathrm{ref}]$, so what the operator sees as perturbed
+is decided here and not by the processor's rule of marking everything. A training run
+may restrict further, for example marking only loss of function and absence for
+isolates; that is a mask over change types, $m_i=\mathbf{1}[c_i\in\mathcal{C}']$, and
+the count of distinct genes under each $\mathcal{C}'$ is not in the census yet (the
+383 and 135 are counts of calls, and a gene can carry two calls).
+
+%% SOURCE: results/store_census.json (perturbation_types per dataset divided by records);
+%% torchcell/models/genotype_tokens_043.py (PERTURBATION_TYPE_TO_CHANGE, CHANGE_PRECEDENCE).
+\begin{table}[htbp]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\caption[]{\textbf{Change types, the store's perturbation types that map onto them, and
+marks per record.} Counts are the census's perturbation counts divided by records
+(\file{results/store_census.json}); the isolate rows are means over records, the others
+exact. Precedence orders the types for a gene that carries several marks: the first in
+the order wins, so a gene that is gone outranks a call on its sequence, which outranks
+a present variant allele. Segregant marks are derived from haplotype blocks, not from
+a perturbation list.}
+\label{tab:change-types}
+\begin{tabular}{>{\raggedright\arraybackslash}p{20mm}r>{\raggedright\arraybackslash}p{44mm}>{\raggedright\arraybackslash}p{50mm}>{\raggedright\arraybackslash}p{50mm}}
+\toprule
+Change type & Precedence & Perturbation types & Datasets & Marks per record \\
+\midrule
+absent & 1 & \texttt{natural\_gene\_absence} & Caudal, Muenzner protein, Muenzner turnover & 135, 133, 134 \\
+deletion & 2 & \texttt{kanmx\_deletion}, \texttt{sga\_kanmx\_deletion}, \texttt{sga\_natmx\_deletion}, \texttt{barcoded\_kanmx\_deletion}, \texttt{marker\_deletion}, \texttt{deletion} & Kemmeren, Hu, Jackson, Nadal-Ribelles, Messner, Zelezniak, Ohya, Sameith Sm (1 each); Sameith Dm (2); isolates (HO: 0.12, 0.11, 0.07) & 1; 2; 0.12 \\
+loss of function & 3 & \texttt{natural\_loss\_of\_function} & Caudal, Muenzner protein, Muenzner turnover & 383, 377, 373 \\
+variant & 4 & \texttt{sequence\_variant}; a segregant gene in a non-reference block & Caudal, Muenzner protein, Muenzner turnover; Boocock, N'Guessan & 5{,}047, 5{,}017, 5{,}059; segregants not yet counted \\
+present & 5 & \texttt{natural\_gene\_presence} (off graph) & Caudal, Muenzner protein, Muenzner turnover & 84, 84, 90 \\
+promoter & 6 & \texttt{variable\_promoter\_reporter} (off graph) & Vaishnav & 1 \\
+reference & implicit & none & every unmarked gene & $6{,}607-M$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\notesec{Segregants under the definite assumption} A \texttt{SegregantGenotype} is a
+cross, two parents pinned to assemblies and a list of \texttt{HaplotypeBlock}s
+($\{$chromosome, start, end, parent, posterior, n\_markers$\}$ in reference
+coordinates). Gene $i$ is marked $c_i=\mathrm{var}$ with $a_i$ the non-reference parent
+when one block of that parent with posterior $\geq 0.9$ contains the whole gene,
+$\mathrm{start}_b\leq\mathrm{start}_i$ and $\mathrm{end}_i\leq\mathrm{end}_b$. A gene in
+a reference-parent block, in a block below the threshold, straddling a block edge or in
+the unassigned gap between two blocks stays reference: the crossover is unresolved by
+construction and nothing is guessed about it. The threshold removes little on the
+pooled panels (the median marker fraction below 0.9 is 0.000 for Boocock pooled and
+0.017 for N'Guessan, Table~\ref{tab:segregants}) and much on the de novo cells (0.236
+to 0.352). The parent token names the parent as the loader does: BY and RM for the
+pooled panels; YJM145, YPS163, CBS2888 and YJM981 for Boocock's other crosses. The
+loaders write chromosomes as \file{chrI} to \file{chrXVI} and the genome keys them as
+integers, so the gene table maps once. The probabilistic form, $m_i\in[0,1]$ equal to
+the covering block's posterior, is the later step and changes nothing above except that
+the mask becomes a soft weight on the mark's embedding.
+
+\subsection{Chromosomal position\secstatus{todo}}
+\label{sec:input-position}
+
+Position is available for every reference gene from the genome object
+(\file{AnnotatedGene.chromosome}, \file{start}, \file{end}, \file{chromosome\_lengths}).
+As a feature it is $\pi_i=(\chi_i,\rho_i)$, entering the reference token as
+$X_i\leftarrow X_i+C_{\chi_i}+w_\rho\,\rho_i$ with $C\in\mathbb{R}^{17\times d}$ a learned
+chromosome embedding and $w_\rho\in\mathbb{R}^d$ a learned direction. It is a flag in the
+prototype (\file{use_position}).
+
+\pfstep{For including it now} A segregant's genotype is linkage: its marks come in
+contiguous runs along a chromosome, and the only way a model can treat two marked genes
+as one inherited block rather than two independent variants is to know they are
+adjacent. Aneuploidy in the isolate descriptor is per chromosome. Both are facts about
+position, not about sequence.
+
+\pfstep{Against including it now} For the deletion datasets the graph is the wild type
+and position is a fixed per-gene attribute; a learned identity table already encodes
+any fixed per-gene attribute, so adding 17 one-hot plus one scalar to it adds nothing
+the table cannot represent. Position only adds information when the base token is a
+frozen sequence encoder with no identity channel, or when a gene is unseen in training.
+Nothing measured bears on whether linkage helps a segregant readout; the within-panel
+genotype signal is small (nearest-genotype deviation $r$ 0.113 against 0.070,
+Sec.~\ref{sec:within}).
+
+\subsection{Strain tokens\secstatus{todo}}
+\label{sec:input-strain}
+
+Some of what is true of a record is true of the strain, not of one gene: the parent
+identity of a segregant, the medium and temperature of the environment, the dataset
+and experiment type that fix the platform and the reference the label is relative to.
+The isolate clade is not on the graph: \texttt{NaturalIsolateDescriptor} carries
+isolate name, ploidy, zygosity, aneuploidy and manipulation, and no clade field, so
+``if released'' resolves to not released. Each strain token is a learned vector $u_k$
+from a categorical vocabulary (prototype: \file{strain_token_vocab}, values such as
+\file{parent:RM}, \file{medium:YPD}, \file{dataset:kemmeren2014}).
+
+\pfstep{Where they attach} Two placements are consistent with the single encode. (1)
+As extra keys and values of the perturbation set, beside the marked genes: every gene
+attends to them through the same operator, and the CLS does too when
+\file{perturb_cls} is on. (2) Added to the CLS row before the operator, so they reach
+the genes only through the perturbed CLS. Adding them to every gene token is a third
+placement that makes the encoder input strain-dependent and so costs one encoder pass
+per strain; it is ruled out on the cost ground alone. Placement (1) is the one the
+prototype's output supports (\file{strain_tokens}, \file{strain_token_mask} in the
+operator's padded-key layout). The allele parent is the exception: it is a property of
+each marked gene, so it enters the gene token as $A_{a_i}$, and the strain token
+\file{parent:RM} says which parent is non-reference for the whole strain.
+
+\subsection{The perturbation operator with marks\secstatus{todo}}
+\label{sec:input-operator}
+
+The operator is unchanged in form. For gene $i$ and the strain's marked genes
+$t=1,\dots,M$,
+\begin{equation}
+s_{i,t}=\frac{(h_iW_Q)\cdot(\mathbf{p}_tW_K)}{\sqrt{d_k}},\qquad
+\Delta h_i=\sum_{t=1}^{M}\beta_{i,t}\,\mathbf{p}_tW_V,\qquad
+\hat h_i=\operatorname{LN}(h_i+\Delta h_i),\qquad
+h_i^{\mathrm{pert}}=\operatorname{LN}\!\big(\hat h_i+\operatorname{FFN}(\hat h_i)\big),
+\label{eq:input-block}
+\end{equation}
+with $\beta_{i,t}$ the softmax over $t$ (operator A), or the softmax over $t$ and a null
+sink (operator C), as the perturbation-operator document defines them. What changes is
+the token:
+\begin{equation}
+\mathbf{p}_t=h_{g(t)}\quad\text{(code today)}\qquad\longrightarrow\qquad
+\mathbf{p}_t=h_{g(t)}+T_{c_{g(t)}}+A_{a_{g(t)}},
+\label{eq:input-token}
+\end{equation}
+which is the Methods' $\mathbf{t}_\tau$ term made concrete, with the allele parent
+beside it. At $T=A=0$ it is the current operator exactly. Three things follow.
+
+\pfstep{A variant and a deletion of the same gene are now different inputs} Under
+Eq.~\ref{eq:input-token} the key and value of a marked gene depend on its change type,
+so the model can deliver a different vector to the genome for ``\gene{YFG1} deleted''
+and ``\gene{YFG1} carries the RM allele''. Without it the two records are the same
+input with different labels, and the loss can only average them.
+
+\pfstep{$M$ goes from 1 to the hundreds or thousands} The deletion sets have $M=1$ or
+2; an isolate has $M\approx 518$ under loss of function plus absence and
+$M\approx 5{,}565$ under every type (sums of the Caudal means, before precedence); a
+BY $\times$ RM segregant has about half its genes in RM blocks if the parents segregate
+one to one (hypothesis; the count per segregant is read off the blocks and not yet
+computed). Operator A's softmax then averages $M$ values into one vector whose
+magnitude does not grow with $M$, and the degeneracy at $M=1$ disappears on its own at
+large $M$ (the score chooses among thousands of keys). Operator B's sum would grow
+with $M$. Which normalization suits a strain with 500 marks is a decision
+(Sec.~\ref{sec:input-decisions}), and no run bears on it. The cost is arithmetic from
+the shapes: the batched operator pads to the largest $M$ in the batch and scores
+$|G|\times M_{\max}$ pairs per head per strain, $6{,}607\times 5{,}047\approx 3.3\times 10^{7}$
+for a Caudal isolate under every type against $6{,}607$ for a deletion, so mixing the two
+classes in one batch pads every deletion to the isolate's width.
+
+\pfstep{The self entry changes meaning} For a deletion, gene $g(t)$'s own readout entry
+is the transcript that is gone (mean $-2.42$ in Kemmeren). For a variant it is the
+allele's own expression, which may be up, down or unchanged. The deleted-gene flag
+$\delta_{i,t}\mathbf{e}_{\mathrm{self}}$ therefore has to carry the change type,
+$\delta_{i,t}\,\mathbf{e}_{\mathrm{self},c_{g(t)}}$, or the model is told every mark
+silences its gene.
+
+\subsection{Shapes end to end\secstatus{todo}}
+\label{sec:input-shapes}
+
+For a batch of $B$ strains over the reference gene set $G$,
+\begin{align}
+X &= W_f\,f_\theta\big(s(\gamma_{\mathrm{ref}})\big)\;[+\,C_\chi+w_\rho\rho]
+  &&\in\mathbb{R}^{|G|\times d}, \label{eq:input-X}\\
+c &\in\mathcal{C}^{B\times|G|},\qquad m=\mathbf{1}[c\neq\mathrm{ref}]\in\{0,1\}^{B\times|G|},\qquad
+a\in\mathcal{A}^{B\times|G|}, \label{eq:input-c}\\
+\tilde X_{b,i} &= X_i+T_{c_{b,i}}+A_{a_{b,i}} &&\in\mathbb{R}^{B\times|G|\times d}, \label{eq:input-Xt}\\
+E &= \operatorname{Enc}\big([\,x_{\mathrm{CLS}};\,X\,]\big)=[\,h;\,h_1;\dots;h_{|G|}\,]
+  &&\in\mathbb{R}^{(|G|+1)\times d}, \label{eq:input-E}\\
+\{\mathbf{p}_{b,t}\}_{t\le M_b} &= \{\,h_i+T_{c_{b,i}}+A_{a_{b,i}}:\;m_{b,i}=1\,\}\;\cup\;\{u_{b,k}\}_k, \label{eq:input-P}\\
+(h^{\mathrm{pert}}_b,\,H_b) &= \operatorname{Op}\big(h,\,\{h_i\},\,\{\mathbf{p}_{b,t}\}\big)
+  &&\in\mathbb{R}^{d}\times\mathbb{R}^{|G|\times d}, \label{eq:input-H}\\
+z_{S,b} &= \operatorname{pool}\{H_{b,i}:m_{b,i}=1\} &&\in\mathbb{R}^{d}. \label{eq:input-z}
+\end{align}
+The encoder in Eq.~\ref{eq:input-E} runs once per batch on the reference tokens, as
+today; the strain enters at Eq.~\ref{eq:input-P}. Eq.~\ref{eq:input-Xt} is what the
+prototype returns as \file{X_strain}; the operator consumes its marked rows through
+\file{perturbation_indices} and \file{perturbation_indices_batch}, the layout
+\file{EquivariantPerturbationTransform.forward} already takes, with the type and parent
+terms added to the gathered keys. The readouts are unchanged: per-gene heads read $H$,
+the global head reads $[h^{\mathrm{pert}}\,\Vert\,\mathrm{mean}_i H_i\,\Vert\,z_S]$
+(\file{GlobalHead(use_pert_summary)}), and $z_S$ for a single deletion is the deleted
+gene's own perturbed token, for an isolate the pool over its marked genes.
+
+The prototype, \file{torchcell/models/genotype_tokens_043.py}, implements
+Eqs.~\ref{eq:input-X} to \ref{eq:input-Xt} and the strain tokens of
+Eq.~\ref{eq:input-P}: a \file{ChangeType} enum with the map of
+Table~\ref{tab:change-types}, a pydantic \file{GenotypeTokenSet} built from deletions,
+from a perturbation list or from haplotype blocks under the definite assumption, a
+\file{SequenceEncoder} protocol with a precomputed-table implementation and a
+\file{PromoterEncoder} protocol with no implementation, and a \file{GenotypeEncoder}
+module returning $X$, $\tilde X$, $c$, $m$, $a$, the flattened mark indices and the
+padded strain tokens. Its test (\file{tests/torchcell/models/test_genotype_tokens_043.py},
+4 tests) builds a deletion, an isolate-style and a segregant-style token set over 12
+genes and checks every shape, the mask counts $(1,4,5)$, the precedence of loss of
+function over variant, the parent rows and that an accessory ORF is reported rather
+than dropped.
+
+\subsection{Owner decisions\secstatus{todo}}
+\label{sec:input-decisions}
+
+Each item names the two options and the measured facts that bear on them; none is
+decided here.
+
+\begin{enumerate}
+\item \textbf{Base token: learned identity table or frozen sequence encoder.} Identity
+(today's model) can represent any fixed per-gene attribute and cannot say anything
+about an unseen allele. A frozen encoder (ProtT5, nucleotide-transformer windows, FUDT)
+gives a token for any sequence, including a variant allele and an accessory ORF, and
+is what makes ``swap the encoder'' meaningful. Facts: every encoder listed is already a
+per-gene row on \file{main}; the 019 campaign used none of them; nothing measured
+compares them on expression.
+\item \textbf{Absence and deletion: one change type or two.} Both are the gene gone
+(\file{state="absent"}, SO deletion); provenance differs. One type hard-codes the
+transfer from 135 natural absences per isolate to the engineered single deletions;
+two types let the model learn the similarity, measurable as the cosine of
+$T_{\mathrm{del}}$ and $T_{\mathrm{abs}}$ after training. The vocabulary keeps two.
+\item \textbf{Which isolate marks enter the mask.} Every type ($M\approx 5{,}565$,
+5{,}575 of 6{,}607 genes marked in the processor today) or loss of function plus
+absence ($M\approx 518$). Facts: the operator cost scales with $M_{\max}$ of the batch;
+the within-isolate agreement of mRNA and protein (0.208 per isolate) is the only
+measured isolate signal and does not separate the options.
+\item \textbf{Segregant gene membership: whole-gene containment or midpoint.}
+Containment leaves a gene straddling a block edge reference; midpoint assigns it. Facts:
+blocks end at marker positions and the crossover is in the gap; no count of straddling
+genes per segregant exists yet.
+\item \textbf{Position: on for every class, or on only when segregants enter.} Facts in
+Sec.~\ref{sec:input-position}; no run.
+\item \textbf{Strain tokens: extra keys of the operator, or added to the CLS row.} Both
+keep the single encode; the first lets every gene attend to the environment and parent
+directly, the second routes them through the CLS. Facts: operator A at $M=1$ delivers
+one shared vector, so for a deletion in one medium placement (1) with one strain token
+makes $M=2$ and un-degenerates the softmax as a side effect, which confounds a
+comparison against today's runs.
+\item \textbf{Normalization at large $M$.} Softmax (average, magnitude fixed) or sigmoid
+gate (sum, magnitude grows with $M$). Facts: operator A has been run at $M=1$ to 3; the
+sigmoid gate once at a resolving budget, $0.200$ against $0.210$, one seed
+(\file{notes-tex/perturbation-operator}, Sec.~3). Nothing at $M\geq 10$.
+\item \textbf{Accessory ORFs and the reporter: encode as extra tokens or report and
+skip.} Both have sequences; neither has a row. Facts: 84 accessory presences per
+isolate; one reporter for Vaishnav. The prototype reports and skips.
+\end{enumerate}

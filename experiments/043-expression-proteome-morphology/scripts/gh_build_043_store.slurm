@@ -10,11 +10,11 @@
 #   sbatch experiments/043-expression-proteome-morphology/scripts/gh_build_043_store.slurm
 #
 # Memory: 256 GB. Job 5855 (96 GB) finished the raw stage (173,617 records, 163 GB raw
-# LMDB, 5 h 48 min) and was OOM-killed at 61% of the aggregation pass: the aggregation
-# LMDB was still 8 KB, so the stage's single write transaction held every copied record
-# in memory (MaxRSS 100.4 GB). The aggregation and processed copies each write the whole
-# store in one transaction. A rerun reuses the finished raw LMDB (the query is skipped
-# when raw/lmdb/data.mdb exists).
+# LMDB, 5 h 48 min) and was OOM-killed at 61% of the aggregation pass (MaxRSS 100.4 GB;
+# the aggregation data.mdb was still 8 KB). Job 5856 (256 GB) reused the raw LMDB (the
+# query is skipped when raw/lmdb/data.mdb exists) and peaked at a MaxRSS of 267 GB
+# through the aggregation and processed copies. Hypothesis (untested): the RSS includes
+# the readahead-mapped pages of the 163 GB input, which the kernel can reclaim.
 #SBATCH -p main
 #SBATCH --mem=256g
 #SBATCH -N 1

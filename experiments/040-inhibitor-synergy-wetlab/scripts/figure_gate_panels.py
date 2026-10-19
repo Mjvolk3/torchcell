@@ -2019,7 +2019,7 @@ def draw_evaluation(ax: Any, R: Reads) -> None:
     )
     ax.text(
         0,
-        45,
+        46,
         r"a strain ($H^c_D$: its deleted rows, summed):"
         "\n"
         r"$\hat y_i = \hat r_{g,i}$, its profile over strains $g$;"
@@ -2031,10 +2031,10 @@ def draw_evaluation(ax: Any, R: Reads) -> None:
         usetex=True,
     )
     # ---- stage three: a mixture composes as Bliss
-    ax.text(0, 27, "3  compose a mixture", **stage_kw)
+    ax.text(0, 28, "3  compose a mixture", **stage_kw)
     ax.text(
         0,
-        22,
+        23.5,
         "each token read alone through the same head, then",
         fontsize=fs,
         ha="left",
@@ -2042,7 +2042,7 @@ def draw_evaluation(ax: Any, R: Reads) -> None:
     )
     ax.text(
         0,
-        16,
+        18,
         r"$\underbrace{\hat f_{\mathrm{mix}} = \textstyle\prod_i \hat f_i}_{\text{host, fitness scale}}\qquad \underbrace{\hat r_{g,\mathrm{mix}} = \textstyle\sum_i \hat r_{g,i}}_{\text{screen, log scale}}$",
         **tex_kw,
     )

@@ -180,7 +180,12 @@ def preview(frame: pd.DataFrame) -> None:
     """A standalone look at the embedding, for the note."""
     import matplotlib.pyplot as plt
 
-    from torchcell.utils import PLOT_PALETTE, apply_paper_style, mm_to_in
+    from torchcell.utils import (
+        PLOT_PALETTE,
+        PLOT_PALETTE_FILL,
+        apply_paper_style,
+        mm_to_in,
+    )
 
     apply_paper_style()
     fig, ax = plt.subplots(figsize=(mm_to_in(88), mm_to_in(80)))
@@ -194,13 +199,19 @@ def preview(frame: pd.DataFrame) -> None:
     )
     # largest source first, so the small screens are not buried under Wildenhain
     order = sorted(SOURCE_ORDER, key=lambda n: -int(frame[n].sum()))
-    color_of = dict(zip(SOURCE_ORDER, PLOT_PALETTE, strict=False))
+    # the figure panel's colors: Wildenhain, the bulk, pale; the small screens dark
+    color_of = {
+        "vanacloig": PLOT_PALETTE[7],
+        "hoepfner_hop": PLOT_PALETTE[8],
+        "hillenmeyer_het": PLOT_PALETTE[11],
+        "wildenhain": PLOT_PALETTE_FILL[17],
+    }
     for name in order:
         sub = frame[frame[name]]
         ax.scatter(
             sub.x,
             sub.y,
-            s=2.0 if name == "wildenhain" else 5.0,
+            s=2.0 if name == "wildenhain" else 6.0,
             color=color_of[name],
             linewidth=0,
             label=f"{SOURCE_LABEL[name]} ({len(sub):,})",
@@ -209,7 +220,7 @@ def preview(frame: pd.DataFrame) -> None:
     ax.scatter(
         ours.x,
         ours.y,
-        s=22.0,
+        s=12.0,
         facecolor="none",
         edgecolor="black",
         linewidth=0.7,

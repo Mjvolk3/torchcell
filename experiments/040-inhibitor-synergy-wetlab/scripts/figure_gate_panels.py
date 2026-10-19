@@ -1729,15 +1729,24 @@ SCREEN_SHORT = {
     "hillenmeyer_het": "Hillenmeyer HET",
     "wildenhain": "Wildenhain",
 }
-#: Which screen a mark belongs to, inside the join panel only. The colors come from the
-#: palette's muted tier, which no evidence family uses, so naming a screen here cannot be
-#: read as the sheet's orange-is-measured, red-is-Bliss encoding. The gene bars and the
-#: compound embedding share them, and the bars' own labels are the key.
+#: Which screen a mark belongs to, inside the join panel only; the gene bars and the
+#: compound embedding share them, and the bars' own labels are the key. Wildenhain holds
+#: 5,170 of the 5,474 compounds, so it is the pale ground (a palette fill) and the three
+#: small screens take the palette's dark tier, which reads against it at panel size
+#: (owner, 2026-10-19: the muted tier was too hard to tell apart on the gray). None of
+#: these indices is an evidence family of the sheet (``SRC_COLOR``).
 SCREEN_COLOR = {
-    "vanacloig": PLOT_PALETTE[12],
-    "hoepfner_hop": PLOT_PALETTE[14],
-    "hillenmeyer_het": PLOT_PALETTE[16],
-    "wildenhain": PLOT_PALETTE[17],
+    "vanacloig": PLOT_PALETTE[7],
+    "hoepfner_hop": PLOT_PALETTE[8],
+    "hillenmeyer_het": PLOT_PALETTE[11],
+    "wildenhain": PLOT_PALETTE_FILL[17],
+}
+#: marker area of a screen's compounds in the embedding: the fewer, the larger
+SCREEN_MARK = {
+    "vanacloig": 1.0,
+    "hoepfner_hop": 0.45,
+    "hillenmeyer_het": 0.35,
+    "wildenhain": 0.16,
 }
 
 
@@ -1845,18 +1854,42 @@ def draw_join(ax: Any, R: Reads) -> None:
     for src in sorted(screens, key=lambda s_: -int(emb[s_].sum())):
         sub = emb[emb[src]]
         ax.scatter(
-            ex(sub.x), ey(sub.y), s=0.16, color=SCREEN_COLOR[src], linewidth=0, zorder=2
+            ex(sub.x),
+            ey(sub.y),
+            s=SCREEN_MARK[src],
+            color=SCREEN_COLOR[src],
+            linewidth=0,
+            zorder=2,
         )
     mine = emb[emb.this_study]
     ax.scatter(
         ex(mine.x),
         ey(mine.y),
-        s=3.2,
+        s=1.3,
         facecolor="none",
         edgecolor="black",
-        linewidth=0.3,
+        linewidth=0.25,
         zorder=4,
     )
+    # the six fall in two places; each group is named beside its rings, on the side
+    # away from the text block
+    furans = {"furfural", "5-(hydroxymethyl)furfural"}
+    for group, members in (
+        ("furans", mine[mine.compound.isin(furans)]),
+        ("acids", mine[~mine.compound.isin(furans)]),
+    ):
+        gx, gy = float(ex(members.x).mean()), float(ey(members.y).mean())
+        right = gx < (bx0 + bx1) / 2.0
+        t = ax.text(
+            gx + (2.6 if right else -2.6),
+            gy,
+            group,
+            fontsize=3.8,
+            ha="left" if right else "right",
+            va="center",
+            zorder=5,
+        )
+        t.set_path_effects([patheffects.withStroke(linewidth=0.8, foreground="white")])
     ax.text(
         32,
         91,
@@ -1864,7 +1897,7 @@ def draw_join(ax: Any, R: Reads) -> None:
         "placed by Tanimoto; color is\n"
         "the screen, as above. Screens\n"
         f"share {int(shared.min())} to {int(shared.max())}. Ringed: this\n"
-        "study's six, furans above acids.",
+        "study's six.",
         fontsize=3.8,
         ha="left",
         va="top",

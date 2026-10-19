@@ -115,7 +115,12 @@ points (human/chicken). The two definitions agree on every ordering the claim re
 `results/organisms.json` (`01_organisms.py` + `02_proteome_prep.py`, pydantic records in
 `orgsim_manifest.py`): 34 organisms, 33 proteomes, one absent. Every protein FASTA and GFF is
 sha256-pinned; NCBI assemblies came through `datasets` 18.39.0 (`datasets download genome
-accession <acc> --include protein,gff3`), tier sets through `registry.resolve`. Per-gene
+accession <acc> --include protein,gff3`), tier sets through `registry.resolve`. The
+mmseqs2, eggNOG and tree runs below read SD108 from the release clone at commit 8ca6a106;
+the manifest was then re-pinned to the tier set `pkudriavzevii_SD108_v1`
+([[torchcell.sequence.genome.pkudriavzevii.sd108]]), whose `proteins.faa` and
+`SD108_genome_v1.gff3` are byte-identical to the clone's (sha256 `8c3e0d46...` and
+`1c3c658d...`), so no downstream number changed. Per-gene
 reduction keeps the longest protein per GFF gene, keyed by NCBI GeneID, which matters for
 GRCh38.p14: 1,239 human protein-coding GeneIDs are annotated twice (primary plus alt loci),
 so keying by gene feature gave 21,287 human genes and keying by GeneID gives 20,076, the
@@ -124,7 +129,7 @@ NCBI protein-coding count.
 | Row | Organism | Source | Accession / set | Strain | Proteins raw | Per gene |
 |---|---|---|---|---|---|---|
 | 1 | S. cerevisiae S288C | tier | sgd_S288C_R64-4-1_20230830 | S288C | 6,716 | 6,716 |
-| 3 | P. kudriavzevii SD108 | SD108 clone | commit 8ca6a106 | SD108 | 5,159 | 5,159 |
+| 3 | P. kudriavzevii SD108 | tier | pkudriavzevii_SD108_v1 (release repo at commit 8ca6a106) | SD108 | 5,159 | 5,159 |
 | 4 | P. kudriavzevii CBS573 | NCBI | GCF_003054445.1 | CBS573 | 5,139 | 5,139 |
 | 5 | E. coli K-12 MG1655 | tier | GCA_000005845.2 | K-12 MG1655 | 4,300 | 4,290 |
 | 6 | P. putida KT2440 | tier | GCA_000007565.2 | KT2440 | 5,564 | 5,564 |
@@ -272,7 +277,5 @@ taxonomic groups of the two members.
   is not tested; no fish, insect or nematode proteome is in the set.
 - **CLEAN for EC annotation** (the owner's later idea) is not run; eggNOG-mapper is the
   annotator.
-- **SD108 through the tier.** SD108 is read from the clone; switching to
-  `resolve(PKUDRIAVZEVII_SD108, "proteins.faa")` waits for the sibling branch to land.
 - **Figures are timestamped** and not yet approved; the superseded renders from the layout
   iteration were moved to `$DATA_ROOT/data/organism_similarity/superseded_renders/`.

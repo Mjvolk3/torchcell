@@ -7,7 +7,7 @@
 #
 # source:
 #   tier   -> read through torchcell.sequence.genome.registry.resolve(set, member)
-#   sd108  -> the SD108 release clone (sha256 recorded by 01_organisms.py)
+#             (S288C, E. coli, P. putida and our P. kudriavzevii SD108 deposit)
 #   ncbi   -> `datasets download genome accession <accession> --include protein,gff3`
 #   absent -> no annotated proteome; kept on the cladogram, excluded from proteome axes
 # accession_choice records why an ncbi accession differs from (or equals) the NCBI
@@ -37,14 +37,14 @@ organisms:
     taxid: 4909
     preferred_strain: SD108
     groups: [cabbi, emerging]
-    source: sd108
-    sd108_protein: /scratch/projects/torchcell-scratch/tmp/044-inputs/sd108-repo/Assembly_Build/final/annotation/proteins.faa
-    sd108_gff: /scratch/projects/torchcell-scratch/tmp/044-inputs/sd108-repo/Assembly_Build/final/annotation/SD108_genome_v1.gff3
-    sd108_commit: 8ca6a106
+    source: tier
+    tier_set: pkudriavzevii_SD108_v1
+    tier_protein: proteins.faa
     justification: >-
       Our curated genome (private repo Aurosish/I.orientalis_SD108_Genome_Reconstruction,
-      commit 8ca6a106, 5 chromosomes + mito + rDNA, 5,144 nuclear protein-coding genes).
-      Low-pH organic acids; succinate >100 g/L in bench fed-batch.
+      commit 8ca6a106, deposited as tier set pkudriavzevii_SD108_v1; 5 chromosomes + mito
+      + rDNA, 5,144 nuclear protein-coding genes). Low-pH organic acids; succinate
+      >100 g/L in bench fed-batch.
 
   - key: pkud_cbs573
     row: 4

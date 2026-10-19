@@ -59,12 +59,11 @@ class ProteomeSource(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    source: Literal["tier", "sd108", "ncbi"]
+    source: Literal["tier", "ncbi"]
     accession: str | None = None
     assembly_name: str | None = None
     annotation_provider: str | None = None
     tier_set: str | None = None
-    sd108_commit: str | None = None
     source_url: str | None = None
     retrieval_method: str
     retrieval_command: str

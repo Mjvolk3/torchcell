@@ -9,11 +9,9 @@ pydantic manifest ``results/organisms.json``:
 
 - ``source: tier``: the protein FASTA is read through
   ``torchcell.sequence.genome.registry.resolve`` (sha256 verified), never re-downloaded;
-  for the bacterial sets the GenBank GFF of the same accession is resolved too, so
+  for the bacterial sets and our P. kudriavzevii SD108 deposit (``pkudriavzevii_SD108_v1``,
+  the release repository at commit 8ca6a106) the GFF of the same set is resolved too, so
   02_proteome_prep.py can map proteins to genes.
-- ``source: sd108``: the SD108 release clone; the sha256 of ``proteins.faa`` and the GFF3
-  are recorded here (the tier set ``pkudriavzevii_SD108_v1`` is being deposited by a
-  sibling branch).
 - ``source: ncbi``: ``datasets summary genome taxon "<taxon_query>" --reference`` is
   recorded beside the chosen accession (the yaml says why they differ when they do), then
   ``datasets download genome accession <acc> --include protein,gff3`` into
@@ -64,10 +62,11 @@ DATASETS = osp.join(ORGSIM_BIN, "datasets")
 NCBI_DIR = osp.join(WORK_DIR, "ncbi")
 API = "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession"
 
-#: The GenBank GFF beside each tier protein FASTA (same accession, so protein ids match).
+#: The GFF beside each tier protein FASTA (same release, so protein ids match).
 TIER_GFF = {
     "ecoli_K12_MG1655_ASM584v2": "GCA_000005845.2_ASM584v2_genomic.gff.gz",
     "pputida_KT2440_ASM756v2": "GCA_000007565.2_ASM756v2_genomic.gff.gz",
+    "pkudriavzevii_SD108_v1": "SD108_genome_v1.gff3",
 }
 
 
@@ -233,38 +232,6 @@ def tier_record(entry: dict) -> OrganismRecord:
     )
 
 
-def sd108_record(entry: dict) -> OrganismRecord:
-    """Pin the SD108 clone's protein FASTA and GFF3."""
-    src = ProteomeSource(
-        source="sd108",
-        sd108_commit=entry["sd108_commit"],
-        annotation_provider="Aurosish/I.orientalis_SD108_Genome_Reconstruction",
-        retrieval_method="git_clone_private_repo",
-        retrieval_command=(
-            "git clone Aurosish/I.orientalis_SD108_Genome_Reconstruction "
-            f"(commit {entry['sd108_commit']}) -> "
-            "$DATA_ROOT/tmp/044-inputs/sd108-repo"
-        ),
-        retrieved_at=now(),
-        protein_fasta=file_record(entry["sd108_protein"]),
-        gff=file_record(entry["sd108_gff"]),
-        n_proteins_raw=count_fasta(entry["sd108_protein"]),
-    )
-    return OrganismRecord(
-        key=entry["key"],
-        row=entry["row"],
-        display=entry["display"],
-        organism_name="Pichia kudriavzevii",
-        taxid=int(entry["taxid"]),
-        strain="SD108",
-        preferred_strain=str(entry["preferred_strain"]),
-        groups=entry["groups"],
-        justification=entry["justification"],
-        accession_choice="our curated SD108 release (private repo clone)",
-        proteome=src,
-    )
-
-
 def absent_record(entry: dict) -> OrganismRecord:
     """An organism with no annotated proteome."""
     ref = summary_lines(["taxon", entry["taxon_query"], "--reference"])
@@ -298,8 +265,6 @@ def main() -> None:
             rec = ncbi_record(entry, datasets_version)
         elif entry["source"] == "tier":
             rec = tier_record(entry)
-        elif entry["source"] == "sd108":
-            rec = sd108_record(entry)
         elif entry["source"] == "absent":
             rec = absent_record(entry)
         else:

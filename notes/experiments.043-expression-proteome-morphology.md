@@ -526,3 +526,33 @@ isolate and segregant rows.
 
 Also measured: slurm job 5902 ran at MaxRSS 157 GB on a 16 GB request because the mmap'd
 LMDB pages count as resident; the job was not killed.
+
+## 2026.10.19 - Design pass: integration into the primer
+
+The owner set the plan on 2026-10-19 and it replaces the primer's two-batch proposal:
+every gene-level readout trains together (all datasets except Sameith Sm, which is
+Kemmeren's arrays; Vaishnav stays in as the promoter signal), expression and proteome
+readouts come off the perturbed graph (CLS, $z_S$, each gene's own node state), Ohya 2005
+is evaluation only through a probe of the frozen latent, split A holds out Kemmeren
+singles by gene, split B all 72 Sameith doubles against the additive null, and split C a
+fifth of the Muenzner proteome isolates.
+
+- New modules, with tests (18 passed): `torchcell/models/genotype_tokens_043.py`,
+  `torchcell/models/readout_heads_043.py`; dataset module
+  [[experiments.043-expression-proteome-morphology.scripts.dataset_043]] and shape pass
+  [[experiments.043-expression-proteome-morphology.scripts.data_shapes_043]].
+- Diagrams: [[experiments.043-expression-proteome-morphology.mermaid.data-flow]],
+  [[experiments.043-expression-proteome-morphology.mermaid.input-side]],
+  [[experiments.043-expression-proteome-morphology.mermaid.output-side]]; the primer's
+  Makefile copies their PDFs into `figures/` scaled to 180 mm (`make diagrams`).
+- Primer `notes-tex/multimodal/043-datasets-primer/` (28 pages): Sec. 5 is the plan
+  (Table 11) and ends with the owner-decision checklist (Table 12, `tab:decisions`, 20
+  rows: I1 to I8 input, O1 to O10 output, P1 Boocock de novo cells, P2 split A against
+  split B); Sec. 6 "Data as tensors" (Fig. 5, Table 13); Secs. 7 and 8 the input and output
+  designs (Figs. 6 and 7 on rotated pages). Tables by
+  [[experiments.043-expression-proteome-morphology.scripts.primer_043_tables]].
+- Published to Zotero `torchcell/notes-tex/multimodal/043-datasets-primer` as
+  `043-datasets-primer_2026-10-19-18-13-41_09fcb3bc.pdf`.
+- The output-side diagram prints at about 4.5 pt on its rotated page, below Nature's 5 pt
+  floor; a redraw with fewer boxes per row would fix it if the figure moves beyond the
+  primer.

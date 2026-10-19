@@ -311,6 +311,93 @@ published to Zotero `torchcell/notes-tex/multimodal/043-datasets-primer` as
 `043-datasets-primer_2026-10-19-17-04-51_c41df5c6.pdf`. Its batch proposal is a
 proposal, not a decision.
 
+## 2026.10.19 - Input design: sequence, genotype and the perturbed cell graph
+
+Design agent for the input side (one of three parallel design agents). Deliverables:
+
+- `notes-tex/multimodal/043-datasets-primer/sections/input-design.tex` (section, `todo`;
+  not yet `\input` by `043-datasets-primer.tex`, the integrator adds the line).
+- [[experiments.043-expression-proteome-morphology.mermaid.input-side]], rendered to
+  `notes/assets/pdf-output/experiments.043-expression-proteome-morphology.mermaid.input-side.pdf`.
+- Prototype [[torchcell.models.genotype_tokens_043]] with
+  `tests/torchcell/models/test_genotype_tokens_043.py` (4 passed; ruff and mypy clean on
+  the module).
+
+### What enters the model today (measured on the retrospective branch)
+
+- The 019 expression model's gene token is a learned `nn.Embedding(6607, d)`
+  (`conf/train_cgt_multitask.yaml`: `node_embeddings: []`, `learnable_embedding.enabled:
+  true`); no sequence encoder is in the loop, though ProtT5, nucleotide-transformer
+  windows (5,979 bp; 1,003 bp five-prime; 300 bp three-prime), FUDT, CALM, codon
+  frequency and one-hot are all served per gene by `NodeEmbeddingBuilder` on main.
+- The perturbation token is `p_t = h_{g(t)}`, the deleted gene's encoder state. The
+  Methods' type embedding `t_tau` and magnitude term are not implemented
+  (perturbation-operator document, symbols table). A variant and a deletion of the same
+  gene are therefore the same input today.
+- The `Perturbation` processor marks every perturbation type: Caudal 5,575 of 6,607
+  nodes; a segregant is all false (the reference strain).
+
+### The abstraction
+
+- **Gene token** `X_i = W_f f_theta(s_i(gamma))`, reference sequence for unmarked genes,
+  shared across strains, encoder run once per batch (the cost the 019 configuration was
+  tuned around). A deleted gene's row stays and is marked; it is neither removed (token
+  edit, one encoder pass per strain) nor zeroed (LayerNorm of a zero row is one constant
+  vector, so every deleted gene would be the same token).
+- **Change types** `C = {reference, deletion, variant, loss_of_function, absent, present,
+  promoter}`, precedence absent > deletion > loss_of_function > variant > present >
+  promoter when a gene carries several marks. Mask `m_i = 1[c_i != reference]`. Per-record
+  counts from the census: deletions 1 (Sameith Dm 2); Caudal 5,047 variant, 383 LoF, 135
+  absent, 84 present (off graph), 0.12 HO deletion; Vaishnav 1 promoter.
+- **Variant token now** `X_i + T_var` (reference feature plus a learned change-type
+  vector); **later** `W_f f_theta(variant allele) + T_var`, computable because every
+  `SequenceVariantPerturbation` carries a sha256-pinned `sequence_ref`.
+- **Segregants, definite assumption**: a gene is `variant` with allele parent = the
+  non-reference parent when one block of that parent with posterior >= 0.9 contains the
+  whole gene; straddling or gap genes stay reference. Loaders write `chrI..chrXVI`; the
+  genome keys chromosomes as ints, so the gene table maps once.
+- **Promoter variant**: `u_rep = W_g g_phi(p) + T_prom + X_YFP`, an extra off-graph token;
+  Vaishnav trains `g_phi`. Hypothesis (untested): `g_phi` on native upstream windows
+  transfers.
+- **Position** `pi_i = (chromosome, midpoint / chromosome length)`, optional flag
+  (`use_position`), added to the reference token. For: segregant marks are linkage
+  blocks. Against: for deletions it is a fixed per-gene attribute an identity table
+  already encodes.
+- **Strain tokens** (parent, medium, dataset) as extra keys of the operator; the isolate
+  clade is not on the graph (`NaturalIsolateDescriptor` has no clade field).
+- **Operator**: unchanged form; token becomes `p_t = h_{g(t)} + T_c + A_a`. At `T = A = 0`
+  it is the current operator. `M` goes from 1 to about 518 (LoF + absent) or 5,565 (every
+  type) per isolate; attention scores per head per strain go from 6,607 to about
+  3.3e7 (6,607 x 5,047); operator A averages (magnitude fixed in `M`), B would sum.
+- **Shapes**: `X [|G|, d]`, `c [B, |G|]`, `m [B, |G|]`, `X_strain [B, |G|, d]`,
+  `E [(|G|+1), d]` once per batch, `H [B, |G|, d]`, `h_pert [B, d]`,
+  `z_S [B, d]`.
+
+### The one change to make first for variants
+
+Implement the change-type term in the perturbation token (`p_t = h_{g(t)} + T_c`, the
+Methods' `t_tau`), and carry the change type on the self flag
+(`delta_{i,t} e_{self,c}`). Without it the operator cannot tell "gene deleted" from "gene
+carries the RM allele", and the self entry is told every mark silences its gene (Kemmeren
+mean -2.42 for the deleted transcript).
+
+### Owner decisions
+
+1. Base token: learned identity table (today) or frozen sequence encoder (ProtT5, NT,
+   FUDT; all per-gene rows on main; none used by 019; nothing measured on expression).
+2. Absence and deletion: one change type or two (same physical state, different
+   provenance; two lets the similarity of `T_del` and `T_abs` be measured).
+3. Isolate mask: every type (`M` about 5,565) or LoF + absent (`M` about 518); cost
+   scales with `M_max` of the batch.
+4. Segregant gene membership: whole-gene containment (prototype) or midpoint.
+5. Position: on for every class or on only when segregants enter.
+6. Strain tokens: extra operator keys or added to the CLS row (keys make `M = 2` for a
+   deletion plus one token, which un-degenerates the softmax and confounds comparisons).
+7. Normalization at large `M`: softmax average or sigmoid sum (sigmoid gate run once,
+   0.200 vs 0.210, one seed, at `M = 1`; nothing at `M >= 10`).
+8. Accessory ORFs and the reporter: encode as extra tokens or report and skip (prototype
+   reports and skips).
+
 ## 2026.10.19 - Data tensors and the dataset module
 
 Scripts: [[experiments.043-expression-proteome-morphology.scripts.data_shapes_043]] (full

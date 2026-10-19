@@ -94,3 +94,18 @@ change and nothing served is staled. Measurements and the open route decision:
 `tests/torchcell/sequence/genome/test_registry.py` now pins the fifth bacterial id and
 runs the tmp-tier `resolve` / `verify_assembly_set` / corruption / absent-set parametrization
 over it as well (30 passed).
+
+## 2026.10.19 - `PKUDRIAVZEVII_SD108` added and deposited
+
+`PKUDRIAVZEVII_SD108 = "pkudriavzevii_SD108_v1"`: the group's curated *Pichia
+kudriavzevii* (*Issatchenkia orientalis*) SD108 genome v1, from the private repository
+`Aurosish/I.orientalis_SD108_Genome_Reconstruction` at commit `8ca6a106`. 15 members
+deposited flat by `scripts/provision_pkudriavzevii_genome.py` with `git_repository`
+retrieval records (new `RetrievalMethod` member and retriever), `provenance_complete=True`,
+`verify_assembly_set` returning all 15 ([[scripts.provision_pkudriavzevii_genome]] holds
+the sha256 table). Read by `PKudriavzeviiSD108Genome`
+([[torchcell.sequence.genome.pkudriavzevii.sd108]]).
+
+The id is in NO schema vocabulary (no NCBI accession, no `GeneIdNamespace` member), so
+`test_schema.py`'s registry-equals-vocabulary check names it as a deposited set no record
+can pin yet; admitting it is the first SD108 loader's schema change.

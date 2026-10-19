@@ -125,6 +125,16 @@ SCEREVISIAE_CENPK113_7D: Final = "scerevisiae_CENPK113-7D_ASM257140v2"
 #: no RefSeq one, and NCBI (dataset report, 2026-10-15) lists no paired RefSeq assembly.
 SCEREVISIAE_CENPK113_7D_GENBANK_ACCESSION: Final = "GCA_002571405.2"
 
+#: Pichia kudriavzevii (Issatchenkia orientalis) SD108, genome v1: the group's curated
+#: assembly (5 chromosomes, the circular mitochondrion and an unplaced rDNA unit) with
+#: its own annotation, taken from the GitHub repository
+#: ``Aurosish/I.orientalis_SD108_Genome_Reconstruction`` at commit
+#: ``8ca6a106809d6b708d4ba621e3834649dd122720``. Its gene ids are the assembly's own
+#: ``SD108_X<seq><type><number>`` namespace; it has no NCBI accession and no GO file.
+#: Deposited by ``scripts/provision_pkudriavzevii_genome.py``, read by
+#: ``PKudriavzeviiSD108Genome`` in ``torchcell/sequence/genome/pkudriavzevii/sd108.py``.
+PKUDRIAVZEVII_SD108: Final = "pkudriavzevii_SD108_v1"
+
 #: Roles a file in an assembly set can play (explicit per file; never inferred).
 ROLE_CONTAINER = "container"  # the archive the release was fetched as
 ROLE_SEQUENCE = "sequence"  # FASTA of chromosomes, ORFs, proteins, assemblies

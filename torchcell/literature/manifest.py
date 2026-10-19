@@ -98,6 +98,12 @@ class RetrievalMethod(StrEnum):
     file out of a local archive whose own manifest records where the file originally
     lived (the thesis archive's ``MANIFEST.tsv``); the record's ``source_url`` names
     that original location and the retriever reads the archive copy.
+    ``git_repository`` is a file taken from a git repository at a pinned commit: the
+    retriever clones the repository with ``gh repo clone <owner>/<repo> <dir> -- --depth
+    1``, fetches and checks out the pinned commit, and reads the file at
+    ``path_in_repo``. A private repository needs the owner's ``gh`` authentication, so
+    for one the deposited bytes are the rebuild source and the clone re-checks them
+    only where that authentication is available.
     """
 
     springer_esm = "springer_esm"
@@ -111,6 +117,7 @@ class RetrievalMethod(StrEnum):
     manual_browser = "manual_browser"
     local_archive = "local_archive"
     globus = "globus"
+    git_repository = "git_repository"
 
 
 class SourceCheck(BaseModel):

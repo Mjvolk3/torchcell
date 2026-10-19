@@ -2146,6 +2146,12 @@ def test_the_assembly_set_vocabulary_equals_the_registry_ids() -> None:
             # GenBank /note: data about one deposited set, not a set id (it moved into
             # the registry from schema.py on 2026-10-15)
             "BW25113_BACKGROUND_GENOTYPE",
+            # a deposited assembly no record can pin YET: P. kudriavzevii SD108 v1 has
+            # no NCBI accession (ASSEMBLY_SET_ACCESSIONS requires a GCA_ one) and no
+            # GeneIdNamespace member. Admitting it to AssemblySet is a schema change
+            # (vocabulary + accession rule) owed by the first loader that writes
+            # records against it; until then only PKudriavzeviiSD108Genome reads it.
+            "PKUDRIAVZEVII_SD108",
         }
         and not name.startswith("ROLE_")
     }

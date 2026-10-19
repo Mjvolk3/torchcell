@@ -132,3 +132,50 @@ def test_check_source_match_and_drift():
     )
     assert not drift.matches
     assert drift.produced_sha256 == hashlib.sha256(b"changed upstream").hexdigest()
+
+
+# --------------------------------------------------------------------------- #
+# git_repository: a file of a git repository at a pinned commit. The clone goes
+# through gh (network), so the hermetic tests pin the command list and read a file
+# out of a local repository's commit tree.
+# --------------------------------------------------------------------------- #
+def test_git_repository_is_the_last_method_and_a_registered_retriever():
+    from torchcell.literature.retrieve import RETRIEVERS, git_repository
+
+    assert list(RetrievalMethod)[-1] == RetrievalMethod.git_repository
+    assert RetrievalMethod.git_repository.value == "git_repository"
+    assert RETRIEVERS["torchcell.literature.retrieve.git_repository"] is git_repository
+
+
+def test_git_clone_commands_are_the_recorded_recipe():
+    from torchcell.literature.retrieve import git_clone_commands
+
+    assert git_clone_commands("owner/repo", "abc123", "/x/repo") == [
+        ["gh", "repo", "clone", "owner/repo", "/x/repo", "--", "--depth", "1"],
+        ["git", "-C", "/x/repo", "fetch", "--depth", "1", "origin", "abc123"],
+        ["git", "-C", "/x/repo", "checkout", "--detach", "abc123"],
+    ]
+
+
+def test_git_show_reads_the_commit_tree_not_the_working_tree(tmp_path):
+    import subprocess
+
+    from torchcell.literature.retrieve import git_show
+
+    repo = tmp_path / "repo"
+    (repo / "d").mkdir(parents=True)
+    (repo / "d" / "f.txt").write_bytes(PAYLOAD)
+
+    def git(*args: str) -> str:
+        return subprocess.run(
+            ["git", "-C", str(repo), *args], check=True, capture_output=True, text=True
+        ).stdout.strip()
+
+    git("init", "-q")
+    git("add", "d/f.txt")
+    git("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "c")
+    commit = git("rev-parse", "HEAD")
+    (repo / "d" / "f.txt").write_bytes(b"edited after the commit")
+    assert git_show(str(repo), commit, "d/f.txt") == PAYLOAD
+    with pytest.raises(subprocess.CalledProcessError):
+        git_show(str(repo), commit, "d/missing.txt")

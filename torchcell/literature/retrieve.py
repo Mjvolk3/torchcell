@@ -319,6 +319,69 @@ def local_archive(path: str, sha256: str) -> bytes:
     return data
 
 
+def git_clone_commands(repo: str, commit: str, directory: str) -> list[list[str]]:
+    """The commands that put ``repo`` at ``commit`` in ``directory``, in order.
+
+    ``gh repo clone`` (which carries the owner's authentication to a private
+    repository) with a depth-1 clone of the default branch, then a depth-1 fetch of the
+    pinned commit (a no-op when it is already the tip) and a detached checkout of it.
+    The list is what :func:`git_checkout` runs and what a provenance note prints.
+    """
+    return [
+        ["gh", "repo", "clone", repo, directory, "--", "--depth", "1"],
+        ["git", "-C", directory, "fetch", "--depth", "1", "origin", commit],
+        ["git", "-C", directory, "checkout", "--detach", commit],
+    ]
+
+
+def git_checkout(repo: str, commit: str, directory: str) -> None:
+    """Clone ``repo`` into ``directory`` and check out ``commit`` (an empty or absent
+    directory only); a checkout whose ``HEAD`` is not ``commit`` afterwards raises.
+    """
+    import subprocess
+
+    for command in git_clone_commands(repo, commit, directory):
+        subprocess.run(command, check=True, capture_output=True)
+    head = subprocess.run(
+        ["git", "-C", directory, "rev-parse", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    if head != commit:
+        raise ValueError(f"{repo} checked out at {head}, not the pinned {commit}")
+
+
+def git_show(directory: str, commit: str, path_in_repo: str) -> bytes:
+    """The bytes of ``path_in_repo`` as committed at ``commit`` in a local clone.
+
+    Read from the commit's tree (``git show <commit>:<path>``), not the working tree,
+    so a file edited after checkout is never what is returned.
+    """
+    import subprocess
+
+    return subprocess.run(
+        ["git", "-C", directory, "show", f"{commit}:{path_in_repo}"],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
+def git_repository(repo: str, commit: str, path_in_repo: str) -> bytes:
+    """Retrieve one file of a git repository at a pinned commit.
+
+    ``repo`` is ``<owner>/<name>`` on GitHub. The repository is cloned into a temporary
+    directory by :func:`git_clone_commands` (``gh`` authentication is needed for a
+    private repository), and the file is read out of the pinned commit's tree.
+    """
+    import tempfile
+
+    with tempfile.TemporaryDirectory(prefix="torchcell-git-") as scratch:
+        directory = f"{scratch}/repo"
+        git_checkout(repo, commit, directory)
+        return git_show(directory, commit, path_in_repo)
+
+
 # Registry: dotted path -> retriever. RetrievalRecord.retriever names a key here.
 # The ``radiant_endpoint`` RetrievalMethod slot (issue #20) is intentionally left
 # without a retriever here: it is reserved for the Radiant VM serving library-rebuild
@@ -335,4 +398,5 @@ RETRIEVERS: dict[str, Callable[..., bytes]] = {
     "torchcell.literature.retrieve.plos_supplementary": plos_supplementary,
     "torchcell.literature.retrieve.elsevier_mmc": elsevier_mmc,
     "torchcell.literature.retrieve.local_archive": local_archive,
+    "torchcell.literature.retrieve.git_repository": git_repository,
 }

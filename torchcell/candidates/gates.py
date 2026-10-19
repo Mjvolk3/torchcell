@@ -99,6 +99,7 @@ from torchcell.sequence.genome.registry import (
     ECOLI_K12_W3110,
     HALE2024_3S_VARIANTS,
     PETER2018_1011,
+    PKUDRIAVZEVII_SD108,
     PPUTIDA_KT2440,
     SCEREVISIAE_CENPK113_7D,
     SGD_S288C_R64,
@@ -521,6 +522,10 @@ READABLE_ASSEMBLY_SETS: Final[frozenset[str]] = frozenset(
         HALE2024_3S_VARIANTS,
         # Read by CenPk1137DGenome (torchcell/sequence/genome/scerevisiae/ncbi.py).
         SCEREVISIAE_CENPK113_7D,
+        # Read by PKudriavzeviiSD108Genome
+        # (torchcell/sequence/genome/pkudriavzevii/sd108.py). No host token names it
+        # yet: the candidate tables hold no P. kudriavzevii row.
+        PKUDRIAVZEVII_SD108,
     )
 )
 

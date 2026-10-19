@@ -2022,11 +2022,15 @@ class Perturbation(GraphProcessor):
         # Add required node count to avoid PyG warnings
         processed_graph["gene"].num_nodes = cell_graph["gene"].num_nodes
 
-        # Process perturbed genes
+        # Process perturbed genes. A SegregantGenotype has no ``perturbations``
+        # attribute (its gene-keyed properties are absent by design): no perturbed genes.
         perturbed_names = {
             p.systematic_gene_name
             for item in data
-            for p in cast(Experiment, item["experiment"]).genotype.perturbations
+            for p in getattr(
+                cast(Experiment, item["experiment"]).genotype, "perturbations", None
+            )
+            or []
         }
         node_ids = cell_graph["gene"].node_ids
         perturbed_indices = [
@@ -2234,11 +2238,15 @@ class DCellGraphProcessor(GraphProcessor):
         if hasattr(cell_graph["gene"], "x"):
             processed_graph["gene"].x = cell_graph["gene"].x
 
-        # Process perturbed genes
+        # Process perturbed genes. A SegregantGenotype has no ``perturbations``
+        # attribute (its gene-keyed properties are absent by design): no perturbed genes.
         perturbed_names = {
             p.systematic_gene_name
             for item in data
-            for p in cast(Experiment, item["experiment"]).genotype.perturbations
+            for p in getattr(
+                cast(Experiment, item["experiment"]).genotype, "perturbations", None
+            )
+            or []
         }
         node_ids = cell_graph["gene"].node_ids
         perturbed_indices = [

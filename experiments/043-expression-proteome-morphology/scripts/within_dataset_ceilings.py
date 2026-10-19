@@ -911,7 +911,7 @@ def figures(out_dir: str, image_dir: str) -> dict[str, str]:
     )
     ax.set_xticks(range(1, len(order) + 1))
     ax.set_xticklabels(
-        [p.replace("nguessan", "NGuessan").replace(" ", "\n") for p in order]
+        [p.replace("nguessan", "NGuessan").replace(" ", "\n", 1) for p in order]
     )
     ax.set_ylabel("log10 UMIs per record")
     ax.set_title("Depth per record")
@@ -939,7 +939,7 @@ def figures(out_dir: str, image_dir: str) -> dict[str, str]:
     ax.set_xlabel("Best genotype concordance of a pooled segregant")
     ax.set_ylabel("Pooled segregants (of 393)")
     ax.set_title("Is any segregant in two panels?")
-    ax.legend(frameon=False, loc="upper right")
+    ax.legend(frameon=False, loc="upper left")
     ax = axes[2]
     _boxes(
         ax,

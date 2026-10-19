@@ -1,0 +1,115 @@
+%% notes-tex/genesis/genesis-proposal-redacted/sections/methods.tex
+%% [[genesis-proposal-redacted]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/genesis/genesis-proposal-redacted/sections/methods.tex
+%% SOURCE: hand-transcribed from the proposal docx, "Proposed Research and
+%% Methods". Group names replaced by institutional roles; the submission's em-dashes
+%% in Aim 2 become commas. Figure 2 is the image embedded in the docx
+%% (word/media/image2.png), converted to PDF unchanged.
+
+\section{Proposed research and methods\secstatus{todo}}\label{sec:methods}
+
+\subsection{Aim 1. Extend TorchCell for generalizable foundational models in
+metabolic engineering\secstatus{todo}}\label{sec:aim1}
+
+To expand TorchCell to other important industrial organisms, we will start with the
+well-studied bacterial strain \org{Escherichia coli} and expand to 10 additional
+gram-negative bacteria and 10 additional yeasts. We will then demonstrate
+applications on \org{Pseudomonas putida}, which has recently been optimized for
+isoprenol production\textsuperscript{11}, an important aviation fuel precursor. In
+addition, this case study will help evaluate recommendations provided by TorchCell in
+DBTL loops (Fig.~\ref{fig:two}a)\textsuperscript{11}.
+
+Although large foundation models have shown some promising results in mammalian
+cells, systematic benchmarking indicates that transformer-based perturbation models
+do not consistently outperform simple linear baselines\textsuperscript{13}. This gap
+can be filled by better mechanistic representations grounded in physical
+constraints, as demonstrated by Merzbacher et al. in their application of deep
+learning to flux cone geometry to predict metabolite
+production\textsuperscript{14}. Since TorchCell already facilitates the inclusion of
+metabolism, we intend to further elaborate its description to ensure deep learning
+cell representations are well grounded in physical constraints
+(Fig.~\ref{fig:two}c). \emph{Successful applications in organisms with
+comparatively less data would demonstrate the successful implementation of MEFMs.}
+(Underlined in the submission; italic here because an underline cannot break
+across lines.)
+
+\tcfigfit[0.62]{figures/genesis-fig2.pdf}{The figure as embedded in the submission,
+which carries no caption of its own. \textbf{a}, organisms entering TorchCell.
+\textbf{b}, the perturb-seq style atlas workflow: individual growth of a new yeast
+knockout collection, pooling under control and stress conditions, scRNA-seq, and
+the genotype-clone-transcriptome readout. \textbf{c}, the metabolic grounding
+layers: the metabolic network, the flux cone under mass balance constraints, and
+dynamics under kinetic and thermodynamic constraints.}{fig:two}
+
+\subsection{Aim 2. Integrate an improved genome LLM based on GenSLM for metabolic
+engineering (HiGenLM) with TorchCell\secstatus{todo}}\label{sec:aim2}
+
+GenSLM was one of the first codon-based LLM models to enable genome-scale predictions
+and to predict novel variants in the newly emerging coronavirus genomes
+(SARS-CoV-2)\textsuperscript{6}. We are now developing a phenotypically informed DNA
+LLM that leverages GenSLM and performs post-training with phenotypic data to make
+effective phenotype predictions. Our new version of GenSLM, HiGenLM, focuses on
+automatically learning the context of nucleotides, genes, contigs, and operons in
+the genome, using a nested, multi-resolution transformer architecture pre-trained on
+genomic sequences from thousands of microbial and eukaryotic genomes. We hypothesize
+that this hierarchical context learning is critical to add phenotypic awareness. At
+its core, HiGenLM decomposes the genome into a hierarchy of overlapping biological
+units, codons, genes, operons, regulatory modules, and chromosome segments, and
+learns representations at each scale through a combination of masked language
+modeling and cross-scale contrastive objectives. The result is a set of scale-aware
+genomic embeddings that capture both the fine-grained biochemical specificity of
+individual protein-coding sequences and the broader genomic context in which they
+operate. Critically, because HiGenLM is pre-trained across phylogenetically diverse
+organisms, its representations encode evolutionary conservation signals that
+genome-scale models entirely lack: residues under purifying selection, syntenic gene
+neighborhoods, and cross-species regulatory grammar are all implicitly encoded in
+the embedding geometry. Currently, we are training HiGenLM with phenotypic data by
+leveraging Directed Preference Optimization (DPO)\textsuperscript{15}, which will
+help us tackle the disparity of phenotypic and genotypic data availability. DPO
+works by directly updating the LLM using a loss function that favors preferred
+datasets (e.g., higher production phenotypes). An important part of this process
+will be augmenting phenotypic data to meet post-training needs, which will be done
+by extrapolating from current data and by supplementing phenotypic data from the
+TorchCell database.
+
+We will attempt to integrate HiGenLM with TorchCell. HiGenLM gene-level embeddings
+can replace or augment the sequence features currently used in TorchCell's
+supervised models for fitness, gene interaction, morphology, and expression
+prediction. By providing each gene node in TorchCell's graph database with a
+HiGenLM-derived embedding giving TorchCell CGT models access to evolutionary and
+functional priors that sharply reduce the effective sample complexity for
+multi-phenotype prediction. Preliminary evidence from analogous integrations using
+GenSLM applied to \org{E. coli} pathway engineering suggests that this embedding
+transfer can improve phenotype prediction accuracy by 15--30\% in low-data regimes,
+precisely the regime most relevant to metabolic engineering strain development.
+Notably, HiGenLM's cross-species pre-training provides a shared embedding space in
+which gene function and regulatory logic are transferable across phylogenetic
+distance, enabling TorchCell-style phenotype models to be rapidly adapted to new
+hosts by grounding their gene representations in HiGenLM's universal genomic
+language.
+
+\subsection{Aim 3. Use biofoundries to validate the predictions made by the
+proposed AI models and generate large amounts of data in a high-throughput manner
+for finetuning of these models\secstatus{todo}}\label{sec:aim3}
+
+Metabolic engineering relies on genetic manipulation to redirect flux within
+organisms, necessitating data collection across perturbations of the genome and
+environment to construct effective metabolic engineering foundation models. We
+propose to collect perturb-seq style single-cell atlas\textsuperscript{12} for
+non-model organisms relevant to industrial biotechnology. Data will be used to
+evaluate foundation models built on model organisms (e.g., \org{S. cerevisiae} and
+\org{E. coli}) and applied to non-model organisms, and to assess model improvements
+using high-throughput perturbation data. Selected strains will also be screened with
+metabolically relevant metabolites using EchoMS to link high-throughput sequencing
+data to more expensive metabolite quantification using previously mentioned
+facilities.
+
+To validate the gene target predictions made by the MEFMs, we will focus on model
+organisms \org{S. cerevisiae} and \org{E. coli} for which we have established
+automated workflows for gene knockouts and overexpression on our iBioFAB and NSF
+iBioFoundry (unpublished data). Building upon our prior
+studies\textsuperscript{4, 16--17}, we will select $\beta$-carotene as a target
+compound for \org{S. cerevisiae}, and lycopene as a target compound for \org{E.
+coli}. These organisms and relevant assays have been well established in the lead
+group and will help evaluate MEFM predictions for the transfer of pathways to new
+hosts.

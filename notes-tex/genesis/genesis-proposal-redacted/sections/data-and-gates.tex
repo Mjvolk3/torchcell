@@ -1,0 +1,41 @@
+%% notes-tex/genesis/genesis-proposal-redacted/sections/data-and-gates.tex
+%% [[genesis-proposal-redacted]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/genesis/genesis-proposal-redacted/sections/data-and-gates.tex
+%% SOURCE: hand-transcribed from the proposal docx, "Data Sources and Models" and
+%% "Decision Gate Metrics". Nothing redacted.
+
+\section{Data sources and models\secstatus{todo}}\label{sec:data}
+
+Source code is located here: \url{https://github.com/Mjvolk3/torchcell}. The Neo4j
+Graph Database is served at UIUC's NCSA Radiant:
+\url{https://torchcell-database.ncsa.illinois.edu/}. Published open-source models
+will be made available at \url{https://huggingface.co/}. The team has access to
+computing resources at UIUC's NCSA and ANL's exascale Aurora supercomputer and other
+DOE-supported compute infrastructures. All AI models and experimental results will
+also be deposited into KBase/K-BERDL, providing a natural integration point with the
+Genesis Mission's AmSC/ModCon platforms.
+
+\section{Decision gate metrics\secstatus{todo}}\label{sec:gates}
+
+At six months, we assess the quantitative metrics in Table~\ref{tab:gonogo} to gate
+technical readiness for months 6--9. Unmet criteria trigger the predefined
+mitigation strategy.
+
+\pfstep{Metric 1 (Computational Scaling)} Cross-organism transfer shows $\geq$
+5$\times$ sample efficiency over from-scratch baselines (v) with transfer exponents
+$> 0$ and 95\% CIs excluding zero demonstrating transfer (vi).
+
+\pfstep{Mitigation} If unmet: Expand training data across phylogenetic gaps in
+TorchCell Database increasing overlap in multimodal inputs and phenotypes (i) and
+revise CGT architecture with a stricter approach in imposing physical constraints
+(iii).
+
+\pfstep{Metric 2 (Experimental Scaling)} RNA-barcoded YKOC data can be collected
+across $\geq$ 3 environmental conditions with perturbation-condition pairs for
+\org{I. orientalis} with data deposited in TorchCell Database.
+
+\pfstep{Mitigation} If unmet: Reapply the published method with the multi-functional
+genome-wide CRISPR (MAGIC) system in \org{S. cerevisiae}. This mitigates the risk of
+applying the method to a new organism while providing an opportunity to develop an
+activation, interference, and deletion perturb-seq-style atlas for
+\org{S. cerevisiae} and to scale along a different axis -- gene perturbation type.

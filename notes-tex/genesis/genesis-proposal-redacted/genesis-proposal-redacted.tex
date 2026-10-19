@@ -1,0 +1,53 @@
+%% notes-tex/genesis/genesis-proposal-redacted/genesis-proposal-redacted.tex
+%% [[genesis-proposal-redacted]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/genesis/genesis-proposal-redacted/genesis-proposal-redacted.tex
+%%
+%% SOURCE: hand-transcribed from the submitted Phase I proposal docx
+%% "Genesis Proposal 4-23-2026.docx" (sha256
+%% d59f9065b8895f70b997667e3034f903426caf75ebd3e7fda755b38313ec6fea), which is
+%% NOT committed. Person names, contact details, the RFA number, named industry
+%% partners and every dollar figure are replaced by [redacted: ...] markers; the
+%% technical text, the go/no-go metrics and the bibliography are verbatim apart
+%% from house style (no em-dashes). The redaction rules are recorded in the
+%% paired dendron note.
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcommand{\redacted}[1]{\textcolor{tcgray}{[redacted: #1]}}
+
+\title{\vspace{-1.5em}Foundation Models for Metabolic Engineering\\
+\large Genesis Mission Phase I proposal, redacted transcription}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\noindent
+A transcription of the Phase I proposal submitted to the Genesis Mission request
+for applications on 2026-04-23, under focus area 2-B, scaling the biotechnology
+revolution, genotype to phenotype. Person names, telephone numbers, email and
+street addresses, the RFA number, the named industry partners and every budget
+figure are replaced by a gray \redacted{what was removed} marker. Institutions,
+facilities, the scientific content, the seven go/no-go metrics of
+Table~\ref{tab:gonogo} and the bibliography are kept as submitted, so this copy can
+be read for what the award commits the project to, without carrying the
+administrative data of the submission.
+
+\vspace{0.5em}
+\tccontents
+\clearpage
+
+\input{sections/cover}
+\input{sections/background}
+\input{sections/objectives}
+\input{sections/methods}
+\input{sections/milestones}
+\input{sections/data-and-gates}
+\input{sections/references}
+
+\end{document}

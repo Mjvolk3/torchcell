@@ -1,0 +1,86 @@
+%% notes-tex/genesis/genesis-proposal-redacted/sections/background.tex
+%% [[genesis-proposal-redacted]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/genesis/genesis-proposal-redacted/sections/background.tex
+%% SOURCE: hand-transcribed from the proposal docx, "Background/Introduction".
+%% Group names replaced by institutional roles. Figure 1 is the image embedded in
+%% the docx (word/media/image1.png), converted to PDF unchanged.
+
+\section{Background and introduction\secstatus{todo}}\label{sec:background}
+
+Metabolic engineering has been increasingly used to produce chemicals, fuels, and
+materials\textsuperscript{1}. Developing AI foundation models for metabolic
+engineering is critical for addressing the complexity and scale of biological design
+problems. Engineering microbial metabolism requires navigating an enormous
+combinatorial space of genes, enzymes, regulatory interactions, and environmental
+conditions. Traditional modeling and machine-learning approaches are typically
+trained for narrow tasks and rely on limited labeled datasets, making them difficult
+to generalize across organisms and pathways. In contrast, foundation models -- large
+AI models pretrained on diverse biological datasets such as genomic sequences,
+metabolic networks, protein structures, and multi-omics measurements -- can learn
+transferable representations of biological systems and be adapted to many downstream
+tasks with relatively little additional data\textsuperscript{2}. In essence, by
+integrating heterogeneous biological data and capturing complex dependencies within
+cellular systems, AI foundation models link genotype and phenotype (Focus area 2B)
+and can guide pathway discovery, retrosynthetic planning, and strain optimization
+while reducing costly experimental trial-and-error\textsuperscript{3}. Ultimately,
+they could transform metabolic engineering into a more predictive and scalable
+discipline, enabling rapid development of sustainable biomanufacturing platforms for
+renewable chemicals, fuels, and materials (AI advantages).
+
+The three partner groups (the lead university group, the LBNL group, and the ANL
+group) are pioneers in developing AI models for metabolic engineering. For example,
+the lead group developed an AI-driven automated workflow for pathway engineering in
+2019\textsuperscript{4} while the LBNL group developed the Automated Recommendation
+Tool (ART), a tool that leverages machine learning and probabilistic modeling
+techniques to guide metabolic engineering in a systematic fashion in
+2020\textsuperscript{5}. Moreover, the ANL group developed GenSLM, a DNA large
+language model (LLM), which was able to predict novel variants in the newly emerging
+coronavirus genomes (SARS-CoV-2) in 2023. Recently, in an unpublished study, the lead
+group developed TorchCell, a framework to facilitate building metabolic engineering
+foundation model (MEFM) with specific applications in \org{Saccharomyces cerevisiae},
+a preeminent industrial platform organism (Fig.~\ref{fig:one}). Yeast genes are
+embedded using various pretrained DNA and protein embedding models, and
+protein-protein interactions, regulatory networks, and metabolism are then used to
+build adjacency matrices among genes, reactions, and metabolites demonstrating
+multimodal input representation of metabolic engineering experiments. We select
+gene-gene epistasis, commonly referred to as gene-gene interactions (GGI), as our
+supervised prediction label since it is a well-defined representation of the
+nonlinear complexity of biological systems that makes it difficult to reliably
+engineer commercially viable strains. The TorchCell Cell Graph Transformer (CGT)
+model is trained on a dataset queried from the TorchCell Database, which aggregates
+multiple original datasets (Fig.~\ref{fig:one}a--c). It achieves a Pearson
+correlation of $0.454 \pm 0.006$ and a Spearman correlation of $0.421 \pm 0.004$,
+with increased noise at the extremes of the GGI range, as expected
+(Fig.~\ref{fig:one}d). We demonstrate state-of-the-art performance from benchmarking
+against flux balance analysis (FBA), the common mechanistic, constraint-based
+modeling method, and two recent deep learning frameworks DCell and
+DANGO\textsuperscript{9--11} (Fig.~\ref{fig:one}e). Notably, many foundation models
+have been developed for protein engineering; however, no foundation model has been
+developed for metabolic engineering. This is largely due to the fragmentation of
+phenotypic data across diverse experimental datasets, where individual studies are
+typically too small to support deep learning approaches, preventing the field from
+understanding how models scale across metabolic engineering data types. TorchCell
+fills this gap by aggregating genotype, phenotype, and environmental data relevant
+to metabolic engineering.
+
+\tcfigfit[0.98]{figures/genesis-fig1.pdf}{TorchCell database construction and
+\org{S. cerevisiae} application predicting cellular epistasis. \textbf{a},
+Literature and public databases are annotated with TorchCell's experiment ontology,
+enabling coherent querying across all data in the knowledge graph database.
+Experiments are added to the TorchCell Graph database hosted by National Center for
+Supercomputing Applications (NCSA), which can be queried to construct datasets large
+enough to enable DL applications. \textbf{b}, TorchCell's minimal requirements for
+genomic representation are a full genome sequence and a genome annotation file, but
+layers of additional graphical knowledge like regulatory networks and metabolism can
+be added if annotations exist. Full representations of experiments are often highly
+repetitive, so TorchCell compresses them into perturbation operators over a reference
+state, facilitating training on millions of strains. \textbf{c}, Cell Graph
+Transformer (CGT) takes multimodal cell inputs, embeds them into cell latent space
+via a perturbation operator as described in recent virtual cell literature, and the
+perturbed cell embeddings are decoded into different supervised labels, in this
+case, GGI\textsuperscript{7--8}. \textbf{d}, TorchCell CGT validation on GGI.
+\textbf{e}, TorchCell CGT achieves state-of-the-art performance in predicting
+trigenic GGI in yeast compared to Yeast9 FBA, DCell, and Dango. \textbf{f},
+TorchCell can be used to learn from previous strain experiments and help design the
+next batch of strains for experimentation in autonomous labs like the NSF
+iBioFoundry at UIUC.}{fig:one}

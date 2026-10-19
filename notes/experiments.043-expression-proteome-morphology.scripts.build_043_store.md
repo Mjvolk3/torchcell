@@ -41,3 +41,33 @@ rather than merge. Offline probe with 12 synthetic records: 12 raw, 12 processed
 The underlying `aggregator=None` defect is a torchcell bug to fix separately
 (hypothesis (untested): rekeying `data_<i>` to `<i>` and wrapping each value in a list in
 the raw-to-processed copy is sufficient).
+
+## 2026.10.19 - First build failed in the raw stage (job 5851)
+
+Slurm job 5851 (`043-build-store`, commit `893ea140e`) started 02:05:20 CDT and FAILED
+after 7 min 56 s, exit code 1. Log:
+`/scratch/projects/torchcell-scratch/experiments/043-expression-proteome-morphology/slurm/output/043-build-store_5851.out`.
+
+The query ran and streamed about 18,999 records (last progress line `18999it [07:32]`),
+then the raw stage raised while rendering a batch:
+
+```text
+File "torchcell/data/neo4j_query_raw.py", line 834, in _render_batch
+    genes = tuple(self.extract_systematic_gene_names(dump["genotype"]))
+File "torchcell/data/neo4j_query_raw.py", line 1219, in extract_systematic_gene_names
+    for perturbation in cast(list[dict[str, Any]], genotype.get("perturbations")):
+TypeError: 'NoneType' object is not iterable
+```
+
+`Neo4jQueryRaw.extract_systematic_gene_names` assumes every genotype has a
+`perturbations` list. A `SegregantGenotype` has none (it carries `cross`, `segregant_id`,
+parents and blocks); in the dev census only Boocock 2025 and Nguessan 2025 have that
+shape, so the failing record is presumably one of theirs (the log does not name the
+record). Nothing was committed: `raw_043/raw/lmdb` is empty and the whole tree is 92 KB.
+
+Not patched, per the stage-1 brief. Further segregant hazards on the same path, read from
+the source and not run (hypothesis (untested)): `RawStageGrouping.prepare` reads
+`experiment["genotype"]["perturbations"]` for its summary (KeyError), and the
+`Perturbation` graph processor reads the perturbation list in `get`. A torchcell fix that
+treats a genotype with no perturbation list as zero gene perturbations, or dropping the
+two segregant datasets from this store, is the owner's call.

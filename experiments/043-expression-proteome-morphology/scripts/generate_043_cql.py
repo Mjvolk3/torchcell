@@ -1,0 +1,172 @@
+# experiments/043-expression-proteome-morphology/scripts/generate_043_cql.py
+# [[experiments.043-expression-proteome-morphology.scripts.generate_043_cql]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/043-expression-proteome-morphology/scripts/generate_043_cql
+"""Generate the experiment 043 query: expression, proteome and morphology over 15 datasets.
+
+Writes one ``UNION ALL`` Cypher file, byte-identical, to two places:
+
+* ``experiments/043-expression-proteome-morphology/queries/expression_proteome_morphology_043.cql``
+  (the copy the store build reads), and
+* ``torchcell/knowledge_graphs/queries/expression_proteome_morphology_043.cql`` (the copy
+  the supported-query registry points at; ``cql_path`` must be inside that package).
+
+Every block has the property-shaped RETURN of the supported query
+``torchcell/knowledge_graphs/queries/expression_proteome_morphology.cql``
+(``e.serialized_data AS e_serialized, ref.serialized_data AS ref_serialized``) and keeps
+the phenotype ``graph_level`` filter. The genotype clause takes one of three shapes:
+
+* ``all``: every perturbation names a gene in ``$gene_set`` and there is at least one
+  (deletion and allele panels, the shape of the supported query).
+* ``any``: at least one perturbation names a gene in ``$gene_set``. The natural isolates
+  (Caudal 2024, Muenzner 2024) carry accessory-ORF absences and thousands of
+  ``sequence_variant`` perturbations outside S288C, which ``all`` would drop.
+* ``none``: no gene clause and no ``Genotype`` label. Boocock 2025 and Nguessan 2025 have
+  ``SegregantGenotype`` genotypes (``segregant genotype`` is_a ``genotype`` in
+  ``biocypher/config/torchcell_schema_config.yaml``, reached through
+  ``GenotypeMemberOf``), and Vaishnav 2022 carries a
+  ``VariablePromoterReporterPerturbation`` with no gene.
+
+Run from the repo root:
+    python experiments/043-expression-proteome-morphology/scripts/generate_043_cql.py
+"""
+
+from __future__ import annotations
+
+import os.path as osp
+from typing import Literal
+
+GeneClause = Literal["all", "any", "none"]
+
+# (dataset id, phenotype class, graph_level, gene clause); order is the UNION order. The
+# phenotype class is the one the dataset's recorded closure in
+# database/releases/2026.10.17-4295f7ca.closures.json carries (comment only; the query
+# filters on graph_level, not on the class).
+BLOCKS: list[tuple[str, str, str, GeneClause]] = [
+    ("MicroarrayKemmeren2014Dataset", "MicroarrayExpressionPhenotype", "node", "all"),
+    ("SmMicroarraySameith2015Dataset", "MicroarrayExpressionPhenotype", "node", "all"),
+    ("DmMicroarraySameith2015Dataset", "MicroarrayExpressionPhenotype", "node", "all"),
+    (
+        "MicroarrayScoreHu2007Dataset",
+        "MicroarrayExpressionScorePhenotype",
+        "node",
+        "all",
+    ),
+    (
+        "TfDeletionPseudobulkJackson2020Dataset",
+        "SingleCellExpressionPhenotype",
+        "node",
+        "all",
+    ),
+    (
+        "NadalRibellesPerturbSeq2025Dataset",
+        "PseudobulkExpressionPhenotype",
+        "node",
+        "all",
+    ),
+    ("ProteomeMessner2023Dataset", "ProteinAbundancePhenotype", "node", "all"),
+    ("ProteomeZelezniak2018Dataset", "ProteinAbundancePhenotype", "node", "all"),
+    ("ScmdOhya2005Dataset", "CalMorphPhenotype", "global", "all"),
+    ("CaudalPanTranscriptome2024Dataset", "RNASeqExpressionPhenotype", "node", "any"),
+    ("ProteomeMuenzner2024Dataset", "ProteinAbundancePhenotype", "node", "any"),
+    ("ProteinTurnoverMuenzner2024Dataset", "ProteinTurnoverPhenotype", "node", "any"),
+    ("Boocock2025Dataset", "SingleCellExpressionPhenotype", "node", "none"),
+    ("Nguessan2025Dataset", "SingleCellExpressionPhenotype", "node", "none"),
+    (
+        "PooledPromoterExpressionVaishnav2022Dataset",
+        "PooledSortSeqExpressionPhenotype",
+        "node",
+        "none",
+    ),
+]
+
+# Served experiment counts in release 2026.10.17-4295f7ca
+# (database/releases/2026.10.17-4295f7ca.json, n_experiments per dataset).
+EXPECTED_COUNTS: dict[str, int] = {
+    "MicroarrayKemmeren2014Dataset": 1484,
+    "SmMicroarraySameith2015Dataset": 82,
+    "DmMicroarraySameith2015Dataset": 72,
+    "MicroarrayScoreHu2007Dataset": 263,
+    "TfDeletionPseudobulkJackson2020Dataset": 784,
+    "NadalRibellesPerturbSeq2025Dataset": 6188,
+    "ProteomeMessner2023Dataset": 4699,
+    "ProteomeZelezniak2018Dataset": 97,
+    "ScmdOhya2005Dataset": 4718,
+    "CaudalPanTranscriptome2024Dataset": 943,
+    "ProteomeMuenzner2024Dataset": 795,
+    "ProteinTurnoverMuenzner2024Dataset": 55,
+    "Boocock2025Dataset": 79516,
+    "Nguessan2025Dataset": 2951,
+    "PooledPromoterExpressionVaishnav2022Dataset": 71158,
+}
+
+QUERY_NAME = "expression_proteome_morphology_043.cql"
+
+HEADER = """\
+// expression_proteome_morphology_043.cql
+// [[experiments.043-expression-proteome-morphology]]
+//
+// Experiment 043 query: expression, proteome and CalMorph morphology over 15 datasets of
+// KG 4.0 (release 2026.10.17-4295f7ca). GENERATED by
+// experiments/043-expression-proteome-morphology/scripts/generate_043_cql.py, which writes
+// this text byte-identical to experiments/043-expression-proteome-morphology/queries/ and
+// torchcell/knowledge_graphs/queries/. Edit the generator, never this file.
+//
+// Block shape of torchcell/knowledge_graphs/queries/expression_proteome_morphology.cql
+// (property-shaped RETURN, no medium filter). Gene clause per block:
+//   all  = every perturbation names a gene in $gene_set, at least one perturbation
+//   any  = at least one perturbation names a gene in $gene_set (natural isolates)
+//   none = no gene clause, unlabeled genotype (segregants, promoter library)"""
+
+
+def _gene_clause(clause: GeneClause) -> str:
+    perts = "[(g)<-[:PerturbationMemberOf]-(pert) | pert]"
+    if clause == "all":
+        return (
+            f"\n AND ALL(p IN {perts}\nWHERE p.systematic_gene_name IN $gene_set)"
+            f"\n AND SIZE({perts}) > 0"
+        )
+    if clause == "any":
+        return f"\n AND ANY(p IN {perts}\nWHERE p.systematic_gene_name IN $gene_set)"
+    return ""
+
+
+def block(dataset_id: str, phenotype: str, graph_level: str, clause: GeneClause) -> str:
+    """One dataset's ``MATCH ... RETURN e_serialized, ref_serialized`` block."""
+    genotype = "(g:Genotype)" if clause != "none" else "(g)"
+    return f"""// {dataset_id} ({phenotype}, graph_level '{graph_level}', gene clause {clause})
+MATCH (dataset:Dataset)<-[:ExperimentMemberOf]-(e:Experiment)
+WHERE dataset.id = '{dataset_id}'
+MATCH (e)<-[:GenotypeMemberOf]-{genotype}
+MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
+MATCH (e)<-[:PhenotypeMemberOf]-(phen:PhenotypicFeature)
+WHERE phen.graph_level = '{graph_level}'{_gene_clause(clause)}
+WITH DISTINCT e, ref
+ ORDER BY e.id
+RETURN e.serialized_data AS e_serialized, ref.serialized_data AS ref_serialized"""
+
+
+def render() -> str:
+    """The full query text."""
+    body = "\n\nUNION ALL\n\n".join(block(*b) for b in BLOCKS)
+    return f"{HEADER}\n\n{body}\n"
+
+
+def main() -> None:
+    """Write the query to the experiment folder and the supported-query package."""
+    here = osp.dirname(osp.abspath(__file__))
+    repo = osp.abspath(osp.join(here, "..", "..", ".."))
+    targets = [
+        osp.join(repo, "experiments", "043-expression-proteome-morphology", "queries"),
+        osp.join(repo, "torchcell", "knowledge_graphs", "queries"),
+    ]
+    text = render()
+    for qdir in targets:
+        path = osp.join(qdir, QUERY_NAME)
+        with open(path, "w") as f:
+            f.write(text)
+        print(f"wrote {path}")
+    print(f"{len(BLOCKS)} blocks, expected {sum(EXPECTED_COUNTS.values())} records")
+
+
+if __name__ == "__main__":
+    main()

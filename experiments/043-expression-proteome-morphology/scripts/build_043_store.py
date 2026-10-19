@@ -21,6 +21,10 @@ is the raw records, one per entry, in the list format the readers expect. The sc
 asserts that the number of processed entries equals the number of raw records; a
 collision (two byte-identical served records) fails the build instead of merging.
 
+The ``aggregator=None`` defect is a torchcell bug, to be fixed separately and not in the
+043 PR: on main ``aggregator=None`` (with no deduplicator) produces a processed store
+that no reader can open.
+
 Genome, graphs and the ``calm`` node embedding are set up as in the 019
 ``build_fig3_proteome.py`` build. The Neo4j connection resolves from ``NEO4J_URI`` /
 ``NEO4J_USER`` / ``NEO4J_PASSWORD`` in ``.env`` through

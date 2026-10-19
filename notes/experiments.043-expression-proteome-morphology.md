@@ -96,3 +96,28 @@ Sameith Sm and Dm, Nadal-Ribelles), `umi_count` (Jackson, Boocock, Nguessan), an
   list); nothing written. Details and traceback in
   [[experiments.043-expression-proteome-morphology.scripts.build_043_store]].
 - Dev-tree census done (173,805 records); raw census waits on a successful build.
+
+## 2026.10.19 - Stage 2: segregant fix, isolate clause, rebuild
+
+- **torchcell fix (same PR):** a genotype with no `perturbations` list (a
+  `SegregantGenotype`, by design) now counts as zero perturbed genes in
+  `Neo4jQueryRaw.extract_systematic_gene_names`, `RawStageGrouping.prepare`, and the
+  `Perturbation` and `DCellGraphProcessor` processors. The record is kept with empty
+  `perturbation_indices` and `pert_mask` all False. Tests:
+  `tests/torchcell/data/test_segregant_genotype_without_perturbations.py` (4 tests, 3 fail
+  without the fix).
+- **Isolate clause:** `(SIZE(perts) = 0 OR ANY(p IN perts WHERE p.systematic_gene_name IN
+  $gene_set))`, so the Muenzner 2024 proteome strain with no perturbation is kept.
+- **Known torchcell bug, not fixed here:** on main, `Neo4jCellDataset` with
+  `aggregator=None` (and no deduplicator) copies the raw LMDB into `processed/`
+  unchanged, keys `data_<i>` with one JSON object per value, while every reader expects
+  keys `<i>` with a JSON list. Measured offline on a one-record LMDB: `get(0)` reads
+  `None` and `compute_phenotype_info` raises `TypeError: string indices must be integers`.
+  The resulting processed store cannot be opened by any reader. The 043 build works
+  around it with the in-script `RecordAggregator` (one record per group).
+- **Not fixed, same shape as the segregant bug:** the lazy index passes
+  `compute_perturbation_count_index`, `compute_is_any_perturbed_gene_index` and
+  `compute_is_any_deletion_gene_index` in `torchcell/data/neo4j_cell.py` still read
+  `["genotype"]["perturbations"]` and catch exceptions per entry. Hypothesis
+  (untested): they would skip segregant entries rather than raise. The 043 build does
+  not run them: the folded raw-stage path writes those index files from the summaries.

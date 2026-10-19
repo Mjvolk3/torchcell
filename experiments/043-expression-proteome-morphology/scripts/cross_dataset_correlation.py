@@ -705,6 +705,24 @@ def _save(fig: plt.Figure, image_dir: str, title: str) -> str:
     return base + ".svg"
 
 
+SHORT = {
+    "01_kemmeren_x_sameith_sm": "1 Kemmeren x Sameith Sm",
+    "02_kemmeren_x_hu": "2 Kemmeren x Hu",
+    "03_kemmeren_x_nadal_condition1": "3 Kemmeren x Nadal YPD",
+    "03_kemmeren_x_nadal_condition2": "3 Kemmeren x Nadal salt",
+    "04_kemmeren_x_jackson_ypd1": "4 Kemmeren x Jackson YPD 10 h",
+    "04_kemmeren_x_jackson_ypd2": "4 Kemmeren x Jackson YPD 4 h a",
+    "04_kemmeren_x_jackson_ypd3": "4 Kemmeren x Jackson YPD 4 h b",
+    "05a_nadal_condition1_x_condition2": "5a Nadal YPD x salt",
+    "05b_nadal_within_condition_duplicates": "5b Nadal duplicates",
+    "06_jackson_between_environments": "6 Jackson env x env",
+    "07_messner_x_zelezniak": "7 Messner x Zelezniak",
+    "08_kemmeren_x_messner": "8 Kemmeren x Messner",
+    "09a_caudal_x_muenzner_proteome": "9 Caudal x Muenzner",
+    "09b_muenzner_turnover_x_abundance": "9 turnover x abundance",
+}
+
+
 def figures(result: dict[str, Any], out_dir: str, image_dir: str) -> dict[str, str]:
     """Per-genotype distributions, per-gene mRNA-protein scatter, morphology ridge."""
     _style()
@@ -719,13 +737,7 @@ def figures(result: dict[str, Any], out_dir: str, image_dir: str) -> dict[str, s
         frame = pd.read_csv(osp.join(out_dir, f"{n}_per_genotype.csv"))
         if len(frame):
             data.append(frame.pearson.to_numpy())
-            labels.append(f"{n.split('_', 1)[0]} (n={len(frame)})")
-    jpath = osp.join(out_dir, "06_jackson_between_environments_per_genotype.csv")
-    if osp.exists(jpath):
-        frame = pd.read_csv(jpath)
-        if len(frame):
-            data.append(frame.pearson.to_numpy())
-            labels.append(f"06 (n={len(frame)})")
+            labels.append(f"{SHORT.get(n, n)} (n={len(frame)})")
     fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(60)))
     bp = ax.boxplot(data, patch_artist=True, widths=0.6, showfliers=False)
     for i, box in enumerate(bp["boxes"]):
@@ -740,7 +752,7 @@ def figures(result: dict[str, Any], out_dir: str, image_dir: str) -> dict[str, s
     ax.set_xticklabels(labels, rotation=45, ha="right")
     ax.set_ylabel("Per-genotype Pearson r across shared genes")
     ax.axhline(0, color="black", linewidth=0.5)
-    ax.set_ylim(-1, 1)
+    ax.set_ylim(-1, 1.05)
     ax.yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(0.2))
     ax.yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(0.1))
     ax.tick_params(which="minor", length=0)
@@ -779,7 +791,7 @@ def figures(result: dict[str, Any], out_dir: str, image_dir: str) -> dict[str, s
         for k in morph["all_features"]
         if "mean_r_over_features" in morph["all_features"][k]
     ]
-    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(45)))
+    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(60)))
     width = 0.8 / max(1, 2 * len(sets))
     for j, s in enumerate(sets):
         for k, stat in enumerate(("mean_r_over_features", "null_mean_r")):
@@ -799,9 +811,9 @@ def figures(result: dict[str, Any], out_dir: str, image_dir: str) -> dict[str, s
     ax.set_xticklabels(
         [f"{i}\n(n={morph['all_features'][i]['n_genotypes']})" for i in inputs]
     )
-    ax.set_ylabel("Mean validation Pearson r per CalMorph feature")
+    ax.set_ylabel("Mean validation Pearson r\nper CalMorph feature")
     ax.axhline(0, color="black", linewidth=0.5)
-    ax.legend(frameon=False, loc="upper right")
+    ax.legend(frameon=False, loc="upper center", bbox_to_anchor=(0.5, -0.25), ncol=2)
     fig.tight_layout()
     paths["morphology"] = _save(fig, image_dir, "cross_dataset_morphology_ridge")
     return paths

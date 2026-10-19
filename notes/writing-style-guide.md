@@ -291,3 +291,43 @@ person editing the caption will see it.
 rises with...` compresses three panels into one clause and leaves the reader to
 work out which panel carries which claim. Each lettered panel gets its own
 sentence, carrying the statistic that panel actually shows.
+
+## 2026.10.18 - A caption carries the point first, then the detail
+
+Owner, 2026-10-18, on reviewing the environment case study's figure sheets: a caption
+is not a legend of what was plotted. It says why the figure is in the document.
+
+**The bold run-in title states the figure's main point.** Two kinds of figure, two
+kinds of title. A *comparative* figure (arms against a bar, a model against a rule, a
+curve against a ceiling) is titled with its takeaway, a measured claim, with the
+statistic behind it in the body: `\textbf{No public screen lifts the compound-cold
+score.}` An *informative* figure (a dataset, a layout, a wiring diagram, a set of
+structures) is titled with what it plainly shows: `\textbf{The six inhibitors, the four
+screens and the host wells.}` A title that names the subject of a comparative figure
+("The source ladder") is a label, not a title.
+
+**The body, in this order.** The main points, each a sentence. Then the secondary
+points, the reasons the figure earns its place that are not the headline (a caveat, a
+second reading, the control). Then a little supplementary detail: what is plotted, the
+statistic and its sample size, the growth call, the fold scheme. One sentence per panel
+still holds inside that order; a panel's sentence carries its own point. The detail that
+does not fit goes to a source table or a paragraph after the figure, never into the
+caption at the cost of the points.
+
+**The caption fits on the page with its figure.** The review card
+(`notes-tex/common/figure_cards.py`, one page per figure, caption included) is the
+test: when the caption spills to the next page, the figure is too tall or the caption
+too long, and the figure gives first. A sheet at Nature's 170 mm height leaves about
+25 lines of `\footnotesize` on an A4 page, about 3,000 characters.
+
+**Panel titles follow the same rule at the panel level.** A comparative panel is titled
+with its takeaway ("the host needs ten times the screen's dose"), an informative one
+with its content ("the six titrations and their Hill fits"), and every panel names the
+dataset it draws from, in the title or on an axis, because a reader who lands on one
+panel must not have to find the dataset in the caption.
+
+**Our own measurements are "this study" in a figure and its caption.** The run
+identifiers (`ex21`, `ex23`, `ex26` to `ex28`) are internal provenance: they stay in
+the source table under the figure, in the script and in the experiment note, and a
+reader of the figure sees "this study: titration", "this study: combinations", "this
+study: isobole grids".

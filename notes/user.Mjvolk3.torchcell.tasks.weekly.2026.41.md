@@ -81,3 +81,12 @@ created: 1791256185172
 - [x] 040 round 11 written: five switchable model pieces (gene-embedding displacement, cell-only readout, Hill host form, Bliss / Loewe / highest-single composition, pair deviation term), 19 of 19 CPU checks, nine grids of 105 one-GPU jobs on bfjt-delta-gpu [[experiments.040-inhibitor-synergy-wetlab]]
 - [x] 040 round 11 submitted on Delta, 105 jobs 22951907 to 22952011, after Lustre target 106 died and 040 moved to its own env, data root and tree
 - [ ] Read round 11 when it lands: rerun `r3_readout.py` and `r3_host_predictions.py` over `results/mixture-delta`, refresh the gate sheet
+
+## 2026.10.18
+
+- [x] 040 round 11 read, partial (163 of 186 configs): the Hill form composed by Bliss and trained on the anchors alone orders the combinations at 0.977 growth AUROC against Loewe's 0.958, the first arm above the rule; the round-11 section and the model wiring supplement in the gate document [[experiments.040-inhibitor-synergy-wetlab]]
+- [x] Figure review cards: `notes-tex/common/figure_cards.py` cuts one single-page PDF per figure, caption included, into `review/`; `make all` runs it (`make cards`)
+- [x] `torchcell.utils.text_clashes`: every sheet is checked for text that runs into other text or off the figure before it is saved, with a unit test; the gate sheets read zero clashes
+- [x] Caption standard recorded in [[writing-style-guide]]: the title states the takeaway or the plain content, the body the main points, the secondary points, then the detail; the caption fits on the page; "this study" on a sheet, the run ids in the source table
+- [x] Gate figure 2 redesigned: the data row (inhibitors, each source's size, culture and what a label is, what the sources share and what is trained on and tested on, the model with LaTeX equations), every panel titled with its takeaway or content flush left after its letter, the two source ladders paired, the caption rewritten to the standard on one page with the figure [[experiments.040-inhibitor-synergy-wetlab]]
+- [ ] Round 11, the rest: pull the 17 resubmitted sweeps and 2 node-killed jobs from Delta, rerun `r11_readout.py` and `r11_gate_section.py`, re-read the isoboles (the Hill arms read the grid interiors worse than the control, 0.29 to 0.51 against 0.19)

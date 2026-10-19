@@ -47,6 +47,7 @@ from torchcell.utils import (  # noqa: E402
     PLOT_PALETTE_FILL,
     mm_to_in,
     savefig_true_size_svg,
+    text_clashes,
 )
 
 load_dotenv()
@@ -319,6 +320,8 @@ def host_figure(scores: pd.DataFrame, table: pd.DataFrame) -> dict[str, str]:
     fig.legend(
         handles=handles, loc="outside lower center", ncol=3, frameon=False, fontsize=5.5
     )
+    for a, b in text_clashes(fig):
+        print(f"  CLASH r11_host: {a!r} x {b!r}", flush=True)
     out_dir = osp.join(os.environ["ASSET_IMAGES_DIR"], SLUG)
     os.makedirs(out_dir, exist_ok=True)
     stamp = timestamp()

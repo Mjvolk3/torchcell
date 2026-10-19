@@ -10,7 +10,7 @@
 // Block shape of torchcell/knowledge_graphs/queries/expression_proteome_morphology.cql
 // (property-shaped RETURN, no medium filter). Gene clause per block:
 //   all  = every perturbation names a gene in $gene_set, at least one perturbation
-//   any  = at least one perturbation names a gene in $gene_set (natural isolates)
+//   any  = no perturbation, or at least one names a gene in $gene_set (natural isolates)
 //   none = no gene clause, unlabeled genotype (segregants, promoter library)
 
 // MicroarrayKemmeren2014Dataset (MicroarrayExpressionPhenotype, graph_level 'node', gene clause all)
@@ -164,8 +164,9 @@ MATCH (e)<-[:GenotypeMemberOf]-(g:Genotype)
 MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
 MATCH (e)<-[:PhenotypeMemberOf]-(phen:PhenotypicFeature)
 WHERE phen.graph_level = 'node'
- AND ANY(p IN [(g)<-[:PerturbationMemberOf]-(pert) | pert]
-WHERE p.systematic_gene_name IN $gene_set)
+ AND (SIZE([(g)<-[:PerturbationMemberOf]-(pert) | pert]) = 0
+ OR ANY(p IN [(g)<-[:PerturbationMemberOf]-(pert) | pert]
+WHERE p.systematic_gene_name IN $gene_set))
 WITH DISTINCT e, ref
  ORDER BY e.id
 RETURN e.serialized_data AS e_serialized, ref.serialized_data AS ref_serialized
@@ -179,8 +180,9 @@ MATCH (e)<-[:GenotypeMemberOf]-(g:Genotype)
 MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
 MATCH (e)<-[:PhenotypeMemberOf]-(phen:PhenotypicFeature)
 WHERE phen.graph_level = 'node'
- AND ANY(p IN [(g)<-[:PerturbationMemberOf]-(pert) | pert]
-WHERE p.systematic_gene_name IN $gene_set)
+ AND (SIZE([(g)<-[:PerturbationMemberOf]-(pert) | pert]) = 0
+ OR ANY(p IN [(g)<-[:PerturbationMemberOf]-(pert) | pert]
+WHERE p.systematic_gene_name IN $gene_set))
 WITH DISTINCT e, ref
  ORDER BY e.id
 RETURN e.serialized_data AS e_serialized, ref.serialized_data AS ref_serialized
@@ -194,8 +196,9 @@ MATCH (e)<-[:GenotypeMemberOf]-(g:Genotype)
 MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
 MATCH (e)<-[:PhenotypeMemberOf]-(phen:PhenotypicFeature)
 WHERE phen.graph_level = 'node'
- AND ANY(p IN [(g)<-[:PerturbationMemberOf]-(pert) | pert]
-WHERE p.systematic_gene_name IN $gene_set)
+ AND (SIZE([(g)<-[:PerturbationMemberOf]-(pert) | pert]) = 0
+ OR ANY(p IN [(g)<-[:PerturbationMemberOf]-(pert) | pert]
+WHERE p.systematic_gene_name IN $gene_set))
 WITH DISTINCT e, ref
  ORDER BY e.id
 RETURN e.serialized_data AS e_serialized, ref.serialized_data AS ref_serialized

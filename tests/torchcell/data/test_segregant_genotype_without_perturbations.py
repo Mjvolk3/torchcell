@@ -11,6 +11,11 @@ perturbed genes:
 * ``Neo4jQueryRaw.extract_systematic_gene_names`` returns ``[]`` for the dumped genotype
   (it raised ``TypeError: 'NoneType' object is not iterable`` on build job 5851).
 * ``RawStageGrouping.prepare`` summarizes the record with perturbation count 0.
+* The processed-store index passes of ``Neo4jCellDataset``
+  (``compute_perturbation_count_index``, ``compute_is_any_perturbed_gene_index``,
+  ``compute_is_any_deletion_gene_index``) count the segregant at 0 perturbations and add
+  no gene for it, where they used to log a KeyError and skip the entry (82,467 entries of
+  the 043 store).
 * ``Perturbation.process`` keeps the record: no perturbed genes, empty
   ``perturbation_indices``, ``pert_mask`` all False, the phenotype stored.
 
@@ -21,20 +26,24 @@ BY x RM ``SegregantGenotype`` and a ``SingleCellExpressionPhenotype`` of UMI cou
 from __future__ import annotations
 
 import json
+import os
 from typing import Any
 
+import lmdb
 import networkx as nx
 from sortedcontainers import SortedDict
 from torch_geometric.data import HeteroData
 
 from torchcell.data.cell_data import to_cell_data
 from torchcell.data.graph_processor import Perturbation
-from torchcell.data.neo4j_cell import RawStageGrouping
+from torchcell.data.neo4j_cell import Neo4jCellDataset, RawStageGrouping
 from torchcell.data.neo4j_query_raw import Neo4jQueryRaw
 from torchcell.datamodels.schema import (
     ArtifactRef,
     Environment,
+    Genotype,
     HaplotypeBlock,
+    KanMxDeletionPerturbation,
     Media,
     ReferenceGenome,
     SegregantExpressionExperiment,
@@ -182,3 +191,45 @@ def test_perturbation_processor_keeps_a_segregant_with_no_perturbed_genes() -> N
     assert out["gene"].phenotype_types == ["umi_count"]
     assert out["gene"].phenotype_values.tolist() == [3.0, 5.0]
     assert out["gene"].phenotype_sample_indices.tolist() == [0, 0]
+
+
+def _deletion_record_dict() -> dict[str, Any]:
+    """The segregant record with its genotype swapped for a YAL002W KanMX deletion."""
+    record = _record_dict()
+    record["experiment"]["genotype"] = json.loads(
+        Genotype(
+            perturbations=[
+                KanMxDeletionPerturbation(
+                    systematic_gene_name="YAL002W", perturbed_gene_name="WRS1"
+                )
+            ]
+        ).model_dump_json()
+    )
+    return record
+
+
+def _processed_store(root: str) -> Neo4jCellDataset:
+    """A processed LMDB of two entries: 0 = the segregant, 1 = a YAL002W deletion."""
+    dataset = object.__new__(Neo4jCellDataset)
+    dataset.root = root
+    dataset.env = None
+    path = os.path.join(dataset.processed_dir, "lmdb")
+    os.makedirs(path)
+    env = lmdb.open(path, map_size=10**8)
+    with env.begin(write=True) as txn:
+        txn.put(b"0", json.dumps([_record_dict()]).encode())
+        txn.put(b"1", json.dumps([_deletion_record_dict()]).encode())
+    env.close()
+    return dataset
+
+
+def test_perturbation_count_index_counts_a_segregant_at_zero(tmp_path: Any) -> None:
+    dataset = _processed_store(str(tmp_path))
+    assert dataset.compute_perturbation_count_index() == {0: [0], 1: [1]}
+
+
+def test_gene_indexes_list_the_deletion_and_skip_nothing(tmp_path: Any) -> None:
+    """The segregant names no gene, so only YAL002W (entry 1) appears in either index."""
+    dataset = _processed_store(str(tmp_path))
+    assert dataset.compute_is_any_perturbed_gene_index() == {"YAL002W": [1]}
+    assert dataset.compute_is_any_deletion_gene_index() == {"YAL002W": [1]}

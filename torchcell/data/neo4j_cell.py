@@ -1141,8 +1141,9 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
                     for data in data_list:
                         # Dict read, not pydantic validation -- see
                         # compute_phenotype_label_index for the cost measured.
+                        # A SegregantGenotype has no perturbation list: count 0.
                         perturbation_count = len(
-                            data["experiment"]["genotype"]["perturbations"]
+                            data["experiment"]["genotype"].get("perturbations") or []
                         )
 
                         if perturbation_count not in perturbation_count_index:
@@ -1208,7 +1209,9 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
                         data_list = json.loads(value.decode())
                         # Process all perturbations in one pass
                         for data in data_list:
-                            for pert in data["experiment"]["genotype"]["perturbations"]:
+                            # A SegregantGenotype has no perturbation list.
+                            genotype = data["experiment"]["genotype"]
+                            for pert in genotype.get("perturbations") or []:
                                 gene = pert["systematic_gene_name"]
                                 if gene not in is_any_perturbed_gene_index:
                                     is_any_perturbed_gene_index[gene] = set()
@@ -1280,7 +1283,9 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
                 for key, value in txn.cursor():
                     idx = int(key.decode())
                     for data in json.loads(value.decode()):
-                        for pert in data["experiment"]["genotype"]["perturbations"]:
+                        # A SegregantGenotype has no perturbation list.
+                        genotype = data["experiment"]["genotype"]
+                        for pert in genotype.get("perturbations") or []:
                             if not pert["perturbation_type"].endswith("deletion"):
                                 continue
                             index.setdefault(pert["systematic_gene_name"], set()).add(

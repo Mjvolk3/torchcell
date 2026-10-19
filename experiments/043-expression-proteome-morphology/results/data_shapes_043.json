@@ -1,0 +1,1953 @@
+{
+ "generated_by": "experiments/043-expression-proteome-morphology/scripts/data_shapes_043.py",
+ "mode": "full",
+ "per_dataset_sample": null,
+ "slurm_job_id": "5902",
+ "seconds": 861.0619087219238,
+ "store_entries": 173617,
+ "gene_set": {
+  "path": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/043-expression-proteome-morphology/raw_043/processed/gene_set.json",
+  "n": 6607,
+  "sha256": "c467a5f369675b14c6acc2e3e411ff82e4107714ac3fef1aea80449a390924f0"
+ },
+ "datasets": {
+  "Boocock2025Dataset": {
+   "records_in_pass": 79516,
+   "experiment_types": {
+    "segregant_expression": 79516
+   },
+   "phenotype_class": [
+    "SingleCellExpressionPhenotype"
+   ],
+   "genotype_class": {
+    "SegregantGenotype": 79516
+   },
+   "label_name": {
+    "umi_count": 79516
+   },
+   "graph_level": {
+    "node": 79516
+   },
+   "measurement_type": {
+    "scrnaseq_umi_count": 79516
+   },
+   "perturbations_per_record": {
+    "n": 79516,
+    "min": 0.0,
+    "median": 0.0,
+    "max": 0.0
+   },
+   "perturbations_per_record_by_type": {},
+   "perturbed_gene_names_by_type": {},
+   "label_keys_per_record": {
+    "n": 79516,
+    "min": 182.0,
+    "median": 962.0,
+    "max": 4758.0
+   },
+   "label_keys_distinct": 5623,
+   "label_keys_distinct_in_gene_set_raw_name": 5623,
+   "label_keys_in_gene_set_per_record_raw_name": {
+    "n": 79516,
+    "min": 182.0,
+    "median": 962.0,
+    "max": 4758.0
+   },
+   "label_keys_in_gene_set_per_record_after_map": {
+    "n": 79516,
+    "min": 182.0,
+    "median": 962.0,
+    "max": 4758.0
+   },
+   "label_none_values_per_record": {
+    "n": 79516,
+    "min": 0.0,
+    "median": 0.0,
+    "max": 0.0
+   },
+   "value_range_finite": {
+    "n_values_sampled": 1666160,
+    "min": 1.0,
+    "median_of_sample": 1.0,
+    "max": 2301.0
+   },
+   "reference_label_keys_per_record": {
+    "n": 79516,
+    "min": 4696.0,
+    "median": 5556.0,
+    "max": 5556.0
+   },
+   "environments": 2,
+   "environment_table": {
+    "f4497b2aeb0e": {
+     "media": "2x YNB + 2% glucose added to FACS sheath fluid (PBS, pH 7.4), liquid (Boocock 2025 de novo segregant cultures)",
+     "temperature": 30.0,
+     "n_environment_perturbations": 0
+    },
+    "5eb8436d2923": {
+     "media": "SM (synthetic minimal: 6.7 g/L YNB without amino acids + 2% glucose), liquid",
+     "temperature": 30.0,
+     "n_environment_perturbations": 0
+    }
+   },
+   "media_names": {
+    "2x YNB + 2% glucose added to FACS sheath fluid (PBS, pH 7.4), liquid (Boocock 2025 de novo segregant cultures)": 79123,
+    "SM (synthetic minimal: 6.7 g/L YNB without amino acids + 2% glucose), liquid": 393
+   },
+   "n_cells_per_record": {
+    "n": 79516,
+    "min": 1.0,
+    "median": 1.0,
+    "max": 51.0
+   },
+   "total_umis_per_record": {
+    "n": 79516,
+    "min": 500.0,
+    "median": 2629.0,
+    "max": 98882.0
+   },
+   "segregant": {
+    "blocks_per_record": {
+     "n": 79516,
+     "min": 46.0,
+     "median": 720.0,
+     "max": 1149.0
+    },
+    "markers_per_record": {
+     "n": 79516,
+     "min": 2190.0,
+     "median": 2824.0,
+     "max": 42052.0
+    },
+    "chromosomes": [
+     "chrI",
+     "chrII",
+     "chrIII",
+     "chrIV",
+     "chrIX",
+     "chrV",
+     "chrVI",
+     "chrVII",
+     "chrVIII",
+     "chrX",
+     "chrXI",
+     "chrXII",
+     "chrXIII",
+     "chrXIV",
+     "chrXV",
+     "chrXVI"
+    ],
+    "crosses": {
+     "B": 44784,
+     "A": 28137,
+     "3004": 6595
+    },
+    "parent_pairs": {
+     "YJM145 x YPS163": 44784,
+     "BY x RM": 28137,
+     "CBS2888 x YJM981": 6595
+    },
+    "posterior_levels_blocks": {
+     "0.50": 2711190,
+     "0.55": 4391370,
+     "0.60": 4457135,
+     "0.65": 4563750,
+     "0.70": 4708464,
+     "0.75": 4923849,
+     "0.80": 5142836,
+     "0.85": 5486953,
+     "0.90": 5939909,
+     "0.95": 7306710,
+     "1.00": 6212931
+    },
+    "posterior_levels_markers": {
+     "0.50": 4463894,
+     "0.55": 7914553,
+     "0.60": 7912388,
+     "0.65": 8277172,
+     "0.70": 8816209,
+     "0.75": 9522240,
+     "0.80": 10518446,
+     "0.85": 12084505,
+     "0.90": 15344916,
+     "0.95": 29421170,
+     "1.00": 133831401
+    },
+    "fraction_blocks_posterior_ge_0.9": 0.34845583668697006,
+    "fraction_markers_posterior_ge_0.9": 0.7198408884196503,
+    "n_blocks_total": 55845097,
+    "n_markers_total": 248106894
+   },
+   "records_in_store": 79516,
+   "raw_index_first_last": [
+    19992,
+    99507
+   ]
+  },
+  "CaudalPanTranscriptome2024Dataset": {
+   "records_in_pass": 943,
+   "experiment_types": {
+    "rnaseq_expression": 943
+   },
+   "phenotype_class": [
+    "RNASeqExpressionPhenotype"
+   ],
+   "genotype_class": {
+    "Genotype+natural_isolate": 943
+   },
+   "label_name": {
+    "expression_tpm": 943
+   },
+   "graph_level": {
+    "node": 943
+   },
+   "measurement_type": {
+    "rnaseq_tpm": 943
+   },
+   "perturbations_per_record": {
+    "n": 943,
+    "min": 195.0,
+    "median": 5662.0,
+    "max": 7025.0
+   },
+   "perturbations_per_record_by_type": {
+    "deletion": {
+     "n": 116,
+     "min": 1.0,
+     "median": 1.0,
+     "max": 1.0,
+     "records_with_type": 116,
+     "total": 116
+    },
+    "natural_gene_absence": {
+     "n": 943,
+     "min": 43.0,
+     "median": 126.0,
+     "max": 453.0,
+     "records_with_type": 943,
+     "total": 126839
+    },
+    "natural_gene_presence": {
+     "n": 943,
+     "min": 34.0,
+     "median": 78.0,
+     "max": 352.0,
+     "records_with_type": 943,
+     "total": 79016
+    },
+    "natural_loss_of_function": {
+     "n": 943,
+     "min": 12.0,
+     "median": 362.0,
+     "max": 940.0,
+     "records_with_type": 943,
+     "total": 361624
+    },
+    "sequence_variant": {
+     "n": 943,
+     "min": 53.0,
+     "median": 5069.0,
+     "max": 5840.0,
+     "records_with_type": 943,
+     "total": 4759608
+    }
+   },
+   "perturbed_gene_names_by_type": {
+    "deletion": {
+     "distinct_in_gene_set": 1,
+     "distinct_outside_gene_set": 0,
+     "examples_outside": []
+    },
+    "natural_gene_absence": {
+     "distinct_in_gene_set": 1111,
+     "distinct_outside_gene_set": 7,
+     "examples_outside": [
+      "YDR134C",
+      "YFL056C",
+      "YIL167W",
+      "YIL171W",
+      "YIR043C"
+     ]
+    },
+    "natural_gene_presence": {
+     "distinct_in_gene_set": 0,
+     "distinct_outside_gene_set": 1614,
+     "examples_outside": [
+      "1-EC1118_1F14_0012g",
+      "10-EC1118_1F14_0133g",
+      "100-augustus_masked.1375.CFF_4",
+      "1000-augustus_masked.CGE_5.5812",
+      "1001-augustus_masked.CGE_5.5812"
+     ]
+    },
+    "natural_loss_of_function": {
+     "distinct_in_gene_set": 4137,
+     "distinct_outside_gene_set": 48,
+     "examples_outside": [
+      "AAD15",
+      "AAD16",
+      "APQ13",
+      "BUD19",
+      "COS3"
+     ]
+    },
+    "sequence_variant": {
+     "distinct_in_gene_set": 5973,
+     "distinct_outside_gene_set": 4,
+     "examples_outside": [
+      "YER109C",
+      "YFL056C",
+      "YFL057C",
+      "YOR031W"
+     ]
+    }
+   },
+   "label_keys_per_record": {
+    "n": 943,
+    "min": 5922.0,
+    "median": 6050.0,
+    "max": 6120.0
+   },
+   "label_keys_distinct": 6483,
+   "label_keys_distinct_in_gene_set_raw_name": 6084,
+   "label_keys_in_gene_set_per_record_raw_name": {
+    "n": 943,
+    "min": 5878.0,
+    "median": 6006.0,
+    "max": 6062.0
+   },
+   "label_keys_in_gene_set_per_record_after_map": {
+    "n": 943,
+    "min": 5878.0,
+    "median": 6006.0,
+    "max": 6062.0
+   },
+   "label_none_values_per_record": {
+    "n": 943,
+    "min": 0.0,
+    "median": 0.0,
+    "max": 0.0
+   },
+   "value_range_finite": {
+    "n_values_sampled": 19750,
+    "min": 0.0,
+    "median_of_sample": 44.82763653423815,
+    "max": 88828.5059467242
+   },
+   "reference_label_keys_per_record": {
+    "n": 943,
+    "min": 6483.0,
+    "median": 6483.0,
+    "max": 6483.0
+   },
+   "environments": 1,
+   "environment_table": {
+    "c7d8fd2babbb": {
+     "media": "SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose)",
+     "temperature": 30.0,
+     "n_environment_perturbations": 0
+    }
+   },
+   "media_names": {
+    "SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose)": 943
+   },
+   "distinct_isolates": 943,
+   "records_in_store": 943,
+   "raw_index_first_last": [
+    18199,
+    19141
+   ]
+  },
+  "DmMicroarraySameith2015Dataset": {
+   "records_in_pass": 72,
+   "experiment_types": {
+    "microarray_expression": 72
+   },
+   "phenotype_class": [
+    "MicroarrayExpressionPhenotype"
+   ],
+   "genotype_class": {
+    "Genotype": 72
+   },
+   "label_name": {
+    "expression_log2_ratio": 72
+   },
+   "graph_level": {
+    "node": 72
+   },
+   "measurement_type": {},
+   "perturbations_per_record": {
+    "n": 72,
+    "min": 2.0,
+    "median": 2.0,
+    "max": 2.0
+   },
+   "perturbations_per_record_by_type": {
+    "sga_kanmx_deletion": {
+     "n": 72,
+     "min": 1.0,
+     "median": 1.0,
+     "max": 1.0,
+     "records_with_type": 72,
+     "total": 72
+    },
+    "sga_natmx_deletion": {
+     "n": 72,
+     "min": 1.0,
+     "median": 1.0,
+     "max": 1.0,
+     "records_with_type": 72,
+     "total": 72
+    }
+   },
+   "perturbed_gene_names_by_type": {
+    "sga_kanmx_deletion": {
+     "distinct_in_gene_set": 45,
+     "distinct_outside_gene_set": 0,
+     "examples_outside": []
+    },
+    "sga_natmx_deletion": {
+     "distinct_in_gene_set": 51,
+     "distinct_outside_gene_set": 0,
+     "examples_outside": []
+    }
+   },
+   "label_keys_per_record": {
+    "n": 72,
+    "min": 6169.0,
+    "median": 6169.0,
+    "max": 6169.0
+   },
+   "label_keys_distinct": 6169,
+   "label_keys_distinct_in_gene_set_raw_name": 6127,
+   "label_keys_in_gene_set_per_record_raw_name": {
+    "n": 72,
+    "min": 6127.0,
+    "median": 6127.0,
+    "max": 6127.0
+   },
+   "label_keys_in_gene_set_per_record_after_map": {
+    "n": 72,
+    "min": 6127.0,
+    "median": 6127.0,
+    "max": 6127.0
+   },
+   "label_none_values_per_record": {
+    "n": 72,
+    "min": 0.0,
+    "median": 0.0,
+    "max": 0.0
+   },
+   "value_range_finite": {
+    "n_values_sampled": 1512,
+    "min": -6.246365950780035,
+    "median_of_sample": 0.0076619626950424225,
+    "max": 4.799274124058684
+   },
+   "reference_label_keys_per_record": {
+    "n": 72,
+    "min": 6169.0,
+    "median": 6169.0,
+    "max": 6169.0
+   },
+   "environments": 1,
+   "environment_table": {
+    "042e9aca39c0": {
+     "media": "SC",
+     "temperature": 30.0,
+     "n_environment_perturbations": 0
+    }
+   },
+   "media_names": {
+    "SC": 72
+   },
+   "records_in_store": 72,
+   "raw_index_first_last": [
+    1564,
+    1635
+   ]
+  },
+  "MicroarrayKemmeren2014Dataset": {
+   "records_in_pass": 1482,
+   "experiment_types": {
+    "microarray_expression": 1482
+   },
+   "phenotype_class": [
+    "MicroarrayExpressionPhenotype"
+   ],
+   "genotype_class": {
+    "Genotype": 1482
+   },
+   "label_name": {
+    "expression_log2_ratio": 1482
+   },
+   "graph_level": {
+    "node": 1482
+   },
+   "measurement_type": {},
+   "perturbations_per_record": {
+    "n": 1482,
+    "min": 1.0,
+    "median": 1.0,
+    "max": 1.0
+   },
+   "perturbations_per_record_by_type": {
+    "kanmx_deletion": {
+     "n": 1482,
+     "min": 1.0,
+     "median": 1.0,
+     "max": 1.0,
+     "records_with_type": 1482,
+     "total": 1482
+    }
+   },
+   "perturbed_gene_names_by_type": {
+    "kanmx_deletion": {
+     "distinct_in_gene_set": 1482,
+     "distinct_outside_gene_set": 0,
+     "examples_outside": []
+    }
+   },
+   "label_keys_per_record": {
+    "n": 1482,
+    "min": 6169.0,
+    "median": 6169.0,
+    "max": 6169.0
+   },
+   "label_keys_distinct": 6169,
+   "label_keys_distinct_in_gene_set_raw_name": 6127,
+   "label_keys_in_gene_set_per_record_raw_name": {
+    "n": 1482,
+    "min": 6127.0,
+    "median": 6127.0,
+    "max": 6127.0
+   },
+   "label_keys_in_gene_set_per_record_after_map": {
+    "n": 1482,
+    "min": 6127.0,
+    "median": 6127.0,
+    "max": 6127.0
+   },
+   "label_none_values_per_record": {
+    "n": 1482,
+    "min": 0.0,
+    "median": 0.0,
+    "max": 0.0
+   },
+   "value_range_finite": {
+    "n_values_sampled": 31122,
+    "min": -6.721680378797541,
+    "median_of_sample": 0.0035569522133925176,
+    "max": 6.170614996893764
+   },
+   "reference_label_keys_per_record": {
+    "n": 1482,
+    "min": 6169.0,
+    "median": 6169.0,
+    "max": 6169.0
+   },
+   "environments": 1,
+   "environment_table": {
+    "042e9aca39c0": {
+     "media": "SC",
+     "temperature": 30.0,
+     "n_environment_perturbations": 0
+    }
+   },
+   "media_names": {
+    "SC": 1482
+   },
+   "records_in_store": 1482,
+   "raw_index_first_last": [
+    0,
+    1481
+   ]
+  },
+  "MicroarrayScoreHu2007Dataset": {
+   "records_in_pass": 262,
+   "experiment_types": {
+    "microarray_expression_score": 262
+   },
+   "phenotype_class": [
+    "MicroarrayExpressionScorePhenotype"
+   ],
+   "genotype_class": {
+    "Genotype": 262
+   },
+   "label_name": {
+    "expression_score": 262
+   },
+   "graph_level": {
+    "node": 262
+   },
+   "measurement_type": {
+    "error_model_x_score_weighted_duplicate_average": 262
+   },
+   "perturbations_per_record": {
+    "n": 262,
+    "min": 1.0,
+    "median": 1.0,
+    "max": 1.0
+   },
+   "perturbations_per_record_by_type": {
+    "kanmx_deletion": {
+     "n": 262,
+     "min": 1.0,
+     "median": 1.0,
+     "max": 1.0,
+     "records_with_type": 262,
+     "total": 262
+    }
+   },
+   "perturbed_gene_names_by_type": {
+    "kanmx_deletion": {
+     "distinct_in_gene_set": 262,
+     "distinct_outside_gene_set": 0,
+     "examples_outside": []
+    }
+   },
+   "label_keys_per_record": {
+    "n": 262,
+    "min": 5921.0,
+    "median": 6381.0,
+    "max": 6429.0
+   },
+   "label_keys_distinct": 6429,
+   "label_keys_distinct_in_gene_set_raw_name": 5878,
+   "label_keys_in_gene_set_per_record_raw_name": {
+    "n": 262,
+    "min": 5390.0,
+    "median": 5832.5,
+    "max": 5878.0
+   },
+   "label_keys_in_gene_set_per_record_after_map": {
+    "n": 262,
+    "min": 5390.0,
+    "median": 5832.5,
+    "max": 5878.0
+   },
+   "label_none_values_per_record": {
+    "n": 262,
+    "min": 0.0,
+    "median": 0.0,
+    "max": 0.0
+   },
+   "value_range_finite": {
+    "n_values_sampled": 5496,
+    "min": -8.35278,
+    "median_of_sample": -0.09075704675499309,
+    "max": 8.050773790694153
+   },
+   "reference_label_keys_per_record": {
+    "n": 262,
+    "min": 5921.0,
+    "median": 6381.0,
+    "max": 6429.0
+   },
+   "environments": 1,
+   "environment_table": {
+    "a805d6f93770": {
+     "media": "YPD (yeast extract / peptone / dextrose), liquid",
+     "temperature": null,
+     "n_environment_perturbations": 0
+    }
+   },
+   "media_names": {
+    "YPD (yeast extract / peptone / dextrose), liquid": 262
+   },
+   "records_in_store": 262,
+   "raw_index_first_last": [
+    1636,
+    1897
+   ]
+  },
+  "NadalRibellesPerturbSeq2025Dataset": {
+   "records_in_pass": 6118,
+   "experiment_types": {
+    "pseudobulk_expression": 6118
+   },
+   "phenotype_class": [
+    "PseudobulkExpressionPhenotype"
+   ],
+   "genotype_class": {
+    "Genotype": 6118
+   },
+   "label_name": {
+    "expression_log2_ratio": 6118
+   },
+   "graph_level": {
+    "node": 6118
+   },
+   "measurement_type": {
+    "pseudobulk_scrnaseq_log2fc": 6118
+   },
+   "perturbations_per_record": {
+    "n": 6118,
+    "min": 1.0,
+    "median": 1.0,
+    "max": 1.0
+   },
+   "perturbations_per_record_by_type": {
+    "marker_deletion": {
+     "n": 6118,
+     "min": 1.0,
+     "median": 1.0,
+     "max": 1.0,
+     "records_with_type": 6118,
+     "total": 6118
+    }
+   },
+   "perturbed_gene_names_by_type": {
+    "marker_deletion": {
+     "distinct_in_gene_set": 3059,
+     "distinct_outside_gene_set": 0,
+     "examples_outside": []
+    }
+   },
+   "label_keys_per_record": {
+    "n": 6118,
+    "min": 4223.0,
+    "median": 5866.0,
+    "max": 6313.0
+   },
+   "label_keys_distinct": 6796,
+   "label_keys_distinct_in_gene_set_raw_name": 1441,
+   "label_keys_in_gene_set_per_record_raw_name": {
+    "n": 6118,
+    "min": 751.0,
+    "median": 929.0,
+    "max": 1175.0
+   },
+   "label_keys_in_gene_set_per_record_after_map": {
+    "n": 6118,
+    "min": 4034.0,
+    "median": 5665.0,
+    "max": 6016.0
+   },
+   "label_none_values_per_record": {
+    "n": 6118,
+    "min": 0.0,
+    "median": 0.0,
+    "max": 0.0
+   },
+   "value_range_finite": {
+    "n_values_sampled": 128180,
+    "min": -33.03433,
+    "median_of_sample": -0.11368139,
+    "max": 32.871998
+   },
+   "reference_label_keys_per_record": {
+    "n": 6118,
+    "min": 6778.0,
+    "median": 6787.0,
+    "max": 6787.0
+   },
+   "environments": 2,
+   "environment_table": {
+    "5f3603465471": {
+     "media": "YPD (yeast extract / peptone / dextrose), liquid",
+     "temperature": 30.0,
+     "n_environment_perturbations": 1
+    },
+    "33a1eacd12ce": {
+     "media": "YPD (yeast extract / peptone / dextrose), liquid",
+     "temperature": 30.0,
+     "n_environment_perturbations": 0
+    }
+   },
+   "media_names": {
+    "YPD (yeast extract / peptone / dextrose), liquid": 6118
+   },
+   "label_keys_distinct_in_gene_set_after_map": 6325,
+   "n_cells_per_record": {
+    "n": 6118,
+    "min": 10.0,
+    "median": 94.0,
+    "max": 1894.0
+   },
+   "records_in_store": 6118,
+   "raw_index_first_last": [
+    2682,
+    8799
+   ]
+  },
+  "Nguessan2025Dataset": {
+   "records_in_pass": 2951,
+   "experiment_types": {
+    "segregant_expression": 2951
+   },
+   "phenotype_class": [
+    "SingleCellExpressionPhenotype"
+   ],
+   "genotype_class": {
+    "SegregantGenotype": 2951
+   },
+   "label_name": {
+    "umi_count": 2951
+   },
+   "graph_level": {
+    "node": 2951
+   },
+   "measurement_type": {
+    "scrnaseq_umi_count": 2951
+   },
+   "perturbations_per_record": {
+    "n": 2951,
+    "min": 0.0,
+    "median": 0.0,
+    "max": 0.0
+   },
+   "perturbations_per_record_by_type": {},
+   "perturbed_gene_names_by_type": {},
+   "label_keys_per_record": {
+    "n": 2951,
+    "min": 475.0,
+    "median": 2592.0,
+    "max": 5111.0
+   },
+   "label_keys_distinct": 6222,
+   "label_keys_distinct_in_gene_set_raw_name": 6218,
+   "label_keys_in_gene_set_per_record_raw_name": {
+    "n": 2951,
+    "min": 475.0,
+    "median": 2591.0,
+    "max": 5109.0
+   },
+   "label_keys_in_gene_set_per_record_after_map": {
+    "n": 2951,
+    "min": 475.0,
+    "median": 2591.0,
+    "max": 5109.0
+   },
+   "label_none_values_per_record": {
+    "n": 2951,
+    "min": 0.0,
+    "median": 0.0,
+    "max": 0.0
+   },
+   "value_range_finite": {
+    "n_values_sampled": 61818,
+    "min": 1.0,
+    "median_of_sample": 2.0,
+    "max": 12339.0
+   },
+   "reference_label_keys_per_record": {
+    "n": 2951,
+    "min": 6222.0,
+    "median": 6222.0,
+    "max": 6222.0
+   },
+   "environments": 1,
+   "environment_table": {
+    "bbf7b9f1e80e": {
+     "media": "YPD (yeast extract / peptone / dextrose), liquid",
+     "temperature": null,
+     "n_environment_perturbations": 0
+    }
+   },
+   "media_names": {
+    "YPD (yeast extract / peptone / dextrose), liquid": 2951
+   },
+   "n_cells_per_record": {
+    "n": 2951,
+    "min": 1.0,
+    "median": 3.0,
+    "max": 53.0
+   },
+   "total_umis_per_record": {
+    "n": 2951,
+    "min": 1035.0,
+    "median": 18221.0,
+    "max": 333210.0
+   },
+   "segregant": {
+    "blocks_per_record": {
+     "n": 2951,
+     "min": 57.0,
+     "median": 483.0,
+     "max": 2225.0
+    },
+    "markers_per_record": {
+     "n": 2951,
+     "min": 41594.0,
+     "median": 41594.0,
+     "max": 41594.0
+    },
+    "chromosomes": [
+     "chrI",
+     "chrII",
+     "chrIII",
+     "chrIV",
+     "chrIX",
+     "chrV",
+     "chrVI",
+     "chrVII",
+     "chrVIII",
+     "chrX",
+     "chrXI",
+     "chrXII",
+     "chrXIII",
+     "chrXIV",
+     "chrXV",
+     "chrXVI"
+    ],
+    "crosses": {
+     "BBQTL_BYxRM": 2951
+    },
+    "parent_pairs": {
+     "BY4741 x RM11-1a": 2951
+    },
+    "posterior_levels_blocks": {
+     "0.50": 94991,
+     "0.55": 131307,
+     "0.60": 132450,
+     "0.65": 133847,
+     "0.70": 137188,
+     "0.75": 141773,
+     "0.80": 148900,
+     "0.85": 160313,
+     "0.90": 182488,
+     "0.95": 254472,
+     "1.00": 228680
+    },
+    "posterior_levels_markers": {
+     "0.50": 348715,
+     "0.55": 697482,
+     "0.60": 716245,
+     "0.65": 742028,
+     "0.70": 795753,
+     "0.75": 876989,
+     "0.80": 1032258,
+     "0.85": 1290902,
+     "0.90": 1901337,
+     "0.95": 4405722,
+     "1.00": 109936463
+    },
+    "fraction_blocks_posterior_ge_0.9": 0.3811478296321194,
+    "fraction_markers_posterior_ge_0.9": 0.9470411782764526,
+    "n_blocks_total": 1746409,
+    "n_markers_total": 122743894
+   },
+   "records_in_store": 2951,
+   "raw_index_first_last": [
+    99508,
+    102458
+   ]
+  },
+  "PooledPromoterExpressionVaishnav2022Dataset": {
+   "records_in_pass": 71158,
+   "experiment_types": {
+    "pooled_sort_seq_expression": 71158
+   },
+   "phenotype_class": [
+    "PooledSortSeqExpressionPhenotype"
+   ],
+   "genotype_class": {
+    "Genotype": 71158
+   },
+   "label_name": {
+    "expression_level": 71158
+   },
+   "graph_level": {
+    "node": 71158
+   },
+   "measurement_type": {},
+   "perturbations_per_record": {
+    "n": 71158,
+    "min": 1.0,
+    "median": 1.0,
+    "max": 1.0
+   },
+   "perturbations_per_record_by_type": {
+    "variable_promoter_reporter": {
+     "n": 71158,
+     "min": 1.0,
+     "median": 1.0,
+     "max": 1.0,
+     "records_with_type": 71158,
+     "total": 71158
+    }
+   },
+   "perturbed_gene_names_by_type": {
+    "variable_promoter_reporter": {
+     "distinct_in_gene_set": 0,
+     "distinct_outside_gene_set": 1,
+     "examples_outside": [
+      "addgene127546:YFP"
+     ]
+    }
+   },
+   "label_keys_per_record": {
+    "n": 71158,
+    "min": 1.0,
+    "median": 1.0,
+    "max": 1.0
+   },
+   "label_keys_distinct": 0,
+   "label_keys_distinct_in_gene_set_raw_name": 0,
+   "label_keys_in_gene_set_per_record_raw_name": null,
+   "label_keys_in_gene_set_per_record_after_map": null,
+   "label_none_values_per_record": {
+    "n": 71158,
+    "min": 0.0,
+    "median": 0.0,
+    "max": 1.0
+   },
+   "value_range_finite": {
+    "n_values_sampled": 71054,
+    "min": 0.320600901386549,
+    "median_of_sample": 9.62049387372964,
+    "max": 17.0
+   },
+   "reference_label_keys_per_record": {
+    "n": 71158,
+    "min": 0.0,
+    "median": 1.0,
+    "max": 1.0
+   },
+   "environments": 1,
+   "environment_table": {
+    "61d90319663a": {
+     "media": "SC-Ura (synthetic complete minus uracil; URA3 plasmid selection)",
+     "temperature": 30.0,
+     "n_environment_perturbations": 0
+    }
+   },
+   "media_names": {
+    "SC-Ura (synthetic complete minus uracil; URA3 plasmid selection)": 71158
+   },
+   "promoter": {
+    "promoter_length": {
+     "n": 71158,
+     "min": 110.0,
+     "median": 110.0,
+     "max": 110.0
+    },
+    "variable_region_length": {
+     "n": 71158,
+     "min": 80.0,
+     "median": 80.0,
+     "max": 80.0
+    },
+    "scaffolds": {
+     "pTpA": 71158
+    },
+    "reporter_genes": {
+     "YFP": 71158
+    },
+    "distinct_promoter_variant_ids": 71158
+   },
+   "records_in_store": 71158,
+   "raw_index_first_last": [
+    102459,
+    173616
+   ]
+  },
+  "ProteinTurnoverMuenzner2024Dataset": {
+   "records_in_pass": 55,
+   "experiment_types": {
+    "protein_turnover": 55
+   },
+   "phenotype_class": [
+    "ProteinTurnoverPhenotype"
+   ],
+   "genotype_class": {
+    "Genotype+natural_isolate": 55
+   },
+   "label_name": {
+    "degradation_rate": 55
+   },
+   "graph_level": {
+    "node": 55
+   },
+   "measurement_type": {
+    "dynamic_silac_lys8_kdp_per_hour_no_dilution_correction": 55
+   },
+   "perturbations_per_record": {
+    "n": 55,
+    "min": 4903.0,
+    "median": 5662.0,
+    "max": 6430.0
+   },
+   "perturbations_per_record_by_type": {
+    "deletion": {
+     "n": 4,
+     "min": 1.0,
+     "median": 1.0,
+     "max": 1.0,
+     "records_with_type": 4,
+     "total": 4
+    },
+    "natural_gene_absence": {
+     "n": 55,
+     "min": 70.0,
+     "median": 128.0,
+     "max": 333.0,
+     "records_with_type": 55,
+     "total": 7366
+    },
+    "natural_gene_presence": {
+     "n": 55,
+     "min": 49.0,
+     "median": 78.0,
+     "max": 334.0,
+     "records_with_type": 55,
+     "total": 4940
+    },
+    "natural_loss_of_function": {
+     "n": 55,
+     "min": 275.0,
+     "median": 359.0,
+     "max": 523.0,
+     "records_with_type": 55,
+     "total": 20525
+    },
+    "sequence_variant": {
+     "n": 55,
+     "min": 4454.0,
+     "median": 5099.0,
+     "max": 5637.0,
+     "records_with_type": 55,
+     "total": 278223
+    }
+   },
+   "perturbed_gene_names_by_type": {
+    "deletion": {
+     "distinct_in_gene_set": 1,
+     "distinct_outside_gene_set": 0,
+     "examples_outside": []
+    },
+    "natural_gene_absence": {
+     "distinct_in_gene_set": 643,
+     "distinct_outside_gene_set": 7,
+     "examples_outside": [
+      "YDR134C",
+      "YFL056C",
+      "YIL167W",
+      "YIL171W",
+      "YIR043C"
+     ]
+    },
+    "natural_gene_presence": {
+     "distinct_in_gene_set": 0,
+     "distinct_outside_gene_set": 983,
+     "examples_outside": [
+      "1-EC1118_1F14_0012g",
+      "10-EC1118_1F14_0133g",
+      "100-augustus_masked.1375.CFF_4",
+      "1008-augustus_masked.AID_2.6438",
+      "1009-augustus_masked.AID_2.6438"
+     ]
+    },
+    "natural_loss_of_function": {
+     "distinct_in_gene_set": 1492,
+     "distinct_outside_gene_set": 18,
+     "examples_outside": [
+      "BUD19",
+      "COS3",
+      "COS4",
+      "COS6",
+      "COS7"
+     ]
+    },
+    "sequence_variant": {
+     "distinct_in_gene_set": 5951,
+     "distinct_outside_gene_set": 4,
+     "examples_outside": [
+      "YER109C",
+      "YFL056C",
+      "YFL057C",
+      "YOR031W"
+     ]
+    }
+   },
+   "label_keys_per_record": {
+    "n": 55,
+    "min": 919.0,
+    "median": 1055.0,
+    "max": 1177.0
+   },
+   "label_keys_distinct": 1836,
+   "label_keys_distinct_in_gene_set_raw_name": 1832,
+   "label_keys_in_gene_set_per_record_raw_name": {
+    "n": 55,
+    "min": 919.0,
+    "median": 1055.0,
+    "max": 1177.0
+   },
+   "label_keys_in_gene_set_per_record_after_map": {
+    "n": 55,
+    "min": 919.0,
+    "median": 1055.0,
+    "max": 1177.0
+   },
+   "label_none_values_per_record": {
+    "n": 55,
+    "min": 0.0,
+    "median": 0.0,
+    "max": 0.0
+   },
+   "value_range_finite": {
+    "n_values_sampled": 1154,
+    "min": 0.0168675650032926,
+    "median_of_sample": 0.2504328293105835,
+    "max": 2.43974233623181
+   },
+   "reference_label_keys_per_record": {
+    "n": 55,
+    "min": 1524.0,
+    "median": 1524.0,
+    "max": 1524.0
+   },
+   "environments": 1,
+   "environment_table": {
+    "ab85e0823b60": {
+     "media": "SM + 80 mg/L [13C6/15N2] L-lysine (SILAC Lys-8), liquid",
+     "temperature": 30.0,
+     "n_environment_perturbations": 0
+    }
+   },
+   "media_names": {
+    "SM + 80 mg/L [13C6/15N2] L-lysine (SILAC Lys-8), liquid": 55
+   },
+   "distinct_isolates": 55,
+   "records_in_store": 55,
+   "raw_index_first_last": [
+    19937,
+    19991
+   ]
+  },
+  "ProteomeMessner2023Dataset": {
+   "records_in_pass": 4624,
+   "experiment_types": {
+    "protein_abundance": 4624
+   },
+   "phenotype_class": [
+    "ProteinAbundancePhenotype"
+   ],
+   "genotype_class": {
+    "Genotype": 4624
+   },
+   "label_name": {
+    "protein_abundance": 4624
+   },
+   "graph_level": {
+    "node": 4624
+   },
+   "measurement_type": {
+    "swath_ms_maxlfq_batch_corrected_quantity": 4624
+   },
+   "perturbations_per_record": {
+    "n": 4624,
+    "min": 1.0,
+    "median": 1.0,
+    "max": 1.0
+   },
+   "perturbations_per_record_by_type": {
+    "kanmx_deletion": {
+     "n": 4624,
+     "min": 1.0,
+     "median": 1.0,
+     "max": 1.0,
+     "records_with_type": 4624,
+     "total": 4624
+    }
+   },
+   "perturbed_gene_names_by_type": {
+    "kanmx_deletion": {
+     "distinct_in_gene_set": 4476,
+     "distinct_outside_gene_set": 0,
+     "examples_outside": []
+    }
+   },
+   "label_keys_per_record": {
+    "n": 4624,
+    "min": 1441.0,
+    "median": 1819.0,
+    "max": 1849.0
+   },
+   "label_keys_distinct": 1850,
+   "label_keys_distinct_in_gene_set_raw_name": 0,
+   "label_keys_in_gene_set_per_record_raw_name": {
+    "n": 4624,
+    "min": 0.0,
+    "median": 0.0,
+    "max": 0.0
+   },
+   "label_keys_in_gene_set_per_record_after_map": {
+    "n": 4624,
+    "min": 1441.0,
+    "median": 1819.0,
+    "max": 1849.0
+   },
+   "label_none_values_per_record": {
+    "n": 4624,
+    "min": 0.0,
+    "median": 0.0,
+    "max": 0.0
+   },
+   "value_range_finite": {
+    "n_values_sampled": 96834,
+    "min": 0.0313344508224006,
+    "median_of_sample": 245.811705213013,
+    "max": 393221.21416587
+   },
+   "reference_label_keys_per_record": {
+    "n": 4624,
+    "min": 1441.0,
+    "median": 1819.0,
+    "max": 1849.0
+   },
+   "environments": 1,
+   "environment_table": {
+    "8f819c781251": {
+     "media": "SM (synthetic minimal: 6.7 g/L YNB without amino acids + 2% glucose), liquid",
+     "temperature": 30.0,
+     "n_environment_perturbations": 0
+    }
+   },
+   "media_names": {
+    "SM (synthetic minimal: 6.7 g/L YNB without amino acids + 2% glucose), liquid": 4624
+   },
+   "label_keys_distinct_in_gene_set_after_map": 1850,
+   "records_in_store": 4624,
+   "raw_index_first_last": [
+    8800,
+    13423
+   ]
+  },
+  "ProteomeMuenzner2024Dataset": {
+   "records_in_pass": 795,
+   "experiment_types": {
+    "protein_abundance": 795
+   },
+   "phenotype_class": [
+    "ProteinAbundancePhenotype"
+   ],
+   "genotype_class": {
+    "Genotype+natural_isolate": 794,
+    "Genotype": 1
+   },
+   "label_name": {
+    "protein_abundance": 795
+   },
+   "graph_level": {
+    "node": 795
+   },
+   "measurement_type": {
+    "swath_ms_maxlfq_precursor_batch_corrected_quantity": 795
+   },
+   "perturbations_per_record": {
+    "n": 795,
+    "min": 0.0,
+    "median": 5628.0,
+    "max": 7025.0
+   },
+   "perturbations_per_record_by_type": {
+    "deletion": {
+     "n": 85,
+     "min": 1.0,
+     "median": 1.0,
+     "max": 1.0,
+     "records_with_type": 85,
+     "total": 85
+    },
+    "natural_gene_absence": {
+     "n": 794,
+     "min": 43.0,
+     "median": 125.0,
+     "max": 420.0,
+     "records_with_type": 794,
+     "total": 105431
+    },
+    "natural_gene_presence": {
+     "n": 794,
+     "min": 34.0,
+     "median": 78.0,
+     "max": 352.0,
+     "records_with_type": 794,
+     "total": 66957
+    },
+    "natural_loss_of_function": {
+     "n": 794,
+     "min": 12.0,
+     "median": 359.0,
+     "max": 940.0,
+     "records_with_type": 794,
+     "total": 300040
+    },
+    "sequence_variant": {
+     "n": 794,
+     "min": 53.0,
+     "median": 5028.0,
+     "max": 5840.0,
+     "records_with_type": 794,
+     "total": 3988281
+    }
+   },
+   "perturbed_gene_names_by_type": {
+    "deletion": {
+     "distinct_in_gene_set": 1,
+     "distinct_outside_gene_set": 0,
+     "examples_outside": []
+    },
+    "natural_gene_absence": {
+     "distinct_in_gene_set": 1105,
+     "distinct_outside_gene_set": 7,
+     "examples_outside": [
+      "YDR134C",
+      "YFL056C",
+      "YIL167W",
+      "YIL171W",
+      "YIR043C"
+     ]
+    },
+    "natural_gene_presence": {
+     "distinct_in_gene_set": 0,
+     "distinct_outside_gene_set": 1643,
+     "examples_outside": [
+      "1-EC1118_1F14_0012g",
+      "10-EC1118_1F14_0133g",
+      "100-augustus_masked.1375.CFF_4",
+      "1000-augustus_masked.CGE_5.5812",
+      "1001-augustus_masked.CGE_5.5812"
+     ]
+    },
+    "natural_loss_of_function": {
+     "distinct_in_gene_set": 3952,
+     "distinct_outside_gene_set": 48,
+     "examples_outside": [
+      "AAD15",
+      "AAD16",
+      "APQ13",
+      "BUD19",
+      "COS3"
+     ]
+    },
+    "sequence_variant": {
+     "distinct_in_gene_set": 5972,
+     "distinct_outside_gene_set": 4,
+     "examples_outside": [
+      "YER109C",
+      "YFL056C",
+      "YFL057C",
+      "YOR031W"
+     ]
+    }
+   },
+   "label_keys_per_record": {
+    "n": 795,
+    "min": 1336.0,
+    "median": 1540.0,
+    "max": 1571.0
+   },
+   "label_keys_distinct": 1576,
+   "label_keys_distinct_in_gene_set_raw_name": 1576,
+   "label_keys_in_gene_set_per_record_raw_name": {
+    "n": 795,
+    "min": 1336.0,
+    "median": 1540.0,
+    "max": 1571.0
+   },
+   "label_keys_in_gene_set_per_record_after_map": {
+    "n": 795,
+    "min": 1336.0,
+    "median": 1540.0,
+    "max": 1571.0
+   },
+   "label_none_values_per_record": {
+    "n": 795,
+    "min": 0.0,
+    "median": 0.0,
+    "max": 0.0
+   },
+   "value_range_finite": {
+    "n_values_sampled": 16645,
+    "min": 0.0906312472897179,
+    "median_of_sample": 251.297416715537,
+    "max": 181277.27470069
+   },
+   "reference_label_keys_per_record": {
+    "n": 795,
+    "min": 1576.0,
+    "median": 1576.0,
+    "max": 1576.0
+   },
+   "environments": 1,
+   "environment_table": {
+    "fbf37e55f920": {
+     "media": "SM (synthetic minimal: 6.8 g/L YNB without amino acids + 2% glucose), liquid",
+     "temperature": 30.0,
+     "n_environment_perturbations": 0
+    }
+   },
+   "media_names": {
+    "SM (synthetic minimal: 6.8 g/L YNB without amino acids + 2% glucose), liquid": 795
+   },
+   "distinct_isolates": 794,
+   "records_in_store": 795,
+   "raw_index_first_last": [
+    19142,
+    19936
+   ]
+  },
+  "ProteomeZelezniak2018Dataset": {
+   "records_in_pass": 97,
+   "experiment_types": {
+    "protein_abundance": 97
+   },
+   "phenotype_class": [
+    "ProteinAbundancePhenotype"
+   ],
+   "genotype_class": {
+    "Genotype": 97
+   },
+   "label_name": {
+    "protein_abundance": 97
+   },
+   "graph_level": {
+    "node": 97
+   },
+   "measurement_type": {
+    "swath_ms_label_free_log_signal_sva": 97
+   },
+   "perturbations_per_record": {
+    "n": 97,
+    "min": 1.0,
+    "median": 1.0,
+    "max": 1.0
+   },
+   "perturbations_per_record_by_type": {
+    "kanmx_deletion": {
+     "n": 97,
+     "min": 1.0,
+     "median": 1.0,
+     "max": 1.0,
+     "records_with_type": 97,
+     "total": 97
+    }
+   },
+   "perturbed_gene_names_by_type": {
+    "kanmx_deletion": {
+     "distinct_in_gene_set": 97,
+     "distinct_outside_gene_set": 0,
+     "examples_outside": []
+    }
+   },
+   "label_keys_per_record": {
+    "n": 97,
+    "min": 726.0,
+    "median": 726.0,
+    "max": 726.0
+   },
+   "label_keys_distinct": 726,
+   "label_keys_distinct_in_gene_set_raw_name": 726,
+   "label_keys_in_gene_set_per_record_raw_name": {
+    "n": 97,
+    "min": 726.0,
+    "median": 726.0,
+    "max": 726.0
+   },
+   "label_keys_in_gene_set_per_record_after_map": {
+    "n": 97,
+    "min": 726.0,
+    "median": 726.0,
+    "max": 726.0
+   },
+   "label_none_values_per_record": {
+    "n": 97,
+    "min": 0.0,
+    "median": 0.0,
+    "max": 0.0
+   },
+   "value_range_finite": {
+    "n_values_sampled": 2037,
+    "min": 1.6205998048497052,
+    "median_of_sample": 6.397483786380003,
+    "max": 11.190253139876964
+   },
+   "reference_label_keys_per_record": {
+    "n": 97,
+    "min": 726.0,
+    "median": 726.0,
+    "max": 726.0
+   },
+   "environments": 1,
+   "environment_table": {
+    "ed4dc0d4d175": {
+     "media": "SM (synthetic minimal, composition deferred to Mulleder 2012), liquid",
+     "temperature": 30.0,
+     "n_environment_perturbations": 0
+    }
+   },
+   "media_names": {
+    "SM (synthetic minimal, composition deferred to Mulleder 2012), liquid": 97
+   },
+   "records_in_store": 97,
+   "raw_index_first_last": [
+    13424,
+    13520
+   ]
+  },
+  "ScmdOhya2005Dataset": {
+   "records_in_pass": 4678,
+   "experiment_types": {
+    "calmorph": 4678
+   },
+   "phenotype_class": [
+    "CalMorphPhenotype"
+   ],
+   "genotype_class": {
+    "Genotype": 4678
+   },
+   "label_name": {
+    "calmorph": 4678
+   },
+   "graph_level": {
+    "global": 4678
+   },
+   "measurement_type": {},
+   "perturbations_per_record": {
+    "n": 4678,
+    "min": 1.0,
+    "median": 1.0,
+    "max": 1.0
+   },
+   "perturbations_per_record_by_type": {
+    "kanmx_deletion": {
+     "n": 4678,
+     "min": 1.0,
+     "median": 1.0,
+     "max": 1.0,
+     "records_with_type": 4678,
+     "total": 4678
+    }
+   },
+   "perturbed_gene_names_by_type": {
+    "kanmx_deletion": {
+     "distinct_in_gene_set": 4678,
+     "distinct_outside_gene_set": 0,
+     "examples_outside": []
+    }
+   },
+   "label_keys_per_record": {
+    "n": 4678,
+    "min": 281.0,
+    "median": 281.0,
+    "max": 281.0
+   },
+   "label_keys_distinct": 281,
+   "label_keys_distinct_in_gene_set_raw_name": 0,
+   "label_keys_in_gene_set_per_record_raw_name": {
+    "n": 4678,
+    "min": 0.0,
+    "median": 0.0,
+    "max": 0.0
+   },
+   "label_keys_in_gene_set_per_record_after_map": {
+    "n": 4678,
+    "min": 0.0,
+    "median": 0.0,
+    "max": 0.0
+   },
+   "label_none_values_per_record": {
+    "n": 4678,
+    "min": 0.0,
+    "median": 0.0,
+    "max": 0.0
+   },
+   "value_range_finite": {
+    "n_values_sampled": 98238,
+    "min": 0.0,
+    "median_of_sample": 2.6889822595,
+    "max": 56973.62025
+   },
+   "reference_label_keys_per_record": {
+    "n": 4678,
+    "min": 281.0,
+    "median": 281.0,
+    "max": 281.0
+   },
+   "environments": 1,
+   "environment_table": {
+    "a9376e030b59": {
+     "media": "YPD (yeast extract / peptone / dextrose), liquid",
+     "temperature": 25.0,
+     "n_environment_perturbations": 0
+    }
+   },
+   "media_names": {
+    "YPD (yeast extract / peptone / dextrose), liquid": 4678
+   },
+   "records_in_store": 4678,
+   "raw_index_first_last": [
+    13521,
+    18198
+   ]
+  },
+  "SmMicroarraySameith2015Dataset": {
+   "records_in_pass": 82,
+   "experiment_types": {
+    "microarray_expression": 82
+   },
+   "phenotype_class": [
+    "MicroarrayExpressionPhenotype"
+   ],
+   "genotype_class": {
+    "Genotype": 82
+   },
+   "label_name": {
+    "expression_log2_ratio": 82
+   },
+   "graph_level": {
+    "node": 82
+   },
+   "measurement_type": {},
+   "perturbations_per_record": {
+    "n": 82,
+    "min": 1.0,
+    "median": 1.0,
+    "max": 1.0
+   },
+   "perturbations_per_record_by_type": {
+    "sga_kanmx_deletion": {
+     "n": 82,
+     "min": 1.0,
+     "median": 1.0,
+     "max": 1.0,
+     "records_with_type": 82,
+     "total": 82
+    }
+   },
+   "perturbed_gene_names_by_type": {
+    "sga_kanmx_deletion": {
+     "distinct_in_gene_set": 82,
+     "distinct_outside_gene_set": 0,
+     "examples_outside": []
+    }
+   },
+   "label_keys_per_record": {
+    "n": 82,
+    "min": 6169.0,
+    "median": 6169.0,
+    "max": 6169.0
+   },
+   "label_keys_distinct": 6169,
+   "label_keys_distinct_in_gene_set_raw_name": 6127,
+   "label_keys_in_gene_set_per_record_raw_name": {
+    "n": 82,
+    "min": 6127.0,
+    "median": 6127.0,
+    "max": 6127.0
+   },
+   "label_keys_in_gene_set_per_record_after_map": {
+    "n": 82,
+    "min": 6127.0,
+    "median": 6127.0,
+    "max": 6127.0
+   },
+   "label_none_values_per_record": {
+    "n": 82,
+    "min": 0.0,
+    "median": 0.0,
+    "max": 0.0
+   },
+   "value_range_finite": {
+    "n_values_sampled": 1722,
+    "min": -4.305434075776194,
+    "median_of_sample": -0.006350790460358944,
+    "max": 5.233846702083904
+   },
+   "reference_label_keys_per_record": {
+    "n": 82,
+    "min": 6169.0,
+    "median": 6169.0,
+    "max": 6169.0
+   },
+   "environments": 1,
+   "environment_table": {
+    "042e9aca39c0": {
+     "media": "SC",
+     "temperature": 30.0,
+     "n_environment_perturbations": 0
+    }
+   },
+   "media_names": {
+    "SC": 82
+   },
+   "records_in_store": 82,
+   "raw_index_first_last": [
+    1482,
+    1563
+   ]
+  },
+  "TfDeletionPseudobulkJackson2020Dataset": {
+   "records_in_pass": 784,
+   "experiment_types": {
+    "pseudobulk_umi_count": 784
+   },
+   "phenotype_class": [
+    "SingleCellExpressionPhenotype"
+   ],
+   "genotype_class": {
+    "Genotype": 784
+   },
+   "label_name": {
+    "umi_count": 784
+   },
+   "graph_level": {
+    "node": 784
+   },
+   "measurement_type": {
+    "scrnaseq_umi_count": 784
+   },
+   "perturbations_per_record": {
+    "n": 784,
+    "min": 1.0,
+    "median": 1.0,
+    "max": 1.0
+   },
+   "perturbations_per_record_by_type": {
+    "barcoded_kanmx_deletion": {
+     "n": 784,
+     "min": 1.0,
+     "median": 1.0,
+     "max": 1.0,
+     "records_with_type": 784,
+     "total": 784
+    }
+   },
+   "perturbed_gene_names_by_type": {
+    "barcoded_kanmx_deletion": {
+     "distinct_in_gene_set": 12,
+     "distinct_outside_gene_set": 0,
+     "examples_outside": []
+    }
+   },
+   "label_keys_per_record": {
+    "n": 784,
+    "min": 298.0,
+    "median": 4028.5,
+    "max": 5561.0
+   },
+   "label_keys_distinct": 6518,
+   "label_keys_distinct_in_gene_set_raw_name": 6383,
+   "label_keys_in_gene_set_per_record_raw_name": {
+    "n": 784,
+    "min": 298.0,
+    "median": 4009.0,
+    "max": 5501.0
+   },
+   "label_keys_in_gene_set_per_record_after_map": {
+    "n": 784,
+    "min": 298.0,
+    "median": 4009.0,
+    "max": 5501.0
+   },
+   "label_none_values_per_record": {
+    "n": 784,
+    "min": 0.0,
+    "median": 0.0,
+    "max": 0.0
+   },
+   "value_range_finite": {
+    "n_values_sampled": 16428,
+    "min": 1.0,
+    "median_of_sample": 3.0,
+    "max": 21655.0
+   },
+   "reference_label_keys_per_record": {
+    "n": 784,
+    "min": 4555.0,
+    "median": 5497.0,
+    "max": 5861.0
+   },
+   "environments": 11,
+   "environment_table": {
+    "57a078e53dee": {
+     "media": "Jackson 2020 nitrogen-limited minimal medium, 2% glucose + 800 uM urea (NLIM-UREA)",
+     "temperature": null,
+     "n_environment_perturbations": 0
+    },
+    "31a2aac58b27": {
+     "media": "Jackson 2020 minimal medium, 2% (v/v) ethanol + 20 mM ammonium sulfate (MMEtOH)",
+     "temperature": null,
+     "n_environment_perturbations": 0
+    },
+    "85560dec9149": {
+     "media": "Jackson 2020 nitrogen-limited minimal medium, 2% glucose + 800 uM L-glutamine (NLIM-GLN)",
+     "temperature": null,
+     "n_environment_perturbations": 0
+    },
+    "309887d86bc2": {
+     "media": "Jackson 2020 nitrogen-limited minimal medium, 2% glucose + 800 uM ammonium sulfate (NLIM-NH4)",
+     "temperature": null,
+     "n_environment_perturbations": 0
+    },
+    "005a55874b02": {
+     "media": "YP + 2% (v/v) ethanol, liquid (Jackson 2020 YPEtOH)",
+     "temperature": null,
+     "n_environment_perturbations": 0
+    },
+    "25f7d50fb210": {
+     "media": "YPD (yeast extract / peptone / dextrose), liquid",
+     "temperature": null,
+     "n_environment_perturbations": 0
+    },
+    "89820c3bd8bc": {
+     "media": "YPD (yeast extract / peptone / dextrose), liquid",
+     "temperature": null,
+     "n_environment_perturbations": 1
+    },
+    "2fba8beb3f4c": {
+     "media": "YPD (yeast extract / peptone / dextrose), liquid",
+     "temperature": null,
+     "n_environment_perturbations": 0
+    },
+    "d1f886a77721": {
+     "media": "Jackson 2020 carbon-starvation medium, 1 mM ammonium sulfate, no carbon source (CSTARVE)",
+     "temperature": null,
+     "n_environment_perturbations": 0
+    },
+    "c9e271a3a23b": {
+     "media": "Jackson 2020 minimal medium, 2% glucose + 20 mM ammonium sulfate (MMD)",
+     "temperature": null,
+     "n_environment_perturbations": 0
+    },
+    "be55c43cd341": {
+     "media": "Jackson 2020 nitrogen-limited minimal medium, 2% glucose + 800 uM L-proline (NLIM-PRO)",
+     "temperature": null,
+     "n_environment_perturbations": 0
+    }
+   },
+   "media_names": {
+    "Jackson 2020 nitrogen-limited minimal medium, 2% glucose + 800 uM urea (NLIM-UREA)": 72,
+    "Jackson 2020 minimal medium, 2% (v/v) ethanol + 20 mM ammonium sulfate (MMEtOH)": 72,
+    "Jackson 2020 nitrogen-limited minimal medium, 2% glucose + 800 uM L-glutamine (NLIM-GLN)": 71,
+    "Jackson 2020 nitrogen-limited minimal medium, 2% glucose + 800 uM ammonium sulfate (NLIM-NH4)": 71,
+    "YP + 2% (v/v) ethanol, liquid (Jackson 2020 YPEtOH)": 72,
+    "YPD (yeast extract / peptone / dextrose), liquid": 212,
+    "Jackson 2020 carbon-starvation medium, 1 mM ammonium sulfate, no carbon source (CSTARVE)": 70,
+    "Jackson 2020 minimal medium, 2% glucose + 20 mM ammonium sulfate (MMD)": 72,
+    "Jackson 2020 nitrogen-limited minimal medium, 2% glucose + 800 uM L-proline (NLIM-PRO)": 72
+   },
+   "n_cells_per_record": {
+    "n": 784,
+    "min": 1.0,
+    "median": 23.0,
+    "max": 266.0
+   },
+   "total_umis_per_record": {
+    "n": 784,
+    "min": 594.0,
+    "median": 43850.5,
+    "max": 749705.0
+   },
+   "records_in_store": 784,
+   "raw_index_first_last": [
+    1898,
+    2681
+   ]
+  }
+ }
+}

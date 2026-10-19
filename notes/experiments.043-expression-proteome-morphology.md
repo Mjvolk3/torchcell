@@ -310,3 +310,74 @@ by [[experiments.043-expression-proteome-morphology.scripts.primer_043_tables]])
 published to Zotero `torchcell/notes-tex/multimodal/043-datasets-primer` as
 `043-datasets-primer_2026-10-19-17-04-51_c41df5c6.pdf`. Its batch proposal is a
 proposal, not a decision.
+
+## 2026.10.19 - Data tensors and the dataset module
+
+Scripts: [[experiments.043-expression-proteome-morphology.scripts.data_shapes_043]] (full
+pass over the 173,617 raw records, slurm job 5902, 14 min 29 s; the sample mode on the
+login node gives the same mins and medians for the deletion sets) and
+[[experiments.043-expression-proteome-morphology.scripts.dataset_043]] (the torch
+`Dataset` the owner steps through; run output recorded in its note). The diagram is
+[[experiments.043-expression-proteome-morphology.mermaid.data-flow]].
+
+![](./assets/pdf-output/experiments.043-expression-proteome-morphology.mermaid.data-flow.svg)
+
+### Shape table (full pass, n = records)
+
+Label keys are the released keys; "on index" is the count on the 6,607-gene
+`gene_set.json` after the two read-time maps (Messner UniProt -> ORF, Nadal-Ribelles
+standard name -> ORF). Marked genes are per the dataset module's definite rules
+(`isolate_marking = all_gene_level`, segregant posterior >= 0.9) and are measured on the
+three records per dataset of the debugger run, not the full pass.
+
+| dataset | records (n) | genotype class | marked genes per record (rule) | phenotype class | label key: released scale | label keys per record min / median / max | label keys on index per record, median (min to max) | environments (sha of environment JSON) |
+|---|---|---|---|---|---|---|---|---|
+| Kemmeren 2014 | 1,482 | Genotype | 1 (deletion) | MicroarrayExpressionPhenotype | expression_log2_ratio: log2 ratio to wild type | 6,169 / 6,169 / 6,169 | 6,127 (6,127 to 6,127) | 1 |
+| Sameith 2015 Sm (dropped: the Kemmeren arrays) | 82 | Genotype | 1 (deletion) | MicroarrayExpressionPhenotype | expression_log2_ratio: log2 ratio | 6,169 / 6,169 / 6,169 | 6,127 | 1 |
+| Sameith 2015 Dm | 72 | Genotype | 2 (deletion, deletion) | MicroarrayExpressionPhenotype | expression_log2_ratio: log2 ratio | 6,169 / 6,169 / 6,169 | 6,127 | 1 |
+| Hu 2007 | 262 | Genotype | 1 (deletion) | MicroarrayExpressionScorePhenotype | expression_score: error-model X score, -8.35 to 8.05 | 5,921 / 6,381 / 6,429 | 5,832 (5,390 to 5,878) | 1 |
+| Jackson 2020 | 784 | Genotype | 1 (deletion) | SingleCellExpressionPhenotype | umi_count: pseudobulk UMI counts, zeros omitted | 298 / 4,028 / 5,561 | 4,009 (298 to 5,501) | 11 |
+| Nadal-Ribelles 2025 | 6,118 | Genotype | 1 (deletion) | PseudobulkExpressionPhenotype | expression_log2_ratio: pseudobulk log2 fc, -33.0 to 32.9 | 4,223 / 5,866 / 6,313 | 5,665 (4,034 to 6,016) | 2 |
+| Caudal 2024 | 943 | Genotype + natural_isolate | 4,952 to 5,995 (variant, lof, absent; 499 under lof_absent_deletion) | RNASeqExpressionPhenotype | expression_tpm: TPM, 0 to 88,829 | 5,922 / 6,050 / 6,120 | 6,006 (5,878 to 6,062) | 1 |
+| Muenzner 2024 proteome | 795 | Genotype + natural_isolate (794), Genotype with 0 perturbations (1) | 4,921 to 5,894 (variant, lof, absent) | ProteinAbundancePhenotype | protein_abundance: MaxLFQ linear, 0.09 to 181,277 | 1,336 / 1,540 / 1,571 | 1,540 (1,336 to 1,571) | 1 |
+| Muenzner 2024 turnover | 55 | Genotype + natural_isolate | 5,901 to 6,012 (variant, lof, absent) | ProteinTurnoverPhenotype | degradation_rate: per hour, 0.017 to 2.44 | 919 / 1,055 / 1,177 | 1,055 (919 to 1,177) | 1 |
+| Boocock 2025 | 79,516 | SegregantGenotype (3 crosses) | 1,415 to 2,320 non-reference alleles at posterior >= 0.9; 2,201 to 2,693 genes in block gaps | SingleCellExpressionPhenotype | umi_count: per-cell UMI counts, 1 to 2,301 | 182 / 962 / 4,758 | 962 (182 to 4,758) | 2 |
+| N'Guessan 2025 | 2,951 | SegregantGenotype (BY4741 x RM11-1a) | 2,743 to 3,158 non-reference alleles; 697 to 1,002 in gaps | SingleCellExpressionPhenotype | umi_count: UMI counts, 1 to 12,339 | 475 / 2,592 / 5,111 | 2,591 (475 to 5,109) | 1 |
+| Vaishnav 2022 | 71,158 | Genotype (variable_promoter_reporter) | 0; promoter 110 nt, variable 80-mer at 18..97, scaffold pTpA | PooledSortSeqExpressionPhenotype | expression_level: sort-seq bin index, 0.32 to 17.0 (scalar) | 1 / 1 / 1 | scalar | 1 |
+| Messner 2023 | 4,624 | Genotype | 1 (deletion) | ProteinAbundancePhenotype | protein_abundance: MaxLFQ linear, 0.03 to 393,221 | 1,441 / 1,819 / 1,849 | 1,819 (1,441 to 1,849) | 1 |
+| Zelezniak 2018 | 97 | Genotype | 1 (deletion) | ProteinAbundancePhenotype | protein_abundance: log signal (SVA), 1.62 to 11.19 | 726 / 726 / 726 | 726 | 1 |
+| Ohya 2005 (hold-out) | 4,678 | Genotype | 1 (deletion) | CalMorphPhenotype | calmorph: 281 features, global | 281 / 281 / 281 | 0 (features, not genes) | 1 |
+
+Total 173,617 records; the 13 training datasets hold 168,857, Ohya 4,678, Sameith Sm 82.
+
+### What the dataset module returns
+
+Per sample: `gene_index` (LongTensor of marked genes on the 6,607 index), `pert_type`
+(one of deletion / variant / lof / absent per marked gene), `allele_parent` (parent token
+per marked gene, -1 outside the segregant panels), `promoter_seq` and `scaffold`
+(Vaishnav), `env_id`, `dataset_id`, `exp_type_id` (the nine phenotype classes), `y_scale`
+(nine released scales), `y` (6,607 floats, NaN where unmeasured), `y_scalar` (Vaishnav),
+`y_global` (Ohya's 281), `y_ref` on request. `collate_043` concatenates the marked genes
+with a `gene_batch` vector and stacks `y` into `[B, 6607]` with `y_mask`. A mixed batch of
+one record per dataset (15 rows) carries 21,728 marked genes, 21,713 of them from the five
+isolate and segregant rows.
+
+### Three shapes that matter for the design
+
+1. **The isolate and segregant rows are dense.** A Caudal isolate marks 4,952 to 5,995 of
+   6,607 genes (variants dominate); a segregant marks 1,415 to 3,158. A deletion row
+   marks 1. The perturbation operator sees three orders of magnitude of marked-set size
+   across datasets.
+2. **The definite segregant rule leaves large gaps.** On the six debugger records 697 to
+   2,693 genes fall between blocks (unassigned) and 157 to 704 sit under a block below
+   posterior 0.9. Hypothesis (untested): Boocock's LD-pruned marker set leaves longer
+   unassigned runs than N'Guessan's 41,594-SNP panel. Interpolating the parent across a
+   gap, or the probabilistic marking, is the next step on this axis.
+3. **Two label-key maps are read-time, not load-time.** Nadal-Ribelles keys are standard
+   names (1,441 of 6,796 match the index by raw name, 6,325 after the map) and Messner
+   keys are UniProt accessions (0 of 1,850 by raw name, 1,850 after); Hu carries 547 to
+   551 platform spot names per record with no gene. Keys with no index position are
+   counted per sample and dropped from `y`, never guessed.
+
+Also measured: slurm job 5902 ran at MaxRSS 157 GB on a 16 GB request because the mmap'd
+LMDB pages count as resident; the job was not killed.

@@ -274,5 +274,5 @@ taxonomic groups of the two members.
   annotator.
 - **SD108 through the tier.** SD108 is read from the clone; switching to
   `resolve(PKUDRIAVZEVII_SD108, "proteins.faa")` waits for the sibling branch to land.
-- **Figures are timestamped** and not yet approved; older timestamped renders from the
-  iteration sit untracked in `notes/assets/images/044-organism-similarity/`.
+- **Figures are timestamped** and not yet approved; the superseded renders from the layout
+  iteration were moved to `$DATA_ROOT/data/organism_similarity/superseded_renders/`.

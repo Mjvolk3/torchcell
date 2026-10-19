@@ -121,3 +121,36 @@ Sameith Sm and Dm, Nadal-Ribelles), `umi_count` (Jackson, Boocock, Nguessan), an
   `["genotype"]["perturbations"]` and catch exceptions per entry. Hypothesis
   (untested): they would skip segregant entries rather than raise. The 043 build does
   not run them: the folded raw-stage path writes those index files from the summaries.
+
+## 2026.10.19 - Stage 3: two processor and index fixes; open items for the owner
+
+Fixed in torchcell (same PR), with no re-query and no rebuild:
+
+- **Shared label read once.** `MicroarrayExpressionPhenotype` and
+  `PseudobulkExpressionPhenotype` both carry `expression_log2_ratio`. All six processors in
+  `torchcell/data/graph_processor.py` that build `phenotype_types` and `stat_types` from
+  `phenotype_info` now keep each name once, in order. Before the fix, the Kemmeren sample
+  carried 12,338 values for 6,169 genes.
+- **Segregants in the index passes.** `compute_perturbation_count_index`,
+  `compute_is_any_perturbed_gene_index` and `compute_is_any_deletion_gene_index` read the
+  perturbation list with `.get(...) or []`; a segregant counts 0 and names no gene. The
+  index files were recomputed from the existing processed store
+  ([[experiments.043-expression-proteome-morphology.scripts.reindex_043_store]]).
+
+Build job 5856 requested 256 GB and `sstat` read a MaxRSS of 267 GB during the
+aggregation and processed copies; the job was not killed.
+
+### Open items for the owner
+
+1. **188 records are dropped by the deletion blocks' `ALL` clause.** By dataset:
+   Kemmeren 2, Hu 1, Nadal-Ribelles 70, Messner 75, Ohya 40. Each has a released gene name
+   outside the 6,607-gene `SCerevisiaeGenome.gene_set`. Keeping them means the deletion
+   blocks adopt the isolates' `SIZE = 0 OR ANY` shape, plus a re-query (about 6 h, from
+   the 5 h 48 min raw stage of job 5855).
+2. **Isolates enter the `Perturbation` processor with every `sequence_variant` gene marked
+   perturbed.** The Caudal sample has 5,575 of 6,607 nodes in `pert_mask`. A rule over
+   perturbation types is needed before any isolate training.
+3. **`aggregator=None` on main writes an unreadable processed store.** The store keeps
+   keys `data_<i>` with one object per value; `get(0)` reads `None` and
+   `compute_phenotype_info` raises `TypeError`. The 043 build works around it with
+   `RecordAggregator`; the bug is to be fixed separately.

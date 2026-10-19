@@ -280,5 +280,137 @@
     "barcoded_kanmx_deletion": 784
    }
   }
+ },
+ "colocation": {
+  "genotypes_by_label": {
+   "calmorph": 4678,
+   "degradation_rate": 55,
+   "expression_log2_ratio": 3685,
+   "expression_score": 262,
+   "expression_tpm": 943,
+   "protein_abundance": 5279,
+   "umi_count": 82479
+  },
+  "genotypes_by_dataset": {
+   "Boocock2025Dataset": 79516,
+   "CaudalPanTranscriptome2024Dataset": 943,
+   "DmMicroarraySameith2015Dataset": 72,
+   "MicroarrayKemmeren2014Dataset": 1482,
+   "MicroarrayScoreHu2007Dataset": 262,
+   "NadalRibellesPerturbSeq2025Dataset": 3059,
+   "Nguessan2025Dataset": 2951,
+   "ProteinTurnoverMuenzner2024Dataset": 55,
+   "ProteomeMessner2023Dataset": 4476,
+   "ProteomeMuenzner2024Dataset": 795,
+   "ProteomeZelezniak2018Dataset": 97,
+   "ScmdOhya2005Dataset": 4678,
+   "SmMicroarraySameith2015Dataset": 82,
+   "TfDeletionPseudobulkJackson2020Dataset": 12
+  },
+  "genotypes_total": 88426,
+  "label_pairs": {
+   "expression_log2_ratio x calmorph": 3473,
+   "protein_abundance x calmorph": 4287,
+   "expression_log2_ratio x protein_abundance": 3317,
+   "expression_tpm x protein_abundance": 759,
+   "umi_count x calmorph": 12,
+   "expression_score x calmorph": 259
+  },
+  "genotype_environment_grid": {
+   "NadalRibellesPerturbSeq2025Dataset": {
+    "environments": 2,
+    "genotypes": 3059,
+    "grid_size": 6118,
+    "observed_cells": 6011,
+    "genotypes_per_environment": [
+     {
+      "environment": "d90725939a0d",
+      "media": "YPD (yeast extract / peptone / dextrose), liquid",
+      "genotypes": 3008
+     },
+     {
+      "environment": "b490825678d3",
+      "media": "YPD (yeast extract / peptone / dextrose), liquid",
+      "genotypes": 3003
+     }
+    ]
+   },
+   "TfDeletionPseudobulkJackson2020Dataset": {
+    "environments": 10,
+    "genotypes": 12,
+    "grid_size": 120,
+    "observed_cells": 120,
+    "genotypes_per_environment": [
+     {
+      "environment": "0cd5701f7c46",
+      "media": "Jackson 2020 carbon-starvation medium, 1 mM ammonium sulfate, no carbon source (CSTARVE)",
+      "genotypes": 12
+     },
+     {
+      "environment": "6ad0ad81b1e8",
+      "media": "Jackson 2020 minimal medium, 2% (v/v) ethanol + 20 mM ammonium sulfate (MMEtOH)",
+      "genotypes": 12
+     },
+     {
+      "environment": "ce010872e837",
+      "media": "Jackson 2020 minimal medium, 2% glucose + 20 mM ammonium sulfate (MMD)",
+      "genotypes": 12
+     },
+     {
+      "environment": "ec4452b333f7",
+      "media": "Jackson 2020 nitrogen-limited minimal medium, 2% glucose + 800 uM L-glutamine (NLIM-GLN)",
+      "genotypes": 12
+     },
+     {
+      "environment": "902d53cba929",
+      "media": "Jackson 2020 nitrogen-limited minimal medium, 2% glucose + 800 uM L-proline (NLIM-PRO)",
+      "genotypes": 12
+     },
+     {
+      "environment": "3fd70c761469",
+      "media": "Jackson 2020 nitrogen-limited minimal medium, 2% glucose + 800 uM ammonium sulfate (NLIM-NH4)",
+      "genotypes": 12
+     },
+     {
+      "environment": "94642f75a1d1",
+      "media": "Jackson 2020 nitrogen-limited minimal medium, 2% glucose + 800 uM urea (NLIM-UREA)",
+      "genotypes": 12
+     },
+     {
+      "environment": "f0588efd64fc",
+      "media": "YP + 2% (v/v) ethanol, liquid (Jackson 2020 YPEtOH)",
+      "genotypes": 12
+     },
+     {
+      "environment": "b78d6a0404f3",
+      "media": "YPD (yeast extract / peptone / dextrose), liquid",
+      "genotypes": 12
+     },
+     {
+      "environment": "112573bd707c",
+      "media": "YPD (yeast extract / peptone / dextrose), liquid",
+      "genotypes": 12
+     }
+    ]
+   }
+  },
+  "isolate_overlap_by_genotype": {
+   "caudal": 943,
+   "muenzner_proteome": 795,
+   "muenzner_turnover": 55,
+   "caudal_and_proteome": 759,
+   "caudal_and_turnover": 55,
+   "proteome_and_turnover": 55,
+   "all_three": 55
+  },
+  "isolate_overlap_by_strain_name": {
+   "caudal": 943,
+   "muenzner_proteome": 795,
+   "muenzner_turnover": 55,
+   "caudal_and_proteome": 759,
+   "caudal_and_turnover": 55,
+   "proteome_and_turnover": 55,
+   "all_three": 55
+  }
  }
 }

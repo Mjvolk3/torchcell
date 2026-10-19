@@ -12,7 +12,7 @@
 \label{sec:mockups}
 
 Each caption gives, per panel, what is plotted, the statistic and the status; the table
-under each figure gives the files behind it. The statistic on the public side is always
+under each figure gives the files behind it. The statistic on the published side is always
 the per-compound centered Spearman under compound-cold folds, median over compounds,
 with \hydnFitCompounds{} compounds fitted per fold; on the wet-lab side it is the growth
 AUROC, the area under the ROC curve of a predicted fitness as the score for whether a
@@ -26,7 +26,7 @@ AUROC is the one scale-free number the two share), and the fitness Spearman over
 blocks, each a layout rather than a drawn result; a dashed box is proposed and not run.
 \textbf{The task} \status{todo}\,\fstat{idea}: a compound and its molar dose enter the
 cell graph transformer as one token placed in front of the gene tokens, which attend to
-it; a public-screen strain is read at its deleted genes, giving a deletion profile, and
+it; a published-screen strain is read at its deleted genes, giving a deletion profile, and
 the bAID host, which carries no deletion, is read at the mean over genes, giving growth
 and fitness. A mixture is a set of compound tokens, one per inhibitor: each is read
 alone through the shared head and the readings compose as Bliss independence (rounds
@@ -36,7 +36,7 @@ nine and ten), which is what took the private readout from chance to the rule's 
 \hydnPoolGenes{} genes, of which \hydnPoolCellsWithMolar{} cells carry a molar dose,
 beside the private Bioscreen runs, \hydnWells{} wells over \hydnInhibitors{} inhibitors
 on one strain. \textbf{The evaluation} \status{todo}\,\fstat{idea}: compound-cold folds
-and the per-compound centered Spearman on the public side, growth and fitness against
+and the per-compound centered Spearman on the published side, growth and fitness against
 Bliss and Loewe on the wet-lab side, and the industrial reading, which is to rank the
 worst combination scenarios of a hydrolysate.}{fig:concept}
 
@@ -69,10 +69,10 @@ block is marked idea even though its counts are on file. \\
 %% 2026-10-18: the title states the takeaway, the body the main points, the secondary
 %% points, then the detail); the paragraph after the figure holds the panel-by-panel
 %% detail with each panel's status, and the table after that the files behind it.
-\tcfig{\figMain}{\textbf{Composition is what the wet lab buys, and no public screen
-lifts the public score.} The six hydrolysate inhibitors are met by one wild-type host;
+\tcfig{\figMain}{\textbf{Composition is what the wet lab buys, and no published screen
+lifts the published score.} The six hydrolysate inhibitors are met by one wild-type host;
 Vanacloig 2022 profiles two of them itself, and the nearest profiled compound of each of
-the other four sits beside it (\textbf{a}). Four public deletion screens of three
+the other four sits beside it (\textbf{a}). Four published deletion screens of three
 genotypes and this study's wild-type wells differ in size, culture and in what a label
 is, a strain-level score on a screen's own scale against a growth rate per well
 (\textbf{b}); what joins them is one gene table, one compound table and one growth
@@ -80,7 +80,7 @@ reading, with a screen's IC30 dose asserting the wild type at \hydicThirtyFitnes
 (\textbf{c}). The cell graph transformer reads one token per inhibitor through one head,
 the host as the empty genotype at the gene mean, the dose as a gain on the medium's
 offset, and composes the readings as Bliss independence (\textbf{d}).
-On the public side nested ridge on fingerprint counts, \hydladderRidge{}, is not beaten by
+On the published side nested ridge on fingerprint counts, \hydladderRidge{}, is not beaten by
 any transformer arm (\textbf{e}, \textbf{f}), ridge gains about \hydcurvePerDoubling{} per
 doubling of fitted compounds with the environment encoder below it at every count
 (\textbf{g}), and adding screens leaves the compound-cold score flat (\textbf{o}, left). On
@@ -93,7 +93,7 @@ screen added, inside the run spread (\textbf{o}, right). Three readings qualify 
 The host needs \hydratioFf{} and \hydratioHmf{} times the screen's IC30 of furfural and
 5-HMF (\textbf{h}); a screen's label is a strain's growth against its own control on its
 own scale, this study's a wild-type growth rate with no growth in a share of
-\hydlabelNoGrowthHostexTwoThree{} of the combination wells (\textbf{b}); and the public
+\hydlabelNoGrowthHostexTwoThree{} of the combination wells (\textbf{b}); and the published
 profiles do not reach the private question: pairs compose as the mean of their singles
 (\textbf{i}), furfural's profile is predicted at \hydprofFfRidge{} where its screen
 repeats at \hydprofFfReliability{} while 5-HMF's screen does not repeat (\textbf{j}), and
@@ -136,7 +136,7 @@ beside each bar. The task's profiles are
 the auxiliary screens add \hydnHoepfnerCells{}, \hydnHillenmeyerCells{} and
 \hydnWildenhainCells{} aerobic cells, \hydnFourSourceCells{} in all. The host readout is
 aerobic, shaken YPD, a different oxygen regime from the profiles. The anchors are the
-\hydnAnchorsFour{} public conditions whose served dose is an IC30 (\hydnAnchorCompounds{}
+\hydnAnchorsFour{} published conditions whose served dose is an IC30 (\hydnAnchorCompounds{}
 compounds of Vanacloig and Hoepfner, and the compound-free medium), read as host records
 at a fitness of \hydicThirtyFitness{} by the definition of IC30, the dose that inhibits
 the wild type's growth by 30 percent, and at 1 for the compound-free medium: asserted
@@ -162,9 +162,14 @@ drawings. Genes: every screen is a deletion collection of the same genes, so one
 of \hydnGeneTokens{} gene tokens serves all of them, each screen's coverage drawn as a
 bar of that length (\hydjoinGenesMin{} to \hydjoinGenesMax{}); this study's host
 deletes none. Compounds: every compound is one row of one structure table (FCFP4
-counts), screens share \hydjoinSharedMin{} to \hydjoinSharedMax{} compounds, and of
-this study's six inhibitors the \hydjoinInhibitorsInScreens{} filled squares (furfural
-and 5-HMF) are in Vanacloig, the other four in no screen. Growth: every value is a
+counts), and the scatter is that table, all \hydjoinCompoundRows{} rows placed in two
+dimensions by UMAP on the Tanimoto similarity between their fingerprints taken as bit
+sets. A point's color is the screen that holds it, read off the gene bars above; gray
+is a row no screen dosed. The screens spread over the whole table and share
+\hydjoinSharedMin{} to \hydjoinSharedMax{} compounds with each other, and this study's
+six, ringed, sit inside it in two places: furfural and 5-HMF among the furans above,
+which Vanacloig also holds, and the four acids below, which no screen dosed. Growth:
+every value is a
 growth reading, a screen's of a strain against its control and this study's of the
 wild type, and an IC30 dose asserts the wild type at \hydicThirtyFitness{}, the marked
 point of the sketch, which is what ties a screen's dose scale to the host's. The split,
@@ -238,7 +243,7 @@ it is \hydsvdPredSpearman{} at p \hydsvdPredP{}. \status{todo}\,\fstat{file}
 \textbf{l}, This study's six titrations with their Hill fits, dose in units of each
 compound's own half-maximal dose; slopes run \hydhillMin{} to \hydhillMax{}. The model
 whose host, the empty genotype read through the shared cell head, is trained on the
-public anchors alone reads a flat line at the anchors' assumed fitness for every
+published anchors alone reads a flat line at the anchors' assumed fitness for every
 inhibitor at every dose, Spearman \hydexTwoOneZeroShotSpearman{} against the
 \hydexTwoOneZeroShotConditions{} observed single-agent conditions (not drawn); trained
 on these wells it fits, Spearman \hydexTwoOneFittedSpearman{}, and is still nearly flat
@@ -277,7 +282,7 @@ model's single-agent curves are nearly flat in dose (l), so a product of two low
 readings matching a low interior is not yet evidence that it reads the interaction; the
 closure drops \hydisoboleExTwoSixModelIslands{} cells on the furfural grid.
 \status{todo}\,\fstat{file}
-\textbf{o}, The public screens added to the task under the Bliss cell readout, every
+\textbf{o}, The published screens added to the task under the Bliss cell readout, every
 fitted and zero-shot arm on the same rows, the mean over every run on fold seed 0 with
 the run spread as the whisker. Left, the compound-cold centered Spearman: one source
 \hydrOneZeroonegenemean{} (\hydrOneZeroonegenen{} runs), with Hoepfner HOP
@@ -365,7 +370,7 @@ o & every \file{results/mixture*/r10_*_cell_bliss*/*_scores.csv} on both machine
 \end{tabular}}
 
 \clearpage
-\tcfig{\figSiOne}{\textbf{Supplement one: the public benchmark in full.}
+\tcfig{\figSiOne}{\textbf{Supplement one: the published benchmark in full.}
 \textbf{a}, Every ladder arm, median centered Spearman per encoder and kernel,
 \hydladderCells{} fitted cells over \hydladderEncoders{} encoders. Fingerprint counts
 lead every kernel they are defined for. \status{todo}\,\fstat{file}
@@ -439,13 +444,13 @@ d & \file{mixture_combinations.csv} (the extrapolation flags),
 \clearpage
 \tcfig{\figSiThree}{\textbf{Supplement three: how profiles compose, and what the
 predicted ones carry.}
-\textbf{a}, Emergent and masked gene rates of each public pair against how alike its two
+\textbf{a}, Emergent and masked gene rates of each published pair against how alike its two
 singles are, with the control-matched null beside them. The median emergent fraction is
 \hydhetEmergentMedian{} against a null of \hydhetNullEmergent{}, and the masked fraction
 \hydhetMaskedMedian{}; the only two near-replicate singles in the screen disagree on
 \hydhetReplicateDisagreeMin{} to \hydhetReplicateDisagreeMax{} of their own hits, which
 is the noise floor these rates sit inside. \status{todo}\,\fstat{file}
-\textbf{b}, The one dose grid the public screen holds, methotrexate against
+\textbf{b}, The one dose grid the published screen holds, methotrexate against
 fluorouracil: the weight the free linear fit puts on the first single moves from
 \hydmtxLinAMin{} to \hydmtxLinAMax{} across \hydmtxCells{} dose pairs, while the mean
 wins at \hydmtxMeanWins{} of them. \status{todo}\,\fstat{file}
@@ -490,7 +495,7 @@ Status: on file. \\
 over both machines.} Rounds three and four of the mixture trainer, every run on fold
 seed 0 unless a panel says otherwise; a run is one seed on one fold on one machine, and
 an arm run on both machines contributes both copies.
-\textbf{a}, The one-, two- and three-source arms on the public side, mean over runs with
+\textbf{a}, The one-, two- and three-source arms on the published side, mean over runs with
 its standard deviation, \hydrThreeonegenen{}, \hydrThreetwogenen{} and
 \hydrThreethreegenen{} runs: \hydrThreeonegenemean{}, \hydrThreetwogenemean{} and
 \hydrThreethreegenemean{}, against nested ridge at \hydladderRidge{}. The run spread is
@@ -504,7 +509,7 @@ readout's arms; the same ladder under the Bliss cell readout, at three seeds, is
 and off, same machine, same folds, one seed; \hydrThreedosepairs{} pairs, FiLM lower on
 \hydrThreedosepairsfilmLower{} of them, and the furfural-grid residual more negative on
 \hydrThreedosepairsgridMoreNegative{} of them. \status{todo}\,\fstat{file}
-\textbf{d}, What the transformer predicts on the public screens it learns from: the
+\textbf{d}, What the transformer predicts on the published screens it learns from: the
 held-out compound score per source, mean over the plain arms that carry it, beside the
 chemistry-feature learner's compound-cold score on the same source (Hoepfner
 \hydrThreesrchoepfnercgt{} against \hydrThreesrchoepfnerridge{}, Hillenmeyer
@@ -581,7 +586,7 @@ a to c & every \file{results/mixture/r3*/*_history.csv} and \file{r4*} on GilaHy
 \clearpage
 \tcfig{\figSiSix}{\textbf{Supplement six: every scored arm of rounds one to
 four, both machines.} One row per arm, every run a point (one seed on one fold on one
-machine) and the arm's mean a bar, sorted by the public score; rounds one and two
+machine) and the arm's mean a bar, sorted by the published score; rounds one and two
 (pool-and-last, 50 epochs) sit on the same axis as rounds three and four (the held-out
 protocol, 150 epochs). \textbf{a}, The compound-cold centered Spearman on Vanacloig
 against nested ridge at \hydladderRidge{}. \textbf{b}, The growth call over the 63
@@ -630,7 +635,7 @@ the score. Three kinds of encoder sit on that basis.
   the cell graph transformer), trained on the same folds, three seeds each; the
   encoder is read against its control paired on compound and fold, median difference
   \hydpairedMedian{}, up on \hydpairedUp{} of \hydpairedEvaluations{}.
-\item \textbf{The mixture trainer} (040), the same transformer with the public screens
+\item \textbf{The mixture trainer} (040), the same transformer with the published screens
   and the host records in one objective, which scores on its own basis (the 28
   compounds with a molar dose, folds 0 to 2): \hydmixVanEnsemble{} for the gene readout
   and, under the cell readout, inside its fold noise (\cref{sec:state}).
@@ -666,11 +671,11 @@ on compound, fold and fold seed. Status: on file. \\
 three seeds.} Every arm is three seeds on the three screening folds of fold seed 0,
 read on both machines where it ran on both; the bar is the mean over runs, the whisker
 the standard deviation.
-\textbf{a}, The source ladder on the public side: one source \hydrOneZeroonegenemean{},
+\textbf{a}, The source ladder on the published side: one source \hydrOneZeroonegenemean{},
 with Hoepfner \hydrOneZerohopgenemean{}, with Hillenmeyer \hydrOneZerohetgenemean{}, with
 Wildenhain \hydrOneZerowilgenemean{}, three \hydrOneZerothreegenemean{}, four
 \hydrOneZerofourgenemean{}, run spreads \hydrOneZeroonegenesd{} to \hydrOneZerofourgenesd{}, against
-nested ridge at \hydladderRidge{}. No public screen lifts the target, and the order is
+nested ridge at \hydladderRidge{}. No published screen lifts the target, and the order is
 more sources, lower, inside one spread. \status{todo}\,\fstat{file}
 \textbf{b}, The same arms on the wet lab, growth AUROC over the 63 combinations: the
 fitted ladder reads \hydrOneZeroonegrowthmean{} to \hydrOneZerofourgrowthmean{} and does not
@@ -689,7 +694,7 @@ dose offset reads it at \hydrOneZerodosedofftitration{} and composes at
 fine-tune with FiLM reads \hydrOneZerodosefttitration{} and composes at
 \hydrOneZerodoseftauroc{}. Zero-shot, no channel reads the titration, and the dose offset
 composes at \hydrOneZerodosezsDoffauroc{}. \status{todo}\,\fstat{file}
-\textbf{d}, What the Bliss arms predict on the public screens they learn from, the
+\textbf{d}, What the Bliss arms predict on the published screens they learn from, the
 held-out compound score per source over every round-ten arm that carries it: Hoepfner
 \hydrOneZerosrchoepfnercgt{} against \hydrOneZerosrchoepfnerridge{}, Hillenmeyer
 \hydrOneZerosrchillenmeyercgt{} against \hydrOneZerosrchillenmeyerridge{}, Wildenhain

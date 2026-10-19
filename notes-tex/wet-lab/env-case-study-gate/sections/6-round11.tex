@@ -11,7 +11,7 @@
 \label{sec:round11}
 
 \pfstep{What the round asked} Ten rounds left three readings: composition is what buys
-the private readout, no public screen lifts the target or is learned at a held-out
+the private readout, no published screen lifts the target or is learned at a held-out
 compound, and every dose arm over-predicts the isobole interiors. Round eleven tested five
 new parts of the model, each switchable and each defaulting to the round-ten arm, so every
 cell of the round is an ablation of one part. \emph{Displacement}: the compound token
@@ -41,7 +41,7 @@ Everything here is one fold partition.
 \tcfig{\figRElevenHost}{\textbf{Round eleven on the wet-lab wells.} One row per arm, the
 bar the mean over folds of each fold's three-seed ensemble, the open circles the folds.
 Hatched arms never saw a titration or a combination well: their only host records are
-the public IC30 anchors and the compound-free medium. Vertical lines: the control (gray),
+the published IC30 anchors and the compound-free medium. Vertical lines: the control (gray),
 Loewe additivity from the \extitration{} Hill fits (purple), Bliss independence from the
 measured singles (red). \textbf{a},~Growth AUROC over the \hydnCombinations{}
 combinations. \textbf{b},~Spearman over the same combinations with no growth read as
@@ -50,7 +50,7 @@ combinations that grew. The displacement arm with the dose gain is the only arm 
 falls far below the control.}{fig:r11host}
 
 
-\pfstep{The reading} The Hill form composed by Bliss and trained on the public anchors
+\pfstep{The reading} The Hill form composed by Bliss and trained on the published anchors
 alone orders the combinations at a growth AUROC of \rElevenzsAuroc{} (folds
 \rElevenzsAurocMin{} to \rElevenzsAurocMax{}) against Loewe's \hydloeweAuroc{}, and ranks
 all of them at a worst-scenario Spearman of \rElevenzsWorst{}; it is the first arm of the
@@ -59,11 +59,11 @@ experiment above the Loewe rule, on one partition and three seeds, with single s
 order as the model-free rules do: Loewe \rElevenloeweAuroc{}, Bliss \rElevenhillAuroc{},
 the highest single agent \rElevenhsaAuroc{}. The Hill fine-tune is the balanced arm
 (\rElevenftAuroc{} growth, \rElevenftGrown{} on the combinations that grew, against
-Bliss's \hydblissSpearman{}). Displacing the gene embeddings leaves the public score
+Bliss's \hydblissSpearman{}). Displacing the gene embeddings leaves the published score
 (\rElevenoperatorVanMin{} to \rElevenoperatorVanMax{}) and the host unchanged, and with the
 dose gain it reads the titration at \rElevendisplaceDoffTit{} while composition collapses
 to \rElevendisplaceDoffAuroc{}. No arm reaches nested ridge's \hydladderRidge{} on the
-public side, no dose channel beats none on a held-out public dose
+published side, no dose channel beats none on a held-out published dose
 (\rElevendoseOff{} without one), and the gene-cold split reads zero
 (\rElevengeneMin{} to \rElevengeneMax{}). \Cref{fig:r11model} wires the leading arm.
 
@@ -79,10 +79,10 @@ public side, no dose channel beats none on a held-out public dose
 arm, wired.} The zero-shot Hill and Bliss arm of \cref{fig:r11host}. Purple, inputs and
 the host records; orange, the operators (the deletion operator, the compound MLP, the
 Bliss split, the Hill curve and its composition); red, the transformer layers and the
-optimization; yellow, the readouts. Every record is a cell: a public strain is read at its
+optimization; yellow, the readouts. Every record is a cell: a published strain is read at its
 deleted genes, and the host is the record with no deleted gene, whose two gene blocks of
 the cell state are zero. The host's fitness is a Hill curve per inhibitor, its IC50 and
 slope read from the same cell state the gene head reads, evaluated at the medium's dose and
-multiplied over the inhibitors of a mixture; the only host records are the public IC30
+multiplied over the inhibitors of a mixture; the only host records are the published IC30
 anchors and the compound-free medium. The graph-prior weight is zero, so the nine gene
 graphs carry no signal into this arm.}{fig:r11model}

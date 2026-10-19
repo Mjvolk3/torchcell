@@ -10,10 +10,10 @@ before any of them enters the paper. Nothing in them is approved: the marks say 
 what is on file.
 
 * ``gate_concept``: the task (a compound and its dose enter the cell graph transformer
-  as a token the genes attend to; a public-screen strain is read at its deleted genes,
+  as a token the genes attend to; a published-screen strain is read at its deleted genes,
   the bAID host at the mean over genes), the two data sources, and the evaluation.
 * ``gate_main``: the four-by-three plan of the experiment note, a to l.
-* ``gate_si1_benchmarks``: the public-benchmark detail behind d, e and f.
+* ``gate_si1_benchmarks``: the published-benchmark detail behind d, e and f.
 * ``gate_si2_growth``: the single-agent and growth-call detail behind j, k and l.
 * ``gate_si3_profiles``: the composition-rule and profile detail behind h and i.
 
@@ -169,7 +169,7 @@ SRC_FILL = {
     "control": PLOT_PALETTE_FILL[10],
 }
 SRC_LABEL = {
-    "measured": "a measured value (the public screens, the Bioscreen wells)",
+    "measured": "a measured value (the published screens, the Bioscreen wells)",
     "bliss": "model-free rule: Bliss independence (the product of the singles)",
     "loewe": "model-free rule: Loewe additivity (the dose-equivalent sum)",
     "hsa": "model-free rule: the highest single agent",
@@ -401,6 +401,9 @@ class Reads:
                 )
             )[0]
         )
+        #: the whole compound table in two dimensions, UMAP on the Tanimoto between
+        #: FCFP4 bit sets, with each screen's membership (``compound_embedding.py``)
+        self.embedding = self.csv(osp.join(R040, "compound_embedding.csv"))
         #: the curated-identity SMILES of every profiled compound; formic and lactic
         #: acid carry an identity gap and are the trainer's own SMILES
         self.smiles = {
@@ -1030,7 +1033,7 @@ def fig_concept(R: Reads) -> dict[str, str]:
         85,
         46,
         14,
-        "read at the deleted genes:\nthe deletion profile\n(the public screens)",
+        "read at the deleted genes:\nthe deletion profile\n(the published screens)",
         SRC_COLOR["cgt"],
         "white",
     )
@@ -1094,7 +1097,7 @@ def fig_concept(R: Reads) -> dict[str, str]:
         8,
         60,
         17,
-        "public screens: compound-cold folds,\nthe per-compound centered Spearman\n"
+        "published screens: compound-cold folds,\nthe per-compound centered Spearman\n"
         "against each compound's reliability ceiling",
         SRC_COLOR["ridge"],
         SRC_FILL["ridge"],
@@ -1349,7 +1352,7 @@ SOURCE_TITLE = {
 #: run ids (ex21, ex23, ex26 to ex28) staying in the source table, the script and the
 #: experiment note as the internal record (owner, 2026-10-18)
 HOST_TITLE = {
-    "host_anchor": "IC30 anchors (screens)",
+    "host_anchor": "IC30 anchors",
     "host_ex21": "this study: titration",
     "host_ex23": "this study: combinations",
     "host_isobole": "this study: isobole grids",
@@ -1424,7 +1427,10 @@ def draw_sources(ax: Any, R: Reads) -> None:
     for split in ["host_anchor", "host_ex21", "host_ex23", "host_isobole"]:
         r = c.loc[split]
         if split == "host_anchor":
-            detail = f"{int(r.n_compounds)} screen compounds\nat their IC30 dose"
+            detail = (
+                f"{int(r.n_compounds)} compounds of Vanacloig\n"
+                "and Hoepfner at their IC30 dose"
+            )
             n = int(r.n_conditions)
         else:
             detail = f"{int(r.n_compounds)} inhibitors\n{CULTURE['host']}"
@@ -1573,8 +1579,8 @@ def draw_label_shapes(ax: Any, R: Reads) -> None:
             )
             k = int(np.argmin(np.abs(curve - IC30_FITNESS)))
             for x, v, text, ha in (
-                (xs[0], 1.0, "1 with none", "left"),
-                (xs[k], IC30_FITNESS, f"{IC30_FITNESS:.2f} at IC30", "left"),
+                (xs[0], 1.0, "no compound, 1", "left"),
+                (xs[k], IC30_FITNESS, f"IC30 dose, {IC30_FITNESS:.2f}", "left"),
             ):
                 ax.plot(
                     [x],
@@ -1723,6 +1729,16 @@ SCREEN_SHORT = {
     "hillenmeyer_het": "Hillenmeyer HET",
     "wildenhain": "Wildenhain",
 }
+#: Which screen a mark belongs to, inside the join panel only. The colors come from the
+#: palette's muted tier, which no evidence family uses, so naming a screen here cannot be
+#: read as the sheet's orange-is-measured, red-is-Bliss encoding. The gene bars and the
+#: compound embedding share them, and the bars' own labels are the key.
+SCREEN_COLOR = {
+    "vanacloig": PLOT_PALETTE[12],
+    "hoepfner_hop": PLOT_PALETTE[14],
+    "hillenmeyer_het": PLOT_PALETTE[16],
+    "wildenhain": PLOT_PALETTE[17],
+}
 
 
 def draw_join(ax: Any, R: Reads) -> None:
@@ -1734,7 +1750,7 @@ def draw_join(ax: Any, R: Reads) -> None:
     six inhibitors as squares, filled where a screen (Vanacloig) holds the compound.
     Growth: a dose-response sketch with the anchor marked (fitness 1 with no compound,
     0.70 at a screen's IC30 dose), then the split as blocks in panel b's fills: the
-    public compound-cold folds (one of five held out) and this study's anchors and
+    published compound-cold folds (one of five held out) and this study's anchors and
     titration against its combinations and isobole grids. Every count is read from the
     trainer's own counts file, 033's cross-source table and ``source_labels.py``.
     """
@@ -1783,7 +1799,7 @@ def draw_join(ax: Any, R: Reads) -> None:
                 (x_bar, y),
                 w_bar * n / GENE_TOKENS,
                 4.5,
-                facecolor=dark,
+                facecolor=SCREEN_COLOR[src],
                 edgecolor="black",
                 linewidth=0.3,
                 zorder=2,
@@ -1808,32 +1824,51 @@ def draw_join(ax: Any, R: Reads) -> None:
         va="center",
         color=GRAY,
     )
-    # ---- compounds: one table, the inhibitors a screen holds
+    # ---- compounds: one table, drawn as the table rather than asserted
     ax.text(0, 97, "compounds: one table (FCFP4)", **head_kw)
-    sq = 7.0
-    for j, ab in enumerate(INHIB):
-        x = 2 + j * 16.5
-        ax.add_patch(
-            plt.Rectangle(
-                (x, 81),
-                sq,
-                sq,
-                facecolor=dark if ab in held else "white",
-                edgecolor="black",
-                linewidth=0.4,
-                zorder=2,
-            )
+    emb = R.embedding
+    num("joinCompoundRows", len(emb))
+    bx0, bx1, by0, by1 = 0.0, 29.0, 65.0, 92.0
+    # the cloud is scaled on its 1st to 99th percentiles and clipped to the box, so a
+    # handful of far points cannot shrink it into a corner
+    ex0, ex1 = (float(v) for v in np.percentile(emb.x, [1, 99]))
+    ey0, ey1 = (float(v) for v in np.percentile(emb.y, [1, 99]))
+
+    def ex(v: Any) -> Any:
+        return np.clip(bx0 + (bx1 - bx0) * (v - ex0) / (ex1 - ex0), bx0, bx1)
+
+    def ey(v: Any) -> Any:
+        return np.clip(by0 + (by1 - by0) * (v - ey0) / (ey1 - ey0), by0, by1)
+
+    ax.scatter(ex(emb.x), ey(emb.y), s=0.10, color="#D9D9D9", linewidth=0, zorder=1)
+    # the bulk first, so a small screen is not buried under Wildenhain
+    for src in sorted(screens, key=lambda s_: -int(emb[s_].sum())):
+        sub = emb[emb[src]]
+        ax.scatter(
+            ex(sub.x), ey(sub.y), s=0.16, color=SCREEN_COLOR[src], linewidth=0, zorder=2
         )
-        ax.text(x + sq / 2, 79.5, ab, fontsize=fs, ha="center", va="top")
+    mine = emb[emb.this_study]
+    ax.scatter(
+        ex(mine.x),
+        ey(mine.y),
+        s=3.2,
+        facecolor="none",
+        edgecolor="black",
+        linewidth=0.3,
+        zorder=4,
+    )
     ax.text(
-        0,
-        72.5,
-        f"filled: in Vanacloig; screens share\n{int(shared.min())} to {int(shared.max())} compounds",
-        fontsize=fs,
+        32,
+        91,
+        f"{len(emb):,} rows, one per compound,\n"
+        "placed by Tanimoto; color is\n"
+        "the screen, as above. Screens\n"
+        f"share {int(shared.min())} to {int(shared.max())}. Ringed: this\n"
+        "study's six, furans above acids.",
+        fontsize=3.8,
         ha="left",
         va="top",
-        color=GRAY,
-        linespacing=1.1,
+        linespacing=1.15,
     )
     # ---- growth: one reading, the anchor, and the split
     ax.text(0, 63, "growth: one reading, and the split", **head_kw)
@@ -1891,13 +1926,13 @@ def draw_join(ax: Any, R: Reads) -> None:
             zorder=3,
         )
 
-    ax.text(0, 24, "public", fontsize=fs, ha="left", va="center")
+    ax.text(0, 24, "published", fontsize=fs, ha="left", va="center")
     for j in range(5):
         block(
-            16 + j * 13.2, 12.4, 20.5, 7.0, light if j == 4 else dark, f"fold {j + 1}"
+            22 + j * 12.6, 11.8, 20.5, 7.0, light if j == 4 else dark, f"fold {j + 1}"
         )
     ax.text(
-        16,
+        22,
         17,
         f"{n_cmp} compounds, one fold of five held out",
         fontsize=3.9,
@@ -1905,12 +1940,12 @@ def draw_join(ax: Any, R: Reads) -> None:
         va="center",
     )
     # the two blocks name their split and the wells go on the line under them, as the
-    # public row does: the counts did not fit inside a block this narrow
+    # published row does: the counts did not fit inside a block this narrow
     ax.text(0, 10, "this\nstudy", fontsize=fs, ha="left", va="center", linespacing=1.1)
-    block(16, 42, 6.5, 7.0, dark, f"{n_anchor} anchors")
-    block(60, 40, 6.5, 7.0, light, f"{wc['n_combinations']} combinations")
+    block(22, 38, 6.5, 7.0, dark, f"{n_anchor} anchors")
+    block(62, 38, 6.5, 7.0, light, f"{wc['n_combinations']} combinations")
     ax.text(
-        16,
+        22,
         2.5,
         f"{int(c.loc['host_ex21'].n_cells)} titration wells, "
         f"{int(c.loc['host_isobole'].n_cells)} isobole wells",
@@ -2856,11 +2891,11 @@ def fig_main(R: Reads) -> dict[str, str]:
     Row one is the data and the model (the inhibitors with their Vanacloig neighbors;
     each source's size, genotype, culture and label; what the sources share and what is
     trained on and tested on, as a graphic; the model with its equations). Row two is
-    the public benchmark at the gene level and the dose (the ladder, the unseen
+    the published benchmark at the gene level and the dose (the ladder, the unseen
     compound, the learning curve, dose in two media). Row three is composition (how
     pairs compose, the predicted profile, the pre-registered similarity test, the
     titrations). Row four is the wet lab (the combinations, the isobole grids, and the
-    source ladder read on the public score and on the wet lab side by side).
+    source ladder read on the published score and on the wet lab side by side).
     """
     fig = new_sheet(170)
     # the gap between rows holds the panel letters (``letters_status``), and the
@@ -2913,7 +2948,7 @@ def fig_main(R: Reads) -> dict[str, str]:
     # the two ladders read NUM["ladderRidge"] and NUM["loeweAuroc"], which e and m set;
     # they share their rows, the wet-lab half without its own labels
     draw_bliss_ladder(
-        o1, R, "gene", title_text="public score flat", compact=True, paired=True
+        o1, R, "gene", title_text="published score flat", compact=True, paired=True
     )
     draw_bliss_ladder(
         o2,
@@ -3069,7 +3104,7 @@ def draw_rule_table(ax: Any, R: Reads) -> None:
 
 
 def fig_si1(R: Reads) -> dict[str, str]:
-    """Supplement 1: the public-benchmark detail behind d, e and f."""
+    """Supplement 1: the published-benchmark detail behind d, e and f."""
     fig = new_sheet(150)
     fig.get_layout_engine().set(rect=(0, 0.012, 1, 0.94))
     axes = rows(fig, 2, 2)
@@ -3691,7 +3726,7 @@ def draw_source_sets(ax: Any, R: Reads, readout: str) -> None:
     bars(ax, data, xlabel, xmax)
     title(
         ax,
-        "adding public screens: "
+        "adding published screens: "
         + (
             "gene level, mean over runs"
             if readout == "gene"
@@ -3821,7 +3856,7 @@ def draw_dose_pairs(ax: Any, R: Reads) -> None:
     title(ax, "the dose channel costs the growth call: paired, same folds", n)
 
 
-#: the arms of the gene readout (rounds three to five) that carry each public screen,
+#: the arms of the gene readout (rounds three to five) that carry each published screen,
 #: and the arms of the Bliss cell readout (round ten) that do
 GENE_SOURCE_ARMS = {
     "hoepfner_hop": ("mix_vanhop_e150", "mix_vanhophet_e150"),
@@ -3854,7 +3889,7 @@ def draw_per_source(
     prefix: str = "r3",
     dose_arms: tuple[str, ...] | None = None,
 ) -> None:
-    """What the transformer predicts on the public screens it learns from.
+    """What the transformer predicts on the published screens it learns from.
 
     For each auxiliary source, the held-out COMPOUND score of the ``plain`` arms that
     carry it (centered Spearman, mean over runs), beside the chemistry-feature
@@ -3925,7 +3960,7 @@ def draw_per_source(
             )
         )
     bars(ax, data, "held-out centered Spearman on the source", 0.5)
-    title(ax, "the public screens are barely learned")
+    title(ax, "the published screens are barely learned")
 
 
 def draw_machines(ax: Any, R: Reads) -> None:
@@ -4037,7 +4072,7 @@ BLISS_LADDER = [
     ("mix_vanhet_e150_cell_bliss", "two: with Hillenmeyer HET", "het"),
     ("mix_vanwil_e150_cell_bliss", "two: with Wildenhain", "wil"),
     ("mix_vanhophet_e150_cell_bliss", "three: Hoepfner and Hillenmeyer", "three"),
-    ("mix_vanhophetwil_e150_cell_bliss", "four: every public screen", "four"),
+    ("mix_vanhophetwil_e150_cell_bliss", "four: every published screen", "four"),
 ]
 ZERO_SHOT_LADDER = [
     ("mix_van_e150_cell_anchors_bliss", "zero-shot, one source", "zsOne"),

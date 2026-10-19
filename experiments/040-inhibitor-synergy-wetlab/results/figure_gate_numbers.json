@@ -220,6 +220,7 @@
   "isoboleExTwoSixModelDoseIslands": 5,
   "isoboleExTwoSixModelIslands": 0,
   "isoboleFrontsBeyondGrid": 0,
+  "joinCompoundRows": 5474,
   "joinGenesMax": 5813,
   "joinGenesMin": 209,
   "joinInhibitorsInScreens": 2,

@@ -123,7 +123,7 @@ row.
 \pfstep{The first model arms} The mixture trainer of this experiment ran its first
 round: the environment-encoder recipe of the corrected-store campaign with one compound
 token per inhibitor, a log-molar dose modulation (FiLM) that can be switched off, and a
-host head read at the mean over genes, fitted on the public dose anchors alone or on the
+host head read at the mean over genes, fitted on the published dose anchors alone or on the
 anchors with the titration run, five compound-cold folds of one fold seed with three
 seeds each. The combination plate and the isobole grids are never trained on.
 \hydarmsscored{} arms have score files here; two more, the dose-off pair, finished on
@@ -142,14 +142,14 @@ model-free rules on every wet-lab readout.
   AUROC \hydloeweAuroc{}; for the worst-scenario ranking over all combinations, Loewe,
   \hydordersloeweworst{}; for fitness over the combinations that grew, Bliss from the
   observed singles, \hydblissSpearman{}; for the furfural grid, the mean of observed
-  minus Bliss, \hydisoboleExTwoSixExcess{}; on the public side, nested ridge,
+  minus Bliss, \hydisoboleExTwoSixExcess{}; on the published side, nested ridge,
   \hydladderRidge{}. A negative grid residual means the arm predicts more growth than
   was seen.}
   \label{tab:arms}
   \begin{tabular}{@{}p{46mm}p{8mm}p{18mm}p{22mm}p{22mm}p{22mm}p{22mm}@{}}
     \toprule
     arm & folds & growth AUROC & worst-scenario Spearman & fitness Spearman, grown &
-    furfural grid, observed minus arm & public, centered Spearman \\
+    furfural grid, observed minus arm & published, centered Spearman \\
     \midrule
     joint, anchors and titration, dose FiLM & \hydarmjointFilmfolds{} &
       \hydarmjointFilmauroc{} & \hydarmjointFilmworst{} & \hydarmjointFilmfitGrown{} &
@@ -181,14 +181,14 @@ model is for. Every arm's grid residual is negative: the arms predict more growt
 interior cells than was seen, and the dose-aware arms predict the most. Hypothesis
 (untested): the host head composes inhibitors near-additively or less, so each added
 inhibitor lowers predicted fitness by less than it lowers observed fitness, and the
-sharper the single-agent fit the larger that gap. On the public side every arm reads
+sharper the single-agent fit the larger that gap. On the published side every arm reads
 within a few hundredths of the earlier campaign's encoder and below ridge, so the wet-lab
 failure is not a model that was working elsewhere.
 
 \pfstep{Where a learned model can still earn the panel} The rules need the single-agent
 curves. The regimes in which they have no prediction, or one they cannot improve with
 data, are the model's territory, and each needs its own baseline. Zero-shot singles: no
-Bioscreen well in training, the six titration curves predicted from public screens; the
+Bioscreen well in training, the six titration curves predicted from published screens; the
 honest readout is the pooled ranking over all titration wells, since within one compound
 fitness falls with dose and any dose-aware model scores near perfectly there; on file the
 anchors arm reads weakly and the dose-off anchors arm reads nothing. One inhibitor
@@ -214,15 +214,15 @@ queued rounds return.
 (\cref{fig:sifour}) was read on 2026.10.12 with every arm scored on Delta and most of them
 on GilaHyper as well. Three readings. The same config at the same seed differs between the
 machines by a median of \hydrThreemachinesmedianAbsDiff{} and by up to
-\hydrThreemachinesmaxAbsDiff{} on the public score, so no single-seed difference in the
+\hydrThreemachinesmaxAbsDiff{} on the published score, so no single-seed difference in the
 screen is a finding. Over every run so far the one-, two- and three-source arms read
 \hydrThreeonegenemean{}, \hydrThreetwogenemean{} and \hydrThreethreegenemean{} on the
-public side and \hydrThreeonegrowthmean{}, \hydrThreetwogrowthmean{} and
-\hydrThreethreegrowthmean{} on the growth call: adding the public screens does not lift
+published side and \hydrThreeonegrowthmean{}, \hydrThreetwogrowthmean{} and
+\hydrThreethreegrowthmean{} on the growth call: adding the published screens does not lift
 either readout, and the arms predict a cold compound on those screens at
 \hydrThreesrchoepfnercgt{} (Hoepfner) and \hydrThreesrchillenmeyercgt{} (Hillenmeyer)
 against the chemistry-feature learners' \hydrThreesrchoepfnerridge{} and
-\hydrThreesrchillenmeyerridge{}. The dose modulation learns a held-out public dose
+\hydrThreesrchillenmeyerridge{}. The dose modulation learns a held-out published dose
 (\hydrThreesrchoepfnerdose{}) and lowers the growth call on
 \hydrThreedosepairsfilmLower{} of \hydrThreedosepairs{} paired comparisons, which is round
 one's reading again under a protocol that selects on a held-out signal. Round four, six
@@ -233,27 +233,27 @@ into a measured null or a difference.
 null: the three source-set arms at six seeds sit inside one spread on both readouts
 (\cref{fig:sifour}). Rounds seven to nine changed what a record is. Under the cell
 readout every record is a cell, the host the record with the empty genotype read through
-the shared head, and the public score did not move; what moved the private readout was
+the shared head, and the published score did not move; what moved the private readout was
 the composition. With the compound tokens of a medium averaged, every arm read one
 fitness at one, two and three inhibitors (growth AUROC 0.48 to 0.57 over six runs);
 summed, the medium read fitter than its singles (0.27); read one inhibitor at a time and
 composed as Bliss independence, the same model orders the combinations at
 \hydmodelAuroc{} fitted over \hydmodelRuns{} runs and \hydrOneZerozsOnegrowthmean{}
 zero-shot, and its predicted fitness falls with the inhibitor count. Round ten
-(\cref{fig:sieight}) put three seeds on the questions. Sources: no public screen lifts
+(\cref{fig:sieight}) put three seeds on the questions. Sources: no published screen lifts
 the target, and the four-source arm is the lowest (\hydrOneZeroonegenemean{} to
 \hydrOneZerofourgenemean{}); the fitted wet-lab readout does not move with sources; the
 zero-shot readout does, \hydrOneZerozsOnegrowthmean{}, \hydrOneZerozsTwogrowthmean{} and
 \hydrOneZerozsThreegrowthmean{} on one, two and three sources, three runs each and the
 steps inside the spread. Dose: FiLM on the tokens reads the titration
 (\hydrOneZerodosefilmtitration{}) and costs the host (\hydrOneZerodosefilmauroc{}
-against \hydrOneZerodoseoffauroc{} with no channel), its public cost of the single-seed
+against \hydrOneZerodoseoffauroc{} with no channel), its published cost of the single-seed
 rounds being seed noise; the dose offset reads the titration at
-\hydrOneZerodosedofftitration{} at no public cost and composes at
+\hydrOneZerodosedofftitration{} at no published cost and composes at
 \hydrOneZerodosedoffauroc{}; the titration fine-tune with FiLM composes at
 \hydrOneZerodoseftauroc{}.
 
-What the public screens themselves can be predicted at is a narrower statement than it
+What the published screens themselves can be predicted at is a narrower statement than it
 may read. The held-out compound score is the only thing measured on them: a compound the
 model never saw, its predicted profile across the HOP strains against the measured one,
 \hydrOneZerosrchoepfnercgt{} over the round-ten arms against ridge's

@@ -15,12 +15,12 @@ runs of 2021 measured all \hydnInhibitors{} of them on one strain, bAID in aerob
 \hydnExTwoOneWells{} titration wells, \hydnExTwoThreeWells{} wells over
 \hydnCombinations{} combinations, and \hydnIsoboleWells{} wells over \hydnIsoboles{}
 isobole grids, \hydnWells{} wells in all. The models that would predict them were trained
-on the pooled chemogenomic table: \hydnScreens{} public screens, \hydnPoolCells{} cells,
+on the pooled chemogenomic table: \hydnScreens{} published screens, \hydnPoolCells{} cells,
 \hydnPoolCompounds{} compounds over \hydnPoolGenes{} genes. Nothing here is approved. The
 sheets are mockups of what the result files support, and the symbol after each panel
 letter says only whether the values behind it are on file. \colorkey{}
 
-\pfstep{What the figure would claim} A model trained on public chemogenomic screens can
+\pfstep{What the figure would claim} A model trained on published chemogenomic screens can
 predict how an industrial host behaves under a mixture of inhibitors it has never seen,
 and it can do so well enough to rank the combinations a process should avoid. The figure
 is built to make that claim testable rather than to assert it: the bottom row puts the
@@ -43,7 +43,7 @@ the matrix the association is \hydsvdBestSpearman{} at a permutation p of
 \hydsvdBestP{} over \hydsvdBestPairs{} pairs, and the all-predicted matrix carries the
 opposite sign, \hydsvdPredRawSpearman{} at p \hydsvdPredRawP{} on raw profiles, which the
 fingerprint explains rather than the biology. Third, that deletion profiles compose under
-a mixture by a rule measurable on public data. On file: over \hydhetPairs{} Hillenmeyer
+a mixture by a rule measurable on published data. On file: over \hydhetPairs{} Hillenmeyer
 HET pairs the mean of the singles is the best fixed rule in \hydhetMeanWins{} of them,
 median R-squared \hydhetrTwomean{} against \hydhetrTwosum{} for the sum and
 \hydhetrTwomax{} for the highest single, and the free linear fit puts weight
@@ -56,18 +56,18 @@ from the all-predicted one. No screen exists to test them.
 from the ex21 Hill fits. Fitness over the combinations that grew: Spearman
 \hydblissSpearman{}, Bliss from the observed ex23 singles. Both are model-free, both come
 from the same wells the model would be scored on, and both are already in a committed
-result file. On the public side the bar is the nested ridge on fingerprint counts at a
+result file. On the published side the bar is the nested ridge on fingerprint counts at a
 median centered Spearman of \hydladderRidge{} over \hydladderCompounds{} compound-cold
 folds, which the next best arm of the ladder trails by a hundredth
 (\hydladderSecond{}).
 
 \pfstep{The angle, after ten rounds} The figure is not a better chemogenomic model.
-Nested ridge on fingerprint counts holds the public bar (\hydladderRidge{}) and no
+Nested ridge on fingerprint counts holds the published bar (\hydladderRidge{}) and no
 transformer arm of any round reaches it. The angle is that the environment is a
 perturbation of the same kind as a deletion, and one cell model composes both. Once
 every record is a cell, a deletion strain in a drug and a wild-type host in a mixture
 being one record type read through one head, and a mixture is read one inhibitor at a
-time and composed as Bliss independence, the model trained on the public deletion
+time and composed as Bliss independence, the model trained on the published deletion
 screens and two anchors orders the \hydnCombinations{} private combinations at a growth
 AUROC of \hydrOneZerozsOnegrowthmean{} without a titration well in training, above the
 Bliss rule on the measured singles (\hydblissAuroc{}) and \hydrOneZerozsThreegrowthmean{}
@@ -77,7 +77,7 @@ giving them a real dose axis (titration Spearman \hydrOneZerodosedofftitration{}
 growth AUROC \hydrOneZerodosedoffauroc{}), then a deviation term, which is the
 environment's analog of a genetic interaction and the open piece; every dose arm
 overpredicts the isobole interiors, which is what a missing interaction term looks like.
-Pooled public data buys transfer, not benchmark points: the screens do not lift the
+Pooled published data buys transfer, not benchmark points: the screens do not lift the
 target (\hydrOneZeroonegenemean{} with one source, \hydrOneZerofourgenemean{} with four,
 inside one spread) and are not learned at a held-out compound, yet the zero-shot private
 readout rises with every screen added, three runs per arm and the steps inside the

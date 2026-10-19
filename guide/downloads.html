@@ -132,9 +132,10 @@ directory (the records LMDB and its <code class="docutils literal notranslate"><
 (<code class="docutils literal notranslate"><span class="pre">build_manifest.json</span></code>, <code class="docutils literal notranslate"><span class="pre">gene_set.json</span></code>, <code class="docutils literal notranslate"><span class="pre">experiment_reference_index.json</span></code>), exactly
 as the loader wrote them, so a download replaces the build step. The raw files each
 loader consumed are served from the same endpoint, hash-pinned by their <code class="docutils literal notranslate"><span class="pre">manifest.json</span></code>,
-and so are two more file tiers that graph records point at without storing their bytes:
-the genomes tier (reference and isolate assembly sets) and the objects tier (derived
-files such as embeddings, matrices and indexed FASTA).</p>
+and so are three more file tiers: two that graph records point at without storing their
+bytes, the genomes tier (reference and isolate assembly sets) and the objects tier
+(derived files such as embeddings, matrices and indexed FASTA), and the library tier,
+which serves each paper’s supplementary material (never the paper itself).</p>
 <p>The endpoint is <code class="docutils literal notranslate"><span class="pre">http://torchcell-database.ncsa.illinois.edu:8724</span></code>, on the database
 host, serving the archive store and the raw mirror from the Taiga project storage. No
 key, account or ssh is needed: every route is open for reading. The URL is built into
@@ -154,7 +155,7 @@ for a mirror or a development server. The store currently holds <code class="doc
 </thead>
 <tbody>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/health</span></code></p></td>
-<td><p>liveness, artifact and raw-key counts</p></td>
+<td><p>liveness, artifact and per-tier key counts</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/datasets</span></code></p></td>
 <td><p>the artifact index: one row per packaged archive</p></td>
@@ -201,6 +202,18 @@ for a mirror or a development server. The store currently holds <code class="doc
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/objects/{object_key}/artifact/{path}</span></code></p></td>
 <td><p>one objects file; <code class="docutils literal notranslate"><span class="pre">X-Artifact-SHA256</span></code>, <code class="docutils literal notranslate"><span class="pre">Accept-Ranges:</span> <span class="pre">bytes</span></code></p></td>
 </tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/library</span></code></p></td>
+<td><p>citation keys in the library tier that carry a manifest</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/library/{citation_key}/manifest</span></code></p></td>
+<td><p>the key’s <code class="docutils literal notranslate"><span class="pre">manifest.json</span></code>, without paper, OCR or layout records</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/library/{citation_key}/files</span></code></p></td>
+<td><p>the supplementary files that manifest lists, with sha256</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/library/{citation_key}/artifact/{path}</span></code></p></td>
+<td><p>one supplementary file; <code class="docutils literal notranslate"><span class="pre">X-Artifact-SHA256</span></code>, <code class="docutils literal notranslate"><span class="pre">Accept-Ranges:</span> <span class="pre">bytes</span></code></p></td>
+</tr>
 </tbody>
 </table>
 <p>An index row records the dataset <code class="docutils literal notranslate"><span class="pre">slug</span></code>, the loader <code class="docutils literal notranslate"><span class="pre">dataset_class</span></code>, the
@@ -210,9 +223,9 @@ the release manifest), the archive name, <code class="docutils literal notransla
 <code class="docutils literal notranslate"><span class="pre">status</span></code> (<code class="docutils literal notranslate"><span class="pre">supported</span></code> or <code class="docutils literal notranslate"><span class="pre">deprecated</span></code>). Pick the newest <code class="docutils literal notranslate"><span class="pre">supported</span></code> row whose
 <code class="docutils literal notranslate"><span class="pre">torchcell_version</span></code> shares your installed <code class="docutils literal notranslate"><span class="pre">major.minor</span></code>.</p>
 </section>
-<section id="raw-genomes-and-objects-tiers">
-<h2>Raw, genomes and objects tiers<a class="headerlink" href="#raw-genomes-and-objects-tiers" title="Link to this heading"></a></h2>
-<p>The three file tiers share one serving rule. Each key (a citation key, an assembly set,
+<section id="raw-genomes-objects-and-library-tiers">
+<h2>Raw, genomes, objects and library tiers<a class="headerlink" href="#raw-genomes-objects-and-library-tiers" title="Link to this heading"></a></h2>
+<p>The four file tiers share one serving rule. Each key (a citation key, an assembly set,
 or an object key) is a directory with a <code class="docutils literal notranslate"><span class="pre">manifest.json</span></code> listing every file by path,
 role, size and sha256; a file is served only if its key’s manifest lists it, and the
 <code class="docutils literal notranslate"><span class="pre">X-Artifact-SHA256</span></code> header of the response is the manifest’s hash, so a client checks
@@ -228,12 +241,20 @@ population, source and release.</p></li>
 <li><p><strong>Objects</strong> (<code class="docutils literal notranslate"><span class="pre">/objects</span></code>): derived files a record points at, keyed by a citation key
 or a named derived set; the manifest is the literature <code class="docutils literal notranslate"><span class="pre">Manifest</span></code>, and each file’s
 processing record names the script and inputs that produced it.</p></li>
+<li><p><strong>Library</strong> (<code class="docutils literal notranslate"><span class="pre">/library</span></code>): a paper’s supplementary material, keyed by citation key;
+the manifest is the literature <code class="docutils literal notranslate"><span class="pre">Manifest</span></code>. Only the SI and data roles are served
+(<code class="docutils literal notranslate"><span class="pre">si_data</span></code>, <code class="docutils literal notranslate"><span class="pre">si_pdf</span></code>, <code class="docutils literal notranslate"><span class="pre">si_ocr</span></code>, <code class="docutils literal notranslate"><span class="pre">si_text</span></code>, <code class="docutils literal notranslate"><span class="pre">raw_data</span></code>, <code class="docutils literal notranslate"><span class="pre">dataset_raw</span></code>, <code class="docutils literal notranslate"><span class="pre">annotations</span></code>,
+<code class="docutils literal notranslate"><span class="pre">other</span></code>), for example a plasmid GenBank file a strain record points at. The paper,
+its OCR markdown, OCR images and layout files are never listed or served; they stay
+behind a key on the literature endpoint.</p></li>
 </ul>
-<p><code class="docutils literal notranslate"><span class="pre">/genomes</span></code> and <code class="docutils literal notranslate"><span class="pre">/objects</span></code> list only keys that carry a manifest, and an endpoint without
-one of those tiers answers its listing with an empty list.</p>
-<p>Paper content is withheld. In the raw and objects tiers a manifest record whose role
-begins <code class="docutils literal notranslate"><span class="pre">paper_</span></code> (<code class="docutils literal notranslate"><span class="pre">paper_pdf</span></code>, <code class="docutils literal notranslate"><span class="pre">paper_text</span></code>, <code class="docutils literal notranslate"><span class="pre">paper_ocr</span></code>, <code class="docutils literal notranslate"><span class="pre">paper_fulltext</span></code>) is left out
-of <code class="docutils literal notranslate"><span class="pre">/manifest</span></code> and <code class="docutils literal notranslate"><span class="pre">/files</span></code>, and a request for its bytes answers 404 <code class="docutils literal notranslate"><span class="pre">paper</span> <span class="pre">content</span> <span class="pre">is</span> <span class="pre">not</span> <span class="pre">served</span></code>. SI files and data files under the same key are served as usual.</p>
+<p><code class="docutils literal notranslate"><span class="pre">/genomes</span></code>, <code class="docutils literal notranslate"><span class="pre">/objects</span></code> and <code class="docutils literal notranslate"><span class="pre">/library</span></code> list only keys that carry a manifest, and an
+endpoint without one of those tiers answers its listing with an empty list.</p>
+<p>Paper content is withheld. In the raw, objects and library tiers a manifest record
+whose role begins <code class="docutils literal notranslate"><span class="pre">paper_</span></code> (<code class="docutils literal notranslate"><span class="pre">paper_pdf</span></code>, <code class="docutils literal notranslate"><span class="pre">paper_text</span></code>, <code class="docutils literal notranslate"><span class="pre">paper_ocr</span></code>, <code class="docutils literal notranslate"><span class="pre">paper_fulltext</span></code>)
+or <code class="docutils literal notranslate"><span class="pre">ocr_</span></code> (<code class="docutils literal notranslate"><span class="pre">ocr_image</span></code>, <code class="docutils literal notranslate"><span class="pre">ocr_layout</span></code>, <code class="docutils literal notranslate"><span class="pre">ocr_provenance</span></code>) is left out of <code class="docutils literal notranslate"><span class="pre">/manifest</span></code> and
+<code class="docutils literal notranslate"><span class="pre">/files</span></code>, and a request for its bytes answers 404 <code class="docutils literal notranslate"><span class="pre">paper</span> <span class="pre">content</span> <span class="pre">is</span> <span class="pre">not</span> <span class="pre">served</span></code>. SI
+files and data files under the same key are served as usual.</p>
 </section>
 <section id="curl">
 <h2>curl<a class="headerlink" href="#curl" title="Link to this heading"></a></h2>
@@ -263,6 +284,9 @@ curl<span class="w"> </span>-C<span class="w"> </span>-<span class="w"> </span>-
 grep<span class="w"> </span>-i<span class="w"> </span>x-artifact-sha256<span class="w"> </span>headers.txt<span class="p">;</span><span class="w"> </span>sha256sum<span class="w"> </span><span class="s2">"&lt;file&gt;"</span><span class="w">   </span><span class="c1"># the two must agree</span>
 curl<span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/objects"</span>
 curl<span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/objects/&lt;object_key&gt;/files"</span>
+
+<span class="c1"># library tier: a paper's supplementary files (the paper itself is not served)</span>
+curl<span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/library/&lt;citation_key&gt;/files"</span>
 </pre></div>
 </div>
 </section>
@@ -296,7 +320,11 @@ curl<span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_U
 <td><p>server</p></td>
 <td><p>the objects tier; defaults to <code class="docutils literal notranslate"><span class="pre">$DATA_ROOT/torchcell-objects</span></code>; may be absent</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">TC_DATA_HOST</span></code>, <code class="docutils literal notranslate"><span class="pre">TC_DATA_PORT</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">TC_DATA_LIBRARY_ROOT</span></code></p></td>
+<td><p>server</p></td>
+<td><p>the library tier, of which only supplementary material is served; defaults to <code class="docutils literal notranslate"><span class="pre">$DATA_ROOT/torchcell-library</span></code>; may be absent</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">TC_DATA_HOST</span></code>, <code class="docutils literal notranslate"><span class="pre">TC_DATA_PORT</span></code></p></td>
 <td><p>server</p></td>
 <td><p>bind address and port (default <code class="docutils literal notranslate"><span class="pre">0.0.0.0:8724</span></code>)</p></td>
 </tr>
@@ -339,7 +367,7 @@ the public endpoint otherwise.</p>
 </pre></div>
 </div>
 <p>The raw mirror keys and files are one <code class="docutils literal notranslate"><span class="pre">GET</span></code> away; see the Swagger page for the exact
-shapes. All three file tiers have client methods:</p>
+shapes. All four file tiers have client methods:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.client</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetClient</span>
 
 <span class="n">client</span> <span class="o">=</span> <span class="n">DatasetClient</span><span class="o">.</span><span class="n">from_env</span><span class="p">()</span>
@@ -355,6 +383,7 @@ shapes. All three file tiers have client methods:</p>
 <span class="n">client</span><span class="o">.</span><span class="n">objects</span><span class="p">()</span>
 <span class="n">client</span><span class="o">.</span><span class="n">object_manifest</span><span class="p">(</span><span class="s2">"&lt;object_key&gt;"</span><span class="p">)</span>  <span class="c1"># literature Manifest</span>
 <span class="n">client</span><span class="o">.</span><span class="n">download_object_file</span><span class="p">(</span><span class="s2">"&lt;object_key&gt;"</span><span class="p">,</span> <span class="s2">"&lt;path&gt;"</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s2">"objects/&lt;path&gt;"</span><span class="p">)</span>
+<span class="n">client</span><span class="o">.</span><span class="n">download_library_file</span><span class="p">(</span><span class="s2">"&lt;citation_key&gt;"</span><span class="p">,</span> <span class="s2">"&lt;path&gt;"</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s2">"library/&lt;path&gt;"</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Each download looks up the file’s row in the key’s manifest first (a path the manifest

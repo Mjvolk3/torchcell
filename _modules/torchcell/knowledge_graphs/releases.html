@@ -1330,8 +1330,10 @@
 <span class="sd">    so each key's manifest is fetched once. A file is ``listed`` when the manifest lists</span>
 <span class="sd">    its path with the pinned sha256, ``sha256_mismatch`` when it lists the path with</span>
 <span class="sd">    another, and ``missing`` when the path is absent or the source has no such key (a</span>
-<span class="sd">    ``RemoteMissError``, which includes a tier tc-data does not serve). Any other error</span>
-<span class="sd">    of the source propagates.</span>
+<span class="sd">    ``RemoteMissError``). tc-data serves all four tiers, so a library pointer is checked</span>
+<span class="sd">    like any other; its public manifest omits paper content (``paper_`` and ``ocr_``</span>
+<span class="sd">    roles), so a pointer at a paper file reads ``missing``. Any other error of the</span>
+<span class="sd">    source propagates.</span>
 <span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.artifacts.resolve</span><span class="w"> </span><span class="kn">import</span> <span class="n">RemoteMissError</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.artifacts.tiers</span><span class="w"> </span><span class="kn">import</span> <span class="n">find_record</span>

@@ -1,0 +1,112 @@
+%% notes-tex/database/database-expansion-200/sections/state.tex
+%% [[experiments.database.expansion-200]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/database-expansion-200/sections/state.tex
+%% SOURCE: hand-authored prose; record counts from database/releases/2026.10.17-4295f7ca.json,
+%% row figures from experiments/database/scripts/build_candidate_datasets_table.py, and the
+%% per-isolate gene-content figures from
+%% experiments/database/scripts/isolate_gene_content_vs_s288c.py
+
+\section{State across genomes\secstatus{todo}}\label{sec:state}
+
+The \term{state} of a cell, for the purposes of this list, is its transcriptome or its
+proteome: the abundance of every transcript or every protein at once. A \term{genome} is a
+strain's total genomic content, written down as sequence. The first band of this ranking
+is the set of rows that measure a state on more than one genome, where the genomes differ
+by sequence rather than by one designed edit: natural isolates, the segregants of a cross,
+a recombinant panel, or an interspecies hybrid read allele by allele. The band comes first
+because a model that predicts state from genome has to be fitted on pairs of the two, and
+the served graph holds far more of each half than of the pair.
+
+\subsection{What the served graph holds on that axis\secstatus{todo}}\label{sec:state-served}
+
+Table~\ref{tab:state-served} is every served dataset whose genotype axis is a set of
+sequenced genomes rather than the S288C reference with one cataloged edit. Three of the
+ten measure a state. Caudal 2024 is 943 isolate transcriptomes on the 1,011-isolate panel;
+Muenzner 2024 is 795 proteomes on the same panel and 55 turnover profiles; Boocock 2025
+and N'Guessan 2025 are single-cell transcriptomes over 82,467 segregant genotypes of four
+crosses. Everything else on a sequenced-genome axis is growth, a life-cycle trait, or a
+guide-by-background fitness, which fixes the genotype side of the pair without supplying a
+state.
+
+\begin{table}[H]\centering
+\small
+\caption[]{Served datasets whose genotype axis is a set of sequenced genomes. Records are
+the served counts of release 2026.10.17-4295f7ca. \emph{State} marks a transcriptome or
+proteome readout.}
+\label{tab:state-served}
+\begin{tabular}{@{}l l l r c@{}}
+\toprule
+Dataset & Genomes & Readout & Records & State \\
+\midrule
+Caudal 2024 & 943 natural isolates & RNA-seq TPM per gene & 943 & yes \\
+Muenzner 2024 & 795 natural isolates & protein abundance per protein & 795 & yes \\
+Muenzner 2024 & 55 natural isolates & protein degradation rate & 55 & yes \\
+Boocock 2025 & 79,516 segregants, 3 crosses & single-cell UMI counts & 79,516 & yes \\
+N'Guessan 2025 & 2,951 BY x RM segregants & single-cell UMI counts, pseudobulk & 2,951 & yes \\
+Hale 2024 & 169 segregants x 8,046 guides & CRISPRi fitness & 8,692,635 & \\
+Bloom 2019 & 13,950 segregants, 16 crosses & growth over 38 traits & 530,100 & \\
+Peter 2018 & 971 natural isolates & growth over 35 conditions & 33,985 & \\
+De Chiara 2022 & 1,011-isolate panel & doubling time, cell yield, life cycle & 76,620 & \\
+Puddu 2019 & 4,800 deletion strains, sequenced & genome architecture & 8,835 & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+How different those genomes are from the reference is a measured quantity, not a
+figure of speech. Against S288C, the 943 isolates of the served Caudal 2024 store carry a
+median of 78 accessory open reading frames the reference lacks and lack a median of 126
+the reference has (ranges 34 to 352 and 43 to 453), so a typical isolate is about 50 ORFs
+smaller than BY4741 and differs from it at about 200 ORFs in presence. The larger
+difference is inside the shared genes: a median of about 5,000 sequence variants and
+roughly 360 natural loss-of-function alleles per isolate. Across the panel, 1,614 distinct
+non-reference ORFs appear in at least one isolate and 1,118 reference ORFs are absent in at
+least one. The population catalog these sit in is Peter 2018's pangenome of 7,796 ORFs,
+4,940 core and 2,856 variable.
+
+\subsection{What the eight rows add\secstatus{todo}}\label{sec:state-rows}
+
+The eight rows of the band, ranks 1 to 8 of Table~\ref{tab:final}, each put a state on a
+genome axis the graph does not yet pair it with.
+
+\notesec{Albert 2018 and Jakobson 2025, the segregant pair} Albert 2018 is bulk RNA-seq of
+1,012 sequenced BY x RM segregants, the largest genotype-indexed transcriptome in yeast and
+the bulk partner of the served Boocock 2025, whose pooled panel holds 393 of these same
+segregants read per cell. Jakobson 2025 measures protein abundance on the same sequenced
+segregant class, 800 F6 segregants with more than 6,400 protein quantitative trait loci.
+Together they are transcript and protein on one recombinant panel, which is the
+natural-variation counterpart of the served Kemmeren 2014 and Messner 2023 pair on
+deletions.
+
+\notesec{Teyssonniere 2024 and Grossbach 2022, within-strain pairing} Teyssonniere 2024 is
+proteomes for 942 of the 1,011 isolates, so against the served Caudal 2024 the
+transcript-to-protein pairing is one to one by strain at species scale. It shares authors
+and a panel with the served Muenzner 2024, and whether the two proteomes are independent
+acquisitions is the first thing to settle, since building both without settling it risks
+serving one measurement twice. Grossbach 2022 is the one row where transcript, protein and
+phosphosite are all observed within a genotype, on 112 sequenced BY x RM strains, which
+turns the RNA-to-protein question from a population correlation into a within-strain
+residual.
+
+\notesec{Smith 2008, the condition axis} Smith 2008 profiles 109 BY x RM segregants in
+glucose and in ethanol. It is the only segregant transcriptome with an environment axis,
+so genotype by environment on expression is a contrast inside one panel rather than a join
+across two.
+
+\notesec{Skelly 2013, McManus 2014 and Foss 2007, the smaller rows} Skelly 2013 pairs
+transcriptome and proteome on the same 22 sequenced isolates. McManus 2014 reads ribosome
+occupancy beside mRNA abundance in \org{S. cerevisiae}, \org{S. paradoxus} and their F1
+hybrid, so translation is measured allele by allele across two genomes; the
+\org{S. paradoxus} arm is out of species and is stored apart or dropped. Foss 2007 is the
+first segregant proteome on the BY x RM cross, fifteen years and two platforms before
+Grossbach 2022, and its figures are the least confirmed of the eight: neither a segregant
+count nor a proteome depth is stated in the abstract.
+
+\subsection{What is still missing after the eight\secstatus{todo}}\label{sec:state-gaps}
+
+Three things no row in the pool supplies. There is no proteome on a condition axis across
+isolates; Teyssonniere 2024 and Muenzner 2024 are one medium each, and the only proteome
+with a condition axis anywhere in the list, Lahtvee 2017, is wild type. There is no
+translation layer on natural isolates beyond McManus 2014's three genomes. And there is no
+single-cell proteome on any genome axis at all; the per-cell rows in the perturb-seq band
+are transcriptomes. These are the shape of the 46-row shortfall, and discovery for the next
+pass should start there.

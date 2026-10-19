@@ -8,8 +8,11 @@
 # because the shared build rules list it as a prerequisite. Same arrangement as
 # notes-tex/wet-lab/w019-strain-build-list.
 #
-# Regenerate the tables before rebuilding; never hand-edit anything under tables/:
-#   python experiments/database/scripts/build_candidate_datasets_table.py
+# FROZEN at version 15 (2026-10-10). The tables under tables/ are the record of the
+# pass that chose the 19 datasets KG 4.0 added; the generating script now writes to
+# notes-tex/database/database-expansion-200, which supersedes this document.
+# Rebuilding the PDF from the committed tables is still fine; regenerating the tables
+# is not, since build_candidate_datasets_table.py no longer targets this directory.
 
 PYTHON ?= /home/michaelvolk/miniconda3/envs/torchcell/bin/python
 

@@ -1,0 +1,58 @@
+%% notes-tex/database/database-expansion-200/database-expansion-200.tex
+%% [[experiments.database.expansion-200]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/database-expansion-200/database-expansion-200.tex
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+
+\usepackage{pdflscape}
+
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\title{\vspace{-1.5em}Adding 200 Yeast Datasets}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\noindent
+The served graph, KG 4.0 (release 2026.10.17-4295f7ca, paired with torchcell v1.8.3),
+holds 70 schematized and L0--L4-verified \org{Saccharomyces cerevisiae} datasets. Nineteen
+of them, from sixteen sources, were added since the previous ranking
+(\emph{The Final Fifty for Datasets 51--100}), and thirteen of those were rows of that
+ranking. Those rows have left the list, and the 154 candidates that remain are ranked here
+for the next 200 additions, from 70 served to 270. The pool is 46 rows short of that
+number; the shortfall is open discovery, named as such, not a reserve.
+
+The ordering changes in one way. The first band is now \term{state across genomes}: a
+transcriptome or a proteome measured on strains whose genomes differ by sequence, which is
+where the served graph is thinnest relative to what a model of cell state needs
+(Sec.~\ref{sec:state}). Eight rows qualify and fill ranks 1 to 8. Behind them the rule of
+the previous pass holds: the rows a yeast Perturb-seq is designed against, then the rows
+that put two molecular layers on one joinable axis, then scale; inside a band, tier, then
+measurements (Sec.~\ref{sec:rule}).
+
+Table~\ref{tab:final} is the recommended first fifty in rank order and ten extra, so a row
+that proves unreachable has a named replacement. Table~\ref{tab:sources} gives each row's
+citation, link, data location and the reason for its position; Table~\ref{tab:synergies}
+names the joins each row opens against a served dataset or another row;
+Table~\ref{tab:excluded} records what was considered and dropped; Sec.~\ref{sec:summary}
+closes with the summary statistics, and Sec.~\ref{sec:full} prints the whole pool with a
+source for every row.
+
+\vspace{0.5em}
+\tccontents
+\clearpage
+
+\input{sections/state}
+\input{sections/rule}
+\input{sections/final}
+\input{sections/synergies}
+\input{sections/caveats}
+\input{sections/summary}
+\input{sections/full}
+
+\end{document}

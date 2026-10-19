@@ -1,0 +1,139 @@
+%% notes-tex/database/database-expansion-200/sections/rule.tex
+%% [[experiments.database.expansion-200]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/database-expansion-200/sections/rule.tex
+%% SOURCE: hand-authored prose; every number quoted here comes from
+%% experiments/database/scripts/build_candidate_datasets_table.py
+
+\section{The selection rule\secstatus{todo}}\label{sec:rule}
+
+\subsection{Sequence reconstruction is the gate, not a preference\secstatus{todo}}
+
+A phenotype is only trainable against a genotype that can be written down. Every row in
+Table~\ref{tab:final} therefore names a \term{sequence basis}: the route by which the
+total genomic content of one strain would be reconstructed. The eleven bases in use are
+
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
+  \item \term{S288C-KO} -- the reference genome minus one cataloged ORF (BY4741, BY4742,
+    BY4743). Thirteen of the sixty in Table~\ref{tab:final} sit here, second only to
+    reference-only.
+  \item \term{S288C-KO/het} -- a heterozygous diploid deletion, so a dosage edit rather
+    than a null.
+  \item \term{S288C+guide} -- the genome is unedited and the perturbation is a designed
+    cassette plus a guide target. Regulatory, not sequence-level.
+  \item \term{S288C+designed-edit} -- a designed single-nucleotide or small-indel library.
+    Designed, and not verified per strain.
+  \item \term{S288C+tag} -- the reference plus a designed tag, degron or promoter cassette.
+  \item \term{S288C+ORF-plasmid} -- the reference plus a barcoded ORF on a known plasmid.
+  \item \term{S288C+reporter-locus} -- the reference plus a designed regulatory sequence
+    driving a reporter, which is what every massively parallel reporter assay perturbs.
+  \item \term{isolate-WGS} -- a published assembly or variant call set per isolate.
+  \item \term{segregant-WGS} -- genotype calls or whole-genome sequence per progeny.
+  \item \term{engineered-chassis} -- a named production strain plus heterologous cassettes.
+  \item \term{reference-only} -- wild type, where the environment carries the perturbation.
+\end{itemize}
+
+What fails the gate is a strain whose genome is unknown even in principle. Genome shuffling
+and adaptive laboratory evolution without resequencing both land there: the selected
+progeny differ from their parents at unmapped positions, so there is no genotype to map a
+phenotype from. Those are dropped in Table~\ref{tab:excluded} rather than ranked low, since
+no amount of phenotypic value substitutes for a missing genotype.
+
+The \term{S288C+designed-edit} and \term{S288C+guide} bases carry a weaker claim than the
+others and the distinction is worth holding. A designed variant library states what each
+member was built to be, not what it turned out to be, so its genotypes are designed rather
+than realized. Ingesting one commits to storing the design and a verification status, not a
+verified sequence.
+
+\subsection{Band comes before tier, and why\secstatus{todo}}\label{sec:band}
+
+Scale is the right default ordering and it is the wrong first question when a specific
+campaign is being planned. The largest row in this table, de Boer 2020 at $10^8$ promoter
+sequences, tells a model of state across genomes nothing; 112 sequenced strains with a
+transcriptome, a proteome and a phosphoproteome each tell it what the pairing looks like.
+Each row therefore carries a \term{band}, applied before tier and before scale:
+
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
+  \item \term{state across genomes}, 8 rows. A transcriptome or proteome measured on
+    strains whose genomes differ by sequence: isolates, segregants, a recombinant panel or
+    an interspecies hybrid. The owner's focus for this pass, set on 2026-10-19, and the
+    axis Sec.~\ref{sec:state} shows the served graph is thinnest on. It replaces the
+    previous pass's \emph{next build} band, whose three rows (Muenzner 2024, Peter 2018,
+    De Chiara 2022) are served.
+  \item \term{perturb-seq}, 23 rows. A CRISPR interference or activation library whose
+    per-guide matrix is released, a barcoded genotype set read out per cell, a designed
+    single-gene perturbation crossed with a transcriptome, or the strain and noise
+    measurements a pooled per-cell campaign depends on. Seven rows of the previous pass's
+    thirty are served (Boocock 2025, Hale 2024, Puddu 2019, Hackett 2020, Hu 2007,
+    N'Guessan 2025, Jackson 2020).
+  \item \term{molecular layers}, 14 rows. Two or more of transcript, translation,
+    protein, phosphosite, metabolite, flux and turnover, joinable on one axis, either
+    inside one study or against a served dataset. The join is per \emph{strain} when
+    both layers are measured on the same genotypes, and per \emph{gene} when one layer is
+    a single genome-wide coefficient such as a half-life. The eight state rows were in
+    this band last pass and are promoted out of it.
+  \item \term{scale}, 109 rows. Everything else, ordered as before.
+\end{itemize}
+
+Within a band the order is tier, then measurements. The cost is visible and is not hidden:
+the three bands total 45 rows, so they fill ranks 1 to 45 and the first five scale rows
+complete the fifty: de Boer 2020, Lee 2014, Nguyen Ba 2022, Galardini 2019 and Dutta 2026.
+The ten extra are all scale. de Boer 2020 and Lee 2014 are the largest things in the
+ranking by instance count and sit at 46 and 47, which is the deliberate consequence of
+ordering by what a row combines with rather than by how many numbers it holds. A reader
+who wants scale back reads rows 46 to 60 first.
+
+\subsection{Tier, and what rows are ranked on\secstatus{todo}}
+
+Tier is assigned from stated bars rather than judgment:
+
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
+  \item \textbf{Tier 1} clears all three of $\geq$$10^3$ genotypes, $\geq$$10^4$ instances,
+    and a clean sequence basis, and lands in one of the nine classes.
+  \item \textbf{Tier 2} clears two of the three, or is the only dataset covering a
+    requested class, or directly de-risks the Perturb-seq proposal.
+  \item \textbf{Tier 3} is a modality or reference backbone the substrate needs without
+    itself carrying a large genotype axis.
+  \item \textbf{Tier 4} is real but small, coarsely labeled, or expensive to extract.
+\end{itemize}
+
+The bars apply to what a row contains rather than to its reputation. Turco 2023 has the
+widest environment axis in the pool at 7,536 and is tier 2, because it is a
+meta-aggregation: its instance count re-serves primary screens, several of them already
+served, and the net-new fraction is unknown until it is de-duplicated against the rest of
+this table.
+
+Within a tier, rows sort by \term{measurements}, meaning instances times phenotype
+dimensionality. Instances alone is the wrong statistic and gets the order visibly wrong:
+Albert 2018 is 1,012 instances, which ranks it below a mid-sized fitness screen, but each
+instance is a transcriptome, so it is roughly $5.8\times10^6$ numbers. This is the same
+normalization the supported-datasets table already applies through its gzip-signal column.
+
+\subsection{Where the lines fall, and what they cost\secstatus{todo}}
+
+The long-run cut is 200 additions, $270-70$, and the pool holds 154 rows, so every row in
+the pool is inside the cut and there is no reserve. The 46-row shortfall is not padded;
+Sec.~\ref{sec:state-gaps} names where the next discovery pass should look.
+
+The two nearer lines are what a build week is planned against. Wave 1 is rows 1--50 and
+wave 2 rows 51--70; a wave-2 row is promoted the moment a wave-1 row turns out to have no
+recoverable per-strain data, which has already happened once to Lee 2014. Wave 1 is the
+eight state rows, 23 Perturb-seq rows, 14 molecular-layer rows and five scale rows; wave 2
+is scale throughout, so the two waves differ in kind and not only in rank.
+Table~\ref{tab:counts} gives the composition by class and by band.
+
+\input{tables/counts}
+
+A dataset named explicitly in the scoping request is pinned into the recommended set even
+if it ranks below the cut, and the pin is reported rather than folded into the score, so
+the set stays auditable. With the whole pool inside the cut no pin can bind, so none is
+in force; the two requested rows, Blank 2005 and Trikka 2015, rank on their own figures.
+
+\subsection{What moved since the previous pass\secstatus{todo}}\label{sec:moves}
+
+Table~\ref{tab:swaps} lists every position change against the committed ranking of the
+previous document, bounded to rows inside either pass's working set. Thirteen rows left
+the list because KG 4.0 serves them, each with the dataset class it is served as. The
+eight state rows climbed from ranks 34 to 112 into the first eight. Everything else in the
+table moved because rows above it left or were promoted, and says so.
+
+\input{tables/swaps}

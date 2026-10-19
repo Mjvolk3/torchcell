@@ -441,3 +441,15 @@ item `CPBBMPAV`). 63 pages; `make check` clean.
 ## 2026.10.10 - Aggregation status, the no-per-record-data rule, and a verdict column
 
 `build_candidate_datasets_table.py` gains the bacteria table's vocabulary so the candidate gate's G1 reads one vocabulary from both tables (decision 13 of [[plan.dataset-admission-pipeline.2026.10.10]]): `Status` adds `aggregation` (marked `A` in the tables, SynthLethDB is the served yeast precedent) and `Excluded.rule` adds `no-per-record-data`. No row uses either yet. The script also writes `tables/verdicts.tex` and a `verdicts` map in the JSON from `database/candidates/`, never touching a row literal or `sort_key`; the JSON dump minus `verdicts` is identical to `origin/main`'s output.
+
+## 2026.10.19 - Superseded by expansion-200; this document is frozen at version 15
+
+KG 4.0 (release 2026.10.17-4295f7ca) serves 70 yeast datasets, nineteen more than this
+document's 51, and thirteen of its ranked rows among them. The ranking continues in
+[[experiments.database.expansion-200]] (`notes-tex/database/database-expansion-200`, "Adding
+200 Yeast Datasets"), which drops the served rows, reads the served count from the release
+snapshot, and puts a new first band, state across genomes, ahead of perturb-seq. The
+tables under this document's `tables/` are frozen as the record of the pass that chose the
+nineteen; `build_candidate_datasets_table.py` writes to the new directory and its
+`previous_ranked()` reads this document's committed `tables/candidates.tex` as the previous
+pass.

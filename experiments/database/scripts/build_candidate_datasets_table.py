@@ -1,7 +1,7 @@
 # experiments/database/scripts/build_candidate_datasets_table.py
-# [[experiments.database.expansion-100]]
+# [[experiments.database.expansion-200]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/database/scripts/build_candidate_datasets_table
-r"""The candidate list for taking the database from 50 supported datasets to 200.
+r"""The candidate list for adding 200 *S. cerevisiae* datasets to the served graph.
 
 This is the CURATION, held as data. Unlike ``build_supported_datasets_table.py``,
 which measures built LMDBs, nothing here can be recomputed from a store: the rows
@@ -9,15 +9,23 @@ are a judgment about which *S. cerevisiae* datasets to ingest next, so the
 judgment itself is the artifact and it lives in a committed script rather than a
 gitignored results file.
 
+The served count is read from the newest release snapshot in ``database/releases/``
+(70 yeast datasets in 2026.10.17-4295f7ca, KG 4.0), and every candidate row that
+release serves carries ``status="built"``: it leaves the ranking and is named in the
+moves table with the reason. The previous pass is the committed ranking of
+``notes-tex/database/database-expansion-100``, which this document supersedes; that
+document's tables are frozen as the record of the pass that chose the 19 datasets
+KG 4.0 added.
+
 Emits, off the same records:
-  - notes-tex/database/database-expansion-100/tables/candidates.tex   (triage table)
-  - notes-tex/database/database-expansion-100/tables/sources.tex      (citation + link + accession)
-  - notes-tex/database/database-expansion-100/tables/perturbseq.tex   (rows bearing on a Perturb-seq)
-  - notes-tex/database/database-expansion-100/tables/synergies.tex    (candidate x partner joins)
-  - notes-tex/database/database-expansion-100/tables/swaps.tex        (rank changes vs the last pass)
-  - notes-tex/database/database-expansion-100/tables/pins.tex         (requested rows pinned above the cut)
-  - notes-tex/database/database-expansion-100/tables/excluded.tex     (what was dropped, and why)
-  - notes-tex/database/database-expansion-100/tables/counts.tex       (per-class and per-band totals)
+  - notes-tex/database/database-expansion-200/tables/candidates.tex   (triage table)
+  - notes-tex/database/database-expansion-200/tables/sources.tex      (citation + link + accession)
+  - notes-tex/database/database-expansion-200/tables/perturbseq.tex   (rows bearing on a Perturb-seq)
+  - notes-tex/database/database-expansion-200/tables/synergies.tex    (candidate x partner joins)
+  - notes-tex/database/database-expansion-200/tables/swaps.tex        (rank changes vs the last pass)
+  - notes-tex/database/database-expansion-200/tables/pins.tex         (requested rows pinned above the cut)
+  - notes-tex/database/database-expansion-200/tables/excluded.tex     (what was dropped, and why)
+  - notes-tex/database/database-expansion-200/tables/counts.tex       (per-class and per-band totals)
   - <results>/candidates/candidate_datasets.json             (machine-readable dump)
 
 Run from the repo root:
@@ -28,6 +36,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 from pathlib import Path
 from typing import Any, Literal
 
@@ -39,20 +48,43 @@ SCRIPT = Path(__file__).resolve()
 REPO = SCRIPT.parents[3]
 RESULTS = SCRIPT.parent.parent / "results"
 # notes-tex documents live one group below notes-tex/ (notes-tex/README.md).
-TEX_DIR = REPO / "notes-tex" / "database" / "database-expansion-100" / "tables"
+TEX_DIR = REPO / "notes-tex" / "database" / "database-expansion-200" / "tables"
+# The previous pass: the committed ranking of the document this one supersedes.
+PREVIOUS_TABLE = (
+    REPO / "notes-tex" / "database" / "database-expansion-100" / "tables" / "candidates.tex"
+)
+RELEASES = REPO / "database" / "releases"
 JSON_OUT = RESULTS / "candidates" / "candidate_datasets.json"
 
 SOURCE_LINE = (
     "%% SOURCE: experiments/database/scripts/build_candidate_datasets_table.py"
 )
 
-# The database holds 50 schematized + L0-L4-verified datasets. The goal is 200, so
-# the long-run recommended set is the first 150 rows; everything after is a ranked
-# reserve bench, kept because the cut line moves whenever one of the 150 turns out
-# to have no recoverable per-strain data.
-BUILT_COUNT = 51
-TARGET_COUNT = 200
-CUT = TARGET_COUNT - BUILT_COUNT  # 150
+
+
+def served_yeast() -> tuple[int, str]:
+    """How many S. cerevisiae datasets the newest release serves, and its id.
+
+    Read from the release snapshot rather than typed, so the count the document
+    opens with is the count the graph serves. Snapshot names sort by date.
+    """
+    newest = max(
+        p for p in RELEASES.glob("*.json") if not p.name.endswith(".closures.json")
+    )
+    release = json.loads(newest.read_text())
+    n = sum(1 for d in release["datasets"].values() if d["organism"] == "scerevisiae")
+    return n, str(release["release"])
+
+
+# The served graph holds BUILT_COUNT schematized + L0-L4-verified yeast datasets
+# (70 in KG 4.0). The goal of this pass is ADDITIONS more, so the recommended set
+# is the first ADDITIONS rows and anything after is a ranked reserve. When the pool
+# is shorter than ADDITIONS the whole pool is recommended and the shortfall is
+# reported, never padded.
+BUILT_COUNT, SERVED_RELEASE = served_yeast()
+ADDITIONS = 200
+TARGET_COUNT = BUILT_COUNT + ADDITIONS
+CUT = ADDITIONS
 
 # The long-run cut is not a work queue. Ingestion happens in waves, so the list
 # carries two nearer lines that are what a build week is planned against:
@@ -156,10 +188,10 @@ PertSeq = Literal["none", "input", "output", "both"]
 # 2026.10.02 store (set 2026-10-09): the 1,011-isolate rows that pair with the built
 # Caudal 2024 transcriptomes. It sits above every other band because it is a decision,
 # not a score, and it is reported as such.
-Band = Literal["next build", "perturb-seq", "molecular layers", "scale"]
+Band = Literal["state across genomes", "perturb-seq", "molecular layers", "scale"]
 
 BAND_ORDER: dict[str, int] = {
-    "next build": 0,
+    "state across genomes": 0,
     "perturb-seq": 1,
     "molecular layers": 2,
     "scale": 3,
@@ -314,6 +346,7 @@ CANDIDATES: list[Candidate] = [
     ),
     Candidate(
         name="Piotrowski 2017 (MOSAIC diagnostic panel)",
+        status="built",
         citation="Piotrowski JS, Li SC, Deshpande R, et al., Boone C, Myers CL. Nat Chem Biol 2017;13:982-993.",
         url="https://doi.org/10.1038/nchembio.2436",
         klass="Tolerance / robustness",
@@ -332,6 +365,7 @@ CANDIDATES: list[Candidate] = [
     ),
     Candidate(
         name="Hale 2024 (CRISPRi x natural variation)",
+        status="built",
         citation="Hale JJ, Matsui T, Goldstein I, et al., Ehrenreich IM. Nat Commun 2024;15:4234.",
         url="https://doi.org/10.1038/s41467-024-48626-1",
         klass="Natural variation",
@@ -388,6 +422,7 @@ CANDIDATES: list[Candidate] = [
     ),
     Candidate(
         name="Parsons 2006 (bioactive-compound profiling)",
+        status="built",
         citation="Parsons AB, Lopez A, Givoni IE, et al., Boone C. Cell 2006;126:611-625.",
         url="https://doi.org/10.1016/j.cell.2006.06.040",
         klass="Tolerance / robustness",
@@ -442,6 +477,7 @@ CANDIDATES: list[Candidate] = [
     ),
     Candidate(
         name="Peter 2018 (1,011 isolate genomes + phenome)",
+        status="built",
         citation="Peter J, De Chiara M, Friedrich A, et al., Schacherer J. Nature 2018;556:339-344.",
         url="https://doi.org/10.1038/s41586-018-0030-5",
         klass="Natural variation",
@@ -607,6 +643,7 @@ CANDIDATES: list[Candidate] = [
     ),
     Candidate(
         name="Muenzner 2024 (natural-isolate proteome)",
+        status="built",
         citation="Muenzner J, et al., Ralser M. Nature 2024;630:149-157.",
         url="https://doi.org/10.1038/s41586-024-07442-9",
         klass="Natural variation",
@@ -648,6 +685,7 @@ CANDIDATES: list[Candidate] = [
     ),
     Candidate(
         name="Puddu 2019 (WGS of the deletion collection)",
+        status="built",
         citation="Puddu F, et al., Jackson SP. Nature 2019;573:416-420.",
         url="https://doi.org/10.1038/s41586-019-1549-9",
         klass="Modality / backbone",
@@ -1351,6 +1389,7 @@ CANDIDATES: list[Candidate] = [
     ),
     Candidate(
         name="N'Guessan 2025 (segregant scRNA-seq eQTL)",
+        status="built",
         citation="N'Guessan A, Tong WY, Heydari H, Nguyen Ba AN. eLife 2025;13:RP93906. PMC12303567.",
         url="https://doi.org/10.7554/eLife.93906",
         klass="Expression / single cell",
@@ -1647,6 +1686,7 @@ CANDIDATES: list[Candidate] = [
     ),
     Candidate(
         name="Vaishnav 2022 (regulatory DNA fitness landscape)",
+        status="built",
         citation="Vaishnav ED, de Boer CG, Molinet J, Yassour M, Fan L, Adiconis X, Thompson DA, Levin JZ, Cubillos FA, Regev A. Nature 2022;603:455-463.",
         url="https://doi.org/10.1038/s41586-022-04506-6",
         klass="Regulatory DNA",
@@ -2002,6 +2042,7 @@ CANDIDATES: list[Candidate] = [
     ),
     Candidate(
         name="Boocock 2025 (single-cell eQTL mapping)",
+        status="built",
         citation="Boocock J, Alexander N, Alamo Tapia L, Walter-McNeill L, Patel SP, Munugala C, Bloom JS, Kruglyak L. eLife 2025;13:e95566.",
         url="https://doi.org/10.7554/eLife.95566",
         klass="Expression / single cell",
@@ -2047,6 +2088,7 @@ CANDIDATES: list[Candidate] = [
         # described the aneuploidy result rather than the paper. The data location
         # is still unverified.
         name="De Chiara 2022 (domestication and the life cycle)",
+        status="built",
         citation="De Chiara M, Barre BP, Persson K, et al., Liti G. Nat Ecol Evol 2022;6:448-460.",
         url="https://doi.org/10.1038/s41559-022-01671-9",
         klass="Natural variation",
@@ -2202,6 +2244,7 @@ CANDIDATES: list[Candidate] = [
     ),
     Candidate(
         name="Hu 2007 (TF deletion expression compendium)",
+        status="built",
         citation="Hu Z, Killion PJ, Iyer VR. Nat Genet 2007;39:683-687.",
         url="https://doi.org/10.1038/ng2012",
         klass="Expression / single cell",
@@ -2579,6 +2622,7 @@ CANDIDATES: list[Candidate] = [
     # ---- Single cell and expression, the Perturb-seq-adjacent tranche ----
     Candidate(
         name="Jackson 2020 (TF-deletion single-cell atlas)",
+        status="built",
         citation="Jackson CA, Castro DM, Saldi GA, Bonneau R, Gresham D. eLife 2020;9:e51254.",
         url="https://doi.org/10.7554/eLife.51254",
         klass="Expression / single cell",
@@ -2641,6 +2685,7 @@ CANDIDATES: list[Candidate] = [
     ),
     Candidate(
         name="Hackett 2020 (IDEA inducible-TF transcriptome time series)",
+        status="built",
         citation="Hackett SR, Baltz EA, Coram M, Wranik BJ, Kim G, Baker A, Fan M, Hendrickson DG, Berndl M, McIsaac RS. Mol Syst Biol 2020;16:e9174.",
         url="https://doi.org/10.15252/msb.20199174",
         klass="Expression / single cell",
@@ -3569,6 +3614,71 @@ CANDIDATES: list[Candidate] = [
 # Why a row left the ranked list. Keyed by name so the move table can state it
 # without the reason being buried in the row it no longer occupies.
 REMOVAL_REASON: dict[str, str] = {
+    "Boocock 2025 (single-cell eQTL mapping)": (
+        "Served since the previous pass in KG 4.0 (release "
+        + SERVED_RELEASE
+        + ") as Boocock2025Dataset, 79,516 records over four segregant panels; it is now a join partner rather than a candidate."
+    ),
+    "De Chiara 2022 (domestication and the life cycle)": (
+        "Served since the previous pass in KG 4.0 (release "
+        + SERVED_RELEASE
+        + ") as three datasets (DoublingTimeDeChiara2022Dataset, CellYieldDeChiara2022Dataset, LifeCycleDeChiara2022Dataset); it is now a join partner rather than a candidate."
+    ),
+    "Hale 2024 (CRISPRi x natural variation)": (
+        "Served since the previous pass in KG 4.0 (release "
+        + SERVED_RELEASE
+        + ") as CrispriSegregantHale2024Dataset; it is now a join partner rather than a candidate."
+    ),
+    "Parsons 2006 (bioactive-compound profiling)": (
+        "Served since the previous pass in KG 4.0 (release "
+        + SERVED_RELEASE
+        + ") as EnvChemgenParsons2006Dataset; it is now a join partner rather than a candidate."
+    ),
+    "Piotrowski 2017 (MOSAIC diagnostic panel)": (
+        "Served since the previous pass in KG 4.0 (release "
+        + SERVED_RELEASE
+        + ") as EnvChemgenPiotrowski2017Dataset; it is now a join partner rather than a candidate."
+    ),
+    "Puddu 2019 (WGS of the deletion collection)": (
+        "Served since the previous pass in KG 4.0 (release "
+        + SERVED_RELEASE
+        + ") as GenomeArchitecturePuddu2019Dataset; it is now a join partner rather than a candidate."
+    ),
+    "Hackett 2020 (IDEA inducible-TF transcriptome time series)": (
+        "Served since the previous pass in KG 4.0 (release "
+        + SERVED_RELEASE
+        + ") as InductionTimecourseHackett2020Dataset; it is now a join partner rather than a candidate."
+    ),
+    "Peter 2018 (1,011 isolate genomes + phenome)": (
+        "Served since the previous pass in KG 4.0 (release "
+        + SERVED_RELEASE
+        + ") as IsolateGrowthPeter2018Dataset; it is now a join partner rather than a candidate."
+    ),
+    "Hu 2007 (TF deletion expression compendium)": (
+        "Served since the previous pass in KG 4.0 (release "
+        + SERVED_RELEASE
+        + ") as MicroarrayScoreHu2007Dataset; it is now a join partner rather than a candidate."
+    ),
+    "N'Guessan 2025 (segregant scRNA-seq eQTL)": (
+        "Served since the previous pass in KG 4.0 (release "
+        + SERVED_RELEASE
+        + ") as Nguessan2025Dataset; it is now a join partner rather than a candidate."
+    ),
+    "Vaishnav 2022 (regulatory DNA fitness landscape)": (
+        "Served since the previous pass in KG 4.0 (release "
+        + SERVED_RELEASE
+        + ") as PooledPromoterExpressionVaishnav2022Dataset; it is now a join partner rather than a candidate."
+    ),
+    "Muenzner 2024 (natural-isolate proteome)": (
+        "Served since the previous pass in KG 4.0 (release "
+        + SERVED_RELEASE
+        + ") as two datasets (ProteomeMuenzner2024Dataset and ProteinTurnoverMuenzner2024Dataset); it is now a join partner rather than a candidate."
+    ),
+    "Jackson 2020 (TF-deletion single-cell atlas)": (
+        "Served since the previous pass in KG 4.0 (release "
+        + SERVED_RELEASE
+        + ") as TfDeletionPseudobulkJackson2020Dataset; it is now a join partner rather than a candidate."
+    ),
     "Bloom 2019 (16-parent cross)": (
         "Built since the previous pass as the 50th supported dataset, 13,950 "
         "segregants over 38 traits, L0-L4 verified. It is now a join partner "
@@ -3729,30 +3839,40 @@ EXCLUDED: list[Excluded] = [
 # ---------------------------------------------------------------------------
 
 BANDS: dict[str, tuple[Band, str]] = {
-    # -- next build: the author's order for the build after 2026.10.02 ---------
-    "Muenzner 2024 (natural-isolate proteome)": (
-        "next build",
-        "Next build, first: the proteome on the sequenced 1,011-isolate panel whose "
-        "transcriptomes the supported Caudal 2024 already carries, so protein and "
-        "mRNA sit on one genotype axis strain by strain. The natural-variation "
-        "counterpart of the Kemmeren 2014 and Messner 2023 pair that Figure 3 "
-        "rests on.",
+    # -- state across genomes: a transcriptome or proteome measured on strains
+    #    whose genomes differ by sequence (isolates, segregants, crosses, hybrids),
+    #    the owner's focus for this pass (2026-10-19) ---------------------------
+    "Albert 2018 (eQTL in 1,012 segregants)": (
+        "state across genomes",
+        "State across genomes, first: bulk RNA-seq of 1,012 sequenced BY x RM segregants, the largest genotype-indexed transcriptome in yeast, and the bulk partner of the served Boocock 2025, whose pooled panel stores 393 of these same segregants.",
     ),
-    "Peter 2018 (1,011 isolate genomes + phenome)": (
-        "next build",
-        "Next build, second: the 36-condition growth phenome on the same panel, and "
-        "the loss-of-function (nonsense plus SIFT) and homozygous-frameshift "
-        "matrices already mirrored from the host. Those matrices define a natural "
-        "loss-of-function perturbation, so the model sees a gene broken two ways, "
-        "by engineered deletion and by a natural allele; the ontology has no type "
-        "for natural gene loss yet and the core-loss copy-number variant stands in.",
+    "Jakobson 2025 (genome-to-proteome map)": (
+        "state across genomes",
+        "State across genomes: protein abundance across the same sequenced segregant panel Albert 2018 profiles by transcriptome, 800 F6 segregants, so protein and transcript loci are measurable on one genotype set.",
     ),
-    "De Chiara 2022 (domestication and the life cycle)": (
-        "next build",
-        "Next build, third: sporulation, germination and other life-cycle traits on "
-        "the same panel, the natural-variation counterpart of the supported "
-        "CalMorph morphology on deletions, so a cell-level phenotype is measured on "
-        "both genotype axes.",
+    "Teyssonniere 2024 (species-wide proteome against transcriptome)": (
+        "state across genomes",
+        "State across genomes: proteomes for 942 of the 1,011 isolates whose transcriptomes the served Caudal 2024 holds and whose proteomes the served Muenzner 2024 holds for 796, so the de-duplication against Muenzner is the first task and the pairing with Caudal is one to one.",
+    ),
+    "Grossbach 2022 (BY x RM transcriptome, proteome and phosphoproteome)": (
+        "state across genomes",
+        "State across genomes: transcript, protein and phosphosite on one set of 112 sequenced BY x RM strains, the only row where all three layers are observed within a genotype.",
+    ),
+    "Smith 2008 (gene-environment interaction eQTL)": (
+        "state across genomes",
+        "State across genomes: mRNA abundance of 109 BY x RM segregants in glucose and in ethanol, the one segregant transcriptome with a condition axis, so genotype by environment is a within-panel contrast.",
+    ),
+    "Skelly 2013 (expression variation across isolates)": (
+        "state across genomes",
+        "State across genomes: transcriptome and proteome on the same 22 sequenced isolates, the cheap and the expensive layer paired within one experiment on natural genomes.",
+    ),
+    "Foss 2007 (BY x RM segregant proteome)": (
+        "state across genomes",
+        "State across genomes: the first segregant proteome on the BY x RM cross and the independent replicate of Grossbach 2022 fifteen years and two platforms earlier.",
+    ),
+    "McManus 2014 (ribosome profiling, allele-specific)": (
+        "state across genomes",
+        "State across genomes: ribosome occupancy beside mRNA abundance for S. cerevisiae, S. paradoxus and their F1 hybrid, so translation is read allele by allele across two genomes; the paradoxus arm is out of species and is stored apart or dropped.",
     ),
     # -- perturb-seq: rows a yeast Perturb-seq campaign is designed against ----
     "Boocock 2025 (single-cell eQTL mapping)": (
@@ -3924,44 +4044,10 @@ BANDS: dict[str, tuple[Band, str]] = {
         "so this is the strain resource a campaign in defined media needs.",
     ),
     # -- molecular layers ------------------------------------------------------
-    "Grossbach 2022 (BY x RM transcriptome, proteome and phosphoproteome)": (
-        "molecular layers",
-        "Three layers on one set of 112 sequenced strains, so the transcript and "
-        "the protein of a gene are observed in the same genotype and the RNA to "
-        "protein question becomes a within-strain residual.",
-    ),
-    "Teyssonniere 2024 (species-wide proteome against transcriptome)": (
-        "molecular layers",
-        "Proteomes for 942 isolates, the panel whose transcriptomes the built "
-        "Caudal 2024 supplies, so the strain-level pairing is one to one.",
-    ),
-    "Foss 2007 (BY x RM segregant proteome)": (
-        "molecular layers",
-        "The independent replicate of Grossbach 2022 on the same cross, and the "
-        "first measurement that protein-level loci differ from transcript-level "
-        "loci.",
-    ),
-    "McManus 2014 (ribosome profiling, allele-specific)": (
-        "molecular layers",
-        "Translation efficiency per gene alongside the mRNA abundance of that "
-        "gene, which is the first of the two terms that separate protein level "
-        "from transcript level.",
-    ),
     "Martin-Perez 2017 (protein half-lives)": (
         "molecular layers",
         "Protein turnover per gene, the second of those two terms, spanning three "
         "orders of magnitude and therefore not replaceable by a global constant.",
-    ),
-    "Jakobson 2025 (genome-to-proteome map)": (
-        "molecular layers",
-        "Protein abundance across the same sequenced segregant panel Albert 2018 "
-        "profiles by transcriptome, so protein and transcript quantitative trait "
-        "loci are measurable on one genotype set.",
-    ),
-    "Albert 2018 (eQTL in 1,012 segregants)": (
-        "molecular layers",
-        "The transcriptome half of the segregant panel that Jakobson 2025, "
-        "Gerke 2017 and Eder 2020 measure protein, metabolite and flux on.",
     ),
     "Cooper 2010 (CE-LIF amino-acid metabolome)": (
         "molecular layers",
@@ -4037,12 +4123,6 @@ BANDS: dict[str, tuple[Band, str]] = {
         "Both layers measured in one study under nitrogen limitation, so it "
         "calibrates the protein-to-metabolite step that cross-study joins assume.",
     ),
-    "Skelly 2013 (expression variation across isolates)": (
-        "molecular layers",
-        "Transcriptome and proteome on the same 22 strains, which is the only row "
-        "where the cheap and expensive layers are paired within one experiment "
-        "rather than joined across two.",
-    ),
 }
 
 
@@ -4082,8 +4162,8 @@ SYNERGIES: dict[str, list[Synergy]] = {
     ],
     "N'Guessan 2025 (segregant scRNA-seq eQTL)": [
         _syn(
-            "Boocock 2025 (single-cell eQTL mapping)",
-            "candidate",
+            "Boocock 2025 (single-cell eQTL, 4 crosses)",
+            "supported",
             "segregant genotype class, single-cell transcriptome",
             "Two independent single-cell expression quantitative trait loci maps, "
             "which is the replication neither has on its own.",
@@ -4144,8 +4224,8 @@ SYNERGIES: dict[str, list[Synergy]] = {
             "makes the deletion effect a contrast rather than an absolute.",
         ),
         _syn(
-            "Hackett 2020 (IDEA inducible-TF transcriptome time series)",
-            "candidate",
+            "Hackett 2020 (IDEA induction time courses)",
+            "supported",
             "the same transcription factors, deletion against induction",
             "Loss of function against gain of function on one regulator set.",
         ),
@@ -4329,8 +4409,8 @@ SYNERGIES: dict[str, list[Synergy]] = {
             "2025 failed cross-batch.",
         ),
         _syn(
-            "Hu 2007 (TF deletion expression compendium)",
-            "candidate",
+            "Hu 2007 (TF-deletion error-model scores)",
+            "supported",
             "deletion strains with a bulk expression readout",
             "A third independent compendium, so agreement can be measured across "
             "three laboratories rather than asserted from two.",
@@ -4346,8 +4426,8 @@ SYNERGIES: dict[str, list[Synergy]] = {
             "has alone and the largest such pair in yeast.",
         ),
         _syn(
-            "Jackson 2020 (TF-deletion single-cell atlas)",
-            "candidate",
+            "Jackson 2020 (TF-deletion pseudobulk)",
+            "supported",
             "transcription-factor deletions",
             "269 regulators in bulk against 11 per cell, so the regulators the "
             "single-cell atlas cannot reach still carry a profile.",
@@ -4386,8 +4466,8 @@ SYNERGIES: dict[str, list[Synergy]] = {
     ],
     "Jackson 2023 (wild-type scRNA-seq time course for RNA kinetics)": [
         _syn(
-            "Jackson 2020 (TF-deletion single-cell atlas)",
-            "candidate",
+            "Jackson 2020 (TF-deletion pseudobulk)",
+            "supported",
             "same platform and laboratory, wild type against deletions",
             "The unperturbed per-cell variance the perturbed atlas is read against.",
         )
@@ -4419,8 +4499,8 @@ SYNERGIES: dict[str, list[Synergy]] = {
     ],
     "Brettner 2024 (ultra-high-throughput yeast scRNA-seq)": [
         _syn(
-            "Jackson 2020 (TF-deletion single-cell atlas)",
-            "candidate",
+            "Jackson 2020 (TF-deletion pseudobulk)",
+            "supported",
             "multiplexed genotypes per single-cell run",
             "The throughput ceiling for a barcoded-genotype design, measured "
             "rather than assumed.",
@@ -4428,8 +4508,8 @@ SYNERGIES: dict[str, list[Synergy]] = {
     ],
     "Jariani 2020 (yeast scRNA-seq through lag phase)": [
         _syn(
-            "Jackson 2020 (TF-deletion single-cell atlas)",
-            "candidate",
+            "Jackson 2020 (TF-deletion pseudobulk)",
+            "supported",
             "carbon-source shift with a per-cell readout",
             "A transition sampled densely in time where the atlas samples eleven "
             "steady states.",
@@ -4486,8 +4566,8 @@ SYNERGIES: dict[str, list[Synergy]] = {
             "which is what makes defined-medium phenotyping interpretable.",
         ),
         _syn(
-            "Jackson 2020 (TF-deletion single-cell atlas)",
-            "candidate",
+            "Jackson 2020 (TF-deletion pseudobulk)",
+            "supported",
             "prototrophy as a precondition for minimal media",
             "A ready-made prototrophic library for a campaign that needs nitrogen "
             "or carbon limitation.",
@@ -4529,8 +4609,8 @@ SYNERGIES: dict[str, list[Synergy]] = {
             "so it is the calibration an inference model is scored against.",
         ),
         _syn(
-            "Muenzner 2024 (natural-isolate proteome)",
-            "candidate",
+            "Muenzner 2024 (natural-isolate proteomes)",
+            "supported",
             "the 1,011-isolate panel, protein layer",
             "De-duplication before either is built: the two share authors and a "
             "panel, and whether they are independent acquisitions is unsettled.",
@@ -4746,8 +4826,8 @@ SYNERGIES: dict[str, list[Synergy]] = {
     ],
     "Airoldi 2016 (nitrogen-limited steady-state and dynamic transcriptome)": [
         _syn(
-            "Jackson 2020 (TF-deletion single-cell atlas)",
-            "candidate",
+            "Jackson 2020 (TF-deletion pseudobulk)",
+            "supported",
             "the same nitrogen-limited media",
             "A wild-type bulk baseline for the medium the single-cell atlas "
             "perturbs in.",
@@ -4837,8 +4917,8 @@ SYNERGIES: dict[str, list[Synergy]] = {
     ],
     "Skelly 2013 (expression variation across isolates)": [
         _syn(
-            "Muenzner 2024 (natural-isolate proteome)",
-            "candidate",
+            "Muenzner 2024 (natural-isolate proteomes)",
+            "supported",
             "natural isolates, paired against joined modalities",
             "A within-experiment paired transcript and protein measurement to "
             "calibrate the cross-study join.",
@@ -4847,8 +4927,8 @@ SYNERGIES: dict[str, list[Synergy]] = {
     # -- scale rows whose join value is worth naming --------------------------
     "de Boer 2020 (100M random promoters)": [
         _syn(
-            "Vaishnav 2022 (regulatory DNA fitness landscape)",
-            "candidate",
+            "Vaishnav 2022 (promoter sort-seq)",
+            "supported",
             "the same random promoter library, expression against fitness",
             "Two labels on one sequence set, which turns a sequence-to-expression "
             "model into a sequence-to-fitness model without new data.",
@@ -4902,8 +4982,8 @@ SYNERGIES: dict[str, list[Synergy]] = {
             "rather than one.",
         ),
         _syn(
-            "Hale 2024 (CRISPRi x natural variation)",
-            "candidate",
+            "Hale 2024 (CRISPRi x segregants)",
+            "supported",
             "perturbation held fixed, background varied",
             "Deletion against knockdown for the background-dependence question.",
         ),
@@ -5109,6 +5189,26 @@ SUPPORTED_PARTNERS: set[str] = {
     "Xue 2025 (free fatty acids, private)",
     "Lopez 2024 (isobutanol screen, private)",
     "Lopez 2024 (isobutanol validated, private)",
+    # Added in KG 4.0 (release 2026.10.17-4295f7ca).
+    "Boocock 2025 (single-cell eQTL, 4 crosses)",
+    "N'Guessan 2025 (single-cell BY x RM segregants)",
+    "Jackson 2020 (TF-deletion pseudobulk)",
+    "Vaishnav 2022 (promoter sort-seq)",
+    "Hackett 2020 (IDEA induction time courses)",
+    "Hu 2007 (TF-deletion error-model scores)",
+    "Muenzner 2024 (natural-isolate proteomes)",
+    "Muenzner 2024 (protein turnover)",
+    "Messner 2021 (drug-response proteomes)",
+    "Puddu 2019 (YKO genome architecture)",
+    "Hale 2024 (CRISPRi x segregants)",
+    "Piotrowski 2017 (MOSAIC chemical genetics)",
+    "Parsons 2006 (chemical-genetic profiles)",
+    "Yoshikawa 2009 (ethanol and stress screen)",
+    "Peter 2018 (1,011 isolates, 35 conditions)",
+    "De Chiara 2022 (doubling time)",
+    "De Chiara 2022 (cell yield)",
+    "De Chiara 2022 (life cycle)",
+    "Volk 2021 (Bioscreen inhibitors, private)",
 }
 
 _apply_curation()
@@ -5193,14 +5293,27 @@ class Move(BaseModel):
 
 
 def previous_ranked() -> list[Candidate]:
-    """The previous pass's order: no bands, and the rows it held.
+    """The previous pass's order: the expansion-100 document's committed ranking.
 
-    Reproduced rather than transcribed, which is why a row built since then keeps
-    its record here under ``status="built"`` instead of being deleted. Deleting it
-    would shift every rank below it by one and turn a single removal into a
-    hundred spurious moves.
+    Read from that document's ``tables/candidates.tex`` rather than re-derived,
+    because the previous pass had its own bands (a next-build band this pass
+    retires) and reproducing them here would keep dead vocabulary alive. A row
+    built since then keeps its record under ``status="built"`` and is reported as
+    a removal; a row absent from that table is new this pass.
     """
-    return sorted((c for c in CANDIDATES if not c.added), key=lambda c: c.scale_key)
+    by_tex = {tex_escape(c.name): c for c in CANDIDATES}
+    out: list[Candidate] = []
+    for line in PREVIOUS_TABLE.read_text().splitlines():
+        m = re.match(r"^(\d+) & \\textbf\{(.+?)\}", line)
+        if m is None:
+            continue
+        name = m.group(2)
+        if name not in by_tex:
+            raise SystemExit(f"previous ranking names a row this pass does not hold: {name!r}")
+        out.append(by_tex[name])
+    if not out:
+        raise SystemExit(f"no ranked rows read from {PREVIOUS_TABLE}")
+    return out
 
 
 def moves(rows: list[Candidate]) -> list[Move]:
@@ -5216,6 +5329,8 @@ def moves(rows: list[Candidate]) -> list[Move]:
     out: list[Move] = []
     for c in CANDIDATES:
         o, n = old_rank.get(c.name), new_rank.get(c.name)
+        if o is None and n is None:
+            continue  # built before the previous pass as well; nothing moved
         if n is None:
             out.append(
                 Move(name=c.name, old=o, new=None, reason=REMOVAL_REASON[c.name])
@@ -5337,8 +5452,20 @@ Sec.~\ref{sec:rule}). A superscript \textbf{B} marks a row already
 attempted and blocked on data access, and \textbf{L} one that already has a loader in
 flight; neither is an untouched candidate. Rows
 1--"""
-        + str(CUT)
-        + r""" are the recommended set.}
+        + str(min(CUT, len(rows)))
+        + r""" are the recommended set"""
+        + (
+            r"; the pool holds "
+            + str(len(rows))
+            + r" rows, "
+            + str(CUT - len(rows))
+            + r" short of the "
+            + str(CUT)
+            + r" this pass adds, so the shortfall is open discovery, not a reserve"
+            if len(rows) < CUT
+            else ""
+        )
+        + r""".}
 \label{tab:candidates}\\
 \toprule
 """
@@ -5887,7 +6014,7 @@ Table~\ref{tab:sources}; joins in Table~\ref{tab:synergies}.}
 """
     )
     band_letter = {
-        "next build": "N",
+        "state across genomes": "G",
         "perturb-seq": "P",
         "molecular layers": "M",
         "scale": "S",
@@ -6046,8 +6173,7 @@ The sixty rows name """
 
 def main() -> None:
     rows, swaps = ranked()
-    if len(rows) < CUT:
-        raise SystemExit(f"only {len(rows)} candidates; need at least {CUT}")
+    shortfall = max(0, CUT - len(rows))
     if len(rows) > 250:
         raise SystemExit(f"{len(rows)} candidates exceeds the 250-row ceiling")
     ms = moves(rows)
@@ -6085,6 +6211,8 @@ def main() -> None:
                 "built_count": BUILT_COUNT,
                 "target_count": TARGET_COUNT,
                 "cut": CUT,
+                "shortfall": shortfall,
+                "served_release": SERVED_RELEASE,
                 "wave_1": WAVE_1,
                 "wave_2": WAVE_2,
                 "final": FINAL,
@@ -6106,7 +6234,8 @@ def main() -> None:
     n_band = sum(c.band != "scale" for c in rows)
     print(
         f"{len(rows)} candidates; wave 1 = {WAVE_1}, wave 2 ends at {WAVE_2}, "
-        f"top {CUT} reach {TARGET_COUNT}"
+        f"top {CUT} reach {TARGET_COUNT}; served {BUILT_COUNT} ({SERVED_RELEASE}); "
+        f"shortfall {shortfall}"
     )
     print(f"{n_band} rows banded out of scale; {n_syn} named joins; {len(ms)} moves")
 

@@ -1,0 +1,47 @@
+%% notes-tex/database/database-expansion-200/sections/summary.tex
+%% [[experiments.database.expansion-200]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/database-expansion-200/sections/summary.tex
+%% SOURCE: experiments/database/scripts/build_candidate_datasets_table.py
+
+\clearpage
+\section{Summary statistics\secstatus{todo}}\label{sec:summary}
+
+\input{tables/summary}
+
+The fifty are the three priority bands in full, 8 state rows, 23 perturb-seq rows and 14
+molecular-layers rows, plus the first five scale rows. The ten extra are all scale, and
+the fifty's five scale rows include the two largest datasets in the whole ranking, de Boer
+2020 and Lee 2014, which is why the instance sums in Table~\ref{tab:summary} are carried
+mostly by five rows. The banded rows are vector-valued: a few hundred strains each carrying
+a transcriptome, a proteome or a per-cell distribution, so they hold few instances and many
+measurements, and ranking on instances alone would have ordered the two blocks the other
+way round. The state band is the extreme case, 3,000 genotypes and $1.2\times10^7$
+measurements.
+
+Two class facts follow from the bands. Natural variation and expression are the joint
+largest classes in the sixty at fifteen rows each, and 16 of the sixty are
+\term{reference-only}, meaning the environment rather than a strain edit carries the
+perturbation, which is what a condition-crossed expression layer looks like. Thirteen of
+the sixty sit on the S288C deletion collection, the axis most of the served set already
+uses, so those thirteen are the cheapest joins in the table.
+
+\subsection{Time\secstatus{todo}}\label{sec:time}
+
+Six of the sixty rows carry a time dimension (Table~\ref{tab:final}, \emph{Time} column):
+Jariani 2020's lag-phase course, Jackson 2023's continuous course, Wang 2022's three ages,
+Airoldi 2016's upshift course, and the two rate rows, Sun 2013 and Martin-Perez 2017,
+whose rates are derived from a labeling series that is not itself released. Hackett 2020's
+induction series, the row the previous pass's time discussion was anchored at, is served
+as 1,752 induction time-course records, one environment per time point. The steady-state
+chemostat rows (Brauer 2008, Boer 2010, Hackett 2016, Yu 2021) vary dilution rate, which
+is a growth rate, not a time axis, and are not counted.
+
+What the schema holds is \texttt{Environment.duration\_hours} and
+\texttt{Environment.duration\_generations}, treatment durations that make two exposure
+lengths two distinct environments, which is how Hackett 2020 was ingested. It is a
+flattening: a model sees time as a categorical condition, and nothing on the record says
+that eight environments are one series in order. A first-class time field on the record
+and a series identity that groups its points are the two schema additions a $c(t)$ model
+needs, and the six rows above are the ones that would exercise them. They are recorded
+here as an open schema item rather than folded into this list's ranking, since the ranking
+rule does not yet score a time axis.

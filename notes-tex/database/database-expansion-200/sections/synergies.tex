@@ -1,0 +1,85 @@
+%% notes-tex/database/database-expansion-200/sections/synergies.tex
+%% [[experiments.database.expansion-200]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/database-expansion-200/sections/synergies.tex
+%% SOURCE: experiments/database/scripts/build_candidate_datasets_table.py for the table;
+%% surrounding prose is hand-authored
+
+\section{What each candidate joins to\secstatus{todo}}\label{sec:synergies}
+
+A dataset's value in a substrate is not only what it measures. It is also what becomes
+measurable once it sits beside what is already held. Table~\ref{tab:synergies} names 89
+such pairs across the sixty rows of Table~\ref{tab:final}, 53 of the sixty carrying at
+least one, each with the axis the two share.
+
+\subsection{A join needs a shared axis, not a shared theme\secstatus{todo}}
+
+The \term{join key} column is required rather than decorative. Two metabolomics papers are
+not joinable because both measure metabolites; they are joinable when they measure
+overlapping analytes on overlapping strains. The keys in use are the deletion collection,
+the sequenced 1,011-isolate panel, a segregant panel from one cross, a guide library over
+one gene set, a media formulation, a compound set, and a single gene. A pair with none of
+these is a theme and is not listed.
+
+Fifty-five of the 89 pairs, on 40 of the sixty rows, have a partner that is already
+served, so that join becomes runnable on the day the candidate is ingested rather than
+after two ingestions. Thirteen of those partners became served since the previous pass,
+which is why pairs that were candidate-to-candidate then, Teyssonniere 2024 against
+Muenzner 2024 or Hughes 2000 against Hu 2007, are now one ingestion from running.
+
+Two kinds of key are distinguished in the table and the difference decides what a join can
+do. A \emph{strain-level} key means both layers were measured on the same genotypes, so
+the join is a paired observation and the residual between the layers is per strain. A
+\emph{gene-level} key means one side is a single genome-wide coefficient, a half-life or a
+translation rate, that applies to every strain alike. A gene-level layer cannot explain why
+two strains differ; it explains why two genes differ, and the two are not interchangeable.
+
+\subsection{The joins that motivate the ordering\secstatus{todo}}
+
+Four groups carry most of the weight, and each is a specific question rather than an
+accumulation.
+
+\notesec{State on one genome axis} The eight rows of the first band are joins by
+construction. Albert 2018 and Jakobson 2025 pair transcript and protein on one segregant
+class, and Albert 2018 pairs with the served Boocock 2025 on the 393 pooled segregants
+the two share. Teyssonniere 2024 pairs with the served Caudal 2024 strain by strain, 942
+against 943 isolates, and with the served Muenzner 2024 on the protein layer, where the
+pairing is also the de-duplication question. Grossbach 2022 and Foss 2007 are the same
+cross fifteen years apart. Smith 2008 is the segregant transcriptome with a condition
+axis, so it pairs with every other BY x RM row on genotype and with Jackson 2020 on media.
+
+\notesec{Transcript against protein, and the two terms between them} Steady-state
+transcript and steady-state protein are both well covered, by the served Kemmeren 2014 and
+Messner 2023 and by the state rows, and they disagree. Two rows make the disagreement
+something a model can carry a term for rather than absorb as error. McManus 2014 gives
+translation efficiency beside mRNA abundance and finds ribosome occupancy more conserved
+than transcript abundance, so translation buffers rather than tracks. Martin-Perez 2017
+gives turnover for 3,160 proteins, spanning three orders of magnitude, which is why a
+single global mRNA-to-protein scaling cannot be right. Sun 2013 supplies the transcript-side
+counterpart, decomposing mRNA level into synthesis and decay across 46 deletion strains.
+
+\notesec{Cross-laboratory replication of the deletion transcriptome} Kemmeren 2014 is
+served and is the largest genotype-indexed transcriptome with designed perturbations, and
+the served Hu 2007 now gives it one independent check on 263 transcription-factor
+deletions. Hughes 2000, Lenstra 2011 and Sun 2013 add three more laboratories across
+fourteen years of array and sequencing platforms, so agreement can be measured gene by
+gene on shared strains rather than assumed. That check matters here specifically: the
+served Nadal-Ribelles 2025 does not replicate its own genotype assignment across batches,
+so a second opinion on what a deletion does to a transcriptome is not a formality.
+
+\notesec{Metabolism against expression on one genotype axis} Blank 2005 measures flux
+through central carbon metabolism on deletion mutants that already carry an expression
+profile in the served Kemmeren 2014 compendium, which is the only place in this table
+where the transcript-to-flux step can be fitted rather than assumed. Aulakh 2025 adds a
+second metabolic panel, the ionome, on the whole collection. Gerke 2017, Ambroset 2014
+and Eder 2020 put metabolite and flux quantitative trait loci on segregant crosses that
+Albert 2018 and Jakobson 2025 give an expression and a protein map, so a metabolite locus
+can be read against both.
+
+\notesec{A condition axis measured on more than one layer} Brauer 2008 and Boer 2010 are
+the transcript and metabolite halves of one chemostat series, same laboratory and same
+limitations, and Hackett 2016 adds flux over the same conditions. Airoldi 2016 supplies the
+nitrogen-limited counterpart, and its media are the media the served Jackson 2020 profiles
+single cells in. That last pairing is what makes a deletion effect in the single-cell atlas
+a contrast against a wild-type baseline in the same medium rather than an absolute.
+
+\input{tables/synergies}

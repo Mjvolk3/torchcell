@@ -1,0 +1,70 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/database/scripts/build_candidate_datasets_table.py
+\begingroup
+\footnotesize
+\begin{longtable}{@{}L{62mm} L{22mm} L{85mm}@{}}
+\caption[]{Considered and dropped. \emph{no-sequence} is the hard gate: without a route to
+the strain's genomic content there is no genotype to map a phenotype from.}
+\label{tab:excluded}\\
+\toprule
+Dataset or group & Rule & Reason \\
+\midrule
+\endfirsthead
+\toprule
+Dataset or group & Rule & Reason \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+Snoek 2015 robot-assisted genome shuffling (ethanol tolerance) & no-sequence & Shuffled progeny are recombinants of unrecorded parental segments with no per-strain sequencing, so the genotype cannot be reconstructed. \\
+\addlinespace[5pt]
+Adaptive laboratory evolution / EMS mutagenesis tolerance panels (e.g. farnesol-FPP selection) & no-sequence & Mutations are unmapped, so a strain's genome is unknown even in principle without whole-genome resequencing the study did not do. \\
+\addlinespace[5pt]
+Avalos lab isobutanol-biosensor deletion screen & not-a-dataset & Described only in a PhD thesis and a DOE report. Track for publication; not citable as a dataset. \\
+\addlinespace[5pt]
+Kitamoto/Kaneko ester and higher-alcohol screen & not-a-dataset & Citation could not be pinned to a specific paper. A placeholder, not a located dataset. \\
+\addlinespace[5pt]
+Fuhrer/Zamboni flow-injection metabolomics & off-species & The validated genome-scale application is in E. coli. No yeast deletion-collection version was located. \\
+\addlinespace[5pt]
+Anglada-Girotto 2022 (CRISPRi + metabolomics) & off-species & 352 CRISPRi genes against 1,342 drug-induced metabolic changes, but in E. coli. Verified from the mirrored PDF. \\
+\addlinespace[5pt]
+Wildenhain 2016 (Sci Data chemical-genetic matrix) & already-built & A data descriptor, not a second experiment. Its own Data Citation 1 is NCBI PubChem BioAssay AID 1159580, which is exactly what torchcell/datasets/scerevisiae/wildenhain2015.py already ingests: 242 strains, 5,518 compounds, 492,126 interaction tests. \\
+\addlinespace[5pt]
+O'Duibhir 2014 expression compendium & already-built & The paper's expression data IS the Kemmeren 2014 compendium plus PCA transforms, already built, as oduibhir2014.py states; only its growth-rate readout was new and that is built too. Caught by check\_candidate\_overlap.py rather than by inspection, which is the first time the script found a duplicate before a person did. \\
+\addlinespace[5pt]
+Ozturk 2022 proteome-effects screen & off-species & 3,308 deletions in S. pombe. Out of species scope. \\
+\addlinespace[5pt]
+Chen 2024 K. phaffii CRISPR fitness screen; Y1000+ multi-species panel & off-species & Not S. cerevisiae. Revisit if the generalization axis widens to other hosts. \\
+\addlinespace[5pt]
+iIsor850 genome-scale model (Issatchenkia orientalis) & not-a-dataset & A reconstruction, not an experiment, and off species. No genome-wide I. orientalis phenotype screen was located; the CABBI knockout library is unpublished. \\
+\addlinespace[5pt]
+CABBI 13C-MFA kinetic-model repository & not-a-dataset & 16 knockout strains total, and the released fluxes are K-FIT model fits recapitulating 75-77 percent of measurements, not raw measurement. Blank 2005 supersedes it on both counts. \\
+\addlinespace[5pt]
+YEASTRACT+ (Teixeira 2023; Monteiro 2020) & not-a-dataset & A literature-curated knowledge base of 304,547 documented TF-target associations, each tagged with the evidence type (DNA binding or expression) and with the environmental condition in which it was observed, so a condition-scoped regulatory graph is recoverable from it. It is a prior over the genome, not a genotype-by-environment measurement, and it belongs in the graph layer beside GO and the metabolic model rather than in this table. Both papers are mirrored; the flat files are shared on request by the maintainers and are not yet held, and scYeast (Fan 2027) built its attention prior from the documented-targets subset (about 170,000 pairs). \\
+\addlinespace[5pt]
+Sc2.0 / Sc3.0 synthetic-genome design & not-a-dataset & Genome-engineering programs, not gene-indexed perturbation-phenotype data. \\
+\addlinespace[5pt]
+Lee 2014 / Hoepfner 2014 / Vanacloig-Pedros 2022 / Messner 2023 / Mulleder 2016 / Lian 2019 / Mormino 2022 / Nadal-Ribelles 2025 and 12 others & already-built & Named as top candidates by the 2026-07 triage pass and BUILT since. Only Lee 2014 remains outstanding and is kept as row 4. \\
+\addlinespace[5pt]
+Bloom 2019 (16-parent cross) & already-built & Ranked 12 in the previous pass and built since as the 50th supported dataset: 13,950 sequenced segregants over 38 traits, L0-L4 verified. Its place in this pass is as a join partner, not a candidate. \\
+\addlinespace[5pt]
+TF-target prior networks used by Jackson 2020 (YEASTRACT, ATAC-motif of Castro 2019, Bussemaker affinity of Ward 2008, Tchourine 2018 gold standard) & not-a-dataset & Four regulator-by-gene matrices: 11,486 unsigned YEASTRACT edges over 3,912 genes and 152 TFs, 71,865 signed ATAC-motif edges over 5,551 genes and 138 TFs, a dense 6,516 by 123 affinity matrix, and the 1,403-edge signed gold standard. Each is a prior over the genome with no genotype and no environment, so each belongs in the graph layer beside GO and YEASTRACT+, not in a genotype-by-environment table. All four ship as TSVs in the eLife Source code 1 archive. \\
+\addlinespace[5pt]
+Tchourine 2018 bulk expression compendium (2,577 observations) & not-a-dataset & The benchmark Jackson 2020 compares its single-cell network against. It is a re-aggregation of public bulk series, and the strain behind an observation lives in each source series' metadata rather than in the released matrix, so admitting it is a de-duplication and re-curation task against Kemmeren 2014, Gasch 2000 and Brauer 2008 rather than one loader. Revisit if the per-sample genotype table is located. \\
+\addlinespace[5pt]
+Albert 2014 (X-pQTL, single-cell protein abundance in large populations) & not-a-dataset & Albert FW, Treusch S, Shockley AH, Bloom JS, Kruglyak L. Nature 2014;506:494-497. Considered as the BY x RM segregant proteome and it is not one: protein level is read from a green fluorescent protein fusion for one gene at a time in a large unsequenced pool, and the mapping comes from sorting that pool rather than from genotyped individuals. There is no strain-by-protein matrix to store, so it cannot enter as a proteome row. The segregant proteome rows here are Grossbach 2022 and Foss 2007. \\
+\addlinespace[5pt]
+Scholes 2019 bulk RNA-seq control (GEO GSE135430) & not-a-dataset & Jackson 2020's external bulk reference point. One wild-type BY4741 genotype in one condition, and the study's own variable is the RNA isolation protocol, so there is neither a genotype nor an environment axis to record. \\
+\addlinespace[5pt]
+Brandner 2025 (mapSPLiT, CRISPRa and CRISPRi single-cell transcriptomes in E. coli and P. putida) & not-a-dataset & The only microbial dataset found that reaches both Perturb-seq axes on purpose: 52 transcription factors targeted by 118 guides, pooled, with multi-guide combinations included to resolve genetic interactions, read out as a single-cell transcriptome. Pseudomonas putida is a single-cell bioproduction host and so is in scope for the generalization axis. It is a preprint and no deposited accession was found, so there is no scriptable data route and it is excluded rather than ranked. It is the closest existing design template for the campaign and should be revisited on publication. \\
+\addlinespace[5pt]
+Mammalian Perturb-seq (Replogle 2022, Zhu 2026, Dixit 2016, Datlinger 2017, Yao 2024) & off-species & The format references, and off species. Replogle perturbs every expressed gene by CRISPR interference across more than 2.5 million cells; Zhu 2026 crosses a genome-scale perturbation with several stimulation time points across about 22 million cells, which is the perturbation-by-context tensor a yeast campaign is an analog of; Yao 2024 pools random multi-perturbation composites over 598 genes and decompresses them, which is the one published route to second-order genetic interactions at a tractable cell count. None supplies yeast data; all four inform the design. \\
+\addlinespace[5pt]
+Bacterial single-cell transcriptomics (Wang 2023 M3-seq, Ma 2023 BacDrop, McNulty 2023 ProBac-seq, Kuchina 2021 microSPLiT) & off-species & Off species, and the axis is environmental rather than genetic: hundreds of thousands of cells over stress, antibiotic and growth-stage conditions in isogenic backgrounds. No perturbation-by-readout matrix to ingest. \\
+\addlinespace[5pt]
+Fulcher 2024 (nanoSPLITS), Taniguchi 2010, Baronas 2026, Leonaviciene 2023 and 2020, Datlinger 2021, Macosko 2015, Rosenberg 2018 & off-species & Platform and paired-modality papers, all off species. nanoSPLITS measures a transcriptome and a mass-spectrometry proteome from the same single cell, which is the precedent for inferring an expensive layer from a cheap one on paired anchors; Taniguchi 2010 is the reference for protein and mRNA copy-number noise in a microbial host. Neither releases a perturbation matrix. \\
+\addlinespace[5pt]
+Reviews, protocols and single-cell statistics in the collection (Nadal-Ribelles 2024, Sun 2023, Larson 2013, Zun 2023, Gaisser 2024, Squair 2021, Zhang 2020, Svensson 2020, Grun 2014, Robinson 2008, McCarthy 2012, Hart 2013, Wang 2026) & not-a-dataset & Thirteen items with no perturbation data of their own. They are the sizing and false-discovery discipline for the campaign, not rows: pseudobulk replicate variation, sequencing depth per cell, dispersion estimation, and whether droplet counts are zero-inflated. \\
+\addlinespace[5pt]
+\end{longtable}
+\endgroup

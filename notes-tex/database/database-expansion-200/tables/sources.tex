@@ -1,0 +1,148 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/database/scripts/build_candidate_datasets_table.py
+\begin{landscape}
+\begingroup
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{longtable}{@{}r@{\hspace{4pt}} L{86mm} L{92mm} L{62mm}@{}}
+\caption[]{Sources for Table~\ref{tab:final}, in the same order. \emph{Why it is
+ordered here} is the band reason for a perturb-seq or molecular-layers row, and the tier
+and measurement rule for a scale row; what the row buys is the \emph{Why} column of Table~\ref{tab:final}. \emph{Data} is where the per-record values live; entries marked
+unconfirmed were not fetched live and must be checked before a loader is written. Every
+link is clickable.}
+\label{tab:sources}\\
+\toprule
+\textbf{\#} & \textbf{Dataset, citation and link} & \textbf{Why it is ordered here} & \textbf{Data} \\
+\midrule
+\endfirsthead
+\multicolumn{4}{@{}l}{\footnotesize\emph{Table~\ref{tab:sources}, continued}}\\
+\toprule
+\textbf{\#} & \textbf{Dataset, citation and link} & \textbf{Why it is ordered here} & \textbf{Data} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+1 & \textbf{Albert 2018 (eQTL in 1,012 segregants)}\newline Albert FW, Bloom JS, Siegel J, Day L, Kruglyak L. eLife 2018;7:e35471.\newline \href{https://doi.org/10.7554/eLife.35471}{doi:10.7554/\allowbreak eLife.35471} & State across genomes, first: bulk RNA-seq of 1,012 sequenced BY x RM segregants, the largest genotype-indexed transcriptome in yeast, and the bulk partner of the served Boocock 2025, whose pooled panel stores 393 of these same segregants. & GEO /\allowbreak  eLife data availability (unconfirmed) \\
+\addlinespace[5pt]
+2 & \textbf{Jakobson 2025 (genome-to-proteome map)}\newline Jakobson CM, et al. Science 2025;390:eadu3198.\newline \href{https://doi.org/10.1126/science.adu3198}{doi:10.1126/\allowbreak science.adu3198} & State across genomes: protein abundance across the same sequenced segregant panel Albert 2018 profiles by transcriptome, 800 F6 segregants, so protein and transcript loci are measurable on one genotype set. & Science data-availability statement (accession unconfirmed) \\
+\addlinespace[5pt]
+3 & \textbf{Teyssonniere 2024 (species-wide proteome against transcriptome)}\newline Teyssonniere EM, Trebulle P, Muenzner J, Loegler V, Ludwig D, Amari F, Mulleder M, Friedrich A, Hou J, Ralser M, Schacherer J. Proc Natl Acad Sci USA 2024;121:e2319211121.\newline \href{https://doi.org/10.1073/pnas.2319211121}{doi:10.1073/\allowbreak pnas.2319211121} & State across genomes: proteomes for 942 of the 1,011 isolates whose transcriptomes the served Caudal 2024 holds and whose proteomes the served Muenzner 2024 holds for 796, so the de-duplication against Muenzner is the first task and the pairing with Caudal is one to one. & PNAS SI; PMC11087752. PRIDE identifier not fetched this pass \\
+\addlinespace[5pt]
+4 & \textbf{Grossbach 2022 (BY x RM transcriptome, proteome and phosphoproteome)}\newline Grossbach J, Gillet L, Clement-Ziza M, Schmalohr CL, Schubert OT, Schutter M, Mawer JSP, Barnes CA, Bludau I, Weith M, Tessarz P, Graef M, Aebersold R, Beyer A. Mol Syst Biol 2022;18:e10712.\newline \href{https://doi.org/10.15252/msb.202110712}{doi:10.15252/\allowbreak msb.202110712} & State across genomes: transcript, protein and phosphosite on one set of 112 sequenced BY x RM strains, the only row where all three layers are observed within a genotype. & Mol Syst Biol SI + PRIDE, identifier not fetched this pass \\
+\addlinespace[5pt]
+5 & \textbf{Smith 2008 (gene-environment interaction eQTL)}\newline Smith EN, Kruglyak L. PLoS Biol 2008;6:e83.\newline \href{https://doi.org/10.1371/journal.pbio.0060083}{doi:10.1371/\allowbreak journal.pbio.0060083} & State across genomes: mRNA abundance of 109 BY x RM segregants in glucose and in ethanol, the one segregant transcriptome with a condition axis, so genotype by environment is a within-panel contrast. & GEO (unconfirmed) \\
+\addlinespace[5pt]
+6 & \textbf{Skelly 2013 (expression variation across isolates)}\newline Skelly DA, Merrihew GE, Riffle M, et al., MacCoss MJ, Akey JM. Genome Res 2013;23:1496-1504.\newline \href{https://doi.org/10.1101/gr.155762.113}{doi:10.1101/\allowbreak gr.155762.113} & State across genomes: transcriptome and proteome on the same 22 sequenced isolates, the cheap and the expensive layer paired within one experiment on natural genomes. & Genome Research SI (unconfirmed) \\
+\addlinespace[5pt]
+7 & \textbf{McManus 2014 (ribosome profiling, allele-specific)}\newline McManus CJ, May GE, Spealman P, Shteyman A. Genome Res 2014;24:422-430.\newline \href{https://doi.org/10.1101/gr.164996.113}{doi:10.1101/\allowbreak gr.164996.113} & State across genomes: ribosome occupancy beside mRNA abundance for S. cerevisiae, S. paradoxus and their F1 hybrid, so translation is read allele by allele across two genomes; the paradoxus arm is out of species and is stored apart or dropped. & GEO, series not fetched this pass \\
+\addlinespace[5pt]
+8 & \textbf{Foss 2007 (BY x RM segregant proteome)}\newline Foss EJ, Radulovic D, Shaffer SA, Ruderfer DM, Bedalov A, Goodlett DR, Kruglyak L. Nat Genet 2007;39:1369-1375.\newline \href{https://doi.org/10.1038/ng.2007.22}{doi:10.1038/\allowbreak ng.2007.22} & State across genomes: the first segregant proteome on the BY x RM cross and the independent replicate of Grossbach 2022 fifteen years and two platforms earlier. & Nat Genet supplementary tables; not fetched \\
+\addlinespace[5pt]
+9 & \textbf{Dong 2021 (MAGIC + SAM biosensor)}\newline Dong C, Schultz JC, Liu W, Lian J, Huang L, Xu Z, Zhao H. Metab Eng 2021;66:319-327.\newline \href{https://doi.org/10.1016/j.ymben.2021.03.005}{doi:10.1016/\allowbreak j.ymben.2021.03.005} & A genome-wide CRISPR activation, interference and deletion library sorted on a metabolite biosensor, so the label is product concentration rather than fitness. The pattern a sorted Perturb-seq would reuse. & Metab Eng SI (accession unconfirmed) \\
+\addlinespace[5pt]
+10 & \textbf{Momen-Roknabadi 2020 (inducible CRISPRi library)}\newline Momen-Roknabadi A, Oikonomou P, Zegans M, Tavazoie S. Commun Biol 2020;3:723.\newline \href{https://doi.org/10.1038/s42003-020-01452-9}{doi:10.1038/\allowbreak s42003-020-01452-9} & A genome-scale inducible CRISPR interference library with a released per-guide matrix. Induction control is what lets a knockdown be applied after a cell is captured rather than during outgrowth. & Addgene + Commun Biol SI \\
+\addlinespace[5pt]
+11 & \textbf{McGlincy 2021 (genome-scale CRISPRi library)}\newline McGlincy NJ, Meacham ZA, Reynaud KK, Muller R, Baum R, Ingolia NT. BMC Genomics 2021;22:205.\newline \href{https://doi.org/10.1186/s12864-021-07518-0}{doi:10.1186/\allowbreak s12864-021-07518-0} & The second independently designed genome-scale yeast CRISPR interference library with a released per-guide matrix, so guide design and gene effect can be separated. & ingolia-lab.org/\allowbreak yeast-crispri + Addgene + BMC SI \\
+\addlinespace[5pt]
+12 & \textbf{Bao 2018 (CHAnGE single-nucleotide library)}\newline Bao Z, HamediRad M, Xue P, Xiao H, Tasan I, Chao R, Liang J, Zhao H. Nat Biotechnol 2018;36:505-508.\newline \href{https://doi.org/10.1038/nbt.4132}{doi:10.1038/\allowbreak nbt.4132} & A guide-indexed genome-wide library whose edits sit below the open reading frame, so the perturbation is an allele rather than a null. & Nat Biotechnol SI (raw sequencing location unconfirmed) \\
+\addlinespace[5pt]
+13 & \textbf{Crook 2016 (tunable RNAi, isobutanol + 1-butanol)}\newline Crook N, Sun J, Morse N, Schmitz A, Alper HS. Appl Microbiol Biotechnol 2016;100:10005-10018. PMID 27654654.\newline \href{https://pubmed.ncbi.nlm.nih.gov/27654654/}{PMID 27654654} & A dose-graded knockdown axis. Graded rather than binary perturbation is what turns a per-cell readout into a dose-response curve. & AMB SI (DOI is an open verification item) \\
+\addlinespace[5pt]
+14 & \textbf{Roy 2018 (multiplexed precision editing)}\newline Roy KR, Smith JD, Vonesch SC, et al., St Onge RP. Nat Biotechnol 2018;36:512-520.\newline \href{https://doi.org/10.1038/nbt.4137}{doi:10.1038/\allowbreak nbt.4137} & Multiplexed designed edits per cell, which is combinatorial input in the sense the Perturb-seq specification requires. & Nat Biotechnol SI (accession unconfirmed) \\
+\addlinespace[5pt]
+15 & \textbf{Newman 2006 (protein noise, GFP library)}\newline Newman JRS, Ghaemmaghami S, Ihmels J, Breslow DK, Noble M, DeRisi JL, Weissman JS. Nature 2006;441:840-846.\newline \href{https://doi.org/10.1038/nature04785}{doi:10.1038/\allowbreak nature04785} & Per-cell protein abundance distributions across a genome-scale tagged collection. Expression noise per gene is what sets how large a perturbation effect has to be before a per-cell readout can resolve it. & Nature SI \\
+\addlinespace[5pt]
+16 & \textbf{Mukherjee 2021 (CRISPRi essential genes x acetic acid)}\newline Mukherjee V, Lind U, St Onge RP, Blomberg A, Nystrom T. mSystems 2021;6:e00410-21.\newline \href{https://doi.org/10.1128/mSystems.00410-21}{doi:10.1128/\allowbreak mSystems.00410-21} & Knockdown reaches the essential genes a deletion collection cannot hold, which is a third of the genome a deletion-based campaign would miss. & mSystems open-access SI \\
+\addlinespace[5pt]
+17 & \textbf{Lian 2017 (CRISPR-AID, beta-carotene)}\newline Lian J, HamediRad M, Hu S, Zhao H. Nat Commun 2017;8:1688.\newline \href{https://doi.org/10.1038/s41467-017-01695-x}{doi:10.1038/\allowbreak s41467-017-01695-x} & Three perturbation modalities in one cell, activation, interference and deletion, which is combinatorial input by modality rather than by gene. & Nat Commun SI \\
+\addlinespace[5pt]
+18 & \textbf{Hughes 2000 (compendium of expression profiles)}\newline Hughes TR, Marton MJ, Jones AR, Roberts CJ, Stoughton R, et al., Friend SH. Cell 2000;102:109-126.\newline \href{https://doi.org/10.1016/S0092-8674(00)00015-5}{doi:10.1016/\allowbreak S0092-8674(00)00015-5} & The original designed-perturbation expression compendium, and the independent measurement that makes cross-laboratory replication of the deletion transcriptome testable against the built Kemmeren 2014. & Rosetta compendium, distributed with the paper; not fetched \\
+\addlinespace[5pt]
+19 & \textbf{Lenstra 2011 (chromatin regulator deletion expression)}\newline Lenstra TL, Benschop JJ, Kim T, et al., Holstege FCP. Mol Cell 2011;42:536-549.\newline \href{https://doi.org/10.1016/j.molcel.2011.03.026}{doi:10.1016/\allowbreak j.molcel.2011.03.026} & The same design over chromatin regulators rather than sequence-specific factors, so the two together cover both halves of transcriptional control by deletion. & GEO (unconfirmed) \\
+\addlinespace[5pt]
+20 & \textbf{Sun 2013 (mRNA synthesis and decay rates across deletion strains)}\newline Sun M, Schwalb B, Pirkl N, Maier KC, Schenk A, Failmezger H, Tresch A, Cramer P. Mol Cell 2013;52:52-62.\newline \href{https://doi.org/10.1016/j.molcel.2013.09.010}{doi:10.1016/\allowbreak j.molcel.2013.09.010} & A designed single-gene perturbation crossed with a transcriptome, and the only one that resolves the level into a synthesis rate and a decay rate. Rates are what a per-cell snapshot cannot recover on its own. & GEO, series not fetched this pass \\
+\addlinespace[5pt]
+21 & \textbf{Jariani 2020 (yeast scRNA-seq through lag phase)}\newline Jariani A, Vermeersch L, Cerulus B, Perez-Samper G, Voordeckers K, Van Brussel T, Thienpont B, Lambrechts D, Verstrepen KJ. eLife 2020;9:e55320.\newline \href{https://doi.org/10.7554/eLife.55320}{doi:10.7554/\allowbreak eLife.55320} & Per-cell states through a carbon-source shift, so the readout is the distribution across an unsynchronized population rather than its mean. & GEO GSE144820 and GSE116246; from the collection sweep, not fetched \\
+\addlinespace[5pt]
+22 & \textbf{Guo 2018 (CRISPR-Cas9 tiling of essential genes)}\newline Guo X, Chavez A, Tung A, et al., Church GM, Shalem O. Nat Biotechnol 2018;36:540-546.\newline \href{https://doi.org/10.1038/nbt.4147}{doi:10.1038/\allowbreak nbt.4147} & Guide tiling produces a graded allelic series across one gene, so guide position rather than gene identity carries the effect. & Nat Biotechnol SI (unconfirmed) \\
+\addlinespace[5pt]
+23 & \textbf{Urbonaite 2021 (yeastDrop-Seq under drug treatment)}\newline Urbonaite G, Lee JTH, Liu P, Parras GG, Hemberg M, Acar M. Commun Biol 2021;4:1372.\newline \href{https://doi.org/10.1038/s42003-021-02895-4}{doi:10.1038/\allowbreak s42003-021-02895-4} & Single-drug arms against their combination with a per-cell readout, the environmental analog of a combinatorial genetic perturbation. & GEO GSE165686; Zenodo 10.5281/\allowbreak zenodo.4767298 and 10.5281/\allowbreak zenodo.4762526; from the collection sweep, not fetched \\
+\addlinespace[5pt]
+24 & \textbf{Nadal-Ribelles 2019 (sensitive yeast scRNA-seq)}\newline Nadal-Ribelles M, Islam S, Wei W, et al., Posas F, Steinmetz LM. Nat Microbiol 2019;4:683-692.\newline \href{https://doi.org/10.1038/s41564-018-0346-9}{doi:10.1038/\allowbreak s41564-018-0346-9} & The high-sensitivity yeast protocol, strand and isoform aware. Sensitivity per cell is the constraint on how small a perturbation effect a campaign can resolve. & Nat Microbiol SI /\allowbreak  GEO \\
+\addlinespace[5pt]
+25 & \textbf{Gasch 2017 (single-cell stress heterogeneity)}\newline Gasch AP, Yu FB, Hose J, et al., Quake SR. PLoS Biol 2017;15:e2004050.\newline \href{https://doi.org/10.1371/journal.pbio.2004050}{doi:10.1371/\allowbreak journal.pbio.2004050} & Separates intrinsic from extrinsic per-cell variation in an isogenic population under stress, which is the null a perturbation effect is measured against. & PLoS Biology SI /\allowbreak  GEO \\
+\addlinespace[5pt]
+26 & \textbf{Jaffe 2019 (multiplexed CRISPR interference epistasis)}\newline Jaffe M, Sherlock G, Levy SF. G3 2019;9:2843-2852.\newline \href{https://doi.org/10.1534/g3.119.400323}{doi:10.1534/\allowbreak g3.119.400323} & Two knockdowns in the same cell with a measured interaction, which is the only combinatorial CRISPR interference design located in yeast. & G3 open-access SI (unconfirmed) \\
+\addlinespace[5pt]
+27 & \textbf{Jackson 2023 (wild-type scRNA-seq time course for RNA kinetics)}\newline Jackson CA, Beheler-Amass M, Tjarnberg A, Suresh I, Hickey AS, Bonneau R, Gresham D. bioRxiv 2023. 10.1101/2023.09.21.558277.\newline \href{https://doi.org/10.1101/2023.09.21.558277}{doi:10.1101/\allowbreak 2023.09.21.558277} & The platform companion of Jackson 2020: 173,361 cells of one strain, which is what sets the per-cell variance a perturbation has to exceed. & GEO GSE242556 (from the scYeast Methods, Sec. 4.1.3) \\
+\addlinespace[5pt]
+28 & \textbf{Brettner 2024 (ultra-high-throughput yeast scRNA-seq)}\newline Brettner L, et al. Yeast 2024. doi:10.1002/yea.3927.\newline \href{https://doi.org/10.1002/yea.3927}{doi:10.1002/\allowbreak yea.3927} & Combinatorial barcoding in yeast at 96 to 384 multiplexed genotypes or environments per run. The throughput route by which a campaign becomes affordable. & Yeast (Wiley) SI \\
+\addlinespace[5pt]
+29 & \textbf{Mulleder 2012 (prototrophic deletion collection)}\newline Mulleder M, Capuano F, Pir P, et al., Ralser M. Nat Biotechnol 2012;30:1176-1178.\newline \href{https://doi.org/10.1038/nbt.2442}{doi:10.1038/\allowbreak nbt.2442} & The prototrophic deletion collection. Jackson 2020 used a prototrophic background because auxotrophy blocks minimal and nitrogen-limited media, so this is the strain resource a campaign in defined media needs. & EUROSCARF; Addgene kit 40276 \\
+\addlinespace[5pt]
+30 & \textbf{Su 2023 (single-cell transcriptomes under four stresses)}\newline Su Y, Xu C, Shea J, DeStephanis D, Su Z. BMC Genomics 2023;24:88.\newline \href{https://doi.org/10.1186/s12864-023-09184-w}{doi:10.1186/\allowbreak s12864-023-09184-w} & Full-length rather than three-prime tag counting, so isoform-level readout is on the table for a campaign that needs it. & GEO GSE201386 (from the scYeast Methods) \\
+\addlinespace[5pt]
+31 & \textbf{Wang 2022 (single-cell transcriptomes across replicative aging)}\newline Wang J, Sang Y, Jin S, Wang X, Azad GK, McCormick MA, Kennedy BK, Li Q, Wang J, Zhang X, et al. Aging Cell 2022;21:e13712.\newline \href{https://doi.org/10.1111/acel.13712}{doi:10.1111/\allowbreak acel.13712} & The only yeast single-cell set with age as the condition axis, which is a covariate any pooled campaign carries whether or not it measures it. & GEO GSE210032 (from the scYeast Methods) \\
+\addlinespace[5pt]
+32 & \textbf{Aulakh 2025 (genome-scale ionome)}\newline Aulakh SK, et al. Cell Syst 2025;16:101319.\newline \href{https://doi.org/10.1016/j.cels.2025.101319}{doi:10.1016/\allowbreak j.cels.2025.101319} & A metabolic readout on the whole deletion collection, which is the genotype axis the supported expression compendium already covers. & Cell Systems SI (accession unconfirmed) \\
+\addlinespace[5pt]
+33 & \textbf{Leutert 2023 (phosphoproteome x 101 conditions)}\newline Leutert M, et al., Villen J. Nat Struct Mol Biol 2023;30:1761-1773.\newline \href{https://doi.org/10.1038/s41594-023-01115-3}{doi:10.1038/\allowbreak s41594-023-01115-3} & Enzyme regulation acts faster than transcription, so a phosphosite layer over 101 conditions is what explains flux changes an expression table cannot. & PRIDE PXD034997 \\
+\addlinespace[5pt]
+34 & \textbf{Brauer 2008 (growth-rate-controlled chemostat transcriptome)}\newline Brauer MJ, Huttenhower C, Airoldi EM, et al., Botstein D. Mol Biol Cell 2008;19:352-367.\newline \href{https://doi.org/10.1091/mbc.e07-08-0779}{doi:10.1091/\allowbreak mbc.e07-08-0779} & Expression at controlled growth rate under each nutrient limitation, which is the condition axis Boer 2010 and Hackett 2016 measure metabolites and flux on. & GEO (unconfirmed) \\
+\addlinespace[5pt]
+35 & \textbf{Hackett 2016 (SIMMER multi-omic flux)}\newline Hackett SR, Zanotelli VRT, Xu W, et al., Rabinowitz JD. Science 2016;354:aaf2786.\newline \href{https://doi.org/10.1126/science.aaf2786}{doi:10.1126/\allowbreak science.aaf2786} & Flux, metabolite and transcript measured in one study under the same nutrient limitations, so the join is internal rather than across papers. & Science SI (accession unconfirmed) \\
+\addlinespace[5pt]
+36 & \textbf{Zhu 2014 (kinase / phosphatase lipidomics)}\newline Zhu Z, Loewen CJR. Mol Biol Cell 2014. PMC4196872.\newline \href{https://pmc.ncbi.nlm.nih.gov/articles/PMC4196872/}{PMC4196872} & A lipidome over 129 signaling deletions, most of which carry an expression profile in the supported compendium. & Mol Biol Cell SI Table S4 (Excel) \\
+\addlinespace[5pt]
+37 & \textbf{Gerke 2017 (urea-cycle mQTL)}\newline Gerke J, et al., Fay JC. Genetics 2017;206:2199.\newline \href{https://doi.org/10.1534/genetics.117.201107}{doi:10.1534/\allowbreak genetics.117.201107} & Metabolite quantitative trait loci on a segregant cross that also has an expression map, so a metabolite locus can be read through its transcript. & Genetics (GSA) SI \\
+\addlinespace[5pt]
+38 & \textbf{Ambroset 2014 (metabolite QTL)}\newline Ambroset C, et al., Fay JC. PLoS Genet 2014;10:e1004142.\newline \href{https://doi.org/10.1371/journal.pgen.1004142}{doi:10.1371/\allowbreak journal.pgen.1004142} & A 74-metabolite panel on a sequenced segregant panel, the widest metabolite vector available on a recombinant genotype axis. & PLOS Genetics SI \\
+\addlinespace[5pt]
+39 & \textbf{Blank 2005 (13C metabolic flux)}\newline Blank LM, Kuepfer L, Sauer U. Genome Biol 2005;6:R49.\newline \href{https://doi.org/10.1186/gb-2005-6-6-r49}{doi:10.1186/\allowbreak gb-2005-6-6-r49} & The only row measuring flux rather than a concentration, on deletion mutants that also have a transcriptome in the supported set. & Genome Biology open-access SI \\
+\addlinespace[5pt]
+40 & \textbf{Airoldi 2016 (nitrogen-limited steady-state and dynamic transcriptome)}\newline Airoldi EM, Miller D, Athanasiadou R, Brandt N, Abdul-Rahman F, Neymotin B, Hashimoto T, Bahmani T, Gresham D. Mol Biol Cell 2016;27:1383-1396.\newline \href{https://doi.org/10.1091/mbc.E14-05-1013}{doi:10.1091/\allowbreak mbc.E14-05-1013} & Expression under the exact nitrogen-limited conditions that Jackson 2020 profiles single cells in, so the deletion effect separates from the medium effect. & GEO, series not confirmed this pass \\
+\addlinespace[5pt]
+41 & \textbf{Martin-Perez 2017 (protein half-lives)}\newline Martin-Perez M, Villen J. Cell Syst 2017;5:283-294.e5.\newline \href{https://doi.org/10.1016/j.cels.2017.08.008}{doi:10.1016/\allowbreak j.cels.2017.08.008} & Protein turnover per gene, the second of those two terms, spanning three orders of magnitude and therefore not replaceable by a global constant. & Cell Systems SI; PRIDE identifier not fetched this pass \\
+\addlinespace[5pt]
+42 & \textbf{Boer 2010 (metabolome across nutrient limitations)}\newline Boer VM, Crutchfield CA, Bradley PH, Botstein D, Rabinowitz JD. Mol Biol Cell 2010;21:198-211.\newline \href{https://doi.org/10.1091/mbc.e09-07-0597}{doi:10.1091/\allowbreak mbc.e09-07-0597} & The metabolite half of the chemostat nutrient-limitation series whose transcriptome half is Brauer 2008, same laboratory and same conditions. & MBoC SI (unconfirmed) \\
+\addlinespace[5pt]
+43 & \textbf{Tengolics 2024 (domestication metabolome)}\newline Tengolics R, Szappanos B, Mulleder M, et al., Ralser M, Papp B. PNAS 2024;121:e2313354121.\newline \href{https://doi.org/10.1073/pnas.2313354121}{doi:10.1073/\allowbreak pnas.2313354121} & Metabolite levels across sequenced isolates, the panel the supported Caudal 2024 transcriptomes and Muenzner 2024 proteomes also sit on. & PNAS Dataset S11 \\
+\addlinespace[5pt]
+44 & \textbf{Eder 2020 (flux QTL)}\newline Eder M, Nidelet T, Sanchez I, Camarasa C, Legras JL, Dequin S. PMID 32034164.\newline \href{https://pubmed.ncbi.nlm.nih.gov/32034164/}{PMID 32034164} & Flux mapped to segregant genotypes, which is the flux counterpart of the expression and protein maps on the same panel type. & Journal SI (venue and accession unconfirmed) \\
+\addlinespace[5pt]
+45 & \textbf{Yu 2021 (proteome and metabolome under nitrogen limitation)}\newline Yu R, Vorontsov E, Sihlbom C, Nielsen J. eLife 2021;10:e65722.\newline \href{https://doi.org/10.7554/eLife.65722}{doi:10.7554/\allowbreak eLife.65722} & Both layers measured in one study under nitrogen limitation, so it calibrates the protein-to-metabolite step that cross-study joins assume. & eLife data availability (unconfirmed) \\
+\addlinespace[5pt]
+46 & \textbf{de Boer 2020 (100M random promoters)}\newline de Boer CG, Vaishnav ED, Sadeh R, Abeyta EL, Friedman N, Regev A. Nat Biotechnol 2020;38:56-65.\newline \href{https://doi.org/10.1038/s41587-019-0315-8}{doi:10.1038/\allowbreak s41587-019-0315-8} & Scale band: tier 1, ordered by measurements (100,000,000). & GEO (de Boer 2020); DREAM 2022 release of 6,739,258 promoters \\
+\addlinespace[5pt]
+47 & \textbf{Lee 2014 (HIP-HOP fitness signatures)}\newline Lee AY, St Onge RP, Proctor MJ, et al., Giaever G, Nislow C. Science 2014;344:208-211.\newline \href{https://doi.org/10.1126/science.1250217}{doi:10.1126/\allowbreak science.1250217} & Scale band: tier 1, ordered by measurements (13,000,000). & Science SI + Nislow/\allowbreak Giaever portal, neither of which yielded per-strain matrices; awaiting author matrices per the WS15 roadmap \\
+\addlinespace[5pt]
+48 & \textbf{Nguyen Ba 2022 (barcoded bulk QTL, 100k segregants)}\newline Nguyen Ba AN, Lawrence KR, Rego-Costa A, Gopalakrishnan S, Temko D, Michor F, Desai MM. eLife 2022;11:e73983.\newline \href{https://doi.org/10.7554/eLife.73983}{doi:10.7554/\allowbreak eLife.73983} & Scale band: tier 1, ordered by measurements (800,000). & eLife data availability; SRA (unconfirmed) \\
+\addlinespace[5pt]
+49 & \textbf{Galardini 2019 (four backgrounds x 38 conditions)}\newline Galardini M, Busby BP, Vieitez C, Dunham AS, Typas A, Beltrao P. Mol Syst Biol 2019;15:e8831.\newline \href{https://doi.org/10.15252/msb.20198831}{doi:10.15252/\allowbreak msb.20198831} & Scale band: tier 1, ordered by measurements (575,472). & GEO GSE123118 + github.com/\allowbreak mgalardini/\allowbreak 2018koyeast \\
+\addlinespace[5pt]
+50 & \textbf{Dutta 2026 (barcoded natural-isolate chemical response)}\newline Dutta A, Garin M, Loegler V, Brach G, Friedrich A, Yoshimura M, Hirano H, Osada H, Boone C, Yashiroda Y, Hou J, Schacherer J. Nat Commun 2026.\newline \href{https://doi.org/10.1038/s41467-026-73532-z}{doi:10.1038/\allowbreak s41467-026-73532-z} & Scale band: tier 1, ordered by measurements (312,000). & Nat Commun SI; isolates from the 1,011 panel (ENA) \\
+\addlinespace[5pt]
+51 & \textbf{Li 2016 (tRNA fitness landscape)}\newline Li C, Qian W, Maclean CJ, Zhang J. Science 2016;352:837-840.\newline \href{https://doi.org/10.1126/science.aae0568}{doi:10.1126/\allowbreak science.aae0568} & Scale band: tier 1, ordered by measurements (65,000). & Science SI (unconfirmed) \\
+\addlinespace[5pt]
+52 & \textbf{Domingo 2018 (tRNA double-mutant landscape)}\newline Domingo J, Diss G, Lehner B. Nature 2018;558:117-121.\newline \href{https://doi.org/10.1038/s41586-018-0170-7}{doi:10.1038/\allowbreak s41586-018-0170-7} & Scale band: tier 1, ordered by measurements (23,000). & Nature SI (unconfirmed) \\
+\addlinespace[5pt]
+53 & \textbf{Zhang 2021 (YETI titratable overexpression)}\newline Zhang Y, Ho Yee Chow M, Ling Y, et al., Andrews BJ. Mol Syst Biol 2021;17:e10321.\newline \href{https://doi.org/10.15252/msb.202010321}{doi:10.15252/\allowbreak msb.202010321} & Scale band: tier 1, ordered by measurements (22,760). & Mol Syst Biol SI (repository accession unconfirmed) \\
+\addlinespace[5pt]
+54 & \textbf{Peeters 2021 (fermentation-trait QTL atlas)}\newline Peeters B, Reijbroek F, Verbaet J, et al., Jarosz DF, Verstrepen KJ. 2021. PMID 34727964.\newline \href{https://pubmed.ncbi.nlm.nih.gov/34727964/}{PMID 34727964} & Scale band: tier 1, ordered by measurements (20,250). & Journal SI; raw reads at SRA/\allowbreak ENA (accession unconfirmed) \\
+\addlinespace[5pt]
+55 & \textbf{Van Leeuwen 2024 (short-chain organic acids)}\newline Shared and specific genetic determinants of tolerance to acetic, butyric and octanoic acid. PMC10903034.\newline \href{https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10903034/}{PMC10903034} & Scale band: tier 1, ordered by measurements (14,400). & Journal SI (open-access PMC) \\
+\addlinespace[5pt]
+56 & \textbf{Chica 2026 (AutoDRY autophagy screen)}\newline Chica N, et al. Nat Cell Biol 2026;28:465-479.\newline \href{https://doi.org/10.1038/s41556-025-01837-0}{doi:10.1038/\allowbreak s41556-025-01837-0} & Scale band: tier 1, ordered by measurements (11,838). & Dryad 10.5061/\allowbreak dryad.cfxpnvxdh \\
+\addlinespace[5pt]
+57 & \textbf{Sopko 2006 (genome-scale overexpression toxicity)}\newline Sopko R, Huang D, Preston N, et al., Boone C, Andrews B. Mol Cell 2006;21:319-330.\newline \href{https://doi.org/10.1016/j.molcel.2005.12.011}{doi:10.1016/\allowbreak j.molcel.2005.12.011} & Scale band: tier 1, ordered by measurements (10,560). & Mol Cell SI tables \\
+\addlinespace[5pt]
+58 & \textbf{Liu 2021 (tryptophan / isobutanol tolerance)}\newline Liu H-L, Wang CH-T, Chiang EP-I, Huang C-C, Li W-H. Biotechnol Biofuels 2021;14:200.\newline \href{https://doi.org/10.1186/s13068-021-02048-z}{doi:10.1186/\allowbreak s13068-021-02048-z} & Scale band: tier 1, ordered by measurements (10,012). & GEO GSE175794 (companion RNA-seq); screen in BMC SI \\
+\addlinespace[5pt]
+59 & \textbf{Kuroda 2019 (isobutanol-specific tolerance)}\newline Kuroda K, Hammer SK, Watanabe Y, Montano Lopez J, Fink GR, Stephanopoulos G, Ueda M, Avalos JL. Cell Syst 2019;9:534-547.e5.\newline \href{https://doi.org/10.1016/j.cels.2019.10.006}{doi:10.1016/\allowbreak j.cels.2019.10.006} & Scale band: tier 1, ordered by measurements (9,600). & ArrayExpress E-MTAB-8175 (RNA-seq); screen data in Cell Syst SI \\
+\addlinespace[5pt]
+60 & \textbf{Turco 2023 (Yeast Phenome)}\newline Turco G, Chang C, Wang RY, et al., Boone C, Andrews BJ, Roth FP. Sci Adv 2023;9:eadg5702.\newline \href{https://doi.org/10.1126/sciadv.adg5702}{doi:10.1126/\allowbreak sciadv.adg5702} & Scale band: tier 2, ordered by measurements (37,680,000). & yeastphenome.org (Zenodo 10.5281/\allowbreak zenodo.7714347); loader torchcell/\allowbreak datasets/\allowbreak scerevisiae/\allowbreak yeastphenome.py, 49 screens, not yet in the built set \\
+\addlinespace[5pt]
+\end{longtable}
+\endgroup
+\end{landscape}

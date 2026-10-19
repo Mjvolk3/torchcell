@@ -1,0 +1,190 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/database/scripts/build_candidate_datasets_table.py
+\begingroup
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{longtable}{@{}L{46mm} r@{\hspace{6pt}} r@{\hspace{6pt}} L{104mm}@{}}
+\caption[]{Rank changes between the previous pass and this one, for every row in
+either pass's first 70, every row added, and every row that left.
+\emph{Was} is recomputed under the previous rule, tier then measurements, over the
+rows that pass held. A dash means the row is new or has gone.}
+\label{tab:swaps}\\
+\toprule
+\textbf{Dataset} & \textbf{Was} & \textbf{Now} & \textbf{Reason} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Dataset} & \textbf{Was} & \textbf{Now} & \textbf{Reason} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\textbf{Albert 2018 (eQTL in 1,012 segregants)} & 34 & 1 & State across genomes, first: bulk RNA-seq of 1,012 sequenced BY x RM segregants, the largest genotype-indexed transcriptome in yeast, and the bulk partner of the served Boocock 2025, whose pooled panel stores 393 of these same segregants. \\
+\addlinespace[5pt]
+\textbf{Jakobson 2025 (genome-to-proteome map)} & 35 & 2 & State across genomes: protein abundance across the same sequenced segregant panel Albert 2018 profiles by transcriptome, 800 F6 segregants, so protein and transcript loci are measurable on one genotype set. \\
+\addlinespace[5pt]
+\textbf{Teyssonniere 2024 (species-wide proteome against transcriptome)} & 37 & 3 & State across genomes: proteomes for 942 of the 1,011 isolates whose transcriptomes the served Caudal 2024 holds and whose proteomes the served Muenzner 2024 holds for 796, so the de-duplication against Muenzner is the first task and the pairing with Caudal is one to one. \\
+\addlinespace[5pt]
+\textbf{Grossbach 2022 (BY x RM transcriptome, proteome and phosphoproteome)} & 38 & 4 & State across genomes: transcript, protein and phosphosite on one set of 112 sequenced BY x RM strains, the only row where all three layers are observed within a genotype. \\
+\addlinespace[5pt]
+\textbf{Smith 2008 (gene-environment interaction eQTL)} & 112 & 5 & State across genomes: mRNA abundance of 109 BY x RM segregants in glucose and in ethanol, the one segregant transcriptome with a condition axis, so genotype by environment is a within-panel contrast. \\
+\addlinespace[5pt]
+\textbf{Skelly 2013 (expression variation across isolates)} & 46 & 6 & State across genomes: transcriptome and proteome on the same 22 sequenced isolates, the cheap and the expensive layer paired within one experiment on natural genomes. \\
+\addlinespace[5pt]
+\textbf{McManus 2014 (ribosome profiling, allele-specific)} & 48 & 7 & State across genomes: ribosome occupancy beside mRNA abundance for S. cerevisiae, S. paradoxus and their F1 hybrid, so translation is read allele by allele across two genomes; the paradoxus arm is out of species and is stored apart or dropped. \\
+\addlinespace[5pt]
+\textbf{Foss 2007 (BY x RM segregant proteome)} & 53 & 8 & State across genomes: the first segregant proteome on the BY x RM cross and the independent replicate of Grossbach 2022 fifteen years and two platforms earlier. \\
+\addlinespace[5pt]
+\textbf{Dong 2021 (MAGIC + SAM biosensor)} & 11 & 9 & A genome-wide CRISPR activation, interference and deletion library sorted on a metabolite biosensor, so the label is product concentration rather than fitness. The pattern a sorted Perturb-seq would reuse. \\
+\addlinespace[5pt]
+\textbf{Momen-Roknabadi 2020 (inducible CRISPRi library)} & 12 & 10 & A genome-scale inducible CRISPR interference library with a released per-guide matrix. Induction control is what lets a knockdown be applied after a cell is captured rather than during outgrowth. \\
+\addlinespace[5pt]
+\textbf{McGlincy 2021 (genome-scale CRISPRi library)} & 13 & 11 & The second independently designed genome-scale yeast CRISPR interference library with a released per-guide matrix, so guide design and gene effect can be separated. \\
+\addlinespace[5pt]
+\textbf{Bao 2018 (CHAnGE single-nucleotide library)} & 14 & 12 & A guide-indexed genome-wide library whose edits sit below the open reading frame, so the perturbation is an allele rather than a null. \\
+\addlinespace[5pt]
+\textbf{Crook 2016 (tunable RNAi, isobutanol + 1-butanol)} & 15 & 13 & A dose-graded knockdown axis. Graded rather than binary perturbation is what turns a per-cell readout into a dose-response curve. \\
+\addlinespace[5pt]
+\textbf{Roy 2018 (multiplexed precision editing)} & 16 & 14 & Multiplexed designed edits per cell, which is combinatorial input in the sense the Perturb-seq specification requires. \\
+\addlinespace[5pt]
+\textbf{Newman 2006 (protein noise, GFP library)} & 17 & 15 & Per-cell protein abundance distributions across a genome-scale tagged collection. Expression noise per gene is what sets how large a perturbation effect has to be before a per-cell readout can resolve it. \\
+\addlinespace[5pt]
+\textbf{Mukherjee 2021 (CRISPRi essential genes x acetic acid)} & 18 & 16 & Knockdown reaches the essential genes a deletion collection cannot hold, which is a third of the genome a deletion-based campaign would miss. \\
+\addlinespace[5pt]
+\textbf{Lian 2017 (CRISPR-AID, beta-carotene)} & 19 & 17 & Three perturbation modalities in one cell, activation, interference and deletion, which is combinatorial input by modality rather than by gene. \\
+\addlinespace[5pt]
+\textbf{Hughes 2000 (compendium of expression profiles)} & 20 & 18 & The original designed-perturbation expression compendium, and the independent measurement that makes cross-laboratory replication of the deletion transcriptome testable against the built Kemmeren 2014. \\
+\addlinespace[5pt]
+\textbf{Lenstra 2011 (chromatin regulator deletion expression)} & 21 & 19 & The same design over chromatin regulators rather than sequence-specific factors, so the two together cover both halves of transcriptional control by deletion. \\
+\addlinespace[5pt]
+\textbf{Sun 2013 (mRNA synthesis and decay rates across deletion strains)} & 22 & 20 & A designed single-gene perturbation crossed with a transcriptome, and the only one that resolves the level into a synthesis rate and a decay rate. Rates are what a per-cell snapshot cannot recover on its own. \\
+\addlinespace[5pt]
+\textbf{Jariani 2020 (yeast scRNA-seq through lag phase)} & 23 & 21 & Per-cell states through a carbon-source shift, so the readout is the distribution across an unsynchronized population rather than its mean. \\
+\addlinespace[5pt]
+\textbf{Guo 2018 (CRISPR-Cas9 tiling of essential genes)} & 24 & 22 & Guide tiling produces a graded allelic series across one gene, so guide position rather than gene identity carries the effect. \\
+\addlinespace[5pt]
+\textbf{Urbonaite 2021 (yeastDrop-Seq under drug treatment)} & 25 & 23 & Single-drug arms against their combination with a per-cell readout, the environmental analog of a combinatorial genetic perturbation. \\
+\addlinespace[5pt]
+\textbf{Nadal-Ribelles 2019 (sensitive yeast scRNA-seq)} & 26 & 24 & The high-sensitivity yeast protocol, strand and isoform aware. Sensitivity per cell is the constraint on how small a perturbation effect a campaign can resolve. \\
+\addlinespace[5pt]
+\textbf{Gasch 2017 (single-cell stress heterogeneity)} & 27 & 25 & Separates intrinsic from extrinsic per-cell variation in an isogenic population under stress, which is the null a perturbation effect is measured against. \\
+\addlinespace[5pt]
+\textbf{Jaffe 2019 (multiplexed CRISPR interference epistasis)} & 28 & 26 & Two knockdowns in the same cell with a measured interaction, which is the only combinatorial CRISPR interference design located in yeast. \\
+\addlinespace[5pt]
+\textbf{Jackson 2023 (wild-type scRNA-seq time course for RNA kinetics)} & 29 & 27 & The platform companion of Jackson 2020: 173,361 cells of one strain, which is what sets the per-cell variance a perturbation has to exceed. \\
+\addlinespace[5pt]
+\textbf{Brettner 2024 (ultra-high-throughput yeast scRNA-seq)} & 30 & 28 & Combinatorial barcoding in yeast at 96 to 384 multiplexed genotypes or environments per run. The throughput route by which a campaign becomes affordable. \\
+\addlinespace[5pt]
+\textbf{Mulleder 2012 (prototrophic deletion collection)} & 31 & 29 & The prototrophic deletion collection. Jackson 2020 used a prototrophic background because auxotrophy blocks minimal and nitrogen-limited media, so this is the strain resource a campaign in defined media needs. \\
+\addlinespace[5pt]
+\textbf{Su 2023 (single-cell transcriptomes under four stresses)} & 32 & 30 & Full-length rather than three-prime tag counting, so isoform-level readout is on the table for a campaign that needs it. \\
+\addlinespace[5pt]
+\textbf{Wang 2022 (single-cell transcriptomes across replicative aging)} & 33 & 31 & The only yeast single-cell set with age as the condition axis, which is a covariate any pooled campaign carries whether or not it measures it. \\
+\addlinespace[5pt]
+\textbf{Aulakh 2025 (genome-scale ionome)} & 36 & 32 & A metabolic readout on the whole deletion collection, which is the genotype axis the supported expression compendium already covers. \\
+\addlinespace[5pt]
+\textbf{Leutert 2023 (phosphoproteome x 101 conditions)} & 39 & 33 & Enzyme regulation acts faster than transcription, so a phosphosite layer over 101 conditions is what explains flux changes an expression table cannot. \\
+\addlinespace[5pt]
+\textbf{Brauer 2008 (growth-rate-controlled chemostat transcriptome)} & 40 & 34 & Expression at controlled growth rate under each nutrient limitation, which is the condition axis Boer 2010 and Hackett 2016 measure metabolites and flux on. \\
+\addlinespace[5pt]
+\textbf{Hackett 2016 (SIMMER multi-omic flux)} & 41 & 35 & Flux, metabolite and transcript measured in one study under the same nutrient limitations, so the join is internal rather than across papers. \\
+\addlinespace[5pt]
+\textbf{Zhu 2014 (kinase / phosphatase lipidomics)} & 42 & 36 & A lipidome over 129 signaling deletions, most of which carry an expression profile in the supported compendium. \\
+\addlinespace[5pt]
+\textbf{Gerke 2017 (urea-cycle mQTL)} & 43 & 37 & Metabolite quantitative trait loci on a segregant cross that also has an expression map, so a metabolite locus can be read through its transcript. \\
+\addlinespace[5pt]
+\textbf{Ambroset 2014 (metabolite QTL)} & 44 & 38 & A 74-metabolite panel on a sequenced segregant panel, the widest metabolite vector available on a recombinant genotype axis. \\
+\addlinespace[5pt]
+\textbf{Blank 2005 (13C metabolic flux)} & 45 & 39 & The only row measuring flux rather than a concentration, on deletion mutants that also have a transcriptome in the supported set. \\
+\addlinespace[5pt]
+\textbf{Airoldi 2016 (nitrogen-limited steady-state and dynamic transcriptome)} & 47 & 40 & Expression under the exact nitrogen-limited conditions that Jackson 2020 profiles single cells in, so the deletion effect separates from the medium effect. \\
+\addlinespace[5pt]
+\textbf{Martin-Perez 2017 (protein half-lives)} & 49 & 41 & Protein turnover per gene, the second of those two terms, spanning three orders of magnitude and therefore not replaceable by a global constant. \\
+\addlinespace[5pt]
+\textbf{Boer 2010 (metabolome across nutrient limitations)} & 50 & 42 & The metabolite half of the chemostat nutrient-limitation series whose transcriptome half is Brauer 2008, same laboratory and same conditions. \\
+\addlinespace[5pt]
+\textbf{Tengolics 2024 (domestication metabolome)} & 51 & 43 & Metabolite levels across sequenced isolates, the panel the supported Caudal 2024 transcriptomes and Muenzner 2024 proteomes also sit on. \\
+\addlinespace[5pt]
+\textbf{Eder 2020 (flux QTL)} & 52 & 44 & Flux mapped to segregant genotypes, which is the flux counterpart of the expression and protein maps on the same panel type. \\
+\addlinespace[5pt]
+\textbf{Yu 2021 (proteome and metabolome under nitrogen limitation)} & 54 & 45 & Both layers measured in one study under nitrogen limitation, so it calibrates the protein-to-metabolite step that cross-study joins assume. \\
+\addlinespace[5pt]
+\textbf{de Boer 2020 (100M random promoters)} & 55 & 46 & Unchanged criteria; moved by 9 as rows around it were promoted into a band. \\
+\addlinespace[5pt]
+\textbf{Lee 2014 (HIP-HOP fitness signatures)} & 57 & 47 & Unchanged criteria; moved by 10 as rows around it were promoted into a band. \\
+\addlinespace[5pt]
+\textbf{Nguyen Ba 2022 (barcoded bulk QTL, 100k segregants)} & 58 & 48 & Unchanged criteria; moved by 10 as rows around it were promoted into a band. \\
+\addlinespace[5pt]
+\textbf{Galardini 2019 (four backgrounds x 38 conditions)} & 59 & 49 & Unchanged criteria; moved by 10 as rows around it were promoted into a band. \\
+\addlinespace[5pt]
+\textbf{Dutta 2026 (barcoded natural-isolate chemical response)} & 61 & 50 & Unchanged criteria; moved by 11 as rows around it were promoted into a band. \\
+\addlinespace[5pt]
+\textbf{Li 2016 (tRNA fitness landscape)} & 62 & 51 & Unchanged criteria; moved by 11 as rows around it were promoted into a band. \\
+\addlinespace[5pt]
+\textbf{Domingo 2018 (tRNA double-mutant landscape)} & 63 & 52 & Unchanged criteria; moved by 11 as rows around it were promoted into a band. \\
+\addlinespace[5pt]
+\textbf{Zhang 2021 (YETI titratable overexpression)} & 64 & 53 & Unchanged criteria; moved by 11 as rows around it were promoted into a band. \\
+\addlinespace[5pt]
+\textbf{Peeters 2021 (fermentation-trait QTL atlas)} & 65 & 54 & Unchanged criteria; moved by 11 as rows around it were promoted into a band. \\
+\addlinespace[5pt]
+\textbf{Van Leeuwen 2024 (short-chain organic acids)} & 66 & 55 & Unchanged criteria; moved by 11 as rows around it were promoted into a band. \\
+\addlinespace[5pt]
+\textbf{Chica 2026 (AutoDRY autophagy screen)} & 67 & 56 & Unchanged criteria; moved by 11 as rows around it were promoted into a band. \\
+\addlinespace[5pt]
+\textbf{Sopko 2006 (genome-scale overexpression toxicity)} & 68 & 57 & Unchanged criteria; moved by 11 as rows around it were promoted into a band. \\
+\addlinespace[5pt]
+\textbf{Liu 2021 (tryptophan / isobutanol tolerance)} & 69 & 58 & Unchanged criteria; moved by 11 as rows around it were promoted into a band. \\
+\addlinespace[5pt]
+\textbf{Kuroda 2019 (isobutanol-specific tolerance)} & 70 & 59 & Unchanged criteria; moved by 11 as rows around it were promoted into a band. \\
+\addlinespace[5pt]
+\textbf{Turco 2023 (Yeast Phenome)} & 71 & 60 & Unchanged criteria; moved by 11 as rows around it were promoted into a band. \\
+\addlinespace[5pt]
+\textbf{Rossi 2021 (ChIP-exo protein architecture)} & 72 & 61 & Unchanged criteria; moved by 11 as rows around it were promoted into a band. \\
+\addlinespace[5pt]
+\textbf{Bloom 2025 (global epistasis in a yeast cross)} & 74 & 62 & Unchanged criteria; moved by 12 as rows around it were promoted into a band. \\
+\addlinespace[5pt]
+\textbf{Gasch 2000 (environmental stress response)} & 75 & 63 & Unchanged criteria; moved by 12 as rows around it were promoted into a band. \\
+\addlinespace[5pt]
+\textbf{Decourty 2021 (RNA-metabolism genetic interactions)} & 76 & 64 & Unchanged criteria; moved by 12 as rows around it were promoted into a band. \\
+\addlinespace[5pt]
+\textbf{Cuperus 2017 (random 5' UTR library)} & 77 & 65 & Unchanged criteria; moved by 12 as rows around it were promoted into a band. \\
+\addlinespace[5pt]
+\textbf{Faure 2022 (doubledeepPCA)} & 78 & 66 & Unchanged criteria; moved by 12 as rows around it were promoted into a band. \\
+\addlinespace[5pt]
+\textbf{Chong 2015 / CYCLoPs (single-cell proteome dynamics)} & 79 & 67 & Unchanged criteria; moved by 12 as rows around it were promoted into a band. \\
+\addlinespace[5pt]
+\textbf{Teyssonniere 2024 (species-wide trait survey)} & 80 & 68 & Unchanged criteria; moved by 12 as rows around it were promoted into a band. \\
+\addlinespace[5pt]
+\textbf{Diss 2018 (Fos-Jun interaction double mutants)} & 81 & 69 & Unchanged criteria; moved by 12 as rows around it were promoted into a band. \\
+\addlinespace[5pt]
+\textbf{Warringer 2011 (trait variation across the SGRP panel)} & 82 & 70 & Unchanged criteria; moved by 12 as rows around it were promoted into a band. \\
+\addlinespace[5pt]
+\textbf{Piotrowski 2017 (MOSAIC diagnostic panel)} & 73 & -- & Served since the previous pass in KG 4.0 (release 2026.10.17-4295f7ca) as EnvChemgenPiotrowski2017Dataset; it is now a join partner rather than a candidate. \\
+\addlinespace[5pt]
+\textbf{Hale 2024 (CRISPRi x natural variation)} & 5 & -- & Served since the previous pass in KG 4.0 (release 2026.10.17-4295f7ca) as CrispriSegregantHale2024Dataset; it is now a join partner rather than a candidate. \\
+\addlinespace[5pt]
+\textbf{Parsons 2006 (bioactive-compound profiling)} & 60 & -- & Served since the previous pass in KG 4.0 (release 2026.10.17-4295f7ca) as EnvChemgenParsons2006Dataset; it is now a join partner rather than a candidate. \\
+\addlinespace[5pt]
+\textbf{Peter 2018 (1,011 isolate genomes + phenome)} & 2 & -- & Served since the previous pass in KG 4.0 (release 2026.10.17-4295f7ca) as IsolateGrowthPeter2018Dataset; it is now a join partner rather than a candidate. \\
+\addlinespace[5pt]
+\textbf{Muenzner 2024 (natural-isolate proteome)} & 1 & -- & Served since the previous pass in KG 4.0 (release 2026.10.17-4295f7ca) as two datasets (ProteomeMuenzner2024Dataset and ProteinTurnoverMuenzner2024Dataset); it is now a join partner rather than a candidate. \\
+\addlinespace[5pt]
+\textbf{Puddu 2019 (WGS of the deletion collection)} & 7 & -- & Served since the previous pass in KG 4.0 (release 2026.10.17-4295f7ca) as GenomeArchitecturePuddu2019Dataset; it is now a join partner rather than a candidate. \\
+\addlinespace[5pt]
+\textbf{N'Guessan 2025 (segregant scRNA-seq eQTL)} & 8 & -- & Served since the previous pass in KG 4.0 (release 2026.10.17-4295f7ca) as Nguessan2025Dataset; it is now a join partner rather than a candidate. \\
+\addlinespace[5pt]
+\textbf{Vaishnav 2022 (regulatory DNA fitness landscape)} & 56 & -- & Served since the previous pass in KG 4.0 (release 2026.10.17-4295f7ca) as PooledPromoterExpressionVaishnav2022Dataset; it is now a join partner rather than a candidate. \\
+\addlinespace[5pt]
+\textbf{Boocock 2025 (single-cell eQTL mapping)} & 4 & -- & Served since the previous pass in KG 4.0 (release 2026.10.17-4295f7ca) as Boocock2025Dataset, 79,516 records over four segregant panels; it is now a join partner rather than a candidate. \\
+\addlinespace[5pt]
+\textbf{De Chiara 2022 (domestication and the life cycle)} & 3 & -- & Served since the previous pass in KG 4.0 (release 2026.10.17-4295f7ca) as three datasets (DoublingTimeDeChiara2022Dataset, CellYieldDeChiara2022Dataset, LifeCycleDeChiara2022Dataset); it is now a join partner rather than a candidate. \\
+\addlinespace[5pt]
+\textbf{Hu 2007 (TF deletion expression compendium)} & 10 & -- & Served since the previous pass in KG 4.0 (release 2026.10.17-4295f7ca) as MicroarrayScoreHu2007Dataset; it is now a join partner rather than a candidate. \\
+\addlinespace[5pt]
+\textbf{Jackson 2020 (TF-deletion single-cell atlas)} & 6 & -- & Served since the previous pass in KG 4.0 (release 2026.10.17-4295f7ca) as TfDeletionPseudobulkJackson2020Dataset; it is now a join partner rather than a candidate. \\
+\addlinespace[5pt]
+\textbf{Hackett 2020 (IDEA inducible-TF transcriptome time series)} & 9 & -- & Served since the previous pass in KG 4.0 (release 2026.10.17-4295f7ca) as InductionTimecourseHackett2020Dataset; it is now a join partner rather than a candidate. \\
+\addlinespace[5pt]
+\end{longtable}
+\endgroup

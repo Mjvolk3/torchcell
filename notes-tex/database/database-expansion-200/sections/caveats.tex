@@ -1,0 +1,96 @@
+%% notes-tex/database/database-expansion-200/sections/caveats.tex
+%% [[experiments.database.expansion-200]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/database-expansion-200/sections/caveats.tex
+%% SOURCE: excluded table from
+%% experiments/database/scripts/build_candidate_datasets_table.py; prose hand-authored
+
+\section{What was dropped\secstatus{todo}}\label{sec:excluded}
+
+\input{tables/excluded}
+
+Table~\ref{tab:excluded} holds the 25 rows that were considered and never ranked: twelve
+that are not a dataset (a prior, a method, a knowledge base), seven that are off species,
+four that were already served before the previous pass, and two with no sequence basis.
+The thirteen rows that were ranked last pass and are served now are not in this table;
+they are in Table~\ref{tab:swaps}, because they were ranked, were built in rank order, and
+their removal is a move rather than an exclusion.
+
+\subsection{Two rows are not untouched candidates\secstatus{todo}}\label{sec:status}
+
+Checking a name against the served list is not sufficient. A dataset can carry a loader, a
+failed retrieval attempt, or an already-ingested deposit under a different paper's name.
+
+\notesec{Lee 2014, row 47, is blocked rather than available} An earlier ingestion attempt
+is recorded as awaiting author matrices, which means the Science supplementary tables and
+the Nislow and Giaever lab portal did not yield per-strain values. Its rank is still
+earned: 3,356 compounds against the full heterozygous and homozygous collections really is
+the largest chemical-genetic matrix in existence, and it really is on the YKO genotype axis
+the served set already uses. What changes is the nature of the work. Row 47 is an author
+request, not a loader, and the $1.3\times10^7$ instances it contributes to the totals in
+Sec.~\ref{sec:summary} should not be counted as reachable until that request succeeds.
+
+\notesec{Turco 2023, row 60, already has a loader}
+\file{torchcell/datasets/scerevisiae/yeastphenome.py} consumes the curated YeastPhenome
+release and retains 49 growth screens, so this row is in flight rather than net new. It is
+not in the served set, which is why it appears here at all. Its de-duplication problem is
+partly solved already, since the loader excludes the primaries served directly, along with
+heterozygous-diploid and expression screens. Lee 2014 is not among its 49 screens, so
+ingesting YeastPhenome does not backfill row 47.
+
+\subsection{Overlap is checked by script, and the check is not yet strong\secstatus{todo}}\label{sec:overlap}
+
+Rows that are already held have been caught by inspection before and by script once, so
+the check is \file{experiments/database/scripts/check_candidate_overlap.py}, run against
+the candidate JSON. It applies three keys of increasing strength: the candidate DOI cited
+in a served loader, an accession token shared with one, and the candidate PMID appearing in
+an aggregator's source-PMID column.
+
+Against the 55 served loaders it reports one overlap, Turco 2023, which
+Sec.~\ref{sec:status} already records as a loader in flight, and no overlap with SynLethDB
+across 3,658 source PMIDs spanning both the lethality and rescue layers. The honest limit
+is coverage. The script resolves a PMID for 124 of 154 rows and finds a parseable
+accession in 11. Accession is the strongest key, so it is running on about one row in
+fourteen. Recording each row's deposit identifier is the single highest-value edit
+available to this list.
+
+\subsection{Confidence, and the candidate gate\secstatus{todo}}\label{sec:confidence}
+
+Rows carry a confidence value in the generated JSON. \emph{sourced} means the figures trace
+to something read in a pass or to the sourced triage note, and covers 65 of the 154 rows,
+34 of the sixty printed. \emph{recall} means the row was written from domain knowledge,
+and covers 89 of the 154, 26 of the sixty. For a recall row the dataset is real and the
+description is sound, but the citation details, the exact counts and the accession all
+need confirming before a loader is written.
+
+The new first band sharpens that warning rather than softening it. Six of the eight state
+rows are recall rows, Albert 2018 among them, and none of the eight has a deposit
+identifier fetched: Albert 2018's GEO series, Jakobson 2025's accession, the PRIDE
+identifiers of Teyssonniere 2024 and Grossbach 2022, Smith 2008's GEO series and
+McManus 2014's are all marked unconfirmed in Table~\ref{tab:sources}. Treat the top of the
+table as a claim to verify first, not a queue to start work from; the candidate gate is
+where that verification is recorded.
+
+Table~\ref{tab:verdicts} in Sec.~\ref{sec:full} gives each row's verdict from the gate's
+verdict store. Eight of the 154 rows have been gated: one admissible, one admissible with
+typed gaps, three blocked on provision and three blocked on a wall. None of the eight
+state rows has a verdict yet, so gating them is the first step of the next build week.
+
+\section{Before a loader is written\secstatus{todo}}\label{sec:caveats}
+
+Every figure in Table~\ref{tab:final} is an axis count, not a verified record count,
+and several are weaker than that. Three qualifications apply, in decreasing order of how
+much damage they would do if ignored.
+
+\notesec{Instance counts marked $\dagger$ are products, not counts} A screen reported as
+4,800 strains against 3 conditions is entered as 14,400 instances. Real screens drop
+strains per condition, so the released matrix is smaller, sometimes by a third. Thirteen of
+the sixty rows carry the mark.
+
+\notesec{Measurements assume a dense vector} A proteome row is counted as instances times
+the number of proteins quantified, but a label-free proteome quantifies a different subset
+of proteins in each sample. The served Messner 2023 ranges from 1,441 to 1,849 proteins per
+record, and a candidate proteome will be sparser than its headline depth in the same way.
+
+\notesec{Estimates marked $\ddagger$ are order-of-magnitude} Twenty-one of the sixty rows
+have an instance count that is an estimate rather than a reported figure or a product of
+reported axes, and among the eight state rows Foss 2007 has none at all.

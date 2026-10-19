@@ -1,0 +1,26 @@
+%% notes-tex/database/database-expansion-200/sections/full.tex
+%% [[experiments.database.expansion-200]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/database-expansion-200/sections/full.tex
+%% SOURCE: experiments/database/scripts/build_candidate_datasets_table.py
+
+\clearpage
+\section{The full pool\secstatus{todo}}\label{sec:full}
+
+Table~\ref{tab:candidates} is the whole pool the sixty were cut from, every row the
+generating script holds, in rank order with its class, both axes, instance and measurement
+counts, phenotype, sequence basis and a clickable link. All 154 rows are inside the 200-row
+cut, so all are recommended; the 46-row shortfall is open. Table~\ref{tab:sources-all}
+gives every row's citation, link, the reason for its position and where the per-record
+values live, in the same order; for the first sixty rows that reason is also the
+\emph{Why} column of Table~\ref{tab:final}. Table~\ref{tab:verdicts} gives the candidate-gate
+verdict of every ranked row from the verdict store. The ranking is produced by
+\texttt{experiments/database/scripts/build\_candidate\_datasets\_table.py} and is also
+written to \texttt{experiments/database/results/candidates/candidate\_datasets.json}.
+
+\input{tables/candidates}
+
+\clearpage
+\input{tables/sources_all}
+
+\clearpage
+\input{tables/verdicts}

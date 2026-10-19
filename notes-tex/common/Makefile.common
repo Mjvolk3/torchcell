@@ -127,9 +127,15 @@ STAT_MTIME := $(shell /usr/bin/stat -c %Y $(firstword $(DEPS)) >/dev/null 2>&1 \
                 && echo "-c %Y" || echo "-f %m")
 export SOURCE_DATE_EPOCH := $(shell /usr/bin/stat $(STAT_MTIME) $(DEPS) | sort -n | tail -1)
 
-.PHONY: all clean-view check bib bib-pull bibcheck figures plots watch clean
+.PHONY: all cards clean-view check bib bib-pull bibcheck figures plots watch clean
 
-all: $(DOC).pdf
+all: $(DOC).pdf cards
+
+# One single-page PDF per figure, caption included, under review/. The review copy of a
+# figure is its page of the built document, so a figure is never reviewed apart from the
+# caption that states what it claims (owner, 2026-10-18).
+cards: $(DOC).pdf
+	@$(PYTHON) $(COMMON)/figure_cards.py . $(DOC)
 
 tcdoc.sty: $(COMMON)/tcdoc.sty
 	@ln -sf $(COMMON)/tcdoc.sty $@

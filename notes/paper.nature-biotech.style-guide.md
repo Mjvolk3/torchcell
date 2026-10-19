@@ -329,3 +329,19 @@ rest of what RDKit exposes, and Nature's bold, hash and margin widths matter onl
 stereo drawings, which RDKit cannot be told. A sheet may draw structures smaller to pack
 them (the 040 gate sheet uses half the bond length) and says so in its caption; the
 labels and lines stay at the stylesheet's sizes.
+
+**Verified against the file, 2026-10-19.** `NR_chemdraw_stylesheet.cds` (ChemDraw 16.0.1.4,
+served at `https://www.nature.com/authors/guides/NR_chemdraw_stylesheet.cds`, the file the
+Communications Physics style guide names as "the Nature Chemistry template") carries, in its
+CDX document settings: chain angle 120 degrees, bond spacing 18.0 percent, bond length
+10.80 pt (0.381 cm), line width 0.595 pt (0.021 cm), bold width 1.56 pt (0.055 cm), margin
+width 1.19 pt (0.042 cm), hash spacing 1.70 pt (0.060 cm), one font (Helvetica), label and
+caption styles at 6 pt. ChemDraw's "ACS Document 1996" preset is 14.4 pt (0.508 cm) bonds
+with 10 pt labels, so the two differ in exactly the sizes that matter beside 6 pt figure
+text. The Nature Chemistry and Nature Chemical Biology structure guides (`nchemstyleguide.pdf`,
+`NChB_StructureGuide`) give drawing rules (discrete bonds, consistent lengths, labels only on
+heteroatoms, Me/Et abbreviations) and point to the template; neither names ACS 1996. The
+Communications Physics guide adds the scaling rule our sheets follow: structures drawn with
+the template "should, however, be scaled in proportion to fit our Figure dimensions, without
+changing the bond thickness." The downloaded file and the parsed settings are in the 040
+experiment note's record of 2026-10-19.

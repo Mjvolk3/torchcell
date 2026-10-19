@@ -1,0 +1,303 @@
+{
+ "generated_by": "experiments/043-expression-proteome-morphology/scripts/reindex_043_store.py",
+ "root": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/043-expression-proteome-morphology/raw_043",
+ "host": "gilahyper",
+ "slurm_job_id": "5861",
+ "seconds": 2194.6382071971893,
+ "len_dataset": 173617,
+ "perturbation_count_index": {
+  "entries_covered": 173617,
+  "count_0": 82468,
+  "by_count_head": {
+   "0": 82468,
+   "1": 89285,
+   "2": 72,
+   "195": 2,
+   "1125": 2
+  }
+ },
+ "is_any_perturbed_gene_index": {
+  "genes": 8112,
+  "entries_covered": 91149
+ },
+ "is_any_deletion_gene_index": {
+  "genes": 4908,
+  "entries_covered": 18404
+ },
+ "dataset_name_index_entries_covered": 173617,
+ "phenotype_label_index_entries_covered": 173617,
+ "samples": {
+  "Boocock2025Dataset": {
+   "index": 84721,
+   "label_name": "umi_count",
+   "label_length": 926,
+   "n_phenotype_values": 926,
+   "phenotype_types": [
+    "expression_level",
+    "degradation_rate",
+    "expression_log2_ratio",
+    "protein_abundance",
+    "expression_score",
+    "umi_count",
+    "expression_tpm",
+    "calmorph"
+   ],
+   "perturbation_indices_length": 0
+  },
+  "CaudalPanTranscriptome2024Dataset": {
+   "index": 82729,
+   "label_name": "expression_tpm",
+   "label_length": 6063,
+   "n_phenotype_values": 6063,
+   "phenotype_types": [
+    "expression_level",
+    "degradation_rate",
+    "expression_log2_ratio",
+    "protein_abundance",
+    "expression_score",
+    "umi_count",
+    "expression_tpm",
+    "calmorph"
+   ],
+   "perturbation_indices_length": 5575
+  },
+  "DmMicroarraySameith2015Dataset": {
+   "index": 62669,
+   "label_name": "expression_log2_ratio",
+   "label_length": 6169,
+   "n_phenotype_values": 6169,
+   "phenotype_types": [
+    "expression_level",
+    "degradation_rate",
+    "expression_log2_ratio",
+    "protein_abundance",
+    "expression_score",
+    "umi_count",
+    "expression_tpm",
+    "calmorph"
+   ],
+   "perturbation_indices_length": 2
+  },
+  "MicroarrayKemmeren2014Dataset": {
+   "index": 0,
+   "label_name": "expression_log2_ratio",
+   "label_length": 6169,
+   "n_phenotype_values": 6169,
+   "phenotype_types": [
+    "expression_level",
+    "degradation_rate",
+    "expression_log2_ratio",
+    "protein_abundance",
+    "expression_score",
+    "umi_count",
+    "expression_tpm",
+    "calmorph"
+   ],
+   "perturbation_indices_length": 1
+  },
+  "MicroarrayScoreHu2007Dataset": {
+   "index": 70669,
+   "label_name": "expression_score",
+   "label_length": 6273,
+   "n_phenotype_values": 6273,
+   "phenotype_types": [
+    "expression_level",
+    "degradation_rate",
+    "expression_log2_ratio",
+    "protein_abundance",
+    "expression_score",
+    "umi_count",
+    "expression_tpm",
+    "calmorph"
+   ],
+   "perturbation_indices_length": 1
+  },
+  "NadalRibellesPerturbSeq2025Dataset": {
+   "index": 92308,
+   "label_name": "expression_log2_ratio",
+   "label_length": 5833,
+   "n_phenotype_values": 5833,
+   "phenotype_types": [
+    "expression_level",
+    "degradation_rate",
+    "expression_log2_ratio",
+    "protein_abundance",
+    "expression_score",
+    "umi_count",
+    "expression_tpm",
+    "calmorph"
+   ],
+   "perturbation_indices_length": 1
+  },
+  "Nguessan2025Dataset": {
+   "index": 6,
+   "label_name": "umi_count",
+   "label_length": 4095,
+   "n_phenotype_values": 4095,
+   "phenotype_types": [
+    "expression_level",
+    "degradation_rate",
+    "expression_log2_ratio",
+    "protein_abundance",
+    "expression_score",
+    "umi_count",
+    "expression_tpm",
+    "calmorph"
+   ],
+   "perturbation_indices_length": 0
+  },
+  "PooledPromoterExpressionVaishnav2022Dataset": {
+   "index": 2736,
+   "label_name": "expression_level",
+   "label_length": 1,
+   "n_phenotype_values": 1,
+   "phenotype_types": [
+    "expression_level",
+    "degradation_rate",
+    "expression_log2_ratio",
+    "protein_abundance",
+    "expression_score",
+    "umi_count",
+    "expression_tpm",
+    "calmorph"
+   ],
+   "perturbation_indices_length": 0
+  },
+  "ProteinTurnoverMuenzner2024Dataset": {
+   "index": 84660,
+   "label_name": "degradation_rate",
+   "label_length": 1006,
+   "n_phenotype_values": 1006,
+   "phenotype_types": [
+    "expression_level",
+    "degradation_rate",
+    "expression_log2_ratio",
+    "protein_abundance",
+    "expression_score",
+    "umi_count",
+    "expression_tpm",
+    "calmorph"
+   ],
+   "perturbation_indices_length": 5538
+  },
+  "ProteomeMessner2023Dataset": {
+   "index": 5,
+   "label_name": "protein_abundance",
+   "label_length": 1838,
+   "n_phenotype_values": 1838,
+   "phenotype_types": [
+    "expression_level",
+    "degradation_rate",
+    "expression_log2_ratio",
+    "protein_abundance",
+    "expression_score",
+    "umi_count",
+    "expression_tpm",
+    "calmorph"
+   ],
+   "perturbation_indices_length": 1
+  },
+  "ProteomeMuenzner2024Dataset": {
+   "index": 83778,
+   "label_name": "protein_abundance",
+   "label_length": 1499,
+   "n_phenotype_values": 1499,
+   "phenotype_types": [
+    "expression_level",
+    "degradation_rate",
+    "expression_log2_ratio",
+    "protein_abundance",
+    "expression_score",
+    "umi_count",
+    "expression_tpm",
+    "calmorph"
+   ],
+   "perturbation_indices_length": 4960
+  },
+  "ProteomeZelezniak2018Dataset": {
+   "index": 38048,
+   "label_name": "protein_abundance",
+   "label_length": 726,
+   "n_phenotype_values": 726,
+   "phenotype_types": [
+    "expression_level",
+    "degradation_rate",
+    "expression_log2_ratio",
+    "protein_abundance",
+    "expression_score",
+    "umi_count",
+    "expression_tpm",
+    "calmorph"
+   ],
+   "perturbation_indices_length": 1
+  },
+  "ScmdOhya2005Dataset": {
+   "index": 39126,
+   "label_name": "calmorph",
+   "label_length": 281,
+   "n_phenotype_values": 281,
+   "phenotype_types": [
+    "expression_level",
+    "degradation_rate",
+    "expression_log2_ratio",
+    "protein_abundance",
+    "expression_score",
+    "umi_count",
+    "expression_tpm",
+    "calmorph"
+   ],
+   "perturbation_indices_length": 1
+  },
+  "SmMicroarraySameith2015Dataset": {
+   "index": 53558,
+   "label_name": "expression_log2_ratio",
+   "label_length": 6169,
+   "n_phenotype_values": 6169,
+   "phenotype_types": [
+    "expression_level",
+    "degradation_rate",
+    "expression_log2_ratio",
+    "protein_abundance",
+    "expression_score",
+    "umi_count",
+    "expression_tpm",
+    "calmorph"
+   ],
+   "perturbation_indices_length": 1
+  },
+  "TfDeletionPseudobulkJackson2020Dataset": {
+   "index": 83596,
+   "label_name": "umi_count",
+   "label_length": 3021,
+   "n_phenotype_values": 3021,
+   "phenotype_types": [
+    "expression_level",
+    "degradation_rate",
+    "expression_log2_ratio",
+    "protein_abundance",
+    "expression_score",
+    "umi_count",
+    "expression_tpm",
+    "calmorph"
+   ],
+   "perturbation_indices_length": 1
+  }
+ },
+ "samples_value_count_equals_label_length": {
+  "Boocock2025Dataset": true,
+  "CaudalPanTranscriptome2024Dataset": true,
+  "DmMicroarraySameith2015Dataset": true,
+  "MicroarrayKemmeren2014Dataset": true,
+  "MicroarrayScoreHu2007Dataset": true,
+  "NadalRibellesPerturbSeq2025Dataset": true,
+  "Nguessan2025Dataset": true,
+  "PooledPromoterExpressionVaishnav2022Dataset": true,
+  "ProteinTurnoverMuenzner2024Dataset": true,
+  "ProteomeMessner2023Dataset": true,
+  "ProteomeMuenzner2024Dataset": true,
+  "ProteomeZelezniak2018Dataset": true,
+  "ScmdOhya2005Dataset": true,
+  "SmMicroarraySameith2015Dataset": true,
+  "TfDeletionPseudobulkJackson2020Dataset": true
+ }
+}

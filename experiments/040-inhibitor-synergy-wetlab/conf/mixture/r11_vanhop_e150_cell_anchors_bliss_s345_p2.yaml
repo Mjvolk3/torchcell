@@ -23,7 +23,7 @@
   dose: 'off'
   env_layers: 1
   lambda_host: 1.0
-  checkpoint: true
+  checkpoint: false
   name: mix_vanhop_e150_cell_anchors_bliss_s345_f2
   sources:
   - vanacloig

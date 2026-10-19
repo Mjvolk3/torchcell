@@ -23,7 +23,7 @@
   dose: 'off'
   env_layers: 1
   lambda_host: 1.0
-  checkpoint: true
+  checkpoint: false
   name: mix_vanhet_e150_cell_bliss_hill_loewe_dev_f0
   sources:
   - vanacloig

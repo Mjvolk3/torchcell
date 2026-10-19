@@ -23,7 +23,7 @@
   dose: 'off'
   env_layers: 1
   lambda_host: 1.0
-  checkpoint: true
+  checkpoint: false
   name: mix_van_e150_cell_bliss_dev_f0
   sources: &id002
   - vanacloig
@@ -50,7 +50,7 @@
   dose: 'off'
   env_layers: 1
   lambda_host: 1.0
-  checkpoint: true
+  checkpoint: false
   name: mix_van_e150_cell_bliss_dev_f1
   sources: *id002
   epochs: 150
@@ -76,7 +76,7 @@
   dose: 'off'
   env_layers: 1
   lambda_host: 1.0
-  checkpoint: true
+  checkpoint: false
   name: mix_van_e150_cell_bliss_dev_f2
   sources: *id002
   epochs: 150

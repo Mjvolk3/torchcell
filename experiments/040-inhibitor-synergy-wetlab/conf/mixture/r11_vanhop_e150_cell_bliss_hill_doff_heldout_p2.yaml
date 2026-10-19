@@ -23,7 +23,7 @@
   dose: 'off'
   env_layers: 1
   lambda_host: 1.0
-  checkpoint: true
+  checkpoint: false
   name: mix_vanhop_e150_cell_bliss_hill_doff_heldout_f2
   sources:
   - vanacloig

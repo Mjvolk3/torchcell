@@ -129,12 +129,18 @@ done
 nvidia-smi --query-gpu=index,name,memory.total --format=csv,noheader
 
 if [ "$PARALLEL" -eq 1 ]; then
+  # THE JOB'S STATE IS THE TRAINER'S. Until round 11 this branch ended on the final echo,
+  # so a trainer that died on a Lustre I/O error still left the job COMPLETED (13 of
+  # round 11's jobs, 2026-10-17); the exit status is now carried out of the script.
   if [ -n "$ONLY" ]; then
     # shellcheck disable=SC2086
     "$DELTA_PY" "$EXP/scripts/train_mixture.py" --sweep "$EXP/$SWEEP" --only $ONLY
   else
     "$DELTA_PY" "$EXP/scripts/train_mixture.py" --sweep "$EXP/$SWEEP"
   fi
+  status=$?
+  echo "finished at $(date -Is) status $status"
+  exit $status
 else
   NAMES=$("$DELTA_PY" -c "import yaml,sys; print(' '.join(c['name'] for c in yaml.safe_load(open(sys.argv[1]))))" "$EXP/$SWEEP")
   read -r -a ALL <<< "$NAMES"

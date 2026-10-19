@@ -84,6 +84,7 @@ from mixture_rules import monotone_alive  # noqa: E402
 from torchcell.timestamp import timestamp  # noqa: E402
 from torchcell.utils import (
     NATURE_BOND_PT,
+    NATURE_FONT_PT,
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
     PLOT_PALETTE_FILL,
@@ -99,13 +100,19 @@ load_dotenv()
 apply_paper_style()
 # Real LaTeX for the equations of the model panel only (``usetex=True`` per text
 # artist): the words in Helvetica through helvet, so they sit with the Arial labels
-# around them, and the mathematics in LaTeX's own Computer Modern math font, so an
-# equation reads as LaTeX (owner, 2026-10-19: under sansmath it looked like Arial
-# mathtext). matplotlib wraps usetex text in ``\rmfamily`` when ``font.family`` is a
+# around them, and the mathematics in a LaTeX math font, so an equation reads as
+# LaTeX (owner, 2026-10-19: under sansmath it looked like Arial mathtext).
+# The math face is Times, not Computer Modern (owner, 2026-10-19: Computer Modern at
+# this size is extremely thin): at a figure's type size Computer Modern's hairlines
+# fall below the stroke the rest of the sheet carries, and Times is both heavier and
+# a fifth narrower, which is what lets the equations hold Nature's 5 pt floor.
+# ``mathptmx`` also sets the roman default to Times, so the Helvetica line comes
+# after it. matplotlib wraps usetex text in ``\rmfamily`` when ``font.family`` is a
 # face it does not know (Arial), so the ROMAN default is what has to be Helvetica.
 # Everything else on the sheets stays Arial mathtext.
 plt.rcParams["text.latex.preamble"] = (
-    r"\usepackage{amsmath}\usepackage{helvet}\renewcommand{\rmdefault}{phv}"
+    r"\usepackage{amsmath}\usepackage{mathptmx}\usepackage{helvet}"
+    r"\renewcommand{\rmdefault}{phv}"
 )
 #: the cell graph transformer's gene table, one token per gene (train_mixture.py)
 GENE_TOKENS = 6607
@@ -1169,11 +1176,20 @@ def tanimoto_counts(a: NDArray[np.float32], b: NDArray[np.float32]) -> float:
     return float(np.minimum(a, b).sum() / np.maximum(a, b).sum())
 
 
-#: the bond length the sheet's structures are drawn at: half of Nature's stylesheet
-#: bond of 0.381 cm, so twelve structures fit the data row (owner, 2026-10-19: smaller
-#: molecules, and the Vanacloig neighbors back); labels and lines stay at the
-#: stylesheet's 6 pt and 0.6 pt
-SHEET_BOND_PT = 0.45 * NATURE_BOND_PT
+#: Nature's stylesheet, scaled down so twelve structures fit the data row (owner,
+#: 2026-10-19: smaller molecules, and the Vanacloig neighbors back). The bond and the
+#: atom label scale TOGETHER and the line width does not, which is how a structure is
+#: reduced: Communications Physics says a template structure "should be scaled in
+#: proportion ... without changing the bond thickness". Holding the label at 6 pt
+#: while the bond went to 45 percent put the label above the bond (a ratio of 0.81
+#: against the stylesheet's 1.80) and collapsed the small molecules; formic acid read
+#: as two labels joined by a stub and the sodium of an acetate sat on its carbonyl.
+#: 0.55 is the largest scale whose six rows still fit panel a, and it leaves the label
+#: under Nature's 5 pt floor for figure TEXT, which an atom label inside a scaled
+#: drawing is not.
+SHEET_SCALE = 0.55
+SHEET_BOND_PT = SHEET_SCALE * NATURE_BOND_PT
+SHEET_FONT_PT = SHEET_SCALE * NATURE_FONT_PT
 
 
 def nearest_vanacloig(R: Reads) -> dict[str, tuple[str, float]]:
@@ -1218,7 +1234,8 @@ def draw_molecules(ax: Any, R: Reads) -> None:
     smiles = {INHIB_LONG[ab]: R.smiles[INHIB_LONG[ab]] for ab, _ in grid}
     smiles.update({nbr: R.smiles[nbr] for _, nbr in grid})
     size = {
-        k: acs_structure_svg(v, bond_pt=SHEET_BOND_PT)[1:] for k, v in smiles.items()
+        k: acs_structure_svg(v, bond_pt=SHEET_BOND_PT, font_pt=SHEET_FONT_PT)[1:]
+        for k, v in smiles.items()
     }
     title(ax, "the inhibitors (host IC50, g/L)")
     fig = ax.figure.get_figure(root=True)
@@ -1228,7 +1245,7 @@ def draw_molecules(ax: Any, R: Reads) -> None:
     axes_h_pt = extent.height / fig.dpi * 72.0
     num("panelAWidthMm", round(axes_w_pt / 72.0 * 25.4, 1))
     num("panelAHeightMm", round(axes_h_pt / 72.0 * 25.4, 1))
-    name_pt, gap_x, gap_y, header_pt, pad = 4.6, 6.0, 1.0, 5.0, 2.0
+    name_pt, gap_x, gap_y, header_pt, pad = 4.6, 6.0, 0.6, 4.6, 2.0
     col_w = [
         max(size[INHIB_LONG[ab]][0] for ab, _ in grid),
         max(size[nbr][0] for _, nbr in grid),
@@ -1288,6 +1305,7 @@ def draw_molecules(ax: Any, R: Reads) -> None:
                 xycoords="axes fraction",
                 box_alignment=(0.5, 0.5),
                 bond_pt=SHEET_BOND_PT,
+                font_pt=SHEET_FONT_PT,
             )
             box_.set_in_layout(False)
             t = ax.annotate(
@@ -1818,8 +1836,8 @@ def draw_join(ax: Any, R: Reads) -> None:
         linespacing=1.1,
     )
     # ---- growth: one reading, the anchor, and the split
-    ax.text(0, 62, "growth: one reading, and the split", **head_kw)
-    gx0, gx1, gy0, gy1 = 6.0, 38.0, 36.0, 54.0
+    ax.text(0, 63, "growth: one reading, and the split", **head_kw)
+    gx0, gx1, gy0, gy1 = 6.0, 38.0, 37.0, 55.0
     ax.plot([gx0, gx0, gx1], [gy1, gy0, gy0], color="black", linewidth=0.4, zorder=2)
     dose = np.logspace(-2, 1.2, 60)
     curve = 1.0 / (1.0 + (dose / 1.0) ** 1.5)
@@ -1841,12 +1859,12 @@ def draw_join(ax: Any, R: Reads) -> None:
     ax.text((gx0 + gx1) / 2, gy0 - 1.5, "dose", fontsize=fs, ha="center", va="top")
     ax.text(
         43,
-        55,
+        56,
         f"a screen: a strain vs\nits control; this study:\nthe wild type; an IC30\ndose asserts {IC30_FITNESS:.2f}\n({n_anchor} anchors)",
         fontsize=3.9,
         ha="left",
         va="top",
-        linespacing=1.15,
+        linespacing=1.05,
     )
 
     # the split: blocks in the fills of b
@@ -1873,35 +1891,32 @@ def draw_join(ax: Any, R: Reads) -> None:
             zorder=3,
         )
 
-    ax.text(0, 27, "public", fontsize=fs, ha="left", va="center")
+    ax.text(0, 24, "public", fontsize=fs, ha="left", va="center")
     for j in range(5):
         block(
-            16 + j * 13.2, 12.4, 23.5, 7.5, light if j == 4 else dark, f"fold {j + 1}"
+            16 + j * 13.2, 12.4, 20.5, 7.0, light if j == 4 else dark, f"fold {j + 1}"
         )
     ax.text(
         16,
-        19,
+        17,
         f"{n_cmp} compounds, one fold of five held out",
         fontsize=3.9,
         ha="left",
         va="center",
     )
-    ax.text(0, 8, "this\nstudy", fontsize=fs, ha="left", va="center", linespacing=1.1)
-    block(
+    # the two blocks name their split and the wells go on the line under them, as the
+    # public row does: the counts did not fit inside a block this narrow
+    ax.text(0, 10, "this\nstudy", fontsize=fs, ha="left", va="center", linespacing=1.1)
+    block(16, 42, 6.5, 7.0, dark, f"{n_anchor} anchors")
+    block(60, 40, 6.5, 7.0, light, f"{wc['n_combinations']} combinations")
+    ax.text(
         16,
-        38,
-        2,
-        12,
-        dark,
-        f"{n_anchor} anchors,\ntitration ({int(c.loc['host_ex21'].n_cells)} wells)",
-    )
-    block(
-        56,
-        44,
-        2,
-        12,
-        light,
-        f"{wc['n_combinations']} combinations,\n{int(c.loc['host_isobole'].n_cells)} isobole wells",
+        2.5,
+        f"{int(c.loc['host_ex21'].n_cells)} titration wells, "
+        f"{int(c.loc['host_isobole'].n_cells)} isobole wells",
+        fontsize=3.9,
+        ha="left",
+        va="center",
     )
     title(ax, "shared; trained on, tested on")
 
@@ -1969,21 +1984,25 @@ def draw_evaluation(ax: Any, R: Reads) -> None:
     num("nCombinationsScored", wc["n_combinations"])
     cgt = SRC_COLOR["cgt"]
     meas, meas_fill = SRC_COLOR["measured"], SRC_FILL["measured"]
-    fs, eq = 4.0, 4.6
-    stage_kw = dict(fontsize=4.4, ha="left", va="top", fontweight="bold")
+    # Nature's figure band floors at 5 pt; the panel cannot hold its content there at
+    # this width, so it runs just under, in Times, which is far heavier than the
+    # Computer Modern it replaces at the same size
+    fs, eq = 4.8, 4.8
+    stage_kw = dict(fontsize=fs, ha="left", va="top", fontweight="bold")
     tex_kw = dict(fontsize=eq, ha="left", va="top", usetex=True)
     # ---- stage one: a molecule becomes a token
     ax.text(0, 150, "1  featurize one inhibitor", **stage_kw)
-    y1 = 141.0
+    y1 = 138.0
     box_, _w, _h = acs_structure(
         ax,
         R.smiles["furfural"],
         (11, y1),
         box_alignment=(0.5, 0.5),
         bond_pt=SHEET_BOND_PT,
+        font_pt=SHEET_FONT_PT,
     )
     box_.set_in_layout(False)
-    ax.text(11, y1 - 5.8, "furfural", fontsize=fs, ha="center", va="top")
+    ax.text(11, y1 - 9.0, "furfural", fontsize=fs, ha="center", va="top")
     arrow(ax, 24, y1, 28, y1)
     strip(ax, 29, y1 - 2.4, 12, 4.8, 10, meas_fill, meas, dark=(1, 4, 7))
     arrow(ax, 42, y1, 46, y1)
@@ -1993,27 +2012,27 @@ def draw_evaluation(ax: Any, R: Reads) -> None:
     ax.text(70, y1, r"$t_i$", fontsize=eq, ha="left", va="center", usetex=True)
     ax.text(
         0,
-        y1 - 12.5,
+        y1 - 16.0,
         r"$t_i = \mathrm{MLP}\big(\underbrace{\mathrm{FCFP4}(m_i)}_{2{,}048\ \text{counts}}\big)$",
         **tex_kw,
     )
     # ---- stage two: the token reads the genome, one head reads the cell
-    ax.text(0, 107, "2  read the cell", **stage_kw)
+    ax.text(0, 103, "2  read the cell", **stage_kw)
     ax.text(
         0,
-        102,
+        97,
         r"$[\,t_i';\ H^c\,] = \mathrm{Layer}\big([\,\underbrace{t_i}_{\text{compound}}\ ;\ \underbrace{G}_{6{,}607\ \text{genes}}\,]\big)$",
         **tex_kw,
     )
     ax.text(
         0,
-        83,
+        77,
         r"$\hat y_i = \mathrm{head}\big(\underbrace{H^c_D}_{\text{deleted}},\ \underbrace{\overline{H^c}}_{\text{mean}},\ \underbrace{t_i'}_{\text{token}}\big) + \underbrace{o(t_i)\,(1 + g(d_i))}_{\text{offset, scaled by dose } d_i}$",
         **tex_kw,
     )
     ax.text(
         0,
-        62,
+        57,
         r"a strain ($H^c_D$: its deleted rows, summed):"
         "\n"
         r"$\hat y_i = \hat r_{g,i}$, its profile over strains $g$;"
@@ -2025,18 +2044,19 @@ def draw_evaluation(ax: Any, R: Reads) -> None:
         usetex=True,
     )
     # ---- stage three: a mixture composes as Bliss
-    ax.text(0, 44, "3  compose a mixture", **stage_kw)
+    ax.text(0, 35, "3  compose a mixture", **stage_kw)
     ax.text(
         0,
-        39,
+        27,
         "each token read alone through the same head, then",
         fontsize=fs,
         ha="left",
         va="top",
+        usetex=True,
     )
     ax.text(
         0,
-        33,
+        19,
         r"$\underbrace{\hat f_{\mathrm{mix}} = \textstyle\prod_i \hat f_i}_{\text{host, fitness scale}}\qquad \underbrace{\hat r_{g,\mathrm{mix}} = \textstyle\sum_i \hat r_{g,i}}_{\text{screen, log scale}}$",
         **tex_kw,
     )

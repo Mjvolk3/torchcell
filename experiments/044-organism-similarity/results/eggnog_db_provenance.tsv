@@ -1,0 +1,4 @@
+file	source_url	sha256	server_last_modified	downloaded_at
+eggnog.db.gz	http://eggnog5.embl.de/download/emapperdb-5.0.2/eggnog.db.gz	20fd3e57d96ab19f2094131e859cb0f2e634e10f594c01ef34335076317a8e0a	2021-03-02T14:01:05Z	2026-10-19T21:43:26Z
+eggnog.taxa.tar.gz	http://eggnog5.embl.de/download/emapperdb-5.0.2/eggnog.taxa.tar.gz	ead5f9f1cb42a51a990c3980fcb272a2f6c07b41c75654739e799d96a190a7f3	2021-03-02T14:04:07Z	2026-10-19T21:43:46Z
+eggnog_proteins.dmnd.gz	http://eggnog5.embl.de/download/emapperdb-5.0.2/eggnog_proteins.dmnd.gz	c74fe142c6d0f1c749a086f754f1658874c0a52d0927626b9d263098c136b320	2021-03-02T14:04:04Z	2026-10-19T21:51:38Z

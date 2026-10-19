@@ -1,0 +1,109 @@
+%% notes-tex/genesis/genesis-proposal-redacted/sections/milestones.tex
+%% [[genesis-proposal-redacted]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/genesis/genesis-proposal-redacted/sections/milestones.tex
+%% SOURCE: hand-transcribed from the proposal docx, "Milestones in the Nine Months"
+%% and its Table 1. The table is a hand-authored verbatim copy of the submission's
+%% table; nothing in it is redacted.
+
+\section{Milestones in the nine months\secstatus{todo}}\label{sec:milestones}
+
+This proposal is structured to establish milestones towards building MEFMs with a
+6-month decision point aligned with the go/no-go metrics
+(Table~\ref{tab:gonogo}). These goals collectively organize the research program
+into stages that help address gaps in the development of MEFMs. These include
+scaling data across organisms and genotypes, designing a metabolic representation
+module, and demonstrating the real-world use of these models by designing strains.
+Following the development of the first MEFMs, these models will be used in
+metabolic engineering applications to generate data from recommended strains, which
+will be fed back into the models to complete the first continuous improvement loop
+for MEFMs.
+
+In the first 6 months, there will be a computational track (i--iii, v) adding new
+data to the current TorchCell database, developing TorchCell CGT models for
+\org{E. coli}, and grounding virtual cell models to respect mass balance and
+thermodynamics; and the experimental track (iv) where a protocol will be developed
+for an RNA-barcoded YKOC experiment in \org{I. orientalis} where the subsequent
+atlas will be published. Improved TorchCell CGT models for \org{S. cerevisiae} and
+\org{E. coli} will be finetuned (v) using published data for \org{P. putida} and
+preliminary in-house data for \org{I. orientalis}. These models will be used for
+strain design recommendations for 3-HP production in \org{I. orientalis} and
+isoprenol production in \org{P. putida}. At the 6-month decision point, success
+will be evaluated using quantitative thresholds aligned with the decision matrix
+(Table~\ref{tab:gonogo}). Achieving these criteria (i--v) will demonstrate the
+scaling of TorchCell's database and experimental ontology across diverse organisms
+and phenotypes, and that physically grounded MEFMs can be used for strain design
+across eukaryotes and prokaryotes.
+
+\begin{table}[H]
+  \centering\footnotesize
+  \caption{Six-month go/no-go decision metrics and AI advantage criteria, as
+  submitted (the proposal's Table 1).}
+  \label{tab:gonogo}
+  \begin{tabular}{L{30mm}L{62mm}L{62mm}L{12mm}}
+    \toprule
+    \textbf{Metric} & \textbf{Go} & \textbf{AI advantage} & \textbf{Months} \\
+    \midrule
+    i) TorchCell Database Expansion &
+    10 bacteria and 10 yeasts plus key organisms \org{E. coli}, \org{P. putida},
+    and \org{I. orientalis} added to the TorchCell database with $\geq$ 1,000
+    experiment instances and $\geq$ 3 phenotypes each. &
+    Shared experimental ontology with TorchCell dataloaders converts heterogeneous
+    data $\geq$ 20 organisms into benchmark-ready DL datasets for building MEFMs. &
+    1--6 \\
+    \midrule
+    ii) TorchCell CGT \org{E. coli} &
+    TorchCell CGT benchmarked on \org{E. coli} demonstrating phenotype prediction
+    exceeding FBA and linear baselines $\geq$ 20\%. &
+    $\geq$ 20\% improvement over FBA and linear baselines demonstrates multimodal
+    representations capture biological nonlinearities beyond shallower methods. &
+    2--4 \\
+    \midrule
+    iii) Metabolic Grounding &
+    Addition of metabolism module to TorchCell CGT so that $\geq$ 95\% of top 100
+    strains don't violate mass balance or $\Delta G$ feasibility. &
+    Physical constraints filter implausible strain designs and are independent of
+    training-data scale, critical for non-model organisms. &
+    1--6 \\
+    \midrule
+    iv) \org{I. orientalis} Atlas &
+    Developed protocol for \org{I. orientalis} RNA-barcoded YKOC across $\geq$ 3
+    environmental conditions yielding $\geq$ 5,000 perturbation-condition pairs. &
+    First genome-$\times$-environment perturbation atlas in \org{I. orientalis}
+    establishing a template for scaling across organisms and providing highly dense
+    training signal for this organism of interest. &
+    1--9 \\
+    \midrule
+    v) Finetune TorchCell CGT &
+    TorchCell CGT finetuned from \org{S. cerevisiae} to \org{I. orientalis}, and
+    from \org{E. coli} to \org{P. putida} matches from scratch baseline Pearson
+    with $\geq$ 5$\times$ fewer target labels. &
+    5$\times$ sample efficiency on cross-organism transfer quantifies the returns
+    of adding new host organism data and provides scaling evidence for expanding
+    MEFMs. &
+    4--6 \\
+    \midrule
+    vi) TorchCell CGT Foundation Model Training Expansion &
+    TorchCell CGT models trained across $\geq$ 10 yeasts and 10 $\geq$ bacteria
+    with leave-one-organism-out Pearson $\geq$ 0.3 and reported transfer exponents
+    with 95\% CIs. &
+    Scaling exponents with uncertainty quantify the return per added organism and
+    phenotype, providing measured scaling behavior for MEFM training. &
+    6--9 \\
+    \midrule
+    vii) TorchCell CGT Metabolic Engineering Applications &
+    $\geq$ 1 strain showing ($p < 0.05$, $n \geq 3$) titer improvement over base
+    strain for 3-HP production in \org{I. orientalis} and isoprenol production in
+    \org{P. putida}, verified by high-throughput mass spec. &
+    Automated biofoundries scale experimental DBTL throughput while feeding results
+    back to MEFM, demonstrating computational and experimental scaling for future
+    strain engineering campaigns. &
+    6--9 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+During months 6--9 TorchCell models will be retrained (vi) on data within the same
+domain of life to lay the blueprint for building MEFMs for broad phenotype
+prediction, but specifically industrial metabolic engineering application. Results
+from MEFMs trained across domains of life will be used to refine strain designs,
+while the first designs from finetuning are being validated (vii).

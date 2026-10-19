@@ -8,6 +8,7 @@
 # statistics, the morphology ridge and the figures. Submit from the repository root:
 #
 #   sbatch experiments/043-expression-proteome-morphology/scripts/gh_cross_dataset_correlation.slurm
+#   sbatch --export=ALL,STAGE=analyze ...   # reuse the extraction cache
 #
 # Memory: 48 GB. The extraction holds the label values of about 25,000 records of the 11
 # compared datasets as Python dicts (about 70 M values, a few GB) before they become
@@ -32,5 +33,5 @@ export PYTHONPATH="$PWD"
 MOVING=/home/michaelvolk/Documents/projects/torchcell.worktrees/multimodal-phenotype-retrospective/experiments/019-simb-multimodal/results/calmorph_moving_features.json
 echo "host $(hostname)  commit $(git rev-parse --short HEAD)  $(date)"
 python experiments/043-expression-proteome-morphology/scripts/cross_dataset_correlation.py \
-    --stage all --moving-features "$MOVING"
+    --stage "${STAGE:-all}" --moving-features "$MOVING"
 echo "done $(date)"

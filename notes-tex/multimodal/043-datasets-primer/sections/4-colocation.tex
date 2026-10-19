@@ -1,0 +1,50 @@
+%% notes-tex/multimodal/043-datasets-primer/sections/4-colocation.tex
+
+\section{Which genotypes carry which labels\secstatus{todo}}
+\label{sec:colocation}
+
+A multitask model learns a shared representation only where one genotype carries more
+than one label. The census keys a genotype by its perturbed gene names, an isolate by its
+strain and a segregant by cross and identifier, and counts the genotypes each label and
+each pair of labels reach (Tables~\ref{tab:bylabel} and~\ref{tab:coloc}).
+
+%% SOURCE: experiments/043-expression-proteome-morphology/scripts/primer_043_tables.py
+%% -> tables/t10-by-label.tex and tables/t9-colocation.tex
+\begin{table}[htbp]
+\centering
+\footnotesize
+\begin{minipage}[t]{0.36\textwidth}\centering
+\caption[]{\textbf{Genotypes per label.} Distinct genotype keys over every dataset
+carrying the label; Vaishnav is not keyed by gene and is left out.}
+\label{tab:bylabel}
+\input{tables/t10-by-label}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.6\textwidth}\centering
+\caption[]{\textbf{Co-location.} Genotypes carrying both labels, in any datasets. A
+label name can span datasets: \texttt{expression\_log2\_ratio} is Kemmeren, Sameith and
+Nadal-Ribelles; \texttt{umi\_count} is Jackson, Boocock and N'Guessan;
+\texttt{protein\_abundance} is Messner, Zelezniak and Muenzner.}
+\label{tab:coloc}
+\input{tables/t9-colocation}
+\end{minipage}
+\end{table}
+
+\notesec{Deletions}
+Morphology is the label most often shared. Of the 4{,}678 CalMorph genotypes, 4{,}287
+also carry a protein profile and 3{,}473 an expression log ratio; the
+expression-by-protein overlap is 3{,}317 genotypes. That count includes Nadal-Ribelles,
+whose within-dataset agreement is near its null (Sec.~\ref{sec:within}); Kemmeren alone
+shares 1{,}349 genotypes with Messner. Kemmeren reaches Ohya on 1{,}437
+genotypes and Messner on 4{,}279, the populations of the morphology ridge
+(Table~\ref{tab:morph}).
+
+\notesec{Isolates}
+The isolate datasets are nested: all 55 turnover isolates are in the protein set and in
+Caudal's transcriptomes, and 759 of the 795 protein isolates have a Caudal
+transcriptome. No isolate carries a CalMorph profile.
+
+\notesec{Segregants and the rest}
+No segregant shares a key with any other dataset, and Boocock and N'Guessan share no
+segregant with each other (0 shared identifiers; Sec.~\ref{sec:within} tests genotype
+identity rather than names). The 12 \texttt{umi\_count} genotypes that carry morphology
+are Jackson's 11 transcription-factor deletions and the HO control.

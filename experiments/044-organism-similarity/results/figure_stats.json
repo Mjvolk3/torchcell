@@ -1,0 +1,57 @@
+{
+ "fig1": {
+  "within_scer": {
+   "n": 1011,
+   "median_divergence_pct": 1.9614713518682936,
+   "min_divergence_pct": 0.05568311908612511,
+   "max_divergence_pct": 4.445062954622758
+  },
+  "within_genus": {
+   "n": 3,
+   "median_aai": 84.1892318725586,
+   "min_aai": 83.54716491699219,
+   "max_aai": 92.14564514160156
+  },
+  "within_mammals": {
+   "n": 28,
+   "median_aai": 84.26226043701172,
+   "min_aai": 83.52491760253906,
+   "max_aai": 98.14212036132812
+  },
+  "mammal_bird": {
+   "n": 8,
+   "median_aai": 72.13003540039062,
+   "min_aai": 71.47198486328125,
+   "max_aai": 72.24658203125
+  },
+  "within_saccharomycotina": {
+   "n": 75,
+   "median_aai": 47.447898864746094,
+   "min_aai": 45.98326873779297,
+   "max_aai": 99.56080627441406
+  },
+  "within_bacteria": {
+   "n": 45,
+   "median_aai": 40.51505661010742,
+   "min_aai": 38.83803176879883,
+   "max_aai": 72.72955322265625
+  },
+  "yeast_bacteria": {
+   "n": 130,
+   "median_aai": 36.53115653991699,
+   "min_aai": 35.088951110839844,
+   "max_aai": 38.16514587402344
+  }
+ },
+ "fig4": {
+  "nearest_to_s288c": "ADT",
+  "nearest_mean_divergence": 4.827904313809982e-06
+ },
+ "paths": {
+  "fig1": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/044-organism-similarity/notes/assets/images/044-organism-similarity/fig1_claim_protein_divergence_2026-10-19-17-54-49.svg",
+  "fig2": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/044-organism-similarity/notes/assets/images/044-organism-similarity/fig2_cladogram_heatmaps_2026-10-19-17-54-49.svg",
+  "fig3": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/044-organism-similarity/notes/assets/images/044-organism-similarity/fig3_taxonomy_vs_aai_nj_2026-10-19-17-54-49.svg",
+  "fig4": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/044-organism-similarity/notes/assets/images/044-organism-similarity/fig4_isolate_tree_2026-10-19-17-54-49.svg",
+  "fig5": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/044-organism-similarity/notes/assets/images/044-organism-similarity/fig5_ortholog_fraction_vs_aai_2026-10-19-17-54-49.svg"
+ }
+}

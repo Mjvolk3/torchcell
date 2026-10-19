@@ -1,0 +1,141 @@
+{
+ "isolates_vs_s288c": {
+  "n_isolates": 1011,
+  "n_orfs_per_isolate": 6005,
+  "median_of_mean_identity": 0.9803852864813171,
+  "min_mean_identity": 0.9555493704537724,
+  "max_mean_identity": 0.9994431688091387,
+  "median_of_median_identity": 0.9971910112359551,
+  "median_of_pooled_identity": 0.984618397234787,
+  "median_of_mean_identity_equal_length": 0.9957742706079384
+ },
+ "categories": {
+  "within_genus": {
+   "n_pairs": 3,
+   "aai_median": 84.1892318725586,
+   "aai_min": 83.54716491699219,
+   "aai_max": 92.14564514160156,
+   "ortholog_fraction_median": 0.954824316787507,
+   "ec4_jaccard_median": 0.9797377830750894
+  },
+  "within_mammals": {
+   "n_pairs": 28,
+   "aai_median": 84.26226043701172,
+   "aai_min": 83.52491760253906,
+   "aai_max": 98.14212036132812,
+   "ortholog_fraction_median": 0.8361214984089116,
+   "ec4_jaccard_median": 0.9908193431444479
+  },
+  "mammal_bird": {
+   "n_pairs": 8,
+   "aai_median": 72.13003540039062,
+   "aai_min": 71.47198486328125,
+   "aai_max": 72.24658203125,
+   "ortholog_fraction_median": 0.7291516395716584,
+   "ec4_jaccard_median": 0.9382534205613865
+  },
+  "within_saccharomycotina": {
+   "n_pairs": 75,
+   "aai_median": 47.447898864746094,
+   "aai_min": 45.98326873779297,
+   "aai_max": 99.56080627441406,
+   "ortholog_fraction_median": 0.6008951157812804,
+   "ec4_jaccard_median": 0.8614393125671321
+  },
+  "within_bacteria": {
+   "n_pairs": 45,
+   "aai_median": 40.51505661010742,
+   "aai_min": 38.83803176879883,
+   "aai_max": 72.72955322265625,
+   "ortholog_fraction_median": 0.2818769126147569,
+   "ec4_jaccard_median": 0.4773358001850138
+  },
+  "yeast_bacteria": {
+   "n_pairs": 130,
+   "aai_median": 36.53115653991699,
+   "aai_min": 35.088951110839844,
+   "aai_max": 38.16514587402344,
+   "ortholog_fraction_median": 0.0894760213143872,
+   "ec4_jaccard_median": 0.2884952358431936
+  }
+ },
+ "pairs": {
+  "human/chimp": {
+   "aai_mean": 98.14212036132812,
+   "aai_median": 99.1999969482422,
+   "n_rbh": 18461,
+   "ortholog_fraction": 0.9195556883841404,
+   "ec4_jaccard": 0.996301775147929,
+   "aai_single_copy_og": 98.06923961623674,
+   "n_single_copy_og": 6063
+  },
+  "human/macaque": {
+   "aai_mean": 95.29190826416016,
+   "aai_median": 96.9000015258789,
+   "n_rbh": 18064,
+   "ortholog_fraction": 0.8997808328352261,
+   "ec4_jaccard": 0.9933628318584072,
+   "aai_single_copy_og": 94.85099088509746,
+   "n_single_copy_og": 6055
+  },
+  "human/mouse": {
+   "aai_mean": 83.69984436035156,
+   "aai_median": 86.5,
+   "n_rbh": 16925,
+   "ortholog_fraction": 0.8430464235903566,
+   "ec4_jaccard": 0.9882179675994108,
+   "aai_single_copy_og": 80.92197519300396,
+   "n_single_copy_og": 5802
+  },
+  "human/chicken": {
+   "aai_mean": 72.1235122680664,
+   "aai_median": 73.5999984741211,
+   "n_rbh": 13170,
+   "ortholog_fraction": 0.7307329523386784,
+   "ec4_jaccard": 0.939149560117302,
+   "aai_single_copy_og": 68.16332969210411,
+   "n_single_copy_og": 4610
+  },
+  "S288C/S. paradoxus": {
+   "aai_mean": 92.14564514160156,
+   "aai_median": 93.1999969482422,
+   "n_rbh": 5367,
+   "ortholog_fraction": 0.9691224268689056,
+   "ec4_jaccard": 0.997610513739546,
+   "aai_single_copy_og": 92.09486039761964,
+   "n_single_copy_og": 3152
+  },
+  "S288C/S. eubayanus": {
+   "aai_mean": 83.54716491699219,
+   "aai_median": 84.69999694824219,
+   "n_rbh": 5136,
+   "ortholog_fraction": 0.954824316787507,
+   "ec4_jaccard": 0.9797377830750894,
+   "aai_single_copy_og": 83.63750818455367,
+   "n_single_copy_og": 3066
+  },
+  "SD108/CBS573": {
+   "aai_mean": 99.56080627441406,
+   "aai_median": 99.8000030517578,
+   "n_rbh": 5037,
+   "ortholog_fraction": 0.9801517805020432,
+   "ec4_jaccard": 0.9951338199513382,
+   "aai_single_copy_og": 99.59272917225572,
+   "n_single_copy_og": 2792
+  },
+  "S288C/E. coli": {
+   "aai_mean": 36.84450149536133,
+   "n_rbh": 391,
+   "ortholog_fraction": 0.0911421911421911
+  }
+ },
+ "literature_protein_identity_band": [
+  0.9989740536457089,
+  0.9991450447047574
+ ],
+ "single_copy_vs_rbh_aai": {
+  "n_pairs": 253,
+  "pearson_r": 0.9979546215777899,
+  "median_difference_sc_minus_rbh": -1.6561390726189842
+ }
+}

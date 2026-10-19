@@ -76,9 +76,9 @@ main): [[experiments.043-expression-proteome-morphology.scripts.build_043_store]
 ### Shared label names
 
 Three label names span more than one dataset, so a per-label readout sees several
-sources under one name: `expression_log2_ratio` (the two-channel microarray panels),
-`umi_count` (the single-cell and pseudobulk counts), and `protein_abundance` (the
-proteomes). The per-dataset label of every record is in
+sources under one name (dev census, 2026.10.19): `expression_log2_ratio` (Kemmeren,
+Sameith Sm and Dm, Nadal-Ribelles), `umi_count` (Jackson, Boocock, Nguessan), and
+`protein_abundance` (Messner 2023, Zelezniak, Muenzner proteome). The per-dataset label of every record is in
 [[experiments.043-expression-proteome-morphology.scripts.store_census]].
 
 ### Scripts
@@ -87,3 +87,12 @@ proteomes). The per-dataset label of every record is in
 - [[experiments.043-expression-proteome-morphology.scripts.build_043_store]]
 - [[experiments.043-expression-proteome-morphology.scripts.gh_build_043_store]]
 - [[experiments.043-expression-proteome-morphology.scripts.store_census]]
+
+## 2026.10.19 - Stage 1 status
+
+- Query generated, registered and validated (`validate` and `check` pass on
+  `2026.10.17-4295f7ca`).
+- Build job 5851 FAILED in the raw stage on the segregant genotypes (no `perturbations`
+  list); nothing written. Details and traceback in
+  [[experiments.043-expression-proteome-morphology.scripts.build_043_store]].
+- Dev-tree census done (173,805 records); raw census waits on a successful build.

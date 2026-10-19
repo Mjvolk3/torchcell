@@ -227,7 +227,8 @@ class RawStageGrouping:
             experiment["experiment_type"],
             phenotype["label_name"],
             experiment["dataset_name"],
-            len(experiment["genotype"]["perturbations"]),
+            # A SegregantGenotype has no perturbation list: zero perturbations.
+            len(experiment["genotype"].get("perturbations") or []),
             values,
         )
 

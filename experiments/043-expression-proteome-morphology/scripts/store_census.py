@@ -22,7 +22,10 @@ content of each perturbation (separates genotypes that share gene names, e.g. a 
 library whose every member carries the same reporter); distinct environments keyed by
 media name, temperature and the environmental perturbations, and distinct media names;
 label names; label vector length min / median / max; perturbations per record min / max;
-and perturbation type counts. Writes ``results/store_census.json`` (raw) or
+and perturbation type counts. The raw source also writes a ``colocation`` key: distinct
+genotypes per label and per dataset, genotypes carrying each label pair, the
+genotype x environment grid of Nadal-Ribelles and Jackson, and the overlap of the three
+isolate sets by genotype and by strain name. Writes ``results/store_census.json`` (raw) or
 ``results/store_census_dev.json`` (dev) and prints a markdown table.
 
 Run from the repo root:
@@ -174,9 +177,166 @@ class DatasetTally:
         }
 
 
-def census(source: str, data_root: str) -> dict[str, dict[str, Any]]:
-    """Per-dataset summaries from the chosen source."""
+# The label pairs whose shared genotypes the co-location census counts.
+LABEL_PAIRS: list[tuple[str, str]] = [
+    ("expression_log2_ratio", "calmorph"),
+    ("protein_abundance", "calmorph"),
+    ("expression_log2_ratio", "protein_abundance"),
+    ("expression_tpm", "protein_abundance"),
+    ("umi_count", "calmorph"),
+    ("expression_score", "calmorph"),
+]
+GRID_DATASETS = [
+    "NadalRibellesPerturbSeq2025Dataset",
+    "TfDeletionPseudobulkJackson2020Dataset",
+]
+ISOLATE_DATASETS = [
+    "CaudalPanTranscriptome2024Dataset",
+    "ProteomeMuenzner2024Dataset",
+    "ProteinTurnoverMuenzner2024Dataset",
+]
+SKIP_COLOCATION = {"PooledPromoterExpressionVaishnav2022Dataset"}
+
+
+class Colocation:
+    """Which genotypes carry which labels, across datasets (raw source only).
+
+    A genotype is keyed as in the per-dataset census (frozenset of gene names, or
+    ``(cross, segregant_id)`` for a segregant); Vaishnav 2022 is skipped (every member
+    carries the same reporter gene, so the gene key is meaningless there). Isolates are
+    also keyed by the strain name the record carries (``natural_isolate.isolate``).
+    """
+
+    def __init__(self) -> None:
+        """Empty maps."""
+        self.labels_by_genotype: dict[Any, set[str]] = {}
+        self.genotypes_by_label: dict[str, set[Any]] = {}
+        self.genotypes_by_dataset: dict[str, set[Any]] = {}
+        self.grid: dict[str, dict[str, set[Any]]] = {n: {} for n in GRID_DATASETS}
+        self.media_by_environment: dict[str, str] = {}
+        self.isolate_keys: dict[str, set[Any]] = {n: set() for n in ISOLATE_DATASETS}
+        self.isolate_names: dict[str, set[str | None]] = {
+            n: set() for n in ISOLATE_DATASETS
+        }
+
+    def add(self, record: dict[str, Any]) -> None:
+        """Fold one record in."""
+        experiment = record["experiment"]
+        name = experiment["dataset_name"]
+        if name in SKIP_COLOCATION:
+            return
+        genotype = experiment["genotype"]
+        key = _genotype_key(genotype)
+        label = experiment["phenotype"]["label_name"]
+        self.labels_by_genotype.setdefault(key, set()).add(label)
+        self.genotypes_by_label.setdefault(label, set()).add(key)
+        self.genotypes_by_dataset.setdefault(name, set()).add(key)
+        if name in self.grid:
+            environment = _environment_key(experiment["environment"])
+            self.grid[name].setdefault(environment, set()).add(key)
+            self.media_by_environment[environment] = experiment["environment"]["media"][
+                "name"
+            ]
+        if name in self.isolate_keys:
+            self.isolate_keys[name].add(key)
+            isolate = genotype.get("natural_isolate")
+            self.isolate_names[name].add(isolate["isolate"] if isolate else None)
+
+    @staticmethod
+    def _overlap(sets: dict[str, set[Any]]) -> dict[str, int]:
+        c, p, t = (sets[n] for n in ISOLATE_DATASETS)
+        return {
+            "caudal": len(c),
+            "muenzner_proteome": len(p),
+            "muenzner_turnover": len(t),
+            "caudal_and_proteome": len(c & p),
+            "caudal_and_turnover": len(c & t),
+            "proteome_and_turnover": len(p & t),
+            "all_three": len(c & p & t),
+        }
+
+    def summary(self) -> dict[str, Any]:
+        """JSON-ready co-location tables."""
+        pairs = {
+            f"{a} x {b}": sum(
+                1 for labels in self.labels_by_genotype.values() if {a, b} <= labels
+            )
+            for a, b in LABEL_PAIRS
+        }
+        grids = {}
+        for name, by_env in self.grid.items():
+            genotypes = set().union(*by_env.values())
+            grids[name] = {
+                "environments": len(by_env),
+                "genotypes": len(genotypes),
+                "grid_size": len(by_env) * len(genotypes),
+                "observed_cells": sum(len(g) for g in by_env.values()),
+                "genotypes_per_environment": sorted(
+                    (
+                        {
+                            "environment": env[:12],
+                            "media": self.media_by_environment[env],
+                            "genotypes": len(g),
+                        }
+                        for env, g in by_env.items()
+                    ),
+                    key=lambda row: (-row["genotypes"], row["media"]),
+                ),
+            }
+        return {
+            "genotypes_by_label": {
+                k: len(v) for k, v in sorted(self.genotypes_by_label.items())
+            },
+            "genotypes_by_dataset": {
+                k: len(v) for k, v in sorted(self.genotypes_by_dataset.items())
+            },
+            "genotypes_total": len(self.labels_by_genotype),
+            "label_pairs": pairs,
+            "genotype_environment_grid": grids,
+            "isolate_overlap_by_genotype": self._overlap(self.isolate_keys),
+            "isolate_overlap_by_strain_name": self._overlap(
+                {k: set(v) for k, v in self.isolate_names.items()}
+            ),
+        }
+
+
+def colocation_markdown(c: dict[str, Any]) -> str:
+    """The co-location tables as markdown."""
+    out = ["| label | genotypes |", "|---|---|"]
+    out += [f"| {k} | {v:,} |" for k, v in c["genotypes_by_label"].items()]
+    out += ["", "| dataset | genotypes |", "|---|---|"]
+    out += [f"| {k} | {v:,} |" for k, v in c["genotypes_by_dataset"].items()]
+    out += [
+        "",
+        f"Distinct genotypes over all datasets but Vaishnav: {c['genotypes_total']:,}",
+    ]
+    out += ["", "| label pair | genotypes carrying both |", "|---|---|"]
+    out += [f"| {k} | {v:,} |" for k, v in c["label_pairs"].items()]
+    for name, g in c["genotype_environment_grid"].items():
+        out += [
+            "",
+            f"{name}: {g['genotypes']:,} genotypes x {g['environments']} environments = "
+            f"grid {g['grid_size']:,}, observed cells {g['observed_cells']:,}",
+            "",
+            "| environment | media | genotypes |",
+            "|---|---|---|",
+        ]
+        out += [
+            f"| {r['environment']} | {r['media']} | {r['genotypes']:,} |"
+            for r in g["genotypes_per_environment"]
+        ]
+    for title in ("isolate_overlap_by_genotype", "isolate_overlap_by_strain_name"):
+        out += ["", f"| {title} | count |", "|---|---|"]
+        out += [f"| {k} | {v:,} |" for k, v in c[title].items()]
+    return "\n".join(out)
+
+
+def census(
+    source: str, data_root: str
+) -> tuple[dict[str, dict[str, Any]], dict[str, Any] | None]:
+    """Per-dataset summaries, and the co-location tables for the raw source."""
     tallies: dict[str, DatasetTally] = {}
+    colocation: Colocation | None = None
     if source == "raw":
         path = osp.join(
             data_root,
@@ -186,16 +346,19 @@ def census(source: str, data_root: str) -> dict[str, dict[str, Any]]:
             "raw",
             "lmdb",
         )
+        colocation = Colocation()
         for record in _iter_raw(path):
             name = record["experiment"]["dataset_name"]
             tallies.setdefault(name, DatasetTally()).add(record)
+            colocation.add(record)
     else:
         for name, directory in DEV_DIRS.items():
             path = osp.join(data_root, "data/torchcell", directory, "processed", "lmdb")
             tally = tallies.setdefault(name, DatasetTally())
             for record in _iter_dev(path):
                 tally.add(record)
-    return {name: tallies[name].summary() for name in sorted(tallies)}
+    summaries = {name: tallies[name].summary() for name in sorted(tallies)}
+    return summaries, colocation.summary() if colocation is not None else None
 
 
 def markdown(summaries: dict[str, dict[str, Any]]) -> str:
@@ -228,12 +391,18 @@ def main() -> None:
     source = parser.parse_args().source
     load_dotenv()
     data_root = os.environ["DATA_ROOT"]
-    summaries = census(source, data_root)
+    summaries, colocation = census(source, data_root)
     name = "store_census.json" if source == "raw" else "store_census_dev.json"
     out = osp.join(experiment_results_dir(EXPERIMENT, __file__), name)
     with open(out, "w") as f:
-        json.dump({"source": source, "datasets": summaries}, f, indent=1)
+        payload: dict[str, Any] = {"source": source, "datasets": summaries}
+        if colocation is not None:
+            payload["colocation"] = colocation
+        json.dump(payload, f, indent=1)
     print(markdown(summaries))
+    if colocation is not None:
+        print("\n## Co-location\n")
+        print(colocation_markdown(colocation))
     print(f"\nwrote {out}")
 
 

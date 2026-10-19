@@ -212,6 +212,12 @@
 <span class="sd">    file out of a local archive whose own manifest records where the file originally</span>
 <span class="sd">    lived (the thesis archive's ``MANIFEST.tsv``); the record's ``source_url`` names</span>
 <span class="sd">    that original location and the retriever reads the archive copy.</span>
+<span class="sd">    ``git_repository`` is a file taken from a git repository at a pinned commit: the</span>
+<span class="sd">    retriever clones the repository with ``gh repo clone &lt;owner&gt;/&lt;repo&gt; &lt;dir&gt; -- --depth</span>
+<span class="sd">    1``, fetches and checks out the pinned commit, and reads the file at</span>
+<span class="sd">    ``path_in_repo``. A private repository needs the owner's ``gh`` authentication, so</span>
+<span class="sd">    for one the deposited bytes are the rebuild source and the clone re-checks them</span>
+<span class="sd">    only where that authentication is available.</span>
 <span class="sd">    """</span>
 
     <span class="n">springer_esm</span> <span class="o">=</span> <span class="s2">"springer_esm"</span>
@@ -225,6 +231,7 @@
     <span class="n">manual_browser</span> <span class="o">=</span> <span class="s2">"manual_browser"</span>
     <span class="n">local_archive</span> <span class="o">=</span> <span class="s2">"local_archive"</span>
     <span class="n">globus</span> <span class="o">=</span> <span class="s2">"globus"</span>
+    <span class="n">git_repository</span> <span class="o">=</span> <span class="s2">"git_repository"</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">SourceCheck</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>

@@ -16,3 +16,6 @@ created: 1792393327949
 - [ ] Owner decisions for 043: keep the 188 gene-set drops or re-query, a perturbation-type rule for isolates, and the `aggregator=None` torchcell bug [[experiments.043-expression-proteome-morphology]]
 - [x] Within-dataset ceilings: Kemmeren own-culture ceiling 0.729 (114 mutants) replaces the void 019 number; Jackson construction pairs barely above null; Hu has no replicates; no segregant in two panels [[experiments.043-expression-proteome-morphology.scripts.within_dataset_ceilings]]
 - [x] 043 datasets primer typeset and published for the batch decision [[experiments.043-expression-proteome-morphology.scripts.primer_043_tables]]
+- [x] 043 design pass: data tensors and dataset module, input-side genotype tokens, output-side readout heads, three mermaid diagrams [[experiments.043-expression-proteome-morphology.mermaid.data-flow]]
+- [x] 043 primer revised to the owner's plan (every gene-level readout together; splits A, B, C; Ohya probe), with the data-as-tensors section, the input and output designs and one owner-decision checklist; published to Zotero [[experiments.043-expression-proteome-morphology]]
+- [ ] Owner decisions for the 043 design: the 20-row checklist, Table 12 of the primer [[experiments.043-expression-proteome-morphology]]

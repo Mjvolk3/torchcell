@@ -71,3 +71,78 @@ the source and not run (hypothesis (untested)): `RawStageGrouping.prepare` reads
 `Perturbation` graph processor reads the perturbation list in `get`. A torchcell fix that
 treats a genotype with no perturbation list as zero gene perturbations, or dropping the
 two segregant datasets from this store, is the owner's call.
+
+## 2026.10.19 - Stage 2 rebuild: jobs 5854, 5855, 5856
+
+- **5854**: cancelled after 19 s. `_describe` still read `genotype["perturbations"]`, which
+  would have raised on the Boocock sample after the build; fixed (`.get(...) or []`) and
+  resubmitted. Its empty store was moved to
+  `/scratch/projects/torchcell-scratch/deprecated/2026.10.19/raw_043.job5854-cancelled`
+  (the job 5851 store is beside it as `raw_043.job5851-empty`).
+- **5855** (96 GB): the raw stage finished, with 173,617 records, a 163 GB raw LMDB,
+  5 h 48 min, and 83,393 interned constants resolved. The job was then OOM-killed at 61% of
+  the aggregation pass (MaxRSS 100.4 GB; the aggregation `data.mdb` was still 8 KB).
+- **5856** (256 GB, launcher raised): COMPLETED in 2 h 39 min (`build_seconds` 8,679). It
+  reused the raw LMDB and did not query again. Peak MaxRSS read by `sstat` during the
+  copies was 267 GB.
+
+Results in `results/build_043_store_census.json`: `len(dataset)` 173,617, which equals the
+raw records and the processed entries; `dataset_name_index` counts equal the raw-scan
+counts for all 15 datasets.
+
+| dataset | gene clause | served | returned | difference |
+|---|---|---|---|---|
+| MicroarrayKemmeren2014Dataset | all | 1,484 | 1,482 | -2 |
+| SmMicroarraySameith2015Dataset | all | 82 | 82 | 0 |
+| DmMicroarraySameith2015Dataset | all | 72 | 72 | 0 |
+| MicroarrayScoreHu2007Dataset | all | 263 | 262 | -1 |
+| TfDeletionPseudobulkJackson2020Dataset | all | 784 | 784 | 0 |
+| NadalRibellesPerturbSeq2025Dataset | all | 6,188 | 6,118 | -70 |
+| ProteomeMessner2023Dataset | all | 4,699 | 4,624 | -75 |
+| ProteomeZelezniak2018Dataset | all | 97 | 97 | 0 |
+| ScmdOhya2005Dataset | all | 4,718 | 4,678 | -40 |
+| CaudalPanTranscriptome2024Dataset | any | 943 | 943 | 0 |
+| ProteomeMuenzner2024Dataset | any | 795 | 795 | 0 |
+| ProteinTurnoverMuenzner2024Dataset | any | 55 | 55 | 0 |
+| Boocock2025Dataset | none | 79,516 | 79,516 | 0 |
+| Nguessan2025Dataset | none | 2,951 | 2,951 | 0 |
+| PooledPromoterExpressionVaishnav2022Dataset | none | 71,158 | 71,158 | 0 |
+| total | | 173,805 | 173,617 | -188 |
+
+**The 188 missing records are the `all` clause against the genome gene set.** These
+records name a gene outside `SCerevisiaeGenome.gene_set` (6,607 genes), measured on the
+dev LMDBs: Kemmeren 2 records (2 genes, e.g. `YNCB0010W`, `YLL016W`), Hu 1 (`YER109C`),
+Nadal-Ribelles 70 (36 genes), Messner 75 (73 genes), Ohya 40 (40 genes). That totals
+2 + 1 + 70 + 75 + 40 = 188, exactly the deficit. The query drops these records at
+`ALL(p IN perts WHERE p.systematic_gene_name IN $gene_set)`; it does not lose them.
+
+First samples (`dataset[i]`, `Perturbation` processor):
+
+| dataset | index | perturbations | `perturbation_indices` | `pert_mask` sum | phenotype values |
+|---|---|---|---|---|---|
+| Kemmeren 2014 | 0 | 1 kanmx_deletion | 1 | 1 | 12,338 (label length 6,169) |
+| Boocock 2025 | 84,721 | 0 (SegregantGenotype) | 0 | 0 | 926 |
+| Caudal 2024 | 82,729 | 6,095 (5,672 distinct gene names) | 5,575 | 5,575 | 6,063 |
+| Ohya 2005 | 39,126 | 1 kanmx_deletion | 1 | 1 | 281 |
+
+`phenotype_types` is the same 9-entry list for every sample: `degradation_rate`,
+`expression_level`, `umi_count`, `expression_score`, `expression_log2_ratio`,
+`expression_tpm`, `protein_abundance`, `expression_log2_ratio`, `calmorph`.
+
+Findings from the rebuild (measured, not fixed here):
+
+- **Duplicate label in `phenotype_types`.** `expression_log2_ratio` appears twice because
+  two phenotype classes in the store carry that `label_name`. The Kemmeren sample stores
+  12,338 values for a 6,169-gene label, which is every value twice. Hypothesis
+  (untested): the same doubling applies to every `expression_log2_ratio` record
+  (Kemmeren, Sameith, Nadal-Ribelles).
+- **The perturbation-count index omits every segregant.**
+  `compute_perturbation_count_index` logged
+  `Error processing entry ...: 'perturbations'. Skipping this entry.` 82,467 times, which
+  equals Boocock plus Nguessan. `perturbation_count_index.json` holds 91,150 of 173,617
+  entries. This is the same missing-list read, at a site the stage 2 fix did not cover.
+  It ran because a resumed build (raw stage skipped) computes the indices from the
+  processed store instead of folding them from the raw stage.
+- **Isolates mark thousands of genes perturbed.** The Caudal sample has `pert_mask` sum
+  5,575 of 6,607 nodes, because every `sequence_variant` gene counts as perturbed. Of the
+  5,672 distinct gene names, 97 are not graph nodes (pangenome ORFs).

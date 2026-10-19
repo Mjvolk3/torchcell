@@ -68,3 +68,20 @@ Readings against the reviewer's dev-store census:
   spans Messner, Zelezniak and Muenzner proteome.
 - Vaishnav 2022 collapses to 1 gene-name genotype (every member carries the same
   reporter); the perturbation-set key separates all 71,158.
+
+## 2026.10.19 - Raw census of the built store
+
+`--source raw` over the job 5855 raw LMDB (173,617 records), written to
+`results/store_census.json`. Every dataset matches the dev census in genotypes,
+environments, media, labels, label lengths and perturbation types, except the
+`all`-clause drops below. Records, then genotypes, raw against dev:
+
+- Kemmeren: 1,482 records against 1,484; genotypes 1,482.
+- Hu: 262 records against 263; genotypes 262.
+- Nadal-Ribelles: 6,118 records against 6,188; genotypes 3,059 against 3,095.
+- Messner: 4,624 records against 4,699; genotypes 4,476 against 4,549.
+- Ohya: 4,678 records against 4,718; genotypes 4,678.
+
+Muenzner proteome now returns 795, including the zero-perturbation strain. Each gap is
+records whose gene is outside the genome's 6,607-gene set; the count is in
+[[experiments.043-expression-proteome-morphology.scripts.build_043_store]].

@@ -16,7 +16,11 @@ single mutants, found here to be Kemmeren's own arrays. Two constructions of one
 different genotypes; Hu 2007 released no replicate; no segregant appears in two panels.
 Between datasets, agreement is low (median per-genotype $r$ from $-$0.006 to 0.208 apart
 from the Sameith copy), and morphology is the label most often shared with expression and
-protein. A proposal for two training batches, deletions with morphology held out and
-isolates with segregants under a stated allele assumption, closes the document; it is
-presented for decision, not decided.
+protein. The plan trains every gene-level readout in one model and asks two engineering
+questions of it: held-out Kemmeren single deletions by gene, and all 72 Sameith double
+deletions against the additive null of their singles; the Muenzner proteome is a third
+test and Ohya morphology a probe of the frozen latent. The data as tensors, the input
+side (gene tokens, change-type marks and the perturbation operator) and the output side
+(readout sites, heads, tokens, losses and the evaluation protocol) follow, with the
+choices left to the owner collected in one table.
 \end{abstract}

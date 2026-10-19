@@ -1,69 +1,114 @@
 %% notes-tex/multimodal/043-datasets-primer/sections/5-proposal.tex
+%% SOURCE: the owner's direction of 2026-10-19 (notes/experiments.043-expression-proteome-morphology.md,
+%% "Design pass"); numbers from results/data_shapes_043.json, results/store_census.json,
+%% results/cross_dataset_correlation.json and results/within_dataset_ceilings.json, through
+%% the tables written by experiments/043-expression-proteome-morphology/scripts/primer_043_tables.py.
 
-\section{Proposal: training batches\secstatus{todo}}
+\section{The plan: every gene-level readout trained together\secstatus{todo}}
 \label{sec:proposal}
 
-What follows is a proposal for the group to accept, change or reject; nothing in it is
-decided. Each choice cites the measurement behind it (Table~\ref{tab:batches}).
+Every gene-level readout of the store trains in one model, and the question it answers
+is an engineering one: does the model predict the transcriptome of a deletion it has not
+seen, and of a double deletion from its two measured singles? Table~\ref{tab:plan} gives
+the sets. An earlier version of this section proposed two separate training batches,
+deletions and then isolates with segregants; the owner superseded it on 2026-10-19.
 
 %% SOURCE: experiments/043-expression-proteome-morphology/scripts/primer_043_tables.py
-%% -> tables/t11-batches.tex
+%% -> tables/t11-plan.tex (record counts from results/data_shapes_043.json)
 \begin{table}[htbp]
 \centering
 \footnotesize
-\caption[]{\textbf{Proposed batches.} Records count the raw store; for Boocock only the
-pooled panel is proposed.}
-\label{tab:batches}
-\input{tables/t11-batches}
+\caption[]{\textbf{The sets of the plan.} Records count the raw store (full pass of
+\file{data_shapes_043.py}, slurm job 5902); a split's count is strains held out, 10\% of
+Kemmeren's 1{,}482 genes and a fifth of Muenzner's 795 isolates. Splits A and C are drawn
+from training records; split B is a dataset of its own and never trains.}
+\label{tab:plan}
+\input{tables/t11-plan}
 \end{table}
 
-\notesec{Batch 1, deletions}
-Kemmeren 2014, Sameith 2015 Dm and Messner 2023 share one genotype
-representation, a set of deleted genes that the \texttt{Perturbation} processor already
-encodes, and each has a measured ceiling: 0.729 for Kemmeren's own cultures, 0.696 by
-decomposition over 388 wild-type replicates for Messner. Sameith Sm is left out because
-its 82 profiles are Kemmeren's; the Sameith doubles add 72 double deletions profiled by the same
-procedures (Sameith Methods defer to Kemmeren). Ohya 2005 CalMorph is the held-out probe target: it
-carries no input to the model, 4{,}287 of its genotypes have a Messner profile and 1{,}437
-a Kemmeren one, a ridge on those inputs already reaches a mean $r$ of 0.238 (Kemmeren) and
-0.179 (Messner) over 281 features against nulls near zero, and its own ceiling is 0.611
-over 122 wild-type replicates. A probe on the learned representation can then be read
-against both the ridge and that ceiling.
+\notesec{Training}
+Twelve datasets train together: every dataset of the store except Sameith 2015 Sm,
+whose 82 profiles are Kemmeren's own arrays (82 of 82 identical), Sameith 2015 Dm, which
+is split B, and Ohya 2005, which is the probe. Vaishnav 2022 stays in as the promoter
+signal: one sort-seq level per promoter insert, read off the strain-level summary and
+the promoter encoder of Sec.~\ref{sec:input-token}. Expression and protein readouts come
+off the perturbed graph: a gene's value is read from that gene's own perturbed node state,
+and the CLS state and the perturbed-gene summary $z_S$ are the strain-level sites
+(Sec.~\ref{sec:output-sites}). The low-agreement datasets train too, and their measured
+agreement is what the weighting decision (O5 in Table~\ref{tab:decisions}) and the arm
+without them read: Nadal-Ribelles agrees with itself across batches at a median $r$ of
+0.043 against 0.022 for different genotypes and with Kemmeren at 0.002; two Jackson 2020
+constructions of one genotype agree at 0.129 against 0.095; Hu 2007 released no
+replicate and agrees with Kemmeren at 0.107 per genotype, on an X score that is not a log
+ratio; Zelezniak 2018 agrees with Messner at 0.049 per genotype over 715 proteins though
+its own ceiling is 0.916; Muenzner 2024 turnover agrees with abundance at $-$0.006 per
+isolate.
 
-\notesec{Batch 2, isolates and segregants}
-Caudal 2024 and Muenzner 2024 protein share 759 isolates and agree
-more than the deletions do (median per-isolate $r$ 0.208 against 0.031). Boocock's 393
-pooled segregants and N'Guessan's 2{,}951 are pseudobulk records of genome-sequenced
-BY $\times$ RM segregants, 7{,}124 and 14{,}263 cells, with near-certain genotypes
-(posterior below 0.9 on a median 0\% and 1.7\% of markers). The de novo Boocock cells are
-left out: single cells with medians of 2{,}000 to 4{,}000 UMIs, with 24 to 35\% of its markers called
-below 0.9.
+\notesec{Split A, Kemmeren singles by gene}
+A tenth of Kemmeren's deletion genes, 148, is held out of every deletion dataset, so a
+held-out gene is never seen as a perturbation. The bound is Kemmeren's own-culture
+ceiling, 0.729 over 114 mutants with two cultures (Sec.~\ref{sec:within}); the 019
+reference, by strain rather than by gene, is $0.180 \pm 0.006$ per gene over four runs.
 
-Both classes need a gene-level genotype the processor does not yet build. The proposed
-definite assumption: per gene, a segregant is marked at the genes whose block was
-inherited from the non-reference parent (RM, or the non-S288C parent of a cross), and
-blocks with posterior below a threshold such as 0.9 are dropped rather than guessed; an
-isolate is marked by a rule over perturbation types (loss of function, absence and
-presence, with sequence variants either dropped or restricted), since marking every
-variant gene sets 5{,}575 of 6{,}607 nodes. The probabilistic representation, a per-gene
-probability of the non-reference allele carried as a soft mask, is the later step.
-Whether the allele-marking assumption carries signal is open: the measured genotype
-signal across segregant panels is small (deviation $r$ 0.113 against 0.070 for the
-nearest cells, Sec.~\ref{sec:within}).
+\notesec{Split B, the Sameith doubles}
+All 72 Sameith 2015 double deletions are held out and scored against their measured
+profiles and against the additive null of their two Kemmeren singles, the paper's own
+expected value. Sameith's Methods defer to Kemmeren's, so the doubles were profiled by
+the same procedure; no double has a replicate, and the Kemmeren ceiling of 0.729 is the
+bound for the same arrays.
 
-\notesec{Held back}
-Each of the following has a measured reason.
-\begin{itemize}
-\item Nadal-Ribelles 2025: the same genotype agrees across batches at a median $r$ of
-0.043 against 0.022 for different genotypes (028), and with Kemmeren at 0.002.
-\item Jackson 2020: two constructions of one genotype agree on the deletion effect at
-0.129 against 0.095 for different genotypes (floor 100); 12 genotypes in 11 conditions
-add environments, not genotypes.
-\item Hu 2007: no replicate is released, and its only bound, agreement with Kemmeren,
-is 0.107 per genotype; the X score is not a log ratio.
-\item Zelezniak 2018: 97 kinase deletions, agreement with Messner 0.049 per genotype over
-715 proteins, though its decomposition ceiling is 0.916.
-\item Vaishnav 2022: one scalar per promoter sequence and no gene-level genotype.
-\item Muenzner 2024 turnover: 55 isolates, and its agreement with abundance is near
-zero ($-$0.006 per isolate).
-\end{itemize}
+\notesec{Split C, the Muenzner proteome}
+A fifth of the 795 Muenzner 2024 proteome isolates, 159, is held out of every readout of
+those isolates (Caudal 2024 shares 759 of them). No Muenzner replicate ceiling is
+measured; the reference is how far another readout of the same isolate agrees, Caudal
+mRNA against Muenzner protein at a median per-isolate $r$ of 0.208, against 0.031 for
+Kemmeren mRNA against Messner protein on deletions.
+
+\notesec{The morphology probe}
+Ohya 2005 CalMorph enters no training. Its 4{,}678 genotypes are run through the frozen
+model and a ridge reads the 116 moving features from the latent. A ridge on the measured
+inputs already reaches a mean $r$ of 0.238 from Kemmeren expression (1{,}437 shared
+genotypes) and 0.179 from Messner protein (4{,}279) over all 281 features, against
+row-permutation nulls near zero, and Ohya's own ceiling is 0.611 over 122 wild-type
+replicates (Table~\ref{tab:morph}). Sec.~\ref{sec:output-protocol} gives the bars for the
+probe.
+
+\notesec{The genotypes the model has not yet read}
+Isolates and segregants need a gene-level genotype the \texttt{Perturbation} processor
+does not build: marking every isolate perturbation sets 5{,}575 of 6{,}607 nodes, and a
+segregant sets none. Sec.~\ref{sec:input} gives the change-type marks that replace it,
+with the definite rule for segregants (a gene inherits the non-reference parent only
+inside a block called at posterior 0.9 or above). The posterior cut removes little on the
+pooled panels (a median of 0\% of markers for Boocock pooled, 1.7\% for N'Guessan) and a
+quarter to a third on Boocock's de novo cells, whose single cells carry medians of 2{,}000
+to 4{,}000 UMIs; whether those cells train is decision P1. The measured genotype signal
+across segregant panels is small: nearest-genotype deviation $r$ 0.113 against 0.070
+for random pairs (Sec.~\ref{sec:within}).
+
+\notesec{Decisions}
+Table~\ref{tab:decisions} collects every choice the design leaves to the owner, with
+its two options, the measured fact that bears on it and the proposal. The I rows come
+from the input side (Sec.~\ref{sec:input-decisions}), the O rows from the output side
+(Sec.~\ref{sec:output-decisions}), and the P rows from putting the plan together.
+
+%% SOURCE: experiments/043-expression-proteome-morphology/scripts/primer_043_tables.py
+%% -> tables/t13-decisions-rows.tex (DECISIONS, condensed from the two design sections)
+\begin{landscape}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{>{\raggedright\arraybackslash}p{6mm}>{\raggedright\arraybackslash}p{26mm}>{\raggedright\arraybackslash}p{38mm}>{\raggedright\arraybackslash}p{38mm}>{\raggedright\arraybackslash}p{74mm}>{\raggedright\arraybackslash}p{40mm}>{\raggedright\arraybackslash}p{9mm}}
+\caption[]{\textbf{Owner decisions, one checklist.} Each row is one choice the design
+cannot make alone. The measured fact is the one its section cites; ``open'' marks a
+choice the section makes no proposal on. The last column is the section that carries the
+full argument.}\label{tab:decisions}\\
+\toprule
+Id & Decision & Option 1 & Option 2 & Measured fact & Proposed & Sec. \\
+\midrule
+\endfirsthead
+\toprule
+Id & Decision & Option 1 & Option 2 & Measured fact & Proposed & Sec. \\
+\midrule
+\endhead
+\input{tables/t13-decisions-rows}
+\end{longtable}
+\end{landscape}

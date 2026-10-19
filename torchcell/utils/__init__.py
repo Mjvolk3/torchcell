@@ -23,6 +23,7 @@ from .utils import (
     mm_to_in,
     panel_label,
     savefig_true_size_svg,
+    text_clashes,
 )
 
 __all__ = [
@@ -32,6 +33,7 @@ __all__ = [
     "acs_structure",
     "acs_structure_box",
     "acs_structure_svg",
+    "text_clashes",
     "FileLockHelper",
     "repo_root",
     "experiment_root",

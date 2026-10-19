@@ -393,3 +393,23 @@ def test_acs_structure_draws_at_the_acs_bond_length(tmp_path: Path) -> None:
     assert 0 < width_pt < 60 and 0 < height_pt < 30
     fig.savefig(tmp_path / "formic.pdf")
     plt.close(fig)
+
+
+def test_text_clashes_reports_overlap_and_the_edge_only() -> None:
+    import matplotlib.pyplot as plt
+
+    from torchcell.utils import text_clashes
+
+    fig = plt.figure(figsize=(3, 2), dpi=100)
+    fig.text(0.1, 0.5, "first label", fontsize=8)
+    fig.text(0.12, 0.5, "second label", fontsize=8)  # starts inside the first
+    fig.text(0.1, 0.1, "clear of both", fontsize=8)
+    fig.text(0.95, 0.8, "runs off the right edge", fontsize=8)
+    fig.text(0.5, 0.9, "✗", fontsize=8)  # a status mark is never a clash
+    fig.text(0.5, 0.9, "", fontsize=8)  # nor is an empty string
+    clashes = text_clashes(fig)
+    plt.close(fig)
+    assert ("first label", "second label") in clashes
+    assert ("runs off the right edge", "<figure edge>") in clashes
+    assert not any("clear of both" in pair for pair in clashes)
+    assert len(clashes) == 2

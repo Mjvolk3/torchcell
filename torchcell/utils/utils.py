@@ -530,3 +530,80 @@ def format_scientific_notation(num: float) -> str:
     mantissa_str = mantissa_str.rstrip("0").rstrip(".")
 
     return f"{sign}{mantissa_str}e{exponent:02d}"
+
+
+#: Text that is meant to sit against its neighbor and is never a clash: the status
+#: marks the figure gates print after a panel letter.
+CLASH_EXEMPT_TEXT = frozenset({"✗", "●", "○", "◐", "✓"})
+
+
+def text_clashes(fig: Any, min_overlap_pt: float = 0.5) -> list[tuple[str, str]]:
+    """Every pair of visible text artists of ``fig`` whose rendered boxes overlap.
+
+    A figure is checked after it is drawn and before it is saved, so a label that runs
+    into another (a panel letter on the x label of the row above, a title past the
+    sheet's edge, a y label into a neighbor's x label) is reported by the script rather
+    than found in review. Two boxes clash when they overlap by more than
+    ``min_overlap_pt`` points in BOTH directions; text of a single artist (a multi-line
+    label) is one box. Empty strings and ``CLASH_EXEMPT_TEXT`` are skipped. Text that
+    runs off the figure is reported against ``"<figure edge>"``.
+
+    Only text that is drawn is read: a tick label whose tick lies outside the axis'
+    view is kept by matplotlib but never drawn, and is skipped. Two labels that are both
+    rotated off the horizontal and vertical (slanted tick labels) are not compared,
+    because their axis-aligned boxes overlap where the glyphs do not; a clash between
+    two slanted labels is therefore not reported.
+
+    It sees text only: a filled patch or a drawn structure behind a label is not text
+    and is not checked here.
+
+    It works on any backend: the figure is laid out without rasterizing it, and the
+    boxes are measured with the figure's own renderer, so a sheet that carries real
+    LaTeX text (``usetex``) under the PDF backend, where Agg cannot draw it without
+    dvipng, is checked the same way.
+    """
+    from matplotlib.text import Text
+
+    fig.draw_without_rendering()
+    renderer = fig._get_renderer()
+    scale = 72.0 / fig.dpi
+    edge = fig.bbox
+    undrawn: set[int] = set()
+    for ax in fig.get_axes():
+        for axis in (ax.xaxis, ax.yaxis):
+            drawn = {id(tick) for tick in axis._update_ticks()}
+            for tick in axis.get_major_ticks() + axis.get_minor_ticks():
+                if id(tick) not in drawn:
+                    undrawn.update((id(tick.label1), id(tick.label2)))
+    boxes = []
+    for artist in fig.findobj(Text):
+        text = artist.get_text().strip()
+        if (
+            not artist.get_visible()
+            or not text
+            or text in CLASH_EXEMPT_TEXT
+            or id(artist) in undrawn
+        ):
+            continue
+        box = artist.get_window_extent(renderer)
+        if box.width <= 0 or box.height <= 0:
+            continue
+        slanted = artist.get_rotation() % 90 != 0
+        boxes.append((text, box, slanted))
+    out = []
+    for i, (text_a, a, slanted_a) in enumerate(boxes):
+        if (
+            (edge.x0 - a.x0) * scale > min_overlap_pt
+            or (a.x1 - edge.x1) * scale > min_overlap_pt
+            or (edge.y0 - a.y0) * scale > min_overlap_pt
+            or (a.y1 - edge.y1) * scale > min_overlap_pt
+        ):
+            out.append((text_a, "<figure edge>"))
+        for text_b, b, slanted_b in boxes[i + 1 :]:
+            if slanted_a and slanted_b:
+                continue
+            width = (min(a.x1, b.x1) - max(a.x0, b.x0)) * scale
+            height = (min(a.y1, b.y1) - max(a.y0, b.y0)) * scale
+            if width > min_overlap_pt and height > min_overlap_pt:
+                out.append((text_a, text_b))
+    return out

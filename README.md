@@ -55,9 +55,9 @@ from dotenv import load_dotenv
 
 load_dotenv()  # reads the .env beside this script or in a parent directory
 
-from torchcell.datasets.scerevisiae.mulleder2016 import AminoAcidMulleder2016Dataset
+from torchcell.datasets.scerevisiae.sgd import GeneEssentialitySgdDataset
 
-dataset = AminoAcidMulleder2016Dataset(root="data/torchcell/amino_acid_mulleder2016")
+dataset = GeneEssentialitySgdDataset(root="data/torchcell/gene_essentiality_sgd")
 ```
 
 The loader reads the two variables from the process environment and does not read `.env`

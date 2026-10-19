@@ -1,0 +1,69 @@
+%% notes-tex/multimodal/043-datasets-primer/sections/5-proposal.tex
+
+\section{Proposal: training batches\secstatus{todo}}
+\label{sec:proposal}
+
+What follows is a proposal for the group to accept, change or reject; nothing in it is
+decided. Each choice cites the measurement behind it (Table~\ref{tab:batches}).
+
+%% SOURCE: experiments/043-expression-proteome-morphology/scripts/primer_043_tables.py
+%% -> tables/t11-batches.tex
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption[]{\textbf{Proposed batches.} Records count the raw store; for Boocock only the
+pooled panel is proposed.}
+\label{tab:batches}
+\input{tables/t11-batches}
+\end{table}
+
+\notesec{Batch 1, deletions}
+Kemmeren 2014, Sameith 2015 Dm and Messner 2023 share one genotype
+representation, a set of deleted genes that the \texttt{Perturbation} processor already
+encodes, and each has a measured ceiling: 0.729 for Kemmeren's own cultures, 0.696 by
+decomposition over 388 wild-type replicates for Messner. Sameith Sm is left out because
+its 82 profiles are Kemmeren's; the Sameith doubles add 72 double deletions profiled by the same
+procedures (Sameith Methods defer to Kemmeren). Ohya 2005 CalMorph is the held-out probe target: it
+carries no input to the model, 4{,}287 of its genotypes have a Messner profile and 1{,}437
+a Kemmeren one, a ridge on those inputs already reaches a mean $r$ of 0.238 (Kemmeren) and
+0.179 (Messner) over 281 features against nulls near zero, and its own ceiling is 0.611
+over 122 wild-type replicates. A probe on the learned representation can then be read
+against both the ridge and that ceiling.
+
+\notesec{Batch 2, isolates and segregants}
+Caudal 2024 and Muenzner 2024 protein share 759 isolates and agree
+more than the deletions do (median per-isolate $r$ 0.208 against 0.031). Boocock's 393
+pooled segregants and N'Guessan's 2{,}951 are pseudobulk records of genome-sequenced
+BY $\times$ RM segregants, 7{,}124 and 14{,}263 cells, with near-certain genotypes
+(posterior below 0.9 on a median 0\% and 1.7\% of markers). The de novo Boocock cells are
+left out: single cells with medians of 2{,}000 to 4{,}000 UMIs, with 24 to 35\% of its markers called
+below 0.9.
+
+Both classes need a gene-level genotype the processor does not yet build. The proposed
+definite assumption: per gene, a segregant is marked at the genes whose block was
+inherited from the non-reference parent (RM, or the non-S288C parent of a cross), and
+blocks with posterior below a threshold such as 0.9 are dropped rather than guessed; an
+isolate is marked by a rule over perturbation types (loss of function, absence and
+presence, with sequence variants either dropped or restricted), since marking every
+variant gene sets 5{,}575 of 6{,}607 nodes. The probabilistic representation, a per-gene
+probability of the non-reference allele carried as a soft mask, is the later step.
+Whether the allele-marking assumption carries signal is open: the measured genotype
+signal across segregant panels is small (deviation $r$ 0.113 against 0.070 for the
+nearest cells, Sec.~\ref{sec:within}).
+
+\notesec{Held back}
+Each of the following has a measured reason.
+\begin{itemize}
+\item Nadal-Ribelles 2025: the same genotype agrees across batches at a median $r$ of
+0.043 against 0.022 for different genotypes (028), and with Kemmeren at 0.002.
+\item Jackson 2020: two constructions of one genotype agree on the deletion effect at
+0.129 against 0.095 for different genotypes (floor 100); 12 genotypes in 11 conditions
+add environments, not genotypes.
+\item Hu 2007: no replicate is released, and its only bound, agreement with Kemmeren,
+is 0.107 per genotype; the X score is not a log ratio.
+\item Zelezniak 2018: 97 kinase deletions, agreement with Messner 0.049 per genotype over
+715 proteins, though its decomposition ceiling is 0.916.
+\item Vaishnav 2022: one scalar per promoter sequence and no gene-level genotype.
+\item Muenzner 2024 turnover: 55 isolates, and its agreement with abundance is near
+zero ($-$0.006 per isolate).
+\end{itemize}

@@ -286,3 +286,27 @@ Figures:
     YJM145, YJM981 and YPS163); N'Guessan has `BBQTL_BYxRM` (BY4741 x RM11-1a).
   - Both name RM as a parent, but under different strain names and as different
     segregant panels.
+
+## 2026.10.19 - Within-dataset ceilings and the datasets primer
+
+Script: [[experiments.043-expression-proteome-morphology.scripts.within_dataset_ceilings]]
+(jobs 5893, 5895, 5896, 5898). Headlines, measured:
+
+- **Kemmeren 2014 own cultures** (114 mutants with two cultures: 72 responsive, 42
+  non-responsive): per-strain r median 0.730 (null 0.284), per-gene r median 0.612,
+  ceiling 0.729 test-retest, 0.653 decomposition. Replaces the void 019 ceiling (0.775),
+  which paired Kemmeren with Sameith Sm, now shown to be the same arrays.
+- **Jackson 2020 construction pairs** within a condition, deletion effect vs summed HO,
+  floor 100 UMIs per condition: same genotype 0.129 vs 0.095 different genotype
+  (1,778 / 21,300 pairs); 0.244 vs 0.103 at floor 1,000 (660 genes). Median depth
+  43,851 UMIs and 23 cells per construction.
+- **Hu 2007**: no replicate released (weighted duplicate averaging before GEO); the bound
+  is Kemmeren x Hu 0.107.
+- **Segregants**: no segregant in two panels (best concordance 0.672 / 0.657, none at
+  0.95); nearest-genotype deviation r 0.113 vs 0.070 random (p 1e-8).
+
+Typeset for the group as `notes-tex/multimodal/043-datasets-primer/` (10 pages; tables
+by [[experiments.043-expression-proteome-morphology.scripts.primer_043_tables]]),
+published to Zotero `torchcell/notes-tex/multimodal/043-datasets-primer` as
+`043-datasets-primer_2026-10-19-17-04-51_c41df5c6.pdf`. Its batch proposal is a
+proposal, not a decision.

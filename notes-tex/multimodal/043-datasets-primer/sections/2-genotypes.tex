@@ -1,0 +1,53 @@
+%% notes-tex/multimodal/043-datasets-primer/sections/2-genotypes.tex
+
+\section{Genotype classes and how each enters a model\secstatus{todo}}
+\label{sec:genotypes}
+
+The store holds four genotype classes, and the graph processors that turn a record into
+model input treat them differently. What follows is the behavior of the code at the 043
+build (\file{torchcell/data/graph_processor.py}), measured on the processed samples.
+
+\notesec{Deletions}
+Kemmeren, Sameith, Hu, Jackson, Nadal-Ribelles, Messner, Zelezniak and Ohya: every
+record names one or two deleted genes (two for Sameith Dm). The genotype is the set of
+systematic names, and the \texttt{Perturbation} processor marks those nodes in
+\texttt{pert\_mask}. Jackson 2020 adds a construction identity (plate well and
+barcode) below the gene name, so its 784 records hold 72 constructions of 12
+genotypes.
+
+\notesec{Isolates}
+Caudal 2024 and the two Muenzner 2024 datasets: a natural isolate's genotype is its
+variant calls against S288C, five perturbation types with the counts of
+Table~\ref{tab:isolates}, between 195 and 7{,}025 perturbations per Caudal record.
+The \texttt{Perturbation} processor marks every gene with any of them, so a Caudal
+sample has 5{,}575 of 6{,}607 nodes in \texttt{pert\_mask}: the mask then separates
+almost nothing, and a rule over perturbation types (for example loss of function and
+absence only) is needed before isolates are trained on.
+
+%% SOURCE: experiments/043-expression-proteome-morphology/scripts/primer_043_tables.py
+%% -> tables/t3-isolates.tex
+\begin{table}[htbp]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\caption[]{\textbf{Perturbations of an isolate record, by type.} Mean count per record
+over the records of each dataset (\file{results/store_census.json}). Sequence variants
+are named by the gene they fall in; natural loss of function, gene absence and gene
+presence are released calls; the few deletions are engineered markers.}
+\label{tab:isolates}
+\input{tables/t3-isolates}
+\end{table}
+
+\notesec{Segregants}
+Boocock 2025 and N'Guessan 2025: a \texttt{SegregantGenotype} names a cross, two parent
+strains pinned to sha256-verified assemblies, and a list of haplotype blocks, and it
+carries no perturbation list by design. Since the stage-2 fix the processors read a
+missing list as zero perturbed genes, so a segregant sample today has
+\texttt{pert\_mask} all false: a model sees it as the reference strain. Using
+segregants needs a representation of the blocks; Sec.~\ref{sec:proposal} names one.
+
+\notesec{Promoter library}
+Vaishnav 2022: each of 71{,}158 records is one 80 bp variable promoter insert driving a
+YFP reporter, read as one scalar. Every record names the same reporter, so the store
+holds one gene-name genotype for all of them; the perturbation sets separate them only
+by sequence content. No gene-level vector and no gene-set encoder applies.

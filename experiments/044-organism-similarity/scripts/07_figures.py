@@ -4,7 +4,8 @@
 
 """Figures 1-5 of experiment 044 (organism similarity) and their captions.
 
-Reads only committed result tables (``results/``) and the tier-free trees; writes PNG +
+Reads committed result tables (``results/``), the tier-free trees and Peter et al.
+2018's sha256-pinned SNP distance matrix (Fig 4); writes PNG +
 true-size SVG to ``ASSET_IMAGES_DIR/044-organism-similarity/`` (timestamped until
 approved) and ``results/figure_captions.json``.
 
@@ -12,23 +13,34 @@ approved) and ``results/figure_captions.json``.
   axis, by pair category, with the within-human literature band.
 - Fig 2: NCBI taxonomy cladogram + AAI, ortholog Jaccard and EC-4 Jaccard heatmaps.
 - Fig 3: taxonomy cladogram vs the AAI neighbor-joining tree (tanglegram).
-- Fig 4: the 1,011-isolate tree colored by Peter's clade.
-- Fig 5: ortholog fraction vs AAI per pair.
+- Fig 4: (a) neighbor-joining tree over Peter et al. 2018's clades (mean between-clade
+  SNP distance from the 1,011 x 1,011 matrix; the isolates with no clade are one more
+  leaf), (b) within-clade pairwise SNP distances in the same rows. Writes
+  ``results/clade_snp_distance.csv``, ``results/clades_nj.nwk`` and
+  ``results/clade_distance_summary.csv``.
+- Fig 5: ortholog fraction vs AAI per pair, one color per pair class.
+- Fig 6 (the main figure): (a) protein divergence of everything measured from S288C, the
+  isolates included, beside the same axis measured from human; (b) the ortholog fraction
+  each organism shares with S288C. Writes ``results/s288c_centered.csv``.
 
 Color is the organism group (plan rule). Fig 2's strip uses the plan's groups
-(reference, established, emerging, CABBI, genus, mammal, outgroup); Figs 1, 3 and 5 color
+(reference, established, emerging, CABBI, genus, mammal, outgroup); Figs 1 and 3 color
 by the taxonomic group the claim is about (S. cerevisiae isolates, Saccharomyces,
-other Saccharomycotina, non-Saccharomycotina fungus, mammals, bird, bacteria); a
-cross-group pair is drawn with the face of one member's color and the edge of the other.
+other Saccharomycotina, non-Saccharomycotina fungus, mammals, bird, bacteria); Fig 1
+draws a cross-group pair with the face of one member's color and the edge of the other.
+Fig 5 colors by pair class (``PAIR_CLASSES``): a within-group class takes its group's
+color, a cross-group class a palette color no group uses. Fig 4 uses one color.
 
 Run from the repo root: ``PYTHONPATH=. ~/miniconda3/envs/torchcell/bin/python ...``.
 """
 
 from __future__ import annotations
 
+import gzip
 import json
 import os
 import os.path as osp
+import sys
 
 import matplotlib
 
@@ -37,6 +49,10 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 from Bio import Phylo  # noqa: E402
+from Bio.Phylo.TreeConstruction import (  # noqa: E402
+    DistanceMatrix,
+    DistanceTreeConstructor,
+)
 from dotenv import load_dotenv  # noqa: E402
 from matplotlib.lines import Line2D  # noqa: E402
 from matplotlib.patches import Patch  # noqa: E402
@@ -50,12 +66,25 @@ from torchcell.utils import (  # noqa: E402
     savefig_true_size_svg,
 )
 
+sys.path.insert(0, osp.dirname(osp.abspath(__file__)))
+from orgsim_manifest import DATA_ROOT, sha256_file  # noqa: E402
+
 load_dotenv()
 EXP_DIR = osp.join(os.environ["EXPERIMENT_ROOT"], "044-organism-similarity")
 RES = osp.join(EXP_DIR, "results")
 OUT_DIR = osp.join(os.environ["ASSET_IMAGES_DIR"], "044-organism-similarity")
 STAMP = timestamp()
 FS = 6
+
+#: Peter et al. 2018's SNP distance matrix (same pin as 05_trees.py).
+PETER_MATRIX = osp.join(
+    DATA_ROOT, "data/peter2018/1011DistanceMatrixBasedOnSNPs.tab.gz"
+)
+PETER_MATRIX_SHA256 = "140da4e5193584c01e60c554a2ba5075a542d925be540afe7c7a92b7377af928"
+#: The group of isolates Table S1 gives no clade (Fig 4).
+NO_CLADE = "no clade in Table S1"
+#: Fig 4b draws a box for a group with at least this many pairs (5 isolates), points below.
+MIN_BOX_PAIRS = 10
 
 #: Plan organism groups -> palette (Fig 2 strip).
 PLAN_GROUPS = [
@@ -127,6 +156,91 @@ LABELED = [
     ("pkud_sd108", "pkud_cbs573", "SD108/CBS573"),
 ]
 
+#: Fig 5 pair classes, legend order: Fig 1's six columns, then the cross-group classes.
+PAIR_CLASSES = [
+    ("within_genus", "Within Saccharomyces"),
+    ("within_mammals", "Within mammals"),
+    ("mammal_bird", "Mammal vs chicken"),
+    ("within_saccharomycotina", "Within Saccharomycotina"),
+    ("within_bacteria", "Within bacteria"),
+    ("yeast_bacteria", "Saccharomycotina vs bacteria"),
+    ("yeast_animal", "Saccharomycotina vs amniote"),
+    ("animal_bacteria", "Amniote vs bacteria"),
+    ("basidio_yeast", "R. toruloides vs Saccharomycotina"),
+    ("basidio_animal", "R. toruloides vs amniote"),
+    ("basidio_bacteria", "R. toruloides vs bacteria"),
+]
+#: A within-group class takes its group's Fig 1 color (a Fig 1 point whose face and edge
+#: are both that color); a cross-group class takes a palette color no group uses.
+PAIR_COLOR = {
+    "within_genus": PLOT_PALETTE[1],
+    "within_mammals": PLOT_PALETTE[4],
+    "within_saccharomycotina": PLOT_PALETTE[2],
+    "within_bacteria": PLOT_PALETTE[6],
+    "mammal_bird": PLOT_PALETTE[7],
+    "yeast_bacteria": PLOT_PALETTE[8],
+    "yeast_animal": PLOT_PALETTE[11],
+    "animal_bacteria": PLOT_PALETTE[10],
+    "basidio_yeast": PLOT_PALETTE[12],
+    "basidio_animal": PLOT_PALETTE[13],
+    "basidio_bacteria": PLOT_PALETTE[14],
+}
+
+#: Fig 6: the human yardstick partners, nearest first.
+HUMAN_YARDSTICK = [
+    "ptro",
+    "ggor",
+    "pabe",
+    "mmul",
+    "mmus_c57bl6j",
+    "rnor",
+    "cgri_cho",
+    "ggal",
+]
+#: Fig 6 columns (S288C partners by taxonomic group, then the human yardstick).
+FIG6_COLUMNS = [
+    ("isolates", "{n:,}\nisolates\n(training)"),
+    ("saccharomyces", "Saccharo-\nmyces"),
+    ("saccharomycotina", "Other\nSaccharo-\nmycotina"),
+    ("rtor", "R. toru-\nloides"),
+    ("animal", "Mammals,\nchicken"),
+    ("bacteria", "Bacteria"),
+    ("human_vs", "Human vs"),
+]
+FIG6_COLUMN = {
+    "saccharomyces": "saccharomyces",
+    "saccharomycotina": "saccharomycotina",
+    "other_fungus": "rtor",
+    "mammal": "animal",
+    "bird": "animal",
+    "bacteria": "bacteria",
+}
+FIG6_LABELS = {
+    "spar_cbs432": "S. paradoxus",
+    "seub_fm1318": "S. eubayanus",
+    "pkud_sd108": "P. kudriavzevii SD108 (this study)",
+    "pkud_cbs573": "P. kudriavzevii CBS573",
+    "ecoli_mg1655": "E. coli",
+    "pput_kt2440": "P. putida",
+    "ptro": "chimp",
+    "ggor": "gorilla",
+    "pabe": "orangutan",
+    "mmul": "macaque",
+    "mmus_c57bl6j": "mouse",
+    "rnor": "rat",
+    "cgri_cho": "hamster",
+    "ggal": "chicken",
+}
+#: Fig 6 S288C-side label positions: (x offset from the column, divergence %, alignment).
+FIG6_LABEL_XY = {
+    "S. paradoxus": (0.3, 4.0, "left"),
+    "S. eubayanus": (0.3, 9.0, "left"),
+    "P. kudriavzevii SD108 (this study)": (-0.45, 30.0, "left"),
+    "P. kudriavzevii CBS573": (-0.45, 21.0, "left"),
+    "E. coli": (0.3, 12.0, "right"),
+    "P. putida": (0.3, 17.0, "right"),
+}
+
 #: Fig 1 label positions (x = category index, y = divergence %) and alignment.
 FIG1_LABEL_XY = {
     "human/chimp": (2.4, 1.6, "left"),
@@ -143,9 +257,9 @@ FIG5_LABEL_XY = {
     "SD108/CBS573": (99.5, 1.12, "right"),
     "S288C/S. paradoxus": (91.0, 1.06, "right"),
     "S288C/S. eubayanus": (78.0, 1.01, "right"),
-    "human/chimp": (101.0, 0.70, "right"),
-    "human/macaque": (91.0, 0.76, "center"),
-    "human/mouse": (84.0, 0.64, "center"),
+    "human/chimp": (100.5, 0.64, "right"),
+    "human/macaque": (89.0, 0.70, "center"),
+    "human/mouse": (78.5, 0.64, "center"),
     "human/chicken": (71.0, 0.64, "right"),
 }
 
@@ -173,11 +287,13 @@ def style() -> None:
     )
 
 
-def save(fig: plt.Figure, name: str) -> str:
-    """PNG + true-size SVG; returns the SVG path."""
+def save(fig: plt.Figure, name: str, pdf: bool = False) -> str:
+    """PNG + true-size SVG (+ a PDF at the figure's size); returns the SVG path."""
     os.makedirs(OUT_DIR, exist_ok=True)
     base = osp.join(OUT_DIR, f"{name}_{STAMP}")
     fig.savefig(base + ".png", dpi=300)
+    if pdf:
+        fig.savefig(base + ".pdf", format="pdf")
     savefig_true_size_svg(fig, base + ".svg")
     plt.close(fig)
     return base + ".svg"
@@ -219,8 +335,12 @@ def load() -> dict:
     }
 
 
-def pair_category(i: str, j: str, lin: pd.DataFrame) -> str | None:
-    """Fig 1 category of an organism pair (None when it is in none)."""
+def pair_category(i: str, j: str, lin: pd.DataFrame, taxon: dict[str, str]) -> str:
+    """Pair class of an organism pair; every pair of two proteomes has exactly one.
+
+    The first six are Fig 1's columns. The rest are the cross-group pairs Fig 1 does not
+    plot, so Fig 5 can color all 528 pairs.
+    """
     a, b = lin.loc[i], lin.loc[j]
     if a.is_saccharomyces and b.is_saccharomyces:
         return "within_genus"
@@ -234,17 +354,32 @@ def pair_category(i: str, j: str, lin: pd.DataFrame) -> str | None:
         return "within_saccharomycotina"
     if a.is_bacteria and b.is_bacteria:
         return "within_bacteria"
-    if (a.is_saccharomycotina and b.is_bacteria) or (
-        b.is_saccharomycotina and a.is_bacteria
-    ):
+    pair = {taxon[i], taxon[j]}
+    yeast = {"saccharomyces", "saccharomycotina"}
+    animal = {"mammal", "bird"}
+    if pair & yeast and "bacteria" in pair:
         return "yeast_bacteria"
-    return None
+    if pair & yeast and pair & animal:
+        return "yeast_animal"
+    if pair & animal and "bacteria" in pair:
+        return "animal_bacteria"
+    if "other_fungus" in pair:
+        rest = pair - {"other_fungus"}
+        if rest & yeast:
+            return "basidio_yeast"
+        if rest & animal:
+            return "basidio_animal"
+        if rest == {"bacteria"}:
+            return "basidio_bacteria"
+    raise ValueError(f"pair {i}/{j} ({pair}) has no class")
 
 
 def pair_table(d: dict) -> pd.DataFrame:
     """Pairwise table with category and taxon colors."""
     pw = d["pw"].copy()
-    pw["category"] = [pair_category(i, j, d["lin"]) for i, j in zip(pw.org_i, pw.org_j)]
+    pw["category"] = [
+        pair_category(i, j, d["lin"], d["taxon"]) for i, j in zip(pw.org_i, pw.org_j)
+    ]
     pw["taxon_i"] = pw.org_i.map(d["taxon"])
     pw["taxon_j"] = pw.org_j.map(d["taxon"])
     return pw
@@ -345,6 +480,9 @@ def fig1(d: dict) -> tuple[str, str, dict]:
     ax.set_xticklabels([lab for _, lab in CATEGORIES])
     ax.set_xlim(-0.6, len(CATEGORIES) - 0.4)
     ax.grid(axis="y", which="major", lw=0.3, color="#CCCCCC")
+    # legend lists only the groups that color a point here (R. toruloides is in no column)
+    plotted = pw[pw.category.isin([c for c, _ in CATEGORIES[1:]])]
+    fig1_taxa = {"isolates"} | set(plotted.taxon_i) | set(plotted.taxon_j)
     handles = [
         Line2D(
             [],
@@ -357,6 +495,7 @@ def fig1(d: dict) -> tuple[str, str, dict]:
             label=TAXON_LABEL[t],
         )
         for t in TAXA
+        if t in fig1_taxa
     ] + [
         Line2D(
             [],
@@ -608,16 +747,73 @@ def fig3(d: dict) -> tuple[str, str]:
     return path, caption
 
 
-def fig4(d: dict) -> tuple[str, str, dict]:
-    """The 1,011-isolate tree colored by clade."""
-    tree = Phylo.read(osp.join(RES, "isolates_nj.nwk"), "newick")
+def clade_distances() -> dict:
+    """Clade-level SNP distances from Peter et al. 2018's 1,011 x 1,011 matrix.
+
+    Every Table S1 clade is its own group, and the isolates with no clade (ATK, the one
+    unmatched code, included) form one more, so the groups partition the 1,011 isolates.
+    Between groups: the mean over every cross pair. Within a group: every pair of its
+    members. Writes ``results/clade_snp_distance.csv`` (the group matrix, diagonal 0).
+    """
+    assert sha256_file(PETER_MATRIX) == PETER_MATRIX_SHA256
+    with gzip.open(PETER_MATRIX, "rt") as fh:
+        mat = pd.read_csv(fh, sep="\t", index_col=0)
+    clades = pd.read_csv(osp.join(RES, "isolate_clades.csv"))
+    assert list(clades["isolate"]) == list(mat.index), "clade table order differs"
+    m = mat.to_numpy()
+    lab = clades["clade"].fillna(NO_CLADE).to_numpy()
+    groups = list(pd.Series(lab).value_counts().index)
+    members = {g: np.where(lab == g)[0] for g in groups}
+    between = pd.DataFrame(0.0, index=groups, columns=groups)
+    for a in groups:
+        for b in groups:
+            if a != b:
+                between.loc[a, b] = float(m[np.ix_(members[a], members[b])].mean())
+    between.index.name = "clade"
+    between.to_csv(osp.join(RES, "clade_snp_distance.csv"))
+    within = {
+        g: m[np.ix_(ix, ix)][np.triu_indices(len(ix), 1)] for g, ix in members.items()
+    }
+    iu = np.triu_indices(len(m), 1)
+    return {
+        "m": m,
+        "members": members,
+        "between": between,
+        "within": within,
+        "all_pairs": m[iu],
+        "isolates": list(mat.index),
+    }
+
+
+def clade_tree(between: pd.DataFrame) -> Phylo.BaseTree.Tree:
+    """Biopython NJ on the clade matrix, midpoint rooted, ladderized; writes the tree.
+
+    NJ runs on positional ids (``c00`` ...), so the Newick writer never sees a clade name's
+    spaces or periods during the build; the names are put back before writing.
+    """
+    names = list(between.index)
+    ids = [f"c{k:02d}" for k in range(len(names))]
+    lower = [
+        [float(between.iloc[i, j]) for j in range(i)] + [0.0] for i in range(len(names))
+    ]
+    tree = DistanceTreeConstructor().nj(DistanceMatrix(ids, lower))
     tree.root_at_midpoint()
     tree.ladderize()
-    clades = pd.read_csv(osp.join(RES, "isolate_clades.csv")).set_index("isolate")
-    counts = clades["clade"].value_counts()
-    top = list(counts.index[:17])
-    color = {c: PLOT_PALETTE[k] for k, c in enumerate(top)}
-    other = PLOT_PALETTE[17]
+    back = dict(zip(ids, names))
+    for t in tree.get_terminals():
+        t.name = back[t.name]
+    for c in tree.get_nonterminals():
+        c.name = None
+    Phylo.write(tree, osp.join(RES, "clades_nj.nwk"), "newick")
+    return tree
+
+
+def fig4(d: dict) -> tuple[str, str, dict]:
+    """Clade-level isolate tree (a) and within-clade SNP distances (b)."""
+    cd = clade_distances()
+    tree = clade_tree(cd["between"])
+    leaves = [t.name for t in tree.get_terminals()]
+    n_iso = {g: len(ix) for g, ix in cd["members"].items()}
     div = pd.read_parquet(
         osp.join(
             EXP_DIR,
@@ -628,9 +824,53 @@ def fig4(d: dict) -> tuple[str, str, dict]:
         )
     )
     nearest = div.sort_values("mean_divergence").iloc[0]
-    fig = plt.figure(figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(110)))
-    ax = fig.add_axes([0.02, 0.24, 0.80, 0.74])
+    near_idx = [
+        k
+        for k, iso in enumerate(cd["isolates"])
+        if iso.removeprefix("SACE_") == nearest.strain
+    ]
+    assert len(near_idx) == 1, near_idx
+    near_clade = next(g for g, ix in cd["members"].items() if near_idx[0] in ix)
+    overall = float(np.median(cd["all_pairs"]))
+    # per-clade summary, in leaf order
+    rows = []
+    for g in leaves:
+        others = cd["between"].loc[g].drop(g)
+        nn = str(others.idxmin())
+        cross = cd["m"][np.ix_(cd["members"][g], cd["members"][nn])].ravel()
+        w = cd["within"][g]
+        rows.append(
+            {
+                "clade": g,
+                "n_isolates": n_iso[g],
+                "n_within_pairs": int(len(w)),
+                "median_within": float(np.median(w)) if len(w) else np.nan,
+                "nearest_other_clade": nn,
+                "mean_to_nearest_other_clade": float(others.min()),
+                "median_to_nearest_other_clade": float(np.median(cross)),
+                "contains_nearest_to_s288c": g == near_clade,
+            }
+        )
+    summ = pd.DataFrame(rows)
+    summ.to_csv(osp.join(RES, "clade_distance_summary.csv"), index=False)
+
+    W = PANEL_WIDTHS_MM["full"]
+    fig = plt.figure(figsize=(mm_to_in(W), mm_to_in(100)))
+    gs = fig.add_gridspec(
+        1,
+        3,
+        width_ratios=[0.8, 0.72, 1.2],
+        wspace=0.0,
+        left=0.02,
+        right=0.98,
+        top=0.93,
+        bottom=0.12,
+    )
+    ax_t, ax_l, ax_b = (fig.add_subplot(gs[k]) for k in range(3))
+    n = len(leaves)
+    # (a) phylogram; NJ can return slightly negative branches, drawn at zero length
     depths = tree.depths()
+    neg = [c.branch_length for c in tree.find_clades() if (c.branch_length or 0) < 0]
     ys = {t: k for k, t in enumerate(tree.get_terminals())}
 
     def y_of(c):
@@ -640,98 +880,200 @@ def fig4(d: dict) -> tuple[str, str, dict]:
         return ys[c]
 
     y_of(tree.root)
-    segs_v, segs_h = [], []
+    xpos = {}
+    for c in tree.find_clades(order="preorder"):
+        xpos[c] = depths[c]
+    for c in tree.find_clades(order="preorder"):
+        for ch in c.clades:
+            xpos[ch] = max(xpos[ch], xpos[c])
     for c in tree.find_clades():
         if c.is_terminal():
             continue
         yc = [ys[ch] for ch in c.clades]
-        segs_v.append([(depths[c], min(yc)), (depths[c], max(yc))])
+        ax_t.plot([xpos[c], xpos[c]], [min(yc), max(yc)], color="black", lw=0.5)
         for ch in c.clades:
-            segs_h.append([(depths[c], ys[ch]), (depths[ch], ys[ch])])
-    from matplotlib.collections import LineCollection
-
-    ax.add_collection(LineCollection(segs_v + segs_h, colors="black", linewidths=0.2))
-    xmax = max(depths.values())
-    strip_x = xmax * 1.03
-    w = xmax * 0.06
-    nterm = len(ys) if False else len(tree.get_terminals())
+            ax_t.plot([xpos[c], xpos[ch]], [ys[ch], ys[ch]], color="black", lw=0.5)
+    xmax = max(xpos[t] for t in tree.get_terminals())
     for t in tree.get_terminals():
-        code = t.name
-        cl = clades.loc[code, "clade"] if code in clades.index else np.nan
-        col = color.get(cl, other) if isinstance(cl, str) else "white"
-        ax.add_patch(plt.Rectangle((strip_x, ys[t] - 0.5), w, 1, color=col, lw=0))
-    near_code = [
-        t
-        for t in tree.get_terminals()
-        if t.name.removeprefix("SACE_") == nearest.strain
-    ]
-    for t in near_code:
-        ax.scatter(strip_x + w * 1.6, ys[t], marker="<", s=12, color="black", zorder=4)
-        ax.text(
-            strip_x + w * 2.2,
-            ys[t],
-            f"{t.name}: nearest\nto S288C",
-            fontsize=FS,
-            va="center",
+        ax_t.plot(
+            [xpos[t], xmax * 1.04],
+            [ys[t], ys[t]],
+            color="#BBBBBB",
+            lw=0.3,
+            ls=(0, (1, 1.5)),
         )
-    ax.set_xlim(0, strip_x + w * 2)
-    ax.set_ylim(nterm + 0.5, -0.5)
-    ax.set_yticks([])
-    ax.set_xlabel("SNP distance (% non-identical bases, Peter 2018 matrix)")
-    for s in ax.spines.values():
+        if t.name == near_clade:
+            ax_t.scatter(
+                xpos[t], ys[t], marker="o", s=10, color="black", zorder=4, lw=0
+            )
+    ax_t.set_xlim(0, xmax * 1.04)
+    ax_t.set_ylim(n - 0.5, -0.5)
+    ax_t.set_yticks([])
+    for s in ("top", "right", "left"):
+        ax_t.spines[s].set_visible(False)
+    ax_t.spines["bottom"].set_linewidth(0.5)
+    ax_t.set_xlabel("Branch length (% SNP distance)")
+    # leaf labels
+    for g in leaves:
+        lab = f"{g} (n = {n_iso[g]:,})"
+        if g == near_clade:
+            lab = f"{g} (n = {n_iso[g]:,}, holds {nearest.strain})"
+        ax_l.text(
+            0.02,
+            ys[next(t for t in tree.get_terminals() if t.name == g)],
+            lab,
+            va="center",
+            ha="left",
+            fontsize=FS,
+            fontweight="bold" if g == near_clade else "normal",
+        )
+    ax_l.set_xlim(0, 1)
+    ax_l.set_ylim(n - 0.5, -0.5)
+    ax_l.axis("off")
+    # (b) within-clade distances, same rows
+    box_color = PLOT_PALETTE[0]
+    rng = np.random.default_rng(0)
+    box_rows, strip_rows = [], []
+    for k, g in enumerate(leaves):
+        w = cd["within"][g]
+        if len(w) >= MIN_BOX_PAIRS:
+            box_rows.append((k, w))
+        elif len(w) > 0:
+            strip_rows.append((k, w))
+        else:
+            ax_b.text(1.5e-4, k, "n = 1, no pair", va="center", ha="left", fontsize=FS)
+    ax_b.boxplot(
+        [w for _, w in box_rows],
+        positions=[k for k, _ in box_rows],
+        vert=False,
+        widths=0.6,
+        showfliers=False,
+        patch_artist=True,
+        boxprops={"facecolor": box_color, "edgecolor": "black", "linewidth": 0.5},
+        medianprops={"color": "black", "linewidth": 0.8},
+        whiskerprops={"color": "black", "linewidth": 0.5},
+        capprops={"color": "black", "linewidth": 0.5},
+    )
+    for k, w in strip_rows:
+        ax_b.scatter(
+            w,
+            k + rng.uniform(-0.15, 0.15, len(w)),
+            s=6,
+            facecolor=box_color,
+            edgecolor="black",
+            lw=0.3,
+            zorder=3,
+        )
+    ax_b.axvline(overall, color=PLOT_PALETTE[5], lw=0.8, ls="--", zorder=1)
+    ax_b.text(
+        overall,
+        -0.9,
+        f"median of all {len(cd['all_pairs']):,} pairs, {overall:.2f}% ",
+        ha="right",
+        va="bottom",
+        fontsize=FS,
+        color=PLOT_PALETTE[5],
+    )
+    ax_b.set_xscale("log")
+    ax_b.set_xlim(1e-4, 3)
+    ax_b.set_xticks([1e-4, 1e-3, 1e-2, 1e-1, 1])
+    ax_b.set_xticklabels(["0.0001", "0.001", "0.01", "0.1", "1"])
+    ax_b.set_ylim(n - 0.5, -0.5)
+    ax_b.set_yticks(range(n))
+    ax_b.set_yticklabels([])
+    ax_b.tick_params(axis="y", length=0)
+    ax_b.grid(axis="x", which="major", lw=0.3, color="#DDDDDD")
+    ax_b.set_axisbelow(True)
+    ax_b.set_xlabel("Within-clade pairwise SNP distance (%)")
+    for s in ax_b.spines.values():
         s.set_linewidth(0.5)
-    handles = [Patch(color=color[c], label=c) for c in top] + [
-        Patch(color=other, label=f"other clades ({len(counts) - len(top)})"),
-        Patch(
-            facecolor="white", edgecolor="black", lw=0.3, label="no clade in Table S1"
+    for ax, letter in ((ax_t, "a"), (ax_b, "b")):
+        ax.text(
+            -0.02 if ax is ax_t else -0.01,
+            1.035,
+            letter,
+            transform=ax.transAxes,
+            fontsize=8,
+            fontweight="bold",
+            va="bottom",
+            ha="left",
+        )
+    path = save(fig, "fig4_clade_tree_within_distance")
+    with_med = summ[summ.n_within_pairs > 0]
+    named = with_med[with_med.clade != NO_CLADE]
+    pooled_named = np.concatenate([cd["within"][g] for g in named.clade])
+    stats = {
+        "nearest_to_s288c": str(nearest.strain),
+        "nearest_mean_divergence": float(nearest.mean_divergence),
+        "nearest_clade": near_clade,
+        "n_leaves": int(n),
+        "n_named_clades": int((summ.clade != NO_CLADE).sum()),
+        "n_isolates_no_clade": int(n_iso[NO_CLADE]),
+        "n_isolates": int(len(cd["isolates"])),
+        "n_all_pairs": int(len(cd["all_pairs"])),
+        "median_all_pairs": overall,
+        "n_box_clades": int(len(box_rows)),
+        "n_strip_clades": int(len(strip_rows)),
+        "min_box_pairs": MIN_BOX_PAIRS,
+        "n_named_clades_with_pairs": int(len(named)),
+        "median_of_clade_medians": float(named.median_within.median()),
+        "min_clade_median": float(named.median_within.min()),
+        "min_clade_median_clade": str(named.loc[named.median_within.idxmin(), "clade"]),
+        "max_clade_median": float(named.median_within.max()),
+        "max_clade_median_clade": str(named.loc[named.median_within.idxmax(), "clade"]),
+        "pooled_within_named_median": float(np.median(pooled_named)),
+        "n_pooled_within_named": int(len(pooled_named)),
+        "n_named_below_overall": int((named.median_within < overall).sum()),
+        "no_clade_median_within": float(
+            summ.set_index("clade").loc[NO_CLADE, "median_within"]
         ),
-    ]
-    fig.legend(
-        handles=handles,
-        loc="lower left",
-        ncol=3,
-        frameon=False,
-        fontsize=5,
-        bbox_to_anchor=(0.0, 0.0),
-        handlelength=0.8,
-        columnspacing=0.5,
-        handletextpad=0.3,
-    )
-    path = save(fig, "fig4_isolate_tree")
-    n_clade = int(clades["clade"].notna().sum())
+        "n_negative_branches": int(len(neg)),
+        "min_negative_branch": float(min(neg)) if neg else 0.0,
+        "tree_height": float(xmax),
+    }
     caption = (
-        "Fig. 4 | The 1,011 S. cerevisiae isolates. rapidnj neighbor-joining tree on "
-        "Peter et al. 2018's SNP distance matrix (percent non-identical bases, "
-        "heterozygous differences half-weighted), midpoint rooted (05_trees.py). Strip: "
-        f"clade from Peter's Supplementary Table 1 ({n_clade} of 1,011 isolates carry "
-        f"one; the {len(top)} largest clades in color, the remaining "
-        f"{len(counts) - len(top)} in one color; Wine/European subclades merged). "
-        f"Arrow: {nearest.strain}, the isolate with the lowest mean per-ORF nucleotide "
-        f"divergence from S288C in 018 ({100 * nearest.mean_divergence:.4f}%); S288C "
-        "itself is not in Peter's matrix."
+        "Fig. 4 | Every named S. cerevisiae clade but one is tighter than the species as "
+        "a whole. "
+        f"(a) Neighbor-joining tree (Biopython) over the {stats['n_leaves']} groups of "
+        f"Peter et al. 2018's {stats['n_isolates']:,} isolates: the "
+        f"{stats['n_named_clades']} clades of their Supplementary Table 1 (Wine/European "
+        f"subclades merged) and the {stats['n_isolates_no_clade']} isolates the table "
+        "gives no clade; the distance between two groups is the mean SNP distance "
+        "(percent non-identical bases, heterozygous differences half-weighted) over every "
+        "pair of their members, midpoint rooted, branch lengths in percent. Bold leaf and "
+        f"black dot: the clade holding {nearest.strain}, the isolate with the lowest mean "
+        f"per-ORF nucleotide divergence from S288C in experiment 018 "
+        f"({100 * nearest.mean_divergence:.4f}%); S288C itself is not in Peter's matrix. "
+        f"(b) SNP distance between every pair of isolates within a group, same rows. "
+        f"{stats['n_named_below_overall']} of the {stats['n_named_clades_with_pairs']} "
+        "named clades with at least one pair have a median below the median over all "
+        f"{stats['n_all_pairs']:,} isolate pairs ({overall:.2f}%, dashed gray line); "
+        f"clade medians run from {stats['min_clade_median']:.4f}% "
+        f"({stats['min_clade_median_clade']}) to {stats['max_clade_median']:.2f}% "
+        f"({stats['max_clade_median_clade']}), median {stats['median_of_clade_medians']:.2f}%. "
+        f"Boxes (groups with at least {MIN_BOX_PAIRS} pairs): median, quartiles and "
+        "whiskers at one and a half times the interquartile range, outliers not drawn; points: every "
+        "pair of a smaller group. One color for every group, since color carries no "
+        "category here. Log axis."
     )
-    return (
-        path,
-        caption,
-        {
-            "nearest_to_s288c": str(nearest.strain),
-            "nearest_mean_divergence": float(nearest.mean_divergence),
-        },
-    )
+    return path, caption, stats
 
 
-def fig5(d: dict) -> tuple[str, str]:
-    """Ortholog fraction vs AAI."""
+def fig5(d: dict) -> tuple[str, str, dict]:
+    """Ortholog fraction vs AAI, one color per pair class."""
     pw = pair_table(d)
-    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(70)))
-    for _, r in pw.iterrows():
+    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(92)))
+    n_class = pw["category"].value_counts()
+    by_size = sorted(PAIR_CLASSES, key=lambda c: -int(n_class.get(c[0], 0)))
+    for cls, _ in by_size:
+        sub = pw[pw.category == cls]
         ax.scatter(
-            r.aai_mean,
-            r.ortholog_fraction,
+            sub.aai_mean,
+            sub.ortholog_fraction,
             s=7,
-            facecolor=TAXON_COLOR[r.taxon_i],
-            edgecolor=TAXON_COLOR[r.taxon_j],
-            lw=0.6,
+            facecolor=PAIR_COLOR[cls],
+            edgecolor="black",
+            lw=0.3,
             zorder=3,
         )
     for i, j, label in LABELED:
@@ -749,7 +1091,7 @@ def fig5(d: dict) -> tuple[str, str]:
             arrowprops={"arrowstyle": "-", "lw": 0.3},
         )
     ax.set_xlabel("AAI over reciprocal best hits (%)")
-    ax.set_ylabel("Ortholog fraction, n RBH / min(n_i, n_j)")
+    ax.set_ylabel("Ortholog fraction (reciprocal best hits / smaller proteome)")
     ax.set_ylim(0, 1.16)
     from matplotlib.ticker import MultipleLocator
 
@@ -757,7 +1099,6 @@ def fig5(d: dict) -> tuple[str, str]:
     ax.yaxis.set_minor_locator(MultipleLocator(0.1))
     ax.tick_params(axis="y", which="minor", length=0)
     ax.grid(axis="y", which="both", lw=0.3, color="#DDDDDD")
-    present = sorted({t for t in pw.taxon_i} | {t for t in pw.taxon_j}, key=TAXA.index)
     handles = [
         Line2D(
             [],
@@ -765,23 +1106,434 @@ def fig5(d: dict) -> tuple[str, str]:
             marker="o",
             ls="",
             markersize=3,
-            markerfacecolor=TAXON_COLOR[t],
-            markeredgecolor=TAXON_COLOR[t],
-            label=TAXON_LABEL[t],
+            markerfacecolor=PAIR_COLOR[cls],
+            markeredgecolor="black",
+            markeredgewidth=0.3,
+            label=f"{lab} ({int(n_class.get(cls, 0))})",
         )
-        for t in present
+        for cls, lab in PAIR_CLASSES
     ]
-    ax.legend(handles=handles, loc="lower right", frameon=False, fontsize=FS)
-    fig.subplots_adjust(left=0.13, right=0.97, bottom=0.15, top=0.97)
-    path = save(fig, "fig5_ortholog_fraction_vs_aai")
-    caption = (
-        f"Fig. 5 | Shared orthologs fall with AAI. Each point is one of the {len(pw)} "
-        "pairs of the 33 proteomes: AAI (mean RBH percent identity) against the ortholog "
-        "fraction, reciprocal best hits over the smaller per-gene proteome "
-        "(03_mmseqs_rbh.py). Face and edge colors are the taxonomic groups of the two "
-        "members."
+    ax.legend(
+        handles=handles,
+        loc="upper left",
+        bbox_to_anchor=(-0.13, -0.11),
+        frameon=False,
+        fontsize=FS,
+        ncol=2,
+        handletextpad=0.2,
+        columnspacing=0.6,
+        title="Pair class (n pairs)",
+        title_fontsize=FS,
+        alignment="left",
     )
-    return path, caption
+    fig.subplots_adjust(left=0.13, right=0.97, bottom=0.33, top=0.98)
+    path = save(fig, "fig5_ortholog_fraction_vs_aai")
+    stats = {
+        "n_pairs": int(len(pw)),
+        "n_per_class": {cls: int(n_class.get(cls, 0)) for cls, _ in PAIR_CLASSES},
+    }
+    caption = (
+        "Fig. 5 | Shared orthologs fall with AAI. Each point"
+        f" is one of the {len(pw)} pairs of the 33 "
+        "proteomes: AAI, the mean percent identity over reciprocal best mmseqs2 hits, "
+        "against the ortholog fraction, the number of reciprocal best hits over the gene "
+        "count of the smaller per-gene proteome (03_mmseqs_rbh.py). Color is the pair "
+        "class (n pairs in the legend; amniote is a mammal or the chicken); a "
+        "within-group class takes that group's Fig. 1 color, and a cross-group class "
+        "takes a color no group uses. Points are drawn largest class first; the "
+        "cross-kingdom pairs at the lowest AAI overlap. "
+        + ", ".join(f"{lab} {int(n_class.get(cls, 0))}" for cls, lab in PAIR_CLASSES)
+        + "."
+    )
+    return path, caption, stats
+
+
+def spread_log(ys: list[float], gap: float) -> list[float]:
+    """Label y positions on a log axis, pushed apart to at least ``gap`` decades, in order."""
+    order = np.argsort(ys)
+    ly = np.log10(np.asarray(ys, dtype=float))
+    out = ly.copy()
+    for a, b in zip(order[:-1], order[1:]):
+        if out[b] - out[a] < gap:
+            out[b] = out[a] + gap
+    # recentre the pushed block on the original mean so labels stay near their points
+    out += np.mean(ly - out)
+    return list(10**out)
+
+
+def s288c_centered(d: dict) -> pd.DataFrame:
+    """Every S288C pair and the human yardstick pairs Fig 6 plots; writes
+    ``results/s288c_centered.csv``.
+    """
+    pw = d["pw"]
+    rows = []
+    for ref, partners in (("scer_s288c", None), ("hsap_grch38", HUMAN_YARDSTICK)):
+        m = (pw.org_i == ref) | (pw.org_j == ref)
+        for _, r in pw[m].iterrows():
+            other = r.org_j if r.org_i == ref else r.org_i
+            if partners is not None and other not in partners:
+                continue
+            rows.append(
+                {
+                    "reference": ref,
+                    "organism": other,
+                    "display": d["display"][other],
+                    "group": d["taxon"][other],
+                    "column": FIG6_COLUMN[d["taxon"][other]]
+                    if ref == "scer_s288c"
+                    else "human_vs",
+                    "aai_mean": float(r.aai_mean),
+                    "aai_median": float(r.aai_median),
+                    "ortholog_fraction": float(r.ortholog_fraction),
+                    "n_rbh": int(r.n_rbh),
+                }
+            )
+    out = pd.DataFrame(rows).sort_values(
+        ["reference", "aai_mean"], ascending=[False, False]
+    )
+    out.to_csv(osp.join(RES, "s288c_centered.csv"), index=False)
+    return out
+
+
+def fig6(d: dict) -> tuple[str, str, dict]:
+    """The main transfer figure: everything measured from S288C, the human yardstick, and
+    the ortholog fraction each organism shares with S288C.
+    """
+    sc = s288c_centered(d)
+    s = sc[sc.reference == "scer_s288c"]
+    h = sc[sc.reference == "hsap_grch38"].set_index("organism").loc[HUMAN_YARDSTICK]
+    iso = d["iso"]
+    cols = [c for c, _ in FIG6_COLUMNS]
+    xs = {c: k for k, c in enumerate(cols)}
+    W = PANEL_WIDTHS_MM["full"]
+    fig = plt.figure(figsize=(mm_to_in(W), mm_to_in(88)))
+    # explicit placement: (a) about twice (b), with room between them for (a)'s identity
+    # axis and (b)'s organism names
+    ax = fig.add_axes([0.065, 0.16, 0.54, 0.70])
+    ax_b = fig.add_axes([0.80, 0.16, 0.185, 0.70])
+    rng = np.random.default_rng(0)
+    # (a) isolates: two sub-strips, median over ORFs and mean over ORFs
+    c_iso = TAXON_COLOR["isolates"]
+    for stat, dx, marker in (
+        ("median_identity", -0.2, "o"),
+        ("mean_identity", 0.2, "^"),
+    ):
+        y = 100.0 * (1.0 - iso[stat].to_numpy())
+        ax.scatter(
+            xs["isolates"] + dx + rng.uniform(-0.13, 0.13, len(y)),
+            y,
+            s=2.5,
+            marker=marker,
+            lw=0,
+            color=c_iso,
+            alpha=0.8,
+            zorder=2,
+        )
+    labels: dict[str, list] = {}
+
+    def plot_column(sub: pd.DataFrame, col: str, x0: float) -> None:
+        sub = sub.sort_values("aai_mean", ascending=False)
+        n = len(sub)
+        offs = np.linspace(-0.25, 0.25, n) if n > 1 else np.zeros(1)
+        for (_, r), dx in zip(sub.iterrows(), offs):
+            hi = r.organism == "pkud_sd108"
+            color = TAXON_COLOR[r.group]
+            ax.scatter(
+                x0 + dx,
+                100.0 - r.aai_mean,
+                s=26 if hi else 9,
+                facecolor=color,
+                edgecolor="black",
+                lw=0.8 if hi else 0.3,
+                zorder=4 if hi else 3,
+            )
+            if r.organism in FIG6_LABELS and (
+                col == "human_vs" or FIG6_LABELS[r.organism] in FIG6_LABEL_XY
+            ):
+                labels.setdefault(col, []).append(
+                    (
+                        x0 + dx,
+                        100.0 - r.aai_mean,
+                        FIG6_LABELS[r.organism],
+                        r.aai_mean,
+                        hi,
+                    )
+                )
+
+    for col in cols[1:-1]:
+        plot_column(s[s.column == col], col, xs[col])
+    plot_column(h.reset_index(), "human_vs", xs["human_vs"])
+    # S288C-side labels at hand-placed positions in the empty space above the points;
+    # the human column's labels sit to its right, pushed apart on the log axis
+    for col, items in labels.items():
+        if col == "human_vs":
+            items = sorted(items, key=lambda t: t[1])
+            ly = spread_log([t[1] for t in items], 0.17)
+            place = [(xs[col] + 0.36, yl, "left") for yl in ly]
+        else:
+            place = [
+                (
+                    xs[col] + FIG6_LABEL_XY[name][0],
+                    FIG6_LABEL_XY[name][1],
+                    FIG6_LABEL_XY[name][2],
+                )
+                for _, _, name, _, _ in items
+            ]
+        for (xv, yv, name, aai, hi), (tx, ty, ha) in zip(items, place):
+            ax.annotate(
+                f"{name} {aai:.1f}%",
+                xy=(xv, yv),
+                xytext=(tx, ty),
+                textcoords="data",
+                fontsize=FS,
+                fontweight="bold" if hi else "normal",
+                ha=ha,
+                va="center",
+                arrowprops={"arrowstyle": "-", "lw": 0.3, "color": "black"},
+            )
+    ax.axvline(xs["human_vs"] - 0.62, color="black", lw=0.5, ls="--")
+    lo, hi_band = d["lit"]["protein_identity_vs_reference"]
+    ax.axhspan(
+        100 * (1 - hi_band),
+        100 * (1 - lo),
+        color=PLOT_PALETTE[5],
+        alpha=0.25,
+        lw=0,
+        zorder=1,
+    )
+    ax.set_yscale("log")
+    ax.set_ylim(0.03, 100)
+    ax.set_yticks([0.1, 1, 10, 100])
+    ax.set_yticklabels(["0.1", "1", "10", "100"])
+    ax.set_ylabel("Protein divergence, 100 - identity (%)")
+    ax.invert_yaxis()
+    sec = ax.secondary_yaxis("right", functions=(lambda v: v, lambda v: v))
+    sec.set_yticks([0.1, 1, 10, 50])
+    sec.set_yticklabels(["99.9", "99", "90", "50"])
+    sec.set_ylabel("Identity (%)", labelpad=1)
+    ax.set_xticks(range(len(cols)))
+    ax.set_xticklabels([lab.format(n=len(iso)) for _, lab in FIG6_COLUMNS])
+    ax.set_xlim(-0.55, len(cols) + 0.75)
+    ax.grid(axis="y", which="major", lw=0.3, color="#CCCCCC")
+    ax.text(
+        xs["saccharomyces"] - 0.5,
+        100 * (1 - hi_band) * 0.85,
+        "one human genome vs GRCh38 (literature)",
+        fontsize=FS,
+        va="bottom",
+        ha="left",
+    )
+    ax.text(
+        xs["human_vs"] - 0.55,
+        0.035,
+        "yardstick:\nfrom human",
+        fontsize=FS,
+        va="top",
+        ha="left",
+    )
+    ax.text(xs["isolates"] - 0.5, 0.035, "from S288C", fontsize=FS, va="top", ha="left")
+    # (b) ortholog fraction with S288C, same order top to bottom
+    order = []
+    for col in cols[1:-1]:
+        order += list(
+            s[s.column == col].sort_values("aai_mean", ascending=False).itertuples()
+        )
+    yb = np.arange(len(order))
+    for k, r in enumerate(order):
+        hi = r.organism == "pkud_sd108"
+        ax_b.barh(
+            k,
+            r.ortholog_fraction,
+            height=0.7,
+            color=TAXON_COLOR[r.group],
+            edgecolor="black",
+            lw=0.8 if hi else 0.3,
+            zorder=3,
+        )
+        if hi:
+            ax_b.text(
+                r.ortholog_fraction + 0.02,
+                k,
+                f"{r.ortholog_fraction:.3f}",
+                va="center",
+                ha="left",
+                fontsize=FS,
+                fontweight="bold",
+            )
+    ax_b.set_yticks(yb)
+    ax_b.set_yticklabels([r.display for r in order])
+    for lab, r in zip(ax_b.get_yticklabels(), order):
+        if r.organism == "pkud_sd108":
+            lab.set_fontweight("bold")
+    ax_b.tick_params(axis="y", length=0, pad=1)
+    ax_b.set_ylim(len(order) - 0.5, -0.5)
+    ax_b.set_xlim(0, 1)
+    from matplotlib.ticker import MultipleLocator
+
+    ax_b.xaxis.set_major_locator(MultipleLocator(0.2))
+    ax_b.xaxis.set_minor_locator(MultipleLocator(0.1))
+    ax_b.tick_params(axis="x", which="minor", length=0)
+    ax_b.grid(axis="x", which="both", lw=0.3, color="#DDDDDD")
+    ax_b.set_axisbelow(True)
+    ax_b.set_xlabel(
+        "Ortholog fraction with S288C\n(reciprocal best hits / smaller proteome)"
+    )
+    for a_ in (ax, ax_b):
+        for sp in a_.spines.values():
+            sp.set_linewidth(0.5)
+    for a_, letter, dx in ((ax, "a", -0.08), (ax_b, "b", -1.0)):
+        a_.text(
+            dx,
+            1.02,
+            letter,
+            transform=a_.transAxes,
+            fontsize=8,
+            fontweight="bold",
+            va="bottom",
+            ha="left",
+        )
+    handles = (
+        [
+            Line2D(
+                [],
+                [],
+                marker="o",
+                ls="",
+                markersize=2.5,
+                markerfacecolor=c_iso,
+                markeredgecolor=c_iso,
+                label="isolate, median over ORFs",
+            ),
+            Line2D(
+                [],
+                [],
+                marker="^",
+                ls="",
+                markersize=2.5,
+                markerfacecolor=c_iso,
+                markeredgecolor=c_iso,
+                label="isolate, mean over ORFs, frameshifts charged",
+            ),
+        ]
+        + [
+            Line2D(
+                [],
+                [],
+                marker="o",
+                ls="",
+                markersize=3,
+                markerfacecolor=TAXON_COLOR[t],
+                markeredgecolor="black",
+                markeredgewidth=0.3,
+                label=TAXON_LABEL[t],
+            )
+            for t in (
+                "saccharomyces",
+                "saccharomycotina",
+                "other_fungus",
+                "mammal",
+                "bird",
+                "bacteria",
+            )
+        ]
+        + [
+            Patch(
+                facecolor=PLOT_PALETTE[5],
+                alpha=0.25,
+                label="within-human literature band",
+            )
+        ]
+    )
+    fig.legend(
+        handles=handles,
+        loc="upper center",
+        bbox_to_anchor=(0.5, 1.0),
+        ncol=5,
+        frameon=False,
+        fontsize=FS,
+        handletextpad=0.3,
+        columnspacing=1.0,
+    )
+    path = save(fig, "fig6_main_transfer_ladder", pdf=True)
+    sd = s.set_index("organism").loc["pkud_sd108"]
+    vert = {"mammal", "bird"}
+    pw = d["pw"]
+    vmask = pw.org_i.map(d["taxon"]).isin(vert) & pw.org_j.map(d["taxon"]).isin(vert)
+    ymaj = s[s.column == "saccharomycotina"]
+    stats = {
+        "sd108_aai_mean": float(sd.aai_mean),
+        "sd108_aai_median": float(sd.aai_median),
+        "sd108_ortholog_fraction": float(sd.ortholog_fraction),
+        "sd108_n_rbh": int(sd.n_rbh),
+        "sd108_n_genes": int(
+            pw[(pw.org_i == "scer_s288c") & (pw.org_j == "pkud_sd108")].n_j.iloc[0]
+        ),
+        "cbs573_aai_mean": float(
+            s.set_index("organism").loc["pkud_cbs573", "aai_mean"]
+        ),
+        "min_vertebrate_aai": float(pw[vmask].aai_mean.min()),
+        "n_vertebrate_pairs": int(vmask.sum()),
+        "human_chicken_aai": float(h.loc["ggal", "aai_mean"]),
+        "human_chimp_aai": float(h.loc["ptro", "aai_mean"]),
+        "isolate_median_of_median_identity": float(
+            100 * iso["median_identity"].median()
+        ),
+        "isolate_median_of_mean_identity": float(100 * iso["mean_identity"].median()),
+        "isolate_min_mean_identity": float(100 * iso["mean_identity"].min()),
+        "n_isolates": int(len(iso)),
+        "n_s288c_partners": int(len(s)),
+        "n_per_column": {c: int((s.column == c).sum()) for c in cols[1:-1]},
+        "n_human_yardstick": int(len(h)),
+        "saccharomycotina_aai_min": float(ymaj.aai_mean.min()),
+        "saccharomycotina_aai_max": float(ymaj.aai_mean.max()),
+        "saccharomycotina_of_min": float(ymaj.ortholog_fraction.min()),
+        "saccharomycotina_of_max": float(ymaj.ortholog_fraction.max()),
+        "animal_from_s288c_aai_min": float(s[s.column == "animal"].aai_mean.min()),
+        "animal_from_s288c_aai_max": float(s[s.column == "animal"].aai_mean.max()),
+        "bacteria_from_s288c_aai_min": float(s[s.column == "bacteria"].aai_mean.min()),
+        "bacteria_from_s288c_aai_max": float(s[s.column == "bacteria"].aai_mean.max()),
+        "bacteria_from_s288c_of_max": float(
+            s[s.column == "bacteria"].ortholog_fraction.max()
+        ),
+        "spar_aai": float(s.set_index("organism").loc["spar_cbs432", "aai_mean"]),
+        "seub_aai": float(s.set_index("organism").loc["seub_fm1318", "aai_mean"]),
+    }
+    st = stats
+    caption = (
+        "Fig. 6 | The training isolates reach human/chimp protein divergence from S288C; "
+        "P. kudriavzevii SD108 lies beyond every vertebrate pair, with "
+        f"{100 * st['sd108_ortholog_fraction']:.1f}% of its genes in one-to-one orthology "
+        "with S. cerevisiae. (a) Protein divergence from S288C (100 minus identity, log "
+        "scale, inverted; identity on the right), columns left to right by distance, "
+        "colored by the partner's taxonomic group. The "
+        f"{st['n_isolates']:,} isolates are drawn twice: each isolate's median over ORFs "
+        f"of protein identity to S288C (circles; median over isolates "
+        f"{st['isolate_median_of_median_identity']:.2f}%) and its mean over ORFs, which "
+        "charges every gap column of a frameshifted or indel-bearing ORF (triangles; "
+        f"median {st['isolate_median_of_mean_identity']:.2f}%, lowest "
+        f"{st['isolate_min_mean_identity']:.2f}%, against human/chimp AAI "
+        f"{st['human_chimp_aai']:.2f}%). SD108 (large point, black edge) is at "
+        f"{st['sd108_aai_mean']:.1f}% AAI from S288C, below the lowest of the "
+        f"{st['n_vertebrate_pairs']} vertebrate pairs ({st['min_vertebrate_aai']:.1f}%; "
+        f"human/chicken {st['human_chicken_aai']:.1f}%); the other Saccharomycotina "
+        f"hosts sit at {st['saccharomycotina_aai_min']:.1f} to "
+        f"{st['saccharomycotina_aai_max']:.1f}%, the mammals and chicken at "
+        f"{st['animal_from_s288c_aai_min']:.1f} to {st['animal_from_s288c_aai_max']:.1f}% "
+        f"and the bacteria at {st['bacteria_from_s288c_aai_min']:.1f} to "
+        f"{st['bacteria_from_s288c_aai_max']:.1f}%. Right of the dashed line, the same "
+        "axis measured from human, as a yardstick (mammals blue, chicken gray). Gray "
+        "band: one human genome vs GRCh38 at peptide-altering sites (1000 Genomes 2015, "
+        "literature value). (b) Ortholog fraction with S288C, reciprocal best hits over "
+        "the smaller per-gene proteome, same organisms and order as (a) without the "
+        f"isolates. SD108 shares {st['sd108_n_rbh']:,} reciprocal best hits with S288C, "
+        f"{100 * st['sd108_ortholog_fraction']:.1f}% of its {st['sd108_n_genes']:,} genes; "
+        "the other Saccharomycotina range from "
+        f"{st['saccharomycotina_of_min']:.3f} to {st['saccharomycotina_of_max']:.3f}, "
+        f"no bacterium exceeds {st['bacteria_from_s288c_of_max']:.3f}. AAI: mean percent "
+        "identity over reciprocal best mmseqs2 hits (03_mmseqs_rbh.py); isolate identity: "
+        "06_isolate_protein_identity.py; table: results/s288c_centered.csv."
+    )
+    return path, caption, stats
 
 
 def headline(d: dict) -> dict:
@@ -865,16 +1617,22 @@ def main() -> None:
     p, c = fig3(d)
     paths["fig3"], caps["fig3_taxonomy_vs_aai_nj"] = p, c
     p, c, s4 = fig4(d)
-    paths["fig4"], caps["fig4_isolate_tree"] = p, c
-    p, c = fig5(d)
+    paths["fig4"], caps["fig4_clade_tree_within_distance"] = p, c
+    p, c, s5 = fig5(d)
     paths["fig5"], caps["fig5_ortholog_fraction_vs_aai"] = p, c
+    p, c, s6 = fig6(d)
+    paths["fig6"], caps["fig6_main_transfer_ladder"] = p, c
     with open(osp.join(RES, "figure_captions.json"), "w") as fh:
         json.dump(caps, fh, indent=1)
     with open(osp.join(RES, "headline_numbers.json"), "w") as fh:
         json.dump(headline(d), fh, indent=1)
     with open(osp.join(RES, "figure_stats.json"), "w") as fh:
-        json.dump({"fig1": s1, "fig4": s4, "paths": paths}, fh, indent=1)
-    print(json.dumps({"paths": paths, "fig1": s1, "fig4": s4}, indent=1))
+        json.dump(
+            {"fig1": s1, "fig4": s4, "fig5": s5, "fig6": s6, "paths": paths},
+            fh,
+            indent=1,
+        )
+    print(json.dumps({"paths": paths, "fig4": s4, "fig5": s5, "fig6": s6}, indent=1))
 
 
 if __name__ == "__main__":

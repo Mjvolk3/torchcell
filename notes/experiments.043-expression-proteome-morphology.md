@@ -556,3 +556,72 @@ fifth of the Muenzner proteome isolates.
 - The output-side diagram prints at about 4.5 pt on its rotated page, below Nature's 5 pt
   floor; a redraw with fewer boxes per row would fix it if the figure moves beyond the
   primer.
+
+## 2026.10.20 - Review pass: representation, objective, splits
+
+Two reviews (representation; objective, splits and evaluation) were reconciled by the
+driver and folded into the primer `notes-tex/multimodal/043-datasets-primer/`. These are
+design decisions; the code (`genotype_tokens_043.py`, `readout_heads_043.py`,
+`dataset_043.py`) follows in the next stage, and no training ran.
+
+Representation (Sec. 7 of the primer):
+
+- I1 composite frozen sequence token: FUDT upstream 1,003 bp and downstream 300 bp (768
+  each), ProtT5-XL (1,024), CaLM (768), per-block LayerNorm and projection, summed, plus
+  position. The identity table survives only as a transductive-ceiling ablation.
+  Alternatives: nucleotide-transformer windows for FUDT (one yeast arm), ESM2 for ProtT5.
+- I3 main: each isolate is its own reference context (979 by strain name, encoded once and
+  cached; the operator carries only engineered edits). Interim arm: LoF plus absence on
+  S288C ($M \approx 518$) with allele tokens on variant rows.
+- I4: the five non-BY segregant parents carry Peter ids (RM `AAA`, YJM145 `AAS`, YPS163
+  `ACD`, CBS2888 `ABL`, YJM981 `ADI`) that are all members of the gene-keyed allele tarball
+  ([[experiments.043-expression-proteome-morphology.scripts.count_distinct_alleles]]), so
+  marked genes carry the parent's real allele token.
+- I5 position on for every class (chromosome embedding scaled by copy number, Fourier
+  features of the relative midpoint, pangenome copy number); reference coordinates.
+- I6: dataset identity only as the per-dataset bias at the head, never in the trunk.
+- Vaishnav stays in the plan; the construct window goes through the same FUDT upstream
+  encoder; linear evaluations (k-mer, one-hot) first; joint entry gated on Addgene 127546
+  being fetched into the constructs tier.
+- E1 isolate embedding plan: dedup by sequence hash; 775,856 distinct proteins and
+  1,198,539 distinct CDS over 1,011 isolates (measured); about 2.7 h of ProtT5 on two
+  cards (hypothesis, throughput assumed).
+
+Objective and evaluation (Secs. 5 and 8):
+
+- O1 one head per readout level, conditioned by the type token; per-dataset
+  standardization and bias; six heads by type is the control arm.
+- O2 ontology path token with a modeling-side grouping; flat id the ablation.
+- O3 main: tokens read at the head (the 030 per-entry token form); arm 1: type and
+  environment attended after the operator (035 form); ablation: no token.
+- O4 HL-Gauss bins (K 32 over [-4, 4] z, sigma 0.75 bins) main; pinball arm; one MSE cell.
+  No binned head has run here; every gain is a hypothesis.
+- S1 global fold file `conf/splits/global_split_v1.json` (`GlobalSplit043`, not yet
+  written); S2 rule: gain >= 0.02, 5 of 6 seeds, strain-resampled interval clear of zero;
+  S3 CPU linear ladder before any GPU run; S4 centered per-strain Pearson with the 0.284
+  floor; S5 joint minus alone; S6 raw and growth-residualized morphology probe; S7
+  Spearman beside Pearson.
+- New subsection "What the three case studies teach" (031, 035/038, 010/030) and the
+  unified protocol; new Table 14 (data per model part, `t14-data-per-part.tex`).
+
+Table 12 (decisions) now has 29 rows. Owner questions: (1) isolate as reference context vs the interim arm; (2) fetch Addgene
+127546; (3) ProtT5 or ESM2 for the first isolate pass; (4) confirm parent allele tokens
+for segregants; (5) headline joint arm with or without Hu, Jackson and Nadal-Ribelles; (6)
+a clade-disjoint isolate split beside the random one; (7) the centered per-strain
+statistic as the quoted form.
+
+Diagrams redrawn: [[experiments.043-expression-proteome-morphology.mermaid.input-side]]
+(four encoders, reference contexts, tokens at the head) and
+[[experiments.043-expression-proteome-morphology.mermaid.output-side]] (heads per level,
+bins; three boxes per row). Printed sizes, read from the PDF text matrices at the placed
+width: output side 6.94 pt body, 4.92 pt sub- and superscripts (0.91 of the text width);
+input side 5.11 pt body, 3.63 pt scripts (rotated page, height-limited). The 2026-10-19
+"4.5 pt" was the unscaled rendering; the placed output figure then printed at 5.12 pt
+body, 3.64 pt scripts.
+
+Isolate count: the census counts 979 isolates by strain name (943 + 795 - 759); the shape
+pass counts 794 distinct isolate descriptors in Muenzner's 795 records, 978 in all.
+
+Primer: 34 pages, `make check` 0 errors 0 warnings; published to Zotero
+`torchcell/notes-tex/multimodal/043-datasets-primer` as
+`043-datasets-primer_2026-10-20-00-33-36_5a419cba.pdf` (built at commit 81400eea9).

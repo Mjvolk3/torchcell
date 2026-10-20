@@ -4,10 +4,13 @@
 r"""Every compound the mixture trainer can read, placed in two dimensions by its FCFP4
 fingerprint, so a panel can show that the screens and this study share one compound table.
 
-The compound table is literally one array: ``fcfp4_count.npz`` of 031, 5,472 InChIKeys by
-2,048 counts, the same rows the trainer featurizes a compound token from. The screens pick
-rows out of it and so does this study, so "one compound table" is a statement about which
-rows each source holds, and the figure should show that rather than assert it.
+The compound table is one array: every InChIKey the four screens serve in the 040 store
+plus this study's six inhibitors, by 2,048 FCFP4 counts computed from the same SMILES the
+trainer featurizes a compound token from (``mixture_data.compound_smiles``). Until the
+store move the rows came from the 031 ``fcfp4_count.npz`` (5,472 InChIKeys), which the
+recipe reproduces exactly. The screens pick rows out of the table and so does this study,
+so "one compound table" is a statement about which rows each source holds, and the figure
+should show that rather than assert it.
 
 The embedding is UMAP on the Tanimoto (Jaccard) distance between the fingerprints taken as
 bit sets, which is the similarity a chemist reads between two FCFP4 vectors and the one
@@ -43,12 +46,12 @@ from numpy.typing import NDArray
 
 sys.path.insert(0, osp.dirname(osp.abspath(__file__)))
 from mixture_data import (  # noqa: E402
-    CELL_TABLE,
-    FCFP4_NPZ,
-    IDENTITY_GAP_SMILES,
     SPECS,
+    STORE,
     _condition_frame,
+    compound_smiles,
     fcfp4_count,
+    load_cells,
     wetlab_inhibitors,
 )
 
@@ -70,16 +73,27 @@ SOURCE_LABEL = {
 UMAP_KW = dict(n_neighbors=15, min_dist=0.10, metric="jaccard", random_state=0)
 
 
-def source_inchikeys() -> dict[str, set[str]]:
-    """The InChIKeys each screen holds, from the cells the trainer reads."""
+def source_inchikeys() -> tuple[dict[str, set[str]], dict[str, str]]:
+    """The InChIKeys each screen holds, from the cells the trainer reads, and the SMILES
+    the trainer fingerprints each from (``mixture_data.compound_smiles``).
+    """
+    cells = load_cells(STORE, frozenset(SPECS[n].dataset for n in SOURCE_ORDER))
     out: dict[str, set[str]] = {}
+    names: dict[str, str] = {}
+    served: dict[str, str | None] = {}
     for name in SOURCE_ORDER:
-        frame = _condition_frame(SPECS[name], CELL_TABLE)
-        keys: set[str] = set()
-        for value in frame.inchikeys:
-            keys.update(value if isinstance(value, (list, tuple)) else [value])
-        out[name] = {k for k in keys if isinstance(k, str) and k}
-    return out
+        frame = _condition_frame(SPECS[name], cells)
+        out[name] = set(frame["inchikeys"])
+        for key, cname, smiles in zip(
+            frame["inchikeys"], frame["compound_names"], frame["smiles"], strict=True
+        ):
+            names.setdefault(key, cname)
+            served.setdefault(key, smiles or None)
+    ours = wetlab_inhibitors()
+    for cname, key in ours.items():
+        names.setdefault(key, cname)
+    smiles_of = compound_smiles(sorted(names), served, names)
+    return out, smiles_of
 
 
 def tanimoto_rows(
@@ -108,25 +122,14 @@ def median_within(bits: NDArray[np.bool_]) -> float:
 
 def main() -> None:
     """Embed the compound table, write the two tables and the preview."""
-    store = np.load(FCFP4_NPZ, allow_pickle=True)
-    keys: NDArray[np.str_] = store["inchikey"]
-    counts: NDArray[np.float32] = store["X"]
-    assert len(keys) == len(counts), "the fingerprint store is ragged"
-    held = source_inchikeys()
+    # the compound table exactly as the trainer builds it: every compound the four
+    # screens serve plus the six wet-lab inhibitors, FCFP4 counts from SMILES
+    held, smiles_of = source_inchikeys()
     ours = wetlab_inhibitors()
-    # formic and lactic acid carry an identity gap: no screen holds them, so the 031
-    # store has no row, and the trainer featurizes them from their curated SMILES. The
-    # table they join is the same 2,048 counts, so they are appended the same way here
+    keys: NDArray[np.str_] = np.array(sorted(smiles_of), dtype=np.str_)
+    counts: NDArray[np.float32] = np.stack([fcfp4_count(smiles_of[k]) for k in keys])
+    assert len(keys) == len(counts), "the fingerprint table is ragged"
     index = {k: i for i, k in enumerate(keys)}
-    gap = [(n, k) for n, k in ours.items() if k not in index]
-    assert {n for n, _ in gap} <= set(IDENTITY_GAP_SMILES), (
-        f"a compound is missing a fingerprint and has no curated SMILES: {gap}"
-    )
-    if gap:
-        extra = np.stack([fcfp4_count(IDENTITY_GAP_SMILES[n]) for n, _ in gap])
-        keys = np.concatenate([keys, np.array([k for _, k in gap], dtype=keys.dtype)])
-        counts = np.concatenate([counts, extra.astype(counts.dtype)])
-        index = {k: i for i, k in enumerate(keys)}
     bits = counts > 0
 
     from umap import UMAP

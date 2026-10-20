@@ -122,9 +122,9 @@ from torch.nn.attention import SDPBackend, sdpa_kernel
 
 sys.path.insert(0, osp.dirname(__file__))
 from mixture_data import (  # noqa: E402
-    CELL_TABLE,
     ISOBOLE_RUNS,
     SOURCE_ATTRIBUTES,
+    STORE,
     Fold,
     GeneSource,
     HostRecord,
@@ -138,8 +138,8 @@ from mixture_data import (  # noqa: E402
     score_genes,
     strain_indices,
     subsample_pool,
-    write_vanacloig_doses,
 )
+from store_manifest_040 import read_manifest  # noqa: E402
 
 # a gene measured under no fitted compound has no mean; it is predicted NaN and left
 # unscored, which is what np.nanmean warns about here (038 ``inhibitor_profiles.py``)
@@ -152,7 +152,6 @@ WANDB_MODE = os.getenv("WANDB_MODE")
 EXPERIMENT = osp.join(EXPERIMENT_ROOT, "040-inhibitor-synergy-wetlab")
 RESULTS = osp.join(EXPERIMENT, "results")
 WELLS_CSV = osp.join(RESULTS, "wetlab_wells.csv")
-DOSES_CSV = osp.join(RESULTS, "vanacloig_doses.csv")
 MODEL_YAML = osp.join(EXPERIMENT, "conf", "mixture", "cgt_model.yaml")
 PREDICTIONS = osp.join(
     DATA_ROOT, "experiments", "040-inhibitor-synergy-wetlab", "predictions"
@@ -2303,24 +2302,20 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--sweep", help="YAML list of configs")
     parser.add_argument("--only", nargs="*", default=None, help="config names to run")
-    parser.add_argument(
-        "--doses-only",
-        action="store_true",
-        help="write results/vanacloig_doses.csv from the dev store and stop",
-    )
     args = parser.parse_args()
-    assert args.sweep or args.doses_only, "--sweep is required unless --doses-only"
-    if args.doses_only:
-        frame = write_vanacloig_doses(DOSES_CSV)
-        print(frame.to_string(), flush=True)
-        print(f"wrote {DOSES_CSV}", flush=True)
-        return
+    assert args.sweep, "--sweep is required"
     sweep = osp.splitext(osp.basename(args.sweep))[0]
     with open(args.sweep) as f:
         configs = [MixtureConfig(**c) for c in yaml.safe_load(f)]
-    assert osp.exists(CELL_TABLE), f"no cell table at {CELL_TABLE}"
-    if not osp.exists(DOSES_CSV):
-        write_vanacloig_doses(DOSES_CSV)
+    # The manifest names the store before a card is spent; the bytes are verified when
+    # the store is read (mixture_data.load_cells).
+    manifest = read_manifest(STORE)
+    print(
+        f"store {STORE}: KG {manifest.kg_release} ({manifest.kg_version}), "
+        f"{manifest.n_processed_entries:,} records, data.mdb sha256 "
+        f"{manifest.data_mdb_sha256[:12]}",
+        flush=True,
+    )
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     for cfg in configs:
         if args.only and cfg.name not in args.only:

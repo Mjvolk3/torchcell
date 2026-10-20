@@ -45,10 +45,11 @@ from dotenv import load_dotenv
 
 sys.path.insert(0, osp.dirname(osp.abspath(__file__)))
 from mixture_data import (  # noqa: E402
-    CELL_TABLE,
     IC30_FITNESS,
     SPECS,
+    STORE,
     _condition_frame,
+    load_cells,
     wetlab_inhibitors,
 )
 
@@ -105,8 +106,9 @@ def main() -> None:
     hists, rows, overlap = [], [], []
     inhibitors = wetlab_inhibitors()
     key_to_name = {key: name for name, key in inhibitors.items()}
+    cells = load_cells(STORE, frozenset(spec.dataset for spec in SPECS.values()))
     for name, spec in SPECS.items():
-        frame = _condition_frame(spec, CELL_TABLE)
+        frame = _condition_frame(spec, cells)
         values = frame["response"].to_numpy(dtype=float)
         hists.append(histogram(name, values))
         label, unit = LABEL[name]

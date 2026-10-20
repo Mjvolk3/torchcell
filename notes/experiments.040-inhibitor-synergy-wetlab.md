@@ -1968,3 +1968,76 @@ heading with no status chip, and the review card is one page.
 **Build order matters.** `make numbers` regenerates the sheets, `make plots` converts the
 new timestamped SVGs into `figures/`, and only then does `make all` find them. Running
 `make all` straight after `make numbers` fails with "Unable to load picture or PDF file".
+
+## 2026.10.19 - The data layer moves to a KG 4.0 query: one store, one manifest
+
+KG 4.0 (release `2026.10.17-4295f7ca`, torchcell 1.8.3) serves every record this experiment
+stands on: Vanacloig 2022 (164,205), Hoepfner 2014 (3,127,814), Hillenmeyer 2008 HET
+(2,963,683), Wildenhain 2015 (448,655) and the private `InhibitorBioscreenVolk2021Dataset`
+(977), and Vanacloig's records now carry their Table S1 IC30 doses. Until now the trainer read
+three hand-carried inputs from three other experiments (the 033 cell table of build 002, the
+031 `fcfp4_count.npz`, the Vanacloig dev store for the doses), glued by three environment
+variables and an rsync, none of it with a manifest. The Lustre incident of 2026-10-16 (one
+file in a hundred unreadable, no error on stat, a job hung to its 12 h limit) is the argument
+for one directory whose bytes are named.
+
+**The store.** [[experiments.040-inhibitor-synergy-wetlab.scripts.generate_040_cql]] writes
+[[experiments.040-inhibitor-synergy-wetlab.queries.env_chemgen_mixture_040]] (five `UNION ALL`
+blocks; the private wells carry an empty genotype and get no gene clause);
+[[experiments.040-inhibitor-synergy-wetlab.scripts.build_040_store]] builds it as a
+`Neo4jCellDataset` under `$DATA_ROOT/data/torchcell/experiments/040-inhibitor-synergy-wetlab/mixture_040`
+with one processed entry per served record (`RecordAggregator`, the 043 device; no
+converter, no deduplicator) and writes `processed/store_manifest.json`
+([[experiments.040-inhibitor-synergy-wetlab.scripts.store_manifest_040]]): release, torchcell
+commit, query sha256, returned against served per dataset, and the size and sha256 of
+`data.mdb`. The build runs on the release's own commit through `TORCHCELL_SRC`
+(`build/kg-4-0-v1-8-0`), which the pairing gate confirmed in the log ("release
+2026.10.17-4295f7ca paired with torchcell v1.8.3"). A Vanacloig genotype carries ONE
+perturbation in 4.0 (the host's PDR1/PDR3/SNQ2 sit on the reference strain), so a smoke gene
+set no longer needs the three host genes.
+
+**The read.** `mixture_data.load_cells` verifies the bytes against the manifest, then walks
+the processed LMDB once per process in key-prefix buckets (110 contiguous cursor ranges over
+`TC040_WORKERS` forked readers, cached per process so a sweep reads once) into one row per
+served record; `_condition_frame` and `load_gene_source` fold a cell's records by the source's
+label policy (`single` asserts one, `mean` averages), which is where 033's post-query analysis
+said the fold belongs. Doses follow ONE rule for every source (`log10_molar_dose`: molar units
+by factor, ug/mL, mg/mL and g/L through the RDKit molecular weight, percent units NaN); the
+033 table had left an auxiliary ug/mL dose NaN, so those conditions now carry a dose (the
+counts table reports `n_conditions_with_molar_dose`). Fingerprints are FCFP4 counts computed
+from SMILES (the identity table's where it has the InChIKey, else the served record's, else
+the two identity-gap structures), the recipe `inhibitor_profiles.py` verified reproduces the
+031 table row for row. `MixtureData.store` carries the manifest. `vanacloig_doses`,
+`write_vanacloig_doses`, `--doses-only`, `CELL_TABLE`, `EMBEDDING_DIR` and
+`VANACLOIG_STORE` are gone; `results/vanacloig_doses.csv` stays as the record of what the dev
+store held. Both launchers verify the store's sha256 in the preflight, and the Delta launcher
+needs one directory (`TC040_STORE`) beside the standard roots instead of three.
+`source_labels.py`, `compound_embedding.py` and `source_axes.py` read the store;
+`het_mixture_composition.py` (the HET pairs) and `inhibitor_profiles.py` (round 1) still read
+the 033 table and are not touched here.
+
+**Smoke, slurm 5907 (five genes, tag `mixture_040_smoke`): 6,423 records in 8.1 min**
+(1,285 partitions at about 1.2 s each; Vanacloig 135, Hoepfner 2,726, HET 2,585, Wildenhain 0
+for those genes, private 977 of 977), `dataset[i]` a cell for every dataset including the
+empty-genotype private record (0 perturbation indices). The loader on that store: 5 s;
+447 compounds (358 SMILES from the identity table, 87 from the served record, 2 identity
+gaps); Vanacloig 37 conditions, every one with a molar dose, four compounds dropped for a
+percent dose (ethanol, gamma-valerolactone, isobutanol, methyl methanesulfonate); Hoepfner
+275 conditions all molar; HET 404 conditions, 395 molar; 531 host records (112 anchors, ex21
+55, ex23 64, isoboles 300). Two launcher faults found on the way: `sbatch --export` splits a
+comma-separated gene list (5905), and a `python -c` check run from the submit directory
+resolves that directory's torchcell before `PYTHONPATH` (5905); a header that spelled the
+partition marker was counted as a second marker (5906).
+
+**Full build: slurm 5910, submitted 2026-10-19 23:27 CDT (16 CPUs, 64 GB, 12 h).** 5908 was
+cancelled a minute in to correct the query header (the comment claimed four Vanacloig
+perturbations), and 5909 refused the `raw/lmdb.partial` it left behind
+(`StaleStagingStoreError`, the honest refusal); the partial directory was removed and 5910
+submitted. Result recorded below when it finishes. The work sits on worktree `exp/040-kg4-store`, branched
+from `exp/040-inhibitor-synergy-wetlab` at 7ffb61bf6 (that worktree had a live session
+editing figure 2, so it was not rebased under it); the branch is 715 commits behind main and
+the build needs the 4.0 pair, which is why the build imports the release worktree rather
+than this one. Not done: the Delta copy of the store (rsync `processed/` and verify), the
+trainer still batches genes by conditions as matrices (the per-sample `dataset[i]` path is
+verified in the census, not used by the trainer), and the general `neo4j_cell` path still
+writes no manifest beside `processed/lmdb` (this experiment's manifest is experiment-local).

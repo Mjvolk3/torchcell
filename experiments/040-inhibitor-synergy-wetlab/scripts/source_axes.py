@@ -54,12 +54,11 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import pyarrow.parquet as pq
 from dotenv import load_dotenv
 from scipy.stats import spearmanr
 
 sys.path.insert(0, osp.dirname(__file__))
-from mixture_data import CELL_TABLE  # noqa: E402
+from mixture_data import SPECS, STORE, load_cells  # noqa: E402
 from mixture_rules import box, panel_letters, save, tenth_grid  # noqa: E402
 
 from torchcell.utils import PLOT_PALETTE  # noqa: E402
@@ -143,27 +142,17 @@ def agreement() -> pd.DataFrame:
     ).sort_values("shared_pairs", ascending=False, ignore_index=True)
 
 
-def dose_structure(cell_table: str) -> pd.DataFrame:
+def dose_structure(store: str) -> pd.DataFrame:
     """One row per compound served at ``MIN_DOSES`` or more molar doses in one source.
 
     The matrix is genes by doses, kept only for genes measured at every dose, so the
-    correlations compare the same gene set across doses.
+    correlations compare the same gene set across doses. Read from the 040 store, one
+    row per served record; repeated measurements of a cell average in the pivot.
     """
-    columns = [
-        "dataset",
-        "genes",
-        "perturbation_type",
-        "n_compounds",
-        "inchikeys",
-        "compound_names",
-        "log10_molar",
-        "responses",
-    ]
-    frame = pq.read_table(
-        cell_table, columns=columns, filters=[("n_compounds", "==", 1)]
-    ).to_pandas()
+    cells = load_cells(store, frozenset(spec.dataset for spec in SPECS.values()))
+    frame = cells[cells["n_compounds"] == 1]
     frame = frame[np.isfinite(frame["log10_molar"])].copy()
-    frame["y"] = frame["responses"].map(lambda r: float(np.mean(r)))
+    frame["y"] = frame["response"].astype(float)
     rows = []
     for (dataset, arm), block in frame.groupby(["dataset", "perturbation_type"]):
         doses_per_compound = block.groupby("inchikeys")["log10_molar"].nunique()
@@ -401,14 +390,14 @@ def short(dataset: str) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--cell-table", default=CELL_TABLE)
+    parser.add_argument("--store", default=STORE)
     args = parser.parse_args()
     os.makedirs(RESULTS, exist_ok=True)
 
     basis = common_basis()
     pairs = agreement()
     repeats = dose_reference()
-    doses = dose_structure(args.cell_table)
+    doses = dose_structure(args.store)
     for frame, name in (
         (basis, "source_basis"),
         (pairs, "source_agreement"),
@@ -423,7 +412,7 @@ def main() -> None:
             {"table": "source_basis", "read": BASELINES_CSV},
             {"table": "source_agreement", "read": AGREEMENT_CSV},
             {"table": "dose_reference", "read": REPEAT_CSV},
-            {"table": "dose_structure", "read": args.cell_table},
+            {"table": "dose_structure", "read": args.store},
             {
                 "table": "store_axes (dose basis quoted in mixture_data)",
                 "read": AXES_CSV,
